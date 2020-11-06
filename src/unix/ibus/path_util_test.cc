@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "testing/base/public/gunit.h"
 #include "unix/ibus/path_util.h"
+
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace ibus {
 
 TEST(PathUtilTest, ValidateReturns) {
-  const string &icon_path = GetIconPath("test.png");
+  const std::string &icon_path = GetIconPath("test.png");
   // Confirm that the returned string is not empty.
   EXPECT_FALSE(icon_path.empty());
   // Confirm that the end of the returned path equals to the icon file.
-  const string kExpected = "/test.png";
+  const std::string kExpected = "/test.png";
   EXPECT_EQ(kExpected, icon_path.substr(icon_path.size() - kExpected.size()));
 }
 

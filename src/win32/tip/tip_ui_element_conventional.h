@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,7 @@ class TipUiElementConventional {
 
   // Returns a ITfUIElement object based of the given parameters. Caller must
   // maintain the reference count of the object returned.
-  static ITfUIElement *New(UIType type,
-                           TipTextService *text_service,
+  static ITfUIElement *New(UIType type, TipTextService *text_service,
                            ITfContext *contxt);
 
  private:

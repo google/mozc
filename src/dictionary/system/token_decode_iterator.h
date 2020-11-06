@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,12 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -48,12 +48,11 @@ class TokenDecodeIterator {
  public:
   TokenDecodeIterator(const SystemDictionaryCodecInterface *codec,
                       const storage::louds::LoudsTrie &value_trie,
-                      const uint32 *frequent_pos,
-                      StringPiece key,
+                      const uint32 *frequent_pos, absl::string_view key,
                       const uint8 *ptr);
   ~TokenDecodeIterator() {}
 
-  const TokenInfo& Get() const { return token_info_; }
+  const TokenInfo &Get() const { return token_info_; }
   bool Done() const { return state_ == DONE; }
   void Next();
 
@@ -66,9 +65,10 @@ class TokenDecodeIterator {
 
   void NextInternal();
 
-  void LookupValue(int id, string *value) const {
+  void LookupValue(int id, std::string *value) const {
     char buffer[storage::louds::LoudsTrie::kMaxDepth + 1];
-    const StringPiece encoded_value = value_trie_->RestoreKeyString(id, buffer);
+    const absl::string_view encoded_value =
+        value_trie_->RestoreKeyString(id, buffer);
     codec_->DecodeValue(encoded_value, value);
   }
 
@@ -76,9 +76,9 @@ class TokenDecodeIterator {
   const storage::louds::LoudsTrie *value_trie_;
   const uint32 *frequent_pos_;
 
-  const StringPiece key_;
+  const absl::string_view key_;
   // Katakana key will be lazily initialized.
-  string key_katakana_;
+  std::string key_katakana_;
 
   State state_;
   const uint8 *ptr_;
@@ -93,10 +93,8 @@ class TokenDecodeIterator {
 
 inline TokenDecodeIterator::TokenDecodeIterator(
     const SystemDictionaryCodecInterface *codec,
-    const storage::louds::LoudsTrie &value_trie,
-    const uint32 *frequent_pos,
-    StringPiece key,
-    const uint8 *ptr)
+    const storage::louds::LoudsTrie &value_trie, const uint32 *frequent_pos,
+    absl::string_view key, const uint8 *ptr)
     : codec_(codec),
       value_trie_(&value_trie),
       frequent_pos_(frequent_pos),
@@ -178,8 +176,8 @@ inline void TokenDecodeIterator::NextInternal() {
   }
 
   if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
-    token_.value.append(1, '_')
-                .append(Util::StringPrintf("%d", token_info_.accent_type));
+    token_.value.append(1, '_').append(
+        Util::StringPrintf("%d", token_info_.accent_type));
   }
 
   if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {

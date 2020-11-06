@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,7 @@
 #include "session/session_handler_interface.h"
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
-
-DECLARE_string(test_tmpdir);
+#include "testing/base/public/googletest.h"
 
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
@@ -107,10 +106,8 @@ bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-SessionHandlerTestBase::SessionHandlerTestBase() {
-}
-SessionHandlerTestBase::~SessionHandlerTestBase() {
-}
+SessionHandlerTestBase::SessionHandlerTestBase() {}
+SessionHandlerTestBase::~SessionHandlerTestBase() {}
 
 void SessionHandlerTestBase::SetUp() {
   flags_max_session_size_backup_ = FLAGS_max_session_size;
@@ -157,14 +154,13 @@ void SessionHandlerTestBase::ClearState() {
 }
 
 TestSessionClient::TestSessionClient(std::unique_ptr<EngineInterface> engine)
-  : id_(0),
-    usage_observer_(new SessionUsageObserver),
-    handler_(new SessionHandler(std::move(engine))) {
+    : id_(0),
+      usage_observer_(new SessionUsageObserver),
+      handler_(new SessionHandler(std::move(engine))) {
   handler_->AddObserver(usage_observer_.get());
 }
 
-TestSessionClient::~TestSessionClient() {
-}
+TestSessionClient::~TestSessionClient() {}
 
 bool TestSessionClient::CreateSession() {
   return ::mozc::session::testing::CreateSession(handler_.get(), &id_);
@@ -264,7 +260,7 @@ bool TestSessionClient::SetConfig(const config::Config &config,
   return EvalCommand(&input, output);
 }
 
-void TestSessionClient::SetCallbackText(const string &text) {
+void TestSessionClient::SetCallbackText(const std::string &text) {
   callback_text_ = text;
 }
 
@@ -281,9 +277,7 @@ bool TestSessionClient::EvalCommandInternal(commands::Input *input,
 
   // If callback is allowed and the callback field exists, evaluate the callback
   // command.
-  if (result &&
-      allow_callback &&
-      command.output().has_callback() &&
+  if (result && allow_callback && command.output().has_callback() &&
       command.output().callback().has_session_command()) {
     commands::Input input2;
     input2.set_type(commands::Input::SEND_COMMAND);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,6 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 namespace composer {
 
@@ -48,8 +46,8 @@ class TransliteratorInterface {
   // Expected usage examples:
   // - HalfKatakanaTransliterator("a", "あ") => "ｱ"
   // - FullAsciiTransliterator("a", "あ") => "ａ"
-  virtual string Transliterate(const string &raw,
-                               const string &converted) const = 0;
+  virtual std::string Transliterate(const std::string &raw,
+                                    const std::string &converted) const = 0;
 
   // Split raw and converted strings based on the transliteration
   // rule.  If raw or converted could not be deterministically split,
@@ -63,11 +61,10 @@ class TransliteratorInterface {
   // - HalfKatakanaTransliterator(1, "zu", "ず") => false
   //   (raw_lhs, raw_rhs) => ("す", "゛")  fall back strings.
   //   (conv_lhs, conv_rhs) => ("す", "゛")
-  virtual bool Split(size_t position,
-                     const string &raw,
-                     const string &converted,
-                     string *raw_lhs, string *raw_rhs,
-                     string *converted_lhs, string *converted_rhs) const = 0;
+  virtual bool Split(size_t position, const std::string &raw,
+                     const std::string &converted, std::string *raw_lhs,
+                     std::string *raw_rhs, std::string *converted_lhs,
+                     std::string *converted_rhs) const = 0;
 };
 
 }  // namespace composer

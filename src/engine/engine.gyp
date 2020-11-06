@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,9 @@
         'engine.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:status',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:segmenter',
@@ -72,6 +74,10 @@
         '../protocol/protocol.gyp:user_dictionary_storage_proto',
         '../rewriter/rewriter.gyp:rewriter',
       ],
+      'export_dependent_settings': [
+        '../dictionary/dictionary_base.gyp:pos_matcher',
+        '../protocol/protocol.gyp:user_dictionary_storage_proto',
+      ],
     },
     {
       'target_name': 'mock_converter_engine',
@@ -81,6 +87,7 @@
         'user_data_manager_mock.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../converter/converter_base.gyp:converter_mock'
       ],
@@ -99,10 +106,12 @@
       'target_name': 'mock_data_engine_factory',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/../dictionary/pos_matcher.h',
         'mock_data_engine_factory.cc',
       ],
       'dependencies': [
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         'engine',
       ],
     },

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -75,8 +75,7 @@ enum COLUMN_TYPE {
 // setController: sets the reference of GoogleJapaneseInputController.
 // It will be used when mouse clicks.  It doesn't take ownerships of
 // |controller|.
-- (void)setSendCommandInterface:
-    (mozc::client::SendCommandInterface *)command_sender;
+- (void)setSendCommandInterface:(mozc::client::SendCommandInterface *)command_sender;
 
 // Checks the |candidates_| and recalculates the layout using |tableLayout_|.
 // It also returns the size which is necessary to draw all GUI elements.

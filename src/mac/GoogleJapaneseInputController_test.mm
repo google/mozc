@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,10 +46,10 @@
 
 @interface MockIMKServer : IMKServer <ServerCallback> {
   // The controller which accepts user's clicks
-  id<ControllerCallback> expectedController_;
+  __weak id<ControllerCallback> expectedController_;
   int setCurrentController_count_;
 }
-@property(readwrite, assign) id<ControllerCallback> expectedController;
+@property(readwrite, weak) id<ControllerCallback> expectedController;
 @end
 
 @implementation MockIMKServer
@@ -76,7 +76,7 @@
 @end
 
 @interface MockClient : NSObject {
-  NSString *bundleIdentifier;
+  __weak NSString *bundleIdentifier;
   NSRect expectedCursor;
   NSRange expectedRange;
   string *selectedMode_;
@@ -85,7 +85,7 @@
   NSAttributedString *attributedString_;
   std::map<string, int> *counters_;
 }
-@property(readwrite, assign) NSString *bundleIdentifier;
+@property(readwrite, weak) NSString *bundleIdentifier;
 @property(readwrite, assign) NSRect expectedCursor;
 @property(readwrite, assign) NSRange expectedRange;
 @property(readonly) string *selectedMode;
@@ -113,11 +113,6 @@
 - (void)dealloc {
   delete counters_;
   delete selectedMode_;
-  [bundleIdentifier release];
-  [insertedText_ release];
-  [overriddenLayout_ release];
-  [attributedString_ release];
-  [super dealloc];
 }
 
 - (int)getCounter:(const char *)selector {
@@ -151,7 +146,6 @@
 }
 
 - (void)setAttributedString:(NSAttributedString *)newString {
-  [attributedString_ autorelease];
   attributedString_ = [newString copy];
 }
 
@@ -172,14 +166,12 @@
 
 - (void)insertText:(NSString *)result replacementRange:(NSRange)range {
   (*counters_)["insertText:replacementRange:"]++;
-  [insertedText_ release];
-  insertedText_ = [result retain];
+  insertedText_ = result;
 }
 
 - (void)overrideKeyboardWithKeyboardNamed:(NSString *)newLayout {
   (*counters_)["overrideKeyboardWithKeyboardNamed:"]++;
-  [overriddenLayout_ release];
-  overriddenLayout_ = [newLayout retain];
+  overriddenLayout_ = newLayout;
 }
 @end
 
@@ -208,7 +200,7 @@ BOOL openURL_test(id self, SEL selector, NSURL *url) {
 }
 
 NSArray *dummy_screens(id self, SEL selector) {
-  return [NSArray arrayWithObject:[[[MockScreen alloc] init] autorelease]];
+  return [NSArray arrayWithObject:[[MockScreen alloc] init]];
 }
 }  // namespace
 
@@ -261,7 +253,6 @@ class MockRenderer : public mozc::renderer::RendererInterface {
 class GoogleJapaneseInputControllerTest : public testing::Test {
  protected:
   void SetUp() {
-    pool_ = [[NSAutoreleasePool alloc] init];
     mock_server_ = [[MockIMKServer alloc] init];
     mock_client_ = [[MockClient alloc] init];
     // setup workspace
@@ -276,13 +267,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
 
     [GoogleJapaneseInputController initializeConstants];
     SetUpController();
-  }
-  void TearDown() {
-    [controller_ release];
-    [mock_server_ release];
-    [mock_client_ release];
-    // mock_renderer is released during the release of |controller_|.
-    [pool_ release];
   }
 
   void SetUpController() {
@@ -299,7 +283,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
   }
 
   void ResetClientBundleIdentifier(NSString *new_bundle_id) {
-    [controller_ release];
+    controller_ = nil;
     mock_client_.bundleIdentifier = new_bundle_id;
     SetUpController();
   }
@@ -312,7 +296,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
 
  private:
   MockIMKServer *mock_server_;
-  NSAutoreleasePool *pool_;
 };
 
 // Because preedit has NSMarkedClauseSegment attribute which has to
@@ -422,7 +405,7 @@ BOOL SendKeyEvent(unsigned short keyCode,
 TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
   // If preedit is nullptr, it still calls setMarkedText, with an empty string.
   NSMutableAttributedString *expected =
-      [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+      [[NSMutableAttributedString alloc] initWithString:@""];
   [controller_ updateComposedString:nullptr];
   EXPECT_TRUE([expected
                 isEqualToAttributedString:[controller_ composedString:nil]]);
@@ -453,8 +436,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
       [controller_ markForStyle:kTSMHiliteConvertedText
                         atRange:NSMakeRange(NSNotFound, 0)];
   expected =
-      [[[NSMutableAttributedString alloc] initWithString:@"abcdef"]
-        autorelease];
+      [[NSMutableAttributedString alloc] initWithString:@"abcdef"];
   [expected addAttributes:underlineAttributes range:NSMakeRange(0, 1)];
   [expected addAttributes:highlightAttributes range:NSMakeRange(1, 2)];
   [expected addAttributes:underlineAttributes range:NSMakeRange(3, 3)];
@@ -682,7 +664,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaReconvert) {
 
   // set attributedString for Reconvert
   [mock_client_ setAttributedString:
-      [[[NSAttributedString alloc] initWithString:@"abcde"] autorelease]];
+      [[NSAttributedString alloc] initWithString:@"abcde"]];
   mock_client_.expectedRange = NSMakeRange(1, 3);
 
   // Send Kana-key.
@@ -934,7 +916,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapEisuCommitRawText) {
 
 TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   [mock_client_ setAttributedString:
-      [[[NSAttributedString alloc] initWithString:@"abcde"] autorelease]];
+      [[NSAttributedString alloc] initWithString:@"abcde"]];
   mock_client_.expectedRange = NSMakeRange(2, 1);
   mozc::commands::Context context;
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
@@ -943,8 +925,8 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
   [mock_client_ setAttributedString:
-      [[[NSAttributedString alloc] initWithString:@"012345678901234567890abcde"]
-       autorelease]];
+      [[NSAttributedString alloc]
+          initWithString:@"012345678901234567890abcde"]];
 
   mock_client_.expectedRange = NSMakeRange(1, 0);
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
@@ -959,7 +941,7 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
   [mock_client_ setAttributedString:
-      [[[NSAttributedString alloc] initWithString:@"012abc345"] autorelease]];
+      [[NSAttributedString alloc] initWithString:@"012abc345"]];
   mozc::commands::Preedit preedit;
   mozc::commands::Preedit::Segment *new_segment = preedit.add_segment();
   new_segment->set_annotation(mozc::commands::Preedit::Segment::HIGHLIGHT);

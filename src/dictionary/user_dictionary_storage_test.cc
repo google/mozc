@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,15 +43,13 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 namespace {
 
 using user_dictionary::UserDictionary;
 
-string GenRandomString(int size) {
-  string result;
+std::string GenRandomString(int size) {
+  std::string result;
   const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
     const char32 l =
@@ -61,7 +59,7 @@ string GenRandomString(int size) {
   return result;
 }
 
-}   // namespace
+}  // namespace
 
 class UserDictionaryStorageTest : public ::testing::Test {
  protected:
@@ -76,12 +74,12 @@ class UserDictionaryStorageTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
   }
 
-  static string GetUserDictionaryFile() {
+  static std::string GetUserDictionaryFile() {
     return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
   }
 
  private:
-  string backup_user_profile_directory_;
+  std::string backup_user_profile_directory_;
 };
 
 TEST_F(UserDictionaryStorageTest, FileTest) {
@@ -118,13 +116,12 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   const size_t kDictionariesSize = 3;
   uint64 id[kDictionariesSize];
 
-  const size_t dict_size = storage.dictionaries_size();
+  const size_t dict_size = storage.GetProto().dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_TRUE(storage.CreateDictionary(
-        "test" + std::to_string(static_cast<uint32>(i)),
-        &id[i]));
-    EXPECT_EQ(i + 1 + dict_size, storage.dictionaries_size());
+        "test" + std::to_string(static_cast<uint32>(i)), &id[i]));
+    EXPECT_EQ(i + 1 + dict_size, storage.GetProto().dictionaries_size());
   }
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
@@ -133,9 +130,9 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   }
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
-    EXPECT_EQ(storage.mutable_dictionaries(i + dict_size),
+    EXPECT_EQ(storage.GetProto().mutable_dictionaries(i + dict_size),
               storage.GetUserDictionary(id[i]));
-    EXPECT_EQ(NULL, storage.GetUserDictionary(id[i] + 1));
+    EXPECT_EQ(nullptr, storage.GetUserDictionary(id[i] + 1));
   }
 
   // empty
@@ -165,7 +162,8 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   EXPECT_FALSE(storage.DeleteDictionary(0));
 
   EXPECT_TRUE(storage.DeleteDictionary(id[1]));
-  EXPECT_EQ(kDictionariesSize + dict_size - 1, storage.dictionaries_size());
+  EXPECT_EQ(kDictionariesSize + dict_size - 1,
+            storage.GetProto().dictionaries_size());
 }
 
 TEST_F(UserDictionaryStorageTest, DeleteTest) {
@@ -174,27 +172,26 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
 
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
-    storage.Clear();
+    storage.GetProto().Clear();
     std::vector<uint64> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
       EXPECT_TRUE(storage.CreateDictionary(
-          "test" + std::to_string(static_cast<uint32>(i)),
-          &ids[i]));
+          "test" + std::to_string(static_cast<uint32>(i)), &ids[i]));
     }
 
     std::vector<uint64> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
-      if (Util::Random(3) == 0) {   // 33%
+      if (Util::Random(3) == 0) {  // 33%
         EXPECT_TRUE(storage.DeleteDictionary(ids[i]));
         continue;
       }
       alive.push_back(ids[i]);
     }
 
-    EXPECT_EQ(alive.size(), storage.dictionaries_size());
+    EXPECT_EQ(alive.size(), storage.GetProto().dictionaries_size());
 
     for (size_t i = 0; i < alive.size(); ++i) {
-      EXPECT_EQ(alive[i], storage.dictionaries(i).id());
+      EXPECT_EQ(alive[i], storage.GetProto().dictionaries(i).id());
     }
   }
 }
@@ -205,12 +202,11 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 
   EXPECT_TRUE(storage.CreateDictionary("test", &id));
 
-  UserDictionaryStorage::UserDictionary *dic =
-      storage.GetUserDictionary(id);
+  UserDictionaryStorage::UserDictionary *dic = storage.GetUserDictionary(id);
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const string prefix = std::to_string(static_cast<uint32>(i));
+    const std::string prefix = std::to_string(static_cast<uint32>(i));
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
@@ -219,13 +215,13 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
     entry->set_comment(prefix + "comment");
   }
 
-  const string export_file = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                                "export.txt");
+  const std::string export_file =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "export.txt");
 
   EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
   EXPECT_TRUE(storage.ExportDictionary(id, export_file));
 
-  string file_string;
+  std::string file_string;
   // Copy whole contents of the file into |file_string|.
   {
     InputFileStream ifs(export_file.c_str());
@@ -241,8 +237,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   UserDictionaryStorage::UserDictionary dic2;
   EXPECT_EQ(UserDictionaryImporter::IMPORT_NO_ERROR,
             UserDictionaryImporter::ImportFromTextLineIterator(
-                UserDictionaryImporter::MOZC,
-                &iter, &dic2));
+                UserDictionaryImporter::MOZC, &iter, &dic2));
 
   dic2.set_id(id);
   dic2.set_name("test");
@@ -262,13 +257,12 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
 
       for (size_t i = 0; i < dic_size; ++i) {
         uint64 id = 0;
-        EXPECT_TRUE(
-            storage1.CreateDictionary(
-                "test" + std::to_string(static_cast<uint32>(i)), &id));
+        EXPECT_TRUE(storage1.CreateDictionary(
+            "test" + std::to_string(static_cast<uint32>(i)), &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
-              storage1.mutable_dictionaries(i);
+              storage1.GetProto().mutable_dictionaries(i);
           UserDictionaryStorage::UserDictionaryEntry *entry =
               dic->add_entries();
           entry->set_key(GenRandomString(10));
@@ -284,11 +278,10 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
     }
 
     UserDictionaryStorage storage2(GetUserDictionaryFile());
-    {
-      EXPECT_TRUE(storage2.Load());
-    }
+    { EXPECT_TRUE(storage2.Load()); }
 
-    EXPECT_EQ(storage1.DebugString(), storage2.DebugString());
+    EXPECT_EQ(storage1.GetProto().DebugString(),
+              storage2.GetProto().DebugString());
   }
 }
 
@@ -319,21 +312,21 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
     bool is_removed_dictionary;
     bool has_normal_entry;
     bool has_removed_entry;
-    string dictionary_name;
+    std::string dictionary_name;
   } test_data[] = {
-    { false, false, false, false, "non-sync dictionary (empty)" },
-    { false, false, true, false, "non-sync dictionary (normal entry)" },
-    { true, false, false, false, "sync dictionary (empty)" },
-    { true, false, false, true, "sync dictionary (removed entry)" },
-    { true, false, true, false, "sync dictionary (normal entry)" },
-    { true, false, true, true, "sync dictionary (normal & removed entries)" },
-    { true, true, false, false, "removed sync dictionary (empty)" },
-    { true, true, false, true, "removed sync dictionary (removed entry)" },
-    { true, true, true, false, "removed sync dictionary (normal entry)" },
-    { true, true, true, true,
-      "removed sync dictionary (normal & removed entries)" },
-    { true, false, true, false,
-      UserDictionaryStorage::default_sync_dictionary_name() },
+      {false, false, false, false, "non-sync dictionary (empty)"},
+      {false, false, true, false, "non-sync dictionary (normal entry)"},
+      {true, false, false, false, "sync dictionary (empty)"},
+      {true, false, false, true, "sync dictionary (removed entry)"},
+      {true, false, true, false, "sync dictionary (normal entry)"},
+      {true, false, true, true, "sync dictionary (normal & removed entries)"},
+      {true, true, false, false, "removed sync dictionary (empty)"},
+      {true, true, false, true, "removed sync dictionary (removed entry)"},
+      {true, true, true, false, "removed sync dictionary (normal entry)"},
+      {true, true, true, true,
+       "removed sync dictionary (normal & removed entries)"},
+      {true, false, true, false,
+       UserDictionaryStorage::default_sync_dictionary_name()},
   };
 
   UserDictionaryStorage storage(GetUserDictionaryFile());
@@ -352,7 +345,8 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
     uint64 dict_id = 0;
     ASSERT_TRUE(storage.CreateDictionary(data.dictionary_name, &dict_id));
     UserDictionaryStorage::UserDictionary *dict =
-        storage.mutable_dictionaries(storage.GetUserDictionaryIndex(dict_id));
+        storage.GetProto().mutable_dictionaries(
+            storage.GetUserDictionaryIndex(dict_id));
     dict->set_syncable(data.is_sync_dictionary);
     dict->set_removed(data.is_removed_dictionary);
     if (data.has_normal_entry) {
@@ -369,28 +363,31 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
       entry->set_removed(true);
     }
   }
-  EXPECT_EQ(9, UserDictionaryStorage::CountSyncableDictionaries(storage));
+  EXPECT_EQ(9, UserDictionaryStorage::CountSyncableDictionaries(
+      storage.GetProto()));
 
   ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
 
   const char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
   const struct ExpectedData {
     bool has_normal_entry;
-    string dictionary_name;
+    std::string dictionary_name;
   } expected_data[] = {
-    { false, "non-sync dictionary (empty)" },
-    { true, "non-sync dictionary (normal entry)" },
-    { true, "sync dictionary (normal entry)" },
-    { true, "sync dictionary (normal & removed entries)" },
-    { true, kDictionaryNameConvertedFromSyncableDictionary },
+      {false, "non-sync dictionary (empty)"},
+      {true, "non-sync dictionary (normal entry)"},
+      {true, "sync dictionary (normal entry)"},
+      {true, "sync dictionary (normal & removed entries)"},
+      {true, kDictionaryNameConvertedFromSyncableDictionary},
   };
 
-  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage));
-  ASSERT_EQ(arraysize(expected_data), storage.dictionaries_size());
+  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(
+      storage.GetProto()));
+  ASSERT_EQ(arraysize(expected_data), storage.GetProto().dictionaries_size());
   for (size_t i = 0; i < arraysize(expected_data); ++i) {
     SCOPED_TRACE(Util::StringPrintf("verify %d", static_cast<int>(i)));
     const ExpectedData &expected = expected_data[i];
-    const UserDictionaryStorage::UserDictionary &dict = storage.dictionaries(i);
+    const UserDictionaryStorage::UserDictionary &dict =
+        storage.GetProto().dictionaries(i);
 
     EXPECT_EQ(expected.dictionary_name, dict.name());
     EXPECT_FALSE(dict.syncable());
@@ -404,77 +401,42 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   }
 
   // Test duplicated dictionary name.
-  storage.Clear();
+  storage.GetProto().Clear();
   {
     uint64 dict_id = 0;
     storage.CreateDictionary(
         UserDictionaryStorage::default_sync_dictionary_name(), &dict_id);
-    storage.CreateDictionary(
-        kDictionaryNameConvertedFromSyncableDictionary, &dict_id);
-    ASSERT_EQ(2, storage.dictionaries_size());
+    storage.CreateDictionary(kDictionaryNameConvertedFromSyncableDictionary,
+                             &dict_id);
+    ASSERT_EQ(2, storage.GetProto().dictionaries_size());
     UserDictionaryStorage::UserDictionary *dict;
-    dict = storage.mutable_dictionaries(0);
+    dict = storage.GetProto().mutable_dictionaries(0);
     dict->set_syncable(true);
     dict->add_entries()->set_key("0");
-    dict = storage.mutable_dictionaries(1);
+    dict = storage.GetProto().mutable_dictionaries(1);
     dict->set_syncable(false);
     dict->add_entries()->set_key("1");
   }
   ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
-  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(storage));
-  EXPECT_EQ(2, storage.dictionaries_size());
+  EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(
+      storage.GetProto()));
+  EXPECT_EQ(2, storage.GetProto().dictionaries_size());
   EXPECT_EQ(Util::StringPrintf("%s_1",
                                kDictionaryNameConvertedFromSyncableDictionary),
-            storage.dictionaries(0).name());
+            storage.GetProto().dictionaries(0).name());
   EXPECT_EQ(kDictionaryNameConvertedFromSyncableDictionary,
-            storage.dictionaries(1).name());
-}
-
-TEST_F(UserDictionaryStorageTest, AddToAutoRegisteredDictionary) {
-  {
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    EXPECT_EQ(0, storage.dictionaries_size());
-    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary(
-        "key1", "value1", UserDictionary::NOUN));
-    EXPECT_EQ(1, storage.dictionaries_size());
-    EXPECT_EQ(1, storage.dictionaries(0).entries_size());
-    const UserDictionaryStorage::UserDictionaryEntry &entry1 =
-        storage.dictionaries(0).entries(0);
-    EXPECT_EQ("key1", entry1.key());
-    EXPECT_EQ("value1", entry1.value());
-    EXPECT_EQ(UserDictionary::NOUN, entry1.pos());
-    EXPECT_TRUE(entry1.auto_registered());
-
-    EXPECT_TRUE(storage.AddToAutoRegisteredDictionary(
-        "key2", "value2", UserDictionary::NOUN));
-    EXPECT_EQ(1, storage.dictionaries_size());
-    EXPECT_EQ(2, storage.dictionaries(0).entries_size());
-    const UserDictionaryStorage::UserDictionaryEntry &entry2 =
-        storage.dictionaries(0).entries(1);
-    EXPECT_EQ("key2", entry2.key());
-    EXPECT_EQ("value2", entry2.value());
-    EXPECT_EQ(UserDictionary::NOUN, entry2.pos());
-    EXPECT_TRUE(entry1.auto_registered());
-  }
-
-  {
-    FileUtil::Unlink(GetUserDictionaryFile());
-    UserDictionaryStorage storage(GetUserDictionaryFile());
-    storage.Lock();
-    // Already locked.
-    EXPECT_FALSE(storage.AddToAutoRegisteredDictionary(
-        "key", "value", UserDictionary::NOUN));
-  }
+            storage.GetProto().dictionaries(1).name());
 }
 
 TEST_F(UserDictionaryStorageTest, Export) {
   const int kDummyDictionaryId = 10;
-  const string kPath = FileUtil::JoinPath(FLAGS_test_tmpdir, "exported_file");
+  const std::string kPath =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "exported_file");
 
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
     {
-      UserDictionary *dictionary = storage.add_dictionaries();
+      UserDictionary *dictionary = storage.GetProto().add_dictionaries();
       dictionary->set_id(kDummyDictionaryId);
       UserDictionary::Entry *entry = dictionary->add_entries();
       entry->set_key("key");
@@ -495,7 +457,7 @@ TEST_F(UserDictionaryStorageTest, Export) {
             string(mapped_data.begin(), mapped_data.size()));
 #else
   EXPECT_EQ("key\tvalue\t名詞\tcomment\n",
-            string(mapped_data.begin(), mapped_data.size()));
+            std::string(mapped_data.begin(), mapped_data.size()));
 #endif  // OS_WIN
 }
 

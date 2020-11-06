@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@
         'date_rewriter_test.cc',
         'dice_rewriter_test.cc',
         'dictionary_generator_test.cc',
+        'emoji_rewriter_test.cc',
         'emoticon_rewriter_test.cc',
         'english_variants_rewriter_test.cc',
         'focus_candidate_rewriter_test.cc',
@@ -59,6 +60,7 @@
         'rewriter_test.cc',
         'symbol_rewriter_test.cc',
         'unicode_rewriter_test.cc',
+        'usage_rewriter_test.cc',
         'user_boundary_history_rewriter_test.cc',
         'user_dictionary_rewriter_test.cc',
         'user_segment_history_rewriter_test.cc',
@@ -67,45 +69,27 @@
         'zipcode_rewriter_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
         '../base/base_test.gyp:clock_mock',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary_base.gyp:user_pos',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../protocol/protocol.gyp:commands_proto',
         '../session/session_base.gyp:request_test_util',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
+        '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'calculator/calculator.gyp:calculator_mock',
         'rewriter.gyp:rewriter',
       ],
       'variables': {
         'test_size': 'small',
       },
-      # TODO(horo): usage is available only in Mac and Win now.
-      'conditions': [
-        ['target_platform!="Android"', {
-          'sources': [
-            'emoji_rewriter_test.cc',
-            'usage_rewriter_test.cc',
-          ],
-          'dependencies': [
-            '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
-          ],
-        }],
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'sources!': [
-            'emoji_rewriter_test.cc',
-            'user_boundary_history_rewriter_test.cc',
-            'user_dictionary_rewriter_test.cc',
-            'user_segment_history_rewriter_test.cc',
-            'variants_rewriter_test.cc',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'single_kanji_rewriter_test',

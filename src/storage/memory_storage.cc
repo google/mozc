@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,18 +41,16 @@ namespace {
 
 class MemoryStorageImpl : public storage::StorageInterface {
  public:
-  virtual bool Open(const string &filename) {
+  virtual bool Open(const std::string &filename) {
     data_.clear();
     return true;
   }
 
-  virtual bool Sync() {
-    return true;
-  }
+  virtual bool Sync() { return true; }
 
-  virtual bool Lookup(const string &key, string *value) const {
+  virtual bool Lookup(const std::string &key, std::string *value) const {
     CHECK(value);
-    std::map<string, string>::const_iterator it = data_.find(key);
+    std::map<std::string, std::string>::const_iterator it = data_.find(key);
     if (it == data_.end()) {
       return false;
     }
@@ -60,13 +58,13 @@ class MemoryStorageImpl : public storage::StorageInterface {
     return true;
   }
 
-  virtual bool Insert(const string &key, const string &value) {
+  virtual bool Insert(const std::string &key, const std::string &value) {
     data_[key] = value;
     return true;
   }
 
-  virtual bool Erase(const string &key) {
-    std::map<string, string>::iterator it = data_.find(key);
+  virtual bool Erase(const std::string &key) {
+    std::map<std::string, std::string>::iterator it = data_.find(key);
     if (it != data_.end()) {
       data_.erase(it);
       return true;
@@ -79,22 +77,18 @@ class MemoryStorageImpl : public storage::StorageInterface {
     return true;
   }
 
-  virtual size_t Size() const {
-    return data_.size();
-  }
+  virtual size_t Size() const { return data_.size(); }
 
   MemoryStorageImpl() {}
   virtual ~MemoryStorageImpl() {}
 
  private:
-  std::map<string, string> data_;
+  std::map<std::string, std::string> data_;
 };
 
 }  // namespace
 
-StorageInterface *MemoryStorage::New() {
-  return new MemoryStorageImpl;
-}
+StorageInterface *MemoryStorage::New() { return new MemoryStorageImpl; }
 
 }  // namespace storage
 }  // namespace mozc

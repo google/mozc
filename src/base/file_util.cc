@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #include "base/file_util.h"
 
 #ifdef OS_WIN
-#include <Windows.h>
 #include <KtmW32.h>
+#include <Windows.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -42,9 +42,6 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/mutex.h"
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include "base/pepper_file_util.h"
-#endif  // MOZC_USE_PEPPER_FILE_IO
 #include "base/scoped_handle.h"
 #include "base/util.h"
 #include "base/win_util.h"
@@ -100,57 +97,49 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 }  // namespace
 #endif  // OS_WIN
 
-bool FileUtil::CreateDirectory(const string &path) {
+bool FileUtil::CreateDirectory(const std::string &path) {
 #if defined(OS_WIN)
   std::wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
-#elif defined(OS_NACL)  // OS_WIN
-  return PepperFileUtil::CreateDirectory(path);
-#else  // OS_WIN or OS_NACL
+#else   // !OS_WIN
   return ::mkdir(path.c_str(), 0700) == 0;
-#endif  // OS_WIN or OS_NACL
+#endif  // OS_WIN
 }
 
-bool FileUtil::RemoveDirectory(const string &dirname) {
+bool FileUtil::RemoveDirectory(const std::string &dirname) {
 #ifdef OS_WIN
   std::wstring wide;
   return (Util::UTF8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
-#elif defined(OS_NACL)  // OS_WIN
-  return PepperFileUtil::Delete(dirname);
-#else  // OS_WIN or OS_NACL
+#else   // !OS_WIN
   return ::rmdir(dirname.c_str()) == 0;
-#endif  // OS_WIN or OS_NACL
+#endif  // OS_WIN
 }
 
-bool FileUtil::Unlink(const string &filename) {
+bool FileUtil::Unlink(const std::string &filename) {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
   std::wstring wide;
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
-#elif defined(MOZC_USE_PEPPER_FILE_IO)
-  return PepperFileUtil::Delete(filename);
-#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
+#else   // !OS_WIN
   return ::unlink(filename.c_str()) == 0;
 #endif  // OS_WIN
 }
 
-bool FileUtil::FileExists(const string &filename) {
+bool FileUtil::FileExists(const std::string &filename) {
 #ifdef OS_WIN
   std::wstring wide;
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
-#elif defined(MOZC_USE_PEPPER_FILE_IO)
-  return PepperFileUtil::FileExists(filename);
-#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
+#else   // !OS_WIN
   struct stat s;
   return ::stat(filename.c_str(), &s) == 0;
 #endif  // OS_WIN
 }
 
-bool FileUtil::DirectoryExists(const string &dirname) {
+bool FileUtil::DirectoryExists(const std::string &dirname) {
 #ifdef OS_WIN
   std::wstring wide;
   if (Util::UTF8ToWide(dirname, &wide) <= 0) {
@@ -158,11 +147,8 @@ bool FileUtil::DirectoryExists(const string &dirname) {
   }
 
   const DWORD attribute = ::GetFileAttributesW(wide.c_str());
-  return ((attribute != -1) &&
-          (attribute & FILE_ATTRIBUTE_DIRECTORY));
-#elif defined(MOZC_USE_PEPPER_FILE_IO)
-  return PepperFileUtil::DirectoryExists(dirname);
-#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
+  return ((attribute != -1) && (attribute & FILE_ATTRIBUTE_DIRECTORY));
+#else   // !OS_WIN
   struct stat s;
   return (::stat(dirname.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
 #endif  // OS_WIN
@@ -173,8 +159,8 @@ namespace {
 
 bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
   const DWORD kTimeout = 5000;  // 5 sec.
-  ScopedHandle handle(::CreateTransaction(
-      nullptr, 0, 0, 0, 0, kTimeout, nullptr));
+  ScopedHandle handle(
+      ::CreateTransaction(nullptr, 0, 0, 0, 0, kTimeout, nullptr));
   const DWORD create_transaction_error = ::GetLastError();
   if (handle.get() == 0) {
     LOG(ERROR) << "CreateTransaction failed: " << create_transaction_error;
@@ -194,8 +180,7 @@ bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
                              MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING,
                              handle.get())) {
     const DWORD move_file_transacted_error = ::GetLastError();
-    LOG(ERROR) << "MoveFileTransactedW failed: "
-               << move_file_transacted_error;
+    LOG(ERROR) << "MoveFileTransactedW failed: " << move_file_transacted_error;
     return false;
   }
 
@@ -234,15 +219,15 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
 
   const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
   const auto result = ::SetFileAttributesW(
-      wfilename.c_str(),
-      (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | original_attributes |
-       extra_attributes) & ~FILE_ATTRIBUTE_NORMAL);
+      wfilename.c_str(), (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+                          FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
+                          original_attributes | extra_attributes) &
+                             ~FILE_ATTRIBUTE_NORMAL);
   return result != 0;
 }
 #endif  // OS_WIN
 
-bool FileUtil::CopyFile(const string &from, const string &to) {
+bool FileUtil::CopyFile(const std::string &from, const std::string &to) {
   InputFileStream ifs(from.c_str(), std::ios::binary);
   if (!ifs) {
     LOG(ERROR) << "Can't open input file. " << from;
@@ -278,8 +263,8 @@ bool FileUtil::CopyFile(const string &from, const string &to) {
   return true;
 }
 
-bool FileUtil::IsEqualFile(const string &filename1,
-                           const string &filename2) {
+bool FileUtil::IsEqualFile(const std::string &filename1,
+                           const std::string &filename2) {
   Mmap mmap1, mmap2;
 
   if (!mmap1.Open(filename1.c_str(), "r")) {
@@ -299,7 +284,7 @@ bool FileUtil::IsEqualFile(const string &filename1,
   return memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
 }
 
-bool FileUtil::AtomicRename(const string &from, const string &to) {
+bool FileUtil::AtomicRename(const std::string &from, const std::string &to) {
 #ifdef OS_WIN
   std::wstring fromw, tow;
   Util::UTF8ToWide(from, &fromw);
@@ -320,10 +305,7 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
   ::SetFileAttributesW(tow.c_str(), original_attributes);
 
   return true;
-#elif defined(MOZC_USE_PEPPER_FILE_IO)
-  // TODO(horo): PepperFileUtil::Rename() is not atomic operation.
-  return PepperFileUtil::Rename(from, to);
-#else  // !OS_WIN && !MOZC_USE_PEPPER_FILE_IO
+#else   // !OS_WIN
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
   // is not properly implemented, atomic rename is POSIX spec though.
   // http://www.weirdnet.nl/apple/rename.html
@@ -331,14 +313,15 @@ bool FileUtil::AtomicRename(const string &from, const string &to) {
 #endif  // OS_WIN
 }
 
-string FileUtil::JoinPath(const std::vector<StringPiece> &components) {
-  string output;
+std::string FileUtil::JoinPath(
+    const std::vector<absl::string_view> &components) {
+  std::string output;
   JoinPath(components, &output);
   return output;
 }
 
-void FileUtil::JoinPath(const std::vector<StringPiece> &components,
-                        string *output) {
+void FileUtil::JoinPath(const std::vector<absl::string_view> &components,
+                        std::string *output) {
   output->clear();
   for (size_t i = 0; i < components.size(); ++i) {
     if (components[i].empty()) {
@@ -352,23 +335,23 @@ void FileUtil::JoinPath(const std::vector<StringPiece> &components,
 }
 
 // TODO(taku): what happens if filename == '/foo/bar/../bar/..
-string FileUtil::Dirname(const string &filename) {
-  const string::size_type p = filename.find_last_of(kFileDelimiter);
-  if (p == string::npos) {
+std::string FileUtil::Dirname(const std::string &filename) {
+  const std::string::size_type p = filename.find_last_of(kFileDelimiter);
+  if (p == std::string::npos) {
     return "";
   }
   return filename.substr(0, p);
 }
 
-string FileUtil::Basename(const string &filename) {
-  const string::size_type p = filename.find_last_of(kFileDelimiter);
-  if (p == string::npos) {
+std::string FileUtil::Basename(const std::string &filename) {
+  const std::string::size_type p = filename.find_last_of(kFileDelimiter);
+  if (p == std::string::npos) {
     return filename;
   }
   return filename.substr(p + 1, filename.size() - p);
 }
 
-string FileUtil::NormalizeDirectorySeparator(const string &path) {
+std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 #ifdef OS_WIN
   const char kFileDelimiterForUnix = '/';
   const char kFileDelimiterForWindows = '\\';
@@ -381,9 +364,9 @@ string FileUtil::NormalizeDirectorySeparator(const string &path) {
 #endif  // OS_WIN
 }
 
-bool FileUtil::GetModificationTime(const string &filename,
+bool FileUtil::GetModificationTime(const std::string &filename,
                                    FileTimeStamp *modified_at) {
-#if defined (OS_WIN)
+#if defined(OS_WIN)
   std::wstring wide;
   if (!Util::UTF8ToWide(filename, &wide)) {
     return false;
@@ -391,29 +374,22 @@ bool FileUtil::GetModificationTime(const string &filename,
   WIN32_FILE_ATTRIBUTE_DATA info = {};
   if (!::GetFileAttributesEx(wide.c_str(), GetFileExInfoStandard, &info)) {
     const auto last_error = ::GetLastError();
-    LOG(ERROR) << "GetFileAttributesEx(" << filename << ") failed. error="
-               << last_error;
+    LOG(ERROR) << "GetFileAttributesEx(" << filename
+               << ") failed. error=" << last_error;
     return false;
   }
   *modified_at =
-      (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32)
-      + info.ftLastWriteTime.dwLowDateTime;
+      (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
+      info.ftLastWriteTime.dwLowDateTime;
   return true;
-#elif defined(OS_NACL)
-  PP_FileInfo file_info;
-  if (!PepperFileUtil::Query(filename, &file_info)) {
-    return false;
-  }
-  *modified_at = file_info.last_modified_time;
-  return true;
-#else  // OS_WIN or OS_NACL
+#else   // !OS_WIN
   struct stat stat_info;
   if (::stat(filename.c_str(), &stat_info)) {
     return false;
   }
   *modified_at = stat_info.st_mtime;
   return true;
-#endif  // OS_WIN or OS_NACL
+#endif  // OS_WIN
 }
 
 }  // namespace mozc

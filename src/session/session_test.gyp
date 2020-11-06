@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -98,7 +98,7 @@
       ],
       'dependencies': [
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
-        '../engine/engine.gyp:engine_factory',
+        '../engine/engine.gyp:mock_data_engine_factory',
         '../testing/testing.gyp:gtest_main',
         'session.gyp:session',
         'session.gyp:session_server',
@@ -126,13 +126,6 @@
       'variables': {
         'test_size': 'small',
       },
-      'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
-          'dependencies!': [
-            'session.gyp:session_server',
-          ],
-        }],
-      ],
     },
     {
       'target_name': 'session_converter_test',
@@ -182,7 +175,7 @@
       },
     },
     {
-      # Android is not supported.
+      # iOS is not supported.
       'target_name': 'session_watch_dog_test',
       'type': 'executable',
       'sources': [
@@ -365,18 +358,6 @@
         'session_watch_dog_test',
       ],
       'conditions': [
-        ['target_platform=="Android"', {
-          'dependencies!': [
-            'session_server_test',
-            'session_watch_dog_test',
-            # These tests have been disabled as it takes long execution time.
-            # In addition currently they fail.
-            # Here we also disable the tests temporarirly.
-            # TODO(matsuzakit): Reactivate them.
-            'session_handler_stress_test',
-            'session_regression_test',
-          ],
-        }],
       ],
     },
   ],

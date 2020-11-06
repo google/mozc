@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,17 +40,16 @@ class QTableWidgetItem;
 namespace mozc {
 namespace gui {
 
-class FindDialog : public QDialog,
-                   private Ui::FindDialog {
+class FindDialog : public QDialog, private Ui::FindDialog {
   Q_OBJECT
 
  public:
   FindDialog(QWidget *parent, QTableWidget *table);
-  virtual ~FindDialog();
+  ~FindDialog() override;
 
  protected:
-  void closeEvent(QCloseEvent *event);
-  void showEvent(QShowEvent *event);
+  void closeEvent(QCloseEvent *event) override;
+  void showEvent(QShowEvent *event) override;
 
  private slots:
   void FindForward();
@@ -59,10 +58,7 @@ class FindDialog : public QDialog,
   void LineEditChanged(const QString &str);
 
  private:
-  enum Direction {
-    FORWARD,
-    BACKWARD
-  };
+  enum Direction { FORWARD, BACKWARD };
 
   bool Match(const QString &query, int row, int column);
   void Find(Direction direction);

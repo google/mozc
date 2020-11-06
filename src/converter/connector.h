@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,21 +34,28 @@
 #include <vector>
 
 #include "base/port.h"
+#include "base/status.h"
+#include "base/statusor.h"
 
 namespace mozc {
 
 class DataManagerInterface;
 
-class Connector {
+class Connector final {
  public:
-  static const int16 kInvalidCost = 30000;
+  static constexpr int16 kInvalidCost = 30000;
 
-  static Connector *CreateFromDataManager(
+  static mozc::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  Connector(const char *connection_data, size_t connection_size,
-            int cache_size);
+  static mozc::StatusOr<std::unique_ptr<Connector>> Create(
+      const char *connection_data, size_t connection_size, int cache_size);
+
+  Connector();
   ~Connector();
+
+  Connector(const Connector &) = delete;
+  Connector &operator=(const Connector &) = delete;
 
   int GetTransitionCost(uint16 rid, uint16 lid) const;
   int GetResolution() const;
@@ -58,18 +65,18 @@ class Connector {
  private:
   class Row;
 
+  mozc::Status Init(const char *connection_data, size_t connection_size,
+                    int cache_size);
+
   int LookupCost(uint16 rid, uint16 lid) const;
 
-  std::vector<Row *> rows_;
-  const uint16 *default_cost_;
-  int resolution_;
-
-  const int cache_size_;
-  const uint32 cache_hash_mask_;
+  std::vector<std::unique_ptr<Row>> rows_;
+  const uint16 *default_cost_ = nullptr;
+  int resolution_ = 0;
+  int cache_size_ = 0;
+  uint32 cache_hash_mask_ = 0;
   mutable std::unique_ptr<uint32[]> cache_key_;
   mutable std::unique_ptr<int[]> cache_value_;
-
-  DISALLOW_COPY_AND_ASSIGN(Connector);
 };
 
 }  // namespace mozc

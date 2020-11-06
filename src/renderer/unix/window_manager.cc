@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,9 @@ WindowManager::WindowManager(GtkWindowInterface *candidate_window,
                              GtkWrapperInterface *gtk)
     : candidate_window_(candidate_window),
       infolist_window_(infolist_window),
-      gtk_(gtk) {
-}
+      gtk_(gtk) {}
 
-WindowManager::~WindowManager() {
-}
+WindowManager::~WindowManager() {}
 
 void WindowManager::Initialize() {
   // Should call ShowWindow function in all window, otherwise each Initialize
@@ -110,8 +108,7 @@ Rect WindowManager::UpdateCandidateWindow(
   const Point alignment_base_point_in_local_window_coord(
       candidate_window_->GetCandidateColumnInClientCord().Left(), 0);
   const auto &preedit_rect = command.preedit_rectangle();
-  const Rect caret_rect(preedit_rect.left(),
-                        preedit_rect.top(),
+  const Rect caret_rect(preedit_rect.left(), preedit_rect.top(),
                         preedit_rect.right() - preedit_rect.left(),
                         preedit_rect.bottom() - preedit_rect.top());
   // |caret_rect| is not always equal to preedit rect but can be an alternative
@@ -119,11 +116,8 @@ Rect WindowManager::UpdateCandidateWindow(
   // horizontal writing.
   const Rect expected_window_rect_in_screen_coord =
       WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
-          new_window_pos,
-          caret_rect,
-          new_window_size,
-          alignment_base_point_in_local_window_coord,
-          working_area,
+          new_window_pos, caret_rect, new_window_size,
+          alignment_base_point_in_local_window_coord, working_area,
           false);  // GTK+ renderer only support horizontal window.
   candidate_window_->Move(expected_window_rect_in_screen_coord.origin);
   candidate_window_->ShowWindow();
@@ -147,13 +141,13 @@ bool WindowManager::ShouldShowInfolistWindow(
     return false;
   }
 
-  if (candidates.usages().information_size() <=  0) {
+  if (candidates.usages().information_size() <= 0) {
     return false;
   }
 
   // Converts candidate's index to column row index.
-  const int focused_row
-      = candidates.focused_index() - candidates.candidate(0).index();
+  const int focused_row =
+      candidates.focused_index() - candidates.candidate(0).index();
   if (candidates.candidate_size() < focused_row) {
     return false;
   }
@@ -171,14 +165,13 @@ Rect WindowManager::GetMonitorRect(gint x, gint y) {
   const gint monitor = gtk_->GdkScreenGetMonitorAtPoint(screen, x, y);
   GdkRectangle screen_rect = {};
   gtk_->GdkScreenGetMonitorGeometry(screen, monitor, &screen_rect);
-  return Rect(screen_rect.x, screen_rect.y,
-              screen_rect.width, screen_rect.height);
+  return Rect(screen_rect.x, screen_rect.y, screen_rect.width,
+              screen_rect.height);
 }
 
 void WindowManager::UpdateInfolistWindow(
     const commands::RendererCommand &command,
     const Rect &candidate_window_rect) {
-
   if (!WindowManager::ShouldShowInfolistWindow(command)) {
     infolist_window_->HideWindow();
     return;
@@ -187,8 +180,8 @@ void WindowManager::UpdateInfolistWindow(
   const commands::Candidates &candidates = command.output().candidates();
   const Size infolist_window_size = infolist_window_->Update(candidates);
 
-  const Rect screen_rect = GetMonitorRect(candidate_window_rect.Left(),
-                                          candidate_window_rect.Top());
+  const Rect screen_rect =
+      GetMonitorRect(candidate_window_rect.Left(), candidate_window_rect.Top());
   const Rect infolist_rect =
       WindowUtil::WindowUtil::GetWindowRectForInfolistWindow(
           infolist_window_size, candidate_window_rect, screen_rect);
@@ -234,7 +227,7 @@ bool WindowManager::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {
   send_command_interface_ = send_command_interface;
   return candidate_window_->SetSendCommandInterface(send_command_interface_) &&
-      infolist_window_->SetSendCommandInterface(send_command_interface_);
+         infolist_window_->SetSendCommandInterface(send_command_interface_);
 }
 
 void WindowManager::SetWindowPos(int x, int y) {

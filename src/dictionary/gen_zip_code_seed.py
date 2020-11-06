@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Zip code dictionary generator.
+r"""Zip code dictionary generator.
 
  The tool for generating zip code dictionary.
  Input files are shift-jis csv.
@@ -51,12 +51,14 @@
  "南三条西","１１丁目","0608612","060  ","札幌",0,0,0
 """
 
+from __future__ import print_function
 __author__ = "toshiyuki"
 
 import optparse
 import re
 import sys
 import unicodedata
+import six
 
 from dictionary import zip_code_util
 
@@ -83,7 +85,7 @@ class ZipEntry(object):
     address = unicodedata.normalize('NFKC', self.address)
     line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
                       address, ZIP_CODE_LABEL])
-    print line.encode('utf-8')
+    print(six.ensure_str(line))
 
 
 def ProcessZipCodeCSV(file_name):
@@ -134,7 +136,7 @@ def ParseTownName(level3):
   #  XX第1地割、XX第2地割、
   #  XX第1地割〜XX第2地割、
   # We simply use XX for them.
-  chiwari_match = re.match(u'(\D*?)第?\d+地割.*', level3, re.U)
+  chiwari_match = re.match(u'(\\D*?)第?\\d+地割.*', level3, re.U)
   if chiwari_match:
     town = chiwari_match.group(1)
     return [town]

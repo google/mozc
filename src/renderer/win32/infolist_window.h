@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_WIN32_INFOLIST_WINDOW_H_
 #define MOZC_RENDERER_WIN32_INFOLIST_WINDOW_H_
 
+// clang-format off
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -39,6 +40,7 @@
 #include <atlcrack.h>
 #include <atlmisc.h>
 #include <atlgdi.h>
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -63,29 +65,27 @@ namespace win32 {
 
 class TextRenderer;
 
-typedef ATL::CWinTraits<
-            WS_POPUP | WS_DISABLED,
-            WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>
-        InfolistWindowTraits;
+typedef ATL::CWinTraits<WS_POPUP | WS_DISABLED,
+                        WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>
+    InfolistWindowTraits;
 
 // a class which implements an IME infolist window for Windows. This class
 // is derived from an ATL CWindowImpl<T> class, which provides methods for
 // creating a window and handling windows messages.
-class InfolistWindow : public ATL::CWindowImpl<InfolistWindow,
-                                               ATL::CWindow,
+class InfolistWindow : public ATL::CWindowImpl<InfolistWindow, ATL::CWindow,
                                                InfolistWindowTraits> {
  public:
-  DECLARE_WND_CLASS_EX(kInfolistWindowClassName,
-                       CS_SAVEBITS | CS_DROPSHADOW, COLOR_WINDOW);
+  DECLARE_WND_CLASS_EX(kInfolistWindowClassName, CS_SAVEBITS | CS_DROPSHADOW,
+                       COLOR_WINDOW);
 
   BEGIN_MSG_MAP_EX(InfolistWindow)
-    MSG_WM_DESTROY(OnDestroy)
-    MSG_WM_ERASEBKGND(OnEraseBkgnd)
-    MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
-    MSG_WM_SETTINGCHANGE(OnSettingChange)
-    MSG_WM_PAINT(OnPaint)
-    MSG_WM_PRINTCLIENT(OnPrintClient)
-    MSG_WM_TIMER(OnTimer)
+  MSG_WM_DESTROY(OnDestroy)
+  MSG_WM_ERASEBKGND(OnEraseBkgnd)
+  MSG_WM_GETMINMAXINFO(OnGetMinMaxInfo)
+  MSG_WM_SETTINGCHANGE(OnSettingChange)
+  MSG_WM_PAINT(OnPaint)
+  MSG_WM_PRINTCLIENT(OnPrintClient)
+  MSG_WM_TIMER(OnTimer)
   END_MSG_MAP()
 
   InfolistWindow();

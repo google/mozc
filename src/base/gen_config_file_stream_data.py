@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@
 
 """Script to generate config_file_stream_data.h."""
 
-__author__ = "hidehiko"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import optparse
 import os.path
@@ -45,7 +46,7 @@ def ParseOptions():
 
 
 def GenerateFileData(path):
-  """Generate FileData entry from given file path.
+  r"""Generate FileData entry from given file path.
 
   The generated FileData entry looks as follows:
    { "something_original_file_path", "\xAA\xBB\xCC", 3 }
@@ -58,14 +59,15 @@ def GenerateFileData(path):
   result = []
   result.append(' { "%s",  "' % os.path.basename(path))
   with open(path, 'rb') as stream:
-    result.extend(r'\x%02X' % ord(byte) for byte in stream.read())
+    # bytearray is necessary for the Python2 compatibility.
+    result.extend(r'\x%02X' % byte for byte in bytearray(stream.read()))
   result.append('",  %d }' % os.path.getsize(path))
 
   return ''.join(result)
 
 
 def OutputConfigFileStreamData(path_list, output):
-  """Outputs the generated FileData entries for path_list.
+  r"""Outputs the generated FileData entries for path_list.
 
   Prints the config_file_stream_data.h file, which contains FileData entries
   of files in given path_list, to the output stream.
@@ -93,8 +95,9 @@ def OutputConfigFileStreamData(path_list, output):
 def main():
   (options, args) = ParseOptions()
   if not options.output:
-    print >>sys.stderr, (
-        'usage: gen_config_file_stream_data.py --output=filepath input ...')
+    print(
+        ('usage: gen_config_file_stream_data.py --output=filepath input ...'),
+        file=sys.stderr)
     sys.exit(2)
 
   with open(options.output, 'w') as output:

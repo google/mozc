@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "renderer/unix/pango_wrapper_interface.h"
 #include "renderer/unix/text_renderer.h"
+#include "renderer/unix/pango_wrapper_interface.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
@@ -41,32 +41,34 @@ namespace gtk {
 
 class FontSpecMock : public FontSpecInterface {
  public:
-  MOCK_CONST_METHOD1(GetFontAlignment, PangoAlignment(FONT_TYPE font_type));
-  MOCK_CONST_METHOD1(GetFontAttributes, PangoAttrList *(FONT_TYPE font_type));
-  MOCK_CONST_METHOD1(GetFontDescription,
-                     const PangoFontDescription *(FONT_TYPE font_type));
-  MOCK_METHOD1(Reload, void(const string &font_description));
+  MOCK_METHOD(PangoAlignment, GetFontAlignment, (FONT_TYPE font_type), (const));
+  MOCK_METHOD(PangoAttrList *, GetFontAttributes, (FONT_TYPE font_type),
+              (const));
+  MOCK_METHOD(const PangoFontDescription *, GetFontDescription,
+              (FONT_TYPE font_type), (const));
+  MOCK_METHOD(void, Reload, (const string &font_description));
 };
 
 class PangoWrapperMock : public PangoWrapperInterface {
  public:
-  MOCK_METHOD3(RendererDrawLayout,
-               void(PangoLayoutWrapperInterface *layout, int x, int y));
-  MOCK_METHOD0(GetContext, PangoContext *());
-  MOCK_METHOD1(CopyAttributes, PangoAttrList *(PangoAttrList *attr));
-  MOCK_METHOD1(AttributesUnref, void(PangoAttrList *attr));
+  MOCK_METHOD(void, RendererDrawLayout,
+              (PangoLayoutWrapperInterface* layout, int x, int y));
+  MOCK_METHOD(PangoContext *, GetContext, ());
+  MOCK_METHOD(PangoAttrList *, CopyAttributes, (PangoAttrList* attr));
+  MOCK_METHOD(void, AttributesUnref, (PangoAttrList* attr));
 };
 
 class PangoLayoutWrapperMock : public PangoLayoutWrapperInterface {
  public:
-  MOCK_METHOD1(SetText, void(const string &text));
-  MOCK_METHOD1(SetAlignment, void(PangoAlignment align));
-  MOCK_METHOD1(SetAttributes, void(PangoAttrList *attr));
-  MOCK_METHOD1(SetFontDescription, void(const PangoFontDescription *font_desc));
-  MOCK_METHOD1(SetWidth, void(int width));
-  MOCK_METHOD1(SetHeight, void(int height));
-  MOCK_CONST_METHOD0(GetPixelSize, Size());
-  MOCK_METHOD0(GetPangoLayout, PangoLayout *());
+  MOCK_METHOD(void, SetText, (const string &text));
+  MOCK_METHOD(void, SetAlignment, (PangoAlignment align));
+  MOCK_METHOD(void, SetAttributes, (PangoAttrList* attr));
+  MOCK_METHOD(void, SetFontDescription,
+              (const PangoFontDescription *font_desc));
+  MOCK_METHOD(void, SetWidth, (int width));
+  MOCK_METHOD(void, SetHeight, (int height));
+  MOCK_METHOD(Size, GetPixelSize, (), (const));
+  MOCK_METHOD(PangoLayout *, GetPangoLayout, ());
 };
 
 class TextRendererTest : public testing::Test {
@@ -91,23 +93,22 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
   const string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
   PangoAlignment align = PANGO_ALIGN_CENTER;
-  PangoAttrList *attributes = reinterpret_cast<PangoAttrList*>(0xabcdef01);
-  PangoAttrList *copied_attributes
-      = reinterpret_cast<PangoAttrList*>(0x237492);
-  PangoFontDescription *font_desc
-      = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpecInterface::FONT_TYPE font_type
-      = FontSpecInterface::FONTSET_FOOTER_LABEL;
+  PangoAttrList *attributes = reinterpret_cast<PangoAttrList *>(0xabcdef01);
+  PangoAttrList *copied_attributes =
+      reinterpret_cast<PangoAttrList *>(0x237492);
+  PangoFontDescription *font_desc =
+      reinterpret_cast<PangoFontDescription *>(0x01abcdef);
+  FontSpecInterface::FONT_TYPE font_type =
+      FontSpecInterface::FONTSET_FOOTER_LABEL;
   Size size(12, 34);
 
-  Expectation set_text_expectation
-      = EXPECT_CALL(layout_mock, SetText(text));
-  Expectation set_alignment_expectation
-      = EXPECT_CALL(layout_mock, SetAlignment(align));
-  Expectation set_attributes
-      = EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
-  Expectation set_font_description_expectation
-      = EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
+  Expectation set_text_expectation = EXPECT_CALL(layout_mock, SetText(text));
+  Expectation set_alignment_expectation =
+      EXPECT_CALL(layout_mock, SetAlignment(align));
+  Expectation set_attributes =
+      EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
+  Expectation set_font_description_expectation =
+      EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
   EXPECT_CALL(*font_spec_mock, GetFontAlignment(font_type))
       .WillOnce(Return(align));
   EXPECT_CALL(*font_spec_mock, GetFontAttributes(font_type))
@@ -116,8 +117,8 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
       .WillOnce(Return(copied_attributes));
   EXPECT_CALL(*font_spec_mock, GetFontDescription(font_type))
       .WillOnce(Return(font_desc));
-  Expectation get_pixel_expectation
-      = EXPECT_CALL(layout_mock, GetPixelSize())
+  Expectation get_pixel_expectation =
+      EXPECT_CALL(layout_mock, GetPixelSize())
           .After(set_text_expectation)
           .After(set_alignment_expectation)
           .After(set_attributes)
@@ -126,10 +127,8 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
   EXPECT_CALL(*pango_mock, AttributesUnref(copied_attributes))
       .After(set_attributes);
 
-  Size actual_size
-      = text_renderer.TextRenderer::GetPixelSizeInternal(font_type,
-                                                         text,
-                                                         &layout_mock);
+  Size actual_size = text_renderer.TextRenderer::GetPixelSizeInternal(
+      font_type, text, &layout_mock);
   EXPECT_EQ(actual_size.width, size.width);
   EXPECT_EQ(actual_size.height, size.height);
 }
@@ -142,36 +141,35 @@ TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
   const string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
   PangoAlignment align = PANGO_ALIGN_CENTER;
-  PangoAttrList *attributes = reinterpret_cast<PangoAttrList*>(0xabcdef01);
-  PangoAttrList *copied_attributes
-      = reinterpret_cast<PangoAttrList*>(0x237492);
-  PangoFontDescription *font_desc
-      = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpecInterface::FONT_TYPE font_type
-      = FontSpecInterface::FONTSET_FOOTER_LABEL;
+  PangoAttrList *attributes = reinterpret_cast<PangoAttrList *>(0xabcdef01);
+  PangoAttrList *copied_attributes =
+      reinterpret_cast<PangoAttrList *>(0x237492);
+  PangoFontDescription *font_desc =
+      reinterpret_cast<PangoFontDescription *>(0x01abcdef);
+  FontSpecInterface::FONT_TYPE font_type =
+      FontSpecInterface::FONTSET_FOOTER_LABEL;
   int width = 12345;
   Size size(12, 34);
 
-  Expectation set_text_expectation
-      = EXPECT_CALL(layout_mock, SetText(text));
-  Expectation set_alignment_expectation
-      = EXPECT_CALL(layout_mock, SetAlignment(align));
-  Expectation set_attributes
-      = EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
+  Expectation set_text_expectation = EXPECT_CALL(layout_mock, SetText(text));
+  Expectation set_alignment_expectation =
+      EXPECT_CALL(layout_mock, SetAlignment(align));
+  Expectation set_attributes =
+      EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
   EXPECT_CALL(*pango_mock, CopyAttributes(attributes))
       .WillOnce(Return(copied_attributes));
-  Expectation set_font_description_expectation
-      = EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
-  Expectation set_width_expectation
-      = EXPECT_CALL(layout_mock, SetWidth(width * PANGO_SCALE));
+  Expectation set_font_description_expectation =
+      EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
+  Expectation set_width_expectation =
+      EXPECT_CALL(layout_mock, SetWidth(width * PANGO_SCALE));
   EXPECT_CALL(*font_spec_mock, GetFontAlignment(font_type))
       .WillOnce(Return(align));
   EXPECT_CALL(*font_spec_mock, GetFontAttributes(font_type))
       .WillOnce(Return(attributes));
   EXPECT_CALL(*font_spec_mock, GetFontDescription(font_type))
       .WillOnce(Return(font_desc));
-  Expectation get_pixel_expectation
-      = EXPECT_CALL(layout_mock, GetPixelSize())
+  Expectation get_pixel_expectation =
+      EXPECT_CALL(layout_mock, GetPixelSize())
           .After(set_text_expectation)
           .After(set_alignment_expectation)
           .After(set_attributes)
@@ -180,11 +178,8 @@ TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
   EXPECT_CALL(*pango_mock, AttributesUnref(copied_attributes))
       .After(set_attributes);
 
-  Size actual_size
-      = text_renderer.TextRenderer::GetMultiLinePixelSizeInternal(font_type,
-                                                                  text,
-                                                                  width,
-                                                                  &layout_mock);
+  Size actual_size = text_renderer.TextRenderer::GetMultiLinePixelSizeInternal(
+      font_type, text, width, &layout_mock);
   EXPECT_EQ(actual_size.width, size.width);
   EXPECT_EQ(actual_size.height, size.height);
 }
@@ -199,13 +194,13 @@ TEST_F(TextRendererTest, RenderTextTest) {
   Rect rect(10, 20, 30, 40);
   Size size(12, 34);
   PangoAlignment align = PANGO_ALIGN_CENTER;
-  PangoAttrList *attributes = reinterpret_cast<PangoAttrList*>(0xabcdef01);
-  PangoAttrList *copied_attributes
-      = reinterpret_cast<PangoAttrList*>(0x237492);
-  PangoFontDescription *font_desc
-      = reinterpret_cast<PangoFontDescription*>(0x01abcdef);
-  FontSpecInterface::FONT_TYPE font_type
-      = FontSpecInterface::FONTSET_FOOTER_LABEL;
+  PangoAttrList *attributes = reinterpret_cast<PangoAttrList *>(0xabcdef01);
+  PangoAttrList *copied_attributes =
+      reinterpret_cast<PangoAttrList *>(0x237492);
+  PangoFontDescription *font_desc =
+      reinterpret_cast<PangoFontDescription *>(0x01abcdef);
+  FontSpecInterface::FONT_TYPE font_type =
+      FontSpecInterface::FONTSET_FOOTER_LABEL;
 
   EXPECT_CALL(*font_spec_mock, GetFontAlignment(font_type))
       .WillRepeatedly(Return(align));
@@ -214,31 +209,29 @@ TEST_F(TextRendererTest, RenderTextTest) {
   EXPECT_CALL(*font_spec_mock, GetFontDescription(font_type))
       .WillRepeatedly(Return(font_desc));
 
-  Expectation set_alignment_expectation
-      = EXPECT_CALL(layout_mock, SetAlignment(align));
-  Expectation set_attributes
-      = EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
+  Expectation set_alignment_expectation =
+      EXPECT_CALL(layout_mock, SetAlignment(align));
+  Expectation set_attributes =
+      EXPECT_CALL(layout_mock, SetAttributes(copied_attributes));
   EXPECT_CALL(*pango_mock, CopyAttributes(attributes))
       .WillOnce(Return(copied_attributes));
-  Expectation set_font_description_expectation
-      = EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
+  Expectation set_font_description_expectation =
+      EXPECT_CALL(layout_mock, SetFontDescription(font_desc));
 
-  Expectation set_text_expectation
-      = EXPECT_CALL(layout_mock, SetText(text));
-  Expectation set_width_expectation
-      = EXPECT_CALL(layout_mock, SetWidth(rect.size.width * PANGO_SCALE));
-  Expectation set_height_expectation
-      = EXPECT_CALL(layout_mock, SetHeight(rect.size.height * PANGO_SCALE));
-  Expectation get_pixel_size_expectation
-      = EXPECT_CALL(layout_mock, GetPixelSize())
-          .WillOnce(Return(size));
+  Expectation set_text_expectation = EXPECT_CALL(layout_mock, SetText(text));
+  Expectation set_width_expectation =
+      EXPECT_CALL(layout_mock, SetWidth(rect.size.width * PANGO_SCALE));
+  Expectation set_height_expectation =
+      EXPECT_CALL(layout_mock, SetHeight(rect.size.height * PANGO_SCALE));
+  Expectation get_pixel_size_expectation =
+      EXPECT_CALL(layout_mock, GetPixelSize()).WillOnce(Return(size));
   EXPECT_CALL(*pango_mock, AttributesUnref(copied_attributes))
       .After(set_attributes);
 
   // Vertical centering
   const int expected_x = rect.origin.x * PANGO_SCALE;
-  const int expected_y
-      = (rect.origin.y + (rect.size.height - size.height)/2) * PANGO_SCALE;
+  const int expected_y =
+      (rect.origin.y + (rect.size.height - size.height) / 2) * PANGO_SCALE;
 
   Expectation rendering_expectation =
       EXPECT_CALL(*pango_mock,

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ namespace composer {
 
 TEST(CompositionInputTest, BasicTest) {
   const TransliteratorInterface *kT12r =
-    Transliterators::GetTransliterator(Transliterators::RAW_STRING);
+      Transliterators::GetTransliterator(Transliterators::RAW_STRING);
   CompositionInput input;
 
   {  // Initial status.
@@ -46,7 +46,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_FALSE(input.is_new_input());
-    EXPECT_TRUE(NULL == input.transliterator());
+    EXPECT_TRUE(nullptr == input.transliterator());
   }
 
   {  // Value setting
@@ -72,7 +72,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_FALSE(input.has_conversion());
     EXPECT_TRUE(input.conversion().empty());
     EXPECT_FALSE(input.is_new_input());
-    EXPECT_TRUE(NULL == input.transliterator());
+    EXPECT_TRUE(nullptr == input.transliterator());
 
     EXPECT_FALSE(input2.Empty());
     EXPECT_EQ("raw", input2.raw());

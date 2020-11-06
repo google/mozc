@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,7 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
-#include "base/string_piece.h"
+#include "base/statusor.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/system/codec_interface.h"
@@ -44,6 +43,7 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -67,74 +67,79 @@ class SystemDictionary : public DictionaryInterface {
   // Usage:
   //   SystemDictionary::Builder builder(filename);
   //   builder.SetOptions(SystemDictionary::NONE);
-  //   builder.SetCodec(NULL);
+  //   builder.SetCodec(nullptr);
   //   SystemDictionary *dictionary = builder.Build();
   //   ...
   //   delete dictionary;
   class Builder {
    public:
     // Creates Builder from filename
-    explicit Builder(const string &filename);
+    explicit Builder(const std::string &filename);
     // Creates Builder from image
     Builder(const char *ptr, int len);
+    Builder(const Builder &) = delete;
+    Builder &operator=(const Builder &) = delete;
     ~Builder();
 
     // Sets options (default: NONE)
     Builder &SetOptions(Options options);
 
-    // Sets codec (default: NULL)
-    // Uses default codec if this is NULL
+    // Sets codec (default: nullptr)
+    // Uses default codec if this is nullptr
     // Doesn't take the ownership of |codec|.
     Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
 
     // Builds and returns system dictionary.
-    SystemDictionary *Build();
+    mozc::StatusOr<std::unique_ptr<SystemDictionary>> Build();
 
    private:
     struct Specification;
     std::unique_ptr<Specification> spec_;
-    DISALLOW_COPY_AND_ASSIGN(Builder);
   };
 
-  virtual ~SystemDictionary();
+  SystemDictionary(const SystemDictionary &) = delete;
+  SystemDictionary &operator=(const SystemDictionary &) = delete;
+
+  ~SystemDictionary() override;
 
   const storage::louds::LoudsTrie &value_trie() const { return value_trie_; }
 
   // Implementation of DictionaryInterface.
-  virtual bool HasKey(StringPiece key) const;
-  virtual bool HasValue(StringPiece value) const;
+  bool HasKey(absl::string_view key) const override;
+  bool HasValue(absl::string_view value) const override;
 
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &converter_request,
-                                Callback *callback) const;
+  void LookupPredictive(absl::string_view key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
 
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &converter_request,
-                            Callback *callback) const;
+  void LookupPrefix(absl::string_view key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
 
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &converter_request,
-                           Callback *callback) const;
+  void LookupExact(absl::string_view key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
 
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &converter_request,
-                             Callback *callback) const;
+  void LookupReverse(absl::string_view str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
 
-  virtual void PopulateReverseLookupCache(StringPiece str) const;
-  virtual void ClearReverseLookupCache() const;
+  void PopulateReverseLookupCache(absl::string_view str) const override;
+  void ClearReverseLookupCache() const override;
 
  private:
   class ReverseLookupCache;
   class ReverseLookupIndex;
   struct PredictiveLookupSearchState;
 
-  explicit SystemDictionary(const SystemDictionaryCodecInterface *codec,
-                            const DictionaryFileCodecInterface *file_codec);
+  SystemDictionary(const SystemDictionaryCodecInterface *codec,
+                   const DictionaryFileCodecInterface *file_codec);
+
   bool OpenDictionaryFile(bool enable_reverse_lookup_index);
 
-  void RegisterReverseLookupTokensForT13N(StringPiece value,
+  void RegisterReverseLookupTokensForT13N(absl::string_view value,
                                           Callback *callback) const;
-  void RegisterReverseLookupTokensForValue(StringPiece value,
+  void RegisterReverseLookupTokensForValue(absl::string_view value,
                                            Callback *callback) const;
   void ScanTokens(const std::set<int> &id_set, ReverseLookupCache *cache) const;
   void RegisterReverseLookupResults(const std::set<int> &id_set,
@@ -143,21 +148,15 @@ class SystemDictionary : public DictionaryInterface {
   void InitReverseLookupIndex();
 
   Callback::ResultType LookupPrefixWithKeyExpansionImpl(
-      const char *key,
-      StringPiece encoded_key,
-      const KeyExpansionTable &table,
-      Callback *callback,
+      const char *key, absl::string_view encoded_key,
+      const KeyExpansionTable &table, Callback *callback,
       storage::louds::LoudsTrie::Node node,
-      StringPiece::size_type key_pos,
-      bool is_expanded,
-      char *actual_key_buffer,
-      string *actual_prefix) const;
+      absl::string_view::size_type key_pos, bool is_expanded,
+      char *actual_key_buffer, std::string *actual_prefix) const;
 
   void CollectPredictiveNodesInBfsOrder(
-      StringPiece encoded_key,
-      const KeyExpansionTable &table,
-      size_t limit,
-      std::vector<PredictiveLookupSearchState> *result) const;
+      absl::string_view encoded_key, const KeyExpansionTable &table,
+      size_t limit, std::vector<PredictiveLookupSearchState> *result) const;
 
   storage::louds::LoudsTrie key_trie_;
   storage::louds::LoudsTrie value_trie_;
@@ -168,8 +167,6 @@ class SystemDictionary : public DictionaryInterface {
   std::unique_ptr<DictionaryFile> dictionary_file_;
   mutable std::unique_ptr<ReverseLookupCache> reverse_lookup_cache_;
   std::unique_ptr<ReverseLookupIndex> reverse_lookup_index_;
-
-  DISALLOW_COPY_AND_ASSIGN(SystemDictionary);
 };
 
 }  // namespace dictionary

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,13 @@
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
 
-void AddSegment(const string &key, const string &value,
+void AddSegment(const std::string &key, const std::string &value,
                 Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();

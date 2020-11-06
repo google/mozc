@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@
 #include "session/session_observer_handler.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
 // Session watch dog is not aviable from android mozc and nacl mozc for now.
 // TODO(kkojima): Remove this guard after
 // enabling session watch dog for android.
@@ -83,8 +83,7 @@ DEFINE_int32(max_session_size, 64,
 DEFINE_int32(create_session_min_interval, 0,
              "minimum interval (sec) for create session");
 
-DEFINE_int32(watch_dog_interval, 180,
-             "watch dog timer intaval (sec)");
+DEFINE_int32(watch_dog_interval, 180, "watch dog timer intaval (sec)");
 
 DEFINE_int32(last_command_timeout, 3600,
              "remove session if it is not accessed for "
@@ -95,8 +94,7 @@ DEFINE_int32(last_create_session_timeout, 300,
              "\"last_create_session_timeout\" sec "
              "after create session command");
 
-DEFINE_bool(restricted, false,
-            "Launch server with restricted setting");
+DEFINE_bool(restricted, false, "Launch server with restricted setting");
 
 namespace mozc {
 
@@ -112,16 +110,15 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   // nothing to prevent any side effects.
 #ifdef OS_WIN
   if (info.has_thread_id()) {
-    return Process::IsThreadAlive(
-        static_cast<size_t>(info.thread_id()), true);
+    return Process::IsThreadAlive(static_cast<size_t>(info.thread_id()), true);
   }
 #else   // OS_WIN
   if (info.has_process_id()) {
-    return Process::IsProcessAlive(
-        static_cast<size_t>(info.process_id()), true);
+    return Process::IsProcessAlive(static_cast<size_t>(info.process_id()),
+                                   true);
   }
 #endif  // OS_WIN
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
   // Currently the process is not available through android mozc and nacl mozc.
   // TODO(kkojima): remove this guard after
   // android version supports base/process.cc
@@ -129,7 +126,7 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   return true;
 }
 
-bool IsCarrierEmoji(const string &utf8_str) {
+bool IsCarrierEmoji(const std::string &utf8_str) {
   if (Util::CharsLen(utf8_str) != 1) {
     return false;
   }
@@ -187,7 +184,7 @@ void SessionHandler::Init(
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   session_watch_dog_.reset(new SessionWatchDog(FLAGS_watch_dog_interval));
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
   // Session watch dog is not aviable from android mozc and nacl mozc for now.
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
@@ -219,16 +216,14 @@ SessionHandler::~SessionHandler() {
   if (session_watch_dog_->IsRunning()) {
     session_watch_dog_->Terminate();
   }
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
   // Session watch dog is not aviable from android mozc and nacl mozc for now.
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
-bool SessionHandler::IsAvailable() const {
-  return is_available_;
-}
+bool SessionHandler::IsAvailable() const { return is_available_; }
 
 bool SessionHandler::StartWatchDog() {
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -236,7 +231,7 @@ bool SessionHandler::StartWatchDog() {
     session_watch_dog_->Start("WatchDog");
   }
   return session_watch_dog_->IsRunning();
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
   // Session watch dog is not aviable from android mozc and nacl mozc for now.
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
@@ -246,15 +241,20 @@ bool SessionHandler::StartWatchDog() {
 
 void SessionHandler::SetConfig(const config::Config &config) {
   *config_ = config;
-  const composer::Table *table = table_manager_->GetTable(
-      *request_, *config_, *engine_->GetDataManager());
+  const auto *data_manager = engine_->GetDataManager();
+  const composer::Table *table =
+      data_manager != nullptr
+          ? table_manager_->GetTable(*request_, *config_, *data_manager)
+          : nullptr;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
-       element != NULL; element = element->next) {
-    if (element->value != NULL) {
+       element != nullptr; element = element->next) {
+    if (element->value != nullptr) {
       element->value->SetConfig(config_.get());
       element->value->SetRequest(request_.get());
-      element->value->SetTable(table);
+      if (table != nullptr) {
+        element->value->SetTable(table);
+      }
     }
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
@@ -263,6 +263,7 @@ void SessionHandler::SetConfig(const config::Config &config) {
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
   engine_->GetUserDataManager()->Sync();
+  GenericStorageManagerFactory::SyncAll();
   return true;
 }
 
@@ -375,8 +376,7 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
   }
   const commands::GenericStorageEntry &storage_entry =
       command->input().storage_entry();
-  if (!storage_entry.has_type() ||
-      !storage_entry.has_key() ||
+  if (!storage_entry.has_type() || !storage_entry.has_key() ||
       storage_entry.value().size() == 0) {
     LOG(WARNING) << "storage_entry lacks some fields.";
     return false;
@@ -390,7 +390,7 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
   }
 
   for (int i = 0; i < storage_entry.value_size(); ++i) {
-    const string &value = storage_entry.value(i);
+    const std::string &value = storage_entry.value(i);
     storage->Insert(value, value.c_str());
   }
 
@@ -420,7 +420,7 @@ bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
   }
 
   commands::GenericStorageEntry::StorageType storage_type =
-    command->input().storage_entry().type();
+      command->input().storage_entry().type();
   GenericStorageInterface *storage =
       GenericStorageManagerFactory::GetStorage(storage_type);
   if (!storage) {
@@ -428,7 +428,7 @@ bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
     return false;
   }
 
-  std::vector<string> result;
+  std::vector<std::string> result;
   storage->GetAllValues(&result);
   output->mutable_storage_entry()->set_type(storage_type);
   for (size_t i = 0; i < result.size(); ++i) {
@@ -450,7 +450,7 @@ bool SessionHandler::ClearStorage(commands::Command *command) {
   }
 
   commands::GenericStorageEntry::StorageType storage_type =
-    command->input().storage_entry().type();
+      command->input().storage_entry().type();
   GenericStorageInterface *storage =
       GenericStorageManagerFactory::GetStorage(storage_type);
   if (!storage) {
@@ -612,7 +612,7 @@ bool SessionHandler::TestSendKey(commands::Command *command) {
 bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
   session::SessionInterface **session =
-    const_cast<session::SessionInterface **>(session_map_->Lookup(id));
+      const_cast<session::SessionInterface **>(session_map_->Lookup(id));
   if (session == NULL || *session == NULL) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
@@ -631,7 +631,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   uint64 current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
       (current_time - last_create_session_time_) <
-      create_session_minimum_interval) {
+          create_session_minimum_interval) {
     return false;
   }
 
@@ -648,12 +648,11 @@ bool SessionHandler::CreateSession(commands::Command *command) {
     delete oldest_element->value;
     oldest_element->value = NULL;
     session_map_->Erase(oldest_element->key);
-    VLOG(1) << "Session is FULL, oldest SessionID "
-            << oldest_element->key << " is removed";
+    VLOG(1) << "Session is FULL, oldest SessionID " << oldest_element->key
+            << " is removed";
   }
 
-  if (engine_builder_ &&
-      session_map_->Size() == 0 &&
+  if (engine_builder_ && session_map_->Size() == 0 &&
       engine_builder_->HasResponse()) {
     auto *response =
         command->mutable_output()->mutable_engine_reload_response();
@@ -720,6 +719,7 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
   if (engine_->GetUserDataManager()) {
     engine_->GetUserDataManager()->Sync();
   }
+  GenericStorageManagerFactory::SyncAll();
   return true;
 }
 
@@ -736,16 +736,15 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   // suspend/hibernation may happen
   uint64 suspend_time = 0;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  if (last_cleanup_time_ != 0 &&
-      session_watch_dog_->IsRunning() &&
+  if (last_cleanup_time_ != 0 && session_watch_dog_->IsRunning() &&
       (current_time - last_cleanup_time_) >
-      2 * session_watch_dog_->interval()) {
-    suspend_time = current_time - last_cleanup_time_ -
-        session_watch_dog_->interval();
-    LOG(WARNING) << "server went to suspend mode for "
-                 << suspend_time << " sec";
+          2 * session_watch_dog_->interval()) {
+    suspend_time =
+        current_time - last_cleanup_time_ - session_watch_dog_->interval();
+    LOG(WARNING) << "server went to suspend mode for " << suspend_time
+                 << " sec";
   }
-#else  // MOZC_DISABLE_SESSION_WATCHDOG
+#else   // MOZC_DISABLE_SESSION_WATCHDOG
   // Session watch dog is not aviable from android mozc and nacl mozc for now.
   // TODO(kkojima): Remove this guard after
   // enabling session watch dog for android.
@@ -789,12 +788,12 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   // Sync all data. This is a regression bug fix http://b/3033708
   engine_->GetUserDataManager()->Sync();
+  GenericStorageManagerFactory::SyncAll();
 
   // timeout is enabled.
-  if (FLAGS_timeout > 0 &&
-      last_session_empty_time_ != 0 &&
-      (current_time - last_session_empty_time_)
-      >= suspend_time + FLAGS_timeout) {
+  if (FLAGS_timeout > 0 && last_session_empty_time_ != 0 &&
+      (current_time - last_session_empty_time_) >=
+          suspend_time + FLAGS_timeout) {
     Shutdown(command);
   }
 
@@ -827,9 +826,7 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::NoOperation(commands::Command *command) {
-  return true;
-}
+bool SessionHandler::NoOperation(commands::Command *command) { return true; }
 
 // Create Random Session ID in order to make the session id unpredicable
 SessionID SessionHandler::CreateNewSessionID() {
@@ -856,11 +853,10 @@ bool SessionHandler::DeleteSessionID(SessionID id) {
   }
   delete *session;
 
-  session_map_->Erase(id);   // remove from LRU
+  session_map_->Erase(id);  // remove from LRU
 
   // if session gets empty, save the timestamp
-  if (last_session_empty_time_ == 0 &&
-      session_map_->Size() == 0) {
+  if (last_session_empty_time_ == 0 && session_map_->Size() == 0) {
     last_session_empty_time_ = Clock::GetTime();
   }
 

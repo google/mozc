@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""A script to embed the given (relative) path name to C/C++ characters array.
+r"""A script to embed the given (relative) path name to C/C++ characters array.
 
 Example:
   ./embed_pathname.py --path_to_be_embedded=d:\data\mozc
@@ -37,23 +37,24 @@ Example:
       const char kMozcDataDir[] = "d:\\data\\mozc";
 """
 
-__author__ = "yukawa"
+from __future__ import absolute_import
+from __future__ import print_function
 
-from optparse import OptionParser
+import optparse
 import os
 import sys
 
 
 def ParseOption():
   """Parse command line options."""
-  parser = OptionParser()
+  parser = optparse.OptionParser()
   parser.add_option('--path_to_be_embedded', dest='path_to_be_embedded')
   parser.add_option('--constant_name', dest='constant_name')
   parser.add_option('--output', dest='output')
 
   (options, unused_args) = parser.parse_args()
   if not all(vars(options).values()):
-    print parser.print_help()
+    print(parser.print_help())
     sys.exit(1)
 
   return options
@@ -63,7 +64,12 @@ def main():
   opt = ParseOption()
   path = os.path.abspath(opt.path_to_be_embedded)
   # TODO(yukawa): Consider the case of non-ASCII characters.
-  escaped_path = path.encode('string-escape')
+  if isinstance(path, str):
+    # Python3
+    escaped_path = path.replace('\\', r'\\')
+  else:
+    # Python2
+    escaped_path = path.encode('string-escape')
   with open(opt.output, 'w') as output_file:
     output_file.write(
         'const char %s[] = "%s";\n' % (opt.constant_name, escaped_path))

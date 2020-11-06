@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,16 +47,17 @@ class DictionaryFileBuilder {
   virtual ~DictionaryFileBuilder();
 
   // Adds a section from a file
-  bool AddSectionFromFile(const string &section_name, const string &file_name);
+  bool AddSectionFromFile(const std::string &section_name,
+                          const std::string &file_name);
 
   // Writes the image of dictionary file to a file.
-  void WriteImageToFile(const string &file_name) const;
+  void WriteImageToFile(const std::string &file_name) const;
 
  private:
   // DictionaryFileBuilder does not take the ownership of |file_codec_|.
   DictionaryFileCodecInterface *file_codec_;
   std::vector<DictionaryFileSection> sections_;
-  std::set<string> added_;
+  std::set<std::string> added_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryFileBuilder);
 };

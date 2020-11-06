@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,11 +40,10 @@ class StatsConfigUtilInterface {
  public:
   virtual bool IsEnabled() = 0;
   virtual bool SetEnabled(bool val) = 0;
+
  protected:
-  StatsConfigUtilInterface() {
-  }
-  virtual ~StatsConfigUtilInterface() {
-  }
+  StatsConfigUtilInterface() {}
+  virtual ~StatsConfigUtilInterface() {}
 };
 
 class StatsConfigUtil {
@@ -71,6 +70,5 @@ class StatsConfigUtil {
 
 }  // namespace config
 }  // namespace mozc
-
 
 #endif  // MOZC_CONFIG_STATS_CONFIG_UTIL_H_

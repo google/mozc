@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ uint32 f(uint32 t, uint32 x, uint32 y, uint32 z) {
 
 // See 3.2 Operations on Words
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
-template<size_t N>
+template <size_t N>
 uint32 ROTL(uint32 x) {
   const size_t kUint32Bits = sizeof(uint32) * CHAR_BIT;
   static_assert(N < kUint32Bits, "Too large rotation sise.");
@@ -84,8 +84,8 @@ uint32 K(uint32 t) {
   }
 }
 
-string AsByteStream(const uint32 (&H)[kNumDWordsOfDigest]) {
-  string str;
+std::string AsByteStream(const uint32 (&H)[kNumDWordsOfDigest]) {
+  std::string str;
   str.resize(sizeof(H));
   for (size_t i = 0; i < kNumDWordsOfDigest; ++i) {
     const size_t base_index = i * sizeof(uint32);
@@ -106,21 +106,19 @@ string AsByteStream(const uint32 (&H)[kNumDWordsOfDigest]) {
 class PaddedMessageIterator {
  public:
   // SHA1 uses 64-byte (512-bit) message block.
-  static const size_t kMessageBlockBytes = 64;
+  static constexpr size_t kMessageBlockBytes = 64;
   // The original data length in bit is stored as 8-byte-length data.
-  static const size_t kDataBitLengthBytes = sizeof(uint64);
+  static constexpr size_t kDataBitLengthBytes = sizeof(uint64);
 
-  explicit PaddedMessageIterator(StringPiece source)
+  explicit PaddedMessageIterator(absl::string_view source)
       : source_(source),
         num_total_message_(GetTotalMessageCount(source.size())),
-        message_index_(0) {
-  }
+        message_index_(0) {}
 
-  bool HasMessage() const {
-    return message_index_ < num_total_message_;
-  }
+  bool HasMessage() const { return message_index_ < num_total_message_; }
 
-  void FillNextMessage(StringPiece::value_type dest[kMessageBlockBytes]) const {
+  void FillNextMessage(
+      absl::string_view::value_type dest[kMessageBlockBytes]) const {
     // 5.1.1 SHA-1, SHA-224 and SHA-256
     static_assert(CHAR_BIT == 8, "Assuming 1 byte == 8 bit");
 
@@ -173,9 +171,7 @@ class PaddedMessageIterator {
     }
   }
 
-  void MoveNext() {
-    ++message_index_;
-  }
+  void MoveNext() { ++message_index_; }
 
  private:
   // Returns the total message count.
@@ -193,7 +189,7 @@ class PaddedMessageIterator {
     return (minimum_size + kMessageBlockBytes - 1) / kMessageBlockBytes;
   }
 
-  const StringPiece source_;
+  const absl::string_view source_;
   const size_t num_total_message_;
   size_t message_index_;
 };
@@ -214,21 +210,17 @@ uint32 CharToUint32(char c) {
   return static_cast<uint32>(static_cast<uint8>(c));
 }
 
-string MakeDigestImpl(StringPiece source) {
+std::string MakeDigestImpl(absl::string_view source) {
   // 5.3 Setting the Initial Hash Value / 5.3.1 SHA-1
 
   // 6.1.1 SHA-1 Preprocessing
   uint32 H[kNumDWordsOfDigest] = {
-    0x67452301,
-    0xefcdab89,
-    0x98badcfe,
-    0x10325476,
-    0xc3d2e1f0,
+      0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0,
   };
 
   // 6.1.2 SHA-1 Hash Computation
   for (PaddedMessageIterator it(source); it.HasMessage(); it.MoveNext()) {
-    StringPiece::value_type message[64];
+    absl::string_view::value_type message[64];
     it.FillNextMessage(message);
 
     uint32 W[80];  // Message schedule.
@@ -270,7 +262,7 @@ string MakeDigestImpl(StringPiece source) {
 
 }  // namespace
 
-string UnverifiedSHA1::MakeDigest(StringPiece source) {
+std::string UnverifiedSHA1::MakeDigest(absl::string_view source) {
   return MakeDigestImpl(source);
 }
 

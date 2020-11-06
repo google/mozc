@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,26 +38,24 @@ namespace louds {
 
 // Initial values of base_length_ and step_length_ is (4, 1) bytes.
 BitVectorBasedArrayBuilder::BitVectorBasedArrayBuilder()
-    : built_(false), base_length_(4), step_length_(1) {
-}
+    : built_(false), base_length_(4), step_length_(1) {}
 
-BitVectorBasedArrayBuilder::~BitVectorBasedArrayBuilder() {
-}
+BitVectorBasedArrayBuilder::~BitVectorBasedArrayBuilder() {}
 
-void BitVectorBasedArrayBuilder::Add(const string &element) {
+void BitVectorBasedArrayBuilder::Add(const std::string &element) {
   CHECK(!built_);
   elements_.push_back(element);
 }
 
-void BitVectorBasedArrayBuilder::SetSize(
-    size_t base_length, size_t step_length) {
+void BitVectorBasedArrayBuilder::SetSize(size_t base_length,
+                                         size_t step_length) {
   CHECK(!built_);
   base_length_ = base_length;
   step_length_ = step_length;
 }
 
 namespace {
-void PushInt32(int value, string *image) {
+void PushInt32(int value, std::string *image) {
   CHECK_EQ(value & ~0xFFFFFFFF, 0);
 
   // Output from LSB to MSB.
@@ -72,11 +70,11 @@ void BitVectorBasedArrayBuilder::Build() {
   CHECK(!built_);
 
   BitStream bit_stream;
-  string data;
+  std::string data;
 
   // Output to the bit_stream and the data.
   for (size_t i = 0; i < elements_.size(); ++i) {
-    const string &element = elements_[i];
+    const std::string &element = elements_[i];
 
     // Counts how many steps is needed.
     int num_steps = 0;
@@ -115,7 +113,7 @@ void BitVectorBasedArrayBuilder::Build() {
   built_ = true;
 }
 
-const string &BitVectorBasedArrayBuilder::image() const {
+const std::string &BitVectorBasedArrayBuilder::image() const {
   CHECK(built_);
   return image_;
 }

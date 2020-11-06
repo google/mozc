@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ TEST(CharChunkTest, AddInput_CharByChar) {
   table.AddRule("tt", "っ", "t");
   table.AddRule("ta", "た", "");
 
-  string input;
+  std::string input;
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   input = "i";
@@ -89,7 +89,7 @@ TEST(CharChunkTest, AddInput_NoEffectInput) {
   table.AddRule("<*>1", "", "1");
   table.AddRule("*", "", "");
 
-  string input;
+  std::string input;
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   input = "2";
@@ -121,7 +121,7 @@ TEST(CharChunkTest, AddInput_ForN) {
   table.AddRule("ya", "[YA]", "");
   table.AddRule("ka", "[KA]", "");
 
-  string input;
+  std::string input;
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   input = "n";
@@ -164,7 +164,7 @@ TEST(CharChunkTest, AddInput_WithString) {
   table.AddRule("tt", "っ", "t");
   table.AddRule("ta", "た", "");
 
-  string input = "itta";
+  std::string input = "itta";
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
   EXPECT_FALSE(chunk1.AddInputInternal(&input));
@@ -191,21 +191,21 @@ TEST(CharChunkTest, AddInput_WithString) {
 }
 
 TEST(CharChunkTest, GetLength) {
-  CharChunk chunk1(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk1(Transliterators::CONVERSION_STRING, nullptr);
   chunk1.set_conversion("ね");
   chunk1.set_pending("");
   chunk1.set_raw("ne");
   EXPECT_EQ(1, chunk1.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(2, chunk1.GetLength(Transliterators::RAW_STRING));
 
-  CharChunk chunk2(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk2(Transliterators::CONVERSION_STRING, nullptr);
   chunk2.set_conversion("っと");
   chunk2.set_pending("");
   chunk2.set_raw("tto");
   EXPECT_EQ(2, chunk2.GetLength(Transliterators::CONVERSION_STRING));
   EXPECT_EQ(3, chunk2.GetLength(Transliterators::RAW_STRING));
 
-  CharChunk chunk3(Transliterators::CONVERSION_STRING, NULL);
+  CharChunk chunk3(Transliterators::CONVERSION_STRING, nullptr);
   chunk3.set_conversion("が");
   chunk3.set_pending("");
   chunk3.set_raw("ga");
@@ -223,8 +223,8 @@ TEST(CharChunkTest, AddInputAndConvertedChar) {
   table.AddRule("す゛", "ず", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
-  string key = "m";
-  string value = "も";
+  std::string key = "m";
+  std::string value = "も";
   chunk1.AddInputAndConvertedChar(&key, &value);
   EXPECT_TRUE(key.empty());
   EXPECT_TRUE(value.empty());
@@ -278,8 +278,8 @@ TEST(CharChunkTest, AddInputAndConvertedCharWithHalfAscii) {
   table.AddRule("-", "ー", "");
 
   CharChunk chunk1(Transliterators::CONVERSION_STRING, &table);
-  string key = "-";
-  string value = "-";
+  std::string key = "-";
+  std::string value = "-";
   chunk1.AddInputAndConvertedChar(&key, &value);
   EXPECT_TRUE(key.empty());
   EXPECT_TRUE(value.empty());
@@ -313,10 +313,10 @@ TEST(CharChunkTest, OutputMode) {
   table.AddRule("a", "あ", "");
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-  string input = "a";
+  std::string input = "a";
   chunk.AddInputInternal(&input);
 
-  string result;
+  std::string result;
   chunk.AppendResult(Transliterators::LOCAL, &result);
   EXPECT_EQ("あ", result);
 
@@ -341,11 +341,11 @@ TEST(CharChunkTest, SplitChunk) {
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
-  string input = "m";
+  std::string input = "m";
   chunk.AddInputInternal(&input);
   EXPECT_TRUE(input.empty());
 
-  string output;
+  std::string output;
   chunk.AppendResult(Transliterators::LOCAL, &output);
   EXPECT_EQ("ｍ", output);
 
@@ -363,7 +363,7 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_EQ("mo", output);
 
   // Split "mo" to "m" and "o".
-  CharChunk *left_chunk_ptr = NULL;
+  CharChunk *left_chunk_ptr = nullptr;
   chunk.SplitChunk(Transliterators::LOCAL, 1, &left_chunk_ptr);
   std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
 
@@ -380,7 +380,7 @@ TEST(CharChunkTest, IsAppendable) {
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
-  string input = "m";
+  std::string input = "m";
   chunk.AddInputInternal(&input);
   EXPECT_TRUE(input.empty());
   EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, &table));
@@ -403,7 +403,7 @@ TEST(CharChunkTest, AddInputInternal) {
 
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
   {
-    string key = "t";
+    std::string key = "t";
     chunk.AddInputInternal(&key);
     EXPECT_TRUE(key.empty());
     EXPECT_EQ("t", chunk.raw());
@@ -411,7 +411,7 @@ TEST(CharChunkTest, AddInputInternal) {
     EXPECT_EQ("t", chunk.pending());
   }
   {
-    string key = "t";
+    std::string key = "t";
     chunk.AddInputInternal(&key);
     EXPECT_TRUE(key.empty());
     EXPECT_EQ("tt", chunk.raw());
@@ -419,7 +419,7 @@ TEST(CharChunkTest, AddInputInternal) {
     EXPECT_EQ("t", chunk.pending());
   }
   {
-    string key = "t";
+    std::string key = "t";
     chunk.AddInputInternal(&key);
     EXPECT_TRUE(key.empty());
     EXPECT_EQ("ttt", chunk.raw());
@@ -427,7 +427,7 @@ TEST(CharChunkTest, AddInputInternal) {
     EXPECT_EQ("t", chunk.pending());
   }
   {
-    string key = "!";
+    std::string key = "!";
     chunk.AddInputInternal(&key);
     EXPECT_EQ("!", key);
     EXPECT_EQ("ttt", chunk.raw());
@@ -441,7 +441,7 @@ TEST(CharChunkTest, CaseSensitive) {
   table.AddRule("ka", "[ka]", "");
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
 
-  string key = "Ka";
+  std::string key = "Ka";
   chunk.AddInputInternal(&key);
   EXPECT_TRUE(key.empty());
   EXPECT_EQ("Ka", chunk.raw());
@@ -459,7 +459,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
   {
-    string input("ssh");
+    std::string input("ssh");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ssh", chunk.raw());
@@ -469,7 +469,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     EXPECT_EQ("", chunk.ambiguous());
   }
   {
-    string result;
+    std::string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
     EXPECT_EQ("っｓｈ", result);
   }
@@ -478,7 +478,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
   chunk.Clear();
   chunk.SetTransliterator(Transliterators::HIRAGANA);
   {
-    string input("s");
+    std::string input("s");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("s", chunk.raw());
@@ -488,7 +488,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     EXPECT_EQ("", chunk.ambiguous());
   }
   {
-    string input("s");
+    std::string input("s");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ss", chunk.raw());
@@ -498,7 +498,7 @@ TEST(CharChunkTest, AlphanumericOfSSH) {
     EXPECT_EQ("", chunk.ambiguous());
   }
   {
-    string input("h");
+    std::string input("h");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("ssh", chunk.raw());
@@ -517,7 +517,7 @@ TEST(CharChunkTest, ShouldCommit) {
 
   {  // ka - DIRECT_INPUT
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("k");
+    std::string input("k");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("k", chunk.raw());
@@ -533,7 +533,7 @@ TEST(CharChunkTest, ShouldCommit) {
 
   {  // ta - NO_TABLE_ATTRIBUTE
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("t");
+    std::string input("t");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("t", chunk.raw());
@@ -549,7 +549,7 @@ TEST(CharChunkTest, ShouldCommit) {
 
   {  // tta - (tt: DIRECT_INPUT / ta: NO_TABLE_ATTRIBUTE)
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("t");
+    std::string input("t");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("t", chunk.raw());
@@ -586,7 +586,7 @@ TEST(CharChunkTest, FlickAndToggle) {
 
   {  // toggle
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("2");
+    std::string input("2");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("2", chunk.raw());
@@ -604,7 +604,7 @@ TEST(CharChunkTest, FlickAndToggle) {
 
   {  // flick#1
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("2");
+    std::string input("2");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("2", chunk.raw());
@@ -616,7 +616,7 @@ TEST(CharChunkTest, FlickAndToggle) {
 
   {  // flick#2
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("a");
+    std::string input("a");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("a", chunk.raw());
@@ -628,7 +628,7 @@ TEST(CharChunkTest, FlickAndToggle) {
 
   {  // flick and toggle
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
-    string input("a");
+    std::string input("a");
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("a", chunk.raw());
@@ -801,8 +801,8 @@ TEST(CharChunkTest, Issue2190364) {
   table.AddRule("ち゛", "ぢ", "");
 
   CharChunk chunk(Transliterators::FULL_ASCII, &table);
-  string key = "a";
-  string converted_char = "ち";
+  std::string key = "a";
+  std::string converted_char = "ち";
   chunk.AddInputAndConvertedChar(&key, &converted_char);
 
   EXPECT_TRUE(key.empty());
@@ -811,7 +811,7 @@ TEST(CharChunkTest, Issue2190364) {
   EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, &table));
 
   {  // The output should be "ａ".
-    string output;
+    std::string output;
     chunk.AppendResult(Transliterators::LOCAL, &output);
     EXPECT_EQ("ａ", output);
   }
@@ -823,7 +823,7 @@ TEST(CharChunkTest, Issue2190364) {
   EXPECT_TRUE(chunk.IsAppendable(Transliterators::LOCAL, &table));
 
   {  // The output should be still "ａ".
-    string output;
+    std::string output;
     chunk.AppendResult(Transliterators::LOCAL, &output);
     EXPECT_EQ("ａ", output);
   }
@@ -838,11 +838,11 @@ TEST(CharChunkTest, Issue2209634) {
 
   CharChunk chunk(Transliterators::HALF_ASCII, &table);
 
-  string key = "q@";
+  std::string key = "q@";
   chunk.AddInput(&key);
   EXPECT_TRUE(key.empty());
 
-  string output;
+  std::string output;
   chunk.AppendResult(Transliterators::LOCAL, &output);
   EXPECT_EQ("q@", output);
 }
@@ -863,25 +863,25 @@ TEST(CharChunkTest, Issue2819580) {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
 
     {
-      string input("n");
+      std::string input("n");
       chunk.AddInput(&input);
     }
     {
-      string input("y");
+      std::string input("y");
       chunk.AddInput(&input);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       EXPECT_EQ("んｙ", result);
     }
 
     {
-      string input("a");
+      std::string input("a");
       chunk.AddInput(&input);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       EXPECT_EQ("にゃ", result);
     }
@@ -893,20 +893,20 @@ TEST(CharChunkTest, Issue2819580) {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
 
     {
-      string input("n");
+      std::string input("n");
       chunk.AddInput(&input);
     }
     {
-      string input("y");
+      std::string input("y");
       chunk.AddInput(&input);
     }
     {
-      string input("a");
-      string converted("a");
+      std::string input("a");
+      std::string converted("a");
       chunk.AddInputAndConvertedChar(&input, &converted);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       EXPECT_EQ("にゃ", result);
     }
@@ -917,33 +917,33 @@ TEST(CharChunkTest, Issue2819580) {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
 
     {
-      string input("p");
+      std::string input("p");
       chunk.AddInput(&input);
     }
     {
-      string input("o");
+      std::string input("o");
       chunk.AddInput(&input);
     }
     {
-      string input("n");
+      std::string input("n");
       chunk.AddInput(&input);
     }
     {
-      string input("y");
+      std::string input("y");
       chunk.AddInput(&input);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       EXPECT_EQ("ぽんｙ", result);
     }
 
     {
-      string input("a");
+      std::string input("a");
       chunk.AddInput(&input);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       // "ぽにゃ"
       EXPECT_EQ("ぽにゃ", result);
@@ -955,19 +955,19 @@ TEST(CharChunkTest, Issue2819580) {
     CharChunk chunk(Transliterators::HIRAGANA, &table);
 
     {
-      string input("z");
+      std::string input("z");
       chunk.AddInput(&input);
     }
     {
-      string input("n");
+      std::string input("n");
       chunk.AddInput(&input);
     }
     {
-      string input("y");
+      std::string input("y");
       chunk.AddInput(&input);
     }
     {
-      string result;
+      std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
       EXPECT_EQ("ｚんｙ", result);
     }
@@ -987,19 +987,19 @@ TEST(CharChunkTest, Issue2990253) {
   CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
 
   {
-    string input("n");
+    std::string input("n");
     chunk.AddInput(&input);
   }
   {
-    string input("y");
+    std::string input("y");
     chunk.AddInput(&input);
   }
 
-  CharChunk *left_new_chunk_ptr = NULL;
+  CharChunk *left_new_chunk_ptr = nullptr;
   chunk.SplitChunk(Transliterators::HIRAGANA, size_t(1), &left_new_chunk_ptr);
   std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
   {
-    string result;
+    std::string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
     EXPECT_EQ("ｙ", result);
   }
@@ -1007,8 +1007,8 @@ TEST(CharChunkTest, Issue2990253) {
 
 TEST(CharChunkTest, Combine) {
   {
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
     lhs.set_ambiguous("LA");
     lhs.set_conversion("LC");
     lhs.set_pending("LP");
@@ -1027,8 +1027,8 @@ TEST(CharChunkTest, Combine) {
   }
 
   {  // lhs' ambigous is empty.
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 
     lhs.set_ambiguous("");
     lhs.set_conversion("LC");
@@ -1048,8 +1048,8 @@ TEST(CharChunkTest, Combine) {
   }
 
   {  // rhs' ambigous is empty.
-    CharChunk lhs(Transliterators::CONVERSION_STRING, NULL);
-    CharChunk rhs(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
+    CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 
     lhs.set_ambiguous("LA");
     lhs.set_conversion("LC");
@@ -1085,7 +1085,7 @@ TEST(CharChunkTest, IsConvertible) {
     // If t12r is inconsistent, returns false.
     chunk.Clear();
     chunk.SetTransliterator(Transliterators::HIRAGANA);
-    string input("n");
+    std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ("n", chunk.pending());
     EXPECT_FALSE(chunk.IsConvertible(Transliterators::FULL_ASCII, &table, "a"));
@@ -1094,7 +1094,7 @@ TEST(CharChunkTest, IsConvertible) {
     // If no entries are found from the table, returns false.
     chunk.Clear();
     chunk.SetTransliterator(Transliterators::HIRAGANA);
-    string input("n");
+    std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ("n", chunk.pending());
     EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, &table, "x"));
@@ -1103,7 +1103,7 @@ TEST(CharChunkTest, IsConvertible) {
     // If found entry does not consume all of input, returns false.
     chunk.Clear();
     chunk.SetTransliterator(Transliterators::HIRAGANA);
-    string input("n");
+    std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ("n", chunk.pending());
     EXPECT_FALSE(chunk.IsConvertible(Transliterators::HIRAGANA, &table, "y"));
@@ -1112,7 +1112,7 @@ TEST(CharChunkTest, IsConvertible) {
     // [pending='n'] + [input='a'] is convertible (single combination).
     chunk.Clear();
     chunk.SetTransliterator(Transliterators::HIRAGANA);
-    string input("n");
+    std::string input("n");
     chunk.AddInput(&input);
     EXPECT_EQ("n", chunk.pending());
     EXPECT_TRUE(chunk.IsConvertible(Transliterators::HIRAGANA, &table, "a"));
@@ -1135,7 +1135,7 @@ TEST(CharChunkTest, SpecialKeys) {
     chunk.set_conversion("");
     chunk.set_pending("[ta]");
 
-    string result;
+    std::string result;
     chunk.AppendResult(Transliterators::RAW_STRING, &result);
     EXPECT_EQ("[x]4", result);
 
@@ -1171,7 +1171,7 @@ TEST(CharChunkTest, SpecialKeys) {
     chunk.set_conversion("");
     chunk.set_pending(Table::ParseSpecialKey("[x]{#2}"));
 
-    string result;
+    std::string result;
     chunk.AppendResult(Transliterators::RAW_STRING, &result);
     EXPECT_EQ("[tu]*", result);
 
@@ -1204,54 +1204,54 @@ TEST(CharChunkTest, SpecialKeys) {
 
 TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
-    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                  0, &left_chunk_ptr));
+    CharChunk *left_chunk_ptr = nullptr;
+    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0,
+                                  &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ(4, chunk.GetLength(Transliterators::CONVERSION_STRING));
-    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                  4, &left_chunk_ptr));
+    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 4,
+                                  &left_chunk_ptr));
     left_chunk.reset(left_chunk_ptr);
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                 1, &left_chunk_ptr));
+    CharChunk *left_chunk_ptr = nullptr;
+    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1,
+                                 &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("a", left_chunk->conversion());
     EXPECT_EQ("bcd", chunk.conversion());
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                 2, &left_chunk_ptr));
+    CharChunk *left_chunk_ptr = nullptr;
+    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2,
+                                 &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("ab", left_chunk->conversion());
     EXPECT_EQ("cd", chunk.conversion());
   }
 
   {
-    CharChunk chunk(Transliterators::CONVERSION_STRING, NULL);
+    CharChunk chunk(Transliterators::CONVERSION_STRING, nullptr);
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = NULL;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                 3, &left_chunk_ptr));
+    CharChunk *left_chunk_ptr = nullptr;
+    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3,
+                                 &left_chunk_ptr));
     std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
     EXPECT_EQ("abc", left_chunk->conversion());
     EXPECT_EQ("d", chunk.conversion());
@@ -1270,7 +1270,7 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
     ASSERT_EQ(Transliterators::RAW_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
 
-    string input = "ka";
+    std::string input = "ka";
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("KA", chunk.conversion());
@@ -1281,7 +1281,7 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
   {  // "sa" - kConvT12r is set if NO_TRANSLITERATION is specified
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    string input = "sa";
+    std::string input = "sa";
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("SA", chunk.conversion());
@@ -1292,7 +1292,7 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
   {  // "s" + "a" - Same with the above.
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    string input = "s";
+    std::string input = "s";
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_TRUE(chunk.conversion().empty());
@@ -1310,7 +1310,7 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
   {  // "kka" - The first attribute (NO_TRANSLITERATION) is used.
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    string input = "kk";
+    std::string input = "kk";
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("x", chunk.conversion());
@@ -1328,7 +1328,7 @@ TEST(CharChunkTest, NoTransliterationAttribute) {
   {  // "ssa" - The first attribute (default behavior) is used.
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    string input = "ss";
+    std::string input = "ss";
     chunk.AddInput(&input);
     EXPECT_TRUE(input.empty());
     EXPECT_EQ("x", chunk.conversion());
@@ -1355,8 +1355,8 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
     ASSERT_EQ(Transliterators::RAW_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
 
-    string input = "t";
-    string conv = "[ka]";
+    std::string input = "t";
+    std::string conv = "[ka]";
     chunk.AddInputAndConvertedChar(&input, &conv);
     EXPECT_TRUE(input.empty());
     EXPECT_TRUE(conv.empty());
@@ -1381,8 +1381,8 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
   {  // "SA" - kConvT12r is set if NO_TRANSLITERATION is specified.
     CharChunk chunk(Transliterators::RAW_STRING, &table);
 
-    string input = "x";
-    string conv = "[sa]";
+    std::string input = "x";
+    std::string conv = "[sa]";
     chunk.AddInputAndConvertedChar(&input, &conv);
     EXPECT_TRUE(input.empty());
     EXPECT_TRUE(conv.empty());
@@ -1406,7 +1406,7 @@ TEST(CharChunkTest, NoTransliterationAttributeForInputAndConvertedChar) {
 }
 
 namespace {
-bool HasResult(const std::set<string> &results, const string &value) {
+bool HasResult(const std::set<std::string> &results, const std::string &value) {
   return (results.find(value) != results.end());
 }
 }  // namespace
@@ -1426,53 +1426,53 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
   table.AddRule("ko", "こ", "");
 
   {
-    string input = "ka";  // AddInputInternal requires non-const string
+    std::string input = "ka";  // AddInputInternal requires non-const string
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("か", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(0, results.size());  // no ambiguity
   }
   {
-    string input = "k";
+    std::string input = "k";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(12, results.size());
     EXPECT_TRUE(HasResult(results, "k"));
-    EXPECT_TRUE(HasResult(results, "か"));  // ka
-    EXPECT_TRUE(HasResult(results, "き"));  // ki
+    EXPECT_TRUE(HasResult(results, "か"));    // ka
+    EXPECT_TRUE(HasResult(results, "き"));    // ki
     EXPECT_TRUE(HasResult(results, "きゃ"));  // kya
     EXPECT_TRUE(HasResult(results, "きぃ"));  // kyi
     EXPECT_TRUE(HasResult(results, "きゅ"));  // kyu
     EXPECT_TRUE(HasResult(results, "きぇ"));  // kye
     EXPECT_TRUE(HasResult(results, "きょ"));  // kyo
-    EXPECT_TRUE(HasResult(results, "く"));  // ku
-    EXPECT_TRUE(HasResult(results, "け"));  // ke
-    EXPECT_TRUE(HasResult(results, "こ"));  // ko
-    EXPECT_TRUE(HasResult(results, "っ"));  // kk
+    EXPECT_TRUE(HasResult(results, "く"));    // ku
+    EXPECT_TRUE(HasResult(results, "け"));    // ke
+    EXPECT_TRUE(HasResult(results, "こ"));    // ko
+    EXPECT_TRUE(HasResult(results, "っ"));    // kk
   }
   {
-    string input = "ky";
+    std::string input = "ky";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(6, results.size());
     EXPECT_TRUE(HasResult(results, "ky"));
@@ -1483,28 +1483,28 @@ TEST(CharChunkTest, RomanGetExpandedResults) {
     EXPECT_TRUE(HasResult(results, "きょ"));
   }
   {
-    string input = "kk";
+    std::string input = "kk";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("っ", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(11, results.size());
-    EXPECT_TRUE(HasResult(results, "か"));  // ka
-    EXPECT_TRUE(HasResult(results, "き"));  // ki
+    EXPECT_TRUE(HasResult(results, "か"));    // ka
+    EXPECT_TRUE(HasResult(results, "き"));    // ki
     EXPECT_TRUE(HasResult(results, "きゃ"));  // kya
     EXPECT_TRUE(HasResult(results, "きぃ"));  // kyi
     EXPECT_TRUE(HasResult(results, "きゅ"));  // kyu
     EXPECT_TRUE(HasResult(results, "きぇ"));  // kye
     EXPECT_TRUE(HasResult(results, "きょ"));  // kyo
-    EXPECT_TRUE(HasResult(results, "く"));  // ku
-    EXPECT_TRUE(HasResult(results, "け"));  // ke
-    EXPECT_TRUE(HasResult(results, "こ"));  // ko
-    EXPECT_TRUE(HasResult(results, "っ"));  // kk
+    EXPECT_TRUE(HasResult(results, "く"));    // ku
+    EXPECT_TRUE(HasResult(results, "け"));    // ke
+    EXPECT_TRUE(HasResult(results, "こ"));    // ko
+    EXPECT_TRUE(HasResult(results, "っ"));    // kk
   }
 }
 
@@ -1516,30 +1516,30 @@ TEST(CharChunkTest, KanaGetExpandedResults) {
 
   {
     // AddInputInternal requires non-const string
-    string input = "か";
+    std::string input = "か";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "か"));
     EXPECT_TRUE(HasResult(results, "が"));
   }
   {
-    string input = "は";
+    std::string input = "は";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     EXPECT_TRUE(HasResult(results, "は"));
@@ -1555,60 +1555,60 @@ TEST(CharChunkTest, 12KeyGetExpandedResults) {
   table.LoadFromFile("system://12keys-hiragana.tsv");
 
   {
-    string input = "1";  // AddInputInternal requires non-const string
+    std::string input = "1";  // AddInputInternal requires non-const string
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "あ"));
     EXPECT_TRUE(HasResult(results, "ぁ"));
   }
   {
-    string input = "8";
+    std::string input = "8";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "や"));
     EXPECT_TRUE(HasResult(results, "ゃ"));
   }
   {
-    string input = "や8";
+    std::string input = "や8";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "ゆ"));
     EXPECT_TRUE(HasResult(results, "ゅ"));
   }
   {
-    string input = "6";
+    std::string input = "6";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     EXPECT_TRUE(HasResult(results, "は"));
@@ -1624,60 +1624,60 @@ TEST(CharChunkTest, FlickGetExpandedResults) {
   table.LoadFromFile("system://flick-hiragana.tsv");
 
   {
-    string input = "1";  // AddInputInternal requires non-const string
+    std::string input = "1";  // AddInputInternal requires non-const string
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "あ"));
     EXPECT_TRUE(HasResult(results, "ぁ"));
   }
   {
-    string input = "8";
+    std::string input = "8";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "や"));
     EXPECT_TRUE(HasResult(results, "ゃ"));
   }
   {
-    string input = "u";
+    std::string input = "u";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(2, results.size());
     EXPECT_TRUE(HasResult(results, "ゆ"));
     EXPECT_TRUE(HasResult(results, "ゅ"));
   }
   {
-    string input = "6";
+    std::string input = "6";
     CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
     chunk.AddInputInternal(&input);
 
-    string base;
+    std::string base;
     chunk.AppendTrimedResult(Transliterators::LOCAL, &base);
     EXPECT_EQ("", base);
 
-    std::set<string> results;
+    std::set<std::string> results;
     chunk.GetExpandedResults(&results);
     EXPECT_EQ(3, results.size());
     EXPECT_TRUE(HasResult(results, "は"));
@@ -1694,7 +1694,7 @@ TEST(CharChunkTest, NoTransliteration_Issue3497962) {
 
   CharChunk chunk(Transliterators::HIRAGANA, &table);
 
-  string input = "2";
+  std::string input = "2";
   chunk.AddInput(&input);
   EXPECT_TRUE(input.empty());
   EXPECT_EQ("2", chunk.raw());
@@ -1723,7 +1723,7 @@ TEST(CharChunkTest, Clone) {
   src.attributes_ = NEW_CHUNK;
 
   std::unique_ptr<CharChunk> dest(
-      new CharChunk(Transliterators::CONVERSION_STRING, NULL));
+      new CharChunk(Transliterators::CONVERSION_STRING, nullptr));
   EXPECT_FALSE(src.transliterator_ == dest->transliterator_);
   EXPECT_FALSE(src.table_ == dest->table_);
   EXPECT_NE(src.raw_, dest->raw_);

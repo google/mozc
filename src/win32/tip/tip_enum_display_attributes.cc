@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,13 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-TipEnumDisplayAttributes::TipEnumDisplayAttributes()
-    : index_(0) {
-}
+TipEnumDisplayAttributes::TipEnumDisplayAttributes() : index_(0) {}
 
-TipEnumDisplayAttributes::~TipEnumDisplayAttributes() {
-}
+TipEnumDisplayAttributes::~TipEnumDisplayAttributes() {}
 
 // Implements the IUnknown::QueryInterface() function.
-HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::QueryInterface(
-    REFIID interface_id, void **object) {
+HRESULT STDMETHODCALLTYPE
+TipEnumDisplayAttributes::QueryInterface(REFIID interface_id, void **object) {
   if (*object == nullptr) {
     return E_INVALIDARG;
   }
@@ -79,8 +76,8 @@ ULONG STDMETHODCALLTYPE TipEnumDisplayAttributes::Release() {
 }
 
 // Implements the IEnumTfDisplayAttributeInfo::Clone() function.
-HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Clone(
-    IEnumTfDisplayAttributeInfo **enum_attributes) {
+HRESULT STDMETHODCALLTYPE
+TipEnumDisplayAttributes::Clone(IEnumTfDisplayAttributeInfo **enum_attributes) {
   // Check the output argument and return if it is invalid.
   if (enum_attributes == nullptr) {
     return E_INVALIDARG;
@@ -100,9 +97,7 @@ HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Clone(
 // This function copies the |count| items from the current position into
 // the |attribute_array|.
 HRESULT STDMETHODCALLTYPE TipEnumDisplayAttributes::Next(
-    ULONG count,
-    ITfDisplayAttributeInfo **attribute_array,
-    ULONG *fetched) {
+    ULONG count, ITfDisplayAttributeInfo **attribute_array, ULONG *fetched) {
   ULONG items = 0;
   for (; items < count; ++items) {
     ITfDisplayAttributeInfo *attribute = nullptr;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ DEFINE_int32(max_case_for_source, 500,
              "specify max test case number for each test sources");
 
 namespace mozc {
-bool IsValidSourceSentence(const string &str) {
+bool IsValidSourceSentence(const std::string& str) {
   // TODO(noriyukit) Treat alphabets by changing to Eisu-mode
   if (Util::ContainsScriptType(str, Util::ALPHABET)) {
     LOG(WARNING) << "contains ALPHABET: " << str;
@@ -68,7 +68,7 @@ bool IsValidSourceSentence(const string &str) {
   }
 
   // Source should not contain katakana
-  string tmp, tmp2;
+  std::string tmp, tmp2;
   Util::StringReplace(str, "ー", "", true, &tmp);
   Util::StringReplace(tmp, "・", "", true, &tmp2);
   if (Util::ContainsScriptType(tmp2, Util::KATAKANA)) {
@@ -78,12 +78,12 @@ bool IsValidSourceSentence(const string &str) {
   return true;
 }
 
-bool GenerateKeySequenceFrom(const string& hiragana_sentence,
+bool GenerateKeySequenceFrom(const std::string& hiragana_sentence,
                              std::vector<commands::KeyEvent>* keys) {
   CHECK(keys);
   keys->clear();
 
-  string tmp, input;
+  std::string tmp, input;
   Util::HiraganaToRomanji(hiragana_sentence, &tmp);
   Util::FullWidthToHalfWidth(tmp, &input);
 
@@ -124,7 +124,7 @@ bool GenerateKeySequenceFrom(const string& hiragana_sentence,
   return true;
 }
 
-bool GetPreedit(const commands::Output &output, string* str) {
+bool GetPreedit(const commands::Output& output, std::string* str) {
   CHECK(str);
 
   if (!output.has_preedit()) {
@@ -140,14 +140,13 @@ bool GetPreedit(const commands::Output &output, string* str) {
   return true;
 }
 
-bool CalculateBLEU(client::Client* client,
-                   const string& hiragana_sentence,
-                   const string& expected_result, double* score) {
+bool CalculateBLEU(client::Client* client, const std::string& hiragana_sentence,
+                   const std::string& expected_result, double* score) {
   // Prepare key events
   std::vector<commands::KeyEvent> keys;
   if (!GenerateKeySequenceFrom(hiragana_sentence, &keys)) {
     LOG(WARNING) << "Failed to generated key events from: "
-               << hiragana_sentence;
+                 << hiragana_sentence;
     return false;
   }
 
@@ -166,11 +165,11 @@ bool CalculateBLEU(client::Client* client,
   VLOG(2) << "Server response: " << output.Utf8DebugString();
 
   // Calculate score
-  string expected_normalized;
+  std::string expected_normalized;
   Scorer::NormalizeForEvaluate(expected_result, &expected_normalized);
-  std::vector<string> goldens;
+  std::vector<std::string> goldens;
   goldens.push_back(expected_normalized);
-  string preedit, preedit_normalized;
+  std::string preedit, preedit_normalized;
   if (!GetPreedit(output, &preedit) || preedit.empty()) {
     LOG(WARNING) << "Could not get output";
     return false;
@@ -194,14 +193,13 @@ bool CalculateBLEU(client::Client* client,
 
 double CalculateMean(const std::vector<double>& scores) {
   CHECK(!scores.empty());
-  const double sum = accumulate(scores.begin(), scores.end(), 0.0);
+  const double sum = std::accumulate(scores.begin(), scores.end(), 0.0);
   return sum / static_cast<double>(scores.size());
 }
 }  // namespace mozc
 
-
 int main(int argc, char* argv[]) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::client::Client client;
   if (!FLAGS_server_path.empty()) {
@@ -212,13 +210,13 @@ int main(int argc, char* argv[]) {
   CHECK(client.EnsureSession()) << "EnsureSession failed";
   CHECK(client.NoOperation()) << "Server is not respoinding";
 
-  std::map<string, std::vector<double> > scores;    // Results to be averaged
+  std::map<std::string, std::vector<double> > scores;  // Results to be averaged
 
-  for (mozc::TestCase* test_case = mozc::test_cases; test_case->source != NULL;
-       ++test_case) {
-    const string &source = test_case->source;
-    const string &hiragana_sentence = test_case->hiragana_sentence;
-    const string &expected_result = test_case->expected_result;
+  for (mozc::TestCase* test_case = mozc::test_cases;
+       test_case->source != nullptr; ++test_case) {
+    const std::string& source = test_case->source;
+    const std::string& hiragana_sentence = test_case->hiragana_sentence;
+    const std::string& expected_result = test_case->expected_result;
 
     if (scores.find(source) == scores.end()) {
       scores[source] = std::vector<double>();
@@ -237,8 +235,8 @@ int main(int argc, char* argv[]) {
     }
 
     double score;
-    if (!mozc::CalculateBLEU(&client, hiragana_sentence,
-                             expected_result, &score)) {
+    if (!mozc::CalculateBLEU(&client, hiragana_sentence, expected_result,
+                             &score)) {
       LOG(WARNING) << "Failed to calculate BLEU score: " << std::endl
                    << "    source: " << source << std::endl
                    << "  hiragana: " << hiragana_sentence << std::endl
@@ -254,7 +252,8 @@ int main(int argc, char* argv[]) {
   }
 
   // Average the scores
-  for (std::map<string, std::vector<double> >::iterator it = scores.begin();
+  for (std::map<std::string, std::vector<double> >::iterator it =
+           scores.begin();
        it != scores.end(); ++it) {
     const double mean = mozc::CalculateMean(it->second);
     (*ofs) << it->first << " : " << mean << std::endl;

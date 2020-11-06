@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,12 +63,11 @@ DEFINE_string(output_string_array, "", "output string array binary file");
 namespace mozc {
 namespace {
 
-void GetSortingMap(const string &auto_file,
-                   const string &rule_file,
-                   std::map<string, uint16> *sorting_map) {
+void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
+                   std::map<std::string, uint16> *sorting_map) {
   CHECK(sorting_map);
   sorting_map->clear();
-  string line;
+  std::string line;
   int sorting_key = 0;
   InputFileStream rule_ifs(rule_file.c_str());
   CHECK(rule_ifs.good());
@@ -87,11 +86,11 @@ void GetSortingMap(const string &auto_file,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    std::vector<string> fields;
+    std::vector<std::string> fields;
     Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 2);
     const char32 ucs4 = strtol(fields[1].c_str(), NULL, 16);
-    string utf8;
+    std::string utf8;
     Util::UCS4ToUTF8(ucs4, &utf8);
     if (sorting_map->find(utf8) != sorting_map->end()) {
       // ordered by rule
@@ -102,16 +101,16 @@ void GetSortingMap(const string &auto_file,
   }
 }
 
-void AddSymbolToDictionary(const string &pos,
-                           const string &value,
-                           const std::vector<string> &keys,
-                           const string &description,
-                           const string &additional_description,
-                           const std::map<string, uint16> &sorting_map,
+void AddSymbolToDictionary(const std::string &pos, const std::string &value,
+                           const std::vector<std::string> &keys,
+                           const std::string &description,
+                           const std::string &additional_description,
+                           const std::map<std::string, uint16> &sorting_map,
                            rewriter::DictionaryGenerator *dictionary) {
   // use first char of value as sorting key.
-  const string first_value = Util::SubString(value, 0, 1);
-  std::map<string, uint16>::const_iterator itr = sorting_map.find(first_value);
+  const auto first_value = std::string(Util::Utf8SubString(value, 0, 1));
+  std::map<std::string, uint16>::const_iterator itr =
+      sorting_map.find(first_value);
   uint16 sorting_key = 0;
   if (itr == sorting_map.end()) {
     DLOG(WARNING) << first_value << " is not defined in sorting map.";
@@ -125,7 +124,7 @@ void AddSymbolToDictionary(const string &pos,
   }
 
   for (size_t i = 0; i < keys.size(); ++i) {
-    const string &key = keys[i];
+    const std::string &key = keys[i];
 
     rewriter::Token token;
     token.set_sorting_key(sorting_key);
@@ -136,7 +135,7 @@ void AddSymbolToDictionary(const string &pos,
     token.set_additional_description(additional_description);
     dictionary->AddToken(token);
 
-    string fw_key;
+    std::string fw_key;
     Util::HalfWidthAsciiToFullWidthAscii(key, &fw_key);
     if (fw_key != key) {
       token.set_key(fw_key);
@@ -146,74 +145,72 @@ void AddSymbolToDictionary(const string &pos,
 }
 
 // Read dic:
-void MakeDictionary(const string &symbol_dictionary_file,
-                    const string &sorting_map_file,
-                    const string &ordering_rule_file,
+void MakeDictionary(const std::string &symbol_dictionary_file,
+                    const std::string &sorting_map_file,
+                    const std::string &ordering_rule_file,
                     rewriter::DictionaryGenerator *dictionary) {
-  std::set<string> seen;
-  std::map<string, uint16> sorting_map;
+  std::set<std::string> seen;
+  std::map<std::string, uint16> sorting_map;
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
   InputFileStream ifs(symbol_dictionary_file.c_str());
   CHECK(ifs.good());
 
-  string line;
+  std::string line;
   CHECK(!getline(ifs, line).fail());  // get first line
 
-  std::vector<string> fields;
+  std::vector<std::string> fields;
   while (!getline(ifs, line).fail()) {
     fields.clear();
     // Format:
     // POS <tab> value <tab> readings(space delimitered) <tab>
     // description <tab> memo
     Util::SplitStringAllowEmpty(line, "\t", &fields);
-    if (fields.size() < 3 ||
-        (fields[1].empty() && fields[2].empty())) {
+    if (fields.size() < 3 || (fields[1].empty() && fields[2].empty())) {
       VLOG(3) << "invalid format. skip line: " << line;
       continue;
     }
-    string pos = fields[0];
+    std::string pos = fields[0];
     Util::UpperString(&pos);
-    const string &value = fields[1];
+    const std::string &value = fields[1];
     if (seen.find(value) != seen.end()) {
       LOG(WARNING) << "already inserted: " << value;
       continue;
     } else {
       seen.insert(value);
     }
-    string keys_str;
+    std::string keys_str;
     Util::StringReplace(fields[2], "　",  // Full-width space
                         " ", true, &keys_str);
-    std::vector<string> keys;
+    std::vector<std::string> keys;
     Util::SplitStringUsing(keys_str, " ", &keys);
-    const string &description = (fields.size()) > 3 ? fields[3] : "";
-    const string &additional_description = (fields.size()) > 4 ? fields[4] : "";
-    AddSymbolToDictionary(pos, value, keys, description,
-                          additional_description,
+    const std::string &description = (fields.size()) > 3 ? fields[3] : "";
+    const std::string &additional_description =
+        (fields.size()) > 4 ? fields[4] : "";
+    AddSymbolToDictionary(pos, value, keys, description, additional_description,
                           sorting_map, dictionary);
   }
   // Add space as a symbol
-  std::vector<string> keys_space;
+  std::vector<std::string> keys_space;
   keys_space.push_back(" ");
-  AddSymbolToDictionary("記号", " ", keys_space,
-                        "空白", "", sorting_map,
+  AddSymbolToDictionary("記号", " ", keys_space, "空白", "", sorting_map,
                         dictionary);
 }
 }  // namespace
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((FLAGS_input.empty() ||
-       FLAGS_sorting_table.empty() ||
-       FLAGS_ordering_rule.empty()) && argc > 3) {
+  if ((FLAGS_input.empty() || FLAGS_sorting_table.empty() ||
+       FLAGS_ordering_rule.empty()) &&
+      argc > 3) {
     FLAGS_input = argv[1];
     FLAGS_sorting_table = argv[2];
     FLAGS_ordering_rule = argv[3];
   }
 
-  const string tmp_text_file = FLAGS_output_token_array + ".txt";
+  const std::string tmp_text_file = FLAGS_output_token_array + ".txt";
 
   // User pos manager data for build tools has no magic number.
   const char *kMagciNumber = "";
@@ -224,14 +221,11 @@ int main(int argc, char **argv) {
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
-  mozc::MakeDictionary(FLAGS_input,
-                       FLAGS_sorting_table,
-                       FLAGS_ordering_rule,
+  mozc::MakeDictionary(FLAGS_input, FLAGS_sorting_table, FLAGS_ordering_rule,
                        &dictionary);
   dictionary.Output(tmp_text_file);
-  mozc::SerializedDictionary::CompileToFiles(tmp_text_file,
-                                             FLAGS_output_token_array,
-                                             FLAGS_output_string_array);
+  mozc::SerializedDictionary::CompileToFiles(
+      tmp_text_file, FLAGS_output_token_array, FLAGS_output_string_array);
   mozc::FileUtil::Unlink(tmp_text_file);
 
   return 0;

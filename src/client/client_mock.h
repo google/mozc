@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,24 +70,25 @@ class ClientMock : public client::ClientInterface {
   virtual void EnableCascadingWindow(bool enable);
   virtual void set_timeout(int timeout);
   virtual void set_restricted(bool restricted);
-  virtual void set_server_program(const string &program_path);
+  virtual void set_server_program(const std::string &program_path);
   virtual void set_suppress_error_dialog(bool suppress);
   virtual void set_client_capability(const commands::Capability &capability);
-  bool LaunchTool(const string &mode, const string &extra_arg);
+  bool LaunchTool(const std::string &mode, const std::string &extra_arg);
   bool LaunchToolWithProtoBuf(const commands::Output &output);
-  bool OpenBrowser(const string &url);
+  bool OpenBrowser(const std::string &url);
 
   void ClearFunctionCounter();
-  void SetBoolFunctionReturn(string func_name, bool value);
-  int GetFunctionCallCount(string key);
+  void SetBoolFunctionReturn(std::string func_name, bool value);
+  int GetFunctionCallCount(std::string key);
 
-#define TEST_METHODS(method_name, arg_type)                             \
- private:                                                               \
-  arg_type called_##method_name##_;                                     \
- public:                                                                \
+#define TEST_METHODS(method_name, arg_type)                                 \
+ private:                                                                   \
+  arg_type called_##method_name##_;                                         \
+                                                                            \
+ public:                                                                    \
   arg_type called_##method_name() const { return called_##method_name##_; } \
-  void set_output_##method_name(const commands::Output &output) {       \
-    outputs_[#method_name].CopyFrom(output);                            \
+  void set_output_##method_name(const commands::Output &output) {           \
+    outputs_[#method_name].CopyFrom(output);                                \
   }
   TEST_METHODS(SendKeyWithContext, commands::KeyEvent);
   TEST_METHODS(TestSendKeyWithContext, commands::KeyEvent);
@@ -98,12 +99,12 @@ class ClientMock : public client::ClientInterface {
   // Counter increments each time the function called.  This method is
   // marked as 'mutable' because it has to accumulate the counter even
   // with const methods.
-  mutable std::map<string, int> function_counter_;
+  mutable std::map<std::string, int> function_counter_;
 
   // Stores return values when corresponding function is called.
-  std::map<string, bool> return_bool_values_;
+  std::map<std::string, bool> return_bool_values_;
 
-  std::map<string, commands::Output> outputs_;
+  std::map<std::string, commands::Output> outputs_;
 
   config::Config called_config_;
 };

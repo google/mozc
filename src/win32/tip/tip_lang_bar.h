@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 #define MOZC_WIN32_TIP_TIP_LANG_BAR_H_
 
-#include <windows.h>
 #include <Unknwn.h>
+#include <windows.h>
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -52,29 +52,27 @@ class TipLangBarCallback : public IUnknown {
  public:
   enum ItemId {
     // Cancel something for general purpose
-    kCancel            = 1,
+    kCancel = 1,
 
     // For input mode selection
-    kDirect            = 10,
-    kHiragana          = 11,
-    kFullKatakana      = 12,
-    kHalfAlphanumeric  = 13,
-    kFullAlphanumeric  = 14,
-    kHalfKatakana      = 15,
+    kDirect = 10,
+    kHiragana = 11,
+    kFullKatakana = 12,
+    kHalfAlphanumeric = 13,
+    kFullAlphanumeric = 14,
+    kHalfKatakana = 15,
 
     // Tool menu
-    kProperty          = 20,
-    kDictionary        = 21,
-    kWordRegister      = 22,
-    kHandWriting       = 23,
-    kCharacterPalette  = 24,
+    kProperty = 20,
+    kDictionary = 21,
+    kWordRegister = 22,
 
     // Help Menu
-    kHelp              = 30,
-    kAbout             = 31,
+    kHelp = 30,
+    kAbout = 31,
 
     // Shortcut commands
-    kReconversion      = 41,
+    kReconversion = 41,
   };
 
   virtual ~TipLangBarCallback();

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,14 +62,11 @@ class DrawToolInterface {
   virtual void FillRect(const Rect &rect, const RGBA &color) = 0;
 
   // Draws rectangle with specified color.
-  virtual void FrameRect(const Rect &rect,
-                         const RGBA &color,
+  virtual void FrameRect(const Rect &rect, const RGBA &color,
                          const uint32 line_width) = 0;
 
   // Draws line with specified color.
-  virtual void DrawLine(const Point &from,
-                        const Point &to,
-                        const RGBA &color,
+  virtual void DrawLine(const Point &from, const Point &to, const RGBA &color,
                         const uint32 line_width) = 0;
 };
 }  // namespace gtk

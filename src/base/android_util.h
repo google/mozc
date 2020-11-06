@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,8 +63,6 @@ class AndroidUtil {
   static string GetSystemProperty(const string &key,
                                   const string &default_value);
 
-  // Gets JNIEnv* from JavaVM*.
-  static JNIEnv *GetEnv(JavaVM *vm);
  private:
   FRIEND_TEST(AndroidUtilTest, ParseLine_valid);
   FRIEND_TEST(AndroidUtilTest, ParseLine_invalid);

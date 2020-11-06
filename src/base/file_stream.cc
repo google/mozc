@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,76 +36,7 @@
 
 #include <string>
 
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include "base/logging.h"
-#include "base/pepper_file_util.h"
-#endif  // MOZC_USE_PEPPER_FILE_IO
-
 namespace mozc {
-
-#ifdef MOZC_USE_PEPPER_FILE_IO
-
-InputFileStream::InputFileStream()
-    : std::istream(nullptr) {
-  init(&string_buffer_);
-}
-
-InputFileStream::InputFileStream(const char* filename,
-                                 std::ios_base::openmode mode)
-    : std::istream(nullptr) {
-  init(&string_buffer_);
-  InputFileStream::open(filename, mode);
-}
-
-void InputFileStream::open(const char* filename, std::ios_base::openmode mode) {
-  string buffer;
-  const bool ret = PepperFileUtil::ReadBinaryFile(filename, &buffer);
-  if (ret) {
-    string_buffer_.sputn(buffer.c_str(), buffer.length());
-  } else {
-    setstate(std::ios_base::failbit);
-  }
-}
-
-void InputFileStream::close() {}
-
-OutputFileStream::OutputFileStream()
-    : std::ostream(),
-      write_done_(false) {
-  init(&string_buffer_);
-}
-
-OutputFileStream::OutputFileStream(const char* filename,
-                                   std::ios_base::openmode mode)
-    : std::ostream(),
-      write_done_(false) {
-  init(&string_buffer_);
-  OutputFileStream::open(filename, mode);
-}
-
-OutputFileStream::~OutputFileStream() {
-  close();
-}
-
-void OutputFileStream::open(const char* filename,
-                            std::ios_base::openmode mode) {
-  filename_ = filename;
-}
-
-void OutputFileStream::close() {
-  if (write_done_) {
-    return;
-  }
-  if (!PepperFileUtil::WriteBinaryFile(filename_, string_buffer_.str())) {
-    LOG(ERROR) << "write error filename: \"" << filename_ << "\""
-               << "size:" << string_buffer_.str().length();
-  } else {
-    write_done_ = true;
-  }
-}
-
-# else  // MOZC_USE_PEPPER_FILE_IO
-
 namespace {
 
 #ifdef OS_WIN
@@ -117,9 +48,9 @@ std::wstring ToPlatformString(const char* filename) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
   return utf8_to_wide.from_bytes(filename);
 }
-#else  // OS_WIN
-string ToPlatformString(const char* filename) {
-  return string(filename);
+#else   // OS_WIN
+std::string ToPlatformString(const char* filename) {
+  return std::string(filename);
 }
 #endif  // OS_WIN or not
 
@@ -147,11 +78,10 @@ void OutputFileStream::open(const char* filename,
                             std::ios_base::openmode mode) {
   std::ofstream::open(ToPlatformString(filename), mode);
 }
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 // Common implementations.
 
-void InputFileStream::ReadToString(string *s) {
+void InputFileStream::ReadToString(std::string* s) {
   seekg(0, end);
   const size_t size = tellg();
   seekg(0, beg);
@@ -159,8 +89,8 @@ void InputFileStream::ReadToString(string *s) {
   read(&(*s)[0], size);
 }
 
-string InputFileStream::Read() {
-  string s;
+std::string InputFileStream::Read() {
+  std::string s;
   ReadToString(&s);
   return s;
 }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,9 @@ Example:
 ./ensure_gyp_module_path.py
     --expected=/home/foobar/work/mozc/src/third_party/gyp/pylib/gyp
 """
-__author__ = "yukawa"
+
+from __future__ import absolute_import
+from __future__ import print_function
 
 import optparse
 import os
@@ -48,7 +50,7 @@ def ParseOption():
 
   (options, _) = parser.parse_args()
   if not options.expected:
-    print parser.print_help()
+    print(parser.print_help())
     sys.exit(1)
 
   return options
@@ -59,20 +61,20 @@ def main():
   opt = ParseOption()
   expected_path = os.path.abspath(opt.expected)
   if not os.path.exists(expected_path):
-    print '%s does not exist.' % expected_path
+    print('%s does not exist.' % expected_path)
     sys.exit(1)
 
   try:
     import gyp  # NOLINT
   except ImportError as e:
-    print 'import gyp failed: %s' % e
+    print('import gyp failed: %s' % e)
     sys.exit(1)
 
   actual_path = os.path.abspath(gyp.__path__[0])
   if expected_path != actual_path:
-    print 'Unexpected gyp module is loaded on this environment.'
-    print '  expected: %s' % expected_path
-    print '  actual  : %s' % actual_path
+    print('Unexpected gyp module is loaded on this environment.')
+    print('  expected: %s' % expected_path)
+    print('  actual  : %s' % actual_path)
     sys.exit(1)
 
 if __name__ == '__main__':

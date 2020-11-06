@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,19 +58,19 @@ DEFINE_string(magic, "", "Hex-encoded magic number to be embedded");
 DEFINE_string(output, "", "Output file");
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  string magic;
+  std::string magic;
   CHECK(mozc::Util::Unescape(FLAGS_magic, &magic))
       << "magic number is not a proper hex-escaped string: " << FLAGS_magic;
 
   struct Input {
-    Input(const string &n, int a, const string &f)
+    Input(const std::string &n, int a, const std::string &f)
         : name(n), alignment(a), filename(f) {}
 
-    string name;
+    std::string name;
     int alignment;
-    string filename;
+    std::string filename;
   };
 
   std::vector<Input> inputs;
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     if (mozc::Util::StartsWith(argv[i], "--")) {
       continue;
     }
-    std::vector<string> params;
+    std::vector<std::string> params;
     mozc::Util::SplitStringUsing(argv[i], ":", &params);
     CHECK_EQ(3, params.size()) << "Unexpected arg[" << i << "] = " << argv[i];
     inputs.emplace_back(params[0], mozc::NumberUtil::SimpleAtoi(params[1]),
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
   // DataSetWriter directly writes to the specified stream, so if it fails for
   // an input, the output contains a partial result.  To avoid such partial file
   // creation, write to a temporary file then rename it.
-  const string tmpfile = FLAGS_output + ".tmp";
+  const std::string tmpfile = FLAGS_output + ".tmp";
   {
     mozc::DataSetWriter writer(magic);
     for (const auto &input : inputs) {

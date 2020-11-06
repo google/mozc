@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
 #include <QtWidgets/QWidget>
-
 #include <memory>
 #include <string>
 
@@ -48,30 +47,28 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
 
  public:
   explicit RomanTableEditorDialog(QWidget *parent);
-  virtual ~RomanTableEditorDialog();
+  ~RomanTableEditorDialog() override;
 
   // show a modal dialog
-  static bool Show(QWidget *parent,
-                   const string &current_keymap,
-                   string *new_keymap);
+  static bool Show(QWidget *parent, const std::string &current_keymap,
+                   std::string *new_keymap);
 
  protected slots:
-  virtual void UpdateMenuStatus();
-  virtual void OnEditMenuAction(QAction *action);
+  void UpdateMenuStatus() override;
+  void OnEditMenuAction(QAction *action) override;
 
  protected:
-  virtual string GetDefaultFilename() const {
-    return "romantable.txt";
-  }
-  virtual bool LoadFromStream(std::istream *is);
-  virtual bool Update();
+  std::string GetDefaultFilename() const override { return "romantable.txt"; }
+  bool LoadFromStream(std::istream *is) override;
+  bool Update() override;
 
  private:
   bool LoadDefaultRomanTable();
-  static string GetDefaultRomanTable();
+  static std::string GetDefaultRomanTable();
 
  private:
   std::unique_ptr<QAction *[]> actions_;
+  QString dialog_title_;
 };
 
 }  // namespace gui

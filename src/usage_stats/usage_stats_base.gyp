@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@
         '../config/config.gyp:stats_config_util',
         '../storage/storage.gyp:storage',
         'gen_usage_stats_list#host',
+        'usage_stats_uploader',
         'usage_stats_protocol',
       ],
     },
@@ -68,7 +69,7 @@
             '<(gen_out_dir)/usage_stats_list.h',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(gen_out_dir)/usage_stats_list.h',
             'gen_stats_list.py',
             '<@(input_files)',
@@ -100,6 +101,18 @@
       ],
       'includes': [
         '../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'usage_stats_uploader',
+      'type': 'static_library',
+      'sources': [
+        'usage_stats_uploader.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../storage/storage.gyp:storage',
+        'gen_usage_stats_list#host',
       ],
     },
   ],

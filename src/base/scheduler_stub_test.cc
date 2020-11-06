@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,8 @@ class SchedulerStubTest : public ::testing::Test {
 TEST_F(SchedulerStubTest, AddRemoveJob) {
   SchedulerStub scheduler_stub;
   EXPECT_FALSE(scheduler_stub.HasJob("Test"));
-  scheduler_stub.AddJob(Scheduler::JobSetting(
-      "Test", 1000, 100000, 5000, 0, &TestFunc, NULL));
+  scheduler_stub.AddJob(
+      Scheduler::JobSetting("Test", 1000, 100000, 5000, 0, &TestFunc, nullptr));
   EXPECT_TRUE(scheduler_stub.HasJob("Test"));
   EXPECT_EQ(0, g_counter);
   scheduler_stub.PutClockForward(1000);
@@ -89,8 +89,8 @@ TEST_F(SchedulerStubTest, AddRemoveJob) {
 
 TEST_F(SchedulerStubTest, BackOff) {
   SchedulerStub scheduler_stub;
-  scheduler_stub.AddJob(Scheduler::JobSetting(
-      "Test", 1000, 6000, 3000, 0, &TestFunc, NULL));
+  scheduler_stub.AddJob(
+      Scheduler::JobSetting("Test", 1000, 6000, 3000, 0, &TestFunc, nullptr));
   g_result = false;
   EXPECT_EQ(0, g_counter);
   scheduler_stub.PutClockForward(1000);
@@ -157,14 +157,14 @@ TEST_F(SchedulerStubTest, BackOff) {
 
 TEST_F(SchedulerStubTest, AddRemoveJobs) {
   SchedulerStub scheduler_stub;
-  scheduler_stub.AddJob(Scheduler::JobSetting(
-      "Test1", 1000, 100000, 1000, 0, &TestFunc, NULL));
+  scheduler_stub.AddJob(Scheduler::JobSetting("Test1", 1000, 100000, 1000, 0,
+                                              &TestFunc, nullptr));
   EXPECT_EQ(0, g_counter);
   scheduler_stub.PutClockForward(1000);  // delay
   EXPECT_EQ(1, g_counter);
 
-  scheduler_stub.AddJob(Scheduler::JobSetting(
-      "Test2", 1000, 100000, 1000, 0, &TestFunc, NULL));
+  scheduler_stub.AddJob(Scheduler::JobSetting("Test2", 1000, 100000, 1000, 0,
+                                              &TestFunc, nullptr));
 
   scheduler_stub.PutClockForward(1000);  // delay + interval
   EXPECT_EQ(3, g_counter);

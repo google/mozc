@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,24 +37,24 @@ namespace gui {
 
 class DictionaryContentTableWidget : public QTableWidget {
   Q_OBJECT;
- public:
 
+ public:
   // overwrite paintEvent to draw a striped pattern to all
   // view port area This makes the view port Mac style.
-  void paintEvent(QPaintEvent *event);
-  void focusInEvent(QFocusEvent *event);
+  void paintEvent(QPaintEvent *event) override;
+  void focusInEvent(QFocusEvent *event) override;
 
   // overwrite mouseDoubleClickEvent to catch click event
   // when user double-clicked empty area in viewport
-  void mouseDoubleClickEvent(QMouseEvent *event);
+  void mouseDoubleClickEvent(QMouseEvent *event) override;
 
   explicit DictionaryContentTableWidget(QWidget *parent);
 
-  signals:
-   void emptyAreaClicked();
+ signals:
+  void emptyAreaClicked();
 };
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc
 
 using mozc::gui::DictionaryContentTableWidget;
 

@@ -1,0 +1,156 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+    "cc_test_mozc",
+)
+load(
+    "//data_manager:mozc_data.bzl",
+    "mozc_dataset",
+)
+
+package(default_visibility = ["//visibility:public"])
+
+# "\xEFMOZC\r\n"
+MOZC_DATASET_MAGIC_NUMBER = "\\xEF\\x4D\\x4F\\x5A\\x43\\x0D\\x0A"
+
+mozc_dataset(
+    name = "mozc_dataset_for_oss",
+    outs = [
+        "mozc.data",
+        "mozc_data.inc",
+        "pos_list.h",
+    ],
+    boundary_def = "//data/rules:boundary.def",
+    cforms = "//data/rules:cforms.def",
+    collocation_src = "//data/dictionary_oss:collocation.txt",
+    collocation_suppression_src = "//data/dictionary_oss:collocation_suppression.txt",
+    connection_deflate = "//data/dictionary_oss:connection.deflate",
+    dictionary_srcs = [
+        "//data/dictionary_oss:dictionary00.txt",
+        "//data/dictionary_oss:dictionary01.txt",
+        "//data/dictionary_oss:dictionary02.txt",
+        "//data/dictionary_oss:dictionary03.txt",
+        "//data/dictionary_oss:dictionary04.txt",
+        "//data/dictionary_oss:dictionary05.txt",
+        "//data/dictionary_oss:dictionary06.txt",
+        "//data/dictionary_oss:dictionary07.txt",
+        "//data/dictionary_oss:dictionary08.txt",
+        "//data/dictionary_oss:dictionary09.txt",
+        "//data/dictionary_oss:reading_correction.tsv",
+    ],
+    emoji_src = "//data/emoji:emoji_data.tsv",
+    emoticon_categorized_src = "//data/emoticon:categorized.tsv",
+    emoticon_src = "//data/emoticon:emoticon.tsv",
+    id_def = "//data/dictionary_oss:id.def",
+    magic = MOZC_DATASET_MAGIC_NUMBER,
+    pos_group_def = "//data/rules:user_segment_history_pos_group.def",
+    pos_matcher_rule_def = "//data/rules:pos_matcher_rule.def",
+    reading_correction_src = "//data/dictionary_oss:reading_correction.tsv",
+    segmenter_def = "//data/rules:segmenter.def",
+    segmenter_generator_src = "gen_oss_segmenter_bitarray_main.cc",
+    single_kanji_src = "//data/single_kanji:single_kanji.tsv",
+    sorting_map = "//data/rules:sorting_map.tsv",
+    special_pos = "//data/rules:special_pos.def",
+    suffix = "//data/dictionary_oss:suffix.txt",
+    suggestion_filter_src = "//data/dictionary_oss:suggestion_filter.txt",
+    symbol_ordering_rule = "//data/symbol:ordering_rule.txt",
+    symbol_src = "//data/symbol:symbol.tsv",
+    tag = "oss",
+    typing_models = [
+        "//data/typing:typing_model_12keys-hiragana.tsv",
+        "//data/typing:typing_model_flick-hiragana.tsv",
+        "//data/typing:typing_model_godan-hiragana.tsv",
+        "//data/typing:typing_model_qwerty_mobile-hiragana.tsv",
+        "//data/typing:typing_model_toggle_flick-hiragana.tsv",
+    ],
+    usage_dict = "@ja_usage_dict//:usage_dict.txt",
+    use_1byte_cost = "false",
+    user_pos_def = "//data/rules:user_pos.def",
+    variant_rule = "//data/single_kanji:variant_rule.txt",
+    varname = "kOssMozcDataSet",
+    zero_query_def = "//data/zero_query:zero_query.def",
+    zero_query_number_def = "//data/zero_query:zero_query_number.def",
+)
+
+cc_library_mozc(
+    name = "oss_data_manager",
+    srcs = [
+        "oss_data_manager.cc",
+        ":mozc_dataset_for_oss@header",
+    ],
+    hdrs = ["oss_data_manager.h"],
+    copts = [
+        "-DMOZC_DATASET_MAGIC_NUMBER='\"" + MOZC_DATASET_MAGIC_NUMBER + "\"'",
+    ],
+    deps = [
+        "//base:embedded_file",
+        "//base:logging",
+        "//base:port",
+        "//data_manager",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "oss_data_manager_test",
+    size = "large",
+    srcs = [
+        "oss_data_manager_test.cc",
+        ":mozc_dataset_for_oss@segmenter_inl_header",
+    ],
+    copts = ["-Wno-parentheses"],
+    data = [
+        ":mozc_dataset_for_oss@connection_single_column",
+        ":mozc_dataset_for_oss@typing_models",
+        "//data/dictionary_oss:dictionary00.txt",
+        "//data/dictionary_oss:dictionary01.txt",
+        "//data/dictionary_oss:dictionary02.txt",
+        "//data/dictionary_oss:dictionary03.txt",
+        "//data/dictionary_oss:dictionary04.txt",
+        "//data/dictionary_oss:dictionary05.txt",
+        "//data/dictionary_oss:dictionary06.txt",
+        "//data/dictionary_oss:dictionary07.txt",
+        "//data/dictionary_oss:dictionary08.txt",
+        "//data/dictionary_oss:dictionary09.txt",
+        "//data/dictionary_oss:suggestion_filter.txt",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":mozc_dataset_for_oss@connection_single_column",
+        ":oss_data_manager",
+        "//data_manager:data_manager_test_base",
+        "//dictionary:pos_matcher_lib",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+    ],
+)

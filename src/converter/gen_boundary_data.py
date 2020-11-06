@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,12 +55,16 @@ suffix penalty of POS ID N (2 bytes)
 See converter/segmenter.cc for how it's used.
 """
 
-__author__ = "taku"
+from __future__ import absolute_import
+from __future__ import print_function
 
+import codecs
 import optparse
 import re
 import struct
 import sys
+
+from six.moves import range
 
 
 def PatternToRegexp(pattern):
@@ -70,7 +74,7 @@ def PatternToRegexp(pattern):
 def LoadPatterns(file):
   prefix = []
   suffix = []
-  for line in open(file, 'r'):
+  for line in codecs.open(file, 'r', encoding='utf-8'):
     if len(line) <= 1 or line[0] == '#':
       continue
     fields = line.split()
@@ -84,7 +88,7 @@ def LoadPatterns(file):
     elif label == 'SUFFIX':
       suffix.append([re.compile(PatternToRegexp(feature)), cost])
     else:
-      print 'format error %s' % (line)
+      print('format error %s' % (line))
       sys.exit(0)
   return (prefix, suffix)
 
@@ -100,7 +104,7 @@ def GetCost(patterns, feature):
 
 def LoadFeatures(filename):
   features = []
-  for line in open(filename, 'r'):
+  for line in codecs.open(filename, 'r', encoding='utf-8'):
     fields = line.split()
     features.append(fields[1])
   return features
@@ -108,7 +112,7 @@ def LoadFeatures(filename):
 
 def CountSpecialPos(filename):
   count = 0
-  for line in open(filename, 'r'):
+  for line in codecs.open(filename, 'r', encoding='utf-8'):
     line = line.rstrip()
     if not line or line[0] == '#':
       continue
@@ -141,7 +145,7 @@ def main():
       f.write(struct.pack('<H', GetCost(prefix, feature)))
       f.write(struct.pack('<H', GetCost(suffix, feature)))
 
-    for _ in xrange(num_special_pos):
+    for _ in range(num_special_pos):
       f.write(struct.pack('<H', 0))
       f.write(struct.pack('<H', 0))
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
   virtual void Show(IBusEngine *engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
-      const string &custom_font_description);
+      const std::string &custom_font_description);
 
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description);

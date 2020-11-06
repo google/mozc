@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,11 @@
 #include <string>
 #include <vector>
 
+#include "base/mozc_hash_map.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -47,8 +49,8 @@ class CollectTokenCallback : public DictionaryInterface::Callback {
   const std::vector<Token> &tokens() const { return tokens_; }
   void Clear() { tokens_.clear(); }
 
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token);
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override;
 
  private:
   std::vector<Token> tokens_;
@@ -60,8 +62,8 @@ class CheckTokenExistenceCallback : public DictionaryInterface::Callback {
   explicit CheckTokenExistenceCallback(const Token *target_token);
   bool found() const { return found_; }
 
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token);
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override;
 
  private:
   const Token *target_token_;
@@ -75,23 +77,23 @@ class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
   bool IsFound(const Token *token) const;
   bool AreAllFound() const;
 
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token);
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override;
 
  private:
   size_t found_count_;
-  std::map<const Token *, bool> result_;
+  mozc_hash_map<const Token *, bool> result_;
 };
 
 // Generates a human redable string of token(s).
-string PrintToken(const Token &token);
-string PrintTokens(const std::vector<Token> &tokens);
-string PrintTokens(const std::vector<Token *> &token_ptrs);
+std::string PrintToken(const Token &token);
+std::string PrintTokens(const std::vector<Token> &tokens);
+std::string PrintTokens(const std::vector<Token *> &token_ptrs);
 
 // Tests if two tokens are equal to each other.
-#define EXPECT_TOKEN_EQ(expected, actual)                         \
-  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::IsTokenEqual, \
-                      expected, actual)
+#define EXPECT_TOKEN_EQ(expected, actual)                                   \
+  EXPECT_PRED_FORMAT2(::mozc::dictionary::internal::IsTokenEqual, expected, \
+                      actual)
 
 // Tests if two token vectors are equal to each other as unordered set.
 #define EXPECT_TOKENS_EQ_UNORDERED(expected, actual)                         \
@@ -100,17 +102,17 @@ string PrintTokens(const std::vector<Token *> &token_ptrs);
 
 namespace internal {
 
-::testing::AssertionResult IsTokenEqual(
-     const char *expected_expr, const char *actual_expr,
-     const Token &expected, const Token &actual);
+::testing::AssertionResult IsTokenEqual(const char *expected_expr,
+                                        const char *actual_expr,
+                                        const Token &expected,
+                                        const Token &actual);
 
 ::testing::AssertionResult AreTokensEqualUnordered(
-     const char *expected_expr, const char *actual_expr,
-     const std::vector<Token *> &expected, const std::vector<Token> &actual);
+    const char *expected_expr, const char *actual_expr,
+    const std::vector<Token *> &expected, const std::vector<Token> &actual);
 
 }  // namespace internal
 }  // namespace dictionary
 }  // namespace mozc
-
 
 #endif  // MOZC_DICTIONARY_DICTIONARY_TEST_UTIL_H_

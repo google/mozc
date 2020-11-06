@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -43,59 +43,58 @@ namespace mozc {
 class NumberUtil {
  public:
   // Converts the string to a number and return it.
-  static int SimpleAtoi(StringPiece str);
+  static int SimpleAtoi(absl::string_view str);
 
   // Returns true if the given input_string contains only number characters
   // (regardless of halfwidth or fullwidth).
   // False for empty string.
-  static bool IsArabicNumber(StringPiece input_string);
+  static bool IsArabicNumber(absl::string_view input_string);
 
   // Returns true if the given str consists of only ASCII digits.
   // False for empty string.
-  static bool IsDecimalInteger(StringPiece str);
+  static bool IsDecimalInteger(absl::string_view str);
 
   struct NumberString {
    public:
     enum Style {
-        DEFAULT_STYLE = 0,
-        // 123,456,789
-        NUMBER_SEPARATED_ARABIC_HALFWIDTH,
-        // "１２３，４５６，７８９"
-        NUMBER_SEPARATED_ARABIC_FULLWIDTH,
-        // "123億456万7890"
-        NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
-        // "１２３億４５６万７８９０"
-        NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
-        // "一億二千三百四十五万六千七百八十九"
-        NUMBER_KANJI,
-        // "壱億弐千参百四拾五万六千七百八拾九"
-        NUMBER_OLD_KANJI,
-        // "ⅠⅡⅢ"
-        NUMBER_ROMAN_CAPITAL,
-        // "ⅰⅱⅲ"
-        NUMBER_ROMAN_SMALL,
-        // "①②③"
-        NUMBER_CIRCLED,
-        // "ニ〇〇"
-        NUMBER_KANJI_ARABIC,
-        // "0x4d2" (1234 in decimal)
-        NUMBER_HEX,
-        // "02322" (1234 in decimal)
-        NUMBER_OCT,
-        // "0b10011010010" (1234 in decimal)
-        NUMBER_BIN,
+      DEFAULT_STYLE = 0,
+      // 123,456,789
+      NUMBER_SEPARATED_ARABIC_HALFWIDTH,
+      // "１２３，４５６，７８９"
+      NUMBER_SEPARATED_ARABIC_FULLWIDTH,
+      // "123億456万7890"
+      NUMBER_ARABIC_AND_KANJI_HALFWIDTH,
+      // "１２３億４５６万７８９０"
+      NUMBER_ARABIC_AND_KANJI_FULLWIDTH,
+      // "一億二千三百四十五万六千七百八十九"
+      NUMBER_KANJI,
+      // "壱億弐千参百四拾五万六千七百八拾九"
+      NUMBER_OLD_KANJI,
+      // "ⅠⅡⅢ"
+      NUMBER_ROMAN_CAPITAL,
+      // "ⅰⅱⅲ"
+      NUMBER_ROMAN_SMALL,
+      // "①②③"
+      NUMBER_CIRCLED,
+      // "ニ〇〇"
+      NUMBER_KANJI_ARABIC,
+      // "0x4d2" (1234 in decimal)
+      NUMBER_HEX,
+      // "02322" (1234 in decimal)
+      NUMBER_OCT,
+      // "0b10011010010" (1234 in decimal)
+      NUMBER_BIN,
     };
 
-    NumberString(StringPiece value, StringPiece description, Style style)
-        : value(value.as_string()),
-          description(description.as_string()),
-          style(style) {}
+    NumberString(const std::string &value, absl::string_view description,
+                 Style style)
+        : value(value), description(description), style(style) {}
 
     // Converted string
-    string value;
+    std::string value;
 
     // Description of Converted String
-    string description;
+    std::string description;
 
     // Converted Number Style
     Style style;
@@ -114,51 +113,51 @@ class NumberUtil {
   //   - output: function appends new representation into output vector.
   // value, desc and style are stored same size and same order.
   // if invalid string is set, this function do nothing.
-  static bool ArabicToKanji(StringPiece input_num,
+  static bool ArabicToKanji(absl::string_view input_num,
                             std::vector<NumberString> *output);
 
   // Converts half-width Arabic number string to Separated Arabic string.
   // (e.g. 1234567890 are converted to 1,234,567,890)
   // Arguments are same as ArabicToKanji (above).
-  static bool ArabicToSeparatedArabic(StringPiece input_num,
+  static bool ArabicToSeparatedArabic(absl::string_view input_num,
                                       std::vector<NumberString> *output);
 
   // Converts half-width Arabic number string to full-width Arabic number
   // string.
   // Arguments are same as ArabicToKanji (above).
-  static bool ArabicToWideArabic(StringPiece input_num,
+  static bool ArabicToWideArabic(absl::string_view input_num,
                                  std::vector<NumberString> *output);
 
   // Converts half-width Arabic number to various styles.
   // Arguments are same as ArabicToKanji (above).
   //   - Roman style (i) (ii) ...
-  static bool ArabicToOtherForms(StringPiece input_num,
+  static bool ArabicToOtherForms(absl::string_view input_num,
                                  std::vector<NumberString> *output);
 
   // Converts half-width Arabic number to various radices (2,8,16).
   // Arguments are same as ArabicToKanji (above).
   // Excepted number of input digits is smaller than 20, but it can be
   // converted only if it can be stored in an unsigned 64-bit integer.
-  static bool ArabicToOtherRadixes(StringPiece input_num,
+  static bool ArabicToOtherRadixes(absl::string_view input_num,
                                    std::vector<NumberString> *output);
 
   // Converts the string to a 32-/64-bit signed/unsigned int.  Returns true if
   // success or false if the string is in the wrong format.
-  static bool SafeStrToInt16(StringPiece str, int16 *value);
-  static bool SafeStrToInt32(StringPiece str, int32 *value);
-  static bool SafeStrToInt64(StringPiece str, int64 *value);
-  static bool SafeStrToUInt16(StringPiece str, uint16 *value);
-  static bool SafeStrToUInt32(StringPiece str, uint32 *value);
-  static bool SafeStrToUInt64(StringPiece str, uint64 *value);
-  static bool SafeHexStrToUInt32(StringPiece str, uint32 *value);
-  static bool SafeOctStrToUInt32(StringPiece str, uint32 *value);
+  static bool SafeStrToInt16(absl::string_view str, int16 *value);
+  static bool SafeStrToInt32(absl::string_view str, int32 *value);
+  static bool SafeStrToInt64(absl::string_view str, int64 *value);
+  static bool SafeStrToUInt16(absl::string_view str, uint16 *value);
+  static bool SafeStrToUInt32(absl::string_view str, uint32 *value);
+  static bool SafeStrToUInt64(absl::string_view str, uint64 *value);
+  static bool SafeHexStrToUInt32(absl::string_view str, uint32 *value);
+  static bool SafeOctStrToUInt32(absl::string_view str, uint32 *value);
 
   // Converts the string to a double.  Returns true if success or false if the
   // string is in the wrong format.
   // If |str| is a hexadecimal number like "0x1234", the result depends on
   // compiler.  It returns false when compiled by VisualC++.  On the other hand
   // it returns true and sets correct value when compiled by gcc.
-  static bool SafeStrToDouble(StringPiece str, double *value);
+  static bool SafeStrToDouble(absl::string_view str, double *value);
 
   // Convert Kanji numeric into Arabic numeric.
   // When the trim_leading_zeros is true, leading zeros for arabic_output
@@ -172,20 +171,20 @@ class NumberUtil {
   // NormalizeNumbers() returns false if it finds non-number characters.
   // NormalizeNumbersWithSuffix() skips trailing non-number characters and
   // return them in "suffix".
-  static bool NormalizeNumbers(StringPiece input,
-                               bool trim_leading_zeros,
-                               string *kanji_output,
-                               string *arabic_output);
+  static bool NormalizeNumbers(absl::string_view input, bool trim_leading_zeros,
+                               std::string *kanji_output,
+                               std::string *arabic_output);
 
-  static bool NormalizeNumbersWithSuffix(StringPiece input,
+  static bool NormalizeNumbersWithSuffix(absl::string_view input,
                                          bool trim_leading_zeros,
-                                         string *kanji_output,
-                                         string *arabic_output,
-                                         string *suffix);
+                                         std::string *kanji_output,
+                                         std::string *arabic_output,
+                                         std::string *suffix);
 
   // Note: this function just does charcter-by-character conversion
   // "百二十" -> 10020
-  static void KanjiNumberToArabicNumber(StringPiece input, string *output);
+  static void KanjiNumberToArabicNumber(absl::string_view input,
+                                        std::string *output);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(NumberUtil);

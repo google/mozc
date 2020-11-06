@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,10 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#if !defined(NO_LOGGING)
+#if !defined(MOZC_NO_LOGGING)
 #include <atlbase.h>
 #include <atlstr.h>  // for CString
-#endif  // !NO_LOGGING
+#endif               // !MOZC_NO_LOGGING
 #include <psapi.h>
 
 #include <algorithm>
@@ -41,33 +41,30 @@
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "base/winmain.h"   // use WinMain
+#include "base/winmain.h"  // use WinMain
 #include "server/cache_service_manager.h"
 
 namespace {
 HANDLE g_stop_event = NULL;
 
-#if defined(NO_LOGGING)
+#if defined(MOZC_NO_LOGGING)
 #define LOG_WIN32_ERROR(message)
 #else
 template <size_t num_elements>
-void LogMessageImpl(
-    const wchar_t (&file)[num_elements],
-    int line,
-    const wchar_t *message,
-    int error_no) {
+void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
+                    const wchar_t *message, int error_no) {
   CString buffer;
   buffer.Format(_T("%s (%d): %s (error: %d)\n"), file, line, message, error_no);
   ::OutputDebugString(buffer);
 }
 #define LOG_WIN32_ERROR(message) \
-    LogMessageImpl(_T(__FILE__), __LINE__, message, ::GetLastError())
+  LogMessageImpl(_T(__FILE__), __LINE__, message, ::GetLastError())
 #endif
 
 std::wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];
-  const int length = ::GetMappedFileName(::GetCurrentProcess(), address,
-                                         path, arraysize(path));
+  const int length = ::GetMappedFileName(::GetCurrentProcess(), address, path,
+                                         arraysize(path));
   if (length == 0 || arraysize(path) <= length) {
     LOG_WIN32_ERROR(L"GetMappedFileName failed.");
     return L"";
@@ -80,9 +77,8 @@ std::wstring GetMappedFileNameByAddress(LPVOID address) {
 // Returns true if all sections are changed to one read-only region.
 // |result_info| contains the memory block information of the combined
 // region if succeeds.
-bool MakeReadOnlyForMappedModule(
-    LPVOID address,
-    MEMORY_BASIC_INFORMATION *result_info) {
+bool MakeReadOnlyForMappedModule(LPVOID address,
+                                 MEMORY_BASIC_INFORMATION *result_info) {
   // For an IMAGE section, the mapped size may be slightly different from the
   // file size since each PE section should be aligned to the page boundary.
   // To investigate the actual mapped size, we scan each block of memory pages.
@@ -132,8 +128,8 @@ bool MakeReadOnlyForMappedModule(
   }
 
   if (result_info != NULL &&
-      ::VirtualQuery(address, result_info,
-                     sizeof(MEMORY_BASIC_INFORMATION)) == 0) {
+      ::VirtualQuery(address, result_info, sizeof(MEMORY_BASIC_INFORMATION)) ==
+          0) {
     LOG_WIN32_ERROR(L"VirtualQuery failed.");
     return false;
   }
@@ -153,7 +149,7 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
       if (NULL != g_stop_event) {
-        if (!::SetEvent(g_stop_event)) {   // raise event
+        if (!::SetEvent(g_stop_event)) {  // raise event
           // call ExitProcess() if SetEvent failed just in case.
           ::ExitProcess(0);
         }
@@ -166,11 +162,12 @@ void WINAPI ServiceHandlerProc(DWORD control_code) {
   }
 }
 
-#define STOP_SERVICE_AND_EXIT_FUNCTION() do { \
-  service_status.dwCurrentState = SERVICE_STOPPED; \
-  ::SetServiceStatus(service_status_handle, &service_status); \
-  return; \
-} while (false)
+#define STOP_SERVICE_AND_EXIT_FUNCTION()                        \
+  do {                                                          \
+    service_status.dwCurrentState = SERVICE_STOPPED;            \
+    ::SetServiceStatus(service_status_handle, &service_status); \
+    return;                                                     \
+  } while (false)
 
 #if defined(DEBUG)
 // This function try to make a temporary file in the same directory of the
@@ -191,20 +188,16 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
     return true;
   }
 
-  const string temp_path =
-      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetServerDirectory(),
-                               "delete_me.txt");
+  const string temp_path = mozc::FileUtil::JoinPath(
+      mozc::SystemUtil::GetServerDirectory(), "delete_me.txt");
   std::wstring wtemp_path;
   mozc::Util::UTF8ToWide(temp_path, &wtemp_path);
-  const HANDLE temp_file = ::CreateFileW(
-      wtemp_path.c_str(),
-      GENERIC_READ | GENERIC_WRITE,
-      FILE_SHARE_READ,
-      NULL,
-      CREATE_ALWAYS,
-      FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_ATTRIBUTE_TEMPORARY
-      | FILE_FLAG_DELETE_ON_CLOSE,
-      NULL);
+  const HANDLE temp_file =
+      ::CreateFileW(wtemp_path.c_str(), GENERIC_READ | GENERIC_WRITE,
+                    FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                    FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
+                        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+                    NULL);
   if (temp_file != INVALID_HANDLE_VALUE) {
     ::CloseHandle(temp_file);
     LOG_WIN32_ERROR(L"CreateEvent should have failed but succeeded.");
@@ -221,14 +214,13 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
 
 VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   SERVICE_STATUS_HANDLE service_status_handle = ::RegisterServiceCtrlHandler(
-      mozc::CacheServiceManager::GetServiceName(),
-      ServiceHandlerProc);
+      mozc::CacheServiceManager::GetServiceName(), ServiceHandlerProc);
 
   if (NULL == service_status_handle) {
     return;
   }
 
-  SERVICE_STATUS service_status = { 0 };
+  SERVICE_STATUS service_status = {0};
 
   service_status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
   service_status.dwWin32ExitCode = NO_ERROR;
@@ -276,10 +268,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   std::wstring server_path;
   mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
 
-  mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(),
-                                              GENERIC_READ,
-                                              FILE_SHARE_READ,
-                                              0, OPEN_EXISTING,
+  mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(), GENERIC_READ,
+                                              FILE_SHARE_READ, 0, OPEN_EXISTING,
                                               0, 0));
   if (NULL == file_handle.get()) {
     LOG_WIN32_ERROR(L"CreateFile failed.");
@@ -289,7 +279,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   const size_t size = ::GetFileSize(file_handle.get(), 0);
 
   // Do not load image if the file size is too big
-  const DWORD kMaxImageSize = 100 * 1024 * 1024;   // 100MB
+  const DWORD kMaxImageSize = 100 * 1024 * 1024;  // 100MB
   if (size > kMaxImageSize) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
@@ -304,10 +294,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   // section for the same file share their memory pages?
   // Anyway we can use SEC_IMAGE to make an IMAGE section for a given file
   // through which we can keep the content of the file on-memory.
-  mozc::ScopedHandle mmap_handle(::CreateFileMapping(file_handle.get(),
-                                                     NULL,
-                                                     PAGE_READONLY | SEC_IMAGE,
-                                                     0, 0, NULL));
+  mozc::ScopedHandle mmap_handle(::CreateFileMapping(
+      file_handle.get(), NULL, PAGE_READONLY | SEC_IMAGE, 0, 0, NULL));
   if (NULL == mmap_handle.get()) {
     LOG_WIN32_ERROR(L"CreateFileMapping failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
@@ -319,7 +307,6 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     LOG_WIN32_ERROR(L"MapViewOfFile failed.");
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
-
 
   // A mapped view of an IMAGE section may have multiple sections whose
   // protection attributes correspond to the attributes of PE sections.
@@ -340,7 +327,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  const DWORD kMinAdditionalSize = 512 * 1024;  // 512KB
+  const DWORD kMinAdditionalSize = 512 * 1024;       // 512KB
   const DWORD kMaxAdditionalSize = 2 * 1024 * 1024;  // 2MB
 
   if (!::SetProcessWorkingSetSize(::GetCurrentProcess(),
@@ -353,82 +340,78 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   DWORD lock_time = 0;
   DWORD unlock_time = 0;
 
- WAIT_HIGH:
-  {
-    const HANDLE handles[] = { g_stop_event, high_memory_event.get() };
-    const DWORD result = ::WaitForMultipleObjects(arraysize(handles),
-                                                  handles,
-                                                  FALSE, INFINITE);
-    switch (result) {
-      case WAIT_OBJECT_0 + 1:   // high is signaled
-        goto TRY_LOCK;
-        break;
-      case WAIT_OBJECT_0:   // ctrl or error
-      default:
-        STOP_SERVICE_AND_EXIT_FUNCTION();
-    }
+WAIT_HIGH : {
+  const HANDLE handles[] = {g_stop_event, high_memory_event.get()};
+  const DWORD result =
+      ::WaitForMultipleObjects(arraysize(handles), handles, FALSE, INFINITE);
+  switch (result) {
+    case WAIT_OBJECT_0 + 1:  // high is signaled
+      goto TRY_LOCK;
+      break;
+    case WAIT_OBJECT_0:  // ctrl or error
+    default:
+      STOP_SERVICE_AND_EXIT_FUNCTION();
   }
+}
 
- TRY_LOCK:
-  {
-    const int kMaxTimeout = 10 * 60 * 1000;   // 10 min.
-    const int kMinTimeout = 1 * 60 * 1000;    // 1min.
+TRY_LOCK : {
+  const int kMaxTimeout = 10 * 60 * 1000;  // 10 min.
+  const int kMinTimeout = 1 * 60 * 1000;   // 1min.
 
-    // if the low event is signaled just after calling VirtualLock(),
-    // the VirtualLock() itself may indirectly raise the low event.
-    // This eventually causes an infinite loop. To prevent this, we check
-    // the duration between the last VirtualUnlock() and VirtualLock() and
-    // set longer timeout, when the duration is shorter.
-    const int duration = static_cast<int>(unlock_time - lock_time);
-    const int timeout =
-        unlock_time == 0 ? 0 : std::max(kMinTimeout,
-                                        kMaxTimeout - std::max(0, duration));
+  // if the low event is signaled just after calling VirtualLock(),
+  // the VirtualLock() itself may indirectly raise the low event.
+  // This eventually causes an infinite loop. To prevent this, we check
+  // the duration between the last VirtualUnlock() and VirtualLock() and
+  // set longer timeout, when the duration is shorter.
+  const int duration = static_cast<int>(unlock_time - lock_time);
+  const int timeout =
+      unlock_time == 0
+          ? 0
+          : std::max(kMinTimeout, kMaxTimeout - std::max(0, duration));
 
-    const DWORD result = ::WaitForSingleObject(g_stop_event, timeout);
-    switch (result) {
-      case WAIT_TIMEOUT:
-        switch (::WaitForSingleObject(high_memory_event.get(), 0)) {
-          case WAIT_OBJECT_0:
-            if (::VirtualLock(mem_info.BaseAddress, mem_info.RegionSize) == 0) {
-              LOG_WIN32_ERROR(L"VirtualLock failed.");
-              STOP_SERVICE_AND_EXIT_FUNCTION();
-            }
-            lock_time = ::GetTickCount();
-            goto WAIT_LOW;
-            break;
-          case WAIT_TIMEOUT:
-            goto TRY_LOCK;
-            break;
-          default:
+  const DWORD result = ::WaitForSingleObject(g_stop_event, timeout);
+  switch (result) {
+    case WAIT_TIMEOUT:
+      switch (::WaitForSingleObject(high_memory_event.get(), 0)) {
+        case WAIT_OBJECT_0:
+          if (::VirtualLock(mem_info.BaseAddress, mem_info.RegionSize) == 0) {
+            LOG_WIN32_ERROR(L"VirtualLock failed.");
             STOP_SERVICE_AND_EXIT_FUNCTION();
-        }
-        break;
-      case WAIT_OBJECT_0:
-      default:
-        STOP_SERVICE_AND_EXIT_FUNCTION();
-    }
-  }
-
- WAIT_LOW:
-  {
-    const HANDLE handles[] = { g_stop_event, low_memory_event.get() };
-    const DWORD result = ::WaitForMultipleObjects(arraysize(handles),
-                                                  handles,
-                                                  FALSE, INFINITE);
-    switch (result) {
-      case WAIT_OBJECT_0 + 1:   // low is signaled
-        if (!::VirtualUnlock(mem_info.BaseAddress, mem_info.RegionSize)) {
-          LOG_WIN32_ERROR(L"VirtualUnlock failed.");
+          }
+          lock_time = ::GetTickCount();
+          goto WAIT_LOW;
+          break;
+        case WAIT_TIMEOUT:
+          goto TRY_LOCK;
+          break;
+        default:
           STOP_SERVICE_AND_EXIT_FUNCTION();
-        }
-        unlock_time = ::GetTickCount();
-        goto WAIT_HIGH;
-        break;
-      case WAIT_OBJECT_0:   // ctrl or error
-      default:
-        STOP_SERVICE_AND_EXIT_FUNCTION();
-    }
+      }
+      break;
+    case WAIT_OBJECT_0:
+    default:
+      STOP_SERVICE_AND_EXIT_FUNCTION();
   }
+}
+
+WAIT_LOW : {
+  const HANDLE handles[] = {g_stop_event, low_memory_event.get()};
+  const DWORD result =
+      ::WaitForMultipleObjects(arraysize(handles), handles, FALSE, INFINITE);
+  switch (result) {
+    case WAIT_OBJECT_0 + 1:  // low is signaled
+      if (!::VirtualUnlock(mem_info.BaseAddress, mem_info.RegionSize)) {
+        LOG_WIN32_ERROR(L"VirtualUnlock failed.");
+        STOP_SERVICE_AND_EXIT_FUNCTION();
+      }
+      unlock_time = ::GetTickCount();
+      goto WAIT_HIGH;
+      break;
+    case WAIT_OBJECT_0:  // ctrl or error
+    default:
+      STOP_SERVICE_AND_EXIT_FUNCTION();
+  }
+}
 
   STOP_SERVICE_AND_EXIT_FUNCTION();
 }
@@ -436,10 +419,9 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
 int main(int argc, char **argv) {
   if (argc <= 1) {
     SERVICE_TABLE_ENTRY kDispatchTable[] = {
-      { const_cast<wchar_t *>(
-          mozc::CacheServiceManager::GetServiceName()), ServiceMain },
-      { NULL, NULL }
-    };
+        {const_cast<wchar_t *>(mozc::CacheServiceManager::GetServiceName()),
+         ServiceMain},
+        {NULL, NULL}};
 
     ::StartServiceCtrlDispatcher(kDispatchTable);
     return 0;

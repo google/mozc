@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,8 @@ Usage:
   % python binary_size_checker.py --target_directory=out_linux/Debug
 """
 
-
-__author__ = "mukai"
-
+from __future__ import absolute_import
+from __future__ import print_function
 
 import logging
 import optparse
@@ -70,12 +69,12 @@ def CheckFileSize(filename):
   actual_size = os.stat(filename).st_size
   expected_size = EXPECTED_MAXIMUM_SIZES[basename]
   if actual_size < expected_size * 1024 * 1024:
-    print 'Pass: %s (size: %d) is smaller than expected (%d MB)' % (
-        filename, actual_size, expected_size)
+    print('Pass: %s (size: %d) is smaller than expected (%d MB)' % (
+        filename, actual_size, expected_size))
     return True
   else:
-    print 'WARNING: %s (size: %d) is larger than expected (%d MB)' % (
-        filename, actual_size, expected_size)
+    print('WARNING: %s (size: %d) is larger than expected (%d MB)' % (
+        filename, actual_size, expected_size))
     return False
 
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,14 @@
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
-UserPOS::UserPOS(StringPiece token_array_data, StringPiece string_array_data)
+UserPOS::UserPOS(absl::string_view token_array_data,
+                 absl::string_view string_array_data)
     : token_array_data_(token_array_data) {
   DCHECK_EQ(token_array_data.size() % 8, 0);
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
@@ -47,19 +50,19 @@ UserPOS::UserPOS(StringPiece token_array_data, StringPiece string_array_data)
 
 UserPOS::~UserPOS() = default;
 
-void UserPOS::GetPOSList(std::vector<string> *pos_list) const {
+void UserPOS::GetPOSList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
   std::set<uint16> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
     }
-    const StringPiece pos = string_array_[iter.pos_index()];
+    const absl::string_view pos = string_array_[iter.pos_index()];
     pos_list->emplace_back(pos.data(), pos.size());
   }
 }
 
-bool UserPOS::IsValidPOS(const string &pos) const {
+bool UserPOS::IsValidPOS(const std::string &pos) const {
   const auto iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (iter == string_array_.end()) {
@@ -68,7 +71,7 @@ bool UserPOS::IsValidPOS(const string &pos) const {
   return std::binary_search(begin(), end(), iter.index());
 }
 
-bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) const {
+bool UserPOS::GetPOSIDs(const std::string &pos, uint16 *id) const {
   const auto str_iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (str_iter == string_array_.end() || *str_iter != pos) {
@@ -82,8 +85,9 @@ bool UserPOS::GetPOSIDs(const string &pos, uint16 *id) const {
   return true;
 }
 
-bool UserPOS::GetTokens(const string &key, const string &value,
-                        const string &pos, std::vector<Token> *tokens) const {
+bool UserPOS::GetTokens(const std::string &key, const std::string &value,
+                        const std::string &pos, const std::string &locale,
+                        std::vector<Token> *tokens) const {
   if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
     return false;
   }
@@ -104,7 +108,8 @@ bool UserPOS::GetTokens(const string &key, const string &value,
   tokens->resize(size);
 
   // TODO(taku)  Change the cost by seeing cost_type
-  const int16 kDefaultCost = 5000;
+  const int16 kDefaultCost =
+      (!locale.empty() && !Util::StartsWith(locale, "ja")) ? 10000 : 5000;
 
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
@@ -124,12 +129,12 @@ bool UserPOS::GetTokens(const string &key, const string &value,
   } else {
     const auto &base_form_token_iter = range.first;
     // expand all other forms
-    string key_stem = key;
-    string value_stem = value;
+    std::string key_stem = key;
+    std::string value_stem = value;
     // assume that conjugation_form[0] contains the suffix of "base form".
-    const StringPiece base_key_suffix =
+    const absl::string_view base_key_suffix =
         string_array_[base_form_token_iter.key_suffix_index()];
-    const StringPiece base_value_suffix =
+    const absl::string_view base_value_suffix =
         string_array_[base_form_token_iter.value_suffix_index()];
 
     if (base_key_suffix.size() < key.size() &&
@@ -141,9 +146,9 @@ bool UserPOS::GetTokens(const string &key, const string &value,
     }
     for (size_t i = 0; i < size; ++i, ++range.first) {
       const auto &token_iter = range.first;
-      const StringPiece key_suffix =
+      const absl::string_view key_suffix =
           string_array_[token_iter.key_suffix_index()];
-      const StringPiece value_suffix =
+      const absl::string_view value_suffix =
           string_array_[token_iter.value_suffix_index()];
       Util::ConcatStrings(key_stem, key_suffix, &(*tokens)[i].key);
       Util::ConcatStrings(value_stem, value_suffix, &(*tokens)[i].value);
@@ -156,10 +161,11 @@ bool UserPOS::GetTokens(const string &key, const string &value,
   return true;
 }
 
-UserPOS *UserPOS::CreateFromDataManager(const DataManagerInterface &manager) {
-  StringPiece token_array_data, string_array_data;
+std::unique_ptr<UserPOS> UserPOS::CreateFromDataManager(
+    const DataManagerInterface &manager) {
+  absl::string_view token_array_data, string_array_data;
   manager.GetUserPOSData(&token_array_data, &string_array_data);
-  return new UserPOS(token_array_data, string_array_data);
+  return absl::make_unique<UserPOS>(token_array_data, string_array_data);
 }
 
 }  // namespace dictionary

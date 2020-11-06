@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "absl/strings/string_view.h"
 
 DEFINE_string(input, "", "space separated input text files");
 DEFINE_string(user_pos_manager_data, "", "user pos manager data");
@@ -66,17 +67,17 @@ namespace {
 const char kReadingCorrectionFile[] = "reading_correction.tsv";
 
 // convert space delimtered text to CSV
-void GetInputFileName(const string &input_file,
-                      string *system_dictionary_input,
-                      string *reading_correction_input) {
+void GetInputFileName(const std::string &input_file,
+                      std::string *system_dictionary_input,
+                      std::string *reading_correction_input) {
   CHECK(system_dictionary_input);
   CHECK(reading_correction_input);
   system_dictionary_input->clear();
   reading_correction_input->clear();
-  const StringPiece kDelimiter(", ", 1);
-  for (SplitIterator<SingleDelimiter> iter(input_file, " ");
-       !iter.Done(); iter.Next()) {
-    const StringPiece &input_file = iter.Get();
+  const absl::string_view kDelimiter(", ", 1);
+  for (SplitIterator<SingleDelimiter> iter(input_file, " "); !iter.Done();
+       iter.Next()) {
+    const absl::string_view &input_file = iter.Get();
     if (Util::EndsWith(input_file, kReadingCorrectionFile)) {
       Util::AppendStringWithDelimiter(kDelimiter, input_file,
                                       reading_correction_input);
@@ -91,9 +92,9 @@ void GetInputFileName(const string &input_file,
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  string system_dictionary_input, reading_correction_input;
+  std::string system_dictionary_input, reading_correction_input;
   mozc::GetInputFileName(FLAGS_input, &system_dictionary_input,
                          &reading_correction_input);
 

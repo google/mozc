@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "gui/base/window_title_modifier.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtGui/QGuiApplication>
@@ -34,29 +36,26 @@
 #include <QtWidgets/QWidget>
 
 #include "base/version.h"
-#include "gui/base/window_title_modifier.h"
 
 namespace mozc {
 namespace gui {
-bool WindowTitleModifier::eventFilter(QObject *obj,
-                                      QEvent *event) {
+bool WindowTitleModifier::eventFilter(QObject *obj, QEvent *event) {
   QWidget *w = QApplication::activeWindow();
-  if (w != NULL && obj != NULL && w == obj &&
-      QEvent::WindowActivate == event->type() &&
-      w->windowTitle().indexOf(prefix_) == -1) {
-    w->setWindowTitle(w->windowTitle() +
-                      prefix_ +
-                      Version::GetMozcVersion().c_str() +
-                      suffix_);
+  if (w == nullptr || obj != w || event->type() != QEvent::WindowActivate) {
+    return QObject::eventFilter(obj, event);
+  }
+
+  const QString prefix = " (Dev ";
+  const QString& title = w->windowTitle();
+  // The window title can be empty, even if it is specified.
+  // See: https://doc.qt.io/qt-5/qmessagebox.html#setWindowTitle
+  if (!title.isEmpty() && title.indexOf(prefix) == -1) {
+    const QString version = prefix + Version::GetMozcVersion().c_str() + ")";
+    w->setWindowTitle(title + version);
   }
 
   return QObject::eventFilter(obj, event);
 }
-
-WindowTitleModifier::WindowTitleModifier()
-    : prefix_(" (Dev "), suffix_(")") {}
-
-WindowTitleModifier::~WindowTitleModifier() {}
 
 }  // namespace gui
 }  // namespace mozc

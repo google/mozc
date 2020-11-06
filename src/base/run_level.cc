@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,17 @@
 #include "base/run_level.h"
 
 #ifdef OS_WIN
-#include <windows.h>
 #include <aclapi.h>
+#include <windows.h>
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <unistd.h>
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 #include "base/const.h"
@@ -55,8 +55,7 @@ namespace mozc {
 namespace {
 
 #ifdef OS_WIN
-const wchar_t kElevatedProcessDisabledName[]
-= L"elevated_process_disabled";
+const wchar_t kElevatedProcessDisabledName[] = L"elevated_process_disabled";
 
 // Returns true if both array have the same content.
 template <typename T, size_t ArraySize>
@@ -74,11 +73,11 @@ bool AreEqualArray(const T (&lhs)[ArraySize], const T (&rhs)[ArraySize]) {
 //  or if failed to determine.
 bool IsDifferentUser(const HANDLE hToken) {
   TOKEN_SOURCE src;
-  DWORD        dwReturnedBc;
+  DWORD dwReturnedBc;
 
   // Get TOKEN_SOURCE
-  if (!::GetTokenInformation(hToken, TokenSource,
-                             &src, sizeof(src), &dwReturnedBc)) {
+  if (!::GetTokenInformation(hToken, TokenSource, &src, sizeof(src),
+                             &dwReturnedBc)) {
     // Most likely there was an error.
     return true;
   }
@@ -107,7 +106,7 @@ bool IsElevatedByUAC(const HANDLE hToken) {
   DWORD dwSize;
   TOKEN_ELEVATION_TYPE ElevationType;
   if (!::GetTokenInformation(hToken, TokenElevationType, &ElevationType,
-                             sizeof(ElevationType), &dwSize )) {
+                             sizeof(ElevationType), &dwSize)) {
     return true;
   }
 
@@ -123,7 +122,7 @@ bool IsElevatedByUAC(const HANDLE hToken) {
   // Get TokenIntegrityLevel.
   BYTE buffer[sizeof(TOKEN_MANDATORY_LABEL) + SECURITY_MAX_SID_SIZE];
   if (!::GetTokenInformation(hToken, TokenIntegrityLevel, buffer,
-                             sizeof(buffer), &dwSize )) {
+                             sizeof(buffer), &dwSize)) {
     return true;
   }
 
@@ -143,7 +142,7 @@ bool IsElevatedByUAC(const HANDLE hToken) {
 
   return (SECURITY_MANDATORY_MEDIUM_RID < *pdwIntegrityLevelRID);
 }
-#endif   // OS_WIN
+#endif  // OS_WIN
 }  // namespace
 
 RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
@@ -158,26 +157,24 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   }
 
   // Get process token
-  HANDLE hProcessToken = NULL;
+  HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                          &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
     return RunLevel::DENY;
   }
 
   ScopedHandle process_token(hProcessToken);
 
   // Opt out of elevated process.
-  if (CLIENT == type &&
-      GetElevatedProcessDisabled() &&
+  if (CLIENT == type && GetElevatedProcessDisabled() &&
       mozc::IsElevatedByUAC(process_token.get())) {
     return RunLevel::DENY;
   }
 
   // Get thread token (if any)
-  HANDLE hThreadToken = NULL;
-  if (!::OpenThreadToken(::GetCurrentThread(),
-                         TOKEN_QUERY, TRUE, &hThreadToken) &&
+  HANDLE hThreadToken = nullptr;
+  if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE,
+                         &hThreadToken) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
     return RunLevel::DENY;
   }
@@ -185,7 +182,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
   ScopedHandle thread_token(hThreadToken);
 
   // Thread token (if any) must not a service account.
-  if (NULL != thread_token.get()) {
+  if (nullptr != thread_token.get()) {
     bool is_service_thread = false;
     if (!WinUtil::IsServiceUser(thread_token.get(), &is_service_thread)) {
       // Returns DENY conservatively.
@@ -206,7 +203,7 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     }
 
     // Thread token must be created by sandbox.
-    if (NULL == thread_token.get()){
+    if (nullptr == thread_token.get()) {
       return RunLevel::DENY;
     }
 
@@ -221,18 +218,14 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
     std::wstring dir;
     Util::UTF8ToWide(user_dir, &dir);
-    ScopedHandle dir_handle(::CreateFile(dir.c_str(),
-                                         READ_CONTROL | WRITE_DAC,
-                                         0,
-                                         NULL,
-                                         OPEN_EXISTING,
-                                         FILE_FLAG_BACKUP_SEMANTICS,
-                                         0));
-    if (NULL != dir_handle.get()) {
+    ScopedHandle dir_handle(::CreateFile(dir.c_str(), READ_CONTROL | WRITE_DAC,
+                                         0, nullptr, OPEN_EXISTING,
+                                         FILE_FLAG_BACKUP_SEMANTICS, 0));
+    if (nullptr != dir_handle.get()) {
       BYTE buffer[sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE];
       DWORD size = 0;
-      if (::GetTokenInformation(thread_token.get(), TokenUser,
-                                buffer, sizeof(buffer), &size)) {
+      if (::GetTokenInformation(thread_token.get(), TokenUser, buffer,
+                                sizeof(buffer), &size)) {
         PTOKEN_USER ptoken_user = reinterpret_cast<PTOKEN_USER>(buffer);
         // Looks like in some environment, the profile foler's permission
         // includes Administrators but does not include the user himself.
@@ -267,6 +260,9 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
 
   return RunLevel::NORMAL;
 
+#elif defined(OS_WASM)
+  // WASM doesn't have runlevels. Always return normal.
+  return RunLevel::NORMAL;
 #else  // OS_WIN
   if (type == SERVER || type == RENDERER) {
     if (::geteuid() == 0) {
@@ -307,22 +303,21 @@ bool RunLevel::IsProcessInJob() {
 
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION JobExtLimitInfo;
   // Get the job information of the current process
-  if (!::QueryInformationJobObject(
-          NULL, JobObjectExtendedLimitInformation,
-          &JobExtLimitInfo, sizeof(JobExtLimitInfo), NULL)) {
+  if (!::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation,
+                                   &JobExtLimitInfo, sizeof(JobExtLimitInfo),
+                                   nullptr)) {
     return false;
   }
 
   // Check to see if we can break away from the current job
   if (JobExtLimitInfo.BasicLimitInformation.LimitFlags &
-      (JOB_OBJECT_LIMIT_BREAKAWAY_OK |
-       JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK)) {
+      (JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK)) {
     // We're in a job, but it allows to break away.
     return false;
   }
 
   return true;
-#else  // OS_WIN
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -330,16 +325,15 @@ bool RunLevel::IsProcessInJob() {
 bool RunLevel::IsElevatedByUAC() {
 #ifdef OS_WIN
   // Get process token
-  HANDLE hProcessToken = NULL;
+  HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                          &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
     return false;
   }
 
   ScopedHandle process_token(hProcessToken);
   return mozc::IsElevatedByUAC(process_token.get());
-#else  // OS_WIN
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -347,43 +341,31 @@ bool RunLevel::IsElevatedByUAC() {
 bool RunLevel::SetElevatedProcessDisabled(bool disable) {
 #ifdef OS_WIN
   HKEY key = 0;
-  LONG result = ::RegCreateKeyExW(HKEY_CURRENT_USER,
-                                  kElevatedProcessDisabledKey,
-                                  0,
-                                  NULL,
-                                  0,
-                                  KEY_WRITE,
-                                  NULL,
-                                  &key,
-                                  NULL);
+  LONG result =
+      ::RegCreateKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey, 0,
+                        nullptr, 0, KEY_WRITE, nullptr, &key, nullptr);
 
   if (ERROR_SUCCESS != result) {
     return false;
   }
 
   const DWORD value = disable ? 1 : 0;
-  result = ::RegSetValueExW(key,
-                            kElevatedProcessDisabledName,
-                            0,
-                            REG_DWORD,
-                            reinterpret_cast<const BYTE *>(&value),
-                            sizeof(value));
+  result =
+      ::RegSetValueExW(key, kElevatedProcessDisabledName, 0, REG_DWORD,
+                       reinterpret_cast<const BYTE *>(&value), sizeof(value));
   ::RegCloseKey(key);
 
   return ERROR_SUCCESS == result;
-#else  // OS_WIN
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
 
 bool RunLevel::GetElevatedProcessDisabled() {
 #ifdef OS_WIN
-  HKEY  key = 0;
-  LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER,
-                                kElevatedProcessDisabledKey,
-                                NULL,
-                                KEY_READ,
-                                &key);
+  HKEY key = 0;
+  LONG result = ::RegOpenKeyExW(HKEY_CURRENT_USER, kElevatedProcessDisabledKey,
+                                0, KEY_READ, &key);
   if (ERROR_SUCCESS != result) {
     return false;
   }
@@ -391,22 +373,18 @@ bool RunLevel::GetElevatedProcessDisabled() {
   DWORD value = 0;
   DWORD value_size = sizeof(value);
   DWORD value_type = 0;
-  result = ::RegQueryValueEx(key,
-                             kElevatedProcessDisabledName,
-                             NULL,
-                             &value_type,
-                             reinterpret_cast<BYTE *>(&value),
-                             &value_size);
+  result =
+      ::RegQueryValueEx(key, kElevatedProcessDisabledName, nullptr, &value_type,
+                        reinterpret_cast<BYTE *>(&value), &value_size);
   ::RegCloseKey(key);
 
-  if (ERROR_SUCCESS != result ||
-      value_type != REG_DWORD ||
+  if (ERROR_SUCCESS != result || value_type != REG_DWORD ||
       value_size != sizeof(value)) {
     return false;
   }
 
   return value > 0;
-#else  // OS_WIN
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }

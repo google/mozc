@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,10 @@ class SegmenterBitarrayGenerator {
  public:
   typedef bool (*IsBoundaryFunc)(uint16 rid, uint16 lid);
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc func,
-                               const string &output_size_info,
-                               const string &output_ltable,
-                               const string &output_rtable,
-                               const string &output_bitarray);
+                               const std::string &output_size_info,
+                               const std::string &output_ltable,
+                               const std::string &output_rtable,
+                               const std::string &output_bitarray);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SegmenterBitarrayGenerator);

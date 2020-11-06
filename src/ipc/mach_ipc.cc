@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,20 +28,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // The IPC implementation using core Mach APIs.
-#ifdef OS_MACOSX
-
-#include "ipc/ipc.h"
-
-#include <map>
+#ifdef __APPLE__
 
 #include <launch.h>
 #include <mach/mach.h>
 #include <servers/bootstrap.h>
 
+#include <map>
+
 #include "base/logging.h"
 #include "base/mac_util.h"
 #include "base/singleton.h"
 #include "base/thread.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {
@@ -101,7 +100,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
                             LAUNCH_KEY_GETJOB);
     launch_data_t job = launch_msg(request);
     launch_data_free(request);
-    if (job == NULL) {
+    if (job == nullptr) {
       LOG(ERROR) << "Server job not found";
       return false;
     }
@@ -113,7 +112,7 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
     }
 
     launch_data_t pid_data = launch_data_dict_lookup(job, LAUNCH_JOBKEY_PID);
-    if (pid_data == NULL ||
+    if (pid_data == nullptr ||
         launch_data_get_type(pid_data) != LAUNCH_DATA_INTEGER) {
       // PID information is unavailable, which means server is not running.
       VLOG(2) << "Returned job is formatted wrongly: cannot find PID data.";
@@ -165,9 +164,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
   // In the server side, it always return "true" because the caller
   // itself is the server.
-  virtual bool IsServerRunning(const string &name) const {
-    return true;
-  }
+  virtual bool IsServerRunning(const string &name) const { return true; }
 
  private:
   std::map<string, mach_port_t> mach_ports_;
@@ -192,12 +189,12 @@ struct mach_ipc_receive_message {
 
 // Client implementation
 IPCClient::IPCClient(const string &name)
-    : name_(name), mach_port_manager_(NULL), ipc_path_manager_(NULL) {
+    : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, "");
 }
 
 IPCClient::IPCClient(const string &name, const string &server_path)
-    : name_(name), mach_port_manager_(NULL), ipc_path_manager_(NULL) {
+    : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, server_path);
 }
 
@@ -212,20 +209,17 @@ void IPCClient::Init(const string &name, const string & /*server_path*/) {
   }
 }
 
-bool IPCClient::Call(const char *request_,
-                     size_t input_length,
-                     char *response_,
-                     size_t *response_size,
-                     int32 timeout) {
+bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
+                     size_t *response_size, int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
 
   // Obtain the server port
   mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
+  if (manager == nullptr || !manager->GetMachPort(name_, &server_port)) {
     last_ipc_error_ = IPC_NO_CONNECTION;
     LOG(ERROR) << "Cannot connect to the server";
     return false;
@@ -234,8 +228,8 @@ bool IPCClient::Call(const char *request_,
   // Creating sending port
   kern_return_t kr;
   mach_port_t client_port = MACH_PORT_NULL;
-  kr = mach_port_allocate(
-      mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &client_port);
+  kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE,
+                          &client_port);
   if (kr != KERN_SUCCESS) {
     last_ipc_error_ = IPC_WRITE_ERROR;
     LOG(ERROR) << "Cannot allocate the client port: " << kr;
@@ -266,10 +260,10 @@ bool IPCClient::Call(const char *request_,
   // Actually send the message
   kr = mach_msg(send_header,
                 MACH_SEND_MSG | MACH_SEND_TIMEOUT,  // send with timeout
-                send_header->msgh_size,  // send size
-                0,  // receive size is 0 because sending
-                MACH_PORT_NULL,  // receive port
-                timeout,  // timeout in msec
+                send_header->msgh_size,             // send size
+                0,                // receive size is 0 because sending
+                MACH_PORT_NULL,   // receive port
+                timeout,          // timeout in msec
                 MACH_PORT_NULL);  // notoicication port in case of error
   if (kr == MACH_SEND_TIMED_OUT) {
     LOG(ERROR) << "sending message timeout";
@@ -298,8 +292,8 @@ bool IPCClient::Call(const char *request_,
                   MACH_RCV_MSG | MACH_RCV_TIMEOUT,  // receive with timeout
                   0,  // send size is 0 because receiving
                   receive_header->msgh_size,  // receive size
-                  client_port,  // receive port
-                  timeout,  // timeout in msec
+                  client_port,                // receive port
+                  timeout,                    // timeout in msec
                   MACH_PORT_NULL);  // notification port in case of error
     if (kr == MACH_RCV_TIMED_OUT) {
       LOG(ERROR) << "receiving message timeout";
@@ -341,7 +335,7 @@ bool IPCClient::Connected() const {
   }
 
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultClientMachPortManager>::get();
   }
 
@@ -349,10 +343,8 @@ bool IPCClient::Connected() const {
 }
 
 // Server implementation
-IPCServer::IPCServer(const string &name,
-                     int32 num_connections,
-                     int32 timeout)
-    : name_(name), mach_port_manager_(NULL), timeout_(timeout) {
+IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
+    : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.
   // It's just for compatibility.
@@ -377,7 +369,7 @@ IPCServer::~IPCServer() {
 
 bool IPCServer::Connected() const {
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
 
@@ -386,13 +378,13 @@ bool IPCServer::Connected() const {
 
 void IPCServer::Loop() {
   MachPortManagerInterface *manager = mach_port_manager_;
-  if (manager == NULL) {
+  if (manager == nullptr) {
     manager = Singleton<DefaultServerMachPortManager>::get();
   }
 
   // Obtain the server port
   mach_port_t server_port;
-  if (manager == NULL || !manager->GetMachPort(name_, &server_port)) {
+  if (manager == nullptr || !manager->GetMachPort(name_, &server_port)) {
     LOG(ERROR) << "Failed to reserve the port.";
     return;
   }
@@ -410,10 +402,10 @@ void IPCServer::Loop() {
     receive_header->msgh_size = sizeof(receive_message);
     kr = mach_msg(receive_header,
                   MACH_RCV_MSG,  // no timeout when receiving clients
-                  0,  // send size is 0 because receiving
+                  0,             // send size is 0 because receiving
                   receive_header->msgh_size,  // receive size
-                  server_port,  // receive port
-                  MACH_MSG_TIMEOUT_NONE,  // no timeout
+                  server_port,                // receive port
+                  MACH_MSG_TIMEOUT_NONE,      // no timeout
                   MACH_PORT_NULL);  // notification port in case of error
 
     if (kr != MACH_MSG_SUCCESS) {
@@ -427,19 +419,17 @@ void IPCServer::Loop() {
 
     size_t response_size = IPC_RESPONSESIZE;
     if (!Process(static_cast<char *>(receive_message.data.address),
-                 receive_message.data.size,
-                 response, &response_size)) {
+                 receive_message.data.size, response, &response_size)) {
       LOG(INFO) << "Process() returns false.  Quit the wait loop.";
       finished = true;
     }
 
-    vm_deallocate(mach_task_self(),
-                  (vm_address_t)receive_message.data.address,
+    vm_deallocate(mach_task_self(), (vm_address_t)receive_message.data.address,
                   receive_message.data.size);
     // Send response
     send_header = &(send_message.header);
     send_header->msgh_bits = MACH_MSGH_BITS_LOCAL(receive_header->msgh_bits) |
-      MACH_MSGH_BITS_COMPLEX;  // To enable OOL message
+                             MACH_MSGH_BITS_COMPLEX;  // To enable OOL message
     send_header->msgh_size = sizeof(send_message);
     send_header->msgh_local_port = MACH_PORT_NULL;
     send_header->msgh_remote_port = receive_header->msgh_remote_port;
@@ -455,10 +445,10 @@ void IPCServer::Loop() {
 
     kr = mach_msg(send_header,
                   MACH_SEND_MSG | MACH_SEND_TIMEOUT,  // send with timeout
-                  send_header->msgh_size,  // send size
-                  0,  // receive size is 0 because sending
-                  MACH_PORT_NULL,  // receive port
-                  timeout_,  // timeout
+                  send_header->msgh_size,             // send size
+                  0,                // receive size is 0 because sending
+                  MACH_PORT_NULL,   // receive port
+                  timeout_,         // timeout
                   MACH_PORT_NULL);  // notification port in case of error
     if (kr != MACH_MSG_SUCCESS) {
       LOG(ERROR) << "Something around mach ports goes wrong: " << kr;
@@ -467,10 +457,8 @@ void IPCServer::Loop() {
   }
 }
 
-void IPCServer::Terminate() {
-  server_thread_->Terminate();
-}
+void IPCServer::Terminate() { server_thread_->Terminate(); }
 
 }  // namespace mozc
 
-#endif  // OS_MACOSX
+#endif  // __APPLE__

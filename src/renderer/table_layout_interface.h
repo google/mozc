@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ namespace renderer {
 
 class TableLayoutInterface {
  public:
-  TableLayoutInterface() {};
+  TableLayoutInterface(){};
   virtual ~TableLayoutInterface() {}
 
   virtual void Initialize(int num_rows, int num_columns) = 0;
@@ -45,8 +45,8 @@ class TableLayoutInterface {
   virtual void SetWindowBorder(int width_in_pixels) = 0;
   virtual void SetRowRectPadding(int width_pixels) = 0;
   virtual void EnsureCellSize(int column, const Size &size) = 0;
-  virtual void EnsureColumnsWidth(int from_column, int to_column, int width)
-      = 0;
+  virtual void EnsureColumnsWidth(int from_column, int to_column,
+                                  int width) = 0;
   virtual void EnsureFooterSize(const Size &size_in_pixels) = 0;
   virtual void EnsureHeaderSize(const Size &size_in_pixels) = 0;
   virtual void FreezeLayout() = 0;
@@ -56,8 +56,8 @@ class TableLayoutInterface {
   virtual Rect GetHeaderRect() const = 0;
   virtual Rect GetFooterRect() const = 0;
   virtual Rect GetVScrollBarRect() const = 0;
-  virtual Rect GetVScrollIndicatorRect(
-      int begin_index, int end_index, int candidates_total) const = 0;
+  virtual Rect GetVScrollIndicatorRect(int begin_index, int end_index,
+                                       int candidates_total) const = 0;
   virtual Rect GetRowRect(int row) const = 0;
   virtual Rect GetColumnRect(int column) const = 0;
   virtual int number_of_rows() const = 0;

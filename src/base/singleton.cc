@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,9 +56,7 @@ SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];
 void ExitWithError() {
   // This logic is copied from logging.h
 #ifdef OS_WIN
-  ::RaiseException(::GetLastError(),
-                   EXCEPTION_NONCONTINUABLE,
-                   NULL, NULL);
+  ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
 #else
   exit(-1);
 #endif

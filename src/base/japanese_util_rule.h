@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 namespace mozc {
 namespace japanese_util_rule {
 
-#define DECLARE_RULE(name)                              \
-  extern const char name##_table[];                     \
+#define DECLARE_RULE(name)          \
+  extern const char name##_table[]; \
   extern const DoubleArray name##_da[]
 
 DECLARE_RULE(hiragana_to_katakana);

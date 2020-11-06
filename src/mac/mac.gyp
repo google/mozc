@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -113,7 +113,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=KanaMap',
@@ -134,7 +134,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialKeyMap',
@@ -155,7 +155,7 @@
             '<(output_file)',
           ],
           'action': [
-            'python', '../build_tools/redirect.py',
+            '<(python)', '../build_tools/redirect.py',
             '<(output_file)',
             'generate_mapping.py',
             '--mapname=SpecialCharMap',
@@ -272,11 +272,9 @@
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',
             '../gui/gui.gyp:about_dialog_mac',
-            '../gui/gui.gyp:character_palette_mac',
             '../gui/gui.gyp:config_dialog_mac',
             '../gui/gui.gyp:dictionary_tool_mac',
             '../gui/gui.gyp:error_message_dialog_mac',
-            '../gui/gui.gyp:hand_writing_mac',
             '../gui/gui.gyp:prelauncher_mac',
             '../gui/gui.gyp:word_register_dialog_mac',
             '../renderer/renderer.gyp:mozc_renderer',
@@ -313,11 +311,9 @@
                 '<(PRODUCT_DIR)/<(branding)Prelauncher.app',
                 '<(PRODUCT_DIR)/<(branding)Renderer.app',
                 '<(PRODUCT_DIR)/AboutDialog.app',
-                '<(PRODUCT_DIR)/CharacterPalette.app',
                 '<(PRODUCT_DIR)/ConfigDialog.app',
                 '<(PRODUCT_DIR)/DictionaryTool.app',
                 '<(PRODUCT_DIR)/ErrorMessageDialog.app',
-                '<(PRODUCT_DIR)/HandWriting.app',
                 '<(PRODUCT_DIR)/WordRegisterDialog.app',
               ],
               'destination': '<(PRODUCT_DIR)/<(branding).app/Contents/Resources',
@@ -350,7 +346,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -366,7 +362,7 @@
                 '<(gen_out_dir)/ActivatePane/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/ActivatePane/Info.plist',
                 '--input', 'ActivatePane/Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -382,7 +378,7 @@
                 '<(gen_out_dir)/Uninstaller/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Uninstaller/Info.plist',
                 '--input', 'Uninstaller/Info.plist',
                 '--version_file', '../mozc_version.txt',
@@ -398,7 +394,7 @@
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/English.lproj/Localizable.strings',
                 '--input',
@@ -415,7 +411,7 @@
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output',
                 '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
                 '--input',
@@ -432,7 +428,7 @@
                 '<(gen_out_dir)/English.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/English.lproj/InfoPlist.strings',
                 '--input', 'English.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -447,7 +443,7 @@
                 '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist_strings.py',
+                '<(python)', '../build_tools/tweak_info_plist_strings.py',
                 '--output', '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
                 '--input', 'Japanese.lproj/InfoPlist.strings',
                 '--branding', '<(branding)',
@@ -464,7 +460,7 @@
               'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Converter.plist', ],
               'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist' ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist',
                 '--input', '../data/mac/com.google.inputmethod.Japanese.Converter.plist',
                 '--version_file', '../mozc_version.txt',
@@ -476,7 +472,7 @@
               'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Renderer.plist', ],
               'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist' ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist',
                 '--input', '../data/mac/com.google.inputmethod.Japanese.Renderer.plist',
                 '--version_file', '../mozc_version.txt',
@@ -506,7 +502,7 @@
               'inputs': [ 'installer/preflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/preflight.sh' ],
               'action': [
-                'python', '../build_tools/tweak_macinstaller_script.py',
+                '<(python)', '../build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/preflight.sh',
                 '--input', 'installer/preflight_template.sh',
                 '--version_file', '../mozc_version.txt',
@@ -518,7 +514,7 @@
               'inputs': [ 'installer/postflight_template.sh', ],
               'outputs': [ '<(gen_out_dir)/postflight.sh' ],
               'action': [
-                'python', '../build_tools/tweak_macinstaller_script.py',
+                '<(python)', '../build_tools/tweak_macinstaller_script.py',
                 '--output', '<(gen_out_dir)/postflight.sh',
                 '--input', 'installer/postflight_template.sh',
                 '--version_file', '../mozc_version.txt',
@@ -530,7 +526,7 @@
               'inputs': [ 'installer/<(branding)_template.pkgproj', ],
               'outputs': [ '<(gen_out_dir)/<(branding).pkgproj' ],
               'action': [
-                'python', '../build_tools/tweak_pkgproj.py',
+                '<(python)', '../build_tools/tweak_pkgproj.py',
                 '--output', '<(gen_out_dir)/<(branding).pkgproj',
                 '--input', 'installer/<(branding)_template.pkgproj',
                 '--version_file', '../mozc_version.txt',
@@ -559,8 +555,9 @@
                 '<(PRODUCT_DIR)/<(branding).pkg',
               ],
               'action': [
-                'python', '../build_tools/build_and_sign_pkg_mac.py',
+                '<(python)', '../build_tools/build_and_sign_pkg_mac.py',
                 '--pkgproj', '<(gen_out_dir)/<(branding).pkgproj',
+                '--product_dir', '<(PRODUCT_DIR)',
               ],
               'conditions': [
                 ['branding=="GoogleJapaneseInput"', {

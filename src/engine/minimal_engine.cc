@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,14 +50,14 @@ class UserDataManagerStub : public UserDataManagerInterface {
   bool ClearUserHistory() override { return true; }
   bool ClearUserPrediction() override { return true; }
   bool ClearUnusedUserPrediction() override { return true; }
-  bool ClearUserPredictionEntry(const string &key,
-                                const string &value) override {
+  bool ClearUserPredictionEntry(const std::string &key,
+                                const std::string &value) override {
     return true;
   }
   bool Wait() override { return true; }
 };
 
-bool AddAsIsCandidate(const string &key, Segments *segments) {
+bool AddAsIsCandidate(const std::string &key, Segments *segments) {
   if (segments == nullptr) {
     return false;
   }
@@ -85,7 +85,7 @@ bool AddAsIsCandidate(const ConversionRequest &request, Segments *segments) {
   if (!request.has_composer()) {
     return false;
   }
-  string key;
+  std::string key;
   request.composer().GetQueryForConversion(&key);
   return AddAsIsCandidate(key, segments);
 }
@@ -100,12 +100,13 @@ class MinimalConverter : public ConverterInterface {
     return AddAsIsCandidate(request, segments);
   }
 
-  bool StartConversion(Segments *segments, const string &key) const override {
+  bool StartConversion(Segments *segments,
+                       const std::string &key) const override {
     return AddAsIsCandidate(key, segments);
   }
 
   bool StartReverseConversion(Segments *segments,
-                              const string &key) const override {
+                              const std::string &key) const override {
     return false;
   }
 
@@ -114,7 +115,8 @@ class MinimalConverter : public ConverterInterface {
     return AddAsIsCandidate(request, segments);
   }
 
-  bool StartPrediction(Segments *segments, const string &key) const override {
+  bool StartPrediction(Segments *segments,
+                       const std::string &key) const override {
     return AddAsIsCandidate(key, segments);
   }
 
@@ -123,7 +125,8 @@ class MinimalConverter : public ConverterInterface {
     return AddAsIsCandidate(request, segments);
   }
 
-  bool StartSuggestion(Segments *segments, const string &key) const override {
+  bool StartSuggestion(Segments *segments,
+                       const std::string &key) const override {
     return AddAsIsCandidate(key, segments);
   }
 
@@ -133,7 +136,7 @@ class MinimalConverter : public ConverterInterface {
   }
 
   bool StartPartialPrediction(Segments *segments,
-                              const string &key) const override {
+                              const std::string &key) const override {
     return false;
   }
 
@@ -143,7 +146,7 @@ class MinimalConverter : public ConverterInterface {
   }
 
   bool StartPartialSuggestion(Segments *segments,
-                              const string &key) const override {
+                              const std::string &key) const override {
     return false;
   }
 
@@ -152,20 +155,14 @@ class MinimalConverter : public ConverterInterface {
     return true;
   }
 
-  bool CancelConversion(Segments *segments) const override {
-    return true;
-  }
+  bool CancelConversion(Segments *segments) const override { return true; }
 
-  bool ResetConversion(Segments *segments) const override {
-    return true;
-  }
+  bool ResetConversion(Segments *segments) const override { return true; }
 
-  bool RevertConversion(Segments *segments) const override {
-    return true;
-  }
+  bool RevertConversion(Segments *segments) const override { return true; }
 
   bool ReconstructHistory(Segments *segments,
-                          const string &preceding_text) const override {
+                          const std::string &preceding_text) const override {
     return true;
   }
 
@@ -176,8 +173,8 @@ class MinimalConverter : public ConverterInterface {
 
   bool CommitPartialSuggestionSegmentValue(
       Segments *segments, size_t segment_index, int candidate_index,
-      const string &current_segment_key,
-      const string &new_segment_key) const override {
+      absl::string_view current_segment_key,
+      absl::string_view new_segment_key) const override {
     return true;
   }
 
@@ -220,10 +217,10 @@ class MinimalPredictor : public PredictorInterface {
     return AddAsIsCandidate(request, segments);
   }
 
-  const string &GetPredictorName() const override { return name_; }
+  const std::string &GetPredictorName() const override { return name_; }
 
  private:
-  const string name_;
+  const std::string name_;
 };
 
 }  // namespace

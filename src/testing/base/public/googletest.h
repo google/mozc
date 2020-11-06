@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,9 @@
 
 #include "base/flags.h"
 
+// gunit doesn't expose test_srcdir and test_tmpdir on mobile platforms like
+// Android.
+
 // --test_srcdir is the path to a directory that contains the input data files
 // for a test, so that each entry in the 'data' section of the BUILD rule for
 // this test specifies a path relative to FLAGS_test_srcdir.
@@ -44,9 +47,9 @@ DECLARE_string(test_srcdir);
 DECLARE_string(test_tmpdir);
 
 namespace mozc {
-  // Initialize FLAGS_test_srcdir and FLAGS_test_tmpdir.
-  void InitTestFlags();
-}
+// Initialize FLAGS_test_srcdir and FLAGS_test_tmpdir.
+void InitTestFlags();
+}  // namespace mozc
 
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GOOGLETEST_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,11 @@
 #include "gui/dictionary_tool/find_dialog.h"
 
 #include <QtGui/QtGui>
-#include <QtWidgets/QTableWidget>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QTableWidget>
 
 #include "base/logging.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -43,27 +44,24 @@ const char kYellowSelectionStyleSheet[] =
 }
 
 FindDialog::FindDialog(QWidget *parent, QTableWidget *table)
-    : QDialog(parent,
-              Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
-      table_(table), last_item_(NULL) {
+    : QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
+      table_(table),
+      last_item_(nullptr) {
   setupUi(this);
   setModal(false);
 
-  connect(QuerylineEdit, SIGNAL(textChanged(const QString &)),
-          this, SLOT(LineEditChanged(const QString &)));
-  connect(FindForwardpushButton, SIGNAL(clicked()),
-          this, SLOT(FindForward()));
-  connect(FindBackwardpushButton, SIGNAL(clicked()),
-          this, SLOT(FindBackward()));
-  connect(CancelpushButton, SIGNAL(clicked()),
-          this, SLOT(close()));
+  connect(QuerylineEdit, SIGNAL(textChanged(const QString &)), this,
+          SLOT(LineEditChanged(const QString &)));
+  connect(FindForwardpushButton, SIGNAL(clicked()), this, SLOT(FindForward()));
+  connect(FindBackwardpushButton, SIGNAL(clicked()), this,
+          SLOT(FindBackward()));
+  connect(CancelpushButton, SIGNAL(clicked()), this, SLOT(close()));
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 FindDialog::~FindDialog() {}
 
-void FindDialog::LineEditChanged(const QString &str) {
-  UpdateUIStatus();
-}
+void FindDialog::LineEditChanged(const QString &str) { UpdateUIStatus(); }
 
 void FindDialog::showEvent(QShowEvent *event) {
   QuerylineEdit->setFocus(Qt::OtherFocusReason);
@@ -71,23 +69,23 @@ void FindDialog::showEvent(QShowEvent *event) {
     QuerylineEdit->selectAll();
   }
   FindForwardpushButton->setDefault(true);
-  last_item_ = NULL;
+  last_item_ = nullptr;
   UpdateUIStatus();
 }
 
 void FindDialog::closeEvent(QCloseEvent *event) {
   table_->setStyleSheet("");
-  last_item_ = NULL;
+  last_item_ = nullptr;
 }
 
 void FindDialog::UpdateUIStatus() {
-  const bool enabled =!QuerylineEdit->text().isEmpty();
+  const bool enabled = !QuerylineEdit->text().isEmpty();
   FindForwardpushButton->setEnabled(enabled);
   FindBackwardpushButton->setEnabled(enabled);
 }
 
 bool FindDialog::Match(const QString &query, int row, int column) {
-  if (last_item_ != NULL && last_item_ == table_->item(row, column)) {
+  if (last_item_ != nullptr && last_item_ == table_->item(row, column)) {
     return false;
   }
   const QString &value = table_->item(row, column)->text();
@@ -140,7 +138,7 @@ void FindDialog::Find(FindDialog::Direction direction) {
       LOG(FATAL) << "Unknown direction: " << static_cast<int>(direction);
   }
 
-  FOUND:
+FOUND:
 
   if (matched_row >= 0 && matched_column >= 0) {
     QTableWidgetItem *item = table_->item(matched_row, matched_column);
@@ -150,7 +148,7 @@ void FindDialog::Find(FindDialog::Direction direction) {
     table_->setCurrentItem(item);
     table_->scrollToItem(item);
   } else {
-    last_item_ = NULL;
+    last_item_ = nullptr;
     QMessageBox::information(this, this->windowTitle(),
                              tr("Cannot find pattern %1").arg(query));
   }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,14 +34,14 @@
 namespace mozc {
 namespace gui {
 
-QString TableUtil::SafeGetItemText(
-    const QTableWidget *table_widget, int row, int column) {
-  if (table_widget == NULL) {
+QString TableUtil::SafeGetItemText(const QTableWidget *table_widget, int row,
+                                   int column) {
+  if (table_widget == nullptr) {
     return QString();
   }
-  // If |row| and/or |column| is out of range, we will get NULL anyway.
+  // If |row| and/or |column| is out of range, we will get nullptr anyway.
   const QTableWidgetItem *item = table_widget->item(row, column);
-  if (item == NULL) {
+  if (item == nullptr) {
     return QString();
   }
   return item->text();

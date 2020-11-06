@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,28 +29,19 @@
 
 #include <google/protobuf/compiler/command_line_interface.h>
 #include <google/protobuf/compiler/cpp/cpp_generator.h>
-#ifdef MOZC_ENABLE_PROTOC_GEN_JAVA
-#include <google/protobuf/compiler/java/java_generator.h>
-#endif  // MOZC_ENABLE_PROTOC_GEN_JAVA
 
-// A custom protoc entrypoint for Mozc, which needs only C++ and Java bindings.
+// A custom protoc entrypoint for Mozc, which needs only C++ bindings.
 // Having this custom entrypoint allows us to
-//  * reduce the maintainance cost of protobuf.gyp, because we do not need to
+//  * reduce the maintenance cost of protobuf.gyp, because we do not need to
 //    build generators for other languages.
 //  * avoid hard-coded OPENSOURCE_PROTOBUF_CPP_BOOTSTRAP macro behavior in the
 //    third_party/protobuf/src/google/protobuf/compiler/main.cc
 int main(int argc, char* argv[]) {
   google::protobuf::compiler::CommandLineInterface cli;
-
   google::protobuf::compiler::cpp::CppGenerator cpp_generator;
+
   cli.RegisterGenerator("--cpp_out", "--cpp_opt", &cpp_generator,
                         "Generate C++ header and source.");
-
-#ifdef MOZC_ENABLE_PROTOC_GEN_JAVA
-  google::protobuf::compiler::java::JavaGenerator java_generator;
-  cli.RegisterGenerator("--java_out", "--java_opt", &java_generator,
-                        "Generate Java source file.");
-#endif  // MOZC_ENABLE_PROTOC_GEN_JAVA
 
   return cli.Run(argc, argv);
 }

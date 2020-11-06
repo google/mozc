@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "win32/tip/tip_ui_handler_immersive.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
@@ -37,6 +38,7 @@
 #include <atlmisc.h>
 #include <atlwin.h>
 #include <msctf.h>
+// clang-format on
 
 #include <unordered_map>
 
@@ -80,9 +82,7 @@ using UiElementMap = std::unordered_map<ITfUIElement *, HWND>;
 class ThreadLocalInfo {
  public:
   ThreadLocalInfo() {}
-  UiElementMap *ui_element_map() {
-    return &ui_element_map_;
-  }
+  UiElementMap *ui_element_map() { return &ui_element_map_; }
 
  private:
   UiElementMap ui_element_map_;
@@ -97,8 +97,8 @@ ThreadLocalInfo *GetThreadLocalInfo() {
   if (g_tls_index == TLS_OUT_OF_INDEXES) {
     return nullptr;
   }
-  ThreadLocalInfo *info = static_cast<ThreadLocalInfo *>(
-      ::TlsGetValue(g_tls_index));
+  ThreadLocalInfo *info =
+      static_cast<ThreadLocalInfo *>(::TlsGetValue(g_tls_index));
   if (info != nullptr) {
     // already initialized.
     return info;
@@ -115,8 +115,8 @@ void EnsureThreadLocalInfoDestroyed() {
   if (g_tls_index == TLS_OUT_OF_INDEXES) {
     return;
   }
-  ThreadLocalInfo *info = static_cast<ThreadLocalInfo *>(
-      ::TlsGetValue(g_tls_index));
+  ThreadLocalInfo *info =
+      static_cast<ThreadLocalInfo *>(::TlsGetValue(g_tls_index));
   if (info == nullptr) {
     // already destroyes.
     return;
@@ -134,8 +134,7 @@ void UpdateUI(TipTextService *text_service, ITfContext *context) {
   if (info == nullptr) {
     return;
   }
-  TipPrivateContext *private_context =
-      text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     return;
   }
@@ -143,8 +142,8 @@ void UpdateUI(TipTextService *text_service, ITfContext *context) {
   const UiElementMap &map = *info->ui_element_map();
 
   const TipUiElementManager::UIElementFlags kUiFlags[] = {
-    TipUiElementManager::kSuggestWindow,
-    TipUiElementManager::kCandidateWindow,
+      TipUiElementManager::kSuggestWindow,
+      TipUiElementManager::kCandidateWindow,
   };
   for (size_t i = 0; i < arraysize(kUiFlags); ++i) {
     const CComPtr<ITfUIElement> ui_element =
@@ -172,8 +171,8 @@ ITfUIElement *TipUiHandlerImmersive::CreateUI(TipUiHandler::UiType type,
         return nullptr;
       }
       HWND window_handle = nullptr;
-      CComPtr<ITfUIElement> element(TipUiElementImmersive::New(
-          text_service, context, &window_handle));
+      CComPtr<ITfUIElement> element(
+          TipUiElementImmersive::New(text_service, context, &window_handle));
       if (element == nullptr) {
         return nullptr;
       }
@@ -240,8 +239,8 @@ bool TipUiHandlerImmersive::OnDllProcessAttach(HINSTANCE module_handle,
                                                bool static_loading) {
   g_module = module_handle;
   g_tls_index = ::TlsAlloc();
-  return TipUiElementImmersive::OnDllProcessAttach(
-      module_handle, static_loading);
+  return TipUiElementImmersive::OnDllProcessAttach(module_handle,
+                                                   static_loading);
 }
 
 void TipUiHandlerImmersive::OnDllProcessDetach(HINSTANCE module_handle,

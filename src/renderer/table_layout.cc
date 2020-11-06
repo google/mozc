@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,10 +57,9 @@ TableLayout::TableLayout()
       row_rect_padding_pixels_(0),
       row_height_(1),
       vscroll_width_pixels_(0),
-      layout_frozen_(false) { }
+      layout_frozen_(false) {}
 
-void TableLayout::Initialize(int num_rows,
-                             int num_columns) {
+void TableLayout::Initialize(int num_rows, int num_columns) {
   number_of_rows_ = num_rows;
   number_of_columns_ = num_columns;
 
@@ -163,8 +162,7 @@ void TableLayout::FreezeLayout() {
   if (ensure_width_from_column_ >= 0 &&
       ensure_width_from_column_ < number_of_columns_ &&
       ensure_width_to_column_ > ensure_width_from_column_ &&
-      ensure_width_to_column_ < number_of_columns_ &&
-      ensure_width_ > 0) {
+      ensure_width_to_column_ < number_of_columns_ && ensure_width_ > 0) {
     int ensured_range_width = 0;
     for (int i = ensure_width_from_column_; i <= ensure_width_to_column_; ++i) {
       ensured_range_width += column_width_list_[i];
@@ -175,8 +173,8 @@ void TableLayout::FreezeLayout() {
     }
   }
 
-  const int all_cell_width = accumulate(column_width_list_.begin(),
-                                        column_width_list_.end(), 0);
+  const int all_cell_width =
+      std::accumulate(column_width_list_.begin(), column_width_list_.end(), 0);
 
   const int table_width =
       row_rect_padding_pixels_ * 2 +  // padding left and right
@@ -203,9 +201,7 @@ void TableLayout::FreezeLayout() {
   layout_frozen_ = true;
 }
 
-bool TableLayout::IsLayoutFrozen() const {
-  return layout_frozen_;
-}
+bool TableLayout::IsLayoutFrozen() const { return layout_frozen_; }
 
 // ------------------------------------------------------------------------
 // Get component rects
@@ -219,9 +215,8 @@ Rect TableLayout::GetCellRect(int row, int column) const {
   DCHECK(0 <= row && row < number_of_rows_);
   DCHECK(0 <= column && column < column_width_list_.size());
 
-  const int width_of_left_cells =
-      accumulate(column_width_list_.begin(),
-                 column_width_list_.begin() + column, 0);
+  const int width_of_left_cells = std::accumulate(
+      column_width_list_.begin(), column_width_list_.begin() + column, 0);
 
   const int left = window_border_pixels_ +     // border left
                    row_rect_padding_pixels_ +  // row padding left
@@ -261,8 +256,8 @@ Rect TableLayout::GetHeaderRect() const {
   const int width = total_size_.width -         // total width
                     window_border_pixels_ * 2;  // border left and rigth
 
-  return Rect(window_border_pixels_, window_border_pixels_,
-              width, minimum_header_size_.height);
+  return Rect(window_border_pixels_, window_border_pixels_, width,
+              minimum_header_size_.height);
 }
 
 Rect TableLayout::GetFooterRect() const {
@@ -302,15 +297,14 @@ Rect TableLayout::GetVScrollBarRect() const {
   return Rect(left, top, vscroll_width_pixels_, height);
 }
 
-Rect TableLayout::GetVScrollIndicatorRect(
-    int begin_index, int end_index, int candidates_total) const {
+Rect TableLayout::GetVScrollIndicatorRect(int begin_index, int end_index,
+                                          int candidates_total) const {
   const Rect &vscroll_rect = GetVScrollBarRect();
 
   const float scroll_bar_height =
       static_cast<float>(vscroll_rect.Height()) / candidates_total;
   const float top = vscroll_rect.Top() + scroll_bar_height * begin_index;
-  const float bottom =
-      vscroll_rect.Top() + scroll_bar_height * (end_index + 1);
+  const float bottom = vscroll_rect.Top() + scroll_bar_height * (end_index + 1);
 
   // add 0.5f to round up
   int rounded_top = static_cast<int>(top + 0.5f);
@@ -352,9 +346,8 @@ Rect TableLayout::GetColumnRect(int column) const {
   }
   DCHECK(0 <= column && column < column_width_list_.size());
 
-  const int width_of_left_cells =
-    accumulate(column_width_list_.begin(),
-               column_width_list_.begin() + column, 0);
+  const int width_of_left_cells = std::accumulate(
+      column_width_list_.begin(), column_width_list_.begin() + column, 0);
 
   const int left = window_border_pixels_ +     // border left
                    row_rect_padding_pixels_ +  // padding left
@@ -373,13 +366,9 @@ Rect TableLayout::GetColumnRect(int column) const {
 // ------------------------------------------------------------------------
 // Parameter getters
 // ------------------------------------------------------------------------
-int TableLayout::number_of_rows() const {
-  return number_of_rows_;
-}
+int TableLayout::number_of_rows() const { return number_of_rows_; }
 
-int TableLayout::number_of_columns() const {
-  return number_of_columns_;
-}
+int TableLayout::number_of_columns() const { return number_of_columns_; }
 
 }  // namespace renderer
 }  // namespace mozc

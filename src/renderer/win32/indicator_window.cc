@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "renderer/win32/indicator_window.h"
 
+// clang-format off
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
@@ -37,6 +38,7 @@
 #include <atlapp.h>
 #include <atlcrack.h>
 #include <atlmisc.h>
+// clang-format on
 
 #include <algorithm>
 #include <vector>
@@ -54,9 +56,9 @@ namespace win32 {
 
 namespace {
 
-using ATL::CWinTraits;
 using ATL::CWindow;
 using ATL::CWindowImpl;
+using ATL::CWinTraits;
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;
@@ -70,16 +72,14 @@ typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 // 96 DPI is the default DPI in Windows.
 const int kDefaultDPI = 96;
 
-
 // As Discussed in b/2317702, UI windows are disabled by default because it is
 // hard for a user to find out what caused the problem than finding that the
 // operations seems to be disabled on the UI window when
 // SPI_GETACTIVEWINDOWTRACKING is enabled.
 // TODO(yukawa): Support mouse operations before we add a GUI feature which
 //     requires UI interaction by mouse and/or touch. (b/2954874)
-typedef CWinTraits<
-    WS_POPUP | WS_DISABLED,
-    WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE>
+typedef CWinTraits<WS_POPUP | WS_DISABLED, WS_EX_LAYERED | WS_EX_TOOLWINDOW |
+                                               WS_EX_TOPMOST | WS_EX_NOACTIVATE>
     IndicatorWindowTraits;
 
 struct Sprite {
@@ -96,7 +96,7 @@ const DWORD kFadingOutInterval = 16;      // msec
 const int kFadingOutAlphaDelta = 32;
 
 double GetDPIScaling() {
-  CDC desktop_dc(::GetDC(NULL));
+  CDC desktop_dc(::GetDC(nullptr));
   const int dpi_x = desktop_dc.GetDeviceCaps(LOGPIXELSX);
   return static_cast<double>(dpi_x) / kDefaultDPI;
 }
@@ -104,21 +104,18 @@ double GetDPIScaling() {
 }  // namespace
 
 class IndicatorWindow::WindowImpl
-    : public CWindowImpl<IndicatorWindow::WindowImpl,
-                         CWindow,
+    : public CWindowImpl<IndicatorWindow::WindowImpl, CWindow,
                          IndicatorWindowTraits> {
  public:
   DECLARE_WND_CLASS_EX(kIndicatorWindowClassName, 0, COLOR_WINDOW);
-  WindowImpl()
-      : alpha_(255),
-        dpi_scaling_(GetDPIScaling()) {
+  WindowImpl() : alpha_(255), dpi_scaling_(GetDPIScaling()) {
     sprites_.resize(commands::NUM_OF_COMPOSITIONS);
   }
 
   BEGIN_MSG_MAP_EX(WindowImpl)
-    MSG_WM_CREATE(OnCreate)
-    MSG_WM_TIMER(OnTimer)
-    MSG_WM_SETTINGCHANGE(OnSettingChange)
+  MSG_WM_CREATE(OnCreate)
+  MSG_WM_TIMER(OnTimer)
+  MSG_WM_SETTINGCHANGE(OnSettingChange)
   END_MSG_MAP()
 
   void OnUpdate(const commands::RendererCommand &command,
@@ -128,14 +125,13 @@ class IndicatorWindow::WindowImpl
 
     bool visible = false;
     IndicatorWindowLayout indicator_layout;
-    if (command.has_visible() &&
-        command.visible() &&
+    if (command.has_visible() && command.visible() &&
         command.has_application_info() &&
         command.application_info().has_indicator_info() &&
         command.application_info().indicator_info().has_status()) {
       const ApplicationInfo &app_info = command.application_info();
-      visible = layout_manager->LayoutIndicatorWindow(app_info,
-                                                      &indicator_layout);
+      visible =
+          layout_manager->LayoutIndicatorWindow(app_info, &indicator_layout);
     }
     if (!visible) {
       HideIndicator();
@@ -144,14 +140,12 @@ class IndicatorWindow::WindowImpl
     DCHECK(command.has_application_info());
     DCHECK(command.application_info().has_indicator_info());
     DCHECK(command.application_info().indicator_info().has_status());
-    const Status &status =
-        command.application_info().indicator_info().status();
+    const Status &status = command.application_info().indicator_info().status();
 
     alpha_ = 255;
     current_image_ = sprites_[commands::DIRECT].bitmap;
     CPoint offset = sprites_[commands::DIRECT].offset;
-    if (!status.has_activated() || !status.has_mode() ||
-        !status.activated()) {
+    if (!status.has_activated() || !status.has_mode() || !status.activated()) {
       current_image_ = sprites_[commands::DIRECT].bitmap;
       offset = sprites_[commands::DIRECT].offset;
     } else {
@@ -201,9 +195,9 @@ class IndicatorWindow::WindowImpl
     BLENDFUNCTION func = {AC_SRC_OVER, 0, alpha_, AC_SRC_ALPHA};
 
     const CBitmapHandle old_bitmap = dc.SelectBitmap(current_image_);
-    const BOOL result = ::UpdateLayeredWindow(
-        m_hWnd, nullptr, &top_left, &size, dc, &src_left_top, 0, &func,
-        ULW_ALPHA);
+    const BOOL result =
+        ::UpdateLayeredWindow(m_hWnd, nullptr, &top_left, &size, dc,
+                              &src_left_top, 0, &func, ULW_ALPHA);
     dc.SelectBitmap(old_bitmap);
     ShowWindow(SW_SHOWNA);
   }
@@ -211,12 +205,8 @@ class IndicatorWindow::WindowImpl
   LRESULT OnCreate(LPCREATESTRUCT create_struct) {
     EnableOrDisableWindowForWorkaround();
     const int kModes[] = {
-      commands::DIRECT,
-      commands::HIRAGANA,
-      commands::FULL_KATAKANA,
-      commands::HALF_ASCII,
-      commands::FULL_ASCII,
-      commands::HALF_KATAKANA,
+        commands::DIRECT,     commands::HIRAGANA,   commands::FULL_KATAKANA,
+        commands::HALF_ASCII, commands::FULL_ASCII, commands::HALF_KATAKANA,
     };
     for (size_t i = 0; i < arraysize(kModes); ++i) {
       LoadSprite(kModes[i]);
@@ -256,8 +246,8 @@ class IndicatorWindow::WindowImpl
     // TODO(yukawa): Support mouse operations before we add a GUI feature which
     //   requires UI interaction by mouse and/or touch. (b/2954874)
     BOOL is_tracking_enabled = FALSE;
-    if (::SystemParametersInfo(SPI_GETACTIVEWINDOWTRACKING,
-                               0, &is_tracking_enabled, 0)) {
+    if (::SystemParametersInfo(SPI_GETACTIVEWINDOWTRACKING, 0,
+                               &is_tracking_enabled, 0)) {
       EnableWindow(!is_tracking_enabled);
     }
   }
@@ -326,30 +316,23 @@ class IndicatorWindow::WindowImpl
   DISALLOW_COPY_AND_ASSIGN(WindowImpl);
 };
 
-IndicatorWindow::IndicatorWindow()
-    : impl_(new WindowImpl) {}
+IndicatorWindow::IndicatorWindow() : impl_(new WindowImpl) {}
 
-IndicatorWindow::~IndicatorWindow() {
-  impl_->DestroyWindow();
-}
+IndicatorWindow::~IndicatorWindow() { impl_->DestroyWindow(); }
 
 void IndicatorWindow::Initialize() {
   impl_->Create(nullptr);
   impl_->ShowWindow(SW_HIDE);
 }
 
-void IndicatorWindow::Destroy() {
-  impl_->DestroyWindow();
-}
+void IndicatorWindow::Destroy() { impl_->DestroyWindow(); }
 
 void IndicatorWindow::OnUpdate(const commands::RendererCommand &command,
                                LayoutManager *layout_manager) {
   impl_->OnUpdate(command, layout_manager);
 }
 
-void IndicatorWindow::Hide() {
-  impl_->HideIndicator();
-}
+void IndicatorWindow::Hide() { impl_->HideIndicator(); }
 
 }  // namespace win32
 }  // namespace renderer

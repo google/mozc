@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/mozc_hash_set.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -45,8 +46,7 @@ EnglishVariantsRewriter::EnglishVariantsRewriter() {}
 EnglishVariantsRewriter::~EnglishVariantsRewriter() {}
 
 bool EnglishVariantsRewriter::ExpandEnglishVariants(
-    const string &input,
-    std::vector<string> *variants) const {
+    const std::string &input, std::vector<std::string> *variants) const {
   DCHECK(variants);
 
   if (input.empty()) {
@@ -54,13 +54,13 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
   }
 
   // multi-word
-  if (input.find(" ") != string::npos) {
+  if (input.find(" ") != std::string::npos) {
     return false;
   }
 
-  string lower = input;
-  string upper = input;
-  string capitalized = input;
+  std::string lower = input;
+  std::string upper = input;
+  std::string capitalized = input;
   Util::LowerString(&lower);
   Util::UpperString(&upper);
   Util::CapitalizeString(&capitalized);
@@ -108,8 +108,14 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
   CHECK(seg);
 
   bool modified = false;
+  mozc_hash_set<std::string> expanded_t13n_candidates;
+  mozc_hash_set<std::string> original_candidates;
 
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
+    original_candidates.insert(seg->candidate(i).value);
+  }
+
+  for (int i = seg->candidates_size() - 1; i >= 0; --i) {
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
 
@@ -117,42 +123,51 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     // If the entry is comming from user dictionary,
     // expand English variants.
     if (original_candidate->attributes &
-        Segment::Candidate::NO_VARIANTS_EXPANSION &&
+            Segment::Candidate::NO_VARIANTS_EXPANSION &&
         !(original_candidate->attributes &
           Segment::Candidate::USER_DICTIONARY)) {
       continue;
     }
 
     if (IsT13NCandidate(original_candidate)) {
-      // Expand T13N candiadte variants
+      if (expanded_t13n_candidates.find(original_candidate->value) !=
+          expanded_t13n_candidates.end()) {
+        original_candidate->attributes |=
+            Segment::Candidate::NO_VARIANTS_EXPANSION;
+        continue;
+      }
+
+      // Expand T13N candidate variants
       modified = true;
       original_candidate->attributes |=
           Segment::Candidate::NO_VARIANTS_EXPANSION;
-      std::vector<string> variants;
-      if (ExpandEnglishVariants(original_candidate->content_value,
-                                &variants)) {
+      std::vector<std::string> variants;
+      if (ExpandEnglishVariants(original_candidate->content_value, &variants)) {
         CHECK(!variants.empty());
-        for (size_t j = 0; j < variants.size(); ++j) {
-          Segment::Candidate *new_candidate = seg->insert_candidate(i + j + 1);
+        for (auto it = variants.rbegin(); it != variants.rend(); ++it) {
+          std::string new_value;
+          Util::ConcatStrings(*it, original_candidate->functional_value(),
+                              &new_value);
+          expanded_t13n_candidates.insert(new_value);
+          if (original_candidates.find(new_value) !=
+              original_candidates.end()) {
+            continue;
+          }
+          Segment::Candidate *new_candidate = seg->insert_candidate(i + 1);
           DCHECK(new_candidate);
           new_candidate->Init();
-          Util::ConcatStrings(variants[j],
-                              original_candidate->functional_value(),
-                              &new_candidate->value);
+          new_candidate->value = std::move(new_value);
           new_candidate->key = original_candidate->key;
-          new_candidate->content_value = variants[j];
+          new_candidate->content_value = std::move(*it);
           new_candidate->content_key = original_candidate->content_key;
           new_candidate->cost = original_candidate->cost;
           new_candidate->wcost = original_candidate->wcost;
-          new_candidate->structure_cost =
-              original_candidate->structure_cost;
+          new_candidate->structure_cost = original_candidate->structure_cost;
           new_candidate->lid = original_candidate->lid;
           new_candidate->rid = original_candidate->rid;
           new_candidate->attributes |=
               Segment::Candidate::NO_VARIANTS_EXPANSION;
         }
-
-        i += variants.size();
       }
     } else if (IsEnglishCandidate(original_candidate)) {
       // Fix variants for English candidate

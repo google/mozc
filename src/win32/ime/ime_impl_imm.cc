@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
 #include "win32/ime/ime_impl_imm.h"
 
 #include <ime.h>
-
 #include <strsafe.h>
+
+#include <limits>
 
 #include "google/protobuf/stubs/common.h"
 #include "base/const.h"
@@ -42,6 +43,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/process.h"
+#include "base/protobuf/protobuf.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/update_util.h"
@@ -107,15 +109,15 @@ bool g_process_is_shutting_down = false;
 // notification.  You are likely to notice this issue especially on
 // CUAS-enabled XP, as filed in b/3088049.
 // This macro can be used to mitigate this scenario.
-#define DANGLING_CALLBACK_GUARD(return_code)   \
-  do {                                         \
-    if (g_process_is_shutting_down) {          \
-      return (return_code);                    \
-    }                                          \
+#define DANGLING_CALLBACK_GUARD(return_code) \
+  do {                                       \
+    if (g_process_is_shutting_down) {        \
+      return (return_code);                  \
+    }                                        \
   } while (false)
 
-static_assert(arraysize(mozc::kIMEUIWndClassName)
-              <= mozc::kIMEUIwndClassNameLimitInTchars,
+static_assert(arraysize(mozc::kIMEUIWndClassName) <=
+                  mozc::kIMEUIwndClassNameLimitInTchars,
               "Window Class Name has length limit.");
 
 // Maximum number of characters for |REGISTERWORD::lpWord| and
@@ -139,10 +141,10 @@ void SetEnveronmentVariablesForWordRegisterDialog(
     const std::wstring &word_value, const std::wstring &word_reading) {
   std::wstring word_value_env_name;
   std::wstring word_reading_env_name;
-  mozc::Util::UTF8ToWide(
-      mozc::kWordRegisterEnvironmentName, &word_value_env_name);
-  mozc::Util::UTF8ToWide(
-      mozc::kWordRegisterEnvironmentReadingName, &word_reading_env_name);
+  mozc::Util::UTF8ToWide(mozc::kWordRegisterEnvironmentName,
+                         &word_value_env_name);
+  mozc::Util::UTF8ToWide(mozc::kWordRegisterEnvironmentReadingName,
+                         &word_reading_env_name);
 
   if (word_value.empty()) {
     // Remove relevant variables.
@@ -150,12 +152,10 @@ void SetEnveronmentVariablesForWordRegisterDialog(
     ::SetEnvironmentVariable(word_reading_env_name.c_str(), nullptr);
   }
 
-  ::SetEnvironmentVariable(word_value_env_name.c_str(),
-                           word_value.c_str());
+  ::SetEnvironmentVariable(word_value_env_name.c_str(), word_value.c_str());
   if (word_reading.empty()) {
     // Remove relevant variable.
-    ::SetEnvironmentVariable(word_reading_env_name.c_str(),
-                             nullptr);
+    ::SetEnvironmentVariable(word_reading_env_name.c_str(), nullptr);
   } else {
     ::SetEnvironmentVariable(word_reading_env_name.c_str(),
                              word_reading.c_str());
@@ -174,8 +174,8 @@ int32 GetContextRevision() {
   if (g_context_revision_tls_index == kInvalidTlsIndex) {
     return 0;
   }
-  const uintptr_t raw_value = reinterpret_cast<uintptr_t>(
-      ::TlsGetValue(g_context_revision_tls_index));
+  const uintptr_t raw_value =
+      reinterpret_cast<uintptr_t>(::TlsGetValue(g_context_revision_tls_index));
   return static_cast<int32>(raw_value);
 }
 
@@ -184,7 +184,7 @@ void IncrementContextRevision() {
     return;
   }
   int32 revision = GetContextRevision();
-  if (revision < kint32max) {
+  if (revision < std::numeric_limits<int32>::max()) {
     ++revision;
   } else {
     revision = 0;
@@ -204,8 +204,8 @@ void FillContext(HIMC himc, mozc::commands::Context *context) {
     return;
   }
   const INPUTCONTEXT *input_context = ::ImmLockIMC(himc);
-  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-      private_context(input_context->hPrivate);
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+      input_context->hPrivate);
   const HWND attached_window = input_context->hWnd;
   ::ImmUnlockIMC(himc);
 
@@ -220,9 +220,7 @@ void FillContext(HIMC himc, mozc::commands::Context *context) {
 
 }  // namespace
 
-HINSTANCE ImeGetResource() {
-  return g_instance;
-}
+HINSTANCE ImeGetResource() { return g_instance; }
 
 namespace mozc {
 namespace win32 {
@@ -243,7 +241,7 @@ BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
   g_instance = instance;
 #if defined(USE_BREAKPAD)
   if (!::InitializeCriticalSectionAndSpinCount(&g_critical_section_for_breakpad,
-                                              kSpinCountForCriticalSection)) {
+                                               kSpinCountForCriticalSection)) {
     return FALSE;
   }
   mozc::CrashReportHandler::SetCriticalSection(
@@ -277,11 +275,11 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
 
   if (!g_in_safe_mode) {
     // It is our responsibility to make sure that our code never touch protobuf
-    // library after google::protobuf::ShutdownProtobufLibrary is called.
+    // library after mozc::protobuf::ShutdownProtobufLibrary is called.
     // Unfortunately, DllMain is the only place that satisfies this condition.
     // So we carefully call it here, even though DllMain is expected to be
     // dangerous for potential deadlocks.  See b/2126375 for details.
-    google::protobuf::ShutdownProtobufLibrary();
+    ::mozc::protobuf::ShutdownProtobufLibrary();
   }
 
   if (process_shutdown) {
@@ -298,8 +296,7 @@ BOOL OnDllProcessDetach(HINSTANCE instance, bool process_shutdown) {
 }  // namespace win32
 }  // namespace mozc
 
-BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
-                       LPTSTR class_name,
+BOOL WINAPI ImeInquire(LPIMEINFO ime_info, LPTSTR class_name,
                        DWORD system_info_flags) {
   // Cache the boot mode here so that we need not call user32.dll functions
   // from DllMain.  If it is safe mode, we omit some initializations/
@@ -319,24 +316,18 @@ BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
   // perspective, we actually have to check all key events, even when the IME
   // is turned off, to allow users to use an arbitrary key combination to turn
   // on IME.
-  ime_info->fdwProperty = 0
-      | IME_PROP_END_UNLOAD
-      | IME_PROP_KBD_CHAR_FIRST
-      | IME_PROP_ACCEPT_WIDE_VKEY
-      | IME_PROP_AT_CARET
-      | IME_PROP_NEED_ALTKEY
-      | IME_PROP_CANDLIST_START_FROM_1
-      | IME_PROP_UNICODE;
+  ime_info->fdwProperty = 0 | IME_PROP_END_UNLOAD | IME_PROP_KBD_CHAR_FIRST |
+                          IME_PROP_ACCEPT_WIDE_VKEY | IME_PROP_AT_CARET |
+                          IME_PROP_NEED_ALTKEY |
+                          IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE;
 
 #if !defined(UNICODE)
   // Actually, we have never tested on non-unicode build.
 #error "Non-Unicode build is not supported.";
 #endif  // !UNICODE
 
-  ime_info->fdwConversionCaps = IME_CMODE_LANGUAGE
-                              | IME_CMODE_KATAKANA
-                              | IME_CMODE_FULLSHAPE
-                              | IME_CMODE_ROMAN;
+  ime_info->fdwConversionCaps = IME_CMODE_LANGUAGE | IME_CMODE_KATAKANA |
+                                IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
 
   // Currently, only IME_SMODE_PHRASEPREDICT is supported.
   // See b/2913510, b/2954777, and b/2955175 for details.
@@ -344,15 +335,12 @@ BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
 
   ime_info->fdwUICaps = UI_CAP_2700;
 
-  ime_info->fdwSCSCaps = SCS_CAP_MAKEREAD
-                       | SCS_CAP_SETRECONVERTSTRING;
+  ime_info->fdwSCSCaps = SCS_CAP_MAKEREAD | SCS_CAP_SETRECONVERTSTRING;
 
-  ime_info->fdwSelectCaps = SELECT_CAP_CONVERSION
-                          | SELECT_CAP_SENTENCE;
+  ime_info->fdwSelectCaps = SELECT_CAP_CONVERSION | SELECT_CAP_SENTENCE;
 
-  const PTSTR strcpy_result =
-      lstrcpyn(class_name, mozc::kIMEUIWndClassName,
-               mozc::kIMEUIwndClassNameLimitInTchars);
+  const PTSTR strcpy_result = lstrcpyn(class_name, mozc::kIMEUIWndClassName,
+                                       mozc::kIMEUIwndClassNameLimitInTchars);
 
   if (!strcpy_result) {
     return FALSE;
@@ -375,11 +363,9 @@ BOOL WINAPI ImeInquire(LPIMEINFO ime_info,
   return TRUE;
 }
 
-DWORD WINAPI ImeConversionList(HIMC himc,
-                               LPCTSTR source,
+DWORD WINAPI ImeConversionList(HIMC himc, LPCTSTR source,
                                LPCANDIDATELIST candidate_list,
-                               DWORD buffer_length,
-                               UINT flags) {
+                               DWORD buffer_length, UINT flags) {
   DANGLING_CALLBACK_GUARD(FALSE);
   return 0;
 }
@@ -389,7 +375,7 @@ BOOL WINAPI ImeDestroy(UINT force) {
   // Free all singleton instances
   mozc::SingletonFinalizer::Finalize();
 
-  // We deliberately call google::protobuf::ShutdownProtobufLibrary from
+  // We deliberately call mozc::protobuf::ShutdownProtobufLibrary from
   // OnDllProcessDetach rather than here.  See b/2126375 for details.
 
 #if defined(USE_BREAKPAD)
@@ -414,11 +400,9 @@ LRESULT WINAPI ImeEscape(HIMC himc, UINT sub_func, LPVOID data) {
       std::wstring name;
       mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &name);
       wchar_t *dest = static_cast<wchar_t *>(data);
-      const HRESULT result = ::StringCchCopyN(
-          dest,
-          mozc::kSafeIMENameLengthForNTInTchars,
-          name.c_str(),
-          mozc::kSafeIMENameLengthForNTInTchars);
+      const HRESULT result =
+          ::StringCchCopyN(dest, mozc::kSafeIMENameLengthForNTInTchars,
+                           name.c_str(), mozc::kSafeIMENameLengthForNTInTchars);
       return (SUCCEEDED(result) ? TRUE : FALSE);
     }
     default:
@@ -469,11 +453,11 @@ BOOL WINAPI ImeSetActiveContext(HIMC himc, BOOL flag) {
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
   if (!mozc::win32::PrivateContextUtil::IsValidPrivateContext(
-           context->hPrivate)) {
+          context->hPrivate)) {
     return FALSE;
   }
-  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-      private_context(context->hPrivate);
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+      context->hPrivate);
 
   mozc::win32::MessageQueue message_queue(himc);
   if (activated) {
@@ -481,15 +465,13 @@ BOOL WINAPI ImeSetActiveContext(HIMC himc, BOOL flag) {
   } else {
     private_context->ui_visibility_tracker->OnBlur();
   }
-  message_queue.AddMessage(
-      WM_IME_NOTIFY, IMN_PRIVATE, mozc::win32::kNotifyUpdateUI);
+  message_queue.AddMessage(WM_IME_NOTIFY, IMN_PRIVATE,
+                           mozc::win32::kNotifyUpdateUI);
 
   return (message_queue.Send() ? TRUE : FALSE);
 }
 
-BOOL WINAPI ImeProcessKey(HIMC himc,
-                          UINT virtual_key,
-                          LPARAM lParam,
+BOOL WINAPI ImeProcessKey(HIMC himc, UINT virtual_key, LPARAM lParam,
                           CONST LPBYTE key_state) {
   DANGLING_CALLBACK_GUARD(FALSE);
   if (!mozc::win32::ImeCore::IsInputContextInitialized(himc)) {
@@ -497,8 +479,8 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   }
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
-  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-      private_context(context->hPrivate);
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+      context->hPrivate);
 
   // Because of IME_PROP_ACCEPT_WIDE_VKEY, |HIWORD(virtual_key)| contains an
   // Unicode character if |HIWORD(virtual_key) == VK_PACKET|.
@@ -519,7 +501,7 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
       // do nothing.
       break;
     case mozc::win32::VKBackBasedDeleter::
-             CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
+        CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
       private_context->deleter->EndDeletion();
       break;
     case mozc::win32::VKBackBasedDeleter::SEND_KEY_TO_APPLICATION:
@@ -527,7 +509,7 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
     case mozc::win32::VKBackBasedDeleter::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
       return TRUE;  // Consume this key but do not send this key to server.
     case mozc::win32::VKBackBasedDeleter::
-             CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
+        CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
     case mozc::win32::VKBackBasedDeleter::APPLY_PENDING_STATUS:
     default:
       DLOG(FATAL) << "this action is not applicable to ImeProcessKey.";
@@ -559,8 +541,8 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   // Update |private_context->ime_behavior| to support Kana/Roman input toggle
   // keys.  See b/3118905 for details.
   mozc::win32::KeyEventHandler::UpdateBehaviorInImeProcessKey(
-      vk, key_info.IsKeyDownInImeProcessKey(),
-      ime_state, private_context->ime_behavior);
+      vk, key_info.IsKeyDownInImeProcessKey(), ime_state,
+      private_context->ime_behavior);
 
   // Make an snapshot of |private_context->ime_behavior|, which
   // cannot be substituted for by const reference.
@@ -573,9 +555,9 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   mozc::win32::InputState next_state;
   mozc::commands::Output temporal_output;
   const mozc::win32::KeyEventHandlerResult result =
-      mozc::win32::ImeCore::ImeProcessKey(private_context->client,
-          vk, key_info, keyboard_status, behavior, ime_state, mozc_context,
-          &next_state, &temporal_output);
+      mozc::win32::ImeCore::ImeProcessKey(
+          private_context->client, vk, key_info, keyboard_status, behavior,
+          ime_state, mozc_context, &next_state, &temporal_output);
   if (!result.succeeded) {
     return FALSE;
   }
@@ -587,13 +569,12 @@ BOOL WINAPI ImeProcessKey(HIMC himc,
   }
 
   const mozc::win32::IndicatorVisibilityTracker::Action indicator_action =
-      private_context->indicator_visibility_tracker->
-          OnTestKey(vk, key_info.IsKeyDownInImeProcessKey(),
-                    result.should_be_eaten);
+      private_context->indicator_visibility_tracker->OnTestKey(
+          vk, key_info.IsKeyDownInImeProcessKey(), result.should_be_eaten);
   if (indicator_action == mozc::win32::IndicatorVisibilityTracker::kUpdateUI) {
     mozc::win32::MessageQueue message_queue(himc);
-    message_queue.AddMessage(
-        WM_IME_NOTIFY, IMN_PRIVATE, mozc::win32::kNotifyUpdateUI);
+    message_queue.AddMessage(WM_IME_NOTIFY, IMN_PRIVATE,
+                             mozc::win32::kNotifyUpdateUI);
     message_queue.Send();
   }
 
@@ -623,8 +604,8 @@ BOOL WINAPI NotifyIME(HIMC himc, DWORD action, DWORD index, DWORD value) {
         return FALSE;
       }
       const int32 candidate_index = static_cast<int32>(value);
-      return mozc::win32::ImeCore::HighlightCandidate(
-          himc, candidate_index, generate_message);
+      return mozc::win32::ImeCore::HighlightCandidate(himc, candidate_index,
+                                                      generate_message);
     }
     case NI_OPENCANDIDATE:
     case NI_CHANGECANDIDATELIST:
@@ -645,15 +626,13 @@ BOOL WINAPI NotifyIME(HIMC himc, DWORD action, DWORD index, DWORD value) {
 
     switch (index) {
       case CPS_COMPLETE: {
-        if (!mozc::win32::ImeCore::SubmitComposition(
-                himc, generate_message)) {
+        if (!mozc::win32::ImeCore::SubmitComposition(himc, generate_message)) {
           return FALSE;
         }
         return TRUE;
       }
       case CPS_CANCEL: {
-        if (!mozc::win32::ImeCore::CancelComposition(
-                himc, generate_message)) {
+        if (!mozc::win32::ImeCore::CancelComposition(himc, generate_message)) {
           return FALSE;
         }
         return TRUE;
@@ -682,8 +661,8 @@ BOOL WINAPI NotifyIME(HIMC himc, DWORD action, DWORD index, DWORD value) {
       context->fdwConversion =
           mozc::win32::ImeCore::GetSupportableConversionMode(
               context->fdwConversion);
-      mozc::win32::ImeCore::SwitchInputMode(
-          himc, context->fdwConversion, generate_message);
+      mozc::win32::ImeCore::SwitchInputMode(himc, context->fdwConversion,
+                                            generate_message);
       // We need not to generate WM_IME_NOTIFY/IMN_SETSENTENCEMODE because
       // ImmSetOpenStatus API generates it anyway.
       return TRUE;
@@ -693,9 +672,8 @@ BOOL WINAPI NotifyIME(HIMC himc, DWORD action, DWORD index, DWORD value) {
       mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
       // We need not to generate WM_IME_NOTIFY/IMN_SETSENTENCEMODE because
       // ImmSetOpenStatus API generates it anyway.
-      context->fdwSentence =
-          mozc::win32::ImeCore::GetSupportableSentenceMode(
-              context->fdwSentence);
+      context->fdwSentence = mozc::win32::ImeCore::GetSupportableSentenceMode(
+          context->fdwSentence);
       return TRUE;
     }
     case IMC_SETOPENSTATUS: {
@@ -769,8 +747,8 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
     mozc::win32::ScopedHIMC<INPUTCONTEXT> context(himc);
     if (mozc::win32::PrivateContextUtil::IsValidPrivateContext(
             context->hPrivate)) {
-      mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-          private_context(context->hPrivate);
+      mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+          context->hPrivate);
       private_context->Uninitialize();
     }
     return TRUE;
@@ -781,9 +759,8 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   // mozc::SystemUtil::GetLoggingDirectory(), which internally calls
   // LoadSystemLibrary.  We should definitely avoid using LoadSystemLibrary when
   // the thread owns loader lock.
-  mozc::Logging::InitLogStream(
-      mozc::FileUtil::JoinPath(mozc::SystemUtil::GetLoggingDirectory(),
-                               kProductPrefix "_imm32_ui.log"));
+  mozc::Logging::InitLogStream(mozc::FileUtil::JoinPath(
+      mozc::SystemUtil::GetLoggingDirectory(), kProductPrefix "_imm32_ui.log"));
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
   if (context.get() == nullptr) {
@@ -798,12 +775,12 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   // allocate the new region in which new client management object is
   // stored.
   if (!mozc::win32::PrivateContextUtil::EnsurePrivateContextIsInitialized(
-           &context->hPrivate)) {
+          &context->hPrivate)) {
     return FALSE;
   }
 
-  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-      private_context(context->hPrivate);
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+      context->hPrivate);
   DCHECK(private_context->Validate());
 
   // Normalize the conversion mode.
@@ -820,8 +797,8 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   if (composition_string_handle == nullptr) {
     return FALSE;
   }
-  mozc::win32::ScopedHIMCC<mozc::win32::CompositionString>
-      composition_string(composition_string_handle);
+  mozc::win32::ScopedHIMCC<mozc::win32::CompositionString> composition_string(
+      composition_string_handle);
   if (!composition_string->Initialize()) {
     return FALSE;
   }
@@ -847,8 +824,8 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
       return FALSE;
     }
     // This is OK because ImeCore::OpenIME does not generate any UI message.
-    if (!mozc::win32::ImeCore::OpenIME(
-             private_context->client, context->fdwConversion)) {
+    if (!mozc::win32::ImeCore::OpenIME(private_context->client,
+                                       context->fdwConversion)) {
       return FALSE;
     }
   }
@@ -863,11 +840,8 @@ BOOL WINAPI ImeSelect(HIMC himc, BOOL select) {
   return TRUE;
 }
 
-BOOL WINAPI ImeSetCompositionString(HIMC himc,
-                                    DWORD index,
-                                    LPVOID comp,
-                                    DWORD comp_length,
-                                    LPVOID read,
+BOOL WINAPI ImeSetCompositionString(HIMC himc, DWORD index, LPVOID comp,
+                                    DWORD comp_length, LPVOID read,
                                     DWORD read_length) {
   DANGLING_CALLBACK_GUARD(FALSE);
   if (index == SCS_QUERYRECONVERTSTRING) {
@@ -875,8 +849,7 @@ BOOL WINAPI ImeSetCompositionString(HIMC himc,
     // |reading_info| if necessary.
     RECONVERTSTRING *composition_info =
         reinterpret_cast<RECONVERTSTRING *>(comp);
-    RECONVERTSTRING *reading_info =
-        reinterpret_cast<RECONVERTSTRING *>(read);
+    RECONVERTSTRING *reading_info = reinterpret_cast<RECONVERTSTRING *>(read);
     return mozc::win32::ImeCore::QueryReconversionFromApplication(
         himc, composition_info, reading_info);
   } else if (index == SCS_SETRECONVERTSTRING) {
@@ -893,23 +866,17 @@ BOOL WINAPI ImeSetCompositionString(HIMC himc,
   return FALSE;
 }
 
-DWORD WINAPI ImeGetImeMenuItems(HIMC himc,
-                                DWORD flags,
-                                DWORD type,
+DWORD WINAPI ImeGetImeMenuItems(HIMC himc, DWORD flags, DWORD type,
                                 LPIMEMENUITEMINFOW ime_parent_menu,
-                                LPIMEMENUITEMINFOW ime_menu,
-                                DWORD size) {
+                                LPIMEMENUITEMINFOW ime_menu, DWORD size) {
   DANGLING_CALLBACK_GUARD(FALSE);
   return 0;
 }
 
 // TODO(yukawa): Refactor the implementation.
-UINT WINAPI ImeToAsciiEx(UINT virtual_key,
-                         UINT scan_code,
-                         CONST LPBYTE key_state,
-                         LPTRANSMSGLIST trans_buf,
-                         UINT state,
-                         HIMC himc) {
+UINT WINAPI ImeToAsciiEx(UINT virtual_key, UINT scan_code,
+                         CONST LPBYTE key_state, LPTRANSMSGLIST trans_buf,
+                         UINT state, HIMC himc) {
   // If fails, no message generated.
   DANGLING_CALLBACK_GUARD(0);
   if (!mozc::win32::ImeCore::IsInputContextInitialized(himc)) {
@@ -918,8 +885,8 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   }
 
   mozc::win32::ScopedHIMC<mozc::win32::InputContext> context(himc);
-  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext>
-      private_context(context->hPrivate);
+  mozc::win32::ScopedHIMCC<mozc::win32::PrivateContext> private_context(
+      context->hPrivate);
 
   mozc::win32::VirtualKey vk =
       mozc::win32::VirtualKey::FromCombinedVirtualKey(virtual_key);
@@ -933,8 +900,8 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   mozc::commands::Output temporal_output;
 
   const mozc::win32::VKBackBasedDeleter::ClientAction vk_back_action =
-      private_context->deleter->OnKeyEvent(
-          vk.virtual_key(), is_key_down, false);
+      private_context->deleter->OnKeyEvent(vk.virtual_key(), is_key_down,
+                                           false);
 
   // Check if this key event is handled by VKBackBasedDeleter to support
   // *deletion_range* rule.
@@ -945,7 +912,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
       // do nothing.
       break;
     case mozc::win32::VKBackBasedDeleter::
-             CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
+        CALL_END_DELETION_THEN_DO_DEFAULT_ACTION:
       private_context->deleter->EndDeletion();
       break;
     case mozc::win32::VKBackBasedDeleter::APPLY_PENDING_STATUS:
@@ -955,7 +922,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
       ignore_this_keyevent = true;
       break;
     case mozc::win32::VKBackBasedDeleter::
-             CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
+        CALL_END_DELETION_BUT_NEVER_SEND_TO_SERVER:
       ignore_this_keyevent = true;
       private_context->deleter->EndDeletion();
       break;
@@ -978,9 +945,9 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
       case mozc::win32::SurrogatePairObserver::DO_DEFAULT_ACTION:
         break;
       case mozc::win32::SurrogatePairObserver::
-             DO_DEFAULT_ACTION_WITH_RETURNED_UCS4:
+          DO_DEFAULT_ACTION_WITH_RETURNED_UCS4:
         vk = mozc::win32::VirtualKey::FromUnicode(surrogate_action.ucs4);
-      break;
+        break;
       case mozc::win32::SurrogatePairObserver::
           CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
         ignore_this_keyevent = true;
@@ -999,8 +966,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   bool should_be_sent_to_server = false;
   if (use_pending_status) {
     next_state = private_context->deleter->pending_ime_state();
-    temporal_output.CopyFrom(
-        private_context->deleter->pending_output());
+    temporal_output.CopyFrom(private_context->deleter->pending_output());
     should_be_sent_to_server = true;
   } else {
     mozc::win32::InputBehavior behavior = *private_context->ime_behavior;
@@ -1030,9 +996,8 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
     const mozc::win32::IndicatorVisibilityTracker::Action indicator_action =
         private_context->indicator_visibility_tracker->OnKey(
             vk, is_key_down, result.should_be_eaten);
-    send_update_ui =
-        (indicator_action ==
-         mozc::win32::IndicatorVisibilityTracker::kUpdateUI);
+    send_update_ui = (indicator_action ==
+                      mozc::win32::IndicatorVisibilityTracker::kUpdateUI);
     should_be_sent_to_server = result.should_be_sent_to_server;
   }
 
@@ -1040,8 +1005,8 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
   message_queue.Attach(trans_buf);
 
   if (should_be_sent_to_server) {
-    mozc::win32::ImeCore::UpdateContext(
-          himc, next_state, temporal_output, &message_queue);
+    mozc::win32::ImeCore::UpdateContext(himc, next_state, temporal_output,
+                                        &message_queue);
   }
 
   // Generate NotifyUpdateUI message if not exists.
@@ -1050,16 +1015,15 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
     const std::vector<TRANSMSG> &messages = message_queue.messages();
     for (size_t i = 0; i < messages.size(); ++i) {
       const TRANSMSG &msg = messages[i];
-      if (msg.message == WM_IME_NOTIFY &&
-          msg.wParam == IMN_PRIVATE &&
+      if (msg.message == WM_IME_NOTIFY && msg.wParam == IMN_PRIVATE &&
           msg.lParam == mozc::win32::kNotifyUpdateUI) {
         has_ui_message = true;
         break;
       }
     }
     if (!has_ui_message) {
-      message_queue.AddMessage(
-          WM_IME_NOTIFY, IMN_PRIVATE, mozc::win32::kNotifyUpdateUI);
+      message_queue.AddMessage(WM_IME_NOTIFY, IMN_PRIVATE,
+                               mozc::win32::kNotifyUpdateUI);
     }
   }
 
@@ -1070,16 +1034,16 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key,
 BOOL WINAPI ImeConfigure(HKL hkl, HWND wnd, DWORD mode, LPVOID data) {
   DANGLING_CALLBACK_GUARD(FALSE);
   if (mode == IME_CONFIG_GENERAL) {
-    if (!mozc::Process::SpawnMozcProcess(
-            mozc::kMozcTool, "--mode=config_dialog")) {
+    if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                         "--mode=config_dialog")) {
       return FALSE;
     }
     return TRUE;
   }
 
   if (mode == IME_CONFIG_SELECTDICTIONARY) {
-    if (!mozc::Process::SpawnMozcProcess(
-            mozc::kMozcTool, "--mode=dictionary_tool")) {
+    if (!mozc::Process::SpawnMozcProcess(mozc::kMozcTool,
+                                         "--mode=dictionary_tool")) {
       return FALSE;
     }
     return TRUE;
@@ -1094,14 +1058,14 @@ BOOL WINAPI ImeConfigure(HKL hkl, HWND wnd, DWORD mode, LPVOID data) {
 
     // Retrieves word registration data.
     const REGISTERWORD *reg_word = static_cast<REGISTERWORD *>(data);
-    const std::wstring word = GetStringIfWithinLimit(reg_word->lpWord,
-                                                kMaxCharsForRegisterWord);
-    const std::wstring reading = GetStringIfWithinLimit(reg_word->lpReading,
-                                                   kMaxCharsForRegisterWord);
+    const std::wstring word =
+        GetStringIfWithinLimit(reg_word->lpWord, kMaxCharsForRegisterWord);
+    const std::wstring reading =
+        GetStringIfWithinLimit(reg_word->lpReading, kMaxCharsForRegisterWord);
 
     SetEnveronmentVariablesForWordRegisterDialog(word, reading);
     const bool spawn_succeeded = mozc::Process::SpawnMozcProcess(
-          mozc::kMozcTool, "--mode=word_register_dialog");
+        mozc::kMozcTool, "--mode=word_register_dialog");
     // Delete all environment variables used.
     SetEnveronmentVariablesForWordRegisterDialog(L"", L"");
 
@@ -1130,11 +1094,8 @@ UINT WINAPI ImeGetRegisterWordStyle(UINT item, LPSTYLEBUF style_buffer) {
   return 0;
 }
 
-UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROC enum_proc,
-                                LPCTSTR reading,
-                                DWORD style,
-                                LPCTSTR value,
-                                LPVOID data) {
+UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROC enum_proc, LPCTSTR reading,
+                                DWORD style, LPCTSTR value, LPVOID data) {
   DANGLING_CALLBACK_GUARD(0);
   return 0;
 }

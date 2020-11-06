@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
 
 #if defined(OS_WIN)
 // We do not use pthread on Windows
-#elif defined(OS_NACL)
+#elif defined(OS_NACL) || defined(OS_WASM)
 // TODO(team): Consider to use glibc rwlock.
 #else
 #define MOZC_PTHREAD_HAS_READER_WRITER_LOCK
@@ -63,7 +63,7 @@ enum CallOnceState {
 namespace {
 
 template <typename T>
-CRITICAL_SECTION *AsCriticalSection(T* opaque_buffer) {
+CRITICAL_SECTION *AsCriticalSection(T *opaque_buffer) {
   static_assert(sizeof(T) >= sizeof(CRITICAL_SECTION),
                 "The opaque buffer must have sufficient space to store a "
                 "CRITICAL_SECTION structure");
@@ -71,7 +71,7 @@ CRITICAL_SECTION *AsCriticalSection(T* opaque_buffer) {
 }
 
 template <typename T>
-SRWLOCK *AsSRWLock(T* opaque_buffer) {
+SRWLOCK *AsSRWLock(T *opaque_buffer) {
   static_assert(sizeof(T) >= sizeof(SRWLOCK),
                 "The opaque buffer must have sufficient space to store a "
                 "SRWLOCK structure");
@@ -84,9 +84,7 @@ Mutex::Mutex() {
   ::InitializeCriticalSection(AsCriticalSection(&opaque_buffer_));
 }
 
-Mutex::~Mutex() {
-  ::DeleteCriticalSection(AsCriticalSection(&opaque_buffer_));
-}
+Mutex::~Mutex() { ::DeleteCriticalSection(AsCriticalSection(&opaque_buffer_)); }
 
 void Mutex::Lock() {
   ::EnterCriticalSection(AsCriticalSection(&opaque_buffer_));
@@ -104,8 +102,7 @@ ReaderWriterMutex::ReaderWriterMutex() {
   ::InitializeSRWLock(AsSRWLock(&opaque_buffer_));
 }
 
-ReaderWriterMutex::~ReaderWriterMutex() {
-}
+ReaderWriterMutex::~ReaderWriterMutex() {}
 
 void ReaderWriterMutex::ReaderLock() {
   ::AcquireSRWLockShared(AsSRWLock(&opaque_buffer_));
@@ -123,16 +120,14 @@ void ReaderWriterMutex::WriterUnlock() {
   ::ReleaseSRWLockExclusive(AsSRWLock(&opaque_buffer_));
 }
 
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
-  return true;
-}
+bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return true; }
 
 #else  // Hereafter, we have pthread-based implementation
 
 namespace {
 
 template <typename T>
-pthread_mutex_t *AsPthreadMutexT(T* opaque_buffer) {
+pthread_mutex_t *AsPthreadMutexT(T *opaque_buffer) {
   static_assert(sizeof(T) >= sizeof(pthread_mutex_t),
                 "The opaque buffer must have sufficient space to store a "
                 "pthread_mutex_t structure");
@@ -153,7 +148,7 @@ Mutex::Mutex() {
   // PTHREAD_MUTEX_RECURSIVE_NP but Mac OS X 10.5 does not
   pthread_mutexattr_t attr;
   pthread_mutexattr_init(&attr);
-#if defined(OS_MACOSX)
+#if defined(__APPLE__) || defined(OS_WASM)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 #elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
@@ -163,34 +158,22 @@ Mutex::Mutex() {
   pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), &attr);
 }
 
-Mutex::~Mutex() {
-  pthread_mutex_destroy(AsPthreadMutexT(&opaque_buffer_));
-}
+Mutex::~Mutex() { pthread_mutex_destroy(AsPthreadMutexT(&opaque_buffer_)); }
 
-void Mutex::Lock() {
-  pthread_mutex_lock(AsPthreadMutexT(&opaque_buffer_));
-}
+void Mutex::Lock() { pthread_mutex_lock(AsPthreadMutexT(&opaque_buffer_)); }
 
 bool Mutex::TryLock() {
   return pthread_mutex_trylock(AsPthreadMutexT(&opaque_buffer_)) == 0;
 }
 
-void Mutex::Unlock() {
-  pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_));
-}
-
-#ifdef MOZC_USE_PEPPER_FILE_IO
-pthread_mutex_t *Mutex::raw_mutex() {
-  return AsPthreadMutexT(&opaque_buffer_);
-}
-#endif  // MOZC_USE_PEPPER_FILE_IO
+void Mutex::Unlock() { pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_)); }
 
 #ifdef MOZC_PTHREAD_HAS_READER_WRITER_LOCK
 // Use pthread native reader writer lock.
 namespace {
 
 template <typename T>
-pthread_rwlock_t *AsPthreadRWLockT(T* opaque_buffer) {
+pthread_rwlock_t *AsPthreadRWLockT(T *opaque_buffer) {
   static_assert(sizeof(T) >= sizeof(pthread_rwlock_t),
                 "The opaque buffer must have sufficient space to store a "
                 "pthread_rwlock_t structure");
@@ -200,7 +183,7 @@ pthread_rwlock_t *AsPthreadRWLockT(T* opaque_buffer) {
 }  // namespace
 
 ReaderWriterMutex::ReaderWriterMutex() {
-  pthread_rwlock_init(AsPthreadRWLockT(&opaque_buffer_), NULL);
+  pthread_rwlock_init(AsPthreadRWLockT(&opaque_buffer_), nullptr);
 }
 
 ReaderWriterMutex::~ReaderWriterMutex() {
@@ -223,16 +206,14 @@ void ReaderWriterMutex::WriterUnlock() {
   pthread_rwlock_unlock(AsPthreadRWLockT(&opaque_buffer_));
 }
 
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
-  return true;
-}
+bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return true; }
 
 #else
 
 // Fallback implementations as ReaderWriterLock is not available.
 ReaderWriterMutex::ReaderWriterMutex() {
   // Non-recursive lock is OK.
-  pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), NULL);
+  pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), nullptr);
 }
 
 ReaderWriterMutex::~ReaderWriterMutex() {
@@ -255,9 +236,7 @@ void ReaderWriterMutex::WriterUnlock() {
   pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_));
 }
 
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() {
-  return false;
-}
+bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return false; }
 
 #endif  // MOZC_PTHREAD_HAS_READER_WRITER_LOCK
 
@@ -284,7 +263,7 @@ void CallOnce(once_t *once, void (*func)()) {
 #ifdef OS_WIN
     ::YieldProcessor();
 #endif  // OS_WIN
-  }  // Busy loop
+  }     // Busy loop
 }
 
 void ResetOnce(once_t *once) {

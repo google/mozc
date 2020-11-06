@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,7 @@ class EngineInterface;
 class EngineRegistrar {
  public:
   // Registers signal handlers implemented by |engine| to the ibus framework.
-  static bool Register(EngineInterface *engine,
-                       IBusEngineClass *engine_class);
+  static bool Register(EngineInterface *engine, IBusEngineClass *engine_class);
 
   // Unregisters all signal handlers registered to the ibus framework.
   // Returns an engine interface registered previously.
@@ -53,9 +52,7 @@ class EngineRegistrar {
   EngineRegistrar();
   ~EngineRegistrar();
 
-  static void CandidateClicked(IBusEngine *engine,
-                               guint index,
-                               guint button,
+  static void CandidateClicked(IBusEngine *engine, guint index, guint button,
                                guint state);
   static void CursorDown(IBusEngine *engine);
   static void CursorUp(IBusEngine *engine);
@@ -65,28 +62,17 @@ class EngineRegistrar {
   static void FocusOut(IBusEngine *engine);
   static void PageDown(IBusEngine *engine);
   static void PageUp(IBusEngine *engine);
-  static gboolean ProcessKeyEvent(IBusEngine *engine,
-                                  guint keyval,
-                                  guint keycode,
-                                  guint state);
-  static void PropertyActivate(IBusEngine *engine,
-                               const gchar *property_name,
+  static gboolean ProcessKeyEvent(IBusEngine *engine, guint keyval,
+                                  guint keycode, guint state);
+  static void PropertyActivate(IBusEngine *engine, const gchar *property_name,
                                guint property_state);
-  static void PropertyHide(IBusEngine *engine,
-                           const gchar *property_name);
-  static void PropertyShow(IBusEngine *engine,
-                           const gchar *property_name);
+  static void PropertyHide(IBusEngine *engine, const gchar *property_name);
+  static void PropertyShow(IBusEngine *engine, const gchar *property_name);
   static void Reset(IBusEngine *engine);
-  static void SetCapabilities(IBusEngine *engine,
-                              guint capabilities);
-  static void SetCursorLocation(IBusEngine *engine,
-                                gint x,
-                                gint y,
-                                gint w,
+  static void SetCapabilities(IBusEngine *engine, guint capabilities);
+  static void SetCursorLocation(IBusEngine *engine, gint x, gint y, gint w,
                                 gint h);
-  static void SetContentType(IBusEngine *engine,
-                             guint purpose,
-                             guint hints);
+  static void SetContentType(IBusEngine *engine, guint purpose, guint hints);
 };
 
 }  // namespace ibus

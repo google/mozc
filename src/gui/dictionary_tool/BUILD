@@ -1,0 +1,186 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//tools/build_defs:qt.bzl",
+    "cc_qt_binary_mozc",
+    "cc_qt_library_mozc",
+    "qt_moc_mozc",
+    "qt_rcc_mozc",
+    "qt_uic_mozc",
+)
+
+package(
+    default_visibility = ["//gui:__subpackages__"],
+)
+
+qt_moc_mozc(
+    name = "moc_dictionary_content_table_widget",
+    srcs = [
+        "dictionary_content_table_widget.h",
+    ],
+    outs = ["moc_dictionary_content_table_widget.cc"],
+)
+
+qt_moc_mozc(
+    name = "moc_dictionary_tool",
+    srcs = [
+        "dictionary_tool.h",
+    ],
+    outs = ["moc_dictionary_tool.cc"],
+)
+
+qt_moc_mozc(
+    name = "moc_find_dialog",
+    srcs = [
+        "find_dialog.h",
+    ],
+    outs = ["moc_find_dialog.cc"],
+)
+
+qt_moc_mozc(
+    name = "moc_import_dialog",
+    srcs = [
+        "import_dialog.h",
+    ],
+    outs = ["moc_import_dialog.cc"],
+)
+
+qt_moc_mozc(
+    name = "moc_zero_width_splitter",
+    srcs = [
+        "zero_width_splitter.h",
+    ],
+    outs = ["moc_zero_width_splitter.cc"],
+)
+
+qt_uic_mozc(
+    name = "uic_dictionary_tool",
+    srcs = [
+        "dictionary_tool.ui",
+    ],
+    outs = ["ui_dictionary_tool.h"],
+)
+
+qt_uic_mozc(
+    name = "uic_find_dialog",
+    srcs = [
+        "find_dialog.ui",
+    ],
+    outs = ["ui_find_dialog.h"],
+)
+
+qt_uic_mozc(
+    name = "uic_import_dialog",
+    srcs = [
+        "import_dialog.ui",
+    ],
+    outs = ["ui_import_dialog.h"],
+)
+
+qt_rcc_mozc(
+    name = "qrc_dictionary_tool",
+    srcs = [
+        "dictionary_tool_en.qm",
+        "dictionary_tool_ja.qm",
+        "//gui/base:tr_en.qm",
+        "//gui/base:tr_ja.qm",
+    ],
+    outs = ["qrc_dictionary_tool.cc"],
+    qrc_file = "dictionary_tool.qrc",
+    qrc_name = "qrc_dictionary_tool",
+)
+
+cc_qt_library_mozc(
+    name = "dictionary_tool",
+    srcs = [
+        "dictionary_content_table_widget.cc",
+        "dictionary_tool.cc",
+        "dictionary_tool_libmain.cc",
+        "find_dialog.cc",
+        "import_dialog.cc",
+        "zero_width_splitter.cc",
+        ":moc_dictionary_content_table_widget",
+        ":moc_dictionary_tool",
+        ":moc_find_dialog",
+        ":moc_import_dialog",
+        ":moc_zero_width_splitter",
+        ":qrc_dictionary_tool",
+    ],
+    hdrs = [
+        "dictionary_content_table_widget.h",
+        "dictionary_tool.h",
+        "find_dialog.h",
+        "import_dialog.h",
+        "zero_width_splitter.h",
+        ":uic_dictionary_tool",
+        ":uic_find_dialog",
+        ":uic_import_dialog",
+    ],
+    deps = [
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:process",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:util",
+        "//base:version",
+        "//client",
+        "//config:config_handler",
+        "//data_manager:pos_list_provider",
+        "//dictionary:user_dictionary",
+        "//dictionary:user_dictionary_importer",
+        "//dictionary:user_dictionary_session",
+        "//dictionary:user_dictionary_storage",
+        "//dictionary:user_dictionary_util",
+        "//gui/base:encoding_util",
+        "//gui/base:gui_base",
+        "//gui/base:msime_user_dictionary_importer",
+        "//gui/base:singleton_window_helper",
+        "//gui/config_dialog:combobox_delegate",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//protocol:user_dictionary_storage_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_qt_binary_mozc(
+    name = "dictionary_tool_main",
+    srcs = ["dictionary_tool_main.cc"],
+    deps = [
+        ":dictionary_tool",
+        "//base:flags",
+        "//base:init_mozc",
+        "//gui/base:gui_base",
+    ],
+)

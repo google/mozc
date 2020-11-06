@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/ime/ime_ui_visibility_tracker.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/ime/ime_types.h"
-#include "win32/ime/ime_ui_visibility_tracker.h"
 
 namespace mozc {
 namespace win32 {
@@ -110,9 +110,8 @@ TEST(ImeUIVisibilityTrackerTest,
 
   // WM_IME_STARTCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_STARTCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_STARTCOMPOSITION, 0, 0));
 
   // Since WM_IME_STARTCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -123,7 +122,6 @@ TEST(ImeUIVisibilityTrackerTest,
   tracker.OnStartComposition();
   EXPECT_TRUE(tracker.IsCompositionWindowVisible());
 }
-
 
 // When a user changes the input method by the LangBar, WM_IME_SETCONTEXT will
 // not be sent.  Even in this case, the candiate window can be visible,
@@ -198,7 +196,6 @@ TEST(ImeUIVisibilityTrackerTest, HideSuggestWindowBySetInputContext) {
   EXPECT_FALSE(tracker.IsSuggestWindowVisible());
 }
 
-
 TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByIME) {
   UIVisibilityTracker tracker;
 
@@ -215,9 +212,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByIME) {
 
   // WM_IME_STARTCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_STARTCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_STARTCOMPOSITION, 0, 0));
 
   // Since WM_IME_STARTCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -239,9 +235,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByIME) {
 
   // WM_IME_COMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_COMPOSITION, 0, kCompositionUpdateBits));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_COMPOSITION, 0, kCompositionUpdateBits));
 
   // Since WM_IME_COMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -258,9 +253,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByIME) {
 
   // WM_IME_ENDCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_ENDCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_ENDCOMPOSITION, 0, 0));
 
   // Since WM_IME_ENDCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -294,9 +288,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByApplication) {
 
   // WM_IME_STARTCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_STARTCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_STARTCOMPOSITION, 0, 0));
 
   // Since WM_IME_STARTCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -315,9 +308,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByApplication) {
 
   // WM_IME_COMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_COMPOSITION, 0, kCompositionUpdateBits));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_COMPOSITION, 0, kCompositionUpdateBits));
 
   // Since WM_IME_COMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -331,9 +323,8 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByApplication) {
 
   // WM_IME_ENDCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_ENDCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_ENDCOMPOSITION, 0, 0));
 
   // Since WM_IME_ENDCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -361,9 +352,8 @@ TEST(ImeUIVisibilityTrackerTest, CandidateIsDrawnByIME) {
 
   // IMN_OPENCANDIDATE should be marked as a visibility-test-message by
   // IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_OPENCANDIDATE, 1));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_OPENCANDIDATE, 1));
 
   // Since WM_IME_NOTIFY/IMN_OPENCANDIDATE is a visibility-test-message, the
   // IME calls BeginVisibilityTestForCandidateWindow the message is
@@ -383,15 +373,13 @@ TEST(ImeUIVisibilityTrackerTest, CandidateIsDrawnByIME) {
 
   // WM_IME_NOTIFY/IMN_CHANGECANDIDATE is not marked as a visibility-test-
   // message by IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_FALSE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_CHANGECANDIDATE, 1));
+  EXPECT_FALSE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_CHANGECANDIDATE, 1));
 
   // WM_IME_NOTIFY/IMN_CLOSECANDIDATE is not marked as a visibility-test-
   // message by IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_CLOSECANDIDATE, 1));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_CLOSECANDIDATE, 1));
 
   // Since WM_IME_NOTIFY/IMN_CLOSECANDIDATE is a visibility-test-message, the
   // IME calls BeginVisibilityTestForCandidateWindow the message is
@@ -427,9 +415,8 @@ TEST(ImeUIVisibilityTrackerTest, CandidateIsDrawnByApplication) {
 
   // IMN_OPENCANDIDATE should be marked as a visibility-test-message by
   // IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_OPENCANDIDATE, 1));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_OPENCANDIDATE, 1));
 
   // Since WM_IME_NOTIFY/IMN_OPENCANDIDATE is a visibility-test-message, the
   // IME calls BeginVisibilityTestForCandidateWindow before the message is
@@ -446,15 +433,13 @@ TEST(ImeUIVisibilityTrackerTest, CandidateIsDrawnByApplication) {
 
   // WM_IME_NOTIFY/IMN_CHANGECANDIDATE is not marked as a visibility-test-
   // message by IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_FALSE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_CHANGECANDIDATE, 1));
+  EXPECT_FALSE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_CHANGECANDIDATE, 1));
 
   // WM_IME_NOTIFY/IMN_CLOSECANDIDATE is not marked as a visibility-test-
   // message by IsVisibilityTestMessageForCandidateWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_NOTIFY, IMN_CLOSECANDIDATE, 1));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_NOTIFY, IMN_CLOSECANDIDATE, 1));
 
   // Since WM_IME_NOTIFY/IMN_CLOSECANDIDATE is a visibility-test-message, the
   // IME calls BeginVisibilityTestForCandidateWindow before the message is
@@ -489,9 +474,8 @@ TEST(ImeUIVisibilityTrackerTest,
 
   // WM_IME_STARTCOMPOSITION should be marked as a visibility-test-message by
   // BeginVisibilityTestForCompositionWindow.
-  EXPECT_TRUE(
-      UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
-          WM_IME_STARTCOMPOSITION, 0, 0));
+  EXPECT_TRUE(UIVisibilityTracker::IsVisibilityTestMessageForComposiwionWindow(
+      WM_IME_STARTCOMPOSITION, 0, 0));
 
   // Since WM_IME_STARTCOMPOSITION is a visibility-test-message, the IME calls
   // BeginVisibilityTestForCompositionWindow the message is posted.
@@ -504,15 +488,13 @@ TEST(ImeUIVisibilityTrackerTest,
 
   // |lParam| contains GCS_RESULTSTR.  Do not use WM_IME_COMPOSITION as a
   // visibility-test-message in this case.
-  EXPECT_FALSE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_COMPOSITION, 0, GCS_RESULTSTR));
+  EXPECT_FALSE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_COMPOSITION, 0, GCS_RESULTSTR));
 
   // |lParam| contains GCS_RESULTSTR.  Do not use WM_IME_COMPOSITION as a
   // visibility-test-message in this case.
-  EXPECT_FALSE(
-      UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
-          WM_IME_COMPOSITION, 0, GCS_COMPSTR | GCS_RESULTSTR));
+  EXPECT_FALSE(UIVisibilityTracker::IsVisibilityTestMessageForCandidateWindow(
+      WM_IME_COMPOSITION, 0, GCS_COMPSTR | GCS_RESULTSTR));
 
   // Composition Window should be visible.
   EXPECT_TRUE(tracker.IsCompositionWindowVisible());

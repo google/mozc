@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,39 +49,39 @@ TEST(TrieTest, Trie) {
     const bool expected_found;
     const string expected_value;
   } test_cases[] = {
-    { ADD, "abc", "data_abc", true, "data_abc" },
-    { ADD, "abd", "data_abd", true, "data_abd" },
-    { ADD, "abcd", "data_abcd", true, "data_abcd" },
-    { ADD, "abc", "data_abc2", true, "data_abc2" },
-    { ADD, "bcd", "data_bcd", true, "data_bcd" },
-    { LOOKUP, "abc", "", true, "data_abc2" },
-    { LOOKUP, "abd", "", true, "data_abd" },
-    { LOOKUP, "abcd", "", true, "data_abcd" },
-    { LOOKUP, "bcd", "", true, "data_bcd" },
-    { LOOKUP, "xyz", "", false, "" },
-    { LOOKUP, "abcde", "", false, "" },
-    { REMOVE, "bcd", "", false, "" },
-    { REMOVE, "abd", "", false, "" },
-    { LOOKUP, "abc", "", true, "data_abc2" },
-    { LOOKUP, "abcd", "", true, "data_abcd" },
-    { REMOVE, "abc", "", false, "" },
-    { LOOKUP, "abcd", "", true, "data_abcd" },
-    { REMOVE, "xyz", "", false, "" },
+      {ADD, "abc", "data_abc", true, "data_abc"},
+      {ADD, "abd", "data_abd", true, "data_abd"},
+      {ADD, "abcd", "data_abcd", true, "data_abcd"},
+      {ADD, "abc", "data_abc2", true, "data_abc2"},
+      {ADD, "bcd", "data_bcd", true, "data_bcd"},
+      {LOOKUP, "abc", "", true, "data_abc2"},
+      {LOOKUP, "abd", "", true, "data_abd"},
+      {LOOKUP, "abcd", "", true, "data_abcd"},
+      {LOOKUP, "bcd", "", true, "data_bcd"},
+      {LOOKUP, "xyz", "", false, ""},
+      {LOOKUP, "abcde", "", false, ""},
+      {REMOVE, "bcd", "", false, ""},
+      {REMOVE, "abd", "", false, ""},
+      {LOOKUP, "abc", "", true, "data_abc2"},
+      {LOOKUP, "abcd", "", true, "data_abcd"},
+      {REMOVE, "abc", "", false, ""},
+      {LOOKUP, "abcd", "", true, "data_abcd"},
+      {REMOVE, "xyz", "", false, ""},
   };
   const int size = arraysize(test_cases);
   for (int i = 0; i < size; ++i) {
-    const TestCase& test = test_cases[i];
+    const TestCase &test = test_cases[i];
     switch (test.type) {
-    case ADD:
-      trie.AddEntry(test.key, test.value);
-      break;
-    case REMOVE:
-      trie.DeleteEntry(test.key);
-      break;
-    case LOOKUP:
-    default:
-      // do nothing
-      break;
+      case ADD:
+        trie.AddEntry(test.key, test.value);
+        break;
+      case REMOVE:
+        trie.DeleteEntry(test.key);
+        break;
+      case LOOKUP:
+      default:
+        // do nothing
+        break;
     }
     string data;
     const bool found = trie.LookUp(test.key, &data);

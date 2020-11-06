@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,16 @@
 A tool to generate segmenter-code from human-readable rule file
 """
 
-__author__ = "taku"
+from __future__ import absolute_import
+from __future__ import print_function
 
-import sys
+import codecs
 import re
+import sys
+import six
 
-HEADER="""
+
+HEADER = """
 namespace  {
 const int kLSize = %d;
 const int kRSize = %d;
@@ -46,22 +50,24 @@ bool IsBoundaryInternal(uint16 rid, uint16 lid) {
   // BOS * or * EOS true
   if (rid == 0 || lid == 0) { return true; }"""
 
-FOOTER="""  return true;  // default
+FOOTER = """  return true;  // default
 }
 }   // namespace
 """
+
+
 def ReadPOSID(id_file, special_pos_file):
   pos = {}
   max_id = 0
 
-  for line in open(id_file, "r"):
+  for line in codecs.open(id_file, "r", encoding="utf8"):
     fields = line.split()
     pos[fields[1]] = fields[0]
     max_id = max(int(fields[0]), max_id)
 
   max_id = max_id + 1
-  for line in open(special_pos_file, "r"):
-    if len(line) <= 1 or line[0] == '#':
+  for line in codecs.open(special_pos_file, "r", encoding="utf8"):
+    if len(line) <= 1 or line[0] == "#":
       continue
     fields = line.split()
     pos[fields[0]] = ("%d" % max_id)
@@ -69,8 +75,10 @@ def ReadPOSID(id_file, special_pos_file):
 
   return pos
 
+
 def PatternToRegexp(pattern):
   return pattern.replace("*", "[^,]+")
+
 
 def GetRange(pos, pattern, name):
   if pattern == "*":
@@ -79,7 +87,7 @@ def GetRange(pos, pattern, name):
   pat = re.compile(PatternToRegexp(pattern))
   min = -1;
   max = -1;
-  keys = pos.keys()
+  keys = list(pos.keys())
   keys.sort()
 
   range = []
@@ -107,27 +115,30 @@ def GetRange(pos, pattern, name):
       tmp.append("(%s >= %s && %s <= %s)" % (name, r[0], name, r[1]))
 
   if len(tmp) == 0:
-    print "FATAL: No rule fiind %s" % (pattern)
+    print("FATAL: No rule fiind %s" % (pattern))
     sys.exit(-1)
 
   return " || ".join(tmp)
 
+
 def main():
   pos = ReadPOSID(sys.argv[1], sys.argv[2])
 
-  print HEADER % (len(pos.keys()), len(pos.keys()))
+  out = codecs.getwriter("utf8")(sys.stdout if six.PY2 else sys.stdout.buffer)
+  print(HEADER % (len(list(pos.keys())), len(list(pos.keys()))), file=out)
 
-  for line in open(sys.argv[3], "r"):
-    if len(line) <= 1 or line[0] == '#':
+  for line in codecs.open(sys.argv[3], "r", encoding="utf8"):
+    if len(line) <= 1 or line[0] == "#":
       continue
     (l, r, result) = line.split()
     result = result.lower()
-    lcond = GetRange(pos, l, "rid") or "true";
-    rcond = GetRange(pos, r, "lid") or "true";
-    print "  // %s %s %s" % (l, r, result)
-    print "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result)
+    lcond = GetRange(pos, l, "rid") or "true"
+    rcond = GetRange(pos, r, "lid") or "true"
+    print("  // %s %s %s" % (l, r, result), file=out)
+    print(
+        "  if ((%s) && (%s)) { return %s; }" % (lcond, rcond, result), file=out)
 
-  print FOOTER
+  print(FOOTER, file=out)
 
 if __name__ == "__main__":
   main()

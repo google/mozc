@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,8 @@
 
 """Utility to generate User POS binary data."""
 
-__author__ = "hidehiko"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import optparse
 import struct
@@ -64,7 +65,7 @@ def OutputUserPosData(user_pos_data, output_token_array, output_string_array):
         f.write(struct.pack('<H', conjugation_id))
 
   serialized_string_array_builder.SerializeToFile(
-      sorted(string_index.iterkeys()), output_string_array)
+      sorted(string_index.keys()), output_string_array)
 
 
 def ParseOptions():

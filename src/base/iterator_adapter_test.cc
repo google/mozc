@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,67 +46,53 @@ struct TestStruct {
 };
 
 struct GetField1 : public AdapterBase<int> {
-  int operator()(const TestStruct *test) const {
-    return test->field1;
-  }
+  int operator()(const TestStruct *test) const { return test->field1; }
 };
 
 struct GetField2 : public AdapterBase<int> {
-  int operator()(const TestStruct *test) const {
-    return test->field2;
-  }
+  int operator()(const TestStruct *test) const { return test->field2; }
 };
 
 TEST(IteratorAdapterTest, LowerBound) {
   const TestStruct kTestData[] = {
-    { 0, 10 },
-    { 1, 11 },
-    { 2, 12 },
-    { 3, 13 },
-    { 3, 14 },
-    { 4, 14 },
+      {0, 10}, {1, 11}, {2, 12}, {3, 13}, {3, 14}, {4, 14},
   };
 
-  EXPECT_EQ(kTestData + 3,
-            std::lower_bound(MakeIteratorAdapter(kTestData, GetField1()),
-                             MakeIteratorAdapter(
-                                 kTestData + arraysize(kTestData), GetField1()),
-                             3).base());
+  EXPECT_EQ(
+      kTestData + 3,
+      std::lower_bound(
+          MakeIteratorAdapter(kTestData, GetField1()),
+          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField1()), 3)
+          .base());
 
   EXPECT_EQ(kTestData + arraysize(kTestData),
             std::lower_bound(MakeIteratorAdapter(kTestData, GetField1()),
                              MakeIteratorAdapter(
                                  kTestData + arraysize(kTestData), GetField1()),
-                             12).base());
+                             12)
+                .base());
 
   EXPECT_EQ(kTestData + 2,
             std::lower_bound(MakeIteratorAdapter(kTestData, GetField2()),
                              MakeIteratorAdapter(
                                  kTestData + arraysize(kTestData), GetField2()),
-                             12).base());
+                             12)
+                .base());
 }
 
 TEST(IteratorAdapterTest, Count) {
   const TestStruct kTestData[] = {
-    { 1, 10 },
-    { 1, 20 },
-    { 2, 30 },
-    { 2, 40 },
-    { 1, 50 },
+      {1, 10}, {1, 20}, {2, 30}, {2, 40}, {1, 50},
   };
 
-  EXPECT_EQ(
-      3,
-      std::count(
-          MakeIteratorAdapter(kTestData, GetField1()),
-          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField1()),
-          1));
-  EXPECT_EQ(
-      2,
-      std::count(
-          MakeIteratorAdapter(kTestData, GetField1()),
-          MakeIteratorAdapter(kTestData + arraysize(kTestData), GetField1()),
-          2));
+  EXPECT_EQ(3, std::count(MakeIteratorAdapter(kTestData, GetField1()),
+                          MakeIteratorAdapter(kTestData + arraysize(kTestData),
+                                              GetField1()),
+                          1));
+  EXPECT_EQ(2, std::count(MakeIteratorAdapter(kTestData, GetField1()),
+                          MakeIteratorAdapter(kTestData + arraysize(kTestData),
+                                              GetField1()),
+                          2));
 }
 
 }  // namespace

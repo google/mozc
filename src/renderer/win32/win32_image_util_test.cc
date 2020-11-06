@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,14 @@
 
 #include "renderer/win32/win32_image_util.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlgdi.h>
 #include <atlmisc.h>
+// clang-format on
 
 #include <algorithm>
 #include <fstream>
@@ -51,8 +53,8 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
-using ::std::min;
 using ::std::max;
+using ::std::min;
 
 // gdiplus.h must be placed here because it internally depends on
 // global min/max functions.
@@ -111,8 +113,8 @@ class BalloonImageTest : public ::testing::Test,
     CPoint tail_offset;
     CSize size;
     std::vector<ARGBColor> buffer;
-    CBitmap dib = TestableBalloonImage::CreateInternal(
-        info, &tail_offset, &size, &buffer);
+    CBitmap dib = TestableBalloonImage::CreateInternal(info, &tail_offset,
+                                                       &size, &buffer);
 
     Json::Value tail;
     BalloonInfoToJson(info, &tail);
@@ -163,8 +165,8 @@ class BalloonImageTest : public ::testing::Test,
     (*tail)["input"] = input;
   }
 
-  static void JsonToBalloonInfo(
-      const Json::Value &tail, TestableBalloonImage::BalloonImageInfo *info) {
+  static void JsonToBalloonInfo(const Json::Value &tail,
+                                TestableBalloonImage::BalloonImageInfo *info) {
     const Json::Value &input = tail["input"];
 
     *info = TestableBalloonImage::BalloonImageInfo();
@@ -226,20 +228,15 @@ class BalloonImageTest : public ::testing::Test,
     }
   }
 
-  static void UninitGdiplus() {
-    Gdiplus::GdiplusShutdown(gdiplus_token_);
-  }
+  static void UninitGdiplus() { Gdiplus::GdiplusShutdown(gdiplus_token_); }
 
   static int32 ColorToInteger(RGBColor color) {
     return static_cast<int32>(color.r) << 16 |
-           static_cast<int32>(color.g) << 8 |
-           static_cast<int32>(color.b);
+           static_cast<int32>(color.g) << 8 | static_cast<int32>(color.b);
   }
 
   static RGBColor IntegerToColor(int32 color) {
-    return RGBColor((color >> 16) & 0xff,
-                    (color >> 8) & 0xff,
-                    color & 0xff);
+    return RGBColor((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
   }
 
   static CLSID clsid_png_;
@@ -256,35 +253,34 @@ ULONG_PTR BalloonImageTest::gdiplus_token_;
 
 // Tests should be passed.
 const char *kRenderingResultList[] = {
-  "data/test/renderer/win32/balloon_blur_alpha_-1.png",
-  "data/test/renderer/win32/balloon_blur_alpha_0.png",
-  "data/test/renderer/win32/balloon_blur_alpha_10.png",
-  "data/test/renderer/win32/balloon_blur_color_32_64_128.png",
-  "data/test/renderer/win32/balloon_blur_offset_-20_-10.png",
-  "data/test/renderer/win32/balloon_blur_offset_0_0.png",
-  "data/test/renderer/win32/balloon_blur_offset_20_5.png",
-  "data/test/renderer/win32/balloon_blur_sigma_0.0.png",
-  "data/test/renderer/win32/balloon_blur_sigma_0.5.png",
-  "data/test/renderer/win32/balloon_blur_sigma_1.0.png",
-  "data/test/renderer/win32/balloon_blur_sigma_2.0.png",
-  "data/test/renderer/win32/balloon_frame_thickness_-1.png",
-  "data/test/renderer/win32/balloon_frame_thickness_0.png",
-  "data/test/renderer/win32/balloon_frame_thickness_1.5.png",
-  "data/test/renderer/win32/balloon_frame_thickness_3.png",
-  "data/test/renderer/win32/balloon_inside_color_32_64_128.png",
-  "data/test/renderer/win32/balloon_no_label.png",
-  "data/test/renderer/win32/balloon_tail_bottom.png",
-  "data/test/renderer/win32/balloon_tail_left.png",
-  "data/test/renderer/win32/balloon_tail_right.png",
-  "data/test/renderer/win32/balloon_tail_top.png",
-  "data/test/renderer/win32/balloon_tail_width_height_-10_-10.png",
-  "data/test/renderer/win32/balloon_tail_width_height_0_0.png",
-  "data/test/renderer/win32/balloon_tail_width_height_10_20.png",
-  "data/test/renderer/win32/balloon_width_height_40_30.png",
+    "data/test/renderer/win32/balloon_blur_alpha_-1.png",
+    "data/test/renderer/win32/balloon_blur_alpha_0.png",
+    "data/test/renderer/win32/balloon_blur_alpha_10.png",
+    "data/test/renderer/win32/balloon_blur_color_32_64_128.png",
+    "data/test/renderer/win32/balloon_blur_offset_-20_-10.png",
+    "data/test/renderer/win32/balloon_blur_offset_0_0.png",
+    "data/test/renderer/win32/balloon_blur_offset_20_5.png",
+    "data/test/renderer/win32/balloon_blur_sigma_0.0.png",
+    "data/test/renderer/win32/balloon_blur_sigma_0.5.png",
+    "data/test/renderer/win32/balloon_blur_sigma_1.0.png",
+    "data/test/renderer/win32/balloon_blur_sigma_2.0.png",
+    "data/test/renderer/win32/balloon_frame_thickness_-1.png",
+    "data/test/renderer/win32/balloon_frame_thickness_0.png",
+    "data/test/renderer/win32/balloon_frame_thickness_1.5.png",
+    "data/test/renderer/win32/balloon_frame_thickness_3.png",
+    "data/test/renderer/win32/balloon_inside_color_32_64_128.png",
+    "data/test/renderer/win32/balloon_no_label.png",
+    "data/test/renderer/win32/balloon_tail_bottom.png",
+    "data/test/renderer/win32/balloon_tail_left.png",
+    "data/test/renderer/win32/balloon_tail_right.png",
+    "data/test/renderer/win32/balloon_tail_top.png",
+    "data/test/renderer/win32/balloon_tail_width_height_-10_-10.png",
+    "data/test/renderer/win32/balloon_tail_width_height_0_0.png",
+    "data/test/renderer/win32/balloon_tail_width_height_10_20.png",
+    "data/test/renderer/win32/balloon_width_height_40_30.png",
 };
 
-INSTANTIATE_TEST_CASE_P(BalloonImageParameters,
-                        BalloonImageTest,
+INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
@@ -402,8 +398,7 @@ TEST(GaussianBlurTest, NoBlurTest) {
   GaussianBlur blur(0.0);
 
   struct Source {
-    Source()
-        : call_count_(0) {}
+    Source() : call_count_(0) {}
     double operator()(int x, int y) const {
       EXPECT_EQ(0, x);
       EXPECT_EQ(0, y);
@@ -424,8 +419,7 @@ TEST(GaussianBlurTest, InvalidParamBlurTest) {
 
   GaussianBlur blur(-100.0);
   struct Source {
-    Source()
-        : call_count_(0) {}
+    Source() : call_count_(0) {}
     double operator()(int x, int y) const {
       EXPECT_EQ(0, x);
       EXPECT_EQ(0, y);
@@ -444,8 +438,7 @@ TEST(GaussianBlurTest, NormalBlurTest) {
   GaussianBlur blur(1.0);
   struct Source {
     explicit Source(int cutoff_length)
-        : call_count_(0),
-          cutoff_length_(cutoff_length) {}
+        : call_count_(0), cutoff_length_(cutoff_length) {}
     double operator()(int x, int y) const {
       EXPECT_GE(cutoff_length_, abs(x));
       EXPECT_GE(cutoff_length_, abs(y));
@@ -489,8 +482,8 @@ TEST(SafeFrameBufferTest, BasicTest) {
 }
 
 TEST(TextLabelTest, BoundingBoxTest) {
-  const TextLabel label(
-      -10.5, -5.1, 10.5, 5.0, "text", "font name", 10, RGBColor::kWhite);
+  const TextLabel label(-10.5, -5.1, 10.5, 5.0, "text", "font name", 10,
+                        RGBColor::kWhite);
   EXPECT_EQ(-11, label.bounding_rect().Left());
   EXPECT_EQ(-6, label.bounding_rect().Top());
   EXPECT_EQ(0, label.bounding_rect().Right());

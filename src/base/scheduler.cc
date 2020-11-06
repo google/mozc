@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,12 +48,8 @@ namespace {
 
 class TimerThread final : public Thread {
  public:
-  TimerThread(std::function<void()> callback,
-              uint32 due_time,
-              uint32 interval)
-      : callback_(callback),
-        due_time_(due_time),
-        interval_(interval) {
+  TimerThread(std::function<void()> callback, uint32 due_time, uint32 interval)
+      : callback_(callback), due_time_(due_time), interval_(interval) {
     CHECK(due_time_ != 0 || interval_ != 0)
         << "Either of due_time or interval must be non 0.";
   }
@@ -111,15 +107,10 @@ class TimerThread final : public Thread {
 
 class QueueTimer final {
  public:
-  QueueTimer(std::function<void()> callback,
-             uint32 due_time,
-             uint32 period)
-      : timer_thread_(callback, due_time, period) {
-  }
+  QueueTimer(std::function<void()> callback, uint32 due_time, uint32 period)
+      : timer_thread_(callback, due_time, period) {}
 
-  void Start() {
-    timer_thread_.Start("QueueTimer");
-  }
+  void Start() { timer_thread_.Start("QueueTimer"); }
 
  private:
   TimerThread timer_thread_;
@@ -129,59 +120,41 @@ class QueueTimer final {
 
 class Job {
  public:
-  explicit Job(const Scheduler::JobSetting &setting) :
-      setting_(setting),
-      skip_count_(0),
-      backoff_count_(0),
-      timer_(NULL),
-      running_(false) {}
+  explicit Job(const Scheduler::JobSetting &setting)
+      : setting_(setting),
+        skip_count_(0),
+        backoff_count_(0),
+        timer_(nullptr),
+        running_(false) {}
 
-  ~Job() {
-    set_timer(NULL);
-  }
+  ~Job() { set_timer(nullptr); }
 
-  const Scheduler::JobSetting setting() const {
-    return setting_;
-  }
+  const Scheduler::JobSetting setting() const { return setting_; }
 
-  void set_skip_count(uint32 skip_count) {
-    skip_count_ = skip_count;
-  }
+  void set_skip_count(uint32 skip_count) { skip_count_ = skip_count; }
 
-  uint32 skip_count() const {
-    return skip_count_;
-  }
+  uint32 skip_count() const { return skip_count_; }
 
   void set_backoff_count(uint32 backoff_count) {
     backoff_count_ = backoff_count;
   }
 
-  uint32 backoff_count() const {
-    return backoff_count_;
-  }
+  uint32 backoff_count() const { return backoff_count_; }
 
   void set_timer(QueueTimer *timer) {
-    if (timer_ != NULL) {
+    if (timer_ != nullptr) {
       delete timer_;
     }
     timer_ = timer;
   }
 
-  const QueueTimer *timer() const {
-    return timer_;
-  }
+  const QueueTimer *timer() const { return timer_; }
 
-  QueueTimer *mutable_timer() {
-    return timer_;
-  }
+  QueueTimer *mutable_timer() { return timer_; }
 
-  void set_running(bool running) {
-    running_ = running;
-  }
+  void set_running(bool running) { running_ = running; }
 
-  bool running() const {
-    return running_;
-  }
+  bool running() const { return running_; }
 
  private:
   Scheduler::JobSetting setting_;
@@ -199,9 +172,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
   }
 
-  virtual ~SchedulerImpl() {
-    RemoveAllJobs();
-  }
+  virtual ~SchedulerImpl() { RemoveAllJobs(); }
 
   virtual void RemoveAllJobs() {
     scoped_lock l(&mutex_);
@@ -213,7 +184,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     DCHECK_NE(0, job_setting.default_interval());
     DCHECK_NE(0, job_setting.max_interval());
     // do not use DCHECK_NE as a type checker raises an error.
-    DCHECK(job_setting.callback() != NULL);
+    DCHECK(job_setting.callback() != nullptr);
   }
 
   virtual bool AddJob(const Scheduler::JobSetting &job_setting) {
@@ -225,7 +196,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
       return false;
     }
 
-    std::pair<std::map<string, Job>::iterator, bool> insert_result =
+    std::pair<std::map<std::string, Job>::iterator, bool> insert_result =
         jobs_.insert(std::make_pair(job_setting.name(), Job(job_setting)));
     if (!insert_result.second) {
       LOG(ERROR) << "insert failed";
@@ -239,7 +210,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     // TODO(hsumita): Make Job class uncopiable.
     job->set_timer(new QueueTimer(std::bind(TimerCallback, job), delay,
                                   job_setting.default_interval()));
-    if (job->timer() == NULL) {
+    if (job->timer() == nullptr) {
       LOG(ERROR) << "failed to create QueueTimer";
       return false;
     }
@@ -247,7 +218,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return true;
   }
 
-  virtual bool RemoveJob(const string &name) {
+  virtual bool RemoveJob(const std::string &name) {
     scoped_lock l(&mutex_);
     if (!HasJob(name)) {
       LOG(WARNING) << "Job " << name << " is not registered";
@@ -256,7 +227,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return (jobs_.erase(name) != 0);
   }
 
-  virtual bool HasJob(const string &name) const {
+  virtual bool HasJob(const std::string &name) const {
     return (jobs_.find(name) != jobs_.end());
   }
 
@@ -275,16 +246,16 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     }
     job->set_running(true);
     Scheduler::JobSetting::CallbackFunc callback = job->setting().callback();
-    DCHECK(callback != NULL);
+    DCHECK(callback != nullptr);
     const bool success = callback(job->setting().data());
     job->set_running(false);
     if (success) {
       job->set_backoff_count(0);
     } else {
-      const uint32 new_backoff_count = (job->backoff_count() == 0) ?
-          1 : job->backoff_count() * 2;
-      if (new_backoff_count * job->setting().default_interval()
-          < job->setting().max_interval()) {
+      const uint32 new_backoff_count =
+          (job->backoff_count() == 0) ? 1 : job->backoff_count() * 2;
+      if (new_backoff_count * job->setting().default_interval() <
+          job->setting().max_interval()) {
         job->set_backoff_count(new_backoff_count);
       }
       job->set_skip_count(job->backoff_count());
@@ -299,16 +270,16 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return delay;
   }
 
-  std::map<string, Job> jobs_;
+  std::map<std::string, Job> jobs_;
   Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);
 };
 
-Scheduler::SchedulerInterface *g_scheduler_handler = NULL;
+Scheduler::SchedulerInterface *g_scheduler_handler = nullptr;
 
 Scheduler::SchedulerInterface *GetSchedulerHandler() {
-  if (g_scheduler_handler != NULL) {
+  if (g_scheduler_handler != nullptr) {
     return g_scheduler_handler;
   } else {
     return Singleton<SchedulerImpl>::get();
@@ -320,15 +291,13 @@ bool Scheduler::AddJob(const Scheduler::JobSetting &job_setting) {
   return GetSchedulerHandler()->AddJob(job_setting);
 }
 
-bool Scheduler::RemoveJob(const string &name) {
+bool Scheduler::RemoveJob(const std::string &name) {
   return GetSchedulerHandler()->RemoveJob(name);
 }
 
-void Scheduler::RemoveAllJobs() {
-  GetSchedulerHandler()->RemoveAllJobs();
-}
+void Scheduler::RemoveAllJobs() { GetSchedulerHandler()->RemoveAllJobs(); }
 
-bool Scheduler::HasJob(const string &name) {
+bool Scheduler::HasJob(const std::string &name) {
   return GetSchedulerHandler()->HasJob(name);
 }
 

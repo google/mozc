@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,8 +61,7 @@ class TipUiRendererImmersive {
   // aligned.
   static HBITMAP Render(const commands::Candidates &candidates,
                         const renderer::win32::TextRenderer *text_renderer,
-                        renderer::TableLayout *table_layout,
-                        SIZE *size,
+                        renderer::TableLayout *table_layout, SIZE *size,
                         int *left_align_offset);
 
  private:
@@ -72,6 +71,5 @@ class TipUiRendererImmersive {
 }  // namespace tsf
 }  // namespace win32
 }  // namespace mozc
-
 
 #endif  // MOZC_WIN32_TIP_TIP_UI_RENDERER_IMMERSIVE_H_

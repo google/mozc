@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,21 +30,21 @@
 #include "config/stats_config_util.h"
 
 #ifdef OS_WIN
-#include <windows.h>
 #include <Lmcons.h>
+#include <atlbase.h>
+#include <sddl.h>
 #include <shlobj.h>
 #include <time.h>
-#include <sddl.h>
-#include <atlbase.h>
+#include <windows.h>
 #else
 #include <pwd.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <fstream>
 #include <string>
 
@@ -80,12 +80,11 @@ const wchar_t kSendStatsName[] = L"usagestats";
 
 class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  WinStatsConfigUtilImpl() {
-  }
-  virtual ~WinStatsConfigUtilImpl() {
-  }
+  WinStatsConfigUtilImpl() {}
+  virtual ~WinStatsConfigUtilImpl() {}
   virtual bool IsEnabled();
   virtual bool SetEnabled(bool val);
+
  private:
   DISALLOW_COPY_AND_ASSIGN(WinStatsConfigUtilImpl);
 };
@@ -94,8 +93,8 @@ bool WinStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else
-  const REGSAM sam_desired = KEY_QUERY_VALUE |
-      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  const REGSAM sam_desired =
+      KEY_QUERY_VALUE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   // Like the crash handler, check the "ClientStateMedium" key first.
   // Then we check "ClientState" key.
   {
@@ -136,11 +135,10 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 #endif  // CHANNEL_DEV
 
   CRegKey key;
-  const REGSAM sam_desired = KEY_WRITE |
-      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
-  LONG result = key.Create(HKEY_LOCAL_MACHINE, kOmahaUsageKey,
-                           REG_NONE, REG_OPTION_NON_VOLATILE,
-                           sam_desired);
+  const REGSAM sam_desired =
+      KEY_WRITE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  LONG result = key.Create(HKEY_LOCAL_MACHINE, kOmahaUsageKey, REG_NONE,
+                           REG_OPTION_NON_VOLATILE, sam_desired);
   if (ERROR_SUCCESS != result) {
     return kReturnCodeInError;
   }
@@ -155,12 +153,11 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   MacStatsConfigUtilImpl();
-  virtual ~MacStatsConfigUtilImpl() {
-  }
+  virtual ~MacStatsConfigUtilImpl() {}
   virtual bool IsEnabled();
   virtual bool SetEnabled(bool val);
 
@@ -230,10 +227,8 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef OS_ANDROID
 class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  AndroidStatsConfigUtilImpl() {
-  }
-  virtual ~AndroidStatsConfigUtilImpl() {
-  }
+  AndroidStatsConfigUtilImpl() {}
+  virtual ~AndroidStatsConfigUtilImpl() {}
   virtual bool IsEnabled() {
     Config config;
     ConfigHandler::GetConfig(&config);
@@ -252,18 +247,14 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 #ifdef OS_NACL
 class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
-  NaclStatsConfigUtilImpl() {
-  }
-  virtual ~NaclStatsConfigUtilImpl() {
-  }
+  NaclStatsConfigUtilImpl() {}
+  virtual ~NaclStatsConfigUtilImpl() {}
   virtual bool IsEnabled() {
     Config config;
     ConfigHandler::GetConfig(&config);
     return config.general_config().upload_usage_stats();
   }
-  virtual bool SetEnabled(bool val) {
-    return false;
-  }
+  virtual bool SetEnabled(bool val) { return false; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NaclStatsConfigUtilImpl);
@@ -276,17 +267,14 @@ class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
   virtual ~NullStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() {
-    return false;
-  }
-  virtual bool SetEnabled(bool val) {
-    return true;
-  }
+  virtual bool IsEnabled() { return false; }
+  virtual bool SetEnabled(bool val) { return true; }
+
  private:
   DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);
 };
 
-StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
+StatsConfigUtilInterface *g_stats_config_util_handler = nullptr;
 
 // GetStatsConfigUtil and SetHandler are not thread safe.
 
@@ -295,7 +283,7 @@ StatsConfigUtilInterface *g_stats_config_util_handler = NULL;
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_WIN)
 typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_ANDROID)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
@@ -307,7 +295,7 @@ typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
 #endif
 
 StatsConfigUtilInterface &GetStatsConfigUtil() {
-  if (g_stats_config_util_handler == NULL) {
+  if (g_stats_config_util_handler == nullptr) {
     return *(Singleton<DefaultConfigUtilImpl>::get());
   } else {
     return *g_stats_config_util_handler;
@@ -319,9 +307,7 @@ void StatsConfigUtil::SetHandler(StatsConfigUtilInterface *handler) {
   g_stats_config_util_handler = handler;
 }
 
-bool StatsConfigUtil::IsEnabled() {
-  return GetStatsConfigUtil().IsEnabled();
-}
+bool StatsConfigUtil::IsEnabled() { return GetStatsConfigUtil().IsEnabled(); }
 
 bool StatsConfigUtil::SetEnabled(bool val) {
   return GetStatsConfigUtil().SetEnabled(val);

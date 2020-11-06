@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,11 +68,9 @@
           'qt5widgetsd_dll_path': '',
           'qwindows_dll_path': '',
           'qwindowsd_dll_path': '',
-          'mozc_zinnia_model_data_path': '',
           'mozc_tool_path': '<(outdir32)/GoogleIMEJaTool.exe',
           'conditions': [
             ['use_qt=="YES"', {
-              'mozc_zinnia_model_data_path': '<(DEPTH)/third_party/zinnia/tomoe/handwriting-light-ja.model',
               'mozc_tool_path': '<(outdir32_dynamic)/GoogleIMEJaTool.exe',
               'qt5core_dll_path': '<(qt_dir)/bin/Qt5Core.dll',
               'qt5cored_dll_path': '<(qt_dir)/bin/Qt5Cored.dll',
@@ -97,7 +95,6 @@
         'qt5widgetsd_dll_path': '<(qt5widgetsd_dll_path)',
         'qwindows_dll_path': '<(qwindows_dll_path)',
         'qwindowsd_dll_path': '<(qwindowsd_dll_path)',
-        'mozc_zinnia_model_data_path': '<(mozc_zinnia_model_data_path)',
         'mozc_tool_path': '<(mozc_tool_path)',
         'mozc_broker32_path': '<(outdir32)/GoogleIMEJaBroker32.exe',
         'mozc_broker64_path': '<(outdir64)/GoogleIMEJaBroker64.exe',
@@ -157,7 +154,7 @@
                 '<(mozc_version_file)',
               ],
               'action': [
-                'python', '../../build_tools/replace_version.py',
+                '<(python)', '../../build_tools/replace_version.py',
                 '--version_file', '../../mozc_version.txt',
                 '--input', 'mozc_version_template.wxi',
                 '--output', '<(mozc_version_file)',
@@ -313,7 +310,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_versioning_dummy',
               ],
               'action': [
-                'python',
+                '<(python)',
                 '../../build_tools/versioning_files.py',
                 '--version_file', '../../mozc_version.txt',
                 '--configuration', '<(CONFIGURATION_NAME)',
@@ -340,7 +337,7 @@
                 '<(PRODUCT_DIR)/mozc_installers_win_size_check_dummy',
               ],
               'action': [
-                'python',
+                '<(python)',
                 '../../build_tools/binary_size_checker.py',
                 '--target_filename',
                 '<(mozc_32bit_msi),<(mozc_64bit_msi)',

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ class Capability;
 class KeyEvent;
 class Output;
 class SessionCommand;
-}
+}  // namespace commands
 
 namespace client {
 class ClientInterface;
@@ -68,7 +68,7 @@ class ServerLauncherInterface {
 
   // terminate the server.
   // You should not call this method unless protocol version mismatch happens.
-  virtual bool ForceTerminateServer(const string &name) = 0;
+  virtual bool ForceTerminateServer(const std::string &name) = 0;
 
   // Wait server until it terminates
   virtual bool WaitServer(uint32 pid) = 0;
@@ -77,11 +77,11 @@ class ServerLauncherInterface {
   virtual void OnFatal(ServerErrorType type) = 0;
 
   // set the full path of server program.
-  virtual void set_server_program(const string &server_program) = 0;
+  virtual void set_server_program(const std::string &server_program) = 0;
 
   // return the full path of server program
   // This is used for making IPC connection.
-  virtual const string &server_program() const = 0;
+  virtual const std::string &server_program() const = 0;
 
   // launch with restricted mode
   virtual void set_restricted(bool restricted) = 0;
@@ -92,7 +92,6 @@ class ServerLauncherInterface {
   ServerLauncherInterface() {}
   virtual ~ServerLauncherInterface() {}
 };
-
 
 class ClientInterface {
  public:
@@ -129,25 +128,20 @@ class ClientInterface {
   // SendKey/TestSendKey/SendCommand automatically
   // make a connection and issue an session id
   // if valid session id is not found.
-  bool SendKey(const commands::KeyEvent &key,
-               commands::Output *output) {
-    return SendKeyWithContext(key,
-                              commands::Context::default_instance(),
+  bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
+    return SendKeyWithContext(key, commands::Context::default_instance(),
                               output);
   }
 
-  bool TestSendKey(const commands::KeyEvent &key,
-                   commands::Output *output) {
-    return TestSendKeyWithContext(key,
-                                  commands::Context::default_instance(),
+  bool TestSendKey(const commands::KeyEvent &key, commands::Output *output) {
+    return TestSendKeyWithContext(key, commands::Context::default_instance(),
                                   output);
   }
 
   bool SendCommand(const commands::SessionCommand &command,
                    commands::Output *output) {
-    return SendCommandWithContext(command,
-                                  commands::Context::default_instance(),
-                                  output);
+    return SendCommandWithContext(
+        command, commands::Context::default_instance(), output);
   }
 
   virtual bool SendKeyWithContext(const commands::KeyEvent &key,
@@ -211,26 +205,26 @@ class ClientInterface {
 
   // Sets server program path.
   // mainly for unittesting.
-  virtual void set_server_program(const string &program_path) = 0;
+  virtual void set_server_program(const std::string &program_path) = 0;
 
   // Sets the flag of error dialog suppression.
   virtual void set_suppress_error_dialog(bool suppress) = 0;
 
   // Sets client capability.
-  virtual void set_client_capability(const commands::Capability &capability)
-      = 0;
+  virtual void set_client_capability(
+      const commands::Capability &capability) = 0;
 
   // Launches mozc tool. |mode| is the mode of MozcTool,
   // e,g,. "config_dialog", "dictionary_tool".
-  virtual bool LaunchTool(const string &mode,
-                          const string &extra_arg) = 0;
+  virtual bool LaunchTool(const std::string &mode,
+                          const std::string &extra_arg) = 0;
   // Launches mozc_tool with output message.
   // If launch_tool_mode has no value or is set as NO_TOOL, this function will
   // do nothing and return false.
   virtual bool LaunchToolWithProtoBuf(const commands::Output &output) = 0;
 
   // Launches browser and pass |url|
-  virtual bool OpenBrowser(const string &url) = 0;
+  virtual bool OpenBrowser(const std::string &url) = 0;
 
  protected:
   ClientInterface() {}

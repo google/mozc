@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -50,10 +51,10 @@ Segment *AddSegment(const string &key, Segments *segments) {
   return segment;
 }
 
-Segment::Candidate *AddCandidate(
-    const string &key, const string &value,
-    const string &content_key, const string &content_value,
-    Segment *segment) {
+Segment::Candidate *AddCandidate(const string &key, const string &value,
+                                 const string &content_key,
+                                 const string &content_value,
+                                 Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->key = key;
@@ -73,9 +74,9 @@ class CorrectionRewriterTest : public testing::Test {
 
   void SetUp() override {
     // Create a rewriter with one entry: (TSUKIGIME, gekkyoku, tsukigime)
-    const std::vector<StringPiece> values = {"TSUKIGIME"};
-    const std::vector<StringPiece> errors = {"gekkyoku"};
-    const std::vector<StringPiece> corrections = {"tsukigime"};
+    const std::vector<absl::string_view> values = {"TSUKIGIME"};
+    const std::vector<absl::string_view> errors = {"gekkyoku"};
+    const std::vector<absl::string_view> corrections = {"tsukigime"};
     rewriter_.reset(new CorrectionRewriter(
         SerializedStringArray::SerializeToBuffer(values, &values_buf_),
         SerializedStringArray::SerializeToBuffer(errors, &errors_buf_),
@@ -104,9 +105,8 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   Segments segments;
 
   Segment *segment = AddSegment("gekkyokuwo", &segments);
-  Segment::Candidate *candidate =
-      AddCandidate("gekkyokuwo", "TSUKIGIMEwo", "gekkyoku", "TSUKIGIME",
-                   segment);
+  Segment::Candidate *candidate = AddCandidate(
+      "gekkyokuwo", "TSUKIGIMEwo", "gekkyoku", "TSUKIGIME", segment);
   candidate->attributes |= Segment::Candidate::RERANKED;
 
   AddCandidate("gekkyokuwo", "GEKKYOKUwo", "gekkyoku", "GEKKYOKU", segment);
@@ -122,9 +122,8 @@ TEST_F(CorrectionRewriterTest, RewriteTest) {
   EXPECT_EQ(
       (Segment::Candidate::RERANKED | Segment::Candidate::SPELLING_CORRECTION),
       segments.conversion_segment(0).candidate(0).attributes);
-  EXPECT_EQ(
-      "<もしかして: tsukigime>",
-      segments.conversion_segment(0).candidate(0).description);
+  EXPECT_EQ("<もしかして: tsukigime>",
+            segments.conversion_segment(0).candidate(0).description);
 
   // candidate 1
   EXPECT_EQ(Segment::Candidate::DEFAULT_ATTRIBUTE,

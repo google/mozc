@@ -1,0 +1,98 @@
+# An identifier for this repository.
+workspace(name = "mozc")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# This rule reffers $ANDROID_SDK_HOME
+android_sdk_repository(name = "androidsdk")
+
+# Android NDK version should be r11c+ for Abseil.
+# This rule reffers $ANDROID_NDK_HOME
+android_ndk_repository(name = "androidndk")
+
+local_repository(
+    name = "com_google_absl",
+    path = "third_party/abseil-cpp",
+)
+
+# This git_repository rule is an alternative for the above rule.
+# git_repository(
+#     name = "com_google_absl",
+#     remote = "https://github.com/abseil/abseil-cpp.git",
+#     # Abseil does not have tags.
+#     commit = "7aa411ceafc1272a28579cca739a97a2fb79055a",  # 2018-07-20
+# )
+
+local_repository(
+    name = "com_google_protobuf",
+    path = "third_party/protobuf",
+)
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+
+# This git_repository rule is an alternative for the above rule.
+# git_repository(
+#     name = "com_google_protobuf",
+#     remote = "https://github.com/google/protobuf.git",
+#     tag = "v3.6.0.1",  # 2018-06-09
+# )
+
+# Gtest
+new_local_repository(
+    name = "gtest",
+    path = "third_party/gtest",
+    build_file = "third_party/gtest/BUILD.bazel",
+)
+
+# Gtk2
+new_local_repository(
+    name = "gtk2",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.gtk2",
+)
+
+# iBus
+new_local_repository(
+    name = "ibus",
+    # This path should be updated per the environment.
+    path = "/usr",  # For Debian
+    build_file = "BUILD.ibus",
+)
+
+# Japanese Usage Dictionary
+new_local_repository(
+    name = "ja_usage_dict",
+    path = "third_party/japanese_usage_dictionary",
+    build_file = "BUILD.ja_usage_dict",
+)
+
+# Qt
+new_local_repository(
+    name = "io_qt",
+    # This path should be updated per the environment.
+    path = "/usr/include/x86_64-linux-gnu/qt5",  # For Debian
+    build_file = "BUILD.qt"
+)
+
+# Python
+http_archive(
+    name = "rules_python",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
+    sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+)
+load("@rules_python//python:repositories.bzl", "py_repositories")
+py_repositories()
+
+# Only needed if using the packaging rules.
+# load("@rules_python//python:pip.bzl", "pip_repositories")
+# pip_repositories()
+
+# Bazel Skylib
+http_archive(
+    name = "bazel_skylib",
+    urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+           ],
+   sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
+)

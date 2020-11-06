@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,14 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
 #include "base/cpu_stats.h"
 #include "base/logging.h"
 #include "base/mutex.h"
+#include "base/port.h"
 #include "base/util.h"
 #include "client/client_mock.h"
-#include "testing/base/public/gunit.h"
 #include "testing/base/public/googletest.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace {
@@ -54,13 +54,9 @@ class TestCPUStats : public CPUStatsInterface {
     return cpu_loads_[cpu_loads_index_++];
   }
 
-  float GetCurrentProcessCPULoad() {
-    return 0.0;
-  }
+  float GetCurrentProcessCPULoad() { return 0.0; }
 
-  size_t GetNumberOfProcessors() const {
-    return static_cast<size_t>(1);
-  }
+  size_t GetNumberOfProcessors() const { return static_cast<size_t>(1); }
 
   void SetCPULoads(const std::vector<float> &cpu_loads) {
     scoped_lock l(&mutex_);

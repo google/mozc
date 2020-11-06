@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -48,14 +49,14 @@ class SerializedDictionaryTest : public ::testing::Test {
  protected:
   void SetUp() override {
     std::stringstream ifs(kTestInput);
-    const std::pair<StringPiece, StringPiece> data =
+    const std::pair<absl::string_view, absl::string_view> data =
         SerializedDictionary::Compile(&ifs, &buf1_, &buf2_);
     token_array_data_ = data.first;
     string_array_data_ = data.second;
   }
 
-  StringPiece token_array_data_;   // Pointing to a block of buf1_
-  StringPiece string_array_data_;  // Pointing to a block of buf2_
+  absl::string_view token_array_data_;   // Pointing to a block of buf1_
+  absl::string_view string_array_data_;  // Pointing to a block of buf2_
 
  private:
   std::unique_ptr<uint32[]> buf1_;
@@ -108,8 +109,9 @@ TEST_F(SerializedDictionaryTest, Compile) {
       "\x3c\x00"          // rid = 60
       "\xd0\x07"          // cost = 2000
       "\x00\x00";         // padding
-  ASSERT_EQ(string(kExpectedTokenArray, arraysize(kExpectedTokenArray) - 1),
-            token_array_data_);
+  ASSERT_EQ(
+      std::string(kExpectedTokenArray, arraysize(kExpectedTokenArray) - 1),
+      token_array_data_);
 }
 
 TEST_F(SerializedDictionaryTest, Iterator) {

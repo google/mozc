@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,12 +50,7 @@ struct TestCase {
 class KeyCodeMapTest : public testing::Test {
  protected:
   void SetUp() {
-    pool_  = [[NSAutoreleasePool alloc] init];
-    keyCodeMap_ = [[[KeyCodeMap alloc] init] autorelease];
-  }
-
-  void TearDown() {
-    [pool_ drain];
+    keyCodeMap_ = [[KeyCodeMap alloc] init];
   }
 
   void KanaMode() {
@@ -79,7 +74,7 @@ class KeyCodeMapTest : public testing::Test {
       characters = @"";
     }
     if (unmodCharacters == nil) {
-      unmodCharacters = [[characters copy] autorelease];
+      unmodCharacters = [characters copy];
     }
 
     NSEvent *event = [NSEvent keyEventWithType:type
@@ -103,7 +98,6 @@ class KeyCodeMapTest : public testing::Test {
   }
 
  private:
-  NSAutoreleasePool *pool_;
   KeyCodeMap *keyCodeMap_;
 };
 

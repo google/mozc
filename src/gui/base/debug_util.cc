@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 #include "gui/base/debug_util.h"
 
 #include "base/logging.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace gui {
@@ -40,7 +40,7 @@ void DebugUtil::MessageHandler(QtMsgType type,
                                const QMessageLogContext &context,
                                const QString &q_msg) {
   QByteArray q_ba = q_msg.toUtf8();
-  const StringPiece msg(q_ba.constData(), q_ba.size());
+  const absl::string_view msg(q_ba.constData(), q_ba.size());
   switch (type) {
     case QtDebugMsg:
       LOG(INFO) << msg;

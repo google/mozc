@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_ADMINISTRATION_DIALOG_H_
-#define MOZC_GUI_ADMINISTRATION_DIALOG_H_
+#ifndef MOZC_GUI_ADMINISTRATION_DIALOG_ADMINISTRATION_DIALOG_H_
+#define MOZC_GUI_ADMINISTRATION_DIALOG_ADMINISTRATION_DIALOG_H_
 
 #include <QtGui/QtGui>
 #include <QtWidgets/QDialog>
@@ -37,23 +37,23 @@
 
 namespace mozc {
 namespace gui {
-class AdministrationDialog : public QDialog,
-                             private Ui::AdministrationDialog {
+class AdministrationDialog : public QDialog, private Ui::AdministrationDialog {
   Q_OBJECT;
 
  public:
   AdministrationDialog();
-  virtual ~AdministrationDialog();
+  ~AdministrationDialog() override;
 
  protected slots:
   virtual void clicked(QAbstractButton *button);
 
  protected:
-  bool eventFilter(QObject *obj, QEvent *event);
+  bool eventFilter(QObject *obj, QEvent *event) override;
 
  private:
   bool CanStartService();
+  QString dialog_title_;
 };
-}  // namespace mozc::gui
+}  // namespace gui
 }  // namespace mozc
-#endif  // MOZC_GUI_ADMINISTRATION_DIALOG_H_
+#endif  // MOZC_GUI_ADMINISTRATION_DIALOG_ADMINISTRATION_DIALOG_H_

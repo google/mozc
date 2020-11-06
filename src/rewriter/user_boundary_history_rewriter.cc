@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ namespace mozc {
 using storage::LRUStorage;
 
 namespace {
-const int kValueSize  = 4;
+const int kValueSize = 4;
 const uint32 kLRUSize = 5000;
 const uint32 kSeedValue = 0x761fea81;
 
@@ -86,14 +86,10 @@ class LengthArray {
   }
 
   bool Equal(const LengthArray &r) const {
-    return (length0_ == r.length0_ &&
-            length1_ == r.length1_ &&
-            length2_ == r.length2_ &&
-            length3_ == r.length3_ &&
-            length4_ == r.length4_ &&
-            length5_ == r.length5_ &&
-            length6_ == r.length6_ &&
-            length7_ == r.length7_);
+    return (length0_ == r.length0_ && length1_ == r.length1_ &&
+            length2_ == r.length2_ && length3_ == r.length3_ &&
+            length4_ == r.length4_ && length5_ == r.length5_ &&
+            length6_ == r.length6_ && length7_ == r.length7_);
   }
 
  private:
@@ -110,8 +106,7 @@ class LengthArray {
 
 UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
     const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter),
-      storage_(new LRUStorage) {
+    : parent_converter_(parent_converter), storage_(new LRUStorage) {
   DCHECK(parent_converter_);
   Reload();
 }
@@ -163,8 +158,8 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
   }
 }
 
-bool UserBoundaryHistoryRewriter::Rewrite(
-    const ConversionRequest &request, Segments *segments) const {
+bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
+                                          Segments *segments) const {
   if (request.config().incognito_mode()) {
     VLOG(2) << "incognito mode";
     return false;
@@ -196,17 +191,24 @@ bool UserBoundaryHistoryRewriter::Rewrite(
   return false;
 }
 
+bool UserBoundaryHistoryRewriter::Sync() {
+  if (storage_) {
+    storage_->DeleteElementsUntouchedFor62Days();
+  }
+  return true;
+}
+
 bool UserBoundaryHistoryRewriter::Reload() {
-  const string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(),
-                              kValueSize, kLRUSize, kSeedValue)) {
+  const std::string filename = ConfigFileStream::GetFileName(kFileName);
+  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLRUSize,
+                              kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
     storage_.reset();
     return false;
   }
 
   const char kFileSuffix[] = ".merge_pending";
-  const string merge_pending_file = filename + kFileSuffix;
+  const std::string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.
   if (FileUtil::FileExists(merge_pending_file)) {
@@ -245,13 +247,13 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     return false;
   }
 
-  std::deque<std::pair<string, size_t>> keys(target_segments_size -
-                                   history_segments_size);
+  std::deque<std::pair<std::string, size_t>> keys(target_segments_size -
+                                                  history_segments_size);
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
     const Segment &segment = segments->segment(i);
     keys[i - history_segments_size].first = segment.key();
     const size_t length = Util::CharsLen(segment.key());
-    if (length > 255) {   // too long segment
+    if (length > 255) {  // too long segment
       VLOG(2) << "too long segment";
       return false;
     }
@@ -261,7 +263,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
   for (size_t i = history_segments_size; i < target_segments_size; ++i) {
     const size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
-    string key;
+    std::string key;
     memset(length_array, 0, sizeof(length_array));
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
@@ -279,19 +281,17 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
             const int old_segments_size =
                 static_cast<int>(target_segments_size);
             VLOG(2) << "ResizeSegment key: " << key << " "
-                    << i - history_segments_size << " " << j + 1
-                    << " " << static_cast<int>(length_array[0])
-                    << " " << static_cast<int>(length_array[1])
-                    << " " << static_cast<int>(length_array[2])
-                    << " " << static_cast<int>(length_array[3])
-                    << " " << static_cast<int>(length_array[4])
-                    << " " << static_cast<int>(length_array[5])
-                    << " " << static_cast<int>(length_array[6])
-                    << " " << static_cast<int>(length_array[7]);
-            parent_converter_->ResizeSegment(segments,
-                                             request,
-                                             i - history_segments_size,
-                                             j + 1,
+                    << i - history_segments_size << " " << j + 1 << " "
+                    << static_cast<int>(length_array[0]) << " "
+                    << static_cast<int>(length_array[1]) << " "
+                    << static_cast<int>(length_array[2]) << " "
+                    << static_cast<int>(length_array[3]) << " "
+                    << static_cast<int>(length_array[4]) << " "
+                    << static_cast<int>(length_array[5]) << " "
+                    << static_cast<int>(length_array[6]) << " "
+                    << static_cast<int>(length_array[7]);
+            parent_converter_->ResizeSegment(segments, request,
+                                             i - history_segments_size, j + 1,
                                              length_array, 8);
             i += (j + target_segments_size - old_segments_size);
             result = true;
@@ -300,15 +300,15 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
         }
       } else if (type == INSERT) {
         VLOG(2) << "InserteSegment key: " << key << " "
-                << i - history_segments_size << " " << j + 1
-                << " " << static_cast<int>(length_array[0])
-                << " " << static_cast<int>(length_array[1])
-                << " " << static_cast<int>(length_array[2])
-                << " " << static_cast<int>(length_array[3])
-                << " " << static_cast<int>(length_array[4])
-                << " " << static_cast<int>(length_array[5])
-                << " " << static_cast<int>(length_array[6])
-                << " " << static_cast<int>(length_array[7]);
+                << i - history_segments_size << " " << j + 1 << " "
+                << static_cast<int>(length_array[0]) << " "
+                << static_cast<int>(length_array[1]) << " "
+                << static_cast<int>(length_array[2]) << " "
+                << static_cast<int>(length_array[3]) << " "
+                << static_cast<int>(length_array[4]) << " "
+                << static_cast<int>(length_array[5]) << " "
+                << static_cast<int>(length_array[6]) << " "
+                << static_cast<int>(length_array[7]);
         LengthArray inserted_value;
         inserted_value.CopyFromUCharArray(length_array);
         storage_->Insert(key, reinterpret_cast<const char *>(&inserted_value));

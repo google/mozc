@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,37 +51,33 @@ gboolean mozc_prepare(GSource *source, int *timeout) {
 }
 
 gboolean mozc_check(GSource *source) {
-  UnixServer::MozcWatchSource *watch
-      = reinterpret_cast<UnixServer::MozcWatchSource*>(source);
+  UnixServer::MozcWatchSource *watch =
+      reinterpret_cast<UnixServer::MozcWatchSource *>(source);
   return watch->poll_fd.revents != 0;
 }
 
 gboolean mozc_dispatch(GSource *source, GSourceFunc callback,
                        gpointer user_data) {
-  UnixServer::MozcWatchSource *watch
-      = reinterpret_cast<UnixServer::MozcWatchSource*>(source);
+  UnixServer::MozcWatchSource *watch =
+      reinterpret_cast<UnixServer::MozcWatchSource *>(source);
   char buf[8];
   // Discards read data.
-  while (read(watch->poll_fd.fd, buf, 8) > 0) {}
+  while (read(watch->poll_fd.fd, buf, 8) > 0) {
+  }
   watch->unix_server->Render();
   return TRUE;
 }
 }  // namespace
 
-UnixServer::UnixServer(GtkWrapperInterface *gtk)
-    : gtk_(gtk) {
-}
+UnixServer::UnixServer(GtkWrapperInterface *gtk) : gtk_(gtk) {}
 
-UnixServer::~UnixServer() {
-}
+UnixServer::~UnixServer() {}
 
 void UnixServer::AsyncHide() {
   // obsolete callback
 }
 
-void UnixServer::AsyncQuit() {
-  gtk_->GtkMainQuit();
-}
+void UnixServer::AsyncQuit() { gtk_->GtkMainQuit(); }
 
 bool UnixServer::Render() {
   string message;
@@ -122,28 +118,20 @@ bool UnixServer::AsyncExecCommand(string *proto_message) {
 }
 
 int UnixServer::StartMessageLoop() {
-  GSourceFuncs src_funcs = {
-    mozc_prepare,
-    mozc_check,
-    mozc_dispatch,
-    NULL
-  };
+  GSourceFuncs src_funcs = {mozc_prepare, mozc_check, mozc_dispatch, nullptr};
 
-  MozcWatchSource *watch = reinterpret_cast<MozcWatchSource*>(
+  MozcWatchSource *watch = reinterpret_cast<MozcWatchSource *>(
       gtk_->GSourceNew(&src_funcs, sizeof(MozcWatchSource)));
   gtk_->GSourceSetCanRecurse(&watch->source, TRUE);
-  gtk_->GSourceAttach(&watch->source, NULL);
-  gtk_->GSourceSetCallback(&watch->source,
-                           NULL,
-                           (gpointer)this,
-                           NULL);
+  gtk_->GSourceAttach(&watch->source, nullptr);
+  gtk_->GSourceSetCallback(&watch->source, nullptr, (gpointer)this, nullptr);
 
   watch->poll_fd.fd = pipefd_[0];
   watch->poll_fd.events = G_IO_IN | G_IO_HUP;
   watch->poll_fd.revents = 0;
   watch->unix_server = this;
 
-  gtk_->GSourceAddPoll(reinterpret_cast<GSource*>(watch), &watch->poll_fd);
+  gtk_->GSourceAddPoll(reinterpret_cast<GSource *>(watch), &watch->poll_fd);
 
   gtk_->GdkThreadsEnter();
   gtk_->GtkMain();

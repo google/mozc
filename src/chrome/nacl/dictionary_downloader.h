@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 
 #ifdef OS_NACL
 
+#include <ppapi/cpp/instance.h>
+
 #include <memory>
 #include <string>
 
@@ -51,15 +53,12 @@ class DictionaryDownloader {
     DOWNLOAD_WAITING_FOR_RETRY,
     DOWNLOAD_ERROR
   };
-  DictionaryDownloader(const string &url,
-                       const string &file_name);
+  DictionaryDownloader(const string &url, const string &file_name,
+                       pp::Instance *instance);
   ~DictionaryDownloader();
   // Sets the options.
-  void SetOption(uint32 start_delay,
-                 uint32 random_delay,
-                 uint32 retry_interval,
-                 uint32 retry_backoff_count,
-                 uint32 max_retry);
+  void SetOption(uint32 start_delay, uint32 random_delay, uint32 retry_interval,
+                 uint32 retry_backoff_count, uint32 max_retry);
   // Downloading will be started after start_delay + [0 - random_delay] msec.
   // If failed, 1st retry is started after retry_interval + [0 - random_delay].
   // While the retry count is less than retry_backoff_count, retry_interval will

@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,11 +49,6 @@
       'variables': {
         'additional_args%': [],
         'conditions': [
-          ['mozc_zinnia_model_data_path!=""', {
-            'additional_args': [
-              '-dMozcZinniaModelDataPath=<(mozc_zinnia_model_data_path)',
-            ],
-          }],
           ['debug_crt_merge_module_id_prefix!=""', {
             'additional_args': [
               '-dDebugCrtMergeModuleIdPrefix=<(debug_crt_merge_module_id_prefix)',
@@ -115,6 +110,11 @@
             ],
           }],
           ['MSVS_VERSION=="2015" and use_qt=="YES"', {
+            'additional_args': [
+              r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
+            ],
+          }],
+          ['MSVS_VERSION=="2017" and use_qt=="YES"', {
             'additional_args': [
               r'-dUCRTDir=C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x86',
             ],

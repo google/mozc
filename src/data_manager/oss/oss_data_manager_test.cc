@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,11 @@ namespace {
 
 #include "data_manager/oss/segmenter_inl.inc"
 
-std::pair<string, string> GetTypingModelEntry(const string &fname) {
-  return std::pair<string, string>(
-      fname,
-      mozc::testing::GetSourceFileOrDie(
-          {"data_manager", "oss", fname + ".data"}));
+std::pair<std::string, std::string> GetTypingModelEntry(
+    const std::string &fname) {
+  return std::pair<std::string, std::string>(
+      fname, mozc::testing::GetSourceFileOrDie(
+                 {"data_manager", "oss", fname + ".data"}));
 }
 
 }  // namespace
@@ -52,27 +52,18 @@ class OssDataManagerTest : public DataManagerTestBase {
  protected:
   OssDataManagerTest()
       : DataManagerTestBase(
-            new OssDataManager,
-            kLSize,
-            kRSize,
-            IsBoundaryInternal,
+            new OssDataManager, kLSize, kRSize, IsBoundaryInternal,
             mozc::testing::GetSourceFileOrDie(
                 {"data_manager", "oss", "connection_single_column.txt"}),
             1,
             mozc::testing::GetSourceFilesInDirOrDie(
                 {"data", "dictionary_oss"},
-                {"dictionary00.txt",
-                 "dictionary01.txt",
-                 "dictionary02.txt",
-                 "dictionary03.txt",
-                 "dictionary04.txt",
-                 "dictionary05.txt",
-                 "dictionary06.txt",
-                 "dictionary07.txt",
-                 "dictionary08.txt",
+                {"dictionary00.txt", "dictionary01.txt", "dictionary02.txt",
+                 "dictionary03.txt", "dictionary04.txt", "dictionary05.txt",
+                 "dictionary06.txt", "dictionary07.txt", "dictionary08.txt",
                  "dictionary09.txt"}),
-            mozc::testing::GetSourceFilesInDirOrDie(
-                {"data", "dictionary_oss"}, {"suggestion_filter.txt"}),
+            mozc::testing::GetSourceFilesInDirOrDie({"data", "dictionary_oss"},
+                                                    {"suggestion_filter.txt"}),
             {
                 GetTypingModelEntry("typing_model_12keys-hiragana.tsv"),
                 GetTypingModelEntry("typing_model_flick-hiragana.tsv"),
@@ -82,9 +73,7 @@ class OssDataManagerTest : public DataManagerTestBase {
             }) {}
 };
 
-TEST_F(OssDataManagerTest, AllTests) {
-  RunAllTests();
-}
+TEST_F(OssDataManagerTest, AllTests) { RunAllTests(); }
 
 }  // namespace oss
 }  // namespace mozc

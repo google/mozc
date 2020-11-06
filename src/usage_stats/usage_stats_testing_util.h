@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,60 +45,55 @@ namespace usage_stats {
 namespace internal {
 ::testing::AssertionResult ExpectStatsExist(const char *name_string,
                                             const char *param_string,
-                                            const string &name,
+                                            const std::string &name,
                                             bool expected);
 
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
-                                            const string &name,
+                                            const std::string &name,
                                             uint32 expected);
 
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
-                                              const string &name,
+                                              const std::string &name,
                                               int32 expected);
 
 ::testing::AssertionResult ExpectBooleanStats(const char *name_string,
                                               const char *expected_string,
-                                              const string &name,
+                                              const std::string &name,
                                               bool expected);
 
-::testing::AssertionResult ExpectTimingStats(const char *name_string,
-                                             const char *expected_total_string,
-                                             const char *expected_num_string,
-                                             const char *expected_min_string,
-                                             const char *expected_max_string,
-                                             const string &name,
-                                             uint64 expected_total,
-                                             uint32 expected_num,
-                                             uint32 expected_min,
-                                             uint32 expected_max);
+::testing::AssertionResult ExpectTimingStats(
+    const char *name_string, const char *expected_total_string,
+    const char *expected_num_string, const char *expected_min_string,
+    const char *expected_max_string, const std::string &name,
+    uint64 expected_total, uint32 expected_num, uint32 expected_min,
+    uint32 expected_max);
 }  // namespace internal
 
 #define EXPECT_STATS_EXIST(name) \
-  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectStatsExist, \
-                      name, true)
+  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectStatsExist, name, true)
 
-#define EXPECT_STATS_NOT_EXIST(name) \
-  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectStatsExist, \
-                      name, false)
+#define EXPECT_STATS_NOT_EXIST(name)                                       \
+  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectStatsExist, name, \
+                      false)
 
-#define EXPECT_COUNT_STATS(name, expected) \
-  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectCountStats, \
-                      name, expected)
+#define EXPECT_COUNT_STATS(name, expected)                                 \
+  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectCountStats, name, \
+                      expected)
 
-#define EXPECT_INTEGER_STATS(name, expected) \
-  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectIntegerStats, \
-                      name, expected)
+#define EXPECT_INTEGER_STATS(name, expected)                                 \
+  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectIntegerStats, name, \
+                      expected)
 
-#define EXPECT_BOOLEAN_STATS(name, expected) \
-  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectBooleanStats, \
-                      name, expected)
+#define EXPECT_BOOLEAN_STATS(name, expected)                                 \
+  EXPECT_PRED_FORMAT2(mozc::usage_stats::internal::ExpectBooleanStats, name, \
+                      expected)
 
 #define EXPECT_TIMING_STATS(name, expected_total, expected_num, expected_min, \
-                            expected_max) \
-  EXPECT_PRED_FORMAT5(mozc::usage_stats::internal::ExpectTimingStats, \
-                      name, expected_total, expected_num, expected_min, \
+                            expected_max)                                     \
+  EXPECT_PRED_FORMAT5(mozc::usage_stats::internal::ExpectTimingStats, name,   \
+                      expected_total, expected_num, expected_min,             \
                       expected_max)
 
 class scoped_usage_stats_enabler {

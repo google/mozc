@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,11 @@
 #include "data_manager/serialized_dictionary.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
-class SingleKanjiRewriter : public RewriterInterface  {
+class SingleKanjiRewriter : public RewriterInterface {
  public:
   explicit SingleKanjiRewriter(const DataManagerInterface &data_manager);
   ~SingleKanjiRewriter() override;
@@ -54,12 +55,12 @@ class SingleKanjiRewriter : public RewriterInterface  {
  private:
   const dictionary::POSMatcher pos_matcher_;
 
-  StringPiece single_kanji_token_array_;
+  absl::string_view single_kanji_token_array_;
   SerializedStringArray single_kanji_string_array_;
 
   SerializedStringArray variant_type_array_;
 
-  StringPiece variant_token_array_;
+  absl::string_view variant_token_array_;
   SerializedStringArray variant_string_array_;
 
   // Since noun_prefix_dictionary_ is just a tentative workaround,

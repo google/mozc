@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,5 @@
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
 
 #include <gtest/gtest.h>
-// TODO(team): Many tests forget to include googletest.h for test_tmpdir and
-// test_srcdir.  Thus it is included here. We should explicitly include this
-// header in each test that uses test_tmpdir etc.
-#include "testing/base/public/googletest.h"
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_H_

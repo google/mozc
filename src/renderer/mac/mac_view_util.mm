@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@ NSColor *MacViewUtil::MacViewUtil::ToNSColor(
                                    alpha:color.a()];
 }
 
-NSAttributedString *MacViewUtil::ToNSAttributedString(const string &str,
+NSAttributedString *MacViewUtil::ToNSAttributedString(const std::string &str,
     const RendererStyle::TextStyle &style) {
   NSString *nsstr = [NSString stringWithUTF8String:str.c_str()];
   NSFont *font;
@@ -97,8 +97,7 @@ NSAttributedString *MacViewUtil::ToNSAttributedString(const string &str,
             NSFontAttributeName,
             nil];
   }
-  return [[[NSAttributedString alloc] initWithString:nsstr attributes:attr]
-          autorelease];
+  return [[NSAttributedString alloc] initWithString:nsstr attributes:attr];
 }
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer

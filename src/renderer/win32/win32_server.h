@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,7 @@ class WindowManager;
 // This class also implements RendererInterface to receive a handler
 // to callback mouse events.
 // Actual window management is delegated to WindowManager class.
-class Win32Server : public RendererServer,
-                    public RendererInterface {
+class Win32Server : public RendererServer, public RendererInterface {
  public:
   Win32Server();
   virtual ~Win32Server();

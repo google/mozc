@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,7 @@ namespace ibus {
 
 class LaunchToolTest : public testing::Test {
  public:
-  LaunchToolTest() {
-    g_type_init();
-  }
+  LaunchToolTest() { g_type_init(); }
 
  protected:
   virtual void SetUp() {
@@ -56,9 +54,7 @@ class LaunchToolTest : public testing::Test {
     mozc_engine_->client_.reset(mock_);
   }
 
-  virtual void TearDown() {
-    mozc_engine_.reset();
-  }
+  virtual void TearDown() { mozc_engine_.reset(); }
 
   client::ClientMock* mock_;
   unique_ptr<MozcEngine> mozc_engine_;

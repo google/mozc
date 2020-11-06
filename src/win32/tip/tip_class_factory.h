@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_CLASS_FACTORY_H_
 #define MOZC_WIN32_TIP_TIP_CLASS_FACTORY_H_
 
-#include <Windows.h>
 #include <Unknwn.h>
+#include <Windows.h>
 
 #include "base/port.h"
 #include "win32/tip/tip_ref_count.h"
@@ -40,22 +40,20 @@ namespace mozc {
 namespace win32 {
 namespace tsf {
 
-class TipClassFactory
-    : public IClassFactory {
+class TipClassFactory : public IClassFactory {
  public:
   TipClassFactory();
 
   // IUnknown methods
-  virtual HRESULT STDMETHODCALLTYPE QueryInterface(
-      REFIID interface_id, void** object);
+  virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID interface_id,
+                                                   void **object);
   virtual ULONG STDMETHODCALLTYPE AddRef();
   virtual ULONG STDMETHODCALLTYPE Release();
 
   // IClassFactory methods
-  virtual HRESULT STDMETHODCALLTYPE CreateInstance(
-      IUnknown *unknown,
-      REFIID interface_id,
-      void **object);
+  virtual HRESULT STDMETHODCALLTYPE CreateInstance(IUnknown *unknown,
+                                                   REFIID interface_id,
+                                                   void **object);
   virtual HRESULT STDMETHODCALLTYPE LockServer(BOOL lock);
 
  private:

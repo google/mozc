@@ -2,6 +2,8 @@
 <qresource>
   <file>about_dialog_ja.qm</file>
   <file>about_dialog_en.qm</file>
+  <file alias="tr_ja.qm">../base/tr_ja.qm</file>
+  <file alias="tr_en.qm">../base/tr_en.qm</file>
   <file alias="product_logo.png">../../data/images/product_icon_32bpp-128.png</file>
 </qresource>
 </RCC>

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -117,9 +117,9 @@ class KeyEventHandlerTest : public testing::Test {
 
     if (modifiers != to_be_sent_mask) {
       return testing::AssertionFailure()
-          << "\n"
-          << "Expected: " << modifiers << "\n"
-          << "  Actual: " << to_be_sent_mask << "\n";
+             << "\n"
+             << "Expected: " << modifiers << "\n"
+             << "  Actual: " << to_be_sent_mask << "\n";
     }
 
     return testing::AssertionSuccess();
@@ -139,12 +139,10 @@ class KeyEventHandlerTest : public testing::Test {
   std::map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
 };
 
-#define EXPECT_MODIFIERS_TO_BE_SENT(modifiers)          \
+#define EXPECT_MODIFIERS_TO_BE_SENT(modifiers) \
   EXPECT_TRUE(CheckModifiersToBeSent(modifiers))
-#define EXPECT_MODIFIERS_PRESSED()              \
-  EXPECT_TRUE(CheckModifiersPressed(true))
-#define EXPECT_NO_MODIFIERS_PRESSED()           \
-  EXPECT_TRUE(CheckModifiersPressed(false))
+#define EXPECT_MODIFIERS_PRESSED() EXPECT_TRUE(CheckModifiersPressed(true))
+#define EXPECT_NO_MODIFIERS_PRESSED() EXPECT_TRUE(CheckModifiersPressed(false))
 
 namespace {
 const uint32 kNoModifiers = 0;
@@ -156,29 +154,29 @@ TEST_F(KeyEventHandlerTest, GetKeyEvent) {
 
   {  // Alt down => a down => a up => Alt up
     key.Clear();
-    EXPECT_FALSE(handler_->GetKeyEvent(
-        IBUS_Alt_L, kDummyKeycode, IBUS_MOD1_MASK,
-        config::Config::ROMAN, true, &key));
+    EXPECT_FALSE(handler_->GetKeyEvent(IBUS_Alt_L, kDummyKeycode,
+                                       IBUS_MOD1_MASK, config::Config::ROMAN,
+                                       true, &key));
     EXPECT_MODIFIERS_TO_BE_SENT(commands::KeyEvent::ALT);
     EXPECT_MODIFIERS_PRESSED();
 
     key.Clear();
-    EXPECT_TRUE(handler_->GetKeyEvent(
-        IBUS_a, 'a', IBUS_MOD1_MASK, config::Config::ROMAN, true, &key));
+    EXPECT_TRUE(handler_->GetKeyEvent(IBUS_a, 'a', IBUS_MOD1_MASK,
+                                      config::Config::ROMAN, true, &key));
     EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
     EXPECT_MODIFIERS_PRESSED();
 
     key.Clear();
-    EXPECT_FALSE(handler_->GetKeyEvent(
-        IBUS_a, 'a', (IBUS_MOD1_MASK | IBUS_RELEASE_MASK),
-        config::Config::ROMAN, true, &key));
+    EXPECT_FALSE(handler_->GetKeyEvent(IBUS_a, 'a',
+                                       (IBUS_MOD1_MASK | IBUS_RELEASE_MASK),
+                                       config::Config::ROMAN, true, &key));
     EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
     EXPECT_MODIFIERS_PRESSED();
 
     key.Clear();
-    EXPECT_FALSE(handler_->GetKeyEvent(
-        IBUS_Alt_L, kDummyKeycode, (IBUS_MOD1_MASK | IBUS_RELEASE_MASK),
-        config::Config::ROMAN, true, &key));
+    EXPECT_FALSE(handler_->GetKeyEvent(IBUS_Alt_L, kDummyKeycode,
+                                       (IBUS_MOD1_MASK | IBUS_RELEASE_MASK),
+                                       config::Config::ROMAN, true, &key));
     EXPECT_MODIFIERS_TO_BE_SENT(kNoModifiers);
     EXPECT_NO_MODIFIERS_PRESSED();
   }
@@ -416,14 +414,8 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
   //   is pressed / released.
 
   const guint kKeySet[] = {
-    IBUS_Alt_L,
-    IBUS_Alt_R,
-    IBUS_Control_L,
-    IBUS_Control_R,
-    IBUS_Shift_L,
-    IBUS_Shift_R,
-    IBUS_Caps_Lock,
-    IBUS_a,
+      IBUS_Alt_L,   IBUS_Alt_R,   IBUS_Control_L, IBUS_Control_R,
+      IBUS_Shift_L, IBUS_Shift_R, IBUS_Caps_Lock, IBUS_a,
   };
   const size_t kKeySetSize = arraysize(kKeySet);
   Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
@@ -433,7 +425,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
     handler_->Clear();
 
     std::set<guint> pressed_keys;
-    string key_sequence;
+    std::string key_sequence;
 
     const int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {

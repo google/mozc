@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
 
 """Simple zlib utility."""
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import zlib
 
@@ -58,7 +60,7 @@ def Decompress(input_filename, output_filename):
 
 def main():
   if len(sys.argv) != 4:
-    print >>sys.stderr, 'Invalid arguments'
+    print('Invalid arguments', file=sys.stderr)
     return
   if sys.argv[1] == 'compress':
     Compress(sys.argv[2], sys.argv[3])
@@ -66,7 +68,7 @@ def main():
   if sys.argv[1] == 'decompress':
     Decompress(sys.argv[2], sys.argv[3])
     return
-  print >>sys.stderr, 'Unknown command:', sys.argv[1]
+  print('Unknown command:', sys.argv[1], file=sys.stderr)
 
 
 if __name__ == '__main__':

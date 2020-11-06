@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,23 +30,28 @@
 #include "base/util.h"
 
 #ifdef OS_WIN
+// clang-format off
 #include <Windows.h>
 #include <WinCrypt.h>  // WinCrypt.h must be included after Windows.h
+// clang-format on
 #include <stdio.h>  // MSVC requires this for _vsnprintf
 #include <time.h>
-#else  // OS_WIN
+#endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+#endif  // __APPLE__
 
-#elif defined(OS_NACL)  // OS_MACOSX
+#if defined(OS_NACL)
 #include <irt.h>
-#endif  // OS_MACOSX or OS_NACL
+#endif  // OS_NACL
+
+#ifndef OS_WIN
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
-#endif  // OS_WIN
+#endif  // !OS_WIN
 
 #include <algorithm>
 #include <cctype>
@@ -65,16 +70,19 @@
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
-
+#include "absl/strings/ascii.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 
-ConstChar32Iterator::ConstChar32Iterator(StringPiece utf8_string)
-    : utf8_string_(utf8_string),
-      current_(0),
-      done_(false) {
+ConstChar32Iterator::ConstChar32Iterator(absl::string_view utf8_string)
+    : utf8_string_(utf8_string), current_(0), done_(false) {
   Next();
 }
 
@@ -89,14 +97,11 @@ void ConstChar32Iterator::Next() {
   }
 }
 
-bool ConstChar32Iterator::Done() const {
-  return done_;
-}
+bool ConstChar32Iterator::Done() const { return done_; }
 
-ConstChar32ReverseIterator::ConstChar32ReverseIterator(StringPiece utf8_string)
-    : utf8_string_(utf8_string),
-      current_(0),
-      done_(false) {
+ConstChar32ReverseIterator::ConstChar32ReverseIterator(
+    absl::string_view utf8_string)
+    : utf8_string_(utf8_string), current_(0), done_(false) {
   Next();
 }
 
@@ -111,20 +116,18 @@ void ConstChar32ReverseIterator::Next() {
   }
 }
 
-bool ConstChar32ReverseIterator::Done() const {
-  return done_;
-}
+bool ConstChar32ReverseIterator::Done() const { return done_; }
 
-MultiDelimiter::MultiDelimiter(const char* delim) {
+MultiDelimiter::MultiDelimiter(const char *delim) {
   std::fill(lookup_table_, lookup_table_ + kTableSize, 0);
-  for (const char* p = delim; *p != '\0'; ++p) {
+  for (const char *p = delim; *p != '\0'; ++p) {
     const unsigned char c = static_cast<unsigned char>(*p);
     lookup_table_[c >> 3] |= 1 << (c & 0x07);
   }
 }
 
 template <typename Delimiter>
-SplitIterator<Delimiter, SkipEmpty>::SplitIterator(StringPiece s,
+SplitIterator<Delimiter, SkipEmpty>::SplitIterator(absl::string_view s,
                                                    const char *delim)
     : end_(s.data() + s.size()),
       delim_(delim),
@@ -132,7 +135,8 @@ SplitIterator<Delimiter, SkipEmpty>::SplitIterator(StringPiece s,
       sp_len_(0) {
   while (sp_begin_ != end_ && delim_.Contains(*sp_begin_)) ++sp_begin_;
   const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {}
+  for (; p != end_ && !delim_.Contains(*p); ++p) {
+  }
   sp_len_ = p - sp_begin_;
 }
 
@@ -145,12 +149,13 @@ void SplitIterator<Delimiter, SkipEmpty>::Next() {
     return;
   }
   const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {}
+  for (; p != end_ && !delim_.Contains(*p); ++p) {
+  }
   sp_len_ = p - sp_begin_;
 }
 
 template <typename Delimiter>
-SplitIterator<Delimiter, AllowEmpty>::SplitIterator(StringPiece s,
+SplitIterator<Delimiter, AllowEmpty>::SplitIterator(absl::string_view s,
                                                     const char *delim)
     : end_(s.data() + s.size()),
       delim_(delim),
@@ -158,7 +163,8 @@ SplitIterator<Delimiter, AllowEmpty>::SplitIterator(StringPiece s,
       sp_len_(0),
       done_(sp_begin_ == end_) {
   const char *p = sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {}
+  for (; p != end_ && !delim_.Contains(*p); ++p) {
+  }
   sp_len_ = p - sp_begin_;
 }
 
@@ -171,7 +177,8 @@ void SplitIterator<Delimiter, AllowEmpty>::Next() {
     return;
   }
   const char *p = ++sp_begin_;
-  for (; p != end_ && !delim_.Contains(*p); ++p) {}
+  for (; p != end_ && !delim_.Contains(*p); ++p) {
+  }
   sp_len_ = p - sp_begin_;
 }
 
@@ -181,56 +188,44 @@ template class SplitIterator<MultiDelimiter, SkipEmpty>;
 template class SplitIterator<SingleDelimiter, AllowEmpty>;
 template class SplitIterator<MultiDelimiter, AllowEmpty>;
 
-void Util::SplitStringUsing(StringPiece str,
-                            const char *delim,
-                            std::vector<string> *output) {
-  if (delim[0] != '\0' && delim[1] == '\0') {
-    for (SplitIterator<SingleDelimiter> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      PushBackStringPiece(iter.Get(), output);
-    }
-  } else {
-    for (SplitIterator<MultiDelimiter> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      PushBackStringPiece(iter.Get(), output);
-    }
+void Util::SplitStringUsing(absl::string_view str, const char *delim,
+                            std::vector<std::string> *output) {
+  if (delim[0] == '\0') {
+    // absl::StrSplit decomposes all characters if delim is empty.
+    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
+    // This block can be deleted if the above spec is practically no problem.
+    output->emplace_back(str.data(), str.size());
+    return;
   }
+  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
 }
 
-void Util::SplitStringUsing(StringPiece str,
-                            const char *delim,
-                            std::vector<StringPiece> *output) {
-  if (delim[0] != '\0' && delim[1] == '\0') {
-    for (SplitIterator<SingleDelimiter> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      output->push_back(iter.Get());
-    }
-  } else {
-    for (SplitIterator<MultiDelimiter> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      output->push_back(iter.Get());
-    }
+void Util::SplitStringUsing(absl::string_view str, const char *delim,
+                            std::vector<absl::string_view> *output) {
+  if (delim[0] == '\0') {
+    // absl::StrSplit decomposes all characters if delim is empty.
+    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
+    // This block can be deleted if the above spec is practically no problem.
+    output->push_back(str);
+    return;
   }
+  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
 }
 
-void Util::SplitStringAllowEmpty(StringPiece str,
-                                 const char *delim,
-                                 std::vector<string> *output) {
-  if (delim[0] != '\0' && delim[1] == '\0') {
-    for (SplitIterator<SingleDelimiter, AllowEmpty> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      PushBackStringPiece(iter.Get(), output);
-    }
-  } else {
-    for (SplitIterator<MultiDelimiter, AllowEmpty> iter(str, delim);
-         !iter.Done(); iter.Next()) {
-      PushBackStringPiece(iter.Get(), output);
-    }
+void Util::SplitStringAllowEmpty(absl::string_view str, const char *delim,
+                                 std::vector<std::string> *output) {
+  if (delim[0] == '\0') {
+    // absl::StrSplit decomposes all characters if delim is empty.
+    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
+    // This block can be deleted if the above spec is practically no problem.
+    output->emplace_back(str.data(), str.size());
+    return;
   }
+  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::AllowEmpty());
 }
 
-void Util::SplitStringToUtf8Chars(StringPiece str,
-                                  std::vector<string> *output) {
+void Util::SplitStringToUtf8Chars(absl::string_view str,
+                                  std::vector<std::string> *output) {
   const char *begin = str.data();
   const char *const end = str.data() + str.size();
   while (begin < end) {
@@ -241,15 +236,16 @@ void Util::SplitStringToUtf8Chars(StringPiece str,
   DCHECK_EQ(begin, end);
 }
 
-void Util::SplitCSV(const string &input, std::vector<string> *output) {
+void Util::SplitCSV(const std::string &input,
+                    std::vector<std::string> *output) {
   std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
   char *str = tmp.get();
   memcpy(str, input.data(), input.size());
   str[input.size()] = '\0';
 
   char *eos = str + input.size();
-  char *start = NULL;
-  char *end = NULL;
+  char *start = nullptr;
+  char *end = nullptr;
   output->clear();
 
   while (str < eos) {
@@ -263,8 +259,7 @@ void Util::SplitCSV(const string &input, std::vector<string> *output) {
       for (; str < eos; ++str) {
         if (*str == '"') {
           str++;
-          if (*str != '"')
-            break;
+          if (*str != '"') break;
         }
         *end++ = *str;
       }
@@ -288,47 +283,15 @@ void Util::SplitCSV(const string &input, std::vector<string> *output) {
   }
 }
 
-void Util::JoinStrings(const std::vector<string> &input,
-                       const char *delim,
-                       string *output) {
+void Util::ConcatStrings(absl::string_view s1, absl::string_view s2,
+                         std::string *output) {
   output->clear();
-  for (size_t i = 0; i < input.size(); ++i) {
-    if (i > 0) {
-      *output += delim;
-    }
-    *output += input[i];
-  }
+  absl::StrAppend(output, s1, s2);
 }
 
-void Util::JoinStringPieces(const std::vector<StringPiece> &pieces,
-                            const char *delim,
-                            string *output) {
-  if (pieces.empty()) {
-    output->clear();
-    return;
-  }
-
-  const size_t delim_len = strlen(delim);
-  size_t len = delim_len * (pieces.size() - 1);
-  for (size_t i = 0; i < pieces.size(); ++i) {
-    len += pieces[i].size();
-  }
-  output->reserve(len);
-  output->assign(pieces[0].data(), pieces[0].size());
-  for (size_t i = 1; i < pieces.size(); ++i) {
-    output->append(delim, delim_len);
-    output->append(pieces[i].data(), pieces[i].size());
-  }
-}
-
-void Util::ConcatStrings(StringPiece s1, StringPiece s2, string *output) {
-  output->assign(s1.data(), s1.size());
-  output->append(s2.data(), s2.size());
-}
-
-void Util::AppendStringWithDelimiter(StringPiece delimiter,
-                                     StringPiece append_string,
-                                     string *output) {
+void Util::AppendStringWithDelimiter(absl::string_view delimiter,
+                                     absl::string_view append_string,
+                                     std::string *output) {
   CHECK(output);
   if (!output->empty()) {
     output->append(delimiter.data(), delimiter.size());
@@ -336,20 +299,19 @@ void Util::AppendStringWithDelimiter(StringPiece delimiter,
   output->append(append_string.data(), append_string.size());
 }
 
-
-void Util::StringReplace(StringPiece s, StringPiece oldsub,
-                         StringPiece newsub, bool replace_all,
-                         string *res) {
+void Util::StringReplace(absl::string_view s, absl::string_view oldsub,
+                         absl::string_view newsub, bool replace_all,
+                         std::string *res) {
   if (oldsub.empty()) {
     res->append(s.data(), s.size());  // if empty, append the given string.
     return;
   }
 
-  string::size_type start_pos = 0;
-  string::size_type pos;
+  std::string::size_type start_pos = 0;
+  std::string::size_type pos;
   do {
     pos = s.find(oldsub, start_pos);
-    if (pos == string::npos) {
+    if (pos == std::string::npos) {
       break;
     }
     res->append(s.data() + start_pos, pos - start_pos);
@@ -366,11 +328,11 @@ namespace {
 const size_t kOffsetFromUpperToLower = 0x0020;
 }
 
-void Util::LowerString(string *str) {
+void Util::LowerString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  string utf8;
+  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32 ucs4 = UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
@@ -394,11 +356,11 @@ void Util::LowerString(string *str) {
   }
 }
 
-void Util::UpperString(string *str) {
+void Util::UpperString(std::string *str) {
   const char *begin = str->data();
   size_t mblen = 0;
 
-  string utf8;
+  std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
     char32 ucs4 = UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
@@ -419,20 +381,19 @@ void Util::UpperString(string *str) {
   }
 }
 
-void Util::CapitalizeString(string *str) {
-  string first_str;
-  SubString(*str, 0, 1, &first_str);
+void Util::CapitalizeString(std::string *str) {
+  auto first_str = std::string(Utf8SubString(*str, 0, 1));
   UpperString(&first_str);
 
-  string tailing_str;
-  SubString(*str, 1, string::npos, &tailing_str);
+  auto tailing_str = std::string(Utf8SubString(*str, 1, std::string::npos));
   LowerString(&tailing_str);
 
-  str->assign(first_str + tailing_str);
+  str->assign(absl::StrCat(first_str, tailing_str));
 }
 
-bool Util::IsLowerAscii(StringPiece s) {
-  for (StringPiece::const_iterator iter = s.begin(); iter != s.end(); ++iter) {
+bool Util::IsLowerAscii(absl::string_view s) {
+  for (absl::string_view::const_iterator iter = s.begin(); iter != s.end();
+       ++iter) {
     if (!islower(*iter)) {
       return false;
     }
@@ -440,8 +401,9 @@ bool Util::IsLowerAscii(StringPiece s) {
   return true;
 }
 
-bool Util::IsUpperAscii(StringPiece s) {
-  for (StringPiece::const_iterator iter = s.begin(); iter != s.end(); ++iter) {
+bool Util::IsUpperAscii(absl::string_view s) {
+  for (absl::string_view::const_iterator iter = s.begin(); iter != s.end();
+       ++iter) {
     if (!isupper(*iter)) {
       return false;
     }
@@ -449,80 +411,66 @@ bool Util::IsUpperAscii(StringPiece s) {
   return true;
 }
 
-bool Util::IsCapitalizedAscii(StringPiece s) {
+bool Util::IsCapitalizedAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerAscii(ClippedSubstr(s, 1));
+    return IsLowerAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
 }
 
-bool Util::IsLowerOrUpperAscii(StringPiece s) {
+bool Util::IsLowerOrUpperAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
   if (islower(*s.begin())) {
-    return IsLowerAscii(ClippedSubstr(s, 1));
+    return IsLowerAscii(absl::ClippedSubstr(s, 1));
   }
   if (isupper(*s.begin())) {
-    return IsUpperAscii(ClippedSubstr(s, 1));
+    return IsUpperAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
 }
 
-bool Util::IsUpperOrCapitalizedAscii(StringPiece s) {
+bool Util::IsUpperOrCapitalizedAscii(absl::string_view s) {
   if (s.empty()) {
     return true;
   }
   if (isupper(*s.begin())) {
-    return IsLowerOrUpperAscii(ClippedSubstr(s, 1));
+    return IsLowerOrUpperAscii(absl::ClippedSubstr(s, 1));
   }
   return false;
 }
 
-void Util::StripWhiteSpaces(const string &input, string *output) {
-  DCHECK(output);
-  output->clear();
-
-  if (input.empty()) {
-    return;
-  }
-
-  size_t start = 0;
-  size_t end = input.size() - 1;
-  for (; start < input.size() && isspace(input[start]); ++start) {}
-  for (; end > start && isspace(input[end]); --end) {}
-
-  if (end >= start) {
-    output->assign(input.data() + start, end - start + 1);
-  }
+void Util::StripWhiteSpaces(const std::string &input, std::string *output) {
+  *output = std::string(absl::StripAsciiWhitespace(input));
 }
 
 namespace {
 
 // Table of UTF-8 character lengths, based on first byte
 const unsigned char kUTF8LenTbl[256] = {
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
-  2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,
-  3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 4,4,4,4,4,4,4,4, 4,4,4,4,4,4,4,4
-};
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-bool IsUTF8TrailingByte(uint8 c) {
-  return (c & 0xc0) == 0x80;
-}
+bool IsUTF8TrailingByte(uint8 c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
 // Return length of a single UTF-8 source character
 size_t Util::OneCharLen(const char *src) {
-  return kUTF8LenTbl[*reinterpret_cast<const uint8*>(src)];
+  return kUTF8LenTbl[*reinterpret_cast<const uint8 *>(src)];
 }
 
 size_t Util::CharsLen(const char *src, size_t length) {
@@ -536,11 +484,9 @@ size_t Util::CharsLen(const char *src, size_t length) {
   return result;
 }
 
-char32 Util::UTF8ToUCS4(const char *begin,
-                        const char *end,
-                        size_t *mblen) {
-  StringPiece s(begin, end - begin);
-  StringPiece rest;
+char32 Util::UTF8ToUCS4(const char *begin, const char *end, size_t *mblen) {
+  absl::string_view s(begin, end - begin);
+  absl::string_view rest;
   char32 c = 0;
   if (!Util::SplitFirstChar32(s, &c, &rest)) {
     *mblen = 0;
@@ -550,20 +496,19 @@ char32 Util::UTF8ToUCS4(const char *begin,
   return c;
 }
 
-bool Util::SplitFirstChar32(StringPiece s,
-                            char32 *first_char32,
-                            StringPiece *rest) {
+bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
+                            absl::string_view *rest) {
   char32 dummy_char32 = 0;
-  if (first_char32 == NULL) {
+  if (first_char32 == nullptr) {
     first_char32 = &dummy_char32;
   }
-  StringPiece dummy_rest;
-  if (rest == NULL) {
+  absl::string_view dummy_rest;
+  if (rest == nullptr) {
     rest = &dummy_rest;
   }
 
   *first_char32 = 0;
-  *rest = StringPiece();
+  *rest = absl::string_view();
 
   while (true) {
     if (s.empty()) {
@@ -578,7 +523,7 @@ bool Util::SplitFirstChar32(StringPiece s,
       const uint8 leading_byte = static_cast<uint8>(s[0]);
       if (leading_byte < 0x80) {
         *first_char32 = leading_byte;
-        *rest = ClippedSubstr(s, 1);
+        *rest = absl::ClippedSubstr(s, 1);
         return true;
       }
 
@@ -638,37 +583,38 @@ bool Util::SplitFirstChar32(StringPiece s,
       return false;
     }
     *first_char32 = result;
-    *rest = ClippedSubstr(s, len);
+    *rest = absl::ClippedSubstr(s, len);
     return true;
   }
 }
 
-bool Util::SplitLastChar32(StringPiece s,
-                           StringPiece *rest,
+bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
                            char32 *last_char32) {
-  StringPiece dummy_rest;
-  if (rest == NULL) {
+  absl::string_view dummy_rest;
+  if (rest == nullptr) {
     rest = &dummy_rest;
   }
   char32 dummy_char32 = 0;
-  if (last_char32 == NULL) {
+  if (last_char32 == nullptr) {
     last_char32 = &dummy_char32;
   }
 
   *last_char32 = 0;
-  *rest = StringPiece();
+  *rest = absl::string_view();
 
   if (s.empty()) {
     return false;
   }
-  StringPiece::const_reverse_iterator it = s.rbegin();
-  for (; (it != s.rend()) && IsUTF8TrailingByte(*it); ++it) {}
+  absl::string_view::const_reverse_iterator it = s.rbegin();
+  for (; (it != s.rend()) && IsUTF8TrailingByte(*it); ++it) {
+  }
   if (it == s.rend()) {
     return false;
   }
-  const StringPiece::difference_type len = std::distance(s.rbegin(), it) + 1;
-  const StringPiece last_piece = ClippedSubstr(s, s.size() - len);
-  StringPiece result_piece;
+  const absl::string_view::difference_type len =
+      std::distance(s.rbegin(), it) + 1;
+  const absl::string_view last_piece = absl::ClippedSubstr(s, s.size() - len);
+  absl::string_view result_piece;
   if (!SplitFirstChar32(last_piece, last_char32, &result_piece)) {
     return false;
   }
@@ -680,17 +626,29 @@ bool Util::SplitLastChar32(StringPiece s,
   return true;
 }
 
-void Util::UCS4ToUTF8(char32 c, string *output) {
+bool Util::IsValidUtf8(absl::string_view s) {
+  char32 first;
+  absl::string_view rest;
+  while (!s.empty()) {
+    if (!SplitFirstChar32(s, &first, &rest)) {
+      return false;
+    }
+    s = rest;
+  }
+  return true;
+}
+
+void Util::UCS4ToUTF8(char32 c, std::string *output) {
   output->clear();
   UCS4ToUTF8Append(c, output);
 }
 
-void Util::UCS4ToUTF8Append(char32 c, string *output) {
+void Util::UCS4ToUTF8Append(char32 c, std::string *output) {
   char buf[7];
   output->append(buf, UCS4ToUTF8(c, buf));
 }
 
-size_t Util::UCS4ToUTF8(char32 c, char* output) {
+size_t Util::UCS4ToUTF8(char32 c, char *output) {
   if (c == 0) {
     // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8Append
     // worked like this.
@@ -744,16 +702,16 @@ size_t Util::UCS4ToUTF8(char32 c, char* output) {
 }
 
 #ifdef OS_WIN
-size_t Util::WideCharsLen(StringPiece src) {
+size_t Util::WideCharsLen(absl::string_view src) {
   const int num_chars =
-      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), NULL, 0);
+      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), nullptr, 0);
   if (num_chars <= 0) {
     return 0;
   }
   return num_chars;
 }
 
-int Util::UTF8ToWide(StringPiece input, std::wstring *output) {
+int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
   const size_t output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
@@ -762,8 +720,7 @@ int Util::UTF8ToWide(StringPiece input, std::wstring *output) {
   const size_t buffer_len = output_length + 1;
   std::unique_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
   const int copied_num_chars = ::MultiByteToWideChar(
-      CP_UTF8, 0, input.begin(), input.size(), input_wide.get(),
-      buffer_len);
+      CP_UTF8, 0, input.begin(), input.size(), input_wide.get(), buffer_len);
   if (0 <= copied_num_chars && copied_num_chars < buffer_len) {
     output->assign(input_wide.get(), copied_num_chars);
   }
@@ -771,16 +728,16 @@ int Util::UTF8ToWide(StringPiece input, std::wstring *output) {
 }
 
 int Util::WideToUTF8(const wchar_t *input, string *output) {
-  const int output_length = WideCharToMultiByte(CP_UTF8, 0, input, -1, NULL, 0,
-                                                NULL, NULL);
+  const int output_length =
+      WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
   if (output_length == 0) {
     return 0;
   }
 
   std::unique_ptr<char[]> input_encoded(new char[output_length + 1]);
-  const int result = WideCharToMultiByte(CP_UTF8, 0, input, -1,
-                                         input_encoded.get(),
-                                         output_length + 1, NULL, NULL);
+  const int result =
+      WideCharToMultiByte(CP_UTF8, 0, input, -1, input_encoded.get(),
+                          output_length + 1, nullptr, nullptr);
   if (result > 0) {
     output->assign(input_encoded.get());
   }
@@ -792,19 +749,19 @@ int Util::WideToUTF8(const std::wstring &input, string *output) {
 }
 #endif  // OS_WIN
 
-StringPiece Util::SubStringPiece(StringPiece src, size_t start) {
+absl::string_view Util::Utf8SubString(absl::string_view src, size_t start) {
   const char *begin = src.data();
   const char *end = begin + src.size();
   for (size_t i = 0; i < start && begin < end; ++i) {
     begin += OneCharLen(begin);
   }
   const size_t prefix_len = begin - src.data();
-  return StringPiece(begin, src.size() - prefix_len);
+  return absl::string_view(begin, src.size() - prefix_len);
 }
 
-StringPiece Util::SubStringPiece(
-    StringPiece src, size_t start, size_t length) {
-  src = SubStringPiece(src, start);
+absl::string_view Util::Utf8SubString(absl::string_view src, size_t start,
+                                      size_t length) {
+  src = Utf8SubString(src, start);
   size_t l = length;
   const char *substr_end = src.data();
   const char *const end = src.data() + src.size();
@@ -812,37 +769,34 @@ StringPiece Util::SubStringPiece(
     substr_end += OneCharLen(substr_end);
     --l;
   }
-  return StringPiece(src.data(), substr_end - src.data());
+  return absl::string_view(src.data(), substr_end - src.data());
 }
 
-void Util::SubString(StringPiece src, size_t start, size_t length,
-                     string *result) {
+void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
+                         std::string *result) {
   DCHECK(result);
-  const StringPiece substr = SubStringPiece(src, start, length);
+  const absl::string_view substr = Utf8SubString(src, start, length);
   result->assign(substr.data(), substr.size());
 }
 
-bool Util::StartsWith(StringPiece str, StringPiece prefix) {
-  return str.starts_with(prefix);
+bool Util::StartsWith(absl::string_view str, absl::string_view prefix) {
+  return absl::StartsWith(str, prefix);
 }
 
-bool Util::EndsWith(StringPiece str, StringPiece suffix) {
-  return str.ends_with(suffix);
+bool Util::EndsWith(absl::string_view str, absl::string_view suffix) {
+  return absl::EndsWith(str, suffix);
 }
 
-void Util::StripUTF8BOM(string *line) {
-  static const char kUTF8BOM[] = "\xef\xbb\xbf";
-  if (line->substr(0, 3) == kUTF8BOM) {
-    line->erase(0, 3);
-  }
+void Util::StripUTF8BOM(std::string *line) {
+  static constexpr char kUTF8BOM[] = "\xef\xbb\xbf";
+  *line = std::string(absl::StripPrefix(*line, kUTF8BOM));
 }
 
-bool Util::IsUTF16BOM(const string &line) {
+bool Util::IsUTF16BOM(const std::string &line) {
   static const char kUTF16LEBOM[] = "\xff\xfe";
   static const char kUTF16BEBOM[] = "\xfe\xff";
   if (line.size() >= 2 &&
-      (line.substr(0, 2) == kUTF16LEBOM ||
-       line.substr(0, 2) == kUTF16BEBOM)) {
+      (line.substr(0, 2) == kUTF16LEBOM || line.substr(0, 2) == kUTF16BEBOM)) {
     return true;
   }
   return false;
@@ -854,78 +808,15 @@ static const char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
 static const char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
 static const char32 kUcs4MinGooglePuaEmoji = 0xFE000;
 static const char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
+}  // namespace
+
+bool Util::IsAndroidPuaEmoji(absl::string_view s) {
+  return (s.size() == 4 && kUtf8MinGooglePuaEmoji <= s &&
+          s <= kUtf8MaxGooglePuaEmoji);
 }
 
-bool Util::IsAndroidPuaEmoji(StringPiece s) {
-  return (s.size() == 4 &&
-          kUtf8MinGooglePuaEmoji <= s && s <= kUtf8MaxGooglePuaEmoji);
-}
-
-namespace {
-
-// Lower-level routine that takes a va_list and appends to a specified
-// string.  All other routines of sprintf family are just convenience
-// wrappers around it.
-void StringAppendV(string *dst, const char *format, va_list ap) {
-  // First try with a small fixed size buffer
-  char space[1024];
-
-  // It's possible for methods that use a va_list to invalidate
-  // the data in it upon use.  The fix is to make a copy
-  // of the structure before using it and use that copy instead.
-  va_list backup_ap;
-  va_copy(backup_ap, ap);
-  int result = vsnprintf(space, sizeof(space), format, backup_ap);
-  va_end(backup_ap);
-
-  if ((result >= 0) && (result < sizeof(space))) {
-    // It fit
-    dst->append(space, result);
-    return;
-  }
-
-  // Repeatedly increase buffer size until it fits
-  int length = sizeof(space);
-  while (true) {
-    if (result < 0) {
-      // Older behavior: just try doubling the buffer size
-      length *= 2;
-    } else {
-      // We need exactly "result+1" characters
-      length = result+1;
-    }
-    char *buf = new char[length];
-
-    // Restore the va_list before we use it again
-    va_copy(backup_ap, ap);
-    result = vsnprintf(buf, length, format, backup_ap);
-    va_end(backup_ap);
-
-    if ((result >= 0) && (result < length)) {
-      // It fit
-      dst->append(buf, result);
-      delete[] buf;
-      return;
-    }
-    delete[] buf;
-  }
-}
-
-}   // namespace
-
-string Util::StringPrintf(const char *format, ...) {
-  va_list ap;
-  va_start(ap, format);
-  string result;
-  StringAppendV(&result, format, ap);
-  va_end(ap);
-  return result;
-}
-
-
-
-bool Util::ChopReturns(string *line) {
-  const string::size_type line_end = line->find_last_not_of("\r\n");
+bool Util::ChopReturns(std::string *line) {
+  const std::string::size_type line_end = line->find_last_not_of("\r\n");
   if (line_end + 1 != line->size()) {
     line->erase(line_end + 1);
     return true;
@@ -938,22 +829,20 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   memset(buf, '\0', buf_size);
 #ifdef OS_WIN
   HCRYPTPROV hprov;
-  if (!::CryptAcquireContext(&hprov,
-                             NULL,
-                             NULL,
-                             PROV_RSA_FULL,
+  if (!::CryptAcquireContext(&hprov, nullptr, nullptr, PROV_RSA_FULL,
                              CRYPT_VERIFYCONTEXT)) {
     return false;
   }
-  if (!::CryptGenRandom(hprov,
-                        static_cast<DWORD>(buf_size),
+  if (!::CryptGenRandom(hprov, static_cast<DWORD>(buf_size),
                         reinterpret_cast<BYTE *>(buf))) {
     ::CryptReleaseContext(hprov, 0);
     return false;
   }
   ::CryptReleaseContext(hprov, 0);
   return true;
-#elif defined(OS_NACL)
+#endif  // OS_WIN
+
+#if defined(OS_NACL)
   struct nacl_irt_random interface;
 
   if (nacl_interface_query(NACL_IRT_RANDOM_v0_1, &interface,
@@ -973,7 +862,15 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
     return false;
   }
   return true;
-#else  // !OS_WIN && !OS_NACL
+#endif
+
+#if defined(OS_CHROMEOS)
+  // TODO(googleo): b/171939770 Accessing "/dev/urandom" is not allowed in
+  // "ime" sandbox. Returns false to use the self-implemented random number
+  // instead. When the API is unblocked, remove the hack.
+  return false;
+#endif  // OS_CHROMEOS
+
   // Use non blocking interface on Linux.
   // Mac also have /dev/urandom (although it's identical with /dev/random)
   std::ifstream ifs("/dev/urandom", std::ios::binary);
@@ -982,7 +879,6 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   }
   ifs.read(buf, buf_size);
   return true;
-#endif  // OS_WIN or OS_NACL
 }
 }  // namespace
 
@@ -1017,61 +913,27 @@ int Util::Random(int size) {
   // Caveat: RAND_MAX is likely to be too small to achieve fine-grained
   // uniform distribution.
   // TODO(yukawa): Improve the resolution.
-  return static_cast<int> (1.0 * size * rand() / (RAND_MAX + 1.0));
+  return static_cast<int>(1.0 * size * rand() / (RAND_MAX + 1.0));
 }
 
-void Util::SetRandomSeed(uint32 seed) {
-  ::srand(seed);
-}
+void Util::SetRandomSeed(uint32 seed) { ::srand(seed); }
 
 void Util::Sleep(uint32 msec) {
 #ifdef OS_WIN
   ::Sleep(msec);
-#else  // OS_WIN
+#else   // OS_WIN
   usleep(msec * 1000);
 #endif  // OS_WIN
 }
 
 namespace {
 
-void EscapeInternal(char input, StringPiece prefix, string *output) {
+void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
   const int hi = ((static_cast<int>(input) & 0xF0) >> 4);
   const int lo = (static_cast<int>(input) & 0x0F);
   output->append(prefix.data(), prefix.size());
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
-}
-
-bool ParseHexChar(char c, char *n) {
-  if ('0' <= c && c <= '9') {
-    *n = c - '0';
-    return true;
-  }
-  if ('a' <= c && c <= 'f') {
-    *n = (c - 'a') + 10;
-    return true;
-  }
-  if ('A' <= c && c <= 'F') {
-    *n = (c - 'A') + 10;
-    return true;
-  }
-  return false;
-}
-
-// Note: we cannot use strtoul() because it requires input to be
-// null-terminated (StringPiece may not be null-terminated).
-bool UnescapeInternal(StringPiece input, StringPiece prefix, char *output) {
-  if (!Util::StartsWith(input, prefix)) {
-    return false;
-  }
-  input.remove_prefix(prefix.size());
-  char hi, lo;
-  if (input.size() < 2 || !ParseHexChar(input[0], &hi) ||
-      !ParseHexChar(input[1], &lo)) {
-    return false;
-  }
-  *output = (hi << 4) | lo;
-  return true;
 }
 
 int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
@@ -1088,7 +950,7 @@ int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
     n = array[p].base;
     if (static_cast<uint32>(b) == array[p].check && n < 0) {
       seekto = i;
-      *result = - n - 1;
+      *result = -n - 1;
       ++num;
     }
     p = b + static_cast<uint8>(key[i]) + 1;
@@ -1111,16 +973,15 @@ int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
 }  // namespace
 
 void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
-                                   const char *ctable,
-                                   StringPiece input,
-                                   string *output) {
+                                   const char *ctable, absl::string_view input,
+                                   std::string *output) {
   output->clear();
   const char *begin = input.data();
   const char *const end = input.data() + input.size();
   while (begin < end) {
     int result = 0;
-    int mblen = LookupDoubleArray(da, begin, static_cast<int>(end - begin),
-                                  &result);
+    int mblen =
+        LookupDoubleArray(da, begin, static_cast<int>(end - begin), &result);
     if (mblen > 0) {
       const char *p = &ctable[result];
       const size_t len = strlen(p);
@@ -1135,106 +996,95 @@ void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
   }
 }
 
-void Util::HiraganaToKatakana(StringPiece input, string *output) {
+void Util::HiraganaToKatakana(absl::string_view input, std::string *output) {
   ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
-                          japanese_util_rule::hiragana_to_katakana_table,
-                          input,
+                          japanese_util_rule::hiragana_to_katakana_table, input,
                           output);
 }
 
-void Util::HiraganaToHalfwidthKatakana(StringPiece input,
-                                       string *output) {
+void Util::HiraganaToHalfwidthKatakana(absl::string_view input,
+                                       std::string *output) {
   // combine two rules
-  string tmp;
-  ConvertUsingDoubleArray(
-      japanese_util_rule::hiragana_to_katakana_da,
-      japanese_util_rule::hiragana_to_katakana_table,
-      input, &tmp);
+  std::string tmp;
+  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
+                          japanese_util_rule::hiragana_to_katakana_table, input,
+                          &tmp);
   ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
-      tmp, output);
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table, tmp,
+      output);
 }
 
-void Util::HiraganaToRomanji(StringPiece input, string *output) {
+void Util::HiraganaToRomanji(absl::string_view input, std::string *output) {
   ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
-                          japanese_util_rule::hiragana_to_romanji_table,
-                          input,
+                          japanese_util_rule::hiragana_to_romanji_table, input,
                           output);
 }
 
-void Util::HalfWidthAsciiToFullWidthAscii(StringPiece input,
-                                          string *output) {
+void Util::HalfWidthAsciiToFullWidthAscii(absl::string_view input,
+                                          std::string *output) {
   ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
-      input,
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_table, input,
       output);
 }
 
-void Util::FullWidthAsciiToHalfWidthAscii(StringPiece input,
-                                          string *output) {
+void Util::FullWidthAsciiToHalfWidthAscii(absl::string_view input,
+                                          std::string *output) {
   ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthascii_to_halfwidthascii_da,
-      japanese_util_rule::fullwidthascii_to_halfwidthascii_table,
-      input,
+      japanese_util_rule::fullwidthascii_to_halfwidthascii_table, input,
       output);
 }
 
-void Util::HiraganaToFullwidthRomanji(StringPiece input, string *output) {
-  string tmp;
+void Util::HiraganaToFullwidthRomanji(absl::string_view input,
+                                      std::string *output) {
+  std::string tmp;
   ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
-                          japanese_util_rule::hiragana_to_romanji_table,
-                          input,
+                          japanese_util_rule::hiragana_to_romanji_table, input,
                           &tmp);
   ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_table,
-      tmp,
-      output);
+      japanese_util_rule::halfwidthascii_to_fullwidthascii_table, tmp, output);
 }
 
-void Util::RomanjiToHiragana(StringPiece input, string *output) {
+void Util::RomanjiToHiragana(absl::string_view input, std::string *output) {
   ConvertUsingDoubleArray(japanese_util_rule::romanji_to_hiragana_da,
-                          japanese_util_rule::romanji_to_hiragana_table,
-                          input,
+                          japanese_util_rule::romanji_to_hiragana_table, input,
                           output);
 }
 
-void Util::KatakanaToHiragana(StringPiece input, string *output) {
+void Util::KatakanaToHiragana(absl::string_view input, std::string *output) {
   ConvertUsingDoubleArray(japanese_util_rule::katakana_to_hiragana_da,
-                          japanese_util_rule::katakana_to_hiragana_table,
-                          input,
+                          japanese_util_rule::katakana_to_hiragana_table, input,
                           output);
 }
 
-void Util::HalfWidthKatakanaToFullWidthKatakana(StringPiece input,
-                                                string *output) {
+void Util::HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
+                                                std::string *output) {
   ConvertUsingDoubleArray(
       japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_da,
-      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table,
-      input,
+      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table, input,
       output);
 }
 
-void Util::FullWidthKatakanaToHalfWidthKatakana(StringPiece input,
-                                                string *output) {
+void Util::FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
+                                                std::string *output) {
   ConvertUsingDoubleArray(
       japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table,
-      input,
+      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table, input,
       output);
 }
 
-void Util::FullWidthToHalfWidth(StringPiece input, string *output) {
-  string tmp;
+void Util::FullWidthToHalfWidth(absl::string_view input, std::string *output) {
+  std::string tmp;
   FullWidthAsciiToHalfWidthAscii(input, &tmp);
   output->clear();
   FullWidthKatakanaToHalfWidthKatakana(tmp, output);
 }
 
-void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
-  string tmp;
+void Util::HalfWidthToFullWidth(absl::string_view input, std::string *output) {
+  std::string tmp;
   HalfWidthAsciiToFullWidthAscii(input, &tmp);
   output->clear();
   HalfWidthKatakanaToFullWidthKatakana(tmp, output);
@@ -1243,18 +1093,22 @@ void Util::HalfWidthToFullWidth(StringPiece input, string *output) {
 // TODO(tabata): Add another function to split voice mark
 // of some UNICODE only characters (required to display
 // and commit for old clients)
-void Util::NormalizeVoicedSoundMark(StringPiece input, string *output) {
+void Util::NormalizeVoicedSoundMark(absl::string_view input,
+                                    std::string *output) {
   ConvertUsingDoubleArray(japanese_util_rule::normalize_voiced_sound_da,
                           japanese_util_rule::normalize_voiced_sound_table,
-                          input,
-                          output);
+                          input, output);
 }
 
 namespace {
 
 struct BracketPair {
-  StringPiece GetOpenBracket() const { return StringPiece(open, open_len); }
-  StringPiece GetCloseBracket() const { return StringPiece(close, close_len); }
+  absl::string_view GetOpenBracket() const {
+    return absl::string_view(open, open_len);
+  }
+  absl::string_view GetCloseBracket() const {
+    return absl::string_view(close, close_len);
+  }
 
   const char *open;
   size_t open_len;
@@ -1267,58 +1121,48 @@ struct BracketPair {
 // NOTE: This array is sorted in order of both |open| and |close|.  If you add a
 // new bracket pair, you must keep this property.
 const BracketPair kSortedBracketPairs[] = {
-  {"(", 1, ")", 1},
-  {"[", 1, "]", 1},
-  {"{", 1, "}", 1},
-  {"〈", 3, "〉", 3},
-  {"《", 3, "》", 3},
-  {"「", 3, "」", 3},
-  {"『", 3, "』", 3},
-  {"【", 3, "】", 3},
-  {"〔", 3, "〕", 3},
-  {"〘", 3, "〙", 3},
-  {"〚", 3, "〛", 3},
-  {"（", 3, "）", 3},
-  {"［", 3, "］", 3},
-  {"｛", 3, "｝", 3},
-  {"｢", 3, "｣", 3},
+    {"(", 1, ")", 1},   {"[", 1, "]", 1},   {"{", 1, "}", 1},
+    {"〈", 3, "〉", 3}, {"《", 3, "》", 3}, {"「", 3, "」", 3},
+    {"『", 3, "』", 3}, {"【", 3, "】", 3}, {"〔", 3, "〕", 3},
+    {"〘", 3, "〙", 3}, {"〚", 3, "〛", 3}, {"（", 3, "）", 3},
+    {"［", 3, "］", 3}, {"｛", 3, "｝", 3}, {"｢", 3, "｣", 3},
 };
 
 }  // namespace
 
-bool Util::IsOpenBracket(StringPiece key, string *close_bracket) {
+bool Util::IsOpenBracket(absl::string_view key, std::string *close_bracket) {
   struct OrderByOpenBracket {
-    bool operator()(const BracketPair &x, StringPiece key) const {
+    bool operator()(const BracketPair &x, absl::string_view key) const {
       return x.GetOpenBracket() < key;
     }
   };
   const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(
-      std::begin(kSortedBracketPairs), end, key, OrderByOpenBracket());
+  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
+                                     OrderByOpenBracket());
   if (iter == end || iter->GetOpenBracket() != key) {
     return false;
   }
-  *close_bracket = string(iter->GetCloseBracket());
+  *close_bracket = std::string(iter->GetCloseBracket());
   return true;
 }
 
-bool Util::IsCloseBracket(StringPiece key, string *open_bracket) {
+bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
   struct OrderByCloseBracket {
-    bool operator()(const BracketPair &x, StringPiece key) const {
+    bool operator()(const BracketPair &x, absl::string_view key) const {
       return x.GetCloseBracket() < key;
     }
   };
   const auto end = std::end(kSortedBracketPairs);
-  const auto iter = std::lower_bound(
-      std::begin(kSortedBracketPairs), end, key, OrderByCloseBracket());
+  const auto iter = std::lower_bound(std::begin(kSortedBracketPairs), end, key,
+                                     OrderByCloseBracket());
   if (iter == end || iter->GetCloseBracket() != key) {
     return false;
   }
-  *open_bracket = string(iter->GetOpenBracket());
+  *open_bracket = std::string(iter->GetOpenBracket());
   return true;
 }
 
-bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
+bool Util::IsFullWidthSymbolInHalfWidthKatakana(const std::string &input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
@@ -1337,7 +1181,7 @@ bool Util::IsFullWidthSymbolInHalfWidthKatakana(const string &input) {
   return true;
 }
 
-bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
+bool Util::IsHalfWidthKatakanaSymbol(const std::string &input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0xFF61:  // FULLSTOP "｡"
@@ -1356,7 +1200,7 @@ bool Util::IsHalfWidthKatakanaSymbol(const string &input) {
   return true;
 }
 
-bool Util::IsKanaSymbolContained(const string &input) {
+bool Util::IsKanaSymbolContained(const std::string &input) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     switch (iter.Get()) {
       case 0x3002:  // FULLSTOP "。"
@@ -1381,10 +1225,10 @@ bool Util::IsKanaSymbolContained(const string &input) {
   return false;
 }
 
-bool Util::IsEnglishTransliteration(const string &value) {
+bool Util::IsEnglishTransliteration(const std::string &value) {
   for (size_t i = 0; i < value.size(); ++i) {
-    if (value[i] == 0x20 || value[i] == 0x21 ||
-        value[i] == 0x27 || value[i] == 0x2D ||
+    if (value[i] == 0x20 || value[i] == 0x21 || value[i] == 0x27 ||
+        value[i] == 0x2D ||
         // " ", "!", "'", "-"
         (value[i] >= 0x41 && value[i] <= 0x5A) ||  // A..Z
         (value[i] >= 0x61 && value[i] <= 0x7A)) {  // a..z
@@ -1397,14 +1241,13 @@ bool Util::IsEnglishTransliteration(const string &value) {
 }
 
 // URL
-void Util::EncodeURI(const string &input, string *output) {
+void Util::EncodeURI(const std::string &input, std::string *output) {
   const char kDigits[] = "0123456789ABCDEF";
   const char *begin = input.data();
   const char *end = input.data() + input.size();
   output->clear();
   while (begin < end) {
-    if (isascii(*begin) &&
-        (isdigit(*begin) || isalpha(*begin))) {
+    if (isascii(*begin) && (isdigit(*begin) || isalpha(*begin))) {
       *output += *begin;
     } else {
       *output += '%';
@@ -1415,7 +1258,7 @@ void Util::EncodeURI(const string &input, string *output) {
   }
 }
 
-void Util::DecodeURI(const string &src, string *output) {
+void Util::DecodeURI(const std::string &src, std::string *output) {
   output->clear();
   const char *p = src.data();
   const char *end = src.data() + src.size();
@@ -1423,8 +1266,8 @@ void Util::DecodeURI(const string &src, string *output) {
     if (*p == '%' && p + 2 < end) {
       const char h = toupper(p[1]);
       const char l = toupper(p[2]);
-      const int vh = isalpha(h) ? (10 + (h -'A')) : (h - '0');
-      const int vl = isalpha(l) ? (10 + (l -'A')) : (l - '0');
+      const int vh = isalpha(h) ? (10 + (h - 'A')) : (h - '0');
+      const int vl = isalpha(l) ? (10 + (l - 'A')) : (l - '0');
       *output += ((vh << 4) + vl);
       p += 3;
     } else if (*p == '+') {
@@ -1437,13 +1280,14 @@ void Util::DecodeURI(const string &src, string *output) {
 }
 
 void Util::AppendCGIParams(
-    const std::vector<std::pair<string, string> > &params, string *base) {
-  if (params.size() == 0 || base == NULL) {
+    const std::vector<std::pair<std::string, std::string> > &params,
+    std::string *base) {
+  if (params.size() == 0 || base == nullptr) {
     return;
   }
 
-  string encoded;
-  for (std::vector<std::pair<string, string> >::const_iterator it =
+  std::string encoded;
+  for (std::vector<std::pair<std::string, std::string> >::const_iterator it =
            params.begin();
        it != params.end(); ++it) {
     // Append "<first>=<encoded second>&"
@@ -1460,69 +1304,21 @@ void Util::AppendCGIParams(
   }
 }
 
-void Util::Escape(StringPiece input, string *output) {
+void Util::Escape(absl::string_view input, std::string *output) {
   output->clear();
   for (size_t i = 0; i < input.size(); ++i) {
     EscapeInternal(input[i], "\\x", output);
   }
 }
 
-string Util::Escape(StringPiece input) {
-  string s;
+std::string Util::Escape(absl::string_view input) {
+  std::string s;
   Escape(input, &s);
   return s;
 }
 
-bool Util::Unescape(StringPiece input, string *output) {
-  output->clear();
-  // Expected input format is "\xNN\xNN\xNN...", so input is parsed every four
-  // bytes (4 is the length of \xNN pattern).
-  for (; !input.empty(); input.remove_prefix(4)) {
-    char c;
-    // Try parsing \xNN pattern of 4 bytes.
-    if (!UnescapeInternal(input, "\\x", &c)) {
-      return false;
-    }
-    output->append(1, c);
-  }
-  return true;
-}
-
-void Util::EscapeUrl(const string &input, string *output) {
-  output->clear();
-  for (size_t i = 0; i < input.size(); ++i) {
-    EscapeInternal(input[i], "%", output);
-  }
-}
-
-string Util::EscapeUrl(const string &input) {
-  string escaped_input;
-  EscapeUrl(input, &escaped_input);
-  return escaped_input;
-}
-
-void Util::EscapeHtml(const string &plain, string *escaped) {
-  string tmp1, tmp2, tmp3, tmp4;
-  StringReplace(plain, "&", "&amp;", true, &tmp1);
-  StringReplace(tmp1, "<", "&lt;", true, &tmp2);
-  StringReplace(tmp2, ">", "&gt;", true, &tmp3);
-  StringReplace(tmp3, "\"", "&quot;", true, &tmp4);
-  StringReplace(tmp4, "'", "&#39;", true, escaped);
-}
-
-void Util::UnescapeHtml(const string &escaped, string *plain) {
-  string tmp1, tmp2, tmp3, tmp4;
-  StringReplace(escaped, "&amp;", "&", true, &tmp1);
-  StringReplace(tmp1, "&lt;", "<", true, &tmp2);
-  StringReplace(tmp2, "&gt;", ">", true, &tmp3);
-  StringReplace(tmp3, "&quot;", "\"", true, &tmp4);
-  StringReplace(tmp4, "&#39;", "'", true, plain);
-}
-
-void Util::EscapeCss(const string &plain, string *escaped) {
-  // ">" and "&" are not escaped because they are used for operands of
-  // CSS.
-  StringReplace(plain, "<", "&lt;", true, escaped);
+bool Util::Unescape(absl::string_view input, std::string *output) {
+  return absl::CUnescape(input, output);
 }
 
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
@@ -1531,24 +1327,26 @@ void Util::EscapeCss(const string &plain, string *escaped) {
 // TODO(yukawa, team): Make a mechanism to keep this classifier up-to-date
 //   based on the original data from Unicode.org.
 Util::ScriptType Util::GetScriptType(char32 w) {
-  if (INRANGE(w, 0x0030, 0x0039) ||    // ascii number
-      INRANGE(w, 0xFF10, 0xFF19)) {    // full width number
+  if (INRANGE(w, 0x0030, 0x0039) ||  // ascii number
+      INRANGE(w, 0xFF10, 0xFF19)) {  // full width number
     return NUMBER;
-  } else if (
-      INRANGE(w, 0x0041, 0x005A) ||    // ascii upper
-      INRANGE(w, 0x0061, 0x007A) ||    // ascii lower
-      INRANGE(w, 0xFF21, 0xFF3A) ||    // fullwidth ascii upper
-      INRANGE(w, 0xFF41, 0xFF5A)) {    // fullwidth ascii lower
+  } else if (INRANGE(w, 0x0041, 0x005A) ||  // ascii upper
+             INRANGE(w, 0x0061, 0x007A) ||  // ascii lower
+             INRANGE(w, 0xFF21, 0xFF3A) ||  // fullwidth ascii upper
+             INRANGE(w, 0xFF41, 0xFF5A)) {  // fullwidth ascii lower
     return ALPHABET;
-  } else if (
-      w == 0x3005 ||                   // IDEOGRAPHIC ITERATION MARK "々"
-      INRANGE(w, 0x3400, 0x4DBF) ||    // CJK Unified Ideographs Extension A
-      INRANGE(w, 0x4E00, 0x9FFF) ||    // CJK Unified Ideographs
-      INRANGE(w, 0xF900, 0xFAFF) ||    // CJK Compatibility Ideographs
-      INRANGE(w, 0x20000, 0x2A6DF) ||  // CJK Unified Ideographs Extension B
-      INRANGE(w, 0x2A700, 0x2B73F) ||  // CJK Unified Ideographs Extension C
-      INRANGE(w, 0x2B740, 0x2B81F) ||  // CJK Unified Ideographs Extension D
-      INRANGE(w, 0x2F800, 0x2FA1F)) {  // CJK Compatibility Ideographs
+  } else if (w == 0x3005 ||  // IDEOGRAPHIC ITERATION MARK "々"
+             INRANGE(w, 0x3400,
+                     0x4DBF) ||  // CJK Unified Ideographs Extension A
+             INRANGE(w, 0x4E00, 0x9FFF) ||  // CJK Unified Ideographs
+             INRANGE(w, 0xF900, 0xFAFF) ||  // CJK Compatibility Ideographs
+             INRANGE(w, 0x20000,
+                     0x2A6DF) ||  // CJK Unified Ideographs Extension B
+             INRANGE(w, 0x2A700,
+                     0x2B73F) ||  // CJK Unified Ideographs Extension C
+             INRANGE(w, 0x2B740,
+                     0x2B81F) ||  // CJK Unified Ideographs Extension D
+             INRANGE(w, 0x2F800, 0x2FA1F)) {  // CJK Compatibility Ideographs
     // As of Unicode 6.0.2, each block has the following characters assigned.
     // [U+3400, U+4DB5]:   CJK Unified Ideographs Extension A
     // [U+4E00, U+9FCB]:   CJK Unified Ideographs
@@ -1558,30 +1356,30 @@ Util::ScriptType Util::GetScriptType(char32 w) {
     // [U+2B740, U+2B81D]: CJK Unified Ideographs Extension D
     // [U+2F800, U+2FA1D]: CJK Compatibility Ideographs
     return KANJI;
-  } else if (
-      INRANGE(w, 0x3041, 0x309F) ||    // hiragana
-      w == 0x1B001) {                  // HIRAGANA LETTER ARCHAIC YE
+  } else if (INRANGE(w, 0x3041, 0x309F) ||  // hiragana
+             w == 0x1B001) {                // HIRAGANA LETTER ARCHAIC YE
     return HIRAGANA;
-  } else if (
-      INRANGE(w, 0x30A1, 0x30FF) ||    // full width katakana
-      INRANGE(w, 0x31F0, 0x31FF) ||    // Katakana Phonetic Extensions for Ainu
-      INRANGE(w, 0xFF65, 0xFF9F) ||    // half width katakana
-      w == 0x1B000) {                  // KATAKANA LETTER ARCHAIC E
+  } else if (INRANGE(w, 0x30A1, 0x30FF) ||  // full width katakana
+             INRANGE(w, 0x31F0,
+                     0x31FF) ||  // Katakana Phonetic Extensions for Ainu
+             INRANGE(w, 0xFF65, 0xFF9F) ||  // half width katakana
+             w == 0x1B000) {                // KATAKANA LETTER ARCHAIC E
     return KATAKANA;
-  } else if (
-      INRANGE(w, 0x02300, 0x023F3) ||  // Miscellaneous Technical
-      INRANGE(w, 0x02700, 0x027BF) ||  // Dingbats
-      INRANGE(w, 0x1F000, 0x1F02F) ||  // Mahjong tiles
-      INRANGE(w, 0x1F030, 0x1F09F) ||  // Domino tiles
-      INRANGE(w, 0x1F0A0, 0x1F0FF) ||  // Playing cards
-      INRANGE(w, 0x1F100, 0x1F2FF) ||  // Enclosed Alphanumeric Supplement
-      INRANGE(w, 0x1F200, 0x1F2FF) ||  // Enclosed Ideographic Supplement
-      INRANGE(w, 0x1F300, 0x1F5FF) ||  // Miscellaneous Symbols And Pictographs
-      INRANGE(w, 0x1F600, 0x1F64F) ||  // Emoticons
-      INRANGE(w, 0x1F680, 0x1F6FF) ||  // Transport And Map Symbols
-      INRANGE(w, 0x1F700, 0x1F77F) ||  // Alchemical Symbols
-      w == 0x26CE ||                   // Ophiuchus
-      INRANGE(w, kUcs4MinGooglePuaEmoji, kUcs4MaxGooglePuaEmoji)) {
+  } else if (INRANGE(w, 0x02300, 0x023F3) ||  // Miscellaneous Technical
+             INRANGE(w, 0x02700, 0x027BF) ||  // Dingbats
+             INRANGE(w, 0x1F000, 0x1F02F) ||  // Mahjong tiles
+             INRANGE(w, 0x1F030, 0x1F09F) ||  // Domino tiles
+             INRANGE(w, 0x1F0A0, 0x1F0FF) ||  // Playing cards
+             INRANGE(w, 0x1F100,
+                     0x1F2FF) ||  // Enclosed Alphanumeric Supplement
+             INRANGE(w, 0x1F200, 0x1F2FF) ||  // Enclosed Ideographic Supplement
+             INRANGE(w, 0x1F300,
+                     0x1F5FF) ||  // Miscellaneous Symbols And Pictographs
+             INRANGE(w, 0x1F600, 0x1F64F) ||  // Emoticons
+             INRANGE(w, 0x1F680, 0x1F6FF) ||  // Transport And Map Symbols
+             INRANGE(w, 0x1F700, 0x1F77F) ||  // Alchemical Symbols
+             w == 0x26CE ||                   // Ophiuchus
+             INRANGE(w, kUcs4MinGooglePuaEmoji, kUcs4MaxGooglePuaEmoji)) {
     return EMOJI;
   }
 
@@ -1632,15 +1430,16 @@ Util::FormType Util::GetFormType(char32 w) {
 #undef INRANGE
 
 // return script type of first character in str
-Util::ScriptType Util::GetScriptType(const char *begin,
-                                     const char *end, size_t *mblen) {
+Util::ScriptType Util::GetScriptType(const char *begin, const char *end,
+                                     size_t *mblen) {
   const char32 w = UTF8ToUCS4(begin, end, mblen);
   return GetScriptType(w);
 }
 
 namespace {
 
-Util::ScriptType GetScriptTypeInternal(StringPiece str, bool ignore_symbols) {
+Util::ScriptType GetScriptTypeInternal(absl::string_view str,
+                                       bool ignore_symbols) {
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
@@ -1649,15 +1448,14 @@ Util::ScriptType GetScriptTypeInternal(StringPiece str, bool ignore_symbols) {
     if ((w == 0x30FC || w == 0x30FB || (w >= 0x3099 && w <= 0x309C)) &&
         // PROLONGEDSOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
         // are HIRAGANA as well
-        (result == Util::SCRIPT_TYPE_SIZE ||
-         result == Util::HIRAGANA || result == Util::KATAKANA)) {
+        (result == Util::SCRIPT_TYPE_SIZE || result == Util::HIRAGANA ||
+         result == Util::KATAKANA)) {
       type = result;  // restore the previous state
     }
 
     // Ignore symbols
     // Regard UNKNOWN_SCRIPT as symbols here
-    if (ignore_symbols &&
-        result != Util::UNKNOWN_SCRIPT &&
+    if (ignore_symbols && result != Util::UNKNOWN_SCRIPT &&
         type == Util::UNKNOWN_SCRIPT) {
       continue;
     }
@@ -1686,23 +1484,21 @@ Util::ScriptType GetScriptTypeInternal(StringPiece str, bool ignore_symbols) {
 
 }  // namespace
 
-Util::ScriptType Util::GetScriptType(StringPiece str) {
+Util::ScriptType Util::GetScriptType(absl::string_view str) {
   return GetScriptTypeInternal(str, false);
 }
 
-Util::ScriptType Util::GetFirstScriptType(const string &str) {
+Util::ScriptType Util::GetFirstScriptType(const std::string &str) {
   size_t mblen = 0;
-  return GetScriptType(str.c_str(),
-                       str.c_str() + str.size(),
-                       &mblen);
+  return GetScriptType(str.c_str(), str.c_str() + str.size(), &mblen);
 }
 
-Util::ScriptType Util::GetScriptTypeWithoutSymbols(const string &str) {
+Util::ScriptType Util::GetScriptTypeWithoutSymbols(const std::string &str) {
   return GetScriptTypeInternal(str, true);
 }
 
 // return true if all script_type in str is "type"
-bool Util::IsScriptType(StringPiece str, Util::ScriptType type) {
+bool Util::IsScriptType(absl::string_view str, Util::ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     const char32 w = iter.Get();
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
@@ -1714,7 +1510,7 @@ bool Util::IsScriptType(StringPiece str, Util::ScriptType type) {
 }
 
 // return true if the string contains script_type char
-bool Util::ContainsScriptType(StringPiece str, ScriptType type) {
+bool Util::ContainsScriptType(absl::string_view str, ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     if (type == GetScriptType(iter.Get())) {
       return true;
@@ -1724,14 +1520,13 @@ bool Util::ContainsScriptType(StringPiece str, ScriptType type) {
 }
 
 // return the Form Type of string
-Util::FormType Util::GetFormType(const string &str) {
+Util::FormType Util::GetFormType(const std::string &str) {
   // TODO(hidehiko): get rid of using FORM_TYPE_SIZE.
   FormType result = FORM_TYPE_SIZE;
 
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     const FormType type = GetFormType(iter.Get());
-    if (type == UNKNOWN_FORM ||
-        (result != FORM_TYPE_SIZE && type != result)) {
+    if (type == UNKNOWN_FORM || (result != FORM_TYPE_SIZE && type != result)) {
       return UNKNOWN_FORM;
     }
     result = type;
@@ -1743,7 +1538,7 @@ Util::FormType Util::GetFormType(const string &str) {
 // Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
 #include "base/character_set.inc"
 
-Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
+Util::CharacterSet Util::GetCharacterSet(absl::string_view str) {
   CharacterSet result = ASCII;
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
     result = std::max(result, GetCharacterSet(iter.Get()));
@@ -1754,50 +1549,42 @@ Util::CharacterSet Util::GetCharacterSet(StringPiece str) {
 // CAUTION: Be careful to change the implementation of serialization.  Some
 // files use this format, so compatibility can be lost.  See, e.g.,
 // data_manager/dataset_writer.cc.
-string Util::SerializeUint64(uint64 x) {
+std::string Util::SerializeUint64(uint64 x) {
   const char s[8] = {
-      static_cast<char>(x >> 56),
-      static_cast<char>((x >> 48) & 0xFF),
-      static_cast<char>((x >> 40) & 0xFF),
-      static_cast<char>((x >> 32) & 0xFF),
-      static_cast<char>((x >> 24) & 0xFF),
-      static_cast<char>((x >> 16) & 0xFF),
-      static_cast<char>((x >> 8) & 0xFF),
-      static_cast<char>(x & 0xFF),
+      static_cast<char>(x >> 56),          static_cast<char>((x >> 48) & 0xFF),
+      static_cast<char>((x >> 40) & 0xFF), static_cast<char>((x >> 32) & 0xFF),
+      static_cast<char>((x >> 24) & 0xFF), static_cast<char>((x >> 16) & 0xFF),
+      static_cast<char>((x >> 8) & 0xFF),  static_cast<char>(x & 0xFF),
   };
-  return string(s, 8);
+  return std::string(s, 8);
 }
 
-bool Util::DeserializeUint64(StringPiece s, uint64 *x) {
+bool Util::DeserializeUint64(absl::string_view s, uint64 *x) {
   if (s.size() != 8) {
     return false;
   }
-  *x = static_cast<uint64>(s[0]) << 56 |
-       static_cast<uint64>(s[1]) << 48 |
-       static_cast<uint64>(s[2]) << 40 |
-       static_cast<uint64>(s[3]) << 32 |
-       static_cast<uint64>(s[4]) << 24 |
-       static_cast<uint64>(s[5]) << 16 |
-       static_cast<uint64>(s[6]) << 8 |
-       static_cast<uint64>(s[7]);
+  // The following operations assume `char` is unsigned (i.e. -funsigned-char).
+  *x = static_cast<uint64>(s[0]) << 56 | static_cast<uint64>(s[1]) << 48 |
+       static_cast<uint64>(s[2]) << 40 | static_cast<uint64>(s[3]) << 32 |
+       static_cast<uint64>(s[4]) << 24 | static_cast<uint64>(s[5]) << 16 |
+       static_cast<uint64>(s[6]) << 8 | static_cast<uint64>(s[7]);
   return true;
 }
 
 bool Util::IsLittleEndian() {
 #ifdef OS_WIN
   return true;
-#else  // OS_WIN
+#endif  // OS_WIN
+
   union {
     unsigned char c[4];
     unsigned int i;
   } u;
   static_assert(sizeof(u.c) == sizeof(u.i),
                 "Expecting (unsigned) int is 32-bit integer.");
-  static_assert(sizeof(u) == sizeof(u.i),
-                "Checking alignment.");
+  static_assert(sizeof(u) == sizeof(u.i), "Checking alignment.");
   u.i = 0x12345678U;
   return u.c[0] == 0x78U;
-#endif  // OS_WIN
 }
 
 }  // namespace mozc

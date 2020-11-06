@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,19 +28,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QtGui/QGuiApplication>
-#include <QtWidgets/QDialog>
 #include <QtGui/QtGui>
+#include <QtWidgets/QDialog>
 
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
+#include "gui/base/util.h"
 #include "gui/word_register_dialog/word_register_dialog.h"
 
 int RunWordRegisterDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_word_register_dialog);
-  QApplication app(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  string name = "word_register_dialog.";
+  std::string name = "word_register_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::gui::SingletonWindowHelper window_helper(name);
@@ -50,8 +50,7 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont(
-      "word_register_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("word_register_dialog");
 
   mozc::gui::WordRegisterDialog word_register_dialog;
   if (!word_register_dialog.IsAvailable()) {
@@ -61,5 +60,5 @@ int RunWordRegisterDialog(int argc, char *argv[]) {
   word_register_dialog.show();
   word_register_dialog.raise();
 
-  return app.exec();
+  return app->exec();
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,71 +30,10 @@
 #ifndef MOZC_BASE_FILE_STREAM_H_
 #define MOZC_BASE_FILE_STREAM_H_
 
-#include <string>
-#ifdef MOZC_USE_PEPPER_FILE_IO
-#include <sstream>
-#else  // MOZC_USE_PEPPER_FILE_IO
 #include <fstream>
-#endif  // MOZC_USE_PEPPER_FILE_IO
-
-#include "base/port_string.h"
+#include <string>
 
 namespace mozc {
-
-#ifdef MOZC_USE_PEPPER_FILE_IO
-
-// Implementation of ifstream for NaCl.
-// This class reads all of the file using Pepper FileIO and sotres the data in
-// string_buffer_ when open() is called. This class can't be used in the NaCl
-// main thread.
-class InputFileStream : public std::istream {
- public:
-  InputFileStream();
-  explicit InputFileStream(const char* filename,
-                           std::ios_base::openmode mode = std::ios_base::in);
-  // Opens the file and reads the all data to string_buffer_.
-  void open(const char* filename, ios_base::openmode mode = std::ios_base::in);
-  // Do nothing.
-  // Note: Error handling after close() is not correctly implemented.
-  // TODO(horo) Implement error handling correctly.
-  void close();
-
-  // Helper functions to load the entire content of a file into string.
-  void ReadToString(string *s);
-  string Read();
-
- private:
-  virtual void UnusedKeyMethod();  // go/definekeymethod
-
-  std::stringbuf string_buffer_;
-};
-
-// Implementation of ofstream for NaCl.
-// This class writes all of the data to the file using Pepper FileIO in the
-// destructor or when close() is called. This class can't be used in the NaCl
-// main thread.
-class OutputFileStream : public std::ostream {
- public:
-  OutputFileStream();
-  explicit OutputFileStream(const char* filename,
-                            std::ios_base::openmode mode = std::ios_base::in);
-  ~OutputFileStream();
-  // Sets filename_.
-  void open(const char* filename, ios_base::openmode mode = std::ios_base::in);
-  // Write the data to the file using Pepper FileIO.
-  // Note: Error handling after close() is not correctly implemented.
-  // TODO(horo) Implement error handling correctly.
-  void close();
-
- private:
-  virtual void UnusedKeyMethod();  // go/definekeymethod
-
-  string filename_;
-  std::stringbuf string_buffer_;
-  bool write_done_;
-};
-
-# else  // MOZC_USE_PEPPER_FILE_IO
 
 // Represents classes which encapsulates the std::ifstream class (or the
 // std::ofstream class) to conceal the encodings of its file names.
@@ -119,8 +58,8 @@ class InputFileStream : public std::ifstream {
             std::ios_base::openmode mode = std::ios_base::in);
 
   // Helper functions to load the entire content of a file into string.
-  void ReadToString(string *s);
-  string Read();
+  void ReadToString(std::string* s);
+  std::string Read();
 
  private:
   virtual void UnusedKeyMethod();  // go/definekeymethod
@@ -142,7 +81,6 @@ class OutputFileStream : public std::ofstream {
  private:
   virtual void UnusedKeyMethod();  // go/definekeymethod
 };
-#endif  // MOZC_USE_PEPPER_FILE_IO
 
 }  // namespace mozc
 

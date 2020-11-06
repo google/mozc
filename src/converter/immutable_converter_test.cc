@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -59,28 +58,54 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
 using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
-using dictionary::POSMatcher;
 using dictionary::PosGroup;
+using dictionary::POSMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
 using dictionary::UserDictionaryStub;
 using dictionary::ValueDictionary;
 
-void SetCandidate(const string &key, const string &value, Segment *segment) {
+void SetCandidate(absl::string_view key, absl::string_view value,
+                  Segment *segment) {
   segment->set_key(key);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
-  candidate->key = key;
-  candidate->value = value;
-  candidate->content_key = key;
-  candidate->content_value = value;
+  candidate->key = std::string(key);
+  candidate->value = std::string(value);
+  candidate->content_key = std::string(key);
+  candidate->content_value = std::string(value);
+}
+
+const ConversionRequest &GetSimplifiedRankingConversionRequest() {
+  class ConversionRequestInitializer {
+   public:
+    ConversionRequestInitializer() {
+      request_.mutable_decoder_experiment_params()
+          ->set_enable_simplified_ranking(true);
+      conversion_request_ =
+          absl::make_unique<ConversionRequest>(nullptr, &request_, &config_);
+    }
+
+    const ConversionRequest &Get() const { return *conversion_request_; }
+
+   private:
+    std::unique_ptr<ConversionRequest> conversion_request_;
+    commands::Request request_;
+    config::Config config_;
+  };
+
+  static const ConversionRequestInitializer *initializer =
+      new ConversionRequestInitializer;
+  return initializer->Get();
 }
 
 class MockDataAndImmutableConverter {
@@ -106,32 +131,30 @@ class MockDataAndImmutableConverter {
       int dictionary_size = 0;
       data_manager_->GetSystemDictionaryData(&dictionary_data,
                                              &dictionary_size);
-      SystemDictionary *sysdic =
-          SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-      dictionary_.reset(new DictionaryImpl(
-          sysdic,  // DictionaryImpl takes the ownership
-          new ValueDictionary(pos_matcher_, &sysdic->value_trie()),
-          &user_dictionary_stub_,
-          suppression_dictionary_.get(),
-          &pos_matcher_));
+      std::unique_ptr<SystemDictionary> sysdic =
+          SystemDictionary::Builder(dictionary_data, dictionary_size)
+              .Build()
+              .value();
+      auto value_dic = absl::make_unique<ValueDictionary>(
+          pos_matcher_, &sysdic->value_trie());
+      dictionary_ = absl::make_unique<DictionaryImpl>(
+          std::move(sysdic), std::move(value_dic), &user_dictionary_stub_,
+          suppression_dictionary_.get(), &pos_matcher_);
     }
     CHECK(dictionary_.get());
 
     if (!suffix_dictionary) {
-      StringPiece suffix_key_array_data, suffix_value_array_data;
+      absl::string_view suffix_key_array_data, suffix_value_array_data;
       const uint32 *token_array;
-      data_manager_->GetSuffixDictionaryData(&suffix_key_array_data,
-                                             &suffix_value_array_data,
-                                             &token_array);
-      suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
-                                                    suffix_value_array_data,
-                                                    token_array));
+      data_manager_->GetSuffixDictionaryData(
+          &suffix_key_array_data, &suffix_value_array_data, &token_array);
+      suffix_dictionary_.reset(new SuffixDictionary(
+          suffix_key_array_data, suffix_value_array_data, token_array));
       suffix_dictionary = suffix_dictionary_.get();
     }
     CHECK(suffix_dictionary);
 
-    connector_.reset(Connector::CreateFromDataManager(*data_manager_));
-    CHECK(connector_.get());
+    connector_ = Connector::CreateFromDataManager(*data_manager_).value();
 
     segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
     CHECK(segmenter_.get());
@@ -147,20 +170,13 @@ class MockDataAndImmutableConverter {
     }
 
     immutable_converter_.reset(new ImmutableConverterImpl(
-        dictionary_.get(),
-        suffix_dictionary,
-        suppression_dictionary_.get(),
-        connector_.get(),
-        segmenter_.get(),
-        &pos_matcher_,
-        pos_group_.get(),
+        dictionary_.get(), suffix_dictionary, suppression_dictionary_.get(),
+        connector_.get(), segmenter_.get(), &pos_matcher_, pos_group_.get(),
         suggestion_filter_.get()));
     CHECK(immutable_converter_.get());
   }
 
-  ImmutableConverterImpl *GetConverter() {
-    return immutable_converter_.get();
-  }
+  ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
 
  private:
   std::unique_ptr<const DataManagerInterface> data_manager_;
@@ -185,7 +201,7 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   segments.set_request_type(Segments::PREDICTION);
   segments.set_max_prediction_candidates_size(10);
   Segment *segment = segments.add_segment();
-  const string kRequestKey = "よろしくおねがいしま";
+  const std::string kRequestKey = "よろしくおねがいしま";
   segment->set_key(kRequestKey);
   EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
   EXPECT_EQ(1, segments.segments_size());
@@ -225,47 +241,41 @@ TEST(ImmutableConverterTest, DummyCandidatesInnerSegmentBoundary) {
 namespace {
 class KeyCheckDictionary : public DictionaryInterface {
  public:
-  explicit KeyCheckDictionary(const string &query)
+  explicit KeyCheckDictionary(absl::string_view query)
       : target_query_(query), received_target_query_(false) {}
-  virtual ~KeyCheckDictionary() {}
+  ~KeyCheckDictionary() override = default;
 
-  virtual bool HasKey(StringPiece key) const { return false; }
-  virtual bool HasValue(StringPiece value) const { return false; }
+  bool HasKey(absl::string_view key) const override { return false; }
+  bool HasValue(absl::string_view value) const override { return false; }
 
-  virtual void LookupPredictive(
-      StringPiece key,
-      const ConversionRequest &convreq,
-      Callback *callback) const {
+  void LookupPredictive(absl::string_view key, const ConversionRequest &convreq,
+                        Callback *callback) const override {
     if (key == target_query_) {
       received_target_query_ = true;
     }
   }
 
-  virtual void LookupPrefix(
-      StringPiece key,
-      const ConversionRequest &convreq,
-      Callback *callback) const {
+  void LookupPrefix(absl::string_view key, const ConversionRequest &convreq,
+                    Callback *callback) const override {
     // No check
   }
 
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &convreq,
-                           Callback *callback) const {
+  void LookupExact(absl::string_view key, const ConversionRequest &convreq,
+                   Callback *callback) const override {
     // No check
   }
 
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &convreq,
-                             Callback *callback) const {
+  void LookupReverse(absl::string_view str, const ConversionRequest &convreq,
+                     Callback *callback) const override {
     // No check
   }
 
-  bool received_target_query() const {
-    return received_target_query_;
-  }
+  bool received_target_query() const { return received_target_query_; }
+
+  void clear_received_target_query() { received_target_query_ = false; }
 
  private:
-  const string target_query_;
+  const std::string target_query_;
   mutable bool received_target_query_;
 };
 }  // namespace
@@ -316,9 +326,28 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter(dictionary, dictionary));
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
-  const ConversionRequest request;
-  converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
-  EXPECT_TRUE(dictionary->received_target_query());
+
+  {
+    EXPECT_EQ(segments.request_type(), Segments::CONVERSION);
+    const ConversionRequest request;
+    converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
+    EXPECT_TRUE(dictionary->received_target_query());
+  }
+
+  {
+    dictionary->clear_received_target_query();
+    converter->MakeLatticeNodesForPredictiveNodes(
+        segments, GetSimplifiedRankingConversionRequest(), &lattice);
+    EXPECT_FALSE(dictionary->received_target_query());
+  }
+
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    dictionary->clear_received_target_query();
+    converter->MakeLatticeNodesForPredictiveNodes(
+        segments, GetSimplifiedRankingConversionRequest(), &lattice);
+    EXPECT_TRUE(dictionary->received_target_query());
+  }
 }
 
 TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
@@ -328,7 +357,7 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   segments.set_request_type(Segments::PREDICTION);
   segments.set_max_prediction_candidates_size(1);
   Segment *segment = segments.add_segment();
-  const string kRequestKey = "わたしのなまえはなかのです";
+  const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
   EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
   ASSERT_EQ(1, segments.segments_size());
@@ -336,9 +365,9 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
   const Segment::Candidate &cand = segments.segment(0).candidate(0);
-  std::vector<StringPiece> keys, values, content_keys, content_values;
-  for (Segment::Candidate::InnerSegmentIterator iter(&cand);
-       !iter.Done(); iter.Next()) {
+  std::vector<absl::string_view> keys, values, content_keys, content_values;
+  for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
+       iter.Next()) {
     keys.push_back(iter.GetKey());
     values.push_back(iter.GetValue());
     content_keys.push_back(iter.GetContentKey());
@@ -371,7 +400,7 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   Segments segments;
   segments.set_request_type(Segments::CONVERSION);
   Segment *segment = segments.add_segment();
-  const string kRequestKey ="わたしのなまえはなかのです";
+  const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
   EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
   EXPECT_LE(1, segments.segments_size());
@@ -424,7 +453,7 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
 
 TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   // "あ..." (100 times)
-  const string kA100 =
+  const std::string kA100 =
       "あああああああああああああああああああああああああ"
       "あああああああああああああああああああああああああ"
       "あああああああああああああああああああああああああ"
@@ -445,7 +474,7 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   // Set up a conversion segment.
   segments.set_request_type(Segments::CONVERSION);
   Segment *segment = segments.add_segment();
-  const string kRequestKey = "あ";
+  const std::string kRequestKey = "あ";
   segment->set_key(kRequestKey);
 
   // Verify that history segments are cleared due to its length limit and at
@@ -467,14 +496,14 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   segments.set_request_type(Segments::PREDICTION);
   segments.set_max_prediction_candidates_size(10);
   Segment *segment = segments.add_segment();
-  const string kRequestKey = "わたしのなまえはなかのです";
+  const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
-      request, &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_LT(0, segments.segment(0).candidates_size());
   bool includes_only_first = false;
-  const string &segment_key = segments.segment(0).key();
+  const std::string &segment_key = segments.segment(0).key();
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &cand = segments.segment(0).candidate(i);
     if (cand.key.size() < segment_key.size() &&
@@ -521,7 +550,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
 
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
-  const string kRequestKeys[] = {
+  const std::string kRequestKeys[] = {
       "たかまち",
       "なのは",
       "まほうしょうじょ",
@@ -532,11 +561,11 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
     segments.set_max_prediction_candidates_size(10);
     Segment *segment = segments.add_segment();
     segment->set_key(kRequestKeys[testcase]);
-    EXPECT_TRUE(data_and_converter->GetConverter()->
-                    ConvertForRequest(conversion_request, &segments));
+    EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+        conversion_request, &segments));
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_LT(0, segments.segment(0).candidates_size());
-    const string &segment_key = segments.segment(0).key();
+    const std::string &segment_key = segments.segment(0).key();
     for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
       const Segment::Candidate &cand = segments.segment(0).candidate(i);
       if (cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {

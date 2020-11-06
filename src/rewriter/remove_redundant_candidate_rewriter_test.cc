@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,9 +70,7 @@ TEST(RemoveRedundantCandidateRewriterTest, CapabilityTest) {
   ConversionRequest convreq;
   commands::Request request;
   convreq.set_request(&request);
-  {
-    EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(convreq));
-  }
+  { EXPECT_EQ(RewriterInterface::NOT_AVAILABLE, rewriter.capability(convreq)); }
 
   {
     request.set_mixed_conversion(true);

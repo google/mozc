@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,8 @@ SuppressionDictionary::SuppressionDictionary()
 
 SuppressionDictionary::~SuppressionDictionary() {}
 
-bool SuppressionDictionary::AddEntry(
-    const string &key, const string &value) {
+bool SuppressionDictionary::AddEntry(const std::string &key,
+                                     const std::string &value) {
   if (!locked_) {
     LOG(ERROR) << "Dictionary is not locked";
     return false;
@@ -95,8 +95,8 @@ bool SuppressionDictionary::IsEmpty() const {
   return dic_.empty();
 }
 
-bool SuppressionDictionary::SuppressEntry(
-    const string &key, const string &value) const {
+bool SuppressionDictionary::SuppressEntry(const std::string &key,
+                                          const std::string &value) const {
   if (dic_.empty()) {
     // Almost all users don't use word supresssion function.
     // We can return false as early as possible
@@ -108,7 +108,7 @@ bool SuppressionDictionary::SuppressEntry(
     return false;
   }
 
-  string lookup_key = key;
+  std::string lookup_key = key;
   lookup_key.append(1, kDelimiter).append(value);
   if (dic_.find(lookup_key) != dic_.end()) {
     return true;

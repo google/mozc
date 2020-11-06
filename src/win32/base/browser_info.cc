@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -74,8 +74,7 @@ std::wstring GetProcessModuleName() {
 BrowserInfo::BrowserType BrowserInfo::GetBrowerType() {
   if (!g_browser_type_initialized_) {
     bool loder_locked = false;
-    if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) ||
-        loder_locked) {
+    if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) || loder_locked) {
       return kBrowserTypeUnknown;
     }
     string exe_path_utf8;
@@ -105,8 +104,7 @@ bool BrowserInfo::IsInIncognitoMode(
   }
 
   bool loder_locked = false;
-  if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) ||
-      loder_locked) {
+  if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) || loder_locked) {
     return false;
   }
 
@@ -148,8 +146,7 @@ bool BrowserInfo::IsOnChromeOmnibox(
   }
 
   bool loder_locked = false;
-  if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) ||
-      loder_locked) {
+  if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) || loder_locked) {
     return false;
   }
 
@@ -185,8 +182,7 @@ void BrowserInfo::OnDllProcessAttach(HINSTANCE module_handle,
 
 // static
 void BrowserInfo::OnDllProcessDetach(HINSTANCE module_handle,
-                                     bool process_shutdown) {
-}
+                                     bool process_shutdown) {}
 
 }  // namespace win32
 }  // namespace mozc

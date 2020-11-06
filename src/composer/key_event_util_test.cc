@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,16 +50,19 @@ namespace {
     const int actual_key_code =
         (actual.has_key_code()) ? actual.key_code() : -1;
     if (expected_key_code != actual_key_code) {
-      const string expected_value = (expected_key_code == -1)
-          ? "None"
-          : Util::StringPrintf("%c (%d)", expected_key_code, expected_key_code);
-      const string actual_value = (actual_key_code == -1)
-          ? string("None")
-          : Util::StringPrintf("%c (%d)", actual_key_code, actual_key_code);
-      return ::testing::AssertionFailure() <<
-          "Key codes are not same\n" <<
-          "Expected: " << expected_value << "\n" <<
-          "Actual  : " << actual_value;
+      const std::string expected_value =
+          (expected_key_code == -1)
+              ? "None"
+              : Util::StringPrintf("%c (%d)", expected_key_code,
+                                   expected_key_code);
+      const std::string actual_value =
+          (actual_key_code == -1)
+              ? std::string("None")
+              : Util::StringPrintf("%c (%d)", actual_key_code, actual_key_code);
+      return ::testing::AssertionFailure()
+             << "Key codes are not same\n"
+             << "Expected: " << expected_value << "\n"
+             << "Actual  : " << actual_value;
     }
   }
 
@@ -69,14 +72,16 @@ namespace {
     const int actual_special_key =
         (actual.has_special_key()) ? actual.special_key() : -1;
     if (expected_special_key != actual_special_key) {
-      const string expected_value = (expected_special_key == -1)
-          ? "None" : std::to_string(expected_special_key);
-      const string actual_value = (actual_special_key == -1)
-          ? "None" : std::to_string(actual_special_key);
-      return ::testing::AssertionFailure() <<
-          "Special keys are not same\n" <<
-          "Expected: " << expected_value << "\n" <<
-          "Actual  : " << actual_value;
+      const std::string expected_value =
+          (expected_special_key == -1) ? "None"
+                                       : std::to_string(expected_special_key);
+      const std::string actual_value = (actual_special_key == -1)
+                                           ? "None"
+                                           : std::to_string(actual_special_key);
+      return ::testing::AssertionFailure()
+             << "Special keys are not same\n"
+             << "Expected: " << expected_value << "\n"
+             << "Actual  : " << actual_value;
     }
   }
 
@@ -84,10 +89,10 @@ namespace {
     const int expected_modifier_keys = KeyEventUtil::GetModifiers(expected);
     const int actual_modifier_keys = KeyEventUtil::GetModifiers(actual);
     if (expected_modifier_keys != actual_modifier_keys) {
-      return ::testing::AssertionFailure() <<
-          "Modifier keys are not same\n" <<
-          "Expected: " << expected_modifier_keys << "\n" <<
-          "Actual  : " << actual_modifier_keys;
+      return ::testing::AssertionFailure()
+             << "Modifier keys are not same\n"
+             << "Expected: " << expected_modifier_keys << "\n"
+             << "Actual  : " << actual_modifier_keys;
     }
   }
 
@@ -128,13 +133,13 @@ TEST(KeyEventUtilTest, GetModifiers) {
 
 TEST(KeyEventUtilTest, GetKeyInformation) {
   const char *kTestKeys[] = {
-    "a",
-    "Space",
-    "Shift",
-    "Shift a",
-    "Shift Space",
-    "Space a",
-    "LeftShift Space a",
+      "a",
+      "Space",
+      "Shift",
+      "Shift a",
+      "Shift Space",
+      "Space a",
+      "LeftShift Space a",
   };
 
   KeyEvent key_event;
@@ -152,8 +157,8 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
     if (key_event.has_special_key()) {
       expected |= static_cast<uint64>(key_event.special_key()) << 32;
     }
-    expected |=
-        static_cast<uint64>(KeyEventUtil::GetModifiers(key_event)) << 48;
+    expected |= static_cast<uint64>(KeyEventUtil::GetModifiers(key_event))
+                << 48;
 
     EXPECT_EQ(expected, output);
   }
@@ -213,18 +218,18 @@ TEST(KeyEventUtilTest, NormalizeNumpadKey) {
     const char *from;
     const char *to;
   } kNormalizeNumpadKeyTestData[] = {
-    { "a",             "a" },
-    { "Shift",         "Shift" },
-    { "Caps",          "Caps" },
-    { "Enter",         "Enter" },
-    { "Shift Caps a",  "Shift Caps a" },
-    { "NUMPAD0",       "0" },
-    { "NUMPAD9",       "9" },
-    { "MULTIPLY",      "*" },
-    { "SEPARATOR",     "Enter" },
-    { "EQUALS",        "=" },
-    { "Ctrl NUMPAD0",  "Ctrl 0" },
-    { "NUMPAD0 a",     "0" },
+      {"a", "a"},
+      {"Shift", "Shift"},
+      {"Caps", "Caps"},
+      {"Enter", "Enter"},
+      {"Shift Caps a", "Shift Caps a"},
+      {"NUMPAD0", "0"},
+      {"NUMPAD9", "9"},
+      {"MULTIPLY", "*"},
+      {"SEPARATOR", "Enter"},
+      {"EQUALS", "="},
+      {"Ctrl NUMPAD0", "Ctrl 0"},
+      {"NUMPAD0 a", "0"},
   };
 
   for (size_t i = 0; i < arraysize(kNormalizeNumpadKeyTestData); ++i) {
@@ -259,33 +264,37 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
   EXPECT_EQ(static_cast<KeyInformation>(KeyEvent::TEXT_INPUT) << 32, key);
 }
 
-TEST(KeyEventUtilTest, RemvoeModifiers) {
+TEST(KeyEventUtilTest, RemoveModifiers) {
   const struct RemoveModifiersTestData {
     const char *input;
     const char *remove;
     const char *output;
   } kRemoveModifiersTestData[] = {
-    {
-      "",
-      "",
-      "",
-    }, {
-      "Ctrl Shift LeftAlt Caps",
-      "Ctrl Shift LeftAlt Caps",
-      "",
-    }, {
-      "Ctrl Shift LeftAlt Caps",
-      "Shift Caps",
-      "Ctrl LeftAlt",
-    }, {
-      "Ctrl Shift LeftAlt Caps",
-      "Alt",
-      "Ctrl Shift Caps",
-    }, {
-      "",
-      "Ctrl Shift LeftAlt Caps",
-      "",
-    },
+      {
+          "",
+          "",
+          "",
+      },
+      {
+          "Ctrl Shift LeftAlt Caps",
+          "Ctrl Shift LeftAlt Caps",
+          "",
+      },
+      {
+          "Ctrl Shift LeftAlt Caps",
+          "Shift Caps",
+          "Ctrl LeftAlt",
+      },
+      {
+          "Ctrl Shift LeftAlt Caps",
+          "Alt",
+          "Ctrl Shift Caps",
+      },
+      {
+          "",
+          "Ctrl Shift LeftAlt Caps",
+          "",
+      },
   };
 
   for (size_t i = 0; i < arraysize(kRemoveModifiersTestData); ++i) {
@@ -343,43 +352,117 @@ TEST(KeyEventUtilTest, IsModifiers) {
     bool is_ctrl_shift;
     bool is_alt_ctrl_shift;
   } kIsModifiersTestData[] = {
-    {
-      0,
-      false, false, false, false, false, false, false
-    }, {
-      KeyEvent::ALT,
-      true, false, false, false, false, false, false,
-    }, {
-      KeyEvent::CTRL,
-      false, true, false, false, false, false, false,
-    }, {
-      KeyEvent::SHIFT,
-      false, false, true, false, false, false, false,
-    }, {
-      KeyEvent::ALT | KeyEvent::CTRL,
-      false, false, false, true, false, false, false,
-    }, {
-      KeyEvent::ALT | KeyEvent::SHIFT,
-      false, false, false, false, true, false, false,
-    }, {
-      KeyEvent::CTRL | KeyEvent::SHIFT,
-      false, false, false, false, false, true, false,
-    }, {
-      KeyEvent::ALT | KeyEvent::CTRL | KeyEvent::SHIFT,
-      false, false, false, false, false, false, true,
-    }, {
-      KeyEvent::LEFT_ALT,
-      true, false, false, false, false, false, false,
-    }, {
-      KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT,
-      true, false, false, false, false, false, false,
-    }, {
-      KeyEvent::CAPS,
-      false, false, false, false, false, false, false,
-    }, {
-      KeyEvent::ALT | KeyEvent::CAPS,
-      true, false, false, false, false, false, false,
-    },
+      {0, false, false, false, false, false, false, false},
+      {
+          KeyEvent::ALT,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::CTRL,
+          false,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::SHIFT,
+          false,
+          false,
+          true,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::ALT | KeyEvent::CTRL,
+          false,
+          false,
+          false,
+          true,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::ALT | KeyEvent::SHIFT,
+          false,
+          false,
+          false,
+          false,
+          true,
+          false,
+          false,
+      },
+      {
+          KeyEvent::CTRL | KeyEvent::SHIFT,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          false,
+      },
+      {
+          KeyEvent::ALT | KeyEvent::CTRL | KeyEvent::SHIFT,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+      },
+      {
+          KeyEvent::LEFT_ALT,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::CAPS,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
+      {
+          KeyEvent::ALT | KeyEvent::CAPS,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+      },
   };
 
   for (size_t i = 0; i < arraysize(kIsModifiersTestData); ++i) {
@@ -403,16 +486,16 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
     bool is_lower;
     bool is_upper;
   } kIsLowerUpperAlphabetTestData[] = {
-    { "a",            true,  false },
-    { "A",            false, true },
-    { "Shift a",      false, true },
-    { "Shift A",      true,  false },
-    { "Shift Caps a", true,  false },
-    { "Shift Caps A", false, true },
-    { "0",            false, false },
-    { "Shift",        false, false },
-    { "Caps",         false, false },
-    { "Space",        false, false },
+      {"a", true, false},
+      {"A", false, true},
+      {"Shift a", false, true},
+      {"Shift A", true, false},
+      {"Shift Caps a", true, false},
+      {"Shift Caps A", false, true},
+      {"0", false, false},
+      {"Shift", false, false},
+      {"Caps", false, false},
+      {"Space", false, false},
   };
 
   for (size_t i = 0; i < arraysize(kIsLowerUpperAlphabetTestData); ++i) {
@@ -430,18 +513,10 @@ TEST(KeyEventUtilTest, IsNumpadKey) {
     const char *key;
     bool is_numpad_key;
   } kIsNumpadKeyTestData[] = {
-    { "a",            false },
-    { "A",            false },
-    { "Shift",        false },
-    { "Shift a",      false },
-    { "0",            false },
-    { "EISU",         false },
-    { "NUMPAD0",      true },
-    { "NUMPAD9",      true },
-    { "MULTIPLY",     true },
-    { "EQUALS",       true },
-    { "COMMA",        true },
-    { "TEXTINPUT",    false },
+      {"a", false},       {"A", false},      {"Shift", false},
+      {"Shift a", false}, {"0", false},      {"EISU", false},
+      {"NUMPAD0", true},  {"NUMPAD9", true}, {"MULTIPLY", true},
+      {"EQUALS", true},   {"COMMA", true},   {"TEXTINPUT", false},
   };
 
   for (size_t i = 0; i < arraysize(kIsNumpadKeyTestData); ++i) {

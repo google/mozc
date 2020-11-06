@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,7 @@ class TipSurroundingText {
   //     session is guaranteed to be safe. A keyevent hander is one of
   //     examples. See the following document for details.
   //     http://blogs.msdn.com/b/tsfaware/archive/2007/05/17/rules-of-text-services.aspx
-  static bool Get(TipTextService *text_service,
-                  ITfContext *context,
+  static bool Get(TipTextService *text_service, ITfContext *context,
                   TipSurroundingTextInfo *info);
 
   // A variant of TipSurroundingText::Get. One difference is that this method

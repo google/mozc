@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,14 +31,15 @@
 #define MOZC_BASE_PROTOBUF_PROTOBUF_H_
 
 
+
 namespace google {
-namespace protobuf {
-}  // namespace protobuf
+namespace protobuf {}  // namespace protobuf
 }  // namespace google
 
 namespace mozc {
 namespace protobuf = ::google::protobuf;
 }  // namespace mozc
+
 
 
 #endif  // MOZC_BASE_PROTOBUF_PROTOBUF_H_

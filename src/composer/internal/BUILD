@@ -1,0 +1,339 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "py_binary_mozc",
+    "py_library_mozc",
+)
+
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
+test_suite(
+    name = "nacl_test",
+)
+
+cc_library_mozc(
+    name = "transliterator_interface",
+    hdrs = ["transliterator_interface.h"],
+)
+
+cc_library_mozc(
+    name = "char_chunk",
+    srcs = [
+        "char_chunk.cc",
+    ],
+    hdrs = ["char_chunk.h"],
+    deps = [
+        ":composition_input",
+        ":transliterator_interface",
+        ":transliterators",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//composer:table",
+        "//testing:gunit_prod",
+    ],
+)
+
+cc_library_mozc(
+    name = "transliterators",
+    srcs = [
+        "transliterators.cc",
+    ],
+    hdrs = ["transliterators.h"],
+    deps = [
+        ":transliterator_interface",
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+        "//base:util",
+        "//config:character_form_manager",
+    ],
+)
+
+cc_test_mozc(
+    name = "transliterators_test",
+    size = "small",
+    srcs = [
+        "transliterators_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":transliterator_interface",
+        ":transliterators",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "char_chunk_test",
+    size = "small",
+    srcs = [
+        "char_chunk_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":char_chunk",
+        ":composition_input",
+        ":transliterator_interface",
+        ":transliterators",
+        "//composer:table",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "composition_input",
+    srcs = ["composition_input.cc"],
+    hdrs = ["composition_input.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "composition_input_test",
+    size = "small",
+    srcs = [
+        "composition_input_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":composition_input",
+        ":transliterator_interface",
+        ":transliterators",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "composition",
+    srcs = [
+        "composition.cc",
+    ],
+    hdrs = ["composition.h"],
+    deps = [
+        ":char_chunk",
+        ":composition_input",
+        ":transliterator_interface",
+        ":transliterators",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//composer:composition_interface",
+        "//composer:table",
+        "//testing:gunit_prod",
+    ],
+)
+
+cc_test_mozc(
+    name = "composition_test",
+    size = "small",
+    srcs = [
+        "composition_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":char_chunk",
+        ":composition",
+        ":composition_input",
+        ":transliterator_interface",
+        ":transliterators",
+        "//composer:composition_interface",
+        "//composer:table",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_binary_mozc(
+    name = "composition_main",
+    srcs = ["composition_main.cc"],
+    deps = [
+        ":composition",
+        "//base:flags",
+        "//base:init_mozc",
+        "//composer:composition_interface",
+        "//composer:table",
+    ],
+)
+
+cc_library_mozc(
+    name = "converter",
+    srcs = ["converter.cc"],
+    hdrs = ["converter.h"],
+    deps = [
+        "//base",
+        "//base:port",
+        "//composer:table",
+    ],
+)
+
+cc_test_mozc(
+    name = "converter_test",
+    size = "small",
+    srcs = ["converter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":converter",
+        "//base",
+        "//composer:table",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "mode_switching_handler",
+    srcs = ["mode_switching_handler.cc"],
+    hdrs = ["mode_switching_handler.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+    ],
+)
+
+cc_test_mozc(
+    name = "mode_switching_handler_test",
+    size = "small",
+    srcs = ["mode_switching_handler_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":mode_switching_handler",
+        "//base",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_binary_mozc(
+    name = "converter_main",
+    srcs = ["converter_main.cc"],
+    deps = [
+        ":converter",
+        "//base:flags",
+        "//base:init_mozc",
+        "//composer:table",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_typing_model_lib",
+    srcs = ["gen_typing_model.py"],
+    deps = [],
+)
+
+py_binary_mozc(
+    name = "gen_typing_model",
+    srcs = ["gen_typing_model.py"],
+    python_version = "PY3",
+    deps = [":gen_typing_model_lib"],
+)
+
+cc_library_mozc(
+    name = "typing_model",
+    srcs = ["typing_model.cc"],
+    hdrs = ["typing_model.h"],
+    deps = [
+        "//base",
+        "//base:port",
+        "//data_manager:data_manager_interface",
+        "//protocol:commands_proto",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "typing_model_test",
+    size = "small",
+    srcs = ["typing_model_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":typing_model",
+        "//base",
+        "//composer:type_corrected_query",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "typing_corrector",
+    srcs = [
+        "typing_corrector.cc",
+    ],
+    hdrs = ["typing_corrector.h"],
+    deps = [
+        ":composition",
+        ":composition_input",
+        ":typing_model",
+        "//base",
+        "//base:flags",
+        "//base:port",
+        "//base/protobuf",
+        "//base/protobuf:repeated_field",
+        "//composer:composition_interface",
+        "//composer:table",
+        "//composer:type_corrected_query",
+        "//config:config_handler",
+        "//protocol:config_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "typing_corrector_test",
+    size = "small",
+    srcs = ["typing_corrector_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        "typing_corrector",
+        ":typing_model",
+        "//base",
+        "//base:singleton",
+        "//composer:table",
+        "//composer:type_corrected_query",
+        "//config:config_handler",
+        "//data_manager/testing:mock_data_manager",
+        "//protocol:commands_proto",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)

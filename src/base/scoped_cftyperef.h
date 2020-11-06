@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,27 +30,27 @@
 #ifndef MOZC_BASE_SCOPED_CFTYPEREF_H_
 #define MOZC_BASE_SCOPED_CFTYPEREF_H_
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
 
-template<typename T> class scoped_cftyperef {
+template <typename T>
+class scoped_cftyperef {
  public:
   typedef T element_type;
-  explicit scoped_cftyperef(T p = NULL, bool do_retain = false)
-      : ptr_(p) {
-    if (do_retain && p != NULL) {
+  explicit scoped_cftyperef(T p = nullptr, bool do_retain = false) : ptr_(p) {
+    if (do_retain && p != nullptr) {
       CFRetain(ptr_);
     }
   }
 
   ~scoped_cftyperef() {
-    if (ptr_ != NULL) {
+    if (ptr_ != nullptr) {
       CFRelease(ptr_);
     }
   }
 
-  void reset(T p = NULL) {
-    if (ptr_ != NULL) {
+  void reset(T p = nullptr) {
+    if (ptr_ != nullptr) {
       CFRelease(ptr_);
     }
     ptr_ = p;
@@ -59,8 +59,8 @@ template<typename T> class scoped_cftyperef {
   T get() const { return ptr_; }
 
   bool Verify(CFTypeID type_id) {
-    return ptr_ != NULL &&
-        CFGetTypeID(reinterpret_cast<CFTypeRef>(ptr_)) == type_id;
+    return ptr_ != nullptr &&
+           CFGetTypeID(reinterpret_cast<CFTypeRef>(ptr_)) == type_id;
   }
 
  private:
@@ -70,5 +70,5 @@ template<typename T> class scoped_cftyperef {
   typedef scoped_cftyperef<T> this_type;
 };
 
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #endif  // MOZC_BASE_SCOPED_CFTYPEREF_H_

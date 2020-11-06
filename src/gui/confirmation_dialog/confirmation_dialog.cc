@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@
 #include <QtWidgets/QMessageBox>
 
 #include "base/flags.h"
+#include "gui/base/util.h"
 
 DEFINE_string(confirmation_type, "", "type of confirmation");
 
@@ -45,43 +46,42 @@ bool ConfirmationDialog::Show() {
   QMessageBox message_box(
       QMessageBox::Question,
       // Title
-      QObject::tr("Mozc"),
+      QObject::tr("[ProductName]"),
       // Message
       QObject::tr("Invalid confirmation dialog.  "
                   "You specified less arguments."),
-      QMessageBox::Yes | QMessageBox::No,
-      NULL,
+      QMessageBox::Yes | QMessageBox::No, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
 
-
   if (FLAGS_confirmation_type == "update") {
-    message_box.setText(QObject::tr(
-        "Mozc has been updated.  "
-        "Would you like to activate the new version now?  "
-        "(Note: some features will not be available "
-        "until you log out and log back in.)"));
+    message_box.setText(
+        QObject::tr("[ProductName] has been updated.  "
+                    "Would you like to activate the new version now?  "
+                    "(Note: some features will not be available "
+                    "until you log out and log back in.)"));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
-    if (yes_button != NULL) {
+    if (yes_button != nullptr) {
       yes_button->setText(QObject::tr("Activate now"));
     }
     QAbstractButton *no_button = message_box.button(QMessageBox::No);
-    if (no_button != NULL) {
+    if (no_button != nullptr) {
       no_button->setText(QObject::tr("Wait until logout"));
     }
   } else if (FLAGS_confirmation_type == "log_out") {
-    message_box.setText(QObject::tr(
-        "Mozc has been updated.  "
-        "Please log out and back in to enable the new version."));
+    message_box.setText(
+        QObject::tr("[ProductName] has been updated.  "
+                    "Please log out and back in to enable the new version."));
     QAbstractButton *yes_button = message_box.button(QMessageBox::Yes);
-    if (yes_button != NULL) {
+    if (yes_button != nullptr) {
       yes_button->setText(QObject::tr("Log out"));
     }
     QAbstractButton *no_button = message_box.button(QMessageBox::No);
-    if (no_button != NULL) {
+    if (no_button != nullptr) {
       no_button->setText(QObject::tr("Remind me in 1 hour"));
     }
   }
 
+  GuiUtil::ReplaceWidgetLabels(&message_box);
   const int result = message_box.exec();
   return (result == QMessageBox::Yes);
 }

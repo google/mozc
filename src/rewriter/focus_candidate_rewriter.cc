@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,12 @@
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "rewriter/number_compound_util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
-enum {
-  NUMBER = 1,
-  SUFFIX = 2,
-  CONNECTOR = 4
-};
+enum { NUMBER = 1, SUFFIX = 2, CONNECTOR = 4 };
 
 // TODO(taku): See POS and increase the coverage.
 bool IsConnectorSegment(const Segment &segment) {
@@ -55,17 +52,17 @@ bool IsConnectorSegment(const Segment &segment) {
 }
 
 // Finds value from the candidates list and move the canidate to the top.
-bool RewriteCandidate(Segment *segment, const string &value) {
+bool RewriteCandidate(Segment *segment, const std::string &value) {
   for (int i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).content_value == value) {
-      segment->move_candidate(i, 0);   // move to top
+      segment->move_candidate(i, 0);  // move to top
       return true;
     }
   }
   // Find value from meta candidates.
   for (int i = 0; i < segment->meta_candidates_size(); ++i) {
     if (segment->meta_candidate(i).content_value == value) {
-      segment->move_candidate(-i - 1, 0);   // copy to top
+      segment->move_candidate(-i - 1, 0);  // copy to top
       return true;
     }
   }
@@ -96,7 +93,7 @@ bool IsSameNumberType(const Segment::Candidate &candidate1,
     if (candidate1.style == NumberUtil::NumberString::DEFAULT_STYLE) {
       if (IsNumberCandidate(candidate1) && IsNumberCandidate(candidate2) &&
           Util::GetFormType(candidate1.value) ==
-          Util::GetFormType(candidate2.value)) {
+              Util::GetFormType(candidate2.value)) {
         return true;
       }
     } else {
@@ -109,7 +106,7 @@ bool IsSameNumberType(const Segment::Candidate &candidate1,
 bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
   for (int i = 0; i < segment->candidates_size(); ++i) {
     if (IsSameNumberType(candidate, segment->candidate(i))) {
-      segment->move_candidate(i, 0);   // move to top
+      segment->move_candidate(i, 0);  // move to top
       return true;
     }
   }
@@ -117,7 +114,7 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
   // Find value from meta candidates.
   for (int i = 0; i < segment->meta_candidates_size(); ++i) {
     if (IsSameNumberType(candidate, segment->meta_candidate(i))) {
-      segment->move_candidate(-i - 1, 0);   // copy to top
+      segment->move_candidate(-i - 1, 0);  // copy to top
       return true;
     }
   }
@@ -133,7 +130,7 @@ FocusCandidateRewriter::FocusCandidateRewriter(
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);
-  const StringPiece data(array, size);
+  const absl::string_view data(array, size);
   // Data manager is responsible for providing a valid data.  Just verify data
   // in debug build.
   DCHECK(SerializedStringArray::VerifyData(data));
@@ -142,8 +139,7 @@ FocusCandidateRewriter::FocusCandidateRewriter(
 
 FocusCandidateRewriter::~FocusCandidateRewriter() {}
 
-bool FocusCandidateRewriter::Focus(Segments *segments,
-                                   size_t segment_index,
+bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
                                    int candidate_index) const {
   if (segments == NULL) {
     LOG(ERROR) << "Segments is NULL";
@@ -167,15 +163,16 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
   if ((candidate_index < 0 &&
        -candidate_index - 1 >= static_cast<int>(seg.meta_candidates_size())) ||
       candidate_index >= static_cast<int>(seg.candidates_size())) {
-    LOG(WARNING) << "Candidate index out of range: "
-                 << candidate_index << " " << seg.candidates_size();
+    LOG(WARNING) << "Candidate index out of range: " << candidate_index << " "
+                 << seg.candidates_size();
     return false;
   }
 
   // left to right
   {
-    const string &left_value = seg.candidate(candidate_index).content_value;
-    string right_value;
+    const std::string &left_value =
+        seg.candidate(candidate_index).content_value;
+    std::string right_value;
 
     if (Util::IsOpenBracket(left_value, &right_value)) {
       int num_nest = 1;
@@ -189,9 +186,9 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
         if (!IsValidSegment(*target_right_seg)) {
           continue;
         }
-        const string &target_right_value =
+        const std::string &target_right_value =
             target_right_seg->candidate(0).content_value;
-        string tmp;
+        std::string tmp;
         if (Util::IsOpenBracket(target_right_value, &tmp)) {
           ++num_nest;
         } else if (Util::IsCloseBracket(target_right_value, &tmp)) {
@@ -209,8 +206,9 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
 
   // right to left
   {
-    const string &right_value = seg.candidate(candidate_index).content_value;
-    string left_value;
+    const std::string &right_value =
+        seg.candidate(candidate_index).content_value;
+    std::string left_value;
 
     if (Util::IsCloseBracket(right_value, &left_value)) {
       int num_nest = 1;
@@ -224,9 +222,9 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
         if (!IsValidSegment(*target_left_seg)) {
           continue;
         }
-        const string &target_left_value =
+        const std::string &target_left_value =
             target_left_seg->candidate(0).content_value;
-        string tmp;
+        std::string tmp;
         if (Util::IsCloseBracket(target_left_value, &tmp)) {
           ++num_nest;
         } else if (Util::IsOpenBracket(target_left_value, &tmp)) {
@@ -258,8 +256,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
 
         // Make sure the first candidate of the segment is number.
         if (IsNumberSegment(*target_right_seg) &&
-            RewriteNumber(target_right_seg,
-                          seg.candidate(candidate_index))) {
+            RewriteNumber(target_right_seg, seg.candidate(candidate_index))) {
           modified = true;
           distance = 0;
         } else {
@@ -280,7 +277,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
         IsNumberSegment(segments->segment(segment_index - 1)) &&
         seg.candidates_size() > 0 &&
         seg.candidate(0).content_key ==
-        seg.candidate(candidate_index).content_key) {
+            seg.candidate(candidate_index).content_key) {
       int next_stat = CONNECTOR | NUMBER;
       bool modified = false;
       for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
@@ -298,13 +295,13 @@ bool FocusCandidateRewriter::Focus(Segments *segments,
         } else if (next_stat == SUFFIX &&
                    segments->segment(i).candidates_size() > 0 &&
                    segments->segment(i).candidate(0).content_key ==
-                   seg.candidate(0).content_key) {
+                       seg.candidate(0).content_key) {
           if (!IsValidSegment(segments->segment(i))) {
             continue;
           }
-          modified |= RewriteCandidate(
-              segments->mutable_segment(i),
-              seg.candidate(candidate_index).content_value);
+          modified |=
+              RewriteCandidate(segments->mutable_segment(i),
+                               seg.candidate(candidate_index).content_value);
           next_stat = CONNECTOR | NUMBER;
         } else {
           break;
@@ -320,7 +317,7 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
                                                     size_t segment_index,
                                                     int candidate_index) const {
   // Check if the focused candidate is a number compound.
-  StringPiece number, suffix;
+  absl::string_view number, suffix;
   uint32 number_script_type = 0;
   const Segment &seg = segments->segment(segment_index);
   if (!ParseNumberCandidate(seg.candidate(candidate_index), &number, &suffix,
@@ -358,11 +355,12 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
 }
 
 int FocusCandidateRewriter::FindMatchingCandidates(
-    const Segment &seg, uint32 ref_script_type, StringPiece ref_suffix) const {
+    const Segment &seg, uint32 ref_script_type,
+    absl::string_view ref_suffix) const {
   // Only segments whose top candidate is a number compound are target of
   // reranking.
   const Segment::Candidate &cand = seg.candidate(0);
-  StringPiece number, suffix;
+  absl::string_view number, suffix;
   uint32 script_type = 0;
   if (!ParseNumberCandidate(cand, &number, &suffix, &script_type)) {
     return -1;
@@ -390,8 +388,8 @@ int FocusCandidateRewriter::FindMatchingCandidates(
 }
 
 bool FocusCandidateRewriter::ParseNumberCandidate(
-    const Segment::Candidate &cand, StringPiece* number,
-    StringPiece* suffix, uint32 *script_type) const {
+    const Segment::Candidate &cand, absl::string_view *number,
+    absl::string_view *suffix, uint32 *script_type) const {
   // If the lengths of content value and value are different, particles may be
   // appended to value.  In such cases, we only accept parallel markers.
   // Otherwise, the following wrong rewrite will occur.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,18 @@
 
 #include "renderer/unix/window_manager.h"
 
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/gmock.h"
 #include "renderer/unix/gtk_window_mock.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
+#include "testing/base/public/gmock.h"
+#include "testing/base/public/gunit.h"
 
+using ::testing::_;
 using ::testing::Expectation;
 using ::testing::NotNull;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 using ::testing::StrEq;
 using ::testing::StrictMock;
-using ::testing::_;
 
 namespace mozc {
 namespace renderer {
@@ -57,8 +57,8 @@ TEST(WindowManagerTest, InitializeTest) {
   GtkWindowMock *infolist_window_mock = new GtkWindowMock();
   GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
-  Expectation candidate_show
-      = EXPECT_CALL(*candidate_window_mock, ShowWindow());
+  Expectation candidate_show =
+      EXPECT_CALL(*candidate_window_mock, ShowWindow());
   EXPECT_CALL(*candidate_window_mock, HideWindow()).After(candidate_show);
   EXPECT_CALL(*candidate_window_mock, Initialize()).After(candidate_show);
 
@@ -133,8 +133,8 @@ TEST(WindowManagerTest, SetSendCommandInterfaceTest) {
   GtkWindowMock *infolist_window_mock = new GtkWindowMock();
   GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
-  client::SendCommandInterface *send_command_interface
-      = reinterpret_cast<client::SendCommandInterface *>(0x12345678);
+  client::SendCommandInterface *send_command_interface =
+      reinterpret_cast<client::SendCommandInterface *>(0x12345678);
 
   WindowManager manager(candidate_window_mock, infolist_window_mock, gtk_mock);
   manager.SetSendCommandInterface(send_command_interface);
@@ -161,7 +161,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
@@ -170,7 +170,7 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
@@ -179,17 +179,17 @@ TEST(WindowManagerTest, ShouldShowCandidateWindowTest) {
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowCandidateWindow(command));
   }
   {
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_TRUE(manager.ShouldShowCandidateWindow(command));
   }
 }
@@ -201,7 +201,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(false);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -210,7 +210,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(true);
     command.mutable_output();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
@@ -219,65 +219,65 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     command.set_visible(true);
     command.mutable_output()->mutable_candidates();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there is no usages message, return false");
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there is no Information List message, return false");
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If there are no information, return false");
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
     commands::InformationList *usage = candidates->mutable_usages();
     usage->add_information();
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If focused index is out of range, return false");
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
     commands::InformationList *usage = candidates->mutable_usages();
     usage->add_information();
 
     candidates->set_focused_index(3);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     SCOPED_TRACE("If focused candidate has no information, return false");
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
     commands::InformationList *usage = candidates->mutable_usages();
     usage->add_information();
@@ -285,14 +285,14 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_index(0);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_FALSE(manager.ShouldShowInfolistWindow(command));
   }
   {
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
 
     commands::InformationList *usage = candidates->mutable_usages();
@@ -301,7 +301,7 @@ TEST(WindowManagerTest, ShouldShowInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-    WindowManager manager(NULL, NULL, NULL);
+    WindowManager manager(nullptr, nullptr, nullptr);
     EXPECT_TRUE(manager.ShouldShowInfolistWindow(command));
   }
 }
@@ -316,8 +316,8 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
 
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->set_focused_index(0);
 
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
@@ -351,19 +351,18 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
                 Move(PointEq(expected_window_position)));
     EXPECT_CALL(*candidate_window_mock, ShowWindow());
 
-    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
-    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget *>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen *>(0x87654321);
     const GdkRectangle monitor_rect = {0, 0, 4000, 4000};
     EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
-                                                      caret_rect.Left(),
-                                                      caret_rect.Bottom()))
+    EXPECT_CALL(*gtk_mock,
+                GdkScreenGetMonitorAtPoint(toplevel_screen, caret_rect.Left(),
+                                           caret_rect.Bottom()))
         .WillOnce(Return(monitor));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
-                                                       monitor,
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen, monitor,
                                                        NotNull()))
         .WillOnce(SetArgPointee<2>(monitor_rect));
 
@@ -384,8 +383,8 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
 
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->set_focused_index(0);
 
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
@@ -419,19 +418,18 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
                 Move(PointEq(expected_window_position)));
     EXPECT_CALL(*candidate_window_mock, ShowWindow());
 
-    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
-    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget *>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen *>(0x87654321);
     const GdkRectangle monitor_rect = {0, 0, 4000, 4000};
     EXPECT_CALL(*gtk_mock, GtkWindowNew(GTK_WINDOW_TOPLEVEL))
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
-                                                      comp_rect.Left(),
-                                                      comp_rect.Bottom()))
+    EXPECT_CALL(*gtk_mock,
+                GdkScreenGetMonitorAtPoint(toplevel_screen, comp_rect.Left(),
+                                           comp_rect.Bottom()))
         .WillOnce(Return(monitor));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
-                                                       monitor,
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen, monitor,
                                                        NotNull()))
         .WillOnce(SetArgPointee<2>(monitor_rect));
 
@@ -451,12 +449,12 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
     commands::RendererCommand command;
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     candidates->add_candidate();
 
-    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
-    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget *>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen *>(0x87654321);
     const Rect client_cord_rect(0, 0, 30, 40);
     const Point window_position(1000, 1000);
     const Size window_size(300, 400);
@@ -476,12 +474,11 @@ TEST(WindowManagerTest, UpdateCandidateWindowTest) {
         .WillOnce(Return(toplevel_widget));
     EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
         .WillOnce(Return(toplevel_screen));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
-                                                      window_position.x,
-                                                      window_position.y))
+    EXPECT_CALL(*gtk_mock,
+                GdkScreenGetMonitorAtPoint(toplevel_screen, window_position.x,
+                                           window_position.y))
         .WillOnce(Return(monitor));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
-                                                       monitor,
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen, monitor,
                                                        NotNull()))
         .WillOnce(SetArgPointee<2>(monitor_rect));
 
@@ -520,8 +517,8 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
 
     commands::RendererCommand command;
     command.set_visible(true);
-    commands::Candidates *candidates
-        = command.mutable_output()->mutable_candidates();
+    commands::Candidates *candidates =
+        command.mutable_output()->mutable_candidates();
     commands::Candidates_Candidate *candidate = candidates->add_candidate();
 
     commands::InformationList *usage = candidates->mutable_usages();
@@ -530,8 +527,8 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
     candidates->set_focused_index(0);
     candidate->set_information_id(0);
 
-    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
-    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+    GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget *>(0x12345678);
+    GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen *>(0x87654321);
     const GdkRectangle monitor_rect = {15, 25, 35, 45};
     const gint monitor = 0x7777;
     const Rect cand_window_rect(10, 20, 30, 40);
@@ -544,11 +541,9 @@ TEST(WindowManagerTest, UpdateInfolistWindowTest) {
                                                       cand_window_rect.Left(),
                                                       cand_window_rect.Top()))
         .WillOnce(Return(monitor));
-    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
-                                                       monitor,
+    EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen, monitor,
                                                        NotNull()))
         .WillOnce(SetArgPointee<2>(monitor_rect));
-
 
     // TODO(nona): Make precise expectation.
     const Size infolist_window_size(10, 20);
@@ -570,8 +565,8 @@ TEST(WindowManagerTest, GetMonitorRectTest) {
   GtkWindowMock *candidate_window_mock = new GtkWindowMock();
   GtkWindowMock *infolist_window_mock = new GtkWindowMock();
   GtkWrapperMock *gtk_mock = new GtkWrapperMock();
-  GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget*>(0x12345678);
-  GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen*>(0x87654321);
+  GtkWidget *toplevel_widget = reinterpret_cast<GtkWidget *>(0x12345678);
+  GdkScreen *toplevel_screen = reinterpret_cast<GdkScreen *>(0x87654321);
   const gint monitor = 0x7777;
   const Point cursor(123, 456);
 
@@ -580,13 +575,11 @@ TEST(WindowManagerTest, GetMonitorRectTest) {
       .WillOnce(Return(toplevel_widget));
   EXPECT_CALL(*gtk_mock, GtkWindowGetScreen(toplevel_widget))
       .WillOnce(Return(toplevel_screen));
-  EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorAtPoint(toplevel_screen,
-                                                    cursor.x,
-                                                    cursor.y))
+  EXPECT_CALL(*gtk_mock,
+              GdkScreenGetMonitorAtPoint(toplevel_screen, cursor.x, cursor.y))
       .WillOnce(Return(monitor));
-  EXPECT_CALL(*gtk_mock, GdkScreenGetMonitorGeometry(toplevel_screen,
-                                                     monitor,
-                                                     NotNull()))
+  EXPECT_CALL(*gtk_mock,
+              GdkScreenGetMonitorGeometry(toplevel_screen, monitor, NotNull()))
       .WillOnce(SetArgPointee<2>(monitor_rect));
 
   WindowManager manager(candidate_window_mock, infolist_window_mock, gtk_mock);
@@ -606,15 +599,15 @@ class FontUpdateTestableWindowManager : public WindowManager {
       : WindowManager(main_window, infolist_window, gtk) {}
   virtual ~FontUpdateTestableWindowManager() {}
 
-  MOCK_METHOD1(ShouldShowCandidateWindow,
-               bool(const commands::RendererCommand &command));
-  MOCK_METHOD1(ShouldShowInfolistWindow,
-               bool(const commands::RendererCommand &command));
-  MOCK_METHOD1(UpdateCandidateWindow,
-               Rect(const commands::RendererCommand &command));
-  MOCK_METHOD2(UpdateInfolistWindow,
-               void(const commands::RendererCommand &command,
-                    const Rect &candidate_window_rect));
+  MOCK_METHOD(bool, ShouldShowCandidateWindow,
+              (const commands::RendererCommand &command));
+  MOCK_METHOD(bool, ShouldShowInfolistWindow,
+              (const commands::RendererCommand &command));
+  MOCK_METHOD(Rect, UpdateCandidateWindow,
+              (const commands::RendererCommand &command));
+  MOCK_METHOD(void, UpdateInfolistWindow,
+              (const commands::RendererCommand &command,
+               const Rect &candidate_window_rect));
 };
 
 TEST(WindowManagerTest, FontReloadTest) {
@@ -648,8 +641,9 @@ TEST(WindowManagerTest, FontReloadTest) {
     window_manager.UpdateLayout(command);
   }
   {
-    SCOPED_TRACE("Does not call reload function when the custom font setting "
-                 "is not available");
+    SCOPED_TRACE(
+        "Does not call reload function when the custom font setting "
+        "is not available");
     GtkWindowMock *candidate_window_mock = new GtkWindowMock();
     GtkWindowMock *infolist_window_mock = new GtkWindowMock();
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
@@ -673,8 +667,9 @@ TEST(WindowManagerTest, FontReloadTest) {
     window_manager.UpdateLayout(command);
   }
   {
-    SCOPED_TRACE("Does not call reload function if previously loaded font"
-                 "description is same as requested one.");
+    SCOPED_TRACE(
+        "Does not call reload function if previously loaded font"
+        "description is same as requested one.");
     GtkWindowMock *candidate_window_mock = new GtkWindowMock();
     GtkWindowMock *infolist_window_mock = new GtkWindowMock();
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
@@ -709,8 +704,9 @@ TEST(WindowManagerTest, FontReloadTest) {
     window_manager.UpdateLayout(command);
   }
   {
-    SCOPED_TRACE("Call reload function if previously loaded font description"
-                 " is different from requested one.");
+    SCOPED_TRACE(
+        "Call reload function if previously loaded font description"
+        " is different from requested one.");
     GtkWindowMock *candidate_window_mock = new GtkWindowMock();
     GtkWindowMock *infolist_window_mock = new GtkWindowMock();
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();

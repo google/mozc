@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ class Process {
  public:
   // Opens the URL with the default browser.  If this function is not
   // supported on the OS or failed, false is returned.
-  static bool OpenBrowser(const string &url);
+  static bool OpenBrowser(const std::string &url);
 
   // Spawns a process specified by path using arg as options.
   // On Windows Vista the process is spawned as the same level as the parent
@@ -52,13 +52,13 @@ class Process {
   // On Mac OSX, if the path does not specify the binary itself but
   // specifies an directory ending with ".app", an application is
   // spawned in the OSX way.
-  static bool SpawnProcess(
-      const string &path, const string& arg, size_t *pid = nullptr);
+  static bool SpawnProcess(const std::string &path, const std::string &arg,
+                           size_t *pid = nullptr);
 
   // A SpawnProcess wrapper to run an executable which is installed in
   // the Mozc server directory.
-  static bool SpawnMozcProcess(
-      const string &filename, const string &arg, size_t *pid = nullptr);
+  static bool SpawnMozcProcess(const std::string &filename,
+                               const std::string &arg, size_t *pid = nullptr);
 
   // Waits for process |pid| to terminate up to |timeout|.
   // If |timeout| is negative, waits forever.
@@ -86,7 +86,7 @@ class Process {
   static bool IsThreadAlive(size_t thread_id, bool default_result);
 
   // Launches an error message dialog.
-  static bool LaunchErrorMessageDialog(const string &type);
+  static bool LaunchErrorMessageDialog(const std::string &type);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Process);

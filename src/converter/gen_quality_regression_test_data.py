@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A tool to embedded tsv file into test binary for quality regression test.
-"""
+"""A tool to embedded tsv file into test binary for quality regression test."""
 
-__author__ = "taku"
+from __future__ import absolute_import
+from __future__ import print_function
 
-import xml.dom.minidom
+import codecs
 import sys
+import xml.dom.minidom
+
 
 def EscapeString(s):
-  """ escape the string with "\\xXX" format.
+  r"""escape the string with "\xXX" format.
 
   We don't use encode('string_escape') because it doesn't escape ascii
   characters.
@@ -59,8 +60,9 @@ def EscapeString(s):
 _DISABLED = 'false'
 _ENABLED = 'true'
 
+
 def ParseTSV(file):
-  for line in open(file, 'r'):
+  for line in codecs.open(file, 'r', encoding='utf-8'):
     if line.startswith('#'):
       continue
     line = line.rstrip('\r\n')
@@ -103,21 +105,23 @@ def ParseFile(file):
 
 
 def GenerateHeader(files):
-  try:
-    print 'namespace mozc{'
-    print 'struct TestCase {'
-    print '  const bool enabled;'
-    print '  const char *tsv;'
-    print '} kTestData[] = {'
-    for file in files:
+  print('namespace mozc{')
+  print('struct TestCase {')
+  print('  const bool enabled;')
+  print('  const char *tsv;')
+  print('} kTestData[] = {')
+
+  for file in files:
+    try:
       for enabled, line in ParseFile(file):
-        print ' {%s, "%s"},' % (enabled, EscapeString(line))
-    print '  {false, nullptr},'
-    print '};'
-    print '}  // namespace mozc'
-  except:
-    print 'cannot open %s' % (file)
-    sys.exit(1)
+        print(' {%s, "%s"},' % (enabled, EscapeString(line)))
+    except:
+      print('cannot open %s' % file)
+      sys.exit(1)
+
+  print('  {false, nullptr},')
+  print('};')
+  print('}  // namespace mozc')
 
 
 def main():

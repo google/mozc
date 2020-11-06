@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -89,8 +89,8 @@ class TipUiElementDelegateFactory {
     kImmersiveIndicatorWindow,
   };
 
-  static TipUiElementDelegate *Create(
-      TipTextService *text_service, ITfContext *context, ElementType type);
+  static TipUiElementDelegate *Create(TipTextService *text_service,
+                                      ITfContext *context, ElementType type);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipUiElementDelegateFactory);

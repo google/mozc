@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,11 @@ namespace {
 #ifndef OS_NACL
 // NaCl test doesn't support real file system, so currently disabled.
 TEST(EmbeddedFileTest, Basic) {
-  const string expected = InputFileStream(
-      testing::GetSourceFileOrDie({"base", "embedded_file.h"}).c_str(),
-      std::ios_base::in | std::ios_base::binary).Read();
+  const std::string expected =
+      InputFileStream(
+          testing::GetSourceFileOrDie({"base", "embedded_file.h"}).c_str(),
+          std::ios_base::in | std::ios_base::binary)
+          .Read();
   EXPECT_EQ(expected, LoadEmbeddedFile(kEmbeddedFileTestData));
 }
 #endif  // OS_NACL

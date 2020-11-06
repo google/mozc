@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,7 @@ static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
 }  // namespace
 
 MessageQueue::MessageQueue(HIMC himc)
-    : himc_(himc), transmsg_(nullptr), transmsg_count_(0) {
-}
+    : himc_(himc), transmsg_(nullptr), transmsg_count_(0) {}
 
 void MessageQueue::Attach(LPTRANSMSGLIST transmsg) {
   Send();
@@ -119,7 +118,7 @@ void MessageQueue::AddMessage(UINT message, WPARAM wparam, LPARAM lparam) {
     return;
   }
 
-  const TRANSMSG transmsg = { message, wparam, lparam };
+  const TRANSMSG transmsg = {message, wparam, lparam};
   messages_.push_back(transmsg);
 }
 

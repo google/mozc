@@ -1,0 +1,260 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Visibility:  please choose a more appropriate default for the package,
+# and update any rules that should be different.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+    "cc_test_mozc",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+test_suite(
+    name = "nacl_test",
+)
+
+cc_library_mozc(
+    name = "ime_context",
+    srcs = ["ime_context.cc"],
+    hdrs = ["ime_context.h"],
+    deps = [
+        ":key_event_transformer",
+        ":keymap",
+        ":keymap_factory",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//composer",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//session:session_converter_interface",
+    ],
+)
+
+cc_library_mozc(
+    name = "keymap",
+    srcs = [
+        "keymap.cc",
+    ],
+    hdrs = [
+        "keymap.h",
+        "keymap-inl.h",
+    ],
+    deps = [
+        ":keymap_interface",
+        "//base",
+        "//base:config_file_stream",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//composer:key_event_util",
+        "//composer:key_parser",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_library_mozc(
+    name = "keymap_factory",
+    srcs = [
+        "keymap_factory.cc",
+    ],
+    hdrs = ["keymap_factory.h"],
+    deps = [
+        ":keymap",
+        "//base",
+        "//base:freelist",
+        "//base:port",
+        "//config:config_handler",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_library_mozc(
+    name = "key_event_transformer",
+    srcs = ["key_event_transformer.cc"],
+    hdrs = ["key_event_transformer.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:util",
+        "//composer:key_event_util",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_library_mozc(
+    name = "candidate_list",
+    srcs = ["candidate_list.cc"],
+    hdrs = ["candidate_list.h"],
+    deps = [
+        "//base:freelist",
+        "//base:hash",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_library_mozc(
+    name = "session_output",
+    srcs = ["session_output.cc"],
+    hdrs = ["session_output.h"],
+    deps = [
+        ":candidate_list",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:text_normalizer",
+        "//base:util",
+        "//base:version",
+        "//composer",
+        "//converter:segments",
+        "//protocol:commands_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "ime_context_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["ime_context_test.cc"],
+    deps = [
+        ":ime_context",
+        ":keymap",
+        ":keymap_factory",
+        ":keymap_interface",
+        "//composer",
+        "//composer:key_parser",
+        "//composer:table",
+        "//converter:converter_interface",
+        "//converter:converter_mock",
+        "//engine:mock_converter_engine",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//session:session_converter",
+        "//testing:gunit_main",
+        "//testing:testing_util",
+    ],
+)
+
+cc_library_mozc(
+    name = "keymap_interface",
+    hdrs = ["keymap_interface.h"],
+    visibility = ["//visibility:private"],
+    deps = ["//base:port"],
+)
+
+cc_test_mozc(
+    name = "keymap_test",
+    size = "small",
+    srcs = [
+        "keymap_test.cc",
+    ],
+    deps = [
+        ":keymap",
+        ":keymap_factory",
+        "//base:config_file_stream",
+        "//base:system_util",
+        "//composer:key_parser",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "keymap_factory_test",
+    size = "small",
+    srcs = [
+        "keymap_factory_test.cc",
+    ],
+    deps = [
+        ":keymap",
+        ":keymap_factory",
+        "//composer:key_parser",
+        "//config:config_handler",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "key_event_transformer_test",
+    size = "small",
+    srcs = ["key_event_transformer_test.cc"],
+    deps = [
+        ":key_event_transformer",
+        "//base",
+        "//base:port",
+        "//base:singleton",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "candidate_list_test",
+    size = "small",
+    srcs = ["candidate_list_test.cc"],
+    deps = [
+        ":candidate_list",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "session_output_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["session_output_test.cc"],
+    deps = [
+        ":candidate_list",
+        ":session_output",
+        "//base:port",
+        "//base:text_normalizer",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//testing:gunit_main",
+    ],
+)

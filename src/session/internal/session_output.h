@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,7 @@ class Candidate;
 class SessionOutput {
  public:
   // Fill the Candidates_Candidate protobuf with the contents of candidate.
-  static void FillCandidate(const Segment &segment,
-                            const Candidate &candidate,
+  static void FillCandidate(const Segment &segment, const Candidate &candidate,
                             commands::Candidates_Candidate *candidate_proto);
 
   // Fill the Candidates protobuf with the contents of candidate_list.
@@ -68,8 +67,7 @@ class SessionOutput {
   // candidate_list.  Candidates in the candidate_list are flatten
   // even if the candidate_list contains sub-candidate lists.
   static void FillAllCandidateWords(
-      const Segment &segment,
-      const CandidateList &candidate_list,
+      const Segment &segment, const CandidateList &candidate_list,
       const commands::Category category,
       commands::CandidateList *candidate_list_proto);
 
@@ -83,7 +81,7 @@ class SessionOutput {
                          commands::Candidates *candidates_proto);
 
   // Fill the access key of Candidates protobuf with the sequence of shortcuts.
-  static void FillShortcuts(const string &shortcuts,
+  static void FillShortcuts(const std::string &shortcuts,
                             commands::Candidates *candidates_proto);
 
   // Fill the sub_label of footer_proto.  This function should be
@@ -100,10 +98,8 @@ class SessionOutput {
                           commands::Preedit *preedit);
 
   // Fill the Preedit protobuf with the contents of segments as a conversion.
-  static void FillConversion(const Segments &segments,
-                             size_t segment_index,
-                             int candidate_id,
-                             commands::Preedit *preedit);
+  static void FillConversion(const Segments &segments, size_t segment_index,
+                             int candidate_id, commands::Preedit *preedit);
 
   enum SegmentType {
     PREEDIT = 1,
@@ -112,29 +108,25 @@ class SessionOutput {
   };
   // Add a Preedit::Segment protobuf to the Preedit protobuf with key
   // and value.  Return true iff. new segment is added to preedit.
-  static bool AddSegment(const string &key,
-                         const string &value,
-                         uint32 segment_type_mask,
-                         commands::Preedit *preedit);
+  static bool AddSegment(const std::string &key, const std::string &value,
+                         uint32 segment_type_mask, commands::Preedit *preedit);
 
   // Fill the Result protobuf with the key and result strings
   // for a conversion result without any text normalization.
   static void FillConversionResultWithoutNormalization(
-      const string &key,
-      const string &result,
+      const std::string &key, const std::string &result,
       commands::Result *result_proto);
 
   // Fill the Result protobuf with the key and result strings
   // nomalizing the string for a conversion result.
-  static void FillConversionResult(const string &key,
-                                   const string &result,
+  static void FillConversionResult(const std::string &key,
+                                   const std::string &result,
                                    commands::Result *result_proto);
 
   // Fill the Result protobuf with the preedit string nomalizing the
   // string for a preedit result.
-  static void FillPreeditResult(const string &preedit,
+  static void FillPreeditResult(const std::string &preedit,
                                 commands::Result *result_proto);
-
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionOutput);

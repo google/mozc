@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
 
 #include "base/number_util.h"
 
+#include <limits>
+
 #include "base/port.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -40,6 +42,11 @@ TEST(NumberUtilTest, SimpleAtoi) {
   EXPECT_EQ(0, NumberUtil::SimpleAtoi("0"));
   EXPECT_EQ(123, NumberUtil::SimpleAtoi("123"));
   EXPECT_EQ(-1, NumberUtil::SimpleAtoi("-1"));
+
+  // Invalid cases return 0.
+  EXPECT_EQ(0, NumberUtil::SimpleAtoi("abc"));
+  EXPECT_EQ(0, NumberUtil::SimpleAtoi("a1"));
+  EXPECT_EQ(0, NumberUtil::SimpleAtoi("1 a"));
 }
 
 TEST(NumberUtilTest, SafeStrToInt16) {
@@ -67,10 +74,10 @@ TEST(NumberUtilTest, SafeStrToInt16) {
   EXPECT_EQ(-12345, value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
-  EXPECT_EQ(kint16min, value);  // min of 16-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int16>::min(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
-  EXPECT_EQ(kint16max, value);  // max of 16-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int16>::max(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
   EXPECT_EQ(1, value);
@@ -87,18 +94,18 @@ TEST(NumberUtilTest, SafeStrToInt16) {
   EXPECT_FALSE(NumberUtil::SafeStrToInt16(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToInt16("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString, 3),
-                                         &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt16(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToInt16(StringPiece(kString + 4, 3),
-                                          &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString + 8, 3),
-                                         &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToInt16(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt16(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToInt16(StringPiece(kString + 7, 4),
-                                         &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt16(absl::string_view(kString + 7, 4), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -127,10 +134,10 @@ TEST(NumberUtilTest, SafeStrToInt32) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-2147483648", &value));
-  EXPECT_EQ(kint32min, value);  // min of 32-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int32>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("2147483647", &value));
-  EXPECT_EQ(kint32max, value);  // max of 32-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int32>::max(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" 1", &value));
   EXPECT_EQ(1, value);
@@ -147,18 +154,18 @@ TEST(NumberUtilTest, SafeStrToInt32) {
   EXPECT_FALSE(NumberUtil::SafeStrToInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToInt32("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToInt32(StringPiece(kString, 3),
-                                         &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt32(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToInt32(StringPiece(kString + 4, 3),
-                                          &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToInt32(StringPiece(kString + 8, 3),
-                                         &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToInt32(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt32(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToInt32(StringPiece(kString + 7, 4),
-                                         &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt32(absl::string_view(kString + 7, 4), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -188,10 +195,10 @@ TEST(NumberUtilTest, SafeStrToInt64) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-9223372036854775808", &value));
-  EXPECT_EQ(kint64min, value);  // min of 64-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int64>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("9223372036854775807", &value));
-  EXPECT_EQ(kint64max, value);  // max of 64-bit signed integer
+  EXPECT_EQ(std::numeric_limits<int64>::max(), value);
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt64("-9223372036854775809",  // overflow
                                           &value));
@@ -203,15 +210,15 @@ TEST(NumberUtilTest, SafeStrToInt64) {
   EXPECT_FALSE(NumberUtil::SafeStrToInt64(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToInt64("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToInt64(StringPiece(kString, 3),
-                                         &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt64(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToInt64(StringPiece(kString + 4, 3),
-                                          &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToInt64(StringPiece(kString + 8, 3),
-                                         &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToInt64(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToInt64(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -250,18 +257,18 @@ TEST(NumberUtilTest, SafeStrToUInt16) {
   EXPECT_FALSE(NumberUtil::SafeStrToUInt16(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt16("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString, 3),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt16(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 4, 3),
-                                           &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 8, 3),
-                                          &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToUInt16(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt16(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt16(StringPiece(kString + 7, 4),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt16(absl::string_view(kString + 7, 4), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -300,18 +307,18 @@ TEST(NumberUtilTest, SafeStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt32("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString, 3),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt32(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 4, 3),
-                                           &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 8, 3),
-                                          &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToUInt32(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt32(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt32(StringPiece(kString + 7, 4),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt32(absl::string_view(kString + 7, 4), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -350,15 +357,15 @@ TEST(NumberUtilTest, SafeHexStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 5x";
-  EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString, 3),
-                                             &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeHexStrToUInt32(absl::string_view(kString, 3), &value));
   EXPECT_EQ(291, value);
-  EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString + 4, 3),
+  EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32(absl::string_view(kString + 4, 3),
                                              &value));
   EXPECT_EQ(2748, value);
-  EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(StringPiece(kString + 8, 2),
+  EXPECT_FALSE(NumberUtil::SafeHexStrToUInt32(absl::string_view(kString + 8, 2),
                                               &value));
 }
 
@@ -389,15 +396,15 @@ TEST(NumberUtilTest, SafeOctStrToUInt32) {
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 456 789";
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString, 3),
-                                             &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeOctStrToUInt32(absl::string_view(kString, 3), &value));
   EXPECT_EQ(83, value);
-  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString + 4, 3),
+  EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 4, 3),
                                              &value));
   EXPECT_EQ(302, value);
-  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(StringPiece(kString + 8, 3),
+  EXPECT_FALSE(NumberUtil::SafeOctStrToUInt32(absl::string_view(kString + 8, 3),
                                               &value));
 }
 
@@ -411,26 +418,27 @@ TEST(NumberUtilTest, SafeStrToUInt64) {
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("012345678", &value));
   EXPECT_EQ(12345678, value);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("18446744073709551615", &value));
-  EXPECT_EQ(18446744073709551615ull, value);  // max of 64-bit unsigned integer
+  EXPECT_EQ(uint64{18446744073709551615u},
+            value);  // max of 64-bit unsigned integer
 
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("-0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("18446744073709551616",  // overflow
-                                     &value));
+                                           &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("0x1234", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("0.", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64(".0", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "123 abc 789";
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt64(StringPiece(kString, 3),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt64(absl::string_view(kString, 3), &value));
   EXPECT_EQ(123, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToUInt64(StringPiece(kString + 4, 3),
-                                           &value));
-  EXPECT_TRUE(NumberUtil::SafeStrToUInt64(StringPiece(kString + 8, 3),
-                                          &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToUInt64(absl::string_view(kString + 4, 3), &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToUInt64(absl::string_view(kString + 8, 3), &value));
   EXPECT_EQ(789, value);
 }
 
@@ -453,34 +461,37 @@ TEST(NumberUtilTest, SafeStrToDouble) {
   EXPECT_EQ(0.0, value);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0.0", &value));
   EXPECT_EQ(0.0, value);
+  // Approximate representation of max of double.  The value checking is done by
+  // EXPECT_DOUBLE_EQ as the result might be very slightly different on some
+  // platforms.
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("1.7976931348623158e308", &value));
-  EXPECT_EQ(1.7976931348623158e308, value);  // approximated representation
-                                             // of max of double
+  EXPECT_DOUBLE_EQ(1.7976931348623158e308, value);
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("-1.7976931348623158e308", &value));
-  EXPECT_EQ(-1.7976931348623158e308, value);
+  EXPECT_DOUBLE_EQ(-1.7976931348623158e308, value);
 
+  // It seems that the Android libc doesn't accept hex format, so disable it.
+#ifndef OS_ANDROID
   EXPECT_TRUE(NumberUtil::SafeStrToDouble("0x1234", &value));
   EXPECT_EQ(static_cast<double>(0x1234), value);
+#endif  // OS_ANDROID
 
-  EXPECT_FALSE(
-      NumberUtil::SafeStrToDouble("1.7976931348623159e308",
-                                  &value));  // overflow
-  EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.7976931348623159e308", &value));
+  EXPECT_FALSE(NumberUtil::SafeStrToDouble("1.0e309", &value));   // overflow
+  EXPECT_FALSE(NumberUtil::SafeStrToDouble("-1.0e309", &value));  // underflow
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("NaN", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("3e", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble(".", &value));
   EXPECT_FALSE(NumberUtil::SafeStrToDouble("", &value));
 
-  // Test for StringPiece input.
+  // Test for absl::string_view input.
   const char *kString = "0.01 3.1415 double";
-  EXPECT_TRUE(NumberUtil::SafeStrToDouble(StringPiece(kString, 4),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToDouble(absl::string_view(kString, 4), &value));
   EXPECT_EQ(0.01, value);
-  EXPECT_TRUE(NumberUtil::SafeStrToDouble(StringPiece(kString + 5, 6),
-                                          &value));
+  EXPECT_TRUE(
+      NumberUtil::SafeStrToDouble(absl::string_view(kString + 5, 6), &value));
   EXPECT_EQ(3.1415, value);
-  EXPECT_FALSE(NumberUtil::SafeStrToDouble(StringPiece(kString + 12, 6),
-                                           &value));
+  EXPECT_FALSE(
+      NumberUtil::SafeStrToDouble(absl::string_view(kString + 12, 6), &value));
 }
 
 TEST(NumberUtilTest, IsArabicNumber) {
@@ -556,11 +567,16 @@ TEST(NumberUtilTest, IsDecimalInteger) {
 
 TEST(NumberUtilTest, KanjiNumberToArabicNumber) {
   const char *inputs[] = {"十", "百", "千", "万", "億", "兆", "京"};
-  const char *expects[] = {"10", "100", "1000", "10000", "100000000",
-                           "1000000000000", "10000000000000000"};
+  const char *expects[] = {"10",
+                           "100",
+                           "1000",
+                           "10000",
+                           "100000000",
+                           "1000000000000",
+                           "10000000000000000"};
 
   for (size_t i = 0; i < arraysize(inputs); ++i) {
-    string arabic;
+    std::string arabic;
     NumberUtil::KanjiNumberToArabicNumber(inputs[i], &arabic);
     EXPECT_EQ(expects[i], arabic);
   }
@@ -617,8 +633,8 @@ TEST(NumberUtilTest, NormalizeNumbers) {
   };
 
   for (size_t i = 0; i < arraysize(success_data); ++i) {
-    string arabic_output = "dummy_text_arabic";
-    string kanji_output = "dummy_text_kanji";
+    std::string arabic_output = "dummy_text_arabic";
+    std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_data[i][0], true,
                                              &kanji_output, &arabic_output));
     EXPECT_EQ(success_data[i][1], kanji_output);
@@ -636,8 +652,8 @@ TEST(NumberUtilTest, NormalizeNumbers) {
   };
 
   for (size_t i = 0; i < arraysize(success_notrim_data); ++i) {
-    string arabic_output = "dummy_text_arabic";
-    string kanji_output = "dummy_text_kanji";
+    std::string arabic_output = "dummy_text_arabic";
+    std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_notrim_data[i][0], false,
                                              &kanji_output, &arabic_output));
     EXPECT_EQ(success_notrim_data[i][1], kanji_output);
@@ -652,7 +668,7 @@ TEST(NumberUtilTest, NormalizeNumbers) {
       "てすと２",
       "一十",
       "一百",
-      "万二千三百四十五",    // lack of number before "万"
+      "万二千三百四十五",  // lack of number before "万"
       "三億一京",          // large base, "京", after small one, "億"
       "三百四百",          // same base appears twice
       "五億六億",          // same base appears twice
@@ -663,119 +679,101 @@ TEST(NumberUtilTest, NormalizeNumbers) {
   };
 
   for (size_t i = 0; i < arraysize(fail_data); ++i) {
-    string arabic_output, kanji_output;
-    EXPECT_FALSE(NumberUtil::NormalizeNumbers(fail_data[i], true,
-                                              &kanji_output, &arabic_output));
+    std::string arabic_output, kanji_output;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbers(fail_data[i], true, &kanji_output,
+                                              &arabic_output));
   }
 }
 
 TEST(NumberUtilTest, NormalizeNumbersWithSuffix) {
   {
     // Checks that kanji_output and arabic_output is cleared.
-    const string input = "一個";
-    string arabic_output = "dummy_text_arabic";
-    string kanji_output = "dummy_text_kanji";
-    string suffix = "dummy_text_suffix";
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "一個";
+    std::string arabic_output = "dummy_text_arabic";
+    std::string kanji_output = "dummy_text_kanji";
+    std::string suffix = "dummy_text_suffix";
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("一", kanji_output);
     EXPECT_EQ("1", arabic_output);
     EXPECT_EQ("個", suffix);
   }
 
   {
-    const string input = "一万二十五個";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "一万二十五個";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("一万二十五", kanji_output);
     EXPECT_EQ("10025", arabic_output);
     EXPECT_EQ("個", suffix);
   }
 
   {
-    const string input = "二百三五万一番目";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "二百三五万一番目";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("二百三五万一", kanji_output);
     EXPECT_EQ("2350001", arabic_output);
     EXPECT_EQ("番目", suffix);
   }
 
   {
-    const string input = "てすと";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                        &kanji_output,
-                                                        &arabic_output,
-                                                        &suffix));
+    const std::string input = "てすと";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
   }
 
   {
-    const string input = "てすと２";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                        &kanji_output,
-                                                        &arabic_output,
-                                                        &suffix));
+    const std::string input = "てすと２";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
   }
 
   // Tests for numbers less than 10.
   {
-    const string input = "零セット";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "零セット";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("零", kanji_output);
     EXPECT_EQ("0", arabic_output);
     EXPECT_EQ("セット", suffix);
   }
 
   {
-    const string input = "九０ぷよ";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "九０ぷよ";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("九〇", kanji_output);
     EXPECT_EQ("90", arabic_output);
     EXPECT_EQ("ぷよ", suffix);
   }
 
   {
-    const string input = "三五$";
-    string arabic_output, kanji_output, suffix;
-    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                       &kanji_output,
-                                                       &arabic_output,
-                                                       &suffix));
+    const std::string input = "三五$";
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_TRUE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
     EXPECT_EQ("三五", kanji_output);
     EXPECT_EQ("35", arabic_output);
     EXPECT_EQ("$", suffix);
   }
 
   {
-    const string input = "二十三十に";  // same base appears twice
-    string arabic_output, kanji_output, suffix;
-    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(input, true,
-                                                        &kanji_output,
-                                                        &arabic_output,
-                                                        &suffix));
+    const std::string input = "二十三十に";  // same base appears twice
+    std::string arabic_output, kanji_output, suffix;
+    EXPECT_FALSE(NumberUtil::NormalizeNumbersWithSuffix(
+        input, true, &kanji_output, &arabic_output, &suffix));
   }
 }
 
 TEST(NumberUtilTest, ArabicToWideArabicTest) {
-  string arabic;
+  std::string arabic;
   std::vector<NumberUtil::NumberString> output;
 
   arabic = "12345";
@@ -832,7 +830,7 @@ struct ArabicToKanjiTestData {
   const int expect_num;
   const char *expect_value[kMaxCandsInArabicToKanjiTest];
   const NumberUtil::NumberString::Style
-  expect_style[kMaxCandsInArabicToKanjiTest];
+      expect_style[kMaxCandsInArabicToKanjiTest];
 };
 }  // namespace
 
@@ -874,7 +872,8 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
        {"1844京6744兆737億955万1615",
         "１８４４京６７４４兆７３７億９５５万１６１５",
         "千八百四十四京六千七百四十四兆七百三十七億九百五十五万千六百十五",
-        "壱阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬壱阡六百壱拾五"},
+        "壱阡八百四拾四京六阡七百四拾四兆七百参拾七億九百五拾五萬壱阡六百壱拾"
+        "五"},
        {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
   };
 
@@ -892,9 +891,8 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
     }
   }
 
-  const char *kFailInputs[] = {
-    "asf56789", "0.001", "-100", "123456789012345678901"
-  };
+  const char *kFailInputs[] = {"asf56789", "0.001", "-100",
+                               "123456789012345678901"};
   for (size_t i = 0; i < arraysize(kFailInputs); ++i) {
     std::vector<NumberUtil::NumberString> output;
     EXPECT_FALSE(NumberUtil::ArabicToKanji(kFailInputs[i], &output));
@@ -904,16 +902,16 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
 
 // ArabicToSeparatedArabic TEST
 TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
-  string arabic;
+  std::string arabic;
   std::vector<NumberUtil::NumberString> output;
 
   // Test data expected to succeed
-  const char* kSuccess[][3] = {
-    {"4", "4", "４"},
-    {"123456789", "123,456,789", "１２３，４５６，７８９"},
-    {"1234567.89", "1,234,567.89", "１，２３４，５６７．８９"},
-    // UINT64_MAX + 1
-    {"18446744073709551616", "18,446,744,073,709,551,616", nullptr},
+  const char *kSuccess[][3] = {
+      {"4", "4", "４"},
+      {"123456789", "123,456,789", "１２３，４５６，７８９"},
+      {"1234567.89", "1,234,567.89", "１，２３４，５６７．８９"},
+      // UINT64_MAX + 1
+      {"18446744073709551616", "18,446,744,073,709,551,616", nullptr},
   };
 
   for (size_t i = 0; i < arraysize(kSuccess); ++i) {
@@ -932,8 +930,11 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
   }
 
   // Test data expected to fail
-  const char* kFail[] = {
-    "0123456789", "asdf0123456789", "0.001", "-100",
+  const char *kFail[] = {
+      "0123456789",
+      "asdf0123456789",
+      "0.001",
+      "-100",
   };
 
   for (size_t i = 0; i < arraysize(kFail); ++i) {
@@ -946,7 +947,7 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
 
 // ArabicToOtherForms
 TEST(NumberUtilTest, ArabicToOtherFormsTest) {
-  string arabic;
+  std::string arabic;
   std::vector<NumberUtil::NumberString> output;
 
   arabic = "5";
@@ -990,7 +991,7 @@ TEST(NumberUtilTest, ArabicToOtherFormsTest) {
 
 // ArabicToOtherRadixes
 TEST(NumberUtilTest, ArabicToOtherRadixesTest) {
-  string arabic;
+  std::string arabic;
   std::vector<NumberUtil::NumberString> output;
 
   arabic = "1";

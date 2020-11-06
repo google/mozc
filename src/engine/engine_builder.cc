@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -74,8 +74,8 @@ class EngineBuilder::Preparator : public Thread {
     const EngineReloadRequest &request = response_.request();
 
     std::unique_ptr<DataManager> tmp_data_manager(new DataManager());
-    const DataManager::Status status = InitDataManager(request,
-                                                       tmp_data_manager.get());
+    const DataManager::Status status =
+        InitDataManager(request, tmp_data_manager.get());
     if (status != DataManager::Status::OK) {
       LOG(ERROR) << "Failed to load data [" << status << "] "
                  << request.Utf8DebugString();
@@ -148,15 +148,12 @@ void EngineBuilder::GetResponse(EngineReloadResponse *response) const {
 }
 
 std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
-  std::unique_ptr<EngineInterface> engine;
-
-  if (!HasResponse() ||
-      !preparator_->data_manager_ ||
+  if (!HasResponse() || !preparator_->data_manager_ ||
       preparator_->response_.status() != EngineReloadResponse::RELOAD_READY) {
     LOG(ERROR) << "Build() is called in invalid state";
-    return engine;
+    return nullptr;
   }
-
+  mozc::StatusOr<std::unique_ptr<Engine>> engine;
   switch (preparator_->response_.request().engine_type()) {
     case EngineReloadRequest::DESKTOP:
       engine =
@@ -171,7 +168,11 @@ std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
       break;
   }
 
-  return engine;
+  if (!engine.ok()) {
+    LOG(ERROR) << engine.status();
+    return nullptr;
+  }
+  return *std::move(engine);
 }
 
 void EngineBuilder::Clear() {

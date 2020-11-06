@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,24 +32,25 @@
 #include <msctf.h>
 
 #include "google/protobuf/stubs/common.h"
-#include "base/mutex.h"
-#include "base/singleton.h"
 #include "base/crash_report_handler.h"
+#include "base/mutex.h"
+#include "base/protobuf/protobuf.h"
+#include "base/singleton.h"
 #include "config/stats_config_util.h"
 #include "win32/base/browser_info.h"
 #include "win32/base/focus_hierarchy_observer.h"
 #include "win32/base/tsf_profile.h"
 #include "win32/base/tsf_registrar.h"
 #include "win32/tip/tip_class_factory.h"
-#include "win32/tip/tip_ui_handler.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_ui_handler.h"
 
 namespace {
 
 using mozc::CrashReportHandler;
+using mozc::once_t;
 using mozc::SingletonFinalizer;
 using mozc::config::StatsConfigUtil;
-using mozc::once_t;
 using mozc::win32::BrowserInfo;
 using mozc::win32::FocusHierarchyObserver;
 using mozc::win32::TsfProfile;
@@ -109,24 +110,20 @@ class ModuleImpl {
         // re-initializable. For instance, we must not call following
         // functions here.
         // - SingletonFinalizer::Finalize()               // see b/10233768
-        // - google::protobuf::ShutdownProtobufLibrary()  // see b/2126375
+        // - mozc::protobuf::ShutdownProtobufLibrary()  // see b/2126375
         mozc::CallOnce(&g_uninitialize_once, TipShutdownCrashReportHandler);
       }
     }
     return ref_count_;
   }
-  static bool IsUnloaded() {
-    return unloaded_;
-  }
-  static bool CanUnload() {
-    return ref_count_ <= 0;
-  }
+  static bool IsUnloaded() { return unloaded_; }
+  static bool CanUnload() { return ref_count_ <= 0; }
 
   static BOOL OnDllProcessAttach(HINSTANCE instance, bool static_loading) {
     module_handle_ = instance;
     if (!::InitializeCriticalSectionAndSpinCount(
             &critical_section_for_breakpad_, 0)) {
-        return FALSE;
+      return FALSE;
     }
     CrashReportHandler::SetCriticalSection(&critical_section_for_breakpad_);
     BrowserInfo::OnDllProcessAttach(instance, static_loading);
@@ -143,11 +140,11 @@ class ModuleImpl {
     BrowserInfo::OnDllProcessDetach(instance, process_shutdown);
     if (!g_in_safe_mode && !process_shutdown) {
       // It is our responsibility to make sure that our code never touch
-      // protobuf library after google::protobuf::ShutdownProtobufLibrary is
+      // protobuf library after mozc::protobuf::ShutdownProtobufLibrary is
       // called. Unfortunately, DllMain is the only place that satisfies this
       // condition. So we carefully call it here, even though there is a risk
       // of deadlocks. See b/2126375 for details.
-      google::protobuf::ShutdownProtobufLibrary();
+      ::mozc::protobuf::ShutdownProtobufLibrary();
     }
 
     ::DeleteCriticalSection(&critical_section_for_breakpad_);
@@ -156,13 +153,9 @@ class ModuleImpl {
     return TRUE;
   }
 
-  static HMODULE module_handle() {
-    return module_handle_;
-  }
+  static HMODULE module_handle() { return module_handle_; }
 
-  static void InitForUnitTest() {
-    in_unit_test_ = true;
-  }
+  static void InitForUnitTest() { in_unit_test_ = true; }
 
  private:
   static HMODULE module_handle_;
@@ -185,8 +178,7 @@ CRITICAL_SECTION ModuleImpl::critical_section_for_breakpad_;
 // Retrieves interfaces exported by this module.
 // This module exports only the IClassFactory object, which is a COM interface
 // that creates an instance of the COM objects implemented by this module.
-STDAPI DllGetClassObject(REFCLSID class_id,
-                         REFIID interface_id,
+STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
                          void **object) {
   mozc::CallOnce(&g_initialize_once, TipBuildGlobalObjects);
   if (object == nullptr) {
@@ -194,7 +186,7 @@ STDAPI DllGetClassObject(REFCLSID class_id,
   }
   if ((::IsEqualIID(interface_id, IID_IClassFactory) ||
        ::IsEqualIID(interface_id, IID_IUnknown)) &&
-       ::IsEqualGUID(class_id, TsfProfile::GetTextServiceGuid())) {
+      ::IsEqualGUID(class_id, TsfProfile::GetTextServiceGuid())) {
     IClassFactory *factory = new mozc::win32::tsf::TipClassFactory();
     factory->AddRef();
     *object = factory;
@@ -206,9 +198,7 @@ STDAPI DllGetClassObject(REFCLSID class_id,
 }
 
 // Returns whether or not Windows can unload this module.
-STDAPI DllCanUnloadNow() {
-  return ModuleImpl::CanUnload() ? S_OK : S_FALSE;
-}
+STDAPI DllCanUnloadNow() { return ModuleImpl::CanUnload() ? S_OK : S_FALSE; }
 
 // Unregisters this module from Windows.
 // This function is called when executing a command
@@ -231,8 +221,8 @@ STDAPI DllRegisterServer() {
   // 2. Register this COM server as a TSF text service, and;
   // 3. Register this text service as a TSF text-input processor.
   wchar_t path[MAX_PATH] = {};
-  const DWORD path_length = ::GetModuleFileName(
-      ModuleImpl::module_handle(), &path[0], arraysize(path));
+  const DWORD path_length = ::GetModuleFileName(ModuleImpl::module_handle(),
+                                                &path[0], arraysize(path));
   HRESULT result = TsfRegistrar::RegisterCOMServer(path, path_length);
   if (FAILED(result)) {
     DllUnregisterServer();
@@ -253,11 +243,11 @@ STDAPI DllRegisterServer() {
 
 // Represents the entry point of this module.
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
-  switch (reason)  {
+  switch (reason) {
     case DLL_PROCESS_ATTACH:
-    // We disable thread library calls only when the dynamic CRT is specified.
-    // This can be determined by checking the _DLL macro.
-    // http://msdn.microsoft.com/en-us/library/b0084kay.aspx
+      // We disable thread library calls only when the dynamic CRT is specified.
+      // This can be determined by checking the _DLL macro.
+      // http://msdn.microsoft.com/en-us/library/b0084kay.aspx
 #if defined(_DLL)
       if (::DisableThreadLibraryCalls(instance) == 0) {
         // DisableThreadLibraryCalls failed.
@@ -290,30 +280,18 @@ namespace win32 {
 namespace tsf {
 
 // Increases the reference count to this module.
-LONG TipDllModule::AddRef() {
-  return ModuleImpl::AddRef();
-}
+LONG TipDllModule::AddRef() { return ModuleImpl::AddRef(); }
 
 // Decreases the reference count to this module.
-LONG TipDllModule::Release() {
-  return ModuleImpl::Release();
-}
+LONG TipDllModule::Release() { return ModuleImpl::Release(); }
 
-bool TipDllModule::IsUnloaded() {
-  return ModuleImpl::IsUnloaded();
-}
+bool TipDllModule::IsUnloaded() { return ModuleImpl::IsUnloaded(); }
 
-bool TipDllModule::CanUnload() {
-  return ModuleImpl::CanUnload();
-}
+bool TipDllModule::CanUnload() { return ModuleImpl::CanUnload(); }
 
-HMODULE TipDllModule::module_handle() {
-  return ModuleImpl::module_handle();
-}
+HMODULE TipDllModule::module_handle() { return ModuleImpl::module_handle(); }
 
-void TipDllModule::InitForUnitTest() {
-  ModuleImpl::InitForUnitTest();
-}
+void TipDllModule::InitForUnitTest() { ModuleImpl::InitForUnitTest(); }
 
 }  // namespace tsf
 }  // namespace win32

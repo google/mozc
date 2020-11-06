@@ -1,0 +1,1623 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Visibility:  please choose a more appropriate default for the package,
+# and update any rules that should be different.
+
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "py_binary_mozc",
+    "py_library_mozc",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+test_suite(
+    name = "nacl_test",
+)
+
+cc_library_mozc(
+    name = "rewriter_interface",
+    textual_hdrs = ["rewriter_interface.h"],
+    deps = [
+        "//converter:segments",
+        "//request:conversion_request",
+    ],
+)
+
+cc_test_mozc(
+    name = "merger_rewriter_test",
+    size = "small",
+    srcs = ["merger_rewriter_test.cc"],
+    requires_full_emulation = False,
+    visibility = ["//visibility:private"],
+    deps = [
+        ":merger_rewriter",
+        "//base",
+        "//base:stl_util",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "collocation_rewriter",
+    srcs = [
+        "collocation_rewriter.cc",
+    ],
+    hdrs = ["collocation_rewriter.h"],
+    deps = [
+        ":collocation_util",
+        ":rewriter_interface",
+        "//base",
+        "//base:flags",
+        "//base:hash",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//storage:existence_filter",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "collocation_rewriter_test",
+    srcs = ["collocation_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":collocation_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//config:config_handler",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "user_segment_history_rewriter",
+    srcs = ["user_segment_history_rewriter.cc"],
+    hdrs = ["user_segment_history_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        ":variants_rewriter",
+        "//base",
+        "//base:config_file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:number_util",
+        "//base:util",
+        "//config:character_form_manager",
+        "//config:config_handler",
+        "//converter:segments",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//storage:lru_storage",
+        "//transliteration",
+        "//usage_stats",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "user_segment_history_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["user_segment_history_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":number_rewriter",
+        ":user_segment_history_rewriter",
+        ":variants_rewriter",
+        "//base",
+        "//base:clock",
+        "//base:clock_mock",
+        "//base:file_util",
+        "//base:logging",
+        "//base:number_util",
+        "//base:system_util",
+        "//base:util",
+        "//config:character_form_manager",
+        "//config:config_handler",
+        "//converter:converter_mock",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "user_boundary_history_rewriter",
+    srcs = ["user_boundary_history_rewriter.cc"],
+    hdrs = ["user_boundary_history_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:config_file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//storage:lru_storage",
+        "//usage_stats",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "user_boundary_history_rewriter_test",
+    size = "small",
+    srcs = ["user_boundary_history_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":user_boundary_history_rewriter",
+        "//base",
+        "//base:file_util",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:converter_mock",
+        "//converter:segments",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "date_rewriter",
+    srcs = ["date_rewriter.cc"],
+    hdrs = ["date_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:clock",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:segments",
+        "//dictionary:dictionary_interface",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "date_rewriter_test",
+    size = "small",
+    srcs = ["date_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":date_rewriter",
+        "//base",
+        "//base:clock",
+        "//base:clock_mock",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:segments",
+        "//dictionary:dictionary_mock",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "number_rewriter",
+    srcs = [
+        "number_rewriter.cc",
+    ],
+    hdrs = ["number_rewriter.h"],
+    deps = [
+        ":number_compound_util",
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "number_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["number_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":number_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "transliteration_rewriter",
+    srcs = [
+        "transliteration_rewriter.cc",
+    ],
+    hdrs = ["transliteration_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:text_normalizer",
+        "//base:util",
+        "//composer",
+        "//converter:segments",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//transliteration",
+        "//usage_stats",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "transliteration_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["transliteration_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":transliteration_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//transliteration",
+        "//usage_stats",
+        "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "language_aware_rewriter",
+    srcs = [
+        "language_aware_rewriter.cc",
+    ],
+    hdrs = ["language_aware_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//composer",
+        "//config:config_handler",
+        "//converter:segments",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//transliteration",
+        "//usage_stats",
+    ],
+)
+
+cc_test_mozc(
+    name = "language_aware_rewriter_test",
+    size = "small",
+    srcs = ["language_aware_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":language_aware_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_mock",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//usage_stats",
+        "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "version_rewriter",
+    srcs = ["version_rewriter.cc"],
+    hdrs = ["version_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+        "//base:version",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "version_rewriter_test",
+    size = "small",
+    srcs = ["version_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":version_rewriter",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "symbol_rewriter",
+    srcs = ["symbol_rewriter.cc"],
+    hdrs = ["symbol_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+        "//base:util",
+        "//config:character_form_manager",
+        "//config:config_handler",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//data_manager:serialized_dictionary",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "symbol_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["symbol_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":symbol_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//engine:engine_interface",
+        "//engine:mock_data_engine_factory",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "emoticon_rewriter",
+    srcs = ["emoticon_rewriter.cc"],
+    hdrs = ["emoticon_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//data_manager:serialized_dictionary",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "emoticon_rewriter_test",
+    size = "small",
+    srcs = ["emoticon_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":emoticon_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "variants_rewriter",
+    srcs = ["variants_rewriter.cc"],
+    hdrs = ["variants_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//config:character_form_manager",
+        "//converter:segments",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "variants_rewriter_test",
+    size = "small",
+    srcs = ["variants_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":variants_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//config:character_form_manager",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+    ],
+)
+
+cc_library_mozc(
+    name = "english_variants_rewriter",
+    srcs = ["english_variants_rewriter.cc"],
+    hdrs = ["english_variants_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:mozc_hash_set",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "english_variants_rewriter_test",
+    size = "small",
+    srcs = ["english_variants_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":english_variants_rewriter",
+        "//base",
+        "//base:system_util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "fortune_rewriter",
+    srcs = ["fortune_rewriter.cc"],
+    hdrs = ["fortune_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:clock",
+        "//base:logging",
+        "//base:singleton",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "fortune_rewriter_test",
+    size = "small",
+    srcs = ["fortune_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":fortune_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "dice_rewriter",
+    srcs = ["dice_rewriter.cc"],
+    hdrs = ["dice_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "dice_rewriter_test",
+    size = "small",
+    srcs = ["dice_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":dice_rewriter",
+        "//base",
+        "//base:system_util",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "calculator_rewriter",
+    srcs = ["calculator_rewriter.cc"],
+    hdrs = ["calculator_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//rewriter/calculator",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "calculator_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["calculator_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":calculator_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:converter_interface",
+        "//converter:converter_mock",
+        "//converter:segments",
+        "//engine:engine_interface",
+        "//engine:mock_data_engine_factory",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//rewriter/calculator",
+        "//rewriter/calculator:calculator_mock",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "unicode_rewriter",
+    srcs = ["unicode_rewriter.cc"],
+    hdrs = ["unicode_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:util",
+        "//composer",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "unicode_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["unicode_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":unicode_rewriter",
+        "//base",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//composer",
+        "//config:config_handler",
+        "//converter:segments",
+        "//engine:engine_interface",
+        "//engine:mock_data_engine_factory",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "user_dictionary_rewriter",
+    srcs = ["user_dictionary_rewriter.cc"],
+    hdrs = ["user_dictionary_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "user_dictionary_rewriter_test",
+    size = "small",
+    srcs = ["user_dictionary_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":user_dictionary_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:system_util",
+        "//base:util",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "dictionary_generator",
+    srcs = [
+        "dictionary_generator.cc",
+    ],
+    hdrs = ["dictionary_generator.h"],
+    deps = [
+        "//base",
+        "//base:file_stream",
+        "//base:freelist",
+        "//base:hash",
+        "//base:logging",
+        "//base:port",
+        "//data_manager:data_manager_interface",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:user_pos",
+    ],
+)
+
+cc_test_mozc(
+    name = "dictionary_generator_test",
+    size = "small",
+    srcs = ["dictionary_generator_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":dictionary_generator",
+        "//base",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_symbol_rewriter_dictionary_main",
+    srcs = ["gen_symbol_rewriter_dictionary_main.cc"],
+    deps = [
+        ":dictionary_generator",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:util",
+        "//data_manager",
+        "//data_manager:serialized_dictionary",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_emoticon_rewriter_data",
+    srcs = ["gen_emoticon_rewriter_data.cc"],
+    deps = [
+        ":rewriter_interface",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:mozc_hash_map",
+        "//base:util",
+        "//data_manager:serialized_dictionary",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_emoji_rewriter_data_lib",
+    srcs = ["gen_emoji_rewriter_data.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_emoji_rewriter_data",
+    srcs = ["gen_emoji_rewriter_data.py"],
+    python_version = "PY3",
+    deps = [
+        ":gen_emoji_rewriter_data_lib",
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+cc_library_mozc(
+    name = "emoji_rewriter",
+    srcs = ["emoji_rewriter.cc"],
+    hdrs = ["emoji_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:iterator_adapter",
+        "//base:logging",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//usage_stats",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "emoji_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["emoji_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":emoji_rewriter",
+        ":variants_rewriter",
+        "//base",
+        "//base:logging",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:character_form_manager",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//storage:registry",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//usage_stats",
+        "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "single_kanji_rewriter",
+    srcs = ["single_kanji_rewriter.cc"],
+    hdrs = ["single_kanji_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//data_manager:serialized_dictionary",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+py_library_mozc(
+    name = "gen_single_kanji_rewriter_data_lib",
+    srcs = ["gen_single_kanji_rewriter_data.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_single_kanji_rewriter_data",
+    srcs = ["gen_single_kanji_rewriter_data.py"],
+    python_version = "PY3",
+    deps = [
+        ":gen_single_kanji_rewriter_data_lib",
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_single_kanji_noun_prefix_data",
+    srcs = ["gen_single_kanji_noun_prefix_data.cc"],
+    deps = [
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:port",
+        "//data_manager:serialized_dictionary",
+    ],
+)
+
+cc_test_mozc(
+    name = "single_kanji_rewriter_test",
+    size = "small",
+    srcs = ["single_kanji_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":single_kanji_rewriter",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_counter_suffix_array_lib",
+    srcs = ["gen_counter_suffix_array.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_counter_suffix_array",
+    srcs = ["gen_counter_suffix_array.py"],
+    python_version = "PY3",
+    deps = [
+        ":gen_counter_suffix_array_lib",
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+cc_library_mozc(
+    name = "focus_candidate_rewriter",
+    srcs = [
+        "focus_candidate_rewriter.cc",
+    ],
+    hdrs = ["focus_candidate_rewriter.h"],
+    deps = [
+        ":number_compound_util",
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//dictionary:pos_matcher_lib",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "focus_candidate_rewriter_test",
+    size = "small",
+    srcs = ["focus_candidate_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":focus_candidate_rewriter",
+        "//base",
+        "//base:number_util",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//testing:gunit_main",
+        "//transliteration",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "zipcode_rewriter",
+    srcs = [
+        "zipcode_rewriter.cc",
+    ],
+    hdrs = ["zipcode_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//config:config_handler",
+        "//converter:segments",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "zipcode_rewriter_test",
+    size = "small",
+    srcs = [
+        "zipcode_rewriter_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":zipcode_rewriter",
+        "//base",
+        "//base:logging",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "katakana_promotion_rewriter",
+    srcs = ["katakana_promotion_rewriter.cc"],
+    hdrs = ["katakana_promotion_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//transliteration",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "katakana_promotion_rewriter_test",
+    size = "small",
+    srcs = ["katakana_promotion_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":katakana_promotion_rewriter",
+        ":transliteration_rewriter",
+        "//base",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "command_rewriter",
+    srcs = ["command_rewriter.cc"],
+    hdrs = ["command_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:config_file_stream",
+        "//base:logging",
+        "//config:config_handler",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "command_rewriter_test",
+    size = "small",
+    srcs = ["command_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":command_rewriter",
+        "//base",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "normalization_rewriter",
+    srcs = ["normalization_rewriter.cc"],
+    hdrs = ["normalization_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:text_normalizer",
+        "//base:util",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+    ],
+)
+
+cc_test_mozc(
+    name = "normalization_rewriter_test",
+    size = "small",
+    srcs = ["normalization_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":normalization_rewriter",
+        "//base",
+        "//base:system_util",
+        "//converter:segments",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "remove_redundant_candidate_rewriter",
+    srcs = ["remove_redundant_candidate_rewriter.cc"],
+    hdrs = ["remove_redundant_candidate_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+    ],
+)
+
+cc_test_mozc(
+    name = "remove_redundant_candidate_rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["remove_redundant_candidate_rewriter_test.cc"],
+    requires_full_emulation = True,
+    deps = [
+        ":remove_redundant_candidate_rewriter",
+        "//base",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_usage_rewriter_dictionary_main",
+    srcs = ["gen_usage_rewriter_dictionary_main.cc"],
+    deps = [
+        "//base",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:serialized_string_array",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "usage_rewriter",
+    srcs = [
+        "usage_rewriter.cc",
+    ],
+    hdrs = ["usage_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:user_dictionary",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "usage_rewriter_test",
+    size = "small",
+    srcs = ["usage_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":rewriter_interface",
+        ":usage_rewriter",
+        "//base",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary",
+        "//dictionary:user_dictionary_storage",
+        "//dictionary:user_pos",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_reading_correction_data_lib",
+    srcs = ["gen_reading_correction_data.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_reading_correction_data",
+    srcs = ["gen_reading_correction_data.py"],
+    python_version = "PY3",
+    deps = [
+        ":gen_reading_correction_data_lib",
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+cc_library_mozc(
+    name = "correction_rewriter",
+    srcs = ["correction_rewriter.cc"],
+    hdrs = ["correction_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//config:config_handler",
+        "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "correction_rewriter_test",
+    size = "small",
+    srcs = ["correction_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":correction_rewriter",
+        "//base",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//config:config_handler",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "rewriter",
+    srcs = [
+        "rewriter.cc",
+    ],
+    hdrs = ["rewriter.h"],
+    deps = [
+        ":calculator_rewriter",
+        ":collocation_rewriter",
+        ":command_rewriter",
+        ":correction_rewriter",
+        ":date_rewriter",
+        ":dice_rewriter",
+        ":emoji_rewriter",
+        ":emoticon_rewriter",
+        ":english_variants_rewriter",
+        ":focus_candidate_rewriter",
+        ":fortune_rewriter",
+        ":katakana_promotion_rewriter",
+        ":language_aware_rewriter",
+        ":merger_rewriter",
+        ":normalization_rewriter",
+        ":number_rewriter",
+        ":remove_redundant_candidate_rewriter",
+        ":rewriter_interface",
+        ":single_kanji_rewriter",
+        ":symbol_rewriter",
+        ":transliteration_rewriter",
+        ":unicode_rewriter",
+        ":usage_rewriter",
+        ":user_boundary_history_rewriter",
+        ":user_dictionary_rewriter",
+        ":user_segment_history_rewriter",
+        ":variants_rewriter",
+        ":version_rewriter",
+        ":zipcode_rewriter",
+        "//base",
+        "//base:flags",
+        "//base:logging",
+        "//base:port",
+        "//converter:converter_interface",
+        "//data_manager:data_manager_interface",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+    ],
+    alwayslink = 1,
+)
+
+cc_library_mozc(
+    name = "rewriter_factory",
+    srcs = ["rewriter_factory.cc"],
+    hdrs = ["rewriter_factory.h"],
+    visibility = [],
+    deps = [
+        ":rewriter",
+        ":rewriter_interface",
+        "//base",
+        "//base:logging",
+        "//base:singleton",
+        "//converter",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suffix_dictionary",
+        "//engine:large_immutable_converter",
+        "//prediction:dictionary_predictor",
+        "//prediction:predictor",
+        "//prediction:user_history_predictor",
+        "//request:conversion_request",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_test_mozc(
+    name = "rewriter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        "rewriter",
+        ":rewriter_interface",
+        "//base",
+        "//base:system_util",
+        "//config:config_handler",
+        "//converter:converter_mock",
+        "//converter:segments",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_group",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "collocation_util",
+    srcs = ["collocation_util.cc"],
+    hdrs = ["collocation_util.h"],
+    deps = [
+        "//base",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "collocation_util_test",
+    size = "small",
+    srcs = ["collocation_util_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":collocation_util",
+        "//base",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "gen_existence_data",
+    srcs = ["gen_existence_data.cc"],
+    hdrs = ["gen_existence_data.h"],
+    deps = [
+        "//base:codegen_bytearray_stream",
+        "//base:hash",
+        "//base:logging",
+        "//storage:existence_filter",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_collocation_data_main",
+    srcs = ["gen_collocation_data_main.cc"],
+    deps = [
+        ":gen_existence_data",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+    ],
+)
+
+cc_binary_mozc(
+    name = "gen_collocation_suppression_data_main",
+    srcs = ["gen_collocation_suppression_data_main.cc"],
+    deps = [
+        ":gen_existence_data",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:util",
+    ],
+)
+
+cc_library_mozc(
+    name = "number_compound_util",
+    srcs = [
+        "number_compound_util.cc",
+    ],
+    hdrs = ["number_compound_util.h"],
+    deps = [
+        "//base",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//converter:segments",
+        "//dictionary:pos_matcher_lib",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "merger_rewriter",
+    hdrs = ["merger_rewriter.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":rewriter_interface",
+        "//base:stl_util",
+        "//config:config_handler",
+        "//converter",
+        "//converter:segments",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+    ],
+)
+
+cc_test_mozc(
+    name = "number_compound_util_test",
+    srcs = ["number_compound_util_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":number_compound_util",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)

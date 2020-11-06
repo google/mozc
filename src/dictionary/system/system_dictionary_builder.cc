@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,14 +58,13 @@ DEFINE_int32(min_key_length_to_use_small_cost_encoding, 6,
 namespace mozc {
 namespace dictionary {
 
-using mozc::storage::louds::LoudsTrieBuilder;
 using mozc::storage::louds::BitVectorBasedArrayBuilder;
+using mozc::storage::louds::LoudsTrieBuilder;
 
 namespace {
 
 struct TokenGreaterThan {
-  inline bool operator()(const TokenInfo& lhs,
-                         const TokenInfo& rhs) const {
+  inline bool operator()(const TokenInfo &lhs, const TokenInfo &rhs) const {
     if (lhs.token->lid != rhs.token->lid) {
       return lhs.token->lid > rhs.token->lid;
     }
@@ -80,7 +79,7 @@ struct TokenGreaterThan {
 };
 
 void WriteSectionToFile(const DictionaryFileSection &section,
-                        const string &filename) {
+                        const std::string &filename) {
   OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::out);
   ofs.write(section.ptr, section.len);
 }
@@ -125,32 +124,31 @@ void SystemDictionaryBuilder::BuildFromTokens(
   BuildTokenArray(key_info_list);
 }
 
-void SystemDictionaryBuilder::WriteToFile(const string &output_file) const {
+void SystemDictionaryBuilder::WriteToFile(
+    const std::string &output_file) const {
   OutputFileStream ofs(output_file.c_str(), std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 
 void SystemDictionaryBuilder::WriteToStream(
-    const string &intermediate_output_file_base_path,
+    const std::string &intermediate_output_file_base_path,
     std::ostream *output_stream) const {
   // Memory images of each section
   std::vector<DictionaryFileSection> sections;
   DictionaryFileSection value_trie_section(
-    value_trie_builder_->image().data(),
-    value_trie_builder_->image().size(),
-    file_codec_->GetSectionName(codec_->GetSectionNameForValue()));
+      value_trie_builder_->image().data(), value_trie_builder_->image().size(),
+      file_codec_->GetSectionName(codec_->GetSectionNameForValue()));
   sections.push_back(value_trie_section);
 
   DictionaryFileSection key_trie_section(
-    key_trie_builder_->image().data(),
-    key_trie_builder_->image().size(),
-    file_codec_->GetSectionName(codec_->GetSectionNameForKey()));
+      key_trie_builder_->image().data(), key_trie_builder_->image().size(),
+      file_codec_->GetSectionName(codec_->GetSectionNameForKey()));
   sections.push_back(key_trie_section);
 
   DictionaryFileSection token_array_section(
-    token_array_builder_->image().data(),
-    token_array_builder_->image().size(),
-    file_codec_->GetSectionName(codec_->GetSectionNameForTokens()));
+      token_array_builder_->image().data(),
+      token_array_builder_->image().size(),
+      file_codec_->GetSectionName(codec_->GetSectionNameForTokens()));
 
   sections.push_back(token_array_section);
   uint32 frequent_pos_array[256] = {0};
@@ -159,15 +157,15 @@ void SystemDictionaryBuilder::WriteToStream(
     frequent_pos_array[i->second] = i->first;
   }
   DictionaryFileSection frequent_pos_section(
-    reinterpret_cast<const char *>(frequent_pos_array),
-    sizeof frequent_pos_array,
-    file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
+      reinterpret_cast<const char *>(frequent_pos_array),
+      sizeof frequent_pos_array,
+      file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
 
   if (FLAGS_preserve_intermediate_dictionary &&
       !intermediate_output_file_base_path.empty()) {
     // Write out intermediate results to files.
-    const string &basepath = intermediate_output_file_base_path;
+    const std::string &basepath = intermediate_output_file_base_path;
     LOG(INFO) << "Writing intermediate files.";
     WriteSectionToFile(value_trie_section, basepath + ".value");
     WriteSectionToFile(key_trie_section, basepath + ".key");
@@ -181,15 +179,13 @@ void SystemDictionaryBuilder::WriteToStream(
 }
 
 namespace {
-uint32 GetCombinedPos(uint16 lid, uint16 rid) {
-  return (lid << 16) | rid;
-}
+uint32 GetCombinedPos(uint16 lid, uint16 rid) { return (lid << 16) | rid; }
 
 TokenInfo::ValueType GetValueType(const Token *token) {
   if (token->value == token->key) {
     return TokenInfo::AS_IS_HIRAGANA;
   }
-  string katakana;
+  std::string katakana;
   Util::HiraganaToKatakana(token->key, &katakana);
   if (token->value == katakana) {
     return TokenInfo::AS_IS_KATAKANA;
@@ -197,8 +193,7 @@ TokenInfo::ValueType GetValueType(const Token *token) {
   return TokenInfo::DEFAULT_VALUE;
 }
 
-bool HasHomonymsInSamePos(
-    const SystemDictionaryBuilder::KeyInfo &key_info) {
+bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
   // Early exit path mainly for performance.
   if (key_info.tokens.size() == 1) {
     return false;
@@ -217,7 +212,7 @@ bool HasHomonymsInSamePos(
 }
 
 struct TokenPtrLessThan {
-  inline bool operator()(const Token* lhs, const Token* rhs) const {
+  inline bool operator()(const Token *lhs, const Token *rhs) const {
     return lhs->key < rhs->key;
   }
 };
@@ -315,10 +310,9 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   }
   CHECK(freq_pos_idx == num_freq_pos)
       << "inconsistent result to find frequent pos";
-  VLOG(1) << freq_pos_idx << " high frequent Pos has "
-          << num_tokens << " tokens";
+  VLOG(1) << freq_pos_idx << " high frequent Pos has " << num_tokens
+          << " tokens";
 }
-
 
 void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {
   for (KeyInfoList::const_iterator itr = key_info_list.begin();
@@ -331,7 +325,7 @@ void SystemDictionaryBuilder::BuildValueTrie(const KeyInfoList &key_info_list) {
         // These values will be stored in token array as flags
         continue;
       }
-      string value_str;
+      std::string value_str;
       codec_->EncodeValue(token_info.token->value, &value_str);
       value_trie_builder_->Add(value_str);
     }
@@ -344,10 +338,9 @@ void SystemDictionaryBuilder::SetIdForValue(KeyInfoList *key_info_list) const {
        itr != key_info_list->end(); ++itr) {
     for (size_t i = 0; i < itr->tokens.size(); ++i) {
       TokenInfo *token_info = &(itr->tokens[i]);
-      string value_str;
+      std::string value_str;
       codec_->EncodeValue(token_info->token->value, &value_str);
-      token_info->id_in_value_trie =
-          value_trie_builder_->GetId(value_str);
+      token_info->id_in_value_trie = value_trie_builder_->GetId(value_str);
     }
   }
 }
@@ -384,8 +377,8 @@ void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
     KeyInfo *key_info = &(*itr);
     for (size_t i = 0; i < key_info->tokens.size(); ++i) {
       TokenInfo *token_info = &(key_info->tokens[i]);
-      const uint32 pos = GetCombinedPos(token_info->token->lid,
-                                        token_info->token->rid);
+      const uint32 pos =
+          GetCombinedPos(token_info->token->lid, token_info->token->rid);
       std::map<uint32, int>::const_iterator itr = frequent_pos_.find(pos);
       if (itr != frequent_pos_.end()) {
         token_info->pos_type = TokenInfo::FREQUENT_POS;
@@ -423,7 +416,7 @@ void SystemDictionaryBuilder::SetValueType(KeyInfoList *key_info_list) const {
 void SystemDictionaryBuilder::BuildKeyTrie(const KeyInfoList &key_info_list) {
   for (KeyInfoList::const_iterator itr = key_info_list.begin();
        itr != key_info_list.end(); ++itr) {
-    string key_str;
+    std::string key_str;
     codec_->EncodeKey(itr->key, &key_str);
     key_trie_builder_->Add(key_str);
   }
@@ -434,10 +427,9 @@ void SystemDictionaryBuilder::SetIdForKey(KeyInfoList *key_info_list) const {
   for (KeyInfoList::iterator itr = key_info_list->begin();
        itr != key_info_list->end(); ++itr) {
     KeyInfo *key_info = &(*itr);
-    string key_str;
+    std::string key_str;
     codec_->EncodeKey(key_info->key, &key_str);
-    key_info->id_in_key_trie =
-        key_trie_builder_->GetId(key_str);
+    key_info->id_in_key_trie = key_trie_builder_->GetId(key_str);
   }
 }
 
@@ -458,13 +450,13 @@ void SystemDictionaryBuilder::BuildTokenArray(
 
     for (size_t i = 0; i < id_to_keyinfo_table.size(); ++i) {
       const KeyInfo &key_info = *id_to_keyinfo_table[i];
-      string tokens_str;
+      std::string tokens_str;
       codec_->EncodeTokens(key_info.tokens, &tokens_str);
       token_array_builder_->Add(tokens_str);
     }
   }
 
-  token_array_builder_->Add(string(1, codec_->GetTokensTerminationFlag()));
+  token_array_builder_->Add(std::string(1, codec_->GetTokensTerminationFlag()));
   token_array_builder_->Build();
 }
 

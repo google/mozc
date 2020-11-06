@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -86,20 +86,21 @@ class DictionaryInterface {
     virtual ~Callback() {}
 
     // Called back when key is found.
-    virtual ResultType OnKey(StringPiece key) {
+    virtual ResultType OnKey(absl::string_view key) {
       return TRAVERSE_CONTINUE;
     }
 
     // Called back when actual key is decoded. The third argument is guaranteed
     // to be (key != actual_key) but computed in an efficient way.
-    virtual ResultType OnActualKey(
-        StringPiece key, StringPiece actual_key, bool is_expanded) {
+    virtual ResultType OnActualKey(absl::string_view key,
+                                   absl::string_view actual_key,
+                                   bool is_expanded) {
       return TRAVERSE_CONTINUE;
     }
 
     // Called back when a token is decoded.
-    virtual ResultType OnToken(StringPiece key,
-                               StringPiece expanded_key,
+    virtual ResultType OnToken(absl::string_view key,
+                               absl::string_view expanded_key,
                                const Token &token_info) {
       return TRAVERSE_CONTINUE;
     }
@@ -111,40 +112,42 @@ class DictionaryInterface {
   virtual ~DictionaryInterface() {}
 
   // Returns true if the dictionary has an entry for the given key.
-  virtual bool HasKey(StringPiece key) const = 0;
+  virtual bool HasKey(absl::string_view key) const = 0;
 
   // Returns true if the dictionary has an entry for the given value.
-  virtual bool HasValue(StringPiece value) const = 0;
+  virtual bool HasValue(absl::string_view value) const = 0;
 
-  virtual void LookupPredictive(StringPiece key,
+  virtual void LookupPredictive(absl::string_view key,
                                 const ConversionRequest &conversion_request,
                                 Callback *callback) const = 0;
 
-  virtual void LookupPrefix(StringPiece key,
+  virtual void LookupPrefix(absl::string_view key,
                             const ConversionRequest &conversion_request,
                             Callback *callback) const = 0;
 
-  virtual void LookupExact(StringPiece key,
+  virtual void LookupExact(absl::string_view key,
                            const ConversionRequest &conversion_request,
                            Callback *callback) const = 0;
 
   // For reverse lookup, the reading is stored in Token::value and the word
   // is stored in Token::key.
-  virtual void LookupReverse(StringPiece str,
+  virtual void LookupReverse(absl::string_view str,
                              const ConversionRequest &conversion_request,
                              Callback *callback) const = 0;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
-  virtual bool LookupComment(StringPiece key, StringPiece value,
+  virtual bool LookupComment(absl::string_view key, absl::string_view value,
                              const ConversionRequest &conversion_request,
-                             string *comment) const { return false; }
+                             std::string *comment) const {
+    return false;
+  }
 
   // Populates cache for LookupReverse().
   // TODO(noriyukit): These cache initialize/finalize mechanism shouldn't be a
   // part of the interface.
-  virtual void PopulateReverseLookupCache(StringPiece str) const {}
+  virtual void PopulateReverseLookupCache(absl::string_view str) const {}
   virtual void ClearReverseLookupCache() const {}
 
   // Sync mutable dictionary data into local disk.

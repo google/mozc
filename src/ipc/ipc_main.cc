@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ DEFINE_int32(num_requests, 100, "number of requests");
 
 namespace mozc {
 
-class MultiConnections: public Thread {
+class MultiConnections : public Thread {
  public:
   void Run() {
     char buf[8192];
@@ -67,28 +67,23 @@ class MultiConnections: public Thread {
   }
 };
 
-class EchoServer: public IPCServer {
+class EchoServer : public IPCServer {
  public:
-  EchoServer(const string &path,
-             int32 num_connections,
-             int32 timeout) :
-      IPCServer(path, num_connections, timeout) {}
-  virtual bool Process(const char *input_buffer,
-                       size_t input_length,
-                       char *output_buffer,
-                       size_t *output_length) {
+  EchoServer(const string &path, int32 num_connections, int32 timeout)
+      : IPCServer(path, num_connections, timeout) {}
+  virtual bool Process(const char *input_buffer, size_t input_length,
+                       char *output_buffer, size_t *output_length) {
     ::memcpy(output_buffer, input_buffer, input_length);
     *output_length = input_length;
     return ::memcmp("kill", input_buffer, 4) != 0;
   }
 };
 
-class EchoServerThread: public Thread {
+class EchoServerThread : public Thread {
  public:
-  explicit EchoServerThread(EchoServer *con): con_(con) {}
-  virtual void Run() {
-    con_->Loop();
-  }
+  explicit EchoServerThread(EchoServer *con) : con_(con) {}
+  virtual void Run() { con_->Loop(); }
+
  private:
   EchoServer *con_;
 };
@@ -96,7 +91,7 @@ class EchoServerThread: public Thread {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_test) {
     mozc::EchoServer con(FLAGS_server_address, 10, 1000);
@@ -117,15 +112,13 @@ int main(int argc, char **argv) {
     const char kill_cmd[32] = "kill";
     char output[32];
     size_t output_size = sizeof(output);
-    kill.Call(kill_cmd, strlen(kill_cmd),
-              output, &output_size, 1000);
-              server_thread_main.Join();
+    kill.Call(kill_cmd, strlen(kill_cmd), output, &output_size, 1000);
+    server_thread_main.Join();
 
     LOG(INFO) << "Done";
 
   } else if (FLAGS_server) {
-    mozc::EchoServer con(FLAGS_server_address,
-                         10, -1);
+    mozc::EchoServer con(FLAGS_server_address, 10, -1);
     CHECK(con.Connected());
     LOG(INFO) << "Start Server at " << FLAGS_server_address;
     con.Loop();
@@ -136,10 +129,9 @@ int main(int argc, char **argv) {
       mozc::IPCClient con(FLAGS_server_address, FLAGS_server_path);
       CHECK(con.Connected());
       size_t response_size = sizeof(response);
-      CHECK(con.Call(line.data(), line.size(),
-                     response, &response_size, 1000));
-      cout << "Request: " << line << endl;
-      cout << "Response: " << string(response, response_size) << endl;
+      CHECK(con.Call(line.data(), line.size(), response, &response_size, 1000));
+      std::cout << "Request: " << line << std::endl;
+      std::cout << "Response: " << string(response, response_size) << std::endl;
     }
   } else {
     LOG(INFO) << "either --server or --client or --test must be set true";

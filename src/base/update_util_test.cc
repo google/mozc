@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,8 @@ class UpdateUtilTestWin : public testing::Test {
     requests.push_back(
         DEFINE_HOOK("advapi32.dll", RegCloseKey, HookRegCloseKey));
 
-    hook_restore_info_ = WinAPITestHelper::DoHook(
-        ::GetModuleHandle(nullptr), requests);
+    hook_restore_info_ =
+        WinAPITestHelper::DoHook(::GetModuleHandle(nullptr), requests);
   }
 
   static void TearDownTestCase() {
@@ -81,37 +81,33 @@ class UpdateUtilTestWin : public testing::Test {
     call_result_ = nullptr;
   }
 
-  virtual void SetUp() {
-    call_result_ = new CallResult();
-  }
+  virtual void SetUp() { call_result_ = new CallResult(); }
   virtual void TearDown() {
     delete call_result_;
     call_result_ = nullptr;
   }
 
-  static const CallResult& call_result() {
-    return *call_result_;
-  }
+  static const CallResult &call_result() { return *call_result_; }
 
  private:
-  static LSTATUS WINAPI HookRegCreateKeyExW(
-      HKEY hkey, LPCWSTR sub_key, DWORD reserved, LPWSTR class_name,
-      DWORD options, REGSAM sam,
-      const LPSECURITY_ATTRIBUTES security_attributes, PHKEY result,
-      LPDWORD disposition) {
+  static LSTATUS WINAPI
+  HookRegCreateKeyExW(HKEY hkey, LPCWSTR sub_key, DWORD reserved,
+                      LPWSTR class_name, DWORD options, REGSAM sam,
+                      const LPSECURITY_ATTRIBUTES security_attributes,
+                      PHKEY result, LPDWORD disposition) {
     call_result_->reg_create_key_ex_called = true;
     call_result_->created_key = hkey;
     call_result_->created_key_path = sub_key;
     return ERROR_SUCCESS;
   }
 
-  static LSTATUS WINAPI HookRegSetValueExW(
-      HKEY key, LPCTSTR value_name, DWORD reserved, DWORD type,
-      const BYTE *data, DWORD num_data) {
+  static LSTATUS WINAPI HookRegSetValueExW(HKEY key, LPCTSTR value_name,
+                                           DWORD reserved, DWORD type,
+                                           const BYTE *data, DWORD num_data) {
     call_result_->reg_set_value_ex_called = true;
     call_result_->written_value_name = value_name;
     call_result_->written_value =
-        std::wstring(reinterpret_cast<const wchar_t*>(data));
+        std::wstring(reinterpret_cast<const wchar_t *>(data));
     call_result_->written_type = type;
     return ERROR_SUCCESS;
   }
@@ -134,9 +130,10 @@ TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {
   EXPECT_TRUE(UpdateUtil::WriteActiveUsageInfo());
   ASSERT_TRUE(call_result().reg_create_key_ex_called);
   EXPECT_EQ(HKEY_CURRENT_USER, call_result().created_key);
-  EXPECT_EQ(L"Software\\Google\\Update\\ClientState"
-            L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}",
-            call_result().created_key_path);
+  EXPECT_EQ(
+      L"Software\\Google\\Update\\ClientState"
+      L"\\{DDCCD2A9-025E-4142-BCEB-F467B88CF830}",
+      call_result().created_key_path);
   ASSERT_TRUE(call_result().reg_set_value_ex_called);
   EXPECT_EQ(L"dr", call_result().written_value_name);
   EXPECT_EQ(L"1", call_result().written_value);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,18 +42,16 @@ namespace {
 PangoAttrList *CreateAttrListByScaleColor(const RGBA &color, double scale) {
   PangoAttrList *attributes = pango_attr_list_new();
   pango_attr_list_insert(attributes, pango_attr_scale_new(scale));
-  pango_attr_list_insert(attributes, pango_attr_foreground_new(
-      color.red << 8, color.green << 8, color.blue << 8));
+  pango_attr_list_insert(
+      attributes, pango_attr_foreground_new(color.red << 8, color.green << 8,
+                                            color.blue << 8));
   return attributes;
 }
 
 RGBA RGBAColor2RGBA(const RendererStyle::RGBAColor &rgba) {
-  RGBA result = {
-    static_cast<uint8>(rgba.r()),
-    static_cast<uint8>(rgba.g()),
-    static_cast<uint8>(rgba.b()),
-    static_cast<uint8>(rgba.a() * 255.0)
-  };
+  RGBA result = {static_cast<uint8>(rgba.r()), static_cast<uint8>(rgba.g()),
+                 static_cast<uint8>(rgba.b()),
+                 static_cast<uint8>(rgba.a() * 255.0)};
   return result;
 }
 }  // namespace
@@ -65,9 +63,7 @@ struct FontInfo {
 };
 
 FontSpec::FontSpec(GtkWrapperInterface *gtk)
-  : fonts_(SIZE_OF_FONT_TYPE),
-    is_initialized_(false),
-    gtk_(gtk) {
+    : fonts_(SIZE_OF_FONT_TYPE), is_initialized_(false), gtk_(gtk) {
   LoadFontSpec(kDefaultFontDescription);
 }
 
@@ -117,50 +113,47 @@ void FontSpec::LoadFontSpec(const string &font_description) {
   fonts_[FONTSET_INFOLIST_DESCRIPTION].align = PANGO_ALIGN_LEFT;
 
   // Set font descriptions.
-  fonts_[FONTSET_CANDIDATE].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_DESCRIPTION].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_FOOTER_INDEX].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_FOOTER_LABEL].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_FOOTER_SUBLABEL].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_SHORTCUT].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_INFOLIST_CAPTION].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_INFOLIST_TITLE].font
-      = pango_font_description_from_string(font_description.c_str());
-  fonts_[FONTSET_INFOLIST_DESCRIPTION].font
-      = pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_CANDIDATE].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_DESCRIPTION].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_FOOTER_INDEX].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_FOOTER_LABEL].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_FOOTER_SUBLABEL].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_SHORTCUT].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_INFOLIST_CAPTION].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_INFOLIST_TITLE].font =
+      pango_font_description_from_string(font_description.c_str());
+  fonts_[FONTSET_INFOLIST_DESCRIPTION].font =
+      pango_font_description_from_string(font_description.c_str());
 
   // Set color and scales.
-  fonts_[FONTSET_CANDIDATE].attributes
-      = CreateAttrListByScaleColor(kDefaultColor, PANGO_SCALE_MEDIUM);
-  fonts_[FONTSET_DESCRIPTION].attributes
-      = CreateAttrListByScaleColor(kDescriptionColor, PANGO_SCALE_MEDIUM);
-  fonts_[FONTSET_FOOTER_INDEX].attributes
-      = CreateAttrListByScaleColor(kFooterIndexColor, PANGO_SCALE_SMALL);
-  fonts_[FONTSET_FOOTER_LABEL].attributes
-      = CreateAttrListByScaleColor(kFooterLabelColor, PANGO_SCALE_SMALL);
-  fonts_[FONTSET_FOOTER_SUBLABEL].attributes
-      = CreateAttrListByScaleColor(kFooterSubLabelColor, PANGO_SCALE_SMALL);
-  fonts_[FONTSET_SHORTCUT].attributes
-      = CreateAttrListByScaleColor(kShortcutColor, PANGO_SCALE_MEDIUM);
-  fonts_[FONTSET_INFOLIST_CAPTION].attributes
-      = CreateAttrListByScaleColor(
-          RGBAColor2RGBA(infostyle.caption_style().foreground_color()),
-          PANGO_SCALE_MEDIUM);
-  fonts_[FONTSET_INFOLIST_TITLE].attributes
-      =  CreateAttrListByScaleColor(
-          RGBAColor2RGBA(infostyle.title_style().foreground_color()),
-          PANGO_SCALE_MEDIUM);
-  fonts_[FONTSET_INFOLIST_DESCRIPTION].attributes
-      =  CreateAttrListByScaleColor(
-          RGBAColor2RGBA(infostyle.description_style().foreground_color()),
-          PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_CANDIDATE].attributes =
+      CreateAttrListByScaleColor(kDefaultColor, PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_DESCRIPTION].attributes =
+      CreateAttrListByScaleColor(kDescriptionColor, PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_FOOTER_INDEX].attributes =
+      CreateAttrListByScaleColor(kFooterIndexColor, PANGO_SCALE_SMALL);
+  fonts_[FONTSET_FOOTER_LABEL].attributes =
+      CreateAttrListByScaleColor(kFooterLabelColor, PANGO_SCALE_SMALL);
+  fonts_[FONTSET_FOOTER_SUBLABEL].attributes =
+      CreateAttrListByScaleColor(kFooterSubLabelColor, PANGO_SCALE_SMALL);
+  fonts_[FONTSET_SHORTCUT].attributes =
+      CreateAttrListByScaleColor(kShortcutColor, PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_INFOLIST_CAPTION].attributes = CreateAttrListByScaleColor(
+      RGBAColor2RGBA(infostyle.caption_style().foreground_color()),
+      PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_INFOLIST_TITLE].attributes = CreateAttrListByScaleColor(
+      RGBAColor2RGBA(infostyle.title_style().foreground_color()),
+      PANGO_SCALE_MEDIUM);
+  fonts_[FONTSET_INFOLIST_DESCRIPTION].attributes = CreateAttrListByScaleColor(
+      RGBAColor2RGBA(infostyle.description_style().foreground_color()),
+      PANGO_SCALE_MEDIUM);
   is_initialized_ = true;
 }
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@ import codecs
 def ReadCSV(file_name):
   """Read CSV file."""
   # Do not use csv reader module because it does not support unicode
-  return [GetCells(line) for line in codecs.open(file_name,
-                                                 'r',
-                                                 'shift_jis',
-                                                 errors='replace')]
+  return [
+      GetCells(line)
+      for line in codecs.open(file_name, 'r', 'cp932', errors='replace')
+  ]
 
 
 def GetCells(line):

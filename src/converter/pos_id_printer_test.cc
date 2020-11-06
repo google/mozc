@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,8 @@ namespace internal {
 class PosIdPrinterTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    const string test_id_def_path = testing::GetSourceFileOrDie({
-        "data", "test", "dictionary", "id.def"});
+    const std::string test_id_def_path =
+        testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"});
     pos_id_.reset(new InputFileStream(test_id_def_path.c_str()));
     pos_id_printer_.reset(new PosIdPrinter(pos_id_.get()));
   }
@@ -58,12 +58,9 @@ class PosIdPrinterTest : public ::testing::Test {
 };
 
 TEST_F(PosIdPrinterTest, BasicIdTest) {
-  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*",
-            pos_id_printer_->IdToString(1934));
-  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*,使用",
-            pos_id_printer_->IdToString(1935));
-  EXPECT_EQ("BOS/EOS,*,*,*,*,*,*",
-            pos_id_printer_->IdToString(0));
+  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*", pos_id_printer_->IdToString(1934));
+  EXPECT_EQ("名詞,サ変接続,*,*,*,*,*,使用", pos_id_printer_->IdToString(1935));
+  EXPECT_EQ("BOS/EOS,*,*,*,*,*,*", pos_id_printer_->IdToString(0));
 }
 
 TEST_F(PosIdPrinterTest, InvalidId) {
@@ -71,7 +68,7 @@ TEST_F(PosIdPrinterTest, InvalidId) {
 }
 
 TEST_F(PosIdPrinterTest, NullInput) {
-  PosIdPrinter pos_id_printer(NULL);
+  PosIdPrinter pos_id_printer(nullptr);
   EXPECT_EQ("", pos_id_printer.IdToString(-1));
   EXPECT_EQ("", pos_id_printer.IdToString(1934));
 }

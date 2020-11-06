@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,8 @@
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
 #include "win32/base/surrogate_pair_observer.h"
-#include "win32/tip/tip_ui_element_manager.h"
 #include "win32/tip/tip_text_service.h"
+#include "win32/tip/tip_ui_element_manager.h"
 
 namespace mozc {
 namespace win32 {
@@ -57,12 +57,10 @@ using ::std::unique_ptr;
 
 class TipPrivateContext::InternalState {
  public:
-  InternalState(DWORD text_edit_sink_cookie,
-                DWORD text_layout_sink_cookie)
-    : client_(ClientFactory::NewClient()),
-      text_edit_sink_cookie_(text_edit_sink_cookie),
-      text_layout_sink_cookie_(text_layout_sink_cookie) {
-  }
+  InternalState(DWORD text_edit_sink_cookie, DWORD text_layout_sink_cookie)
+      : client_(ClientFactory::NewClient()),
+        text_edit_sink_cookie_(text_edit_sink_cookie),
+        text_layout_sink_cookie_(text_layout_sink_cookie) {}
   unique_ptr<client::ClientInterface> client_;
   SurrogatePairObserver surrogate_pair_observer_;
   commands::Output last_output_;
@@ -77,8 +75,8 @@ class TipPrivateContext::InternalState {
 
 TipPrivateContext::TipPrivateContext(DWORD text_edit_sink_cookie,
                                      DWORD text_layout_sink_cookie)
-    : state_(new InternalState(text_edit_sink_cookie,
-                               text_layout_sink_cookie)) {
+    : state_(
+          new InternalState(text_edit_sink_cookie, text_layout_sink_cookie)) {
   EnsureInitialized();
 }
 

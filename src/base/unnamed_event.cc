@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,20 +44,18 @@ namespace mozc {
 
 #ifdef OS_WIN
 UnnamedEvent::UnnamedEvent()
-    : handle_(::CreateEvent(NULL, FALSE, FALSE, NULL)) {
+    : handle_(::CreateEvent(nullptr, FALSE, FALSE, nullptr)) {
   // Use Auto reset mode of Win32 Event. (2nd arg of CreateEvent).
   // pthread_cond_signal: auto reset mode.
   // pthread_cond_broadcast: manual reset mode.
-  if (NULL == handle_.get()) {
+  if (nullptr == handle_.get()) {
     LOG(ERROR) << "CreateEvent failed: " << ::GetLastError();
   }
 }
 
 UnnamedEvent::~UnnamedEvent() {}
 
-bool UnnamedEvent::IsAvailable() const {
-  return (NULL != handle_.get());
-}
+bool UnnamedEvent::IsAvailable() const { return (nullptr != handle_.get()); }
 
 bool UnnamedEvent::Notify() {
   if (!IsAvailable()) {
@@ -75,18 +73,17 @@ bool UnnamedEvent::Notify() {
 
 bool UnnamedEvent::Wait(int msec) {
   if (!IsAvailable()) {
-    return true;   // assume that it is already raised
+    return true;  // assume that it is already raised
   }
 
   if (msec < 0) {
     msec = INFINITE;
   }
 
-  return WAIT_TIMEOUT !=
-      ::WaitForSingleObject(handle_.get(), msec);
+  return WAIT_TIMEOUT != ::WaitForSingleObject(handle_.get(), msec);
 }
 
-#else  // OS_WIN
+#else   // OS_WIN
 
 namespace {
 class ScopedPthreadMutexLock {
@@ -94,9 +91,7 @@ class ScopedPthreadMutexLock {
   explicit ScopedPthreadMutexLock(pthread_mutex_t *mutex) : mutex_(mutex) {
     pthread_mutex_lock(mutex_);
   }
-  ~ScopedPthreadMutexLock() {
-    pthread_mutex_unlock(mutex_);
-  }
+  ~ScopedPthreadMutexLock() { pthread_mutex_unlock(mutex_); }
 
  private:
   pthread_mutex_t *mutex_;
@@ -105,8 +100,8 @@ class ScopedPthreadMutexLock {
 }  // namespace
 
 UnnamedEvent::UnnamedEvent() : notified_(false) {
-  pthread_mutex_init(&mutex_, NULL);
-  pthread_cond_init(&cond_, NULL);
+  pthread_mutex_init(&mutex_, nullptr);
+  pthread_cond_init(&cond_, nullptr);
 }
 
 // It is necessary to ensure that no threads wait for this event before the
@@ -116,9 +111,7 @@ UnnamedEvent::~UnnamedEvent() {
   pthread_cond_destroy(&cond_);
 }
 
-bool UnnamedEvent::IsAvailable() const {
-  return true;
-}
+bool UnnamedEvent::IsAvailable() const { return true; }
 
 bool UnnamedEvent::Notify() {
   {
@@ -163,7 +156,7 @@ bool UnnamedEvent::Wait(int msec) {
     } else {
       // Wait with time out.
       struct timeval tv;
-      if (gettimeofday(&tv, NULL) != 0) {
+      if (gettimeofday(&tv, nullptr) != 0) {
         LOG(ERROR) << "Failed to take the current time: " << errno;
         return false;
       }
@@ -193,5 +186,5 @@ bool UnnamedEvent::Wait(int msec) {
   notified_ = false;
   return true;
 }
-#endif   // OS_WIN
+#endif  // OS_WIN
 }  // namespace mozc

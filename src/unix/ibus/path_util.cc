@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@ const char kInstalledDirectory[] = "/usr/share/ibus-mozc";
 namespace mozc {
 namespace ibus {
 
-string GetIconPath(const string &icon_file) {
-  return kInstalledDirectory + string("/") + icon_file;
+std::string GetIconPath(const std::string &icon_file) {
+  return kInstalledDirectory + std::string("/") + icon_file;
 }
 
 }  // namespace ibus

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,14 +65,11 @@ class VariantsRewriter : public RewriterInterface {
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
   static void SetDescriptionForCandidate(
-      const dictionary::POSMatcher &pos_matcher,
-      Segment::Candidate *candidate);
+      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
   static void SetDescriptionForTransliteration(
-      const dictionary::POSMatcher &pos_matcher,
-      Segment::Candidate *candidate);
+      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
   static void SetDescriptionForPrediction(
-      const dictionary::POSMatcher &pos_matcher,
-      Segment::Candidate *candidate);
+      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
 
  private:
   // 1) Full width / half width description
@@ -81,14 +78,14 @@ class VariantsRewriter : public RewriterInterface {
   // 4) Zipcode description (XXX-XXXX)
   //     * note that this overrides other descriptions
   enum DescriptionType {
-    FULL_HALF_WIDTH = 1,   // automatically detect full/haflwidth.
+    FULL_HALF_WIDTH = 1,               // automatically detect full/haflwidth.
     FULL_HALF_WIDTH_WITH_UNKNOWN = 2,  // set half/full widith for symbols.
     // This flag must be used together with FULL_HALF_WIDTH.
     // If WITH_UNKNOWN is specified, assign FULL/HALF width annotation
     // more aggressively.
-    HALF_WIDTH = 4,        // always set half width description.
-    FULL_WIDTH = 8,        // always set full width description.
-    CHARACTER_FORM = 16,    // Hiragana/Katakana..etc
+    HALF_WIDTH = 4,       // always set half width description.
+    FULL_WIDTH = 8,       // always set full width description.
+    CHARACTER_FORM = 16,  // Hiragana/Katakana..etc
     PLATFORM_DEPENDENT_CHARACTER = 32,
     ZIPCODE = 64,
     SPELLING_CORRECTION = 128
@@ -104,11 +101,9 @@ class VariantsRewriter : public RewriterInterface {
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;
   bool GenerateAlternatives(
-      const Segment::Candidate &original,
-      string *default_value,
-      string *alternative_value,
-      string *default_content_value,
-      string *alternative_content_value,
+      const Segment::Candidate &original, std::string *default_value,
+      std::string *alternative_value, std::string *default_content_value,
+      std::string *alternative_content_value,
       std::vector<uint32> *default_inner_segment_boundary,
       std::vector<uint32> *alternative_inner_segment_boundary) const;
 

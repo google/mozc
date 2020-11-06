@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,22 +45,23 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
 class ValueCostCompare {
  public:
-  bool operator() (SerializedDictionary::const_iterator a,
-                   SerializedDictionary::const_iterator b) const {
+  bool operator()(SerializedDictionary::const_iterator a,
+                  SerializedDictionary::const_iterator b) const {
     return a.cost() < b.cost();
   }
 };
 
 class IsEqualValue {
  public:
-  bool operator() (const SerializedDictionary::const_iterator a,
-                   const SerializedDictionary::const_iterator b) const {
+  bool operator()(const SerializedDictionary::const_iterator a,
+                  const SerializedDictionary::const_iterator b) const {
     return a.value() == b.value();
   }
 };
@@ -70,10 +71,8 @@ class IsEqualValue {
 // Remained candidates are added to the buttom.
 void InsertCandidates(SerializedDictionary::const_iterator begin,
                       SerializedDictionary::const_iterator end,
-                      size_t initial_insert_pos,
-                      size_t initial_insert_size,
-                      bool is_no_learning,
-                      Segment *segment) {
+                      size_t initial_insert_pos, size_t initial_insert_size,
+                      bool is_no_learning, Segment *segment) {
   if (segment->candidates_size() == 0) {
     LOG(WARNING) << "candiadtes_size is 0";
     return;
@@ -135,7 +134,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
     if (sorted_value[i].description().empty()) {
       c->description = kBaseEmoticonDescription;
     } else {
-      string description = kBaseEmoticonDescription;
+      std::string description = kBaseEmoticonDescription;
       description.append(" ");
       description.append(sorted_value[i].description().data(),
                          sorted_value[i].description().size());
@@ -149,7 +148,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
 bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    const string &key = segments->conversion_segment(i).key();
+    const std::string &key = segments->conversion_segment(i).key();
     if (key.empty()) {
       // This case happens for zero query suggestion.
       continue;
@@ -193,7 +192,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       end = begin + 1;
       initial_insert_pos = 4;
       initial_insert_size = 1;
-      is_no_learning = true;   // do not learn this candidate.
+      is_no_learning = true;  // do not learn this candidate.
     } else {
       const auto range = dic_.equal_range(key);
       begin = range.first;
@@ -208,11 +207,8 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       continue;
     }
 
-    InsertCandidates(begin, end,
-                     initial_insert_pos,
-                     initial_insert_size,
-                     is_no_learning,
-                     segments->mutable_conversion_segment(i));
+    InsertCandidates(begin, end, initial_insert_pos, initial_insert_size,
+                     is_no_learning, segments->mutable_conversion_segment(i));
     modified = true;
   }
 
@@ -221,14 +217,14 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
 
 std::unique_ptr<EmoticonRewriter> EmoticonRewriter::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
-  StringPiece token_array_data, string_array_data;
+  absl::string_view token_array_data, string_array_data;
   data_manager.GetEmoticonRewriterData(&token_array_data, &string_array_data);
   return std::unique_ptr<EmoticonRewriter>(
       new EmoticonRewriter(token_array_data, string_array_data));
 }
 
-EmoticonRewriter::EmoticonRewriter(StringPiece token_array_data,
-                                   StringPiece string_array_data)
+EmoticonRewriter::EmoticonRewriter(absl::string_view token_array_data,
+                                   absl::string_view string_array_data)
     : dic_(token_array_data, string_array_data) {}
 
 EmoticonRewriter::~EmoticonRewriter() = default;

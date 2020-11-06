@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,7 @@
 
 namespace mozc {
 
-ConverterMock::ConverterMock() {
-  LOG(INFO) << "ConverterMock is created";
-}
+ConverterMock::ConverterMock() { LOG(INFO) << "ConverterMock is created"; }
 
 ConverterMock::~ConverterMock() {}
 
@@ -151,8 +149,8 @@ void ConverterMock::SetCommitSegmentValue(Segments *segments, bool result) {
   commitsegmentvalue_output_.return_value = result;
 }
 
-void ConverterMock::SetCommitPartialSuggestionSegmentValue(
-    Segments *segments, bool result) {
+void ConverterMock::SetCommitPartialSuggestionSegmentValue(Segments *segments,
+                                                           bool result) {
   commitpartialsuggestionsegmentvalue_output_.initialized = true;
   commitpartialsuggestionsegmentvalue_output_.segments.CopyFrom(*segments);
   commitpartialsuggestionsegmentvalue_output_.return_value = result;
@@ -188,41 +186,41 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
   resizesegment2_output_.return_value = result;
 }
 
-void ConverterMock::GetStartConversionForRequest(
-    Segments *segments, ConversionRequest *request) {
+void ConverterMock::GetStartConversionForRequest(Segments *segments,
+                                                 ConversionRequest *request) {
   segments->CopyFrom(startconversionwithrequest_input_.segments);
   request->CopyFrom(startconversionwithrequest_input_.request);
 }
 
-void ConverterMock::GetStartConversion(Segments *segments, string *key) {
+void ConverterMock::GetStartConversion(Segments *segments, std::string *key) {
   segments->CopyFrom(startconversion_input_.segments);
   *key = startconversion_input_.key;
 }
 
 void ConverterMock::GetStartReverseConversion(Segments *segments,
-                                              string *key) {
+                                              std::string *key) {
   segments->CopyFrom(startreverseconversion_input_.segments);
   *key = startreverseconversion_input_.key;
 }
 
-void ConverterMock::GetStartPredictionForRequest(
-    Segments *segments, ConversionRequest *request) {
+void ConverterMock::GetStartPredictionForRequest(Segments *segments,
+                                                 ConversionRequest *request) {
   segments->CopyFrom(startpredictionwithrequest_input_.segments);
   request->CopyFrom(startpredictionwithrequest_input_.request);
 }
 
-void ConverterMock::GetStartPrediction(Segments *segments, string *key) {
+void ConverterMock::GetStartPrediction(Segments *segments, std::string *key) {
   segments->CopyFrom(startprediction_input_.segments);
   *key = startprediction_input_.key;
 }
 
-void ConverterMock::GetStartSuggestionForRequest(
-    Segments *segments, ConversionRequest *request) {
+void ConverterMock::GetStartSuggestionForRequest(Segments *segments,
+                                                 ConversionRequest *request) {
   segments->CopyFrom(startsuggestionforrequest_input_.segments);
   request->CopyFrom(startsuggestionforrequest_input_.request);
 }
 
-void ConverterMock::GetStartSuggestion(Segments *segments, string *key) {
+void ConverterMock::GetStartSuggestion(Segments *segments, std::string *key) {
   segments->CopyFrom(startsuggestion_input_.segments);
   *key = startsuggestion_input_.key;
 }
@@ -233,12 +231,14 @@ void ConverterMock::GetStartPartialPredictionForRequest(
   request->CopyFrom(startpartialpredictionforrequest_input_.request);
 }
 
-void ConverterMock::GetStartPartialPrediction(Segments *segments, string *key) {
+void ConverterMock::GetStartPartialPrediction(Segments *segments,
+                                              std::string *key) {
   segments->CopyFrom(startpartialprediction_input_.segments);
   *key = startpartialprediction_input_.key;
 }
 
-void ConverterMock::GetStartPartialSuggestion(Segments *segments, string *key) {
+void ConverterMock::GetStartPartialSuggestion(Segments *segments,
+                                              std::string *key) {
   segments->CopyFrom(startpartialsuggestion_input_.segments);
   *key = startpartialsuggestion_input_.key;
 }
@@ -264,8 +264,8 @@ void ConverterMock::GetReconstructHistory(Segments *segments) {
 }
 
 void ConverterMock::GetCommitSegmentValue(Segments *segments,
-                                           size_t *segment_index,
-                                           int *candidate_index) {
+                                          size_t *segment_index,
+                                          int *candidate_index) {
   segments->CopyFrom(commitsegmentvalue_input_.segments);
   *segment_index = commitsegmentvalue_input_.segment_index;
   *candidate_index = commitsegmentvalue_input_.candidate_index;
@@ -273,7 +273,7 @@ void ConverterMock::GetCommitSegmentValue(Segments *segments,
 
 void ConverterMock::GetCommitPartialSuggestionSegmentValue(
     Segments *segments, size_t *segment_index, int *candidate_index,
-    string *current_segment_key, string *new_segment_key) {
+    std::string *current_segment_key, std::string *new_segment_key) {
   segments->CopyFrom(commitpartialsuggestionsegmentvalue_input_.segments);
   *segment_index = commitpartialsuggestionsegmentvalue_input_.segment_index;
   *candidate_index = commitpartialsuggestionsegmentvalue_input_.candidate_index;
@@ -283,15 +283,15 @@ void ConverterMock::GetCommitPartialSuggestionSegmentValue(
 }
 
 void ConverterMock::GetFocusSegmentValue(Segments *segments,
-                                          size_t *segment_index,
-                                          int *candidate_index) {
+                                         size_t *segment_index,
+                                         int *candidate_index) {
   segments->CopyFrom(focussegmentvalue_input_.segments);
   *segment_index = focussegmentvalue_input_.segment_index;
   *candidate_index = focussegmentvalue_input_.candidate_index;
 }
 
 void ConverterMock::GetFreeSegmentValue(Segments *segments,
-                                         size_t *segment_index) {
+                                        size_t *segment_index) {
   segments->CopyFrom(freesegmentvalue_input_.segments);
   *segment_index = freesegmentvalue_input_.segment_index;
 }
@@ -303,17 +303,17 @@ void ConverterMock::GetCommitSegments(Segments *segments,
 }
 
 void ConverterMock::GetResizeSegment1(Segments *segments, size_t *segment_index,
-                                     int *offset_length) {
+                                      int *offset_length) {
   segments->CopyFrom(resizesegment1_input_.segments);
   *segment_index = resizesegment1_input_.segment_index;
   *offset_length = resizesegment1_input_.offset_length;
 }
 
 void ConverterMock::GetResizeSegment2(Segments *segments,
-                                     size_t *start_segment_index,
-                                     size_t *segments_size,
-                                     uint8 **new_size_array,
-                                     size_t *array_size) {
+                                      size_t *start_segment_index,
+                                      size_t *segments_size,
+                                      uint8 **new_size_array,
+                                      size_t *array_size) {
   segments->CopyFrom(resizesegment2_input_.segments);
   *start_segment_index = resizesegment2_input_.start_segment_index;
   *segments_size = resizesegment2_input_.segments_size;
@@ -336,7 +336,7 @@ bool ConverterMock::StartConversionForRequest(const ConversionRequest &request,
 }
 
 bool ConverterMock::StartConversion(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   VLOG(2) << "mock function: StartConversion";
   startconversion_input_.segments.CopyFrom(*segments);
   startconversion_input_.key = key;
@@ -350,7 +350,7 @@ bool ConverterMock::StartConversion(Segments *segments,
 }
 
 bool ConverterMock::StartReverseConversion(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   VLOG(2) << "mock function: StartReverseConversion";
   startreverseconversion_input_.segments.CopyFrom(*segments);
   startreverseconversion_input_.key = key;
@@ -379,7 +379,7 @@ bool ConverterMock::StartPredictionForRequest(const ConversionRequest &request,
 }
 
 bool ConverterMock::StartPrediction(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   VLOG(2) << "mock function: StartPrediction";
   startprediction_input_.segments.CopyFrom(*segments);
   startprediction_input_.key = key;
@@ -407,7 +407,7 @@ bool ConverterMock::StartSuggestionForRequest(const ConversionRequest &request,
 }
 
 bool ConverterMock::StartSuggestion(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   VLOG(2) << "mock function: StartSuggestion";
   startsuggestion_input_.segments.CopyFrom(*segments);
   startsuggestion_input_.key = key;
@@ -435,7 +435,7 @@ bool ConverterMock::StartPartialPredictionForRequest(
 }
 
 bool ConverterMock::StartPartialPrediction(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   VLOG(2) << "mock function: StartParialPrediction";
   startpartialprediction_input_.segments.CopyFrom(*segments);
   startpartialprediction_input_.key = key;
@@ -463,7 +463,7 @@ bool ConverterMock::StartPartialSuggestionForRequest(
 }
 
 bool ConverterMock::StartPartialSuggestion(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   VLOG(2) << "mock function: StartParialSuggestion";
   startpartialsuggestion_input_.segments.CopyFrom(*segments);
   startpartialsuggestion_input_.key = key;
@@ -525,8 +525,8 @@ bool ConverterMock::RevertConversion(Segments *segments) const {
   }
 }
 
-bool ConverterMock::ReconstructHistory(Segments *segments,
-                                       const string &preceding_text) const {
+bool ConverterMock::ReconstructHistory(
+    Segments *segments, const std::string &preceding_text) const {
   VLOG(2) << "mock function: ReconstructHistory";
   reconstructhistory_input_.segments.CopyFrom(*segments);
 
@@ -538,8 +538,7 @@ bool ConverterMock::ReconstructHistory(Segments *segments,
   }
 }
 
-bool ConverterMock::CommitSegmentValue(Segments *segments,
-                                       size_t segment_index,
+bool ConverterMock::CommitSegmentValue(Segments *segments, size_t segment_index,
                                        int candidate_index) const {
   VLOG(2) << "mock function: CommitSegmentValue";
   commitsegmentvalue_input_.segments.CopyFrom(*segments);
@@ -555,18 +554,17 @@ bool ConverterMock::CommitSegmentValue(Segments *segments,
 }
 
 bool ConverterMock::CommitPartialSuggestionSegmentValue(
-    Segments *segments,
-    size_t segment_index,
-    int candidate_index,
-    const string &current_segment_key,
-    const string &new_segment_key) const {
+    Segments *segments, size_t segment_index, int candidate_index,
+    absl::string_view current_segment_key,
+    absl::string_view new_segment_key) const {
   VLOG(2) << "mock function: CommitPartialSuggestionSegmentValue";
   commitpartialsuggestionsegmentvalue_input_.segments.CopyFrom(*segments);
   commitpartialsuggestionsegmentvalue_input_.segment_index = segment_index;
   commitpartialsuggestionsegmentvalue_input_.candidate_index = candidate_index;
   commitpartialsuggestionsegmentvalue_input_.current_segment_key =
-      current_segment_key;
-  commitpartialsuggestionsegmentvalue_input_.new_segment_key = new_segment_key;
+      std::string(current_segment_key);
+  commitpartialsuggestionsegmentvalue_input_.new_segment_key =
+      std::string(new_segment_key);
 
   if (!commitpartialsuggestionsegmentvalue_output_.initialized) {
     return false;
@@ -576,9 +574,8 @@ bool ConverterMock::CommitPartialSuggestionSegmentValue(
   }
 }
 
-bool ConverterMock::FocusSegmentValue(Segments *segments,
-                                      size_t segment_index,
-                                      int    candidate_index) const {
+bool ConverterMock::FocusSegmentValue(Segments *segments, size_t segment_index,
+                                      int candidate_index) const {
   VLOG(2) << "mock function: FocusSegmentValue";
   focussegmentvalue_input_.segments.CopyFrom(*segments);
   focussegmentvalue_input_.segment_index = segment_index;
@@ -591,7 +588,6 @@ bool ConverterMock::FocusSegmentValue(Segments *segments,
     return focussegmentvalue_output_.return_value;
   }
 }
-
 
 bool ConverterMock::FreeSegmentValue(Segments *segments,
                                      size_t segment_index) const {
@@ -608,8 +604,7 @@ bool ConverterMock::FreeSegmentValue(Segments *segments,
 }
 
 bool ConverterMock::CommitSegments(
-    Segments *segments,
-    const std::vector<size_t> &candidate_index) const {
+    Segments *segments, const std::vector<size_t> &candidate_index) const {
   VLOG(2) << "mock function: CommitSegments";
   submitsegments_input_.segments.CopyFrom(*segments);
   submitsegments_input_.candidate_index_list = candidate_index;
@@ -649,8 +644,7 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   resizesegment2_input_.segments.CopyFrom(*segments);
   resizesegment2_input_.start_segment_index = start_segment_index;
   resizesegment2_input_.segments_size = segments_size;
-  std::vector<uint8> size_array(new_size_array,
-                           new_size_array + array_size);
+  std::vector<uint8> size_array(new_size_array, new_size_array + array_size);
   resizesegment2_input_.new_size_array = size_array;
 
   if (!resizesegment2_output_.initialized) {

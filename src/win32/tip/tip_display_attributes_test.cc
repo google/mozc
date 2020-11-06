@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,32 +50,32 @@ class TestableTipDisplayAttribute : public TipDisplayAttribute {
   TestableTipDisplayAttribute(const GUID &guid,
                               const TF_DISPLAYATTRIBUTE &attribute,
                               const std::wstring &description)
-      : TipDisplayAttribute(guid, attribute, description) {
-  }
+      : TipDisplayAttribute(guid, attribute, description) {}
 };
 
 const TF_DISPLAYATTRIBUTE kTestAttribute = {
-  { TF_CT_NONE, 0 },        // text color
-  { TF_CT_NONE, 0 },        // background color
-  TF_LS_DOT,                // underline style
-  FALSE,                    // underline boldness
-  { TF_CT_NONE, 0 },        // underline color
-  TF_ATTR_INPUT             // attribute info
+    {TF_CT_NONE, 0},  // text color
+    {TF_CT_NONE, 0},  // background color
+    TF_LS_DOT,        // underline style
+    FALSE,            // underline boldness
+    {TF_CT_NONE, 0},  // underline color
+    TF_ATTR_INPUT     // attribute info
 };
 
 const TF_DISPLAYATTRIBUTE kTestUserAttribute = {
-  { TF_CT_NONE, 0 },        // text color
-  { TF_CT_NONE, 0 },        // background color
-  TF_LS_SOLID,              // underline style
-  TRUE,                     // underline boldness
-  { TF_CT_NONE, 0 },        // underline color
-  TF_ATTR_TARGET_CONVERTED  // attribute info
+    {TF_CT_NONE, 0},          // text color
+    {TF_CT_NONE, 0},          // background color
+    TF_LS_SOLID,              // underline style
+    TRUE,                     // underline boldness
+    {TF_CT_NONE, 0},          // underline color
+    TF_ATTR_TARGET_CONVERTED  // attribute info
 };
 
 // {4D20DBEC-C60E-4DAC-B456-9222521E5036}
-const GUID kTestGuid = {
-  0x4d20dbec, 0xc60e, 0x4dac, {0xb4, 0x56, 0x92, 0x22, 0x52, 0x1e, 0x50, 0x36}
-};
+const GUID kTestGuid = {0x4d20dbec,
+                        0xc60e,
+                        0x4dac,
+                        {0xb4, 0x56, 0x92, 0x22, 0x52, 0x1e, 0x50, 0x36}};
 
 const wchar_t kTestDescription[] = L"This is test description!";
 
@@ -88,14 +88,12 @@ bool IsSameColor(const TF_DA_COLOR &color1, const TF_DA_COLOR &color2) {
 
 class TipDisplayAttributesTest : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    TipDllModule::InitForUnitTest();
-  }
+  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
 };
 
 TEST(TipDisplayAttributesTest, BasicTest) {
-  TestableTipDisplayAttribute attribute(
-      kTestGuid, kTestAttribute, kTestDescription);
+  TestableTipDisplayAttribute attribute(kTestGuid, kTestAttribute,
+                                        kTestDescription);
 
   CComBSTR desc;
   EXPECT_EQ(S_OK, attribute.GetDescription(&desc));
@@ -116,8 +114,8 @@ TEST(TipDisplayAttributesTest, BasicTest) {
 }
 
 TEST(TipDisplayAttributesTest, SetAttributeInfo) {
-  TestableTipDisplayAttribute attribute(
-    kTestGuid, kTestAttribute, kTestDescription);
+  TestableTipDisplayAttribute attribute(kTestGuid, kTestAttribute,
+                                        kTestDescription);
 
   EXPECT_EQ(S_OK, attribute.SetAttributeInfo(&kTestUserAttribute));
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ class MacServerSendCommand : public client::SendCommandInterface {
   virtual bool SendCommand(const mozc::commands::SessionCommand &command,
                            mozc::commands::Output *output);
 };
-}  // namespace mozc::renderer::mac
-}  // namespace mozc::renderer
+}  // namespace mac
+}  // namespace renderer
 }  // namespace mozc
 #endif  // MOZC_RENDERER_MAC_MAC_SERVER_SEND_COMMAND_H_

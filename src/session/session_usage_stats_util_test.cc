@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@
 
 #include "session/session_usage_stats_util.h"
 
-#include "protocol/commands.pb.h"
 #include "composer/key_parser.h"
+#include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
@@ -62,22 +62,22 @@ TEST_F(SessionUsageStatsUtilTest, HasExperimentalFeature) {
   const char kFeatureName2[] = "TestFeature2";
   Context context;
 
-  EXPECT_FALSE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName1));
-  EXPECT_FALSE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName2));
+  EXPECT_FALSE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
+  EXPECT_FALSE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
 
   context.add_experimental_features(kFeatureName1);
-  EXPECT_TRUE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName1));
-  EXPECT_FALSE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName2));
+  EXPECT_TRUE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
+  EXPECT_FALSE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
 
   context.add_experimental_features(kFeatureName2);
-  EXPECT_TRUE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName1));
-  EXPECT_TRUE(SessionUsageStatsUtil::HasExperimentalFeature(context,
-                                                             kFeatureName2));
+  EXPECT_TRUE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName1));
+  EXPECT_TRUE(
+      SessionUsageStatsUtil::HasExperimentalFeature(context, kFeatureName2));
 }
 
 TEST_F(SessionUsageStatsUtilTest, AddSendKeyInputStats) {
@@ -163,8 +163,7 @@ TEST_F(SessionUsageStatsUtilTest, AddSendCommandInputStats) {
   EXPECT_COUNT_STATS("MouseSelect", 2);
 
   // Smoke test to make sure it works without crash.
-  // Should skip "0" since it is not a valid command.
-  for (int i = 1; i < SessionCommand::NUM_OF_COMMANDS; ++i) {
+  for (int i = 0; i < SessionCommand::CommandType_ARRAYSIZE; ++i) {
     input.Clear();
     input.set_type(Input::SEND_COMMAND);
     input.mutable_command()->set_type(
@@ -176,6 +175,7 @@ TEST_F(SessionUsageStatsUtilTest, AddSendCommandInputStats) {
   EXPECT_COUNT_STATS("SendCommand_SelectCandidate", 2);
   EXPECT_COUNT_STATS("SendCommand_SubmitCandidate", 2);
   EXPECT_COUNT_STATS("SendCommand_Undo", 1);
+  EXPECT_COUNT_STATS("SendCommand_StopKeyToggling", 1);
   EXPECT_COUNT_STATS("MouseSelect", 4);
 }
 

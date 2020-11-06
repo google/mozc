@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "base/util.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -56,7 +57,7 @@ Node *InitBOSNode(Lattice *lattice, uint16 length) {
   bos_node->cost = 0;
   bos_node->begin_pos = length;
   bos_node->end_pos = length;
-  bos_node->enext = NULL;
+  bos_node->enext = nullptr;
   return bos_node;
 }
 
@@ -72,14 +73,14 @@ Node *InitEOSNode(Lattice *lattice, uint16 length) {
   eos_node->cost = 0;
   eos_node->begin_pos = length;
   eos_node->end_pos = length;
-  eos_node->bnext = NULL;
+  eos_node->bnext = nullptr;
   return eos_node;
 }
 
 bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
-                        const string &str) {
+                        const std::string &str) {
   CHECK(node);
-  for (; node->prev != NULL; node = node->prev) {
+  for (; node->prev != nullptr; node = node->prev) {
     if (node->begin_pos == begin_pos && node->end_pos == end_pos &&
         node->value == str) {
       return true;
@@ -88,11 +89,11 @@ bool PathContainsString(const Node *node, size_t begin_pos, size_t end_pos,
   return false;
 }
 
-string GetDebugStringForNode(const Node *node, const Node *prev_node) {
+std::string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   CHECK(node);
   std::stringstream os;
-  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) -
-      node->wcost << "]";
+  os << "[con:" << node->cost - (prev_node ? prev_node->cost : 0) - node->wcost
+     << "]";
   os << "[lid:" << node->lid << "]";
   os << "\"" << node->value << "\"";
   os << "[wcost:" << node->wcost << "]";
@@ -101,7 +102,7 @@ string GetDebugStringForNode(const Node *node, const Node *prev_node) {
   return os.str();
 }
 
-string GetDebugStringForPath(const Node *end_node) {
+std::string GetDebugStringForPath(const Node *end_node) {
   CHECK(end_node);
   std::stringstream os;
   std::vector<const Node *> node_vector;
@@ -109,7 +110,7 @@ string GetDebugStringForPath(const Node *end_node) {
   for (const Node *node = end_node; node; node = node->prev) {
     node_vector.push_back(node);
   }
-  const Node *prev_node = NULL;
+  const Node *prev_node = nullptr;
 
   for (int i = static_cast<int>(node_vector.size()) - 1; i >= 0; --i) {
     const Node *node = node_vector[i];
@@ -119,11 +120,11 @@ string GetDebugStringForPath(const Node *end_node) {
   return os.str();
 }
 
-string GetCommonPrefix(const string &str1, const string &str2) {
-  std::vector<string> split1, split2;
+std::string GetCommonPrefix(const std::string &str1, const std::string &str2) {
+  std::vector<std::string> split1, split2;
   Util::SplitStringToUtf8Chars(str1, &split1);
   Util::SplitStringToUtf8Chars(str2, &split2);
-  string common_prefix = "";
+  std::string common_prefix = "";
   for (int i = 0; i < std::min(split1.size(), split2.size()); ++i) {
     if (split1[i] == split2[i]) {
       common_prefix += split1[i];
@@ -139,30 +140,22 @@ string GetCommonPrefix(const string &str1, const string &str2) {
 struct LatticeDisplayNodeInfo {
   size_t display_node_begin_pos_;
   size_t display_node_end_pos_;
-  string display_node_str_;
+  std::string display_node_str_;
 };
 
 Lattice::Lattice() : history_end_pos_(0), node_allocator_(new NodeAllocator) {}
 
 Lattice::~Lattice() {}
 
-NodeAllocator *Lattice::node_allocator() const {
-  return node_allocator_.get();
-}
+NodeAllocator *Lattice::node_allocator() const { return node_allocator_.get(); }
 
-Node *Lattice::NewNode() {
-  return node_allocator_->NewNode();
-}
+Node *Lattice::NewNode() { return node_allocator_->NewNode(); }
 
-Node *Lattice::begin_nodes(size_t pos) const {
-  return begin_nodes_[pos];
-}
+Node *Lattice::begin_nodes(size_t pos) const { return begin_nodes_[pos]; }
 
-Node *Lattice::end_nodes(size_t pos) const {
-  return end_nodes_[pos];
-}
+Node *Lattice::end_nodes(size_t pos) const { return end_nodes_[pos]; }
 
-void Lattice::SetKey(StringPiece key) {
+void Lattice::SetKey(absl::string_view key) {
   Clear();
   key_.assign(key.data(), key.size());
   const size_t size = key.size();
@@ -171,41 +164,36 @@ void Lattice::SetKey(StringPiece key) {
   cache_info_.resize(size + 4);
 
   std::fill(begin_nodes_.begin(), begin_nodes_.end(),
-            static_cast<Node *>(NULL));
-  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
+  std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(nullptr));
   std::fill(cache_info_.begin(), cache_info_.end(), 0);
 
-  end_nodes_[0] = InitBOSNode(this,
-                              static_cast<uint16>(0));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
   begin_nodes_[key_.size()] =
       InitEOSNode(this, static_cast<uint16>(key_.size()));
 }
 
-Node *Lattice::bos_nodes() const {
-  return end_nodes_[0];
-}
+Node *Lattice::bos_nodes() const { return end_nodes_[0]; }
 
-Node *Lattice::eos_nodes() const {
-  return begin_nodes_[key_.size()];
-}
+Node *Lattice::eos_nodes() const { return begin_nodes_[key_.size()]; }
 
 void Lattice::Insert(size_t pos, Node *node) {
-  for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
+  for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
     const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
     rnode->begin_pos = static_cast<uint16>(pos);
     rnode->end_pos = static_cast<uint16>(end_pos);
-    rnode->prev = NULL;
-    rnode->next = NULL;
+    rnode->prev = nullptr;
+    rnode->next = nullptr;
     rnode->cost = 0;
     rnode->enext = end_nodes_[end_pos];
     end_nodes_[end_pos] = rnode;
   }
 
-  if (begin_nodes_[pos] == NULL) {
+  if (begin_nodes_[pos] == nullptr) {
     begin_nodes_[pos] = node;
   } else {
-    for (Node *rnode = node; rnode != NULL; rnode = rnode->bnext) {
-      if (rnode->bnext == NULL) {
+    for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
+      if (rnode->bnext == nullptr) {
         rnode->bnext = begin_nodes_[pos];
         begin_nodes_[pos] = node;
         break;
@@ -214,13 +202,9 @@ void Lattice::Insert(size_t pos, Node *node) {
   }
 }
 
-const string &Lattice::key() const {
-  return key_;
-}
+const std::string &Lattice::key() const { return key_; }
 
-bool Lattice::has_lattice() const {
-  return !begin_nodes_.empty();
-}
+bool Lattice::has_lattice() const { return !begin_nodes_.empty(); }
 
 void Lattice::Clear() {
   key_.clear();
@@ -232,7 +216,7 @@ void Lattice::Clear() {
 }
 
 void Lattice::SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
-                                  const string &str) {
+                                  const std::string &str) {
   LatticeDisplayNodeInfo *info = Singleton<LatticeDisplayNodeInfo>::get();
   info->display_node_begin_pos_ = begin_pos;
   info->display_node_end_pos_ = end_pos;
@@ -244,17 +228,13 @@ void Lattice::ResetDebugDisplayNode() {
   info->display_node_str_.clear();
 }
 
-void Lattice::set_history_end_pos(size_t pos) {
-  history_end_pos_ = pos;
-}
+void Lattice::set_history_end_pos(size_t pos) { history_end_pos_ = pos; }
 
-size_t Lattice::history_end_pos() const {
-  return history_end_pos_;
-}
+size_t Lattice::history_end_pos() const { return history_end_pos_; }
 
-void Lattice::UpdateKey(const string &new_key) {
-  const string old_key = key_;
-  const string common_prefix = GetCommonPrefix(new_key, old_key);
+void Lattice::UpdateKey(const std::string &new_key) {
+  const std::string old_key = key_;
+  const std::string common_prefix = GetCommonPrefix(new_key, old_key);
 
   // if the length of common prefix is too short, call SetKey
   if (common_prefix.size() <= old_key.size() / 2) {
@@ -275,7 +255,7 @@ void Lattice::UpdateKey(const string &new_key) {
   AddSuffix(new_key.substr(common_prefix.size()));
 }
 
-void Lattice::AddSuffix(const string &suffix_key) {
+void Lattice::AddSuffix(const std::string &suffix_key) {
   if (suffix_key.empty()) {
     return;
   }
@@ -287,14 +267,12 @@ void Lattice::AddSuffix(const string &suffix_key) {
   end_nodes_.resize(new_size + 4);
 
   std::fill(begin_nodes_.begin() + old_size, begin_nodes_.end(),
-            static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
   std::fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
-            static_cast<Node *>(NULL));
+            static_cast<Node *>(nullptr));
 
-  end_nodes_[0] = InitBOSNode(this,
-                              static_cast<uint16>(0));
-  begin_nodes_[new_size] =
-      InitEOSNode(this, static_cast<uint16>(new_size));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
+  begin_nodes_[new_size] = InitEOSNode(this, static_cast<uint16>(new_size));
 
   // update cache_info
   cache_info_.resize(new_size + 4, 0);
@@ -313,11 +291,11 @@ void Lattice::ShrinkKey(const size_t new_len) {
   // erase nodes whose end position exceeds new_len
   for (size_t i = 0; i < new_len; ++i) {
     Node *begin = begin_nodes_[i];
-    if (begin == NULL) {
+    if (begin == nullptr) {
       continue;
     }
 
-    for (Node *prev = begin, *curr = begin->bnext; curr != NULL; ) {
+    for (Node *prev = begin, *curr = begin->bnext; curr != nullptr;) {
       CHECK(prev);
       if (curr->end_pos > new_len) {
         prev->bnext = curr->bnext;
@@ -334,13 +312,12 @@ void Lattice::ShrinkKey(const size_t new_len) {
 
   // update begin_nodes and end_nodes
   for (size_t i = new_len; i <= old_len; ++i) {
-    begin_nodes_[i] = NULL;
+    begin_nodes_[i] = nullptr;
   }
   for (size_t i = new_len + 1; i <= old_len; ++i) {
-    end_nodes_[i] = NULL;
+    end_nodes_[i] = nullptr;
   }
-  begin_nodes_[new_len] =
-      InitEOSNode(this, static_cast<uint16>(new_len));
+  begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16>(new_len));
 
   // update cache_info
   for (size_t i = 0; i < new_len; ++i) {
@@ -364,9 +341,9 @@ void Lattice::SetCacheInfo(const size_t pos, const size_t len) {
 
 void Lattice::ResetNodeCost() {
   for (size_t i = 0; i <= key_.size(); ++i) {
-    if (begin_nodes_[i] != NULL) {
-      Node *prev = NULL;
-      for (Node *node = begin_nodes_[i]; node != NULL; node = node->bnext) {
+    if (begin_nodes_[i] != nullptr) {
+      Node *prev = nullptr;
+      for (Node *node = begin_nodes_[i]; node != nullptr; node = node->bnext) {
         // do not process BOS / EOS nodes
         if (node->node_type == Node::BOS_NODE ||
             node->node_type == Node::EOS_NODE) {
@@ -378,8 +355,8 @@ void Lattice::ResetNodeCost() {
           node->wcost = node->raw_wcost;
         } else {
           if (node == begin_nodes_[i]) {
-            if (node->bnext == NULL) {
-              begin_nodes_[i] = NULL;
+            if (node->bnext == nullptr) {
+              begin_nodes_[i] = nullptr;
             } else {
               begin_nodes_[i] = node->bnext;
             }
@@ -394,9 +371,9 @@ void Lattice::ResetNodeCost() {
       }
     }
 
-    if (end_nodes_[i] != NULL) {
-      Node *prev = NULL;
-      for (Node *node = end_nodes_[i]; node != NULL; node = node->enext) {
+    if (end_nodes_[i] != nullptr) {
+      Node *prev = nullptr;
+      for (Node *node = end_nodes_[i]; node != nullptr; node = node->enext) {
         if (node->node_type == Node::BOS_NODE ||
             node->node_type == Node::EOS_NODE) {
           continue;
@@ -405,8 +382,8 @@ void Lattice::ResetNodeCost() {
           node->wcost = node->raw_wcost;
         } else {
           if (node == end_nodes_[i]) {
-            if (node->enext == NULL) {
-              end_nodes_[i] = NULL;
+            if (node->enext == nullptr) {
+              end_nodes_[i] = nullptr;
             } else {
               end_nodes_[i] = node->enext;
             }
@@ -422,7 +399,7 @@ void Lattice::ResetNodeCost() {
   }
 }
 
-string Lattice::DebugString() const {
+std::string Lattice::DebugString() const {
   std::stringstream os;
   if (!has_lattice()) {
     return "";
@@ -442,7 +419,7 @@ string Lattice::DebugString() const {
     return os.str();
   }
 
-  for (; node != NULL; node = node->prev) {
+  for (; node != nullptr; node = node->prev) {
     best_path_nodes.push_back(node);
   }
 
@@ -455,8 +432,7 @@ string Lattice::DebugString() const {
     }
     for (const Node *prev_node = end_nodes(best_path_node->begin_pos);
          prev_node; prev_node = prev_node->enext) {
-      if (!PathContainsString(prev_node,
-                              info->display_node_begin_pos_,
+      if (!PathContainsString(prev_node, info->display_node_begin_pos_,
                               info->display_node_end_pos_,
                               info->display_node_str_)) {
         continue;

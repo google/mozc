@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,8 @@ using dictionary::POSMatcher;
 }  // namespace
 
 bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
-                                                   string *zipcode,
-                                                   string *address,
+                                                   std::string *zipcode,
+                                                   std::string *address,
                                                    size_t *insert_pos) const {
   DCHECK(zipcode);
   DCHECK(address);
@@ -66,8 +66,8 @@ bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
 
 // Insert zipcode into the |segment|
 bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
-                                      const string &zipcode,
-                                      const string &address,
+                                      const std::string &zipcode,
+                                      const std::string &address,
                                       const ConversionRequest &request,
                                       Segment *segment) const {
   DCHECK(segment);
@@ -102,14 +102,14 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
       break;
   }
 
-  string space;
+  std::string space;
   if (is_full_width) {
     space = "　";  // "　" (full-width space)
   } else {
     space = " ";
   }
 
-  const string value = zipcode + space + address;
+  const std::string value = zipcode + space + address;
 
   candidate->Init();
   candidate->lid = pos_matcher_->GetZipcodeId();
@@ -138,23 +138,19 @@ bool ZipcodeRewriter::Rewrite(const ConversionRequest &request,
   }
 
   const Segment &segment = segments->conversion_segment(0);
-  const string &key = segment.key();
+  const std::string &key = segment.key();
   if (key.empty()) {
     LOG(ERROR) << "Key is empty";
     return false;
   }
 
   size_t insert_pos;
-  string zipcode, address;
-  if (!GetZipcodeCandidatePositions(segment, &zipcode,
-                                    &address, &insert_pos)) {
+  std::string zipcode, address;
+  if (!GetZipcodeCandidatePositions(segment, &zipcode, &address, &insert_pos)) {
     return false;
   }
 
-  return InsertCandidate(insert_pos,
-                         zipcode,
-                         address,
-                         request,
+  return InsertCandidate(insert_pos, zipcode, address, request,
                          segments->mutable_conversion_segment(0));
 }
 

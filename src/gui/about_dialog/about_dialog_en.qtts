@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.0">
+<context>
+    <name>AboutDialog</name>
+    <message>
+        <location filename="about_dialog.ui" line="32"/>
+        <source>About [ProductName]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="about_dialog.ui" line="59"/>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message utf8="true">
+        <location filename="about_dialog.ui" line="80"/>
+        <source>Copyright © 2020 Google Inc. All rights reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="about_dialog.ui" line="95"/>
+        <source>&lt;html&gt;&lt;body&gt;[ProductName] is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="about_dialog.ui" line="133"/>
+        <source>&lt;html&gt;&lt;body&gt;[ProductName] &lt;a href=&quot;[ProductUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;[ForumUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;[ForumName]&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="about_dialog.ui" line="174"/>
+        <source>[ProductName]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="about_dialog.ui" line="197"/>
+        <source>0.0.0.0</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+</TS>

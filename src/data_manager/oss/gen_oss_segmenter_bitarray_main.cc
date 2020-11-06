@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ DEFINE_string(output_rtable, "", "RTable array");
 DEFINE_string(output_bitarray, "", "Segmenter bitarray");
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
       kLSize, kRSize, &IsBoundaryInternal, FLAGS_output_size_info,
       FLAGS_output_ltable, FLAGS_output_rtable, FLAGS_output_bitarray);

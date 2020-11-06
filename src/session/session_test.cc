@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@
 #include "engine/engine.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
+#include "engine/user_data_manager_mock.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
@@ -64,7 +65,9 @@ namespace mozc {
 class ConverterInterface;
 class PredictorInterface;
 
-namespace dictionary { class SuppressionDictionary; }
+namespace dictionary {
+class SuppressionDictionary;
+}
 
 namespace session {
 namespace {
@@ -72,7 +75,7 @@ namespace {
 using ::mozc::commands::Request;
 using ::mozc::usage_stats::UsageStats;
 
-void SetSendKeyCommandWithKeyString(const string &key_string,
+void SetSendKeyCommandWithKeyString(const std::string &key_string,
                                     commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -80,14 +83,13 @@ void SetSendKeyCommandWithKeyString(const string &key_string,
   key->set_key_string(key_string);
 }
 
-bool SetSendKeyCommand(const string &key, commands::Command *command) {
+bool SetSendKeyCommand(const std::string &key, commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   return KeyParser::ParseKey(key, command->mutable_input()->mutable_key());
 }
 
-bool SendKey(const string &key,
-             Session *session,
+bool SendKey(const std::string &key, Session *session,
              commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
@@ -95,10 +97,8 @@ bool SendKey(const string &key,
   return session->SendKey(command);
 }
 
-bool SendKeyWithMode(const string &key,
-                     commands::CompositionMode mode,
-                     Session *session,
-                     commands::Command *command) {
+bool SendKeyWithMode(const std::string &key, commands::CompositionMode mode,
+                     Session *session, commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -106,11 +106,9 @@ bool SendKeyWithMode(const string &key,
   return session->SendKey(command);
 }
 
-bool SendKeyWithModeAndActivated(const string &key,
-                                 bool activated,
+bool SendKeyWithModeAndActivated(const std::string &key, bool activated,
                                  commands::CompositionMode mode,
-                                 Session *session,
-                                 commands::Command *command) {
+                                 Session *session, commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -119,8 +117,7 @@ bool SendKeyWithModeAndActivated(const string &key,
   return session->SendKey(command);
 }
 
-bool TestSendKey(const string &key,
-                 Session *session,
+bool TestSendKey(const std::string &key, Session *session,
                  commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
@@ -128,10 +125,8 @@ bool TestSendKey(const string &key,
   return session->TestSendKey(command);
 }
 
-bool TestSendKeyWithMode(const string &key,
-                         commands::CompositionMode mode,
-                         Session *session,
-                         commands::Command *command) {
+bool TestSendKeyWithMode(const std::string &key, commands::CompositionMode mode,
+                         Session *session, commands::Command *command) {
   if (!SetSendKeyCommand(key, command)) {
     return false;
   }
@@ -139,8 +134,7 @@ bool TestSendKeyWithMode(const string &key,
   return session->TestSendKey(command);
 }
 
-bool TestSendKeyWithModeAndActivated(const string &key,
-                                     bool activated,
+bool TestSendKeyWithModeAndActivated(const std::string &key, bool activated,
                                      commands::CompositionMode mode,
                                      Session *session,
                                      commands::Command *command) {
@@ -153,14 +147,12 @@ bool TestSendKeyWithModeAndActivated(const string &key,
 }
 
 bool SendSpecialKey(commands::KeyEvent::SpecialKey special_key,
-                    Session* session,
-                    commands::Command* command) {
+                    Session *session, commands::Command *command) {
   command->Clear();
   command->mutable_input()->set_type(commands::Input::SEND_KEY);
   command->mutable_input()->mutable_key()->set_special_key(special_key);
   return session->SendKey(command);
 }
-
 
 void SetSendCommandCommand(commands::SessionCommand::CommandType type,
                            commands::Command *command) {
@@ -169,15 +161,14 @@ void SetSendCommandCommand(commands::SessionCommand::CommandType type,
   command->mutable_input()->mutable_command()->set_type(type);
 }
 
-bool SendCommand(commands::SessionCommand::CommandType type,
-                 Session *session,
+bool SendCommand(commands::SessionCommand::CommandType type, Session *session,
                  commands::Command *command) {
   SetSendCommandCommand(type, command);
   return session->SendCommand(command);
 }
 
 bool InsertCharacterCodeAndString(const char key_code,
-                                  const string &key_string,
+                                  const std::string &key_string,
                                   Session *session,
                                   commands::Command *command) {
   command->Clear();
@@ -187,8 +178,8 @@ bool InsertCharacterCodeAndString(const char key_code,
   return session->InsertCharacter(command);
 }
 
-Segment::Candidate *AddCandidate(const string &key, const string &value,
-                                 Segment *segment) {
+Segment::Candidate *AddCandidate(const std::string &key,
+                                 const std::string &value, Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->key = key;
   candidate->content_key = key;
@@ -196,7 +187,8 @@ Segment::Candidate *AddCandidate(const string &key, const string &value,
   return candidate;
 }
 
-Segment::Candidate *AddMetaCandidate(const string &key, const string &value,
+Segment::Candidate *AddMetaCandidate(const std::string &key,
+                                     const std::string &value,
                                      Segment *segment) {
   Segment::Candidate *candidate = segment->add_meta_candidate();
   candidate->key = key;
@@ -205,24 +197,24 @@ Segment::Candidate *AddMetaCandidate(const string &key, const string &value,
   return candidate;
 }
 
-string GetComposition(const commands::Command &command) {
+std::string GetComposition(const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return "";
   }
 
-  string preedit;
+  std::string preedit;
   for (size_t i = 0; i < command.output().preedit().segment_size(); ++i) {
     preedit.append(command.output().preedit().segment(i).value());
   }
   return preedit;
 }
 
-::testing::AssertionResult EnsurePreedit(const string &expected,
+::testing::AssertionResult EnsurePreedit(const std::string &expected,
                                          const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
-  string actual;
+  std::string actual;
   for (size_t i = 0; i < command.output().preedit().segment_size(); ++i) {
     actual.append(command.output().preedit().segment(i).value());
   }
@@ -230,43 +222,42 @@ string GetComposition(const commands::Command &command) {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-      << "expected: " << expected << ", actual: " << actual;
+         << "expected: " << expected << ", actual: " << actual;
 }
 
 ::testing::AssertionResult EnsureSingleSegment(
-    const string &expected, const commands::Command &command) {
+    const std::string &expected, const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
   if (command.output().preedit().segment_size() != 1) {
     return ::testing::AssertionFailure()
-        << "Not single segment. segment size: "
-        << command.output().preedit().segment_size();
+           << "Not single segment. segment size: "
+           << command.output().preedit().segment_size();
   }
   const commands::Preedit::Segment &segment =
       command.output().preedit().segment(0);
   if (!segment.has_value()) {
     return ::testing::AssertionFailure() << "No segment value.";
   }
-  const string &actual = segment.value();
+  const std::string &actual = segment.value();
   if (expected == actual) {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-      << "expected: " << expected << ", actual: " << actual;
+         << "expected: " << expected << ", actual: " << actual;
 }
 
 ::testing::AssertionResult EnsureSingleSegmentAndKey(
-    const string &expected_value,
-    const string &expected_key,
+    const std::string &expected_value, const std::string &expected_key,
     const commands::Command &command) {
   if (!command.output().has_preedit()) {
     return ::testing::AssertionFailure() << "No preedit.";
   }
   if (command.output().preedit().segment_size() != 1) {
     return ::testing::AssertionFailure()
-        << "Not single segment. segment size: "
-        << command.output().preedit().segment_size();
+           << "Not single segment. segment size: "
+           << command.output().preedit().segment_size();
   }
   const commands::Preedit::Segment &segment =
       command.output().preedit().segment(0);
@@ -276,19 +267,18 @@ string GetComposition(const commands::Command &command) {
   if (!segment.has_key()) {
     return ::testing::AssertionFailure() << "No segment key.";
   }
-  const string &actual_value = segment.value();
-  const string &actual_key = segment.key();
+  const std::string &actual_value = segment.value();
+  const std::string &actual_key = segment.key();
   if (expected_value == actual_value && expected_key == actual_key) {
     return ::testing::AssertionSuccess();
   }
-  return ::testing::AssertionFailure()
-      << "expected_value: " << expected_value
-      << ", actual_value: " << actual_value
-      << ", expected_key: " << expected_key
-      << ", actual_key: " << actual_key;
+  return ::testing::AssertionFailure() << "expected_value: " << expected_value
+                                       << ", actual_value: " << actual_value
+                                       << ", expected_key: " << expected_key
+                                       << ", actual_key: " << actual_key;
 }
 
-::testing::AssertionResult EnsureResult(const string &expected,
+::testing::AssertionResult EnsureResult(const std::string &expected,
                                         const commands::Command &command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
@@ -296,17 +286,16 @@ string GetComposition(const commands::Command &command) {
   if (!command.output().result().has_value()) {
     return ::testing::AssertionFailure() << "No result value.";
   }
-  const string &actual = command.output().result().value();
+  const std::string &actual = command.output().result().value();
   if (expected == actual) {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-      << "expected: " << expected << ", actual: " << actual;
+         << "expected: " << expected << ", actual: " << actual;
 }
 
 ::testing::AssertionResult EnsureResultAndKey(
-    const string &expected_value,
-    const string &expected_key,
+    const std::string &expected_value, const std::string &expected_key,
     const commands::Command &command) {
   if (!command.output().has_result()) {
     return ::testing::AssertionFailure() << "No result.";
@@ -317,16 +306,15 @@ string GetComposition(const commands::Command &command) {
   if (!command.output().result().has_key()) {
     return ::testing::AssertionFailure() << "No result value.";
   }
-  const string &actual_value = command.output().result().value();
-  const string &actual_key = command.output().result().key();
+  const std::string &actual_value = command.output().result().value();
+  const std::string &actual_key = command.output().result().key();
   if (expected_value == actual_value && expected_key == actual_key) {
     return ::testing::AssertionSuccess();
   }
-  return ::testing::AssertionFailure()
-      << "expected_value: " << expected_value
-      << ", actual_value: " << actual_value
-      << ", expected_key: " << expected_key
-      << ", actual_key: " << actual_key;
+  return ::testing::AssertionFailure() << "expected_value: " << expected_value
+                                       << ", actual_value: " << actual_value
+                                       << ", expected_key: " << expected_key
+                                       << ", actual_key: " << actual_key;
 }
 
 ::testing::AssertionResult TryUndoAndAssertSuccess(Session *session) {
@@ -340,9 +328,9 @@ string GetComposition(const commands::Command &command) {
   }
   if (command.output().callback().session_command().type() !=
       commands::SessionCommand::UNDO) {
-    return ::testing::AssertionFailure() <<
-        "Callback type is not Undo. Actual type: " <<
-        command.output().callback().session_command().type();
+    return ::testing::AssertionFailure()
+           << "Callback type is not Undo. Actual type: "
+           << command.output().callback().session_command().type();
   }
   return ::testing::AssertionSuccess();
 }
@@ -352,22 +340,21 @@ string GetComposition(const commands::Command &command) {
   session->RequestUndo(&command);
   if (command.output().consumed()) {
     return ::testing::AssertionFailure()
-        << "Key event is consumed against expectation.";
+           << "Key event is consumed against expectation.";
   }
   return ::testing::AssertionSuccess();
 }
 
-#define EXPECT_PREEDIT(expected, command)  \
-    EXPECT_TRUE(EnsurePreedit(expected, command))
-#define EXPECT_SINGLE_SEGMENT(expected, command)  \
-    EXPECT_TRUE(EnsureSingleSegment(expected, command))
-#define EXPECT_SINGLE_SEGMENT_AND_KEY(expected_value, expected_key, command)  \
-    EXPECT_TRUE(EnsureSingleSegmentAndKey(expected_value,                     \
-                                          expected_key, command))
-#define EXPECT_RESULT(expected, command)  \
-    EXPECT_TRUE(EnsureResult(expected, command))
-#define EXPECT_RESULT_AND_KEY(expected_value, expected_key, command)  \
-    EXPECT_TRUE(EnsureResultAndKey(expected_value, expected_key, command))
+#define EXPECT_PREEDIT(expected, command) \
+  EXPECT_TRUE(EnsurePreedit(expected, command))
+#define EXPECT_SINGLE_SEGMENT(expected, command) \
+  EXPECT_TRUE(EnsureSingleSegment(expected, command))
+#define EXPECT_SINGLE_SEGMENT_AND_KEY(expected_value, expected_key, command) \
+  EXPECT_TRUE(EnsureSingleSegmentAndKey(expected_value, expected_key, command))
+#define EXPECT_RESULT(expected, command) \
+  EXPECT_TRUE(EnsureResult(expected, command))
+#define EXPECT_RESULT_AND_KEY(expected_value, expected_key, command) \
+  EXPECT_TRUE(EnsureResultAndKey(expected_value, expected_key, command))
 
 void SwitchInputFieldType(commands::Context::InputFieldType type,
                           Session *session) {
@@ -396,13 +383,9 @@ class ConverterMockForReset : public ConverterMock {
     return true;
   }
 
-  bool reset_conversion_called() const {
-    return reset_conversion_called_;
-  }
+  bool reset_conversion_called() const { return reset_conversion_called_; }
 
-  void Reset() {
-    reset_conversion_called_ = false;
-  }
+  void Reset() { reset_conversion_called_ = false; }
 
  private:
   mutable bool reset_conversion_called_;
@@ -417,27 +400,23 @@ class MockConverterEngineForReset : public EngineInterface {
     return converter_mock_.get();
   }
 
-  PredictorInterface *GetPredictor() const override {
-    return nullptr;
-  }
+  PredictorInterface *GetPredictor() const override { return nullptr; }
 
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return nullptr;
   }
 
-  bool Reload() override {
-    return true;
-  }
+  bool Reload() override { return true; }
 
-  UserDataManagerInterface *GetUserDataManager() override {
-    return nullptr;
-  }
+  UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
 
   const DataManagerInterface *GetDataManager() const override {
     return nullptr;
   }
 
-  StringPiece GetDataVersion() const override { return StringPiece(); }
+  absl::string_view GetDataVersion() const override {
+    return absl::string_view();
+  }
 
   const ConverterMockForReset &converter_mock() const {
     return *converter_mock_;
@@ -460,13 +439,9 @@ class ConverterMockForRevert : public ConverterMock {
     return true;
   }
 
-  bool revert_conversion_called() const {
-    return revert_conversion_called_;
-  }
+  bool revert_conversion_called() const { return revert_conversion_called_; }
 
-  void Reset() {
-    revert_conversion_called_ = false;
-  }
+  void Reset() { revert_conversion_called_ = false; }
 
  private:
   mutable bool revert_conversion_called_;
@@ -482,27 +457,23 @@ class MockConverterEngineForRevert : public EngineInterface {
     return converter_mock_.get();
   }
 
-  PredictorInterface *GetPredictor() const override {
-    return nullptr;
-  }
+  PredictorInterface *GetPredictor() const override { return nullptr; }
 
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return nullptr;
   }
 
-  bool Reload() override {
-    return true;
-  }
+  bool Reload() override { return true; }
 
-  UserDataManagerInterface *GetUserDataManager() override {
-    return nullptr;
-  }
+  UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
 
   const DataManagerInterface *GetDataManager() const override {
     return nullptr;
   }
 
-  StringPiece GetDataVersion() const override { return StringPiece(); }
+  absl::string_view GetDataVersion() const override {
+    return absl::string_view();
+  }
 
   const ConverterMockForRevert &converter_mock() const {
     return *converter_mock_;
@@ -529,17 +500,13 @@ class SessionTest : public ::testing::Test {
     mock_data_engine_.reset(MockDataEngineFactory::Create());
     engine_.reset(new MockConverterEngine);
 
-    t13n_rewriter_.reset(
-        new TransliterationRewriter(
-            dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData())));
+    t13n_rewriter_.reset(new TransliterationRewriter(
+        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData())));
   }
 
-  void TearDown() override {
-    UsageStats::ClearAllStatsForTest();
-  }
+  void TearDown() override { UsageStats::ClearAllStatsForTest(); }
 
-  void InsertCharacterChars(const string &chars,
-                            Session *session,
+  void InsertCharacterChars(const std::string &chars, Session *session,
                             commands::Command *command) const {
     const uint32 kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
@@ -551,7 +518,7 @@ class SessionTest : public ::testing::Test {
     }
   }
 
-  void InsertCharacterCharsWithContext(const string &chars,
+  void InsertCharacterCharsWithContext(const std::string &chars,
                                        const commands::Context &context,
                                        Session *session,
                                        commands::Command *command) const {
@@ -566,17 +533,16 @@ class SessionTest : public ::testing::Test {
     }
   }
 
-  void InsertCharacterString(const string &key_strings,
-                             const string &chars,
-                             Session *session,
+  void InsertCharacterString(const std::string &key_strings,
+                             const std::string &chars, Session *session,
                              commands::Command *command) const {
     const uint32 kNoModifiers = 0;
-    std::vector<string> inputs;
+    std::vector<std::string> inputs;
     const char *begin = key_strings.data();
     const char *end = key_strings.data() + key_strings.size();
     while (begin < end) {
       const size_t mblen = Util::OneCharLen(begin);
-      inputs.push_back(string(begin, mblen));
+      inputs.push_back(std::string(begin, mblen));
       begin += mblen;
     }
     CHECK_EQ(inputs.size(), chars.size());
@@ -608,7 +574,7 @@ class SessionTest : public ::testing::Test {
     candidate->value = "アイウエオ";
   }
 
-  void InitSessionToDirect(Session* session) {
+  void InitSessionToDirect(Session *session) {
     InitSessionToPrecomposition(session);
     commands::Command command;
     session->IMEOff(&command);
@@ -631,7 +597,7 @@ class SessionTest : public ::testing::Test {
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
   }
 
-  void InitSessionToPrecomposition(Session* session) {
+  void InitSessionToPrecomposition(Session *session) {
 #ifdef OS_WIN
     // Session is created with direct mode on Windows
     // Direct status
@@ -641,9 +607,8 @@ class SessionTest : public ::testing::Test {
     InitSessionWithRequest(session, commands::Request::default_instance());
   }
 
-  void InitSessionToPrecomposition(
-      Session* session,
-      const commands::Request &request) {
+  void InitSessionToPrecomposition(Session *session,
+                                   const commands::Request &request) {
 #ifdef OS_WIN
     // Session is created with direct mode on Windows
     // Direct status
@@ -653,9 +618,8 @@ class SessionTest : public ::testing::Test {
     InitSessionWithRequest(session, request);
   }
 
-  void InitSessionWithRequest(
-      Session* session,
-      const commands::Request &request) {
+  void InitSessionWithRequest(Session *session,
+                              const commands::Request &request) {
     session->SetRequest(&request);
     table_.reset(new composer::Table());
     table_->InitializeWithRequestAndConfig(
@@ -695,8 +659,8 @@ class SessionTest : public ::testing::Test {
     request->set_composer(&session->context().composer());
   }
 
-  void SetupMockForReverseConversion(const string &kanji,
-                                     const string &hiragana) {
+  void SetupMockForReverseConversion(const std::string &kanji,
+                                     const std::string &hiragana) {
     // Set up Segments for reverse conversion.
     Segments reverse_segments;
     Segment *segment;
@@ -718,7 +682,7 @@ class SessionTest : public ::testing::Test {
     GetConverterMock()->SetStartConversionForRequest(&segments, true);
   }
 
-  void SetupCommandForReverseConversion(const string &text,
+  void SetupCommandForReverseConversion(const std::string &text,
                                         commands::Input *input) {
     input->Clear();
     input->set_type(commands::Input::SEND_COMMAND);
@@ -727,8 +691,7 @@ class SessionTest : public ::testing::Test {
     input->mutable_command()->set_text(text);
   }
 
-  void SetupZeroQuerySuggestionReady(bool enable,
-                                     Session *session,
+  void SetupZeroQuerySuggestionReady(bool enable, Session *session,
                                      commands::Request *request) {
     InitSessionToPrecomposition(session);
 
@@ -766,8 +729,7 @@ class SessionTest : public ::testing::Test {
     }
   }
 
-  void SetupZeroQuerySuggestion(Session *session,
-                                commands::Request *request,
+  void SetupZeroQuerySuggestion(Session *session, commands::Request *request,
                                 commands::Command *command) {
     SetupZeroQuerySuggestionReady(true, session, request);
     command->Clear();
@@ -810,7 +772,7 @@ class SessionTest : public ::testing::Test {
     return engine_->mutable_converter_mock();
   }
 
-  // IMPORTANT: Use std::unique_ptr and instanciate an object in SetUp() method
+  // IMPORTANT: Use std::unique_ptr and instantiate an object in SetUp() method
   //    if the target object should be initialized *AFTER* global settings
   //    such as user profile dir or global config are set up for unit test.
   //    If you directly define a variable here without std::unique_ptr, its
@@ -1128,7 +1090,7 @@ TEST_F(SessionTest, Conversion) {
   command.Clear();
   session->ConvertNext(&command);
 
-  string key;
+  std::string key;
   for (int i = 0; i < command.output().preedit().segment_size(); ++i) {
     EXPECT_TRUE(command.output().preedit().segment(i).has_value());
     EXPECT_TRUE(command.output().preedit().segment(i).has_key());
@@ -1407,7 +1369,8 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   command.Clear();
   session->ConvertNext(&command);
   // ex. "[針に]旅行に行った"
-  const string first_segment = command.output().preedit().segment(0).value();
+  const std::string first_segment =
+      command.output().preedit().segment(0).value();
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
@@ -1866,8 +1829,7 @@ TEST_F(SessionTest, SwitchKanaType) {
 
     command.Clear();
     session->SwitchKanaType(&command);
-    EXPECT_SINGLE_SEGMENT(
-        "ｶﾝｼﾞ", command);
+    EXPECT_SINGLE_SEGMENT("ｶﾝｼﾞ", command);
 
     command.Clear();
     session->SwitchKanaType(&command);
@@ -2013,7 +1975,7 @@ TEST_F(SessionTest, UpdatePreferences) {
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
   EXPECT_EQ(no_cascading_cand_size, cascading_cand_size);
-#else  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
+#else   // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
 #endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
 
@@ -2054,8 +2016,7 @@ TEST_F(SessionTest, RomajiInput) {
   commands::Command command;
   InsertCharacterChars("pan", session.get(), &command);
 
-  EXPECT_EQ("ぱｎ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("ぱｎ", command.output().preedit().segment(0).value());
 
   command.Clear();
 
@@ -2076,7 +2037,6 @@ TEST_F(SessionTest, RomajiInput) {
   session->ConvertToHalfASCII(&command);
   EXPECT_SINGLE_SEGMENT("pan", command);
 }
-
 
 TEST_F(SessionTest, KanaInput) {
   Segments segments;
@@ -2135,11 +2095,11 @@ TEST_F(SessionTest, ExceededComposition) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
-  const string exceeded_preedit(500, 'a');
+  const std::string exceeded_preedit(500, 'a');
   ASSERT_EQ(500, exceeded_preedit.size());
   InsertCharacterChars(exceeded_preedit, session.get(), &command);
 
-  string long_a;
+  std::string long_a;
   for (int i = 0; i < 500; ++i) {
     long_a += "あ";
   }
@@ -2198,7 +2158,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else  // OS_LINUX || OS_ANDROID || OS_NACL
+#else   // OS_LINUX || OS_ANDROID || OS_NACL
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
@@ -2226,7 +2186,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else  // OS_LINUX || OS_ANDROID || OS_NACL
+#else   // OS_LINUX || OS_ANDROID || OS_NACL
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
@@ -2623,7 +2583,6 @@ TEST_F(SessionTest, UndoOrRewind_undo) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session->set_client_capability(capability);
 
-
   // Commit twice.
   for (size_t i = 0; i < 2; ++i) {
     commands::Command command;
@@ -2695,6 +2654,31 @@ TEST_F(SessionTest, UndoOrRewind_rewind) {
   EXPECT_PREEDIT("え", command);
   EXPECT_FALSE(command.output().has_deletion_range());
   EXPECT_TRUE(command.output().has_all_candidate_words());
+}
+
+TEST_F(SessionTest, StopKeyToggling) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get(), *mobile_request_);
+
+  Segments segments;
+  {
+    segments.set_request_type(Segments::SUGGESTION);
+    Segment *segment;
+    segment = segments.add_segment();
+    AddCandidate("dummy", "Dummy", segment);
+  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+
+  commands::Command command;
+  InsertCharacterChars("1", session.get(), &command);
+  EXPECT_PREEDIT("あ", command);
+
+  command.Clear();
+  session->StopKeyToggling(&command);
+
+  command.Clear();
+  InsertCharacterChars("1", session.get(), &command);
+  EXPECT_PREEDIT("ああ", command);
 }
 
 TEST_F(SessionTest, CommitRawText) {
@@ -2863,8 +2847,8 @@ TEST_F(SessionTest, ConvertNextPage_PrevPage) {
     segment->set_key("あいうえお");
     for (int page_index = 0; page_index < 3; ++page_index) {
       for (int cand_index = 0; cand_index < 9; ++cand_index) {
-        segment->add_candidate()->value = Util::StringPrintf(
-            "page%d-cand%d", page_index, cand_index);
+        segment->add_candidate()->value =
+            Util::StringPrintf("page%d-cand%d", page_index, cand_index);
       }
     }
     GetConverterMock()->SetStartConversionForRequest(&segments, true);
@@ -3448,18 +3432,18 @@ TEST_F(SessionTest, T13NWithResegmentation) {
 
 TEST_F(SessionTest, Shortcut) {
   const config::Config::SelectionShortcut kDataShortcut[] = {
-    config::Config::NO_SHORTCUT,
-    config::Config::SHORTCUT_123456789,
-    config::Config::SHORTCUT_ASDFGHJKL,
+      config::Config::NO_SHORTCUT,
+      config::Config::SHORTCUT_123456789,
+      config::Config::SHORTCUT_ASDFGHJKL,
   };
-  const string kDataExpected[][2] = {
-    {"", ""},
-    {"1", "2"},
-    {"a", "s"},
+  const std::string kDataExpected[][2] = {
+      {"", ""},
+      {"1", "2"},
+      {"a", "s"},
   };
   for (size_t i = 0; i < arraysize(kDataShortcut); ++i) {
     config::Config::SelectionShortcut shortcut = kDataShortcut[i];
-    const string *expected = kDataExpected[i];
+    const std::string *expected = kDataExpected[i];
 
     config::Config config;
     config.set_selection_shortcut(shortcut);
@@ -3471,8 +3455,7 @@ TEST_F(SessionTest, Shortcut) {
     Segments segments;
     SetAiueo(&segments);
     const ImeContext &context = session->context();
-    ConversionRequest request(&context.composer(),
-                              &context.GetRequest(),
+    ConversionRequest request(&context.composer(), &context.GetRequest(),
                               &context.GetConfig());
     FillT13Ns(request, &segments);
     GetConverterMock()->SetStartConversionForRequest(&segments, true);
@@ -4511,7 +4494,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
   // First, test against http://b/6027559
   config::Config config;
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
@@ -4524,11 +4507,11 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA,
+                                    session.get(), &command));
     EXPECT_FALSE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_KATAKANA, session.get(),
+                                &command));
     // In this case, space key event should not be consumed.
     EXPECT_FALSE(command.output().consumed());
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
@@ -4546,18 +4529,18 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_PREEDIT("あ", command);
     EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
 
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_KATAKANA, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ ", command);
     EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
   }
 
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertAlternateSpace\n"
         "Composition\tSpace\tInsertAlternateSpace\n";
@@ -4570,11 +4553,11 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_KATAKANA, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_RESULT("　", command);
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
@@ -4593,11 +4576,11 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_PREEDIT("あ", command);
     EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
 
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_KATAKANA,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_KATAKANA, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_KATAKANA, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("あ　", command);  // Full-width space
     EXPECT_EQ(ImeContext::COMPOSITION, session->context().state());
@@ -4605,7 +4588,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Second, the 1st case filed in http://b/2936141
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
@@ -4620,12 +4603,12 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_ASCII,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_ASCII, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_RESULT("　", command);
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session->context().state());
@@ -4637,20 +4620,20 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "a", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("a", commands::HALF_ASCII, session.get(),
+                                    &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "a", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(
+        SendKeyWithMode("a", commands::HALF_ASCII, session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("a", command);
     EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
 
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::HALF_ASCII,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::HALF_ASCII, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::HALF_ASCII, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("a　", command);  // Full-width space
     EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
@@ -4658,7 +4641,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 
   // Finally, the 2nd case filed in http://b/2936141
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tSpace\tInsertSpace\n"
         "Composition\tSpace\tInsertSpace\n";
@@ -4673,11 +4656,11 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::FULL_ASCII,
+                                    session.get(), &command));
     EXPECT_FALSE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::FULL_ASCII, session.get(),
+                                &command));
     EXPECT_FALSE(command.output().consumed());
   }
   {
@@ -4686,20 +4669,20 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     InitSessionToPrecomposition(session.get());
 
     commands::Command command;
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "a", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("a", commands::FULL_ASCII, session.get(),
+                                    &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "a", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(
+        SendKeyWithMode("a", commands::FULL_ASCII, session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("ａ", command);
     EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
 
-    EXPECT_TRUE(TestSendKeyWithMode(
-        "Space", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(TestSendKeyWithMode("Space", commands::FULL_ASCII,
+                                    session.get(), &command));
     EXPECT_TRUE(command.output().consumed());
-    EXPECT_TRUE(SendKeyWithMode(
-        "Space", commands::FULL_ASCII, session.get(), &command));
+    EXPECT_TRUE(SendKeyWithMode("Space", commands::FULL_ASCII, session.get(),
+                                &command));
     EXPECT_TRUE(command.output().consumed());
     EXPECT_PREEDIT("ａ ", command);
     EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
@@ -4709,7 +4692,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
 TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertSpace\n"
       "Precomposition\tShift Space\tInsertSpace\n";
@@ -4751,7 +4734,7 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertAlternateSpace\n"
       "Precomposition\tShift Space\tInsertAlternateSpace\n";
@@ -4793,7 +4776,7 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertHalfSpace\n"
       "Precomposition\tShift Space\tInsertHalfSpace\n";
@@ -4834,7 +4817,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
 TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Precomposition\tSpace\tInsertFullSpace\n"
       "Precomposition\tShift Space\tInsertFullSpace\n";
@@ -4877,7 +4860,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
 
 TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Direct\tCtrl a\tInsertSpace\n"
       "Direct\tCtrl b\tInsertAlternateSpace\n"
@@ -4936,7 +4919,7 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
 TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Composition\tCtrl a\tInsertSpace\n"
       "Composition\tCtrl b\tInsertAlternateSpace\n"
@@ -4983,7 +4966,7 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
 TEST_F(SessionTest, InsertSpaceInConversionMode) {
   // This is a unittest against http://b/5872031
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "Conversion\tCtrl a\tInsertSpace\n"
       "Conversion\tCtrl b\tInsertAlternateSpace\n"
@@ -5075,7 +5058,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   std::unique_ptr<Session> session;
   config::Config config;
 
-  { // When |empty_command| does not have |empty_command.key().input()| field,
+  {  // When |empty_command| does not have |empty_command.key().input()| field,
     // the current input mode will be used.
 
     // Default config -- follow to the current mode.
@@ -5175,7 +5158,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     EXPECT_FALSE(session->IsFullWidthInsertSpace(empty_input));
   }
 
-  { // When |input| has |input.key().mode()| field,
+  {  // When |input| has |input.key().mode()| field,
     // the specified input mode by |input| will be used.
 
     // Default config -- follow to the current mode.
@@ -5250,7 +5233,7 @@ TEST_F(SessionTest, Issue1951385) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
 
-  const string exceeded_preedit(500, 'a');
+  const std::string exceeded_preedit(500, 'a');
   ASSERT_EQ(500, exceeded_preedit.size());
   InsertCharacterChars(exceeded_preedit, session.get(), &command);
 
@@ -5312,7 +5295,7 @@ TEST_F(SessionTest, Issue1975771) {
   GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
 
   commands::Command command;
-  commands::KeyEvent* key_event = command.mutable_input()->mutable_key();
+  commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
   key_event->set_key_code('a');
   key_event->set_modifiers(0);  // No modifiers.
   EXPECT_TRUE(session->InsertCharacter(&command));
@@ -5509,8 +5492,7 @@ TEST_F(SessionTest, Issue1556649) {
   InitSessionToPrecomposition(session.get());
   commands::Command command;
   InsertCharacterChars("kudoudesu", session.get(), &command);
-  EXPECT_EQ("くどうです",
-            GetComposition(command));
+  EXPECT_EQ("くどうです", GetComposition(command));
   EXPECT_EQ(5, command.output().preedit().cursor());
 
   command.Clear();
@@ -5603,7 +5585,6 @@ TEST_F(SessionTest, Issue2223823) {
   EXPECT_EQ("G", GetComposition(command));
   EXPECT_EQ(commands::HIRAGANA, command.output().mode());
 }
-
 
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
@@ -5991,12 +5972,9 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
 
 TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   composer::Table table;
-  table.AddRuleWithAttributes("ka", "か", "",
-                              composer::DIRECT_INPUT);
-  table.AddRuleWithAttributes("tt", "っ", "t",
-                              composer::DIRECT_INPUT);
-  table.AddRuleWithAttributes("ta", "た", "",
-                              composer::NO_TABLE_ATTRIBUTE);
+  table.AddRuleWithAttributes("ka", "か", "", composer::DIRECT_INPUT);
+  table.AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
+  table.AddRuleWithAttributes("ta", "た", "", composer::NO_TABLE_ATTRIBUTE);
 
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
@@ -6025,14 +6003,12 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     InitSessionToDirect(session.get());
 
     commands::Command command;
-    command.mutable_input()->mutable_key()->set_mode(
-        commands::HIRAGANA);
+    command.mutable_input()->mutable_key()->set_mode(commands::HIRAGANA);
     EXPECT_TRUE(session->IMEOn(&command));
     EXPECT_TRUE(command.output().has_consumed());
     EXPECT_TRUE(command.output().consumed());
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HIRAGANA,
-              command.output().mode());
+    EXPECT_EQ(commands::HIRAGANA, command.output().mode());
     SendKey("a", session.get(), &command);
     EXPECT_SINGLE_SEGMENT("あ", command);
   }
@@ -6041,12 +6017,10 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     InitSessionToDirect(session.get());
 
     commands::Command command;
-    command.mutable_input()->mutable_key()->set_mode(
-        commands::FULL_KATAKANA);
+    command.mutable_input()->mutable_key()->set_mode(commands::FULL_KATAKANA);
     EXPECT_TRUE(session->IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::FULL_KATAKANA,
-              command.output().mode());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().mode());
     SendKey("a", session.get(), &command);
     EXPECT_SINGLE_SEGMENT("ア", command);
   }
@@ -6055,12 +6029,10 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     InitSessionToDirect(session.get());
 
     commands::Command command;
-    command.mutable_input()->mutable_key()->set_mode(
-        commands::HALF_KATAKANA);
+    command.mutable_input()->mutable_key()->set_mode(commands::HALF_KATAKANA);
     EXPECT_TRUE(session->IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_KATAKANA,
-              command.output().mode());
+    EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
     SendKey("a", session.get(), &command);
     // "ｱ" (half-width Katakana)
     EXPECT_SINGLE_SEGMENT("ｱ", command);
@@ -6070,12 +6042,10 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     InitSessionToDirect(session.get());
 
     commands::Command command;
-    command.mutable_input()->mutable_key()->set_mode(
-        commands::FULL_ASCII);
+    command.mutable_input()->mutable_key()->set_mode(commands::FULL_ASCII);
     EXPECT_TRUE(session->IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::FULL_ASCII,
-              command.output().mode());
+    EXPECT_EQ(commands::FULL_ASCII, command.output().mode());
     SendKey("a", session.get(), &command);
     EXPECT_SINGLE_SEGMENT("ａ", command);
   }
@@ -6084,12 +6054,10 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     InitSessionToDirect(session.get());
 
     commands::Command command;
-    command.mutable_input()->mutable_key()->set_mode(
-        commands::HALF_ASCII);
+    command.mutable_input()->mutable_key()->set_mode(commands::HALF_ASCII);
     EXPECT_TRUE(session->IMEOn(&command));
     EXPECT_TRUE(command.output().has_mode());
-    EXPECT_EQ(commands::HALF_ASCII,
-              command.output().mode());
+    EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
     SendKey("a", session.get(), &command);
     EXPECT_SINGLE_SEGMENT("a", command);
   }
@@ -6448,7 +6416,6 @@ TEST_F(SessionTest, Issue5742293) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session->set_client_capability(capability);
 
-
   SetUndoContext(session.get());
 
   commands::Command command;
@@ -6618,15 +6585,13 @@ TEST_F(SessionTest, AutoConversion) {
           config.set_auto_conversion_key(pattern);
 
           int flag[4];
-          flag[0] = static_cast<int>(
-              config.auto_conversion_key() &
-              config::Config::AUTO_CONVERSION_KUTEN);
-          flag[1] = static_cast<int>(
-              config.auto_conversion_key() &
-              config::Config::AUTO_CONVERSION_TOUTEN);
-          flag[2] = static_cast<int>(
-              config.auto_conversion_key() &
-              config::Config::AUTO_CONVERSION_QUESTION_MARK);
+          flag[0] = static_cast<int>(config.auto_conversion_key() &
+                                     config::Config::AUTO_CONVERSION_KUTEN);
+          flag[1] = static_cast<int>(config.auto_conversion_key() &
+                                     config::Config::AUTO_CONVERSION_TOUTEN);
+          flag[2] =
+              static_cast<int>(config.auto_conversion_key() &
+                               config::Config::AUTO_CONVERSION_QUESTION_MARK);
           flag[3] = static_cast<int>(
               config.auto_conversion_key() &
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
@@ -6638,11 +6603,11 @@ TEST_F(SessionTest, AutoConversion) {
             commands::Command command;
 
             if (kana_mode) {
-              string key = "てすと";
+              std::string key = "てすと";
               key += trigger_key[i];
               InsertCharacterString(key, "wst/", session.get(), &command);
             } else {
-              string key = "tesuto";
+              std::string key = "tesuto";
               key += trigger_key[i];
               InsertCharacterChars(key, session.get(), &command);
             }
@@ -6746,58 +6711,47 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
   EXPECT_EQ(1, command.output().preedit().cursor());
 
   SendKey("2", session.get(), &command);
-  EXPECT_EQ("あか",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あか", command.output().preedit().segment(0).value());
   EXPECT_EQ(2, command.output().preedit().cursor());
 
   SendKey("2", session.get(), &command);
-  EXPECT_EQ("あき",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あき", command.output().preedit().segment(0).value());
   EXPECT_EQ(2, command.output().preedit().cursor());
 
   SendKey("*", session.get(), &command);
-  EXPECT_EQ("あぎ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あぎ", command.output().preedit().segment(0).value());
   EXPECT_EQ(2, command.output().preedit().cursor());
 
   SendKey("*", session.get(), &command);
-  EXPECT_EQ("あき",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あき", command.output().preedit().segment(0).value());
   EXPECT_EQ(2, command.output().preedit().cursor());
 
   SendKey("3", session.get(), &command);
-  EXPECT_EQ("あきさ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきさ", command.output().preedit().segment(0).value());
   EXPECT_EQ(3, command.output().preedit().cursor());
 
   SendSpecialKey(commands::KeyEvent::RIGHT, session.get(), &command);
-  EXPECT_EQ("あきさ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきさ", command.output().preedit().segment(0).value());
   EXPECT_EQ(3, command.output().preedit().cursor());
 
   SendKey("3", session.get(), &command);
-  EXPECT_EQ("あきささ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきささ", command.output().preedit().segment(0).value());
   EXPECT_EQ(4, command.output().preedit().cursor());
 
   SendSpecialKey(commands::KeyEvent::LEFT, session.get(), &command);
-  EXPECT_EQ("あきささ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきささ", command.output().preedit().segment(0).value());
   EXPECT_EQ(3, command.output().preedit().cursor());
 
   SendKey("4", session.get(), &command);
-  EXPECT_EQ("あきさたさ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきさたさ", command.output().preedit().segment(0).value());
   EXPECT_EQ(4, command.output().preedit().cursor());
 
   SendSpecialKey(commands::KeyEvent::LEFT, session.get(), &command);
-  EXPECT_EQ("あきさたさ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきさたさ", command.output().preedit().segment(0).value());
   EXPECT_EQ(3, command.output().preedit().cursor());
 
   SendKey("*", session.get(), &command);
-  EXPECT_EQ("あきざたさ",
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきざたさ", command.output().preedit().segment(0).value());
   EXPECT_EQ(3, command.output().preedit().cursor());
 
   // Test for End key
@@ -6807,8 +6761,7 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
   SendSpecialKey(commands::KeyEvent::END, session.get(), &command);
   SendKey("6", session.get(), &command);
   SendKey("*", session.get(), &command);
-  EXPECT_EQ("あきざたさひば",
-      command.output().preedit().segment(0).value());
+  EXPECT_EQ("あきざたさひば", command.output().preedit().segment(0).value());
   EXPECT_EQ(7, command.output().preedit().cursor());
 
   // Test for Right key
@@ -6819,7 +6772,7 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
   SendKey("6", session.get(), &command);
   SendKey("*", session.get(), &command);
   EXPECT_EQ("あきざたさひばひば",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   EXPECT_EQ(9, command.output().preedit().cursor());
 
   // Test for Left key
@@ -6827,33 +6780,33 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
   SendKey("6", session.get(), &command);
   SendKey("6", session.get(), &command);
   EXPECT_EQ("あきざたさひばひばひ",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   SendSpecialKey(commands::KeyEvent::LEFT, session.get(), &command);
   SendKey("6", session.get(), &command);
   EXPECT_EQ("あきざたさひばひばはひ",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   SendKey("*", session.get(), &command);
   EXPECT_EQ("あきざたさひばひばばひ",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   EXPECT_EQ(10, command.output().preedit().cursor());
 
   // Test for Home key
   SendSpecialKey(commands::KeyEvent::HOME, session.get(), &command);
   EXPECT_EQ("あきざたさひばひばばひ",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   SendKey("6", session.get(), &command);
   SendKey("*", session.get(), &command);
   EXPECT_EQ("ばあきざたさひばひばばひ",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   EXPECT_EQ(1, command.output().preedit().cursor());
 
   SendSpecialKey(commands::KeyEvent::END, session.get(), &command);
   SendKey("5", session.get(), &command);
   EXPECT_EQ("ばあきざたさひばひばばひな",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   SendKey("*", session.get(), &command);  // no effect
   EXPECT_EQ("ばあきざたさひばひばばひな",
-      command.output().preedit().segment(0).value());
+            command.output().preedit().segment(0).value());
   EXPECT_EQ(13, command.output().preedit().cursor());
 }
 
@@ -6871,8 +6824,7 @@ TEST_F(SessionTest, KeitaiInput_flick) {
     SendKey("*", session.get(), &command);
     InsertCharacterCodeAndString('3', "ょ", session.get(), &command);
     InsertCharacterCodeAndString('1', "う", session.get(), &command);
-    EXPECT_EQ("はじょう",
-        command.output().preedit().segment(0).value());
+    EXPECT_EQ("はじょう", command.output().preedit().segment(0).value());
   }
 
   {
@@ -7066,7 +7018,7 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   command.mutable_input()->mutable_command()->set_id(0);
   ASSERT_TRUE(session->CommitCandidate(&command));
   EXPECT_FALSE(command.output().has_preedit());
-  EXPECT_RESULT("猫のしっぽを抜いた" , command);
+  EXPECT_RESULT("猫のしっぽを抜いた", command);
 }
 
 TEST_F(SessionTest, CommitCandidate_suggestion) {
@@ -7106,11 +7058,10 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
 }
 
 bool FindCandidateID(const commands::Candidates &candidates,
-                      const string &value, int *id) {
+                     const std::string &value, int *id) {
   CHECK(id);
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate =
-        candidates.candidate(i);
+    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
     if (candidate.value() == value) {
       *id = candidate.id();
       return true;
@@ -7120,13 +7071,12 @@ bool FindCandidateID(const commands::Candidates &candidates,
 }
 
 void FindCandidateIDs(const commands::Candidates &candidates,
-                      const string &value, std::vector<int> *ids) {
+                      const std::string &value, std::vector<int> *ids) {
   CHECK(ids);
   ids->clear();
   for (size_t i = 0; i < candidates.candidate_size(); ++i) {
-    const commands::Candidates::Candidate &candidate =
-        candidates.candidate(i);
-    LOG(INFO) <<  candidate.value();
+    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+    LOG(INFO) << candidate.value();
     if (candidate.value() == value) {
       ids->push_back(candidate.id());
     }
@@ -7176,7 +7126,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
   SendKey("k", session.get(), &command);
   ASSERT_TRUE(command.output().has_candidates());
   int id = 0;
-#if defined(OS_WIN) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(__APPLE__)
   // meta candidates are in cascading window
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else
@@ -7217,8 +7167,7 @@ TEST_F(SessionTest, ConvertReverse) {
 
   EXPECT_TRUE(session->SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(kKanjiAiueo,
-            command.output().preedit().segment(0).value());
+  EXPECT_EQ(kKanjiAiueo, command.output().preedit().segment(0).value());
   EXPECT_EQ(kKanjiAiueo,
             command.output().all_candidate_words().candidates(0).value());
   EXPECT_TRUE(command.output().has_candidates());
@@ -7359,7 +7308,7 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 TEST_F(SessionTest, ConvertReverseFromOffState) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const string kanji_aiueo = "阿伊宇江於";
+  const std::string kanji_aiueo = "阿伊宇江於";
 
   // IMEOff
   commands::Command command;
@@ -7383,7 +7332,7 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ("あいうえお", command.output().preedit().segment(0).value());
   EXPECT_EQ("あいうえお",
-      command.output().all_candidate_words().candidates(0).value());
+            command.output().all_candidate_words().candidates(0).value());
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_GT(command.output().candidates().candidate_size(), 0);
 
@@ -7888,7 +7837,6 @@ TEST_F(SessionTest, UndoKeyAction) {
     EXPECT_EQ("ざ", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
 
-
     SetSendKeyCommand("*", &command);
     command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
     session.SendKey(&command);
@@ -8155,8 +8103,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
   session->MoveCursorRight(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result_ResultType_STRING,
-            command.output().result().type());
+  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
   EXPECT_EQ("MOZC", command.output().result().value());
   EXPECT_EQ(0, command.output().result().cursor_offset());
 }
@@ -8191,8 +8138,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   session->MoveCursorLeft(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result_ResultType_STRING,
-            command.output().result().type());
+  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
   EXPECT_EQ("MOZC", command.output().result().value());
   EXPECT_EQ(-4, command.output().result().cursor_offset());
 }
@@ -8214,8 +8160,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
   session->MoveCursorRight(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result_ResultType_STRING,
-            command.output().result().type());
+  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
   EXPECT_EQ("GOOGLE", command.output().result().value());
   EXPECT_EQ(0, command.output().result().cursor_offset());
   EXPECT_TRUE(command.output().has_candidates());
@@ -8244,8 +8189,7 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
   session->MoveCursorLeft(&command);
   EXPECT_FALSE(command.output().consumed());
   ASSERT_TRUE(command.output().has_result());
-  EXPECT_EQ(commands::Result_ResultType_STRING,
-            command.output().result().type());
+  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
   EXPECT_EQ("GOOGLE", command.output().result().value());
   EXPECT_EQ(-6, command.output().result().cursor_offset());
   EXPECT_FALSE(command.output().has_candidates());
@@ -8266,8 +8210,7 @@ TEST_F(SessionTest, CommitHead) {
   EXPECT_EQ("もｚ", GetComposition(command));
   command.Clear();
   session->CommitHead(1, &command);
-  EXPECT_EQ(commands::Result_ResultType_STRING,
-            command.output().result().type());
+  EXPECT_EQ(commands::Result::STRING, command.output().result().type());
   EXPECT_EQ("も", command.output().result().value());
   EXPECT_EQ("ｚ", GetComposition(command));
   InsertCharacterChars("u", session.get(), &command);
@@ -8514,7 +8457,7 @@ TEST_F(SessionTest, ImeOff) {
 TEST_F(SessionTest, EditCancelAndIMEOff) {
   config::Config config;
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Composition\thankaku/zenkaku\tCancelAndIMEOff\n"
@@ -8652,7 +8595,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   config::Config config;
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\tESC\tCancel\n"
         "Composition\tESC\tCancel\n"
@@ -8764,7 +8707,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   config::Config config;
   {
-    const string custom_keymap_table =
+    const std::string custom_keymap_table =
         "status\tkey\tcommand\n"
         "Precomposition\thankaku/zenkaku\tCancelAndIMEOff\n"
         "Composition\thankaku/zenkaku\tCancelAndIMEOff\n"
@@ -8934,19 +8877,19 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   GetConverterMock()->SetStartConversionForRequest(&segments_a_conv, true);
 
   commands::Command command;
-  SendKey("a", &session, &command);     // "あ|" (composition)
+  SendKey("a", &session, &command);  // "あ|" (composition)
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
 
-  SendKey(".", &session, &command);     // "あ。|" (conversion)
+  SendKey(".", &session, &command);  // "あ。|" (conversion)
   EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
-  SendKey("ESC", &session, &command);   // "あ。|" (composition)
+  SendKey("ESC", &session, &command);  // "あ。|" (composition)
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
 
   SendKey("Left", &session, &command);  // "あ|。" (composition)
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
 
-  SendKey("i", &session, &command);     // "あい|。" (should be composition)
+  SendKey("i", &session, &command);  // "あい|。" (should be composition)
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
 }
 
@@ -9051,7 +8994,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
   command.mutable_output()->Clear();
   EXPECT_TRUE(session.SendKey(&command));
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_PREEDIT(string(kZa) + kOnsenManju, command);
+  EXPECT_PREEDIT(std::string(kZa) + kOnsenManju, command);
 }
 
 TEST_F(SessionTest, IndirectImeOnOff) {
@@ -9066,15 +9009,15 @@ TEST_F(SessionTest, IndirectImeOnOff) {
   {
     commands::Command command;
     // 'a'
-    TestSendKeyWithModeAndActivated(
-        "a", true, commands::HIRAGANA, session.get(), &command);
+    TestSendKeyWithModeAndActivated("a", true, commands::HIRAGANA,
+                                    session.get(), &command);
     EXPECT_TRUE(command.output().consumed());
   }
   {
     commands::Command command;
     // 'a'
-    SendKeyWithModeAndActivated(
-        "a", true, commands::HIRAGANA, session.get(), &command);
+    SendKeyWithModeAndActivated("a", true, commands::HIRAGANA, session.get(),
+                                &command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_TRUE(command.output().has_status());
     EXPECT_TRUE(command.output().status().activated())
@@ -9083,15 +9026,15 @@ TEST_F(SessionTest, IndirectImeOnOff) {
   {
     commands::Command command;
     // 'a'
-    TestSendKeyWithModeAndActivated(
-        "a", false, commands::HIRAGANA, session.get(), &command);
+    TestSendKeyWithModeAndActivated("a", false, commands::HIRAGANA,
+                                    session.get(), &command);
     EXPECT_FALSE(command.output().consumed());
   }
   {
     commands::Command command;
     // 'a'
-    SendKeyWithModeAndActivated(
-        "a", false, commands::HIRAGANA, session.get(), &command);
+    SendKeyWithModeAndActivated("a", false, commands::HIRAGANA, session.get(),
+                                &command);
     EXPECT_FALSE(command.output().consumed());
     EXPECT_FALSE(command.output().has_result())
         << "Indirect IME off flushes ongoing composition";
@@ -9236,6 +9179,36 @@ TEST_F(SessionTest, MakeSureIMEOff) {
       EXPECT_FALSE(command.output().status().activated());
       EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
     }
+  }
+}
+
+TEST_F(SessionTest, DeleteCandidateFromHistory) {
+  // InitSessionToConversionWithAiueo initializes candidates as follows:
+  // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
+  {  // Delete focused candidate (i.e. without candidate ID).
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    InitSessionToConversionWithAiueo(session.get());
+    commands::Command command;
+    session->DeleteCandidateFromHistory(&command);
+
+    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
+    EXPECT_EQ(1, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
+    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
+    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedValue());  // ID == 0
+  }
+  {  // Delete candidate with ID.
+    std::unique_ptr<Session> session(new Session(engine_.get()));
+    InitSessionToConversionWithAiueo(session.get());
+    commands::Command command;
+    SetSendCommandCommand(
+        commands::SessionCommand::DELETE_CANDIDATE_FROM_HISTORY, &command);
+    command.mutable_input()->mutable_command()->set_id(1);
+    session->DeleteCandidateFromHistory(&command);
+
+    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
+    EXPECT_EQ(2, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
+    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
+    EXPECT_EQ("アイウエオ", udm_mock->GetLastClearedValue());  // ID == 1
   }
 }
 

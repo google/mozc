@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,15 +36,15 @@
 #include <QtWidgets/QDialog>
 
 #include "base/system_util.h"
-#include "gui/base/locale_util.h"
 #include "gui/base/singleton_window_helper.h"
+#include "gui/base/util.h"
 #include "gui/config_dialog/config_dialog.h"
 
 int RunConfigDialog(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_config_dialog);
-  QApplication app(argc, argv);
+  auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  string name = "config_dialog.";
+  std::string name = "config_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
   mozc::gui::SingletonWindowHelper window_helper(name);
   if (window_helper.FindPreviousWindow()) {
@@ -53,11 +53,11 @@ int RunConfigDialog(int argc, char *argv[]) {
     return -1;
   }
 
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("config_dialog");
-  mozc::gui::LocaleUtil::InstallTranslationMessageAndFont("keymap");
+  mozc::gui::GuiUtil::InstallTranslator("config_dialog");
+  mozc::gui::GuiUtil::InstallTranslator("keymap");
   mozc::gui::ConfigDialog mozc_config;
 
   mozc_config.show();
   mozc_config.raise();
-  return app.exec();
+  return app->exec();
 }

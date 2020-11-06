@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,11 @@
 #include <memory>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "data_manager/data_manager_interface.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
-
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
@@ -58,13 +57,13 @@ class TypingModel {
 
   // Gets cost value from key.
   // virtual for mocking.
-  virtual int GetCost(StringPiece key) const;
+  virtual int GetCost(absl::string_view key) const;
 
   // Creates a TypingModel based on SpecialRomanjiTable.
   // nullptr if no corresponding model is available.
   static std::unique_ptr<const TypingModel> CreateTypingModel(
       const mozc::commands::Request::SpecialRomanjiTable &special_romanji_table,
-      const DataManagerInterface& data_manager);
+      const DataManagerInterface &data_manager);
 
   // No data means its const is infinity.
   static const int kInfinity;
@@ -81,7 +80,7 @@ class TypingModel {
   // so when accessing to cost value, index should be
   // calculated by this method.
   // c.f. gen_typing_model.py's GetIndexFromKey.
-  size_t GetIndex(StringPiece key) const;
+  size_t GetIndex(absl::string_view key) const;
 
   // Radix table, needed by GetIndex.
   std::unique_ptr<unsigned char[]> character_to_radix_table_;

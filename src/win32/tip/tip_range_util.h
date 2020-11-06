@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
 #ifndef MOZC_WIN32_TIP_TIP_RANGE_UTIL_H_
 #define MOZC_WIN32_TIP_TIP_RANGE_UTIL_H_
 
-#include <Windows.h>
 #include <InputScope.h>
+#include <Windows.h>
 #include <msctf.h>
 
 #include <string>
@@ -48,30 +48,27 @@ class TipRangeUtil {
  public:
   // Sets the specified |range| into |context|.
   // Returns the general result code.
-  static HRESULT SetSelection(
-      ITfContext *context, TfEditCookie edit_cookie, ITfRange *range,
-      TfActiveSelEnd active_sel_end);
+  static HRESULT SetSelection(ITfContext *context, TfEditCookie edit_cookie,
+                              ITfRange *range, TfActiveSelEnd active_sel_end);
 
   // Retrieves the default selection from |context| into |range|.
   // Returns the general result code.
-  static HRESULT GetDefaultSelection(
-      ITfContext *context, TfEditCookie edit_cookie, ITfRange **range,
-      TfActiveSelEnd *active_sel_end);
+  static HRESULT GetDefaultSelection(ITfContext *context,
+                                     TfEditCookie edit_cookie, ITfRange **range,
+                                     TfActiveSelEnd *active_sel_end);
 
   // Retrieves the text from |range| into |text|.
   // Returns the general result code.
-  static HRESULT GetText(
-      ITfRange *range, TfEditCookie edit_cookie, std::wstring *text);
+  static HRESULT GetText(ITfRange *range, TfEditCookie edit_cookie,
+                         std::wstring *text);
 
   // Retrieves the input scopes from |range| into |input_scopes|.
   // Returns the general result code.
-  static HRESULT GetInputScopes(ITfRange *range,
-                                TfEditCookie read_cookie,
+  static HRESULT GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
                                 std::vector<InputScope> *input_scopes);
 
   // Checks whether or not |range_test| becomes a subset of |range_cover|.
-  static bool IsRangeCovered(TfEditCookie edit_cookie,
-                             ITfRange *range_test,
+  static bool IsRangeCovered(TfEditCookie edit_cookie, ITfRange *range_test,
                              ITfRange *range_cover);
 
   // Returns the result of ITfContextView::GetTextExt with a workaround for a
@@ -80,10 +77,8 @@ class TipRangeUtil {
   // work depending on the attached application implements
   // ITextStoreACP::GetACPFromPoint.
   static HRESULT GetTextExt(ITfContextView *context_view,
-                            TfEditCookie read_cookie,
-                            ITfRange *range,
-                            RECT *rect,
-                            bool *clipped);
+                            TfEditCookie read_cookie, ITfRange *range,
+                            RECT *rect, bool *clipped);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipRangeUtil);

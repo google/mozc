@@ -1,0 +1,366 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "select_mozc",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library_mozc(
+    name = "renderer_client",
+    srcs = ["renderer_client.cc"],
+    hdrs = ["renderer_client.h"],
+    deps = [
+        ":renderer_interface",
+        "//base",
+        "//base:clock",
+        "//base:logging",
+        "//base:mutex",
+        "//base:port",
+        "//base:process",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:thread",
+        "//base:util",
+        "//base:version",
+        "//ipc",
+        "//ipc:named_event",
+        "//protocol:renderer_proto",
+        "@com_google_absl//absl/memory",
+    ] + select_mozc(
+        ios = ["//base:mac_util"],
+    ),
+)
+
+cc_test_mozc(
+    name = "renderer_client_test",
+    size = "medium",
+    srcs = ["renderer_client_test.cc"],
+    requires_full_emulation = False,
+    tags = [
+        "disable_on_nacl_test",
+        "no_android",
+    ],
+    deps = [
+        ":renderer_client",
+        ":renderer_interface",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//base:version",
+        "//ipc",
+        "//protocol:renderer_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library_mozc(
+    name = "renderer_server",
+    srcs = ["renderer_server.cc"],
+    hdrs = ["renderer_server.h"],
+    deps = [
+        ":renderer_interface",
+        "//base",
+        "//base:flags",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//client",
+        "//client:client_interface",
+        "//config:config_handler",
+        "//ipc",
+        "//ipc:named_event",
+        "//ipc:process_watch_dog",
+        "//protocol:config_proto",
+        "//protocol:renderer_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "renderer_server_test",
+    size = "medium",
+    srcs = ["renderer_server_test.cc"],
+    requires_full_emulation = False,
+    tags = [
+        "disable_on_nacl_test",
+        "no_android",
+    ],
+    deps = [
+        ":renderer_client",
+        ":renderer_interface",
+        ":renderer_server",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//ipc:ipc_test_util",
+        "//protocol:renderer_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "table_layout",
+    srcs = [
+        "table_layout.cc",
+        "table_layout_interface.h",
+    ],
+    hdrs = ["table_layout.h"],
+    deps = [
+        "//base",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "table_layout_test",
+    size = "small",
+    srcs = [
+        "table_layout_interface.h",
+        "table_layout_test.cc",
+    ],
+    requires_full_emulation = False,
+    tags = [
+        "disable_on_nacl_test",
+        "no_android",
+    ],
+    deps = [
+        ":table_layout",
+        "//base",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "window_util",
+    srcs = ["window_util.cc"],
+    hdrs = ["window_util.h"],
+    deps = [
+        "//base",
+        "//base:coordinates",
+    ],
+)
+
+cc_library_mozc(
+    name = "renderer_interface",
+    hdrs = ["renderer_interface.h"],
+)
+
+cc_library_mozc(
+    name = "unix_const",
+    hdrs = ["unix/const.h"],
+    deps = ["//base:port"],
+)
+
+cc_library_mozc(
+    name = "renderer_mock",
+    testonly = 1,
+    hdrs = ["renderer_mock.h"],
+    deps = [
+        ":renderer_interface",
+        "//testing:gunit",
+    ],
+)
+
+cc_test_mozc(
+    name = "window_util_test",
+    size = "small",
+    srcs = ["window_util_test.cc"],
+    requires_full_emulation = False,
+    tags = [
+        "disable_on_nacl_test",
+        "no_android",
+    ],
+    deps = [
+        ":window_util",
+        "//base",
+        "//base:coordinates",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "renderer_style_handler",
+    srcs = ["renderer_style_handler.cc"],
+    hdrs = ["renderer_style_handler.h"],
+    deps = [
+        "//base:singleton",
+        "//protocol:renderer_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "renderer_style_handler_test",
+    size = "small",
+    srcs = ["renderer_style_handler_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":renderer_style_handler",
+        "//protocol:renderer_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+# This rule is only for Linux application build.
+cc_library_mozc(
+    name = "mozc_renderer_lib",
+    srcs = select_mozc(
+        linux = [
+            "unix/cairo_factory.cc",
+            "unix/cairo_wrapper.cc",
+            "unix/candidate_window.cc",
+            "unix/draw_tool.cc",
+            "unix/font_spec.cc",
+            "unix/gtk_window_base.cc",
+            "unix/gtk_wrapper.cc",
+            "unix/infolist_window.cc",
+            "unix/pango_wrapper.cc",
+            "unix/text_renderer.cc",
+            "unix/unix_renderer.cc",
+            "unix/unix_server.cc",
+            "unix/window_manager.cc",
+        ],
+    ),
+    hdrs = select_mozc(
+        linux = [
+            "unix/cairo_factory.h",
+            "unix/cairo_factory_interface.h",
+            "unix/cairo_wrapper.h",
+            "unix/cairo_wrapper_interface.h",
+            "unix/candidate_window.h",
+            "unix/const.h",
+            "unix/draw_tool.h",
+            "unix/draw_tool_interface.h",
+            "unix/font_spec.h",
+            "unix/font_spec_interface.h",
+            "unix/gtk_window_base.h",
+            "unix/gtk_window_interface.h",
+            "unix/gtk_wrapper.h",
+            "unix/gtk_wrapper_interface.h",
+            "unix/infolist_window.h",
+            "unix/pango_wrapper.h",
+            "unix/pango_wrapper_interface.h",
+            "unix/text_renderer.h",
+            "unix/text_renderer_interface.h",
+            "unix/unix_renderer.h",
+            "unix/unix_server.h",
+            "unix/window_manager.h",
+            "unix/window_manager_interface.h",
+        ],
+    ),
+    deps = [
+        "//base",
+        "//client",
+        "//config:stats_config_util",
+        "//ipc",
+        "//protocol:config_proto",
+        "//protocol:renderer_proto",
+        ":renderer_server",
+        ":renderer_style_handler",
+        ":table_layout",
+        ":window_util",
+    ] + select_mozc(
+        oss_linux = ["@gtk2//:gtk2"],
+    ),
+)
+
+# This rule is only for Linux application build.
+cc_binary_mozc(
+    name = "mozc_renderer",
+    srcs = ["mozc_renderer_main.cc"],
+    defines = select_mozc(
+        linux = ["ENABLE_GTK_RENDERER"],
+    ),
+    deps = [
+        ":mozc_renderer_lib",
+        "//base:crash_report_handler",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:util",
+        "//config:stats_config_util",
+    ] + select_mozc(
+        linux = [":renderer_client"],
+    ),
+)
+
+# This rule is only for Linux application build.
+cc_test_mozc(
+    name = "gtk_renderer_test",
+    srcs = select_mozc(
+        linux = [
+            "renderer_mock.h",
+            "table_layout_mock.h",
+            "unix/cairo_factory_interface.h",
+            "unix/cairo_factory_mock.h",
+            "unix/cairo_wrapper_interface.h",
+            "unix/cairo_wrapper_mock.h",
+            "unix/candidate_window_test.cc",
+            "unix/draw_tool_interface.h",
+            "unix/draw_tool_mock.h",
+            "unix/draw_tool_test.cc",
+            "unix/font_spec_interface.h",
+            "unix/font_spec_test.cc",
+            "unix/gtk_window_base_test.cc",
+            "unix/gtk_window_interface.h",
+            "unix/gtk_window_mock.h",
+            "unix/gtk_wrapper_interface.h",
+            "unix/gtk_wrapper_mock.h",
+            "unix/infolist_window_test.cc",
+            "unix/pango_wrapper_interface.h",
+            "unix/text_renderer_interface.h",
+            "unix/text_renderer_mock.h",
+            "unix/text_renderer_test.cc",
+            "unix/unix_renderer_test.cc",
+            "unix/unix_server_test.cc",
+            "unix/window_manager_interface.h",
+            "unix/window_manager_mock.h",
+            "unix/window_manager_test.cc",
+        ],
+    ),
+    deps = [
+        ":mozc_renderer_lib",
+        "//testing:gunit_main",
+    ] + select_mozc(
+        oss_linux = ["@gtk2//:gtk2"],
+    ),
+)

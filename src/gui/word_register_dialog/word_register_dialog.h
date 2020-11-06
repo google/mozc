@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_WORD_REGISTER_DIALOG_H_
-#define MOZC_GUI_WORD_REGISTER_DIALOG_H_
+#ifndef MOZC_GUI_WORD_REGISTER_DIALOG_WORD_REGISTER_DIALOG_H_
+#define MOZC_GUI_WORD_REGISTER_DIALOG_WORD_REGISTER_DIALOG_H_
 
 #include <QtCore/QString>
 #include <QtGui/QtGui>
 #include <QtWidgets/QDialog>
-
 #include <memory>
 
 #include "base/port.h"
@@ -52,13 +51,12 @@ class UserDictionarySession;
 }  // namespace user_dictionary
 
 namespace gui {
-class WordRegisterDialog : public QDialog,
-                           private Ui::WordRegisterDialog {
+class WordRegisterDialog : public QDialog, private Ui::WordRegisterDialog {
   Q_OBJECT;
 
  public:
   WordRegisterDialog();
-  virtual ~WordRegisterDialog();
+  ~WordRegisterDialog() override;
 
   bool IsAvailable() const;
 
@@ -122,4 +120,4 @@ class WordRegisterDialog : public QDialog,
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // MOZC_GUI_WORD_REGISTER_DIALOG_H_
+#endif  // MOZC_GUI_WORD_REGISTER_DIALOG_WORD_REGISTER_DIALOG_H_

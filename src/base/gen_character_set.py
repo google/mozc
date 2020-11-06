@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 
 __author__ = "taku"
 
+import codecs
 import itertools
 import optparse
 import re
-import string
 import sys
 
 
@@ -85,11 +85,10 @@ class CodePointCategorizer(object):
         ('JISX0213', self._jisx0213),
         ('CP932', self._cp932)]
 
-
   @staticmethod
   def _LoadTable(filename, column_index, pattern, validater):
     result = set()
-    for line in open(filename):
+    for line in codecs.open(filename, encoding='utf-8'):
       if line.startswith('#'):
         # Skip a comment line.
         continue
@@ -250,7 +249,7 @@ def GenerateCategoryBitmap(category_list, name):
   # (at most) four code points.
   bit_list = []
   for _, group in itertools.groupby(enumerate(category_list),
-                                    lambda (codepoint, _): codepoint / 4):
+                                    lambda args: args[0] // 4):  # codepoint/4
     # Fill bits from LSB to MSB for each group.
     bits = 0
     for index, (_, category) in enumerate(group):
@@ -263,7 +262,7 @@ def GenerateCategoryBitmap(category_list, name):
 
   # Output the content. Each line would have (at most) 16 bytes.
   for _, group in itertools.groupby(enumerate(bit_list),
-                                    lambda (index, _): index / 16):
+                                    lambda args: args[0] // 16):  # index/16
     line = ['    \"']
     for _, bits in group:
       line.append('\\x%02X' % bits)
@@ -386,7 +385,7 @@ def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
   # Bitmap lookup.
   # TODO(hidehiko): the bitmap has two huge 0-bits ranges. Reduce them.
   category_map = [
-      (bits, category) for category, bits in CATEGORY_BITMAP.iteritems()]
+      (bits, category) for category, bits in CATEGORY_BITMAP.items()]
   category_map.sort()
 
   lines.extend([
@@ -451,7 +450,7 @@ def main():
                                      options.jisx0213file)
   category_list = [
       categorizer.GetCategory(codepoint)
-      for codepoint in xrange(categorizer.MaxCodePoint() + 1)]
+      for codepoint in range(categorizer.MaxCodePoint() + 1)]
   generated_character_set_header = GenerateCharacterSetHeader(category_list)
 
   # Write the result.
@@ -465,5 +464,5 @@ def main():
     sys.stdout.writelines(generated_character_set_header)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

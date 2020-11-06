@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(OS_WIN)
+// clang-format off
 #include <windows.h>
 #include <imm.h>
+// clang-format on
 #endif  // OS_WIN
 
 #include "protocol/commands.pb.h"
@@ -60,73 +62,74 @@ TEST(ConversionModeUtilTest, ToNativeMode) {
   uint32 native_code = 0;
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::DIRECT, false, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, false,
+                                               &native_code));
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HIRAGANA, false, &native_code));
-  EXPECT_EQ(
-      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, native_code);
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HIRAGANA, false,
+                                               &native_code));
+  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+            native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HALF_KATAKANA, false, &native_code));
-  EXPECT_EQ(
-      IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_ROMAN, native_code);
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_KATAKANA,
+                                               false, &native_code));
+  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_ROMAN,
+            native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HALF_ASCII, false, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_ASCII,
+                                               false, &native_code));
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::FULL_ASCII, false, &native_code));
-  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE |
-            IME_CMODE_ROMAN, native_code);
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_ASCII,
+                                               false, &native_code));
+  EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
+            native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::FULL_KATAKANA, false, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA |
-            IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN, native_code);
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_KATAKANA,
+                                               false, &native_code));
+  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_FULLSHAPE |
+                IME_CMODE_ROMAN,
+            native_code);
 }
 
 TEST(ConversionModeUtilTest, ToNativeModeWithKanaLocked) {
   uint32 native_code = 0;
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::DIRECT, true, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::DIRECT, true,
+                                               &native_code));
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HIRAGANA, true, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HIRAGANA, true,
+                                               &native_code));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HALF_KATAKANA, true, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_KATAKANA,
+                                               true, &native_code));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::HALF_ASCII, true, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::HALF_ASCII, true,
+                                               &native_code));
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::FULL_ASCII, true, &native_code));
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_ASCII, true,
+                                               &native_code));
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE, native_code);
 
   native_code = 0;
-  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(
-      mozc::commands::FULL_KATAKANA, true, &native_code));
-  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA |
-            IME_CMODE_FULLSHAPE, native_code);
+  EXPECT_TRUE(ConversionModeUtil::ToNativeMode(mozc::commands::FULL_KATAKANA,
+                                               true, &native_code));
+  EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_KATAKANA | IME_CMODE_FULLSHAPE,
+            native_code);
 }
 
 TEST(ConversionModeUtilTest, ToMozcMode) {
@@ -175,8 +178,7 @@ TEST(ConversionModeUtilTest, ToMozcMode) {
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
-  EXPECT_FALSE(ConversionModeUtil::ToMozcMode(
-      IME_CMODE_NATIVE, &mode));
+  EXPECT_FALSE(ConversionModeUtil::ToMozcMode(IME_CMODE_NATIVE, &mode));
 
   // Check for FULL_KATAKANA
   mode = mozc::commands::DIRECT;
@@ -186,9 +188,10 @@ TEST(ConversionModeUtilTest, ToMozcMode) {
 
   // IME_CMODE_ROMAN has no effect in this conversion.
   mode = mozc::commands::DIRECT;
-  EXPECT_TRUE(ConversionModeUtil::ToMozcMode(
-      IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
-      IME_CMODE_KATAKANA | IME_CMODE_ROMAN, &mode));
+  EXPECT_TRUE(
+      ConversionModeUtil::ToMozcMode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
+                                         IME_CMODE_KATAKANA | IME_CMODE_ROMAN,
+                                     &mode));
   EXPECT_EQ(mozc::commands::FULL_KATAKANA, mode);
 
   // Check for HALF_KATAKANA
@@ -297,7 +300,7 @@ TEST(ConversionModeUtilTest, ConvertStatusFromMozcToNative) {
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
       status, false, &is_open, &logical_mode, &visible_mode));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-      logical_mode);
+            logical_mode);
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
 
   // The mode conversion should always be done regardless of open/close status.
@@ -311,7 +314,7 @@ TEST(ConversionModeUtilTest, ConvertStatusFromMozcToNative) {
   EXPECT_TRUE(ConversionModeUtil::ConvertStatusFromMozcToNative(
       status, false, &is_open, &logical_mode, &visible_mode));
   EXPECT_EQ(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN,
-      logical_mode);
+            logical_mode);
   EXPECT_EQ(IME_CMODE_ALPHANUMERIC | IME_CMODE_ROMAN, visible_mode);
 }
 

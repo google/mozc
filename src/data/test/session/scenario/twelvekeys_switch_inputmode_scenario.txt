@@ -38,3 +38,24 @@ SEND_KEY	LEFT
 # Then send "い" by toggling
 SEND_KEYS	11
 EXPECT_PREEDIT	abいc
+
+
+# Input Hiragana first and then input Latin characters with switched keyboard without commiting candidates.
+RESET_CONTEXT
+
+# Switch to flick-hiragana keyboard layout.
+UPDATE_MOBILE_KEYBOARD	FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+SEND_KEYS	87
+EXPECT_PREEDIT	やま
+EXPECT_IN_ALL_CANDIDATE_WORDS	山
+
+# Switch to qwerty ascii keyboard layout.
+UPDATE_MOBILE_KEYBOARD	QWERTY_MOBILE_TO_HALFWIDTHASCII	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HALF_ASCII
+
+# We want to have converted candidatete for "やま" of "やまA"
+SEND_KEYS	A
+EXPECT_PREEDIT	やまA
+EXPECT_IN_ALL_CANDIDATE_WORDS	山A

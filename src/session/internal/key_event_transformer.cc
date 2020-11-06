@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,7 @@ KeyEventTransformer::KeyEventTransformer() {
   ReloadConfig(config::ConfigHandler::DefaultConfig());
 }
 
-KeyEventTransformer::~KeyEventTransformer() {
-}
+KeyEventTransformer::~KeyEventTransformer() {}
 
 void KeyEventTransformer::ReloadConfig(const Config &config) {
   numpad_character_form_ = config.numpad_character_form();
@@ -163,10 +162,10 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   DCHECK(key_event->has_key_code());
   const uint32 key_code = key_event->key_code();
   DCHECK_GT(128, key_code);
-  const string half_width_key_string(1, static_cast<char>(key_code));
+  const std::string half_width_key_string(1, static_cast<char>(key_code));
 
   if (is_full_width) {
-    string full_width_key_string;
+    std::string full_width_key_string;
     Util::HalfWidthAsciiToFullWidthAscii(half_width_key_string,
                                          &full_width_key_string);
     key_event->set_key_string(full_width_key_string);

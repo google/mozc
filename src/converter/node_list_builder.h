@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include "converter/node_allocator.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -48,21 +49,23 @@ static const int32 kKanaModifierInsensitivePenalty = 1700;
 class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
   BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit)
-      : allocator_(allocator), limit_(limit), penalty_(0), result_(NULL) {
-    DCHECK(allocator_) << "Allocator must not be NULL";
+      : allocator_(allocator), limit_(limit), penalty_(0), result_(nullptr) {
+    DCHECK(allocator_) << "Allocator must not be nullptr";
   }
 
+  BaseNodeListBuilder(const BaseNodeListBuilder &) = delete;
+  BaseNodeListBuilder &operator=(const BaseNodeListBuilder &) = delete;
+
   // Determines a penalty for tokens of this (key, actual_key) pair.
-  virtual ResultType OnActualKey(StringPiece key,
-                                 StringPiece actual_key,
-                                 bool is_expanded) {
+  ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
+                         bool is_expanded) override {
     penalty_ = is_expanded ? kKanaModifierInsensitivePenalty : 0;
     return TRAVERSE_CONTINUE;
   }
 
   // Creates a new node and prepends it to the current list.
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const dictionary::Token &token) {
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const dictionary::Token &token) override {
     Node *new_node = NewNodeFromToken(token);
     PrependNode(new_node);
     return (limit_ <= 0) ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
@@ -91,9 +94,6 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   int limit_;
   int penalty_;
   Node *result_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(BaseNodeListBuilder);
 };
 
 // Implements key filtering rule for LookupPrefix().
@@ -105,15 +105,17 @@ class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
       : BaseNodeListBuilder(allocator, limit),
         min_key_length_(min_key_length) {}
 
-  virtual ResultType OnKey(StringPiece key) {
+  NodeListBuilderForLookupPrefix(const NodeListBuilderForLookupPrefix &) =
+      delete;
+  NodeListBuilderForLookupPrefix &operator=(
+      const NodeListBuilderForLookupPrefix &) = delete;
+
+  ResultType OnKey(absl::string_view key) override {
     return key.size() < min_key_length_ ? TRAVERSE_NEXT_KEY : TRAVERSE_CONTINUE;
   }
 
  protected:
   const size_t min_key_length_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NodeListBuilderForLookupPrefix);
 };
 
 }  // namespace mozc

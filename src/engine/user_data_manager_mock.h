@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,14 +51,18 @@ class UserDataManagerMock : public UserDataManagerInterface {
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
   bool ClearUnusedUserPrediction() override;
-  bool ClearUserPredictionEntry(const string &key,
-                                const string &value) override;
+  bool ClearUserPredictionEntry(const std::string &key,
+                                const std::string &value) override;
   bool Wait() override;
 
-  int GetFunctionCallCount(const string &name);
+  int GetFunctionCallCount(const std::string &name) const;
+  const std::string &GetLastClearedKey() const;
+  const std::string &GetLastClearedValue() const;
 
  private:
-  std::map<string, int> function_counters_;
+  std::map<std::string, int> function_counters_;
+  std::string last_cleared_key_;
+  std::string last_cleared_value_;
   DISALLOW_COPY_AND_ASSIGN(UserDataManagerMock);
 };
 

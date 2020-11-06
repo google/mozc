@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@ class MessageTranslatorInterface {
 
   // Returns translated string if possible.
   // Returns |message| if fails to translate.
-  virtual string MaybeTranslate(const string &message) const = 0;
+  virtual std::string MaybeTranslate(const std::string &message) const = 0;
 };
 
 // This class never translates messages actually.
@@ -56,7 +56,7 @@ class NullMessageTranslator : public MessageTranslatorInterface {
   NullMessageTranslator();
 
   // Always returns |message|.
-  virtual string MaybeTranslate(const string &message) const;
+  virtual std::string MaybeTranslate(const std::string &message) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullMessageTranslator);
@@ -66,11 +66,11 @@ class NullMessageTranslator : public MessageTranslatorInterface {
 // supported.
 class LocaleBasedMessageTranslator : public MessageTranslatorInterface {
  public:
-  explicit LocaleBasedMessageTranslator(const string &locale_name);
-  virtual string MaybeTranslate(const string &message) const;
+  explicit LocaleBasedMessageTranslator(const std::string &locale_name);
+  virtual std::string MaybeTranslate(const std::string &message) const;
 
  private:
-  std::map<string, string> utf8_japanese_map_;
+  std::map<std::string, std::string> utf8_japanese_map_;
   DISALLOW_COPY_AND_ASSIGN(LocaleBasedMessageTranslator);
 };
 

@@ -1,0 +1,817 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load("//tools/build_defs:stubs.bzl", "bzl_library")
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "py_binary_mozc",
+    "py_library_mozc",
+)
+
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
+test_suite(
+    name = "nacl_test",
+    tags = ["-disable_on_nacl_test"],
+)
+
+test_suite(
+    name = "nacl_tap_test",
+    tags = [
+        "-disable_on_nacl_tap_test",
+        "-disable_on_nacl_test",
+    ],
+)
+
+cc_library_mozc(
+    name = "segments",
+    srcs = [
+        "segments.cc",
+    ],
+    hdrs = ["segments.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        ":lattice",
+        "//base",
+        "//base:freelist",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//config:config_handler",
+        "//dictionary:pos_matcher_lib",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "segments_test",
+    size = "small",
+    srcs = ["segments_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":segments",
+        "//base",
+        "//base:number_util",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "node",
+    hdrs = ["node.h"],
+    visibility = [
+        "//data_manager:__pkg__",
+        "//dictionary:__subpackages__",
+    ],
+    deps = [
+        "//base",
+        "//base:port",
+        "//dictionary:dictionary_token",
+    ],
+)
+
+cc_library_mozc(
+    name = "node_allocator",
+    hdrs = ["node_allocator.h"],
+    visibility = [
+        "//dictionary:__subpackages__",
+        "//prediction:__pkg__",
+    ],
+    deps = [
+        ":node",
+        "//base",
+        "//base:freelist",
+        "//base:logging",
+        "//base:port",
+    ],
+)
+
+cc_library_mozc(
+    name = "node_list_builder",
+    hdrs = ["node_list_builder.h"],
+    deps = [
+        ":node",
+        ":node_allocator",
+        "//base:logging",
+        "//base:port",
+        "//base:trie",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "connector",
+    srcs = ["connector.cc"],
+    hdrs = ["connector.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:mutex",
+        "//base:port",
+        "//base:status",
+        "//base:util",
+        "//data_manager:data_manager_interface",
+        "//storage/louds:simple_succinct_bit_vector_index",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "connector_test",
+    srcs = ["connector_test.cc"],
+    data = [
+        "//data_manager/testing:mozc_dataset_for_testing@connection",
+        "//data_manager/testing:mozc_dataset_for_testing@connection_single_column",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":connector",
+        "//base",
+        "//base:logging",
+        "//base:mmap",
+        "//data_manager:connection_file_reader",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_library_mozc(
+    name = "nbest_generator",
+    srcs = [
+        "nbest_generator.cc",
+    ],
+    hdrs = ["nbest_generator.h"],
+    deps = [
+        ":candidate_filter",
+        ":connector",
+        ":lattice",
+        ":node",
+        ":segmenter",
+        ":segments",
+        "//base",
+        "//base:freelist",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+    ],
+)
+
+cc_test_mozc(
+    name = "nbest_generator_test",
+    srcs = [
+        "nbest_generator_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":connector",
+        ":immutable_converter_no_factory",
+        ":nbest_generator",
+        ":segmenter",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//config:config_handler",
+        "//data_manager:data_manager_interface",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_impl",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suffix_dictionary",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary_stub",
+        "//dictionary/system:system_dictionary",
+        "//dictionary/system:value_dictionary",
+        "//prediction:suggestion_filter",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "candidate_filter",
+    srcs = [
+        "candidate_filter.cc",
+    ],
+    hdrs = ["candidate_filter.h"],
+    deps = [
+        ":lattice",
+        ":node",
+        ":node_allocator",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+        "//prediction:suggestion_filter",
+    ],
+)
+
+cc_test_mozc(
+    name = "candidate_filter_test",
+    size = "small",
+    srcs = ["candidate_filter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":candidate_filter",
+        ":node",
+        ":segments",
+        "//base",
+        "//base:freelist",
+        "//base:port",
+        "//base:util",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+        "//prediction:suggestion_filter",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "segmenter",
+    srcs = ["segmenter.cc"],
+    hdrs = ["segmenter.h"],
+    deps = [
+        ":node",
+        "//base",
+        "//base:bitarray",
+        "//base:logging",
+        "//base:port",
+        "//data_manager:data_manager_interface",
+    ],
+)
+
+cc_library_mozc(
+    name = "lattice",
+    srcs = [
+        "lattice.cc",
+    ],
+    hdrs = ["lattice.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":node",
+        ":node_allocator",
+        "//base",
+        "//base:freelist",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "lattice_test",
+    size = "small",
+    srcs = ["lattice_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":lattice",
+        ":node",
+        "//base",
+        "//base:port",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "immutable_converter_interface",
+    srcs = ["immutable_converter_interface.cc"],
+    hdrs = ["immutable_converter_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        "//base:logging",
+        "//request:conversion_request",
+    ],
+)
+
+cc_library_mozc(
+    name = "immutable_converter_no_factory",
+    srcs = [
+        "immutable_converter.cc",
+    ],
+    hdrs = ["immutable_converter.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//prediction:__pkg__",
+    ],
+    deps = [
+        ":connector",
+        ":immutable_converter_interface",
+        ":key_corrector",
+        ":lattice",
+        ":nbest_generator",
+        ":node",
+        ":node_allocator",
+        ":node_list_builder",
+        ":segmenter",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:stl_util",
+        "//base:util",
+        "//config:config_handler",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+        "//prediction:suggestion_filter",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "immutable_converter_factory",
+    srcs = ["immutable_converter_factory.cc"],
+    hdrs = ["immutable_converter_factory.h"],
+    visibility = [
+    ],
+    deps = [
+        ":immutable_converter_interface",
+        ":immutable_converter_no_factory",
+        "//base:singleton",
+        "//engine:large_immutable_converter",
+    ],
+)
+
+cc_test_mozc(
+    name = "immutable_converter_test",
+    size = "small",
+    srcs = [
+        "immutable_converter_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":connector",
+        ":immutable_converter_no_factory",
+        ":lattice",
+        ":segmenter",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//data_manager:data_manager_interface",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_impl",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suffix_dictionary",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary_stub",
+        "//dictionary/system:system_dictionary",
+        "//dictionary/system:value_dictionary",
+        "//prediction:suggestion_filter",
+        "//protocol:commands_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "converter_interface",
+    hdrs = ["converter_interface.h"],
+    deps = [
+        ":segments",
+        "//base:port",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "converter_util",
+    srcs = ["converter_util.cc"],
+    hdrs = ["converter_util.h"],
+    visibility = ["//session:__pkg__"],
+    deps = [
+        ":segments",
+        "//base:port",
+    ],
+)
+
+cc_library_mozc(
+    name = "converter",
+    srcs = [
+        "converter.cc",
+    ],
+    hdrs = ["converter.h"],
+    visibility = [
+        "//engine:__pkg__",
+        "//evaluation/simulator:__pkg__",
+        "//rewriter:__pkg__",
+        "//session:__pkg__",
+    ],
+    deps = [
+        ":converter_interface",
+        ":immutable_converter_interface",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+        "//composer",
+        "//dictionary:dictionary_interface",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suppression_dictionary",
+        "//prediction:predictor_interface",
+        "//request:conversion_request",
+        "//rewriter:rewriter_interface",
+        "//testing:gunit_prod",
+        "//transliteration",
+        "//usage_stats",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "converter_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["converter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":connector",
+        ":converter",
+        ":converter_interface",
+        ":immutable_converter_interface",
+        ":immutable_converter_no_factory",
+        ":node",
+        ":segmenter",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//data_manager:data_manager_interface",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_impl",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_mock",
+        "//dictionary:pos_group",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:suffix_dictionary",
+        "//dictionary:suppression_dictionary",
+        "//dictionary:user_dictionary",
+        "//dictionary:user_dictionary_stub",
+        "//dictionary:user_pos",
+        "//dictionary/system:system_dictionary",
+        "//dictionary/system:value_dictionary",
+        "//engine",
+        "//engine:engine_factory",
+        "//engine:engine_interface",
+        "//engine:mock_data_engine_factory",
+        "//prediction:dictionary_predictor",
+        "//prediction:predictor",
+        "//prediction:predictor_interface",
+        "//prediction:suggestion_filter",
+        "//prediction:user_history_predictor",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//rewriter",
+        "//rewriter:rewriter_interface",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "//transliteration",
+        "//usage_stats",
+        "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "converter_regression_test",
+    size = "medium",
+    srcs = ["converter_regression_test.cc"],
+    requires_full_emulation = False,
+    # Disable on NaCl TAP since GoogleDataManager is too large to build on ARM.
+    tags = ["disable_on_nacl_tap_test"],
+    deps = [
+        ":converter",
+        ":converter_interface",
+        ":segments",
+        "//base",
+        "//base:file_util",
+        "//base:system_util",
+        "//composer",
+        "//composer:table",
+        "//config:config_handler",
+        "//engine",
+        "//engine:engine_factory",
+        "//engine:engine_interface",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+    ],
+)
+
+cc_library_mozc(
+    name = "pos_id_printer",
+    srcs = ["pos_id_printer.cc"],
+    hdrs = ["pos_id_printer.h"],
+    deps = [
+        "//base",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+cc_test_mozc(
+    name = "pos_id_printer_test",
+    size = "small",
+    srcs = ["pos_id_printer_test.cc"],
+    data = ["//data/test/dictionary:id.def"],
+    requires_full_emulation = False,
+    deps = [
+        ":pos_id_printer",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:flags",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+    ],
+)
+
+cc_binary_mozc(
+    name = "converter_main",
+    testonly = 1,
+    srcs = ["converter_main.cc"],
+    data = [
+        "//data/dictionary:id.def",
+        "//data/dictionary_android:id.def",
+        "//data/dictionary_chromeos:id.def",
+        "//data/dictionary_oss:id.def",
+        "//data/test/dictionary:id.def",
+        "//data_manager/android:mozc.data",
+        "//data_manager/chromeos:zipped_data_chromeos",
+        "//data_manager/google:mozc.data",
+        "//data_manager/oss:mozc.data",
+        "//data_manager/testing:mock_mozc.data",
+    ],
+    deps = [
+        ":converter_interface",
+        ":lattice",
+        ":pos_id_printer",
+        ":segments",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:singleton",
+        "//base:system_util",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//data_manager",
+        "//engine",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//session:request_test_util",
+    ],
+)
+
+cc_library_mozc(
+    name = "gen_segmenter_bitarray",
+    srcs = ["gen_segmenter_bitarray.cc"],
+    hdrs = ["gen_segmenter_bitarray.h"],
+    visibility = ["//data_manager:__subpackages__"],
+    deps = [
+        "//base",
+        "//base:bitarray",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//protocol:segmenter_data_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_segmenter_code_lib",
+    srcs = ["gen_segmenter_code.py"],
+    visibility = ["//visibility:private"],
+    deps = [],
+)
+
+py_binary_mozc(
+    name = "gen_segmenter_code",
+    srcs = ["gen_segmenter_code.py"],
+    visibility = ["//data_manager:__subpackages__"],
+    deps = [":gen_segmenter_code_lib"],
+)
+
+py_library_mozc(
+    name = "gen_boundary_data_lib",
+    srcs = ["gen_boundary_data.py"],
+    visibility = ["//visibility:private"],
+    deps = [],
+)
+
+py_binary_mozc(
+    name = "gen_boundary_data",
+    srcs = ["gen_boundary_data.py"],
+    python_version = "PY3",
+    visibility = ["//data_manager:__subpackages__"],
+    deps = [":gen_boundary_data_lib"],
+)
+
+cc_library_mozc(
+    name = "key_corrector",
+    srcs = ["key_corrector.cc"],
+    hdrs = ["key_corrector.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "key_corrector_test",
+    size = "small",
+    srcs = ["key_corrector_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":key_corrector",
+        "//base",
+        "//base:port",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "converter_mock",
+    testonly = 1,
+    srcs = [
+        "converter_mock.cc",
+    ],
+    hdrs = ["converter_mock.h"],
+    deps = [
+        ":converter_interface",
+        ":segments",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//request:conversion_request",
+    ],
+)
+
+cc_test_mozc(
+    name = "converter_mock_test",
+    size = "small",
+    srcs = ["converter_mock_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":converter_mock",
+        ":segments",
+        "//base",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_quality_regression_test_data_lib",
+    srcs = ["gen_quality_regression_test_data.py"],
+)
+
+py_binary_mozc(
+    name = "gen_quality_regression_test_data",
+    srcs = ["gen_quality_regression_test_data.py"],
+    deps = [":gen_quality_regression_test_data_lib"],
+)
+
+cc_library_mozc(
+    name = "quality_regression_util",
+    srcs = ["quality_regression_util.cc"],
+    hdrs = ["quality_regression_util.h"],
+    deps = [
+        ":converter_interface",
+        ":segments",
+        "//base",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:port",
+        "//base:text_normalizer",
+        "//base:util",
+        "//composer",
+        "//composer:table",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_binary_mozc(
+    name = "quality_regression_main",
+    srcs = ["quality_regression_main.cc"],
+    deps = [
+        ":quality_regression_util",
+        "//base",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:util",
+        "//engine:engine_factory",
+        "//engine:engine_interface",
+    ],
+)
+
+bzl_library(
+    name = "quality_regression_test_bzl",
+    srcs = ["quality_regression_test.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)

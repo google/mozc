@@ -1,4 +1,0 @@
-/* Localized versions of Info.plist keys */
-
-CFBundleName = "手書き文字認識";
-NSHumanReadableCopyright = "© Google Inc., 2011";

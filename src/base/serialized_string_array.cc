@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,8 @@ SerializedStringArray::SerializedStringArray() {
 
 SerializedStringArray::~SerializedStringArray() = default;
 
-bool SerializedStringArray::Init(StringPiece data_aligned_at_4byte_boundary) {
+bool SerializedStringArray::Init(
+    absl::string_view data_aligned_at_4byte_boundary) {
   if (VerifyData(data_aligned_at_4byte_boundary)) {
     data_ = data_aligned_at_4byte_boundary;
     return true;
@@ -59,16 +60,18 @@ bool SerializedStringArray::Init(StringPiece data_aligned_at_4byte_boundary) {
   return false;
 }
 
-void SerializedStringArray::Set(StringPiece data_aligned_at_4byte_boundary) {
+void SerializedStringArray::Set(
+    absl::string_view data_aligned_at_4byte_boundary) {
   DCHECK(VerifyData(data_aligned_at_4byte_boundary));
   data_ = data_aligned_at_4byte_boundary;
 }
 
 void SerializedStringArray::clear() {
-  data_ = StringPiece(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
+  data_ =
+      absl::string_view(reinterpret_cast<const char *>(&kEmptyArrayData), 4);
 }
 
-bool SerializedStringArray::VerifyData(StringPiece data) {
+bool SerializedStringArray::VerifyData(absl::string_view data) {
   if (data.size() < 4) {
     LOG(ERROR) << "Array size is missing";
     return false;
@@ -107,8 +110,9 @@ bool SerializedStringArray::VerifyData(StringPiece data) {
   return true;
 }
 
-StringPiece SerializedStringArray::SerializeToBuffer(
-    const std::vector<StringPiece> &strs, std::unique_ptr<uint32[]> *buffer) {
+absl::string_view SerializedStringArray::SerializeToBuffer(
+    const std::vector<absl::string_view> &strs,
+    std::unique_ptr<uint32[]> *buffer) {
   const size_t header_byte_size = 4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
@@ -138,14 +142,14 @@ StringPiece SerializedStringArray::SerializeToBuffer(
     dest[strs[i].size()] = '\0';
   }
 
-  return StringPiece(reinterpret_cast<const char *>(buffer->get()),
-                     current_offset);
+  return absl::string_view(reinterpret_cast<const char *>(buffer->get()),
+                           current_offset);
 }
 
 void SerializedStringArray::SerializeToFile(
-    const std::vector<StringPiece> &strs, const string &filepath) {
+    const std::vector<absl::string_view> &strs, const string &filepath) {
   std::unique_ptr<uint32[]> buffer;
-  const StringPiece data = SerializeToBuffer(strs, &buffer);
+  const absl::string_view data = SerializeToBuffer(strs, &buffer);
   OutputFileStream ofs(filepath.c_str(),
                        std::ios_base::out | std::ios_base::binary);
   CHECK(ofs.write(data.data(), data.size()));

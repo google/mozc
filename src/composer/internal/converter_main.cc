@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,15 @@ DEFINE_string(table, "system://romanji-hiragana.tsv",
               "preedit conversion table file.");
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
   table.LoadFromFile(FLAGS_table.c_str());
 
   mozc::composer::Converter converter(table);
 
-  string command;
-  string result;
+  std::string command;
+  std::string result;
   while (getline(std::cin, command)) {
     converter.Convert(command, &result);
     std::cout << result << std::endl;

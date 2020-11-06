@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -131,8 +131,8 @@ bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
   if (private_context) {
     prefer_kana_input = private_context->input_behavior().prefer_kana_input;
   }
-  const CompositionMode tsf_mode = static_cast<CompositionMode>(
-      input_mode_manager->GetTsfConversionMode());
+  const CompositionMode tsf_mode =
+      static_cast<CompositionMode>(input_mode_manager->GetTsfConversionMode());
   const CompositionMode effective_mode = static_cast<CompositionMode>(
       input_mode_manager->GetEffectiveConversionMode());
 
@@ -143,8 +143,7 @@ bool GetOpenAndMode(TipTextService *text_service, ITfContext *context,
   return has_valid_logical_mode && has_valid_visible_mode;
 }
 
-void FillMozcContextCommon(TipTextService *text_service,
-                           ITfContext *context,
+void FillMozcContextCommon(TipTextService *text_service, ITfContext *context,
                            Context *mozc_context) {
   if (mozc_context == nullptr) {
     return;
@@ -173,8 +172,7 @@ void FillMozcContextCommon(TipTextService *text_service,
 }
 
 HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
-                  bool is_key_down, WPARAM wparam, LPARAM lparam,
-                  BOOL *eaten) {
+                  bool is_key_down, WPARAM wparam, LPARAM lparam, BOOL *eaten) {
   DCHECK(text_service);
   DCHECK(eaten);
   TipPrivateContext *private_context = text_service->GetPrivateContext(context);
@@ -270,8 +268,8 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
 
   InputState next_state;
   commands::Output temporal_output;
-  unique_ptr<Win32KeyboardInterface>
-      keyboard(Win32KeyboardInterface::CreateDefault());
+  unique_ptr<Win32KeyboardInterface> keyboard(
+      Win32KeyboardInterface::CreateDefault());
 
   const KeyEventHandlerResult result = KeyEventHandler::ImeProcessKey(
       vk, key_info.GetScanCode(), is_key_down, keyboard_status, behavior,
@@ -288,8 +286,8 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
     private_context->mutable_last_output()->CopyFrom(temporal_output);
   }
   const TipInputModeManager::Action action =
-      text_service->GetThreadContext()->GetInputModeManager()
-          ->OnTestKey(vk, is_key_down, result.should_be_eaten);
+      text_service->GetThreadContext()->GetInputModeManager()->OnTestKey(
+          vk, is_key_down, result.should_be_eaten);
   if (action == TipInputModeManager::kUpdateUI) {
     text_service->PostUIUpdateMessage();
   }
@@ -297,8 +295,7 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   return S_OK;
 }
 
-void FillMozcContextForOnKey(TipTextService *text_service,
-                             ITfContext *context,
+void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
                              Context *mozc_context) {
   FillMozcContextCommon(text_service, context, mozc_context);
   TipSurroundingTextInfo info;
@@ -352,8 +349,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   VirtualKey vk = GetVK(wparam, keyboard_status);
 
   const VKBackBasedDeleter::ClientAction vk_back_action =
-      private_context->GetDeleter()->OnKeyEvent(
-          vk.virtual_key(), is_key_down, false);
+      private_context->GetDeleter()->OnKeyEvent(vk.virtual_key(), is_key_down,
+                                                false);
 
   // Check if this key event is handled by VKBackBasedDeleter to support
   // *deletion_range* rule.
@@ -388,14 +385,14 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     }
 
     const SurrogatePairObserver::ClientAction surrogate_action =
-        private_context->GetSurrogatePairObserver()->OnKeyEvent(
-            vk, is_key_down);
+        private_context->GetSurrogatePairObserver()->OnKeyEvent(vk,
+                                                                is_key_down);
     switch (surrogate_action.type) {
       case SurrogatePairObserver::DO_DEFAULT_ACTION:
         break;
       case SurrogatePairObserver::DO_DEFAULT_ACTION_WITH_RETURNED_UCS4:
         vk = VirtualKey::FromUnicode(surrogate_action.ucs4);
-      break;
+        break;
       case SurrogatePairObserver::CONSUME_KEY_BUT_NEVER_SEND_TO_SERVER:
         ignore_this_keyevent = true;
         break;
@@ -415,8 +412,7 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   if (use_pending_output) {
     // In this case, we have a pending output. So no need to call
     // KeyEventHandler::ImeToAsciiEx.
-    temporal_output.CopyFrom(
-        private_context->GetDeleter()->pending_output());
+    temporal_output.CopyFrom(private_context->GetDeleter()->pending_output());
   } else if (open && is_key_down &&
              (vk.wide_char() == kTouchKeyboardPreviousPage)) {
     // Handle PrevPage button on the on-screen keyboard.
@@ -453,8 +449,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     KeyEventHandler::UpdateBehaviorInImeProcessKey(
         vk, is_key_down, ime_state, private_context->mutable_input_behavior());
 
-    unique_ptr<Win32KeyboardInterface>
-        keyboard(Win32KeyboardInterface::CreateDefault());
+    unique_ptr<Win32KeyboardInterface> keyboard(
+        Win32KeyboardInterface::CreateDefault());
 
     Context mozc_context;
     FillMozcContextForOnKey(text_service, context, &mozc_context);
@@ -472,8 +468,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     }
 
     const TipInputModeManager::Action action =
-        text_service->GetThreadContext()->GetInputModeManager()->
-            OnKey(vk, is_key_down, result.should_be_eaten);
+        text_service->GetThreadContext()->GetInputModeManager()->OnKey(
+            vk, is_key_down, result.should_be_eaten);
     if (action == IndicatorVisibilityTracker::kUpdateUI) {
       text_service->PostUIUpdateMessage();
     }
@@ -500,27 +496,27 @@ const bool kKeyUp = false;
 
 }  // namespace
 
-HRESULT TipKeyeventHandler::OnTestKeyDown(
-    TipTextService *text_service, ITfContext *context,
-    WPARAM wparam, LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnTestKeyDown(TipTextService *text_service,
+                                          ITfContext *context, WPARAM wparam,
+                                          LPARAM lparam, BOOL *eaten) {
   return OnTestKey(text_service, context, kKeyDown, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnTestKeyUp(
-    TipTextService *text_service, ITfContext *context, WPARAM wparam,
-    LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnTestKeyUp(TipTextService *text_service,
+                                        ITfContext *context, WPARAM wparam,
+                                        LPARAM lparam, BOOL *eaten) {
   return OnTestKey(text_service, context, kKeyUp, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnKeyDown(
-    TipTextService *text_service, ITfContext *context, WPARAM wparam,
-    LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnKeyDown(TipTextService *text_service,
+                                      ITfContext *context, WPARAM wparam,
+                                      LPARAM lparam, BOOL *eaten) {
   return OnKey(text_service, context, kKeyDown, wparam, lparam, eaten);
 }
 
-HRESULT TipKeyeventHandler::OnKeyUp(
-    TipTextService *text_service, ITfContext *context, WPARAM wparam,
-    LPARAM lparam, BOOL *eaten) {
+HRESULT TipKeyeventHandler::OnKeyUp(TipTextService *text_service,
+                                    ITfContext *context, WPARAM wparam,
+                                    LPARAM lparam, BOOL *eaten) {
   return OnKey(text_service, context, kKeyUp, wparam, lparam, eaten);
 }
 

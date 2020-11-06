@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,20 +34,13 @@ namespace renderer {
 namespace gtk {
 
 CairoWrapper::CairoWrapper(GdkWindow *window)
-  :  cairo_context_(gdk_cairo_create(window)) {
-}
+    : cairo_context_(gdk_cairo_create(window)) {}
 
-CairoWrapper::~CairoWrapper() {
-  cairo_destroy(cairo_context_);
-}
+CairoWrapper::~CairoWrapper() { cairo_destroy(cairo_context_); }
 
-void CairoWrapper::Save() {
-  cairo_save(cairo_context_);
-}
+void CairoWrapper::Save() { cairo_save(cairo_context_); }
 
-void CairoWrapper::Restore() {
-  cairo_restore(cairo_context_);
-}
+void CairoWrapper::Restore() { cairo_restore(cairo_context_); }
 
 void CairoWrapper::SetSourceRGBA(double r, double g, double b, double a) {
   cairo_set_source_rgba(cairo_context_, r, g, b, a);
@@ -57,17 +50,13 @@ void CairoWrapper::Rectangle(double x, double y, double width, double height) {
   cairo_rectangle(cairo_context_, x, y, width, height);
 }
 
-void CairoWrapper::Fill() {
-  cairo_fill(cairo_context_);
-}
+void CairoWrapper::Fill() { cairo_fill(cairo_context_); }
 
 void CairoWrapper::SetLineWidth(double width) {
   cairo_set_line_width(cairo_context_, width);
 }
 
-void CairoWrapper::Stroke() {
-  cairo_stroke(cairo_context_);
-}
+void CairoWrapper::Stroke() { cairo_stroke(cairo_context_); }
 
 void CairoWrapper::MoveTo(double x, double y) {
   cairo_move_to(cairo_context_, x, y);

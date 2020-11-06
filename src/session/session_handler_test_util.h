@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@ class SessionHandlerTestBase : public ::testing::Test {
 
  private:
   // Keep the global configurations here, and restore them in tear down phase.
-  string user_profile_directory_backup_;
+  std::string user_profile_directory_backup_;
   config::Config config_backup_;
   int32 flags_max_session_size_backup_;
   int32 flags_create_session_min_interval_backup_;
@@ -109,15 +109,14 @@ class TestSessionClient {
   bool CleanUp();
   bool ClearUserPrediction();
   bool SendKey(const commands::KeyEvent &key, commands::Output *output) {
-    return SendKeyWithOption(
-        key, commands::Input::default_instance(), output);
+    return SendKeyWithOption(key, commands::Input::default_instance(), output);
   }
   bool SendKeyWithOption(const commands::KeyEvent &key,
                          const commands::Input &option,
                          commands::Output *output);
   bool TestSendKey(const commands::KeyEvent &key, commands::Output *output) {
-    return TestSendKeyWithOption(
-        key, commands::Input::default_instance(), output);
+    return TestSendKeyWithOption(key, commands::Input::default_instance(),
+                                 output);
   }
   bool TestSendKeyWithOption(const commands::KeyEvent &key,
                              const commands::Input &option,
@@ -131,7 +130,7 @@ class TestSessionClient {
   bool SwitchInputMode(commands::CompositionMode composition_mode);
   bool SetRequest(const commands::Request &request, commands::Output *output);
   bool SetConfig(const config::Config &config, commands::Output *output);
-  void SetCallbackText(const string &text);
+  void SetCallbackText(const std::string &text);
 
  private:
   bool EvalCommand(commands::Input *input, commands::Output *output);
@@ -141,7 +140,7 @@ class TestSessionClient {
   uint64 id_;
   std::unique_ptr<SessionObserverInterface> usage_observer_;
   std::unique_ptr<SessionHandlerInterface> handler_;
-  string callback_text_;
+  std::string callback_text_;
 
   DISALLOW_COPY_AND_ASSIGN(TestSessionClient);
 };

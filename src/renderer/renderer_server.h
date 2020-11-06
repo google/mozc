@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ class ParentApplicationWatchDog;
 class RendererServer : public IPCServer {
  public:
   RendererServer();
-  virtual ~RendererServer();
+  ~RendererServer() override;
 
   void SetRendererInterface(RendererInterface *renderer_interface);
 
@@ -58,10 +58,8 @@ class RendererServer : public IPCServer {
   // The return value is suppose to be used for the arg of exit().
   int StartServer();
 
-  bool Process(const char *request,
-               size_t request_size,
-               char *response,
-               size_t *response_size);
+  bool Process(const char *request, size_t request_size, char *response,
+               size_t *response_size) override;
 
   // DEPRECATED: this functions is never called
   virtual void AsyncHide() {}
@@ -75,7 +73,7 @@ class RendererServer : public IPCServer {
   // IPC listener thread can reply to the client request as
   // early as possible.
   // This function takes the owership of proto_message
-  virtual bool AsyncExecCommand(string *proto_message)  = 0;
+  virtual bool AsyncExecCommand(std::string *proto_message) = 0;
 
  protected:
   // implement Message Loop function.

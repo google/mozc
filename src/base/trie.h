@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,12 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 #include "base/util.h"
 
 namespace mozc {
 
-template<typename T>
+template <typename T>
 class Trie {
  public:
   Trie() : has_data_(false) {}
@@ -54,7 +54,7 @@ class Trie {
     }
   }
 
-  void AddEntry(StringPiece key, T data) {
+  void AddEntry(absl::string_view key, T data) {
     if (key.empty()) {
       data_ = data;
       has_data_ = true;
@@ -63,17 +63,17 @@ class Trie {
 
     Trie *sub_trie;
     if (HasSubTrie(GetKeyHead(key))) {
-      sub_trie = trie_[GetKeyHead(key).as_string()];
+      sub_trie = trie_[std::string(GetKeyHead(key))];
     } else {
       sub_trie = new Trie();
-      trie_[GetKeyHead(key).as_string()] = sub_trie;
+      trie_[std::string(GetKeyHead(key))] = sub_trie;
     }
 
-    const StringPiece key_tail = GetKeyTail(key);
+    const absl::string_view key_tail = GetKeyTail(key);
     sub_trie->AddEntry(key_tail, data);
   }
 
-  bool DeleteEntry(StringPiece key) {
+  bool DeleteEntry(absl::string_view key) {
     if (key.empty()) {
       if (trie_.empty()) {
         return true;
@@ -88,11 +88,11 @@ class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const StringPiece sub_key = GetKeyTail(key);
+    const absl::string_view sub_key = GetKeyTail(key);
     const bool should_delete_subtrie = sub_trie->DeleteEntry(sub_key);
     if (should_delete_subtrie) {
       delete sub_trie;
-      trie_.erase(GetKeyHead(key).as_string());
+      trie_.erase(std::string(GetKeyHead(key)));
       // If the size of trie_ is 0, This trie should be deleted.
       return trie_.size() == 0;
     } else {
@@ -100,7 +100,7 @@ class Trie {
     }
   }
 
-  bool LookUp(StringPiece key, T *data) const {
+  bool LookUp(absl::string_view key, T *data) const {
     if (key.empty()) {
       if (!has_data_) {
         return false;
@@ -114,7 +114,7 @@ class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const StringPiece sub_key = GetKeyTail(key);
+    const absl::string_view sub_key = GetKeyTail(key);
     return sub_trie->LookUp(sub_key, data);
   }
 
@@ -129,9 +129,7 @@ class Trie {
   //  -- Do not refer 'a' here.
   //  - Return true for the key, 'ac'
   //  -- Matches in prefix by 'a', and 'a' have data
-  bool LookUpPrefix(StringPiece key,
-                    T *data,
-                    size_t *key_length,
+  bool LookUpPrefix(absl::string_view key, T *data, size_t *key_length,
                     bool *fixed) const {
     if (key.empty() || !HasSubTrie(GetKeyHead(key))) {
       *key_length = 0;
@@ -146,7 +144,7 @@ class Trie {
     }
 
     Trie *sub_trie = GetSubTrie(key);
-    const StringPiece sub_key = GetKeyTail(key);
+    const absl::string_view sub_key = GetKeyTail(key);
     if (sub_trie->LookUpPrefix(sub_key, data, key_length, fixed)) {
       *key_length += GetKeyHeadLength(key);
       return true;
@@ -168,7 +166,7 @@ class Trie {
   //  - Return 'abc', 'abd', 'a', for the key 'a'
   //  - Return 'abc', 'abd' for the key 'ab'
   //  - Return nothing for the key 'b'
-  void LookUpPredictiveAll(StringPiece key,
+  void LookUpPredictiveAll(absl::string_view key,
                            std::vector<T> *data_list) const {
     DCHECK(data_list);
     if (!key.empty()) {
@@ -176,7 +174,7 @@ class Trie {
         return;
       }
       const Trie *sub_trie = GetSubTrie(key);
-      const StringPiece sub_key = GetKeyTail(key);
+      const absl::string_view sub_key = GetKeyTail(key);
       return sub_trie->LookUpPredictiveAll(sub_key, data_list);
     }
 
@@ -184,16 +182,16 @@ class Trie {
       data_list->push_back(data_);
     }
 
-    for (typename SubTrie::const_iterator it = trie_.begin();
-         it != trie_.end(); ++it) {
+    for (typename SubTrie::const_iterator it = trie_.begin(); it != trie_.end();
+         ++it) {
       it->second->LookUpPredictiveAll("", data_list);
     }
   }
 
-  bool HasSubTrie(StringPiece key) const {
-    const StringPiece head = GetKeyHead(key);
+  bool HasSubTrie(absl::string_view key) const {
+    const absl::string_view head = GetKeyHead(key);
 
-    const typename SubTrie::const_iterator it = trie_.find(head.as_string());
+    const typename SubTrie::const_iterator it = trie_.find(std::string(head));
     if (it == trie_.end()) {
       return false;
     }
@@ -206,23 +204,23 @@ class Trie {
   }
 
  private:
-  StringPiece GetKeyHead(StringPiece key) const {
-    return Util::SubStringPiece(key, 0, 1);
+  absl::string_view GetKeyHead(absl::string_view key) const {
+    return Util::Utf8SubString(key, 0, 1);
   }
 
-  size_t GetKeyHeadLength(StringPiece key) const {
+  size_t GetKeyHeadLength(absl::string_view key) const {
     return Util::OneCharLen(key.data());
   }
 
-  StringPiece GetKeyTail(StringPiece key) const {
-    return ClippedSubstr(key, Util::OneCharLen(key.data()));
+  absl::string_view GetKeyTail(absl::string_view key) const {
+    return absl::ClippedSubstr(key, Util::OneCharLen(key.data()));
   }
 
-  Trie<T> *GetSubTrie(StringPiece key) const {
-    return trie_.find(GetKeyHead(key).as_string())->second;
+  Trie<T> *GetSubTrie(absl::string_view key) const {
+    return trie_.find(std::string(GetKeyHead(key)))->second;
   }
 
-  typedef std::map<const string, Trie<T> *> SubTrie;
+  typedef std::map<const std::string, Trie<T> *> SubTrie;
   SubTrie trie_;
   bool has_data_;
   T data_;

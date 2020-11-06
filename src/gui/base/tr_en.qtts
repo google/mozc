@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1">
+<context>
+    <name>QObject</name>
+    <message>
+        <location filename="util.cc" line="21"/>
+        <source>Mozc</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="util.cc" line="23"/>
+        <source>Mozc</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../about_dialog/about_dialog.cc" line="39"/>
+        <source>issues</source>
+        <translation></translation>
+    </message>
+</context>
+</TS>

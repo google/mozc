@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include <QtWidgets/QMessageBox>
 
 #include "base/flags.h"
+#include "gui/base/util.h"
 
 DEFINE_string(error_type, "", "type of error");
 
@@ -45,12 +46,11 @@ namespace {
 void OnFatal(const QString &message) {
   // we don't use QMessageBox::critical() here
   // to set WindowStaysOnTopHint
-  QMessageBox message_box(QMessageBox::Critical,
-                          QObject::tr("Mozc Fatal Error"),
-                          message, QMessageBox::Ok, NULL,
-                          Qt::Dialog |
-                          Qt::MSWindowsFixedSizeDialogHint |
-                          Qt::WindowStaysOnTopHint);
+  QMessageBox message_box(
+      QMessageBox::Critical, QObject::tr("[ProductName] Fatal Error"),
+      message, QMessageBox::Ok, nullptr,
+      Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
+  GuiUtil::ReplaceWidgetLabels(&message_box);
   DeleyedMessageDialogHandler handler(&message_box);
   handler.Exec();
 }
@@ -66,7 +66,7 @@ void DeleyedMessageDialogHandler::Exec() {
   const int kDisableInterval = 3000;
   QTimer::singleShot(kDisableInterval, this, SLOT(EnableOkButton()));
   QAbstractButton *button = message_box_->button(QMessageBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(false);
   }
   message_box_->exec();
@@ -74,7 +74,7 @@ void DeleyedMessageDialogHandler::Exec() {
 
 void DeleyedMessageDialogHandler::EnableOkButton() {
   QAbstractButton *button = message_box_->button(QMessageBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(true);
   }
 }
@@ -83,31 +83,39 @@ void ErrorMessageDialog::Show() {
   // defining all literal messages inside Show() method
   // for easy i18n/i10n
   if (FLAGS_error_type == "server_timeout") {
-    OnFatal(QObject::tr("Conversion engine is not responding. "
-                        "Please restart this application."));
+    OnFatal(
+        QObject::tr("Conversion engine is not responding. "
+                    "Please restart this application."));
   } else if (FLAGS_error_type == "server_broken_message") {
-    OnFatal(QObject::tr("Connecting to an incompatible conversion engine. "
-                        "Please restart your computer to enable Mozc. "
-                        "If this problem persists, please uninstall Mozc "
-                        "and install it again."));
+    OnFatal(QObject::tr(
+        "Connecting to an incompatible conversion engine. "
+        "Please restart your computer to enable [ProductName]. "
+        "If this problem persists, please uninstall [ProductName] "
+        "and install it again."));
   } else if (FLAGS_error_type == "server_version_mismatch") {
-    OnFatal(QObject::tr("Conversion engine has been upgraded. "
-                        "Please restart this application to enable conversion engine. "
-                        "If the problem persists, please restart your computer."));
+    OnFatal(QObject::tr(
+        "Conversion engine has been upgraded. "
+        "Please restart this application to enable conversion engine. "
+        "If the problem persists, please restart your computer."));
   } else if (FLAGS_error_type == "server_shutdown") {
-    OnFatal(QObject::tr("Conversion engine is killed unexceptionally. "
-                        "Restarting the engine..."));
+    OnFatal(
+        QObject::tr("Conversion engine is killed unexceptionally. "
+                    "Restarting the engine..."));
   } else if (FLAGS_error_type == "server_fatal") {
-    OnFatal(QObject::tr("Cannot start conversion engine. "
-                        "Please restart your computer."));
+    OnFatal(
+        QObject::tr("Cannot start conversion engine. "
+                    "Please restart your computer."));
   } else if (FLAGS_error_type == "renderer_version_mismatch") {
-    OnFatal(QObject::tr("Candidate window renderer has been upgraded. "
-                        "Please restart this application to enable new candidate window renderer. "
-                        "If the problem persists, please restart your computer."));
+    OnFatal(
+        QObject::tr("Candidate window renderer has been upgraded. "
+                    "Please restart this application to enable new candidate "
+                    "window renderer. "
+                    "If the problem persists, please restart your computer."));
   } else if (FLAGS_error_type == "renderer_fatal") {
-    OnFatal(QObject::tr("Cannot start candidate window renderer. "
-                        "Please restart your computer."));
+    OnFatal(
+        QObject::tr("Cannot start candidate window renderer. "
+                    "Please restart your computer."));
   }
 }
-}  // gui
-}  // mozc
+}  // namespace gui
+}  // namespace mozc

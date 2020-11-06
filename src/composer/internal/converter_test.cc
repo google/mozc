@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,9 @@
 namespace mozc {
 namespace {
 
-void InitTable(mozc::composer::Table* table) {
-  table->AddRule("a",  "あ", "");
-  table->AddRule("i",  "い", "");
+void InitTable(mozc::composer::Table *table) {
+  table->AddRule("a", "あ", "");
+  table->AddRule("i", "い", "");
   table->AddRule("ka", "か", "");
   table->AddRule("ki", "き", "");
   table->AddRule("ku", "く", "");
@@ -48,7 +48,7 @@ void InitTable(mozc::composer::Table* table) {
   table->AddRule("kk", "っ", "k");
   table->AddRule("na", "な", "");
   table->AddRule("ni", "に", "");
-  table->AddRule("n",  "ん", "");
+  table->AddRule("n", "ん", "");
   table->AddRule("nn", "ん", "");
 }
 
@@ -57,16 +57,16 @@ TEST(ConverterTest, Converter) {
     const char *input;
     const char *expected_output;
   } test_cases[] = {
-    { "a", "あ" },
-    { "ka", "か" },
-    { "ki", "き" },
-    { "ku", "く" },
-    { "kk", "っk" },
-    { "aka", "あか" },
-    { "kakizkka", "かきzっか" },
-    { "nankanai?", "なんかない?" },
-    { "nannkanain?", "なんかないん?" },
-    { "nannkanain", "なんかないん" },
+      {"a", "あ"},
+      {"ka", "か"},
+      {"ki", "き"},
+      {"ku", "く"},
+      {"kk", "っk"},
+      {"aka", "あか"},
+      {"kakizkka", "かきzっか"},
+      {"nankanai?", "なんかない?"},
+      {"nannkanain?", "なんかないん?"},
+      {"nannkanain", "なんかないん"},
   };
   static const int size = arraysize(test_cases);
 
@@ -76,7 +76,7 @@ TEST(ConverterTest, Converter) {
 
   for (int i = 0; i < size; ++i) {
     const TestCase &test = test_cases[i];
-    string output;
+    std::string output;
     converter.Convert(test.input, &output);
     EXPECT_EQ(test.expected_output, output);
   }

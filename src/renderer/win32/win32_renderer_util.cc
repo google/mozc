@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include "renderer/win32/win32_renderer_util.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
@@ -36,6 +37,7 @@
 #include <atlgdi.h>
 #include <atlmisc.h>
 #include <winuser.h>
+// clang-format on
 
 #include <algorithm>
 #include <limits>
@@ -54,15 +56,15 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 using ATL::CWindow;
+using std::unique_ptr;
 using WTL::CDC;
 using WTL::CDCHandle;
-using WTL::CSize;
-using WTL::CRect;
-using WTL::CPoint;
 using WTL::CFont;
 using WTL::CFontHandle;
 using WTL::CLogFont;
-using std::unique_ptr;
+using WTL::CPoint;
+using WTL::CRect;
+using WTL::CSize;
 
 typedef mozc::commands::RendererCommand::CompositionForm CompositionForm;
 typedef mozc::commands::RendererCommand::CandidateForm CandidateForm;
@@ -73,13 +75,9 @@ namespace {
 template <typename T>
 class Optional {
  public:
-  Optional()
-    : value_(T()),
-      has_value_(false) {}
+  Optional() : value_(T()), has_value_(false) {}
 
-  explicit Optional(const T &src)
-    : value_(src),
-      has_value_(true) {}
+  explicit Optional(const T &src) : value_(src), has_value_(true) {}
 
   const T &value() const {
     DCHECK(has_value_);
@@ -91,13 +89,9 @@ class Optional {
     return &value_;
   }
 
-  bool has_value() const {
-    return has_value_;
-  }
+  bool has_value() const { return has_value_; }
 
-  void Clear() {
-    has_value_ = false;
-  }
+  void Clear() { has_value_ = false; }
 
  private:
   T value_;
@@ -119,8 +113,8 @@ struct CandidateWindowLayoutParams {
 };
 
 bool IsValidRect(const commands::RendererCommand::Rectangle &rect) {
-  return rect.has_left() && rect.has_top() &&
-         rect.has_right() && rect.has_bottom();
+  return rect.has_left() && rect.has_top() && rect.has_right() &&
+         rect.has_bottom();
 }
 
 CRect ToRect(const commands::RendererCommand::Rectangle &rect) {
@@ -217,13 +211,11 @@ bool IsCompatibleCompositionForm(const CompositionForm &form,
   return false;
 }
 
-bool ExtractParams(
-    LayoutManager *layout,
-    int compatibility_mode,
-    const commands::RendererCommand::ApplicationInfo &app_info,
-    CandidateWindowLayoutParams *params) {
-  DCHECK_NE(NULL, layout);
-  DCHECK_NE(NULL, params);
+bool ExtractParams(LayoutManager *layout, int compatibility_mode,
+                   const commands::RendererCommand::ApplicationInfo &app_info,
+                   CandidateWindowLayoutParams *params) {
+  DCHECK_NE(nullptr, layout);
+  DCHECK_NE(nullptr, params);
 
   params->window_handle.Clear();
   params->char_pos.Clear();
@@ -238,8 +230,8 @@ bool ExtractParams(
   if (!app_info.has_target_window_handle()) {
     return false;
   }
-  const HWND target_window = WinUtil::DecodeWindowHandle(
-      app_info.target_window_handle());
+  const HWND target_window =
+      WinUtil::DecodeWindowHandle(app_info.target_window_handle());
 
   *params->window_handle.mutable_value() = target_window;
 
@@ -247,12 +239,9 @@ bool ExtractParams(
     const commands::RendererCommand::CharacterPosition &char_pos =
         app_info.composition_target();
     // Check the availability of optional fields.
-    if (char_pos.has_position() &&
-        char_pos.has_top_left() &&
-        IsValidPoint(char_pos.top_left()) &&
-        char_pos.has_line_height() &&
-        char_pos.line_height() > 0 &&
-        char_pos.has_document_area() &&
+    if (char_pos.has_position() && char_pos.has_top_left() &&
+        IsValidPoint(char_pos.top_left()) && char_pos.has_line_height() &&
+        char_pos.line_height() > 0 && char_pos.has_document_area() &&
         IsValidRect(char_pos.document_area())) {
       // Positional fields are (logical) screen coordinate.
       IMECHARPOSITION *dest = params->char_pos.mutable_value();
@@ -268,8 +257,7 @@ bool ExtractParams(
         app_info.composition_form();
 
     // Check the availability of optional fields.
-    if (form.has_current_position() &&
-        IsValidPoint(form.current_position()) &&
+    if (form.has_current_position() && IsValidPoint(form.current_position()) &&
         IsCompatibleCompositionForm(form, compatibility_mode)) {
       Optional<CPoint> screen_pos;
       if (!layout->ClientPointToScreen(
@@ -296,56 +284,52 @@ bool ExtractParams(
 
     // Check the availability of optional fields.
     if ((has_candidate_pos_style_bit || has_exclude_style_bit) &&
-        form.has_current_position() &&
-        IsValidPoint(form.current_position())) {
+        form.has_current_position() && IsValidPoint(form.current_position())) {
       const bool use_local_coord =
           (compatibility_mode & USE_LOCAL_COORD_FOR_CANDIDATE_FORM) ==
           USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
       Optional<CPoint> screen_pos;
       if (use_local_coord) {
-        if (!layout->LocalPointToScreen(
-                target_window, ToPoint(form.current_position()),
-                screen_pos.mutable_value())) {
+        if (!layout->LocalPointToScreen(target_window,
+                                        ToPoint(form.current_position()),
+                                        screen_pos.mutable_value())) {
           screen_pos.Clear();
         }
       } else {
-        if (!layout->ClientPointToScreen(
-                target_window, ToPoint(form.current_position()),
-                screen_pos.mutable_value())) {
+        if (!layout->ClientPointToScreen(target_window,
+                                         ToPoint(form.current_position()),
+                                         screen_pos.mutable_value())) {
           screen_pos.Clear();
         }
       }
       if (screen_pos.has_value()) {
         // Here, we got an appropriate position where the candidate window
         // can be placed.
-        params->candidate_form.mutable_value()->
-            InitializeWithPosition(screen_pos.value());
+        params->candidate_form.mutable_value()->InitializeWithPosition(
+            screen_pos.value());
 
         // If |CandidateForm::EXCLUDE| is specified, try to use the |area|
         // field as an exclude region.
-        if (has_exclude_style_bit &&
-            form.has_area() &&
+        if (has_exclude_style_bit && form.has_area() &&
             IsValidRect(form.area())) {
           Optional<CRect> screen_rect;
           if (use_local_coord) {
-            if (!layout->LocalRectToScreen(
-                    target_window, ToRect(form.area()),
-                    screen_rect.mutable_value())) {
+            if (!layout->LocalRectToScreen(target_window, ToRect(form.area()),
+                                           screen_rect.mutable_value())) {
               screen_rect.Clear();
             }
           } else {
-            if (!layout->ClientRectToScreen(
-                    target_window, ToRect(form.area()),
-                    screen_rect.mutable_value())) {
+            if (!layout->ClientRectToScreen(target_window, ToRect(form.area()),
+                                            screen_rect.mutable_value())) {
               screen_rect.Clear();
             }
           }
           if (screen_rect.has_value()) {
             // Here we got an appropriate exclude region too.
             // Update the |candidate_form| with them.
-            params->candidate_form.mutable_value()->
-                InitializeWithPositionAndExcludeRegion(
-                    screen_pos.value(), screen_rect.value());
+            params->candidate_form.mutable_value()
+                ->InitializeWithPositionAndExcludeRegion(screen_pos.value(),
+                                                         screen_rect.value());
           }
         }
       }
@@ -357,19 +341,18 @@ bool ExtractParams(
         app_info.caret_info();
 
     // Check the availability of optional fields.
-    if (caret_info.has_blinking() &&
-        caret_info.has_caret_rect() &&
+    if (caret_info.has_blinking() && caret_info.has_caret_rect() &&
         IsValidRect(caret_info.caret_rect()) &&
         caret_info.has_target_window_handle()) {
-      const HWND caret_window = WinUtil::DecodeWindowHandle(
-          caret_info.target_window_handle());
+      const HWND caret_window =
+          WinUtil::DecodeWindowHandle(caret_info.target_window_handle());
       const CRect caret_rect_in_client_coord(ToRect(caret_info.caret_rect()));
       // It seems (0, 0, 0, 0) represents that the application does not have a
       // valid caret now.
       if (!caret_rect_in_client_coord.IsRectNull()) {
-        if (!layout->ClientRectToScreen(
-                caret_window, caret_rect_in_client_coord,
-                params->caret_rect.mutable_value())) {
+        if (!layout->ClientRectToScreen(caret_window,
+                                        caret_rect_in_client_coord,
+                                        params->caret_rect.mutable_value())) {
           params->caret_rect.Clear();
         }
       }
@@ -392,9 +375,8 @@ bool ExtractParams(
     CRect client_rect_in_local_coord;
     CRect client_rect_in_logical_screen_coord;
     if (layout->GetClientRect(target_window, &client_rect_in_local_coord) &&
-        layout->ClientRectToScreen(
-            target_window, client_rect_in_local_coord,
-            &client_rect_in_logical_screen_coord)) {
+        layout->ClientRectToScreen(target_window, client_rect_in_local_coord,
+                                   &client_rect_in_logical_screen_coord)) {
       *params->client_rect.mutable_value() =
           client_rect_in_logical_screen_coord;
     }
@@ -413,8 +395,7 @@ bool ExtractParams(
 }
 
 bool CanUseExcludeRegionInCandidateFrom(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
     bool for_suggestion) {
   if (for_suggestion &&
       ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) !=
@@ -433,16 +414,16 @@ bool CanUseExcludeRegionInCandidateFrom(
 }
 
 std::wstring ComposePreeditText(const commands::Preedit &preedit,
-                           string *preedit_utf8,
-                          std::vector<int> *segment_indices,
-                          std::vector<CharacterRange> *segment_ranges) {
-  if (preedit_utf8 != NULL) {
+                                string *preedit_utf8,
+                                std::vector<int> *segment_indices,
+                                std::vector<CharacterRange> *segment_ranges) {
+  if (preedit_utf8 != nullptr) {
     preedit_utf8->clear();
   }
-  if (segment_indices != NULL) {
+  if (segment_indices != nullptr) {
     segment_indices->clear();
   }
-  if (segment_ranges != NULL) {
+  if (segment_ranges != nullptr) {
     segment_ranges->clear();
   }
   std::wstring value;
@@ -453,16 +434,16 @@ std::wstring ComposePreeditText(const commands::Preedit &preedit,
     std::wstring segment_value;
     mozc::Util::UTF8ToWide(segment.value(), &segment_value);
     value.append(segment_value);
-    if (preedit_utf8 != NULL) {
+    if (preedit_utf8 != nullptr) {
       preedit_utf8->append(segment.value());
     }
     const int text_length = segment_value.size();
-    if (segment_indices != NULL) {
+    if (segment_indices != nullptr) {
       for (size_t i = 0; i < text_length; ++i) {
         segment_indices->push_back(segment_index);
       }
     }
-    if (segment_ranges != NULL) {
+    if (segment_ranges != nullptr) {
       CharacterRange range;
       range.begin = total_characters;
       range.length = text_length;
@@ -473,17 +454,15 @@ std::wstring ComposePreeditText(const commands::Preedit &preedit,
   return value;
 }
 
-bool CalcLayoutWithTextWrappingInternal(
-    CDCHandle dc,
-    const std::wstring &str,
-    const int maximum_line_length,
-    const int initial_offset,
-   std::vector<LineLayout> *line_layouts) {
-  DCHECK(line_layouts != NULL);
+bool CalcLayoutWithTextWrappingInternal(CDCHandle dc, const std::wstring &str,
+                                        const int maximum_line_length,
+                                        const int initial_offset,
+                                        std::vector<LineLayout> *line_layouts) {
+  DCHECK(line_layouts != nullptr);
   if (initial_offset < 0 || maximum_line_length <= 0 ||
       maximum_line_length < initial_offset) {
-    LOG(ERROR) << "(initial_offset, maximum_line_length) = ("
-               << initial_offset << ", " << maximum_line_length << ")";
+    LOG(ERROR) << "(initial_offset, maximum_line_length) = (" << initial_offset
+               << ", " << maximum_line_length << ")";
     return false;
   }
 
@@ -508,21 +487,17 @@ bool CalcLayoutWithTextWrappingInternal(
     //  current_offset <= maximum_line_length
     const int remaining_extent = maximum_line_length - current_offset;
     DCHECK_GE(remaining_extent, 0)
-       << "(remaining_extent, maximum_line_length) = ("
-       << remaining_extent << ", " << maximum_line_length << ")";
+        << "(remaining_extent, maximum_line_length) = (" << remaining_extent
+        << ", " << maximum_line_length << ")";
     DCHECK_GE(maximum_line_length, remaining_extent)
-       << "(remaining_extent, maximum_line_length) = ("
-       << remaining_extent << ", " << maximum_line_length << ")";
+        << "(remaining_extent, maximum_line_length) = (" << remaining_extent
+        << ", " << maximum_line_length << ")";
 
     int allowable_chars = 0;
     CSize dummy;
     BOOL result = dc.GetTextExtentExPoint(
-        str.c_str() + string_index,
-        remaining_chars,
-        &dummy,
-        remaining_extent,
-        &allowable_chars,
-        NULL);
+        str.c_str() + string_index, remaining_chars, &dummy, remaining_extent,
+        &allowable_chars, nullptr);
     if (result == FALSE) {
       const int error = ::GetLastError();
       LOG(ERROR) << "GetTextExtentExPoint failed. error = " << error;
@@ -539,8 +514,8 @@ bool CalcLayoutWithTextWrappingInternal(
     // is invalid.  We have not seen any problem around this API though.
     if (allowable_chars < 0 || remaining_chars < allowable_chars) {
       // Something wrong.
-      LOG(ERROR) << "(allowable_chars, remaining_chars) = ("
-                 << allowable_chars << ", " << remaining_chars << ")";
+      LOG(ERROR) << "(allowable_chars, remaining_chars) = (" << allowable_chars
+                 << ", " << remaining_chars << ")";
       return false;
     }
 
@@ -560,11 +535,8 @@ bool CalcLayoutWithTextWrappingInternal(
         int allowable_chars_for_confirmation = 0;
         std::unique_ptr<int[]> size_buffer(new int[allowable_chars]);
         result = dc.GetTextExtentExPoint(
-            layout.text.c_str(),
-            layout.text.size(),
-            &line_size,
-            remaining_extent,
-            &allowable_chars_for_confirmation,
+            layout.text.c_str(), layout.text.size(), &line_size,
+            remaining_extent, &allowable_chars_for_confirmation,
             size_buffer.get());
         if (result == FALSE) {
           const int error = ::GetLastError();
@@ -574,8 +546,8 @@ bool CalcLayoutWithTextWrappingInternal(
         if (allowable_chars != allowable_chars_for_confirmation) {
           LOG(ERROR)
               << "(allowable_chars, allowable_chars_for_confirmation) = ("
-              << allowable_chars << ", "
-              << allowable_chars_for_confirmation << ")";
+              << allowable_chars << ", " << allowable_chars_for_confirmation
+              << ")";
           return false;
         }
         layout.line_length = line_size.cx;
@@ -607,7 +579,7 @@ class NativeSystemPreferenceAPI : public SystemPreferenceInterface {
   virtual ~NativeSystemPreferenceAPI() {}
 
   virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == NULL) {
+    if (log_font == nullptr) {
       return false;
     }
 
@@ -633,16 +605,15 @@ class NativeWorkingAreaAPI : public WorkingAreaInterface {
   NativeWorkingAreaAPI() {}
 
  private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point,
-                                       RECT *working_area) {
+  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
     if (working_area == nullptr) {
       return false;
     }
     ::SetRect(working_area, 0, 0, 0, 0);
 
     // Obtain the monitor's working area
-    const HMONITOR monitor = ::MonitorFromPoint(point,
-                                                MONITOR_DEFAULTTONEAREST);
+    const HMONITOR monitor =
+        ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
     if (monitor == nullptr) {
       return false;
     }
@@ -664,18 +635,17 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
  public:
   NativeWindowPositionAPI()
       : logical_to_physical_point_for_per_monitor_dpi_(
-            GetLogicalToPhysicalPointForPerMonitorDPI()) {
-  }
+            GetLogicalToPhysicalPointForPerMonitorDPI()) {}
 
   virtual ~NativeWindowPositionAPI() {}
 
-  virtual bool LogicalToPhysicalPoint(
-      HWND window_handle, const POINT &logical_coordinate,
-      POINT *physical_coordinate) {
-    if (physical_coordinate == NULL) {
+  virtual bool LogicalToPhysicalPoint(HWND window_handle,
+                                      const POINT &logical_coordinate,
+                                      POINT *physical_coordinate) {
+    if (physical_coordinate == nullptr) {
       return false;
     }
-    DCHECK_NE(NULL, physical_coordinate);
+    DCHECK_NE(nullptr, physical_coordinate);
     if (!::IsWindow(window_handle)) {
       return false;
     }
@@ -707,11 +677,11 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
         return false;
       }
       return logical_to_physical_point_for_per_monitor_dpi_(
-          root_window_handle, physical_coordinate) != FALSE;
+                 root_window_handle, physical_coordinate) != FALSE;
     }
     // On Windows 8 and prior, it's OK to rely on LogicalToPhysicalPoint API.
-    return ::LogicalToPhysicalPoint(
-        root_window_handle, physical_coordinate) != FALSE;
+    return ::LogicalToPhysicalPoint(root_window_handle, physical_coordinate) !=
+           FALSE;
   }
 
   // This method is not const to implement Win32WindowInterface.
@@ -744,7 +714,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowClassName(HWND window_handle,
                                   std::wstring *class_name) {
-    if (class_name == NULL) {
+    if (class_name == nullptr) {
       return false;
     }
     wchar_t class_name_buffer[1024] = {};
@@ -760,7 +730,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   }
 
  private:
-  typedef BOOL (WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
+  typedef BOOL(WINAPI *LogicalToPhysicalPointForPerMonitorDPIFunc)(
       HWND window_handle, POINT *point);
   static LogicalToPhysicalPointForPerMonitorDPIFunc
   GetLogicalToPhysicalPointForPerMonitorDPI() {
@@ -779,7 +749,7 @@ class NativeWindowPositionAPI : public WindowPositionInterface {
   }
 
   const LogicalToPhysicalPointForPerMonitorDPIFunc
-  logical_to_physical_point_for_per_monitor_dpi_;
+      logical_to_physical_point_for_per_monitor_dpi_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeWindowPositionAPI);
 };
@@ -790,8 +760,7 @@ struct WindowInfo {
   CPoint client_area_offset;
   CSize client_area_size;
   double scale_factor;
-  WindowInfo()
-      : scale_factor(1.0) {}
+  WindowInfo() : scale_factor(1.0) {}
 };
 
 class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
@@ -802,7 +771,7 @@ class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
   virtual ~SystemPreferenceEmulatorImpl() {}
 
   virtual bool GetDefaultGuiFont(LOGFONTW *log_font) {
-    if (log_font == NULL) {
+    if (log_font == nullptr) {
       return false;
     }
     *log_font = default_gui_font_;
@@ -815,12 +784,10 @@ class SystemPreferenceEmulatorImpl : public SystemPreferenceInterface {
 
 class WorkingAreaEmulatorImpl : public WorkingAreaInterface {
  public:
-  explicit WorkingAreaEmulatorImpl(const CRect &area)
-      : area_(area) {}
+  explicit WorkingAreaEmulatorImpl(const CRect &area) : area_(area) {}
 
  private:
-  virtual bool GetWorkingAreaFromPoint(const POINT &point,
-                                       RECT *working_area) {
+  virtual bool GetWorkingAreaFromPoint(const POINT &point, RECT *working_area) {
     if (working_area == nullptr) {
       return false;
     }
@@ -837,11 +804,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowRect(HWND window_handle, RECT *rect) {
-    if (rect == NULL) {
+    if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *rect = info->window_rect;
@@ -850,11 +817,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetClientRect(HWND window_handle, RECT *rect) {
-    if (rect == NULL) {
+    if (rect == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *rect = CRect(CPoint(0, 0), info->client_area_size);
@@ -863,22 +830,21 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool ClientToScreen(HWND window_handle, POINT *point) {
-    if (point == NULL) {
+    if (point == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
-    *point = (info->window_rect.TopLeft() + info->client_area_offset +
-              *point);
+    *point = (info->window_rect.TopLeft() + info->client_area_offset + *point);
     return true;
   }
 
   // This method is not const to implement Win32WindowInterface.
   virtual bool IsWindow(HWND window_handle) {
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     return true;
@@ -897,11 +863,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   // This method is not const to implement Win32WindowInterface.
   virtual bool GetWindowClassName(HWND window_handle,
                                   std::wstring *class_name) {
-    if (class_name == NULL) {
+    if (class_name == nullptr) {
       return false;
     }
-    const WindowInfo *info = GetWindowInfomation(window_handle);
-    if (info == NULL) {
+    const WindowInfo *info = GetWindowInformation(window_handle);
+    if (info == nullptr) {
       return false;
     }
     *class_name = info->class_name;
@@ -909,26 +875,24 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  virtual bool LogicalToPhysicalPoint(
-      HWND window_handle, const POINT &logical_coordinate,
-      POINT *physical_coordinate) {
-    if (physical_coordinate == NULL) {
+  virtual bool LogicalToPhysicalPoint(HWND window_handle,
+                                      const POINT &logical_coordinate,
+                                      POINT *physical_coordinate) {
+    if (physical_coordinate == nullptr) {
       return false;
     }
 
-    DCHECK_NE(NULL, physical_coordinate);
+    DCHECK_NE(nullptr, physical_coordinate);
     const WindowInfo *root_info =
-        GetWindowInfomation(GetRootWindow(window_handle));
-    if (root_info == NULL) {
+        GetWindowInformation(GetRootWindow(window_handle));
+    if (root_info == nullptr) {
       return false;
     }
 
     // BottomRight is treated inside of the rect in this scenario.
     const CRect &bottom_right_inflated_rect = CRect(
-        root_info->window_rect.left,
-        root_info->window_rect.top,
-        root_info->window_rect.right + 1,
-        root_info->window_rect.bottom + 1);
+        root_info->window_rect.left, root_info->window_rect.top,
+        root_info->window_rect.right + 1, root_info->window_rect.bottom + 1);
     if (bottom_right_inflated_rect.PtInRect(logical_coordinate) == FALSE) {
       return false;
     }
@@ -937,10 +901,11 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
     return true;
   }
 
-  virtual HWND RegisterWindow(
-      const std::wstring &class_name, const RECT &window_rect,
-      const POINT &client_area_offset, const SIZE &client_area_size,
-      double scale_factor) {
+  virtual HWND RegisterWindow(const std::wstring &class_name,
+                              const RECT &window_rect,
+                              const POINT &client_area_offset,
+                              const SIZE &client_area_size,
+                              double scale_factor) {
     const HWND hwnd = GetNextWindowHandle();
     window_map_[hwnd].class_name = class_name;
     window_map_[hwnd].window_rect = window_rect;
@@ -965,9 +930,9 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
   }
 
   // This method is not const to implement Win32WindowInterface.
-  const WindowInfo *GetWindowInfomation(HWND hwnd) {
+  const WindowInfo *GetWindowInformation(HWND hwnd) {
     if (window_map_.find(hwnd) == window_map_.end()) {
-      return NULL;
+      return nullptr;
     }
     return &(window_map_.find(hwnd)->second);
   }
@@ -979,8 +944,7 @@ class WindowPositionEmulatorImpl : public WindowPositionEmulator {
 };
 
 bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
-  return params.vertical_writing.has_value() &&
-         params.vertical_writing.value();
+  return params.vertical_writing.has_value() && params.vertical_writing.value();
 }
 
 // This is a helper function for LayoutCandidateWindowByCandidateForm.
@@ -995,10 +959,8 @@ bool IsVerticalWriting(const CandidateWindowLayoutParams &params) {
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool UpdateCandidateWindowFromBasePosAndFontHeight(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    const CPoint &base_pos_in_logical_coord,
-    LayoutManager *layout_manager,
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    const CPoint &base_pos_in_logical_coord, LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
@@ -1019,27 +981,23 @@ bool UpdateCandidateWindowFromBasePosAndFontHeight(
   if (is_vertical) {
     // Vertical
     exclude_region_in_logical_coord.SetRect(
-        base_pos_in_logical_coord.x,
-        base_pos_in_logical_coord.y,
+        base_pos_in_logical_coord.x, base_pos_in_logical_coord.y,
         base_pos_in_logical_coord.x + font_height,
         base_pos_in_logical_coord.y + 1);
   } else {
     // Horizontal
     exclude_region_in_logical_coord.SetRect(
-        base_pos_in_logical_coord.x,
-        base_pos_in_logical_coord.y - font_height,
-        base_pos_in_logical_coord.x + 1,
-        base_pos_in_logical_coord.y);
+        base_pos_in_logical_coord.x, base_pos_in_logical_coord.y - font_height,
+        base_pos_in_logical_coord.x + 1, base_pos_in_logical_coord.y);
   }
 
   CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, exclude_region_in_logical_coord,
-      &exclude_region_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window,
+                                          exclude_region_in_logical_coord,
+                                          &exclude_region_in_physical_coord);
 
-  const CPoint base_pos_in_physical_coord =
-      GetBasePositionFromExcludeRect(exclude_region_in_physical_coord,
-                                     is_vertical);
+  const CPoint base_pos_in_physical_coord = GetBasePositionFromExcludeRect(
+      exclude_region_in_physical_coord, is_vertical);
   candidate_layout->InitializeWithPositionAndExcludeRegion(
       base_pos_in_physical_coord, exclude_region_in_physical_coord);
   return true;
@@ -1061,10 +1019,8 @@ bool UpdateCandidateWindowFromBasePosAndFontHeight(
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCandidateForm(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -1079,8 +1035,8 @@ bool LayoutCandidateWindowByCandidateForm(
   const CandidateWindowLayout &form = params.candidate_form.value();
 
   CPoint base_pos_in_physical_coord;
-  layout_manager->GetPointInPhysicalCoords(
-      target_window, form.position(), &base_pos_in_physical_coord);
+  layout_manager->GetPointInPhysicalCoords(target_window, form.position(),
+                                           &base_pos_in_physical_coord);
 
   if (!form.has_exclude_region()) {
     // If the candidate form does not have the exclude region, try to compose
@@ -1101,9 +1057,8 @@ bool LayoutCandidateWindowByCandidateForm(
   DCHECK(form.has_exclude_region());
 
   CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, form.exclude_region(),
-      &exclude_region_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window, form.exclude_region(),
+                                          &exclude_region_in_physical_coord);
 
   candidate_layout->InitializeWithPositionAndExcludeRegion(
       base_pos_in_physical_coord, exclude_region_in_physical_coord);
@@ -1124,10 +1079,8 @@ bool LayoutCandidateWindowByCandidateForm(
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCompositionTarget(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    bool for_suggestion,
-    LayoutManager *layout_manager,
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    bool for_suggestion, LayoutManager *layout_manager,
     CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
@@ -1169,8 +1122,8 @@ bool LayoutCandidateWindowByCompositionTarget(
   //   (Base Line)
 
   const bool can_use_candidate_form_exclude_region =
-      CanUseExcludeRegionInCandidateFrom(
-          params, compatibility_mode, for_suggestion);
+      CanUseExcludeRegionInCandidateFrom(params, compatibility_mode,
+                                         for_suggestion);
   const bool is_vertical = IsVerticalWriting(params);
   CRect exclude_region_in_logical_coord;
   if (can_use_candidate_form_exclude_region) {
@@ -1178,8 +1131,7 @@ bool LayoutCandidateWindowByCompositionTarget(
         params.candidate_form.value().exclude_region();
   } else if (is_vertical) {
     // Vertical
-    exclude_region_in_logical_coord.left =
-        char_pos.pt.x - char_pos.cLineHeight;
+    exclude_region_in_logical_coord.left = char_pos.pt.x - char_pos.cLineHeight;
     exclude_region_in_logical_coord.top = char_pos.pt.y;
     exclude_region_in_logical_coord.right = char_pos.pt.x;
     exclude_region_in_logical_coord.bottom = char_pos.pt.y + 1;
@@ -1197,13 +1149,12 @@ bool LayoutCandidateWindowByCompositionTarget(
 
   CPoint base_pos_in_physical_coord;
   layout_manager->GetPointInPhysicalCoords(
-      target_window, base_pos_in_logical_coord,
-      &base_pos_in_physical_coord);
+      target_window, base_pos_in_logical_coord, &base_pos_in_physical_coord);
 
   CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, exclude_region_in_logical_coord,
-      &exclude_region_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window,
+                                          exclude_region_in_logical_coord,
+                                          &exclude_region_in_physical_coord);
 
   candidate_layout->InitializeWithPositionAndExcludeRegion(
       base_pos_in_physical_coord, exclude_region_in_physical_coord);
@@ -1224,10 +1175,8 @@ bool LayoutCandidateWindowByCompositionTarget(
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByCompositionForm(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -1252,18 +1201,17 @@ bool LayoutCandidateWindowByCompositionForm(
     }
     DCHECK_LT(0, font_height);
 
-    const CRect rect_in_logical_coord(
-        topleft_in_logical_coord.x,
-        topleft_in_logical_coord.y,
-        topleft_in_logical_coord.x + 1,
-        topleft_in_logical_coord.y + font_height);
+    const CRect rect_in_logical_coord(topleft_in_logical_coord.x,
+                                      topleft_in_logical_coord.y,
+                                      topleft_in_logical_coord.x + 1,
+                                      topleft_in_logical_coord.y + font_height);
 
     CRect rect_in_physical_coord;
     layout_manager->GetRectInPhysicalCoords(
         target_window, rect_in_logical_coord, &rect_in_physical_coord);
 
-    const CPoint bottom_left_in_physical_coord(
-        rect_in_physical_coord.left, rect_in_physical_coord.bottom);
+    const CPoint bottom_left_in_physical_coord(rect_in_physical_coord.left,
+                                               rect_in_physical_coord.bottom);
     candidate_layout->InitializeWithPositionAndExcludeRegion(
         bottom_left_in_physical_coord, rect_in_physical_coord);
     return true;
@@ -1273,8 +1221,7 @@ bool LayoutCandidateWindowByCompositionForm(
   DCHECK(is_vertical);
   CPoint topleft_in_physical_coord;
   layout_manager->GetPointInPhysicalCoords(
-      target_window, topleft_in_logical_coord,
-      &topleft_in_physical_coord);
+      target_window, topleft_in_logical_coord, &topleft_in_physical_coord);
 
   if (font_height == 0) {
     // For vertical writing, top-left cornier is acceptable.
@@ -1285,14 +1232,12 @@ bool LayoutCandidateWindowByCompositionForm(
   DCHECK_LT(0, font_height);
 
   const CRect rect_in_logical_coord(
-      topleft_in_logical_coord.x,
-      topleft_in_logical_coord.y,
-      topleft_in_logical_coord.x + font_height,
-      topleft_in_logical_coord.y + 1);
+      topleft_in_logical_coord.x, topleft_in_logical_coord.y,
+      topleft_in_logical_coord.x + font_height, topleft_in_logical_coord.y + 1);
 
   CRect rect_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, rect_in_logical_coord, &rect_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
+                                          &rect_in_physical_coord);
 
   candidate_layout->InitializeWithPositionAndExcludeRegion(
       topleft_in_physical_coord, rect_in_physical_coord);
@@ -1318,11 +1263,10 @@ bool LayoutCandidateWindowByCompositionForm(
 //     - Suggest window on Internet Explorer 8
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
-bool LayoutCandidateWindowByCaretInfo(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
+bool LayoutCandidateWindowByCaretInfo(const CandidateWindowLayoutParams &params,
+                                      int compatibility_mode,
+                                      LayoutManager *layout_manager,
+                                      CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -1355,13 +1299,12 @@ bool LayoutCandidateWindowByCaretInfo(
   }
 
   CRect exclude_region_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, exclude_region_in_logical_coord,
-      &exclude_region_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window,
+                                          exclude_region_in_logical_coord,
+                                          &exclude_region_in_physical_coord);
 
-  const CPoint base_pos_in_physical_coord =
-      GetBasePositionFromExcludeRect(exclude_region_in_physical_coord,
-                                     is_vertical);
+  const CPoint base_pos_in_physical_coord = GetBasePositionFromExcludeRect(
+      exclude_region_in_physical_coord, is_vertical);
 
   candidate_layout->InitializeWithPositionAndExcludeRegion(
       base_pos_in_physical_coord, exclude_region_in_physical_coord);
@@ -1377,10 +1320,8 @@ bool LayoutCandidateWindowByCaretInfo(
 //   See also relevant unit tests.
 // Returns true if the |candidate_layout| is determined in successful.
 bool LayoutCandidateWindowByClientRect(
-    const CandidateWindowLayoutParams &params,
-    int compatibility_mode,
-    LayoutManager *layout_manager,
-    CandidateWindowLayout *candidate_layout) {
+    const CandidateWindowLayoutParams &params, int compatibility_mode,
+    LayoutManager *layout_manager, CandidateWindowLayout *candidate_layout) {
   DCHECK(candidate_layout);
   candidate_layout->Clear();
 
@@ -1392,14 +1333,13 @@ bool LayoutCandidateWindowByClientRect(
   }
 
   const HWND target_window = params.window_handle.value();
-  const CRect &client_rect_in_logical_coord =
-      params.client_rect.value();
+  const CRect &client_rect_in_logical_coord = params.client_rect.value();
   const bool is_vertical = IsVerticalWriting(params);
 
   CRect client_rect_in_physical_coord;
-  layout_manager->GetRectInPhysicalCoords(
-      target_window, client_rect_in_logical_coord,
-      &client_rect_in_physical_coord);
+  layout_manager->GetRectInPhysicalCoords(target_window,
+                                          client_rect_in_logical_coord,
+                                          &client_rect_in_physical_coord);
 
   if (is_vertical) {
     // Vertical
@@ -1409,22 +1349,21 @@ bool LayoutCandidateWindowByClientRect(
     // This is why we do not use GetBasePositionFromExcludeRect here.
     // TODO(yukawa): use GetBasePositionFromExcludeRect once the vertical
     //   writing is fully supported by the candidate window.
-    candidate_layout->InitializeWithPosition(CPoint(
-        client_rect_in_physical_coord.right,
-        client_rect_in_physical_coord.top));
+    candidate_layout->InitializeWithPosition(
+        CPoint(client_rect_in_physical_coord.right,
+               client_rect_in_physical_coord.top));
   } else {
     // Horizontal
-    candidate_layout->InitializeWithPosition(CPoint(
-        client_rect_in_physical_coord.left,
-        client_rect_in_physical_coord.bottom));
+    candidate_layout->InitializeWithPosition(
+        CPoint(client_rect_in_physical_coord.left,
+               client_rect_in_physical_coord.bottom));
   }
   return true;
 }
 
 bool LayoutIndicatorWindowByCompositionTarget(
     const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager,
-    CRect *target_rect) {
+    const LayoutManager &layout_manager, CRect *target_rect) {
   DCHECK(target_rect);
   *target_rect = CRect();
 
@@ -1457,11 +1396,9 @@ bool LayoutIndicatorWindowByCompositionTarget(
     //    |
     //    v
     //   (Base Line)
-    rect_in_logical_coord = CRect(
-        char_pos.pt.x - char_pos.cLineHeight,
-        char_pos.pt.y,
-        char_pos.pt.x,
-        char_pos.pt.y + 1);
+    rect_in_logical_coord =
+        CRect(char_pos.pt.x - char_pos.cLineHeight, char_pos.pt.y,
+              char_pos.pt.x, char_pos.pt.y + 1);
   } else {
     // [Horizontal Writing]
     //
@@ -1471,22 +1408,19 @@ bool LayoutIndicatorWindowByCompositionTarget(
     //     |     | (cLineHeight)
     //     |     |
     //   --+-----+---------->  (Base Line)
-    rect_in_logical_coord = CRect(
-        char_pos.pt.x,
-        char_pos.pt.y,
-        char_pos.pt.x + 1,
-        char_pos.pt.y + char_pos.cLineHeight);
+    rect_in_logical_coord =
+        CRect(char_pos.pt.x, char_pos.pt.y, char_pos.pt.x + 1,
+              char_pos.pt.y + char_pos.cLineHeight);
   }
 
-  layout_manager.GetRectInPhysicalCoords(
-      target_window, rect_in_logical_coord, target_rect);
+  layout_manager.GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
+                                         target_rect);
   return true;
 }
 
 bool LayoutIndicatorWindowByCompositionForm(
     const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager,
-    CRect *target_rect) {
+    const LayoutManager &layout_manager, CRect *target_rect) {
   DCHECK(target_rect);
   *target_rect = CRect();
   if (!params.window_handle.has_value()) {
@@ -1509,15 +1443,14 @@ bool LayoutIndicatorWindowByCompositionForm(
       topleft_in_logical_coord,
       is_vertical ? CSize(font_height, 1) : CSize(1, font_height));
 
-  layout_manager.GetRectInPhysicalCoords(
-      target_window, rect_in_logical_coord, target_rect);
+  layout_manager.GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
+                                         target_rect);
   return true;
 }
 
-bool LayoutIndicatorWindowByCaretInfo(
-    const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager,
-    CRect *target_rect) {
+bool LayoutIndicatorWindowByCaretInfo(const CandidateWindowLayoutParams &params,
+                                      const LayoutManager &layout_manager,
+                                      CRect *target_rect) {
   DCHECK(target_rect);
   *target_rect = CRect();
   if (!params.window_handle.has_value()) {
@@ -1530,33 +1463,28 @@ bool LayoutIndicatorWindowByCaretInfo(
   const HWND target_window = params.window_handle.value();
   CRect rect_in_logical_coord = params.caret_rect.value();
 
-  // Use font height if available to improve the accuracy of exlude region.
+  // Use font height if available to improve the accuracy of exclude region.
   const int font_height = GetAbsoluteFontHeight(params);
   const bool is_vertical = IsVerticalWriting(params);
 
   if (font_height > 0) {
-    if (is_vertical &&
-        (rect_in_logical_coord.Width() < font_height)) {
+    if (is_vertical && (rect_in_logical_coord.Width() < font_height)) {
       // Vertical
-      rect_in_logical_coord.right =
-          rect_in_logical_coord.left + font_height;
-    } else if (!is_vertical &&
-               (rect_in_logical_coord.Height() < font_height)) {
+      rect_in_logical_coord.right = rect_in_logical_coord.left + font_height;
+    } else if (!is_vertical && (rect_in_logical_coord.Height() < font_height)) {
       // Horizontal
-      rect_in_logical_coord.bottom =
-          rect_in_logical_coord.top + font_height;
+      rect_in_logical_coord.bottom = rect_in_logical_coord.top + font_height;
     }
   }
 
-  layout_manager.GetRectInPhysicalCoords(
-      target_window, rect_in_logical_coord, target_rect);
+  layout_manager.GetRectInPhysicalCoords(target_window, rect_in_logical_coord,
+                                         target_rect);
   return true;
 }
 
-bool GetTargetRectForIndicator(
-    const CandidateWindowLayoutParams &params,
-    const LayoutManager &layout_manager,
-    CRect *focus_rect) {
+bool GetTargetRectForIndicator(const CandidateWindowLayoutParams &params,
+                               const LayoutManager &layout_manager,
+                               CRect *focus_rect) {
   if (focus_rect == nullptr) {
     return false;
   }
@@ -1565,14 +1493,11 @@ bool GetTargetRectForIndicator(
                                                focus_rect)) {
     return true;
   }
-  if (LayoutIndicatorWindowByCompositionForm(params,
-                                             layout_manager,
+  if (LayoutIndicatorWindowByCompositionForm(params, layout_manager,
                                              focus_rect)) {
     return true;
   }
-  if (LayoutIndicatorWindowByCaretInfo(params,
-                                       layout_manager,
-                                       focus_rect)) {
+  if (LayoutIndicatorWindowByCaretInfo(params, layout_manager, focus_rect)) {
     return true;
   }
 
@@ -1592,8 +1517,7 @@ WorkingAreaInterface *WorkingAreaFactory::Create() {
   return new NativeWorkingAreaAPI();
 }
 
-WorkingAreaInterface *WorkingAreaFactory::CreateMock(
-    const RECT &working_area) {
+WorkingAreaInterface *WorkingAreaFactory::CreateMock(const RECT &working_area) {
   return new WorkingAreaEmulatorImpl(working_area);
 }
 
@@ -1601,14 +1525,10 @@ WindowPositionEmulator *WindowPositionEmulator::Create() {
   return new WindowPositionEmulatorImpl();
 }
 
-CharacterRange::CharacterRange()
-    : begin(0),
-      length(0) {}
+CharacterRange::CharacterRange() : begin(0), length(0) {}
 
 LineLayout::LineLayout()
-    : line_length(0),
-      line_width(0),
-      line_start_offset(0) {}
+    : line_length(0), line_width(0), line_start_offset(0) {}
 
 CandidateWindowLayout::CandidateWindowLayout()
     : position_(CPoint()),
@@ -1640,9 +1560,7 @@ void CandidateWindowLayout::InitializeWithPositionAndExcludeRegion(
   initialized_ = true;
 }
 
-const POINT &CandidateWindowLayout::position() const {
-  return position_;
-}
+const POINT &CandidateWindowLayout::position() const { return position_; }
 
 const RECT &CandidateWindowLayout::exclude_region() const {
   DCHECK(has_exclude_region_);
@@ -1653,12 +1571,9 @@ bool CandidateWindowLayout::has_exclude_region() const {
   return has_exclude_region_;
 }
 
-bool CandidateWindowLayout::initialized() const {
-  return initialized_;
-}
+bool CandidateWindowLayout::initialized() const { return initialized_; }
 
-IndicatorWindowLayout::IndicatorWindowLayout()
-    : is_vertical(false) {
+IndicatorWindowLayout::IndicatorWindowLayout() : is_vertical(false) {
   ::SetRect(&window_rect, 0, 0, 0, 0);
 }
 
@@ -1668,12 +1583,9 @@ void IndicatorWindowLayout::Clear() {
 }
 
 bool LayoutManager::CalcLayoutWithTextWrapping(
-    const LOGFONTW &font,
-    const std::wstring &text,
-    int maximum_line_length,
-    int initial_offset,
-   std::vector<LineLayout> *line_layouts) {
-  if (line_layouts == NULL) {
+    const LOGFONTW &font, const std::wstring &text, int maximum_line_length,
+    int initial_offset, std::vector<LineLayout> *line_layouts) {
+  if (line_layouts == nullptr) {
     return false;
   }
   line_layouts->clear();
@@ -1686,26 +1598,25 @@ bool LayoutManager::CalcLayoutWithTextWrapping(
 
   CDC dc;
   // Create a memory DC compatible with desktop DC.
-  dc.CreateCompatibleDC(CDC(::GetDC(NULL)));
+  dc.CreateCompatibleDC(CDC(::GetDC(nullptr)));
   CFontHandle old_font = dc.SelectFont(new_font);
 
   const bool result = CalcLayoutWithTextWrappingInternal(
-      dc.m_hDC, text, maximum_line_length, initial_offset,
-      line_layouts);
+      dc.m_hDC, text, maximum_line_length, initial_offset, line_layouts);
   dc.SelectFont(old_font);
 
   return result;
 }
 
-void LayoutManager::GetPointInPhysicalCoords(
-    HWND window_handle, const POINT &point, POINT *result) const {
-  if (result == NULL) {
+void LayoutManager::GetPointInPhysicalCoords(HWND window_handle,
+                                             const POINT &point,
+                                             POINT *result) const {
+  if (result == nullptr) {
     return;
   }
 
   DCHECK_NE(nullptr, window_position_.get());
-  if (window_position_->LogicalToPhysicalPoint(
-          window_handle, point, result)) {
+  if (window_position_->LogicalToPhysicalPoint(window_handle, point, result)) {
     return;
   }
 
@@ -1719,28 +1630,27 @@ void LayoutManager::GetPointInPhysicalCoords(
   return;
 }
 
-void LayoutManager::GetRectInPhysicalCoords(
-    HWND window_handle, const RECT &rect, RECT *result) const {
-  if (result == NULL) {
+void LayoutManager::GetRectInPhysicalCoords(HWND window_handle,
+                                            const RECT &rect,
+                                            RECT *result) const {
+  if (result == nullptr) {
     return;
   }
 
   DCHECK_NE(nullptr, window_position_.get());
 
   CPoint top_left;
-  GetPointInPhysicalCoords(
-      window_handle, CPoint(rect.left, rect.top), &top_left);
+  GetPointInPhysicalCoords(window_handle, CPoint(rect.left, rect.top),
+                           &top_left);
   CPoint bottom_right;
-  GetPointInPhysicalCoords(
-      window_handle, CPoint(rect.right, rect.bottom), &bottom_right);
+  GetPointInPhysicalCoords(window_handle, CPoint(rect.right, rect.bottom),
+                           &bottom_right);
   *result = CRect(top_left, bottom_right);
   return;
 }
 
 SegmentMarkerLayout::SegmentMarkerLayout()
-    : from(CPoint()),
-      to(CPoint()),
-      highlighted(false) {}
+    : from(CPoint()), to(CPoint()), highlighted(false) {}
 
 CompositionWindowLayout::CompositionWindowLayout()
     : window_position_in_screen_coordinate(CRect()),
@@ -1765,17 +1675,16 @@ LayoutManager::~LayoutManager() {}
 //   more easily.
 bool LayoutManager::LayoutCompositionWindow(
     const commands::RendererCommand &command,
-   std::vector<CompositionWindowLayout> *composition_window_layouts,
+    std::vector<CompositionWindowLayout> *composition_window_layouts,
     CandidateWindowLayout *candidate_layout) const {
-  if (composition_window_layouts != NULL) {
+  if (composition_window_layouts != nullptr) {
     composition_window_layouts->clear();
   }
-  if (candidate_layout != NULL) {
+  if (candidate_layout != nullptr) {
     candidate_layout->Clear();
   }
 
-  if (!command.has_output() ||
-      !command.output().has_preedit() ||
+  if (!command.has_output() || !command.output().has_preedit() ||
       command.output().preedit().segment_size() <= 0 ||
       !command.output().preedit().has_cursor() ||
       !command.has_application_info() ||
@@ -1847,7 +1756,7 @@ bool LayoutManager::LayoutCompositionWindow(
 
   const HWND root_window_handle =
       window_position_->GetRootWindow(target_window_handle);
-  if (root_window_handle == NULL) {
+  if (root_window_handle == nullptr) {
     LOG(ERROR) << "GetRootWindow failed.";
     return false;
   }
@@ -1867,8 +1776,8 @@ bool LayoutManager::LayoutCompositionWindow(
   }
 
   CPoint current_pos;
-  GetPointInPhysicalCoords(target_window_handle,
-                           current_pos_in_logical_coord, &current_pos);
+  GetPointInPhysicalCoords(target_window_handle, current_pos_in_logical_coord,
+                           &current_pos);
 
   // Check the availability of optional fields.
   // Note that some applications may set |CompositionForm::RECT| and other
@@ -1876,8 +1785,7 @@ bool LayoutManager::LayoutCompositionWindow(
   // See b/3200425 for details.
   bool use_area_in_composition_form = false;
   if (((style_bits & CompositionForm::RECT) == CompositionForm::RECT) &&
-      composition_form.has_area() &&
-      composition_form.area().has_left() &&
+      composition_form.has_area() && composition_form.area().has_left() &&
       composition_form.area().has_top() &&
       composition_form.area().has_right() &&
       composition_form.area().has_bottom()) {
@@ -1887,13 +1795,11 @@ bool LayoutManager::LayoutCompositionWindow(
   CRect area_in_client_coord;
   if (use_area_in_composition_form) {
     area_in_client_coord.SetRect(
-        composition_form.area().left(),
-        composition_form.area().top(),
-        composition_form.area().right(),
-        composition_form.area().bottom());
+        composition_form.area().left(), composition_form.area().top(),
+        composition_form.area().right(), composition_form.area().bottom());
   } else {
-    if (window_position_->GetClientRect(
-            target_window_handle, &area_in_client_coord) == FALSE) {
+    if (window_position_->GetClientRect(target_window_handle,
+                                        &area_in_client_coord) == FALSE) {
       const int error = ::GetLastError();
       DLOG(ERROR) << "GetClientRect failed.  error = " << error;
       return false;
@@ -1907,14 +1813,12 @@ bool LayoutManager::LayoutCompositionWindow(
   }
 
   CPoint current_pos_in_physical_coord;
-  GetPointInPhysicalCoords(
-      target_window_handle, current_pos_in_logical_coord,
-      &current_pos_in_physical_coord);
+  GetPointInPhysicalCoords(target_window_handle, current_pos_in_logical_coord,
+                           &current_pos_in_physical_coord);
 
   CRect area_in_physical_coord;
-  GetRectInPhysicalCoords(
-      target_window_handle, area_in_logical_coord,
-      &area_in_physical_coord);
+  GetRectInPhysicalCoords(target_window_handle, area_in_logical_coord,
+                          &area_in_physical_coord);
 
   // Adjust the font size to be equal to that in the target process with
   // taking DPI virtualization into account.
@@ -1942,20 +1846,21 @@ bool LayoutManager::LayoutCompositionWindow(
   std::vector<mozc::renderer::win32::LineLayout> layouts;
   bool result = false;
   {
-    const int offset = is_vertical
-        ? current_pos_in_physical_coord.y - area_in_physical_coord.top
-        : current_pos_in_physical_coord.x - area_in_physical_coord.left;
+    const int offset =
+        is_vertical
+            ? current_pos_in_physical_coord.y - area_in_physical_coord.top
+            : current_pos_in_physical_coord.x - area_in_physical_coord.left;
     const int limit = is_vertical ? area_in_physical_coord.Height()
                                   : area_in_physical_coord.Width();
-    result = CalcLayoutWithTextWrapping(
-        logfont, composition_text, limit, offset, &layouts);
+    result = CalcLayoutWithTextWrapping(logfont, composition_text, limit,
+                                        offset, &layouts);
   }
   if (!result) {
     LOG(ERROR) << "CalcLayoutWithTextWrapping failed.";
     return false;
   }
 
-  if (composition_window_layouts != NULL) {
+  if (composition_window_layouts != nullptr) {
     composition_window_layouts->clear();
   }
 
@@ -1966,12 +1871,12 @@ bool LayoutManager::LayoutCompositionWindow(
     // In case surrogate pair appears, use Util::WideCharsLen to calculate the
     // cursor position as wide character index. See b/4163234 for details.
     cursor_index = Util::WideCharsLen(
-        Util::SubString(preedit_utf8, 0, output.candidates().position()));
+        Util::Utf8SubString(preedit_utf8, 0, output.candidates().position()));
   }
 
   const bool is_suggest =
       output.candidates().has_category() &&
-      (output.candidates().category() ==  commands::SUGGESTION);
+      (output.candidates().category() == commands::SUGGESTION);
 
   // When this flag is true, suggest window must not hide preedit text.
   // TODO(yukawa): remove |!is_vertical| when vertical candidate window is
@@ -1980,18 +1885,15 @@ bool LayoutManager::LayoutCompositionWindow(
 
   int total_line_offset = 0;
   int total_characters = 0;
-  for (size_t layout_index = 0; layout_index < layouts.size();
-       ++layout_index) {
+  for (size_t layout_index = 0; layout_index < layouts.size(); ++layout_index) {
     const mozc::renderer::win32::LineLayout &layout = layouts[layout_index];
-    if (layout.text.size() < 0 ||
-        layout.line_length < 0 ||
+    if (layout.text.size() < 0 || layout.line_length < 0 ||
         layout.character_positions.size() < 0) {
       // unexpected values found.
       return false;
     }
 
-    if (layout.text.size() == 0 ||
-        layout.line_length == 0 ||
+    if (layout.text.size() == 0 || layout.line_length == 0 ||
         layout.character_positions.size() == 0) {
       // This line is full.  Go to next line.
       total_line_offset += layout.line_width;
@@ -2012,15 +1914,12 @@ bool LayoutManager::LayoutCompositionWindow(
     if (is_vertical) {
       window_rect.top = area_in_physical_coord.top + layout.line_start_offset;
       window_rect.right = current_pos.x - total_line_offset;
-      window_rect.left =
-          window_rect.right - layout.line_width;
-      window_rect.bottom =
-          window_rect.top + layout.line_length;
+      window_rect.left = window_rect.right - layout.line_width;
+      window_rect.bottom = window_rect.top + layout.line_length;
       text_rect.SetRect(0, 0, layout.line_width, layout.line_length);
       base_point.SetPoint(layout.line_width, 0);
     } else {
-      window_rect.left =
-          area_in_physical_coord.left + layout.line_start_offset;
+      window_rect.left = area_in_physical_coord.left + layout.line_start_offset;
       window_rect.top = current_pos.y + total_line_offset;
       window_rect.right = window_rect.left + layout.line_length;
       window_rect.bottom = window_rect.top + layout.line_width;
@@ -2041,7 +1940,7 @@ bool LayoutManager::LayoutCompositionWindow(
     // TODO(yukawa): We should use the actual caret size, which can be
     //   obtained by GetGUIThreadInfo API.
     const int caret_index = Util::WideCharsLen(
-        Util::SubString(preedit_utf8, 0, output.preedit().cursor()));
+        Util::Utf8SubString(preedit_utf8, 0, output.preedit().cursor()));
 
     if (total_characters <= caret_index &&
         caret_index < next_total_characters) {
@@ -2093,13 +1992,11 @@ bool LayoutManager::LayoutCompositionWindow(
         window_layout.caret_rect =
             CRect(caret_begin, 0, caret_end, layout.line_width);
       }
-      window_layout.window_position_in_screen_coordinate =
-          extended_rect;
+      window_layout.window_position_in_screen_coordinate = extended_rect;
     }
 
     if (total_characters <= cursor_index &&
-        cursor_index < next_total_characters &&
-        candidate_layout != NULL &&
+        cursor_index < next_total_characters && candidate_layout != nullptr &&
         !suggest_window_never_hides_preedit) {
       const int local_cursor_index = cursor_index - total_characters;
       CPoint cursor_pos;
@@ -2119,21 +2016,20 @@ bool LayoutManager::LayoutCompositionWindow(
       }
       cursor_pos.Offset(window_rect.left, window_rect.top);
       exclusion_area.OffsetRect(window_rect.left, window_rect.top);
-      candidate_layout->InitializeWithPositionAndExcludeRegion(
-          cursor_pos, exclusion_area);
+      candidate_layout->InitializeWithPositionAndExcludeRegion(cursor_pos,
+                                                               exclusion_area);
     }
 
     const size_t min_segment_index = segment_indices[total_characters];
-    const size_t max_segment_index =
-        segment_indices[next_total_characters - 1];
+    const size_t max_segment_index = segment_indices[next_total_characters - 1];
     for (size_t segment_index = min_segment_index;
          segment_index <= max_segment_index; ++segment_index) {
       const commands::Preedit::Segment &segment =
           preedit.segment(segment_index);
       if ((segment.annotation() & commands::Preedit::Segment::UNDERLINE) !=
-           commands::Preedit::Segment::UNDERLINE &&
+              commands::Preedit::Segment::UNDERLINE &&
           (segment.annotation() & commands::Preedit::Segment::HIGHLIGHT) !=
-           commands::Preedit::Segment::HIGHLIGHT) {
+              commands::Preedit::Segment::HIGHLIGHT) {
         continue;
       }
       const int segment_begin =
@@ -2141,8 +2037,9 @@ bool LayoutManager::LayoutCompositionWindow(
           total_characters;
       const int segment_end =
           std::min(segment_lengths[segment_index].begin +
-              segment_lengths[segment_index].length,
-              next_total_characters) - total_characters;
+                       segment_lengths[segment_index].length,
+                   next_total_characters) -
+          total_characters;
       if (segment_begin >= segment_end) {
         continue;
       }
@@ -2152,7 +2049,7 @@ bool LayoutManager::LayoutCompositionWindow(
         // If this segment is the last segment, we do not show the gap.
         show_segment_gap = false;
       } else if (segment_lengths[segment_index].begin +
-                 segment_lengths[segment_index].length !=
+                     segment_lengths[segment_index].length !=
                  segment_end + total_characters) {
         // If this segment continues to the next line, we do not show the
         // gap.  This behavior is different from the composition window
@@ -2163,16 +2060,15 @@ bool LayoutManager::LayoutCompositionWindow(
       // As CUAS does, we make a gap in underline between segments.
       // The length of underline will be shortened 20% of the width of
       // the last character.
-      const int begin_pos =
-          layout.character_positions[segment_begin].begin;
+      const int begin_pos = layout.character_positions[segment_begin].begin;
       const int end_pos =
           layout.character_positions[segment_end - 1].begin +
           80 * layout.character_positions[segment_end - 1].length /
-          (show_segment_gap ? 100 : 80);
+              (show_segment_gap ? 100 : 80);
 
       SegmentMarkerLayout marker;
       if ((segment.annotation() & commands::Preedit::Segment::HIGHLIGHT) ==
-           commands::Preedit::Segment::HIGHLIGHT) {
+          commands::Preedit::Segment::HIGHLIGHT) {
         marker.highlighted = true;
       }
 
@@ -2189,7 +2085,7 @@ bool LayoutManager::LayoutCompositionWindow(
       }
       window_layout.marker_layouts.push_back(marker);
     }
-    if (composition_window_layouts != NULL) {
+    if (composition_window_layouts != nullptr) {
       composition_window_layouts->push_back(window_layout);
     }
     total_line_offset += layout.line_width;
@@ -2200,16 +2096,15 @@ bool LayoutManager::LayoutCompositionWindow(
   // so that suggest window never hides the preedit.
   if (suggest_window_never_hides_preedit &&
       (composition_window_layouts->size() > 0) &&
-      (candidate_layout != NULL)) {
+      (candidate_layout != nullptr)) {
     // Initialize the |exclusion_area| with invalid data. These values will
     // be updated to be valid at the first turn of the next for-loop.
     // For example, |exclusion_area.left| will be updated as follows.
     //   exclusion_area.left = std::min(exclusion_area.left,
     //                             std::numeric_limits<int>::max());
-    CRect exclusion_area(std::numeric_limits<int>::max(),
-                         std::numeric_limits<int>::max(),
-                         std::numeric_limits<int>::min(),
-                         std::numeric_limits<int>::min());
+    CRect exclusion_area(
+        std::numeric_limits<int>::max(), std::numeric_limits<int>::max(),
+        std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
 
     for (size_t i = 0; i < composition_window_layouts->size(); ++i) {
       const CompositionWindowLayout &layout = composition_window_layouts->at(i);
@@ -2217,14 +2112,14 @@ bool LayoutManager::LayoutCompositionWindow(
       text_area_in_screen_coord.OffsetRect(
           layout.window_position_in_screen_coordinate.left,
           layout.window_position_in_screen_coordinate.top);
-      exclusion_area.left = std::min(exclusion_area.left,
-                                     text_area_in_screen_coord.left);
-      exclusion_area.top = std::min(exclusion_area.top,
-                                    text_area_in_screen_coord.top);
-      exclusion_area.right = std::max(exclusion_area.right,
-                                      text_area_in_screen_coord.right);
-      exclusion_area.bottom = std::max(exclusion_area.bottom,
-                                       text_area_in_screen_coord.bottom);
+      exclusion_area.left =
+          std::min(exclusion_area.left, text_area_in_screen_coord.left);
+      exclusion_area.top =
+          std::min(exclusion_area.top, text_area_in_screen_coord.top);
+      exclusion_area.right =
+          std::max(exclusion_area.right, text_area_in_screen_coord.right);
+      exclusion_area.bottom =
+          std::max(exclusion_area.bottom, text_area_in_screen_coord.bottom);
     }
 
     CPoint cursor_pos;
@@ -2233,17 +2128,16 @@ bool LayoutManager::LayoutCompositionWindow(
     } else {
       cursor_pos.SetPoint(exclusion_area.left, exclusion_area.bottom);
     }
-    candidate_layout->InitializeWithPositionAndExcludeRegion(
-        cursor_pos, exclusion_area);
+    candidate_layout->InitializeWithPositionAndExcludeRegion(cursor_pos,
+                                                             exclusion_area);
   }
   return true;
 }
 
-bool LayoutManager::ClientPointToScreen(
-    HWND src_window_handle,
-    const POINT &src_point,
-    POINT *dest_point) const {
-  if (dest_point == NULL) {
+bool LayoutManager::ClientPointToScreen(HWND src_window_handle,
+                                        const POINT &src_point,
+                                        POINT *dest_point) const {
+  if (dest_point == nullptr) {
     return false;
   }
 
@@ -2263,11 +2157,10 @@ bool LayoutManager::ClientPointToScreen(
   return true;
 }
 
-bool LayoutManager::ClientRectToScreen(
-    HWND src_window_handle,
-    const RECT &src_rect,
-    RECT *dest_rect) const {
-  if (dest_rect == NULL) {
+bool LayoutManager::ClientRectToScreen(HWND src_window_handle,
+                                       const RECT &src_rect,
+                                       RECT *dest_rect) const {
+  if (dest_rect == nullptr) {
     return false;
   }
 
@@ -2296,11 +2189,10 @@ bool LayoutManager::ClientRectToScreen(
   return true;
 }
 
-bool LayoutManager::LocalPointToScreen(
-    HWND src_window_handle,
-    const POINT &src_point,
-    POINT *dest_point) const {
-  if (dest_point == NULL) {
+bool LayoutManager::LocalPointToScreen(HWND src_window_handle,
+                                       const POINT &src_point,
+                                       POINT *dest_point) const {
+  if (dest_point == nullptr) {
     return false;
   }
 
@@ -2322,11 +2214,10 @@ bool LayoutManager::LocalPointToScreen(
   return true;
 }
 
-bool LayoutManager::LocalRectToScreen(
-    HWND src_window_handle,
-    const RECT &src_rect,
-    RECT *dest_rect) const {
-  if (dest_rect == NULL) {
+bool LayoutManager::LocalRectToScreen(HWND src_window_handle,
+                                      const RECT &src_rect,
+                                      RECT *dest_rect) const {
+  if (dest_rect == nullptr) {
     return false;
   }
 
@@ -2350,8 +2241,7 @@ bool LayoutManager::LocalRectToScreen(
   return true;
 }
 
-bool LayoutManager::GetClientRect(
-    HWND window_handle, RECT *client_rect) const {
+bool LayoutManager::GetClientRect(HWND window_handle, RECT *client_rect) const {
   return window_position_->GetClientRect(window_handle, client_rect);
 }
 
@@ -2365,18 +2255,18 @@ double LayoutManager::GetScalingFactor(HWND window_handle) const {
 
   CPoint top_left_in_physical_coord;
   if (!window_position_->LogicalToPhysicalPoint(
-           window_handle, window_rect_in_logical_coord.TopLeft(),
-           &top_left_in_physical_coord)) {
+          window_handle, window_rect_in_logical_coord.TopLeft(),
+          &top_left_in_physical_coord)) {
     return kDefaultValue;
   }
   CPoint bottom_right_in_physical_coord;
   if (!window_position_->LogicalToPhysicalPoint(
-           window_handle, window_rect_in_logical_coord.BottomRight(),
-           &bottom_right_in_physical_coord)) {
+          window_handle, window_rect_in_logical_coord.BottomRight(),
+          &bottom_right_in_physical_coord)) {
     return kDefaultValue;
   }
-  const CRect window_rect_in_physical_coord(
-      top_left_in_physical_coord, bottom_right_in_physical_coord);
+  const CRect window_rect_in_physical_coord(top_left_in_physical_coord,
+                                            bottom_right_in_physical_coord);
 
   if (window_rect_in_physical_coord == window_rect_in_logical_coord) {
     // No scaling.
@@ -2457,27 +2347,27 @@ bool LayoutManager::LayoutCandidateWindowForSuggestion(
 
   if ((compatibility_mode & CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) ==
       CAN_USE_CANDIDATE_FORM_FOR_SUGGEST) {
-    if (LayoutCandidateWindowByCandidateForm(
-            params, compatibility_mode, this, candidate_layout)) {
+    if (LayoutCandidateWindowByCandidateForm(params, compatibility_mode, this,
+                                             candidate_layout)) {
       DCHECK(candidate_layout->initialized());
       return true;
     }
   }
 
-  if (LayoutCandidateWindowByCaretInfo(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCaretInfo(params, compatibility_mode, this,
+                                       candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
-  if (LayoutCandidateWindowByCompositionForm(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCompositionForm(params, compatibility_mode, this,
+                                             candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
-  if (LayoutCandidateWindowByClientRect(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByClientRect(params, compatibility_mode, this,
+                                        candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -2502,26 +2392,26 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
     return true;
   }
 
-  if (LayoutCandidateWindowByCandidateForm(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCandidateForm(params, compatibility_mode, this,
+                                           candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
-  if (LayoutCandidateWindowByCaretInfo(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCaretInfo(params, compatibility_mode, this,
+                                       candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
-  if (LayoutCandidateWindowByCompositionForm(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByCompositionForm(params, compatibility_mode, this,
+                                             candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
 
-  if (LayoutCandidateWindowByClientRect(
-          params, compatibility_mode, this, candidate_layout)) {
+  if (LayoutCandidateWindowByClientRect(params, compatibility_mode, this,
+                                        candidate_layout)) {
     DCHECK(candidate_layout->initialized());
     return true;
   }
@@ -2530,12 +2420,12 @@ bool LayoutManager::LayoutCandidateWindowForConversion(
 }
 
 int LayoutManager::GetCompatibilityMode(
-        const commands::RendererCommand_ApplicationInfo &app_info) {
+    const commands::RendererCommand_ApplicationInfo &app_info) {
   if (!app_info.has_target_window_handle()) {
     return COMPATIBILITY_MODE_NONE;
   }
-  const HWND target_window = WinUtil::DecodeWindowHandle(
-      app_info.target_window_handle());
+  const HWND target_window =
+      WinUtil::DecodeWindowHandle(app_info.target_window_handle());
 
   if (!window_position_->IsWindow(target_window)) {
     return COMPATIBILITY_MODE_NONE;
@@ -2547,80 +2437,75 @@ int LayoutManager::GetCompatibilityMode(
   }
 
   int mode = COMPATIBILITY_MODE_NONE;
-  {
-    {
-      const wchar_t *kUseCandidateFormForSuggest[] = {
-          L"Chrome_RenderWidgetHostHWND",
-          L"JsTaroCtrl",
-          L"MozillaWindowClass",
-          L"OperaWindowClass",
-          L"QWidget",
-      };
-      for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
-        if (kUseCandidateFormForSuggest[i] == class_name) {
-          mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
-          break;
-        }
-      }
-    }
-  }
-
-  {
-    const wchar_t *kUseLocalCoord[] = {
-        L"gdkWindowToplevel",
-        L"SunAwtDialog",
-        L"SunAwtFrame",
+  {{const wchar_t * kUseCandidateFormForSuggest[] = {
+        L"Chrome_RenderWidgetHostHWND",
+        L"JsTaroCtrl",
+        L"MozillaWindowClass",
+        L"OperaWindowClass",
+        L"QWidget",
     };
-    for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
-      if (kUseLocalCoord[i] == class_name) {
-        mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
-        break;
-      }
+  for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
+    if (kUseCandidateFormForSuggest[i] == class_name) {
+      mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
+      break;
     }
   }
+}
+}  // namespace win32
 
-  {
-    const wchar_t *kIgnoreDefaultCompositionForm[] = {
-        L"SunAwtDialog",
-        L"SunAwtFrame",
-    };
-    for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
-      if (kIgnoreDefaultCompositionForm[i] == class_name) {
-        mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
-        break;
-      }
+{
+  const wchar_t *kUseLocalCoord[] = {
+      L"gdkWindowToplevel",
+      L"SunAwtDialog",
+      L"SunAwtFrame",
+  };
+  for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
+    if (kUseLocalCoord[i] == class_name) {
+      mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
+      break;
     }
   }
-
-  {
-    const wchar_t *kShowInfolistImmediately[] = {
-        L"Emacs",
-        L"MEADOW",
-    };
-    for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
-      if (kShowInfolistImmediately[i] == class_name) {
-        mode |= SHOW_INFOLIST_IMMEDIATELY;
-        break;
-      }
-    }
-  }
-
-  return mode;
 }
 
+{
+  const wchar_t *kIgnoreDefaultCompositionForm[] = {
+      L"SunAwtDialog",
+      L"SunAwtFrame",
+  };
+  for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
+    if (kIgnoreDefaultCompositionForm[i] == class_name) {
+      mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
+      break;
+    }
+  }
+}
+
+{
+  const wchar_t *kShowInfolistImmediately[] = {
+      L"Emacs",
+      L"MEADOW",
+  };
+  for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
+    if (kShowInfolistImmediately[i] == class_name) {
+      mode |= SHOW_INFOLIST_IMMEDIATELY;
+      break;
+    }
+  }
+}
+
+return mode;
+}  // namespace renderer
+
 bool LayoutManager::LayoutIndicatorWindow(
-      const commands::RendererCommand_ApplicationInfo &app_info,
-      IndicatorWindowLayout *indicator_layout) {
+    const commands::RendererCommand_ApplicationInfo &app_info,
+    IndicatorWindowLayout *indicator_layout) {
   if (indicator_layout == nullptr) {
     return false;
   }
   indicator_layout->Clear();
 
   CandidateWindowLayoutParams params;
-  if (!ExtractParams(this,
-                     GetCompatibilityMode(app_info),
-                     app_info,
-                     &params)) {
+  if (!ExtractParams(this, GetCompatibilityMode(app_info), app_info, &params)) {
     return false;
   }
 

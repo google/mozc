@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
+#include "absl/strings/string_view.h"
 
 using mozc::dictionary::POSMatcher;
 
@@ -40,11 +41,11 @@ namespace mozc {
 namespace number_compound_util {
 
 bool SplitStringIntoNumberAndCounterSuffix(
-    const SerializedStringArray &suffix_array,
-    StringPiece input, StringPiece *number, StringPiece *counter_suffix,
+    const SerializedStringArray &suffix_array, absl::string_view input,
+    absl::string_view *number, absl::string_view *counter_suffix,
     uint32 *script_type) {
   *script_type = NONE;
-  StringPiece s = input, rest = input;
+  absl::string_view s = input, rest = input;
   while (!s.empty()) {
     char32 c;
     if (!Util::SplitFirstChar32(s, &c, &rest)) {
@@ -64,14 +65,27 @@ bool SplitStringIntoNumberAndCounterSuffix(
     }
     switch (c) {
       // Cases where c is one of "〇零一二三四五六七八九十百千".
-      case 0x3007: case 0x4E00: case 0x4E03: case 0x4E09: case 0x4E5D:
-      case 0x4E8C: case 0x4E94: case 0x516B: case 0x516D: case 0x5341:
-      case 0x5343: case 0x56DB: case 0x767E: case 0x96F6:
+      case 0x3007:
+      case 0x4E00:
+      case 0x4E03:
+      case 0x4E09:
+      case 0x4E5D:
+      case 0x4E8C:
+      case 0x4E94:
+      case 0x516B:
+      case 0x516D:
+      case 0x5341:
+      case 0x5343:
+      case 0x56DB:
+      case 0x767E:
+      case 0x96F6:
         *script_type |= KANJI;
         s = rest;
         continue;
       // Cases where c is one of "壱弐参".
-      case 0x58F1: case 0x5F10: case 0x53C2:
+      case 0x58F1:
+      case 0x5F10:
+      case 0x53C2:
         *script_type |= OLD_KANJI;
         s = rest;
         continue;
@@ -103,7 +117,7 @@ bool IsNumber(const SerializedStringArray &suffix_array,
   // it's successful and the resulting number component is nonempty, we may
   // assume the candidate is number.  This check prevents, e.g., the following
   // misrewrite: 百舌鳥(もず, noun) -> 100舌鳥, １００舌鳥, etc.
-  StringPiece number, suffix;
+  absl::string_view number, suffix;
   uint32 script_type = 0;
   if (!number_compound_util::SplitStringIntoNumberAndCounterSuffix(
           suffix_array, cand.content_value, &number, &suffix, &script_type)) {

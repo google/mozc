@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,16 +31,17 @@
 
 #include <string>
 
-#include "base/string_piece.h"
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-void CollocationUtil::GetNormalizedScript(
-    const StringPiece str, bool remove_number, string *output) {
+void CollocationUtil::GetNormalizedScript(const absl::string_view str,
+                                          bool remove_number,
+                                          std::string *output) {
   output->clear();
-  string temp;
+  std::string temp;
   RemoveExtraCharacters(str, remove_number, &temp);
-  string temp2;
+  std::string temp2;
   Util::StringReplace(temp, "％", "%", true, &temp2);
   Util::StringReplace(temp2, "～", "〜", true, output);
 }
@@ -74,15 +75,16 @@ bool CollocationUtil::IsNumber(char32 c) {
   return false;
 }
 
-void CollocationUtil::RemoveExtraCharacters(
-    const StringPiece input, bool remove_number, string *output) {
+void CollocationUtil::RemoveExtraCharacters(const absl::string_view input,
+                                            bool remove_number,
+                                            std::string *output) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     const char32 w = iter.Get();
     if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) &&
          (!remove_number || !IsNumber(w))) ||
-        w == 0x3005 ||  // "々"
+        w == 0x3005 ||                 // "々"
         w == 0x0025 || w == 0xFF05 ||  // "%", "％"
-        w == 0x3006 ||  // "〆"
+        w == 0x3006 ||                 // "〆"
         w == 0x301C || w == 0xFF5E) {  // "〜", "～"
       Util::UCS4ToUTF8Append(w, output);
     }

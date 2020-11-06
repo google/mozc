@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,29 +32,28 @@
 #include <set>
 #include <string>
 
+#include "base/mozc_hash_map.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
 bool IsTokenEqualImpl(const Token &expected, const Token &actual) {
-  return expected.key == actual.key &&
-         expected.value == actual.value &&
-         expected.cost == actual.cost &&
-         expected.lid == actual.lid &&
-         expected.rid == actual.rid &&
-         expected.attributes == actual.attributes;
+  return expected.key == actual.key && expected.value == actual.value &&
+         expected.cost == actual.cost && expected.lid == actual.lid &&
+         expected.rid == actual.rid && expected.attributes == actual.attributes;
 }
 
 }  // namespace
 
-DictionaryInterface::Callback::ResultType
-CollectTokenCallback::OnToken(StringPiece,  // key
-                              StringPiece,  // actual_key
-                              const Token &token) {
+DictionaryInterface::Callback::ResultType CollectTokenCallback::OnToken(
+    absl::string_view,  // key
+    absl::string_view,  // actual_key
+    const Token &token) {
   tokens_.push_back(token);
   return TRAVERSE_CONTINUE;
 }
@@ -63,10 +62,10 @@ CheckTokenExistenceCallback::CheckTokenExistenceCallback(
     const Token *target_token)
     : target_token_(target_token), found_(false) {}
 
-DictionaryInterface::Callback::ResultType
-CheckTokenExistenceCallback::OnToken(StringPiece,  // key
-                                     StringPiece,  // actual_key
-                                     const Token &token) {
+DictionaryInterface::Callback::ResultType CheckTokenExistenceCallback::OnToken(
+    absl::string_view,  // key
+    absl::string_view,  // actual_key
+    const Token &token) {
   if (IsTokenEqualImpl(*target_token_, token)) {
     found_ = true;
     return TRAVERSE_DONE;
@@ -75,14 +74,15 @@ CheckTokenExistenceCallback::OnToken(StringPiece,  // key
 }
 
 CheckMultiTokensExistenceCallback::CheckMultiTokensExistenceCallback(
-    const std::vector<Token *> &tokens) : found_count_(0) {
+    const std::vector<Token *> &tokens)
+    : found_count_(0) {
   for (size_t i = 0; i < tokens.size(); ++i) {
     result_[tokens[i]] = false;
   }
 }
 
 bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
-  std::map<const Token *, bool>::const_iterator iter = result_.find(token);
+  const auto iter = result_.find(token);
   if (iter == result_.end()) {
     return false;
   }
@@ -90,9 +90,8 @@ bool CheckMultiTokensExistenceCallback::IsFound(const Token *token) const {
 }
 
 bool CheckMultiTokensExistenceCallback::AreAllFound() const {
-  for (std::map<const Token *, bool>::const_iterator iter = result_.begin();
-       iter != result_.end(); ++iter) {
-    if (!iter->second) {
+  for (const auto &kv : result_) {
+    if (!kv.second) {
       return false;
     }
   }
@@ -100,11 +99,10 @@ bool CheckMultiTokensExistenceCallback::AreAllFound() const {
 }
 
 DictionaryInterface::Callback::ResultType
-CheckMultiTokensExistenceCallback::OnToken(StringPiece,  // key
-                                           StringPiece,  // actual_key
+CheckMultiTokensExistenceCallback::OnToken(absl::string_view,  // key
+                                           absl::string_view,  // actual_key
                                            const Token &token) {
-  for (std::map<const Token *, bool>::iterator iter = result_.begin();
-       iter != result_.end(); ++iter) {
+  for (auto iter = result_.begin(); iter != result_.end(); ++iter) {
     if (!iter->second && IsTokenEqualImpl(*iter->first, token)) {
       iter->second = true;
       ++found_count_;
@@ -114,23 +112,22 @@ CheckMultiTokensExistenceCallback::OnToken(StringPiece,  // key
   return found_count_ == result_.size() ? TRAVERSE_DONE : TRAVERSE_CONTINUE;
 }
 
-string PrintToken(const Token &token) {
+std::string PrintToken(const Token &token) {
   return Util::StringPrintf(
-      "{key:%s, val:%s, cost:%d, lid:%d, rid:%d, attr:%d}",
-      token.key.c_str(), token.value.c_str(), token.cost,
-      token.lid, token.rid, token.attributes);
+      "{key:%s, val:%s, cost:%d, lid:%d, rid:%d, attr:%d}", token.key.c_str(),
+      token.value.c_str(), token.cost, token.lid, token.rid, token.attributes);
 }
 
-string PrintTokens(const std::vector<Token> &tokens) {
-  string s = "[";
+std::string PrintTokens(const std::vector<Token> &tokens) {
+  std::string s = "[";
   for (size_t i = 0; i < tokens.size(); ++i) {
     s.append(PrintToken(tokens[i])).append(", ");
   }
   return s.append(1, ']');
 }
 
-string PrintTokens(const std::vector<Token *> &token_ptrs) {
-  string s = "[";
+std::string PrintTokens(const std::vector<Token *> &token_ptrs) {
+  std::string s = "[";
   for (size_t i = 0; i < token_ptrs.size(); ++i) {
     s.append(PrintToken(*token_ptrs[i])).append(", ");
   }
@@ -139,36 +136,35 @@ string PrintTokens(const std::vector<Token *> &token_ptrs) {
 
 namespace internal {
 
-::testing::AssertionResult IsTokenEqual(
-     const char *,  // expected_expr
-     const char *,  // actual_expr
-     const Token &expected, const Token &actual) {
+::testing::AssertionResult IsTokenEqual(const char *,  // expected_expr
+                                        const char *,  // actual_expr
+                                        const Token &expected,
+                                        const Token &actual) {
   if (IsTokenEqualImpl(expected, actual)) {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-          << "Tokens are not equal\n"
-          << "Expected: " << PrintToken(expected) << "\n"
-          << "Actual: " << PrintToken(actual);
+         << "Tokens are not equal\n"
+         << "Expected: " << PrintToken(expected) << "\n"
+         << "Actual: " << PrintToken(actual);
 }
 
 ::testing::AssertionResult AreTokensEqualUnordered(
-     const char *,  // expected_expr
-     const char *,  // actual_expr
-     const std::vector<Token *> &expected,
-     const std::vector<Token> &actual) {
+    const char *,  // expected_expr
+    const char *,  // actual_expr
+    const std::vector<Token *> &expected, const std::vector<Token> &actual) {
   if (expected.size() != actual.size()) {
     return ::testing::AssertionFailure()
-            << "Size are different\n"
-            << "Expected: " << PrintTokens(expected) << "\n"
-            << "Actual: " << PrintTokens(actual);
+           << "Size are different\n"
+           << "Expected: " << PrintTokens(expected) << "\n"
+           << "Actual: " << PrintTokens(actual);
   }
-  std::set<string> encoded_actual;
+  std::set<std::string> encoded_actual;
   for (size_t i = 0; i < actual.size(); ++i) {
     encoded_actual.insert(PrintToken(actual[i]));
   }
   for (size_t i = 0; i < expected.size(); ++i) {
-    const string encoded = PrintToken(*expected[i]);
+    const std::string encoded = PrintToken(*expected[i]);
     if (encoded_actual.find(encoded) == encoded_actual.end()) {
       return ::testing::AssertionFailure()
              << "Expected token " << i << " not found\n"

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ TEST(LoggingTest, CompileTest) {
 TEST(LoggingTest, SideEffectTest) {
   bool flag = false;
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   // LOG_(INFO|WARNING|ERROR|DFATAL) are not executed on release mode
   flag = true;
   LOG_IF(INFO, flag = false) << "";
@@ -190,7 +190,7 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG(ERROR) << "test: " << DebugString();
   LOG(WARNING) << "test: " << DebugString();
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   EXPECT_EQ(0, g_counter);
 #else
   EXPECT_EQ(3, g_counter);
@@ -201,7 +201,7 @@ TEST(LoggingTest, RightHandSideEvaluation) {
   LOG_IF(ERROR, true) << "test: " << DebugString();
   LOG_IF(WARNING, true) << "test: " << DebugString();
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
   EXPECT_EQ(0, g_counter);
 #else
   EXPECT_EQ(3, g_counter);

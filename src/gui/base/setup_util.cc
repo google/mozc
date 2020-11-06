@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ namespace gui {
 
 SetupUtil::SetupUtil()
     : storage_(new UserDictionaryStorage(
-        UserDictionaryUtil::GetUserDictionaryFileName())),
+          UserDictionaryUtil::GetUserDictionaryFileName())),
       is_userdictionary_locked_(false) {}
 
 SetupUtil::~SetupUtil() {}
@@ -113,8 +113,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   uint64 dic_id = 0;
   const string kMsimeUserdictionaryName = "MS-IME User Dictionary";
   for (size_t i = 0; i < storage_->dictionaries_size(); ++i) {
-    if (storage_->dictionaries(i).name() ==
-        kMsimeUserdictionaryName) {
+    if (storage_->dictionaries(i).name() == kMsimeUserdictionaryName) {
       dic_id = storage_->dictionaries(i).id();
       break;
     }
@@ -129,8 +128,8 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
 
   UserDictionaryStorage::UserDictionary *dic =
       storage_->GetUserDictionary(dic_id);
-  if (dic == NULL) {
-    LOG(ERROR) << "GetUserDictionary returned NULL";
+  if (dic == nullptr) {
+    LOG(ERROR) << "GetUserDictionary returned nullptr";
     return false;
   }
 
@@ -142,7 +141,7 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   }
 
   if (UserDictionaryImporter::ImportFromIterator(iter.get(), dic) !=
-    UserDictionaryImporter::IMPORT_NO_ERROR) {
+      UserDictionaryImporter::IMPORT_NO_ERROR) {
     LOG(ERROR) << "ImportFromMSIME failed";
     return false;
   }

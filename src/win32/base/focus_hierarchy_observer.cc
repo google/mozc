@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -136,10 +136,8 @@ void FillWindowInfo(
   DCHECK(false) << "must not reach here.";
 }
 
-void FillAccessibleInfo(
-    AccessibleObject accessible,
-    HWND focused_window_handle,
-    std::vector<AccessibleObjectInfo> *hierarchy) {
+void FillAccessibleInfo(AccessibleObject accessible, HWND focused_window_handle,
+                        std::vector<AccessibleObjectInfo> *hierarchy) {
   if (!accessible.IsValid()) {
     return;
   }
@@ -174,9 +172,7 @@ class ThreadLocalInfo {
   std::vector<FocusHierarchyObserver::WindowInfo> window_hierarchy() const {
     return window_hierarchy_;
   }
-  string root_window_name() const {
-    return root_window_name_;
-  }
+  string root_window_name() const { return root_window_name_; }
 
   void SyncFocusHierarchy() {
     const HWND focused_window = ::GetFocus();
@@ -194,9 +190,7 @@ class ThreadLocalInfo {
     OnInitialize(focused_window, accesible);
   }
 
-  void AddRef() {
-    ++ref_count_;
-  }
+  void AddRef() { ++ref_count_; }
 
   void Release() {
     --ref_count_;
@@ -223,8 +217,7 @@ class ThreadLocalInfo {
 
  private:
   explicit ThreadLocalInfo(HWINEVENTHOOK hook_handle)
-      : ref_count_(0),
-        hook_handle_(hook_handle) {
+      : ref_count_(0), hook_handle_(hook_handle) {
     ::TlsSetValue(g_tls_index, this);
   }
 
@@ -242,9 +235,8 @@ class ThreadLocalInfo {
     }
 
     auto hook_handle = ::SetWinEventHook(
-        EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, g_module_handle,
-        WinEventProc, ::GetCurrentProcessId(), ::GetCurrentThreadId(),
-        WINEVENT_INCONTEXT);
+        EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, g_module_handle, WinEventProc,
+        ::GetCurrentProcessId(), ::GetCurrentThreadId(), WINEVENT_INCONTEXT);
 
     if (hook_handle == nullptr) {
       return nullptr;
@@ -253,12 +245,9 @@ class ThreadLocalInfo {
     return new ThreadLocalInfo(hook_handle);
   }
 
-  static void CALLBACK WinEventProc(HWINEVENTHOOK hook_handle,
-                                    DWORD event,
-                                    HWND window_handle,
-                                    LONG object_id,
-                                    LONG child_id,
-                                    DWORD event_thread,
+  static void CALLBACK WinEventProc(HWINEVENTHOOK hook_handle, DWORD event,
+                                    HWND window_handle, LONG object_id,
+                                    LONG child_id, DWORD event_thread,
                                     DWORD event_time) {
     if (g_module_handle == nullptr) {
       return;
@@ -331,9 +320,7 @@ class ThreadLocalInfo {
   string root_window_name_;
 };
 
-bool TlsAvailable() {
-  return g_tls_index != TLS_OUT_OF_INDEXES;
-}
+bool TlsAvailable() { return g_tls_index != TLS_OUT_OF_INDEXES; }
 
 class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
  public:
@@ -347,8 +334,7 @@ class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
   }
 
  private:
-  FocusHierarchyObserverImpl() {
-  }
+  FocusHierarchyObserverImpl() {}
 
   virtual ~FocusHierarchyObserverImpl() {
     auto *self = ThreadLocalInfo::Self();
@@ -396,41 +382,31 @@ class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
 
 class FocusHierarchyObserverNullImpl : public FocusHierarchyObserver {
  public:
-  FocusHierarchyObserverNullImpl() {
-  }
-  virtual ~FocusHierarchyObserverNullImpl() {
-  }
+  FocusHierarchyObserverNullImpl() {}
+  virtual ~FocusHierarchyObserverNullImpl() {}
 
  private:
   // FocusHierarchyObserver overrides:
-  virtual void SyncFocusHierarchy() {
-  }
-  virtual bool IsAbailable() const {
-    return false;
-  }
+  virtual void SyncFocusHierarchy() {}
+  virtual bool IsAbailable() const { return false; }
   virtual std::vector<AccessibleObjectInfo> GetUIHierarchy() const {
     return std::vector<AccessibleObjectInfo>();
   }
   virtual std::vector<WindowInfo> GetWindowHierarchy() const {
     return std::vector<WindowInfo>();
   }
-  virtual string GetRootWindowName() const {
-    return "";
-  }
+  virtual string GetRootWindowName() const { return ""; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(FocusHierarchyObserverNullImpl);
 };
 
-}   // namespace
+}  // namespace
 
-FocusHierarchyObserver::~FocusHierarchyObserver() {
-}
+FocusHierarchyObserver::~FocusHierarchyObserver() {}
 
 FocusHierarchyObserver::WindowInfo::WindowInfo()
-    : window_handle(nullptr),
-      process_id(0) {
-}
+    : window_handle(nullptr), process_id(0) {}
 
 // static
 void FocusHierarchyObserver::OnDllProcessAttach(HINSTANCE module_handle,

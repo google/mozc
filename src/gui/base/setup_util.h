@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,9 @@ namespace gui {
 class SetupUtil {
  public:
   enum SetDefaultFlags {
-    NONE                    = 0,
-    IME_DEFAULT             = 1,
-    DISABLE_HOTKEY          = 2,
+    NONE = 0,
+    IME_DEFAULT = 1,
+    DISABLE_HOTKEY = 2,
     IMPORT_MSIME_DICTIONARY = 4
   };
 
@@ -59,7 +59,7 @@ class SetupUtil {
 
   // |flags| should be assigned by SetDefaultFlags.
   // If |flags| contains
-  // - IME_DEFAULT, sets Mozc as the default IME
+  // - IME_DEFAULT, sets this IME as the default IME
   // - DISABLE_HOTKEY, disables IME hotkey (Ctrl+Shift).
   // - IMPORT_MSIME_DICTIONARY, Imports MS-IME's user dictionary
   // this function usually is used to lock user dictionary. for example

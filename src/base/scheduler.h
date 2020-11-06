@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 // usage:
 // // start scheduled job
 // Scheduler::AddJob(Scheduler::JobSetting(
-//     "TimerName", 60*1000, 60*60*1000, 30*1000, 60*1000, &Callback, NULL));
-// (NULL is the args for Callback)
+//     "TimerName", 60*1000, 60*60*1000, 30*1000, 60*1000, &Callback, nullptr));
+// (nullptr is the args for Callback)
 // // stop job
 // Scheduler::RemoveJob("TimerName");
 
@@ -60,24 +60,20 @@ class Scheduler {
    public:
     typedef bool (*CallbackFunc)(void *);
 
-    JobSetting(const string &name,
-            uint32 default_interval,
-            uint32 max_interval,
-            uint32 delay_start,
-            uint32 random_delay,
-            CallbackFunc callback,
-            void *data) :
-        name_(name),
-        default_interval_(default_interval),
-        max_interval_(max_interval),
-        delay_start_(delay_start),
-        random_delay_(random_delay),
-        callback_(callback),
-        data_(data) {}
+    JobSetting(const std::string &name, uint32 default_interval,
+               uint32 max_interval, uint32 delay_start, uint32 random_delay,
+               CallbackFunc callback, void *data)
+        : name_(name),
+          default_interval_(default_interval),
+          max_interval_(max_interval),
+          delay_start_(delay_start),
+          random_delay_(random_delay),
+          callback_(callback),
+          data_(data) {}
 
     ~JobSetting() {}
 
-    string name() const { return name_; }
+    std::string name() const { return name_; }
     uint32 default_interval() const { return default_interval_; }
     uint32 max_interval() const { return max_interval_; }
     uint32 delay_start() const { return delay_start_; }
@@ -86,7 +82,7 @@ class Scheduler {
     void *data() const { return data_; }
 
    private:
-    string name_;
+    std::string name_;
     uint32 default_interval_;
     uint32 max_interval_;
     uint32 delay_start_;
@@ -101,13 +97,13 @@ class Scheduler {
   static bool AddJob(const JobSetting &job_setting);
 
   // stop scheduled job specified by neme.
-  static bool RemoveJob(const string &name);
+  static bool RemoveJob(const std::string &name);
 
   // stop all jobs
   static void RemoveAllJobs();
 
   // returns true is the job has been registered.
-  static bool HasJob(const string &name);
+  static bool HasJob(const std::string &name);
 
   // This function is provided for test.
   // The behavior of scheduler can be customized by replacing an underlying
@@ -121,9 +117,9 @@ class Scheduler {
    public:
     virtual ~SchedulerInterface() {}
     virtual bool AddJob(const JobSetting &job_setting) = 0;
-    virtual bool RemoveJob(const string &name) = 0;
+    virtual bool RemoveJob(const std::string &name) = 0;
     virtual void RemoveAllJobs() = 0;
-    virtual bool HasJob(const string &name) const = 0;
+    virtual bool HasJob(const std::string &name) const = 0;
   };
 
  private:

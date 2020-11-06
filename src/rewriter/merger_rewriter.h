@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,7 @@ namespace mozc {
 class MergerRewriter : public RewriterInterface {
  public:
   MergerRewriter() {}
-  virtual ~MergerRewriter() {
-    STLDeleteElements(&rewriters_);
-  }
+  virtual ~MergerRewriter() { STLDeleteElements(&rewriters_); }
 
   // return true if rewriter can be called with the segments.
   bool CheckCapablity(const ConversionRequest &request, Segments *segments,
@@ -57,18 +55,18 @@ class MergerRewriter : public RewriterInterface {
     }
     switch (segments->request_type()) {
       case Segments::CONVERSION:
-        return ((rewriter->capability(request) & RewriterInterface::CONVERSION)
-                != 0);
+        return ((rewriter->capability(request) &
+                 RewriterInterface::CONVERSION) != 0);
 
       case Segments::PREDICTION:
       case Segments::PARTIAL_PREDICTION:
-        return ((rewriter->capability(request) & RewriterInterface::PREDICTION)
-                != 0);
+        return ((rewriter->capability(request) &
+                 RewriterInterface::PREDICTION) != 0);
 
       case Segments::SUGGESTION:
       case Segments::PARTIAL_SUGGESTION:
-        return ((rewriter->capability(request) & RewriterInterface::SUGGESTION)
-                != 0);
+        return ((rewriter->capability(request) &
+                 RewriterInterface::SUGGESTION) != 0);
 
       case Segments::REVERSE_CONVERSION:
       default:
@@ -109,14 +107,11 @@ class MergerRewriter : public RewriterInterface {
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  virtual bool Focus(Segments *segments,
-                     size_t segment_index,
+  virtual bool Focus(Segments *segments, size_t segment_index,
                      int candidate_index) const {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
-      result |= rewriters_[i]->Focus(segments,
-                                     segment_index,
-                                     candidate_index);
+      result |= rewriters_[i]->Focus(segments, segment_index, candidate_index);
     }
     return result;
   }

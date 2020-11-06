@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,18 +35,16 @@
 namespace mozc {
 namespace gui {
 
-ComboBoxDelegate::ComboBoxDelegate(QObject *parent)
-    : QItemDelegate(parent) {}
+ComboBoxDelegate::ComboBoxDelegate(QObject *parent) : QItemDelegate(parent) {}
 
 ComboBoxDelegate::~ComboBoxDelegate() {}
 
-QWidget *ComboBoxDelegate::createEditor(
-    QWidget *parent,
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const {
+QWidget *ComboBoxDelegate::createEditor(QWidget *parent,
+                                        const QStyleOptionViewItem &option,
+                                        const QModelIndex &index) const {
   QComboBox *editor = new QComboBox(parent);
-  connect(editor, SIGNAL(currentIndexChanged(const QString &)),
-          this, SLOT(CommitAndCloseEditor(const QString &)));
+  connect(editor, SIGNAL(currentIndexChanged(const QString &)), this,
+          SLOT(CommitAndCloseEditor(const QString &)));
   for (int i = 0; i < item_list_.size(); ++i) {
     editor->addItem(item_list_.at(i));
   }
@@ -57,32 +55,29 @@ void ComboBoxDelegate::SetItemList(const QStringList &item_list) {
   item_list_ = item_list;
 }
 
-void ComboBoxDelegate::setEditorData(
-    QWidget *editor,
-    const QModelIndex &index) const {
+void ComboBoxDelegate::setEditorData(QWidget *editor,
+                                     const QModelIndex &index) const {
   QString str = index.model()->data(index, Qt::EditRole).toString();
-  QComboBox *comboBox = static_cast<QComboBox*>(editor);
-  if (comboBox == NULL) {
+  QComboBox *comboBox = static_cast<QComboBox *>(editor);
+  if (comboBox == nullptr) {
     return;
   }
   comboBox->setCurrentIndex(comboBox->findText(str));
 }
 
-void ComboBoxDelegate::setModelData(
-    QWidget *editor, QAbstractItemModel *model,
-    const QModelIndex &index) const {
-  QComboBox *comboBox = static_cast<QComboBox*>(editor);
-  if (comboBox == NULL || model == NULL) {
+void ComboBoxDelegate::setModelData(QWidget *editor, QAbstractItemModel *model,
+                                    const QModelIndex &index) const {
+  QComboBox *comboBox = static_cast<QComboBox *>(editor);
+  if (comboBox == nullptr || model == nullptr) {
     return;
   }
   model->setData(index, comboBox->currentText(), Qt::EditRole);
 }
 
-void ComboBoxDelegate::updateEditorGeometry(
-    QWidget *editor,
-    const QStyleOptionViewItem &option,
-    const QModelIndex &index) const {
-  if (editor == NULL) {
+void ComboBoxDelegate::updateEditorGeometry(QWidget *editor,
+                                            const QStyleOptionViewItem &option,
+                                            const QModelIndex &index) const {
+  if (editor == nullptr) {
     return;
   }
   editor->setGeometry(option.rect);

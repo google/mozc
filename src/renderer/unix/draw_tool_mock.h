@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,14 +39,15 @@ namespace gtk {
 
 class DrawToolMock : public DrawToolInterface {
  public:
-  MOCK_METHOD1(Reset, void((CairoWrapperInterface *cairo)));
-  MOCK_METHOD0(Save, void());
-  MOCK_METHOD0(Restore, void());
-  MOCK_METHOD2(FillRect, void(const Rect &rect, const RGBA &color));
-  MOCK_METHOD3(FrameRect, void(const Rect &rect, const RGBA &color,
-                               const uint32 line_width));
-  MOCK_METHOD4(DrawLine, void(const Point &from, const Point &to,
-                              const RGBA &color, const uint32 line_width));
+  MOCK_METHOD(void, Reset, ((CairoWrapperInterface* cairo)));
+  MOCK_METHOD(void, Save, ());
+  MOCK_METHOD(void, Restore, ());
+  MOCK_METHOD(void, FillRect, (const Rect &rect, const RGBA &color));
+  MOCK_METHOD(void, FrameRect,
+              (const Rect &rect, const RGBA &color, const uint32 line_width));
+  MOCK_METHOD(void, DrawLine,
+              (const Point &from, const Point &to, const RGBA &color,
+               const uint32 line_width));
 };
 
 }  // namespace gtk

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,23 +34,20 @@
 #include "base/logging.h"
 
 namespace mozc {
-CalculatorMock::CalculatorMock()
-    : calculation_counter_(0) {
-}
+CalculatorMock::CalculatorMock() : calculation_counter_(0) {}
 
 CalculatorMock::~CalculatorMock() {}
 
-void CalculatorMock::SetCalculatePair(const string &key,
-                                      const string &value,
+void CalculatorMock::SetCalculatePair(const std::string &key,
+                                      const std::string &value,
                                       bool return_value) {
   calculation_map_[key] = std::make_pair(value, return_value);
 }
 
-int CalculatorMock::calculation_counter() const {
-  return calculation_counter_;
-}
+int CalculatorMock::calculation_counter() const { return calculation_counter_; }
 
-bool CalculatorMock::CalculateString(const string &key, string *result) const {
+bool CalculatorMock::CalculateString(const std::string &key,
+                                     std::string *result) const {
   ++calculation_counter_;
   DCHECK(result);
   CalculationMap::const_iterator iter = calculation_map_.find(key);

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,48 +49,61 @@ using ATL::CComQIPtr;
 
 // {ED9D5450-EBE6-4255-8289-F8A31E687228}
 const GUID kSystemLangBarHelpMenu = {
-  0xED9D5450, 0xEBE6, 0x4255, {0x82, 0x89, 0xF8, 0xA3, 0x1E, 0x68, 0x72, 0x28}
-};
+    0xED9D5450,
+    0xEBE6,
+    0x4255,
+    {0x82, 0x89, 0xF8, 0xA3, 0x1E, 0x68, 0x72, 0x28}};
 
 // For Windows 8
 // {2C77A81E-41CC-4178-A3A7-5F8A987568E6} == GUID_LBI_INPUTMODE
 const GUID kSystemInputMode = {
-  0x2C77A81E, 0x41CC, 0x4178, {0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6}
-};
+    0x2C77A81E,
+    0x41CC,
+    0x4178,
+    {0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6}};
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
 // {D8C8D5EB-8213-47CE-95B7-BA3F67757F94}
 const GUID kTipLangBarItem_Button = {
-  0xd8c8d5eb, 0x8213, 0x47ce, {0x95, 0xb7, 0xba, 0x3f, 0x67, 0x75, 0x7f, 0x94}
-};
+    0xd8c8d5eb,
+    0x8213,
+    0x47ce,
+    {0x95, 0xb7, 0xba, 0x3f, 0x67, 0x75, 0x7f, 0x94}};
 
 // {0EAB48C4-F798-4CC8-91FA-087B24F520A8}
 const GUID kTipLangBarItem_ToolButton = {
-  0xeab48c4, 0xf798, 0x4cc8, {0x91, 0xfa, 0x8, 0x7b, 0x24, 0xf5, 0x20, 0xa8}
-};
+    0xeab48c4, 0xf798, 0x4cc8, {0x91, 0xfa, 0x8, 0x7b, 0x24, 0xf5, 0x20, 0xa8}};
 
 // {6D46F0F2-2924-4666-9B89-4F23699B2203}
 const GUID kTipLangBarItem_HelpMenu = {
-  0x6d46f0f2, 0x2924, 0x4666, {0x9b, 0x89, 0x4f, 0x23, 0x69, 0x9b, 0x22, 0x3}
-};
+    0x6d46f0f2,
+    0x2924,
+    0x4666,
+    {0x9b, 0x89, 0x4f, 0x23, 0x69, 0x9b, 0x22, 0x3}};
 
 #else
 
 // {FC8E2486-F5BA-4863-91C3-8D166B454604}
 const GUID kTipLangBarItem_Button = {
-  0xfc8e2486, 0xf5ba, 0x4863, {0x91, 0xc3, 0x8d, 0x16, 0x6b, 0x45, 0x46, 0x4}
-};
+    0xfc8e2486,
+    0xf5ba,
+    0x4863,
+    {0x91, 0xc3, 0x8d, 0x16, 0x6b, 0x45, 0x46, 0x4}};
 
 // {1BA637CA-7521-4F21-B51E-6516271A9FE3}
 const GUID kTipLangBarItem_ToolButton = {
-  0x1ba637ca, 0x7521, 0x4f21, {0xb5, 0x1e, 0x65, 0x16, 0x27, 0x1a, 0x9f, 0xe3}
-};
+    0x1ba637ca,
+    0x7521,
+    0x4f21,
+    {0xb5, 0x1e, 0x65, 0x16, 0x27, 0x1a, 0x9f, 0xe3}};
 
 // {F78AD6B1-49D3-400E-8218-896F22A70011}
 const GUID kTipLangBarItem_HelpMenu = {
-  0xf78ad6b1, 0x49d3, 0x400e, {0x82, 0x18, 0x89, 0x6f, 0x22, 0xa7, 0x0, 0x11}
-};
+    0xf78ad6b1,
+    0x49d3,
+    0x400e,
+    {0x82, 0x18, 0x89, 0x6f, 0x22, 0xa7, 0x0, 0x11}};
 
 #endif
 
@@ -111,11 +124,11 @@ CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   if (function == nullptr) {
     return nullptr;
   }
-  typedef HRESULT (WINAPI *FPTF_CreateLangBarItemMgr)(
-      ITfLangBarItemMgr **pplbim);
+  typedef HRESULT(WINAPI * FPTF_CreateLangBarItemMgr)(ITfLangBarItemMgr *
+                                                      *pplbim);
   CComPtr<ITfLangBarItemMgr> ptr;
-  const HRESULT result = reinterpret_cast<FPTF_CreateLangBarItemMgr>(function)(
-      &ptr);
+  const HRESULT result =
+      reinterpret_cast<FPTF_CreateLangBarItemMgr>(function)(&ptr);
   if (FAILED(result)) {
     return nullptr;
   }
@@ -178,37 +191,30 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     return E_FAIL;
   }
 
-  const TipLangBarMenuItem kInputMenuDisabled = {
-    kTipLangBarItemTypeDefault, 0, IDS_DISABLED,
-    IDI_DISABLED_NT, IDI_DISABLED
-  };
+  const TipLangBarMenuItem kInputMenuDisabled = {kTipLangBarItemTypeDefault, 0,
+                                                 IDS_DISABLED, IDI_DISABLED_NT,
+                                                 IDI_DISABLED};
 
   if (input_button_menu_ == nullptr) {
     // Add the "Input Mode" button.
     const TipLangBarMenuItem kInputMenu[] = {
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHiragana,
-       IDS_HIRAGANA, IDI_HIRAGANA_NT, IDI_HIRAGANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kFullKatakana,
-       IDS_FULL_KATAKANA, IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kFullAlphanumeric,
-       IDS_FULL_ALPHANUMERIC, IDI_FULL_ALPHANUMERIC_NT, IDI_FULL_ALPHANUMERIC},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHalfKatakana,
-       IDS_HALF_KATAKANA, IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHalfAlphanumeric,
-       IDS_HALF_ALPHANUMERIC, IDI_HALF_ALPHANUMERIC_NT, IDI_HALF_ALPHANUMERIC},
-      {kTipLangBarItemTypeRadioChecked,
-       TipLangBarCallback::kDirect,
-       IDS_DIRECT, IDI_DIRECT_NT,
-       IDI_DIRECT},
-      {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kCancel,
-       IDS_CANCEL, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHiragana,
+         IDS_HIRAGANA, IDI_HIRAGANA_NT, IDI_HIRAGANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kFullKatakana,
+         IDS_FULL_KATAKANA, IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kFullAlphanumeric,
+         IDS_FULL_ALPHANUMERIC, IDI_FULL_ALPHANUMERIC_NT,
+         IDI_FULL_ALPHANUMERIC},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHalfKatakana,
+         IDS_HALF_KATAKANA, IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHalfAlphanumeric,
+         IDS_HALF_ALPHANUMERIC, IDI_HALF_ALPHANUMERIC_NT,
+         IDI_HALF_ALPHANUMERIC},
+        {kTipLangBarItemTypeRadioChecked, TipLangBarCallback::kDirect,
+         IDS_DIRECT, IDI_DIRECT_NT, IDI_DIRECT},
+        {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kCancel, IDS_CANCEL, 0,
+         0},
     };
 
     const bool kMenuButton = true;
@@ -220,10 +226,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     }
 
     result = input_button_menu->Init(TipDllModule::module_handle(),
-                                     IDS_INPUTMODE,
-                                     &kInputMenu[0],
-                                     arraysize(kInputMenu),
-                                     kInputMenuDisabled);
+                                     IDS_INPUTMODE, &kInputMenu[0],
+                                     arraysize(kInputMenu), kInputMenuDisabled);
     if (result != S_OK) {
       return result;
     }
@@ -234,59 +238,43 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
   if (SystemUtil::IsWindows8OrLater() && !input_mode_button_for_win8_) {
     // Add the "Input Mode" button.
     const TipLangBarMenuItem kInputMenu[] = {
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHiragana,
-       IDS_HIRAGANA, IDI_HIRAGANA_NT, IDI_HIRAGANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kFullKatakana,
-       IDS_FULL_KATAKANA, IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kFullAlphanumeric,
-       IDS_FULL_ALPHANUMERIC, IDI_FULL_ALPHANUMERIC_NT, IDI_FULL_ALPHANUMERIC},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHalfKatakana,
-       IDS_HALF_KATAKANA, IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHalfAlphanumeric,
-       IDS_HALF_ALPHANUMERIC, IDI_HALF_ALPHANUMERIC_NT, IDI_HALF_ALPHANUMERIC},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kDirect,
-       IDS_DIRECT, IDI_DIRECT_NT, IDI_DIRECT},
-      {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHandWriting,
-       IDS_HAND_WRITING, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kCharacterPalette,
-       IDS_CHARACTER_PALETTE, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kDictionary,
-       IDS_DICTIONARY, IDI_DICTIONARY_NT, IDI_DICTIONARY},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kWordRegister,
-       IDS_WORD_REGISTER, IDI_DICTIONARY_NT, IDI_DICTIONARY},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kProperty,
-       IDS_PROPERTY, IDI_PROPERTY_NT, IDI_PROPERTY},
-      {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kAbout,
-       IDS_ABOUT, 0, 0},
-      {kTipLangBarItemTypeDefault, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHiragana,
+         IDS_HIRAGANA, IDI_HIRAGANA_NT, IDI_HIRAGANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kFullKatakana,
+         IDS_FULL_KATAKANA, IDI_FULL_KATAKANA_NT, IDI_FULL_KATAKANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kFullAlphanumeric,
+         IDS_FULL_ALPHANUMERIC, IDI_FULL_ALPHANUMERIC_NT,
+         IDI_FULL_ALPHANUMERIC},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHalfKatakana,
+         IDS_HALF_KATAKANA, IDI_HALF_KATAKANA_NT, IDI_HALF_KATAKANA},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHalfAlphanumeric,
+         IDS_HALF_ALPHANUMERIC, IDI_HALF_ALPHANUMERIC_NT,
+         IDI_HALF_ALPHANUMERIC},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kDirect, IDS_DIRECT,
+         IDI_DIRECT_NT, IDI_DIRECT},
+        {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kDictionary,
+         IDS_DICTIONARY, IDI_DICTIONARY_NT, IDI_DICTIONARY},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kWordRegister,
+         IDS_WORD_REGISTER, IDI_DICTIONARY_NT, IDI_DICTIONARY},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kProperty,
+         IDS_PROPERTY, IDI_PROPERTY_NT, IDI_PROPERTY},
+        {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kAbout, IDS_ABOUT, 0,
+         0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
     const bool kNonMenuButton = false;
-    CComPtr<TipLangBarToggleButton> input_mode_menu(
-        new TipLangBarToggleButton(text_service, kSystemInputMode,
-                                   kNonMenuButton, kShowInTaskbar));
+    CComPtr<TipLangBarToggleButton> input_mode_menu(new TipLangBarToggleButton(
+        text_service, kSystemInputMode, kNonMenuButton, kShowInTaskbar));
     if (input_mode_menu == nullptr) {
       return E_OUTOFMEMORY;
     }
 
     result = input_mode_menu->Init(TipDllModule::module_handle(),
-                                   IDS_WIN8_TRAY_ITEM,
-                                   kInputMenu, arraysize(kInputMenu),
-                                   kInputMenuDisabled);
+                                   IDS_WIN8_TRAY_ITEM, kInputMenu,
+                                   arraysize(kInputMenu), kInputMenuDisabled);
     if (FAILED(result)) {
       return result;
     }
@@ -298,22 +286,16 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     // Add the "Tool" button.
     // TODO(yukawa): Make an Icon for kWordRegister.
     const TipLangBarMenuItem kToolMenu[] = {
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kHandWriting, IDS_HAND_WRITING, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kCharacterPalette, IDS_CHARACTER_PALETTE, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kDictionary, IDS_DICTIONARY,
-       IDI_DICTIONARY_NT, IDI_DICTIONARY},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kWordRegister, IDS_WORD_REGISTER,
-       IDI_DICTIONARY_NT, IDI_DICTIONARY},  // Use Dictionary icon temporarily
-      {kTipLangBarItemTypeDefault, TipLangBarCallback::kProperty, IDS_PROPERTY,
-       IDI_PROPERTY_NT, IDI_PROPERTY},
-      {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
-      {kTipLangBarItemTypeDefault,
-       TipLangBarCallback::kCancel,
-       IDS_CANCEL, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kDictionary,
+         IDS_DICTIONARY, IDI_DICTIONARY_NT, IDI_DICTIONARY},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kWordRegister,
+         IDS_WORD_REGISTER, IDI_DICTIONARY_NT,
+         IDI_DICTIONARY},  // Use Dictionary icon temporarily
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kProperty,
+         IDS_PROPERTY, IDI_PROPERTY_NT, IDI_PROPERTY},
+        {kTipLangBarItemTypeSeparator, 0, 0, 0, 0},
+        {kTipLangBarItemTypeDefault, TipLangBarCallback::kCancel, IDS_CANCEL, 0,
+         0},
     };
 
     // Always show the tool icon so that a user can find the icon.
@@ -326,8 +308,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     }
 
     result = tool_button->Init(TipDllModule::module_handle(), IDS_TOOL,
-                               &kToolMenu[0], arraysize(kToolMenu),
-                               IDI_TOOL_NT, IDI_TOOL);
+                               &kToolMenu[0], arraysize(kToolMenu), IDI_TOOL_NT,
+                               IDI_TOOL);
     if (result != S_OK) {
       return result;
     }
@@ -338,8 +320,8 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
   if (help_menu_ == nullptr) {
     // Add the "Help" items to the system language bar help menu.
     const TipLangBarMenuItem kHelpMenu[] = {
-      {0, TipLangBarCallback::kAbout, IDS_ABOUT, 0, 0},
-      {0, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
+        {0, TipLangBarCallback::kAbout, IDS_ABOUT, 0, 0},
+        {0, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
     CComPtr<TipSystemLangBarMenu> help_menu(
@@ -348,8 +330,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
       return E_OUTOFMEMORY;
     }
 
-    result = help_menu->Init(TipDllModule::module_handle(),
-                             &kHelpMenu[0],
+    result = help_menu->Init(TipDllModule::module_handle(), &kHelpMenu[0],
                              arraysize(kHelpMenu));
     if (result != S_OK) {
       return result;
@@ -367,8 +348,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     }
     result = source->AdviseSink(
         IID_ITfSystemLangBarItemSink,
-        static_cast<ITfSystemLangBarItemSink*>(help_menu),
-        &help_menu_cookie_);
+        static_cast<ITfSystemLangBarItemSink *>(help_menu), &help_menu_cookie_);
     if (result != S_OK) {
       return result;
     }
@@ -413,8 +393,7 @@ HRESULT TipLangBar::UninitLangBar() {
 
   if ((help_menu_ != nullptr) && (help_menu_cookie_ != TF_INVALID_COOKIE)) {
     CComPtr<ITfLangBarItem> help_menu_item;
-    result = item->GetItem(
-        kSystemLangBarHelpMenu, &help_menu_item);
+    result = item->GetItem(kSystemLangBarHelpMenu, &help_menu_item);
     if (result == S_OK) {
       CComPtr<ITfSource> source;
       result = help_menu_item.QueryInterface(&source);

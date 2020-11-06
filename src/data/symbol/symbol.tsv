@@ -528,6 +528,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	㊦	した げ	丸下
 記号	㊧	ひだり	丸左
 記号	㊨	みぎ	丸右
+記号	㋿	れいわ ねんごう	年号		OTHER
 記号	㍻	へいせい ねんごう	年号		OTHER
 記号	㍼	しょうわ  ねんごう	年号		OTHER
 記号	㍽	たいしょう  ねんごう	年号		OTHER

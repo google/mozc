@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include "dictionary/dictionary_test_util.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -48,12 +49,12 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   ConversionRequest convreq;
   {
     const testing::MockDataManager manager;
-    StringPiece key_array_data, value_arra_data;
+    absl::string_view key_array_data, value_arra_data;
     const uint32 *token_array = nullptr;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
                                     &token_array);
-    dic.reset(new SuffixDictionary(key_array_data, value_arra_data,
-                                   token_array));
+    dic.reset(
+        new SuffixDictionary(key_array_data, value_arra_data, token_array));
     ASSERT_NE(nullptr, dic.get());
   }
 
@@ -69,12 +70,12 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);
-      EXPECT_EQ(Token::NONE, token.attributes);
+      EXPECT_EQ(Token::SUFFIX_DICTIONARY, token.attributes);
     }
   }
   {
     // Non-empty prefix.
-    const string kPrefix = "た";
+    const std::string kPrefix = "た";
     CollectTokenCallback callback;
     dic->LookupPredictive(kPrefix, convreq, &callback);
     EXPECT_FALSE(callback.tokens().empty());
@@ -84,7 +85,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);
-      EXPECT_EQ(Token::NONE, token.attributes);
+      EXPECT_EQ(Token::SUFFIX_DICTIONARY, token.attributes);
     }
   }
 }

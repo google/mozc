@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -157,8 +157,8 @@ TEST(TipInputModeManagerTest, IgnoreConversionModeByGlobalConfig_Issue8583505) {
 
   // SetFocus (Off + Hiragana)
   std::vector<InputScope> input_scope_empty;
-  auto action = input_mode_manager.OnSetFocus(
-      false, kNativeHiragana, input_scope_empty);
+  auto action =
+      input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
@@ -166,8 +166,8 @@ TEST(TipInputModeManagerTest, IgnoreConversionModeByGlobalConfig_Issue8583505) {
             input_mode_manager.GetEffectiveConversionMode());
 
   // On
-  input_mode_manager.OnReceiveCommand(
-      true, TipInputModeManager::kHiragana, TipInputModeManager::kHiragana);
+  input_mode_manager.OnReceiveCommand(true, TipInputModeManager::kHiragana,
+                                      TipInputModeManager::kHiragana);
   EXPECT_TRUE(input_mode_manager.GetEffectiveOpenClose());
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
 
@@ -194,8 +194,8 @@ TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
 
   // SetFocus (Off + Hiragana)
   std::vector<InputScope> input_scope_empty;
-  auto action = input_mode_manager.OnSetFocus(
-      false, kNativeHiragana, input_scope_empty);
+  auto action =
+      input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());
@@ -203,8 +203,8 @@ TEST(TipInputModeManagerTest, HonorConversionMode_Issue8583505) {
             input_mode_manager.GetEffectiveConversionMode());
 
   // On
-  input_mode_manager.OnReceiveCommand(
-      true, TipInputModeManager::kHiragana, TipInputModeManager::kHiragana);
+  input_mode_manager.OnReceiveCommand(true, TipInputModeManager::kHiragana,
+                                      TipInputModeManager::kHiragana);
   EXPECT_TRUE(input_mode_manager.GetEffectiveOpenClose());
   EXPECT_TRUE(input_mode_manager.IsIndicatorVisible());
 
@@ -229,8 +229,8 @@ TEST(TipInputModeManagerTest, ChangeInputScope) {
 
   // SetFocus (Off + Hiragana)
   std::vector<InputScope> input_scope_empty;
-  auto action = input_mode_manager.OnSetFocus(
-      false, kNativeHiragana, input_scope_empty);
+  auto action =
+      input_mode_manager.OnSetFocus(false, kNativeHiragana, input_scope_empty);
   EXPECT_EQ(TipInputModeManager::kDoNothing, action);
   EXPECT_FALSE(input_mode_manager.IsIndicatorVisible());
   EXPECT_FALSE(input_mode_manager.GetEffectiveOpenClose());

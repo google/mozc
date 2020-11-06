@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,25 +47,20 @@ namespace win32 {
 namespace tsf {
 namespace {
 
-using ATL::CComPtr;
 using ATL::CComBSTR;
+using ATL::CComPtr;
 using testing::AssertionFailure;
 using testing::AssertionResult;
 using testing::AssertionSuccess;
 
 class TipCandidateListTest : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    TipDllModule::InitForUnitTest();
-  }
+  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
 };
 
 class MockCallbackResult {
  public:
-  MockCallbackResult()
-      : on_finalize_called_(false),
-        index_(0) {
-  }
+  MockCallbackResult() : on_finalize_called_(false), index_(0) {}
 
   void Reset() {
     on_finalize_called_ = false;
@@ -79,17 +74,11 @@ class MockCallbackResult {
     candidate_ = candidate;
   }
 
-  bool on_finalize_called() const {
-    return on_finalize_called_;
-  }
+  bool on_finalize_called() const { return on_finalize_called_; }
 
-  size_t index() const {
-    return index_;
-  }
+  size_t index() const { return index_; }
 
-  const std::wstring &candidate() const {
-    return candidate_;
-  }
+  const std::wstring &candidate() const { return candidate_; }
 
  private:
   bool on_finalize_called_;
@@ -101,9 +90,7 @@ class MockCallbackResult {
 class MockCallback : public TipCandidateListCallback {
  public:
   // Does not take ownership of |result|.
-  explicit MockCallback(MockCallbackResult *result)
-      : result_(result) {
-  }
+  explicit MockCallback(MockCallbackResult *result) : result_(result) {}
 
  private:
   // TipCandidateListCallback overrides:
@@ -134,8 +121,8 @@ AssertionResult ExpectCandidateString(ULONG expected_index,
                                 << " hr = " << hr;
     }
     if (expected_index != index) {
-      return AssertionFailure() << "expected: " << expected_index
-                                << ", actual: " << index;
+      return AssertionFailure()
+             << "expected: " << expected_index << ", actual: " << index;
     }
   }
   {
@@ -147,14 +134,14 @@ AssertionResult ExpectCandidateString(ULONG expected_index,
     }
     const std::wstring wstr(ToWStr(str));
     if (expected_text != wstr) {
-      return AssertionFailure() << "expected: " << expected_text
-                                << ", actual: " << wstr;
+      return AssertionFailure()
+             << "expected: " << expected_text << ", actual: " << wstr;
     }
   }
   return AssertionSuccess();
 }
 
-#define EXPECT_CANDIDATE_STR(expected_index, expected_str, actual)  \
+#define EXPECT_CANDIDATE_STR(expected_index, expected_str, actual) \
   EXPECT_PRED3(ExpectCandidateString, expected_index, expected_str, actual)
 
 TEST(TipCandidateListTest, EmptyCandiate) {
@@ -179,9 +166,8 @@ TEST(TipCandidateListTest, EmptyCandiate) {
 
   ITfCandidateString *buffer[3] = {};
   ULONG num_fetched = 0;
-  EXPECT_EQ(S_FALSE, enum_candidates->Next(arraysize(buffer),
-                                           buffer,
-                                           &num_fetched));
+  EXPECT_EQ(S_FALSE,
+            enum_candidates->Next(arraysize(buffer), buffer, &num_fetched));
   EXPECT_EQ(0, num_fetched);
 
   EXPECT_FALSE(result.on_finalize_called());

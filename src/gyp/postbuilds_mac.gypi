@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
     {
       'postbuild_name': 'dump symbols',
       'action': [
-        'python', '../build_tools/redirect.py',
+        '<(python)', '../build_tools/redirect.py',
         '${BUILT_PRODUCTS_DIR}/<(product_name)_x86_64.breakpad',
         '<(mac_breakpad_tools_dir)/dump_syms',
         '-a', 'x86_64',

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!--
- Copyright 2010-2018, Google Inc.
+ Copyright 2010-2020, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,6 @@
      between ifdef conditional block. -->
 <?ifndef UCRTDir ?>
   <?define UCRTDir="" ?>
-<?endif?>
-<?ifndef MozcZinniaModelDataPath ?>
-  <?define MozcZinniaModelDataPath="" ?>
 <?endif?>
 <?ifndef DebugCrtMergeModuleIdPrefix ?>
   <?define DebugCrtMergeModuleIdPrefix="" ?>
@@ -367,13 +364,6 @@
                   Name='GoogleIMEJaTool.exe' DiskId='1'
                   Checksum='yes' Source='$(var.MozcToolPath)' Vital='yes' />
             </Component>
-            <?if $(var.MozcZinniaModelDataPath) != "" ?>
-              <Component Id='ZinniaModelData' Guid='*'>
-                <File Id='handwriting_ja.model'
-                    Name='handwriting-ja.model' DiskId='1' Vital='yes'
-                    Checksum='yes' Source='$(var.MozcZinniaModelDataPath)' />
-              </Component>
-            <?endif?>
             <?if $(var.VSConfigurationName) = "Debug" ?>
               <?if $(var.Qt5CoredDllPath) != "" ?>
                 <Component Id='Qt5CoredDll' Guid='*'>
@@ -643,9 +633,6 @@
       <ComponentRef Id='GIMEJaCacheService' />
       <ComponentRef Id='GIMEJaRenderer' />
       <ComponentRef Id='GIMEJaTool' />
-      <?if $(var.MozcZinniaModelDataPath) != "" ?>
-        <ComponentRef Id='ZinniaModelData' />
-      <?endif?>
       <?if $(var.VSConfigurationName) = "Debug" ?>
         <?if $(var.Qt5CoredDllPath) != "" ?>
           <ComponentRef Id='Qt5CoredDll' />

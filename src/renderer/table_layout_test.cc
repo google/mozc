@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,25 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "renderer/table_layout.h"
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 namespace renderer {
 
-#define EXPECT_SIZE_EQ(                                                 \
-    expect_width, expect_height, actual_size)                           \
-  do {                                                                  \
-     EXPECT_EQ((expect_width), (actual_size).width);                    \
-     EXPECT_EQ((expect_height), (actual_size).height);                  \
+#define EXPECT_SIZE_EQ(expect_width, expect_height, actual_size) \
+  do {                                                           \
+    EXPECT_EQ((expect_width), (actual_size).width);              \
+    EXPECT_EQ((expect_height), (actual_size).height);            \
   } while (false)
 
-#define EXPECT_RECT_EQ(                                                 \
-    expect_left, expect_top, expect_width, expect_height, actual_rect)  \
-  do {                                                                  \
-     EXPECT_EQ((expect_left), (actual_rect).origin.x);                  \
-     EXPECT_EQ((expect_top), (actual_rect).origin.y);                   \
-     EXPECT_EQ((expect_width), (actual_rect).Width());                  \
-     EXPECT_EQ((expect_height), (actual_rect).Height());                \
+#define EXPECT_RECT_EQ(expect_left, expect_top, expect_width, expect_height, \
+                       actual_rect)                                          \
+  do {                                                                       \
+    EXPECT_EQ((expect_left), (actual_rect).origin.x);                        \
+    EXPECT_EQ((expect_top), (actual_rect).origin.y);                         \
+    EXPECT_EQ((expect_width), (actual_rect).Width());                        \
+    EXPECT_EQ((expect_height), (actual_rect).Height());                      \
   } while (false)
 
 enum COLUMN_TYPE {

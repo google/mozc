@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/tip/tip_ref_count.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "win32/tip/tip_dll_module.h"
-#include "win32/tip/tip_ref_count.h"
 
 namespace mozc {
 namespace win32 {
@@ -38,9 +38,7 @@ namespace tsf {
 
 class TipRefCountTest : public testing::Test {
  protected:
-  static void SetUpTestCase() {
-    TipDllModule::InitForUnitTest();
-  }
+  static void SetUpTestCase() { TipDllModule::InitForUnitTest(); }
 };
 
 TEST_F(TipRefCountTest, AddRefRelease) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 #include "base/version.h"
 #include "composer/composer.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
 
 namespace mozc {
@@ -73,21 +74,18 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
 }
 
 void FillAllCandidateWordsInternal(
-    const Segment &segment,
-    const CandidateList &candidate_list,
-    const int focused_id,
-    commands::CandidateList *candidate_list_proto) {
+    const Segment &segment, const CandidateList &candidate_list,
+    const int focused_id, commands::CandidateList *candidate_list_proto) {
   for (size_t i = 0; i < candidate_list.size(); ++i) {
     const Candidate &candidate = candidate_list.candidate(i);
     if (candidate.IsSubcandidateList()) {
-      FillAllCandidateWordsInternal(
-          segment, candidate.subcandidate_list(), focused_id,
-          candidate_list_proto);
+      FillAllCandidateWordsInternal(segment, candidate.subcandidate_list(),
+                                    focused_id, candidate_list_proto);
       continue;
     }
 
     commands::CandidateWord *candidate_word_proto =
-      candidate_list_proto->add_candidates();
+        candidate_list_proto->add_candidates();
     // id
     const int id = candidate.id();
     candidate_word_proto->set_id(id);
@@ -114,6 +112,28 @@ void FillAllCandidateWordsInternal(
     if (FillAnnotation(segment_candidate, &annotation)) {
       candidate_word_proto->mutable_annotation()->CopyFrom(annotation);
     }
+
+    if (segment_candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
+      candidate_word_proto->add_attributes(commands::USER_DICTIONARY);
+    }
+    if (segment_candidate.attributes &
+        Segment::Candidate::USER_HISTORY_PREDICTION) {
+      candidate_word_proto->add_attributes(commands::USER_HISTORY);
+    }
+    if (segment_candidate.attributes &
+        Segment::Candidate::SPELLING_CORRECTION) {
+      candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
+    }
+    if (segment_candidate.attributes & Segment::Candidate::TYPING_CORRECTION) {
+      candidate_word_proto->add_attributes(commands::TYPING_CORRECTION);
+    }
+
+    // number of segments
+    candidate_word_proto->set_num_segments_in_candidate(1);
+    if (!segment_candidate.inner_segment_boundary.empty()) {
+      candidate_word_proto->set_num_segments_in_candidate(
+          segment_candidate.inner_segment_boundary.size());
+    }
   }
 }
 
@@ -121,8 +141,7 @@ void FillAllCandidateWordsInternal(
 
 // static
 void SessionOutput::FillCandidate(
-    const Segment &segment,
-    const Candidate &candidate,
+    const Segment &segment, const Candidate &candidate,
     commands::Candidates_Candidate *candidate_proto) {
   if (candidate.IsSubcandidateList()) {
     candidate_proto->set_value(candidate.subcandidate_list().name());
@@ -159,13 +178,12 @@ void SessionOutput::FillCandidates(const Segment &segment,
 
   size_t c_begin = 0;
   size_t c_end = 0;
-  candidate_list.GetPageRange(candidate_list.focused_index(),
-                              &c_begin, &c_end);
+  candidate_list.GetPageRange(candidate_list.focused_index(), &c_begin, &c_end);
 
   // Store candidates.
   for (size_t i = c_begin; i <= c_end; ++i) {
     commands::Candidates_Candidate *candidate_proto =
-      candidates_proto->add_candidate();
+        candidates_proto->add_candidate();
     candidate_proto->set_index(i);
     FillCandidate(segment, candidate_list.candidate(i), candidate_proto);
   }
@@ -184,17 +202,14 @@ void SessionOutput::FillCandidates(const Segment &segment,
 
 // static
 void SessionOutput::FillAllCandidateWords(
-    const Segment &segment,
-    const CandidateList &candidate_list,
+    const Segment &segment, const CandidateList &candidate_list,
     const commands::Category category,
     commands::CandidateList *candidate_list_proto) {
   candidate_list_proto->set_category(category);
-  FillAllCandidateWordsInternal(
-      segment, candidate_list, candidate_list.focused_id(),
-      candidate_list_proto);
+  FillAllCandidateWordsInternal(segment, candidate_list,
+                                candidate_list.focused_id(),
+                                candidate_list_proto);
 }
-
-
 
 // static
 bool SessionOutput::ShouldShowUsages(const Segment &segment,
@@ -208,7 +223,7 @@ bool SessionOutput::ShouldShowUsages(const Segment &segment,
       continue;
     }
     const Segment::Candidate &candidate =
-      segment.candidate(cand_list.candidate(i).id());
+        segment.candidate(cand_list.candidate(i).id());
     if (candidate.usage_title.empty()) {
       continue;
     }
@@ -216,7 +231,6 @@ bool SessionOutput::ShouldShowUsages(const Segment &segment,
   }
   return false;
 }
-
 
 // static
 void SessionOutput::FillUsages(const Segment &segment,
@@ -240,7 +254,7 @@ void SessionOutput::FillUsages(const Segment &segment,
       continue;
     }
     const Segment::Candidate &candidate =
-      segment.candidate(cand_list.candidate(i).id());
+        segment.candidate(cand_list.candidate(i).id());
     if (candidate.usage_title.empty()) {
       continue;
     }
@@ -248,7 +262,7 @@ void SessionOutput::FillUsages(const Segment &segment,
     int index;
     commands::Information *info;
     std::map<int32, IndexInfoPair>::iterator info_itr =
-      usageid_information_map.find(candidate.usage_id);
+        usageid_information_map.find(candidate.usage_id);
 
     if (info_itr == usageid_information_map.end()) {
       index = usages->information_size();
@@ -270,17 +284,16 @@ void SessionOutput::FillUsages(const Segment &segment,
   }
 }
 
-
 // static
-void SessionOutput::FillShortcuts(const string &shortcuts,
+void SessionOutput::FillShortcuts(const std::string &shortcuts,
                                   commands::Candidates *candidates_proto) {
   const size_t num_loop =
       std::min(static_cast<size_t>(candidates_proto->candidate_size()),
                shortcuts.size());
   for (size_t i = 0; i < num_loop; ++i) {
-    const string shortcut = shortcuts.substr(i, 1);
-    candidates_proto->mutable_candidate(i)->mutable_annotation()->
-      set_shortcut(shortcut);
+    const std::string shortcut = shortcuts.substr(i, 1);
+    candidates_proto->mutable_candidate(i)->mutable_annotation()->set_shortcut(
+        shortcut);
   }
 }
 
@@ -291,11 +304,11 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
   footer->clear_label();
 
   // Append third number of the version to sub_label.
-  const string version = Version::GetMozcVersion();
-  std::vector<string> version_numbers;
+  const std::string version = Version::GetMozcVersion();
+  std::vector<std::string> version_numbers;
   Util::SplitStringUsing(version, ".", &version_numbers);
   if (version_numbers.size() > 2) {
-    string sub_label("build ");
+    std::string sub_label("build ");
     sub_label.append(version_numbers[2]);
     footer->set_sub_label(sub_label);
   } else {
@@ -306,8 +319,7 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
 // static
 bool SessionOutput::FillFooter(const commands::Category category,
                                commands::Candidates *candidates) {
-  if (category != commands::SUGGESTION &&
-      category != commands::PREDICTION &&
+  if (category != commands::SUGGESTION && category != commands::PREDICTION &&
       category != commands::CONVERSION) {
     return false;
   }
@@ -334,13 +346,13 @@ bool SessionOutput::FillFooter(const commands::Category category,
         }
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
           const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
 #elif defined(OS_NACL)
           const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
-#else   // !OS_MACOSX && !OS_NACL
+#else   // !__APPLE__ && !OS_NACL
           const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
-#endif  // OS_MACOSX || OS_NACL
+#endif  // __APPLE__ || OS_NACL
           footer->set_label(kDeleteInstruction);
           show_build_number = false;
         }
@@ -361,15 +373,14 @@ bool SessionOutput::FillFooter(const commands::Category category,
 }
 
 // static
-bool SessionOutput::AddSegment(const string &key,
-                               const string &value,
+bool SessionOutput::AddSegment(const std::string &key, const std::string &value,
                                const uint32 segment_type_mask,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
-  string normalized_key;
+  std::string normalized_key;
   TextNormalizer::NormalizeText(key, &normalized_key);
 
-  string normalized_value;
+  std::string normalized_value;
   if (segment_type_mask & PREEDIT) {
     TextNormalizer::NormalizeText(value, &normalized_value);
   } else if (segment_type_mask & CONVERSION) {
@@ -399,12 +410,13 @@ bool SessionOutput::AddSegment(const string &key,
 // static
 void SessionOutput::FillPreedit(const composer::Composer &composer,
                                 commands::Preedit *preedit) {
-  string output;
+  std::string output;
   composer.GetStringForPreedit(&output);
 
   const uint32 kBaseType = PREEDIT;
   AddSegment(output, output, kBaseType, preedit);
   preedit->set_cursor(static_cast<uint32>(composer.GetCursor()));
+  preedit->set_is_toggleable(composer.IsToggleable());
 }
 
 // static
@@ -418,14 +430,14 @@ void SessionOutput::FillConversion(const Segments &segments,
   for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
     const Segment &segment = segments.conversion_segment(i);
     if (i == segment_index) {
-      const string &value = segment.candidate(candidate_id).value;
+      const std::string &value = segment.candidate(candidate_id).value;
       if (AddSegment(segment.key(), value, kBaseType | FOCUSED, preedit) &&
           (!preedit->has_highlighted_position())) {
         preedit->set_highlighted_position(cursor);
       }
       cursor += Util::CharsLen(value);
     } else {
-      const string &value = segment.candidate(0).value;
+      const std::string &value = segment.candidate(0).value;
       AddSegment(segment.key(), value, kBaseType, preedit);
       cursor += Util::CharsLen(value);
     }
@@ -435,8 +447,7 @@ void SessionOutput::FillConversion(const Segments &segments,
 
 // static
 void SessionOutput::FillConversionResultWithoutNormalization(
-    const string &key,
-    const string &result,
+    const std::string &key, const std::string &result,
     commands::Result *result_proto) {
   result_proto->set_type(commands::Result::STRING);
   result_proto->set_key(key);
@@ -444,26 +455,26 @@ void SessionOutput::FillConversionResultWithoutNormalization(
 }
 
 // static
-void SessionOutput::FillConversionResult(const string &key,
-                                         const string &result,
+void SessionOutput::FillConversionResult(const std::string &key,
+                                         const std::string &result,
                                          commands::Result *result_proto) {
   // Key should be normalized as a preedit text.
-  string normalized_key;
+  std::string normalized_key;
   TextNormalizer::NormalizeText(key, &normalized_key);
 
   // value is already normalized by converter.
-  FillConversionResultWithoutNormalization(
-      normalized_key, result, result_proto);
+  FillConversionResultWithoutNormalization(normalized_key, result,
+                                           result_proto);
 }
 
 // static
-void SessionOutput::FillPreeditResult(const string &preedit,
+void SessionOutput::FillPreeditResult(const std::string &preedit,
                                       commands::Result *result_proto) {
-  string normalized_preedit;
+  std::string normalized_preedit;
   TextNormalizer::NormalizeText(preedit, &normalized_preedit);
 
-  FillConversionResultWithoutNormalization(
-      normalized_preedit, normalized_preedit, result_proto);
+  FillConversionResultWithoutNormalization(normalized_preedit,
+                                           normalized_preedit, result_proto);
 }
 
 }  // namespace session

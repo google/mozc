@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,9 +72,7 @@ namespace mozc {
 class Mutex;
 class ProcessMutex;
 
-// Inherit from ProtocolBuffer
-// TODO(hidehiko): Get rid of this implementation.
-class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
+class UserDictionaryStorage {
  public:
   typedef user_dictionary::UserDictionary UserDictionary;
   typedef user_dictionary::UserDictionary::Entry UserDictionaryEntry;
@@ -97,11 +95,11 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
     ERROR_TYPE_SIZE
   };
 
-  explicit UserDictionaryStorage(const string &filename);
+  explicit UserDictionaryStorage(const std::string &filename);
   virtual ~UserDictionaryStorage();
 
   // return the filename of user dictionary
-  const string &filename() const;
+  const std::string &filename() const;
 
   // Return true if data tied with this object already
   // exists. Otherwise, it means that the space for the data is used
@@ -127,18 +125,18 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   bool UnLock();
 
   // Export a dictionary to a file in TSV format.
-  bool ExportDictionary(uint64 dic_id, const string &file_name);
+  bool ExportDictionary(uint64 dic_id, const std::string &file_name);
 
   // Create a new dictionary with a specified name. Returns the id of
   // the new instance via new_dic_id.
 
-  bool CreateDictionary(const string &dic_name, uint64 *new_dic_id);
+  bool CreateDictionary(const std::string &dic_name, uint64 *new_dic_id);
 
   // Delete a dictionary.
   bool DeleteDictionary(uint64 dic_id);
 
   // Rename a dictionary.
-  bool RenameDictionary(uint64 dic_id, const string &dic_name);
+  bool RenameDictionary(uint64 dic_id, const std::string &dic_name);
 
   // return the index of "dic_id"
   // return -1 if no dictionary is found.
@@ -150,16 +148,11 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // Searches a dictionary from a dictionary name, and the dictionary id is
   // stored in "dic_id".
   // Returns false if the name is not found.
-  bool GetUserDictionaryId(const string &dic_name, uint64 *dic_id);
+  bool GetUserDictionaryId(const std::string &dic_name, uint64 *dic_id);
 
   // return last error type.
   // You can obtain the reason of the error of dictionary operation.
   UserDictionaryStorageErrorType GetLastError() const;
-
-  // Add new entry to the auto registered dictionary.
-  bool AddToAutoRegisteredDictionary(const string &key,
-                                     const string &value,
-                                     UserDictionary::PosType pos);
 
   // Converts syncable dictionaries to unsyncable dictionaries.
   // The name of default sync dictionary is renamed to locale-independent name
@@ -179,17 +172,30 @@ class UserDictionaryStorage : public user_dictionary::UserDictionaryStorage {
   // maximum number of entries one dictionary can hold
   static size_t max_entry_size();
 
-  static string default_sync_dictionary_name();
+  static std::string default_sync_dictionary_name();
+
+  user_dictionary::UserDictionaryStorage &GetProto() { return proto_; }
+
+  const user_dictionary::UserDictionaryStorage &GetProto() const {
+    return proto_;
+  }
+
+  size_t dictionaries_size() const { return proto_.dictionaries_size(); }
+
+  const user_dictionary::UserDictionary &dictionaries(size_t i) const {
+    return proto_.dictionaries(i);
+  }
 
  private:
   // Return true if this object can accept the given dictionary name.
   // This changes the internal state.
-  bool IsValidDictionaryName(const string &name);
+  bool IsValidDictionaryName(const std::string &name);
 
   // Load the data from file_name actually.
   bool LoadInternal();
 
-  string file_name_;
+  user_dictionary::UserDictionaryStorage proto_;
+  std::string file_name_;
   bool locked_;
   UserDictionaryStorageErrorType last_error_type_;
   std::unique_ptr<Mutex> local_mutex_;

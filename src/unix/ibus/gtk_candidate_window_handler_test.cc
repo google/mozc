@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,15 +37,15 @@
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
-using ::testing::AllOf;
-using ::testing::Property;
-using ::testing::Return;
 using mozc::commands::Candidates;
 using mozc::commands::Command;
 using mozc::commands::Output;
 using mozc::commands::RendererCommand;
 using mozc::renderer::RendererInterface;
 using mozc::renderer::RendererMock;
+using ::testing::AllOf;
+using ::testing::Property;
+using ::testing::Return;
 typedef mozc::commands::Candidates_Candidate Candidate;
 typedef mozc::commands::RendererCommand_ApplicationInfo ApplicationInfo;
 
@@ -59,9 +59,9 @@ class TestableGtkCandidateWindowHandler : public GtkCandidateWindowHandler {
   virtual ~TestableGtkCandidateWindowHandler() {}
 
   // Change access rights.
-  using GtkCandidateWindowHandler::SendUpdateCommand;
-  using GtkCandidateWindowHandler::renderer_;
   using GtkCandidateWindowHandler::last_update_output_;
+  using GtkCandidateWindowHandler::renderer_;
+  using GtkCandidateWindowHandler::SendUpdateCommand;
 };
 
 namespace {
@@ -113,8 +113,7 @@ MATCHER_P(VisibilityEq, visibility, "") {
 
 MATCHER_P(PreeditRectangleEq, rect, "") {
   if (!arg.has_preedit_rectangle()) {
-    *result_listener
-        << "RendererCommand::preedit_rectangle does not exist";
+    *result_listener << "RendererCommand::preedit_rectangle does not exist";
     return false;
   }
   const auto &actual_rect = arg.preedit_rectangle();
@@ -147,19 +146,20 @@ MATCHER_P(PreeditRectangleEq, rect, "") {
 
 MATCHER_P(OutputEq, expected, "") {
   if (expected.Utf8DebugString() != arg.Utf8DebugString()) {
-    *result_listener
-        << "The output does not match\n"
-        << "  expected: \n" << expected.Utf8DebugString() << "\n"
-        << "  actual:   \n" << arg.Utf8DebugString();
+    *result_listener << "The output does not match\n"
+                     << "  expected: \n"
+                     << expected.Utf8DebugString() << "\n"
+                     << "  actual:   \n"
+                     << arg.Utf8DebugString();
     return false;
   }
 
   return true;
 }
 
-#define EXPECT_CALL_EXEC_COMMAND(mock, ...)                              \
-    EXPECT_CALL((mock), ExecCommand(                                     \
-        AllOf(IsIBusMozcRendererRequest(), __VA_ARGS__)))
+#define EXPECT_CALL_EXEC_COMMAND(mock, ...) \
+  EXPECT_CALL((mock),                       \
+              ExecCommand(AllOf(IsIBusMozcRendererRequest(), __VA_ARGS__)))
 
 }  // namespace
 
@@ -178,8 +178,7 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(false),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
                              PreeditRectangleEq(kExpectedCursorArea));
     gtk_candidate_window_handler.SendUpdateCommand(&engine, output, false);
   }
@@ -189,8 +188,7 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(true),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea));
     gtk_candidate_window_handler.SendUpdateCommand(&engine, output, true);
   }
@@ -200,12 +198,11 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(true),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(false));
-    EXPECT_FALSE(gtk_candidate_window_handler.SendUpdateCommand(
-        &engine, output, true));
+    EXPECT_FALSE(
+        gtk_candidate_window_handler.SendUpdateCommand(&engine, output, true));
   }
   {
     SCOPED_TRACE("return value check. true case.");
@@ -213,12 +210,11 @@ TEST(GtkCandidateWindowHandlerTest, SendUpdateCommandTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(true),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea))
         .WillOnce(Return(true));
-    EXPECT_TRUE(gtk_candidate_window_handler.SendUpdateCommand(
-        &engine, output, true));
+    EXPECT_TRUE(
+        gtk_candidate_window_handler.SendUpdateCommand(&engine, output, true));
   }
 }
 
@@ -241,14 +237,14 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(false),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
                              PreeditRectangleEq(kExpectedCursorArea));
     gtk_candidate_window_handler.Update(&engine, output);
   }
   {
-    SCOPED_TRACE("If there is at least one candidate, "
-                 "visibility expects true");
+    SCOPED_TRACE(
+        "If there is at least one candidate, "
+        "visibility expects true");
     Output output;
     Candidates *candidates = output.mutable_candidates();
     Candidate *candidate = candidates->add_candidate();
@@ -257,8 +253,7 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             VisibilityEq(true),
+    EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
                              PreeditRectangleEq(kExpectedCursorArea));
     gtk_candidate_window_handler.Update(&engine, output);
   }
@@ -278,13 +273,11 @@ TEST(GtkCandidateWindowHandlerTest, UpdateTest) {
     RendererMock *renderer_mock = new RendererMock();
     TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
         renderer_mock);
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             Property(&RendererCommand::output,
-                                      OutputEq(output1)))
+    EXPECT_CALL_EXEC_COMMAND(
+        *renderer_mock, Property(&RendererCommand::output, OutputEq(output1)))
         .WillOnce(Return(true));
-    EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                             Property(&RendererCommand::output,
-                                      OutputEq(output2)))
+    EXPECT_CALL_EXEC_COMMAND(
+        *renderer_mock, Property(&RendererCommand::output, OutputEq(output2)))
         .WillOnce(Return(true));
     gtk_candidate_window_handler.Update(&engine, output1);
     EXPECT_THAT(*(gtk_candidate_window_handler.last_update_output_.get()),
@@ -305,10 +298,8 @@ TEST(GtkCandidateWindowHandlerTest, HideTest) {
   engine.cursor_area.height = kExpectedCursorArea.Height();
 
   RendererMock *renderer_mock = new RendererMock();
-  TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
-      renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                           VisibilityEq(false),
+  TestableGtkCandidateWindowHandler gtk_candidate_window_handler(renderer_mock);
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(false),
                            PreeditRectangleEq(kExpectedCursorArea));
   gtk_candidate_window_handler.Hide(&engine);
 }
@@ -323,10 +314,8 @@ TEST(GtkCandidateWindowHandlerTest, ShowTest) {
   engine.cursor_area.height = kExpectedCursorArea.Height();
 
   RendererMock *renderer_mock = new RendererMock();
-  TestableGtkCandidateWindowHandler gtk_candidate_window_handler(
-      renderer_mock);
-  EXPECT_CALL_EXEC_COMMAND(*renderer_mock,
-                           VisibilityEq(true),
+  TestableGtkCandidateWindowHandler gtk_candidate_window_handler(renderer_mock);
+  EXPECT_CALL_EXEC_COMMAND(*renderer_mock, VisibilityEq(true),
                            PreeditRectangleEq(kExpectedCursorArea));
   gtk_candidate_window_handler.Show(&engine);
 }

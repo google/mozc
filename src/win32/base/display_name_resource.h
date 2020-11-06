@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by TextService_template.rc
 //
-#define IDS_TEXTSERVICE_DISPLAYNAME     101
-#define IDS_IME_DISPLAYNAME             101
+#define IDS_TEXTSERVICE_DISPLAYNAME 101
+#define IDS_IME_DISPLAYNAME 101
 // Synonym of IDS_TEXTSERVICE_DISPLAYNAME to update
 // MUI string cache.  See b/2994558 for details.
 #define IDS_TEXTSERVICE_DISPLAYNAME_SYNONYM 201

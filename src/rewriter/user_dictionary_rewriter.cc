@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,7 @@ UserDictionaryRewriter::UserDictionaryRewriter() {}
 
 UserDictionaryRewriter::~UserDictionaryRewriter() {}
 
-int UserDictionaryRewriter::capability(
-    const ConversionRequest &request) const {
+int UserDictionaryRewriter::capability(const ConversionRequest &request) const {
   return RewriterInterface::CONVERSION | RewriterInterface::PREDICTION;
 }
 
@@ -63,8 +62,8 @@ bool UserDictionaryRewriter::Rewrite(const ConversionRequest &request,
     // final destination of the user dictionary candidate.
     int move_to_start = 1;
 
-    for (size_t move_from = 2;
-         move_from < segment->candidates_size(); ++move_from) {
+    for (size_t move_from = 2; move_from < segment->candidates_size();
+         ++move_from) {
       if (!(segment->candidate(move_from).attributes &
             Segment::Candidate::USER_DICTIONARY)) {
         continue;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,15 +55,14 @@ KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
   Clear();
 }
 
-bool KeyEventHandler::GetKeyEvent(
-    guint keyval, guint keycode, guint modifiers,
-    config::Config::PreeditMethod preedit_method,
-    bool layout_is_jp, commands::KeyEvent *key) {
+bool KeyEventHandler::GetKeyEvent(guint keyval, guint keycode, guint modifiers,
+                                  config::Config::PreeditMethod preedit_method,
+                                  bool layout_is_jp, commands::KeyEvent *key) {
   DCHECK(key);
   key->Clear();
 
-  if (!key_translator_->Translate(
-          keyval, keycode, modifiers, preedit_method, layout_is_jp, key)) {
+  if (!key_translator_->Translate(keyval, keycode, modifiers, preedit_method,
+                                  layout_is_jp, key)) {
     LOG(ERROR) << "Translate failed";
     return false;
   }
@@ -167,8 +166,7 @@ bool KeyEventHandler::ProcessModifiers(bool is_key_up, guint keyval,
     key_event->mutable_modifier_keys()->Clear();
     for (std::set<commands::KeyEvent::ModifierKey>::const_iterator it =
              modifiers_to_be_sent_.begin();
-         it != modifiers_to_be_sent_.end();
-         ++it) {
+         it != modifiers_to_be_sent_.end(); ++it) {
       key_event->add_modifier_keys(*it);
     }
     modifiers_to_be_sent_.clear();

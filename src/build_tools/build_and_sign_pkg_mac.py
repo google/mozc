@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Builds package file from .pkgproj and sings it.
+r"""Builds package file from .pkgproj and sings it.
 
 Typical usage:
 
@@ -43,7 +43,7 @@ import optparse
 import os
 import shutil
 import sys
-
+import codesign_mac
 from util import PrintErrorAndExit
 from util import RunOrDie
 
@@ -53,10 +53,60 @@ def ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--pkgproj', dest='pkgproj')
   parser.add_option('--signpkg', dest='signpkg')
+  parser.add_option('--product_dir', dest='product_dir')
 
   (opts, _) = parser.parse_args()
 
   return opts
+
+
+
+def CodesignPackage(product_dir):
+  """Codesign the package modules under the product_dir."""
+  # Target modules to be signed. To simplify the build rules, we sign built
+  # modules here all at once, rather than each build of the module.
+  product_name = 'Mozc'
+  app_res = product_name + '.app/Contents/Resources/'
+  breakpad = 'Contents/Frameworks/Breakpad.framework/Versions/A/Resources/breakpadUtilities.dylib'
+  libqcocoa = 'Contents/Frameworks/QtCore.framework/Versions/5/Resources/plugins/platforms/libqcocoa.dylib'
+  targets = [
+      'ConfigDialog.app/' + breakpad,
+      'DictionaryTool.app/' + breakpad,
+      product_name + '.app/' + breakpad,
+      app_res + product_name + 'Converter.app/' + breakpad,
+      app_res + product_name + 'Prelauncher.app/' + breakpad,
+      app_res + product_name + 'Renderer.app/' + breakpad,
+      app_res + 'AboutDialog.app/' + breakpad,
+      app_res + 'ConfigDialog.app/' + breakpad,
+      app_res + 'DictionaryTool.app/' + breakpad,
+      app_res + 'ErrorMessageDialog.app/' + breakpad,
+      app_res + 'WordRegisterDialog.app/' + breakpad,
+  ] + [
+      'ConfigDialog.app/' + libqcocoa,
+      app_res + 'ConfigDialog.app/' + libqcocoa,
+  ] + [
+      app_res + product_name + 'Converter.app',
+      app_res + product_name + 'Prelauncher.app',
+      app_res + product_name + 'Renderer.app',
+      app_res + 'AboutDialog.app',
+      app_res + 'ConfigDialog.app',
+      app_res + 'DictionaryTool.app',
+      app_res + 'ErrorMessageDialog.app',
+      app_res + 'WordRegisterDialog.app',
+  ] + [
+      product_name + '.app',
+      'AboutDialog.app',
+      'ActivatePane.bundle',
+      'ConfigDialog.app',
+      'DevConfirmPane.bundle',
+      'DictionaryTool.app',
+      'ErrorMessageDialog.app',
+      'UninstallGoogleJapaneseInput.app',
+      'WordRegisterDialog.app',
+  ]
+
+  for target in targets:
+    codesign_mac.Codesign(os.path.join(product_dir, target))
 
 
 def main():
@@ -66,9 +116,8 @@ def main():
     PrintErrorAndExit('--pkgproj option is mandatory.')
   pkgproj = os.path.abspath(opt.pkgproj)
 
-
   # Make sure Packages is installed
-  packagesbuild_path = ""
+  packagesbuild_path = ''
   if os.path.exists('/usr/local/bin/packagesbuild'):
     packagesbuild_path = '/usr/local/bin/packagesbuild'
   elif os.path.exists('/usr/bin/packagesbuild'):
@@ -77,10 +126,12 @@ def main():
     logging.critical('error: Cannot find "packagesbuild"')
     sys.exit(1)
 
+  # codesign
+  CodesignPackage(product_dir)
+
   # Build the package
   cmd = [packagesbuild_path, pkgproj]
   RunOrDie(cmd)
-
 
 if __name__ == '__main__':
   main()

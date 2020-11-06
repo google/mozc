@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,60 +37,42 @@
 struct LAYOUTORTIPPROFILE;
 struct LAYOUTORTIP;
 
-extern "C"
-UINT WINAPI EnumEnabledLayoutOrTip(
-    __in_opt  LPCWSTR pszUserReg,
-    __in_opt  LPCWSTR pszSystemReg,
-    __in_opt  LPCWSTR pszSoftwareReg,
-    __out     LAYOUTORTIPPROFILE *pLayoutOrTipProfile,
-    __in      UINT uBufLength) {
-  CHECK(false)
-      << "This is a stub function to create an import library. "
-      << "Shouldn't be called from anywhere.";
+extern "C" UINT WINAPI EnumEnabledLayoutOrTip(
+    __in_opt LPCWSTR pszUserReg, __in_opt LPCWSTR pszSystemReg,
+    __in_opt LPCWSTR pszSoftwareReg,
+    __out LAYOUTORTIPPROFILE *pLayoutOrTipProfile, __in UINT uBufLength) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
   return 0;
 }
 
-extern "C"
-UINT WINAPI EnumLayoutOrTipForSetup(
-    __in                     LANGID langid,
-    __out_ecount(uBufLength) LAYOUTORTIP *pLayoutOrTip,
-    __in                     UINT uBufLength,
-    __in                     DWORD dwFlags) {
-  CHECK(false)
-      << "This is a stub function to create an import library. "
-      << "Shouldn't be called from anywhere.";
+extern "C" UINT WINAPI EnumLayoutOrTipForSetup(__in LANGID langid,
+                                               __out_ecount(uBufLength)
+                                                   LAYOUTORTIP *pLayoutOrTip,
+                                               __in UINT uBufLength,
+                                               __in DWORD dwFlags) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
   return 0;
 }
 
-extern "C"
-BOOL WINAPI InstallLayoutOrTip(
-    __in      LPCWSTR psz,
-    __in      DWORD dwFlags) {
-  CHECK(false)
-      << "This is a stub function to create an import library. "
-      << "Shouldn't be called from anywhere.";
+extern "C" BOOL WINAPI InstallLayoutOrTip(__in LPCWSTR psz,
+                                          __in DWORD dwFlags) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
   return FALSE;
 }
 
-extern "C"
-BOOL WINAPI InstallLayoutOrTipUserReg(
-    __in_opt  LPCWSTR pszUserReg,
-    __in_opt  LPCWSTR pszSystemReg,
-    __in_opt  LPCWSTR pszSoftwareReg,
-    __in      LPCWSTR psz,
-    __in      DWORD dwFlags) {
-  CHECK(false)
-      << "This is a stub function to create an import library. "
-      << "Shouldn't be called from anywhere.";
+extern "C" BOOL WINAPI InstallLayoutOrTipUserReg(
+    __in_opt LPCWSTR pszUserReg, __in_opt LPCWSTR pszSystemReg,
+    __in_opt LPCWSTR pszSoftwareReg, __in LPCWSTR psz, __in DWORD dwFlags) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
   return FALSE;
 }
 
-extern "C"
-BOOL WINAPI SetDefaultLayoutOrTip(
-    __in  LPCWSTR psz,
-    DWORD dwFlags) {
-  CHECK(false)
-      << "This is a stub function to create an import library. "
-      << "Shouldn't be called from anywhere.";
+extern "C" BOOL WINAPI SetDefaultLayoutOrTip(__in LPCWSTR psz, DWORD dwFlags) {
+  CHECK(false) << "This is a stub function to create an import library. "
+               << "Shouldn't be called from anywhere.";
   return FALSE;
 }

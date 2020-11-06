@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,30 +72,24 @@ class HTTPClientMock : public HTTPClientInterface {
  public:
   HTTPClientMock() : failure_mode_(false), execution_time_(0) {}
 
-  bool Get(const string &url, const HTTPClient::Option &option,
-           string *output) const;
-  bool Head(const string &url, const HTTPClient::Option &option,
-            string *output) const;
-  bool Post(const string &url, const string &data,
-            const HTTPClient::Option &option, string *output) const;
+  bool Get(const std::string &url, const HTTPClient::Option &option,
+           std::string *output) const;
+  bool Head(const std::string &url, const HTTPClient::Option &option,
+            std::string *output) const;
+  bool Post(const std::string &url, const std::string &data,
+            const HTTPClient::Option &option, std::string *output) const;
 
   struct Result {
-    string expected_url;
-    string expected_request;
-    string expected_result;
+    std::string expected_url;
+    std::string expected_request;
+    std::string expected_result;
   };
 
   // HTTP request fails if failure_mode is true.
-  void set_failure_mode(bool failure_mode) {
-    failure_mode_ = failure_mode;
-  }
+  void set_failure_mode(bool failure_mode) { failure_mode_ = failure_mode; }
 
-  void set_result(const Result &result) {
-    result_ = result;
-  }
-  void set_option(const HTTPClient::Option &option) {
-    option_ = option;
-  }
+  void set_result(const Result &result) { result_ = result; }
+  void set_option(const HTTPClient::Option &option) { option_ = option; }
 
   void set_execution_time(int execution_time) {
     execution_time_ = execution_time;
@@ -106,9 +100,9 @@ class HTTPClientMock : public HTTPClientInterface {
   // if all of them are correct.  |header| should have a HTTP response header,
   // but it gets other strings for simplicity.
   // |body| will have a HTTP response content.
-  bool DoRequest(const string &url, const bool check_data,
-                 const string &data, const HTTPClient::Option &option,
-                 string *header, string *output) const;
+  bool DoRequest(const std::string &url, const bool check_data,
+                 const std::string &data, const HTTPClient::Option &option,
+                 std::string *header, std::string *output) const;
   bool failure_mode_;
   Result result_;
   int execution_time_;

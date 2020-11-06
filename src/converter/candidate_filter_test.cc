@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,12 +53,10 @@ using ::mozc::dictionary::POSMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 
 const Segments::RequestType kRequestTypes[] = {
-  Segments::CONVERSION,
-  Segments::PREDICTION,
-  Segments::SUGGESTION,
-  Segments::PARTIAL_PREDICTION,
-  Segments::PARTIAL_SUGGESTION,
-  // Type Segments::REVERSE_CONVERSION is tested separately.
+    Segments::CONVERSION,         Segments::PREDICTION,
+    Segments::SUGGESTION,         Segments::PARTIAL_PREDICTION,
+    Segments::PARTIAL_SUGGESTION,
+    // Type Segments::REVERSE_CONVERSION is tested separately.
 };
 
 class CandidateFilterTest : public ::testing::Test {
@@ -72,7 +70,7 @@ class CandidateFilterTest : public ::testing::Test {
     node_freelist_.reset(new FreeList<Node>(1024));
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     {
-      const char *data = NULL;
+      const char *data = nullptr;
       size_t size = 0;
       mock_data_manager_.GetSuggestionFilterData(&data, &size);
       suggestion_filter_.reset(new SuggestionFilter(data, size));
@@ -113,14 +111,11 @@ class CandidateFilterTest : public ::testing::Test {
     return c;
   }
 
-  const POSMatcher &pos_matcher() const {
-    return pos_matcher_;
-  }
+  const POSMatcher &pos_matcher() const { return pos_matcher_; }
 
   CandidateFilter *CreateCandidateFilter(
       bool apply_suggestion_filter_for_exact_match) const {
-    return new CandidateFilter(&suppression_dictionary_,
-                               &pos_matcher_,
+    return new CandidateFilter(&suppression_dictionary_, &pos_matcher_,
                                suggestion_filter_.get(),
                                apply_suggestion_filter_for_exact_match);
   }
@@ -299,8 +294,8 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
   node->value = "test";
 
   const uint16 pos_ids[] = {
-    pos_matcher().GetIsolatedWordId(),
-    pos_matcher().GetGeneralSymbolId(),
+      pos_matcher().GetIsolatedWordId(),
+      pos_matcher().GetGeneralSymbolId(),
   };
   // Perform the same test for the above POS IDs.
   for (const uint16 id : pos_ids) {
@@ -478,9 +473,8 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
 
 TEST_F(CandidateFilterTest, Regression3437022) {
   std::unique_ptr<SuppressionDictionary> dic(new SuppressionDictionary);
-  std::unique_ptr<CandidateFilter> filter(
-      new CandidateFilter(dic.get(), &pos_matcher_,
-                          suggestion_filter_.get(), true));
+  std::unique_ptr<CandidateFilter> filter(new CandidateFilter(
+      dic.get(), &pos_matcher_, suggestion_filter_.get(), true));
 
   std::vector<const Node *> n;
   GetDefaultNodes(&n);
@@ -513,9 +507,9 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   c1->content_value = "test_value";
 
   for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
-              filter->FilterCandidate("test_key_suffix", c1, n,
-                                      kRequestTypes[i]));
+    EXPECT_EQ(
+        CandidateFilter::BAD_CANDIDATE,
+        filter->FilterCandidate("test_key_suffix", c1, n, kRequestTypes[i]));
     filter->Reset();
   }
 
@@ -524,9 +518,9 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   dic->UnLock();
 
   for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate("test_key_suffix", c1, n,
-                                      kRequestTypes[i]));
+    EXPECT_EQ(
+        CandidateFilter::GOOD_CANDIDATE,
+        filter->FilterCandidate("test_key_suffix", c1, n, kRequestTypes[i]));
     filter->Reset();
   }
 }
@@ -595,9 +589,8 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
 
   // Good top candidate
   for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
-    ASSERT_EQ(
-        CandidateFilter::GOOD_CANDIDATE,
-        filter->FilterCandidate(c1->key, c1, nodes, kRequestTypes[i]));
+    ASSERT_EQ(CandidateFilter::GOOD_CANDIDATE,
+              filter->FilterCandidate(c1->key, c1, nodes, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
     // "seen" rule.
     filter->Reset();
@@ -747,7 +740,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
     nodes.push_back(n3);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key).append(n3->key);;
+    c->key.assign(n1->key).append(n2->key).append(n3->key);
+    ;
     c->value.assign(n1->value).append(n2->value).append(n3->value);
     c->content_key = c->key;
     c->content_value = c->value;
@@ -889,7 +883,8 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
     nodes.push_back(n3);
 
     Segment::Candidate *c = NewCandidate();
-    c->key.assign(n1->key).append(n2->key).append(n3->key);;
+    c->key.assign(n1->key).append(n2->key).append(n3->key);
+    ;
     c->value.assign(n1->value).append(n2->value).append(n3->value);
     c->content_key = c->key;
     c->content_value = c->value;
@@ -950,9 +945,9 @@ TEST_F(CandidateFilterTest, ReverseConversion) {
     c->content_value = c->value;
     c->cost = 1000;
     c->structure_cost = 2000;
-    EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
-              filter->FilterCandidate(" ", c, nodes,
-                                      Segments::REVERSE_CONVERSION));
+    EXPECT_EQ(
+        CandidateFilter::GOOD_CANDIDATE,
+        filter->FilterCandidate(" ", c, nodes, Segments::REVERSE_CONVERSION));
   }
 }
 

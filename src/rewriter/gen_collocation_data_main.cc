@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@ namespace {
 
 void Convert() {
   InputFileStream ifs(FLAGS_collocation_data.c_str());
-  string line;
-  std::vector<string> entries;
+  std::string line;
+  std::vector<std::string> entries;
   while (!getline(ifs, line).fail()) {
     if (line.empty()) {
       continue;
@@ -78,7 +78,7 @@ void Convert() {
   if (FLAGS_binary_mode) {
     OutputExistenceBinary(entries, ofs, FLAGS_error_rate);
   } else {
-    const string kNameSpace = "CollocationData";
+    const std::string kNameSpace = "CollocationData";
     OutputExistenceHeader(entries, kNameSpace, ofs, FLAGS_error_rate);
   }
 
@@ -90,7 +90,7 @@ void Convert() {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_collocation_data.empty() && argc > 1) {
     FLAGS_collocation_data = argv[1];

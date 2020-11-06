@@ -1,0 +1,18 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "qt",
+    hdrs = glob([
+        "QtCore/**",
+        "QtGui/**",
+        "QtWidgets/**",
+    ]),
+    includes = ["."],
+    linkopts = [
+        "-lQt5Core",
+        "-lQt5Gui",
+        "-lQt5Widgets",
+    ],
+)

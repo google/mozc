@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@ package mozc.renderer;
 message RendererStyle {
   message RGBAColor {
     // RGB color range : [0 - 255]
-    required double r = 1 [default = 0];
-    required double g = 2 [default = 0];
-    required double b = 3 [default = 0];
+    optional double r = 1 [default = 0];
+    optional double g = 2 [default = 0];
+    optional double b = 3 [default = 0];
     // Alpha value range : [0 - 1.0]
     optional double a = 4 [default = 1.0];
   }
@@ -52,9 +52,9 @@ message RendererStyle {
     optional string font_name = 6;
   }
 
-  message InfolistStyle{
-    optional string caption_string  = 1;
-    optional int32 caption_height  = 2;
+  message InfolistStyle {
+    optional string caption_string = 1;
+    optional int32 caption_height = 2;
     optional int32 caption_padding = 3;
     optional int32 window_border = 4;
     optional int32 row_rect_padding = 5;

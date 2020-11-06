@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,39 +60,49 @@ const char kKanaCombinationTableFile[] = "system://kana.tsv";
 
 // Special tables for 12keys
 const char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
-const char k12keysHalfwidthasciiTableFile[]
-    = "system://12keys-halfwidthascii.tsv";
+const char k12keysHiraganaIntuitiveTableFile[] =
+    "system://12keys-hiragana_intuitive.tsv";
+const char k12keysHalfwidthasciiTableFile[] =
+    "system://12keys-halfwidthascii.tsv";
 const char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
-const char kFlickHalfwidthasciiTableFile[]
-    = "system://flick-halfwidthascii.tsv";
-const char kToggleFlickHiraganaTableFile[]
-    = "system://toggle_flick-hiragana.tsv";
-const char kToggleFlickHalfwidthasciiTableFile[]
-    = "system://toggle_flick-halfwidthascii.tsv";
+const char kFlickHalfwidthasciiIosTableFile[] =
+    "system://flick-halfwidthascii_ios.tsv";
+const char kFlickNumberTableFile[] = "system://flick-number.tsv";
+const char kFlickHiraganaIntuitiveTableFile[] =
+    "system://flick-hiragana_intuitive.tsv";
+const char kFlickHalfwidthasciiTableFile[] =
+    "system://flick-halfwidthascii.tsv";
+const char kToggleFlickHiraganaTableFile[] =
+    "system://toggle_flick-hiragana.tsv";
+const char kToggleFlickHiraganaIntuitiveTableFile[] =
+    "system://toggle_flick-hiragana_intuitive.tsv";
+const char kToggleFlickHalfwidthasciiIosTableFile[] =
+    "system://toggle_flick-halfwidthascii_ios.tsv";
+const char kToggleFlickNumberTableFile[] = "system://toggle_flick-number.tsv";
+const char kToggleFlickHalfwidthasciiTableFile[] =
+    "system://toggle_flick-halfwidthascii.tsv";
 // Special tables for QWERTY mobile
-const char kQwertyMobileHiraganaTableFile[]
-    = "system://qwerty_mobile-hiragana.tsv";
-const char kQwertyMobileHalfwidthasciiTableFile[]
-    = "system://qwerty_mobile-halfwidthascii.tsv";
+const char kQwertyMobileHiraganaTableFile[] =
+    "system://qwerty_mobile-hiragana.tsv";
+const char kQwertyMobileHalfwidthasciiTableFile[] =
+    "system://qwerty_mobile-halfwidthascii.tsv";
 // Special tables for Godan
 const char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
 const char kNotouchHiraganaTableFile[] = "system://notouch-hiragana.tsv";
 // Reuse qwerty_mobile-halfwidthascii table
-const char kNotouchHalfwidthasciiTableFile[]
-    = "system://qwerty_mobile-halfwidthascii.tsv";
+const char kNotouchHalfwidthasciiTableFile[] =
+    "system://qwerty_mobile-halfwidthascii.tsv";
 
 const char kNewChunkPrefix[] = "\t";
-const char kSpecialKeyOpen[] = "\x0F";  // Shift-In of ASCII
+const char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
 const char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
 }  // namespace
 
 // ========================================
 // Entry
 // ========================================
-Entry::Entry(const string &input,
-             const string &result,
-             const string &pending,
-             const TableAttributes attributes)
+Entry::Entry(const std::string &input, const std::string &result,
+             const std::string &pending, const TableAttributes attributes)
     : input_(input),
       result_(result),
       pending_(pending),
@@ -101,40 +111,38 @@ Entry::Entry(const string &input,
 // ========================================
 // Table
 // ========================================
-Table::Table()
-    : entries_(new EntryTrie),
-      case_sensitive_(false) {}
+Table::Table() : entries_(new EntryTrie), case_sensitive_(false) {}
 
-Table::~Table() {
-  ResetEntrySet();
-}
+Table::~Table() { ResetEntrySet(); }
 
-static const char kKuten[]  = "、";
+static const char kKuten[] = "、";
 static const char kTouten[] = "。";
-static const char kComma[]  = "，";
+static const char kComma[] = "，";
 static const char kPeriod[] = "．";
 
-static const char kCornerOpen[]  = "「";
+static const char kCornerOpen[] = "「";
 static const char kCornerClose[] = "」";
-static const char kSlash[]       = "／";
-static const char kSquareOpen[]  = "[";
+static const char kSlash[] = "／";
+static const char kSquareOpen[] = "[";
 static const char kSquareClose[] = "]";
-static const char kMiddleDot[]   = "・";
+static const char kMiddleDot[] = "・";
 
 bool Table::InitializeWithRequestAndConfig(
-    const commands::Request &request,
-    const config::Config &config,
-    const DataManagerInterface& data_manager) {
+    const commands::Request &request, const config::Config &config,
+    const DataManagerInterface &data_manager) {
   case_sensitive_ = false;
   bool result = false;
   typing_model_ = TypingModel::CreateTypingModel(
       request.special_romanji_table(), data_manager);
-  if (request.special_romanji_table()
-      != mozc::commands::Request::DEFAULT_TABLE) {
+  if (request.special_romanji_table() !=
+      mozc::commands::Request::DEFAULT_TABLE) {
     const char *table_file_name;
     switch (request.special_romanji_table()) {
       case mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA:
         table_file_name = k12keysHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TO_HIRAGANA_INTUITIVE:
+        table_file_name = k12keysHiraganaIntuitiveTableFile;
         break;
       case mozc::commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII:
         table_file_name = k12keysHalfwidthasciiTableFile;
@@ -142,11 +150,29 @@ bool Table::InitializeWithRequestAndConfig(
       case mozc::commands::Request::FLICK_TO_HIRAGANA:
         table_file_name = kFlickHiraganaTableFile;
         break;
+      case mozc::commands::Request::FLICK_TO_HIRAGANA_INTUITIVE:
+        table_file_name = kFlickHiraganaIntuitiveTableFile;
+        break;
+      case mozc::commands::Request::FLICK_TO_HALFWIDTHASCII_IOS:
+        table_file_name = kFlickHalfwidthasciiIosTableFile;
+        break;
       case mozc::commands::Request::FLICK_TO_HALFWIDTHASCII:
         table_file_name = kFlickHalfwidthasciiTableFile;
         break;
+      case mozc::commands::Request::FLICK_TO_NUMBER:
+        table_file_name = kFlickNumberTableFile;
+        break;
       case mozc::commands::Request::TOGGLE_FLICK_TO_HIRAGANA:
         table_file_name = kToggleFlickHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_HIRAGANA_INTUITIVE:
+        table_file_name = kToggleFlickHiraganaIntuitiveTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII_IOS:
+        table_file_name = kToggleFlickHalfwidthasciiIosTableFile;
+        break;
+      case mozc::commands::Request::TOGGLE_FLICK_TO_NUMBER:
+        table_file_name = kToggleFlickNumberTableFile;
         break;
       case mozc::commands::Request::TOGGLE_FLICK_TO_HALFWIDTHASCII:
         table_file_name = kToggleFlickHalfwidthasciiTableFile;
@@ -172,7 +198,7 @@ bool Table::InitializeWithRequestAndConfig(
         table_file_name = kNotouchHalfwidthasciiTableFile;
         break;
       default:
-        table_file_name = NULL;
+        table_file_name = nullptr;
     }
     if (table_file_name && LoadFromFile(table_file_name)) {
       return true;
@@ -181,9 +207,9 @@ bool Table::InitializeWithRequestAndConfig(
   switch (config.preedit_method()) {
     case config::Config::ROMAN:
       result = (config.has_custom_roman_table() &&
-                !config.custom_roman_table().empty()) ?
-          LoadFromString(config.custom_roman_table()) :
-          LoadFromFile(kRomajiPreeditTableFile);
+                !config.custom_roman_table().empty())
+                   ? LoadFromString(config.custom_roman_table())
+                   : LoadFromFile(kRomajiPreeditTableFile);
       break;
     case config::Config::KANA:
       result = LoadFromFile(kRomajiPreeditTableFile);
@@ -203,11 +229,11 @@ bool Table::InitializeWithRequestAndConfig(
   // Initialize punctuations.
   const config::Config::PunctuationMethod punctuation_method =
       config.punctuation_method();
-  const mozc::composer::Entry *entry = NULL;
+  const mozc::composer::Entry *entry = nullptr;
 
   // Comma / Kuten
   entry = LookUp(",");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kKuten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
         punctuation_method == config::Config::COMMA_TOUTEN) {
@@ -219,7 +245,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Period / Touten
   entry = LookUp(".");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kTouten && entry->pending().empty())) {
     if (punctuation_method == config::Config::COMMA_PERIOD ||
         punctuation_method == config::Config::KUTEN_PERIOD) {
@@ -234,7 +260,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Slash / Middle dot
   entry = LookUp("/");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kMiddleDot && entry->pending().empty())) {
     if (symbol_method == config::Config::SQUARE_BRACKET_SLASH ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -246,7 +272,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Square open bracket / Corner open bracket
   entry = LookUp("[");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kCornerOpen && entry->pending().empty())) {
     if (symbol_method == config::Config::CORNER_BRACKET_MIDDLE_DOT ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -258,7 +284,7 @@ bool Table::InitializeWithRequestAndConfig(
 
   // Square close bracket / Corner close bracket
   entry = LookUp("]");
-  if (entry == NULL ||
+  if (entry == nullptr ||
       (entry->result() == kCornerClose && entry->pending().empty())) {
     if (symbol_method == config::Config::CORNER_BRACKET_MIDDLE_DOT ||
         symbol_method == config::Config::CORNER_BRACKET_SLASH) {
@@ -276,13 +302,13 @@ bool Table::InitializeWithRequestAndConfig(
   return result;
 }
 
-bool Table::IsLoopingEntry(const string &input,
-                           const string &pending) const {
+bool Table::IsLoopingEntry(const std::string &input,
+                           const std::string &pending) const {
   if (input.empty() || pending.empty()) {
     return false;
   }
 
-  string key = pending;
+  std::string key = pending;
   do {
     // If input is a prefix of key, it should be looping.
     // (ex. input="a", pending="abc").
@@ -293,7 +319,7 @@ bool Table::IsLoopingEntry(const string &input,
     size_t key_length = 0;
     bool fixed = false;
     const Entry *entry = LookUpPrefix(key, &key_length, &fixed);
-    if (entry == NULL) {
+    if (entry == nullptr) {
       return false;
     }
     DCHECK_LE(key_length, key.size());
@@ -303,42 +329,39 @@ bool Table::IsLoopingEntry(const string &input,
   return false;
 }
 
-const Entry *Table::AddRule(const string &input,
-                            const string &output,
-                            const string &pending) {
+const Entry *Table::AddRule(const std::string &input, const std::string &output,
+                            const std::string &pending) {
   return AddRuleWithAttributes(input, output, pending, NO_TABLE_ATTRIBUTE);
 }
 
-const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
-                                          const string &output,
-                                          const string &escaped_pending,
+const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
+                                          const std::string &output,
+                                          const std::string &escaped_pending,
                                           const TableAttributes attributes) {
   if (attributes & NEW_CHUNK) {
     // TODO(komatsu): Make a new trie tree for checking the new chunk
     // attribute rather than reusing the conversion trie.
-    const string additional_input = kNewChunkPrefix + escaped_input;
+    const std::string additional_input = kNewChunkPrefix + escaped_input;
     AddRuleWithAttributes(additional_input, output, escaped_pending,
                           NO_TABLE_ATTRIBUTE);
   }
 
   const size_t kMaxSize = 300;
-  if (escaped_input.size() >= kMaxSize ||
-      output.size() >= kMaxSize ||
+  if (escaped_input.size() >= kMaxSize || output.size() >= kMaxSize ||
       escaped_pending.size() >= kMaxSize) {
     LOG(ERROR) << "Invalid input/output/pending";
-    return NULL;
+    return nullptr;
   }
 
-  const string input = ParseSpecialKey(escaped_input);
-  const string pending = ParseSpecialKey(escaped_pending);
+  const std::string input = ParseSpecialKey(escaped_input);
+  const std::string pending = ParseSpecialKey(escaped_pending);
   if (IsLoopingEntry(input, pending)) {
-    LOG(WARNING) << "Entry "
-                 << input << " " << output << " " << pending
+    LOG(WARNING) << "Entry " << input << " " << output << " " << pending
                  << " is removed, since the rule is looping";
-    return NULL;
+    return nullptr;
   }
 
-  const Entry *old_entry = NULL;
+  const Entry *old_entry = nullptr;
   if (entries_->LookUp(input, &old_entry)) {
     DeleteEntry(old_entry);
   }
@@ -350,7 +373,7 @@ const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
   // Check if the input has a large captal character.
   // Invisible character is exception.
   if (!case_sensitive_) {
-    const string trimed_input = DeleteSpecialKey(input);
+    const std::string trimed_input = DeleteSpecialKey(input);
     for (ConstChar32Iterator iter(trimed_input); !iter.Done(); iter.Next()) {
       const char32 ucs4 = iter.Get();
       if ('A' <= ucs4 && ucs4 <= 'Z') {
@@ -362,7 +385,7 @@ const Entry *Table::AddRuleWithAttributes(const string &escaped_input,
   return entry;
 }
 
-void Table::DeleteRule(const string &input) {
+void Table::DeleteRule(const std::string &input) {
   // NOTE : If this method is called and an entry is deleted,
   //     case_sensitive_ turns to be invalid
   //     because it is not updated.
@@ -378,30 +401,28 @@ void Table::DeleteRule(const string &input) {
   entries_->DeleteEntry(input);
 }
 
-bool Table::LoadFromString(const string &str) {
+bool Table::LoadFromString(const std::string &str) {
   std::istringstream is(str);
   return LoadFromStream(&is);
 }
 
 bool Table::LoadFromFile(const char *filepath) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filepath));
-  if (ifs.get() == NULL) {
+  if (ifs == nullptr) {
     return false;
   }
   return LoadFromStream(ifs.get());
 }
 
-const TypingModel* Table::typing_model() const {
-  return typing_model_.get();
-}
+const TypingModel *Table::typing_model() const { return typing_model_.get(); }
 
 namespace {
 const char kAttributeDelimiter[] = " ";
 
-TableAttributes ParseAttributes(const string &input) {
+TableAttributes ParseAttributes(const std::string &input) {
   TableAttributes attributes = NO_TABLE_ATTRIBUTE;
 
-  std::vector<string> attribute_strings;
+  std::vector<std::string> attribute_strings;
   Util::SplitStringAllowEmpty(input, kAttributeDelimiter, &attribute_strings);
 
   for (size_t i = 0; i < attribute_strings.size(); ++i) {
@@ -421,8 +442,8 @@ TableAttributes ParseAttributes(const string &input) {
 
 bool Table::LoadFromStream(std::istream *is) {
   DCHECK(is);
-  string line;
-  const string empty_pending("");
+  std::string line;
+  const std::string empty_pending("");
   while (!is->eof()) {
     getline(*is, line);
     Util::ChopReturns(&line);
@@ -430,7 +451,7 @@ bool Table::LoadFromStream(std::istream *is) {
       continue;
     }
 
-    std::vector<string> rules;
+    std::vector<std::string> rules;
     Util::SplitStringAllowEmpty(line, "\t", &rules);
     if (rules.size() == 4) {
       const TableAttributes attributes = ParseAttributes(rules[3]);
@@ -450,49 +471,48 @@ bool Table::LoadFromStream(std::istream *is) {
   return true;
 }
 
-const Entry *Table::LookUp(const string &input) const {
-  const Entry *entry = NULL;
+const Entry *Table::LookUp(const std::string &input) const {
+  const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUp(input, &entry);
   } else {
-    string normalized_input = input;
+    std::string normalized_input = input;
     Util::LowerString(&normalized_input);
     entries_->LookUp(normalized_input, &entry);
   }
   return entry;
 }
 
-const Entry *Table::LookUpPrefix(const string &input,
-                                 size_t *key_length,
+const Entry *Table::LookUpPrefix(const std::string &input, size_t *key_length,
                                  bool *fixed) const {
-  const Entry *entry = NULL;
+  const Entry *entry = nullptr;
   if (case_sensitive_) {
     entries_->LookUpPrefix(input, &entry, key_length, fixed);
   } else {
-    string normalized_input = input;
+    std::string normalized_input = input;
     Util::LowerString(&normalized_input);
     entries_->LookUpPrefix(normalized_input, &entry, key_length, fixed);
   }
   return entry;
 }
 
-void Table::LookUpPredictiveAll(const string &input,
+void Table::LookUpPredictiveAll(const std::string &input,
                                 std::vector<const Entry *> *results) const {
   if (case_sensitive_) {
     entries_->LookUpPredictiveAll(input, results);
   } else {
-    string normalized_input = input;
+    std::string normalized_input = input;
     Util::LowerString(&normalized_input);
     entries_->LookUpPredictiveAll(normalized_input, results);
   }
 }
 
-bool Table::HasNewChunkEntry(const string &input) const {
+bool Table::HasNewChunkEntry(const std::string &input) const {
   if (input.empty()) {
     return false;
   }
 
-  const string key = kNewChunkPrefix + input;
+  const std::string key = kNewChunkPrefix + input;
   size_t key_length = 0;
   bool fixed = false;
   LookUpPrefix(key, &key_length, &fixed);
@@ -503,11 +523,11 @@ bool Table::HasNewChunkEntry(const string &input) const {
   return false;
 }
 
-bool Table::HasSubRules(const string &input) const {
+bool Table::HasSubRules(const std::string &input) const {
   if (case_sensitive_) {
     return entries_->HasSubTrie(input);
   } else {
-    string normalized_input = input;
+    std::string normalized_input = input;
     Util::LowerString(&normalized_input);
     return entries_->HasSubTrie(normalized_input);
   }
@@ -526,27 +546,26 @@ void Table::ResetEntrySet() {
   entry_set_.clear();
 }
 
-bool Table::case_sensitive() const {
-  return case_sensitive_;
-}
+bool Table::case_sensitive() const { return case_sensitive_; }
 
 void Table::set_case_sensitive(const bool case_sensitive) {
   case_sensitive_ = case_sensitive;
 }
 
 namespace {
-bool FindBlock(const string &input, const string &open, const string &close,
-               const size_t offset, size_t *open_pos, size_t *close_pos) {
+bool FindBlock(const std::string &input, const std::string &open,
+               const std::string &close, const size_t offset, size_t *open_pos,
+               size_t *close_pos) {
   DCHECK(open_pos);
   DCHECK(close_pos);
 
   *open_pos = input.find(open, offset);
-  if (*open_pos == string::npos) {
+  if (*open_pos == std::string::npos) {
     return false;
   }
 
   *close_pos = input.find(close, *open_pos);
-  if (*close_pos == string::npos) {
+  if (*close_pos == std::string::npos) {
     return false;
   }
 
@@ -555,8 +574,8 @@ bool FindBlock(const string &input, const string &open, const string &close,
 }  // namespace
 
 // static
-string Table::ParseSpecialKey(const string &input) {
-  string output;
+std::string Table::ParseSpecialKey(const std::string &input) {
+  std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;
   for (size_t cursor = 0; cursor < input.size();) {
@@ -568,7 +587,7 @@ string Table::ParseSpecialKey(const string &input) {
     output.append(input, cursor, open_pos - cursor);
 
     // The both sizes of "{" and "}" is 1.
-    const string key(input, open_pos + 1, close_pos - open_pos - 1);
+    const std::string key(input, open_pos + 1, close_pos - open_pos - 1);
     if (key == "{") {
       // "{{}" is treated as "{".
       output.append("{");
@@ -585,13 +604,13 @@ string Table::ParseSpecialKey(const string &input) {
 }
 
 // static
-string Table::DeleteSpecialKey(const string &input) {
-  string output;
+std::string Table::DeleteSpecialKey(const std::string &input) {
+  std::string output;
   size_t open_pos = 0;
   size_t close_pos = 0;
   for (size_t cursor = 0; cursor < input.size();) {
-    if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose,
-                   cursor, &open_pos, &close_pos)) {
+    if (!FindBlock(input, kSpecialKeyOpen, kSpecialKeyClose, cursor, &open_pos,
+                   &close_pos)) {
       output.append(input, cursor, input.size() - cursor);
       break;
     }
@@ -607,30 +626,27 @@ string Table::DeleteSpecialKey(const string &input) {
 // TableContainer
 // ========================================
 TableManager::TableManager()
-    : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {
-}
+    : custom_roman_table_fingerprint_(Hash::Fingerprint32("")) {}
 
 TableManager::~TableManager() = default;
 
 const Table *TableManager::GetTable(
-    const mozc::commands::Request &request,
-    const mozc::config::Config &config,
+    const mozc::commands::Request &request, const mozc::config::Config &config,
     const mozc::DataManagerInterface &data_manager) {
   // calculate the hash depending on the request and the config
   uint32 hash = request.special_romanji_table();
-  hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1)
-      + config.preedit_method();
-  hash =
-      hash * (mozc::config::Config_PunctuationMethod_PunctuationMethod_MAX + 1)
-      + config.punctuation_method();
-  hash = hash * (mozc::config::Config_SymbolMethod_SymbolMethod_MAX + 1)
-      + config.symbol_method();
+  hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1) +
+         config.preedit_method();
+  hash = hash * (mozc::config::Config_PunctuationMethod_PunctuationMethod_MAX +
+                 1) +
+         config.punctuation_method();
+  hash = hash * (mozc::config::Config_SymbolMethod_SymbolMethod_MAX + 1) +
+         config.symbol_method();
 
   // When custom_roman_table is set, force to create new table.
   bool update_custom_roman_table = false;
   if ((config.preedit_method() == config::Config::ROMAN) &&
-      config.has_custom_roman_table() &&
-      !config.custom_roman_table().empty()) {
+      config.has_custom_roman_table() && !config.custom_roman_table().empty()) {
     const uint32 custom_roman_table_fingerprint =
         Hash::Fingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
@@ -654,14 +670,12 @@ const Table *TableManager::GetTable(
     return nullptr;
   }
 
-  const Table* ret = table.get();
+  const Table *ret = table.get();
   table_map_[hash] = std::move(table);
   return ret;
 }
 
-void TableManager::ClearCaches() {
-  table_map_.clear();
-}
+void TableManager::ClearCaches() { table_map_.clear(); }
 
 }  // namespace composer
 }  // namespace mozc

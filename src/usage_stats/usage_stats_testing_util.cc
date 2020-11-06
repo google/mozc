@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,193 +47,51 @@ namespace mozc {
 namespace usage_stats {
 namespace internal {
 
-namespace {
-
-string GetExistFailure(const string &name, Stats stats) {
-  string type_string, value_string;
-  switch (stats.type()) {
-    case Stats::COUNT:
-      type_string = "Count";
-      value_string = std::to_string(stats.count());
-      break;
-    case Stats::INTEGER:
-      type_string = "Integer";
-      value_string = std::to_string(stats.int_value());
-      break;
-    case Stats::BOOLEAN:
-      type_string = "Boolean";
-      value_string = stats.boolean_value() ? "True" : "False";
-      break;
-    case Stats::TIMING:
-      type_string = "Timing";
-      value_string = string() +
-          "num:" + std::to_string(stats.num_timings()) + " total:" +
-          std::to_string(static_cast<uint64>(stats.total_time())) +
-          " min:" + std::to_string(stats.min_time()) +
-          " max:" + std::to_string(stats.max_time());
-      break;
-    case Stats::VIRTUAL_KEYBOARD:
-      type_string = "Virtual Keyboard";
-      break;
-  }
-
-  string message =  "Usage stats \"" + name + "\" exists.\n" +
-      " type: " + type_string + "\n";
-  if (!value_string.empty()) {
-    message += "value: " + value_string;
-  }
-  return message;
-}
-
-string GetNotExistFailure(const string &name) {
-  return "Usage stats \"" + name + "\" doesn't exist.";
-}
-
-string GetError(const string &name, const string &expected_string,
-                const string &expected, const string &actual) {
-  string message = "Usage stats \"" + name + "\" doesn't match.\n" +
-      "  Actual: " + actual + "\n";
-  if (expected_string != expected) {
-    message += "Value of: " + expected_string + "\n";
-  }
-  message += "Expected: " + expected;
-  return message;
-}
-
-string GetNumberError(const string &name, const string &expected_string,
-                      int expected, int actual) {
-  return GetError(name, expected_string, std::to_string(expected),
-                  std::to_string(actual));
-}
-
-string GetBooleanError(const string &name, const string &expected_string,
-                       bool expected, bool actual) {
-  const string expected_value = expected ? "true" : "false";
-  const string actual_value = actual ? "true" : "false";
-  return GetError(name, expected_string, expected_value, actual_value);
-}
-
-}  // namespace
-
 ::testing::AssertionResult ExpectStatsExist(const char *name_string,
                                             const char *param_string,
-                                            const string &name,
+                                            const std::string &name,
                                             bool expected) {
-  Stats stats;
-  if (UsageStats::GetStatsForTest(name, &stats) == expected) {
-    return AssertionSuccess();
-  }
-
-  if (expected) {
-    return AssertionFailure() << GetNotExistFailure(name);
-  } else {
-    return AssertionFailure() << GetExistFailure(name, stats);
-  }
+  // Always returns success for now.
+  // TODO(toshiyuki): Remove all caller test code.
+  return AssertionSuccess();
 }
 
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
-                                            const string &name,
+                                            const std::string &name,
                                             uint32 expected) {
-  uint32 actual = 0;
-  if (!UsageStats::GetCountForTest(name, &actual)) {
-    if (expected == 0) {
-      return AssertionSuccess();
-    } else {
-      return AssertionFailure() << GetNotExistFailure(name);
-    }
-  }
-
-  if (actual == expected) {
-    return AssertionSuccess();
-  } else {
-    return AssertionFailure()
-        << GetNumberError(name, expected_string, expected, actual);
-  }
+  // Always returns success for now.
+  // TODO(toshiyuki): Remove all caller test code.
+  return AssertionSuccess();
 }
 
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
-                                              const string &name,
+                                              const std::string &name,
                                               int32 expected) {
-  int32 actual = 0;
-  if (!UsageStats::GetIntegerForTest(name, &actual)) {
-    return AssertionFailure() << GetNotExistFailure(name);
-  }
-
-  if (actual == expected) {
-    return AssertionSuccess();
-  } else {
-    return AssertionFailure()
-        << GetNumberError(name, expected_string, expected, actual);
-  }
+  // Always returns success for now.
+  // TODO(toshiyuki): Remove all caller test code.
+  return AssertionSuccess();
 }
 
 ::testing::AssertionResult ExpectBooleanStats(const char *name_string,
                                               const char *expected_string,
-                                              const string &name,
+                                              const std::string &name,
                                               bool expected) {
-  bool actual = false;
-  if (!UsageStats::GetBooleanForTest(name, &actual)) {
-    return AssertionFailure() << GetNotExistFailure(name);
-  }
-
-  if (actual == expected) {
-    return AssertionSuccess();
-  } else {
-    return AssertionFailure()
-        << GetBooleanError(name, expected_string, expected, actual);
-  }
+  // Always returns success for now.
+  // TODO(toshiyuki): Remove all caller test code.
+  return AssertionSuccess();
 }
 
-::testing::AssertionResult ExpectTimingStats(const char *name_string,
-                                             const char *expected_total_string,
-                                             const char *expected_num_string,
-                                             const char *expected_min_string,
-                                             const char *expected_max_string,
-                                             const string &name,
-                                             uint64 expected_total,
-                                             uint32 expected_num,
-                                             uint32 expected_min,
-                                             uint32 expected_max) {
-  uint64 actual_total = 0;
-  uint32 actual_num = 0;
-  uint32 actual_min = 0;
-  uint32 actual_max = 0;
-  std::vector<string> errors;
-  if (!UsageStats::GetTimingForTest(name, &actual_total, &actual_num, NULL,
-                                    &actual_min, &actual_max)) {
-    if (expected_num == 0) {
-      return AssertionSuccess();
-    } else {
-      return AssertionFailure() << GetNotExistFailure(name);
-    }
-  }
-
-  if (actual_total != expected_total) {
-    errors.push_back(GetNumberError(name + ":total", expected_total_string,
-                                    expected_total, actual_total));
-  }
-  if (actual_num != expected_num) {
-    errors.push_back(GetNumberError(name + ":num", expected_num_string,
-                                    expected_num, actual_num));
-  }
-  if (actual_min != expected_min) {
-    errors.push_back(GetNumberError(name + ":min", expected_min_string,
-                                    expected_min, actual_min));
-  }
-  if (actual_max != expected_max) {
-    errors.push_back(GetNumberError(name + ":max", expected_max_string,
-                                    expected_max, actual_max));
-  }
-
-  if (errors.empty()) {
-    return AssertionSuccess();
-  } else {
-    string message;
-    Util::JoinStrings(errors, "\n", &message);
-    return AssertionFailure() << message;
-  }
+::testing::AssertionResult ExpectTimingStats(
+    const char *name_string, const char *expected_total_string,
+    const char *expected_num_string, const char *expected_min_string,
+    const char *expected_max_string, const std::string &name,
+    uint64 expected_total, uint32 expected_num, uint32 expected_min,
+    uint32 expected_max) {
+  // Always returns success for now.
+  // TODO(toshiyuki): Remove all caller test code.
+  return AssertionSuccess();
 }
 
 }  // namespace internal

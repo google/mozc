@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,8 +62,6 @@ int g_column_minimum_width = 0;
 once_t g_OnceForInitializeStyle = MOZC_ONCE_INIT;
 
 void InitializeDefaultStyle() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
 
@@ -92,15 +90,13 @@ void InitializeDefaultStyle() {
     [NSDictionary dictionaryWithObject:[NSFont messageFontOfSize:14]
                                 forKey:NSFontAttributeName];
   NSAttributedString *defaultMessage =
-    [[[NSAttributedString alloc] initWithString:nsstr attributes:attr]
-     autorelease];
+    [[NSAttributedString alloc] initWithString:nsstr attributes:attr];
   g_column_minimum_width = [defaultMessage size].width;
 
   // default line width is specified as 1.0 *pt*, but we want to draw
   // it as 1.0 px.
   [NSBezierPath setDefaultLineWidth:1.0];
   [NSBezierPath setDefaultLineJoinStyle:NSMiterLineJoinStyle];
-  [pool drain];
 }
 }
 
@@ -132,7 +128,6 @@ void InitializeDefaultStyle() {
     focusedRow_ = -1;
   }
   if (!tableLayout_ || !style_) {
-    [self release];
     self = nil;
   }
   return self;
@@ -151,10 +146,9 @@ void InitializeDefaultStyle() {
 }
 
 - (void)dealloc {
-  [candidateStringsCache_ release];
+  candidateStringsCache_ = nil;
   delete tableLayout_;
   delete style_;
-  [super dealloc];
 }
 
 - (const TableLayout *)tableLayout {
@@ -165,8 +159,7 @@ void InitializeDefaultStyle() {
 
 #define max(x, y)  (((x) > (y))? (x) : (y))
 - (NSSize)updateLayout {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  [candidateStringsCache_ release];
+  candidateStringsCache_ = nil;
   tableLayout_->Initialize(candidates_.candidate_size(), NUMBER_OF_COLUMNS);
   tableLayout_->SetWindowBorder(style_->window_border());
 
@@ -236,7 +229,7 @@ void InitializeDefaultStyle() {
       " ", style_->text_styles(COLUMN_GAP1));
   tableLayout_->EnsureCellSize(COLUMN_GAP1, MacViewUtil::ToSize([gap1 size]));
 
-  NSMutableArray *newCache = [[NSMutableArray array] retain];
+  NSMutableArray *newCache = [[NSMutableArray array] init];
   for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
     const Candidates::Candidate &candidate = candidates_.candidate(i);
     NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
@@ -286,7 +279,6 @@ void InitializeDefaultStyle() {
 
   candidateStringsCache_ = newCache;
   tableLayout_->FreezeLayout();
-  [pool drain];
   return MacViewUtil::ToNSSize(tableLayout_->GetTotalSize());
 }
 
@@ -364,7 +356,6 @@ void InitializeDefaultStyle() {
 }
 
 - (void)drawFooter {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   if (candidates_.has_footer()) {
     const mozc::commands::Footer &footer = candidates_.footer();
     NSRect footerRect = MacViewUtil::ToNSRect(tableLayout_->GetFooterRect());
@@ -382,10 +373,9 @@ void InitializeDefaultStyle() {
 
     // Draw Footer background and data if necessary
     NSGradient *footerBackground =
-      [[[NSGradient alloc]
-        initWithStartingColor:MacViewUtil::ToNSColor(style_->footer_top_color())
-        endingColor:MacViewUtil::ToNSColor(style_->footer_bottom_color())]
-       autorelease];
+      [[NSGradient alloc]
+       initWithStartingColor:MacViewUtil::ToNSColor(style_->footer_top_color())
+       endingColor:MacViewUtil::ToNSColor(style_->footer_bottom_color())];
     [footerBackground drawInRect:footerRect angle:90.0];
 
     // Draw logo
@@ -437,7 +427,6 @@ void InitializeDefaultStyle() {
       [footerAttributedIndex drawAtPoint:footerPosition];
     }
   }
-  [pool drain];
 }
 
 - (void)drawVScrollBar {

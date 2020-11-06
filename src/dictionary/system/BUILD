@@ -1,0 +1,281 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Description:
+#   System dictionary implementation of Mozc.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+    "cc_test_mozc",
+)
+
+cc_library_mozc(
+    name = "codec_interface",
+    hdrs = ["codec_interface.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//base:port",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "codec",
+    srcs = ["codec.cc"],
+    hdrs = [
+        "codec.h",
+        "codec_interface.h",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":words_info",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:status",
+        "//base:util",
+        "//dictionary:dictionary_token",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "codec_test",
+    size = "small",
+    srcs = ["codec_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":codec",
+        ":words_info",
+        "//base:logging",
+        "//base:util",
+        "//dictionary:dictionary_token",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "token_decode_iterator",
+    hdrs = ["token_decode_iterator.h"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":codec_interface",
+        ":words_info",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "//dictionary:dictionary_token",
+        "//storage/louds:louds_trie",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "system_dictionary",
+    srcs = ["system_dictionary.cc"],
+    hdrs = ["system_dictionary.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":codec",
+        ":key_expansion_table",
+        ":token_decode_iterator",
+        ":words_info",
+        "//base",
+        "//base:logging",
+        "//base:mmap",
+        "//base:port",
+        "//base:status",
+        "//base:util",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary/file:codec_factory",
+        "//dictionary/file:codec_interface",
+        "//dictionary/file:dictionary_file",
+        "//storage/louds:bit_vector_based_array",
+        "//storage/louds:louds_trie",
+        "//testing:gunit_prod",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "value_dictionary",
+    srcs = [
+        "value_dictionary.cc",
+    ],
+    hdrs = ["value_dictionary.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":codec",
+        "//base",
+        "//base:logging",
+        "//base:mmap",
+        "//base:port",
+        "//dictionary:dictionary_interface",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary/file:codec_factory",
+        "//dictionary/file:dictionary_file",
+        "//storage/louds:louds_trie",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "system_dictionary_builder",
+    srcs = [
+        "system_dictionary_builder.cc",
+    ],
+    hdrs = ["system_dictionary_builder.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":codec",
+        ":words_info",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:logging",
+        "//base:mozc_hash_set",
+        "//base:port",
+        "//base:util",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:text_dictionary_loader",
+        "//dictionary/file:codec",
+        "//dictionary/file:codec_factory",
+        "//dictionary/file:codec_interface",
+        "//storage/louds:bit_vector_based_array_builder",
+        "//storage/louds:louds_trie_builder",
+    ],
+)
+
+cc_library_mozc(
+    name = "words_info",
+    hdrs = ["words_info.h"],
+    visibility = ["//visibility:private"],
+)
+
+cc_test_mozc(
+    name = "system_dictionary_test",
+    size = "large",
+    srcs = [
+        "system_dictionary_test.cc",
+    ],
+    data = ["//data/dictionary_oss:dictionary00.txt"],
+    requires_full_emulation = False,
+    deps = [
+        ":codec",
+        ":system_dictionary",
+        ":system_dictionary_builder",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:stl_util",
+        "//base:system_util",
+        "//base:util",
+        "//config:config_handler",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_test_util",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_matcher_lib",
+        "//dictionary:text_dictionary_loader",
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "value_dictionary_test",
+    size = "medium",
+    srcs = ["value_dictionary_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":codec",
+        ":value_dictionary",
+        "//data_manager/testing:mock_data_manager",
+        "//dictionary:dictionary_test_util",
+        "//dictionary:dictionary_token",
+        "//dictionary:pos_matcher_lib",
+        "//request:conversion_request",
+        "//storage/louds:louds_trie_builder",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "system_dictionary_benchmark",
+    srcs = [
+        "system_dictionary_benchmark.cc",
+    ],
+    data = ["//data_manager/google:mozc_dataset_for_google@dictionary"],
+    requires_full_emulation = False,
+    deps = [
+        ":system_dictionary",
+        "//base",
+        "//base:file_stream",
+        "//base:flags",
+        "//base:logging",
+        "//base:util",
+        "//dictionary:dictionary_test_util",
+        "//request:conversion_request",
+        "//testing:gunit_main",
+        "//testing/base/public:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "key_expansion_table",
+    hdrs = ["key_expansion_table.h"],
+    deps = [
+        "//base",
+        "//base:port",
+    ],
+)
+
+cc_test_mozc(
+    name = "key_expansion_table_test",
+    size = "small",
+    srcs = ["key_expansion_table_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":key_expansion_table",
+        "//testing:gunit_main",
+    ],
+)

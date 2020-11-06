@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,12 +35,12 @@
 
 syntax = "proto2";
 
+package mozc.commands;
+
 import "protocol/candidates.proto";
 import "protocol/config.proto";
 import "protocol/engine_builder.proto";
 import "protocol/user_dictionary_storage.proto";
-
-package mozc.commands;
 
 option java_outer_classname = "ProtoCommands";
 option java_package = "org.mozc.android.inputmethod.japanese.protobuf";
@@ -76,7 +76,7 @@ message KeyEvent {
     UP = 8;
     DOWN = 9;
     ESCAPE = 10;
-    DEL = 11;    // not DELETE because DELETE is reserved in MSVC
+    DEL = 11;  // not DELETE because DELETE is reserved in MSVC
     BACKSPACE = 12;
     HENKAN = 13;
     MUHENKAN = 14;
@@ -124,30 +124,30 @@ message KeyEvent {
     NUMPAD7 = 54;
     NUMPAD8 = 55;
     NUMPAD9 = 56;
-    MULTIPLY = 57;  // Numpad [*]
-    ADD = 58;  // Numpad [+]
-    SEPARATOR = 59;  // Numpad [enter]
-    SUBTRACT = 60;  // Numpad [-]
-    DECIMAL = 61;  // Numpad [.]
-    DIVIDE = 62;  // Numpad [/]
-    EQUALS = 63;  // Numpad [=]
+    MULTIPLY = 57;    // Numpad [*]
+    ADD = 58;         // Numpad [+]
+    SEPARATOR = 59;   // Numpad [enter]
+    SUBTRACT = 60;    // Numpad [-]
+    DECIMAL = 61;     // Numpad [.]
+    DIVIDE = 62;      // Numpad [/]
+    EQUALS = 63;      // Numpad [=]
     TEXT_INPUT = 64;  // Meta key event representing any text input.
     HANKAKU = 65;
     KANJI = 66;
-    KATAKANA = 67; // VK_DBE_KATAKANA(Win)
+    KATAKANA = 67;  // VK_DBE_KATAKANA(Win)
     CAPS_LOCK = 68;
     // Unsupported keys (e.g. PrtSc, Pause) fall back to UNDEFINED_KEY.
     UNDEFINED_KEY = 69;
-    COMMA = 70;  // Numpad [,]
-    CLEAR = 71;  // Numpad [5] without NUMLOCK
-    VIRTUAL_LEFT = 72;  // Left key on virtual (software) keyboard
+    COMMA = 70;          // Numpad [,]
+    CLEAR = 71;          // Numpad [5] without NUMLOCK
+    VIRTUAL_LEFT = 72;   // Left key on virtual (software) keyboard
     VIRTUAL_RIGHT = 73;  // Right key on virtual (software) keyboard
     VIRTUAL_ENTER = 74;  // Enter key on virtual (software) keyboard
-    VIRTUAL_UP = 75;  // Up key on virtual (software) keyboard
-    VIRTUAL_DOWN = 76;  // Down key on virtual (software) keyboard
+    VIRTUAL_UP = 75;     // Up key on virtual (software) keyboard
+    VIRTUAL_DOWN = 76;   // Down key on virtual (software) keyboard
 
     NUM_SPECIALKEYS = 77;
-  };
+  }
 
   // CTRL, ALT and SHIFT cover both LEFT and RIGHT keys.  If the
   // difference between LEFT and RIGHT is no matter, using CTRL (or ALT, SHIFT)
@@ -229,7 +229,7 @@ message KeyEvent {
     RIGHT_ALT = 512;
     RIGHT_SHIFT = 1024;
     CAPS = 2048;
-  };
+  }
 
   // Probable key event, mainly for touch screen.
   // User's input has ambiguity (e.g. the touch position is merginal)
@@ -237,18 +237,18 @@ message KeyEvent {
   message ProbableKeyEvent {
     // message ID is the same as Input message.
     optional uint32 key_code = 1;
-    optional SpecialKey special_key = 3;  // Unprintable key listed above.
+    optional SpecialKey special_key = 3;     // Unprintable key listed above.
     repeated ModifierKey modifier_keys = 4;  // ModifierKeys
     // Sum of probabilities must be lesser or equal than 1.
     // 0<= probability <= 1
     optional double probability = 10;
-  };
+  }
 
   // Printable key in UCS4.  If key_code is empty, key_string is used
   // as a raw input.
   optional uint32 key_code = 1;
-  optional uint32 modifiers = 2;  // Going to be obsolete.
-  optional SpecialKey special_key = 3;  // Unprintable key listed above.
+  optional uint32 modifiers = 2;           // Going to be obsolete.
+  optional SpecialKey special_key = 3;     // Unprintable key listed above.
   repeated ModifierKey modifier_keys = 4;  // ModifierKeys
 
   // String used for preedit.  Kana characters and strings typed from
@@ -267,7 +267,7 @@ message KeyEvent {
     // Immediately output key_string on the precomposition mode.
     // Same with AS_IS on the preedit mode.
     DIRECT_INPUT = 2;
-  };
+  }
   optional InputStyle input_style = 6 [default = FOLLOW_MODE];
 
   // Input mode
@@ -294,13 +294,13 @@ message KeyEvent {
   // indirect IME off, where |mode| should contain the next mode. If this field
   // is not set, the server will act as if indirect on/off was not supported.
   optional bool activated = 9;
-};
+}
 
 message GenericStorageEntry {
   enum StorageType {
     SYMBOL_HISTORY = 0;
     EMOTICON_HISTORY = 1;
-    EMOJI_HISTORY=2;
+    EMOJI_HISTORY = 2;
   }
   optional StorageType type = 1;
   optional string key = 2;
@@ -316,6 +316,9 @@ message GenericStorageEntry {
 
 message SessionCommand {
   enum CommandType {
+    // Do nothing.
+    NONE = 0;
+
     // Revert the session, this is usually similar to type ESC several times.
     REVERT = 1;
     // Commit the session, this is usually similar to type Enter.
@@ -438,11 +441,13 @@ message SessionCommand {
     // |composition_mode| is honored even when IME is already turned off.
     TURN_OFF_IME = 23;
 
-    // Number of commands.
-    // When new command is added, the command should use below number
-    // and NUM_OF_COMMANDS should be incremented.
-    NUM_OF_COMMANDS = 24;
-  };
+    // Delete the candidate specified with |id = 2| from the user history.
+    DELETE_CANDIDATE_FROM_HISTORY = 24;
+
+    // Stops key toggling of the composer if its table is a toggle-supported
+    // layout (e.g., 12-key toggle flick.)
+    STOP_KEY_TOGGLING = 25;
+  }
   required CommandType type = 1;
 
   // Unique number specifying a candidate word.
@@ -483,8 +488,7 @@ message SessionCommand {
     KEYBOARD_FOLD_EVENT = 20;
     KEYBOARD_EXPAND_EVENT = 21;
     MUSHROOM_SELECTION_DIALOG_OPEN_EVENT = 22;
-    SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE = 23;
-    SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT = 24;
+    reserved 23, 24;  // Deprecated keyboard height stats.
     SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE = 25;
     SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT = 26;
     SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_LANDSCAPE = 27;
@@ -496,7 +500,7 @@ message SessionCommand {
   reserved 8;  // Deprecated caret_rectangle
 
   reserved 10;  // Deprecated asynchronous_request_id
-};
+}
 
 message Context {
   // Former part of surrounding text.
@@ -532,7 +536,7 @@ message Context {
 
     // Number
     NUMBER = 4;
-  };
+  }
   // Type of the input field being focused.
   optional InputFieldType input_field_type = 4;
 
@@ -546,7 +550,7 @@ message Context {
 
   // Repeated fields to be used for experimental features.
   repeated string experimental_features = 100;
-};
+}
 
 // Clients' capability.
 // Users cannot modify this.
@@ -558,10 +562,18 @@ message Capability {
 
     // Can delete preceding text which is adjacent to preedit.
     DELETE_PRECEDING_TEXT = 1;
-  };
+  }
   optional TextDeletionCapabilityType text_deletion = 1
       [default = NO_TEXT_DELETION_CAPABILITY];
-};
+}
+
+// Next ID: 2
+// Bundles together some Android experiment flags so that they can be easily
+// retrieved throughout the native code.  These flags are generally specific to
+// the decoder, and are made available when the decoder is initialized.
+message DecoderExperimentParams {
+  optional bool enable_simplified_ranking = 1;
+}
 
 // Clients' request to the server.
 // Users cannot modify this.
@@ -570,11 +582,10 @@ message Capability {
 message Request {
   // Enable zero query suggestion.
   optional bool zero_query_suggestion = 1
-      [default = false] ;  // true for android
+      [default = false];  // true for android
 
   // Conversion's candidate includes suggestion, prediction and conversion.
-  optional bool mixed_conversion = 2
-      [default = false] ;  // true for android
+  optional bool mixed_conversion = 2 [default = false];  // true for android
 
   reserved 3;  // Deprecated combine_all_segments
 
@@ -586,19 +597,44 @@ message Request {
     // Use special table for 12keys (to hiragana).
     TWELVE_KEYS_TO_HIRAGANA = 10;
 
+    // This is a temporary romaji table that is to be used instead of the
+    // current 12keys-to-hiragana table.
+    // TODO(noriyukit): Replace TWELVE_KEYS_TO_HIRAGANA by this.
+    TWELVE_KEYS_TO_HIRAGANA_INTUITIVE = 10000;
+
     // Use special table for 12keys (to half-width ascii).
     TWELVE_KEYS_TO_HALFWIDTHASCII = 11;
 
     // Use special table for flick (to hiragana).
     FLICK_TO_HIRAGANA = 13;
 
+    // This is a temporary romaji table that is to be used instead of the
+    // current flick-to-hiragana table.
+    // TODO(noriyukit): Replace FLICK_TO_HIRAGANA by this.
+    FLICK_TO_HIRAGANA_INTUITIVE = 10002;
+
     // Use special table for flick (to half-width ascii).
     FLICK_TO_HALFWIDTHASCII = 14;
 
+    // Use special table for flick (to alphabet).
+    FLICK_TO_HALFWIDTHASCII_IOS = 44;
+
+    // Use special table for flick (to number).
+    FLICK_TO_NUMBER = 43;
 
     // Use special table for both toggle and flick (to hiragana).
     TOGGLE_FLICK_TO_HIRAGANA = 16;
 
+    // This is a temporary romaji table that is to be used instead of the
+    // current toggle_flick_hiragana table.
+    // TODO(noriyukit): Replace TOGGLE_FLICK_HIRAGANA by this.
+    TOGGLE_FLICK_TO_HIRAGANA_INTUITIVE = 10001;
+
+    // Use special table for both toggle and flick (to number).
+    TOGGLE_FLICK_TO_NUMBER = 42;
+
+    // Use special table for both toggle and flick (to alphabet).
+    TOGGLE_FLICK_TO_HALFWIDTHASCII_IOS = 45;
 
     // Use special table for both toggle and flick (to half-width ascii).
     TOGGLE_FLICK_TO_HALFWIDTHASCII = 17;
@@ -627,12 +663,11 @@ message Request {
     OBSOLETE_GODAN_TO_NUMBER = 32;
     OBSOLETE_QWERTY_MOBILE_TO_HIRAGANA_NUMBER = 21;
     OBSOLETE_TOGGLE_FLICK_TO_NUMBER = 18;
-  };
+  }
 
   // Use special Romanji table.
   optional SpecialRomanjiTable special_romanji_table = 4
-    [default = DEFAULT_TABLE] ; //  TWELVE_KEYS_TO_HIRAGANA for android.
-
+      [default = DEFAULT_TABLE];  //  TWELVE_KEYS_TO_HIRAGANA for android.
 
   enum SpaceOnAlphanumeric {
     // The first input is treated as a space, double input is treated
@@ -650,7 +685,7 @@ message Request {
 
     // Commit the composition and a space.
     COMMIT = 2;
-  };
+  }
 
   optional SpaceOnAlphanumeric space_on_alphanumeric = 6
       [default = SPACE_OR_CONVERT_KEEPING_COMPOSITION];
@@ -665,8 +700,7 @@ message Request {
   // and a user selects HIRAGANA mode, if the user moves the carret to between
   // "a" and "d" the mode will be automatically switch to ASCII (temporarily).
   // See details in the Composer::UpdateInputMode.
-  optional bool update_input_mode_from_surrounding_text = 8
-      [default = true];
+  optional bool update_input_mode_from_surrounding_text = 8 [default = true];
 
   // Enables Kana-modifier-insensitive conversion as follows:
   // 1) Voiced/Semi-voiced kana will be hit by non-modified kana.
@@ -776,6 +810,10 @@ message Request {
   // NOTE: Each segment has at least one candidate and meta candidates even if
   //       this value is set to 0.
   optional int32 candidates_size_limit = 16;
+
+  // Experimentally changes the decoder's behavior.
+  // This flag is usually populated through the phenotype flags.
+  optional DecoderExperimentParams decoder_experiment_params = 17;
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -788,7 +826,7 @@ message ApplicationInfo {
   // We use this field in NaCl Mozc because we can't know the local timezone in
   // NaCl environment.
   optional int32 timezone_offset = 3;
-};
+}
 
 message Input {
   enum CommandType {
@@ -883,7 +921,7 @@ message Input {
     //       15 have never been used before, and 19 was used to clear synced
     //       data on dev channel.
     NUM_OF_COMMANDS = 28;
-  };
+  }
   required CommandType type = 1;
 
   // Session ID created by CREATE_SESSION.
@@ -922,7 +960,7 @@ message Input {
     TOUCH_DOWN = 1;
     TOUCH_MOVE = 2;
     TOUCH_UP = 3;
-  };
+  }
   message TouchPosition {
     optional TouchAction action = 1;
     // x, y potision: keyboad left-top is (0, 0), right-bottom is (1, 1).
@@ -944,8 +982,8 @@ message Input {
   }
   repeated TouchEvent touch_events = 12;
 
-  optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command
-      = 13;
+  optional mozc.user_dictionary.UserDictionaryCommand user_dictionary_command =
+      13;
 
   // A flag to control if the server should return suggest-results or not.
   // If this is set to false, regardless of other configurations,
@@ -961,8 +999,7 @@ message Input {
   optional bool request_suggestion = 14 [default = true];
 
   optional mozc.EngineReloadRequest engine_reload_request = 15;
-};
-
+}
 
 // Result contains data to be submitted to the host application by the
 // ime client.
@@ -970,7 +1007,7 @@ message Result {
   enum ResultType {
     NONE = 0;
     STRING = 1;
-  };
+  }
   required ResultType type = 1;
   // The result of conversion.
   required string value = 2;
@@ -984,8 +1021,7 @@ message Result {
   // e.g.) "-s", where s is the length of value, means the caret position
   // after the committing should be the beginning of the committed value.
   optional int32 cursor_offset = 4 [default = 0];
-};
-
+}
 
 // Preedit represents a composition data, which is rendered on the
 // host application by the ime client.  On Japanese IME, the both
@@ -1003,7 +1039,7 @@ message Preedit {
       NONE = 0;
       UNDERLINE = 1;
       HIGHLIGHT = 2;
-    };
+    }
     required Annotation annotation = 3;
     required string value = 4;
 
@@ -1015,13 +1051,21 @@ message Preedit {
 
     // Source of the value.  It is almost always the reading of the value.
     optional string key = 6;
-  };
+  }
 
   // The position of the first segment whose annotation is 'HIGHLIGHT'. Not set
   // if there are no such segments.
   optional uint32 highlighted_position = 3;
-};
 
+  // This flag is set to true if the character at the cursor position
+  // is in toggleable state.  For example, when the table is
+  // TOGGLE_FLICK_TO_HIRAGANA and key event '1' is received
+  // repeatedly, the preedit toggles like あ -> い -> う -> ....  This
+  // flag is true during this cycle.  This state is reset when user
+  // types another key or SessionCommand::STOP_KEY_TOGGLING is
+  // received.
+  optional bool is_toggleable = 4 [default = false];
+}
 
 message Status {
   // Whether IME is ON or OFF
@@ -1037,7 +1081,7 @@ message Status {
   // |comeback_mode| can be different from |mode|.
   // TODO(yukawa): Use more appropriate name.
   optional CompositionMode comeback_mode = 3;
-};
+}
 
 // This message contains which characters are to be deleted by client.
 // E.g. if current composition and surrounding text are
@@ -1053,7 +1097,7 @@ message DeletionRange {
 
   // Length of the range.
   optional int32 length = 2;
-};
+}
 
 message Output {
   optional uint64 id = 1;
@@ -1081,7 +1125,7 @@ message Output {
   enum PreeditMethod {
     ASCII = 0;
     KANA = 1;
-  };
+  }
   optional PreeditMethod preedit_method = 10 [default = ASCII];
 
   // ErrorCode:
@@ -1090,8 +1134,8 @@ message Output {
   enum ErrorCode {
     SESSION_SUCCESS = 0;
     SESSION_FAILURE = 1;
-  };
-  optional ErrorCode error_code = 11 [ default = SESSION_SUCCESS ];
+  }
+  optional ErrorCode error_code = 11 [default = SESSION_SUCCESS];
 
   reserved 12;  // Deprecated elapsed_time
 
@@ -1110,12 +1154,12 @@ message Output {
   // if launch_tool_mode is set, MozcTool is supposed to be launched
   // by client.
   enum ToolMode {
-    NO_TOOL = 0;   // no need to launch tool
+    NO_TOOL = 0;  // no need to launch tool
     CONFIG_DIALOG = 1;
     DICTIONARY_TOOL = 2;
     WORD_REGISTER_DIALOG = 3;
-  };
-  optional ToolMode launch_tool_mode = 17 [ default = NO_TOOL ];
+  }
+  optional ToolMode launch_tool_mode = 17 [default = NO_TOOL];
 
   // Callback request to the client.
   message Callback {
@@ -1126,7 +1170,7 @@ message Output {
 
     // Callback command should be sent after this delay.
     optional uint32 delay_millisec = 2;
-  };
+  }
   optional Callback callback = 18;
 
   // Used when the command is READ_ALL_FROM_STORAGE.
@@ -1138,14 +1182,14 @@ message Output {
       user_dictionary_command_status = 21;
 
   optional mozc.EngineReloadResponse engine_reload_response = 22;
-};
+}
 
 message Command {
   required Input input = 1;
   required Output output = 2;
-};
+}
 
 message CommandList {
   // This message is used for unittest.
   repeated Command commands = 1;
-};
+}

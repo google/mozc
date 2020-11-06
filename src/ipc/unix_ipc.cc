@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,6 @@
 // OS_LINUX only. Note that OS_ANDROID/OS_NACL don't reach here.
 #if defined(OS_LINUX)
 
-#include "ipc/ipc.h"
-
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -45,12 +43,13 @@
 #include <unistd.h>
 
 #include <cerrno>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/thread.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
 #ifndef UNIX_PATH_MAX
@@ -63,11 +62,10 @@ namespace {
 
 const int kInvalidSocket = -1;
 
-void mkdir_p(const string &dirname) {
-  const string parent_dir = FileUtil::Dirname(dirname);
+void mkdir_p(const std::string &dirname) {
+  const std::string parent_dir = FileUtil::Dirname(dirname);
   struct stat st;
-  if (!parent_dir.empty() &&
-      ::stat(parent_dir.c_str(), &st) < 0) {
+  if (!parent_dir.empty() && ::stat(parent_dir.c_str(), &st) < 0) {
     mkdir_p(parent_dir);
   }
   FileUtil::CreateDirectory(dirname);
@@ -83,7 +81,7 @@ bool IsReadTimeout(int socket, int timeout) {
   FD_SET(socket, &fds);
   tv.tv_sec = timeout / 1000;
   tv.tv_usec = 1000 * (timeout % 1000);
-  if (select(socket + 1, &fds, NULL, NULL, &tv) < 0) {
+  if (select(socket + 1, &fds, nullptr, nullptr, &tv) < 0) {
     // Mac OS X and glibc implementations of strerror() return a pointer to a
     // string literal whenever errno is in a valid range, and thus thread-safe.
     // Probably we don't have to use the cumbersome strerror_r() function.
@@ -108,7 +106,7 @@ bool IsWriteTimeout(int socket, int timeout) {
   FD_SET(socket, &fds);
   tv.tv_sec = timeout / 1000;
   tv.tv_usec = 1000 * (timeout % 1000);
-  if (select(socket + 1, NULL, &fds, NULL, &tv) < 0) {
+  if (select(socket + 1, nullptr, &fds, nullptr, &tv) < 0) {
     LOG(WARNING) << "select() failed: " << strerror(errno);
     return true;
   }
@@ -148,9 +146,7 @@ bool IsPeerValid(int socket, pid_t *pid) {
   return true;
 }
 
-bool SendMessage(int socket,
-                 const char *buf,
-                 size_t buf_length, int timeout,
+bool SendMessage(int socket, const char *buf, size_t buf_length, int timeout,
                  IPCErrorType *last_ipc_error) {
   size_t buf_length_left = buf_length;
   while (buf_length_left > 0) {
@@ -163,7 +159,8 @@ bool SendMessage(int socket,
     if (l < 0) {
       // An error occurs.
       LOG(ERROR) << "an error occurred during sending \""
-                 << string(buf, buf_length_left) << "\": " << strerror(errno);
+                 << std::string(buf, buf_length_left)
+                 << "\": " << strerror(errno);
       *last_ipc_error = IPC_WRITE_ERROR;
       return false;
     }
@@ -174,10 +171,7 @@ bool SendMessage(int socket,
   return true;
 }
 
-bool RecvMessage(int socket,
-                 char *buf,
-                 size_t *buf_length,
-                 int timeout,
+bool RecvMessage(int socket, char *buf, size_t *buf_length, int timeout,
                  IPCErrorType *last_ipc_error) {
   if (*buf_length == 0) {
     LOG(WARNING) << "buf_length is 0";
@@ -211,45 +205,47 @@ bool RecvMessage(int socket,
 void SetCloseOnExecFlag(int fd) {
   int flags = ::fcntl(fd, F_GETFD, 0);
   if (flags < 0) {
-    LOG(WARNING) << "fcntl(F_GETFD) for fd " << fd << " failed: "
-                 << strerror(errno);
+    LOG(WARNING) << "fcntl(F_GETFD) for fd " << fd
+                 << " failed: " << strerror(errno);
     return;
   }
   flags |= FD_CLOEXEC;
   if (::fcntl(fd, F_SETFD, flags) != 0) {
-    LOG(WARNING) << "fcntl(F_SETFD) for fd " << fd << " failed: "
-                 << strerror(errno);
+    LOG(WARNING) << "fcntl(F_SETFD) for fd " << fd
+                 << " failed: " << strerror(errno);
   }
 }
 
 // Returns true if address is in abstract namespace. See unix(7) on Linux for
 // details.
-bool IsAbstractSocket(const string& address) {
+bool IsAbstractSocket(const std::string &address) {
   return (!address.empty()) && (address[0] == '\0');
 }
 }  // namespace
 
 // Client
-IPCClient::IPCClient(const string &name)
-    : socket_(kInvalidSocket), connected_(false),
-      ipc_path_manager_(NULL),
+IPCClient::IPCClient(const std::string &name)
+    : socket_(kInvalidSocket),
+      connected_(false),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, "");
 }
 
-IPCClient::IPCClient(const string &name, const string &server_path)
-    : socket_(kInvalidSocket), connected_(false),
-      ipc_path_manager_(NULL),
+IPCClient::IPCClient(const std::string &name, const std::string &server_path)
+    : socket_(kInvalidSocket),
+      connected_(false),
+      ipc_path_manager_(nullptr),
       last_ipc_error_(IPC_NO_ERROR) {
   Init(name, server_path);
 }
 
-void IPCClient::Init(const string &name, const string &server_path) {
+void IPCClient::Init(const std::string &name, const std::string &server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // Try twice, because key may be changed.
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
-  if (manager == NULL) {
+  if (manager == nullptr) {
     LOG(ERROR) << "IPCPathManager::GetIPCPathManager failed";
     return;
   }
@@ -257,15 +253,15 @@ void IPCClient::Init(const string &name, const string &server_path) {
   ipc_path_manager_ = manager;
 
   for (size_t trial = 0; trial < 2; ++trial) {
-    string server_address;
+    std::string server_address;
     if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }
     sockaddr_un address;
     ::memset(&address, 0, sizeof(address));
     const size_t server_address_length =
-        (server_address.size() >= UNIX_PATH_MAX) ?
-        UNIX_PATH_MAX - 1 : server_address.size();
+        (server_address.size() >= UNIX_PATH_MAX) ? UNIX_PATH_MAX - 1
+                                                 : server_address.size();
     if (server_address.size() >= UNIX_PATH_MAX) {
       LOG(WARNING) << "too long path: " << server_address;
     }
@@ -280,8 +276,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
     address.sun_path[server_address_length] = '\0';
     const size_t sun_len = sizeof(address.sun_family) + server_address_length;
     pid_t pid = 0;
-    if (::connect(socket_,
-                  reinterpret_cast<const sockaddr*>(&address),
+    if (::connect(socket_, reinterpret_cast<const sockaddr *>(&address),
                   sun_len) != 0 ||
         !IsPeerValid(socket_, &pid)) {
       if ((errno == ENOTSOCK || errno == ECONNREFUSED) &&
@@ -294,8 +289,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
       manager->Clear();
       continue;
     } else {
-      if (!manager->IsValidServer(static_cast<uint32>(pid),
-                                  server_path)) {
+      if (!manager->IsValidServer(static_cast<uint32>(pid), server_path)) {
         LOG(ERROR) << "Connecting to invalid server";
         last_ipc_error_ = IPC_INVALID_SERVER;
         break;
@@ -319,11 +313,8 @@ IPCClient::~IPCClient() {
 }
 
 // RPC call
-bool IPCClient::Call(const char *request_,
-                     size_t input_length,
-                     char *response_,
-                     size_t *response_size,
-                     int32 timeout) {
+bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
+                     size_t *response_size, int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!SendMessage(socket_, request_, input_length, timeout,
                    &last_ipc_error_)) {
@@ -348,13 +339,10 @@ bool IPCClient::Call(const char *request_,
   return true;
 }
 
-bool IPCClient::Connected() const {
-  return connected_;
-}
+bool IPCClient::Connected() const { return connected_; }
 
 // Server
-IPCServer::IPCServer(const string &name,
-                     int32 num_connections,
+IPCServer::IPCServer(const std::string &name, int32 num_connections,
                      int32 timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
@@ -369,7 +357,7 @@ IPCServer::IPCServer(const string &name,
   }
   DCHECK(!server_address_.empty());
 
-  const string dirname = FileUtil::Dirname(server_address_);
+  const std::string dirname = FileUtil::Dirname(server_address_);
   mkdir_p(dirname);
 
   sockaddr_un addr;
@@ -387,16 +375,11 @@ IPCServer::IPCServer(const string &name,
   }
 
   addr.sun_family = AF_UNIX;
-  ::memcpy(addr.sun_path,
-           server_address_.data(),
-           server_address_.size());
+  ::memcpy(addr.sun_path, server_address_.data(), server_address_.size());
   addr.sun_path[server_address_.size()] = '\0';
 
   int on = 1;
-  ::setsockopt(socket_,
-               SOL_SOCKET,
-               SO_REUSEADDR,
-               reinterpret_cast<char *>(&on),
+  ::setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&on),
                sizeof(on));
   const size_t sun_len = sizeof(addr.sun_family) + server_address_.size();
   if (!IsAbstractSocket(server_address_)) {
@@ -424,7 +407,7 @@ IPCServer::IPCServer(const string &name,
 }
 
 IPCServer::~IPCServer() {
-  if (server_thread_.get() != NULL) {
+  if (server_thread_.get() != nullptr) {
     server_thread_->Terminate();
   }
   ::shutdown(socket_, SHUT_RDWR);
@@ -438,9 +421,7 @@ IPCServer::~IPCServer() {
   VLOG(1) << "IPCServer destructed";
 }
 
-bool IPCServer::Connected() const {
-  return connected_;
-}
+bool IPCServer::Connected() const { return connected_; }
 
 void IPCServer::Loop() {
   // The most portable and straightforward single-thread server
@@ -448,7 +429,7 @@ void IPCServer::Loop() {
   IPCErrorType last_ipc_error = IPC_NO_ERROR;
   pid_t pid = 0;
   while (!error) {
-    const int new_sock = ::accept(socket_, NULL, NULL);
+    const int new_sock = ::accept(socket_, nullptr, nullptr);
     if (new_sock < 0) {
       LOG(FATAL) << "accept() failed: " << strerror(errno);
       return;
@@ -458,18 +439,15 @@ void IPCServer::Loop() {
     }
     size_t request_size = sizeof(request_);
     size_t response_size = sizeof(response_);
-    if (RecvMessage(new_sock,
-                    &request_[0],
-                    &request_size, timeout_, &last_ipc_error)) {
-      if (!Process(&request_[0], request_size,
-                   &response_[0], &response_size)) {
+    if (RecvMessage(new_sock, &request_[0], &request_size, timeout_,
+                    &last_ipc_error)) {
+      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
         LOG(WARNING) << "Process() failed";
         error = true;
       }
       if (response_size > 0) {
-        SendMessage(new_sock,
-                    &response_[0],
-                    response_size, timeout_, &last_ipc_error);
+        SendMessage(new_sock, &response_[0], response_size, timeout_,
+                    &last_ipc_error);
       }
     }
 
@@ -486,9 +464,7 @@ void IPCServer::Loop() {
   socket_ = kInvalidSocket;
 }
 
-void IPCServer::Terminate() {
-  server_thread_->Terminate();
-}
+void IPCServer::Terminate() { server_thread_->Terminate(); }
 
 }  // namespace mozc
 

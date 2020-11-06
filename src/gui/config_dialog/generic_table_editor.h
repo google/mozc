@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include <QtWidgets/QWidget>
 #include <string>
 
-#include "base/port_string.h"
 #include "gui/config_dialog/ui_generic_table_editor.h"
 
 class QAbstractButton;
@@ -46,12 +45,11 @@ class GenericTableEditorDialog : public QDialog,
   Q_OBJECT;
 
  public:
-  explicit GenericTableEditorDialog(QWidget *parent,
-                                    size_t column_size);
-  virtual ~GenericTableEditorDialog();
+  explicit GenericTableEditorDialog(QWidget *parent, size_t column_size);
+  ~GenericTableEditorDialog() override;
 
-  bool LoadFromString(const string &table);
-  const string &table() const;
+  bool LoadFromString(const std::string &table);
+  const std::string &table() const;
 
  protected slots:
   virtual void AddNewItem();
@@ -68,12 +66,12 @@ class GenericTableEditorDialog : public QDialog,
   virtual void OnEditMenuAction(QAction *action);
 
  protected:
-  string *mutable_table();
+  std::string *mutable_table();
   QTableWidget *mutable_table_widget();
   QMenu *mutable_edit_menu();
 
   // impliments a method which returns default fileame
-  virtual string GetDefaultFilename() const = 0;
+  virtual std::string GetDefaultFilename() const = 0;
 
   // implements a method which loads
   // internal data from istream
@@ -88,7 +86,7 @@ class GenericTableEditorDialog : public QDialog,
 
  private:
   QMenu *edit_menu_;
-  string table_;
+  std::string table_;
   size_t column_size_;
 };
 }  // namespace gui

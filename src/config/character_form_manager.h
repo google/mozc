@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,48 +41,50 @@
 namespace mozc {
 
 // TODO(team): Get rid of Singleton.
-template <class T> class Singleton;
+template <class T>
+class Singleton;
 
 namespace config {
 
-// TOOD(hidehiko): Move some methods which don't depend on "config" to the
+// TODO(hidehiko): Move some methods which don't depend on "config" to the
 //   mozc::Util class.
 class CharacterFormManager {
  public:
-  enum FormType {
-    UNKNOWN_FORM,
-    HALF_WIDTH,
-    FULL_WIDTH
-  };
+  enum FormType { UNKNOWN_FORM, HALF_WIDTH, FULL_WIDTH };
 
   // Returns the preference of character form.
   // This method cannot return the preference,
   // if str has two set of string groups having different preferences.
   // e.g., GetPreeditCharacterForm("グーグル012") returns NO_CONVERSION
-  Config::CharacterForm GetPreeditCharacterForm(const string &input) const;
-  Config::CharacterForm GetConversionCharacterForm(const string &input) const;
+  Config::CharacterForm GetPreeditCharacterForm(const std::string &input) const;
+  Config::CharacterForm GetConversionCharacterForm(
+      const std::string &input) const;
 
   // Converts string according to the config rules.
-  void ConvertPreeditString(const string &input, string *output) const;
-  void ConvertConversionString(const string &input, string *output) const;
+  void ConvertPreeditString(const std::string &input,
+                            std::string *output) const;
+  void ConvertConversionString(const std::string &input,
+                               std::string *output) const;
 
   // Converts string according to the config rules.
   // if alternate output, which should be shown next to
   // the output, is defined, it is stored into alternative_output.
-  // If alternative_output is not required, you can pass NULL.
+  // If alternative_output is not required, you can pass nullptr.
   // e.g., output = "@" alternative_output = "＠"
   // return true if both output and alternative_output are defined.
   bool ConvertPreeditStringWithAlternative(
-      const string &input, string *output, string *alternative_output) const;
+      const std::string &input, std::string *output,
+      std::string *alternative_output) const;
   bool ConvertConversionStringWithAlternative(
-      const string &input, string *output, string *alternative_output) const;
+      const std::string &input, std::string *output,
+      std::string *alternative_output) const;
 
   // Calls this method after user fixed the final result.
   // If a character has "LAST_FORM" preference in the config,
   // SetCharacterForm() stores the last character form into local file.
   // Next time user calls GetPreeditCharacterForm() or
   // GetConversionCharacterForm(), the preference is restored.
-  void SetCharacterForm(const string &input, Config::CharacterForm form);
+  void SetCharacterForm(const std::string &input, Config::CharacterForm form);
 
   // Guesses the character form of str and call
   // SetCharacterForm with this result.
@@ -90,7 +92,7 @@ class CharacterFormManager {
   // It is more useful to call GuessAndSetCharacterForm(), as
   // you don't need to pass the form.
   // You can just pass the final final conversion string to this method.
-  void GuessAndSetCharacterForm(const string &input);
+  void GuessAndSetCharacterForm(const std::string &input);
 
   // Clears history data. This method does not clear config data.
   void ClearHistory();
@@ -103,9 +105,9 @@ class CharacterFormManager {
   // AddPreeditRule("[]{}()", config::Config::LAST_FORM);
   // AddPreeditRule("+=", config::Config::HALF_WIDTH);
   // The all characters in str are treated as the same group.
-  void AddPreeditRule(const string &input, Config::CharacterForm form);
+  void AddPreeditRule(const std::string &input, Config::CharacterForm form);
 
-  void AddConversionRule(const string &input, Config::CharacterForm form);
+  void AddConversionRule(const std::string &input, Config::CharacterForm form);
 
   // Loads Default rules.
   void SetDefaultRule();
@@ -114,7 +116,7 @@ class CharacterFormManager {
   void ReloadConfig(const Config &config);
 
   // Utility function: pass character form.
-  static void ConvertWidth(const string &input, string *output,
+  static void ConvertWidth(const std::string &input, std::string *output,
                            Config::CharacterForm form);
 
   // Returns form types for given two pair of strings.
@@ -133,12 +135,13 @@ class CharacterFormManager {
   // Ambiguous case:
   //  input1="ABC１２３" input2="ＡＢＣ123"
   //  return false.
-  static bool GetFormTypesFromStringPair(
-      const string &input1, FormType *form1,
-      const string &input2, FormType *form2);
+  static bool GetFormTypesFromStringPair(const std::string &input1,
+                                         FormType *form1,
+                                         const std::string &input2,
+                                         FormType *form2);
 
   // Returns the singleton instance.
-  static CharacterFormManager* GetCharacterFormManager();
+  static CharacterFormManager *GetCharacterFormManager();
 
  private:
   class Data;

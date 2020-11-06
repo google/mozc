@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,19 +44,19 @@ class KeyCorrector {
     KANA,
   };
 
-  KeyCorrector(const string &key, InputMode mode, size_t history_size);
+  KeyCorrector(const std::string &key, InputMode mode, size_t history_size);
   KeyCorrector();
   virtual ~KeyCorrector();
 
   InputMode mode() const;
 
-  bool CorrectKey(const string &key, InputMode mode, size_t history_size);
+  bool CorrectKey(const std::string &key, InputMode mode, size_t history_size);
 
   // return corrected key;
-  const string &corrected_key() const;
+  const std::string &corrected_key() const;
 
   // return original key;
-  const string &original_key() const;
+  const std::string &original_key() const;
 
   // return true key correction was done successfully
   bool IsAvailable() const;
@@ -84,8 +84,8 @@ class KeyCorrector {
 
   // return new prefix of string correspoindng to
   // the prefix of the original key at "original_key_pos"
-  // if new prefix and original prefix are the same, return NULL.
-  // Note that return value won't be NULL terminated.
+  // if new prefix and original prefix are the same, return nullptr.
+  // Note that return value won't be nullptr terminated.
   // "length" stores the length of return value.
   // We don't allow empty matching (see GetPrefix(15) below)
   //
@@ -102,17 +102,17 @@ class KeyCorrector {
   //  GetPrefix(3) = "かいじゅうのはっぱ"
   //  GetPrefix(9) = "じゅうのはっぱ"
   //  GetPrefix(12) = "ゅうのはっぱ"
-  //  GetPrefix(15) = NULL (not "うのはっぱ")
+  //  GetPrefix(15) = nullptr (not "うのはっぱ")
   //                  "う" itself doesn't correspond to the original key,
   //                   so, we don't make a new prefix
-  //  GetPrefix(18) = NULL (same as original)
+  //  GetPrefix(18) = nullptr (same as original)
   //
   // Example2:
   //  original: "みんあのほん"
   //  GetPrefix(0) = "みんなのほん"
   //  GetPrefix(3) = "んなのほん"
   //  GetPrefix(9) = "なのほん"
-  //  GetPrefix(12) = NULL
+  //  GetPrefix(12) = nullptr
   const char *GetCorrectedPrefix(const size_t original_key_pos,
                                  size_t *length) const;
 
@@ -143,10 +143,9 @@ class KeyCorrector {
   size_t GetOriginalOffset(const size_t original_key_pos,
                            const size_t new_key_offset) const;
 
-
   // return the cost penalty for the corrected key.
   // The return value is added to the original cost as a penalty.
-  static int GetCorrectedCostPenalty(const string &key);
+  static int GetCorrectedCostPenalty(const std::string &key);
 
   // clear internal data
   void Clear();
@@ -154,8 +153,8 @@ class KeyCorrector {
  private:
   bool available_;
   InputMode mode_;
-  string corrected_key_;
-  string original_key_;
+  std::string corrected_key_;
+  std::string original_key_;
   std::vector<size_t> alignment_;
   std::vector<size_t> rev_alignment_;
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,24 +44,24 @@ class GtkWindowMock : public GtkWindowInterface {
   GtkWindowMock() {}
   virtual ~GtkWindowMock() {}
 
-  MOCK_METHOD0(ShowWindow, void());
-  MOCK_METHOD0(HideWindow, void());
-  MOCK_METHOD0(GetWindowWidget, GtkWidget *());
-  MOCK_METHOD0(GetCanvasWidget, GtkWidget *());
-  MOCK_METHOD0(GetWindowRect, Rect());
-  MOCK_METHOD0(GetWindowPos, Point());
-  MOCK_METHOD0(GetWindowSize, Size());
-  MOCK_METHOD0(IsActive, bool());
-  MOCK_METHOD0(DestroyWindow, bool());
-  MOCK_METHOD1(Move, void(const Point &pos));
-  MOCK_METHOD1(Resize, void(const Size &size));
-  MOCK_METHOD0(Initialize, void());
-  MOCK_METHOD0(Redraw, void());
-  MOCK_METHOD1(Update, Size(const commands::Candidates &candidates));
-  MOCK_CONST_METHOD0(GetCandidateColumnInClientCord, Rect());
-  MOCK_METHOD1(SetSendCommandInterface,
-               bool(client::SendCommandInterface *send_command_interface));
-  MOCK_METHOD1(ReloadFontConfig, void(const string &font_description));
+  MOCK_METHOD(void, ShowWindow, ());
+  MOCK_METHOD(void, HideWindow, ());
+  MOCK_METHOD(GtkWidget *, GetWindowWidget, ());
+  MOCK_METHOD(GtkWidget *, GetCanvasWidget, ());
+  MOCK_METHOD(Rect, GetWindowRect, ());
+  MOCK_METHOD(Point, GetWindowPos, ());
+  MOCK_METHOD(Size, GetWindowSize, ());
+  MOCK_METHOD(bool, IsActive, ());
+  MOCK_METHOD(bool, DestroyWindow, ());
+  MOCK_METHOD(void, Move, (const Point &pos));
+  MOCK_METHOD(void, Resize, (const Size &size));
+  MOCK_METHOD(void, Initialize, ());
+  MOCK_METHOD(void, Redraw, ());
+  MOCK_METHOD(Size, Update, (const commands::Candidates &candidates));
+  MOCK_METHOD(Rect, GetCandidateColumnInClientCord, (), (const));
+  MOCK_METHOD(bool, SetSendCommandInterface,
+              (client::SendCommandInterface* send_command_interface));
+  MOCK_METHOD(void, ReloadFontConfig, (const string &font_description));
 };
 
 }  // namespace gtk

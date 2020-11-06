@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,59 +44,55 @@ TEST(ModeSwitchingHandlerTest, GetModeSwitchingRule) {
   ModeSwitchingHandler::ModeSwitching input_mode =
       ModeSwitchingHandler::NO_CHANGE;
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("google",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("google", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("Google",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("Google", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("Chrome",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("Chrome", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("chrome",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("chrome", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("Android",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("Android", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("android",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(
+      handler.GetModeSwitchingRule("android", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::PREFERRED_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::REVERT_TO_PREVIOUS_MODE, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("http",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("http", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("www.",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("www.", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("\\\\",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("\\\\", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
-  EXPECT_TRUE(handler.GetModeSwitchingRule("C:\\",
-                                           &display_mode, &input_mode));
+  EXPECT_TRUE(handler.GetModeSwitchingRule("C:\\", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::HALF_ALPHANUMERIC, input_mode);
 
   // Normal text should return false.
-  EXPECT_FALSE(handler.GetModeSwitchingRule("foobar",
-                                            &display_mode, &input_mode));
+  EXPECT_FALSE(
+      handler.GetModeSwitchingRule("foobar", &display_mode, &input_mode));
   EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, display_mode);
   EXPECT_EQ(ModeSwitchingHandler::NO_CHANGE, input_mode);
 }

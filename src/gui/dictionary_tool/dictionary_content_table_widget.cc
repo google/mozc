@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ DictionaryContentTableWidget::DictionaryContentTableWidget(QWidget *parent)
 void DictionaryContentTableWidget::paintEvent(QPaintEvent *event) {
   QTableView::paintEvent(event);
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   if (!isEnabled()) {
     return;
   }
@@ -53,7 +53,7 @@ void DictionaryContentTableWidget::paintEvent(QPaintEvent *event) {
     alternate_index = 1;
   } else {
     QTableWidgetItem *last_item = item(rowCount() - 1, 0);
-    if (last_item == NULL) {
+    if (last_item == nullptr) {
       return;
     }
     rect = visualItemRect(last_item);
@@ -70,18 +70,18 @@ void DictionaryContentTableWidget::paintEvent(QPaintEvent *event) {
     start_offset += rect.height();
     ++alternate_index;
   }
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 }
 
 void DictionaryContentTableWidget::mouseDoubleClickEvent(QMouseEvent *event) {
   QTableView::mouseDoubleClickEvent(event);
 
   // When empty area is double-clicked, emit a signal
-#ifdef OS_MACOSX
-  if (NULL == itemAt(event->pos())) {
+#ifdef __APPLE__
+  if (nullptr == itemAt(event->pos())) {
     emit emptyAreaClicked();
   }
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 }
 
 void DictionaryContentTableWidget::focusInEvent(QFocusEvent *event) {

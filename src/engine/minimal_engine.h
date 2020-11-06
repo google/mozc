@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ class MinimalEngine : public EngineInterface {
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override { return true; }
   UserDataManagerInterface *GetUserDataManager() override;
-  StringPiece GetDataVersion() const override { return "0.0.0"; }
+  absl::string_view GetDataVersion() const override { return "0.0.0"; }
   const DataManagerInterface *GetDataManager() const override;
 
  private:

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,11 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 TEST(PasswordManager, PasswordManagerTest) {
   SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
-  string password1, password2;
+  std::string password1, password2;
   EXPECT_TRUE(PasswordManager::InitPassword());
   EXPECT_TRUE(PasswordManager::GetPassword(&password1));
   EXPECT_TRUE(PasswordManager::GetPassword(&password2));

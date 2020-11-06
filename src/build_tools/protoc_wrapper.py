@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,6 @@ def ParseOption():
   parser.add_option('--proto', dest='proto', help='path of the *.proto file')
   parser.add_option('--cpp_out', dest='cpp_out', default='',
                     help='path where cpp files should be generated')
-  parser.add_option('--java_out', dest='java_out', default='',
-                    help='path where java files should be generated')
   parser.add_option('--project_root', dest='project_root', default='.',
                     help='run protoc after moving this directory')
   parser.add_option('--proto_path', dest='proto_path', default='',
@@ -76,7 +74,6 @@ def main():
   project_root = os.path.abspath(opts.project_root)
   proto_path = os.path.abspath(opts.proto_path) if opts.proto_path else ''
   cpp_out = os.path.abspath(opts.cpp_out) if opts.cpp_out else ''
-  java_out = os.path.abspath(opts.java_out) if opts.java_out else ''
 
   protoc_path = opts.protoc_command
   if opts.protoc_dir:
@@ -94,8 +91,6 @@ def main():
   commands = [protoc_path] + proto_files
   if cpp_out:
     commands += ['--cpp_out=' + cpp_out]
-  if java_out:
-    commands += ['--java_out=' + java_out]
   if proto_path:
     rel_proto_path = os.path.relpath(proto_path, project_root)
     commands += ['--proto_path=' + rel_proto_path]

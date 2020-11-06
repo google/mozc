@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_GUI_POST_INSTALL_DIALOG_H_
-#define MOZC_GUI_POST_INSTALL_DIALOG_H_
+#ifndef MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
+#define MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_
 
 #include <memory>
 
@@ -41,23 +41,22 @@ namespace gui {
 class SetupUtil;
 
 // Shows additional information to the user after installation.
-// This dialog also set Mozc as the default IME if it is closed
+// This dialog also set this IME as the default IME if it is closed
 // with the check box marekd.
-class PostInstallDialog : public QDialog,
-                          private Ui::PostInstallDialog {
+class PostInstallDialog : public QDialog, private Ui::PostInstallDialog {
   Q_OBJECT;
 
  public:
   PostInstallDialog();
-  virtual ~PostInstallDialog();
+  ~PostInstallDialog() override;
 
  protected slots:
   virtual void OnOk();
   virtual void OnsetAsDefaultCheckBoxToggled(int state);
-  virtual void reject();
+  void reject() override;
 
  private:
-  // - Sets Mozc as the default IME if the check box on the
+  // - Sets this IME as the default IME if the check box on the
   //   dialog is marked.
   // - Imports MS-IME's user dictionary to Mozc' dictionary if
   //   the checkbox on the dialog is marked.
@@ -69,4 +68,4 @@ class PostInstallDialog : public QDialog,
 }  // namespace gui
 }  // namespace mozc
 
-#endif  // MOZC_GUI_POST_INSTALL_DIALOG_H_
+#endif  // MOZC_GUI_POST_INSTALL_DIALOG_POST_INSTALL_DIALOG_H_

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,8 @@ class CairoFactoryInterface {
   virtual ~CairoFactoryInterface() {}
 
   // This function does NOT take ownership of instance.
-  virtual CairoWrapperInterface
-      *CreateCairoInstance(GdkWindow *drawable) const = 0;
+  virtual CairoWrapperInterface *CreateCairoInstance(
+      GdkWindow *drawable) const = 0;
 };
 
 }  // namespace gtk

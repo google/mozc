@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,25 +37,9 @@
 
 namespace mozc {
 namespace usage_stats {
-class UploadUtil;
-
-class ClientIdInterface {
- public:
-  ClientIdInterface();
-  virtual ~ClientIdInterface();
-
-  // gets client id
-  virtual void GetClientId(string *output) = 0;
-};
 
 class UsageStatsUploader {
  public:
-  // Default values for scheduler.
-  static const uint32 kDefaultSchedulerDelay;
-  static const uint32 kDefaultSchedulerRandomDelay;
-  static const uint32 kDefaultScheduleInterval;
-  static const uint32 kDefaultScheduleMaxInterval;
-
   // Scheduler callback
   // Sends daily usage stats
   // Is called periodically (is not necessarily called 'daily')
@@ -67,16 +51,11 @@ class UsageStatsUploader {
   //  So this should be thread-safe.
   static bool Send(void *data);
 
-  // Sets client id handler
-  static void SetClientIdHandler(ClientIdInterface *client_id_handler);
+  static void ClearMetaData();
 
- protected:
-  static void LoadStats(UploadUtil *uploader);
-
-  // Gets client id
-  static void GetClientId(string *output);
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UsageStatsUploader);
+  UsageStatsUploader() = delete;
+  UsageStatsUploader(const UsageStatsUploader &) = delete;
+  UsageStatsUploader &operator=(const UsageStatsUploader &) = delete;
 };
 
 }  // namespace usage_stats

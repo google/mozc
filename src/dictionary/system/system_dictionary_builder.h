@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ class SystemDictionaryBuilder {
     KeyInfo() : id_in_key_trie(-1) {}
     // id of the key(=reading) string in key trie
     int id_in_key_trie;
-    string key;
+    std::string key;
     std::vector<TokenInfo> tokens;
   };
 
@@ -71,14 +71,14 @@ class SystemDictionaryBuilder {
   virtual ~SystemDictionaryBuilder();
   void BuildFromTokens(const std::vector<Token *> &tokens);
 
-  void WriteToFile(const string &output_file) const;
-  void WriteToStream(const string &intermediate_output_file_base_path,
+  void WriteToFile(const std::string &output_file) const;
+  void WriteToStream(const std::string &intermediate_output_file_base_path,
                      std::ostream *output_stream) const;
 
  private:
   typedef std::deque<KeyInfo> KeyInfoList;
 
-  void ReadTokens(const std::vector<Token *>& tokens,
+  void ReadTokens(const std::vector<Token *> &tokens,
                   KeyInfoList *key_info_list) const;
 
   void BuildFrequentPos(const KeyInfoList &key_info_list);

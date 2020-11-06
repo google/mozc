@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@ const int kGetSurroundingTextClientLengthLimit = 1000;
 
 NSString *GetLabelForSuffix(const string &suffix) {
   string label = mozc::MacUtil::GetLabelForSuffix(suffix);
-  return [[NSString stringWithUTF8String:label.c_str()] retain];
+  return [NSString stringWithUTF8String:label.c_str()];
 }
 
 CompositionMode GetCompositionMode(NSString *modeID) {
@@ -209,7 +209,6 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
   [NSBundle loadNibNamed:@"Config" owner:self];
   if (!originalString_ || !composedString_ || !candidateController_ ||
       !rendererCommand_ || !mozcClient_ || !clientBundle_) {
-    [self release];
     self = nil;
   } else {
     DLOG(INFO) << [[NSString stringWithFormat:@"initWithServer: %@ %@ %@",
@@ -234,16 +233,15 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
 }
 
 - (void)dealloc {
-  [keyCodeMap_ release];
-  [originalString_ release];
-  [composedString_ release];
-  [imkClientForTest_ release];
+  keyCodeMap_ = nil;
+  originalString_ = nil;
+  composedString_ = nil;
+  imkClientForTest_ = nil;
   delete clientBundle_;
   delete candidateController_;
   delete mozcClient_;
   delete rendererCommand_;
   DLOG(INFO) << "dealloc server";
-  [super dealloc];
 }
 
 - (id)client {
@@ -680,7 +678,6 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
 
 #pragma mark Mozc Server methods
 
-
 #pragma mark IMKServerInput Protocol
 // Currently GoogleJapaneseInputController uses handleEvent:client:
 // method to handle key events.  It does not support inputText:client:
@@ -722,9 +719,8 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
       NSString *seg_string =
           [NSString stringWithUTF8String:seg.value().c_str()];
       NSAttributedString *seg_attributed_string =
-          [[[NSAttributedString alloc]
-             initWithString:seg_string attributes:attr]
-            autorelease];
+          [[NSAttributedString alloc]
+            initWithString:seg_string attributes:attr];
       [composedString_ appendAttributedString:seg_attributed_string];
     }
   }
@@ -1016,14 +1012,6 @@ bool IsBannedApplication(const std::set<string>* bundleIdSet,
 
 - (IBAction)registerWordClicked:(id)sender {
   [self launchWordRegisterTool:[self client]];
-}
-
-- (IBAction)characterPaletteClicked:(id)sender {
-  MacProcess::LaunchMozcTool("character_palette");
-}
-
-- (IBAction)handWritingClicked:(id)sender {
-  MacProcess::LaunchMozcTool("hand_writing");
 }
 
 - (IBAction)aboutDialogClicked:(id)sender {

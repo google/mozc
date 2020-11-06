@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,11 @@
 #ifndef MOZC_WIN32_IME_IME_LANGUAGE_BAR_H_
 #define MOZC_WIN32_IME_IME_LANGUAGE_BAR_H_
 
-#include <windows.h>
-#include <rpcsal.h>
-#include <msctf.h>
-#include <ctffunc.h>
 #include <atlbase.h>
+#include <ctffunc.h>
+#include <msctf.h>
+#include <rpcsal.h>
+#include <windows.h>
 
 #include "base/port.h"
 #include "protocol/commands.pb.h"
@@ -47,29 +47,29 @@ class LangBarCallback {
  public:
   enum MenuId {
     // Cancel something for general purpose
-    kCancel            = 1,
+    kCancel = 1,
 
     // For input mode selection
-    kDirect            = 10,
-    kHiragana          = 11,
-    kFullKatakana      = 12,
-    kHalfAlphanumeric  = 13,
-    kFullAlphanumeric  = 14,
-    kHalfKatakana      = 15,
+    kDirect = 10,
+    kHiragana = 11,
+    kFullKatakana = 12,
+    kHalfAlphanumeric = 13,
+    kFullAlphanumeric = 14,
+    kHalfKatakana = 15,
 
     // Tool menu
-    kProperty          = 20,
-    kDictionary        = 21,
-    kWordRegister      = 22,
-    kHandWriting       = 23,
-    kCharacterPalette  = 24,
+    kProperty = 20,
+    kDictionary = 21,
+    kWordRegister = 22,
+    kHandWriting = 23,
+    kCharacterPalette = 24,
 
     // Help Menu
-    kHelp              = 30,
-    kAbout             = 31,
+    kHelp = 30,
+    kAbout = 31,
 
     // Shortcut commands
-    kReconversion      = 41,
+    kReconversion = 41,
   };
 
   virtual ULONG AddRef() = 0;

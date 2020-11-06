@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -86,9 +86,9 @@ struct NounPrefix {
 }  // namespace
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
-  std::map<string, mozc::SerializedDictionary::TokenList> tokens;
+  std::map<std::string, mozc::SerializedDictionary::TokenList> tokens;
   for (const NounPrefix &entry : kNounPrefixList) {
     std::unique_ptr<mozc::SerializedDictionary::CompilerToken> token(
         new mozc::SerializedDictionary::CompilerToken);
@@ -98,8 +98,7 @@ int main(int argc, char **argv) {
     token->cost = entry.rank;
     tokens[entry.key].emplace_back(std::move(token));
   }
-  mozc::SerializedDictionary::CompileToFiles(tokens,
-                                             FLAGS_output_token_array,
+  mozc::SerializedDictionary::CompileToFiles(tokens, FLAGS_output_token_array,
                                              FLAGS_output_string_array);
   return 0;
 }

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ TEST(MacUtil, GetSerialNumber) {
   EXPECT_EQ(serial1, serial2);
 }
 
+#ifndef OS_IOS
 TEST(MacUtil, IsSuppressSuggestionWindow) {
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
       "", ""));
@@ -71,5 +72,6 @@ TEST(MacUtil, IsSuppressSuggestionWindow) {
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
       "ABC - Google Search", "Firefox"));
 }
+#endif  // OS_IOS
 
 }  // namespace mozc

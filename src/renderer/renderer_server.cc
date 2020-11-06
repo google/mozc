@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,7 @@
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
 DEFINE_int32(timeout, 10 * 60, "timeout of candidate server (sec)");
-DEFINE_bool(restricted, false,
-            "launch candidates server with restricted mode");
+DEFINE_bool(restricted, false, "launch candidates server with restricted mode");
 
 namespace mozc {
 
@@ -67,16 +66,16 @@ namespace renderer {
 
 namespace {
 #ifdef OS_WIN
-const int kNumConnections   = 1;
+const int kNumConnections = 1;
 #else
-const int kNumConnections   = 10;
+const int kNumConnections = 10;
 #endif  // OS_WIN or not
 const int kIPCServerTimeOut = 1000;
-const char kServiceName[]   = "renderer";
+const char kServiceName[] = "renderer";
 
-string GetServiceName() {
-  string name = kServiceName;
-  const string desktop_name = SystemUtil::GetDesktopNameAsString();
+std::string GetServiceName() {
+  std::string name = kServiceName;
+  const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
   if (!desktop_name.empty()) {
     name += ".";
     name += desktop_name;
@@ -89,11 +88,11 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
  public:
   explicit ParentApplicationWatchDog(RendererServer *renderer_server)
       : renderer_server_(renderer_server) {}
-  virtual ~ParentApplicationWatchDog() {}
+  ~ParentApplicationWatchDog() override {}
 
-  void Signaled(ProcessWatchDog::SignalType type) {
-    if (renderer_server_ == NULL) {
-      LOG(ERROR) << "renderer_server is NULL";
+  void Signaled(ProcessWatchDog::SignalType type) override {
+    if (renderer_server_ == nullptr) {
+      LOG(ERROR) << "renderer_server is nullptr";
       return;
     }
     if (type == ProcessWatchDog::PROCESS_SIGNALED ||
@@ -102,7 +101,7 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
       mozc::commands::RendererCommand command;
       command.set_type(mozc::commands::RendererCommand::UPDATE);
       command.set_visible(false);
-      string *buf = new string;
+      std::string *buf = new std::string;
       if (command.SerializeToString(buf)) {
         renderer_server_->AsyncExecCommand(buf);
       } else {
@@ -120,10 +119,10 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
 class RendererServerSendCommand : public client::SendCommandInterface {
  public:
   RendererServerSendCommand() : receiver_handle_(0) {}
-  virtual ~RendererServerSendCommand() {}
+  ~RendererServerSendCommand() override {}
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
-                   mozc::commands::Output* output) {
+                   mozc::commands::Output *output) override {
 #ifdef OS_WIN
     if ((command.type() != commands::SessionCommand::SELECT_CANDIDATE) &&
         (command.type() != commands::SessionCommand::HIGHLIGHT_CANDIDATE) &&
@@ -133,12 +132,11 @@ class RendererServerSendCommand : public client::SendCommandInterface {
     }
 
     HWND target = reinterpret_cast<HWND>(receiver_handle_);
-    if (target == NULL) {
-      LOG(ERROR) << "target window is NULL";
+    if (target == nullptr) {
+      LOG(ERROR) << "target window is nullptr";
       return false;
     }
-    UINT mozc_msg =
-        ::RegisterWindowMessageW(kMessageReceiverMessageName);
+    UINT mozc_msg = ::RegisterWindowMessageW(kMessageReceiverMessageName);
     if (mozc_msg == 0) {
       LOG(ERROR) << "RegisterWindowMessage failed: " << ::GetLastError();
       return false;
@@ -170,7 +168,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
       timeout_(0),
-      renderer_interface_(NULL),
+      renderer_interface_(nullptr),
       ALLOW_THIS_IN_INITIALIZER_LIST(
           watch_dog_(new ParentApplicationWatchDog(this))),
       send_command_(new RendererServerSendCommand) {
@@ -182,11 +180,11 @@ RendererServer::RendererServer()
   timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60, FLAGS_timeout));
   VLOG(2) << "timeout is set to be : " << timeout_;
 
-#ifndef NO_LOGGING
+#ifndef MOZC_NO_LOGGING
   config::Config config;
   config::ConfigHandler::GetConfig(&config);
   Logging::SetConfigVerboseLevel(config.verbose_level());
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
 }
 
 RendererServer::~RendererServer() {}
@@ -194,7 +192,7 @@ RendererServer::~RendererServer() {}
 void RendererServer::SetRendererInterface(
     RendererInterface *renderer_interface) {
   renderer_interface_ = renderer_interface;
-  if (renderer_interface_ != NULL) {
+  if (renderer_interface_ != nullptr) {
     renderer_interface_->SetSendCommandInterface(send_command_.get());
   }
 }
@@ -208,7 +206,7 @@ int RendererServer::StartServer() {
   LoopAndReturn();
 
   // send "ready" event to the client
-  const string name = GetServiceName();
+  const std::string name = GetServiceName();
   NamedEventNotifier notifier(name.c_str());
   notifier.Notify();
 
@@ -216,10 +214,8 @@ int RendererServer::StartServer() {
   return StartMessageLoop();
 }
 
-bool RendererServer::Process(const char *request,
-                             size_t request_size,
-                             char *response,
-                             size_t *response_size) {
+bool RendererServer::Process(const char *request, size_t request_size,
+                             char *response, size_t *response_size) {
   // here we just copy the serialized message in order
   // to reply to the client ui as soon as possible.
   // ParseFromString is executed in the main(another) thread.
@@ -229,7 +225,7 @@ bool RendererServer::Process(const char *request,
   // If we use stack, this program will be crashed.
   //
   // The reciver of command_str takes the ownership of this string.
-  string *command_str = new string(request, request_size);
+  std::string *command_str = new std::string(request, request_size);
 
   // no need to set the result code.
   *response_size = 1;
@@ -242,8 +238,8 @@ bool RendererServer::Process(const char *request,
 
 bool RendererServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  if (renderer_interface_ == NULL) {
-    LOG(ERROR) << "renderer_interface is NULL";
+  if (renderer_interface_ == nullptr) {
+    LOG(ERROR) << "renderer_interface is nullptr";
     return false;
   }
 
@@ -254,8 +250,8 @@ bool RendererServer::ExecCommandInternal(
     // set HWND of message-only window
     if (command.has_application_info() &&
         command.application_info().has_receiver_handle()) {
-      send_command_->set_receiver_handle
-          (command.application_info().receiver_handle());
+      send_command_->set_receiver_handle(
+          command.application_info().receiver_handle());
     } else {
       LOG(WARNING) << "receiver_handle is not set";
     }
@@ -264,11 +260,11 @@ bool RendererServer::ExecCommandInternal(
     if (command.has_application_info() &&
         command.application_info().has_process_id() &&
         command.application_info().has_thread_id()) {
-      if (!watch_dog_->SetID
-          (static_cast<ProcessWatchDog::ProcessID>
-           (command.application_info().process_id()),
-           static_cast<ProcessWatchDog::ThreadID>
-           (command.application_info().thread_id()), -1)) {
+      if (!watch_dog_->SetID(static_cast<ProcessWatchDog::ProcessID>(
+                                 command.application_info().process_id()),
+                             static_cast<ProcessWatchDog::ThreadID>(
+                                 command.application_info().thread_id()),
+                             -1)) {
         LOG(ERROR) << "Cannot set new ids for watch dog";
       }
     } else {
@@ -283,8 +279,6 @@ bool RendererServer::ExecCommandInternal(
   return false;
 }
 
-uint32 RendererServer::timeout() const {
-  return timeout_;
-}
+uint32 RendererServer::timeout() const { return timeout_; }
 }  // namespace renderer
 }  // namespace mozc

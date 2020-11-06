@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,10 @@
 
 #include "server/cache_service_manager.h"
 
+// clang-format off
 #include <windows.h>
 #include <wincrypt.h>
+// clang-format on
 
 #include <memory>
 #include <string>
@@ -40,12 +42,11 @@
 #include "base/const.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/protobuf/protobuf.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "server/win32_service_state.pb.h"
-
-using std::unique_ptr;
 
 namespace mozc {
 namespace {
@@ -54,10 +55,8 @@ const uint64 kMinimumRequiredMemorySizeForInstall = 384 * 1024 * 1024;
 
 class ScopedSCHandle {
  public:
-  ScopedSCHandle()
-      : handle_(NULL) {}
-  explicit ScopedSCHandle(SC_HANDLE handle)
-      : handle_(handle) {}
+  ScopedSCHandle() : handle_(NULL) {}
+  explicit ScopedSCHandle(SC_HANDLE handle) : handle_(handle) {}
 
   ~ScopedSCHandle() {
     if (NULL != handle_) {
@@ -67,7 +66,7 @@ class ScopedSCHandle {
 
   SC_HANDLE get() const { return handle_; }
 
-  void swap(ScopedSCHandle & other) {
+  void swap(ScopedSCHandle &other) {
     SC_HANDLE tmp = handle_;
     handle_ = other.handle_;
     other.handle_ = tmp;
@@ -80,27 +79,27 @@ class ScopedSCHandle {
 // This function serializes a given message (any type of protobuf message)
 // as a std::wstring encoded by base64.
 // Returns true if succeeds.
-bool SerializeToBase64WString(const ::google::protobuf::Message &message,
+bool SerializeToBase64WString(const mozc::protobuf::Message &message,
                               std::wstring *dest) {
   if (dest == NULL) {
     return false;
   }
 
   const int serialized_len = message.ByteSize();
-  unique_ptr<BYTE[]> serialized(new BYTE[serialized_len]);
+  std::unique_ptr<BYTE[]> serialized(new BYTE[serialized_len]);
   if (!message.SerializeToArray(serialized.get(), serialized_len)) {
     LOG(ERROR) << "SerializeAsArray failed";
     return false;
   }
 
   DWORD base64_string_len = 0;
-  BOOL result = ::CryptBinaryToString(serialized.get(), serialized_len,
-                                      CRYPT_STRING_BASE64, NULL,
-                                      &base64_string_len);
+  BOOL result =
+      ::CryptBinaryToString(serialized.get(), serialized_len,
+                            CRYPT_STRING_BASE64, NULL, &base64_string_len);
   if (result == FALSE) {
     return false;
   }
-  unique_ptr<wchar_t[]> base64_string(new wchar_t[base64_string_len]);
+  std::unique_ptr<wchar_t[]> base64_string(new wchar_t[base64_string_len]);
   result = ::CryptBinaryToString(serialized.get(), serialized_len,
                                  CRYPT_STRING_BASE64, base64_string.get(),
                                  &base64_string_len);
@@ -116,30 +115,21 @@ bool SerializeToBase64WString(const ::google::protobuf::Message &message,
 // SerializeToBase64WString.
 // Returns true if succeeds
 bool DeserializeFromBase64WString(const std::wstring &src,
-                                  ::google::protobuf::Message *message) {
+                                  mozc::protobuf::Message *message) {
   if (message == NULL) {
     return false;
   }
 
   DWORD buffer_len = 0;
-  BOOL result = ::CryptStringToBinary(src.c_str(),
-                                      src.size(),
-                                      CRYPT_STRING_BASE64,
-                                      NULL,
-                                      &buffer_len,
-                                      NULL,
-                                      NULL);
+  BOOL result =
+      ::CryptStringToBinary(src.c_str(), src.size(), CRYPT_STRING_BASE64, NULL,
+                            &buffer_len, NULL, NULL);
   if (result == FALSE) {
     return false;
   }
-  unique_ptr<BYTE[]> buffer(new BYTE[buffer_len]);
-  result = ::CryptStringToBinary(src.c_str(),
-                                 src.size(),
-                                 CRYPT_STRING_BASE64,
-                                 buffer.get(),
-                                 &buffer_len,
-                                 NULL,
-                                 NULL);
+  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_len]);
+  result = ::CryptStringToBinary(src.c_str(), src.size(), CRYPT_STRING_BASE64,
+                                 buffer.get(), &buffer_len, NULL, NULL);
   if (result == FALSE) {
     return false;
   }
@@ -164,8 +154,8 @@ bool GetCacheService(DWORD service_controler_rights, DWORD service_rights,
     return false;
   }
 
-  ScopedSCHandle sc_handle(::OpenSCManager(NULL, NULL,
-                                           service_controler_rights));
+  ScopedSCHandle sc_handle(
+      ::OpenSCManager(NULL, NULL, service_controler_rights));
   if (NULL == sc_handle.get()) {
     LOG(ERROR) << "OpenSCManager failed: " << ::GetLastError();
     return false;
@@ -210,7 +200,8 @@ bool StartServiceInternal(const ScopedSCHandle &service_handle,
     return true;
   }
 
-  unique_ptr<const wchar_t*[]> args(new const wchar_t*[arguments.size()]);
+  std::unique_ptr<const wchar_t *[]> args(
+      new const wchar_t *[arguments.size()]);
   for (size_t i = 0; i < arguments.size(); ++i) {
     args[i] = arguments[i].c_str();
   }
@@ -285,8 +276,7 @@ void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
     SERVICE_SID_INFO sid_info = {};
     sid_info.dwServiceSidType = SERVICE_SID_TYPE_RESTRICTED;
     if (!::ChangeServiceConfig2(service_handle.get(),
-                                SERVICE_CONFIG_SERVICE_SID_INFO,
-                                &sid_info)) {
+                                SERVICE_CONFIG_SERVICE_SID_INFO, &sid_info)) {
       LOG(ERROR) << "ChangeServiceConfig2 failed: " << ::GetLastError();
     }
   }
@@ -305,8 +295,8 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   const DWORD kSCRights = SC_MANAGER_CONNECT;
   const DWORD kServiceRights =
       GENERIC_READ | GENERIC_WRITE | SERVICE_START | SERVICE_STOP;
-  if (!GetCacheService(kSCRights, kServiceRights, &service_handle)
-      || (NULL == service_handle.get())) {
+  if (!GetCacheService(kSCRights, kServiceRights, &service_handle) ||
+      (NULL == service_handle.get())) {
     return false;
   }
 
@@ -336,10 +326,10 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
       }
     }
     return StartServiceInternal(service_handle, arguments);
-  // If the service is now runnning and was not running, stop it.
+    // If the service is now runnning and was not running, stop it.
   } else if (!state.running() && now_running) {
     return StopService(service_handle);
-  // Nothing to do.
+    // Nothing to do.
   } else {
     return true;
   }
@@ -352,7 +342,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
 // is successfully retrieved.  Some members of QUERY_SERVICE_CONFIG points
 // memory addresses inside the retrieved byte array.
 bool GetServiceConfig(const ScopedSCHandle &service_handle,
-                      unique_ptr<char[]> *result) {
+                      std::unique_ptr<char[]> *result) {
   if (NULL == result) {
     return false;
   }
@@ -373,12 +363,12 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
     return false;
   }
 
-  unique_ptr<char[]> buf(new char[size]);
+  std::unique_ptr<char[]> buf(new char[size]);
   LPQUERY_SERVICE_CONFIG service_config =
       reinterpret_cast<LPQUERY_SERVICE_CONFIG>(buf.get());
 
-  if (!::QueryServiceConfig(service_handle.get(),
-                            service_config, size, &size)) {
+  if (!::QueryServiceConfig(service_handle.get(), service_config, size,
+                            &size)) {
     LOG(ERROR) << "QueryServiceConfig failed: " << ::GetLastError();
     return false;
   }
@@ -391,8 +381,8 @@ bool GetServiceConfig(const ScopedSCHandle &service_handle,
 bool CacheServiceManager::IsInstalled() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_STATUS,
-                       &service_handle)
-      || (NULL == service_handle.get())) {
+                       &service_handle) ||
+      (NULL == service_handle.get())) {
     return false;
   }
   return true;
@@ -401,8 +391,8 @@ bool CacheServiceManager::IsInstalled() {
 bool CacheServiceManager::IsRunning() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_STATUS,
-                       &service_handle)
-      || (NULL == service_handle.get())) {
+                       &service_handle) ||
+      (NULL == service_handle.get())) {
     return false;
   }
   return IsServiceRunning(service_handle);
@@ -411,8 +401,8 @@ bool CacheServiceManager::IsRunning() {
 bool CacheServiceManager::IsEnabled() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT | GENERIC_READ, SERVICE_QUERY_CONFIG,
-                       &service_handle)
-      || (NULL == service_handle.get())) {
+                       &service_handle) ||
+      (NULL == service_handle.get())) {
     return false;
   }
 
@@ -420,7 +410,7 @@ bool CacheServiceManager::IsEnabled() {
   // string buffers which are reffered by corresponding members of
   // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
   // all tasks which use the contents of QUERY_SERVICE_CONFIG.
-  unique_ptr<char[]> buffer;
+  std::unique_ptr<char[]> buffer;
   if (!GetServiceConfig(service_handle, &buffer)) {
     return false;
   }
@@ -434,9 +424,8 @@ const wchar_t *CacheServiceManager::GetServiceName() {
 }
 
 std::wstring CacheServiceManager::GetUnquotedServicePath() {
-  const string lock_service_path =
-      FileUtil::JoinPath(SystemUtil::GetServerDirectory(),
-                         kMozcCacheServiceExeName);
+  const string lock_service_path = FileUtil::JoinPath(
+      SystemUtil::GetServerDirectory(), kMozcCacheServiceExeName);
   std::wstring wlock_service_path;
   if (Util::UTF8ToWide(lock_service_path, &wlock_service_path) <= 0) {
     return L"";
@@ -490,8 +479,8 @@ bool CacheServiceManager::RestartService() {
   ScopedSCHandle service_handle;
   if (!GetCacheService(SC_MANAGER_CONNECT,
                        SERVICE_START | SERVICE_STOP | SERVICE_QUERY_STATUS,
-                       &service_handle)
-      || (NULL == service_handle.get())) {
+                       &service_handle) ||
+      (NULL == service_handle.get())) {
     return false;
   }
 
@@ -518,7 +507,7 @@ bool CacheServiceManager::RestartService() {
 
 bool CacheServiceManager::HasEnoughMemory() {
   return SystemUtil::GetTotalPhysicalMemory() >=
-      kMinimumRequiredMemorySizeForInstall;
+         kMinimumRequiredMemorySizeForInstall;
 }
 
 bool CacheServiceManager::BackupStateAsString(std::wstring *result) {
@@ -553,16 +542,15 @@ bool CacheServiceManager::BackupStateAsString(std::wstring *result) {
     // string buffers which are reffered by corresponding members of
     // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
     // all tasks which use the contents of QUERY_SERVICE_CONFIG.
-    unique_ptr<char[]> buffer;
+    std::unique_ptr<char[]> buffer;
     if (!GetServiceConfig(service_handle, &buffer)) {
       return false;
     }
     const LPQUERY_SERVICE_CONFIG service_config =
         reinterpret_cast<const LPQUERY_SERVICE_CONFIG>(buffer.get());
     // retrieves the server load type.
-    state.set_load_type(
-        static_cast<cache_service::Win32ServiceState::LoadType>(
-            service_config->dwStartType));
+    state.set_load_type(static_cast<cache_service::Win32ServiceState::LoadType>(
+        service_config->dwStartType));
     // retrieves the server running status.
     state.set_running(IsServiceRunning(service_handle));
   }

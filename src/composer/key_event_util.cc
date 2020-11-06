@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,8 +78,9 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
   DCHECK(key);
 
   const uint16 modifier_keys = static_cast<uint16>(GetModifiers(key_event));
-  const uint16 special_key = key_event.has_special_key() ?
-      key_event.special_key() : KeyEvent::NO_SPECIALKEY;
+  const uint16 special_key = key_event.has_special_key()
+                                 ? key_event.special_key()
+                                 : KeyEvent::NO_SPECIALKEY;
   const uint32 key_code = key_event.has_key_code() ? key_event.key_code() : 0;
 
   // Make sure the translation from the obsolete spesification.
@@ -88,10 +89,9 @@ bool KeyEventUtil::GetKeyInformation(const KeyEvent &key_event,
     return false;
   }
 
-  *key =
-      (static_cast<KeyInformation>(modifier_keys) << 48) |
-      (static_cast<KeyInformation>(special_key) << 32) |
-      (static_cast<KeyInformation>(key_code));
+  *key = (static_cast<KeyInformation>(modifier_keys) << 48) |
+         (static_cast<KeyInformation>(special_key) << 32) |
+         (static_cast<KeyInformation>(key_code));
 
   return true;
 }
@@ -104,17 +104,15 @@ void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
   // LEFT (or RIGHT) ctrl is set.
   // LEFT_CTRL (or others) is not handled on Japanese, so we remove these.
   const uint32 kIgnorableModifierMask =
-      (KeyEvent::CAPS |
-       KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT |
-       KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL |
-       KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT);
+      (KeyEvent::CAPS | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT |
+       KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL | KeyEvent::LEFT_SHIFT |
+       KeyEvent::RIGHT_SHIFT);
 
   RemoveModifiers(key_event, kIgnorableModifierMask, new_key_event);
 
   // Reverts the flip of alphabetical key events caused by CapsLock.
   const uint32 original_modifiers = GetModifiers(key_event);
-  if ((original_modifiers & KeyEvent::CAPS) &&
-      key_event.has_key_code()) {
+  if ((original_modifiers & KeyEvent::CAPS) && key_event.has_key_code()) {
     const uint32 key_code = key_event.key_code();
     if ('A' <= key_code && key_code <= 'Z') {
       new_key_event->set_key_code(key_code + ('a' - 'A'));
@@ -234,9 +232,7 @@ bool KeyEventUtil::MaybeGetKeyStub(const KeyEvent &key_event,
   return true;
 }
 
-bool KeyEventUtil::HasAlt(uint32 modifiers) {
-  return Any(modifiers, kAltMask);
-}
+bool KeyEventUtil::HasAlt(uint32 modifiers) { return Any(modifiers, kAltMask); }
 
 bool KeyEventUtil::HasCtrl(uint32 modifiers) {
   return Any(modifiers, kCtrlMask);

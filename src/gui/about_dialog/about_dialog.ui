@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2010-2018, Google Inc.
+ Copyright 2010-2020, Google Inc.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>About Mozc</string>
+   <string>About [ProductName]</string>
   </property>
   <widget class="QFrame" name="color_frame">
    <property name="geometry">
@@ -95,7 +95,7 @@
       <x>20</x>
       <y>10</y>
       <width>471</width>
-      <height>81</height>
+      <height>82</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout_3">
@@ -107,7 +107,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Copyright © 2018 Google Inc. All rights reserved.</string>
+        <string>Copyright © 2020 Google Inc. All rights reserved.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -122,7 +122,7 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;body&gt;Mozc is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;body&gt;[ProductName] is made possible by &lt;a href=&quot;file://credits_en.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;open source software&lt;/span&gt;&lt;/a&gt;.&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -160,7 +160,7 @@
         </font>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;body&gt;Mozc &lt;a href=&quot;https://github.com/google/mozc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;https://github.com/google/mozc/issues&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;issues&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;body&gt;[ProductName] &lt;a href=&quot;[ProductUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;product information&lt;/span&gt;&lt;/a&gt; &lt;a href=&quot;[ForumUrl]&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;[ForumName]&lt;/span&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -194,14 +194,13 @@
      <widget class="QLabel" name="label">
       <property name="font">
        <font>
-        <family>メイリオ</family>
         <pointsize>24</pointsize>
         <weight>50</weight>
         <bold>false</bold>
        </font>
       </property>
       <property name="text">
-       <string>Mozc</string>
+       <string>[ProductName]</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

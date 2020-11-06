@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 
 #include <QtGui/QtGui>
 #include <QtWidgets/QPushButton>
-
 #include <memory>
 
 #include "base/logging.h"
@@ -42,18 +41,14 @@ namespace gui {
 
 class KeyBindingEditorTriggerButton : public QPushButton {
  public:
-  KeyBindingEditorTriggerButton(QWidget *parent) :
-      QPushButton(parent),
-      editor_(new KeyBindingEditor(parent, this)) {
-    editor_->setModal(true);   // create a modal dialog
+  KeyBindingEditorTriggerButton(QWidget *parent)
+      : QPushButton(parent), editor_(new KeyBindingEditor(parent, this)) {
+    editor_->setModal(true);  // create a modal dialog
     setFocusProxy(editor_.get());
-    connect(this, SIGNAL(clicked()),
-            editor_.get(), SLOT(show()));
+    connect(this, SIGNAL(clicked()), editor_.get(), SLOT(show()));
   }
 
-  KeyBindingEditor *mutable_editor() {
-    return editor_.get();
-  }
+  KeyBindingEditor *mutable_editor() { return editor_.get(); }
 
  private:
   std::unique_ptr<KeyBindingEditor> editor_;
@@ -65,50 +60,45 @@ KeyBindingEditorDelegate::KeyBindingEditorDelegate(QObject *parent)
 KeyBindingEditorDelegate::~KeyBindingEditorDelegate() {}
 
 QWidget *KeyBindingEditorDelegate::createEditor(
-    QWidget *parent,
-    const QStyleOptionViewItem &option,
+    QWidget *parent, const QStyleOptionViewItem &option,
     const QModelIndex &index) const {
-  KeyBindingEditorTriggerButton *button
-      = new KeyBindingEditorTriggerButton(parent);
+  KeyBindingEditorTriggerButton *button =
+      new KeyBindingEditorTriggerButton(parent);
   CHECK(button);
-  connect(button->mutable_editor(), SIGNAL(accepted()),
-          this, SLOT(CommitAndCloseEditor()));
-  connect(button->mutable_editor(), SIGNAL(rejected()),
-          this, SLOT(CloseEditor()));
+  connect(button->mutable_editor(), SIGNAL(accepted()), this,
+          SLOT(CommitAndCloseEditor()));
+  connect(button->mutable_editor(), SIGNAL(rejected()), this,
+          SLOT(CloseEditor()));
   return button;
 }
 
-void KeyBindingEditorDelegate::setEditorData(
-    QWidget *editor,
-    const QModelIndex &index) const {
+void KeyBindingEditorDelegate::setEditorData(QWidget *editor,
+                                             const QModelIndex &index) const {
   const QString str = index.model()->data(index, Qt::EditRole).toString();
-  KeyBindingEditorTriggerButton *button
-      = static_cast<KeyBindingEditorTriggerButton *>(editor);
-  if (button == NULL) {
+  KeyBindingEditorTriggerButton *button =
+      static_cast<KeyBindingEditorTriggerButton *>(editor);
+  if (button == nullptr) {
     return;
   }
   button->setText(str);
   button->mutable_editor()->SetBinding(str);
 }
 
-void KeyBindingEditorDelegate::setModelData(
-    QWidget *editor, QAbstractItemModel *model,
-    const QModelIndex &index) const {
-  KeyBindingEditorTriggerButton *button
-      = static_cast<KeyBindingEditorTriggerButton *>(editor);
-  if (model == NULL || button == NULL) {
+void KeyBindingEditorDelegate::setModelData(QWidget *editor,
+                                            QAbstractItemModel *model,
+                                            const QModelIndex &index) const {
+  KeyBindingEditorTriggerButton *button =
+      static_cast<KeyBindingEditorTriggerButton *>(editor);
+  if (model == nullptr || button == nullptr) {
     return;
   }
-  model->setData(index,
-                 button->mutable_editor()->GetBinding(),
-                 Qt::EditRole);
+  model->setData(index, button->mutable_editor()->GetBinding(), Qt::EditRole);
 }
 
 void KeyBindingEditorDelegate::updateEditorGeometry(
-    QWidget *editor,
-    const QStyleOptionViewItem &option,
+    QWidget *editor, const QStyleOptionViewItem &option,
     const QModelIndex &index) const {
-  if (editor == NULL) {
+  if (editor == nullptr) {
     return;
   }
   editor->setGeometry(option.rect);
@@ -119,7 +109,7 @@ void KeyBindingEditorDelegate::CommitAndCloseEditor() {
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(
           editor->mutable_trigger_parent());
-  if (button == NULL) {
+  if (button == nullptr) {
     return;
   }
   emit commitData(button);
@@ -131,7 +121,7 @@ void KeyBindingEditorDelegate::CloseEditor() {
   KeyBindingEditorTriggerButton *button =
       static_cast<KeyBindingEditorTriggerButton *>(
           editor->mutable_trigger_parent());
-  if (button == NULL) {
+  if (button == nullptr) {
     return;
   }
   emit closeEditor(button);

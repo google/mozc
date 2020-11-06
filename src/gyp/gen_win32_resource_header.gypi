@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
         '<(gen_output_resource_path)',
       ],
       'action': [
-        'python', '<(script_path)',
+        '<(python)', '<(script_path)',
         '--version_file', '<(version_file_path)',
         '--main', '<(gen_main_resource_path)',
         '--output', '<(gen_output_resource_path)',

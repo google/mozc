@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,16 +28,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A tool to generate test sentences for stress test"
-"""
+"""A tool to generate test sentences for stress test."""
 
-__author__ = "taku"
+from __future__ import print_function
 
+import codecs
 import sys
+import six
+
 
 def escape_string(s):
-  """ escape the string with "\\xXX" format.
+  r"""escape the string with "\\xXX" format.
 
   We don't use encode('string_escape') because it doesn't escape ascii
   characters.
@@ -48,6 +49,9 @@ def escape_string(s):
   Returns:
     an escaped string.
   """
+  if six.PY3:
+    return ''.join(r'\x%02x' % b for b in s.encode('utf-8'))
+
   result = ''
   for c in s:
     hexstr = hex(ord(c))
@@ -55,23 +59,32 @@ def escape_string(s):
     result += '\\x' + hexstr[2:]
   return result
 
+
+def OpenFile(filename):
+  if six.PY2:
+    return open(filename, 'r')
+  else:
+    return codecs.open(filename, 'r', encoding='utf-8')
+
+
 def GenerateHeader(file):
   try:
-    print "const char *kTestSentences[] = {"
-    for line in open(file, "r"):
+    print('const char *kTestSentences[] = {')
+    for line in OpenFile(file):
       if line.startswith('#'):
         continue
       line = line.rstrip('\r\n')
       if not line:
         continue
-      print " \"%s\"," % escape_string(line)
-    print "};"
-  except:
-    print "cannot open %s" % (file)
-    sys.exit(1)
+      print(' "%s",' % escape_string(line))
+    print('};')
+  except Exception as e:
+    print('cannot open %s' % file)
+    raise e
+
 
 def main():
   GenerateHeader(sys.argv[1])
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

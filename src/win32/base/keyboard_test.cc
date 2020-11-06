@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/base/keyboard.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "win32/base/keyboard.h"
 
 namespace mozc {
 namespace win32 {
@@ -40,14 +40,12 @@ const BYTE kToggled = 0x01;
 
 class ImeKeyboardTest : public testing::Test {
  protected:
-  ImeKeyboardTest()
-      : japanese_keyboard_layout_(nullptr) {}
+  ImeKeyboardTest() : japanese_keyboard_layout_(nullptr) {}
 
   virtual ~ImeKeyboardTest() {}
 
   virtual void SetUp() {
-    const HKL hkl = ::LoadKeyboardLayoutW(
-        L"00000411", KLF_ACTIVATE);
+    const HKL hkl = ::LoadKeyboardLayoutW(L"00000411", KLF_ACTIVATE);
 
     // In 32-bit Windows, |hkl| is like 04110411.
     // In 64-bit Windows, |hkl| is like 0000000004110411.
@@ -73,9 +71,7 @@ class ImeKeyboardTest : public testing::Test {
     return available;
   }
 
-  HKL japanese_keyboard_layout() const {
-    return japanese_keyboard_layout_;
-  }
+  HKL japanese_keyboard_layout() const { return japanese_keyboard_layout_; }
 
  private:
   HKL japanese_keyboard_layout_;
@@ -93,9 +89,9 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithKanaLock) {
   keyboard_state[VK_KANA] = kPressed;
 
   wchar_t expected_buffer[16] = {};
-  const int expected_length = ::ToUnicodeEx(
-      'Q', 0, keyboard_state, expected_buffer, arraysize(expected_buffer),
-      0, japanese_keyboard_layout());
+  const int expected_length =
+      ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
+                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
@@ -118,9 +114,9 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithoutCapsLock) {
   BYTE keyboard_state[256] = {};
 
   wchar_t expected_buffer[16] = {};
-  const int expected_length = ::ToUnicodeEx(
-      'Q', 0, keyboard_state, expected_buffer, arraysize(expected_buffer),
-      0, japanese_keyboard_layout());
+  const int expected_length =
+      ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
+                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
@@ -144,9 +140,9 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithCapsLock) {
   keyboard_state[VK_CAPITAL] = kToggled;
 
   wchar_t expected_buffer[16] = {};
-  const int expected_length = ::ToUnicodeEx(
-      'Q', 0, keyboard_state, expected_buffer, arraysize(expected_buffer),
-      0, japanese_keyboard_layout());
+  const int expected_length =
+      ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
+                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
@@ -171,9 +167,9 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCapsLock) {
   keyboard_state[VK_CAPITAL] = kToggled;
 
   wchar_t expected_buffer[16] = {};
-  const int expected_length = ::ToUnicodeEx(
-      'Q', 0, keyboard_state, expected_buffer, arraysize(expected_buffer),
-      0, japanese_keyboard_layout());
+  const int expected_length =
+      ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
+                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
@@ -199,9 +195,9 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCtrlCapsLock) {
   keyboard_state[VK_CAPITAL] = kToggled;
 
   wchar_t expected_buffer[16] = {};
-  const int expected_length = ::ToUnicodeEx(
-      'Q', 0, keyboard_state, expected_buffer, arraysize(expected_buffer),
-      0, japanese_keyboard_layout());
+  const int expected_length =
+      ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
+                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(

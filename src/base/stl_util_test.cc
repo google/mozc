@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,12 @@ namespace {
 
 // This templatized helper can subclass any class and count how many times
 // instances have been constructed or destructed.  It is used to make sure
-// that deletes are actually occuring.
+// that deletes are actually occurring.
 template <class T>
-class InstanceCounter: public T {
+class InstanceCounter : public T {
  public:
-  InstanceCounter<T>() : T () {
-    ++instance_count;
-  }
-  ~InstanceCounter<T>() {
-    --instance_count;
-  }
+  InstanceCounter<T>() : T() { ++instance_count; }
+  ~InstanceCounter<T>() { --instance_count; }
   static int instance_count;
 };
 template <class T>
@@ -54,20 +50,20 @@ int InstanceCounter<T>::instance_count = 0;
 }  // namespace
 
 TEST(STLDeleteElementsTest, STLDeleteElements) {
-  std::vector<InstanceCounter<string> *> v;
-  v.push_back(new InstanceCounter<string>());
-  v.push_back(new InstanceCounter<string>());
-  v.push_back(new InstanceCounter<string>());
-  EXPECT_EQ(3, InstanceCounter<string>::instance_count);
-  v.push_back(NULL);
-  EXPECT_EQ(3, InstanceCounter<string>::instance_count);
-  STLDeleteElements(&v);
-  EXPECT_EQ(0, InstanceCounter<string>::instance_count);
+  std::vector<InstanceCounter<std::string> *> v;
+  v.push_back(new InstanceCounter<std::string>());
+  v.push_back(new InstanceCounter<std::string>());
+  v.push_back(new InstanceCounter<std::string>());
+  EXPECT_EQ(3, InstanceCounter<std::string>::instance_count);
+  v.push_back(nullptr);
+  EXPECT_EQ(3, InstanceCounter<std::string>::instance_count);
+  mozc::STLDeleteElements(&v);
+  EXPECT_EQ(0, InstanceCounter<std::string>::instance_count);
   EXPECT_EQ(0, v.size());
 
-  // Deleting NULL pointers to containers is ok.
-  std::vector<InstanceCounter<string> *> *p = NULL;
-  STLDeleteElements(p);
+  // Deleting nullptr pointers to containers is ok.
+  std::vector<InstanceCounter<std::string> *> *p = nullptr;
+  mozc::STLDeleteElements(p);
 }
 
 TEST(StlUtilTest, OrderBy) {

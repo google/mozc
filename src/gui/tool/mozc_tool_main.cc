@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/winmain.h"
 #include "gui/tool/mozc_tool_libmain.h"
 
-int main(int argc, char *argv[]) {
-  return RunMozcTool(argc, argv);
-}
+#ifdef OS_WIN
+#include "base/winmain.h"
+#endif  // OS_WIN
+
+int main(int argc, char *argv[]) { return RunMozcTool(argc, argv); }

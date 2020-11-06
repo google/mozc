@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,13 +48,13 @@ namespace internal {
 
 namespace {
 
-bool EqualsProtoInternal(
-    const Message &message1, const Message &message2, bool is_partial);
+bool EqualsProtoInternal(const Message &message1, const Message &message2,
+                         bool is_partial);
 
 // Compares (non-repeated) filed of the given messages.
-bool EqualsField(
-    const FieldDescriptor *field, const Reflection *reflection,
-    const Message &message1, const Message &message2, bool is_partial) {
+bool EqualsField(const FieldDescriptor *field, const Reflection *reflection,
+                 const Message &message1, const Message &message2,
+                 bool is_partial) {
   const bool has_field = reflection->HasField(message1, field);
   if (is_partial && !has_field) {
     // Don't check empty fields for partial equality check.
@@ -67,11 +67,11 @@ bool EqualsField(
 
 // Use macro for boilerplate code generation.
 #define MOZC_PROTO_FIELD_EQ_CASE(cpptype, method) \
-  case FieldDescriptor::cpptype: \
-    if (reflection->method(message1, field) != \
-        reflection->method(message2, field)) { \
-      return false; \
-    } \
+  case FieldDescriptor::cpptype:                  \
+    if (reflection->method(message1, field) !=    \
+        reflection->method(message2, field)) {    \
+      return false;                               \
+    }                                             \
     break
 
   switch (field->cpp_type()) {
@@ -85,10 +85,9 @@ bool EqualsField(
     MOZC_PROTO_FIELD_EQ_CASE(CPPTYPE_ENUM, GetEnum);
     MOZC_PROTO_FIELD_EQ_CASE(CPPTYPE_STRING, GetString);
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      if (!EqualsProtoInternal(
-              reflection->GetMessage(message1, field),
-              reflection->GetMessage(message2, field),
-              is_partial)) {
+      if (!EqualsProtoInternal(reflection->GetMessage(message1, field),
+                               reflection->GetMessage(message2, field),
+                               is_partial)) {
         return false;
       }
       break;
@@ -101,9 +100,9 @@ bool EqualsField(
   return true;
 }
 
-bool EqualsRepeatedField(
-    const FieldDescriptor *field, const Reflection *reflection,
-    const Message &message1, const Message &message2, bool is_partial) {
+bool EqualsRepeatedField(const FieldDescriptor *field,
+                         const Reflection *reflection, const Message &message1,
+                         const Message &message2, bool is_partial) {
   const int field_size = reflection->FieldSize(message1, field);
   if (is_partial && field_size == 0) {
     // Don't check empty fields for partial equality check.
@@ -116,13 +115,13 @@ bool EqualsRepeatedField(
 
 // Use macro for boilerplate code generation.
 #define MOZC_PROTO_REPEATED_FIELD_EQ_CASE(cpptype, method) \
-  case FieldDescriptor::cpptype: \
-    for (int i = 0; i < field_size; ++i) { \
-      if (reflection->method(message1, field, i) != \
-          reflection->method(message2, field, i)) { \
-        return false;\
-      } \
-    } \
+  case FieldDescriptor::cpptype:                           \
+    for (int i = 0; i < field_size; ++i) {                 \
+      if (reflection->method(message1, field, i) !=        \
+          reflection->method(message2, field, i)) {        \
+        return false;                                      \
+      }                                                    \
+    }                                                      \
     break
 
   switch (field->cpp_type()) {
@@ -154,8 +153,8 @@ bool EqualsRepeatedField(
   return true;
 }
 
-bool EqualsProtoInternal(
-    const Message &message1, const Message &message2, bool is_partial) {
+bool EqualsProtoInternal(const Message &message1, const Message &message2,
+                         bool is_partial) {
   const Descriptor *descriptor = message1.GetDescriptor();
   CHECK(descriptor == message2.GetDescriptor());
 
@@ -166,8 +165,8 @@ bool EqualsProtoInternal(
     const FieldDescriptor *field = descriptor->field(i);
     CHECK(field != nullptr);
     if (field->is_repeated()) {
-      if (!EqualsRepeatedField(
-              field, reflection, message1, message2, is_partial)) {
+      if (!EqualsRepeatedField(field, reflection, message1, message2,
+                               is_partial)) {
         return false;
       }
     } else {
@@ -182,29 +181,32 @@ bool EqualsProtoInternal(
 
 }  // namespace
 
-::testing::AssertionResult EqualsProtoFormat(
-    const char *expect_string, const char *actual_string,
-    const Message &expect, const Message &actual,
-    bool is_partial) {
+::testing::AssertionResult EqualsProtoFormat(const char *expect_string,
+                                             const char *actual_string,
+                                             const Message &expect,
+                                             const Message &actual,
+                                             bool is_partial) {
   if (EqualsProtoInternal(expect, actual, is_partial)) {
     return ::testing::AssertionSuccess();
   }
 
   return ::testing::AssertionFailure()
-      << "EXPECT_PROTO_" << (is_partial ? "P" : "") << "EQ("
-      << expect_string << ", " << actual_string << ")"
-      << " evaluates to false, where\n"
-      << expect_string << " evaluates to " << expect.Utf8DebugString() << "\n"
-      << actual_string << " evaluates to " << actual.Utf8DebugString();
+         << "EXPECT_PROTO_" << (is_partial ? "P" : "") << "EQ(" << expect_string
+         << ", " << actual_string << ")"
+         << " evaluates to false, where\n"
+         << expect_string << " evaluates to " << expect.Utf8DebugString()
+         << "\n"
+         << actual_string << " evaluates to " << actual.Utf8DebugString();
 }
 
 }  // namespace internal
 
 namespace {
-::testing::AssertionResult EqualsProtoWithParse(
-    const char *expect_string, const char *actual_string,
-    const char *expect, const Message &actual,
-    bool is_partial) {
+::testing::AssertionResult EqualsProtoWithParse(const char *expect_string,
+                                                const char *actual_string,
+                                                const char *expect,
+                                                const Message &actual,
+                                                bool is_partial) {
   // Note: Message::New returns an instance of the actual type,
   // so we can convert the string representation of the "actual"'s type,
   // by simply parsing it.
@@ -214,23 +216,25 @@ namespace {
   CHECK(parser.ParseFromString(expect, expect_message.get()))
       << "Failed to parse message: " << expect;
 
-  return internal::EqualsProtoFormat(
-      expect_string, actual_string, *expect_message, actual, is_partial);
+  return internal::EqualsProtoFormat(expect_string, actual_string,
+                                     *expect_message, actual, is_partial);
 }
 }  // namespace
 
-::testing::AssertionResult EqualsProto(
-    const char *expect_string, const char *actual_string,
-    const char *expect, const Message &actual) {
-  return EqualsProtoWithParse(
-      expect_string, actual_string, expect, actual, false);
+::testing::AssertionResult EqualsProto(const char *expect_string,
+                                       const char *actual_string,
+                                       const char *expect,
+                                       const Message &actual) {
+  return EqualsProtoWithParse(expect_string, actual_string, expect, actual,
+                              false);
 }
 
-::testing::AssertionResult PartiallyEqualsProto(
-    const char *expect_string, const char *actual_string,
-    const char *expect, const Message &actual) {
-  return EqualsProtoWithParse(
-      expect_string, actual_string, expect, actual, true);
+::testing::AssertionResult PartiallyEqualsProto(const char *expect_string,
+                                                const char *actual_string,
+                                                const char *expect,
+                                                const Message &actual) {
+  return EqualsProtoWithParse(expect_string, actual_string, expect, actual,
+                              true);
 }
 
 }  // namespace testing

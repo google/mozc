@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
 class GoogleJapaneseInputServerTest : public testing::Test {
  protected:
   void SetUp() {
-    pool_ = [[NSAutoreleasePool alloc] init];
     // Although GoogleJapaneseInputServer is a subclass of IMKServer,
     // it does not use initWithName:... method to instantiate the
     // object because we don't test those IMKServer functionality
@@ -44,13 +43,7 @@ class GoogleJapaneseInputServerTest : public testing::Test {
     server_ = [[GoogleJapaneseInputServer alloc] init];
   }
 
-  void TearDown() {
-    [pool_ drain];
-    [server_ release];
-  }
-
  protected:
-  NSAutoreleasePool *pool_;
   GoogleJapaneseInputServer *server_;
 };
 
@@ -90,7 +83,7 @@ class GoogleJapaneseInputServerTest : public testing::Test {
 @end
 
 TEST_F(GoogleJapaneseInputServerTest, sendData) {
-  MockController *controller = [[[MockController alloc] init] autorelease];
+  MockController *controller = [[MockController alloc] init];
   [server_ setCurrentController:controller];
 
   mozc::commands::SessionCommand command;
@@ -106,7 +99,7 @@ TEST_F(GoogleJapaneseInputServerTest, sendData) {
 }
 
 TEST_F(GoogleJapaneseInputServerTest, outputResult) {
-  MockController *controller = [[[MockController alloc] init] autorelease];
+  MockController *controller = [[MockController alloc] init];
   [server_ setCurrentController:controller];
 
   mozc::commands::Output output;

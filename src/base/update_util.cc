@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,27 +41,18 @@ bool UpdateUtil::WriteActiveUsageInfo() {
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
 
 #ifdef OS_WIN
-  const wchar_t kOmahaUsageKey[] = L"Software\\Google\\Update\\ClientState\\"
-                                   L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
+  const wchar_t kOmahaUsageKey[] =
+      L"Software\\Google\\Update\\ClientState\\"
+      L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
   HKEY key;
-  LONG result = RegCreateKeyExW(HKEY_CURRENT_USER,
-                                kOmahaUsageKey,
-                                0,
-                                NULL,
-                                0,
-                                KEY_WRITE,
-                                NULL,
-                                &key,
-                                NULL);
+  LONG result = RegCreateKeyExW(HKEY_CURRENT_USER, kOmahaUsageKey, 0, nullptr,
+                                0, KEY_WRITE, nullptr, &key, nullptr);
   if (ERROR_SUCCESS != result) {
     return false;
   }
   const wchar_t kDidRunName[] = L"dr";
   const wchar_t kDidRunValue[] = L"1";
-  result = RegSetValueExW(key,
-                          kDidRunName,
-                          0,
-                          REG_SZ,
+  result = RegSetValueExW(key, kDidRunName, 0, REG_SZ,
                           reinterpret_cast<const BYTE *>(kDidRunValue),
                           sizeof(kDidRunValue));
   RegCloseKey(key);

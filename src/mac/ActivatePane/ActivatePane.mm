@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@ static void ActivateGoogleJapaneseInput() {
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
     TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
         sourceList, i));
-    NSString *sourceID = (NSString *)(TISGetInputSourceProperty(
+    NSString *sourceID = (__bridge NSString *)(TISGetInputSourceProperty(
         inputSource, kTISPropertyInputSourceID));
     if ([sourceID isEqualToString:kSourceID]) {
       TISEnableInputSource(inputSource);
@@ -98,7 +98,7 @@ static BOOL IsAlreadyActive() {
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
     TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
         sourceList, i));
-    NSString *sourceID = (NSString *)(TISGetInputSourceProperty(
+    NSString *sourceID = (__bridge NSString *)(TISGetInputSourceProperty(
         inputSource, kTISPropertyInputSourceID));
     if ([sourceID isEqualToString:kSourceID]) {
       CFBooleanRef isEnabled = (CFBooleanRef)(TISGetInputSourceProperty(
@@ -125,7 +125,6 @@ static BOOL HasUsageStatsDB() {
 #elif defined(CHANNEL_DEV)
   return YES;
 #endif  // CHANNEL_DEV
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, YES);
   NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -133,7 +132,6 @@ static BOOL HasUsageStatsDB() {
   NSString *usageStatsDBPath = nil;
   BOOL exists = NO;
   if (libraryPaths == nil || [libraryPaths count] == 0) {
-    [pool drain];
     return NO;
   }
   libraryPath = [libraryPaths objectAtIndex:0];
@@ -143,7 +141,6 @@ static BOOL HasUsageStatsDB() {
         stringByAppendingPathComponent:@"JapaneseInput"]
         stringByAppendingPathComponent:@".usagestats.db"];
   exists = [fileManager fileExistsAtPath:usageStatsDBPath];
-  [pool drain];
   return exists;
 }
 
@@ -154,7 +151,6 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
 #ifndef GOOGLE_JAPANESE_INPUT_BUILD
   return NO;
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
       NSLibraryDirectory, NSUserDomainMask, YES);
   NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -163,7 +159,6 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   NSString *japaneseInputPath = nil;
   NSString *usageStatsDBPath = nil;
   if (libraryPaths == nil || [libraryPaths count] == 0) {
-    [pool drain];
     return NO;
   }
 
@@ -179,7 +174,6 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
                 withIntermediateDirectories:YES
                                  attributes:defaultAttributes
                                       error:nullptr]) {
-      [pool drain];
       return NO;
     }
   }
@@ -194,7 +188,6 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
                 withIntermediateDirectories:YES
                                  attributes:japaneseInputAttributes
                                       error:nullptr]) {
-      [pool drain];
       return NO;
     }
   }
@@ -212,12 +205,10 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
                              contents:[NSData dataWithBytes:&sending
                                                      length:4]
                            attributes:usageStatsDBAttributes]) {
-      [pool drain];
       return YES;
     }
   }
 
-  [pool drain];
   return NO;
 }
 

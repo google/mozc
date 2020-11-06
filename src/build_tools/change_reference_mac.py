@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Change the reference to frameworks.
+r"""Change the reference to frameworks.
 
 Typical usage:
 
@@ -79,32 +79,32 @@ def main():
   if not opt.target:
     PrintErrorAndExit('--target option is mandatory.')
 
-  qtdir = os.path.abspath(opt.qtdir)
+  unused_qtdir = os.path.abspath(opt.qtdir)  # TODO(komatsu): remove this.
   target = os.path.abspath(opt.target)
 
   # Changes the reference to QtCore framework from the target application
-  # From: /path/to/qt/lib/QtCore.framework/Versions/5/QtCore
+  # From: @rpath/QtCore.framework/Versions/5/QtCore
   #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
   qtcore_framework = GetFrameworkPath('QtCore', '5')
   InstallNameTool(target,
-                  '%s/lib/%s' % (qtdir, qtcore_framework),
+                  '@rpath/%s' % qtcore_framework,
                   GetReferenceTo(qtcore_framework))
 
   # Changes the reference to QtGui framework from the target application
   qtgui_framework = GetFrameworkPath('QtGui', '5')
   InstallNameTool(target,
-                  '%s/lib/%s' % (qtdir, qtgui_framework),
+                  '@rpath/%s' % qtgui_framework,
                   GetReferenceTo(qtgui_framework))
 
   # Changes the reference to QtWidgets framework from the target application
   qtwidgets_framework = GetFrameworkPath('QtWidgets', '5')
   InstallNameTool(target,
-                  '%s/lib/%s' % (qtdir, qtwidgets_framework),
+                  '@rpath/%s' % qtwidgets_framework,
                   GetReferenceTo(qtwidgets_framework))
 
   # Change the reference to $(branding)Tool_lib from the target application
   # From: @executable_path/../Frameworks/MozcTool_lib.framework/...
-  #   To: @executable_path/../../../MozcTool.app/Contents/Frameworks/...
+  #   To: @executable_path/../../../ConfigDialog.app/Contents/Frameworks/...
   toollib_framework = GetFrameworkPath('GuiTool_lib', 'A')
   InstallNameTool(target,
                   '@executable_path/../Frameworks/%s' % toollib_framework,

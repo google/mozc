@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <Windows.h>
 #include <CGuid.h>
+#include <Windows.h>
 
 #include "base/const.h"
 #include "base/util.h"
@@ -42,12 +42,14 @@ namespace win32 {
 namespace {
 
 // Windows NT 6.0, 6.1
-const CLSID CLSID_IMJPTIP = {
-    0x03b5835f, 0xf03c, 0x411b, {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}
-};
-const GUID GUID_IMJPTIP = {
-    0xa76c93d9, 0x5523, 0x4e90, {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}
-};
+const CLSID CLSID_IMJPTIP = {0x03b5835f,
+                             0xf03c,
+                             0x411b,
+                             {0x9c, 0xe2, 0xaa, 0x23, 0xe1, 0x17, 0x1e, 0x36}};
+const GUID GUID_IMJPTIP = {0xa76c93d9,
+                           0x5523,
+                           0x4e90,
+                           {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
 const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
 const DWORD kJapaneseKLID = 0xE0200411;
@@ -103,10 +105,7 @@ TEST(UninstallHelperTest, BasicCaseForVista) {
   std::vector<LayoutProfileInfo> removed_profiles;
 
   EXPECT_TRUE(UninstallHelper::GetNewEnabledProfileForVista(
-      current_profiles,
-      installed_profiles,
-      &current_default,
-      &new_default,
+      current_profiles, installed_profiles, &current_default, &new_default,
       &removed_profiles));
 
   EXPECT_EQ(1, removed_profiles.size());
@@ -170,10 +169,7 @@ TEST(UninstallHelperTest, BasicCaseForWin8) {
   std::vector<LayoutProfileInfo> removed_profiles;
 
   EXPECT_TRUE(UninstallHelper::GetNewEnabledProfileForVista(
-      current_profiles,
-      installed_profiles,
-      &current_default,
-      &new_default,
+      current_profiles, installed_profiles, &current_default, &new_default,
       &removed_profiles));
 
   EXPECT_EQ(2, removed_profiles.size());
@@ -193,8 +189,7 @@ TEST(UninstallHelperTest, LoadKeyboardProfilesTest) {
       kLANGJaJP, &installed_profiles));
 
   std::vector<LayoutProfileInfo> current_profiles;
-  EXPECT_TRUE(UninstallHelper::GetCurrentProfilesForVista(
-      &current_profiles));
+  EXPECT_TRUE(UninstallHelper::GetCurrentProfilesForVista(&current_profiles));
 }
 
 TEST(UninstallHelperTest, ComposeProfileStringForVistaTest) {
@@ -216,9 +211,10 @@ TEST(UninstallHelperTest, ComposeProfileStringForVistaTest) {
   }
   const std::wstring &profile_string =
       UninstallHelper::ComposeProfileStringForVista(profiles);
-  EXPECT_EQ(L"0411:E0220411;0411:{03B5835F-F03C-411B-9CE2-AA23E1171E36}"
-            L"{A76C93D9-5523-4E90-AAFA-4DB112F9AC76}",
-            profile_string);
+  EXPECT_EQ(
+      L"0411:E0220411;0411:{03B5835F-F03C-411B-9CE2-AA23E1171E36}"
+      L"{A76C93D9-5523-4E90-AAFA-4DB112F9AC76}",
+      profile_string);
 }
 
 }  // namespace win32

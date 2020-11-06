@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,13 @@
 
 #import <Foundation/Foundation.h>
 
+#ifdef OS_IOS
+#import <UIKit/UIKit.h>
+#else
 #include <launch.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
+#endif
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -45,9 +49,11 @@ namespace mozc {
 namespace {
 const char kServerDirectory[] =
     "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources";
+#ifndef OS_IOS
 const unsigned char kPrelauncherPath[] =
     "/Library/Input Methods/" kProductPrefix ".app/Contents/Resources/"
     kProductPrefix "Prelauncher.app";
+#endif  // OS_IOS
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const char kProjectPrefix[] =
@@ -59,6 +65,7 @@ const char kProjectPrefix[] =
 #error Unknown branding
 #endif
 
+#ifndef OS_IOS
 // Returns the reference of prelauncher login item.
 // If the prelauncher login item does not exist this function returns nullptr.
 // Otherwise you must release the reference.
@@ -116,6 +123,7 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 
   return prelauncher_item;
 }
+#endif  // OS_IOS
 
 string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
   string dir;
@@ -185,8 +193,18 @@ string MacUtil::GetResourcesDirectory() {
   return result;
 }
 
+#ifdef OS_IOS
 string MacUtil::GetSerialNumber() {
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  string result;
+  NSString *const kSerialNumberNSString =
+      [[UIDevice currentDevice].identifierForVendor UUIDString];
+  if (kSerialNumberNSString != nil) {
+    result.assign([kSerialNumberNSString UTF8String]);
+  }
+  return result;
+}
+#else
+string MacUtil::GetSerialNumber() {
   // Please refer to TN1103 for the details
   // http://developer.apple.com/library/mac/#technotes/tn/tn1103.html
   string result;
@@ -199,15 +217,13 @@ string MacUtil::GetSerialNumber() {
             platformExpert, CFSTR(kIOPlatformSerialNumberKey),
             kCFAllocatorDefault, 0);
     if (serialNumberAsCFString) {
-      const NSString *serialNumberNSString = reinterpret_cast<const NSString *>(
-          serialNumberAsCFString);
+      NSString *serialNumberNSString = (__bridge NSString*)serialNumberAsCFString;
       result.assign([serialNumberNSString UTF8String]);
     }
 
     IOObjectRelease(platformExpert);
   }
 
-  [pool drain];
   // Return the empty string if failed.
   return result;
 }
@@ -374,5 +390,6 @@ bool MacUtil::IsSuppressSuggestionWindow(const string &name,
               " - Google \xE6\xA4\x9C\xE7\xB4\xA2") ||  // " - Google 検索"
           Util::EndsWith(name, " - Google Search"));
 }
+#endif  // OS_IOS
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,46 +49,33 @@ class KeyTranslator {
 
   // Converts ibus keycode to Mozc key code and stores them on |out_event|.
   // Returns true if ibus keycode is successfully converted to Mozc key code.
-  bool Translate(guint keyval,
-                 guint keycode,
-                 guint modifiers,
-                 config::Config::PreeditMethod method,
-                 bool layout_is_jp,
+  bool Translate(guint keyval, guint keycode, guint modifiers,
+                 config::Config::PreeditMethod method, bool layout_is_jp,
                  commands::KeyEvent *out_event) const;
 
  private:
   typedef std::map<guint, commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<guint, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<guint, std::pair<string, string> > KanaMap;
+  typedef std::map<guint, std::pair<string, std::string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(guint keyval,
-                     guint keycode,
-                     guint modifiers) const;
+  bool IsModifierKey(guint keyval, guint keycode, guint modifiers) const;
 
   // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(guint keyval,
-                    guint keycode,
-                    guint modifiers) const;
+  bool IsSpecialKey(guint keyval, guint keycode, guint modifiers) const;
 
   // Returns true iff |keyval| is a key with a kana assigned.
-  bool IsKanaAvailable(guint keyval,
-                       guint keycode,
-                       guint modifiers,
-                       bool layout_is_jp,
-                       string *out) const;
+  bool IsKanaAvailable(guint keyval, guint keycode, guint modifiers,
+                       bool layout_is_jp, std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
-  static bool IsAscii(guint keyval,
-                      guint keycode,
-                      guint modifiers);
+  static bool IsAscii(guint keyval, guint keycode, guint modifiers);
 
   // Returns true iff key is printable.
   static bool IsPrintable(guint keyval, guint keycode, guint modifiers);
 
   // Returns true iff key is HiraganaKatakana with shift modifier.
-  static bool IsHiraganaKatakanaKeyWithShift(guint keyval,
-                                             guint keycode,
+  static bool IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
                                              guint modifiers);
 
   // Initializes private fields.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,26 +27,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// This file is for Mac used in mozc_tool_libmain.cc
+
 #include <memory>
 
 #include "base/flags.h"
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include "base/mac_util.h"
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #include "client/client_interface.h"
 #include "renderer/renderer_client.h"
 
-#ifdef OS_MACOSX
-DEFINE_bool(register_prelauncher, false,
-            "Register prelauncher to login item.");
-#endif  // OS_MACOSX
+#ifdef __APPLE__
+DEFINE_bool(register_prelauncher, false, "Register prelauncher to login item.");
+#endif  // __APPLE__
 
 int RunPrelaunchProcesses(int argc, char *argv[]) {
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   if (FLAGS_register_prelauncher) {
     mozc::MacUtil::AddPrelauncherLoginItem();
   }
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
   {
     std::unique_ptr<mozc::client::ClientInterface> converter_client(

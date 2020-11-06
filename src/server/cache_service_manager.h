@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,6 @@ class CacheServiceManager {
   // - The cache service is installed and running but successfully stopped by
   //   this function.
   static bool EnsureServiceStopped();
-
 
  private:
   CacheServiceManager() {}

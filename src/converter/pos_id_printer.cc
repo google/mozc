@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,12 +44,12 @@ namespace mozc {
 namespace internal {
 
 PosIdPrinter::PosIdPrinter(std::istream *id_def) {
-  if (id_def == NULL) {
+  if (id_def == nullptr) {
     return;
   }
 
-  string line;
-  std::vector<string> columns;
+  std::string line;
+  std::vector<std::string> columns;
   while (getline(*id_def, line)) {
     columns.clear();
     Util::SplitStringUsing(line, " ", &columns);
@@ -61,8 +61,8 @@ PosIdPrinter::PosIdPrinter(std::istream *id_def) {
 
 PosIdPrinter::~PosIdPrinter() {}
 
-string PosIdPrinter::IdToString(int id) const {
-  std::map<int, string>::const_iterator iter = id_to_pos_map_.find(id);
+std::string PosIdPrinter::IdToString(int id) const {
+  std::map<int, std::string>::const_iterator iter = id_to_pos_map_.find(id);
   if (iter == id_to_pos_map_.end()) {
     return "";
   }

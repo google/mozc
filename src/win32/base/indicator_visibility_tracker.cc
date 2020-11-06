@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,8 @@ namespace {
 
 const double kIgnoreMoveWindowDuration = 500.0;  // msec
 
-IndicatorVisibilityTracker::Action GetDefaultAction(
-    bool previously_visible, bool now_visible) {
+IndicatorVisibilityTracker::Action GetDefaultAction(bool previously_visible,
+                                                    bool now_visible) {
   if (previously_visible == now_visible) {
     return IndicatorVisibilityTracker::kNothing;
   }
@@ -49,8 +49,7 @@ IndicatorVisibilityTracker::Action GetDefaultAction(
 
 struct IndicatorVisibilityTracker::InternalState {
  public:
-  InternalState()
-      : visible(false) {}
+  InternalState() : visible(false) {}
 
   bool visible;
   Stopwatch mode_changed_;
@@ -119,9 +118,7 @@ IndicatorVisibilityTracker::OnChangeInputMode() {
   return GetDefaultAction(original, state_->visible);
 }
 
-bool IndicatorVisibilityTracker::IsVisible() const {
-  return state_->visible;
-}
+bool IndicatorVisibilityTracker::IsVisible() const { return state_->visible; }
 
 }  // namespace win32
 }  // namespace mozc

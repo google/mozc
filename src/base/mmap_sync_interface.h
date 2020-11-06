@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,11 +37,6 @@ namespace mozc {
 class MmapSyncInterface {
  public:
   virtual ~MmapSyncInterface() {}
-
-#ifdef MOZC_USE_PEPPER_FILE_IO
-  // Save the data in memory to the file.
-  virtual bool SyncToFile() = 0;
-#endif  // MOZC_USE_PEPPER_FILE_IO
 };
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,8 @@ class TestThread : public Thread {
     Util::Sleep(time_);
   }
 
-  bool invoked() const {
-    return invoked_;
-  }
-  void clear_invoked() {
-    invoked_ = false;
-  }
+  bool invoked() const { return invoked_; }
+  void clear_invoked() { invoked_ = false; }
 
  private:
   int time_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,7 @@ namespace {
 
 once_t g_aux_lib_initialized = MOZC_ONCE_INIT;
 
-void CallAuxUlibInitialize() {
-  ::AuxUlibInitialize();
-}
+void CallAuxUlibInitialize() { ::AuxUlibInitialize(); }
 
 bool EqualLuid(const LUID &L1, const LUID &L2) {
   return (L1.LowPart == L2.LowPart && L1.HighPart == L2.HighPart);
@@ -91,8 +89,7 @@ HMODULE WinUtil::LoadSystemLibrary(const std::wstring &base_filename) {
   fullpath += L"\\";
   fullpath += base_filename;
 
-  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          nullptr,
+  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(), nullptr,
                                           LOAD_WITH_ALTERED_SEARCH_PATH);
   if (nullptr == module) {
     const int last_error = ::GetLastError();
@@ -109,8 +106,7 @@ HMODULE WinUtil::LoadMozcLibrary(const std::wstring &base_filename) {
   fullpath += L"\\";
   fullpath += base_filename;
 
-  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(),
-                                          nullptr,
+  const HMODULE module = ::LoadLibraryExW(fullpath.c_str(), nullptr,
                                           LOAD_WITH_ALTERED_SEARCH_PATH);
   if (nullptr == module) {
     const int last_error = ::GetLastError();
@@ -161,12 +157,10 @@ bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
   }
 
   BOOL synchronization_held = FALSE;
-  const BOOL result =
-      ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
+  const BOOL result = ::AuxUlibIsDLLSynchronizationHeld(&synchronization_held);
   if (!result) {
     const int error = ::GetLastError();
-    DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = "
-                << error;
+    DLOG(ERROR) << "AuxUlibIsDLLSynchronizationHeld failed. error = " << error;
     return false;
   }
   *lock_status = (synchronization_held != FALSE);
@@ -181,8 +175,8 @@ HWND WinUtil::DecodeWindowHandle(uint32 window_handle_value) {
   return reinterpret_cast<HWND>(static_cast<uintptr_t>(window_handle_value));
 }
 
-bool WinUtil::SystemEqualString(
-      const std::wstring &lhs, const std::wstring &rhs, bool ignore_case) {
+bool WinUtil::SystemEqualString(const std::wstring &lhs,
+                                const std::wstring &rhs, bool ignore_case) {
   // We assume a string instance never contains NUL character in principle.
   // So we will raise an error to notify the unexpected situation in debug
   // builds.  In production, however, we will admit such an instance and
@@ -197,9 +191,8 @@ bool WinUtil::SystemEqualString(
   const std::wstring &rhs_null_trimmed = rhs.substr(0, rhs_null_pos);
 
   const int compare_result = ::CompareStringOrdinal(
-      lhs_null_trimmed.data(), lhs_null_trimmed.size(),
-      rhs_null_trimmed.data(), rhs_null_trimmed.size(),
-      (ignore_case ? TRUE : FALSE));
+      lhs_null_trimmed.data(), lhs_null_trimmed.size(), rhs_null_trimmed.data(),
+      rhs_null_trimmed.size(), (ignore_case ? TRUE : FALSE));
 
   return compare_result == CSTR_EQUAL;
 }
@@ -212,8 +205,8 @@ bool WinUtil::IsServiceUser(HANDLE hToken, bool *is_service) {
   TOKEN_STATISTICS ts;
   DWORD dwSize = 0;
   // Use token logon LUID instead of user SID, for brevity and safety
-  if (!::GetTokenInformation(hToken, TokenStatistics,
-                             (LPVOID)&ts, sizeof(ts), &dwSize)) {
+  if (!::GetTokenInformation(hToken, TokenStatistics, (LPVOID)&ts, sizeof(ts),
+                             &dwSize)) {
     return false;
   }
 
@@ -249,8 +242,7 @@ bool WinUtil::IsServiceProcess(bool *is_service) {
   // Get process token
   HANDLE hProcessToken = nullptr;
   if (!::OpenProcessToken(::GetCurrentProcess(),
-                          TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                          &hProcessToken)) {
+                          TOKEN_QUERY | TOKEN_QUERY_SOURCE, &hProcessToken)) {
     return false;
   }
 
@@ -271,8 +263,8 @@ bool WinUtil::IsServiceThread(bool *is_service) {
 
   // Get thread token (if any)
   HANDLE hThreadToken = nullptr;
-  if (!::OpenThreadToken(::GetCurrentThread(),
-                        TOKEN_QUERY, TRUE, &hThreadToken) &&
+  if (!::OpenThreadToken(::GetCurrentThread(), TOKEN_QUERY, TRUE,
+                         &hThreadToken) &&
       ERROR_NO_TOKEN != ::GetLastError()) {
     return false;
   }
@@ -325,8 +317,7 @@ bool WinUtil::IsServiceAccount(bool *is_service) {
   return true;
 }
 
-bool WinUtil::IsProcessImmersive(HANDLE process_handle,
-                                 bool *is_immersive) {
+bool WinUtil::IsProcessImmersive(HANDLE process_handle, bool *is_immersive) {
   if (is_immersive == nullptr) {
     return false;
   }
@@ -341,7 +332,7 @@ bool WinUtil::IsProcessImmersive(HANDLE process_handle,
     return false;
   }
 
-  typedef BOOL (WINAPI* IsImmersiveProcessFunc)(HANDLE process);
+  typedef BOOL(WINAPI * IsImmersiveProcessFunc)(HANDLE process);
   IsImmersiveProcessFunc is_immersive_process =
       reinterpret_cast<IsImmersiveProcessFunc>(
           ::GetProcAddress(module, "IsImmersiveProcess"));
@@ -405,8 +396,8 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
 #endif  // _WIN32_WINNT_WIN8
   DWORD returned_size = 0;
   DWORD retval = 0;
-  if (!GetTokenInformation(process_token.get(), kTokenIsAppContainer,
-                           &retval, sizeof(retval), &returned_size)) {
+  if (!GetTokenInformation(process_token.get(), kTokenIsAppContainer, &retval,
+                           sizeof(retval), &returned_size)) {
     return false;
   }
   if (returned_size != sizeof(retval)) {
@@ -417,8 +408,8 @@ bool WinUtil::IsProcessInAppContainer(HANDLE process_handle,
   return true;
 }
 
-bool WinUtil::GetFileSystemInfoFromPath(
-    const std::wstring &path, BY_HANDLE_FILE_INFORMATION *info) {
+bool WinUtil::GetFileSystemInfoFromPath(const std::wstring &path,
+                                        BY_HANDLE_FILE_INFORMATION *info) {
   // no read access is required.
   ScopedHandle handle(::CreateFileW(
       path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -456,9 +447,9 @@ bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
 
   ScopedHandle file_handle(::CreateFileW(
       dos_path.c_str(), 0,
-      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-      nullptr, OPEN_EXISTING,
-      FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL, nullptr));
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+      OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_ATTRIBUTE_NORMAL,
+      nullptr));
   if (file_handle.get() == nullptr) {
     // Caveats: |file_handle.get()| becomes nullptr instead of
     // INVALID_HANDLE_VALUE when failure.
@@ -466,15 +457,11 @@ bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
   }
 
   const size_t kMaxPath = 4096;
-  unique_ptr<wchar_t[]> ntpath_buffer(
-      new wchar_t[kMaxPath]);
+  unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
   const DWORD copied_len_without_null = ::GetFinalPathNameByHandleW(
-      file_handle.get(),
-      ntpath_buffer.get(),
-      kMaxPath,
+      file_handle.get(), ntpath_buffer.get(), kMaxPath,
       FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
-  if (copied_len_without_null == 0 ||
-      copied_len_without_null > kMaxPath) {
+  if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {
     const DWORD error = ::GetLastError();
     VLOG(1) << "GetFinalPathNameByHandleW() failed: " << error;
     return false;
@@ -490,8 +477,8 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
   }
   nt_path->clear();
 
-  ScopedHandle process_handle(::OpenProcess(
-      PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
+  ScopedHandle process_handle(
+      ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
 
   if (process_handle.get() == nullptr) {
     VLOG(1) << "OpenProcess() failed: " << ::GetLastError();
@@ -500,10 +487,8 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
 
   const size_t kMaxPath = 4096;
   unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
-  const DWORD copied_len_without_null =
-      ::GetProcessImageFileNameW(process_handle.get(),
-                                 ntpath_buffer.get(),
-                                 kMaxPath);
+  const DWORD copied_len_without_null = ::GetProcessImageFileNameW(
+      process_handle.get(), ntpath_buffer.get(), kMaxPath);
   if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {
     const DWORD error = ::GetLastError();
     VLOG(1) << "GetProcessImageFileNameW() failed: " << error;
@@ -525,8 +510,7 @@ bool WinUtil::IsPerUserInputSettingsEnabled() {
     return false;
   }
   BOOL is_thread_local = FALSE;
-  if (::SystemParametersInfo(SPI_GETTHREADLOCALINPUTSETTINGS,
-                             0,
+  if (::SystemParametersInfo(SPI_GETTHREADLOCALINPUTSETTINGS, 0,
                              reinterpret_cast<void *>(&is_thread_local),
                              0) == FALSE) {
     return false;
@@ -540,24 +524,19 @@ bool WinUtil::IsProcessSandboxed() {
   return sandboxed;
 }
 
-bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb,
-                                      const wchar_t *file,
+bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
                                       const wchar_t *parameters) {
-  const auto result = static_cast<uint32>(reinterpret_cast<uintptr_t>(
-      ::ShellExecuteW(0, verb, file, parameters, SystemUtil::GetSystemDir(),
-                      SW_SHOW)));
+  const auto result =
+      static_cast<uint32>(reinterpret_cast<uintptr_t>(::ShellExecuteW(
+          0, verb, file, parameters, SystemUtil::GetSystemDir(), SW_SHOW)));
   LOG_IF(ERROR, result <= 32)
       << "ShellExecute failed."
-      << ", error:" << result
-      << ", verb: " << verb
-      << ", file: " << file
+      << ", error:" << result << ", verb: " << verb << ", file: " << file
       << ", parameters: " << parameters;
   return result > 32;
 }
 
-ScopedCOMInitializer::ScopedCOMInitializer()
-    : hr_(::CoInitialize(nullptr)) {
-}
+ScopedCOMInitializer::ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}
 
 ScopedCOMInitializer::~ScopedCOMInitializer() {
   if (SUCCEEDED(hr_)) {

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,16 +37,14 @@ GtkWidget *GtkWrapper::GtkWindowNew(GtkWindowType type) {
   return gtk_window_new(type);
 }
 
-GtkWidget *GtkWrapper::GtkDrawingAreaNew() {
-  return gtk_drawing_area_new();
-}
+GtkWidget *GtkWrapper::GtkDrawingAreaNew() { return gtk_drawing_area_new(); }
 
 void GtkWrapper::GtkContainerAdd(GtkWidget *container, GtkWidget *widget) {
   gtk_container_add(GTK_CONTAINER(container), widget);
 }
 
-void GtkWrapper::GSignalConnect(
-    gpointer instance, const gchar *signal, GCallback handler, gpointer data) {
+void GtkWrapper::GSignalConnect(gpointer instance, const gchar *signal,
+                                GCallback handler, gpointer data) {
   g_signal_connect(instance, signal, handler, data);
 }
 
@@ -74,18 +72,14 @@ void GtkWrapper::GtkWindowResize(GtkWidget *window, int width, int height) {
   gtk_window_resize(GTK_WINDOW(window), width, height);
 }
 
-void GtkWrapper::GtkMainQuit() {
-  gtk_main_quit();
-}
+void GtkWrapper::GtkMainQuit() { gtk_main_quit(); }
 
 void GtkWrapper::GtkWidgetQueueDrawArea(GtkWidget *widget, int x, int y,
                                         int width, int height) {
   gtk_widget_queue_draw_area(widget, x, y, width, height);
 }
 
-void GtkWrapper::GObjectUnref(gpointer object) {
-  g_object_unref(object);
-}
+void GtkWrapper::GObjectUnref(gpointer object) { g_object_unref(object); }
 
 void GtkWrapper::GSourceAttach(GSource *source, GMainContext *context) {
   g_source_attach(source, context);
@@ -95,10 +89,8 @@ GSource *GtkWrapper::GSourceNew(GSourceFuncs *source_funcs, guint struct_size) {
   return g_source_new(source_funcs, struct_size);
 }
 
-void GtkWrapper::GSourceSetCallback(GSource *source,
-                                    GSourceFunc func,
-                                    gpointer data,
-                                    GDestroyNotify notify) {
+void GtkWrapper::GSourceSetCallback(GSource *source, GSourceFunc func,
+                                    gpointer data, GDestroyNotify notify) {
   g_source_set_callback(source, func, data, notify);
 }
 
@@ -106,9 +98,7 @@ void GtkWrapper::GSourceSetCanRecurse(GSource *source, gboolean can_recurse) {
   g_source_set_can_recurse(source, can_recurse);
 }
 
-void GtkWrapper::GtkMain() {
-  gtk_main();
-}
+void GtkWrapper::GtkMain() { gtk_main(); }
 
 GdkScreen *GtkWrapper::GtkWindowGetScreen(GtkWidget *window) {
   return gtk_window_get_screen(GTK_WINDOW(window));
@@ -118,21 +108,16 @@ void GtkWrapper::GSourceAddPoll(GSource *source, GPollFD *fd) {
   g_source_add_poll(source, fd);
 }
 
-void GtkWrapper::GdkThreadsEnter() {
-  gdk_threads_enter();
-}
+void GtkWrapper::GdkThreadsEnter() { gdk_threads_enter(); }
 
-void GtkWrapper::GdkThreadsLeave() {
-  gdk_threads_leave();
-}
+void GtkWrapper::GdkThreadsLeave() { gdk_threads_leave(); }
 
-gint GtkWrapper::GdkScreenGetMonitorAtPoint(
-    GdkScreen *screen, gint x, gint y) {
+gint GtkWrapper::GdkScreenGetMonitorAtPoint(GdkScreen *screen, gint x, gint y) {
   return gdk_screen_get_monitor_at_point(screen, x, y);
 }
 
-void GtkWrapper::GdkScreenGetMonitorGeometry(
-    GdkScreen *screen, gint monitor, GdkRectangle *rectangle) {
+void GtkWrapper::GdkScreenGetMonitorGeometry(GdkScreen *screen, gint monitor,
+                                             GdkRectangle *rectangle) {
   gdk_screen_get_monitor_geometry(screen, monitor, rectangle);
 }
 

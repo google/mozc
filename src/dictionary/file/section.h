@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,12 @@ namespace mozc {
 namespace dictionary {
 
 struct DictionaryFileSection {
-  DictionaryFileSection(const char *ptr, size_t len, const string &name)
+  DictionaryFileSection(const char *ptr, size_t len, const std::string &name)
       : ptr(ptr), len(len), name(name) {}
 
   const char *ptr;
   size_t len;
-  string name;
+  std::string name;
 };
 
 }  // namespace dictionary

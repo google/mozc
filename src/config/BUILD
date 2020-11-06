@@ -1,0 +1,159 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "select_mozc",
+)
+
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
+test_suite(
+    name = "nacl_test",
+)
+
+cc_library_mozc(
+    name = "config_handler",
+    srcs = ["config_handler.cc"],
+    hdrs = ["config_handler.h"],
+    deps = [
+        "//base",
+        "//base:clock",
+        "//base:config_file_stream",
+        "//base:logging",
+        "//base:mutex",
+        "//base:port",
+        "//base:singleton",
+        "//base:system_util",
+        "//base:version",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "config_handler_test",
+    size = "large",
+    srcs = ["config_handler_test.cc"],
+    data = ["//data/test/config:config_test_data"],
+    requires_full_emulation = False,
+    deps = [
+        ":config_handler",
+        "//base",
+        "//base:file_util",
+        "//base:logging",
+        "//base:mozc_hash_set",
+        "//base:port",
+        "//base:system_util",
+        "//base:thread",
+        "//base:util",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+    ],
+)
+
+cc_library_mozc(
+    name = "stats_config_util",
+    srcs = ["stats_config_util.cc"],
+    hdrs = ["stats_config_util.h"],
+    deps = [
+        ":config_handler",
+        "//base:file_util",
+        "//base:mutex",
+        "//base:singleton",
+        "//base:system_util",
+    ] + select_mozc(
+        ios = ["//base:mac_util"],
+    ) + [
+        "//base:port",
+        "//protocol:config_proto",
+    ],
+)
+
+cc_test_mozc(
+    name = "stats_config_util_test",
+    size = "small",
+    srcs = ["stats_config_util_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":config_handler",
+        ":stats_config_util",
+        "//base:file_util",
+        "//base:singleton",
+        "//base:system_util",
+        "//base:win_api_test_helper",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "stats_config_util_mock",
+    testonly = 1,
+    hdrs = ["stats_config_util_mock.h"],
+    deps = [":stats_config_util"],
+)
+
+cc_library_mozc(
+    name = "character_form_manager",
+    srcs = ["character_form_manager.cc"],
+    hdrs = ["character_form_manager.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":config_handler",
+        "//base",
+        "//base:config_file_stream",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:util",
+        "//protocol:config_proto",
+        "//storage:lru_storage",
+    ],
+)
+
+cc_test_mozc(
+    name = "character_form_manager_test",
+    size = "large",
+    srcs = ["character_form_manager_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":character_form_manager",
+        ":config_handler",
+        "//base",
+        "//base:system_util",
+        "//protocol:config_proto",
+        "//testing:gunit_main",
+    ],
+)

@@ -1,0 +1,18 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<!--
+// The following is the manual step to make *qm files.
+// - Edit source files (*.cc *.h *.qtts)
+// - Update *.qtts file. tr() messages are stored in .qtts
+//   % lupdate . -ts tr_ja.qtts
+//   % lupdate . -ts tr_en.qtts
+// - open *.qtts files with QT linguest and added translation
+// - convert *.qtts file to *.qm file
+//   % lrelease tr_ja.qtts -qm tr_ja.qm
+//   % lrelease tr_en.qtts -qm tr_en.qm
+-->
+<qresource>
+  <file>tr_ja.qm</file>
+  <file>tr_en.qm</file>
+</qresource>
+</RCC>

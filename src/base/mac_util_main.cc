@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,18 +35,14 @@
 #include "base/mac_util.h"
 #include "base/util.h"
 
-DEFINE_bool(label_for_suffix, false,
-            "call GetLabelForSuffix when specified");
+DEFINE_bool(label_for_suffix, false, "call GetLabelForSuffix when specified");
 DEFINE_bool(application_support_directory, false,
             "call GetApplicationSupportDirectory when specified");
 DEFINE_bool(logging_directory, false,
             "call GetLoggingDirectory when specified");
-DEFINE_bool(os_version_string, false,
-            "call GetOSVersionString when specified");
-DEFINE_bool(server_directory, false,
-            "call GetServerDirectory when specified");
-DEFINE_bool(serial_number, false,
-            "call GetSerialNumber when specified");
+DEFINE_bool(os_version_string, false, "call GetOSVersionString when specified");
+DEFINE_bool(server_directory, false, "call GetServerDirectory when specified");
+DEFINE_bool(serial_number, false, "call GetSerialNumber when specified");
 DEFINE_bool(start_launchd_service, false,
             "call StartLaunchdService when specified");
 
@@ -56,39 +52,39 @@ DEFINE_string(service_name, "", "The service name to be launched");
 using mozc::MacUtil;
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_label_for_suffix) {
-    cout << MacUtil::GetLabelForSuffix(FLAGS_suffix) << endl;
+    std::cout << MacUtil::GetLabelForSuffix(FLAGS_suffix) << std::endl;
   }
 
   if (FLAGS_application_support_directory) {
-    cout << MacUtil::GetApplicationSupportDirectory() << endl;
+    std::cout << MacUtil::GetApplicationSupportDirectory() << std::endl;
   }
 
   if (FLAGS_logging_directory) {
-    cout << MacUtil::GetLoggingDirectory() << endl;
+    std::cout << MacUtil::GetLoggingDirectory() << std::endl;
   }
 
   if (FLAGS_os_version_string) {
-    cout << MacUtil::GetOSVersionString() << endl;
+    std::cout << MacUtil::GetOSVersionString() << std::endl;
   }
 
   if (FLAGS_server_directory) {
-    cout << MacUtil::GetServerDirectory() << endl;
+    std::cout << MacUtil::GetServerDirectory() << std::endl;
   }
 
   if (FLAGS_serial_number) {
-    cout << MacUtil::GetSerialNumber() << endl;
+    std::cout << MacUtil::GetSerialNumber() << std::endl;
   }
 
   if (FLAGS_start_launchd_service) {
     if (FLAGS_service_name.empty()) {
-      cout << "Specify the service name to be launched" << endl;
+      std::cout << "Specify the service name to be launched" << std::endl;
     } else {
       pid_t pid;
       MacUtil::StartLaunchdService(FLAGS_service_name, &pid);
-      cout << "pid: " << pid << endl;
+      std::cout << "pid: " << pid << std::endl;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,11 +27,11 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/base/string_util.h"
 #include <string>
 #include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "win32/base/string_util.h"
 
 namespace mozc {
 namespace win32 {
@@ -289,21 +289,20 @@ TEST(StringUtilTest, AlphaNumeric) {
 }
 
 TEST(StringUtilTest, LCMapStringATest) {
-  DWORD lcid = MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT),
-                        SORT_JAPANESE_XJIS);
+  DWORD lcid =
+      MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), SORT_JAPANESE_XJIS);
 
   char buf[512];
   // backquote
-  size_t len = LCMapStringA(lcid, LCMAP_HALFWIDTH, "\x81\x65", -1, buf,
-                            sizeof(buf));
+  size_t len =
+      LCMapStringA(lcid, LCMAP_HALFWIDTH, "\x81\x65", -1, buf, sizeof(buf));
   EXPECT_EQ(2, len);
   // LCMapStringA converts "\x81\x65" (backquote) to ' for some reason.
   // EXPECT_EQ('`', buf[0]);
   EXPECT_EQ('\'', buf[0]);
 
   // quote
-  len = LCMapStringA(lcid, LCMAP_HALFWIDTH, "\x81\x66", -1, buf,
-                     sizeof(buf));
+  len = LCMapStringA(lcid, LCMAP_HALFWIDTH, "\x81\x66", -1, buf, sizeof(buf));
   EXPECT_EQ(2, len);
   EXPECT_EQ('\'', buf[0]);
 }

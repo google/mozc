@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ using mozc::EngineInterface;
 using mozc::quality_regression::QualityRegressionUtil;
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
   QualityRegressionUtil util(engine->GetConverter());
@@ -55,8 +55,8 @@ int main(int argc, char **argv) {
   QualityRegressionUtil::ParseFile(FLAGS_test_file, &items);
 
   for (size_t i = 0; i < items.size(); ++i) {
-    string actual_value;
-    const  bool result = util.ConvertAndTest(items[i], &actual_value);
+    std::string actual_value;
+    const bool result = util.ConvertAndTest(items[i], &actual_value);
     if (result) {
       std::cout << "OK:\t" << items[i].OutputAsTSV() << std::endl;
     } else {

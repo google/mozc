@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,9 +78,10 @@ class WindowUtil {
   // |working_area| is the available area in the current monitor.  If
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
-  static Rect GetWindowRectForCascadingWindow(
-      const Rect &selected_row, const Size &window_size,
-      const Point &zero_point_offset, const Rect &working_area);
+  static Rect GetWindowRectForCascadingWindow(const Rect &selected_row,
+                                              const Size &window_size,
+                                              const Point &zero_point_offset,
+                                              const Rect &working_area);
 
   // Returns the appropriate infolist window position in the screen
   // coordinate.  |window_size| is the size of the infolist window.
@@ -88,9 +89,9 @@ class WindowUtil {
   // |working_area| is the available area in the current monitor.  If
   // caller fails to obtain |working_area|, set its width or height as
   // 0.  Then it doesn't care the monitor.
-  static Rect GetWindowRectForInfolistWindow(
-    const Size &window_size, const Rect &candidate_rect,
-    const Rect &working_area);
+  static Rect GetWindowRectForInfolistWindow(const Size &window_size,
+                                             const Rect &candidate_rect,
+                                             const Rect &working_area);
 };
 }  // namespace renderer
 }  // namespace mozc

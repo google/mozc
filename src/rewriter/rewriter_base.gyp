@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,51 +41,44 @@
       'type': 'none',
       'dependencies': [
         '../dictionary/dictionary_base.gyp:pos_util',
+        'gen_usage_rewriter_dictionary_main#host',
       ],
       'toolsets': ['host'],
-      'actions': [],
-      'conditions': [
-        ['target_platform!="Android"', {
-          'dependencies': [
-            'gen_usage_rewriter_dictionary_main#host',
+      'actions': [
+        {
+          'action_name': 'gen_usage_rewriter_data',
+          'variables': {
+            'generator': '<(PRODUCT_DIR)/gen_usage_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
+            'usage_data_file': [
+              '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
+            ],
+            'cforms_file': [
+              '../data/rules/cforms.def',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(usage_data_file)',
+            '<@(cforms_file)',
           ],
-          'actions': [
-            {
-              'action_name': 'gen_usage_rewriter_data',
-              'variables': {
-                'generator': '<(PRODUCT_DIR)/gen_usage_rewriter_dictionary_main<(EXECUTABLE_SUFFIX)',
-                'usage_data_file': [
-                  '<(DEPTH)/third_party/japanese_usage_dictionary/usage_dict.txt',
-                ],
-                'cforms_file': [
-                  '../data/rules/cforms.def',
-                ],
-              },
-              'inputs': [
-                '<(generator)',
-                '<@(usage_data_file)',
-                '<@(cforms_file)',
-              ],
-              'outputs': [
-                '<(gen_out_dir)/usage_base_conj_suffix.data',
-                '<(gen_out_dir)/usage_conj_index.data',
-                '<(gen_out_dir)/usage_conj_suffix.data',
-                '<(gen_out_dir)/usage_item_array.data',
-                '<(gen_out_dir)/usage_string_array.data',
-              ],
-              'action': [
-                '<(generator)',
-                '--usage_data_file=<@(usage_data_file)',
-                '--cforms_file=<@(cforms_file)',
-                '--output_base_conjugation_suffix=<(gen_out_dir)/usage_base_conj_suffix.data',
-                '--output_conjugation_suffix=<(gen_out_dir)/usage_conj_suffix.data',
-                '--output_conjugation_index=<(gen_out_dir)/usage_conj_index.data',
-                '--output_usage_item_array=<(gen_out_dir)/usage_item_array.data',
-                '--output_string_array=<(gen_out_dir)/usage_string_array.data',
-              ],
-            },
+          'outputs': [
+            '<(gen_out_dir)/usage_base_conj_suffix.data',
+            '<(gen_out_dir)/usage_conj_index.data',
+            '<(gen_out_dir)/usage_conj_suffix.data',
+            '<(gen_out_dir)/usage_item_array.data',
+            '<(gen_out_dir)/usage_string_array.data',
           ],
-        }],
+          'action': [
+            '<(generator)',
+            '--usage_data_file=<@(usage_data_file)',
+            '--cforms_file=<@(cforms_file)',
+            '--output_base_conjugation_suffix=<(gen_out_dir)/usage_base_conj_suffix.data',
+            '--output_conjugation_suffix=<(gen_out_dir)/usage_conj_suffix.data',
+            '--output_conjugation_index=<(gen_out_dir)/usage_conj_index.data',
+            '--output_usage_item_array=<(gen_out_dir)/usage_item_array.data',
+            '--output_string_array=<(gen_out_dir)/usage_string_array.data',
+          ],
+        },
       ],
     },
     {

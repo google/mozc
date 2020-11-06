@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,15 +46,14 @@ bool MaybePromoteKatakana(Segment *segment) {
 
   const Segment::Candidate &katakana_candidate =
       segment->meta_candidate(transliteration::FULL_KATAKANA);
-  const string &katakana_value = katakana_candidate.value;
+  const std::string &katakana_value = katakana_candidate.value;
   if (!Util::IsScriptType(katakana_value, Util::KATAKANA)) {
     return false;
   }
 
   constexpr size_t kMaxRankForKatakana = 5;
   for (size_t i = 0;
-       i < std::min(segment->candidates_size(), kMaxRankForKatakana);
-       ++i) {
+       i < std::min(segment->candidates_size(), kMaxRankForKatakana); ++i) {
     if (segment->candidate(i).value == katakana_value) {
       // No need to promote or insert.
       return false;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,37 +39,29 @@
 namespace mozc {
 
 IPCClientMock::IPCClientMock(IPCClientFactoryMock *caller)
-      : caller_(caller),
-        connected_(false),
-        server_protocol_version_(0),
-        server_product_version_(Version::GetMozcVersion()),
-        server_process_id_(0),
-        result_(false) {
-}
+    : caller_(caller),
+      connected_(false),
+      server_protocol_version_(0),
+      server_product_version_(Version::GetMozcVersion()),
+      server_process_id_(0),
+      result_(false) {}
 
-bool IPCClientMock::Connected() const {
-  return connected_;
-}
+bool IPCClientMock::Connected() const { return connected_; }
 
 uint32 IPCClientMock::GetServerProtocolVersion() const {
   return server_protocol_version_;
 }
 
-const string &IPCClientMock::GetServerProductVersion() const {
+const std::string &IPCClientMock::GetServerProductVersion() const {
   return server_product_version_;
 }
 
+uint32 IPCClientMock::GetServerProcessId() const { return server_process_id_; }
 
-uint32 IPCClientMock::GetServerProcessId() const {
-  return server_process_id_;
-}
-
-bool IPCClientMock::Call(const char *request,
-                         const size_t request_size,
-                         char *response,
-                         size_t *response_size,
+bool IPCClientMock::Call(const char *request, const size_t request_size,
+                         char *response, size_t *response_size,
                          const int32 timeout) {
-  caller_->SetGeneratedRequest(string(request, request_size));
+  caller_->SetGeneratedRequest(std::string(request, request_size));
   if (!connected_ || !result_) {
     return false;
   }
@@ -79,28 +71,29 @@ bool IPCClientMock::Call(const char *request,
 }
 
 IPCClientFactoryMock::IPCClientFactoryMock()
-    : connection_(false), result_(false),
-      server_protocol_version_(IPC_PROTOCOL_VERSION) {
-}
+    : connection_(false),
+      result_(false),
+      server_protocol_version_(IPC_PROTOCOL_VERSION) {}
 
-IPCClientInterface *IPCClientFactoryMock::NewClient(const string &unused_name,
-                                                    const string &path_name) {
+IPCClientInterface *IPCClientFactoryMock::NewClient(
+    const std::string &unused_name, const std::string &path_name) {
   return NewClientMock();
 }
 
-IPCClientInterface *IPCClientFactoryMock::NewClient(const string &unused_name) {
+IPCClientInterface *IPCClientFactoryMock::NewClient(
+    const std::string &unused_name) {
   return NewClientMock();
 }
 
-const string &IPCClientFactoryMock::GetGeneratedRequest() const {
+const std::string &IPCClientFactoryMock::GetGeneratedRequest() const {
   return request_;
 }
 
-void IPCClientFactoryMock::SetGeneratedRequest(const string &request) {
+void IPCClientFactoryMock::SetGeneratedRequest(const std::string &request) {
   request_ = request;
 }
 
-void IPCClientFactoryMock::SetMockResponse(const string &response) {
+void IPCClientFactoryMock::SetMockResponse(const std::string &response) {
   response_ = response;
 }
 
@@ -108,23 +101,19 @@ void IPCClientFactoryMock::SetConnection(const bool connection) {
   connection_ = connection;
 }
 
-void IPCClientFactoryMock::SetResult(const bool result) {
-  result_ = result;
-}
+void IPCClientFactoryMock::SetResult(const bool result) { result_ = result; }
 
-void IPCClientFactoryMock::SetServerProtocolVersion(const uint32
-                                                    server_protocol_version) {
+void IPCClientFactoryMock::SetServerProtocolVersion(
+    const uint32 server_protocol_version) {
   server_protocol_version_ = server_protocol_version;
 }
 
-void IPCClientFactoryMock::SetServerProductVersion(const string &
-                                                   server_product_version) {
+void IPCClientFactoryMock::SetServerProductVersion(
+    const std::string &server_product_version) {
   server_product_version_ = server_product_version;
 }
 
-
-void IPCClientFactoryMock::SetServerProcessId(const uint32
-                                              server_process_id) {
+void IPCClientFactoryMock::SetServerProcessId(const uint32 server_process_id) {
   server_process_id_ = server_process_id;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,12 @@
 #include <QtWidgets/QSplitter>
 
 void ZeroWidthSplitterHandle::paintEvent(QPaintEvent *event) {
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   QPainter painter(this);
   QColor topColor(145, 145, 145);
   painter.setPen(topColor);
   painter.drawLine(0, 0, 0, height());
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 }
 
 QSize ZeroWidthSplitterHandle::sizeHint() const {
@@ -46,14 +46,13 @@ QSize ZeroWidthSplitterHandle::sizeHint() const {
   return QSize(1, parent.height());
 }
 
-ZeroWidthSplitterHandle::ZeroWidthSplitterHandle(
-    Qt::Orientation orientation, QSplitter *parent)
+ZeroWidthSplitterHandle::ZeroWidthSplitterHandle(Qt::Orientation orientation,
+                                                 QSplitter *parent)
     : QSplitterHandle(orientation, parent) {}
 
 ZeroWidthSplitterHandle::~ZeroWidthSplitterHandle() {}
 
-ZeroWidthSplitter::ZeroWidthSplitter(QWidget *parent)
-    : QSplitter(parent) {}
+ZeroWidthSplitter::ZeroWidthSplitter(QWidget *parent) : QSplitter(parent) {}
 
 QSplitterHandle *ZeroWidthSplitter::createHandle() {
   return new ZeroWidthSplitterHandle(orientation(), this);

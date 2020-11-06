@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,7 @@ class CalculatorRewriter : public RewriterInterface {
   // Inserts a candidate with the string into the |segment|.
   // Position of insertion is indicated by |insert_pos|. It returns false if
   // insertion is failed.
-  bool InsertCandidate(const string &value,
-                       size_t insert_pos,
+  bool InsertCandidate(const std::string &value, size_t insert_pos,
                        Segment *segment) const;
 
   const ConverterInterface *parent_converter_;

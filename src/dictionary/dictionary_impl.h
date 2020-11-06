@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,11 +33,10 @@
 #include <memory>
 #include <vector>
 
-#include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -53,37 +52,40 @@ class DictionaryImpl : public DictionaryInterface {
   // thus user_dictionary can be const as well. We can make it const after
   // clarifying the ownership of the user dictionary and changing code so that
   // the owner reloads it.
-  DictionaryImpl(const DictionaryInterface *system_dictionary,
-                 const DictionaryInterface *value_dictionary,
+  DictionaryImpl(std::unique_ptr<const DictionaryInterface> system_dictionary,
+                 std::unique_ptr<const DictionaryInterface> value_dictionary,
                  DictionaryInterface *user_dictionary,
                  const SuppressionDictionary *suppression_dictionary,
                  const POSMatcher *pos_matcher);
 
-  virtual ~DictionaryImpl();
+  DictionaryImpl(const DictionaryImpl &) = delete;
+  DictionaryImpl &operator=(const DictionaryImpl &) = delete;
 
-  virtual bool HasKey(StringPiece key) const;
-  virtual bool HasValue(StringPiece value) const;
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &conversion_request,
-                                Callback *callback) const;
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &conversion_request,
-                            Callback *callback) const;
+  ~DictionaryImpl() override;
 
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &conversion_request,
-                           Callback *callback) const;
+  bool HasKey(absl::string_view key) const override;
+  bool HasValue(absl::string_view value) const override;
+  void LookupPredictive(absl::string_view key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
+  void LookupPrefix(absl::string_view key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
 
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &conversion_request,
-                             Callback *callback) const;
+  void LookupExact(absl::string_view key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
 
-  virtual bool LookupComment(StringPiece key, StringPiece value,
-                             const ConversionRequest &conversion_request,
-                             string *comment) const;
-  virtual bool Reload();
-  virtual void PopulateReverseLookupCache(StringPiece str) const;
-  virtual void ClearReverseLookupCache() const;
+  void LookupReverse(absl::string_view str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
+
+  bool LookupComment(absl::string_view key, absl::string_view value,
+                     const ConversionRequest &conversion_request,
+                     std::string *comment) const override;
+  bool Reload() override;
+  void PopulateReverseLookupCache(absl::string_view str) const override;
+  void ClearReverseLookupCache() const override;
 
  private:
   enum LookupType {
@@ -107,8 +109,6 @@ class DictionaryImpl : public DictionaryInterface {
 
   // Suppression dictionary is used to suppress entries.
   const SuppressionDictionary *suppression_dictionary_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryImpl);
 };
 
 }  // namespace dictionary

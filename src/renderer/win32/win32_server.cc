@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,8 +71,7 @@ bool IsTSFMessage(const commands::RendererCommand &command) {
 namespace win32 {
 
 Win32Server::Win32Server()
-    : event_(nullptr),
-      window_manager_(new WindowManager) {
+    : event_(nullptr), window_manager_(new WindowManager) {
   // Manual reset event to notify we have a renderer command
   // to be handled in the UI thread.
   // The renderer command is serialized into "message_".
@@ -81,9 +80,7 @@ Win32Server::Win32Server()
       << "CreateEvent failed, Error = " << ::GetLastError();
 }
 
-Win32Server::~Win32Server() {
-  ::CloseHandle(event_);
-}
+Win32Server::~Win32Server() { ::CloseHandle(event_); }
 
 void Win32Server::AsyncHide() {
   {
@@ -183,7 +180,7 @@ int Win32Server::StartMessageLoop() {
 
     // Wait for the next window message or next rendering message.
     const DWORD wait_result =
-      ::MsgWaitForMultipleObjects(1, &event_, FALSE, INFINITE, QS_ALLINPUT);
+        ::MsgWaitForMultipleObjects(1, &event_, FALSE, INFINITE, QS_ALLINPUT);
     if (wait_result == WAIT_OBJECT_0) {
       // "event_" is signaled so that we have to handle the renderer command
       // stored in "message_"

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,25 @@
 #ifndef MOZC_STORAGE_LRU_STORAGE_H_
 #define MOZC_STORAGE_LRU_STORAGE_H_
 
-#include <map>
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "base/mmap.h"
+#include "base/mozc_hash_map.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-
-class Mmap;
-
 namespace storage {
 
 class LRUStorage {
  public:
   LRUStorage();
+
+  LRUStorage(const LRUStorage &) = delete;
+  LRUStorage &operator=(const LRUStorage &) = delete;
+
   ~LRUStorage();
 
   bool Open(const char *filename);
@@ -54,95 +57,117 @@ class LRUStorage {
   // Try to open exisiting database
   // If the file is broken or cannot open, tries to recreate
   // new file
-  bool OpenOrCreate(const char *filename,
-                    size_t new_value_size,
-                    size_t new_size,
-                    uint32 new_seed);
+  bool OpenOrCreate(const char *filename, size_t new_value_size,
+                    size_t new_size, uint32 new_seed);
 
-  // Lookup key
-  const char *Lookup(const string &key,
-                     uint32 *last_access_time) const;
+  // Looks up elements by key.
+  const char *Lookup(const std::string &key, uint32 *last_access_time) const;
+  const char *Lookup(const std::string &key) const;
 
-  const char *Lookup(const string &key) const;
+  // A safer lookup for string values (the pointers returned by above Lookup()'s
+  // are not null terminated.)
+  absl::string_view LookupAsString(const std::string &key) const {
+    const char *ptr = Lookup(key);
+    return (ptr == nullptr) ? absl::string_view()
+                            : absl::string_view(ptr, value_size_);
+  }
 
-  // Returns all values.
-  // The order is new to old (*values->begin() is the newest).
-  bool GetAllValues(std::vector<string> *values) const;
+  // Returns all the values.  The order is new to old (*values->begin() is the
+  // most recently used one).
+  void GetAllValues(std::vector<std::string> *values) const;
 
-  // clear all LRU cache;
-  // mapped file is also initialized
+  // Clears all LRU cache.  The mapped file is also initialized
   bool Clear();
 
-  // Merge from other data
+  // Merges other data into this LRU.
   bool Merge(const char *filename);
   bool Merge(const LRUStorage &storage);
 
-  // update timestamp
-  bool Touch(const string &key);
+  // Updates timestamp.
+  bool Touch(const std::string &key);
 
-  // Insert key and values
-  bool Insert(const string &key,
-              const char *value);
+  // Inserts a key value pair.
+  bool Insert(const std::string &key, const char *value);
 
-  // if key is found, insert value,
-  // otherwise return
-  bool TryInsert(const string &key,
-                 const char *value);
+  // Inserts a key value pair only if |key| already exists.
+  // CAUTION: despite the name, it does nothing if there's no value of |key|.
+  bool TryInsert(const std::string &key, const char *value);
 
+  // Deletes the element if exists.  Returns false on failure (it's not failure
+  // if the element for |key| doesn't exist.)
+  bool Delete(const std::string &key);
+
+  // Deletes all the elements that have timestamp less than |timestamp|, i.e.,
+  // the last access is before |timestamp|.  Returns the number of deleted
+  // elements.
+  int DeleteElementsBefore(uint32 timestamp);
+
+  // Deletes all the elements that are not accessed for 62 days.
+  // Returns the number of deleted elements.
+  int DeleteElementsUntouchedFor62Days();
+
+  // Returns the byte length of each item, which is the user specified value
+  // size + 12 bytes.  Here, 12 bytes is used for fingerprint (8 bytes) and
+  // timestamp (4 bytes).
+  size_t item_size() const;
+
+  // Returns the user specified value size.
   size_t value_size() const;
-  size_t size() const;
-  size_t used_size() const;
-  uint32 seed() const;
-  const string &filename() const;
 
-  // Write one entry at |i| th index.
+  // Returns the maximum number of item (capacity).
+  size_t size() const;
+
+  // Returns the number of items in LRU.
+  size_t used_size() const;
+
+  // Returns the seed used for fingerprinting.
+  uint32 seed() const;
+
+  const std::string &filename() const;
+
+  // Writes one entry at |i| th index.
   // i must be 0 <= i < size.
   // This data will not update the index of the storage.
-  void Write(size_t i,
-             uint64 fp,
-             const string &value,
+  void Write(size_t i, uint64 fp, const std::string &value,
              uint32 last_access_time);
 
-  // Read one entry from |i| th index.
+  // Reads one entry from |i| th index.
   // i must be 0 <= i < size.
-  void Read(size_t i,
-            uint64 *fp,
-            string *value,
+  void Read(size_t i, uint64 *fp, std::string *value,
             uint32 *last_access_time) const;
 
-  // Create Instance from file. Call Open internally
+  // Creates Instance from file. Call Open internally
   static LRUStorage *Create(const char *filename);
 
-  // Create Instance from file. Call OpenOrCreate internally
-  static LRUStorage *Create(const char *filename,
-                            size_t value_size,
-                            size_t size,
-                            uint32 seed);
+  // Creates Instance from file. Call OpenOrCreate internally
+  static LRUStorage *Create(const char *filename, size_t value_size,
+                            size_t size, uint32 seed);
 
-  // Create an empty LRU db file
-  static bool CreateStorageFile(const char *filename,
-                                size_t value_size,
-                                size_t size,
-                                uint32 seed);
+  // Creates an empty LRU db file
+  static bool CreateStorageFile(const char *filename, size_t value_size,
+                                size_t size, uint32 seed);
+
  private:
-  class LRUList;
-  class Node;
-
-  // load from memory buffer
+  // Initializes this LRU from memory buffer.
   bool Open(char *ptr, size_t ptr_size);
+
+  // Deletes the element from |fp| or |it|.
+  bool Delete(uint64 fp);
+  bool Delete(std::list<char *>::iterator it);
+
+  // Actual implementation of Delete() methods.
+  bool Delete(uint64 fp, std::list<char *>::iterator it);
 
   size_t value_size_;
   size_t size_;
   uint32 seed_;
-  char *last_item_;
+  char *next_item_;
   char *begin_;
   char *end_;
-  string filename_;
-  std::map<uint64, Node *> map_;
-  std::unique_ptr<LRUList> lru_list_;
+  std::string filename_;
+  std::list<char *> lru_list_;  // Front is the most recently used data.
+  mozc_hash_map<uint64, std::list<char *>::iterator> lru_map_;
   std::unique_ptr<Mmap> mmap_;
-
-  DISALLOW_COPY_AND_ASSIGN(LRUStorage);
 };
 
 }  // namespace storage

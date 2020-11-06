@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,9 @@
 #include <QtWidgets/QFileDialog>
 
 #include "base/util.h"
-#include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_importer.h"
+#include "dictionary/user_dictionary_storage.h"
+#include "gui/base/util.h"
 
 namespace mozc {
 namespace gui {
@@ -45,7 +46,7 @@ ImportDialog::ImportDialog(QWidget *parent)
               Qt::WindowTitleHint | Qt::WindowSystemMenuHint) {
   setupUi(this);
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   layout()->setContentsMargins(8, 12, 8, 8);
 #endif
 
@@ -53,64 +54,53 @@ ImportDialog::ImportDialog(QWidget *parent)
   ime_combobox_->addItem(
       tr("Auto detection"),
       static_cast<int>(UserDictionaryImporter::IME_AUTO_DETECT));
-  ime_combobox_->addItem(
-      tr("Google"),
-      static_cast<int>(UserDictionaryImporter::MOZC));
+  ime_combobox_->addItem(tr("Google"),
+                         static_cast<int>(UserDictionaryImporter::MOZC));
 
 #ifdef OS_WIN
-  ime_combobox_->addItem(
-      tr("Microsoft IME"),
-      static_cast<int>(UserDictionaryImporter::MSIME));
-  ime_combobox_->addItem(
-      tr("ATOK"),
-      static_cast<int>(UserDictionaryImporter::ATOK));
-  ime_combobox_->addItem(
-      tr("Kotoeri"),
-      static_cast<int>(UserDictionaryImporter::KOTOERI));
+  ime_combobox_->addItem(tr("Microsoft IME"),
+                         static_cast<int>(UserDictionaryImporter::MSIME));
+  ime_combobox_->addItem(tr("ATOK"),
+                         static_cast<int>(UserDictionaryImporter::ATOK));
+  ime_combobox_->addItem(tr("Kotoeri"),
+                         static_cast<int>(UserDictionaryImporter::KOTOERI));
 #else
-  ime_combobox_->addItem(
-      tr("Kotoeri"),
-      static_cast<int>(UserDictionaryImporter::KOTOERI));
-  ime_combobox_->addItem(
-      tr("ATOK"),
-      static_cast<int>(UserDictionaryImporter::ATOK));
-  ime_combobox_->addItem(
-      tr("Microsoft IME"),
-      static_cast<int>(UserDictionaryImporter::MSIME));
+  ime_combobox_->addItem(tr("Kotoeri"),
+                         static_cast<int>(UserDictionaryImporter::KOTOERI));
+  ime_combobox_->addItem(tr("ATOK"),
+                         static_cast<int>(UserDictionaryImporter::ATOK));
+  ime_combobox_->addItem(tr("Microsoft IME"),
+                         static_cast<int>(UserDictionaryImporter::MSIME));
 #endif
 
   encoding_combobox_->addItem(
       tr("Auto detection"),
       static_cast<int>(UserDictionaryImporter::ENCODING_AUTO_DETECT));
+  encoding_combobox_->addItem(tr("Unicode"),
+                              static_cast<int>(UserDictionaryImporter::UTF16));
   encoding_combobox_->addItem(
-      tr("Unicode"),
-      static_cast<int>(UserDictionaryImporter::UTF16));
-  encoding_combobox_->addItem(
-      tr("Shift JIS"),
-      static_cast<int>(UserDictionaryImporter::SHIFT_JIS));
-  encoding_combobox_->addItem(
-      tr("UTF-8"),
-      static_cast<int>(UserDictionaryImporter::UTF8));
+      tr("Shift JIS"), static_cast<int>(UserDictionaryImporter::SHIFT_JIS));
+  encoding_combobox_->addItem(tr("UTF-8"),
+                              static_cast<int>(UserDictionaryImporter::UTF8));
 
   QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setText(tr("Import"));
   }
 
   // Signals and slots to connect buttons and actions.
-  connect(select_file_pushbutton_, SIGNAL(clicked()),
-          this, SLOT(SelectFile()));
+  connect(select_file_pushbutton_, SIGNAL(clicked()), this, SLOT(SelectFile()));
 
-  connect(buttonbox_,
-          SIGNAL(clicked(QAbstractButton *)),
-          this,
+  connect(buttonbox_, SIGNAL(clicked(QAbstractButton *)), this,
           SLOT(Clicked(QAbstractButton *)));
 
   // Signals and slots to manage availability of GUI components.
-  connect(file_name_lineedit_, SIGNAL(textChanged(const QString &)),
-          this, SLOT(OnFormValueChanged()));
-  connect(dic_name_lineedit_, SIGNAL(textChanged(const QString &)),
-          this, SLOT(OnFormValueChanged()));
+  connect(file_name_lineedit_, SIGNAL(textChanged(const QString &)), this,
+          SLOT(OnFormValueChanged()));
+  connect(dic_name_lineedit_, SIGNAL(textChanged(const QString &)), this,
+          SLOT(OnFormValueChanged()));
+
+  GuiUtil::ReplaceWidgetLabels(this);
 }
 
 ImportDialog::~ImportDialog() {}
@@ -147,17 +137,15 @@ int ImportDialog::ExecInAppendMode() {
 
 bool ImportDialog::IsAcceptButtonEnabled() const {
   const bool is_enabled =
-      (mode_ == CREATE &&
-       !file_name_lineedit_->text().isEmpty() &&
+      (mode_ == CREATE && !file_name_lineedit_->text().isEmpty() &&
        !dic_name_lineedit_->text().isEmpty()) ||
-      (mode_ == APPEND &&
-       !file_name_lineedit_->text().isEmpty());
+      (mode_ == APPEND && !file_name_lineedit_->text().isEmpty());
   return is_enabled;
 }
 
 void ImportDialog::OnFormValueChanged() {
   QPushButton *button = buttonbox_->button(QDialogButtonBox::Ok);
-  if (button != NULL) {
+  if (button != nullptr) {
     button->setEnabled(IsAcceptButtonEnabled());
   }
 }
@@ -181,19 +169,16 @@ void ImportDialog::Reset() {
 }
 
 void ImportDialog::SelectFile() {
-  const QString initial_path =
-      file_name_lineedit_->text().isEmpty() ?
-      QDir::homePath() :
-      file_name_lineedit_->text();
-  const QString filename = QFileDialog::getOpenFileName(
-      this, tr("Import dictionary"),
-      initial_path,
-      tr("Text Files (*.txt);;All Files (*)"));
+  const QString initial_path = file_name_lineedit_->text().isEmpty()
+                                   ? QDir::homePath()
+                                   : file_name_lineedit_->text();
+  const QString filename =
+      QFileDialog::getOpenFileName(this, tr("Import dictionary"), initial_path,
+                                   tr("Text Files (*.txt);;All Files (*)"));
   if (filename.isEmpty()) {
     return;
   }
-  file_name_lineedit_->setText(
-      QDir::toNativeSeparators(filename));
+  file_name_lineedit_->setText(QDir::toNativeSeparators(filename));
 }
 
 void ImportDialog::Clicked(QAbstractButton *button) {

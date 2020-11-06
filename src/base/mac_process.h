@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,21 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 namespace mozc {
 class MacProcess {
  public:
   // Open a browser in mac way using NSFoundation framework.
-  static bool OpenBrowserForMac(const string &url);
+  static bool OpenBrowserForMac(const std::string &url);
 
   // Open an application in mac way using NSWorkspace.
-  static bool OpenApplication(const string &path);
+  static bool OpenApplication(const std::string &path);
 
   // Open GoogleJapaneseInputTool.app as the specified tool name.
-  static bool LaunchMozcTool(const string &tool_name);
+  static bool LaunchMozcTool(const std::string &tool_name);
 
   // Open GoogleJapaneseInputTool.app as the error message dialog.
-  static bool LaunchErrorMessageDialog(const string &error_type);
+  static bool LaunchErrorMessageDialog(const std::string &error_type);
 };
 }  // namespace mozc
 #endif

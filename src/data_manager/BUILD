@@ -1,0 +1,292 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load("//tools/build_defs:stubs.bzl", "bzl_library")
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "py_binary_mozc",
+    "py_library_mozc",
+    "select_mozc",
+)
+load("//tools/build_defs:stubs.bzl", "portable_proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library_mozc(
+    name = "data_manager_interface",
+    hdrs = ["data_manager_interface.h"],
+    deps = [
+        "//base:port",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "data_manager",
+    srcs = [
+        "data_manager.cc",
+    ],
+    hdrs = ["data_manager.h"],
+    deps = [
+        ":data_manager_interface",
+        ":dataset_reader",
+        ":serialized_dictionary",
+        "//base:logging",
+        "//base:mmap",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:stl_util",
+        "//base:util",
+        "//base:version",
+        "//dictionary:pos_matcher_lib",
+        "//protocol:segmenter_data_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "data_manager_test_base",
+    testonly = 1,
+    srcs = [
+        "data_manager_test_base.cc",
+    ],
+    hdrs = ["data_manager_test_base.h"],
+    deps = [
+        ":connection_file_reader",
+        ":data_manager_interface",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:mozc_hash_set",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "//converter:connector",
+        "//converter:node",
+        "//converter:segmenter",
+        "//dictionary:pos_matcher_lib",
+        "//prediction:suggestion_filter",
+        "//testing",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_connection_data_lib",
+    srcs = ["gen_connection_data.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_connection_data",
+    srcs = ["gen_connection_data.py"],
+    python_version = "PY3",
+    deps = [
+        ":gen_connection_data_lib",
+        "//build_tools:code_generator_util",
+    ],
+)
+
+cc_library_mozc(
+    name = "connection_file_reader",
+    srcs = ["connection_file_reader.cc"],
+    hdrs = ["connection_file_reader.h"],
+    deps = [
+        "//base",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+    ],
+)
+
+proto_library(
+    name = "dataset_proto_full",
+    srcs = ["dataset.proto"],
+    visibility = ["//visibility:private"],
+)
+
+portable_proto_library(
+    name = "dataset_proto",
+    config = "//protocol:portable_proto.pbtxt",
+    header_outs = ["dataset.pb.h"],
+    proto_deps = [":dataset_proto_full"],
+    visibility = ["//visibility:private"],
+)
+
+cc_library_mozc(
+    name = "dataset_writer",
+    srcs = ["dataset_writer.cc"],
+    hdrs = ["dataset_writer.h"],
+    deps = [
+        ":dataset_proto",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:obfuscator_support",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "dataset_writer_test",
+    srcs = ["dataset_writer_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":dataset_proto",
+        ":dataset_writer",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:obfuscator_support",
+        "//base:util",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_binary_mozc(
+    name = "dataset_writer_main",
+    srcs = ["dataset_writer_main.cc"],
+    deps = [
+        ":dataset_writer",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:flags",
+        "//base:init_mozc_buildtool",
+        "//base:logging",
+        "//base:number_util",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "dataset_reader",
+    srcs = ["dataset_reader.cc"],
+    hdrs = ["dataset_reader.h"],
+    deps = [
+        ":dataset_proto",
+        "//base:logging",
+        "//base:obfuscator_support",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "dataset_reader_test",
+    srcs = ["dataset_reader_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":dataset_reader",
+        ":dataset_writer",
+        "//base:port",
+        "//base:util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_data_version_lib",
+    srcs = ["gen_data_version.py"],
+    visibility = ["//visibility:private"],
+)
+
+py_binary_mozc(
+    name = "gen_data_version",
+    srcs = ["gen_data_version.py"],
+    visibility = ["//data_manager:__subpackages__"],
+    deps = [":gen_data_version_lib"],
+)
+
+cc_library_mozc(
+    name = "serialized_dictionary",
+    srcs = ["serialized_dictionary.cc"],
+    hdrs = ["serialized_dictionary.h"],
+    deps = [
+        "//base:file_stream",
+        "//base:logging",
+        "//base:number_util",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "serialized_dictionary_test",
+    srcs = ["serialized_dictionary_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":serialized_dictionary",
+        "//base:port",
+        "//base:serialized_string_array",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "pos_list_provider",
+    srcs = ["pos_list_provider.cc"],
+    hdrs = ["pos_list_provider.h"],
+    textual_hdrs = select_mozc(
+        android = ["//data_manager/android:pos_list.h"],
+        client = ["//data_manager/google:pos_list.h"],
+        default = [],
+        nacl = ["//data_manager/chromeos:pos_list.h"],
+        oss = ["//data_manager/oss:pos_list.h"],
+    ),
+    deps = [
+        "//base:embedded_file",
+        "//base:logging",
+        "//base:serialized_string_array",
+        "//dictionary:user_pos_interface",
+    ],
+)
+
+bzl_library(
+    name = "mozc_data_bzl",
+    srcs = ["mozc_data.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)

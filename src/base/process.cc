@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,12 @@
 #include <cerrno>
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
 #include "base/mac_process.h"
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
 #include <fcntl.h>
@@ -60,13 +60,14 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "absl/strings/match.h"
 
 #ifdef OS_WIN
 #include "base/scoped_handle.h"
 #include "base/win_util.h"
 #endif  // OS_WIN
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 // We do not use the global environ variable because it is unavailable
 // in Mac Framework/dynamic libraries.  Instead call _NSGetEnviron().
 // See the "PROGRAMMING" section of http://goo.gl/4Hq0D for the
@@ -74,7 +75,7 @@
 #include <crt_externs.h>
 static char **environ = *_NSGetEnviron();
 #elif !defined(OS_WIN)
-// Defined somewhere in libc. We can't pass NULL as the 6th argument of
+// Defined somewhere in libc. We can't pass nullptr as the 6th argument of
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
 extern char **environ;
@@ -82,11 +83,10 @@ extern char **environ;
 
 namespace mozc {
 
-bool Process::OpenBrowser(const string &url) {
+bool Process::OpenBrowser(const std::string &url) {
   // url must start with http:// or https:// or file://
-  if (url.find("http://") != 0 &&
-      url.find("https://") != 0 &&
-      url.find("file://") != 0) {
+  if (!absl::StartsWith(url, "http://") && !absl::StartsWith(url, "https://") &&
+      !absl::StartsWith(url, "file://")) {
     return false;
   }
 
@@ -103,14 +103,14 @@ bool Process::OpenBrowser(const string &url) {
   return SpawnProcess(kBrowserCommand, url);
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   return MacProcess::OpenBrowserForMac(url);
-#endif  // OS_MACOSX
+#endif  // __APPLE__
   return false;
 }
 
-bool Process::SpawnProcess(const string &path,
-                           const string& arg, size_t *pid) {
+bool Process::SpawnProcess(const std::string &path, const std::string &arg,
+                           size_t *pid) {
 #ifdef OS_WIN
   std::wstring wpath;
   Util::UTF8ToWide(path, &wpath);
@@ -129,22 +129,22 @@ bool Process::SpawnProcess(const string &path,
     return false;
   }
 
-  STARTUPINFOW si = { 0 };
+  STARTUPINFOW si = {0};
   si.cb = sizeof(si);
   si.dwFlags = STARTF_FORCEOFFFEEDBACK;
-  PROCESS_INFORMATION pi = { 0 };
+  PROCESS_INFORMATION pi = {0};
 
-  // If both |lpApplicationName| and |lpCommandLine| are non-NULL,
+  // If both |lpApplicationName| and |lpCommandLine| are non-nullptr,
   // the argument array of the process will be shifted.
   // http://support.microsoft.com/kb/175986
-  const bool create_process_succeeded = ::CreateProcessW(
-      NULL, wpath2.get(), NULL, NULL, FALSE,
-      CREATE_DEFAULT_ERROR_MODE, NULL,
-      // NOTE: Working directory will be locked by the system.
-      // We use system directory to spawn process so that users will not
-      // to be aware of any undeletable directory. (http://b/2017482)
-      SystemUtil::GetSystemDir(),
-      &si, &pi) != FALSE;
+  const bool create_process_succeeded =
+      ::CreateProcessW(
+          nullptr, wpath2.get(), nullptr, nullptr, FALSE,
+          CREATE_DEFAULT_ERROR_MODE, nullptr,
+          // NOTE: Working directory will be locked by the system.
+          // We use system directory to spawn process so that users will not
+          // to be aware of any undeletable directory. (http://b/2017482)
+          SystemUtil::GetSystemDir(), &si, &pi) != FALSE;
 
   if (create_process_succeeded) {
     ::CloseHandle(pi.hThread);
@@ -154,23 +154,26 @@ bool Process::SpawnProcess(const string &path,
   }
 
   return create_process_succeeded;
+#elif defined(OS_WASM)
+  // Spawning processes is not supported in WASM.
+  return false;
 #else
 
-  std::vector<string> arg_tmp;
+  std::vector<std::string> arg_tmp;
   Util::SplitStringUsing(arg, " ", &arg_tmp);
-  std::unique_ptr<const char * []> argv(new const char *[arg_tmp.size() + 2]);
+  std::unique_ptr<const char *[]> argv(new const char *[arg_tmp.size() + 2]);
   argv[0] = path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
   }
-  argv[arg_tmp.size() + 1] = NULL;
+  argv[arg_tmp.size() + 1] = nullptr;
 
   struct stat statbuf;
   if (::stat(path.c_str(), &statbuf) != 0) {
     LOG(ERROR) << "Can't stat " << path << ": " << strerror(errno);
     return false;
   }
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   // Check if the "path" is an application or not.  If it's an
   // application, do a special process using mac_process.mm.
   if (S_ISDIR(statbuf.st_mode) && path.size() > 4 &&
@@ -211,27 +214,26 @@ bool Process::SpawnProcess(const string &path,
   // posix_spawn returns 0 even if kMozcServer doesn't exist, because
   // the return value of posix_spawn is basically determined
   // by the return value of fork().
-  const int result = ::posix_spawn(
-      &tmp_pid, path.c_str(), NULL, NULL, const_cast<char* const*>(argv.get()),
-      environ);
+  const int result =
+      ::posix_spawn(&tmp_pid, path.c_str(), nullptr, nullptr,
+                    const_cast<char *const *>(argv.get()), environ);
   if (result == 0) {
     VLOG(1) << "posix_spawn: child pid is " << tmp_pid;
   } else {
     LOG(ERROR) << "posix_spawn failed: " << strerror(result);
   }
 
-  if (pid != NULL) {
+  if (pid != nullptr) {
     *pid = tmp_pid;
   }
   return result == 0;
 #endif  // OS_WIN
 }
 
-bool Process::SpawnMozcProcess(
-    const string &filename, const string &arg, size_t *pid) {
+bool Process::SpawnMozcProcess(const std::string &filename,
+                               const std::string &arg, size_t *pid) {
   return Process::SpawnProcess(
-      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), filename),
-      arg, pid);
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), filename), arg, pid);
 }
 
 bool Process::WaitProcess(size_t pid, int timeout) {
@@ -248,7 +250,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 #ifdef OS_WIN
   DWORD processe_id = static_cast<DWORD>(pid);
   ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE, processe_id));
-  if (handle.get() == NULL) {
+  if (handle.get() == nullptr) {
     LOG(ERROR) << "Cannot get handle id";
     return true;
   }
@@ -264,6 +266,9 @@ bool Process::WaitProcess(size_t pid, int timeout) {
   }
 
   return true;
+#elif defined(OS_WASM)
+  // Process handling is not supported in WASM.
+  return false;
 #else
   pid_t processe_id = static_cast<pid_t>(pid);
   const int kPollingDuration = 250;
@@ -272,9 +277,9 @@ bool Process::WaitProcess(size_t pid, int timeout) {
     Util::Sleep(kPollingDuration);
     if (::kill(processe_id, 0) != 0) {
       if (errno == EPERM) {
-        return false;   // access defined
+        return false;  // access defined
       }
-      return true;   // process not found
+      return true;  // process not found
     }
     if (timeout > 0) {
       left_time -= kPollingDuration;
@@ -293,9 +298,9 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
 
 #ifdef OS_WIN
   {
-    ScopedHandle handle(::OpenProcess(SYNCHRONIZE, FALSE,
-                                      static_cast<DWORD>(pid)));
-    if (NULL == handle.get()) {
+    ScopedHandle handle(
+        ::OpenProcess(SYNCHRONIZE, FALSE, static_cast<DWORD>(pid)));
+    if (nullptr == handle.get()) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenProcess failed: " << error;
@@ -310,8 +315,10 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   }  // release handle
 
   return default_result;  // unknown
-
-#else  // OS_WIN
+#elif defined(OS_WASM)
+  // Process handling is not supported in WASM.
+  return false;
+#else   // OS_WIN
   const int kSig = 0;
   if (::kill(static_cast<pid_t>(pid), kSig) == -1) {
     if (errno == EPERM || errno == EINVAL) {
@@ -332,9 +339,9 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
   }
 
   {
-    ScopedHandle handle(::OpenThread(SYNCHRONIZE, FALSE,
-                                     static_cast<DWORD>(thread_id)));
-    if (NULL == handle.get()) {
+    ScopedHandle handle(
+        ::OpenThread(SYNCHRONIZE, FALSE, static_cast<DWORD>(thread_id)));
+    if (nullptr == handle.get()) {
       const DWORD error = ::GetLastError();
       if (error == ERROR_ACCESS_DENIED) {
         LOG(ERROR) << "OpenThread failed: " << error;
@@ -357,13 +364,13 @@ bool Process::IsThreadAlive(size_t thread_id, bool default_result) {
 #endif  // OS_WNIDOWS
 }
 
-bool Process::LaunchErrorMessageDialog(const string &error_type) {
-#ifdef OS_MACOSX
+bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
+#ifdef __APPLE__
   if (!MacProcess::LaunchErrorMessageDialog(error_type)) {
     LOG(ERROR) << "cannot error message dialog";
     return false;
   }
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
 #ifdef OS_WIN
   const string arg = "--mode=error_message_dialog --error_type=" + error_type;
@@ -376,7 +383,8 @@ bool Process::LaunchErrorMessageDialog(const string &error_type) {
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
   const char kMozcTool[] = "mozc_tool";
-  const string arg = "--mode=error_message_dialog --error_type=" + error_type;
+  const std::string arg =
+      "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
   if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;

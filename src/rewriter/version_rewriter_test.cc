@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,8 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -55,14 +54,14 @@ class VersionRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
-  static void AddSegment(const string &key, const string &value,
+  static void AddSegment(const std::string &key, const std::string &value,
                          Segments *segments) {
     Segment *segment = segments->push_back_segment();
     segment->set_key(key);
     AddCandidate(key, value, segment);
   }
 
-  static void AddCandidate(const string &key, const string &value,
+  static void AddCandidate(const std::string &key, const std::string &value,
                            Segment *segment) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
@@ -71,7 +70,7 @@ class VersionRewriterTest : public ::testing::Test {
     candidate->content_key = key;
   }
 
-  static bool FindCandidateWithPrefix(const string &prefix,
+  static bool FindCandidateWithPrefix(const std::string &prefix,
                                       const Segments &segments) {
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       for (size_t j = 0; j < segments.segment(i).candidates_size(); ++j) {

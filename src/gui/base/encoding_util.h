@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ namespace mozc {
 
 class EncodingUtil {
  public:
-  static void SJISToUTF8(const string &input, string *output);
+  static void SJISToUTF8(const std::string &input, std::string *output);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(EncodingUtil);

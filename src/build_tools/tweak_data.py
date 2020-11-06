@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@ __author__ = "komatsu"
 
 import re
 
+
 def ReplaceVariables(data, environment):
   """Replace all occurrence of the variable in data by the value.
 
@@ -46,7 +47,7 @@ def ReplaceVariables(data, environment):
     the data string which replaces the variables by the value.
   """
   def Replacer(matchobj):
-    """The replace function to expand variables
+    """The replace function to expand variables.
 
     Args:
       matchobj: the match object
@@ -55,7 +56,7 @@ def ReplaceVariables(data, environment):
       The value for the variable if the variable is defined in the
       environment.  Otherwise original string is returned.
     """
-    if environment.has_key(matchobj.group(1)):
+    if matchobj.group(1) in environment:
       return environment[matchobj.group(1)]
     return matchobj.group(0)
 

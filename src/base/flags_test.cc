@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 DEFINE_string(test_string, "hogehoge", "test_string");
 DEFINE_int32(test_int32, 20, "test_int32");
-DEFINE_int64(test_int64,   29051773239673121LL, "test_int64");
+DEFINE_int64(test_int64, 29051773239673121LL, "test_int64");
 DEFINE_uint64(test_uint64, 84467440737095516LL, "test_uint64");
 DEFINE_bool(test_bool, false, "test_bool");
 DEFINE_double(test_double, 0.5, "test_double");
@@ -44,7 +44,7 @@ namespace mozc {
 namespace {
 
 char *strdup_with_new(const char *str) {
-  char *result = new char [strlen(str) + 1];
+  char *result = new char[strlen(str) + 1];
   strcpy(result, str);
   return result;
 }
@@ -64,13 +64,13 @@ class FlagsTest : public testing::Test {
 TEST_F(FlagsTest, FlagsBasicTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
-  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
+  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
   EXPECT_EQ("hogehoge", FLAGS_test_string);
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);
 
-  char **argv = new char * [8];
+  char **argv = new char *[8];
   argv[0] = strdup_with_new("test");
   argv[1] = strdup_with_new("--test_int32=11214141");
   argv[2] = strdup_with_new("--test_string=test");
@@ -80,12 +80,11 @@ TEST_F(FlagsTest, FlagsBasicTest) {
   argv[6] = strdup_with_new("--test_uint64=9414041694169841");
   argv[7] = strdup_with_new("invalid_value");
   int argc = 8;
-  const uint32 used_argc =
-      mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  const uint32 used_argc = mozc_flags::ParseCommandLineFlags(&argc, &argv);
   for (size_t i = 0; i < argc; ++i) {
-    delete [] argv[i];
+    delete[] argv[i];
   }
-  delete [] argv;
+  delete[] argv;
 
   EXPECT_EQ(8u, used_argc);
   EXPECT_EQ(true, FLAGS_test_bool);
@@ -100,25 +99,24 @@ TEST_F(FlagsTest, FlagsBasicTest) {
 TEST_F(FlagsTest, NoValuesFlagsTest) {
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
-  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
+  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
+  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
   EXPECT_EQ("hogehoge", FLAGS_test_string);
   EXPECT_LT(0.4, FLAGS_test_double);
   EXPECT_GT(0.6, FLAGS_test_double);
 
-  char **argv = new char * [3];
+  char **argv = new char *[3];
   // We set only boolean and string values, because other types will stops
   // the test process if empty values are set.
   argv[0] = strdup_with_new("test");
   argv[1] = strdup_with_new("--test_string");
   argv[2] = strdup_with_new("--test_bool");
   int argc = 3;
-  const uint32 used_argc =
-      mozc_flags::ParseCommandLineFlags(&argc, &argv, false);
+  const uint32 used_argc = mozc_flags::ParseCommandLineFlags(&argc, &argv);
   for (size_t i = 0; i < argc; ++i) {
-    delete [] argv[i];
+    delete[] argv[i];
   }
-  delete [] argv;
+  delete[] argv;
 
   EXPECT_EQ(3u, used_argc);
   EXPECT_TRUE(FLAGS_test_bool);

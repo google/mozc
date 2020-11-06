@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,8 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 
@@ -47,11 +46,22 @@ class EnglishVariantsRewriterTest : public ::testing::Test {
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
+
+  bool GetRankFromValue(const Segment &segment, const std::string &value,
+                        int *rank) {
+    for (size_t i = 0; i < segment.candidates_size(); ++i) {
+      if (segment.candidate(i).value == value) {
+        *rank = static_cast<int>(i);
+        return true;
+      }
+    }
+    return false;
+  }
 };
 
 TEST_F(EnglishVariantsRewriterTest, ExpandEnglishVariants) {
   EnglishVariantsRewriter rewriter;
-  std::vector<string> variants;
+  std::vector<std::string> variants;
 
   EXPECT_TRUE(rewriter.ExpandEnglishVariants("foo", &variants));
   EXPECT_EQ(2, variants.size());
@@ -215,6 +225,82 @@ TEST_F(EnglishVariantsRewriterTest, Regression5137299) {
     EXPECT_EQ("google", seg->candidate(1).content_value);
     EXPECT_EQ("GOOGLE", seg->candidate(2).value);
     EXPECT_EQ("GOOGLE", seg->candidate(2).content_value);
+  }
+}
+
+TEST_F(EnglishVariantsRewriterTest, DoNotAddDuplicatedCandidates) {
+  EnglishVariantsRewriter rewriter;
+  Segments segments;
+  const ConversionRequest request;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "GOOGLE";
+    candidate->content_value = "GOOGLE";
+
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "グーグル";
+    candidate->content_value = "グーグル";
+
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "google";
+    candidate->content_value = "google";
+
+    EXPECT_EQ(3, seg->candidates_size());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(4, seg->candidates_size());  // Kana, lower, upper, capitalized
+  }
+}
+
+TEST_F(EnglishVariantsRewriterTest, KeepRank) {
+  EnglishVariantsRewriter rewriter;
+  Segments segments;
+  const ConversionRequest request;
+  Segment *seg = segments.push_back_segment();
+
+  {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "GOOGLE";
+    candidate->content_value = "GOOGLE";
+
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "グーグル";
+    candidate->content_value = "グーグル";
+
+    candidate = seg->add_candidate();
+    candidate->Init();
+    candidate->content_key = "ぐーぐる";
+    candidate->key = "ぐーぐる";
+    candidate->value = "google";
+    candidate->content_value = "google";
+
+    EXPECT_EQ(3, seg->candidates_size());
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+
+    int upper_rank, lower_rank, capitalized_rank, kana_rank;
+    EXPECT_TRUE(GetRankFromValue(*seg, "GOOGLE", &upper_rank));
+    EXPECT_TRUE(GetRankFromValue(*seg, "google", &lower_rank));
+    EXPECT_TRUE(GetRankFromValue(*seg, "Google", &capitalized_rank));
+    EXPECT_TRUE(GetRankFromValue(*seg, "グーグル", &kana_rank));
+    EXPECT_LT(upper_rank, lower_rank);
+    EXPECT_LT(kana_rank, lower_rank);
+    EXPECT_LT(lower_rank, capitalized_rank);
   }
 }
 

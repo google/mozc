@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
 #include <QtWidgets/QWidget>
-
 #include <map>
 #include <memory>
 #include <set>
@@ -53,37 +52,34 @@ class KeyMapEditorDialog : public GenericTableEditorDialog {
 
  public:
   explicit KeyMapEditorDialog(QWidget *parent);
-  virtual ~KeyMapEditorDialog();
+  ~KeyMapEditorDialog() override;
 
   // show a modal dialog
-  static bool Show(QWidget *parent,
-                   const string &current_keymap,
-                   string *new_keymap);
+  static bool Show(QWidget *parent, const std::string &current_keymap,
+                   std::string *new_keymap);
 
  protected slots:
-  virtual void UpdateMenuStatus();
-  virtual void OnEditMenuAction(QAction *action);
+  void UpdateMenuStatus() override;
+  void OnEditMenuAction(QAction *action) override;
 
  protected:
-  virtual string GetDefaultFilename() const {
-    return "keymap.txt";
-  }
-  virtual bool LoadFromStream(std::istream *is);
-  virtual bool Update();
+  std::string GetDefaultFilename() const override { return "keymap.txt"; }
+  bool LoadFromStream(std::istream *is) override;
+  bool Update() override;
 
  private:
-  string invisible_keymap_table_;
+  std::string invisible_keymap_table_;
   // This is used for deciding whether the user has changed the settings that
   // are valid only for new applications.
-  std::set<string> direct_mode_commands_;
+  std::set<std::string> direct_mode_commands_;
   std::unique_ptr<QAction *[]> actions_;
   std::unique_ptr<QAction *[]> import_actions_;
   std::unique_ptr<ComboBoxDelegate> status_delegate_;
   std::unique_ptr<ComboBoxDelegate> commands_delegate_;
   std::unique_ptr<KeyBindingEditorDelegate> keybinding_delegate_;
 
-  std::map<string, string> normalized_command_map_;
-  std::map<string, string> normalized_status_map_;
+  std::map<std::string, std::string> normalized_command_map_;
+  std::map<std::string, std::string> normalized_status_map_;
 };
 
 }  // namespace gui

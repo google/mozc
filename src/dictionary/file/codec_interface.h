@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,12 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_
 #define MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_
 
-#include <ostream>
+#include <iosfwd>
+#include <string>
 #include <vector>
 
 #include "base/port.h"
+#include "base/status.h"
 #include "dictionary/file/section.h"
 
 namespace mozc {
@@ -46,19 +48,16 @@ class DictionaryFileCodecInterface {
                              std::ostream *ofs) const = 0;
 
   // Reads sections from memory image.
-  virtual bool ReadSections(
+  virtual mozc::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const = 0;
 
   // Gets section name.
-  virtual string GetSectionName(const string &name) const = 0;
+  virtual std::string GetSectionName(const std::string &name) const = 0;
 
  protected:
-  DictionaryFileCodecInterface() {}
-  virtual ~DictionaryFileCodecInterface() {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DictionaryFileCodecInterface);
+  DictionaryFileCodecInterface() = default;
+  virtual ~DictionaryFileCodecInterface() = default;
 };
 
 }  // namespace dictionary

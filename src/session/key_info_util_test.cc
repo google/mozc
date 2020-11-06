@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ using ::mozc::commands::KeyEvent;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
 
-void PushKey(const string &key_string, std::vector<KeyInformation> *keys) {
+void PushKey(const std::string &key_string, std::vector<KeyInformation> *keys) {
   KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return;

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,61 +28,60 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-__author__ = "komatsu"
-
-"""
-This script code-signs the target files with the specified keychain.
+"""This script code-signs the target files with the specified keychain.
 
 Exapmle:
 /home/komatsu/bin/update_codesign.py --target /path/to/target
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import optparse
 import os
-import platform
 import subprocess
 import sys
 
 
 def RunOrDie(command):
   """Run the command, or die if it failed."""
-  print "Running: " + command
+  print("Running: " + command)
   try:
     output = subprocess.check_output(command, shell=True)
-    print >> sys.stderr, "=========="
-    print >> sys.stderr, "COMMAND: " + command
-    print >> sys.stderr, output
+    print("==========", file=sys.stderr)
+    print("COMMAND: " + command, file=sys.stderr)
+    print(output, file=sys.stderr)
   except subprocess.CalledProcessError as e:
-    print >> sys.stderr, "=========="
-    print >> sys.stderr, "ERROR: " + command
-    print >> sys.stderr, e.output
-    print >> sys.stderr, "=========="
+    print("==========", file=sys.stderr)
+    print("ERROR: " + command, file=sys.stderr)
+    print(e.output, file=sys.stderr)
+    print("==========", file=sys.stderr)
     sys.exit(1)
 
 
-def Codesign(target, sign, flags):
+def Codesign(target, sign=None, keychain=None):
   """Run the codesign command with the arguments."""
 
-  # If the platform is Marvericks or greater, "--deep" should be used for
-  # codesign.
-  options = "-f --verbose"
-  mac_ver = platform.mac_ver()[0].split(".")
-  if mac_ver > [10, 9, 0]:
-    options += " --deep"
+  sign = (sign or GetIdentifier(""))
+  keychain = (keychain or GetKeychain(""))
+  if not sign or not keychain:
+    return
 
+  flags = "--keychain " + os.path.abspath(keychain)
   RunOrDie(" ".join(["/usr/bin/codesign",
-                     options,
+                     "-f --verbose",
+                     "--deep",  # Recursive signs
+                     "--timestamp --options=runtime",  # For notarization
                      "--sign \"%s\"" % sign,
                      flags,
                      target]))
 
+
 def Verify(target):
   """Run the codesign command with the -vvv option."""
   # codesign returns false if the target was not signed.
-  result = os.system(" ".join(["/usr/bin/codesign",
-                     "-vvv",
-                     target]))
-  return (result == 0)
+  result = os.system(" ".join(["/usr/bin/codesign", "-vvv", target]))
+  return result == 0
+
 
 def UnlockKeychain(keychain, password=None):
   """Run the security command with the unlock-keychain option."""
@@ -103,6 +102,25 @@ def GetKeychain(default):
   return os.path.abspath(default)
 
 
+def GetCodeSignFlags():
+  """Return a list of code sign flags considering the build environment."""
+  identity = GetIdentifier("")
+  keychain = GetKeychain("")
+
+  if identity and keychain:
+    flags = "--deep --timestamp --options=runtime --keychain %s" % keychain
+    return [
+        "CODE_SIGN_IDENTITY=%s" % identity,
+        "OTHER_CODE_SIGN_FLAGS=%s" % flags,
+        # CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO is the configuration to address
+        # the error of "The executable requests the
+        #               com.apple.security.get-task-allow entitlement."
+        "CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO",
+    ]
+  else:
+    return []
+
+
 def ParseOption():
   """Parse command line options."""
   parser = optparse.OptionParser()
@@ -116,21 +134,26 @@ def ParseOption():
                     default=False)
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
+  parser.add_option("--notarization_id", dest="notarization_id")
   (options, unused_args) = parser.parse_args()
 
   if not options.target:
-    print "Error: --target should be specified."
-    print parser.print_help()
+    print("Error: --target should be specified.")
+    print(parser.print_help())
     sys.exit(1)
 
   return options
 
 
 def DumpEnviron():
-  print "=== os.environ ==="
+  print("=== os.environ ===")
   for key in sorted(os.environ):
-    print "%s = %s" % (key, os.getenv(key))
-  print "=================="
+    print("%s = %s" % (key, os.getenv(key)))
+  print("==================")
+
+
+def Notarize(target, bundle_id):
+  """Execute the notariazation commands."""
 
 
 def main():
@@ -142,16 +165,16 @@ def main():
   DumpEnviron()
 
   # Call Codesign with the release keychain.
-  sign = GetIdentifier(opts.sign)
   keychain = GetKeychain(opts.keychain)
-
-  flags = "--keychain " + os.path.abspath(keychain)
   RunOrDie(" ".join(["/usr/bin/security", "find-identity", keychain]))
 
   # Unlock Keychain for codesigning.
   UnlockKeychain(keychain, opts.password)
 
-  Codesign(opts.target, sign, flags)
+  Codesign(opts.target, keychain=keychain)
+
+  if opts.notarization_id:
+    Notarize(opts.target, opts.notarization_id)
 
 
 if __name__ == "__main__":

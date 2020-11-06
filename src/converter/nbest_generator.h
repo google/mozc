@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 #include "base/port.h"
 #include "converter/candidate_filter.h"
 #include "converter/segments.h"
-#include "dictionary/suppression_dictionary.h"
 #include "dictionary/pos_matcher.h"
+#include "dictionary/suppression_dictionary.h"
 
 namespace mozc {
 
@@ -82,10 +82,8 @@ class NBestGenerator {
   // Try to enumurate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const Segmenter *segmenter,
-      const Connector *connector,
-      const dictionary::POSMatcher *pos_matcher,
-      const Lattice *lattice,
+      const Segmenter *segmenter, const Connector *connector,
+      const dictionary::POSMatcher *pos_matcher, const Lattice *lattice,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
   ~NBestGenerator();
@@ -96,8 +94,7 @@ class NBestGenerator {
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  bool Next(const string &original_key,
-            Segment::Candidate *candidate,
+  bool Next(const std::string &original_key, Segment::Candidate *candidate,
             Segments::RequestType request_type);
 
  private:
@@ -107,8 +104,9 @@ class NBestGenerator {
     INVALID,
   };
 
-  typedef BoundaryCheckResult (NBestGenerator::*BoundaryChecker)(
-      const Node *, const Node *, bool) const;
+  typedef BoundaryCheckResult (NBestGenerator::*BoundaryChecker)(const Node *,
+                                                                 const Node *,
+                                                                 bool) const;
 
   struct QueueElement;
   struct QueueElementComparator;
@@ -117,57 +115,45 @@ class NBestGenerator {
   // more operations in addition to std::priority_queue.
   class Agenda {
    public:
-    Agenda() {
-    }
-    ~Agenda() {
-    }
+    Agenda() {}
+    ~Agenda() {}
 
-    const QueueElement *Top() const {
-      return priority_queue_.front();
-    }
-    bool IsEmpty() const {
-      return priority_queue_.empty();
-    }
-    void Clear() {
-      priority_queue_.clear();
-    }
-    void Reserve(int size) {
-      priority_queue_.reserve(size);
-    }
+    const QueueElement *Top() const { return priority_queue_.front(); }
+    bool IsEmpty() const { return priority_queue_.empty(); }
+    void Clear() { priority_queue_.clear(); }
+    void Reserve(int size) { priority_queue_.reserve(size); }
 
     void Push(const QueueElement *element);
     void Pop();
 
    private:
-    std::vector<const QueueElement*> priority_queue_;
+    std::vector<const QueueElement *> priority_queue_;
 
     DISALLOW_COPY_AND_ASSIGN(Agenda);
   };
 
-  int InsertTopResult(const string &original_key,
+  int InsertTopResult(const std::string &original_key,
                       Segment::Candidate *candidate,
                       Segments::RequestType request_type);
 
-  void MakeCandidate(Segment::Candidate *candidate,
-                     int32 cost, int32 structure_cost, int32 wcost,
+  void MakeCandidate(Segment::Candidate *candidate, int32 cost,
+                     int32 structure_cost, int32 wcost,
                      const std::vector<const Node *> &nodes) const;
 
   // Helper functions for Next(). Checks node boundary conditions.
-  BoundaryCheckResult CheckStrict(
-      const Node *lnode, const Node *rnode, bool is_edge) const;
-  BoundaryCheckResult CheckOnlyMid(
-      const Node *lnode, const Node *rnode, bool is_edge) const;
-  BoundaryCheckResult CheckOnlyEdge(
-      const Node *lnode, const Node *rnode, bool is_edge) const;
+  BoundaryCheckResult CheckStrict(const Node *lnode, const Node *rnode,
+                                  bool is_edge) const;
+  BoundaryCheckResult CheckOnlyMid(const Node *lnode, const Node *rnode,
+                                   bool is_edge) const;
+  BoundaryCheckResult CheckOnlyEdge(const Node *lnode, const Node *rnode,
+                                    bool is_edge) const;
 
   int GetTransitionCost(const Node *lnode, const Node *rnode) const;
 
   // Create queue element from freelist
   const QueueElement *CreateNewElement(const Node *node,
-                                       const QueueElement *next,
-                                       int32 fx,
-                                       int32 gx,
-                                       int32 structure_gx,
+                                       const QueueElement *next, int32 fx,
+                                       int32 gx, int32 structure_gx,
                                        int32 w_gx);
 
   // References to relevant modules.

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,14 +59,13 @@ class PasswordManager {
 
   // get current password
   // Call InitPassword() if need be
-  static bool GetPassword(string *password);
+  static bool GetPassword(std::string *password);
 
   // remove current password
   static bool RemovePassword();
 
   // set internal interface for unittesting
-  static void SetPasswordManagerHandler(
-      PasswordManagerInterface *handler);
+  static void SetPasswordManagerHandler(PasswordManagerInterface *handler);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(PasswordManager);
@@ -75,8 +74,8 @@ class PasswordManager {
 // Implements PasswordManager implementation.
 class PasswordManagerInterface {
  public:
-  virtual bool SetPassword(const string &password) const = 0;
-  virtual bool GetPassword(string *password) const = 0;
+  virtual bool SetPassword(const std::string &password) const = 0;
+  virtual bool GetPassword(std::string *password) const = 0;
   virtual bool RemovePassword() const = 0;
 
   PasswordManagerInterface() {}

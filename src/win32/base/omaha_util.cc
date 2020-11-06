@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,16 +50,16 @@ namespace win32 {
 namespace {
 using ATL::CRegKey;
 
-const wchar_t kClientStateKey[] = L"Software\\Google\\Update\\ClientState\\"
-                                  L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
+const wchar_t kClientStateKey[] =
+    L"Software\\Google\\Update\\ClientState\\"
+    L"{DDCCD2A9-025E-4142-BCEB-F467B88CF830}";
 const wchar_t kChannelKeyName[] = L"ap";
 
 LONG OpenClientStateKey(CRegKey *key, REGSAM base_sam) {
-  const REGSAM sam_desired = base_sam |
-      (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
-  return key->Create(HKEY_LOCAL_MACHINE, kClientStateKey,
-                     REG_NONE, REG_OPTION_NON_VOLATILE,
-                     sam_desired);
+  const REGSAM sam_desired =
+      base_sam | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
+  return key->Create(HKEY_LOCAL_MACHINE, kClientStateKey, REG_NONE,
+                     REG_OPTION_NON_VOLATILE, sam_desired);
 }
 }  // namespace
 

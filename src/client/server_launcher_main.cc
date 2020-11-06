@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,12 +34,11 @@
 #include "base/logging.h"
 #include "client/client.h"
 
-DEFINE_bool(shutdown, false,
-            "shutdown server if mozc_server is running");
+DEFINE_bool(shutdown, false, "shutdown server if mozc_server is running");
 
 // simple command line tool to launch mozc server
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
   mozc::client::Client client;
 
   if (FLAGS_shutdown) {

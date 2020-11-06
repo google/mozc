@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ template <class T>
 class ScopedHIMC {
  public:
   explicit ScopedHIMC(HIMC himc) : himc_(nullptr), pointer_(nullptr) {
-    pointer_ = static_cast<T*>(::ImmLockIMC(himc));
+    pointer_ = static_cast<T *>(::ImmLockIMC(himc));
     if (pointer_ == nullptr) {
       return;
     }
@@ -57,21 +57,13 @@ class ScopedHIMC {
     pointer_ = nullptr;
   }
 
-  const T *get() const {
-    return pointer_;
-  }
+  const T *get() const { return pointer_; }
 
-  T *get() {
-    return pointer_;
-  }
+  T *get() { return pointer_; }
 
-  const T *operator->() const {
-    return pointer_;
-  }
+  const T *operator->() const { return pointer_; }
 
-  T *operator->() {
-    return pointer_;
-  }
+  T *operator->() { return pointer_; }
 
  private:
   HIMC himc_;
@@ -83,7 +75,7 @@ template <class T>
 class ScopedHIMCC {
  public:
   explicit ScopedHIMCC(HIMCC himcc) : himcc_(himcc), pointer_(nullptr) {
-    pointer_ = static_cast<T*>(::ImmLockIMCC(himcc_));
+    pointer_ = static_cast<T *>(::ImmLockIMCC(himcc_));
     if (pointer_ == nullptr) {
       himcc_ = nullptr;
     }
@@ -96,21 +88,13 @@ class ScopedHIMCC {
     pointer_ = nullptr;
   }
 
-  const T *get() const {
-    return pointer_;
-  }
+  const T *get() const { return pointer_; }
 
-  T *get() {
-    return pointer_;
-  }
+  T *get() { return pointer_; }
 
-  const T *operator->() const {
-    return pointer_;
-  }
+  const T *operator->() const { return pointer_; }
 
-  T *operator->() {
-    return pointer_;
-  }
+  T *operator->() { return pointer_; }
 
  private:
   T *pointer_;

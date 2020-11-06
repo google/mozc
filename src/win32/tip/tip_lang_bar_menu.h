@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #ifndef MOZC_WIN32_TIP_TIP_LANG_BAR_MENU_H_
 #define MOZC_WIN32_TIP_TIP_LANG_BAR_MENU_H_
 
-#include <windows.h>
-#include <rpcsal.h>
 #include <msctf.h>
+#include <rpcsal.h>
+#include <windows.h>
 
 #include <string>
 #include <vector>
@@ -58,7 +58,7 @@ class TipBarCallback;
 
 enum TipLangBarItemFlags {
   kTipLangBarItemTypeDefault = 0,
-  kTipLangBarItemTypeChecked = TF_LBMENUF_CHECKED,            // 0x1
+  kTipLangBarItemTypeChecked = TF_LBMENUF_CHECKED,  // 0x1
   // ImeLangBarItemTypeSubMenu = TF_LBMENUF_SUBMENU  // 0x2 (not supported)
   kTipLangBarItemTypeSeparator = TF_LBMENUF_SEPARATOR,        // 0x4
   kTipLangBarItemTypeRadioChecked = TF_LBMENUF_RADIOCHECKED,  // 0x8
@@ -88,12 +88,10 @@ struct TipLangBarMenuData {
 // Reperesents the data possessed by a language bar menu.
 class TipLangBarMenuDataArray {
  public:
-  HRESULT Init(HINSTANCE instance,
-               const TipLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, const TipLangBarMenuItem *menu, int count);
 
   size_t size() const;
-  TipLangBarMenuData* data(size_t i);
+  TipLangBarMenuData *data(size_t i);
 
  private:
   std::vector<TipLangBarMenuData> data_;
@@ -112,10 +110,9 @@ IMozcLangBarToggleItem : public IUnknown {
 };
 
 // Represents the common operations for a button-menu item in the language bar.
-class TipLangBarButton
-    : public ITfLangBarItemButton,
-      public ITfSource,
-      public IMozcLangBarItem {
+class TipLangBarButton : public ITfLangBarItemButton,
+                         public ITfSource,
+                         public IMozcLangBarItem {
  public:
   TipLangBarButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                    bool is_menu, bool show_in_tray);
@@ -136,16 +133,14 @@ class TipLangBarButton
   virtual STDMETHODIMP GetTooltipString(BSTR *tooltip);
 
   // The ITfLangBarItemButton interface methods
-  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point,
-                               const RECT *rect);
+  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point, const RECT *rect);
   virtual STDMETHODIMP InitMenu(ITfMenu *menu) = 0;
   virtual STDMETHODIMP OnMenuSelect(UINT menu_id) = 0;
   virtual STDMETHODIMP GetIcon(HICON *icon) = 0;
   virtual STDMETHODIMP GetText(BSTR *text);
 
   // The ITfSource interface methods
-  virtual STDMETHODIMP AdviseSink(REFIID interface_id,
-                                  IUnknown *unknown,
+  virtual STDMETHODIMP AdviseSink(REFIID interface_id, IUnknown *unknown,
                                   DWORD *cookie);
   virtual STDMETHODIMP UnadviseSink(DWORD cookie);
 
@@ -154,10 +149,8 @@ class TipLangBarButton
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               int string_id,
-               const TipLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, int string_id,
+               const TipLangBarMenuItem *menu, int count);
 
   // Notifies the language bar of a change in a language bar item.
   STDMETHODIMP OnUpdate(DWORD update_flag);
@@ -176,13 +169,13 @@ class TipLangBarButton
 
   // Returns the i-th data in the language bar menu.
   // Returns NULL if i is out of bounds.
-  TipLangBarMenuData* menu_data(size_t i);
+  TipLangBarMenuData *menu_data(size_t i);
 
   // Returns the size of the language bar menu.
   size_t menu_data_size() const;
 
   // Returns the item information for langbar menu.
-  const TF_LANGBARITEMINFO* item_info() const;
+  const TF_LANGBARITEMINFO *item_info() const;
 
   // Returns true if the attribute is menu button.
   bool IsMenuButton() const;
@@ -214,11 +207,9 @@ class TipLangBarButton
 
 // Represents the common operations for a button-menu item with an icon in the
 // language bar.
-class TipLangBarMenuButton
-    : public TipLangBarButton {
+class TipLangBarMenuButton : public TipLangBarButton {
  public:
-  TipLangBarMenuButton(TipLangBarCallback *langbar_callback,
-                       const GUID &guid,
+  TipLangBarMenuButton(TipLangBarCallback *langbar_callback, const GUID &guid,
                        bool show_in_tray);
 
   // The IUnknown interface methods
@@ -235,12 +226,9 @@ class TipLangBarMenuButton
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               UINT string_id,
-               const TipLangBarMenuItem *menu,
-               int count,
-               UINT menu_icon_id_for_non_theme,
-               UINT menu_icon_id_for_theme);
+  HRESULT Init(HINSTANCE instance, UINT string_id,
+               const TipLangBarMenuItem *menu, int count,
+               UINT menu_icon_id_for_non_theme, UINT menu_icon_id_for_theme);
 
  private:
   TipRefCount ref_count_;
@@ -252,12 +240,11 @@ class TipLangBarMenuButton
 
 // Represents the common operations for a toggle button-menu item in the
 // language bar.
-class TipLangBarToggleButton
-    : public TipLangBarButton,
-      public IMozcLangBarToggleItem {
+class TipLangBarToggleButton : public TipLangBarButton,
+                               public IMozcLangBarToggleItem {
  public:
-  TipLangBarToggleButton(TipLangBarCallback *langbar_callback,
-                         const GUID &guid, bool is_menu, bool show_in_tray);
+  TipLangBarToggleButton(TipLangBarCallback *langbar_callback, const GUID &guid,
+                         bool is_menu, bool show_in_tray);
   virtual ~TipLangBarToggleButton();
 
   // The IUnknown interface methods
@@ -280,10 +267,8 @@ class TipLangBarToggleButton
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               int string_id,
-               const TipLangBarMenuItem *menu,
-               int count,
+  HRESULT Init(HINSTANCE instance, int string_id,
+               const TipLangBarMenuItem *menu, int count,
                const TipLangBarMenuItem &menu_for_disabled);
 
  private:
@@ -298,8 +283,7 @@ class TipLangBarToggleButton
 
 // Represents the common operations for a button-menu item in the system
 // language bar.
-class TipSystemLangBarMenu
-    : public ITfSystemLangBarItemSink {
+class TipSystemLangBarMenu : public ITfSystemLangBarItemSink {
  public:
   TipSystemLangBarMenu(TipLangBarCallback *langbar_callback, const GUID &guid);
   virtual ~TipSystemLangBarMenu();
@@ -315,9 +299,7 @@ class TipSystemLangBarMenu
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               const TipLangBarMenuItem *menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, const TipLangBarMenuItem *menu, int count);
 
  private:
   TipRefCount ref_count_;

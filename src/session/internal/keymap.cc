@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,14 +60,13 @@ static const char kMobileKeyMapFile[] = "system://mobile.tsv";
 static const char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
 }  // namespace
 
-#if defined(OS_MACOSX)
+#if defined(__APPLE__)
 const bool KeyMapManager::kInputModeXCommandSupported = false;
 #else
 const bool KeyMapManager::kInputModeXCommandSupported = true;
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 
-KeyMapManager::KeyMapManager()
-  : keymap_(config::Config::NONE) {
+KeyMapManager::KeyMapManager() : keymap_(config::Config::NONE) {
   InitCommandData();
 }
 
@@ -89,14 +88,13 @@ bool KeyMapManager::Initialize(const config::Config::SessionKeymap keymap) {
   Reset();
 
   const char *keymap_file = GetKeyMapFileName(keymap);
-  if (keymap != config::Config::CUSTOM &&
-      keymap_file != NULL &&
+  if (keymap != config::Config::CUSTOM && keymap_file != NULL &&
       LoadFile(keymap_file)) {
     return true;
   }
 
-  const char *default_keymapfile = GetKeyMapFileName(
-      config::ConfigHandler::GetDefaultKeyMap());
+  const char *default_keymapfile =
+      GetKeyMapFileName(config::ConfigHandler::GetDefaultKeyMap());
   return LoadFile(default_keymapfile);
 }
 
@@ -108,19 +106,19 @@ bool KeyMapManager::ReloadConfig(const config::Config &config) {
     return true;
   }
 
-  const string &custom_keymap_table = config.custom_keymap_table();
+  const std::string &custom_keymap_table = config.custom_keymap_table();
 
   if (custom_keymap_table.empty()) {
     LOG(WARNING) << "custom_keymap_table is empty. use default setting";
-    const char *default_keymapfile = GetKeyMapFileName(
-        config::ConfigHandler::GetDefaultKeyMap());
+    const char *default_keymapfile =
+        GetKeyMapFileName(config::ConfigHandler::GetDefaultKeyMap());
     return LoadFile(default_keymapfile);
   }
 
-#ifndef NO_LOGGING
+#ifndef MOZC_NO_LOGGING
   // make a copy of keymap file just for debugging
   const char *keymap_file = GetKeyMapFileName(keymap_);
-  const string filename = ConfigFileStream::GetFileName(keymap_file);
+  const std::string filename = ConfigFileStream::GetFileName(keymap_file);
   OutputFileStream ofs(filename.c_str());
   if (ofs) {
     ofs << "# This is a copy of keymap table for debugging." << std::endl;
@@ -177,23 +175,23 @@ bool KeyMapManager::LoadFile(const char *filename) {
 }
 
 bool KeyMapManager::LoadStream(std::istream *ifs) {
-  std::vector<string> errors;
+  std::vector<std::string> errors;
   return LoadStreamWithErrors(ifs, &errors);
 }
 
 bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
-                                         std::vector<string> *errors) {
-  string line;
-  getline(*ifs, line);  // Skip the first line.
+                                         std::vector<std::string> *errors) {
+  std::string line;
+  std::getline(*ifs, line);  // Skip the first line.
   while (!ifs->eof()) {
-    getline(*ifs, line);
+    std::getline(*ifs, line);
     Util::ChopReturns(&line);
 
     if (line.empty() || line[0] == '#') {  // Skip empty or comment line.
       continue;
     }
 
-    std::vector<string> rules;
+    std::vector<std::string> rules;
     Util::SplitStringUsing(line, "\t", &rules);
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;
@@ -219,17 +217,17 @@ bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
   return true;
 }
 
-bool KeyMapManager::AddCommand(const string &state_name,
-                               const string &key_event_name,
-                               const string &command_name) {
-#ifdef NO_LOGGING  // means RELEASE BUILD
+bool KeyMapManager::AddCommand(const std::string &state_name,
+                               const std::string &key_event_name,
+                               const std::string &command_name) {
+#ifdef MOZC_NO_LOGGING  // means RELEASE BUILD
   // On the release build, we do not support the ReportBug
   // commands.  Note, true is returned as the arguments are
   // interpreted properly.
   if (command_name == "ReportBug") {
     return true;
   }
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
 
   commands::KeyEvent key_event;
   if (!KeyParser::ParseKey(key_event_name, &key_event)) {
@@ -310,10 +308,11 @@ bool KeyMapManager::AddCommand(const string &state_name,
 }
 
 namespace {
-template<typename T> bool GetNameInternal(
-    const std::map<T, string> &reverse_command_map, T command, string *name) {
+template <typename T>
+bool GetNameInternal(const std::map<T, std::string> &reverse_command_map,
+                     T command, std::string *name) {
   DCHECK(name);
-  typename std::map<T, string>::const_iterator iter =
+  typename std::map<T, std::string>::const_iterator iter =
       reverse_command_map.find(command);
   if (iter == reverse_command_map.end()) {
     return false;
@@ -324,50 +323,50 @@ template<typename T> bool GetNameInternal(
 }
 }  // namespace
 
-bool KeyMapManager::GetNameFromCommandDirect(
-    DirectInputState::Commands command, string *name) const {
+bool KeyMapManager::GetNameFromCommandDirect(DirectInputState::Commands command,
+                                             std::string *name) const {
   return GetNameInternal<DirectInputState::Commands>(
       reverse_command_direct_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandPrecomposition(
-    PrecompositionState::Commands command, string *name) const {
+    PrecompositionState::Commands command, std::string *name) const {
   return GetNameInternal<PrecompositionState::Commands>(
       reverse_command_precomposition_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandComposition(
-    CompositionState::Commands command, string *name) const {
+    CompositionState::Commands command, std::string *name) const {
   return GetNameInternal<CompositionState::Commands>(
       reverse_command_composition_map_, command, name);
 }
 
 bool KeyMapManager::GetNameFromCommandConversion(
-    ConversionState::Commands command, string *name) const {
+    ConversionState::Commands command, std::string *name) const {
   return GetNameInternal<ConversionState::Commands>(
       reverse_command_conversion_map_, command, name);
 }
 
-void KeyMapManager::RegisterDirectCommand(
-    const string &command_string, DirectInputState::Commands command) {
+void KeyMapManager::RegisterDirectCommand(const std::string &command_string,
+                                          DirectInputState::Commands command) {
   command_direct_map_[command_string] = command;
   reverse_command_direct_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterPrecompositionCommand(
-    const string &command_string, PrecompositionState::Commands command) {
+    const std::string &command_string, PrecompositionState::Commands command) {
   command_precomposition_map_[command_string] = command;
   reverse_command_precomposition_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterCompositionCommand(
-    const string &command_string, CompositionState::Commands command) {
+    const std::string &command_string, CompositionState::Commands command) {
   command_composition_map_[command_string] = command;
   reverse_command_composition_map_[command] = command_string;
 }
 
 void KeyMapManager::RegisterConversionCommand(
-    const string &command_string, ConversionState::Commands command) {
+    const std::string &command_string, ConversionState::Commands command) {
   command_conversion_map_[command_string] = command;
   reverse_command_conversion_map_[command] = command_string;
 }
@@ -386,19 +385,13 @@ void KeyMapManager::InitCommandData() {
     RegisterDirectCommand("InputModeHalfAlphanumeric",
                           DirectInputState::INPUT_MODE_HALF_ALPHANUMERIC);
   } else {
-    RegisterDirectCommand("InputModeHiragana",
-                          DirectInputState::NONE);
-    RegisterDirectCommand("InputModeFullKatakana",
-                          DirectInputState::NONE);
-    RegisterDirectCommand("InputModeHalfKatakana",
-                          DirectInputState::NONE);
-    RegisterDirectCommand("InputModeFullAlphanumeric",
-                          DirectInputState::NONE);
-    RegisterDirectCommand("InputModeHalfAlphanumeric",
-                          DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHiragana", DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullKatakana", DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfKatakana", DirectInputState::NONE);
+    RegisterDirectCommand("InputModeFullAlphanumeric", DirectInputState::NONE);
+    RegisterDirectCommand("InputModeHalfAlphanumeric", DirectInputState::NONE);
   }
-  RegisterDirectCommand("Reconvert",
-                        DirectInputState::RECONVERT);
+  RegisterDirectCommand("Reconvert", DirectInputState::RECONVERT);
 
   // Precomposition
   RegisterPrecompositionCommand("IMEOff", PrecompositionState::IME_OFF);
@@ -419,11 +412,9 @@ void KeyMapManager::InitCommandData() {
     RegisterPrecompositionCommand("InputModeHiragana",
                                   PrecompositionState::INPUT_MODE_HIRAGANA);
     RegisterPrecompositionCommand(
-        "InputModeFullKatakana",
-        PrecompositionState::INPUT_MODE_FULL_KATAKANA);
+        "InputModeFullKatakana", PrecompositionState::INPUT_MODE_FULL_KATAKANA);
     RegisterPrecompositionCommand(
-        "InputModeHalfKatakana",
-        PrecompositionState::INPUT_MODE_HALF_KATAKANA);
+        "InputModeHalfKatakana", PrecompositionState::INPUT_MODE_HALF_KATAKANA);
     RegisterPrecompositionCommand(
         "InputModeFullAlphanumeric",
         PrecompositionState::INPUT_MODE_FULL_ALPHANUMERIC);
@@ -475,8 +466,7 @@ void KeyMapManager::InitCommandData() {
                              CompositionState::INSERT_CHARACTER);
   RegisterCompositionCommand("Delete", CompositionState::DEL);
   RegisterCompositionCommand("Backspace", CompositionState::BACKSPACE);
-  RegisterCompositionCommand("InsertSpace",
-                             CompositionState::INSERT_SPACE);
+  RegisterCompositionCommand("InsertSpace", CompositionState::INSERT_SPACE);
   RegisterCompositionCommand("InsertAlternateSpace",
                              CompositionState::INSERT_ALTERNATE_SPACE);
   RegisterCompositionCommand("InsertHalfSpace",
@@ -543,12 +533,9 @@ void KeyMapManager::InitCommandData() {
     RegisterCompositionCommand("InputModeHalfAlphanumeric",
                                CompositionState::INPUT_MODE_HALF_ALPHANUMERIC);
   } else {
-    RegisterCompositionCommand("InputModeHiragana",
-                             CompositionState::NONE);
-    RegisterCompositionCommand("InputModeFullKatakana",
-                               CompositionState::NONE);
-    RegisterCompositionCommand("InputModeHalfKatakana",
-                               CompositionState::NONE);
+    RegisterCompositionCommand("InputModeHiragana", CompositionState::NONE);
+    RegisterCompositionCommand("InputModeFullKatakana", CompositionState::NONE);
+    RegisterCompositionCommand("InputModeHalfKatakana", CompositionState::NONE);
     RegisterCompositionCommand("InputModeFullAlphanumeric",
                                CompositionState::NONE);
     RegisterCompositionCommand("InputModeHalfAlphanumeric",
@@ -560,8 +547,7 @@ void KeyMapManager::InitCommandData() {
   RegisterConversionCommand("IMEOn", ConversionState::IME_ON);
   RegisterConversionCommand("InsertCharacter",
                             ConversionState::INSERT_CHARACTER);
-  RegisterConversionCommand("InsertSpace",
-                            ConversionState::INSERT_SPACE);
+  RegisterConversionCommand("InsertSpace", ConversionState::INSERT_SPACE);
   RegisterConversionCommand("InsertAlternateSpace",
                             ConversionState::INSERT_ALTERNATE_SPACE);
   RegisterConversionCommand("InsertHalfSpace",
@@ -637,20 +623,17 @@ void KeyMapManager::InitCommandData() {
     RegisterConversionCommand("InputModeHalfAlphanumeric",
                               ConversionState::INPUT_MODE_HALF_ALPHANUMERIC);
   } else {
-    RegisterConversionCommand("InputModeHiragana",
-                              ConversionState::NONE);
-    RegisterConversionCommand("InputModeFullKatakana",
-                              ConversionState::NONE);
-    RegisterConversionCommand("InputModeHalfKatakana",
-                              ConversionState::NONE);
+    RegisterConversionCommand("InputModeHiragana", ConversionState::NONE);
+    RegisterConversionCommand("InputModeFullKatakana", ConversionState::NONE);
+    RegisterConversionCommand("InputModeHalfKatakana", ConversionState::NONE);
     RegisterConversionCommand("InputModeFullAlphanumeric",
                               ConversionState::NONE);
     RegisterConversionCommand("InputModeHalfAlphanumeric",
                               ConversionState::NONE);
   }
-#ifndef NO_LOGGING  // means NOT RELEASE build
+#ifndef MOZC_NO_LOGGING  // means NOT RELEASE build
   RegisterConversionCommand("ReportBug", ConversionState::REPORT_BUG);
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
 }
 
 bool KeyMapManager::GetCommandDirect(
@@ -711,7 +694,7 @@ bool KeyMapManager::GetCommandPrediction(
 }
 
 bool KeyMapManager::ParseCommandDirect(
-    const string &command_string,
+    const std::string &command_string,
     DirectInputState::Commands *command) const {
   if (command_direct_map_.count(command_string) == 0) {
     return false;
@@ -722,7 +705,7 @@ bool KeyMapManager::ParseCommandDirect(
 
 // This should be in KeyMap instead of KeyMapManager.
 bool KeyMapManager::ParseCommandPrecomposition(
-    const string &command_string,
+    const std::string &command_string,
     PrecompositionState::Commands *command) const {
   if (command_precomposition_map_.count(command_string) == 0) {
     return false;
@@ -731,9 +714,8 @@ bool KeyMapManager::ParseCommandPrecomposition(
   return true;
 }
 
-
 bool KeyMapManager::ParseCommandComposition(
-    const string &command_string,
+    const std::string &command_string,
     CompositionState::Commands *command) const {
   if (command_composition_map_.count(command_string) == 0) {
     return false;
@@ -743,7 +725,7 @@ bool KeyMapManager::ParseCommandComposition(
 }
 
 bool KeyMapManager::ParseCommandConversion(
-    const string &command_string,
+    const std::string &command_string,
     ConversionState::Commands *command) const {
   if (command_conversion_map_.count(command_string) == 0) {
     return false;
@@ -753,57 +735,57 @@ bool KeyMapManager::ParseCommandConversion(
 }
 
 void KeyMapManager::GetAvailableCommandNameDirect(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   DCHECK(command_names);
-  for (std::map<string, DirectInputState::Commands>::const_iterator iter
-           = command_direct_map_.begin();
+  for (std::map<std::string, DirectInputState::Commands>::const_iterator iter =
+           command_direct_map_.begin();
        iter != command_direct_map_.end(); ++iter) {
     command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNamePrecomposition(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   DCHECK(command_names);
-  for (std::map<string, PrecompositionState::Commands>::const_iterator iter
-           = command_precomposition_map_.begin();
+  for (std::map<std::string, PrecompositionState::Commands>::const_iterator
+           iter = command_precomposition_map_.begin();
        iter != command_precomposition_map_.end(); ++iter) {
     command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNameComposition(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   DCHECK(command_names);
-  for (std::map<string, CompositionState::Commands>::const_iterator iter
-           = command_composition_map_.begin();
+  for (std::map<std::string, CompositionState::Commands>::const_iterator iter =
+           command_composition_map_.begin();
        iter != command_composition_map_.end(); ++iter) {
     command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNameConversion(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   DCHECK(command_names);
-  for (std::map<string, ConversionState::Commands>::const_iterator iter
-           = command_conversion_map_.begin();
+  for (std::map<std::string, ConversionState::Commands>::const_iterator iter =
+           command_conversion_map_.begin();
        iter != command_conversion_map_.end(); ++iter) {
     command_names->insert(iter->first);
   }
 }
 
 void KeyMapManager::GetAvailableCommandNameZeroQuerySuggestion(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   GetAvailableCommandNamePrecomposition(command_names);
 }
 
 void KeyMapManager::GetAvailableCommandNameSuggestion(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   GetAvailableCommandNameComposition(command_names);
 }
 
 void KeyMapManager::GetAvailableCommandNamePrediction(
-    std::set<string> *command_names) const {
+    std::set<std::string> *command_names) const {
   GetAvailableCommandNameConversion(command_names);
 }
 

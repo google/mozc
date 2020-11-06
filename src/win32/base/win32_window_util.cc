@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,14 @@
 
 #include "win32/base/win32_window_util.h"
 
+// clang-format off
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlwin.h>
 #include <atlstr.h>
+// clang-format on
 
 #include <memory>
 
@@ -46,8 +48,8 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using ATL::CWindow;
 using ATL::CStringW;
+using ATL::CWindow;
 using std::unique_ptr;
 
 std::wstring SafeGetWindowText(HWND window_handle) {
@@ -63,8 +65,8 @@ std::wstring SafeGetWindowText(HWND window_handle) {
   const size_t buffer_len = text_len_without_null + 1;
   unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
 
-  const int copied_len_without_null = GetWindowText(
-      window_handle, buffer.get(), buffer_len);
+  const int copied_len_without_null =
+      GetWindowText(window_handle, buffer.get(), buffer_len);
 
   if (copied_len_without_null <= 0) {
     return std::wstring();
@@ -79,8 +81,8 @@ std::wstring WindowUtil::GetWindowClassName(HWND window_handle) {
   // Maximum length of WindowClass is assumed to be 256.
   // http://msdn.microsoft.com/en-us/library/ms633576.aspx
   wchar_t buffer[256 + 1] = {};
-  const size_t num_copied_without_null = ::GetClassNameW(
-      window_handle, buffer, arraysize(buffer));
+  const size_t num_copied_without_null =
+      ::GetClassNameW(window_handle, buffer, arraysize(buffer));
   if (num_copied_without_null + 1 >= arraysize(buffer)) {
     return L"";
   }
@@ -89,8 +91,8 @@ std::wstring WindowUtil::GetWindowClassName(HWND window_handle) {
 
 // static
 bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
-  typedef BOOL (WINAPI *FPChangeWindowMessageFilterEx)(
-      HWND, UINT, DWORD, LPVOID);
+  typedef BOOL(WINAPI * FPChangeWindowMessageFilterEx)(HWND, UINT, DWORD,
+                                                       LPVOID);
 
   // The following constant is not available unless we change the WINVER
   // higher enough.
@@ -104,13 +106,13 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
 
   // Windows 7+
   // http://msdn.microsoft.com/en-us/library/dd388202.aspx
-  FPChangeWindowMessageFilterEx change_window_message_filter_ex
-      = reinterpret_cast<FPChangeWindowMessageFilterEx>(
+  FPChangeWindowMessageFilterEx change_window_message_filter_ex =
+      reinterpret_cast<FPChangeWindowMessageFilterEx>(
           ::GetProcAddress(lib, "ChangeWindowMessageFilterEx"));
   if (change_window_message_filter_ex != nullptr) {
     // Windows 7+ only
-    if (!(*change_window_message_filter_ex)(
-            window_handle, message, kMessageFilterAllow, nullptr)) {
+    if (!(*change_window_message_filter_ex)(window_handle, message,
+                                            kMessageFilterAllow, nullptr)) {
       // Note: this actually fails in Internet Explorer 10 on Windows 8
       // with ERROR_ACCESS_DENIED (0x5).
       const int error = ::GetLastError();

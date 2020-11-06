@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,17 +59,14 @@ class TipStatus {
 
   // Returns true if TSF conversion mode is successfully retrieved into |mode|.
   static bool GetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                     TfClientId client_id,
-                                     DWORD *mode);
+                                     TfClientId client_id, DWORD *mode);
 
   // Returns true if TSF keyboard open/closed mode is updated.
-  static bool SetIMEOpen(ITfThreadMgr *thread_mgr,
-                         TfClientId client_id,
+  static bool SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
                          bool open);
 
   // Returns true if TSF conversion mode is updated.
-  static bool SetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                     DWORD client_id,
+  static bool SetInputModeConversion(ITfThreadMgr *thread_mgr, DWORD client_id,
                                      DWORD native_mode);
 
  private:

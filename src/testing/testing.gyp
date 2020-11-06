@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,21 +33,27 @@
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
   },
   'conditions': [
-    ['target_platform=="NaCl"', {
+    ['target_platform=="iOS"', {
       'targets': [
         {
-          'target_name': 'nacl_mock_module',
-          'type': 'static_library',
-          'sources': [
-            'base/public/nacl_mock_module.cc',
-          ],
-          'dependencies': [
-            '../base/base.gyp:base',
-            '../net/net.gyp:http_client',
-            'googletest_lib',
-          ],
-        },
-      ],
+          'target_name': 'gen_ios_test_info_plist',
+          'type': 'none',
+          'actions': [
+            {
+              'action_name': 'tweak_info_plist',
+              'inputs': [ '../data/mac/ios_test_info' ],
+              'outputs': [ '<(SHARED_INTERMEDIATE_DIR)/ios_test_Info.plist' ],
+              'action': [
+                '<(python)', '../build_tools/tweak_info_plist.py',
+                '--output', '<@(_outputs)',
+                '--input', '<@(_inputs)',
+                '--version_file', '../mozc_version.txt',
+                '--branding', '<(branding)',
+              ]
+            }
+          ]
+        }
+      ]
     }],
   ],
   'targets': [
@@ -61,19 +67,6 @@
         ],
         'gtest_dir': '<(third_party_dir)/gtest/googletest',
         'gmock_dir': '<(third_party_dir)/gtest/googlemock',
-        'conditions': [
-          ['_toolset=="target" and target_platform=="Android"', {
-            'gtest_defines': [
-              'GTEST_HAS_RTTI=0',  # Android NDKr7 requires this.
-              'GTEST_HAS_CLONE=0',
-              'GTEST_HAS_GLOBAL_WSTRING=0',
-              'GTEST_HAS_POSIX_RE=0',
-              'GTEST_HAS_STD_WSTRING=0',
-              'GTEST_OS_LINUX=1',
-              'GTEST_OS_LINUX_ANDROID=1',
-            ],
-          }],
-        ],
       },
       'sources': [
         '<(gmock_dir)/src/gmock-cardinalities.cc',
@@ -83,6 +76,7 @@
         '<(gmock_dir)/src/gmock.cc',
         '<(gtest_dir)/src/gtest-death-test.cc',
         '<(gtest_dir)/src/gtest-filepath.cc',
+        '<(gtest_dir)/src/gtest-matchers.cc',
         '<(gtest_dir)/src/gtest-port.cc',
         '<(gtest_dir)/src/gtest-printers.cc',
         '<(gtest_dir)/src/gtest-test-part.cc',
@@ -133,7 +127,7 @@
             '<(gen_header_path)',
           ],
           'action': [
-            'python', '../build_tools/embed_pathname.py',
+            '<(python)', '../build_tools/embed_pathname.py',
             '--path_to_be_embedded', '<(mozc_data_dir)',
             '--constant_name', 'kMozcDataDir',
             '--output', '<(gen_header_path)',
@@ -180,15 +174,20 @@
                   'action': ['$(TargetPath)'],
                 },
               }],
+              ['target_platform=="iOS" and _toolset=="target"', {
+                'mac_bundle': '1',
+                'xcode_settings': {
+                  'INFOPLIST_FILE': '<(SHARED_INTERMEDIATE_DIR)/ios_test_Info.plist'
+                },
+              }],
             ],
           }],
         ],
       },
       'conditions': [
-        ['target_platform=="NaCl" and _toolset=="target"', {
+        ['target_platform=="iOS" and _toolset=="target"', {
           'dependencies': [
-            '../base/base.gyp:pepper_file_system_mock',
-            'nacl_mock_module',
+            'gen_ios_test_info_plist',
           ],
         }],
       ],
@@ -212,8 +211,8 @@
         'base/public/mozctest.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base_core',
-        '../base/base.gyp:string_piece',
         'googletest_lib',
       ],
     },

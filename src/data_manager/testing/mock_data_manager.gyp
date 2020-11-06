@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
     'use_1byte_cost_for_connection_data': 'false',
     'dictionary_files': [
       '<(platform_data_dir)/dictionary.txt',
+      '<(mozc_dir)/data/dictionary_manual/domain.txt',
     ],
     'magic_number': '\\x4D\\x4F\\x43\\x4B',  # MOCK
     'mozc_data_varname': 'kMockMozcDataSet',

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,22 +40,22 @@
 namespace mozc {
 class ConversionRequest;
 
-class EnglishVariantsRewriter : public RewriterInterface  {
+class EnglishVariantsRewriter : public RewriterInterface {
  public:
   EnglishVariantsRewriter();
-  virtual ~EnglishVariantsRewriter();
+  ~EnglishVariantsRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   FRIEND_TEST(EnglishVariantsRewriterTest, ExpandEnglishVariants);
   bool IsT13NCandidate(Segment::Candidate *candidate) const;
   bool IsEnglishCandidate(Segment::Candidate *candidate) const;
-  bool ExpandEnglishVariants(const string &input,
-                             std::vector<string> *variants) const;
+  bool ExpandEnglishVariants(const std::string &input,
+                             std::vector<std::string> *variants) const;
   bool ExpandEnglishVariantsWithSegment(Segment *seg) const;
 };
 

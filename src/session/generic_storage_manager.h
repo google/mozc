@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,15 @@ class LRUStorage;
 // GenericStorageManager for unit test.
 class GenericStorageManagerInterface {
  public:
-  GenericStorageManagerInterface() {}
-  virtual ~GenericStorageManagerInterface() {}
+  virtual ~GenericStorageManagerInterface() = default;
+
   virtual GenericStorageInterface *GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type) = 0;
+      commands::GenericStorageEntry::StorageType storage_type) = 0;
+
+  // Synchronizes all the managed storages.  Returns true iff all the storages
+  // are synchronized successfully (Note: even if one failed, it's guaranteed
+  // that Sync() to all the storages are called.).
+  virtual bool SyncAll() = 0;
 };
 
 // Manages generic storages.
@@ -62,12 +67,20 @@ class GenericStorageManagerFactory {
   // Returns corresponding storage's instance.
   // If no instance is available, NULL is returned.
   static GenericStorageInterface *GetStorage(
-     commands::GenericStorageEntry::StorageType storage_type);
+      commands::GenericStorageEntry::StorageType storage_type);
+
+  // Synchronizes all the storages managed by this factory.  Returns true iff
+  // all the storages are synchronized successfully (Note: even if one failed,
+  // it's guaranteed that Sync() to all the storages are called.).
+  static bool SyncAll();
+
   // For unit test.
   static void SetGenericStorageManager(GenericStorageManagerInterface *manager);
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(GenericStorageManagerFactory);
+  GenericStorageManagerFactory() = delete;
+  GenericStorageManagerFactory(const GenericStorageManagerFactory &) = delete;
+  GenericStorageManagerFactory &operator=(
+      const GenericStorageManagerFactory &) = delete;
 };
 
 // Generic interface for storages.
@@ -76,42 +89,48 @@ class GenericStorageManagerFactory {
 // backend.
 class GenericStorageInterface {
  public:
-  GenericStorageInterface() {}
-  virtual ~GenericStorageInterface() {}
+  virtual ~GenericStorageInterface() = default;
 
   // Inserts new entry.
   // If something goes wrong, returns false.
   // value should be terminated by '\0'.
-  virtual bool Insert(const string &key, const char *value) = 0;
+  virtual bool Insert(const std::string &key, const char *value) = 0;
   // Looks up the value.
   // If something goes wrong, returns NULL.
-  virtual const char *Lookup(const string &key) = 0;
+  virtual const char *Lookup(const std::string &key) = 0;
   // Lists all the values.
   // If something goes wrong, returns false.
-  virtual bool GetAllValues(std::vector<string> *values) = 0;
+  virtual bool GetAllValues(std::vector<std::string> *values) = 0;
   // Clears all the entries.
   virtual bool Clear() = 0;
+  // Writes the data to file(s).
+  virtual bool Sync() = 0;
 };
 
 // Storage class of which backend is LRUStorage.
 class GenericLruStorage : public GenericStorageInterface {
  public:
-  GenericLruStorage(
-      const char *file_name, size_t value_size, size_t size, uint32 seed);
-  virtual ~GenericLruStorage();
+  GenericLruStorage(const char *file_name, size_t value_size, size_t size,
+                    uint32 seed);
+
+  GenericLruStorage(const GenericLruStorage &) = delete;
+  GenericLruStorage &operator=(const GenericLruStorage &) = delete;
+
+  ~GenericLruStorage() override;
 
   // If the storage has |key|, this method overwrites
   // the old value.
   // If the entiry's size is over GetSize(),
   // the oldest value is disposed.
-  virtual bool Insert(const string &key, const char *value);
+  bool Insert(const std::string &key, const char *value) override;
 
-  virtual const char *Lookup(const string &key);
+  const char *Lookup(const std::string &key) override;
 
   // The order is new to old.
-  virtual bool GetAllValues(std::vector<string> *values);
+  bool GetAllValues(std::vector<std::string> *values) override;
 
-  virtual bool Clear();
+  bool Clear() override;
+  bool Sync() override;
 
  protected:
   // Opens the storage if not opened yet.
@@ -121,14 +140,12 @@ class GenericLruStorage : public GenericStorageInterface {
  private:
   friend class GenericLruStorageProxy;
   std::unique_ptr<mozc::storage::LRUStorage> lru_storage_;
-  const string file_name_;
+  const std::string file_name_;
   const size_t value_size_;
   const size_t size_;
   const uint32 seed_;
   // Temporary buffer to insert a value into this storage.
   std::unique_ptr<char[]> value_buffer_;
-
-  DISALLOW_COPY_AND_ASSIGN(GenericLruStorage);
 };
 
 }  // namespace mozc

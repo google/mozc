@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,13 +42,12 @@ class WindowUtilTest : public testing::Test {
   WindowUtilTest()
       : working_area_(0, 0, 200, 100),
         window_size_(10, 20),
-        zero_point_offset_(1, -2) {
-  }
+        zero_point_offset_(1, -2) {}
 
-  void VerifyMainWindowWithPreeditRect(
-      int preedit_left, int preedit_top, int preedit_width, int preedit_height,
-      int expected_left, int expected_top,
-      const char *message) {
+  void VerifyMainWindowWithPreeditRect(int preedit_left, int preedit_top,
+                                       int preedit_width, int preedit_height,
+                                       int expected_left, int expected_top,
+                                       const char *message) {
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromPreeditRect(
         preedit_rect, window_size_, zero_point_offset_, working_area_);
@@ -56,9 +55,9 @@ class WindowUtilTest : public testing::Test {
     EXPECT_EQ(expected_top, result.Top()) << message;
   }
 
-  void VerifyMainWindowWithTargetPoint(
-      int target_point_x, int target_point_y,
-      int expected_left, int expected_top, const char *message) {
+  void VerifyMainWindowWithTargetPoint(int target_point_x, int target_point_y,
+                                       int expected_left, int expected_top,
+                                       const char *message) {
     Point target_point(target_point_x, target_point_y);
     Rect result = WindowUtil::GetWindowRectForMainWindowFromTargetPoint(
         target_point, window_size_, zero_point_offset_, working_area_);
@@ -67,9 +66,9 @@ class WindowUtilTest : public testing::Test {
   }
 
   void VerifyMainWindowWithTargetPointAndPreeditHorizontal(
-      int target_point_x, int target_point_y,
-      int preedit_left, int preedit_top, int preedit_width, int preedit_height,
-      int expected_left, int expected_top, const char *message) {
+      int target_point_x, int target_point_y, int preedit_left, int preedit_top,
+      int preedit_width, int preedit_height, int expected_left,
+      int expected_top, const char *message) {
     Point target_point(target_point_x, target_point_y);
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result =
@@ -81,9 +80,9 @@ class WindowUtilTest : public testing::Test {
   }
 
   void VerifyMainWindowWithTargetPointAndPreeditVertical(
-      int target_point_x, int target_point_y,
-      int preedit_left, int preedit_top, int preedit_width, int preedit_height,
-      int expected_left, int expected_top, const char *message) {
+      int target_point_x, int target_point_y, int preedit_left, int preedit_top,
+      int preedit_width, int preedit_height, int expected_left,
+      int expected_top, const char *message) {
     Point target_point(target_point_x, target_point_y);
     Rect preedit_rect(preedit_left, preedit_top, preedit_width, preedit_height);
     Rect result =
@@ -94,10 +93,9 @@ class WindowUtilTest : public testing::Test {
     EXPECT_EQ(expected_top, result.Top()) << message;
   }
 
-  void VerifyCascadingWindow(
-      int row_left, int row_top, int row_width, int row_height,
-      int expected_left, int expected_top,
-      const char *message) {
+  void VerifyCascadingWindow(int row_left, int row_top, int row_width,
+                             int row_height, int expected_left,
+                             int expected_top, const char *message) {
     Rect selected_row(row_left, row_top, row_width, row_height);
     Rect result = WindowUtil::GetWindowRectForCascadingWindow(
         selected_row, window_size_, zero_point_offset_, working_area_);
@@ -105,15 +103,14 @@ class WindowUtilTest : public testing::Test {
     EXPECT_EQ(expected_top, result.Top()) << message;
   }
 
-  void VerifyInfolistWindow(
-      int infolist_width, int infolist_height,
-      int candidate_left, int candidate_top,
-      int candidate_width, int candidate_height,
-      int expected_left, int expected_top,
-      const char *message) {
+  void VerifyInfolistWindow(int infolist_width, int infolist_height,
+                            int candidate_left, int candidate_top,
+                            int candidate_width, int candidate_height,
+                            int expected_left, int expected_top,
+                            const char *message) {
     Size window_size(infolist_width, infolist_height);
-    Rect candidate_rect(candidate_left, candidate_top,
-        candidate_width, candidate_height);
+    Rect candidate_rect(candidate_left, candidate_top, candidate_width,
+                        candidate_height);
     Rect result = WindowUtil::GetWindowRectForInfolistWindow(
         window_size, candidate_rect, working_area_);
     EXPECT_EQ(expected_left, result.Left()) << message;
@@ -128,60 +125,51 @@ class WindowUtilTest : public testing::Test {
 };
 
 TEST_F(WindowUtilTest, MainWindow) {
-  VerifyMainWindowWithPreeditRect(
-      50, 50, 20, 5, 49, 57, "Preedit is in the middle of the window");
-  VerifyMainWindowWithPreeditRect(
-      198, 50, 20, 5, 190, 57, "On the right edge");
-  VerifyMainWindowWithPreeditRect(
-      -5, 50, 20, 5, 0, 57, "On the left edge");
+  VerifyMainWindowWithPreeditRect(50, 50, 20, 5, 49, 57,
+                                  "Preedit is in the middle of the window");
+  VerifyMainWindowWithPreeditRect(198, 50, 20, 5, 190, 57, "On the right edge");
+  VerifyMainWindowWithPreeditRect(-5, 50, 20, 5, 0, 57, "On the left edge");
   // If the candidate window across the bottom edge, it appears above
   // the preedit.
-  VerifyMainWindowWithPreeditRect(
-      50, 92, 20, 5, 49, 70, "On the bottom edge");
-  VerifyMainWindowWithPreeditRect(
-      50, 110, 20, 5, 49, 80, "Under the bottom edge");
-  VerifyMainWindowWithPreeditRect(
-      50, -10, 20, 5, 49, 0, "On the top edge");
+  VerifyMainWindowWithPreeditRect(50, 92, 20, 5, 49, 70, "On the bottom edge");
+  VerifyMainWindowWithPreeditRect(50, 110, 20, 5, 49, 80,
+                                  "Under the bottom edge");
+  VerifyMainWindowWithPreeditRect(50, -10, 20, 5, 49, 0, "On the top edge");
 
-  VerifyMainWindowWithTargetPoint(
-      50, 55, 49, 57, "Preedit is in the middle of the window");
-  VerifyMainWindowWithTargetPoint(
-      198, 55, 190, 57, "On the right edge");
-  VerifyMainWindowWithTargetPoint(
-      -5, 55, 0, 57, "On the left edge");
+  VerifyMainWindowWithTargetPoint(50, 55, 49, 57,
+                                  "Preedit is in the middle of the window");
+  VerifyMainWindowWithTargetPoint(198, 55, 190, 57, "On the right edge");
+  VerifyMainWindowWithTargetPoint(-5, 55, 0, 57, "On the left edge");
   // If the candidate window across the bottom edge, it appears above
   // the preedit.
-  VerifyMainWindowWithTargetPoint(
-      50, 97, 49, 80, "On the bottom edge");
-  VerifyMainWindowWithTargetPoint(
-      50, 115, 49, 80, "Under the bottom edge");
-  VerifyMainWindowWithTargetPoint(
-      50, -5, 49, 0, "On the top edge");
+  VerifyMainWindowWithTargetPoint(50, 97, 49, 80, "On the bottom edge");
+  VerifyMainWindowWithTargetPoint(50, 115, 49, 80, "Under the bottom edge");
+  VerifyMainWindowWithTargetPoint(50, -5, 49, 0, "On the top edge");
 
   VerifyMainWindowWithTargetPointAndPreeditHorizontal(
       50, 55, 50, 50, 20, 5, 49, 57, "Preedit is in the middle of the window");
   VerifyMainWindowWithTargetPointAndPreeditHorizontal(
       198, 55, 198, 50, 20, 5, 190, 57, "On the right edge");
-  VerifyMainWindowWithTargetPointAndPreeditHorizontal(
-      50, -5, 50, -10, 20, 5, 49, 0, "On the top edge");
+  VerifyMainWindowWithTargetPointAndPreeditHorizontal(50, -5, 50, -10, 20, 5,
+                                                      49, 0, "On the top edge");
   VerifyMainWindowWithTargetPointAndPreeditHorizontal(
       50, 55, 0, 50, 100, 5, 49, 57,
       "Preedit width is the same to client area");
   // If the candidate window across the bottom edge, it appears above
   // the preedit.
-  VerifyMainWindowWithTargetPointAndPreeditHorizontal(
-      50, 97, 50, 92, 20, 5, 49, 70, "On the bottom edge");
+  VerifyMainWindowWithTargetPointAndPreeditHorizontal(50, 97, 50, 92, 20, 5, 49,
+                                                      70, "On the bottom edge");
   VerifyMainWindowWithTargetPointAndPreeditHorizontal(
       50, 115, 50, 110, 20, 5, 49, 80, "Under the bottom edge");
-  VerifyMainWindowWithTargetPointAndPreeditHorizontal(
-      50, -5, 50, -10, 20, 5, 49, 0, "On the top edge");
+  VerifyMainWindowWithTargetPointAndPreeditHorizontal(50, -5, 50, -10, 20, 5,
+                                                      49, 0, "On the top edge");
 
   VerifyMainWindowWithTargetPointAndPreeditVertical(
       50, 55, 50, 50, 20, 5, 70, 55, "Preedit is in the middle of the window");
-  VerifyMainWindowWithTargetPointAndPreeditVertical(
-      50, 198, 50, 198, 5, 20, 55, 80, "On the bottom edge");
-  VerifyMainWindowWithTargetPointAndPreeditVertical(
-      -50, 50, -50, 50, 5, 20, 0, 50, "On the left edge");
+  VerifyMainWindowWithTargetPointAndPreeditVertical(50, 198, 50, 198, 5, 20, 55,
+                                                    80, "On the bottom edge");
+  VerifyMainWindowWithTargetPointAndPreeditVertical(-50, 50, -50, 50, 5, 20, 0,
+                                                    50, "On the left edge");
   VerifyMainWindowWithTargetPointAndPreeditVertical(
       50, 55, 50, 0, 20, 100, 70, 55,
       "Preedit height is the same to client area");
@@ -191,32 +179,27 @@ TEST_F(WindowUtilTest, MainWindow) {
       192, 50, 192, 50, 5, 20, 182, 50, "On the right edge");
   VerifyMainWindowWithTargetPointAndPreeditVertical(
       215, 50, 210, 50, 5, 20, 190, 50, "Under the right edge");
-  VerifyMainWindowWithTargetPointAndPreeditVertical(
-      -5, 50, -10, 50, 5, 20, 0, 50, "On the left edge");
+  VerifyMainWindowWithTargetPointAndPreeditVertical(-5, 50, -10, 50, 5, 20, 0,
+                                                    50, "On the left edge");
 }
 
 TEST_F(WindowUtilTest, CascadingWindow) {
-  VerifyCascadingWindow(50, 50, 20, 5,
-                        69, 52, "Selected row is in the middle of the window");
+  VerifyCascadingWindow(50, 50, 20, 5, 69, 52,
+                        "Selected row is in the middle of the window");
   // If the cascading window across the right edge, it appears the
   // left side of the main window.
-  VerifyCascadingWindow(178, 50, 20, 5,
-                        169, 52, "On the right edge");
-  VerifyCascadingWindow(-30, 50, 20, 5,
-                        0, 52, "On the left edge");
-  VerifyCascadingWindow(50, 92, 20, 5,
-                        69, 80, "On the bottom edge");
-  VerifyCascadingWindow(50, -20, 20, 5,
-                        69, 0, "On the top edge");
+  VerifyCascadingWindow(178, 50, 20, 5, 169, 52, "On the right edge");
+  VerifyCascadingWindow(-30, 50, 20, 5, 0, 52, "On the left edge");
+  VerifyCascadingWindow(50, 92, 20, 5, 69, 80, "On the bottom edge");
+  VerifyCascadingWindow(50, -20, 20, 5, 69, 0, "On the top edge");
 }
 
 TEST_F(WindowUtilTest, InfolistWindow) {
-  VerifyInfolistWindow(10, 20, 20, 30, 11, 12,
-                       31, 30, "Right of the candidate window");
-  VerifyInfolistWindow(10, 10, 160, 30, 40, 12,
-                       150, 30, "Left of the candidate window");
-  VerifyInfolistWindow(10, 20, 20, 85, 11, 12,
-                       31, 80, "On the bottom edge");
+  VerifyInfolistWindow(10, 20, 20, 30, 11, 12, 31, 30,
+                       "Right of the candidate window");
+  VerifyInfolistWindow(10, 10, 160, 30, 40, 12, 150, 30,
+                       "Left of the candidate window");
+  VerifyInfolistWindow(10, 20, 20, 85, 11, 12, 31, 80, "On the bottom edge");
 }
 
 TEST_F(WindowUtilTest, MonitorErrors) {

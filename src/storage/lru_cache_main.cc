@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 #include "storage/lru_cache.h"
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
   mozc::storage::LRUCache<string, string> cache(5);
 
   string line;
@@ -48,9 +48,9 @@ int main(int argc, char **argv) {
     } else if (fields[0] == "f") {
       const string *v = cache.Lookup(fields[1]);
       if (v == NULL) {
-        cout << "NULL" << endl;
+        std::cout << "NULL" << std::endl;
       } else {
-        cout << *v << endl;
+        std::cout << *v << std::endl;
       }
     }
   }

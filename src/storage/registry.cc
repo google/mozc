@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,13 +48,13 @@ Mutex g_mutex;
 #ifdef OS_WIN
 const char kRegistryFileName[] = "registry.db";
 #else
-const char kRegistryFileName[] = ".registry.db";   // hidden file
+const char kRegistryFileName[] = ".registry.db";  // hidden file
 #endif
 
 class StorageInitializer {
  public:
-  StorageInitializer() :
-      default_storage_(TinyStorage::New()), current_storage_(NULL) {
+  StorageInitializer()
+      : default_storage_(TinyStorage::New()), current_storage_(NULL) {
     if (!default_storage_->Open(FileUtil::JoinPath(
             SystemUtil::GetUserProfileDirectory(), kRegistryFileName))) {
       LOG(ERROR) << "cannot open registry";
@@ -69,9 +69,7 @@ class StorageInitializer {
     }
   }
 
-  void SetStorage(StorageInterface *storage) {
-    current_storage_ = storage;
-  }
+  void SetStorage(StorageInterface *storage) { current_storage_ = storage; }
 
  private:
   std::unique_ptr<StorageInterface> default_storage_;
@@ -102,7 +100,7 @@ void Registry::SetStorage(StorageInterface *handler) {
 }
 
 bool Registry::LookupInternal(const string &key, string *value) {
-  scoped_lock l(&g_mutex);   // just for safe
+  scoped_lock l(&g_mutex);  // just for safe
   return Singleton<StorageInitializer>::get()->GetStorage()->Lookup(key, value);
 }
 

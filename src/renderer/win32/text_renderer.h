@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,12 +30,14 @@
 #ifndef MOZC_RENDERER_WIN32_TEXT_RENDERER_H_
 #define MOZC_RENDERER_WIN32_TEXT_RENDERER_H_
 
+// clang-format off
 #include <windows.h>
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
 #include <atlbase.h>
 #include <atlapp.h>
 #include <atlmisc.h>
+// clang-format on
 
 #include <string>
 #include <vector>
@@ -51,9 +53,8 @@ namespace win32 {
 struct TextRenderingInfo {
   std::wstring text;
   Rect rect;
-  TextRenderingInfo(const std::wstring &str, const Rect &r) :
-    text(str), rect(r) {
-  }
+  TextRenderingInfo(const std::wstring &str, const Rect &r)
+      : text(str), rect(r) {}
 };
 
 // An interface which manages text rendering for Windows. This class
@@ -89,13 +90,10 @@ class TextRenderer {
                                       const std::wstring &str,
                                       const int width) const = 0;
   // Renders the given |text|.
-  virtual void RenderText(WTL::CDCHandle dc,
-                          const std::wstring &text,
-                          const Rect &rect,
-                          FONT_TYPE font_type) const = 0;
+  virtual void RenderText(WTL::CDCHandle dc, const std::wstring &text,
+                          const Rect &rect, FONT_TYPE font_type) const = 0;
   virtual void RenderTextList(
-      WTL::CDCHandle dc,
-      const std::vector<TextRenderingInfo> &display_list,
+      WTL::CDCHandle dc, const std::vector<TextRenderingInfo> &display_list,
       FONT_TYPE font_type) const = 0;
 };
 

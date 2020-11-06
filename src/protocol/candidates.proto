@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ message Annotation {
   optional string shortcut = 4;
   // Set to true if this candidate can be deleted from history.
   optional bool deletable = 5 [default = false];
-};
+}
 
 // Additional information to a candidate word.  This message is
 // used for describing a word usage for instance.
@@ -68,7 +68,7 @@ message Information {
 
   // The IDs of candidates which connect with the information.
   repeated int32 candidate_id = 4;
-};
+}
 
 // Category describes the attribute of the words.
 enum Category {
@@ -77,14 +77,23 @@ enum Category {
   SUGGESTION = 2;
   TRANSLITERATION = 3;
   USAGE = 4;
-};
+}
 
 // DisplayType is a hint to UI renderers describing how the words are
 // displayed.
 enum DisplayType {
   MAIN = 0;
   CASCADE = 1;
-};
+}
+
+// CandidateAttribute indicates how the candidate was generated.
+enum CandidateAttribute {
+  DEFAULT_ATTRIBUTE = 0;
+  USER_DICTIONARY = 1;
+  USER_HISTORY = 2;
+  SPELLING_CORRECTION = 3;  // "ふいんき"→"雰囲気"
+  TYPING_CORRECTION = 4;  // "やんしょん"(with 12-key)→"マンション"
+}
 
 message InformationList {
   optional uint32 focused_index = 1;
@@ -97,8 +106,8 @@ message InformationList {
 
   // How long rendere needs to wait before the infolist is displayed.
   // the default setting is 500 msec.
-  optional uint32 delay = 5  [ default = 500 ];
-};
+  optional uint32 delay = 5 [default = 500];
+}
 
 // Message representing the footer part of the candidate window.
 message Footer {
@@ -111,7 +120,7 @@ message Footer {
   // Message modestly shown.  It is used for displaying the version on
   // dev-channel now.
   optional string sub_label = 4;
-};
+}
 
 message CandidateWord {
   // Unique number specifing the candidate.  This may be a negative value.
@@ -124,7 +133,12 @@ message CandidateWord {
   // Converted value.  (e.g. Kanji value).
   optional string value = 4;
   optional Annotation annotation = 5;
-};
+  // Attributes of this candidate. Can set multiple attributes.
+  repeated CandidateAttribute attributes = 6;
+  // The number of segments for logging.
+  // If the candidate is "今日は|晴れ", the number of segments is 2.
+  optional int32 num_segments_in_candidate = 7;
+}
 
 message CandidateList {
   // This value represents the focused position of the next
@@ -141,7 +155,7 @@ message CandidateList {
   repeated CandidateWord candidates = 2;
   // Category of the candidates.
   optional Category category = 3 [default = CONVERSION];
-};
+}
 
 // TODO(komatsu) rename it to CandidateWindow.
 message Candidates {
@@ -165,7 +179,7 @@ message Candidates {
     optional int32 id = 9;  // Unique number specifing the candidate.
     optional Annotation annotation = 7;
     optional int32 information_id = 10;
-  };
+  }
   // The position on the composition in character counted by Util::CharsLen.
   // The number represents the left edge of the candidate window.  For example,
   // if the composition is "あいう" and the cursor is the position is between
@@ -195,13 +209,13 @@ message Candidates {
   enum Direction {
     VERTICAL = 0;
     HORIZONTAL = 1;
-  };
-  optional Direction direction = 14 [ default = VERTICAL ];
+  }
+  optional Direction direction = 14 [default = VERTICAL];
 
   reserved 15;  // Deprecated composition_rectangle
   reserved 16;  // Deprecated caret_rectangle
   reserved 17;  // Deprecated window_location
 
   // The number of candidates per page.
-  optional uint32 page_size = 18 [ default = 9 ];
-};
+  optional uint32 page_size = 18 [default = 9];
+}

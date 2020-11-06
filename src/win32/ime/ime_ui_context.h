@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,10 @@
 #ifndef MOZC_WIN32_IME_IME_UI_CONTEXT_H_
 #define MOZC_WIN32_IME_IME_UI_CONTEXT_H_
 
+// clang-format off
 #include <windows.h>
 #include <imm.h>
+// clang-format on
 
 #include <string>
 #include <vector>
@@ -66,8 +68,7 @@ class UIContext {
   bool IsCompositionStringEmpty() const;
   bool GetFocusedCharacterIndexInComposition(DWORD *index) const;
   bool GetCompositionForm(COMPOSITIONFORM *composition_form) const;
-  bool GetCandidateForm(
-      DWORD form_index, CANDIDATEFORM *candidate_form) const;
+  bool GetCandidateForm(DWORD form_index, CANDIDATEFORM *candidate_form) const;
   bool GetCompositionFont(LOGFONTW *font) const;
   bool GetConversionMode(DWORD *conversion) const;
   bool GetVisibleConversionMode(DWORD *conversion) const;
@@ -83,8 +84,7 @@ class UIContext {
 
   bool FillCompositionForm(
       commands::RendererCommand_ApplicationInfo *info) const;
-  bool FillCandidateForm(
-      commands::RendererCommand_ApplicationInfo *info) const;
+  bool FillCandidateForm(commands::RendererCommand_ApplicationInfo *info) const;
   bool FillCharPosition(commands::RendererCommand_ApplicationInfo *info) const;
   bool FillCaretInfo(commands::RendererCommand_ApplicationInfo *info) const;
   bool FillFontInfo(commands::RendererCommand_ApplicationInfo *info) const;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,16 +73,16 @@ TEST_F(KeyMapTest, AddRule) {
 
   // 1 to 31 should be rejected.
   key_event.set_key_code(1);
-  EXPECT_FALSE(keymap.AddRule(key_event,
-                              PrecompositionState::INSERT_CHARACTER));
+  EXPECT_FALSE(
+      keymap.AddRule(key_event, PrecompositionState::INSERT_CHARACTER));
   key_event.set_key_code(31);
-  EXPECT_FALSE(keymap.AddRule(key_event,
-                              PrecompositionState::INSERT_CHARACTER));
+  EXPECT_FALSE(
+      keymap.AddRule(key_event, PrecompositionState::INSERT_CHARACTER));
 
   // 32 (space) is also invalid input.
   key_event.set_key_code(32);
-  EXPECT_FALSE(keymap.AddRule(key_event,
-                              PrecompositionState::INSERT_CHARACTER));
+  EXPECT_FALSE(
+      keymap.AddRule(key_event, PrecompositionState::INSERT_CHARACTER));
 
   // 33 (!) is a valid input.
   key_event.set_key_code(33);
@@ -100,8 +100,8 @@ TEST_F(KeyMapTest, GetCommand) {
     KeyMap<PrecompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_key_code(97);
-    EXPECT_TRUE(keymap.AddRule(init_key_event,
-                               PrecompositionState::INSERT_CHARACTER));
+    EXPECT_TRUE(
+        keymap.AddRule(init_key_event, PrecompositionState::INSERT_CHARACTER));
 
     commands::KeyEvent key_event;
     PrecompositionState::Commands command;
@@ -117,8 +117,8 @@ TEST_F(KeyMapTest, GetCommand) {
     KeyMap<PrecompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_special_key(commands::KeyEvent::TEXT_INPUT);
-    EXPECT_TRUE(keymap.AddRule(init_key_event,
-                               PrecompositionState::INSERT_CHARACTER));
+    EXPECT_TRUE(
+        keymap.AddRule(init_key_event, PrecompositionState::INSERT_CHARACTER));
 
     commands::KeyEvent key_event;
     PrecompositionState::Commands command;
@@ -130,8 +130,8 @@ TEST_F(KeyMapTest, GetCommand) {
     KeyMap<CompositionState> keymap;
     commands::KeyEvent init_key_event;
     init_key_event.set_key_code(97);
-    EXPECT_TRUE(keymap.AddRule(init_key_event,
-                               CompositionState::INSERT_CHARACTER));
+    EXPECT_TRUE(
+        keymap.AddRule(init_key_event, CompositionState::INSERT_CHARACTER));
 
     commands::KeyEvent key_event;
     CompositionState::Commands command;
@@ -247,8 +247,8 @@ TEST_F(KeyMapTest, GetCommandKeyStub) {
   KeyMap<PrecompositionState> keymap;
   commands::KeyEvent init_key_event;
   init_key_event.set_special_key(commands::KeyEvent::TEXT_INPUT);
-  EXPECT_TRUE(keymap.AddRule(init_key_event,
-                             PrecompositionState::INSERT_CHARACTER));
+  EXPECT_TRUE(
+      keymap.AddRule(init_key_event, PrecompositionState::INSERT_CHARACTER));
 
   PrecompositionState::Commands command;
   commands::KeyEvent key_event;
@@ -313,7 +313,7 @@ TEST_F(KeyMapTest, DefaultKeyBindings) {
 
 TEST_F(KeyMapTest, LoadStreamWithErrors) {
   KeyMapManager manager;
-  std::vector<string> errors;
+  std::vector<std::string> errors;
   std::unique_ptr<std::istream> is(
       ConfigFileStream::LegacyOpen("system://atok.tsv"));
   EXPECT_TRUE(manager.LoadStreamWithErrors(is.get(), &errors));
@@ -339,17 +339,17 @@ TEST_F(KeyMapTest, GetName) {
   KeyMapManager manager;
   {
     // Direct
-    string name;
-    EXPECT_TRUE(manager.GetNameFromCommandDirect(DirectInputState::IME_ON,
-                                                 &name));
+    std::string name;
+    EXPECT_TRUE(
+        manager.GetNameFromCommandDirect(DirectInputState::IME_ON, &name));
     EXPECT_EQ("IMEOn", name);
-    EXPECT_TRUE(manager.GetNameFromCommandDirect(DirectInputState::RECONVERT,
-                                                 &name));
+    EXPECT_TRUE(
+        manager.GetNameFromCommandDirect(DirectInputState::RECONVERT, &name));
     EXPECT_EQ("Reconvert", name);
   }
   {
     // Precomposition
-    string name;
+    std::string name;
     EXPECT_TRUE(manager.GetNameFromCommandPrecomposition(
         PrecompositionState::IME_OFF, &name));
     EXPECT_EQ("IMEOff", name);
@@ -365,12 +365,12 @@ TEST_F(KeyMapTest, GetName) {
   }
   {
     // Composition
-    string name;
-    EXPECT_TRUE(manager.GetNameFromCommandComposition(
-        CompositionState::IME_OFF, &name));
+    std::string name;
+    EXPECT_TRUE(manager.GetNameFromCommandComposition(CompositionState::IME_OFF,
+                                                      &name));
     EXPECT_EQ("IMEOff", name);
-    EXPECT_TRUE(manager.GetNameFromCommandComposition(
-        CompositionState::IME_ON, &name));
+    EXPECT_TRUE(
+        manager.GetNameFromCommandComposition(CompositionState::IME_ON, &name));
     EXPECT_EQ("IMEOn", name);
     EXPECT_TRUE(manager.GetNameFromCommandComposition(
         CompositionState::INSERT_CHARACTER, &name));
@@ -378,12 +378,12 @@ TEST_F(KeyMapTest, GetName) {
   }
   {
     // Conversion
-    string name;
-    EXPECT_TRUE(manager.GetNameFromCommandConversion(
-        ConversionState::IME_OFF, &name));
+    std::string name;
+    EXPECT_TRUE(
+        manager.GetNameFromCommandConversion(ConversionState::IME_OFF, &name));
     EXPECT_EQ("IMEOff", name);
-    EXPECT_TRUE(manager.GetNameFromCommandConversion(
-        ConversionState::IME_ON, &name));
+    EXPECT_TRUE(
+        manager.GetNameFromCommandConversion(ConversionState::IME_ON, &name));
     EXPECT_EQ("IMEOn", name);
     EXPECT_TRUE(manager.GetNameFromCommandConversion(
         ConversionState::INSERT_CHARACTER, &name));
@@ -395,7 +395,7 @@ TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
   // are not supported in direct mode.
   KeyMapManager manager;
-  std::set<string> names;
+  std::set<std::string> names;
   manager.GetAvailableCommandNameDirect(&names);
 
   // We cannot use EXPECT_EQ because of overload resolution here.
@@ -507,8 +507,8 @@ TEST_F(KeyMapTest, Reconvert) {
     KeyParser::ParseKey("Shift Henkan", &key_event);
     EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(
-        key_event, &precomposition_command));
+    EXPECT_TRUE(
+        manager->GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
   {  // MSIME
@@ -518,8 +518,8 @@ TEST_F(KeyMapTest, Reconvert) {
     KeyParser::ParseKey("Henkan", &key_event);
     EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(
-        key_event, &precomposition_command));
+    EXPECT_TRUE(
+        manager->GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
   {  // KOTOERI
@@ -529,8 +529,8 @@ TEST_F(KeyMapTest, Reconvert) {
     KeyParser::ParseKey("Ctrl Shift r", &key_event);
     EXPECT_TRUE(manager->GetCommandDirect(key_event, &direct_command));
     EXPECT_EQ(DirectInputState::RECONVERT, direct_command);
-    EXPECT_TRUE(manager->GetCommandPrecomposition(
-        key_event, &precomposition_command));
+    EXPECT_TRUE(
+        manager->GetCommandPrecomposition(key_event, &precomposition_command));
     EXPECT_EQ(PrecompositionState::RECONVERT, precomposition_command);
   }
 }
@@ -583,12 +583,11 @@ TEST_F(KeyMapTest, AddCommand) {
 
 TEST_F(KeyMapTest, ZeroQuerySuggestion) {
   KeyMapManager manager;
-  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
-                                 "ESC", "Cancel"));
-  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
-                                 "Tab", "PredictAndConvert"));
-  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion",
-                                 "Shift Enter", "CommitFirstSuggestion"));
+  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion", "ESC", "Cancel"));
+  EXPECT_TRUE(
+      manager.AddCommand("ZeroQuerySuggestion", "Tab", "PredictAndConvert"));
+  EXPECT_TRUE(manager.AddCommand("ZeroQuerySuggestion", "Shift Enter",
+                                 "CommitFirstSuggestion"));
   // For fallback testing
   EXPECT_TRUE(manager.AddCommand("Precomposition", "Ctrl Backspace", "Revert"));
 

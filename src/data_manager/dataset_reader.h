@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <map>
 #include <string>
 
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -47,22 +47,22 @@ class DataSetReader {
   // file into memory, and |memblock| must outlive this instance.  Note: this
   // method doesn't verify checksum for performance.  One can separately call
   // VerifyChecksum().
-  bool Init(StringPiece memblock, StringPiece magic);
+  bool Init(absl::string_view memblock, absl::string_view magic);
 
   // Gets the byte data corresponding to |name|.  If the data for |name| doesn't
   // exist, returns false.
-  bool Get(const string &name, StringPiece *data) const;
+  bool Get(const std::string &name, absl::string_view *data) const;
 
   // Verifies the checksum of binary image.
-  static bool VerifyChecksum(StringPiece memblock);
+  static bool VerifyChecksum(absl::string_view memblock);
 
-  const std::map<string, StringPiece> &name_to_data_map() const {
+  const std::map<std::string, absl::string_view> &name_to_data_map() const {
     return name_to_data_map_;
   }
 
  private:
   // The value points to a block of the specified |memblock|.
-  std::map<string, StringPiece> name_to_data_map_;
+  std::map<std::string, absl::string_view> name_to_data_map_;
 };
 
 }  // namespace mozc

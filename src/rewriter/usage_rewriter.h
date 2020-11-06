@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ namespace mozc {
 
 class DataManagerInterface;
 
-class UsageRewriter : public RewriterInterface  {
+class UsageRewriter : public RewriterInterface {
  public:
   UsageRewriter(const DataManagerInterface *data_manager,
                 const dictionary::DictionaryInterface *dictionary);
@@ -64,7 +64,7 @@ class UsageRewriter : public RewriterInterface  {
  private:
   FRIEND_TEST(UsageRewriterTest, GetKanjiPrefixAndOneHiragana);
 
-  static const size_t kUsageItemByteLength = 20;
+  static constexpr size_t kUsageItemByteLength = 20;
 
   class UsageDictItemIterator {
    public:
@@ -104,13 +104,12 @@ class UsageRewriter : public RewriterInterface  {
     const char *ptr_;
   };
 
-  using StrPair = std::pair<string, string>;
-  static string GetKanjiPrefixAndOneHiragana(const string &word);
+  using StrPair = std::pair<std::string, std::string>;
+  static std::string GetKanjiPrefixAndOneHiragana(const std::string &word);
 
   UsageDictItemIterator LookupUnmatchedUsageHeuristically(
       const Segment::Candidate &candidate) const;
-  UsageDictItemIterator LookupUsage(
-      const Segment::Candidate &candidate) const;
+  UsageDictItemIterator LookupUsage(const Segment::Candidate &candidate) const;
 
   std::map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
   const dictionary::POSMatcher pos_matcher_;

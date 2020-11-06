@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,8 @@
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -49,7 +48,8 @@ const char kKey[] = "さいころ";
 // Candidate window size.
 const int kPageSize = 9;
 
-void AddCandidate(const string &key, const string &value, Segment *segment) {
+void AddCandidate(const std::string &key, const std::string &value,
+                  Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
   candidate->value = value;
@@ -57,16 +57,14 @@ void AddCandidate(const string &key, const string &value, Segment *segment) {
   candidate->content_key = key;
 }
 
-void AddSegment(const string &key, Segments *segments) {
+void AddSegment(const std::string &key, Segments *segments) {
   Segment *segment = segments->push_back_segment();
   segment->set_key(key);
 }
 
 // Make a segments which has some dummy candidates.
-void MakeSegments(Segments *segments,
-                  const string &key,
-                  const int &num_segment,
-                  const int &num_dummy_candidate) {
+void MakeSegments(Segments *segments, const std::string &key,
+                  const int &num_segment, const int &num_dummy_candidate) {
   segments->Clear();
 
   AddSegment(key, segments);
@@ -93,12 +91,9 @@ int CountDiceNumber(const Segment &segment) {
 }
 
 bool HasValidValue(const Segment::Candidate &candidate) {
-  return ("1" == candidate.value ||
-          "2" == candidate.value ||
-          "3" == candidate.value ||
-          "4" == candidate.value ||
-          "5" == candidate.value ||
-          "6" == candidate.value);
+  return ("1" == candidate.value || "2" == candidate.value ||
+          "3" == candidate.value || "4" == candidate.value ||
+          "5" == candidate.value || "6" == candidate.value);
 }
 
 size_t GetDiceNumberIndex(const Segment &segment) {
@@ -126,8 +121,7 @@ TEST_F(DiceRewriterTest, InsertTest) {
   const ConversionRequest request;
 
   // Check a dice number index with some mock candidates.
-  for (int candidates_size = 1;
-       candidates_size <= kPageSize;
+  for (int candidates_size = 1; candidates_size <= kPageSize;
        ++candidates_size) {
     MakeSegments(&segments, kKey, 1, candidates_size);
 

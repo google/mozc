@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ class RewriterInterface {
     ALL = (1 | 2 | 4),
   };
 
-  // return capablity of this rewriter.
+  // Returns capablity of this rewriter.
   // If (capability() & CONVERSION), this rewriter
   // is called after StartConversion().
   virtual int capability(const ConversionRequest &request) const {
@@ -64,8 +64,7 @@ class RewriterInterface {
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  virtual bool Focus(Segments *segments,
-                     size_t segment_index,
+  virtual bool Focus(Segments *segments, size_t segment_index,
                      int candidate_index) const {
     return true;
   }
@@ -73,13 +72,20 @@ class RewriterInterface {
   // Hook(s) for all mutable operations
   virtual void Finish(const ConversionRequest &request, Segments *segments) {}
 
-  // sync internal data to local file system.
+  // Synchronizes internal data to local file system.  This method is called
+  // when the server received SYNC_DATA command from the client.  Currently,
+  // this event happens, e.g., when user moves to another text area.
   virtual bool Sync() { return true; }
 
-  // reload internal data from local file system.
+  // Reloads internal data from local file system.  This method is called when
+  // the server received RELOAD command from the client.  Currently, this event
+  // happens when user edited the user dictionary by dictionary tool.
   virtual bool Reload() { return true; }
 
-  // clear internal data
+  // Clears internal data on local storage.  This method is called when the
+  // server received CLEAR_USER_HISTORY command from the client.  Currently,
+  // this event happens when user explicitly requested "clear user history"
+  // on settings UI.
   virtual void Clear() {}
 
  protected:

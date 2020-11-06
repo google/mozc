@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,13 @@
 
 #include "base/file_util.h"
 #include "base/util.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace {
 
-static const string GetTemporaryFilePath() {
-  return mozc::FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                  "generic_storage_test.db");
+static const std::string GetTemporaryFilePath() {
+  return mozc::FileUtil::JoinPath(FLAGS_test_tmpdir, "generic_storage_test.db");
 }
 
 }  // namespace
@@ -47,15 +45,12 @@ static const string GetTemporaryFilePath() {
 namespace mozc {
 
 TEST(GenericStorageManagerFactoryTest, GetStorage) {
-  GenericStorageInterface *symbol =
-      GenericStorageManagerFactory::GetStorage(
-          commands::GenericStorageEntry::SYMBOL_HISTORY);
-  GenericStorageInterface *emoticon =
-      GenericStorageManagerFactory::GetStorage(
-          commands::GenericStorageEntry::EMOTICON_HISTORY);
-  GenericStorageInterface *invalid =
-      GenericStorageManagerFactory::GetStorage(
-          (commands::GenericStorageEntry::StorageType)(100));
+  GenericStorageInterface *symbol = GenericStorageManagerFactory::GetStorage(
+      commands::GenericStorageEntry::SYMBOL_HISTORY);
+  GenericStorageInterface *emoticon = GenericStorageManagerFactory::GetStorage(
+      commands::GenericStorageEntry::EMOTICON_HISTORY);
+  GenericStorageInterface *invalid = GenericStorageManagerFactory::GetStorage(
+      (commands::GenericStorageEntry::StorageType)(100));
 
   EXPECT_NE(nullptr, symbol);
   EXPECT_NE(nullptr, emoticon);
@@ -70,27 +65,27 @@ TEST(GenericLruStorageTest, BasicOperations) {
   const int kSize = 10;
   constexpr const char *kPrintFormat = "%12zu";  // 12 = kValueSize
 
-  GenericLruStorage storage(
-      GetTemporaryFilePath().data(), kValueSize, kSize, 123);
+  GenericLruStorage storage(GetTemporaryFilePath().data(), kValueSize, kSize,
+                            123);
   // Inserts (kSize + 1) entries.
   for (size_t i = 0; i < kSize + 1; ++i) {
-    const string value = Util::StringPrintf(kPrintFormat, i);
-    const string key = string("key") + value;
+    const std::string value = Util::StringPrintf(kPrintFormat, i);
+    const std::string key = std::string("key") + value;
     storage.Insert(key, value.data());
     // Check the existence.
-    EXPECT_EQ(value, string(storage.Lookup(key), kValueSize));
+    EXPECT_EQ(value, std::string(storage.Lookup(key), kValueSize));
   }
 
   // First inserted entry is already pushed out.
   EXPECT_EQ(NULL, storage.Lookup("0"));
   for (size_t i = 1; i < kSize + 1; ++i) {
-    const string value = Util::StringPrintf(kPrintFormat, i);
-    const string key = string("key") + value;
-    EXPECT_EQ(value, string(storage.Lookup(key), kValueSize));
+    const std::string value = Util::StringPrintf(kPrintFormat, i);
+    const std::string key = std::string("key") + value;
+    EXPECT_EQ(value, std::string(storage.Lookup(key), kValueSize));
   }
 
   // Check the list.
-  std::vector<string> values;
+  std::vector<std::string> values;
   storage.GetAllValues(&values);
   EXPECT_EQ(kSize, values.size());
   for (size_t i = 1; i < kSize + 1; ++i) {

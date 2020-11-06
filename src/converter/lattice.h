@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "converter/node.h"
 #include "converter/node_allocator.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -49,10 +49,10 @@ class Lattice {
   NodeAllocator *node_allocator() const;
 
   // set key and initalizes lattice with key.
-  void SetKey(StringPiece key);
+  void SetKey(absl::string_view key);
 
   // return key.
-  const string& key() const;
+  const std::string &key() const;
 
   // Set history end position.
   // For cache, we have to reset lattice when the history size is changed.
@@ -89,10 +89,10 @@ class Lattice {
   bool has_lattice() const;
 
   // set key with cache information kept
-  void UpdateKey(const string &new_key);
+  void UpdateKey(const std::string &new_key);
 
   // add suffix_key to the end of a current key
-  void AddSuffix(const string &suffix_key);
+  void AddSuffix(const std::string &suffix_key);
 
   // erase the suffix of a key so that the length of the key becomes new_len
   void ShrinkKey(const size_t new_len);
@@ -109,18 +109,18 @@ class Lattice {
   void ResetNodeCost();
 
   // Dump the best path and the path that contains the designated string.
-  string DebugString() const;
+  std::string DebugString() const;
 
   // Set the node info that should be used in DebugString() (For debug use).
   static void SetDebugDisplayNode(size_t start_pos, size_t end_pos,
-                                  const string &str);
+                                  const std::string &str);
 
   // Reset the debug info.
   static void ResetDebugDisplayNode();
 
  private:
   // TODO(team): Splitting the cache module may make this module simpler.
-  string key_;
+  std::string key_;
   size_t history_end_pos_;
   std::vector<Node *> begin_nodes_;
   std::vector<Node *> end_nodes_;

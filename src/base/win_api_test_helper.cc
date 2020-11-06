@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 #include <Windows.h>
 #include <winnt.h>
 
-#include <type_traits>
 #include <map>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 #include "base/logging.h"
@@ -56,8 +56,7 @@ struct Thunk {
 class ThunkRewriter {
  public:
   ThunkRewriter(const Thunk *thunk, FunctionPointer proc)
-      : thunk_(thunk),
-        proc_(proc) {}
+      : thunk_(thunk), proc_(proc) {}
 
   bool Rewrite() const {
     // Note: There is a race condition between the first VirtualProtect and
@@ -66,9 +65,8 @@ class ThunkRewriter {
     auto *writable_thunk = const_cast<Thunk *>(thunk_);
 
     DWORD original_protect = 0;
-    auto result = ::VirtualProtect(
-        writable_thunk, sizeof(*writable_thunk), PAGE_READWRITE,
-        &original_protect);
+    auto result = ::VirtualProtect(writable_thunk, sizeof(*writable_thunk),
+                                   PAGE_READWRITE, &original_protect);
     if (result == 0) {
       const auto error = ::GetLastError();
       LOG(FATAL) << "VirtualProtect failed. error = " << error;
@@ -79,8 +77,8 @@ class ThunkRewriter {
     writable_thunk->proc = proc_;
 
     DWORD dummy = 0;
-    result = ::VirtualProtect(
-        writable_thunk, sizeof(*writable_thunk), original_protect, &dummy);
+    result = ::VirtualProtect(writable_thunk, sizeof(*writable_thunk),
+                              original_protect, &dummy);
     if (result == 0) {
       const auto error = ::GetLastError();
       LOG(FATAL) << "VirtualProtect failed. error = " << error;
@@ -103,9 +101,9 @@ class HookTargetInfo {
     for (size_t i = 0; i < requests.size(); ++i) {
       const auto &request = requests[i];
       HMODULE module_handle = nullptr;
-      const auto result = ::GetModuleHandleExA(
-          GET_MODULE_HANDLE_EX_FLAG_PIN, request.module_name.c_str(),
-          &module_handle);
+      const auto result =
+          ::GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_PIN,
+                               request.module_name.c_str(), &module_handle);
       if (result == 0) {
         const auto error = ::GetLastError();
         LOG(FATAL) << "GetModuleHandleExA failed. error = " << error;
@@ -130,9 +128,8 @@ class HookTargetInfo {
     return info_.find(lower_module_name) != info_.end();
   }
 
-  const FunctionPointer GetNewProc(
-      const string &module_name,
-      FunctionPointer original_proc) const {
+  const FunctionPointer GetNewProc(const string &module_name,
+                                   FunctionPointer original_proc) const {
     string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     const auto module_iterator = info_.find(lower_module_name);
@@ -154,8 +151,7 @@ class HookTargetInfo {
 class PortableExecutableImage {
  public:
   explicit PortableExecutableImage(HMODULE module_handle)
-      : module_handle_(module_handle),
-        is_invalid_image_(false) {
+      : module_handle_(module_handle), is_invalid_image_(false) {
     if (module_handle_ == nullptr) {
       is_invalid_image_ = true;
       return;
@@ -183,9 +179,7 @@ class PortableExecutableImage {
         reinterpret_cast<const uint8 *>(module_handle_) + offset);
   }
 
-  bool IsValid() const {
-    return !is_invalid_image_;
-  }
+  bool IsValid() const { return !is_invalid_image_; }
 
  private:
   HMODULE module_handle_;
@@ -216,9 +210,7 @@ class ImageImportDescriptorIterator {
     return *desc;
   }
 
-  void Next() {
-    ++descriptor_index_;
-  }
+  void Next() { ++descriptor_index_; }
 
   bool Done() const {
     if (!image_.IsValid()) {
@@ -252,9 +244,7 @@ class ImageThunkDataIterator {
  public:
   ImageThunkDataIterator(const PortableExecutableImage &image,
                          const IMAGE_IMPORT_DESCRIPTOR &import_descriptor)
-      : image_(image),
-        import_descriptor_(import_descriptor),
-        thunk_index_(0) {}
+      : image_(image), import_descriptor_(import_descriptor), thunk_index_(0) {}
 
   const Thunk *Get() const {
     CHECK(!Done());
@@ -262,13 +252,9 @@ class ImageThunkDataIterator {
     return reinterpret_cast<const Thunk *>(&raw_thunk->u1.Function);
   }
 
-  void Next() {
-    ++thunk_index_;
-  }
+  void Next() { ++thunk_index_; }
 
-  bool Done() const {
-    return GetInternal()->u1.Function == 0;
-  }
+  bool Done() const { return GetInternal()->u1.Function == 0; }
 
  private:
   const IMAGE_THUNK_DATA *GetInternal() const {
@@ -289,10 +275,9 @@ class WinAPITestHelper::RestoreInfo {
   std::vector<ThunkRewriter> rewrites;
 };
 
-WinAPITestHelper::HookRequest::HookRequest(
-    const string &src_module,
-    const string &src_proc_name,
-    FunctionPointer new_proc_addr)
+WinAPITestHelper::HookRequest::HookRequest(const string &src_module,
+                                           const string &src_proc_name,
+                                           FunctionPointer new_proc_addr)
     : module_name(src_module),
       proc_name(src_proc_name),
       new_proc_address(new_proc_addr) {}

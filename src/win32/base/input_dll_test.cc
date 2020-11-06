@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,8 @@
 namespace {
 
 TEST(InputDllTest, EnumEnabledLayoutOrTipTest) {
-  const UINT num_element = ::EnumEnabledLayoutOrTip(
-      nullptr, nullptr, nullptr, nullptr, 0);
+  const UINT num_element =
+      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
   EXPECT_LT(0, num_element);
 }
 

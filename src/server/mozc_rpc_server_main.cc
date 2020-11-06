@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -70,12 +69,11 @@ namespace mozc {
 namespace {
 
 const size_t kMaxRequestSize = 32 * 32 * 8192;
-const size_t kMaxOutputSize  = 32 * 32 * 8192;
-const int    kInvalidSocket  = -1;
+const size_t kMaxOutputSize = 32 * 32 * 8192;
+const int kInvalidSocket = -1;
 
 // TODO(taku): timeout should be handled.
-bool Recv(int socket, char *buf,
-          size_t buf_size, int timeout) {
+bool Recv(int socket, char *buf, size_t buf_size, int timeout) {
   ssize_t buf_left = buf_size;
   while (buf_left > 0) {
     const ssize_t read_size = ::recv(socket, buf, buf_left, 0);
@@ -90,13 +88,12 @@ bool Recv(int socket, char *buf,
 }
 
 // TODO(taku): timeout should be handled.
-bool Send(int socket, const char *buf,
-          size_t buf_size, int timeout) {
+bool Send(int socket, const char *buf, size_t buf_size, int timeout) {
   ssize_t buf_left = buf_size;
   while (buf_left > 0) {
 #if defined(OS_WIN)
     const int kFlag = 0;
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
     const int kFlag = SO_NOSIGPIPE;
 #else
     const int kFlag = MSG_NOSIGNAL;
@@ -127,9 +124,10 @@ void CloseSocket(int client_socket) {
 // This allows us to reuse client::Session library and SessionServer.
 class RPCServer {
  public:
-  RPCServer() : server_socket_(kInvalidSocket),
-                handler_(new SessionHandler(
-                    std::unique_ptr<Engine>(EngineFactory::Create()))) {
+  RPCServer()
+      : server_socket_(kInvalidSocket),
+        handler_(new SessionHandler(
+            std::unique_ptr<Engine>(EngineFactory::Create()))) {
     struct sockaddr_in sin;
 
     server_socket_ = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -150,14 +148,13 @@ class RPCServer {
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int on = 1;
-    ::setsockopt(server_socket_,
-                 SOL_SOCKET,
-                 SO_REUSEADDR, reinterpret_cast<char * >(&on),
-                 sizeof(on));
+    ::setsockopt(server_socket_, SOL_SOCKET, SO_REUSEADDR,
+                 reinterpret_cast<char *>(&on), sizeof(on));
 
-    CHECK_GE(::bind(server_socket_,
-                    reinterpret_cast<struct sockaddr *>(&sin),
-                    sizeof(sin)), 0) << "bind failed";
+    CHECK_GE(::bind(server_socket_, reinterpret_cast<struct sockaddr *>(&sin),
+                    sizeof(sin)),
+             0)
+        << "bind failed";
 
     CHECK_GE(::listen(server_socket_, SOMAXCONN), 0) << "listen failed";
     CHECK_NE(server_socket_, 0);
@@ -195,8 +192,8 @@ class RPCServer {
 
       // Receive the body of serialized protobuf.
       std::unique_ptr<char[]> request_str(new char[request_size]);
-      if (!Recv(client_socket,
-                request_str.get(), request_size, FLAGS_rpc_timeout)) {
+      if (!Recv(client_socket, request_str.get(), request_size,
+                FLAGS_rpc_timeout)) {
         LOG(ERROR) << "cannot receive body of request.";
         CloseSocket(client_socket);
         continue;
@@ -212,7 +209,7 @@ class RPCServer {
 
       CHECK(handler_->EvalCommand(&command));
 
-      string output_str;
+      std::string output_str;
       // Return the result.
       CHECK(command.output().SerializeToString(&output_str));
 
@@ -280,27 +277,24 @@ class RPCClient {
   }
 
  private:
-  bool Call(const commands::Input &input,
-            commands::Output *output) const {
+  bool Call(const commands::Input &input, commands::Output *output) const {
     struct addrinfo hints, *res;
     ::memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 
-    const string port_str = std::to_string(FLAGS_port);
-    CHECK_EQ(::getaddrinfo(FLAGS_host.c_str(), port_str.c_str(),
-                           &hints, &res), 0)
+    const std::string port_str = std::to_string(FLAGS_port);
+    CHECK_EQ(::getaddrinfo(FLAGS_host.c_str(), port_str.c_str(), &hints, &res),
+             0)
         << "getaddrinfo failed";
 
-    const int client_socket = ::socket(res->ai_family,
-                                       res->ai_socktype,
-                                       res->ai_protocol);
+    const int client_socket =
+        ::socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     CHECK_NE(client_socket, kInvalidSocket) << "socket failed";
-    CHECK_GE(::connect(client_socket,
-                       res->ai_addr, res->ai_addrlen), 0)
+    CHECK_GE(::connect(client_socket, res->ai_addr, res->ai_addrlen), 0)
         << "connect failed";
 
-    string request_str;
+    std::string request_str;
     CHECK(input.SerializeToString(&request_str));
     uint32 request_size = request_str.size();
     CHECK_GT(request_size, 0);
@@ -320,8 +314,8 @@ class RPCClient {
     CHECK_LT(output_size, kMaxOutputSize);
 
     std::unique_ptr<char[]> output_str(new char[output_size]);
-    CHECK(Recv(client_socket,
-               output_str.get(), output_size, FLAGS_rpc_timeout));
+    CHECK(
+        Recv(client_socket, output_str.get(), output_size, FLAGS_rpc_timeout));
 
     CHECK(output->ParseFromArray(output_str.get(), output_size));
 
@@ -341,8 +335,7 @@ class ScopedWSAData {
   ScopedWSAData() {
 #ifdef OS_WIN
     WSADATA wsaData;
-    CHECK_EQ(::WSAStartup(MAKEWORD(2, 1), &wsaData), 0)
-        << "WSAStartup failed";
+    CHECK_EQ(::WSAStartup(MAKEWORD(2, 1), &wsaData), 0) << "WSAStartup failed";
 #endif
   }
   ~ScopedWSAData() {
@@ -356,7 +349,7 @@ class ScopedWSAData {
 }  // namespace mozc
 
 int main(int argc, char *argv[]) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::ScopedWSAData wsadata;
 

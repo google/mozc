@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,29 +59,32 @@ class HTTPClientInterface;
 class HTTPClient {
  public:
   struct Option {
-    bool   include_header;       // include header in output
-    size_t max_data_size;        // maximum data size client can retrieve
-    int32  timeout;              // timeout
-    std::vector<string> headers;      // additional headers;
+    bool include_header;          // include header in output
+    size_t max_data_size;         // maximum data size client can retrieve
+    int32 timeout;                // timeout
+    std::vector<std::string> headers;  // additional headers;
 
     // set default parameter
     Option()
         : include_header(false),
           max_data_size(10 * 1024 * 1024),  // 10Mbyte
-          timeout(600000) {}  // 10min
+          timeout(600000) {}                // 10min
   };
 
   // Synchronous HTTP GET, HEAD and POST
 
   // string interface
-  static bool Get(const string &url, string *output);
-  static bool Head(const string &url, string *output);
-  static bool Post(const string &url, const string &data, string *output);
+  static bool Get(const std::string &url, std::string *output);
+  static bool Head(const std::string &url, std::string *output);
+  static bool Post(const std::string &url, const std::string &data,
+                   std::string *output);
 
-  static bool Get(const string &url, const Option &option, string *output);
-  static bool Head(const string &url, const Option &option, string *output);
-  static bool Post(const string &url, const string &data,
-                   const Option &option, string *output);
+  static bool Get(const std::string &url, const Option &option,
+                  std::string *output);
+  static bool Head(const std::string &url, const Option &option,
+                   std::string *output);
+  static bool Post(const std::string &url, const std::string &data,
+                   const Option &option, std::string *output);
 
   // Inject a dependency for unittesting
   static void SetHTTPClientHandler(const HTTPClientInterface *handler);
@@ -96,13 +99,13 @@ class HTTPClientInterface {
   HTTPClientInterface() {}
   virtual ~HTTPClientInterface() {}
 
-  virtual bool Get(const string &url, const HTTPClient::Option &option,
-                   string *output) const = 0;
-  virtual bool Head(const string &url, const HTTPClient::Option &option,
-                    string *output) const = 0;
-  virtual bool Post(const string &url, const string &data,
+  virtual bool Get(const std::string &url, const HTTPClient::Option &option,
+                   std::string *output) const = 0;
+  virtual bool Head(const std::string &url, const HTTPClient::Option &option,
+                    std::string *output) const = 0;
+  virtual bool Post(const std::string &url, const std::string &data,
                     const HTTPClient::Option &option,
-                    string *output) const = 0;
+                    std::string *output) const = 0;
 };
 }  // namespace mozc
 #endif  // MOZC_NET_HTTP_CLIENT_H_

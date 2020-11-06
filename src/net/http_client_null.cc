@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,17 +41,13 @@ namespace mozc {
 
 namespace {
 
-void Error() {
-  LOG(ERROR) << "HttpClient is not enabled.";
-}
+void Error() { LOG(ERROR) << "HttpClient is not enabled."; }
 
 }  // namespace
 
 // static
-bool NullHTTPRequestHandler::Request(HTTPMethodType type,
-                                     const string &url,
-                                     const char *post_data,
-                                     size_t post_size,
+bool NullHTTPRequestHandler::Request(HTTPMethodType type, const string &url,
+                                     const char *post_data, size_t post_size,
                                      const HTTPClient::Option &option,
                                      string *output_string) {
   Error();
@@ -59,9 +55,7 @@ bool NullHTTPRequestHandler::Request(HTTPMethodType type,
 }
 
 #ifdef OS_NACL
-void RegisterPepperInstanceForHTTPClient(pp::Instance *instance) {
-  Error();
-}
+void RegisterPepperInstanceForHTTPClient(pp::Instance *instance) { Error(); }
 
 pp::Instance *GetPepperInstanceForHTTPClient() {
   Error();

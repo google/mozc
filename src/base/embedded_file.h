@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -50,10 +50,10 @@
 //    }
 //
 //    // In this translation unit, the file content can be retrieved by:
-//    StringPiece data = LoadEmbeddedFile(kVarName);
+//    absl::string_view data = LoadEmbeddedFile(kVarName);
 
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -66,8 +66,8 @@ struct EmbeddedFile {
 };
 
 // Interprets EmbeddedFile as a byte array.
-inline StringPiece LoadEmbeddedFile(EmbeddedFile f) {
-  return StringPiece(reinterpret_cast<const char*>(f.data), f.size);
+inline absl::string_view LoadEmbeddedFile(EmbeddedFile f) {
+  return absl::string_view(reinterpret_cast<const char *>(f.data), f.size);
 }
 
 }  // namespace mozc

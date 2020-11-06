@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,7 @@ class PreeditHandlerInterface {
   PreeditHandlerInterface() {}
   virtual ~PreeditHandlerInterface() {}
 
-  virtual bool Update(IBusEngine *engine,
-                      const commands::Output &output) = 0;
+  virtual bool Update(IBusEngine *engine, const commands::Output &output) = 0;
 };
 
 }  // namespace ibus

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,23 +40,42 @@ const uint32 kFingerPrintSeed1 = 0x7a63;
 
 }  // namespace
 
-#define Mix(a, b, c) {            \
-  a -= b; a -= c; a ^= (c >> 13); \
-  b -= c; b -= a; b ^= (a << 8);  \
-  c -= a; c -= b; c ^= (b >> 13); \
-  a -= b; a -= c; a ^= (c >> 12); \
-  b -= c; b -= a; b ^= (a << 16); \
-  c -= a; c -= b; c ^= (b >> 5);  \
-  a -= b; a -= c; a ^= (c >> 3);  \
-  b -= c; b -= a; b ^= (a << 10); \
-  c -= a; c -= b; c ^= (b >> 15); \
-}
+#define Mix(a, b, c) \
+  {                  \
+    a -= b;          \
+    a -= c;          \
+    a ^= (c >> 13);  \
+    b -= c;          \
+    b -= a;          \
+    b ^= (a << 8);   \
+    c -= a;          \
+    c -= b;          \
+    c ^= (b >> 13);  \
+    a -= b;          \
+    a -= c;          \
+    a ^= (c >> 12);  \
+    b -= c;          \
+    b -= a;          \
+    b ^= (a << 16);  \
+    c -= a;          \
+    c -= b;          \
+    c ^= (b >> 5);   \
+    a -= b;          \
+    a -= c;          \
+    a ^= (c >> 3);   \
+    b -= c;          \
+    b -= a;          \
+    b ^= (a << 10);  \
+    c -= a;          \
+    c -= b;          \
+    c ^= (b >> 15);  \
+  }
 
-uint32 Hash::Fingerprint32(StringPiece str) {
+uint32 Hash::Fingerprint32(absl::string_view str) {
   return Fingerprint32WithSeed(str, kFingerPrint32Seed);
 }
 
-uint32 Hash::Fingerprint32WithSeed(StringPiece str, uint32 seed) {
+uint32 Hash::Fingerprint32WithSeed(absl::string_view str, uint32 seed) {
 #define U32(x) static_cast<uint32>(x)
 #define ToUint32(a, b, c, d) \
   (U32(a) + (U32(b) << 8) + (U32(c) << 16) + (U32(d) << 24))
@@ -78,34 +97,34 @@ uint32 Hash::Fingerprint32WithSeed(StringPiece str, uint32 seed) {
   switch (str.size()) {
     case 11:
       c += U32(str[10]) << 24;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 10:
       c += U32(str[9]) << 16;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 9:
       c += U32(str[8]) << 8;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 8:
       b += U32(str[7]) << 24;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 7:
       b += U32(str[6]) << 16;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 6:
       b += U32(str[5]) << 8;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 5:
       b += U32(str[4]);
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 4:
       a += U32(str[3]) << 24;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 3:
       a += U32(str[2]) << 16;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 2:
       a += U32(str[1]) << 8;
-      FALLTHROUGH_INTENDED;
+      ABSL_FALLTHROUGH_INTENDED;
     case 1:
       a += U32(str[0]);
       break;
@@ -117,16 +136,16 @@ uint32 Hash::Fingerprint32WithSeed(StringPiece str, uint32 seed) {
 #undef U32
 }
 
-uint64 Hash::Fingerprint(StringPiece str) {
+uint64 Hash::Fingerprint(absl::string_view str) {
   return FingerprintWithSeed(str, kFingerPrintSeed0);
 }
 
-uint64 Hash::FingerprintWithSeed(StringPiece str, uint32 seed) {
+uint64 Hash::FingerprintWithSeed(absl::string_view str, uint32 seed) {
   const uint32 hi = Fingerprint32WithSeed(str, seed);
   const uint32 lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
   uint64 result = static_cast<uint64>(hi) << 32 | static_cast<uint64>(lo);
   if ((hi == 0) && (lo < 2)) {
-    result ^= GG_ULONGLONG(0x130f9bef94a0a928);
+    result ^= 0x130f9bef94a0a928uLL;
   }
   return result;
 }

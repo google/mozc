@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef OS_WIN
-#include <string.h>
-#include <windows.h>
 #include <sddl.h>
 #include <shlobj.h>
+#include <string.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif  // OS_WIN
@@ -43,7 +43,9 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
+#if defined(__APPLE__) || defined(OS_IOS)
 #include "base/mac_util.h"
+#endif  // __APPLE__ || OS_IOS
 #include "base/port.h"
 #include "base/process.h"
 #include "base/run_level.h"
@@ -109,7 +111,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     return true;
   }
 
-  string arg;
+  std::string arg;
 
 #ifdef OS_WIN
   // When mozc is not used as a default IME and some applications (like notepad)
@@ -124,8 +126,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 
   const bool process_in_job = RunLevel::IsProcessInJob();
   if (process_in_job || restricted_) {
-    LOG(WARNING)
-        << "Parent process is in job. start with restricted mode";
+    LOG(WARNING) << "Parent process is in job. start with restricted mode";
     arg += "--restricted";
   }
 #endif
@@ -166,19 +167,17 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(ERROR) << "Can't start process: " << ::GetLastError();
     return false;
   }
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
   // Use launchd API instead of spawning process.  It doesn't use
   // server_program() at all.
   const bool result = MacUtil::StartLaunchdService(
       "Converter", reinterpret_cast<pid_t *>(&pid));
   if (!result) {
-      LOG(ERROR) << "Can't start process";
-      return false;
-    }
+    LOG(ERROR) << "Can't start process";
+    return false;
+  }
 #else
-  const bool result = mozc::Process::SpawnProcess(server_program(),
-                                                  arg,
-                                                  &pid);
+  const bool result = mozc::Process::SpawnProcess(server_program(), arg, &pid);
   if (!result) {
     LOG(ERROR) << "Can't start process: " << strerror(result);
     return false;
@@ -231,7 +230,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
   return false;
 }
 
-bool ServerLauncher::ForceTerminateServer(const string &name) {
+bool ServerLauncher::ForceTerminateServer(const std::string &name) {
   return IPCClient::TerminateServer(name);
 }
 
@@ -240,11 +239,10 @@ bool ServerLauncher::WaitServer(uint32 pid) {
   return Process::WaitProcess(static_cast<size_t>(pid), kTimeout);
 }
 
-void ServerLauncher::OnFatal(
-    ServerLauncherInterface::ServerErrorType type) {
+void ServerLauncher::OnFatal(ServerLauncherInterface::ServerErrorType type) {
   LOG(ERROR) << "OnFatal is called: " << static_cast<int>(type);
 
-  string error_type;
+  std::string error_type;
   switch (type) {
     case ServerLauncherInterface::SERVER_TIMEOUT:
       error_type = "server_timeout";

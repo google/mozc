@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,6 +50,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/strings/match.h"
 
 DEFINE_string(input, "", "Input file");
 DEFINE_int32(key_duration, 10, "Key duration (msec)");
@@ -63,17 +65,17 @@ namespace {
 
 // Parses key events.  If |input| gets EOF, returns false.
 bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
-              string *answer) {
+              std::string *answer) {
   keys->clear();
   answer->clear();
 
-  string line;
-  while (getline(*input, line)) {
+  std::string line;
+  while (std::getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
       continue;
     }
-    if (line.find(">> ") == 0) {
+    if (absl::StartsWith(line, ">> ")) {
       // Answer line
       answer->assign(line, 3, line.size() - 3);
       continue;
@@ -105,12 +107,12 @@ int Loop(std::istream *input) {
   mozc::commands::RendererCommand renderer_command;
 
   if (FLAGS_test_renderer) {
-#if defined(OS_WIN) || defined(OS_MACOSX)
+#if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
-    renderer_command.mutable_application_info()->set_process_id
-        (::GetCurrentProcessId());
-    renderer_command.mutable_application_info()->set_thread_id
-        (::GetCurrentThreadId());
+    renderer_command.mutable_application_info()->set_process_id(
+        ::GetCurrentProcessId());
+    renderer_command.mutable_application_info()->set_thread_id(
+        ::GetCurrentThreadId());
 #endif
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
@@ -126,7 +128,7 @@ int Loop(std::istream *input) {
   commands::Command command;
   commands::Output output;
   std::vector<commands::KeyEvent> keys;
-  string answer;
+  std::string answer;
 
   // TODO(tok): Stop the test if server is crashed.  Currently, we cannot
   // detect the server crash out of client library, as client automatically
@@ -148,7 +150,7 @@ int Loop(std::istream *input) {
       client.SendKey(keys[i], &output);
       VLOG(2) << "Output of SendKey: " << output.DebugString();
 
-      if (renderer_client.get() != NULL) {
+      if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
         renderer_command.mutable_output()->CopyFrom(output);
@@ -169,7 +171,7 @@ int Loop(std::istream *input) {
 }  // namespace mozc
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!FLAGS_profile_dir.empty()) {
     mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
@@ -177,7 +179,7 @@ int main(int argc, char **argv) {
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
-  std::istream *input = NULL;
+  std::istream *input = nullptr;
 
   if (!FLAGS_input.empty()) {
     // Batch mode loading the input file.

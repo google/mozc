@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,13 @@ class DebugUtil {
  public:
   // Callback function used as a Qt message handler which is called when Qt
   // message functions (qDebug, qWarning, qCritical and qFatal) are called.
-  static void MessageHandler(QtMsgType type,
-                             const QMessageLogContext &context,
+  static void MessageHandler(QtMsgType type, const QMessageLogContext &context,
                              const QString &q_msg);
 
  private:
   DebugUtil() {}
   ~DebugUtil() {}
 };
-}  // gui
-}  // mozc
-#endif   // MOZC_GUI_BASE_DEBUG_UTIL_H_
+}  // namespace gui
+}  // namespace mozc
+#endif  // MOZC_GUI_BASE_DEBUG_UTIL_H_

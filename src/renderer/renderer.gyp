@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -198,11 +198,6 @@
             'gtk_renderer_test',
           ],
         }],
-        # Android runs nothing.
-        ['target_platform=="Android"', {
-          'dependencies=': [],
-        },
-      ],
       ],
     },
   ],
@@ -512,7 +507,7 @@
                 '<(gen_out_dir)/Info.plist',
               ],
               'action': [
-                'python', '../build_tools/tweak_info_plist.py',
+                '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'mac/Info.plist',
                 '--version_file', '../mozc_version.txt',

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,19 +46,18 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace composer {
+namespace {
 
+using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::config::ConfigHandler;
-using ::mozc::commands::Request;
 
-namespace {
-bool InsertKey(const string &key_string, Composer *composer) {
+bool InsertKey(const std::string &key_string, Composer *composer) {
   commands::KeyEvent key;
   if (!KeyParser::ParseKey(key_string, &key)) {
     return false;
@@ -66,7 +65,7 @@ bool InsertKey(const string &key_string, Composer *composer) {
   return composer->InsertCharacterKeyEvent(key);
 }
 
-bool InsertKeyWithMode(const string &key_string,
+bool InsertKeyWithMode(const std::string &key_string,
                        const commands::CompositionMode mode,
                        Composer *composer) {
   commands::KeyEvent key;
@@ -77,8 +76,8 @@ bool InsertKeyWithMode(const string &key_string,
   return composer->InsertCharacterKeyEvent(key);
 }
 
-string GetPreedit(const Composer *composer) {
-  string preedit;
+std::string GetPreedit(const Composer *composer) {
+  std::string preedit;
   composer->GetStringForPreedit(&preedit);
   return preedit;
 }
@@ -95,25 +94,25 @@ void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
   EXPECT_EQ(lhs.GetInputFieldType(), rhs.GetInputFieldType());
 
   {
-    string left_text, right_text;
+    std::string left_text, right_text;
     lhs.GetStringForPreedit(&left_text);
     rhs.GetStringForPreedit(&right_text);
     EXPECT_EQ(left_text, right_text);
   }
   {
-    string left_text, right_text;
+    std::string left_text, right_text;
     lhs.GetStringForSubmission(&left_text);
     rhs.GetStringForSubmission(&right_text);
     EXPECT_EQ(left_text, right_text);
   }
   {
-    string left_text, right_text;
+    std::string left_text, right_text;
     lhs.GetQueryForConversion(&left_text);
     rhs.GetQueryForConversion(&right_text);
     EXPECT_EQ(left_text, right_text);
   }
   {
-    string left_text, right_text;
+    std::string left_text, right_text;
     lhs.GetQueryForPrediction(&left_text);
     rhs.GetQueryForPrediction(&right_text);
     EXPECT_EQ(left_text, right_text);
@@ -153,7 +152,6 @@ class ComposerTest : public ::testing::Test {
   DISALLOW_COPY_AND_ASSIGN(ComposerTest);
 };
 
-
 TEST_F(ComposerTest, Reset) {
   composer_->InsertCharacter("mozuku");
 
@@ -169,8 +167,7 @@ TEST_F(ComposerTest, Reset) {
   EXPECT_TRUE(composer_->Empty());
   // The input mode ramains as the previous mode.
   EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
-  EXPECT_EQ(commands::Context::PASSWORD,
-            composer_->GetInputFieldType());
+  EXPECT_EQ(commands::Context::PASSWORD, composer_->GetInputFieldType());
   // The output mode should be reset.
   EXPECT_EQ(transliteration::HIRAGANA, composer_->GetOutputMode());
 }
@@ -208,7 +205,7 @@ TEST_F(ComposerTest, EnableInsert) {
   composer_->InsertCharacter("!");
   EXPECT_EQ(6, composer_->GetLength());
 
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("mozuku", result);
 
@@ -223,7 +220,7 @@ TEST_F(ComposerTest, BackSpace) {
   composer_->Backspace();
   EXPECT_EQ(2, composer_->GetLength());
   EXPECT_EQ(2, composer_->GetCursor());
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("ab", result);
 
@@ -262,7 +259,7 @@ TEST_F(ComposerTest, OutputMode) {
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("あいう", output);
 
@@ -288,7 +285,7 @@ TEST_F(ComposerTest, OutputMode_2) {
   composer_->InsertCharacter("i");
   composer_->InsertCharacter("u");
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("あいう", output);
 
@@ -438,19 +435,19 @@ TEST_F(ComposerTest, GetStringFunctions) {
 
   // Query: "!kan"
   composer_->InsertCharacter("!kan");
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("！かｎ", preedit);
 
-  string submission;
+  std::string submission;
   composer_->GetStringForSubmission(&submission);
   EXPECT_EQ("！かｎ", submission);
 
-  string conversion;
+  std::string conversion;
   composer_->GetQueryForConversion(&conversion);
   EXPECT_EQ("!かん", conversion);
 
-  string prediction;
+  std::string prediction;
   composer_->GetQueryForPrediction(&prediction);
   EXPECT_EQ("!か", prediction);
 
@@ -526,7 +523,7 @@ TEST_F(ComposerTest, GetQueryForPredictionHalfAscii) {
   // Switch to Half-Latin input mode.
   composer_->SetInputMode(transliteration::HALF_ASCII);
 
-  string prediction;
+  std::string prediction;
   {
     const char kInput[] = "hello";
     composer_->InsertCharacter(kInput);
@@ -552,7 +549,7 @@ TEST_F(ComposerTest, GetQueryForPredictionFullAscii) {
   // Switch to Full-Latin input mode.
   composer_->SetInputMode(transliteration::FULL_ASCII);
 
-  string prediction;
+  std::string prediction;
   {
     composer_->InsertCharacter("ｈｅｌｌｏ");
     composer_->GetQueryForPrediction(&prediction);
@@ -577,8 +574,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionRoman) {
   table_->AddRule("so", "そ", "");
 
   {
-    string base, preedit;
-    std::set<string> expanded;
+    std::string base, preedit;
+    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("us");
     composer_->GetQueriesForPrediction(&base, &expanded);
@@ -605,8 +602,8 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
   table_->AddRule("ど*", "", "と");
 
   {
-    string base, preedit;
-    std::set<string> expanded;
+    std::string base, preedit;
+    std::set<std::string> expanded;
     composer_->EditErase();
     composer_->InsertCharacter("_$");
     composer_->GetQueriesForPrediction(&base, &expanded);
@@ -628,28 +625,28 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   table_->AddRule("ka", "[KA]", "");
 
   composer_->InsertCharacter("nynyan");
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", preedit);
 
-  string submission;
+  std::string submission;
   composer_->GetStringForSubmission(&submission);
   EXPECT_EQ("ｎｙ［ＮＹＡ］ｎ", submission);
 
-  string conversion;
+  std::string conversion;
   composer_->GetQueryForConversion(&conversion);
   EXPECT_EQ("ny[NYA][N]", conversion);
 
-  string prediction;
+  std::string prediction;
   composer_->GetQueryForPrediction(&prediction);
   EXPECT_EQ("ny[NYA]", prediction);
 
   composer_->InsertCharacter("ka");
-  string conversion2;
+  std::string conversion2;
   composer_->GetQueryForConversion(&conversion2);
   EXPECT_EQ("ny[NYA][N][KA]", conversion2);
 
-  string prediction2;
+  std::string prediction2;
   composer_->GetQueryForPrediction(&prediction2);
   EXPECT_EQ("ny[NYA][N][KA]", prediction2);
 }
@@ -666,12 +663,11 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
   };
 
   composer_->SetInputMode(transliteration::HIRAGANA);
-  for (size_t test_data_index = 0;
-       test_data_index < arraysize(test_data_list);
+  for (size_t test_data_index = 0; test_data_index < arraysize(test_data_list);
        ++test_data_index) {
     const TestData &test_data = test_data_list[test_data_index];
     composer_->SetInputFieldType(test_data.field_type_);
-    string key, converted;
+    std::string key, converted;
     for (char c = 0x20; c <= 0x7E; ++c) {
       key.assign(1, c);
       composer_->EditErase();
@@ -697,8 +693,13 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
 
 TEST_F(ComposerTest, InsertCommandCharacter) {
   composer_->SetInputMode(transliteration::HALF_ASCII);
+
   composer_->InsertCommandCharacter(Composer::REWIND);
   EXPECT_EQ("\x0F<\x0E", GetPreedit(composer_.get()));
+
+  composer_->Reset();
+  composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
+  EXPECT_EQ("\x0F!\x0E", GetPreedit(composer_.get()));
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
@@ -708,7 +709,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEvent) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("あ", preedit);
 
@@ -769,7 +770,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithUcs4KeyCode) {
   key.set_key_code(0x5C71);  // U+5C71 = "山"
   composer_->InsertCharacterKeyEvent(key);
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ(kYama, preedit);
 
@@ -796,7 +797,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithoutKeyCode) {
   composer_->InsertCharacterKeyEvent(key);
   EXPECT_FALSE(key.has_key_code());
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ(kYama, preedit);
 
@@ -814,7 +815,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithAsIs) {
   key.set_key_code('a');
   composer_->InsertCharacterKeyEvent(key);
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("あ", preedit);
 
@@ -885,8 +886,8 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // [shift] → "あIu" (Hiragana)
-    EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
-                                  composer_.get()));
+    EXPECT_TRUE(
+        InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
     EXPECT_EQ("あIu", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
@@ -905,8 +906,8 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
     // "i" (Katakana) → "あイ" (Katakana)
-    EXPECT_TRUE(InsertKeyWithMode("i", commands::FULL_KATAKANA,
-                                  composer_.get()));
+    EXPECT_TRUE(
+        InsertKeyWithMode("i", commands::FULL_KATAKANA, composer_.get()));
     EXPECT_EQ("あイ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
 
@@ -915,20 +916,19 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // [shift] → "あイ" (Alphanumeric) - Nothing happens.
-    EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
-                                  composer_.get()));
+    EXPECT_TRUE(
+        InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
     EXPECT_EQ("あイ", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // "U" → "あイ" (Alphanumeric)
-    EXPECT_TRUE(InsertKeyWithMode("U", commands::HALF_ASCII,
-                                  composer_.get()));
+    EXPECT_TRUE(InsertKeyWithMode("U", commands::HALF_ASCII, composer_.get()));
     EXPECT_EQ("あイU", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
 
     // [shift] → "あイU" (Alphanumeric) - Nothing happens.
-    EXPECT_TRUE(InsertKeyWithMode("Shift", commands::HALF_ASCII,
-                                  composer_.get()));
+    EXPECT_TRUE(
+        InsertKeyWithMode("Shift", commands::HALF_ASCII, composer_.get()));
     EXPECT_EQ("あイU", GetPreedit(composer_.get()));
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
   }
@@ -948,16 +948,16 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    std::pair<string, bool> kTestDataAscii[] = {
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair(".", true), std::make_pair("a", true),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair(".", true), std::make_pair("a", true),
+    std::pair<std::string, bool> kTestDataAscii[] = {
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair(".", true),   std::make_pair("a", true),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair(".", true),   std::make_pair("a", true),
         std::make_pair("あ", false), std::make_pair("a", false),
     };
 
@@ -966,9 +966,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
                                          kCapsUnlocked);
 
       const transliteration::TransliterationType expected =
-          kTestDataAscii[i].second
-          ? transliteration::HALF_ASCII
-          : transliteration::HIRAGANA;
+          kTestDataAscii[i].second ? transliteration::HALF_ASCII
+                                   : transliteration::HIRAGANA;
 
       EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
       EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
@@ -980,27 +979,25 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::ASCII_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    std::pair<string, bool> kTestDataAscii[] = {
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair(".", true), std::make_pair("A", true),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair(".", true), std::make_pair("A", true),
+    std::pair<std::string, bool> kTestDataAscii[] = {
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair(".", true),   std::make_pair("A", true),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair(".", true),   std::make_pair("A", true),
         std::make_pair("あ", false), std::make_pair("A", false),
     };
 
     for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
-      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first,
-                                         kCapsLocked);
+      composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first, kCapsLocked);
 
       const transliteration::TransliterationType expected =
-          kTestDataAscii[i].second
-          ? transliteration::HALF_ASCII
-          : transliteration::HIRAGANA;
+          kTestDataAscii[i].second ? transliteration::HALF_ASCII
+                                   : transliteration::HIRAGANA;
 
       EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
       EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
@@ -1012,16 +1009,16 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    std::pair<string, bool> kTestDataKatakana[] = {
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair("a", false), std::make_pair("a", false),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair("a", false), std::make_pair("A", true),
-        std::make_pair(".", true), std::make_pair("a", false),
-        std::make_pair("A", true), std::make_pair("A", true),
-        std::make_pair(".", true), std::make_pair("a", false),
+    std::pair<std::string, bool> kTestDataKatakana[] = {
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair("a", false),  std::make_pair("a", false),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair("a", false),  std::make_pair("A", true),
+        std::make_pair(".", true),   std::make_pair("a", false),
+        std::make_pair("A", true),   std::make_pair("A", true),
+        std::make_pair(".", true),   std::make_pair("a", false),
         std::make_pair("あ", false), std::make_pair("a", false),
     };
 
@@ -1030,9 +1027,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
                                          kCapsUnlocked);
 
       const transliteration::TransliterationType expected =
-          kTestDataKatakana[i].second
-          ? transliteration::FULL_KATAKANA
-          : transliteration::HIRAGANA;
+          kTestDataKatakana[i].second ? transliteration::FULL_KATAKANA
+                                      : transliteration::HIRAGANA;
 
       EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
       EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
@@ -1044,16 +1040,16 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
     config_->set_shift_key_mode_switch(Config::KATAKANA_INPUT_MODE);
 
     // pair<input, use_temporary_input_mode>
-    std::pair<string, bool> kTestDataKatakana[] = {
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair("A", false), std::make_pair("A", false),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair("A", false), std::make_pair("a", true),
-        std::make_pair(".", true), std::make_pair("A", false),
-        std::make_pair("a", true), std::make_pair("a", true),
-        std::make_pair(".", true), std::make_pair("A", false),
+    std::pair<std::string, bool> kTestDataKatakana[] = {
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair("A", false),  std::make_pair("A", false),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair("A", false),  std::make_pair("a", true),
+        std::make_pair(".", true),   std::make_pair("A", false),
+        std::make_pair("a", true),   std::make_pair("a", true),
+        std::make_pair(".", true),   std::make_pair("A", false),
         std::make_pair("あ", false), std::make_pair("A", false),
     };
 
@@ -1062,9 +1058,8 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
                                          kCapsLocked);
 
       const transliteration::TransliterationType expected =
-          kTestDataKatakana[i].second
-          ? transliteration::FULL_KATAKANA
-          : transliteration::HIRAGANA;
+          kTestDataKatakana[i].second ? transliteration::FULL_KATAKANA
+                                      : transliteration::HIRAGANA;
 
       EXPECT_EQ(expected, composer_->GetInputMode()) << "index=" << i;
       EXPECT_EQ(transliteration::HIRAGANA, composer_->GetComebackInputMode())
@@ -1110,11 +1105,11 @@ TEST_F(ComposerTest, CopyFrom) {
   {
     SCOPED_TRACE("Precomposition");
 
-    string src_composition;
+    std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1125,11 +1120,11 @@ TEST_F(ComposerTest, CopyFrom) {
 
     composer_->InsertCharacter("a");
     composer_->InsertCharacter("n");
-    string src_composition;
+    std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("あｎ", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1138,11 +1133,11 @@ TEST_F(ComposerTest, CopyFrom) {
   {
     SCOPED_TRACE("Conversion");
 
-    string src_composition;
+    std::string src_composition;
     composer_->GetQueryForConversion(&src_composition);
     EXPECT_EQ("あん", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1157,11 +1152,11 @@ TEST_F(ComposerTest, CopyFrom) {
     InsertKey("A", composer_.get());
     InsertKey("A", composer_.get());
     InsertKey("a", composer_.get());
-    string src_composition;
+    std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("AaAAあ", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1175,11 +1170,11 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->SetInputMode(transliteration::HALF_ASCII);
     composer_->SetOutputMode(transliteration::HALF_ASCII);
     composer_->InsertCharacter("M");
-    string src_composition;
+    std::string src_composition;
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest(NULL, request_.get(), config_.get());
+    Composer dest(nullptr, request_.get(), config_.get());
     dest.CopyFrom(*composer_);
 
     ExpectSameComposer(*composer_, dest);
@@ -1190,7 +1185,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
   commands::KeyEvent key;
   table_->AddRule("a", "あ", "");
 
-  { // Basic feature.
+  {  // Basic feature.
     composer_->Reset();
     InsertKey("a", composer_.get());  // "あ"
     InsertKey("A", composer_.get());  // "あA"
@@ -1202,7 +1197,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("Shift", composer_.get());
     InsertKey("a", composer_.get());  // "あAaああ"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("あAaああ", preedit);
   }
@@ -1220,7 +1215,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("Shift", composer_.get());
     InsertKey("a", composer_.get());  // "アAaアア"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("アAaアア", preedit);
     EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
@@ -1238,7 +1233,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("A", composer_.get());  // "AAあA"
     InsertKey("a", composer_.get());  // "AAあAa"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("AAあAa", preedit);
   }
@@ -1252,7 +1247,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("2", composer_.get());  // "D&D2"
     InsertKey("a", composer_.get());  // "D&D2a"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("D&D2a", preedit);
   }
@@ -1263,7 +1258,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("A", composer_.get());  // "Ａ"
     InsertKey("a", composer_.get());  // "Ａａ"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("Ａａ", preedit);
   }
@@ -1274,7 +1269,7 @@ TEST_F(ComposerTest, ShiftKeyOperation) {
     InsertKey("A", composer_.get());  // "A"
     InsertKey("a", composer_.get());  // "Aa"
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("Aa", preedit);
   }
@@ -1305,7 +1300,7 @@ TEST_F(ComposerTest, ShiftKeyOperationForKatakana) {
   InsertKey("a", composer_.get());
   EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   // NOTE(komatsu): "KATakAna" is converted to "カＴあｋアな" rather
   // than "カタカな".  This is a different behavior from Kotoeri due
@@ -1333,7 +1328,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
     InsertKey("p", composer_.get());
 
-    string preedit;
+    std::string preedit;
     composer_->GetStringForPreedit(&preedit);
     EXPECT_EQ("http", preedit);
     EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
@@ -1460,7 +1455,7 @@ TEST_F(ComposerTest, AutoIMETurnOffDisabled) {
   key.set_key_code('/');
   composer_->InsertCharacterKeyEvent(key);
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("ｈっｔｐ：・・", preedit);
 }
@@ -1496,7 +1491,7 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
   key.set_key_code('/');
   composer_->InsertCharacterKeyEvent(key);
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("ｈっｔｐ：・・", preedit);
 }
@@ -1504,19 +1499,19 @@ TEST_F(ComposerTest, AutoIMETurnOffKana) {
 TEST_F(ComposerTest, KanaPrediction) {
   composer_->InsertCharacterKeyAndPreedit("t", "か");
   {
-    string preedit;
+    std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
     EXPECT_EQ("か", preedit);
   }
   composer_->InsertCharacterKeyAndPreedit("\\", "ー");
   {
-    string preedit;
+    std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
     EXPECT_EQ("かー", preedit);
   }
   composer_->InsertCharacterKeyAndPreedit(",", "、");
   {
-    string preedit;
+    std::string preedit;
     composer_->GetQueryForPrediction(&preedit);
     EXPECT_EQ("かー、", preedit);
   }
@@ -1530,7 +1525,7 @@ TEST_F(ComposerTest, KanaTransliteration) {
   composer_->InsertCharacterKeyAndPreedit("l", "り");
   composer_->InsertCharacterKeyAndPreedit("o", "ら");
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("くいりりら", preedit);
 
@@ -1549,7 +1544,7 @@ TEST_F(ComposerTest, SetOutputMode) {
   composer_->InsertCharacter("z");
   composer_->InsertCharacter("u");
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("もず", output);
   EXPECT_EQ(2, composer_->GetCursor());
@@ -1588,7 +1583,7 @@ TEST_F(ComposerTest, UpdateInputMode) {
   InsertKey("i", composer_.get());
   EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("AIあいａｉ", output);
 
@@ -1659,7 +1654,6 @@ TEST_F(ComposerTest, UpdateInputMode) {
   EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
 }
 
-
 TEST_F(ComposerTest, DisabledUpdateInputMode) {
   // Set the flag disable.
   commands::Request request;
@@ -1688,7 +1682,7 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
   InsertKey("i", composer_.get());
   EXPECT_EQ(transliteration::FULL_ASCII, composer_->GetInputMode());
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("AIあいａｉ", output);
 
@@ -1763,7 +1757,7 @@ TEST_F(ComposerTest, DisabledUpdateInputMode) {
 }
 
 TEST_F(ComposerTest, TransformCharactersForNumbers) {
-  string query;
+  std::string query;
 
   query = "";
   EXPECT_FALSE(Composer::TransformCharactersForNumbers(&query));
@@ -1895,7 +1889,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     manager->AddPreeditRule("1", Config::HALF_WIDTH);
     manager->AddPreeditRule(".,", Config::HALF_WIDTH);
     composer_->InsertCharacter("3.14");
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("3.14", result);
   }
@@ -1906,7 +1900,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     manager->AddPreeditRule("1", Config::FULL_WIDTH);
     manager->AddPreeditRule(".,", Config::HALF_WIDTH);
     composer_->InsertCharacter("3.14");
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("３.１４", result);
   }
@@ -1917,7 +1911,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     manager->AddPreeditRule("1", Config::HALF_WIDTH);
     manager->AddPreeditRule(".,", Config::FULL_WIDTH);
     composer_->InsertCharacter("3.14");
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("3．14", result);
   }
@@ -1928,7 +1922,7 @@ TEST_F(ComposerTest, PreeditFormAfterCharacterTransform) {
     manager->AddPreeditRule("1", Config::FULL_WIDTH);
     manager->AddPreeditRule(".,", Config::FULL_WIDTH);
     composer_->InsertCharacter("3.14");
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("３．１４", result);
   }
@@ -1951,27 +1945,27 @@ TEST_F(ComposerTest, ComposingWithcharactertransform) {
   composer_->InsertCharacter("-1,000.5");
 
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
   }
   {
-    string result;
+    std::string result;
     composer_->GetStringForSubmission(&result);
     EXPECT_EQ("−１，０００．５", result);  // The hyphen is U+2212.
   }
   {
-    string result;
+    std::string result;
     composer_->GetQueryForConversion(&result);
     EXPECT_EQ("-1,000.5", result);
   }
   {
-    string result;
+    std::string result;
     composer_->GetQueryForPrediction(&result);
     EXPECT_EQ("-1,000.5", result);
   }
   {
-    string left, focused, right;
+    std::string left, focused, right;
     // Right edge
     composer_->GetPreedit(&left, &focused, &right);
     EXPECT_EQ("−１，０００．５", left);  // The hyphen is U+2212.
@@ -2037,7 +2031,7 @@ TEST_F(ComposerTest, AlphanumericOfSSH) {
   composer_->InsertCharacter("ssh");
   EXPECT_EQ("［Ｘ］ｓｈ", GetPreedit(composer_.get()));
 
-  string query;
+  std::string query;
   composer_->GetQueryForConversion(&query);
   EXPECT_EQ("[X]sh", query);
 
@@ -2055,7 +2049,7 @@ TEST_F(ComposerTest, Issue2190364) {
   // Toggle the input mode to HALF_ASCII
   composer_->ToggleInputMode();
   EXPECT_TRUE(composer_->InsertCharacterKeyEvent(key));
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("a", output);
 
@@ -2090,11 +2084,11 @@ TEST_F(ComposerTest, Issue1817410) {
   InsertKey("s", composer_.get());
   InsertKey("s", composer_.get());
 
-  string preedit;
+  std::string preedit;
   composer_->GetStringForPreedit(&preedit);
   EXPECT_EQ("っｓ", preedit);
 
-  string t13n;
+  std::string t13n;
   composer_->GetSubTransliteration(transliteration::HALF_ASCII, 0, 2, &t13n);
   EXPECT_EQ("ss", t13n);
 
@@ -2150,7 +2144,7 @@ TEST_F(ComposerTest, Issue2819580_1) {
   InsertKey("n", composer_.get());
   InsertKey("y", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("んy", result);
 }
@@ -2169,7 +2163,7 @@ TEST_F(ComposerTest, Issue2819580_2) {
   InsertKey("n", composer_.get());
   InsertKey("y", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("ぽんy", result);
 }
@@ -2186,7 +2180,7 @@ TEST_F(ComposerTest, Issue2819580_3) {
   InsertKey("n", composer_.get());
   InsertKey("y", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("zんy", result);
 }
@@ -2204,7 +2198,7 @@ TEST_F(ComposerTest, Issue2797991_1) {
   InsertKey("W", composer_.get());
   InsertKey("i", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetStringForPreedit(&result);
   EXPECT_EQ("C:\\Wi", result);
 }
@@ -2221,7 +2215,7 @@ TEST_F(ComposerTest, Issue2797991_2) {
   InsertKey("W", composer_.get());
   InsertKey("i", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetStringForPreedit(&result);
   EXPECT_EQ("C:Wi", result);
 }
@@ -2239,7 +2233,7 @@ TEST_F(ComposerTest, Issue2797991_3) {
   InsertKey("W", composer_.get());
   InsertKey("i", composer_.get());
   InsertKeyWithMode("i", commands::HIRAGANA, composer_.get());
-  string result;
+  std::string result;
   composer_->GetStringForPreedit(&result);
   EXPECT_EQ("C:\\Wiい", result);
 }
@@ -2257,7 +2251,7 @@ TEST_F(ComposerTest, Issue2797991_4) {
   InsertKey("W", composer_.get());
   InsertKey("i", composer_.get());
 
-  string result;
+  std::string result;
   composer_->GetStringForPreedit(&result);
   EXPECT_EQ("c:\\Wi", result);
 }
@@ -2275,7 +2269,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     InsertKey("i", composer_.get());
     InsertKey("I", composer_.get());
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("いイいイ", result);
   }
@@ -2292,7 +2286,7 @@ TEST_F(ComposerTest, CaseSensitiveByConfiguration) {
     InsertKey("I", composer_.get());
     InsertKey("i", composer_.get());
     InsertKey("I", composer_.get());
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("いIiI", result);
   }
@@ -2312,7 +2306,7 @@ TEST_F(ComposerTest,
       composer_->Reset();
       composer_->SetInputMode(transliteration::FULL_ASCII);
       InsertKey("I", composer_.get());
-      string result;
+      std::string result;
       composer_->GetStringForPreedit(&result);
       EXPECT_EQ("Ｉ", result);
     }
@@ -2321,7 +2315,7 @@ TEST_F(ComposerTest,
       composer_->Reset();
       composer_->SetInputMode(transliteration::HALF_ASCII);
       InsertKey("I", composer_.get());
-      string result;
+      std::string result;
       composer_->GetStringForPreedit(&result);
       EXPECT_EQ("I", result);
     }
@@ -2330,7 +2324,7 @@ TEST_F(ComposerTest,
       composer_->Reset();
       composer_->SetInputMode(transliteration::FULL_KATAKANA);
       InsertKey("I", composer_.get());
-      string result;
+      std::string result;
       composer_->GetStringForPreedit(&result);
       EXPECT_EQ("イ", result);
     }
@@ -2339,7 +2333,7 @@ TEST_F(ComposerTest,
       composer_->Reset();
       composer_->SetInputMode(transliteration::HALF_KATAKANA);
       InsertKey("I", composer_.get());
-      string result;
+      std::string result;
       composer_->GetStringForPreedit(&result);
       EXPECT_EQ("ｲ", result);
     }
@@ -2348,15 +2342,14 @@ TEST_F(ComposerTest,
       composer_->Reset();
       composer_->SetInputMode(transliteration::HIRAGANA);
       InsertKey("I", composer_.get());
-      string result;
+      std::string result;
       composer_->GetStringForPreedit(&result);
       EXPECT_EQ("イ", result);
     }
   }
 }
 
-TEST_F(ComposerTest,
-       DeletingAlphanumericPartShouldQuitToggleAlphanumericMode) {
+TEST_F(ComposerTest, DeletingAlphanumericPartShouldQuitToggleAlphanumericMode) {
   // http://b/2206560
   // 1. Type "iGoogle" (preedit text turns to be "いGoogle")
   // 2. Type Back-space 6 times ("い")
@@ -2376,7 +2369,7 @@ TEST_F(ComposerTest,
   InsertKey("e", composer_.get());
 
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("いGoogle", result);
   }
@@ -2389,7 +2382,7 @@ TEST_F(ComposerTest,
   composer_->Backspace();
 
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("い", result);
   }
@@ -2397,7 +2390,7 @@ TEST_F(ComposerTest,
   InsertKey("i", composer_.get());
 
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("いい", result);
   }
@@ -2415,35 +2408,35 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   InsertKey("i", composer_.get());
   composer_->MoveCursorRight();
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("い", result);
   }
 
   composer_->MoveCursorLeft();
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("い", result);
   }
 
   InsertKey("G", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("Gい", result);
   }
 
   composer_->MoveCursorRight();
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("Gい", result);
   }
 
   InsertKey("G", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいG", result);
   }
@@ -2451,7 +2444,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->MoveCursorLeft();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいいG", result);
   }
@@ -2459,7 +2452,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->MoveCursorRight();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいいGi", result);
   }
@@ -2467,7 +2460,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   InsertKey("G", composer_.get());
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいいGiGi", result);
   }
@@ -2477,7 +2470,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->Backspace();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいいGi", result);
   }
@@ -2487,7 +2480,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->MoveCursorRight();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("GいいGiGGi", result);
   }
@@ -2501,7 +2494,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->Backspace();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("Gい", result);
   }
@@ -2511,7 +2504,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   composer_->MoveCursorRight();
   InsertKey("i", composer_.get());
   {
-    string result;
+    std::string result;
     composer_->GetStringForPreedit(&result);
     EXPECT_EQ("Gi", result);
   }
@@ -2546,19 +2539,17 @@ TEST_F(ComposerTest, ShuoldCommit) {
 
 TEST_F(ComposerTest, ShouldCommitHead) {
   struct TestData {
-    const string input_text;
+    const std::string input_text;
     const commands::Context::InputFieldType field_type;
     const bool expected_return;
     const size_t expected_commit_length;
-    TestData(const string &input_text,
-             commands::Context::InputFieldType field_type,
-             bool expected_return,
+    TestData(const std::string &input_text,
+             commands::Context::InputFieldType field_type, bool expected_return,
              size_t expected_commit_length)
         : input_text(input_text),
           field_type(field_type),
           expected_return(expected_return),
-          expected_commit_length(expected_commit_length) {
-    }
+          expected_commit_length(expected_commit_length) {}
   };
   const TestData test_data_list[] = {
       // On NORMAL, never commit the head.
@@ -2739,7 +2730,7 @@ TEST_F(ComposerTest, 12KeysAsciiGetQueryForPrediction) {
       request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   composer_->InsertCharacter("2");
   EXPECT_EQ("a", GetPreedit(composer_.get()));
-  string result;
+  std::string result;
   composer_->GetQueryForConversion(&result);
   EXPECT_EQ("a", result);
   result.clear();
@@ -2751,11 +2742,11 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   const char kTestStr[] = "ああaｋka。";
 
   {
-    string preedit;
-    string conversion_query;
-    string prediction_query;
-    string base;
-    std::set<string> expanded;
+    std::string preedit;
+    std::string conversion_query;
+    std::string prediction_query;
+    std::string base;
+    std::set<std::string> expanded;
     composer_->InsertCharacterPreedit(kTestStr);
     composer_->GetStringForPreedit(&preedit);
     composer_->GetQueryForConversion(&conversion_query);
@@ -2768,12 +2759,12 @@ TEST_F(ComposerTest, InsertCharacterPreedit) {
   }
   composer_->Reset();
   {
-    string preedit;
-    string conversion_query;
-    string prediction_query;
-    string base;
-    std::set<string> expanded;
-    std::vector<string> chars;
+    std::string preedit;
+    std::string conversion_query;
+    std::string prediction_query;
+    std::string base;
+    std::set<std::string> expanded;
+    std::vector<std::string> chars;
     Util::SplitStringToUtf8Chars(kTestStr, &chars);
     for (size_t i = 0; i < chars.size(); ++i) {
       composer_->InsertCharacterPreedit(chars[i]);
@@ -2807,9 +2798,7 @@ class MockTypingModel : public TypingModel {
  public:
   MockTypingModel() : TypingModel(nullptr, 0, nullptr, 0, nullptr) {}
   ~MockTypingModel() override = default;
-  int GetCost(StringPiece key) const override {
-    return 10;
-  }
+  int GetCost(absl::string_view key) const override { return 10; }
 };
 
 // Test fixture for setting up mobile qwerty romaji table to test typing
@@ -2846,21 +2835,18 @@ class TypingCorrectionTest : public ::testing::Test {
 
 TEST_F(TypingCorrectionTest, ResetAfterComposerReset) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->Reset();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
 }
 
 TEST_F(TypingCorrectionTest, InvalidateAfterDeleteAt) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->DeleteAt(0);
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2868,8 +2854,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterDeleteAt) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterDelete) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->Delete();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2877,8 +2862,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterDelete) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterDeleteRange) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->DeleteRange(0, 1);
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2886,21 +2870,18 @@ TEST_F(TypingCorrectionTest, InvalidateAfterDeleteRange) {
 
 TEST_F(TypingCorrectionTest, ResetAfterEditErase) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->EditErase();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
 }
 
 TEST_F(TypingCorrectionTest, InvalidateAfterBackspace) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->Backspace();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2908,8 +2889,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterBackspace) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorLeft) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->MoveCursorLeft();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2917,8 +2897,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorLeft) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorRight) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->MoveCursorRight();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2926,8 +2905,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorRight) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToBeginning) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->MoveCursorToBeginning();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2935,8 +2913,7 @@ TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToBeginning) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToEnd) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->MoveCursorToEnd();
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2944,11 +2921,9 @@ TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorToEnd) {
 
 TEST_F(TypingCorrectionTest, InvalidateAfterMoveCursorTo) {
   composer_->InsertCharacterForProbableKeyEvents(
-      "a",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "a", GetStubProbableKeyEvent('a', 0.9f));
   composer_->InsertCharacterForProbableKeyEvents(
-      "b",
-      GetStubProbableKeyEvent('a', 0.9f));
+      "b", GetStubProbableKeyEvent('a', 0.9f));
   EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   composer_->MoveCursorTo(0);
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
@@ -2958,11 +2933,10 @@ TEST_F(TypingCorrectionTest, GetTypeCorrectedQueriesForPrediction) {
   // This test only checks if typing correction candidates are nonempty after
   // each key insertion. The quality of typing correction depends on data model
   // and is tested in composer/internal/typing_corrector_test.cc.
-  const char *kKeys[] = { "m", "o", "z", "u", "k", "u" };
+  const char *kKeys[] = {"m", "o", "z", "u", "k", "u"};
   for (size_t i = 0; i < arraysize(kKeys); ++i) {
     composer_->InsertCharacterForProbableKeyEvents(
-        kKeys[i],
-        GetStubProbableKeyEvent(kKeys[i][0], 0.9f));
+        kKeys[i], GetStubProbableKeyEvent(kKeys[i][0], 0.9f));
     EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   }
   composer_->Backspace();
@@ -2982,20 +2956,142 @@ TEST_F(ComposerTest, GetRawString) {
 
   composer_->InsertCharacter("sashimi");
 
-  string output;
+  std::string output;
   composer_->GetStringForPreedit(&output);
   EXPECT_EQ("さしみ", output);
 
-  string raw_string;
+  std::string raw_string;
   composer_->GetRawString(&raw_string);
   EXPECT_EQ("sashimi", raw_string);
 
-  string raw_sub_string;
+  std::string raw_sub_string;
   composer_->GetRawSubString(0, 2, &raw_sub_string);
   EXPECT_EQ("sashi", raw_sub_string);
 
   composer_->GetRawSubString(1, 1, &raw_sub_string);
   EXPECT_EQ("shi", raw_sub_string);
+}
+
+TEST_F(ComposerTest, SetPreeditTextForTestOnly) {
+  std::string output;
+  std::set<std::string> expanded;
+
+  composer_->SetPreeditTextForTestOnly("も");
+
+  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+
+  composer_->GetStringForPreedit(&output);
+  EXPECT_EQ("も", output);
+
+  composer_->GetStringForSubmission(&output);
+  EXPECT_EQ("も", output);
+
+  composer_->GetQueryForConversion(&output);
+  EXPECT_EQ("も", output);
+
+  composer_->GetQueryForPrediction(&output);
+  EXPECT_EQ("も", output);
+
+  composer_->GetQueriesForPrediction(&output, &expanded);
+  EXPECT_EQ("も", output);
+  EXPECT_TRUE(expanded.empty());
+
+  composer_->Reset();
+
+  composer_->SetPreeditTextForTestOnly("mo");
+
+  EXPECT_EQ(transliteration::HALF_ASCII, composer_->GetInputMode());
+
+  composer_->GetStringForPreedit(&output);
+  EXPECT_EQ("mo", output);
+
+  composer_->GetStringForSubmission(&output);
+  EXPECT_EQ("mo", output);
+
+  composer_->GetQueryForConversion(&output);
+  EXPECT_EQ("mo", output);
+
+  composer_->GetQueryForPrediction(&output);
+  EXPECT_EQ("mo", output);
+
+  composer_->GetQueriesForPrediction(&output, &expanded);
+  EXPECT_EQ("mo", output);
+
+  EXPECT_TRUE(expanded.empty());
+
+  composer_->Reset();
+
+  composer_->SetPreeditTextForTestOnly("ｍ");
+
+  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+
+  composer_->GetStringForPreedit(&output);
+  EXPECT_EQ("ｍ", output);
+
+  composer_->GetStringForSubmission(&output);
+  EXPECT_EQ("ｍ", output);
+
+  composer_->GetQueryForConversion(&output);
+  EXPECT_EQ("m", output);
+
+  composer_->GetQueryForPrediction(&output);
+  EXPECT_EQ("m", output);
+
+  composer_->GetQueriesForPrediction(&output, &expanded);
+  EXPECT_EQ("m", output);
+
+  EXPECT_TRUE(expanded.empty());
+
+  composer_->Reset();
+
+  composer_->SetPreeditTextForTestOnly("もｚ");
+
+  EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
+
+  composer_->GetStringForPreedit(&output);
+  EXPECT_EQ("もｚ", output);
+
+  composer_->GetStringForSubmission(&output);
+  EXPECT_EQ("もｚ", output);
+
+  composer_->GetQueryForConversion(&output);
+  EXPECT_EQ("もz", output);
+
+  composer_->GetQueryForPrediction(&output);
+  EXPECT_EQ("もz", output);
+
+  composer_->GetQueriesForPrediction(&output, &expanded);
+  EXPECT_EQ("もz", output);
+
+  EXPECT_TRUE(expanded.empty());
+}
+
+TEST_F(ComposerTest, IsToggleable) {
+  const int kAttrs =
+      TableAttribute::NEW_CHUNK | TableAttribute::NO_TRANSLITERATION;
+  table_->AddRuleWithAttributes("1", "", "{?}あ", kAttrs);
+  table_->AddRule("{?}あ1", "", "{?}い");
+  table_->AddRule("{?}い{!}", "", "{*}い");
+
+  EXPECT_FALSE(composer_->IsToggleable());
+
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  EXPECT_TRUE(composer_->IsToggleable());
+
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_TRUE(composer_->IsToggleable());
+
+  composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
+  EXPECT_EQ("い", GetPreedit(composer_.get()));
+  EXPECT_FALSE(composer_->IsToggleable());
+
+  composer_->Reset();
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+  composer_->SetNewInput();
+  EXPECT_FALSE(composer_->IsToggleable());
 }
 
 }  // namespace composer

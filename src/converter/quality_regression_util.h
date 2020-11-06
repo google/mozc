@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,31 +59,30 @@ class QualityRegressionUtil {
   };
 
   struct TestItem {
-    string label;
-    string key;
-    string expected_value;
-    string command;
-    int    expected_rank;
+    std::string label;
+    std::string key;
+    std::string expected_value;
+    std::string command;
+    int expected_rank;
     double accuracy;
     // Target platform. Can set multiple platform defined in enum |Platform|.
     uint32 platform;
-    string OutputAsTSV() const;
-    bool ParseFromTSV(const string &tsv_line);
+    std::string OutputAsTSV() const;
+    bool ParseFromTSV(const std::string &tsv_line);
   };
 
   explicit QualityRegressionUtil(ConverterInterface *converter);
   virtual ~QualityRegressionUtil();
 
   // Pase |filename| and save the all test items into |outputs|.
-  static bool ParseFile(const string &filename,
+  static bool ParseFile(const std::string &filename,
                         std::vector<TestItem> *outputs);
 
-  bool ConvertAndTest(const TestItem &item,
-                      string *actual_value);
+  bool ConvertAndTest(const TestItem &item, std::string *actual_value);
 
   void SetRequest(const commands::Request &request);
   void SetConfig(const config::Config &config);
-  static string GetPlatformString(uint32 platform_bitfiled);
+  static std::string GetPlatformString(uint32 platform_bitfiled);
 
  private:
   ConverterInterface *converter_;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,9 @@ namespace mozc {
 namespace storage {
 namespace louds {
 
-LoudsTrieBuilder::LoudsTrieBuilder() : built_(false) {
-}
+LoudsTrieBuilder::LoudsTrieBuilder() : built_(false) {}
 
-void LoudsTrieBuilder::Add(const string &word) {
+void LoudsTrieBuilder::Add(const std::string &word) {
   CHECK(!built_);
   CHECK(!word.empty());
   word_list_.push_back(word);
@@ -54,22 +53,20 @@ namespace {
 // A pair of word and its original index in the (sorted) word_list_.
 class Entry {
  public:
-  Entry(const string &word, size_t original_index)
-      : word_(&word), original_index_(original_index) {
-  }
+  Entry(const std::string &word, size_t original_index)
+      : word_(&word), original_index_(original_index) {}
 
-  const string &word() const { return *word_; }
+  const std::string &word() const { return *word_; }
   size_t original_index() const { return original_index_; }
 
  private:
-  const string *word_;
+  const std::string *word_;
   size_t original_index_;
 };
 
 class EntryLengthLessThan {
  public:
-  explicit EntryLengthLessThan(size_t length) : length_(length) {
-  }
+  explicit EntryLengthLessThan(size_t length) : length_(length) {}
 
   bool operator()(const Entry &entry) {
     return entry.word().length() < length_;
@@ -79,7 +76,7 @@ class EntryLengthLessThan {
   size_t length_;
 };
 
-void PushInt(size_t value, string* image) {
+void PushInt(size_t value, std::string *image) {
   // Make sure the value is fit in the 32-bit value.
   CHECK_EQ(value & ~0xFFFFFFFF, 0);
 
@@ -103,12 +100,12 @@ void LoudsTrieBuilder::Build() {
   for (size_t i = 0; i < word_list_.size(); ++i) {
     entry_list.push_back(Entry(word_list_[i], i));
   }
-  id_list_.resize(word_list_.size(), - 1);
+  id_list_.resize(word_list_.size(), -1);
 
   // Output the tree to streams.
   BitStream trie_stream;
   BitStream terminal_stream;
-  string edge_character;
+  std::string edge_character;
 
   // Push root.
   trie_stream.PushBit(1);
@@ -158,14 +155,13 @@ void LoudsTrieBuilder::Build() {
   int id = 0;
   for (size_t depth = 0; !entry_list.empty(); ++depth) {
     for (size_t i = 0; i < entry_list.size(); ++i) {
-      const string &word = entry_list[i].word();
+      const std::string &word = entry_list[i].word();
       if (word.length() > depth &&
           (i == 0 ||
            // To ensure the entry_list[i - 1].word().length >= depth + 1,
            // we call c_str() (which adds '\0' if necessary) as a hack.
-           word.compare(
-               0, depth + 1,
-               entry_list[i - 1].word().c_str(), 0, depth + 1) != 0)) {
+           word.compare(0, depth + 1, entry_list[i - 1].word().c_str(), 0,
+                        depth + 1) != 0)) {
         // This is the first string of this node. Output an edge.
         trie_stream.PushBit(1);
         edge_character.push_back(entry_list[i].word()[depth]);
@@ -214,16 +210,16 @@ void LoudsTrieBuilder::Build() {
   built_ = true;
 }
 
-const string &LoudsTrieBuilder::image() const {
+const std::string &LoudsTrieBuilder::image() const {
   CHECK(built_);
   return image_;
 }
 
-int LoudsTrieBuilder::GetId(const string &word) const {
+int LoudsTrieBuilder::GetId(const std::string &word) const {
   CHECK(built_);
 
   // Binary search the word.
-  std::vector<string>::const_iterator iter =
+  std::vector<std::string>::const_iterator iter =
       std::lower_bound(word_list_.begin(), word_list_.end(), word);
   if (iter == word_list_.end() || *iter != word) {
     // Not found.

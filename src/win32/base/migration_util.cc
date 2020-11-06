@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -134,13 +134,13 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
     return true;
   }
 
-  const UINT num_element = ::EnumEnabledLayoutOrTip(
-      nullptr, nullptr, nullptr, nullptr, 0);
+  const UINT num_element =
+      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
 
   unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
 
-  const UINT num_copied = ::EnumEnabledLayoutOrTip(
-      nullptr, nullptr, nullptr, buffer.get(), num_element);
+  const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
+                                                   buffer.get(), num_element);
 
   // Look up IMM32 Mozc from |buffer|.
   for (size_t i = 0; i < num_copied; ++i) {
@@ -186,12 +186,12 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
     if ((profile.dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
       wchar_t clsid[64] = {};
       if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
-                              arraysize(clsid))) {
+                             arraysize(clsid))) {
         return false;
       }
       wchar_t profile_id[64] = {};
       if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
-                              arraysize(profile_id))) {
+                             arraysize(profile_id))) {
         return false;
       }
 

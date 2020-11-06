@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,11 +51,11 @@ class TestRenderer : public RendererInterface {
  public:
   TestRenderer() : counter_(0), finished_(false) {}
 
-  bool Activate() { return true; }
+  bool Activate() override { return true; }
 
-  bool IsAvailable() const { return true; }
+  bool IsAvailable() const override { return true; }
 
-  bool ExecCommand(const commands::RendererCommand &command) {
+  bool ExecCommand(const commands::RendererCommand &command) override {
     if (finished_) {
       return false;
     }
@@ -63,17 +63,11 @@ class TestRenderer : public RendererInterface {
     return true;
   }
 
-  void Reset() {
-    counter_ = 0;
-  }
+  void Reset() { counter_ = 0; }
 
-  int counter() const {
-    return counter_;
-  }
+  int counter() const { return counter_; }
 
-  void Shutdown() {
-    finished_ = true;
-  }
+  void Shutdown() { finished_ = true; }
 
  private:
   int counter_;
@@ -84,14 +78,12 @@ class TestRendererServer : public RendererServer {
  public:
   TestRendererServer() {}
 
-  virtual ~TestRendererServer() {}
+  ~TestRendererServer() override {}
 
-  int StartMessageLoop() {
-    return 0;
-  }
+  int StartMessageLoop() override { return 0; }
 
   // Not async for testing
-  bool AsyncExecCommand(string *proto_message) {
+  bool AsyncExecCommand(std::string *proto_message) override {
     commands::RendererCommand command;
     command.ParseFromString(*proto_message);
     delete proto_message;
@@ -102,40 +94,32 @@ class TestRendererServer : public RendererServer {
 // A renderer launcher which does nothing.
 class DummyRendererLauncher : public RendererLauncherInterface {
  public:
-  void StartRenderer(const string &name,
-                     const string &renderer_path,
-                     bool disable_renderer_path_check,
-                     IPCClientFactoryInterface *ipc_client_factory_interface) {
+  void StartRenderer(
+      const std::string &name, const std::string &renderer_path,
+      bool disable_renderer_path_check,
+      IPCClientFactoryInterface *ipc_client_factory_interface) override {
     LOG(INFO) << name << " " << renderer_path;
   }
 
-  bool ForceTerminateRenderer(const string &name) {
-    return true;
-  }
+  bool ForceTerminateRenderer(const std::string &name) override { return true; }
 
-  void OnFatal(RendererErrorType type) {
+  void OnFatal(RendererErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);
   }
 
-  virtual bool IsAvailable() const {
-    return true;
-  }
+  bool IsAvailable() const override { return true; }
 
-  virtual bool CanConnect() const {
-    return true;
-  }
+  bool CanConnect() const override { return true; }
 
-  virtual void SetPendingCommand(const commands::RendererCommand &command) {
-  }
+  void SetPendingCommand(const commands::RendererCommand &command) override {}
 
-  virtual void set_suppress_error_dialog(bool suppress) {
-  }
+  void set_suppress_error_dialog(bool suppress) override {}
 };
 }  // namespace
 
 class RendererServerTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };
@@ -147,7 +131,7 @@ TEST_F(RendererServerTest, IPCTest) {
   std::unique_ptr<TestRendererServer> server(new TestRendererServer);
   TestRenderer renderer;
   server->SetRendererInterface(&renderer);
-#ifdef OS_MACOSX
+#ifdef __APPLE__
   server->SetMachPortManager(on_memory_client_factory.OnMemoryPortManager());
 #endif
   renderer.Reset();

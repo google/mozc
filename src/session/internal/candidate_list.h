@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,8 @@
 
 namespace mozc {
 
-template <class T> class ObjectPool;
+template <class T>
+class ObjectPool;
 
 namespace session {
 class CandidateList;  // This is fully declared at the bottom.
@@ -103,15 +104,14 @@ class CandidateList {
   void Clear();
 
   const Candidate &GetDeepestFocusedCandidate() const;
-  void AddCandidate(int id, const string &value);
-  void AddCandidateWithAttributes(int id,
-                                  const string &value,
+  void AddCandidate(int id, const std::string &value);
+  void AddCandidateWithAttributes(int id, const std::string &value,
                                   Attributes attributes);
   void AddSubCandidateList(CandidateList *subcandidate_list);
   CandidateList *AllocateSubCandidateList(bool rotate);
 
-  void set_name(const string &name);
-  const string &name() const;
+  void set_name(const std::string &name);
+  const std::string &name() const;
 
   void set_page_size(size_t page_size);
   size_t page_size() const;
@@ -155,7 +155,7 @@ class CandidateList {
   size_t page_size_;
   size_t focused_index_;
   bool focused_;
-  string name_;
+  std::string name_;
   std::unique_ptr<ObjectPool<Candidate>> candidate_pool_;
   std::unique_ptr<std::vector<Candidate *>> candidates_;
   int next_available_id_;

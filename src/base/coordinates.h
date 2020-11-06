@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,9 +71,7 @@ struct Rect {
     size.width -= l + r;
     size.height -= t + b;
   }
-  inline void DeflateRect(int x, int y) {
-    DeflateRect(x, y, x, y);
-  }
+  inline void DeflateRect(int x, int y) { DeflateRect(x, y, x, y); }
   inline void DeflateRect(const Size &s) { DeflateRect(s.width, s.height); }
   // Returns true if the right side is less than or equal to the coordinate
   // of the left side, or the coordinate of the bottom side is less than or
@@ -84,8 +82,8 @@ struct Rect {
     return size.width <= 0 || size.height <= 0;
   }
   inline bool PtrInRect(const Point &p) const {
-    return p.x >= origin.x && p.x <= origin.x + size.width &&
-        p.y >= origin.y && p.y <= origin.y + size.height;
+    return p.x >= origin.x && p.x <= origin.x + size.width && p.y >= origin.y &&
+           p.y <= origin.y + size.height;
   }
 };
 }  // namespace mozc

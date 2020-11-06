@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,114 +37,112 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-
 class MozcEmacsHelperLibTest : public testing::Test {
  protected:
-  void ParseAndTestInputLine(
-      const string &input_line, uint32 event_id, uint32 session_id,
-      const string &protobuf) {
+  void ParseAndTestInputLine(const std::string &input_line, uint32 event_id,
+                             uint32 session_id, const std::string &protobuf) {
     uint32 actual_event_id = 0xDEADBEEFU;
     uint32 actual_session_id = 0xDEADBEEFU;
     mozc::commands::Input input;
-    mozc::emacs::ParseInputLine(
-        input_line, &actual_event_id, &actual_session_id, &input);
+    mozc::emacs::ParseInputLine(input_line, &actual_event_id,
+                                &actual_session_id, &input);
     EXPECT_EQ(event_id, actual_event_id);
     EXPECT_EQ(session_id, actual_session_id);
     EXPECT_EQ(protobuf, input.ShortDebugString());
   }
 
-  void PrintAndTestSexpr(
-      const mozc::protobuf::Message &message, const string &sexpr) {
-    std::vector<string> buffer;
+  void PrintAndTestSexpr(const mozc::protobuf::Message &message,
+                         const std::string &sexpr) {
+    std::vector<std::string> buffer;
     mozc::emacs::PrintMessage(message, &buffer);
-    string output;
+    std::string output;
     mozc::Util::JoinStrings(buffer, "", &output);
     EXPECT_EQ(sexpr, output);
   }
 
-  void TestUnquoteString(const string &expected, const string &input) {
-    string output;
+  void TestUnquoteString(const std::string &expected,
+                         const std::string &input) {
+    std::string output;
     EXPECT_TRUE(mozc::emacs::UnquoteString("\"" + input + "\"", &output));
     EXPECT_EQ(expected, output);
   }
 
-  void ExpectUnquoteStringFails(const string &input) {
-    string output = "output string must become empty.";
+  void ExpectUnquoteStringFails(const std::string &input) {
+    std::string output = "output string must become empty.";
     EXPECT_FALSE(mozc::emacs::UnquoteString(input, &output));
     EXPECT_TRUE(output.empty());
   }
 };
 
-
 TEST_F(MozcEmacsHelperLibTest, ParseInputLine) {
   // CreateSession
   ParseAndTestInputLine("(0 CreateSession)", 0, 0xDEADBEEFU,
-      "type: CREATE_SESSION");
+                        "type: CREATE_SESSION");
   // Spaces around parentheses
   ParseAndTestInputLine(" \t( 1\tCreateSession )\t", 1, 0xDEADBEEFU,
-      "type: CREATE_SESSION");
+                        "type: CREATE_SESSION");
 
   // DeleteSession
-  ParseAndTestInputLine("(2 DeleteSession 0)", 2, 0,
-      "type: DELETE_SESSION");
+  ParseAndTestInputLine("(2 DeleteSession 0)", 2, 0, "type: DELETE_SESSION");
   // Spaces around parentheses
   ParseAndTestInputLine(" \t( 3\tDeleteSession\t1 )\t", 3, 1,
-      "type: DELETE_SESSION");
+                        "type: DELETE_SESSION");
 
   // SendKey
   ParseAndTestInputLine("(4 SendKey 2 97)", 4, 2,
-      "type: SEND_KEY "
-      "key { key_code: 97 }");
+                        "type: SEND_KEY "
+                        "key { key_code: 97 }");
   // Modifier keys
   ParseAndTestInputLine("(5 SendKey 3 97 shift)", 5, 3,
-      "type: SEND_KEY "
-      "key { key_code: 97 "
-            "modifier_keys: SHIFT "
-          "}");
+                        "type: SEND_KEY "
+                        "key { key_code: 97 "
+                        "modifier_keys: SHIFT "
+                        "}");
   // alt, meta, super, hyper keys will be converted to a single alt key.
   // modifier_keys are sorted by enum value defined in commands.proto.
-  ParseAndTestInputLine(
-      "(6 SendKey 4 97 shift ctrl meta alt super hyper)", 6, 4,
-      "type: SEND_KEY "
-      "key { key_code: 97 "
-            "modifier_keys: CTRL "
-            "modifier_keys: ALT "
-            "modifier_keys: SHIFT "
-          "}");
+  ParseAndTestInputLine("(6 SendKey 4 97 shift ctrl meta alt super hyper)", 6,
+                        4,
+                        "type: SEND_KEY "
+                        "key { key_code: 97 "
+                        "modifier_keys: CTRL "
+                        "modifier_keys: ALT "
+                        "modifier_keys: SHIFT "
+                        "}");
   // Special keys
   ParseAndTestInputLine("(7 SendKey 5 32)", 7, 5,
-      "type: SEND_KEY "
-      "key { key_code: 32 }");  // space as normal key
+                        "type: SEND_KEY "
+                        "key { key_code: 32 }");  // space as normal key
   ParseAndTestInputLine("(8 SendKey 6 space)", 8, 6,
-      "type: SEND_KEY "
-      "key { special_key: SPACE }");  // space as special key
+                        "type: SEND_KEY "
+                        "key { special_key: SPACE }");  // space as special key
   // alt, meta keys will be converted to a single alt key.
   // modifier_keys are sorted by enum value defined in commands.proto.
   ParseAndTestInputLine("(9 SendKey 7 return shift ctrl meta alt)", 9, 7,
-      "type: SEND_KEY "
-      "key { special_key: ENTER "
-            "modifier_keys: CTRL "
-            "modifier_keys: ALT "
-            "modifier_keys: SHIFT "
-          "}");
+                        "type: SEND_KEY "
+                        "key { special_key: ENTER "
+                        "modifier_keys: CTRL "
+                        "modifier_keys: ALT "
+                        "modifier_keys: SHIFT "
+                        "}");
   // Key and string literal
-  ParseAndTestInputLine("(10 SendKey 8 97 \"\343\201\241\")", 10, 8,
+  ParseAndTestInputLine(
+      "(10 SendKey 8 97 \"\343\201\241\")", 10, 8,
       "type: SEND_KEY "
       "key { key_code: 97 "
-            // ShortDebugString() prints escape sequences in octal format.
-            "key_string: \"\\343\\201\\241\" }");  // "ち"
+      // ShortDebugString() prints escape sequences in octal format.
+      "key_string: \"\\343\\201\\241\" }");  // "ち"
   ParseAndTestInputLine("(11 SendKey 9 72 \"Hello, World!\")", 11, 9,
-      "type: SEND_KEY "
-      "key { key_code: 72 "
-            "key_string: \"Hello, World!\" }");
+                        "type: SEND_KEY "
+                        "key { key_code: 72 "
+                        "key_string: \"Hello, World!\" }");
   ParseAndTestInputLine("(12 SendKey 10 72 \"\t\n\v\f\r \")", 12, 10,
-      "type: SEND_KEY "
-      "key { key_code: 72 "
-            "key_string: \"\\t\\n\\013\\014\\r \" }");
+                        "type: SEND_KEY "
+                        "key { key_code: 72 "
+                        "key_string: \"\\t\\n\\013\\014\\r \" }");
   ParseAndTestInputLine("(13 SendKey 11 72 \"\\a\\b\\t\\n\\s\\d\")", 13, 11,
-      "type: SEND_KEY "
-      "key { key_code: 72 "
-            "key_string: \"\\007\\010\\t\\n \\177\" }");
+                        "type: SEND_KEY "
+                        "key { key_code: 72 "
+                        "key_string: \"\\007\\010\\t\\n \\177\" }");
 }
 
 TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
@@ -152,24 +150,23 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   mozc::commands::KeyEvent key_event;
   PrintAndTestSexpr(key_event, "()");
   key_event.set_special_key(mozc::commands::KeyEvent::PAGE_UP);
-  PrintAndTestSexpr(key_event,
-      "((special-key . page-up))");
+  PrintAndTestSexpr(key_event, "((special-key . page-up))");
   key_event.add_modifier_keys(mozc::commands::KeyEvent::KEY_DOWN);
   PrintAndTestSexpr(key_event,
-      "((special-key . page-up)"
-       "(modifier-keys key-down))");
+                    "((special-key . page-up)"
+                    "(modifier-keys key-down))");
   key_event.add_modifier_keys(mozc::commands::KeyEvent::SHIFT);
   PrintAndTestSexpr(key_event,
-      "((special-key . page-up)"
-       "(modifier-keys key-down shift))");
+                    "((special-key . page-up)"
+                    "(modifier-keys key-down shift))");
 
   // Result
   mozc::commands::Result result;
   result.set_type(mozc::commands::Result::STRING);
   result.set_value("RESULT_STRING");
   PrintAndTestSexpr(result,
-      "((type . string)"
-       "(value . \"RESULT_STRING\"))");
+                    "((type . string)"
+                    "(value . \"RESULT_STRING\"))");
 
   // Preedit
   mozc::commands::Preedit preedit;
@@ -182,12 +179,12 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   segment->set_annotation(mozc::commands::Preedit::Segment::NONE);
   segment->set_value("なし");
   PrintAndTestSexpr(preedit,
-    "((cursor . 1)"
-     "(segment "
-      "((annotation . underline)"
-       "(value . \"UNDER_LINE\"))"
-      "((annotation . none)"
-       "(value . \"なし\"))))");
+                    "((cursor . 1)"
+                    "(segment "
+                    "((annotation . underline)"
+                    "(value . \"UNDER_LINE\"))"
+                    "((annotation . none)"
+                    "(value . \"なし\"))))");
 
   // Output
   mozc::commands::Output output;
@@ -203,18 +200,18 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   output.mutable_preedit()->CopyFrom(preedit);
   output.mutable_key()->CopyFrom(key_event);
   PrintAndTestSexpr(output,
-    "((id . \"1234\")"
-     "(mode . hiragana)"
-     "(consumed . t)"
-     "(result . ((type . string)"
-                "(value . \"RESULT_STRING\")))"
-     "(preedit . ((cursor . 1)"
-                 "(segment ((annotation . underline)"
-                           "(value . \"UNDER_LINE\"))"
-                          "((annotation . none)"
-                           "(value . \"なし\")))))"
-     "(key . ((special-key . page-up)"
-             "(modifier-keys key-down shift))))");
+                    "((id . \"1234\")"
+                    "(mode . hiragana)"
+                    "(consumed . t)"
+                    "(result . ((type . string)"
+                    "(value . \"RESULT_STRING\")))"
+                    "(preedit . ((cursor . 1)"
+                    "(segment ((annotation . underline)"
+                    "(value . \"UNDER_LINE\"))"
+                    "((annotation . none)"
+                    "(value . \"なし\")))))"
+                    "(key . ((special-key . page-up)"
+                    "(modifier-keys key-down shift))))");
 }
 
 TEST_F(MozcEmacsHelperLibTest, NormalizeSymbol) {
@@ -253,18 +250,17 @@ TEST_F(MozcEmacsHelperLibTest, UnquoteString) {
 
 TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
   using mozc::emacs::TokenizeSExpr;
-  const string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
-  std::vector<string> output;
+  const std::string input = " ('abc \" \t\\r\\\n\\\"\"\t-x0\"い\"p)\n";
+  std::vector<std::string> output;
   bool result = TokenizeSExpr(input, &output);
 
-  const char *golden[] = {
-    "(", "'", "abc", "\" \t\\r\\\n\\\"\"", "-x0", "\"い\"", "p", ")"
-  };
+  const char *golden[] = {"(",   "'",      "abc", "\" \t\\r\\\n\\\"\"",
+                          "-x0", "\"い\"", "p",   ")"};
 
   EXPECT_TRUE(result);
   EXPECT_EQ(arraysize(golden), output.size());
   int len = std::min(arraysize(golden), output.size());
-  for (int i =0; i < len; ++i) {
+  for (int i = 0; i < len; ++i) {
     EXPECT_EQ(golden[i], output[i]);
   }
 

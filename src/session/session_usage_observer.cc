@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include "session/session_usage_observer.h"
 
 #include <climits>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -39,7 +40,6 @@
 #include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/scheduler.h"
 #include "config/stats_config_util.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
@@ -54,21 +54,13 @@ namespace session {
 
 namespace {
 Mutex g_stats_cache_mutex;  // NOLINT
-const char kStatsJobName[] = "SaveCachedStats";
-#ifndef OS_ANDROID
-const uint32 kSaveCacheStatsInterval = 10 * 60 * 1000;  // 10 min
-#else  // !OS_ANDROID
-// Reduce the frequency to save battery.
-const uint32 kSaveCacheStatsInterval = 2 * 60 * 60 * 1000;  // 2 hours
-#endif  // !OS_ANDROID
 
 const size_t kMaxSession = 64;
 
 // Adds double value to DoubleValueStats.
 // DoubleValueStats contains (num, total, square_total).
-void AddToDoubleValueStats(
-    double value,
-    usage_stats::Stats::DoubleValueStats *double_stats) {
+void AddToDoubleValueStats(double value,
+                           usage_stats::Stats::DoubleValueStats *double_stats) {
   DCHECK(double_stats);
   double_stats->set_num(double_stats->num() + 1);
   double_stats->set_total(double_stats->total() + value);
@@ -85,7 +77,7 @@ uint64 GetTimeInMilliSecond() {
 uint32 GetDuration(uint64 base_value) {
   const uint64 result = GetTimeInMilliSecond() - base_value;
   if (result != static_cast<uint32>(result)) {
-    return kuint32max;
+    return std::numeric_limits<uint32>::max();
   }
   return result;
 }
@@ -111,19 +103,15 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
 }  // namespace
 
 SessionUsageObserver::SessionUsageObserver() {
-  Scheduler::AddJob(Scheduler::JobSetting(
-      kStatsJobName,
-      kSaveCacheStatsInterval,  // default interval
-      kSaveCacheStatsInterval,  // max interval
-      kSaveCacheStatsInterval,  // delay start
-      0,  // random delay 0 (no internet connection from this job)
-      &SessionUsageObserver::SaveCachedStats,
-      &usage_cache_));
+  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // metadata for migration.
+  UsageStats::Sync();
 }
 
 SessionUsageObserver::~SessionUsageObserver() {
-  SaveCachedStats(&usage_cache_);
-  Scheduler::RemoveJob(kStatsJobName);
+  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // metadata for migration.
+  UsageStats::Sync();
 }
 
 void SessionUsageObserver::UsageCache::Clear() {
@@ -138,12 +126,12 @@ bool SessionUsageObserver::SaveCachedStats(void *data) {
   {
     scoped_lock l(&g_stats_cache_mutex);
     if (!cache->touch_event.empty()) {
-      UsageStats::StoreTouchEventStats(
-          "VirtualKeyboardStats", cache->touch_event);
+      UsageStats::StoreTouchEventStats("VirtualKeyboardStats",
+                                       cache->touch_event);
     }
     if (!cache->miss_touch_event.empty()) {
-      UsageStats::StoreTouchEventStats(
-          "VirtualKeyboardMissStats", cache->miss_touch_event);
+      UsageStats::StoreTouchEventStats("VirtualKeyboardMissStats",
+                                       cache->miss_touch_event);
     }
     cache->Clear();
   }
@@ -217,7 +205,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
     if (output.has_candidates()) {
       switch (output.candidates().category()) {
         case commands::CONVERSION:
-        state->set_start_conversion_window_time(GetTimeInMilliSecond());
+          state->set_start_conversion_window_time(GetTimeInMilliSecond());
           break;
         case commands::PREDICTION:
           state->set_start_prediction_window_time(GetTimeInMilliSecond());
@@ -254,8 +242,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Cascading window
   if ((!state->has_candidates() ||
-       (state->has_candidates() &&
-        !state->candidates().has_subcandidates())) &&
+       (state->has_candidates() && !state->candidates().has_subcandidates())) &&
       output.has_candidates() && output.candidates().has_subcandidates()) {
     UsageStats::IncrementCount("ShowCascadingWindow");
   }
@@ -375,37 +362,39 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
     case commands::SessionCommand::MUSHROOM_SELECTION_DIALOG_OPEN_EVENT:
       UsageStats::IncrementCount("MushroomSelectionDialogOpen");
       break;
-    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE:
-      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
-          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_LANDSCAPE stats"
-          << " must have int value.";
-      UsageStats::SetInteger("SoftwareKeyboardHeightDipLandscape",
-                             input.command().usage_stats_event_int_value());
-      break;
-    case commands::SessionCommand::SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT:
-      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
-          << "SOFTWARE_KEYBOARD_HEIGHT_DIP_PORTRAIT stats must have int value.";
-      UsageStats::SetInteger("SoftwareKeyboardHeightDipPortrait",
-                             input.command().usage_stats_event_int_value());
-      break;
-    case commands::SessionCommand
-        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE:
+    case commands::SessionCommand::
+        SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE:
       LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
           << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_LANDSCAPE stats"
           << " must have int value.";
       UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledLandscape",
                              input.command().usage_stats_event_int_value() > 0);
       break;
-    case commands::SessionCommand
-        ::SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT:
+    case commands::SessionCommand::
+        SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT:
       LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
           << "SOFTWARE_KEYBOARD_LAYOUT_ADJUSTMENT_ENABLED_PORTRAIT stats"
           << " must have int value.";
       UsageStats::SetBoolean("SoftwareKeyboardLayoutAdjustmentEnabledPortrait",
                              input.command().usage_stats_event_int_value() > 0);
       break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_LANDSCAPE:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_LANDSCAPE stats"
+          << " must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardLayoutEnglishLandscape",
+                             input.command().usage_stats_event_int_value());
+      break;
+    case commands::SessionCommand::SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_PORTRAIT:
+      LOG_IF(DFATAL, !input.command().has_usage_stats_event_int_value())
+          << "SOFTWARE_KEYBOARD_LAYOUT_ENGLISH_PORTRAIT stats"
+          << " must have int value.";
+      UsageStats::SetInteger("SoftwareKeyboardLayoutEnglishPortrait",
+                             input.command().usage_stats_event_int_value());
+      break;
     default:
-      LOG(DFATAL) << "client side usage stats event has invalid category";
+      LOG(DFATAL) << "client side usage stats event has invalid category: "
+                  << input.command().usage_stats_event();
       break;
   }
 }
@@ -453,12 +442,12 @@ void SessionUsageObserver::LogTouchEvent(const commands::Input &input,
   if (!state.has_request() || !state.request().has_keyboard_name()) {
     return;
   }
-  const string &keyboard_name = state.request().keyboard_name();
+  const std::string &keyboard_name = state.request().keyboard_name();
 
   // When last_touchevents_ is not empty and BACKSPACE is pressed,
   // save last_touchevents_ as miss_touch_event.
-  if (!last_touchevents_.empty() &&
-      input.has_key() && input.key().has_special_key() &&
+  if (!last_touchevents_.empty() && input.has_key() &&
+      input.key().has_special_key() &&
       input.key().special_key() == commands::KeyEvent::BACKSPACE &&
       state.has_preedit()) {
     for (size_t i = 0; i < last_touchevents_.size(); ++i) {
@@ -489,7 +478,7 @@ void SessionUsageObserver::LogTouchEvent(const commands::Input &input,
       // save the TouchEvent to last_touchevents_.
       // This last_touchevents_ will be aggregated to touch_event_stat_cache_
       // or miss_touch_event_stat_cache_ and be cleared when the subsequent
-      // command will be recieved.
+      // command will be received.
       for (size_t i = 0; i < input.touch_events_size(); ++i) {
         last_touchevents_.push_back(input.touch_events(i));
       }
@@ -566,8 +555,7 @@ void SessionUsageObserver::EvalCommandHandler(
   // Client side event
   if ((input.type() == commands::Input::SEND_COMMAND) &&
       (input.has_command()) &&
-      (input.command().type() ==
-       commands::SessionCommand::USAGE_STATS_EVENT) &&
+      (input.command().type() == commands::SessionCommand::USAGE_STATS_EVENT) &&
       (input.command().has_usage_stats_event())) {
     UpdateClientSideStats(input, state);
   }
@@ -577,8 +565,7 @@ void SessionUsageObserver::EvalCommandHandler(
 
   if ((input.type() == commands::Input::SEND_COMMAND ||
        input.type() == commands::Input::SEND_KEY) &&
-      output.has_consumed() &&
-      output.consumed()) {
+      output.has_consumed() && output.consumed()) {
     // update states only when input was consumed
     UpdateState(input, output, state);
   }

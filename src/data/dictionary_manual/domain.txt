@@ -1,0 +1,6 @@
+@gmail.com	0	0	8000	@gmail.com
+@docomo.ne.jp	0	0	9000	@docomo.ne.jp
+@i.softbank.jp	0	0	9001	@i.softbank.jp
+@softbank.ne.jp	0	0	9002	@softbank.ne.jp
+@ezweb.ne.jp	0	0	9003	@ezweb.ne.jp
+@au.com	0	0	9004	@au.com

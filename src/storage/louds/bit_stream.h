@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ class BitStream {
  public:
   BitStream();
 
-  const string &image() const { return image_; }
+  const std::string &image() const { return image_; }
   size_t num_bits() const { return num_bits_; }
   size_t ByteSize() const { return image_.length(); }
 
@@ -53,7 +53,7 @@ class BitStream {
   void FillPadding32();
 
  private:
-  string image_;
+  std::string image_;
   size_t num_bits_;
 
   DISALLOW_COPY_AND_ASSIGN(BitStream);

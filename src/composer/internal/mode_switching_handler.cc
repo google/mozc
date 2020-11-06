@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,8 +58,7 @@ ModeSwitchingHandler::ModeSwitchingHandler() {
 ModeSwitchingHandler::~ModeSwitchingHandler() {}
 
 bool ModeSwitchingHandler::GetModeSwitchingRule(
-    const string &key,
-    ModeSwitching *display_mode,
+    const string &key, ModeSwitching *display_mode,
     ModeSwitching *input_mode) const {
   if (display_mode == nullptr || input_mode == nullptr) {
     LOG(ERROR) << "display_mode/input_mode is nullptr.";
@@ -85,8 +84,7 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
 }
 
 bool ModeSwitchingHandler::IsDriveLetter(const string &key) {
-  return key.size() == 3 &&
-         isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
+  return key.size() == 3 && isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
 }
 
 void ModeSwitchingHandler::AddRule(const string &key,

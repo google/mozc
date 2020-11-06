@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,20 +65,12 @@ enum TransliterationType {
   HALF_KATAKANA,
   NUM_T13N_TYPES
 };
-typedef std::vector<string> Transliterations;
+typedef std::vector<std::string> Transliterations;
 
 static const TransliterationType TransliterationTypeArray[NUM_T13N_TYPES] = {
-  HIRAGANA,
-  FULL_KATAKANA,
-  HALF_ASCII,
-  HALF_ASCII_UPPER,
-  HALF_ASCII_LOWER,
-  HALF_ASCII_CAPITALIZED,
-  FULL_ASCII,
-  FULL_ASCII_UPPER,
-  FULL_ASCII_LOWER,
-  FULL_ASCII_CAPITALIZED,
-  HALF_KATAKANA,
+    HIRAGANA,         FULL_KATAKANA,          HALF_ASCII,    HALF_ASCII_UPPER,
+    HALF_ASCII_LOWER, HALF_ASCII_CAPITALIZED, FULL_ASCII,    FULL_ASCII_UPPER,
+    FULL_ASCII_LOWER, FULL_ASCII_CAPITALIZED, HALF_KATAKANA,
 };
 
 class T13n {
@@ -112,6 +104,5 @@ class T13n {
 
 }  // namespace transliteration
 }  // namespace mozc
-
 
 #endif  // MOZC_TRANSLITERATION_TRANSLITERATION_H_

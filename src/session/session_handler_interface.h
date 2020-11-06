@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 #define MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_
 
-#include "base/port.h"
-#include "base/string_piece.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -48,6 +47,10 @@ class SessionObserverInterface;
 class SessionHandlerInterface {
  public:
   SessionHandlerInterface() = default;
+
+  SessionHandlerInterface(const SessionHandlerInterface &) = delete;
+  SessionHandlerInterface &operator=(const SessionHandlerInterface &) = delete;
+
   virtual ~SessionHandlerInterface() = default;
 
   // Returns true if SessionHandle is available.
@@ -58,14 +61,11 @@ class SessionHandlerInterface {
   // Starts watch dog timer to cleanup sessions.
   virtual bool StartWatchDog() = 0;
 
-  virtual void AddObserver(
-      session::SessionObserverInterface *observer) = 0;
+  virtual void AddObserver(session::SessionObserverInterface *observer) = 0;
 
-  virtual StringPiece GetDataVersion() const = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SessionHandlerInterface);
+  virtual absl::string_view GetDataVersion() const = 0;
 };
 
 }  // namespace mozc
+
 #endif  // MOZC_SESSION_SESSION_HANDLER_INTERFACE_H_

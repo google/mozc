@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
-#include "renderer/renderer_client.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/renderer_client.h"
 
 namespace mozc {
 namespace renderer {
@@ -69,13 +69,9 @@ volatile DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 class SenderThread {
  public:
   SenderThread(HANDLE command_event, HANDLE quit_event)
-    : command_event_(command_event),
-      quit_event_(quit_event) {
-  }
+      : command_event_(command_event), quit_event_(quit_event) {}
 
-  void RequestQuit() {
-    ::SetEvent(quit_event_.get());
-  }
+  void RequestQuit() { ::SetEvent(quit_event_.get()); }
 
   void UpdateCommand(const RendererCommand &new_command) {
     scoped_lock lock(&mutex_);
@@ -160,8 +156,8 @@ SenderThread *CreateSenderThread() {
   // be OK because this code will be running as DLL and the CRT can manage
   // thread specific resources through attach/detach notification in DllMain.
   DWORD thread_id = 0;
-  ScopedHandle thread_handle(::CreateThread(
-      nullptr, 0, ThreadProc, nullptr, CREATE_SUSPENDED, &thread_id));
+  ScopedHandle thread_handle(::CreateThread(nullptr, 0, ThreadProc, nullptr,
+                                            CREATE_SUSPENDED, &thread_id));
   if (thread_handle.get() == nullptr) {
     // Failed to create the thread. Restore the reference count of the DLL.
     return nullptr;
@@ -191,8 +187,8 @@ SenderThread *CreateSenderThread() {
     return nullptr;
   }
 
-  std::unique_ptr<SenderThread> thread(new SenderThread(
-      command_event.take(), quit_event.take()));
+  std::unique_ptr<SenderThread> thread(
+      new SenderThread(command_event.take(), quit_event.take()));
 
   // Resume the thread.
   if (::ResumeThread(thread_handle.get()) == -1) {
@@ -211,8 +207,7 @@ bool CanIgnoreRequest(const RendererCommand &command) {
   if (g_tls_index == TLS_OUT_OF_INDEXES) {
     return true;
   }
-  if ((::TlsGetValue(g_tls_index) == nullptr) &&
-      !command.visible()) {
+  if ((::TlsGetValue(g_tls_index) == nullptr) && !command.visible()) {
     // The sender threaed is not initialized and |command| is to hide the
     // renderer. We are likely to be able to skip this request.
     return true;

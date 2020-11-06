@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,10 +31,10 @@
 
 #define _ATL_NO_AUTOMATIC_NAMESPACE
 #define _WTL_NO_AUTOMATIC_NAMESPACE
+#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
 #include <atlbase.h>
 #include <atlcom.h>
 #include <msctf.h>
-#include <CommCtrl.h>  // for CCSIZEOF_STRUCT
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -85,18 +85,18 @@ size_t GetTargetPos(const commands::Output &output) {
     case commands::SUGGESTION:
       return 0;
     case commands::CONVERSION: {
-        const Preedit &preedit = output.preedit();
-        size_t offset = 0;
-        for (int i = 0; i < preedit.segment_size(); ++i) {
-          const Segment &segment = preedit.segment(i);
-          const Annotation &annotation = segment.annotation();
-          if (annotation == Segment::HIGHLIGHT) {
-            return offset;
-          }
-          offset += Util::WideCharsLen(segment.value());
+      const Preedit &preedit = output.preedit();
+      size_t offset = 0;
+      for (int i = 0; i < preedit.segment_size(); ++i) {
+        const Segment &segment = preedit.segment(i);
+        const Annotation &annotation = segment.annotation();
+        if (annotation == Segment::HIGHLIGHT) {
+          return offset;
         }
-        return offset;
+        offset += Util::WideCharsLen(segment.value());
       }
+      return offset;
+    }
     default:
       return 0;
   }
@@ -182,8 +182,8 @@ bool FillCaretInfo(ApplicationInfo *app_info) {
   rect->set_right(thread_info.rcCaret.right);
   rect->set_bottom(thread_info.rcCaret.bottom);
 
-  caret->set_target_window_handle(WinUtil::EncodeWindowHandle(
-      thread_info.hwndCaret));
+  caret->set_target_window_handle(
+      WinUtil::EncodeWindowHandle(thread_info.hwndCaret));
 
   return true;
 }
@@ -222,8 +222,8 @@ CComPtr<ITfRange> GetSelectionRange(ITfContext *context,
                                     TfEditCookie read_cookie) {
   CComPtr<ITfRange> selection_range;
   TfActiveSelEnd sel_end = TF_AE_NONE;
-  if (FAILED(TipRangeUtil::GetDefaultSelection(
-          context, read_cookie, &selection_range, &sel_end))) {
+  if (FAILED(TipRangeUtil::GetDefaultSelection(context, read_cookie,
+                                               &selection_range, &sel_end))) {
     return nullptr;
   }
   return selection_range;
@@ -233,12 +233,9 @@ CComPtr<ITfRange> GetSelectionRange(ITfContext *context,
 // IMM32-based client. Ideally we'd better to define new field for TSF Mozc
 // into which the result of ITfContextView::GetTextExt is stored.
 // TODO(yukawa): Replace FillCharPosition with new one designed for TSF.
-bool FillCharPosition(TipPrivateContext *private_context,
-                      ITfContext *context,
-                      TfEditCookie read_cookie,
-                      bool has_composition,
-                      ApplicationInfo *app_info,
-                      bool *no_layout) {
+bool FillCharPosition(TipPrivateContext *private_context, ITfContext *context,
+                      TfEditCookie read_cookie, bool has_composition,
+                      ApplicationInfo *app_info, bool *no_layout) {
   if (private_context == nullptr) {
     return false;
   }
@@ -255,9 +252,9 @@ bool FillCharPosition(TipPrivateContext *private_context,
   const HWND window_handle =
       WinUtil::DecodeWindowHandle(app_info->target_window_handle());
 
-  CComPtr<ITfRange> range =
-      has_composition ? GetCompositionRange(context, read_cookie)
-                      : GetSelectionRange(context, read_cookie);
+  CComPtr<ITfRange> range = has_composition
+                                ? GetCompositionRange(context, read_cookie)
+                                : GetSelectionRange(context, read_cookie);
   if (!range) {
     return false;
   }
@@ -275,12 +272,12 @@ bool FillCharPosition(TipPrivateContext *private_context,
     return false;
   }
   const size_t target_pos = GetTargetPos(output);
-  if (FAILED(target_range->ShiftStart(
-          read_cookie, target_pos, &shifted, nullptr))) {
+  if (FAILED(target_range->ShiftStart(read_cookie, target_pos, &shifted,
+                                      nullptr))) {
     return false;
   }
-  if (FAILED(target_range->ShiftEnd(
-          read_cookie, target_pos + 1, &shifted, nullptr))) {
+  if (FAILED(target_range->ShiftEnd(read_cookie, target_pos + 1, &shifted,
+                                    nullptr))) {
     return false;
   }
 
@@ -313,8 +310,8 @@ bool FillCharPosition(TipPrivateContext *private_context,
   top_left->set_x(text_rect.left);
   top_left->set_y(text_rect.top);
   app_info->mutable_composition_target()->set_position(0);
-  app_info->mutable_composition_target()->set_line_height(
-      text_rect.bottom - text_rect.top);
+  app_info->mutable_composition_target()->set_line_height(text_rect.bottom -
+                                                          text_rect.top);
 
   RendererCommand::Rectangle *area =
       app_info->mutable_composition_target()->mutable_document_area();
@@ -326,10 +323,8 @@ bool FillCharPosition(TipPrivateContext *private_context,
   return true;
 }
 
-void UpdateCommand(TipTextService *text_service,
-                   ITfContext *context,
-                   TfEditCookie read_cookie,
-                   RendererCommand *command,
+void UpdateCommand(TipTextService *text_service, ITfContext *context,
+                   TfEditCookie read_cookie, RendererCommand *command,
                    bool *no_layout) {
   command->Clear();
   command->set_type(RendererCommand::UPDATE);
@@ -406,9 +401,7 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
     return S_OK;
   }
 
-  virtual ULONG STDMETHODCALLTYPE AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  virtual ULONG STDMETHODCALLTYPE AddRef() { return ref_count_.AddRefImpl(); }
 
   virtual ULONG STDMETHODCALLTYPE Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -435,23 +428,19 @@ class UpdateUiEditSessionImpl : public ITfEditSession {
     // When RequestEditSession fails, it does not maintain the reference count.
     // So we need to ensure that AddRef/Release should be called at least once
     // per object.
-    CComPtr<ITfEditSession> edit_session(new UpdateUiEditSessionImpl(
-        text_service, context));
+    CComPtr<ITfEditSession> edit_session(
+        new UpdateUiEditSessionImpl(text_service, context));
 
     HRESULT edit_session_result = S_OK;
     const HRESULT result = context->RequestEditSession(
-        text_service->GetClientID(),
-        edit_session,
+        text_service->GetClientID(), edit_session,
         TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
     return SUCCEEDED(result);
   }
 
  private:
-  UpdateUiEditSessionImpl(TipTextService *text_service,
-                          ITfContext *context)
-      : text_service_(text_service),
-        context_(context) {
-  }
+  UpdateUiEditSessionImpl(TipTextService *text_service, ITfContext *context)
+      : text_service_(text_service), context_(context) {}
 
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;

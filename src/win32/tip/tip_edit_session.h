@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,25 +81,22 @@ class TipEditSession {
   static bool OnOpenCloseChangedAsync(TipTextService *text_service);
   // Begins an async edit session to handle a renderer callback event.
   static bool OnRendererCallbackAsync(TipTextService *text_service,
-                                      ITfContext *context,
-                                      WPARAM wparam,
+                                      ITfContext *context, WPARAM wparam,
                                       LPARAM lparam);
 
   // Begins an async edit session to submit the current candidate.
   static bool SubmitAsync(TipTextService *text_service, ITfContext *context);
   // Begins an async edit session to cancel the current composition.
   static bool CancelCompositionAsync(TipTextService *text_service,
-                                      ITfContext *context);
+                                     ITfContext *context);
   // Begins an async edit session to highlight the candidate specified by
   // |candidate_id|.
   static bool HilightCandidateAsync(TipTextService *text_service,
-                                    ITfContext *context,
-                                    int candidate_id);
+                                    ITfContext *context, int candidate_id);
   // Begins an async edit session to select the candidate specified by
   // |candidate_id|.
   static bool SelectCandidateAsync(TipTextService *text_service,
-                                   ITfContext *context,
-                                   int candidate_id);
+                                   ITfContext *context, int candidate_id);
 
   // Begins an async edit session to change input mode specified by
   // |native_mode|.
@@ -107,14 +104,12 @@ class TipEditSession {
                                    uint32 mozc_mode);
 
   // Begins a sync edit session to retrieve the text from |range|.
-  static bool GetTextSync(TipTextService *text_service,
-                          ITfRange *range,
+  static bool GetTextSync(TipTextService *text_service, ITfRange *range,
                           std::wstring *text);
 
   // Begins an async edit session to set |text| to |range|.
   static bool SetTextAsync(TipTextService *text_service,
-                           const std::wstring &text,
-                           ITfRange *range);
+                           const std::wstring &text, ITfRange *range);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipEditSession);

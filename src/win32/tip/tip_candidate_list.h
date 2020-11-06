@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ struct ITfCandidateList;
 namespace mozc {
 namespace commands {
 class Output;
-}  // commands
+}  // namespace commands
 
 namespace win32 {
 namespace tsf {
@@ -62,7 +62,7 @@ class TipCandidateList {
   // Caller must maintain the reference count of the returned object.
   static ITfCandidateList *New(const std::vector<std::wstring> &candidates,
                                TipCandidateListCallback *callback);
-  static const IID& GetIID();
+  static const IID &GetIID();
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TipCandidateList);

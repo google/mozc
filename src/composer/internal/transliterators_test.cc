@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,18 +41,16 @@ TEST(TransliteratorsTest, ConversionStringSelector) {
   EXPECT_EQ("ず", t12r->Transliterate("zu", "ず"));
   EXPECT_EQ("っk", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_TRUE(t12r->Split(1, "zu", "ず",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_TRUE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("zu", raw_lhs);
   EXPECT_EQ("", raw_rhs);
   EXPECT_EQ("ず", converted_lhs);
   EXPECT_EQ("", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -60,8 +58,7 @@ TEST(TransliteratorsTest, ConversionStringSelector) {
 
   // Ideally "kkk" should be separated into "っ" and "っk", but it's
   // not implemented yet.
-  EXPECT_FALSE(t12r->Split(1, "kkk", "っっk",
-                           &raw_lhs, &raw_rhs,
+  EXPECT_FALSE(t12r->Split(1, "kkk", "っっk", &raw_lhs, &raw_rhs,
                            &converted_lhs, &converted_rhs));
   EXPECT_EQ("っ", raw_lhs);
   EXPECT_EQ("っk", raw_rhs);
@@ -75,18 +72,16 @@ TEST(TransliteratorsTest, RawStringSelector) {
   EXPECT_EQ("zu", t12r->Transliterate("zu", "ず"));
   EXPECT_EQ("kk", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_FALSE(t12r->Split(1, "zu", "ず",
-                           &raw_lhs, &raw_rhs,
-                           &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_FALSE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                           &converted_rhs));
   EXPECT_EQ("z", raw_lhs);
   EXPECT_EQ("u", raw_rhs);
   EXPECT_EQ("z", converted_lhs);
   EXPECT_EQ("u", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -100,18 +95,16 @@ TEST(TransliteratorsTest, HiraganaTransliterator) {
   // Half width "k" is transliterated into full width "ｋ".
   EXPECT_EQ("っｋ", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_TRUE(t12r->Split(1, "zu", "ず",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_TRUE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("zu", raw_lhs);
   EXPECT_EQ("", raw_rhs);
   EXPECT_EQ("ず", converted_lhs);
   EXPECT_EQ("", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -119,8 +112,7 @@ TEST(TransliteratorsTest, HiraganaTransliterator) {
 
   // Ideally "kkk" should be separated into "っ" and "っk", but it's
   // not implemented yet.
-  EXPECT_FALSE(t12r->Split(1, "kkk", "っっk",
-                           &raw_lhs, &raw_rhs,
+  EXPECT_FALSE(t12r->Split(1, "kkk", "っっk", &raw_lhs, &raw_rhs,
                            &converted_lhs, &converted_rhs));
   EXPECT_EQ("っ", raw_lhs);
   EXPECT_EQ("っk", raw_rhs);
@@ -140,18 +132,16 @@ TEST(TransliteratorsTest, FullKatakanaTransliterator) {
   // Half width "k" is transliterated into full width "ｋ".
   EXPECT_EQ("ッｋ", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_TRUE(t12r->Split(1, "zu", "ず",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_TRUE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("zu", raw_lhs);
   EXPECT_EQ("", raw_rhs);
   EXPECT_EQ("ず", converted_lhs);
   EXPECT_EQ("", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -170,27 +160,24 @@ TEST(TransliteratorsTest, HalfKatakanaTransliterator) {
   // Half width "k" remains in the current implementation (can be changed).
   EXPECT_EQ("ｯk", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
   // "ｽﾞ" is split to "ｽ" and "ﾞ".
-  EXPECT_FALSE(t12r->Split(1, "zu", "ず",
-                           &raw_lhs, &raw_rhs,
-                           &converted_lhs, &converted_rhs));
+  EXPECT_FALSE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                           &converted_rhs));
   EXPECT_EQ("す", raw_lhs);
   EXPECT_EQ("゛", raw_rhs);
   EXPECT_EQ("す", converted_lhs);
   EXPECT_EQ("゛", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(2, "zu", "ず",
-                           &raw_lhs, &raw_rhs,
-                           &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(2, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("zu", raw_lhs);
   EXPECT_EQ("", raw_rhs);
   EXPECT_EQ("ず", converted_lhs);
   EXPECT_EQ("", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -208,18 +195,16 @@ TEST(TransliteratorsTest, HalfAsciiTransliterator) {
   EXPECT_EQ("zu", t12r->Transliterate("zu", "ず"));
   EXPECT_EQ("kk", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_FALSE(t12r->Split(1, "zu", "ず",
-                           &raw_lhs, &raw_rhs,
-                           &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_FALSE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                           &converted_rhs));
   EXPECT_EQ("z", raw_lhs);
   EXPECT_EQ("u", raw_rhs);
   EXPECT_EQ("z", converted_lhs);
   EXPECT_EQ("u", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);
@@ -237,18 +222,16 @@ TEST(TransliteratorsTest, FullAsciiTransliterator) {
   EXPECT_EQ("ｚｕ", t12r->Transliterate("zu", "ず"));
   EXPECT_EQ("ｋｋ", t12r->Transliterate("kk", "っk"));
 
-  string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
-  EXPECT_FALSE(t12r->Split(1, "zu", "ず",
-                           &raw_lhs, &raw_rhs,
-                           &converted_lhs, &converted_rhs));
+  std::string raw_lhs, raw_rhs, converted_lhs, converted_rhs;
+  EXPECT_FALSE(t12r->Split(1, "zu", "ず", &raw_lhs, &raw_rhs, &converted_lhs,
+                           &converted_rhs));
   EXPECT_EQ("z", raw_lhs);
   EXPECT_EQ("u", raw_rhs);
   EXPECT_EQ("z", converted_lhs);
   EXPECT_EQ("u", converted_rhs);
 
-  EXPECT_TRUE(t12r->Split(1, "kk", "っk",
-                          &raw_lhs, &raw_rhs,
-                          &converted_lhs, &converted_rhs));
+  EXPECT_TRUE(t12r->Split(1, "kk", "っk", &raw_lhs, &raw_rhs, &converted_lhs,
+                          &converted_rhs));
   EXPECT_EQ("k", raw_lhs);
   EXPECT_EQ("k", raw_rhs);
   EXPECT_EQ("っ", converted_lhs);

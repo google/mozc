@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@
 #define MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -50,30 +50,32 @@ class ValueDictionary : public DictionaryInterface {
   // This class doesn't take the ownership of |value_trie|.
   ValueDictionary(const POSMatcher &pos_matcher,
                   const storage::louds::LoudsTrie *value_trie);
-  virtual ~ValueDictionary();
+
+  ValueDictionary(const ValueDictionary &) = delete;
+  ValueDictionary &operator=(const ValueDictionary &) = delete;
+
+  ~ValueDictionary() override;
 
   // Implementation of DictionaryInterface
-  virtual bool HasKey(StringPiece key) const;
-  virtual bool HasValue(StringPiece value) const;
-  virtual void LookupPredictive(StringPiece key,
-                                const ConversionRequest &conversion_request,
-                                Callback *callback) const;
-  virtual void LookupPrefix(StringPiece key,
-                            const ConversionRequest &conversion_request,
-                            Callback *callback) const;
-  virtual void LookupExact(StringPiece key,
-                           const ConversionRequest &conversion_request,
-                           Callback *callback) const;
-  virtual void LookupReverse(StringPiece str,
-                             const ConversionRequest &conversion_request,
-                             Callback *callback) const;
+  bool HasKey(absl::string_view key) const override;
+  bool HasValue(absl::string_view value) const override;
+  void LookupPredictive(absl::string_view key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override;
+  void LookupPrefix(absl::string_view key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override;
+  void LookupExact(absl::string_view key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override;
+  void LookupReverse(absl::string_view str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override;
 
  private:
   const storage::louds::LoudsTrie *value_trie_;
   const SystemDictionaryCodecInterface *codec_;
   const uint16 suggestion_only_word_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(ValueDictionary);
 };
 
 }  // namespace dictionary

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,6 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 
 #include <algorithm>
 #include <map>
@@ -104,8 +103,8 @@ class QualityRegressionTest : public ::testing::Test {
     ExamineResults(false, platform, &disabled_results);
 
     const int total_cases = num_executed_cases + num_disabled_cases;
-    LOG(INFO) << "Tested " << num_executed_cases << " / "
-              << total_cases << " entries.";
+    LOG(INFO) << "Tested " << num_executed_cases << " / " << total_cases
+              << " entries.";
   }
 
   // If |enabled| parameter is true, then actual conversion results are tested
@@ -128,16 +127,15 @@ class QualityRegressionTest : public ::testing::Test {
         // Print failed example for failed label
         const float actual_ratio = 1.0 * correct / values->size();
         if (enabled) {
-          EXPECT_LT(accuracy, actual_ratio) << value.second
-                                            << " " << accuracy
-                                            << " " << actual_ratio;
+          EXPECT_LT(accuracy, actual_ratio)
+              << value.second << " " << accuracy << " " << actual_ratio;
         } else {
           if (accuracy < actual_ratio) {
-            LOG(INFO) << "PASSED (DISABLED): "
-                      << it->first << ": " << value.second;
+            LOG(INFO) << "PASSED (DISABLED): " << it->first << ": "
+                      << value.second;
           } else {
-            LOG(INFO) << "FAILED (DISABLED): "
-                      << it->first << ": " << value.second;
+            LOG(INFO) << "FAILED (DISABLED): " << it->first << ": "
+                      << value.second;
             all_passed = false;
           }
         }
@@ -147,8 +145,8 @@ class QualityRegressionTest : public ::testing::Test {
       if (!enabled && all_passed) {
         LOG(INFO) << "CLOSED ISSUE [platform = "
                   << QualityRegressionUtil::GetPlatformString(platform)
-                  << "]: " << it->first << " with "
-                  << it->second.size() << " cases";
+                  << "]: " << it->first << " with " << it->second.size()
+                  << " cases";
       }
     }
   }
@@ -163,20 +161,19 @@ std::unique_ptr<EngineInterface> CreateEngine(const string &data_file_path,
   std::unique_ptr<DataManager> data_manager(new DataManager);
   const auto status = data_manager->InitFromFile(data_file_path, magic_number);
   if (status != DataManager::Status::OK) {
-    LOG(ERROR) << "Failed to load " << data_file_path
-               << ": " << DataManager::StatusCodeToString(status);
+    LOG(ERROR) << "Failed to load " << data_file_path << ": "
+               << DataManager::StatusCodeToString(status);
     return nullptr;
   }
   if (engine_type == "desktop") {
-    return Engine::CreateDesktopEngine(std::move(data_manager));
+    return Engine::CreateDesktopEngine(std::move(data_manager)).value();
   }
   if (engine_type == "mobile") {
-    return Engine::CreateMobileEngine(std::move(data_manager));
+    return Engine::CreateMobileEngine(std::move(data_manager)).value();
   }
   LOG(ERROR) << "Invalid engine type: " << engine_type;
   return nullptr;
 }
-
 
 }  // namespace
 }  // namespace mozc

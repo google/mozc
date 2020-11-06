@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,14 @@
 
 #include <string>
 
-#include "base/port_string.h"
-
 namespace mozc {
 
 class CalculatorInterface {
  public:
   // Calculates expression and outputs to |result|. If key is not an expression,
   // it returns false.
-  virtual bool CalculateString(const string &key, string *result) const = 0;
+  virtual bool CalculateString(const std::string &key,
+                               std::string *result) const = 0;
 
  protected:
   CalculatorInterface() {}

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,6 @@ bool TipStatus::IsEmptyContext(ITfContext *context) {
   return var.vt == VT_I4 && var.lVal != FALSE;
 }
 
-
 bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
                                        TfClientId client_id, DWORD *mode) {
   if (mode == nullptr) {
@@ -116,27 +115,23 @@ bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
   return true;
 }
 
-bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr,
-                           TfClientId client_id, bool open) {
+bool TipStatus::SetIMEOpen(ITfThreadMgr *thread_mgr, TfClientId client_id,
+                           bool open) {
   CComVariant var;
   var.vt = VT_I4;
   var.lVal = open ? TRUE : FALSE;
-  return TipCompartmentUtil::Set(thread_mgr,
-                                 GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
-                                 client_id,
-                                 var);
+  return TipCompartmentUtil::Set(
+      thread_mgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, client_id, var);
 }
 
 bool TipStatus::SetInputModeConversion(ITfThreadMgr *thread_mgr,
-                                       DWORD client_id,
-                                       DWORD native_mode) {
+                                       DWORD client_id, DWORD native_mode) {
   CComVariant var;
   var.vt = VT_I4;
   var.lVal = native_mode;
   return TipCompartmentUtil::Set(thread_mgr,
                                  GUID_COMPARTMENT_KEYBOARD_INPUTMODE_CONVERSION,
-                                 client_id,
-                                 var);
+                                 client_id, var);
 }
 
 }  // namespace tsf

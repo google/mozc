@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,8 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/pos_matcher.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-
-DECLARE_string(test_tmpdir);
 
 namespace mozc {
 namespace {
@@ -117,8 +116,8 @@ class CollocationRewriterTest : public ::testing::Test {
   }
 
   // Returns the concatenated string of top candidates.
-  static string GetTopValue(const Segments &segments) {
-    string result;
+  static std::string GetTopValue(const Segments &segments) {
+    std::string result;
     for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
       const Segment::Candidate &candidate =
           segments.conversion_segment(i).candidate(0);

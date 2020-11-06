@@ -41,6 +41,9 @@ Composition	Shift Muhenkan	ToggleAlphanumericMode
 Composition	Shift Space	Convert
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
+Composition	VirtualLeft	MoveCursorLeft
+Composition	VirtualRight	MoveCursorRight
+Composition	VirtualEnter	Commit
 Conversion	Backspace	Cancel
 Conversion	Ctrl [	Cancel
 Conversion	Ctrl @	ConvertToHalfAlphanumeric
@@ -86,6 +89,9 @@ Conversion	Shift Tab	ConvertPrev
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev
+Conversion	VirtualLeft	SegmentWidthShrink
+Conversion	VirtualRight	SegmentWidthExpand
+Conversion	VirtualEnter	CommitOnlyFirstSegment
 DirectInput	Hankaku/Zenkaku	IMEOn
 DirectInput	Henkan	IMEOn
 DirectInput	Kanji	IMEOn

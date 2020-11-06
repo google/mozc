@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,158 +42,157 @@ class KeyEvent;
 namespace keymap {
 
 struct DirectInputState {
-enum Commands {
-  NONE = 0,
-  IME_ON,
-  // Switch input mode.
-  INPUT_MODE_HIRAGANA,
-  INPUT_MODE_FULL_KATAKANA,
-  INPUT_MODE_HALF_KATAKANA,
-  INPUT_MODE_FULL_ALPHANUMERIC,
-  INPUT_MODE_HALF_ALPHANUMERIC,
-  RECONVERT,
-};
+  enum Commands {
+    NONE = 0,
+    IME_ON,
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    RECONVERT,
+  };
 };
 
 struct PrecompositionState {
-enum Commands {
-  NONE = 0,
-  IME_OFF,
-  IME_ON,
-  INSERT_CHARACTER,  // Move to Composition status.
-  INSERT_SPACE,   // To handle spaces.
-  // to handle shift+spaces (useally toggle half/full with)
-  INSERT_ALTERNATE_SPACE,
-  INSERT_HALF_SPACE,  // Input half-width space
-  INSERT_FULL_SPACE,  // Input full-width space
-  TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
-  // Switch input mode.
-  INPUT_MODE_HIRAGANA,
-  INPUT_MODE_FULL_KATAKANA,
-  INPUT_MODE_HALF_KATAKANA,
-  INPUT_MODE_FULL_ALPHANUMERIC,
-  INPUT_MODE_HALF_ALPHANUMERIC,
-  INPUT_MODE_SWITCH_KANA_TYPE,  // rotate input mode
-  LAUNCH_CONFIG_DIALOG,
-  LAUNCH_DICTIONARY_TOOL,
-  LAUNCH_WORD_REGISTER_DIALOG,
-  REVERT,  // revert last operation (preedit still remains)
-  UNDO,    // undo last operation (preedit is restored)
-  RECONVERT,
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,  // Move to Composition status.
+    INSERT_SPACE,      // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,         // Input half-width space
+    INSERT_FULL_SPACE,         // Input full-width space
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    INPUT_MODE_SWITCH_KANA_TYPE,  // rotate input mode
+    LAUNCH_CONFIG_DIALOG,
+    LAUNCH_DICTIONARY_TOOL,
+    LAUNCH_WORD_REGISTER_DIALOG,
+    REVERT,  // revert last operation (preedit still remains)
+    UNDO,    // undo last operation (preedit is restored)
+    RECONVERT,
 
-  // For ZeroQuerySuggestion
-  CANCEL,  // Back to Composition status.
-  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
-  COMMIT_FIRST_SUGGESTION,   // ATOK's Shift-Enter style
-  PREDICT_AND_CONVERT,
-};
+    // For ZeroQuerySuggestion
+    CANCEL,                   // Back to Composition status.
+    CANCEL_AND_IME_OFF,       // Cancel composition and turn off IME
+    COMMIT_FIRST_SUGGESTION,  // ATOK's Shift-Enter style
+    PREDICT_AND_CONVERT,
+  };
 };
 
 struct CompositionState {
-enum Commands {
-  NONE = 0,
-  IME_OFF,
-  IME_ON,
-  INSERT_CHARACTER,
-  DEL,  // DELETE cannot be used on Windows.  It is defined as a macro.
-  BACKSPACE,
-  INSERT_SPACE,   // To handle spaces.
-  // to handle shift+spaces (useally toggle half/full with)
-  INSERT_ALTERNATE_SPACE,
-  INSERT_HALF_SPACE,  // Input half-width space
-  INSERT_FULL_SPACE,  // Input full-width space
-  CANCEL,  // Move to Precomposition stauts.
-  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
-  UNDO,
-  MOVE_CURSOR_LEFT,
-  MOVE_CURSOR_RIGHT,
-  MOVE_CURSOR_TO_BEGINNING,
-  MOVE_MOVE_CURSOR_TO_END,
-  COMMIT,  // Move to Precomposition status.
-  COMMIT_FIRST_SUGGESTION,   // ATOK's Shift-Enter style
-  CONVERT,  // Move to Conversion status.
-  CONVERT_WITHOUT_HISTORY,  // Move to Conversion status.
-  PREDICT_AND_CONVERT,
-  // Switching to ConversionState
-  CONVERT_TO_HIRAGANA,  // F6
-  CONVERT_TO_FULL_KATAKANA,  // F7
-  CONVERT_TO_HALF_KATAKANA,
-  CONVERT_TO_HALF_WIDTH,  // F8
-  CONVERT_TO_FULL_ALPHANUMERIC,  // F9
-  CONVERT_TO_HALF_ALPHANUMERIC,  // F10
-  SWITCH_KANA_TYPE,  // Muhenkan
-  // Rmaining CompositionState
-  DISPLAY_AS_HIRAGANA,  // F6
-  DISPLAY_AS_FULL_KATAKANA,  // F7
-  DISPLAY_AS_HALF_KATAKANA,
-  TRANSLATE_HALF_WIDTH,  // F8
-  TRANSLATE_FULL_ASCII,  // F9
-  TRANSLATE_HALF_ASCII,  // F10
-  TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
-  // Switch input mode.
-  INPUT_MODE_HIRAGANA,
-  INPUT_MODE_FULL_KATAKANA,
-  INPUT_MODE_HALF_KATAKANA,
-  INPUT_MODE_FULL_ALPHANUMERIC,
-  INPUT_MODE_HALF_ALPHANUMERIC,
-};
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,
+    DEL,  // DELETE cannot be used on Windows.  It is defined as a macro.
+    BACKSPACE,
+    INSERT_SPACE,  // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,   // Input half-width space
+    INSERT_FULL_SPACE,   // Input full-width space
+    CANCEL,              // Move to Precomposition stauts.
+    CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
+    UNDO,
+    MOVE_CURSOR_LEFT,
+    MOVE_CURSOR_RIGHT,
+    MOVE_CURSOR_TO_BEGINNING,
+    MOVE_MOVE_CURSOR_TO_END,
+    COMMIT,                   // Move to Precomposition status.
+    COMMIT_FIRST_SUGGESTION,  // ATOK's Shift-Enter style
+    CONVERT,                  // Move to Conversion status.
+    CONVERT_WITHOUT_HISTORY,  // Move to Conversion status.
+    PREDICT_AND_CONVERT,
+    // Switching to ConversionState
+    CONVERT_TO_HIRAGANA,       // F6
+    CONVERT_TO_FULL_KATAKANA,  // F7
+    CONVERT_TO_HALF_KATAKANA,
+    CONVERT_TO_HALF_WIDTH,         // F8
+    CONVERT_TO_FULL_ALPHANUMERIC,  // F9
+    CONVERT_TO_HALF_ALPHANUMERIC,  // F10
+    SWITCH_KANA_TYPE,              // Muhenkan
+    // Rmaining CompositionState
+    DISPLAY_AS_HIRAGANA,       // F6
+    DISPLAY_AS_FULL_KATAKANA,  // F7
+    DISPLAY_AS_HALF_KATAKANA,
+    TRANSLATE_HALF_WIDTH,      // F8
+    TRANSLATE_FULL_ASCII,      // F9
+    TRANSLATE_HALF_ASCII,      // F10
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+  };
 };
 
 struct ConversionState {
-enum Commands {
-  NONE = 0,
-  IME_OFF,
-  IME_ON,
-  INSERT_CHARACTER,  // Submit and Move to Composition status.
-  INSERT_SPACE,   // To handle spaces.
-  // to handle shift+spaces (useally toggle half/full with)
-  INSERT_ALTERNATE_SPACE,
-  INSERT_HALF_SPACE,  // Input half-width space
-  INSERT_FULL_SPACE,  // Input full-width space
-  CANCEL,  // Back to Composition status.
-  CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
-  UNDO,
-  SEGMENT_FOCUS_LEFT,
-  SEGMENT_FOCUS_RIGHT,
-  SEGMENT_FOCUS_FIRST,
-  SEGMENT_FOCUS_LAST,
-  SEGMENT_WIDTH_EXPAND,
-  SEGMENT_WIDTH_SHRINK,
-  CONVERT_NEXT,
-  CONVERT_PREV,
-  CONVERT_NEXT_PAGE,
-  CONVERT_PREV_PAGE,
-  PREDICT_AND_CONVERT,
-  COMMIT,  // Move to Precomposition status.
-  COMMIT_SEGMENT,  // Down on the ATOK style.
-  // CONVERT_TO and TRANSLATE are same behavior on ConversionState.
-  CONVERT_TO_HIRAGANA,  // F6
-  CONVERT_TO_FULL_KATAKANA,  // F7
-  CONVERT_TO_HALF_KATAKANA,
-  CONVERT_TO_HALF_WIDTH,  // F8
-  CONVERT_TO_FULL_ALPHANUMERIC,  // F9
-  CONVERT_TO_HALF_ALPHANUMERIC,  // F10
-  SWITCH_KANA_TYPE,  // Muhenkan
-  DISPLAY_AS_HIRAGANA,  // F6
-  DISPLAY_AS_FULL_KATAKANA,  // F7
-  DISPLAY_AS_HALF_KATAKANA,
-  TRANSLATE_HALF_WIDTH,  // F8
-  TRANSLATE_FULL_ASCII,  // F9
-  TRANSLATE_HALF_ASCII,  // F10
-  TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
-  // Switch input mode.
-  INPUT_MODE_HIRAGANA,
-  INPUT_MODE_FULL_KATAKANA,
-  INPUT_MODE_HALF_KATAKANA,
-  INPUT_MODE_FULL_ALPHANUMERIC,
-  INPUT_MODE_HALF_ALPHANUMERIC,
-  DELETE_SELECTED_CANDIDATE,
-  REPORT_BUG,
-};
+  enum Commands {
+    NONE = 0,
+    IME_OFF,
+    IME_ON,
+    INSERT_CHARACTER,  // Submit and Move to Composition status.
+    INSERT_SPACE,      // To handle spaces.
+    // to handle shift+spaces (useally toggle half/full with)
+    INSERT_ALTERNATE_SPACE,
+    INSERT_HALF_SPACE,   // Input half-width space
+    INSERT_FULL_SPACE,   // Input full-width space
+    CANCEL,              // Back to Composition status.
+    CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
+    UNDO,
+    SEGMENT_FOCUS_LEFT,
+    SEGMENT_FOCUS_RIGHT,
+    SEGMENT_FOCUS_FIRST,
+    SEGMENT_FOCUS_LAST,
+    SEGMENT_WIDTH_EXPAND,
+    SEGMENT_WIDTH_SHRINK,
+    CONVERT_NEXT,
+    CONVERT_PREV,
+    CONVERT_NEXT_PAGE,
+    CONVERT_PREV_PAGE,
+    PREDICT_AND_CONVERT,
+    COMMIT,          // Move to Precomposition status.
+    COMMIT_SEGMENT,  // Down on the ATOK style.
+    // CONVERT_TO and TRANSLATE are same behavior on ConversionState.
+    CONVERT_TO_HIRAGANA,       // F6
+    CONVERT_TO_FULL_KATAKANA,  // F7
+    CONVERT_TO_HALF_KATAKANA,
+    CONVERT_TO_HALF_WIDTH,         // F8
+    CONVERT_TO_FULL_ALPHANUMERIC,  // F9
+    CONVERT_TO_HALF_ALPHANUMERIC,  // F10
+    SWITCH_KANA_TYPE,              // Muhenkan
+    DISPLAY_AS_HIRAGANA,           // F6
+    DISPLAY_AS_FULL_KATAKANA,      // F7
+    DISPLAY_AS_HALF_KATAKANA,
+    TRANSLATE_HALF_WIDTH,      // F8
+    TRANSLATE_FULL_ASCII,      // F9
+    TRANSLATE_HALF_ASCII,      // F10
+    TOGGLE_ALPHANUMERIC_MODE,  // toggle AlphaNumeric and Hiragana mode.
+    // Switch input mode.
+    INPUT_MODE_HIRAGANA,
+    INPUT_MODE_FULL_KATAKANA,
+    INPUT_MODE_HALF_KATAKANA,
+    INPUT_MODE_FULL_ALPHANUMERIC,
+    INPUT_MODE_HALF_ALPHANUMERIC,
+    DELETE_SELECTED_CANDIDATE,
+    REPORT_BUG,
+  };
 };
 
-
-template<typename T>
+template <typename T>
 class KeyMapInterface {
  public:
   virtual ~KeyMapInterface<T>() {}

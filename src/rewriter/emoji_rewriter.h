@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,10 @@
 #include <utility>
 
 #include "base/serialized_string_array.h"
-#include "base/string_piece.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -69,7 +69,7 @@ class ConversionRequest;
 //   }
 class EmojiRewriter : public RewriterInterface {
  public:
-  static const size_t kEmojiDataByteLength = 28;
+  static constexpr size_t kEmojiDataByteLength = 28;
 
   // Emoji data token is 28 bytes data of the following format:
   //
@@ -100,9 +100,7 @@ class EmojiRewriter : public RewriterInterface {
     EmojiDataIterator() : ptr_(nullptr) {}
     explicit EmojiDataIterator(const char *ptr) : ptr_(ptr) {}
 
-    uint32 key_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_);
-    }
+    uint32 key_index() const { return *reinterpret_cast<const uint32 *>(ptr_); }
     uint32 emoji_index() const {
       return *reinterpret_cast<const uint32 *>(ptr_ + 4);
     }
@@ -246,20 +244,19 @@ class EmojiRewriter : public RewriterInterface {
     return EmojiDataIterator(token_array_data_.data());
   }
   EmojiDataIterator end() const {
-    return EmojiDataIterator(
-        token_array_data_.data() + token_array_data_.size());
+    return EmojiDataIterator(token_array_data_.data() +
+                             token_array_data_.size());
   }
 
   // Adds emoji candidates on each segment of given segments, if it has a
   // specific string as a key based on a dictionary.  If a segment's value is
   // "えもじ", adds all emoji candidates.
   // Returns true if emoji candidates are added in any segment.
-  bool RewriteCandidates(
-      int32 available_emoji_carrier, Segments *segments) const;
+  bool RewriteCandidates(Segments *segments) const;
 
-  IteratorRange LookUpToken(StringPiece key) const;
+  IteratorRange LookUpToken(absl::string_view key) const;
 
-  StringPiece token_array_data_;
+  absl::string_view token_array_data_;
   SerializedStringArray string_array_;
 
   DISALLOW_COPY_AND_ASSIGN(EmojiRewriter);

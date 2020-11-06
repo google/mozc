@@ -3,5 +3,7 @@
 <qresource>
   <file>dictionary_tool_ja.qm</file>
   <file>dictionary_tool_en.qm</file>
+  <file alias="tr_ja.qm">../base/tr_ja.qm</file>
+  <file alias="tr_en.qm">../base/tr_en.qm</file>
 </qresource>
 </RCC>

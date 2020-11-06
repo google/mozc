@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ namespace session {
 
 class KeyEventTransformer {
  public:
-  typedef std::map<string, commands::KeyEvent> Table;
+  typedef std::map<std::string, commands::KeyEvent> Table;
 
   KeyEventTransformer();
   virtual ~KeyEventTransformer();

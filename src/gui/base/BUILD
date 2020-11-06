@@ -1,0 +1,171 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+)
+load(
+    "//tools/build_defs:qt.bzl",
+    "cc_qt_library_mozc",
+    "qt_moc_mozc",
+    "qt_rcc_mozc",
+)
+
+package(
+    default_visibility = ["//gui:__subpackages__"],
+)
+
+cc_library_mozc(
+    name = "encoding_util",
+    srcs = ["encoding_util.cc"],
+    hdrs = [
+        "encoding_util.h",
+        "sjis_to_ucs2_table.h",
+    ],
+    deps = [
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+qt_moc_mozc(
+    name = "base_files",
+    srcs = ["window_title_modifier.h"],
+    outs = ["moc_window_title_modifier.cc"],
+)
+
+exports_files([
+    "tr_en.qm",
+    "tr_ja.qm",
+])
+
+qt_rcc_mozc(
+    name = "qrc_tr",
+    srcs = [
+        "tr_en.qm",
+        "tr_ja.qm",
+    ],
+    outs = ["qrc_tr.cc"],
+    qrc_file = "tr.qrc",
+    qrc_name = "qrc_tr",
+)
+
+cc_qt_library_mozc(
+    name = "gui_base",
+    srcs = [
+        "debug_util.cc",
+        "table_util.cc",
+        "util.cc",
+        "win_util.cc",
+        "window_title_modifier.cc",
+        ":base_files",
+        ":qrc_tr",
+    ],
+    hdrs = [
+        "debug_util.h",
+        "table_util.h",
+        "util.h",
+        "win_util.h",
+        "window_title_modifier.h",
+    ],
+    deps = [
+        ":encoding_util",
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:singleton",
+        "//base:system_util",
+        "//base:util",
+        "//base:version",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_qt_library_mozc(
+    name = "msime_user_dictionary_importer",
+    srcs = [
+        "msime_user_dictionary_importer.cc",
+    ],
+    hdrs = [
+        "msime_user_dictionary_importer.h",
+    ],
+    deps = [
+        "//base:port",
+        "//dictionary:user_dictionary_importer",
+    ],
+)
+
+cc_library_mozc(
+    name = "setup_util",
+    srcs = [
+        "setup_util.cc",
+    ],
+    hdrs = [
+        "setup_util.h",
+    ],
+    deps = [
+        ":gui_base",
+        ":msime_user_dictionary_importer",
+        "//base:logging",
+        "//base:port",
+        "//dictionary:user_dictionary",
+        "//dictionary:user_dictionary_importer",
+        "//dictionary:user_dictionary_storage",
+        "//dictionary:user_dictionary_util",
+        "//usage_stats",
+    ],
+)
+
+cc_qt_library_mozc(
+    name = "singleton_window_helper",
+    srcs = [
+        "singleton_window_helper.cc",
+    ],
+    hdrs = [
+        "singleton_window_helper.h",
+    ],
+    deps = [
+        ":gui_base",
+        "//base:file_stream",
+        "//base:logging",
+        "//base:mutex",
+        "//base:port",
+        "//base:process_mutex",
+        "//base:scoped_handle",
+        "//base:util",
+        "//base:version",
+        "//ipc",
+        "//ipc:window_info_proto",
+        "@com_google_absl//absl/memory",
+    ],
+)

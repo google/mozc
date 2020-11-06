@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,14 @@
 
 #include "chrome/nacl/dictionary_downloader.h"
 
+#include <ppapi/cpp/instance.h>
 #include <ppapi/utility/completion_callback_factory.h>
 
 #include "base/logging.h"
 #include "base/mutex.h"
-#include "base/pepper_file_util.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "chrome/nacl/url_loader_util.h"
-#include "net/http_client_pepper.h"
 
 namespace mozc {
 namespace chrome {
@@ -47,15 +46,10 @@ namespace nacl {
 
 class DictionaryDownloader::Impl {
  public:
-  Impl(const string &url,
-       const string &file_name,
-       pp::Instance *instance);
+  Impl(const string &url, const string &file_name, pp::Instance *instance);
   ~Impl();
-  void SetOption(uint32 start_delay,
-                 uint32 random_delay,
-                 uint32 retry_interval,
-                 uint32 retry_backoff_count,
-                 uint32 max_retry);
+  void SetOption(uint32 start_delay, uint32 random_delay, uint32 retry_interval,
+                 uint32 retry_backoff_count, uint32 max_retry);
   void StartDownload();
   DownloadStatus GetStatus();
 
@@ -78,11 +72,8 @@ class DictionaryDownloader::Impl {
   DISALLOW_COPY_AND_ASSIGN(Impl);
 };
 
-
-DictionaryDownloader::Impl::Impl(
-    const string &url,
-    const string &file_name,
-    pp::Instance *instance)
+DictionaryDownloader::Impl::Impl(const string &url, const string &file_name,
+                                 pp::Instance *instance)
     : url_(url),
       file_name_(file_name),
       instance_(instance),
@@ -96,8 +87,7 @@ DictionaryDownloader::Impl::Impl(
   callback_factory_.Initialize(this);
 }
 
-DictionaryDownloader::Impl::~Impl() {
-}
+DictionaryDownloader::Impl::~Impl() {}
 
 void DictionaryDownloader::Impl::SetOption(uint32 start_delay,
                                            uint32 random_delay,
@@ -115,9 +105,8 @@ void DictionaryDownloader::Impl::StartDownload() {
   SetStatus(DOWNLOAD_PENDING);
   const int32 delay = start_delay_ + Util::Random(random_delay_);
   pp::Module::Get()->core()->CallOnMainThread(
-      delay,
-      callback_factory_.NewCallback(
-          &DictionaryDownloader::Impl::StartDownloadCallback));
+      delay, callback_factory_.NewCallback(
+                 &DictionaryDownloader::Impl::StartDownloadCallback));
 }
 
 void DictionaryDownloader::Impl::StartDownloadCallback(int32 result) {
@@ -128,11 +117,8 @@ void DictionaryDownloader::Impl::StartDownloadCallback(int32 result) {
   VLOG(2) << " file_name_:" << file_name_;
   SetStatus(DOWNLOAD_STARTED);
   URLLoaderUtil::StartDownloadToFile(
-      instance_,
-      url_,
-      file_name_,
-      callback_factory_.NewCallback(
-          &DictionaryDownloader::Impl::OnDownloaded));
+      instance_, url_, file_name_,
+      callback_factory_.NewCallback(&DictionaryDownloader::Impl::OnDownloaded));
 }
 
 DictionaryDownloader::DownloadStatus DictionaryDownloader::Impl::GetStatus() {
@@ -167,37 +153,26 @@ void DictionaryDownloader::Impl::OnDownloaded(int32 result) {
   SetStatus(DOWNLOAD_WAITING_FOR_RETRY);
   VLOG(2) << " next_delay:" << next_delay;
   pp::Module::Get()->core()->CallOnMainThread(
-      next_delay,
-      callback_factory_.NewCallback(
-          &DictionaryDownloader::Impl::StartDownloadCallback));
+      next_delay, callback_factory_.NewCallback(
+                      &DictionaryDownloader::Impl::StartDownloadCallback));
 }
 
-DictionaryDownloader::DictionaryDownloader(
-    const string &url,
-    const string &file_name)
-    : impl_(new Impl(url,
-                     file_name,
-                     GetPepperInstanceForHTTPClient())) {
-}
+DictionaryDownloader::DictionaryDownloader(const string &url,
+                                           const string &file_name,
+                                           pp::Instance *instance)
+    : impl_(new Impl(url, file_name, instance)) {}
 
-DictionaryDownloader::~DictionaryDownloader() {
-}
+DictionaryDownloader::~DictionaryDownloader() {}
 
-void DictionaryDownloader::SetOption(uint32 start_delay,
-                                     uint32 random_delay,
+void DictionaryDownloader::SetOption(uint32 start_delay, uint32 random_delay,
                                      uint32 retry_interval,
                                      uint32 retry_backoff_count,
                                      uint32 max_retry) {
-  impl_->SetOption(start_delay,
-                   random_delay,
-                   retry_interval,
-                   retry_backoff_count,
-                   max_retry);
+  impl_->SetOption(start_delay, random_delay, retry_interval,
+                   retry_backoff_count, max_retry);
 }
 
-void DictionaryDownloader::StartDownload() {
-  impl_->StartDownload();
-}
+void DictionaryDownloader::StartDownload() { impl_->StartDownload(); }
 
 DictionaryDownloader::DownloadStatus DictionaryDownloader::GetStatus() {
   return impl_->GetStatus();

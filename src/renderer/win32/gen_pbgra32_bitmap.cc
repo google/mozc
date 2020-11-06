@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,8 @@
 DEFINE_string(src, "", "path to the input PNG file");
 DEFINE_string(dest, "", "path to the output BMP file");
 
-using ::std::min;
 using ::std::max;
+using ::std::min;
 
 // gdiplus.h must be placed here because it internally depends on
 // global min/max functions.
@@ -86,24 +86,24 @@ bool ConvertMain() {
   // which uses 2 byte packing.  Include <poppack.h> to restore the
   // current packing mode.
   // c.f. https://msdn.microsoft.com/en-us/library/2e70t5y1.aspx
-#include <pshpack2.h>    // NOLINT
+#include <pshpack2.h>  // NOLINT
   struct PBGR32Bitmap {
-    uint16   file_signature;
-    uint32   file_size;
-    uint16   reserved1;
-    uint16   reserved2;
-    uint32   pixel_data_offset;
-    uint32   header_size;
-    int32    width;
-    int32    height;
-    uint16   num_planes;
-    uint16   bit_count;
-    uint32   compression;
-    uint32   pixel_data_size;
-    int32    pixel_per_meter_x;
-    int32    pixel_per_meter_y;
-    uint32   num_pallete;
-    uint32   important_color;
+    uint16 file_signature;
+    uint32 file_size;
+    uint16 reserved1;
+    uint16 reserved2;
+    uint32 pixel_data_offset;
+    uint32 header_size;
+    int32 width;
+    int32 height;
+    uint16 num_planes;
+    uint16 bit_count;
+    uint32 compression;
+    uint32 pixel_data_size;
+    int32 pixel_per_meter_x;
+    int32 pixel_per_meter_y;
+    uint32 num_pallete;
+    uint32 important_color;
   };
 #include <poppack.h>  // NOLINT
 
@@ -142,7 +142,7 @@ bool ConvertMain() {
 }  // namespace
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (FLAGS_src.empty()) {
     std::cout << "Specify --src option";

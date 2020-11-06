@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,16 +34,16 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
-#include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/words_info.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
-void EncodeDecodeKeyImpl(const StringPiece src, string *dst);
-size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src);
+void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst);
+size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src);
 
 uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
 
@@ -53,11 +53,11 @@ uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token);
 
 void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset);
 
-void EncodePos(
-    const TokenInfo &token_info, uint8 flags, uint8 *dst, int *offset);
+void EncodePos(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+               int *offset);
 
-void EncodeValueInfo(
-    const TokenInfo &token_info, uint8 flags, uint8 *dst, int *offset);
+void EncodeValueInfo(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+                     int *offset);
 
 uint8 ReadFlags(uint8 val);
 
@@ -65,11 +65,10 @@ void DecodeCost(const uint8 *ptr, TokenInfo *token, int *offset);
 
 void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token, int *offset);
 
-void DecodeValueInfo(
-    const uint8 *ptr, uint8 flags, TokenInfo *token_info, int *offset);
+void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
+                     int *offset);
 
-void ReadValueInfo(
-    const uint8 *ptr, uint8 flags, int *value_id, int *offset);
+void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset);
 
 //// Constants for section name ////
 const char kKeySectionName[] = "k";
@@ -197,39 +196,39 @@ SystemDictionaryCodec::SystemDictionaryCodec() {}
 
 SystemDictionaryCodec::~SystemDictionaryCodec() {}
 
-const string SystemDictionaryCodec::GetSectionNameForKey() const {
+const std::string SystemDictionaryCodec::GetSectionNameForKey() const {
   return kKeySectionName;
 }
 
-const string SystemDictionaryCodec::GetSectionNameForValue() const {
+const std::string SystemDictionaryCodec::GetSectionNameForValue() const {
   return kValueSectionName;
 }
 
-const string SystemDictionaryCodec::GetSectionNameForTokens() const {
+const std::string SystemDictionaryCodec::GetSectionNameForTokens() const {
   return kTokensSectionName;
 }
 
-const string SystemDictionaryCodec::GetSectionNameForPos() const {
+const std::string SystemDictionaryCodec::GetSectionNameForPos() const {
   return kPosSectionName;
 }
 
-void SystemDictionaryCodec::EncodeKey(
-    const StringPiece src, string *dst) const {
+void SystemDictionaryCodec::EncodeKey(const absl::string_view src,
+                                      std::string *dst) const {
   EncodeDecodeKeyImpl(src, dst);
 }
 
-void SystemDictionaryCodec::DecodeKey(
-    const StringPiece src, string *dst) const {
+void SystemDictionaryCodec::DecodeKey(const absl::string_view src,
+                                      std::string *dst) const {
   EncodeDecodeKeyImpl(src, dst);
 }
 
 size_t SystemDictionaryCodec::GetEncodedKeyLength(
-    const StringPiece src) const {
+    const absl::string_view src) const {
   return GetEncodedDecodedKeyLengthImpl(src);
 }
 
 size_t SystemDictionaryCodec::GetDecodedKeyLength(
-    const StringPiece src) const {
+    const absl::string_view src) const {
   return GetEncodedDecodedKeyLengthImpl(src);
 }
 
@@ -245,8 +244,8 @@ size_t SystemDictionaryCodec::GetDecodedKeyLength(
 //  Other 0x?? ?? -> VALUE_CHAR_MARK_OTHER ?? ??
 //  0x?????? -> VALUE_CHAR_MARK_BIG ?? ?? ??
 
-void SystemDictionaryCodec::EncodeValue(
-    const StringPiece src, string *dst) const {
+void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
+                                        std::string *dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32) == sizeof(char32),
@@ -302,8 +301,8 @@ void SystemDictionaryCodec::EncodeValue(
   }
 }
 
-void SystemDictionaryCodec::DecodeValue(
-    const StringPiece src, string *dst) const {
+void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
+                                        std::string *dst) const {
   DCHECK(dst);
   const uint8 *p = reinterpret_cast<const uint8 *>(src.data());
   const uint8 *const end = p + src.size();
@@ -358,8 +357,8 @@ uint8 SystemDictionaryCodec::GetTokensTerminationFlag() const {
   return kTokenTerminationFlag;
 }
 
-void SystemDictionaryCodec::EncodeTokens(
-    const std::vector<TokenInfo> &tokens, string *output) const {
+void SystemDictionaryCodec::EncodeTokens(const std::vector<TokenInfo> &tokens,
+                                         std::string *output) const {
   DCHECK(output);
   output->clear();
 
@@ -383,8 +382,8 @@ void SystemDictionaryCodec::EncodeTokens(
 // Index: (less than 2^22)
 //  When kCrammedIDFlag is set, 2 bytes
 //  Othewise, 3 bytes
-void SystemDictionaryCodec::EncodeToken(
-    const std::vector<TokenInfo> &tokens, int index, string *output) const {
+void SystemDictionaryCodec::EncodeToken(const std::vector<TokenInfo> &tokens,
+                                        int index, std::string *output) const {
   CHECK_LT(index, tokens.size());
 
   // Determines the flags for this token.
@@ -396,16 +395,16 @@ void SystemDictionaryCodec::EncodeToken(
   int offset = 1;
 
   const TokenInfo &token_info = tokens[index];
-  EncodePos(token_info, flags, buff, &offset);  // <= 3 bytes
-  EncodeCost(token_info, buff, &offset);  // <= 2 bytes
+  EncodePos(token_info, flags, buff, &offset);        // <= 3 bytes
+  EncodeCost(token_info, buff, &offset);              // <= 2 bytes
   EncodeValueInfo(token_info, flags, buff, &offset);  // <= 3 bytes
 
   CHECK_LE(offset, 9);
   output->append(reinterpret_cast<char *>(buff), offset);
 }
 
-void SystemDictionaryCodec::DecodeTokens(
-    const uint8 *ptr, std::vector<TokenInfo> *tokens) const {
+void SystemDictionaryCodec::DecodeTokens(const uint8 *ptr,
+                                         std::vector<TokenInfo> *tokens) const {
   DCHECK(tokens);
   int offset = 0;
   while (true) {
@@ -420,8 +419,8 @@ void SystemDictionaryCodec::DecodeTokens(
   }
 }
 
-bool SystemDictionaryCodec::DecodeToken(
-    const uint8 *ptr, TokenInfo *token_info, int *read_bytes) const {
+bool SystemDictionaryCodec::DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+                                        int *read_bytes) const {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(read_bytes);
@@ -432,8 +431,8 @@ bool SystemDictionaryCodec::DecodeToken(
   }
 
   int offset = 1;
-  DecodePos(ptr, flags, token_info, &offset);  // <= 3bytes
-  DecodeCost(ptr, token_info, &offset);  // <= 2bytes
+  DecodePos(ptr, flags, token_info, &offset);        // <= 3bytes
+  DecodeCost(ptr, token_info, &offset);              // <= 2bytes
   DecodeValueInfo(ptr, flags, token_info, &offset);  // <= 3bytes
   DCHECK_LE(offset, 9);
   *read_bytes = offset;
@@ -444,8 +443,9 @@ bool SystemDictionaryCodec::DecodeToken(
   }
 }
 
-bool SystemDictionaryCodec::ReadTokenForReverseLookup(
-    const uint8 *ptr, int *value_id, int *read_bytes) const {
+bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8 *ptr,
+                                                      int *value_id,
+                                                      int *read_bytes) const {
   DCHECK(ptr);
   DCHECK(value_id);
   DCHECK(read_bytes);
@@ -472,7 +472,6 @@ bool SystemDictionaryCodec::ReadTokenForReverseLookup(
   return !(flags & kLastTokenFlag);
 }
 
-
 namespace {
 
 // Swap the area for Hiragana, prolonged sound mark and middle dot with
@@ -483,7 +482,7 @@ namespace {
 // U+30FB - U+30FC ("・" - "ー") <=> U+0076 - U+0077
 //
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
-void EncodeDecodeKeyImpl(const StringPiece src, string *dst) {
+void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32) == sizeof(char32),
                   "char32 must be 32-bit integer size.");
@@ -509,7 +508,7 @@ void EncodeDecodeKeyImpl(const StringPiece src, string *dst) {
   }
 }
 
-size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src) {
+size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
   size_t size = src.size();
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
     static_assert(sizeof(uint32) == sizeof(char32),
@@ -534,8 +533,7 @@ size_t GetEncodedDecodedKeyLengthImpl(const StringPiece src) {
 }
 
 // Return flags for token
-uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens,
-                       int index) {
+uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index) {
   // Determines the flags for this token.
   uint8 flags = 0;
   if (index == tokens.size() - 1) {
@@ -561,7 +559,7 @@ uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens,
   // Value flag
   flags |= GetFlagForValue(token_info, token);
   if (index == 0) {
-    CHECK_NE(flags &  kValueTypeFlagMask, kSameAsPrevValueFlag)
+    CHECK_NE(flags & kValueTypeFlagMask, kSameAsPrevValueFlag)
         << "First token cannot become the SameAsPrevValue.";
   }
 
@@ -572,9 +570,7 @@ uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens,
   return flags;
 }
 
-uint8 GetFlagForPos(
-    const TokenInfo &token_info,
-    const Token *token) {
+uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token) {
   CHECK(token);
   const uint16 lid = token->lid;
   const uint16 rid = token->rid;
@@ -594,9 +590,7 @@ uint8 GetFlagForPos(
   }
 }
 
-uint8 GetFlagForValue(
-    const TokenInfo &token_info,
-    const Token *token) {
+uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token) {
   CHECK(token);
   if (token_info.value_type == TokenInfo::SAME_AS_PREV_VALUE) {
     return kSameAsPrevValueFlag;
@@ -609,8 +603,7 @@ uint8 GetFlagForValue(
   }
 }
 
-void EncodeCost(
-    const TokenInfo &token_info, uint8 *dst, int *offset) {
+void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset) {
   const Token *token = token_info.token;
   CHECK_LE(token->cost, kCostMax) << "Assuming cost is within 15bits.";
   if (token_info.cost_type == TokenInfo::CAN_USE_SMALL_ENCODING) {
@@ -623,8 +616,8 @@ void EncodeCost(
   }
 }
 
-void EncodePos(
-    const TokenInfo &token_info, uint8 flags, uint8 *dst, int *offset) {
+void EncodePos(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+               int *offset) {
   const uint8 pos_flag = flags & kPosTypeFlagMask;
   const Token *token = token_info.token;
   const uint16 lid = token->lid;
@@ -664,8 +657,8 @@ void EncodePos(
   }
 }
 
-void EncodeValueInfo(
-    const TokenInfo &token_info, uint8 flags, uint8 *dst, int *offset) {
+void EncodeValueInfo(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+                     int *offset) {
   const uint8 value_type_flag = flags & kValueTypeFlagMask;
   if (value_type_flag != kNormalValueFlag) {
     // No need to store id for word trie
@@ -713,8 +706,8 @@ void DecodeCost(const uint8 *ptr, TokenInfo *token_info, int *offset) {
   }
 }
 
-void DecodePos(
-    const uint8 *ptr, uint8 flags, TokenInfo *token_info, int *offset) {
+void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
+               int *offset) {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(offset);
@@ -754,9 +747,7 @@ void DecodePos(
   }
 }
 
-void DecodeValueInfo(const uint8 *ptr,
-                     uint8 flags,
-                     TokenInfo *token_info,
+void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
                      int *offset) {
   DCHECK(ptr);
   DCHECK(token_info);
@@ -817,12 +808,12 @@ void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset) {
 }  // namespace
 
 namespace {
-SystemDictionaryCodecInterface *g_system_dictionary_codec = NULL;
+SystemDictionaryCodecInterface *g_system_dictionary_codec = nullptr;
 typedef SystemDictionaryCodec DefaultSystemDictionaryCodec;
 }  // namespace
 
 SystemDictionaryCodecInterface *SystemDictionaryCodecFactory::GetCodec() {
-  if (g_system_dictionary_codec == NULL) {
+  if (g_system_dictionary_codec == nullptr) {
     return Singleton<DefaultSystemDictionaryCodec>::get();
   } else {
     return g_system_dictionary_codec;

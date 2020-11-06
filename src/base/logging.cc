@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,8 +62,7 @@
 #include "base/singleton.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
-DEFINE_bool(logtostderr,
-            false,
+DEFINE_bool(logtostderr, false,
             "log messages go to stderr instead of logfiles");
 DEFINE_int32(v, 0, "verbose level");
 
@@ -74,10 +73,10 @@ namespace {
 // In order to make logging.h independent from <android/log.h>, we use the
 // raw number to define the following constants. Check the equality here
 // just in case.
-#define COMPARE_LOG_LEVEL(mozc_log_level, android_log_level)  \
-    static_assert(static_cast<int>(mozc_log_level) ==         \
-                  static_cast<int>(android_log_level),        \
-                  "Checking Android log level constants.")
+#define COMPARE_LOG_LEVEL(mozc_log_level, android_log_level)                   \
+  static_assert(                                                               \
+      static_cast<int>(mozc_log_level) == static_cast<int>(android_log_level), \
+      "Checking Android log level constants.")
 COMPARE_LOG_LEVEL(LOG_UNKNOWN, ANDROID_LOG_UNKNOWN);
 COMPARE_LOG_LEVEL(LOG_DEFAULT, ANDROID_LOG_DEFAULT);
 COMPARE_LOG_LEVEL(LOG_VERBOSE, ANDROID_LOG_VERBOSE);
@@ -104,56 +103,50 @@ string Logging::GetLogMessageHeader() {
            "%p",
 #elif defined(OS_LINUX)
            "%lu",
-#elif defined(OS_MACOSX) && defined(__LP64__)
+#elif defined(__APPLE__) && defined(__LP64__)
            "%llu",
-#else  // OS_WIN or OS_MACOSX(32bit)
+#else  // OS_WIN or __APPLE__(32bit)
            "%u",
 #endif
-           1900 + tm_time.tm_year,
-           1 + tm_time.tm_mon,
-           tm_time.tm_mday,
-           tm_time.tm_hour,
-           tm_time.tm_min,
-           tm_time.tm_sec,
+           1900 + tm_time.tm_year, 1 + tm_time.tm_mon, tm_time.tm_mday,
+           tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec,
 #if defined(OS_WIN)
-           ::GetCurrentProcessId(),
-           ::GetCurrentThreadId()
-#elif defined(OS_MACOSX)
+           ::GetCurrentProcessId(), ::GetCurrentThreadId()
+#elif defined(__APPLE__)
            ::getpid(),
 #ifdef __LP64__
            reinterpret_cast<uint64>(pthread_self())
-#else  // __LP64__
+#else   // __LP64__
            reinterpret_cast<uint32>(pthread_self())
 #endif  // __LP64__
+#elif defined(OS_WASM)
+           ::getpid(), static_cast<unsigned int>(pthread_self())
 #elif defined(OS_NACL)
            ::getpid(),
            // pthread_self() returns __nc_basic_thread_data*.
-           static_cast<void*>(pthread_self())
+           static_cast<void *>(pthread_self())
 #else  // = OS_LINUX
            ::getpid(),
            // It returns unsigned long.
            pthread_self()
 #endif
-           );
+  );
   return buf;
-#else  // OS_ANDROID
+#else   // OS_ANDROID
   // On Android, other records are not needed because they are added by
   // Android's logging framework.
   char buf[32];
-  snprintf(buf, sizeof(buf),
-           "%lu ",
+  snprintf(buf, sizeof(buf), "%lu ",
            pthread_self());  // returns unsigned long.
   return buf;
 #endif  // OS_ANDROID
 }
 
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
 
-void Logging::InitLogStream(const string &log_file_path) {
-}
+void Logging::InitLogStream(const string &log_file_path) {}
 
-void Logging::CloseLogStream() {
-}
+void Logging::CloseLogStream() {}
 
 std::ostream &Logging::GetWorkingLogStream() {
   // Never called.
@@ -170,29 +163,21 @@ NullLogStream &Logging::GetNullLogStream() {
   return *(Singleton<NullLogStream>::get());
 }
 
-const char *Logging::GetLogSeverityName(LogSeverity severity) {
-  return "";
-}
+const char *Logging::GetLogSeverityName(LogSeverity severity) { return ""; }
 
 const char *Logging::GetBeginColorEscapeSequence(LogSeverity severity) {
   return "";
 }
 
-const char *Logging::GetEndColorEscapeSequence() {
-  return "";
-}
+const char *Logging::GetEndColorEscapeSequence() { return ""; }
 
-int Logging::GetVerboseLevel() {
-  return 0;
-}
+int Logging::GetVerboseLevel() { return 0; }
 
-void Logging::SetVerboseLevel(int verboselevel) {
-}
+void Logging::SetVerboseLevel(int verboselevel) {}
 
-void Logging::SetConfigVerboseLevel(int verboselevel) {
-}
+void Logging::SetConfigVerboseLevel(int verboselevel) {}
 
-#else   // NO_LOGGING
+#else  // MOZC_NO_LOGGING
 
 namespace {
 
@@ -205,12 +190,12 @@ class LogStreamImpl {
   void Reset();
 
   int verbose_level() const {
-    return std::max(FLAGS_v, config_verbose_level_);
+    return std::max(mozc::GetFlag(FLAGS_v), config_verbose_level_);
   }
 
   void set_verbose_level(int level) {
     scoped_lock l(&mutex_);
-    FLAGS_v = level;
+    mozc::SetFlag(&FLAGS_v, level);
   }
 
   void set_config_verbose_level(int level) {
@@ -218,9 +203,7 @@ class LogStreamImpl {
     config_verbose_level_ = level;
   }
 
-  bool support_color() const {
-    return support_color_;
-  }
+  bool support_color() const { return support_color_; }
 
   void Write(LogSeverity, const string &log);
 
@@ -242,8 +225,8 @@ void LogStreamImpl::Write(LogSeverity severity, const string &log) {
   } else {
 #if defined(OS_ANDROID)
     __android_log_write(severity, kProductPrefix,
-                        const_cast<char*>(log.c_str()));
-#else  // OS_ANDROID
+                        const_cast<char *>(log.c_str()));
+#else   // OS_ANDROID
     // Since our logging mechanism is essentially singleton, it is indeed
     // possible that this method is called before |Logging::InitLogStream()|.
     // b/32360767 is an example, where |SystemUtil::GetLoggingDirectory()|
@@ -256,9 +239,7 @@ void LogStreamImpl::Write(LogSeverity severity, const string &log) {
   }
 }
 
-LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) {
-  Reset();
-}
+LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
 
 // Initializes real log stream.
 // After initialization, use_cerr_ and real_log_stream_ become like following:
@@ -301,29 +282,26 @@ void LogStreamImpl::Reset() {
   real_log_stream_ = nullptr;
   config_verbose_level_ = 0;
 #if defined(OS_NACL)
-    // In NaCl, we only use stderr to output logs.
-    use_cerr_ = true;
-    support_color_ = false;
+  // In NaCl, we only use stderr to output logs.
+  use_cerr_ = true;
+  support_color_ = false;
 #elif defined(OS_ANDROID)
-    // Android uses Android's log library.
-    use_cerr_ = false;
-    support_color_ = false;
+  // Android uses Android's log library.
+  use_cerr_ = false;
+  support_color_ = false;
 #elif defined(OS_WIN)
-    // Coloring is disabled on windows
-    // because cmd.exe doesn't support ANSI color escape sequences.
-    // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
-    use_cerr_ = FLAGS_logtostderr;
-    support_color_ = false;
-#else  // OS_NACL, OS_ANDROID, OS_WIN
-    use_cerr_ = FLAGS_logtostderr;
-    support_color_ = use_cerr_ && FLAGS_colored_log
-        && ::isatty(::fileno(stderr));
+  // Coloring is disabled on windows
+  // because cmd.exe doesn't support ANSI color escape sequences.
+  // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
+  use_cerr_ = FLAGS_logtostderr;
+  support_color_ = false;
+#else   // OS_NACL, OS_ANDROID, OS_WIN
+  use_cerr_ = FLAGS_logtostderr;
+  support_color_ = use_cerr_ && FLAGS_colored_log && ::isatty(::fileno(stderr));
 #endif  // OS_NACL, OS_ANDROID, OS_WIN
 }
 
-LogStreamImpl::~LogStreamImpl() {
-  Reset();
-}
+LogStreamImpl::~LogStreamImpl() { Reset(); }
 }  // namespace
 
 void Logging::InitLogStream(const string &log_file_path) {
@@ -333,9 +311,7 @@ void Logging::InitLogStream(const string &log_file_path) {
   FinalizeWorkingLogStream(LogSeverity::LOG_INFO, &stream);
 }
 
-void Logging::CloseLogStream() {
-  Singleton<LogStreamImpl>::get()->Reset();
-}
+void Logging::CloseLogStream() { Singleton<LogStreamImpl>::get()->Reset(); }
 
 std::ostream &Logging::GetWorkingLogStream() {
   return *(new std::ostringstream);
@@ -345,7 +321,7 @@ void Logging::FinalizeWorkingLogStream(LogSeverity severity,
                                        std::ostream *working_stream) {
   *working_stream << std::endl;
   Singleton<LogStreamImpl>::get()->Write(
-      severity, static_cast<std::ostringstream*>(working_stream)->str());
+      severity, static_cast<std::ostringstream *>(working_stream)->str());
   // The working stream is new'd in LogStreamImpl::GetWorkingLogStream().
   // Must be deleted by finalizer.
   delete working_stream;
@@ -363,10 +339,10 @@ namespace {
 // Blue:    "\x1b[34m"
 // Magenta: "\x1b[35m"
 // White    "\x1b[37m"
-const char *kClearEscapeSequence   = "\x1b[0m";
-const char *kRedEscapeSequence     = "\x1b[31m";
-const char *kYellowEscapeSequence  = "\x1b[33m";
-const char *kCyanEscapeSequence    = "\x1b[36m";
+const char *kClearEscapeSequence = "\x1b[0m";
+const char *kRedEscapeSequence = "\x1b[31m";
+const char *kYellowEscapeSequence = "\x1b[33m";
+const char *kCyanEscapeSequence = "\x1b[36m";
 
 const struct SeverityProperty {
  public:
@@ -374,20 +350,16 @@ const struct SeverityProperty {
   const char *color_escape_sequence;
 } kSeverityProperties[] = {
 #ifdef OS_ANDROID
-  { "UNKNOWN", kCyanEscapeSequence },
-  { "DEFAULT", kCyanEscapeSequence },
-  { "VERBOSE", kCyanEscapeSequence },
-  { "DEBUG",   kCyanEscapeSequence },
-  { "INFO",    kCyanEscapeSequence },
-  { "WARNING", kYellowEscapeSequence },
-  { "ERROR",   kRedEscapeSequence },
-  { "FATAL",   kRedEscapeSequence },
-  { "SILENT",  kCyanEscapeSequence },
+    {"UNKNOWN", kCyanEscapeSequence}, {"DEFAULT", kCyanEscapeSequence},
+    {"VERBOSE", kCyanEscapeSequence}, {"DEBUG", kCyanEscapeSequence},
+    {"INFO", kCyanEscapeSequence},    {"WARNING", kYellowEscapeSequence},
+    {"ERROR", kRedEscapeSequence},    {"FATAL", kRedEscapeSequence},
+    {"SILENT", kCyanEscapeSequence},
 #else
-  { "INFO",    kCyanEscapeSequence },
-  { "WARNING", kYellowEscapeSequence },
-  { "ERROR",   kRedEscapeSequence },
-  { "FATAL",   kRedEscapeSequence },
+    {"INFO", kCyanEscapeSequence},
+    {"WARNING", kYellowEscapeSequence},
+    {"ERROR", kRedEscapeSequence},
+    {"FATAL", kRedEscapeSequence},
 #endif  // OS_ANDROID
 };
 }  // namespace
@@ -421,10 +393,9 @@ void Logging::SetVerboseLevel(int verboselevel) {
 void Logging::SetConfigVerboseLevel(int verboselevel) {
   Singleton<LogStreamImpl>::get()->set_config_verbose_level(verboselevel);
 }
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
 
-LogFinalizer::LogFinalizer(LogSeverity severity)
-    : severity_(severity) {}
+LogFinalizer::LogFinalizer(LogSeverity severity) : severity_(severity) {}
 
 LogFinalizer::~LogFinalizer() {
   Logging::FinalizeWorkingLogStream(severity_, working_stream_);
@@ -440,7 +411,7 @@ LogFinalizer::~LogFinalizer() {
   }
 }
 
-void LogFinalizer::operator&(std::ostream& working_stream) {
+void LogFinalizer::operator&(std::ostream &working_stream) {
   working_stream_ = &working_stream;
 }
 
@@ -452,4 +423,4 @@ void NullLogFinalizer::OnFatal() {
 #endif
 }
 
-}       // namespace mozc
+}  // namespace mozc

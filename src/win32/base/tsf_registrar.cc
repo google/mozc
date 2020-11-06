@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,13 +63,13 @@ const wchar_t kTipTextServiceModel[] = L"Apartment";
 
 // The categories this text service is registered under.
 const GUID kCategories[] = {
-  GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,     // It supports inline input.
-  GUID_TFCAT_TIPCAP_COMLESS,               // It's a COM-Less module.
-  GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT,  // It supports input mode.
-  GUID_TFCAT_TIPCAP_UIELEMENTENABLED,      // It supports UI less mode.
-  GUID_TFCAT_TIP_KEYBOARD,                 // It's a keyboard input method.
-  GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,      // It supports Metro mode.
-  GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,        // It supports Win8 systray.
+    GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,     // It supports inline input.
+    GUID_TFCAT_TIPCAP_COMLESS,               // It's a COM-Less module.
+    GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT,  // It supports input mode.
+    GUID_TFCAT_TIPCAP_UIELEMENTENABLED,      // It supports UI less mode.
+    GUID_TFCAT_TIP_KEYBOARD,                 // It's a keyboard input method.
+    GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,      // It supports Metro mode.
+    GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,        // It supports Win8 systray.
 };
 
 }  // namespace
@@ -147,14 +147,14 @@ void TsfRegistrar::UnregisterCOMServer() {
   // Create the registry key for this COM server.
   // Only Administrators can create keys under HKEY_CLASSES_ROOT.
   wchar_t ime_key[64] = {};
-  if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(),
-                         &ime_key[0], arraysize(ime_key))) {
+  if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), &ime_key[0],
+                         arraysize(ime_key))) {
     return;
   }
 
   ATL::CRegKey key;
-  HRESULT result = key.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0],
-                            KEY_READ | KEY_WRITE);
+  HRESULT result =
+      key.Open(HKEY_CLASSES_ROOT, &kTipInfoKeyPrefix[0], KEY_READ | KEY_WRITE);
   if (result != ERROR_SUCCESS) {
     return;
   }
@@ -174,8 +174,7 @@ void TsfRegistrar::UnregisterCOMServer() {
 //  5. Click "Details" in the "Text services and input languages" frame, and;
 //  6. All installed prossors are enumerated in the "Installed services"
 //     frame.
-HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path,
-                                       DWORD path_length) {
+HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
   // Retrieve the profile store for input processors.
   // If you might want to create the manager object w/o calling the pair of
   // CoInitialize/CoUninitialize, there is a helper function to retrieve the
@@ -196,14 +195,10 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path,
     std::wstring description;
     mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &description);
 
-    result = profiles->AddLanguageProfile(TsfProfile::GetTextServiceGuid(),
-                                          TsfProfile::GetLangId(),
-                                          TsfProfile::GetProfileGuid(),
-                                          description.c_str(),
-                                          description.size(),
-                                          path,
-                                          path_length,
-                                          TsfProfile::GetIconIndex());
+    result = profiles->AddLanguageProfile(
+        TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
+        TsfProfile::GetProfileGuid(), description.c_str(), description.size(),
+        path, path_length, TsfProfile::GetIconIndex());
 
     HRESULT set_display_name_result = S_OK;
     ATL::CComPtr<ITfInputProcessorProfilesEx> profiles_ex;
@@ -230,10 +225,8 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path,
       // modifiers.  See b/2994558 and the following article for details.
       // http://msdn.microsoft.com/en-us/library/bb759919.aspx
       set_display_name_result = profiles_ex->SetLanguageProfileDisplayName(
-          TsfProfile::GetTextServiceGuid(),
-          TsfProfile::GetLangId(),
-          TsfProfile::GetProfileGuid(), path,
-          path_length,
+          TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
+          TsfProfile::GetProfileGuid(), path, path_length,
           TsfProfile::GetDescriptionTextIndex());
       if (FAILED(set_display_name_result)) {
         LOG(ERROR) << "SetLanguageProfileDisplayName failed."
@@ -303,12 +296,12 @@ HRESULT TsfRegistrar::GetProfileEnabled(BOOL *enabled) {
   }
   *enabled = FALSE;
 
-  const int num_profiles = ::EnumEnabledLayoutOrTip(
-      nullptr, nullptr, nullptr, nullptr, 0);
+  const int num_profiles =
+      ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
   unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
       new LAYOUTORTIPPROFILE[num_profiles]);
-  const int num_copied = ::EnumEnabledLayoutOrTip(
-      nullptr, nullptr, nullptr, profiles.get(), num_profiles);
+  const int num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
+                                                  profiles.get(), num_profiles);
 
   for (size_t i = 0; i < num_copied; ++i) {
     if ((profiles[i].dwProfileType == LOTP_INPUTPROCESSOR) &&
@@ -369,8 +362,7 @@ HRESULT TsfRegistrar::SetProfileEnabled(BOOL enable) {
 
   return profiles->EnableLanguageProfile(TsfProfile::GetTextServiceGuid(),
                                          TsfProfile::GetLangId(),
-                                         TsfProfile::GetProfileGuid(),
-                                         enable);
+                                         TsfProfile::GetProfileGuid(), enable);
 }
 
 }  // namespace win32

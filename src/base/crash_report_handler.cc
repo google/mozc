@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #if defined(OS_WIN) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
 
-#include <Windows.h>
 #include <ShellAPI.h>  // for CommandLineToArgvW
+#include <Windows.h>
 
 #include <cstdlib>
 #include <string>
@@ -53,7 +53,7 @@ const wchar_t kGoogleCrashHandlerPipePrefix[] =
     L"\\\\.\\pipe\\GoogleCrashServices\\";
 
 // This is the well known SID for the system principal.
-const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
+const wchar_t kSystemPrincipalSid[] = L"S-1-5-18";
 
 // The postfix of the pipe name which GoogleCrashHandler.exe opens for clients
 // to register them.
@@ -62,10 +62,10 @@ const wchar_t kSystemPrincipalSid[] =L"S-1-5-18";
 #if defined(_M_X64)
 // x64 crash handler expects the postfix "-64".
 // See b/5166654 or http://crbug.com/89730 for the background info.
-const wchar_t kGoogleCrashHandlerPipePostfix[] =L"-x64";
+const wchar_t kGoogleCrashHandlerPipePostfix[] = L"-x64";
 #elif defined(_M_IX86)
 // No postfix for the x86 crash handler.
-const wchar_t kGoogleCrashHandlerPipePostfix[] =L"";
+const wchar_t kGoogleCrashHandlerPipePostfix[] = L"";
 #else
 #error "unsupported platform"
 #endif
@@ -78,13 +78,13 @@ int g_reference_count = 0;
 
 // The CRITICAL_SECTION struct used for creating or deleting ExceptionHandler in
 // a mutually exclusive manner.
-CRITICAL_SECTION *g_critical_section = NULL;
+CRITICAL_SECTION *g_critical_section = nullptr;
 
-google_breakpad::ExceptionHandler *g_handler = NULL;
+google_breakpad::ExceptionHandler *g_handler = nullptr;
 
 // Returns the name of the build mode.
 std::wstring GetBuildMode() {
-#if defined(NO_LOGGING)
+#if defined(MOZC_NO_LOGGING)
   return L"rel";
 #elif defined(DEBUG)
   return L"dbg";
@@ -94,22 +94,22 @@ std::wstring GetBuildMode() {
 }
 
 // Reduces the size of the string |str| to a max of 64 chars (Extra 1 char is
-// trimmed for NULL-terminator so effective characters are 63 characters).
+// trimmed for nullptr-terminator so effective characters are 63 characters).
 // Required because breakpad's CustomInfoEntry raises an invalid_parameter error
 // if the string we want to set is longer than 64 characters, including
-// NULL-terminator.
+// nullptr-terminator.
 std::wstring TrimToBreakpadMax(const std::wstring &str) {
   std::wstring shorter(str);
   return shorter.substr(0,
-      google_breakpad::CustomInfoEntry::kValueMaxLength - 1);
+                        google_breakpad::CustomInfoEntry::kValueMaxLength - 1);
 }
 
 // Returns the custom info structure based on the dll in parameter and the
 // process type.
-google_breakpad::CustomClientInfo* GetCustomInfo() {
+google_breakpad::CustomClientInfo *GetCustomInfo() {
   // Common entries.
-  google_breakpad::CustomInfoEntry ver_entry(L"ver",
-      mozc::Version::GetMozcVersionW().c_str());
+  google_breakpad::CustomInfoEntry ver_entry(
+      L"ver", mozc::Version::GetMozcVersionW().c_str());
   google_breakpad::CustomInfoEntry prod_entry(L"prod", kProductNameInCrash);
   google_breakpad::CustomInfoEntry buildmode_entry(L"Build Mode",
                                                    GetBuildMode().c_str());
@@ -119,8 +119,8 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
   google_breakpad::CustomInfoEntry switch2(L"switch-2", L"");
   {
     int num_args = 0;
-    wchar_t** args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
-    if (args != NULL) {
+    wchar_t **args = ::CommandLineToArgvW(::GetCommandLineW(), &num_args);
+    if (args != nullptr) {
       if (num_args > 1) {
         switch1.set_value(TrimToBreakpadMax(args[1]).c_str());
       }
@@ -132,10 +132,10 @@ google_breakpad::CustomClientInfo* GetCustomInfo() {
     }
   }
 
-  static google_breakpad::CustomInfoEntry entries[] =
-      {ver_entry, prod_entry, buildmode_entry, switch1, switch2};
-  static google_breakpad::CustomClientInfo custom_info =
-      {entries, arraysize(entries)};
+  static google_breakpad::CustomInfoEntry entries[] = {
+      ver_entry, prod_entry, buildmode_entry, switch1, switch2};
+  static google_breakpad::CustomClientInfo custom_info = {entries,
+                                                          arraysize(entries)};
 
   return &custom_info;
 }
@@ -152,13 +152,13 @@ std::wstring GetCrashHandlerPipeName() {
 class ScopedCriticalSection {
  public:
   explicit ScopedCriticalSection(CRITICAL_SECTION *critical_section)
-    : critical_section_(critical_section) {
-      if (critical_section_ != NULL) {
-        EnterCriticalSection(critical_section_);
-      }
+      : critical_section_(critical_section) {
+    if (critical_section_ != nullptr) {
+      EnterCriticalSection(critical_section_);
+    }
   }
   ~ScopedCriticalSection() {
-    if (critical_section_ != NULL) {
+    if (critical_section_ != nullptr) {
       LeaveCriticalSection(critical_section_);
     }
   }
@@ -169,11 +169,11 @@ class ScopedCriticalSection {
 
 // get the handle to the module containing the given executing address
 HMODULE GetModuleHandleFromAddress(void *address) {
-  // address may be NULL
+  // address may be nullptr
   MEMORY_BASIC_INFORMATION mbi;
   SIZE_T result = VirtualQuery(address, &mbi, sizeof(mbi));
   if (0 == result) {
-    return NULL;
+    return nullptr;
   }
   return static_cast<HMODULE>(mbi.AllocationBase);
 }
@@ -185,7 +185,7 @@ HMODULE GetCurrentModuleHandle() {
 
 // Check to see if an address is in the current module.
 bool IsAddressInCurrentModule(void *address) {
-  // address may be NULL
+  // address may be nullptr
   return GetCurrentModuleHandle() == GetModuleHandleFromAddress(address);
 }
 
@@ -213,17 +213,11 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
 #error "unsupported platform"
 #endif
 
-  while (StackWalk64(IMAGE_FILE_MACHINE_I386,
-                     GetCurrentProcess(),
-                     GetCurrentThread(),
-                     &stack,
-                     context,
-                     0,
-                     SymFunctionTableAccess64,
-                     SymGetModuleBase64,
-                     0)) {
+  while (StackWalk64(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(),
+                     GetCurrentThread(), &stack, context, 0,
+                     SymFunctionTableAccess64, SymGetModuleBase64, 0)) {
     if (IsAddressInCurrentModule(
-        reinterpret_cast<void*>(stack.AddrPC.Offset))) {
+            reinterpret_cast<void *>(stack.AddrPC.Offset))) {
       return true;
     }
   }
@@ -232,9 +226,9 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
 
 bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
                    MDRawAssertionInfo *assertion) {
-  if (exinfo == NULL) {
+  if (exinfo == nullptr) {
     // We do not catch CRT error in release build.
-#ifdef NO_LOGGING
+#ifdef MOZC_NO_LOGGING
     return false;
 #else
     return true;
@@ -255,14 +249,13 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
 
 }  // namespace
 
-
 namespace mozc {
 
 bool CrashReportHandler::Initialize(bool check_address) {
   ScopedCriticalSection critical_section(g_critical_section);
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
-  if (g_reference_count == 1 && g_handler == NULL) {
+  if (g_reference_count == 1 && g_handler == nullptr) {
     const string acrashdump_directory = SystemUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
     if (!FileUtil::FileExists(acrashdump_directory)) {
@@ -273,18 +266,15 @@ bool CrashReportHandler::Initialize(bool check_address) {
     Util::UTF8ToWide(acrashdump_directory, &crashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
-        check_address ? FilterHandler : NULL;
+        check_address ? FilterHandler : nullptr;
     const auto kCrashDumpType = static_cast<MINIDUMP_TYPE>(
         MiniDumpWithUnloadedModules | MiniDumpWithProcessThreadData);
     g_handler = new google_breakpad::ExceptionHandler(
-        crashdump_directory.c_str(),
-        filter_callback,
-        NULL,  // MinidumpCallback
-        NULL,  // callback_context
-        google_breakpad::ExceptionHandler::HANDLER_ALL,
-        kCrashDumpType,
-        GetCrashHandlerPipeName().c_str(),
-        GetCustomInfo());
+        crashdump_directory.c_str(), filter_callback,
+        nullptr,  // MinidumpCallback
+        nullptr,  // callback_context
+        google_breakpad::ExceptionHandler::HANDLER_ALL, kCrashDumpType,
+        GetCrashHandlerPipeName().c_str(), GetCustomInfo());
 
 #ifdef DEBUG
     g_handler->set_handle_debug_exceptions(true);
@@ -303,9 +293,9 @@ bool CrashReportHandler::Uninitialize() {
   ScopedCriticalSection critical_section(g_critical_section);
   --g_reference_count;
   DCHECK_GE(g_reference_count, 0);
-  if (g_reference_count == 0 && g_handler != NULL) {
+  if (g_reference_count == 0 && g_handler != nullptr) {
     delete g_handler;
-    g_handler = NULL;
+    g_handler = nullptr;
     return true;
   }
   return false;
@@ -324,22 +314,15 @@ namespace mozc {
 
 // Null implementation for platforms where we do not want to enable breakpad.
 
-bool CrashReportHandler::Initialize(bool check_address) {
-  return false;
-}
+bool CrashReportHandler::Initialize(bool check_address) { return false; }
 
-bool CrashReportHandler::IsInitialized() {
-  return false;
-}
+bool CrashReportHandler::IsInitialized() { return false; }
 
-bool CrashReportHandler::Uninitialize() {
-  return false;
-}
+bool CrashReportHandler::Uninitialize() { return false; }
 
 #ifdef OS_WIN
 void CrashReportHandler::SetCriticalSection(
-    CRITICAL_SECTION *critical_section) {
-}
+    CRITICAL_SECTION *critical_section) {}
 #endif  // OS_WIN
 
 }  // namespace mozc

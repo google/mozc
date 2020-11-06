@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,23 +45,21 @@ struct TranslationMap {
 };
 
 const TranslationMap kUTF8JapaneseMap[] = {
-  { "Direct input", "直接入力" },
-  { "Hiragana", "ひらがな" },
-  { "Katakana", "カタカナ" },
-  { "Latin", "半角英数" },
-  { "Wide Latin", "全角英数" },
-  { "Half width katakana", "半角カタカナ" },
-  { "Tools", "ツール" },
-  { "Properties", "プロパティ" },
-  { "Dictionary Tool", "辞書ツール" },
-  { "Add Word", "単語登録" },
-  { "Handwriting", "手書き文字入力" },
-  { "Character Palette", "文字パレット" },
-  { "Input Mode", "入力モード" },
+    {"Direct input", "直接入力"},
+    {"Hiragana", "ひらがな"},
+    {"Katakana", "カタカナ"},
+    {"Latin", "半角英数"},
+    {"Wide Latin", "全角英数"},
+    {"Half width katakana", "半角カタカナ"},
+    {"Tools", "ツール"},
+    {"Properties", "プロパティ"},
+    {"Dictionary Tool", "辞書ツール"},
+    {"Add Word", "単語登録"},
+    {"Input Mode", "入力モード"},
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  { "About Mozc", "Google 日本語入力について" },
+    {"About Mozc", "Google 日本語入力について"},
 #else
-  { "About Mozc", "Mozc について" },
+    {"About Mozc", "Mozc について"},
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 };
 
@@ -74,25 +72,25 @@ MessageTranslatorInterface::~MessageTranslatorInterface() {}
 
 NullMessageTranslator::NullMessageTranslator() {}
 
-string NullMessageTranslator::MaybeTranslate(const string &message) const {
+string NullMessageTranslator::MaybeTranslate(const std::string &message) const {
   return message;
 }
 
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
-    const string &locale_name) {
+    const std::string &locale_name) {
   // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
   std::vector<string> tokens;
   Util::SplitStringUsing(locale_name, ".", &tokens);
   if (tokens.size() != 2) {
     return;
   }
-  const string &language_code = tokens[0];
+  const std::string &language_code = tokens[0];
   if (language_code != "ja_JP") {
     return;
   }
 
   Util::LowerString(&tokens[1]);
-  const string &lowser_char_set_name = tokens[1];
+  const std::string &lowser_char_set_name = tokens[1];
   if (lowser_char_set_name != "utf-8" && lowser_char_set_name != "utf8") {
     return;
   }
@@ -107,8 +105,8 @@ LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
 }
 
 string LocaleBasedMessageTranslator::MaybeTranslate(
-    const string &message) const {
-  std::map<string, string>::const_iterator itr =
+    const std::string &message) const {
+  std::map<string, std::string>::const_iterator itr =
       utf8_japanese_map_.find(message);
   if (itr == utf8_japanese_map_.end()) {
     return message;

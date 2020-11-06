@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@
 #include <fstream>
 #include <string>
 
-#include "base/compiler_specific.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "rewriter/calculator/calculator_interface.h"
@@ -44,9 +43,9 @@ namespace {
 
 // Runs calculation with |expression| and compares the result and |expect|.
 void VerifyCalculation(const CalculatorInterface *calculator,
-                       const string &expression,
-                       const string &expected) {
-  string result;
+                       const std::string &expression,
+                       const std::string &expected) {
+  std::string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
   const double result_val = atof(result.c_str());
@@ -62,9 +61,9 @@ void VerifyCalculation(const CalculatorInterface *calculator,
 
 // Runs calculation and compare results in PRINTED string.
 void VerifyCalculationInString(const CalculatorInterface *calculator,
-                               const string &expression,
-                               const string &expected) {
-  string result;
+                               const std::string &expression,
+                               const std::string &expected) {
+  std::string result;
   EXPECT_TRUE(calculator->CalculateString(expression, &result))
       << expression << "  expected = " << expected;
   EXPECT_EQ(expected, result) << "expr = " << expression << std::endl;
@@ -72,8 +71,8 @@ void VerifyCalculationInString(const CalculatorInterface *calculator,
 
 // Tries to calculate |wrong_key| and returns true if it fails.
 void VerifyRejection(const CalculatorInterface *calculator,
-                     const string &wrong_key) {
-  string result;
+                     const std::string &wrong_key) {
+  std::string result;
   EXPECT_FALSE(calculator->CalculateString(wrong_key, &result))
       << "expression: " << wrong_key << std::endl;
 }
@@ -134,27 +133,27 @@ TEST(CalculatorTest, BasicTest) {
 // "expression=answer".  Answer is suppressed if the expression is invalid,
 // i.e. it is a false test.
 TEST(CalculatorTest, StressTest) {
-  const string filename = testing::GetSourceFileOrDie({
-      "data", "test", "calculator", "testset.txt"});
+  const std::string filename = testing::GetSourceFileOrDie(
+      {"data", "test", "calculator", "testset.txt"});
   CalculatorInterface *calculator = CalculatorFactory::GetCalculator();
 
   std::ifstream finput(filename.c_str());
-  string line;
+  std::string line;
   int lineno = 0;
   while (getline(finput, line)) {
     ++lineno;
 
     // |line| is of format "expression=answer".
     const size_t index_of_equal = line.find('=');
-    DCHECK(index_of_equal != string::npos);
+    DCHECK(index_of_equal != std::string::npos);
     const size_t query_length = index_of_equal + 1;
-    const string query(line, 0, query_length);
+    const std::string query(line, 0, query_length);
 
     // Smoke test.
     // If (OS_ANDROID && x86) the result differs from expectation
     // because of floating point specification so on such environment
     // Following verification is skipped.
-    string unused_result;
+    std::string unused_result;
     calculator->CalculateString(query, &unused_result);
 #if !defined(OS_ANDROID) || !defined(__i386__)
     if (line.size() == query_length) {
@@ -162,7 +161,7 @@ TEST(CalculatorTest, StressTest) {
       VerifyRejection(calculator, line);
       continue;
     }
-    const string answer(line, query_length);
+    const std::string answer(line, query_length);
     VerifyCalculation(calculator, query, answer);
 #endif  // !defined(OS_ANDROID) || !defined(__i386__)
   }

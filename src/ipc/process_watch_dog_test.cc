@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ class TestProcessWatchDog : public ProcessWatchDog {
   void Signaled(ProcessWatchDog::SignalType type) {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
     const uint64 diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(2, diff);   // allow 1-sec error
+    EXPECT_EQ(2, diff);  // allow 1-sec error
   }
 };
 
@@ -62,8 +62,7 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
   } else if (pid > 0) {
     TestProcessWatchDog dog;
     dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
-              ProcessWatchDog::UnknownThreadID,
-              -1);
+              ProcessWatchDog::UnknownThreadID, -1);
     Util::Sleep(4000);
   } else {
     LOG(ERROR) << "cannot execute fork";

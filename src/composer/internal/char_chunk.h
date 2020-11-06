@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,7 @@ class Table;
 class CharChunk {
  public:
   // LOCAL transliterator is not accepted.
-  CharChunk(Transliterators::Transliterator transliterator,
-            const Table *table);
+  CharChunk(Transliterators::Transliterator transliterator, const Table *table);
 
   void Clear();
 
@@ -65,29 +64,27 @@ class CharChunk {
   // transliterator.  If the transliterator is LOCAL, the local
   // transliterator specified via SetTransliterator is used.
   void AppendResult(Transliterators::Transliterator transliterator,
-                    string *result) const;
+                    std::string *result) const;
   void AppendTrimedResult(Transliterators::Transliterator transliterator,
-                          string *result) const;
+                          std::string *result) const;
   void AppendFixedResult(Transliterators::Transliterator transliterator,
-                         string *result) const;
+                         std::string *result) const;
 
   // Get possible results from current chunk
-  void GetExpandedResults(std::set<string> *results) const;
+  void GetExpandedResults(std::set<std::string> *results) const;
   bool IsFixed() const;
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
-  bool IsConvertible(
-      Transliterators::Transliterator transliterator,
-      const Table *table,
-      const string &input) const;
+  bool IsConvertible(Transliterators::Transliterator transliterator,
+                     const Table *table, const std::string &input) const;
 
   // Combines all fields with |left_chunk|.
   // [this chunk] := [left_chunk]+[this chunk]
   // Note that after calling this method,
   // the information contained in |left_chunk| duplicates.
   // Deleting |left_chunk| would be preferable.
-  void Combine(const CharChunk& left_chunk);
+  void Combine(const CharChunk &left_chunk);
 
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator and the table.
@@ -97,18 +94,16 @@ class CharChunk {
   // Split CharChunk at |position| and set split new chunk to |left_new_chunk|.
   // CharChunk doesn't have ownership of the new chunk.
   bool SplitChunk(Transliterators::Transliterator transliterator,
-                  size_t position,
-                  CharChunk **left_new_chunk);
+                  size_t position, CharChunk **left_new_chunk);
 
-  // Return true if this chunk should be commited immediately.  This
+  // Return true if this chunk should be committed immediately.  This
   // function refers DIRECT_INPUT attribute.
   bool ShouldCommit() const;
 
   bool ShouldInsertNewChunk(const CompositionInput &input) const;
-  void AddInput(string *input);
-  void AddConvertedChar(string *input);
-  void AddInputAndConvertedChar(string *key,
-                                string *converted_char);
+  void AddInput(std::string *input);
+  void AddConvertedChar(std::string *input);
+  void AddInputAndConvertedChar(std::string *key, std::string *converted_char);
   void AddCompositionInput(CompositionInput *input);
 
   void SetTransliterator(Transliterators::Transliterator transliterator);
@@ -131,33 +126,34 @@ class CharChunk {
   Transliterators::Transliterator GetTransliterator(
       Transliterators::Transliterator transliterator) const;
 
-  string Transliterate(Transliterators::Transliterator transliterator,
-                       const string &raw, const string &converted) const;
+  std::string Transliterate(Transliterators::Transliterator transliterator,
+                            const std::string &raw,
+                            const std::string &converted) const;
 
   // Test only
-  const string &raw() const;
+  const std::string &raw() const;
   // Test only
-  void set_raw(const string &raw);
+  void set_raw(const std::string &raw);
 
   // Test only
-  const string &conversion() const;
+  const std::string &conversion() const;
   // Test only
-  void set_conversion(const string &conversion);
+  void set_conversion(const std::string &conversion);
 
   // Test only
-  const string &pending() const;
+  const std::string &pending() const;
   // Test only
-  void set_pending(const string &pending);
+  void set_pending(const std::string &pending);
 
   // Test only
-  const string &ambiguous() const;
+  const std::string &ambiguous() const;
   // Test only
-  void set_ambiguous(const string &ambiguous);
+  void set_ambiguous(const std::string &ambiguous);
 
   CharChunk *Clone() const;
 
   // Test only
-  bool AddInputInternal(string *input);
+  bool AddInputInternal(std::string *input);
 
  private:
   FRIEND_TEST(CharChunkTest, Clone);
@@ -166,11 +162,12 @@ class CharChunk {
   Transliterators::Transliterator transliterator_;
   const Table *table_;
 
-  string raw_;
-  string conversion_;
-  string pending_;
-  string ambiguous_;
+  std::string raw_;
+  std::string conversion_;
+  std::string pending_;
+  std::string ambiguous_;
   TableAttributes attributes_;
+  mutable size_t local_length_cache_;
 };
 
 }  // namespace composer

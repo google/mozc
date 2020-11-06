@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,28 +30,29 @@
 #include "dictionary/dictionary_impl.h"
 
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
-#include "base/string_piece.h"
 #include "base/util.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
 DictionaryImpl::DictionaryImpl(
-    const DictionaryInterface *system_dictionary,
-    const DictionaryInterface *value_dictionary,
+    std::unique_ptr<const DictionaryInterface> system_dictionary,
+    std::unique_ptr<const DictionaryInterface> value_dictionary,
     DictionaryInterface *user_dictionary,
     const SuppressionDictionary *suppression_dictionary,
     const POSMatcher *pos_matcher)
     : pos_matcher_(pos_matcher),
-      system_dictionary_(system_dictionary),
-      value_dictionary_(value_dictionary),
+      system_dictionary_(std::move(system_dictionary)),
+      value_dictionary_(std::move(value_dictionary)),
       user_dictionary_(user_dictionary),
       suppression_dictionary_(suppression_dictionary) {
   CHECK(pos_matcher_);
@@ -64,11 +65,9 @@ DictionaryImpl::DictionaryImpl(
   dics_.push_back(user_dictionary_);
 }
 
-DictionaryImpl::~DictionaryImpl() {
-  dics_.clear();
-}
+DictionaryImpl::~DictionaryImpl() { dics_.clear(); }
 
-bool DictionaryImpl::HasKey(StringPiece key) const {
+bool DictionaryImpl::HasKey(absl::string_view key) const {
   for (size_t i = 0; i < dics_.size(); ++i) {
     if (dics_[i]->HasKey(key)) {
       return true;
@@ -77,7 +76,7 @@ bool DictionaryImpl::HasKey(StringPiece key) const {
   return false;
 }
 
-bool DictionaryImpl::HasValue(StringPiece value) const {
+bool DictionaryImpl::HasValue(absl::string_view value) const {
   for (size_t i = 0; i < dics_.size(); ++i) {
     if (dics_[i]->HasValue(value)) {
       return true;
@@ -103,17 +102,17 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
         suppression_dictionary_(suppression_dictionary),
         callback_(callback) {}
 
-  virtual ResultType OnKey(StringPiece key) {
+  ResultType OnKey(absl::string_view key) override {
     return callback_->OnKey(key);
   }
 
-  virtual ResultType OnActualKey(StringPiece key, StringPiece actual_key,
-                                 bool is_expanded) {
+  ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
+                         bool is_expanded) override {
     return callback_->OnActualKey(key, actual_key, is_expanded);
   }
 
-  virtual ResultType OnToken(StringPiece key, StringPiece actual_key,
-                             const Token &token) {
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override {
     if (!(token.attributes & Token::USER_DICTIONARY)) {
       if (!use_spelling_correction_ &&
           (token.attributes & Token::SPELLING_CORRECTION)) {
@@ -145,78 +144,61 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
 }  // namespace
 
 void DictionaryImpl::LookupPredictive(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
+    absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config().use_spelling_correction(),
       conversion_request.config().use_zip_code_conversion(),
-      conversion_request.config().use_t13n_conversion(),
-      pos_matcher_,
-      suppression_dictionary_,
-      callback);
+      conversion_request.config().use_t13n_conversion(), pos_matcher_,
+      suppression_dictionary_, callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupPredictive(
-        key,
-        conversion_request,
-        &callback_with_filter);
+    dics_[i]->LookupPredictive(key, conversion_request, &callback_with_filter);
   }
 }
 
-void DictionaryImpl::LookupPrefix(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void DictionaryImpl::LookupPrefix(absl::string_view key,
+                                  const ConversionRequest &conversion_request,
+                                  Callback *callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config().use_spelling_correction(),
       conversion_request.config().use_zip_code_conversion(),
-      conversion_request.config().use_t13n_conversion(),
-      pos_matcher_,
-      suppression_dictionary_,
-      callback);
+      conversion_request.config().use_t13n_conversion(), pos_matcher_,
+      suppression_dictionary_, callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
-    dics_[i]->LookupPrefix(
-        key,
-        conversion_request,
-        &callback_with_filter);
+    dics_[i]->LookupPrefix(key, conversion_request, &callback_with_filter);
   }
 }
 
-void DictionaryImpl::LookupExact(
-    StringPiece key,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void DictionaryImpl::LookupExact(absl::string_view key,
+                                 const ConversionRequest &conversion_request,
+                                 Callback *callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config().use_spelling_correction(),
       conversion_request.config().use_zip_code_conversion(),
-      conversion_request.config().use_t13n_conversion(),
-      pos_matcher_,
-      suppression_dictionary_,
-      callback);
+      conversion_request.config().use_t13n_conversion(), pos_matcher_,
+      suppression_dictionary_, callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
     dics_[i]->LookupExact(key, conversion_request, &callback_with_filter);
   }
 }
 
-void DictionaryImpl::LookupReverse(
-    StringPiece str,
-    const ConversionRequest &conversion_request,
-    Callback *callback) const {
+void DictionaryImpl::LookupReverse(absl::string_view str,
+                                   const ConversionRequest &conversion_request,
+                                   Callback *callback) const {
   CallbackWithFilter callback_with_filter(
       conversion_request.config().use_spelling_correction(),
       conversion_request.config().use_zip_code_conversion(),
-      conversion_request.config().use_t13n_conversion(),
-      pos_matcher_,
-      suppression_dictionary_,
-      callback);
+      conversion_request.config().use_t13n_conversion(), pos_matcher_,
+      suppression_dictionary_, callback);
   for (size_t i = 0; i < dics_.size(); ++i) {
     dics_[i]->LookupReverse(str, conversion_request, &callback_with_filter);
   }
 }
 
-bool DictionaryImpl::LookupComment(StringPiece key, StringPiece value,
+bool DictionaryImpl::LookupComment(absl::string_view key,
+                                   absl::string_view value,
                                    const ConversionRequest &conversion_request,
-                                   string *comment) const {
+                                   std::string *comment) const {
   // TODO(komatsu): UserDictionary should be treated as the highest priority.
   // In the current implementation, UserDictionary is the last node of dics_,
   // but the only dictionary which may return true.
@@ -228,11 +210,9 @@ bool DictionaryImpl::LookupComment(StringPiece key, StringPiece value,
   return false;
 }
 
-bool DictionaryImpl::Reload() {
-  return user_dictionary_->Reload();
-}
+bool DictionaryImpl::Reload() { return user_dictionary_->Reload(); }
 
-void DictionaryImpl::PopulateReverseLookupCache(StringPiece str) const {
+void DictionaryImpl::PopulateReverseLookupCache(absl::string_view str) const {
   for (size_t i = 0; i < dics_.size(); ++i) {
     dics_[i]->PopulateReverseLookupCache(str);
   }

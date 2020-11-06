@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,22 +54,23 @@ DEFINE_string(output_file, "", "input file");
 DEFINE_string(test_input, "", "test input string");
 
 namespace {
-string Escape(const string &buf) {
-  string tmp;
+std::string Escape(const std::string &buf) {
+  std::string tmp;
   mozc::Util::Escape(buf, &tmp);
   return tmp;
 }
 }  // namespace
 
 int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!FLAGS_iv.empty()) {
     CHECK_EQ(16, FLAGS_iv.size()) << "iv size must be 16 byte";
   }
 
-  const uint8 *iv = FLAGS_iv.empty() ? NULL :
-      reinterpret_cast<const uint8 *>(FLAGS_iv.data());
+  const uint8 *iv = FLAGS_iv.empty()
+                        ? nullptr
+                        : reinterpret_cast<const uint8 *>(FLAGS_iv.data());
 
   if (!FLAGS_input_file.empty() && !FLAGS_output_file.empty()) {
     mozc::Encryptor::Key key;
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
 
     mozc::Mmap mmap;
     CHECK(mmap.Open(FLAGS_input_file.c_str(), "r"));
-    string buf(mmap.begin(), mmap.size());
+    std::string buf(mmap.begin(), mmap.size());
     if (FLAGS_encrypt) {
       CHECK(mozc::Encryptor::EncryptString(key, &buf));
     } else if (FLAGS_decrypt) {
@@ -93,8 +94,9 @@ int main(int argc, char **argv) {
     CHECK(key1.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
     CHECK(key2.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
 
-    string buf = FLAGS_test_input;
-    string iv_buf(reinterpret_cast<const char *>(key1.iv()), key1.iv_size());
+    std::string buf = FLAGS_test_input;
+    std::string iv_buf(reinterpret_cast<const char *>(key1.iv()),
+                       key1.iv_size());
 
     std::cout << "Password:  \"" << Escape(FLAGS_password) << "\"" << std::endl;
     std::cout << "Salt:      \"" << Escape(FLAGS_salt) << "\"" << std::endl;
@@ -105,8 +107,7 @@ int main(int argc, char **argv) {
     CHECK(mozc::Encryptor::DecryptString(key2, &buf));
     std::cout << "Decrypted: \"" << Escape(buf) << "\"" << std::endl;
   } else {
-    LOG(ERROR) <<
-        "Unknown mode. set --input_file/--output_file/--test_input";
+    LOG(ERROR) << "Unknown mode. set --input_file/--output_file/--test_input";
   }
 
   return 0;

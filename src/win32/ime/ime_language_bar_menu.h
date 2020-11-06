@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 #ifndef MOZC_WIN32_IME_IME_LANGUAGE_BAR_MENU_H_
 #define MOZC_WIN32_IME_IME_LANGUAGE_BAR_MENU_H_
 
-#include <windows.h>
-#include <rpcsal.h>
 #include <msctf.h>
+#include <rpcsal.h>
+#include <windows.h>
 #include <vector>
 
 // MIDL_INTERFACE expects a string literal rather than a constant array of
@@ -49,7 +49,7 @@ class LangBarCallback;
 
 enum ImeLangBarItemFlags {
   kImeLangBarItemTypeDefault = 0,
-  kImeLangBarItemTypeChecked = TF_LBMENUF_CHECKED,            // 0x1
+  kImeLangBarItemTypeChecked = TF_LBMENUF_CHECKED,  // 0x1
   // ImeLangBarItemTypeSubMenu = TF_LBMENUF_SUBMENU  // 0x2 (not supported)
   kImeLangBarItemTypeSeparator = TF_LBMENUF_SEPARATOR,        // 0x4
   kImeLangBarItemTypeRadioChecked = TF_LBMENUF_RADIOCHECKED,  // 0x8
@@ -79,12 +79,11 @@ struct ImeLangBarMenuData {
 // Reperesents the data possessed by a language bar menu.
 class ImeLangBarMenuDataArray {
  public:
-  HRESULT Init(HINSTANCE instance,
-               const ImeLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, const ImeLangBarMenuItem* menu, int count);
 
   size_t size() const;
   ImeLangBarMenuData* data(size_t i);
+
  private:
   std::vector<ImeLangBarMenuData> data_;
 };
@@ -95,7 +94,6 @@ IMozcLangBarMenu : public IUnknown {
   virtual STDMETHODIMP SetEnabled(bool enabled) = 0;
 };
 
-
 MIDL_INTERFACE(IIDSTR_IMozcToggleButtonMenu)
 IMozcToggleButtonMenu : public IUnknown {
   // Selects a menu item which has the given |menu_id|.
@@ -103,13 +101,11 @@ IMozcToggleButtonMenu : public IUnknown {
 };
 
 // Represents the common operations for a button-menu item in the language bar.
-class ImeLangBarMenu
-    : public ITfLangBarItemButton,
-      public ITfSource,
-      public IMozcLangBarMenu {
+class ImeLangBarMenu : public ITfLangBarItemButton,
+                       public ITfSource,
+                       public IMozcLangBarMenu {
  public:
-  explicit ImeLangBarMenu(LangBarCallback* langbar_callback,
-                          const GUID& guid,
+  explicit ImeLangBarMenu(LangBarCallback* langbar_callback, const GUID& guid,
                           bool show_in_tray);
   // It is OK to declare the destructor as non-virtual because all the
   // insbtances will be deleted from and only from the Release() method by
@@ -128,16 +124,14 @@ class ImeLangBarMenu
   virtual STDMETHODIMP GetTooltipString(BSTR* tooltip);
 
   // The ITfLangBarItemButton interface methods
-  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point,
-                               const RECT* rect);
+  virtual STDMETHODIMP OnClick(TfLBIClick clink, POINT point, const RECT* rect);
   virtual STDMETHODIMP InitMenu(ITfMenu* menu) = 0;
   virtual STDMETHODIMP OnMenuSelect(UINT menu_id) = 0;
   virtual STDMETHODIMP GetIcon(HICON* icon) = 0;
   virtual STDMETHODIMP GetText(BSTR* text);
 
   // The ITfSource interface methods
-  virtual STDMETHODIMP AdviseSink(REFIID interface_id,
-                                  IUnknown* unknown,
+  virtual STDMETHODIMP AdviseSink(REFIID interface_id, IUnknown* unknown,
                                   DWORD* cookie);
   virtual STDMETHODIMP UnadviseSink(DWORD cookie);
 
@@ -146,10 +140,8 @@ class ImeLangBarMenu
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               int string_id,
-               const ImeLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, int string_id,
+               const ImeLangBarMenuItem* menu, int count);
 
   // Notifies the language bar of a change in a language bar item.
   STDMETHODIMP OnUpdate(DWORD update_flag);
@@ -194,8 +186,7 @@ class ImeLangBarMenu
 class ImeIconButtonMenu : public ImeLangBarMenu {
  public:
   explicit ImeIconButtonMenu(LangBarCallback* langbar_callback,
-                             const GUID& guid,
-                             bool show_in_tray);
+                             const GUID& guid, bool show_in_tray);
 
   // The IUnknown interface methods
   virtual STDMETHODIMP QueryInterface(REFIID guid, void** object);
@@ -211,12 +202,9 @@ class ImeIconButtonMenu : public ImeLangBarMenu {
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               UINT string_id,
-               const ImeLangBarMenuItem* menu,
-               int count,
-               UINT menu_icon_id_for_non_theme,
-               UINT menu_icon_id_for_theme);
+  HRESULT Init(HINSTANCE instance, UINT string_id,
+               const ImeLangBarMenuItem* menu, int count,
+               UINT menu_icon_id_for_non_theme, UINT menu_icon_id_for_theme);
 
  private:
   // Represents the reference count to an instance.
@@ -230,13 +218,11 @@ class ImeIconButtonMenu : public ImeLangBarMenu {
 
 // Represents the common operations for a toggle button-menu item in the
 // language bar.
-class ImeToggleButtonMenu
-    : public ImeLangBarMenu,
-      public IMozcToggleButtonMenu {
+class ImeToggleButtonMenu : public ImeLangBarMenu,
+                            public IMozcToggleButtonMenu {
  public:
   explicit ImeToggleButtonMenu(LangBarCallback* langbar_callback,
-                               const GUID& guid,
-                               bool show_in_tray);
+                               const GUID& guid, bool show_in_tray);
   ~ImeToggleButtonMenu();
 
   // The IUnknown interface methods
@@ -255,10 +241,8 @@ class ImeToggleButtonMenu
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               int string_id,
-               const ImeLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, int string_id,
+               const ImeLangBarMenuItem* menu, int count);
 
  private:
   // Represents the reference count to an instance.
@@ -271,8 +255,7 @@ class ImeToggleButtonMenu
 
 // Represents the common operations for a button-menu item in the system
 // language bar.
-class ImeSystemLangBarMenu
-    : public ITfSystemLangBarItemSink {
+class ImeSystemLangBarMenu : public ITfSystemLangBarItemSink {
  public:
   explicit ImeSystemLangBarMenu(LangBarCallback* langbar_callback,
                                 const GUID& guid);
@@ -289,9 +272,7 @@ class ImeSystemLangBarMenu
 
   // Initializes an ImeButtonMenu instance.
   // This function allocates resources for an ImeButtonMenu instance.
-  HRESULT Init(HINSTANCE instance,
-               const ImeLangBarMenuItem* menu,
-               int count);
+  HRESULT Init(HINSTANCE instance, const ImeLangBarMenuItem* menu, int count);
 
  private:
   // Represents the reference count to an instance.

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,8 @@ This script provides more features than 'copies' rule of GYP.
 2. Is able to copy directories recursively.
 """
 
-__author__ = "yukishiino"
+from __future__ import absolute_import
+from __future__ import print_function
 
 import optparse
 import os
@@ -52,7 +53,7 @@ def _ErrorExit(message):
   Args:
     message: The error message to be printed to stderr.
   """
-  print >>sys.stderr, message
+  print(message, file=sys.stderr)
   sys.exit(1)
 
 

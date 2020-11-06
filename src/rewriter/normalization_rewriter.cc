@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,19 +41,15 @@
 namespace mozc {
 namespace {
 
-enum CandidateType {
-  CANDIDATE,
-  TRANSLITERATION
-};
+enum CandidateType { CANDIDATE, TRANSLITERATION };
 
-bool NormalizeCandidate(Segment::Candidate *candidate,
-                        CandidateType type) {
+bool NormalizeCandidate(Segment::Candidate *candidate, CandidateType type) {
   DCHECK(candidate);
   if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
     return false;
   }
 
-  string value, content_value;
+  std::string value, content_value;
   switch (type) {
     case CANDIDATE:  // Go through to TRANSLITERATION
     case TRANSLITERATION:
@@ -65,8 +61,8 @@ bool NormalizeCandidate(Segment::Candidate *candidate,
       return false;
   }
 
-  const bool modified = (content_value != candidate->content_value ||
-                         value != candidate->value);
+  const bool modified =
+      (content_value != candidate->content_value || value != candidate->value);
   candidate->value = value;
   candidate->content_value = content_value;
 
@@ -94,7 +90,7 @@ bool NormalizationRewriter::Rewrite(const ConversionRequest &request,
     // Meta candidate
     for (size_t j = 0; j < segment->meta_candidates_size(); ++j) {
       Segment::Candidate *candidate =
-          segment->mutable_candidate(-static_cast<int>(j)-1);
+          segment->mutable_candidate(-static_cast<int>(j) - 1);
       DCHECK(candidate);
       modified |= NormalizeCandidate(candidate, TRANSLITERATION);
     }

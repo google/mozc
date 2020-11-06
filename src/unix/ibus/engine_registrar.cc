@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -98,11 +98,8 @@ EngineInterface *EngineRegistrar::Unregister(IBusEngineClass *engine_class) {
   return previous;
 }
 
-void EngineRegistrar::CandidateClicked(
-    IBusEngine *engine,
-    guint index,
-    guint button,
-    guint state) {
+void EngineRegistrar::CandidateClicked(IBusEngine *engine, guint index,
+                                       guint button, guint state) {
   g_engine->CandidateClicked(engine, index, button, state);
 }
 
@@ -114,17 +111,11 @@ void EngineRegistrar::CursorUp(IBusEngine *engine) {
   g_engine->CursorUp(engine);
 }
 
-void EngineRegistrar::Disable(IBusEngine *engine) {
-  g_engine->Disable(engine);
-}
+void EngineRegistrar::Disable(IBusEngine *engine) { g_engine->Disable(engine); }
 
-void EngineRegistrar::Enable(IBusEngine *engine) {
-  g_engine->Enable(engine);
-}
+void EngineRegistrar::Enable(IBusEngine *engine) { g_engine->Enable(engine); }
 
-void EngineRegistrar::FocusIn(IBusEngine *engine) {
-  g_engine->FocusIn(engine);
-}
+void EngineRegistrar::FocusIn(IBusEngine *engine) { g_engine->FocusIn(engine); }
 
 void EngineRegistrar::FocusOut(IBusEngine *engine) {
   g_engine->FocusOut(engine);
@@ -134,60 +125,42 @@ void EngineRegistrar::PageDown(IBusEngine *engine) {
   g_engine->PageDown(engine);
 }
 
-void EngineRegistrar::PageUp(IBusEngine *engine) {
-  g_engine->PageUp(engine);
-}
+void EngineRegistrar::PageUp(IBusEngine *engine) { g_engine->PageUp(engine); }
 
-gboolean EngineRegistrar::ProcessKeyEvent(
-    IBusEngine *engine,
-    guint keyval,
-    guint keycode,
-    guint state) {
+gboolean EngineRegistrar::ProcessKeyEvent(IBusEngine *engine, guint keyval,
+                                          guint keycode, guint state) {
   return g_engine->ProcessKeyEvent(engine, keyval, keycode, state);
 }
 
-void EngineRegistrar::PropertyActivate(
-    IBusEngine *engine,
-    const gchar *property_name,
-    guint property_state) {
+void EngineRegistrar::PropertyActivate(IBusEngine *engine,
+                                       const gchar *property_name,
+                                       guint property_state) {
   g_engine->PropertyActivate(engine, property_name, property_state);
 }
 
-void EngineRegistrar::PropertyHide(
-    IBusEngine *engine,
-    const gchar *property_name) {
+void EngineRegistrar::PropertyHide(IBusEngine *engine,
+                                   const gchar *property_name) {
   g_engine->PropertyHide(engine, property_name);
 }
 
-void EngineRegistrar::PropertyShow(
-    IBusEngine *engine,
-    const gchar *property_name) {
+void EngineRegistrar::PropertyShow(IBusEngine *engine,
+                                   const gchar *property_name) {
   g_engine->PropertyShow(engine, property_name);
 }
 
-void EngineRegistrar::Reset(IBusEngine *engine) {
-  g_engine->Reset(engine);
-}
+void EngineRegistrar::Reset(IBusEngine *engine) { g_engine->Reset(engine); }
 
-void EngineRegistrar::SetCapabilities(
-    IBusEngine *engine,
-    guint capabilities) {
+void EngineRegistrar::SetCapabilities(IBusEngine *engine, guint capabilities) {
   g_engine->SetCapabilities(engine, capabilities);
 }
 
-void EngineRegistrar::SetCursorLocation(
-    IBusEngine *engine,
-    gint x,
-    gint y,
-    gint w,
-    gint h) {
+void EngineRegistrar::SetCursorLocation(IBusEngine *engine, gint x, gint y,
+                                        gint w, gint h) {
   g_engine->SetCursorLocation(engine, x, y, w, h);
 }
 
-void EngineRegistrar::SetContentType(
-    IBusEngine *engine,
-    guint purpose,
-    guint hints) {
+void EngineRegistrar::SetContentType(IBusEngine *engine, guint purpose,
+                                     guint hints) {
   g_engine->SetContentType(engine, purpose, hints);
 }
 

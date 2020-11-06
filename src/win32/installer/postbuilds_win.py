@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,8 @@
 postbuilds_win.py --targetpath=my_binary.exe
 """
 
+from __future__ import print_function
+
 __author__ = "yukawa"
 
 import optparse
@@ -58,7 +60,6 @@ def ParseOption():
   return opts
 
 
-
   # Touch the timestamp file.
   if os.path.exists(abs_touch_file_path):
     os.utime(abs_touch_file_path, None)
@@ -66,11 +67,11 @@ def ParseOption():
     open(abs_touch_file_path, 'w').close()
 
 
-class RunOrDieError(StandardError):
+class RunOrDieError(Exception):
   """The exception class for RunOrDie."""
 
   def __init__(self, message):
-    StandardError.__init__(self, message)
+    Exception.__init__(self, message)
 
 
 def RunOrDie(argv):
@@ -84,25 +85,27 @@ def RunOrDie(argv):
   # be emitted to a terminal or console.
   process = subprocess.Popen(argv, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
-  (_, _) = process.communicate()
+  out, err = process.communicate()
   if process.wait() != 0:
     raise RunOrDieError('\n'.join(['',
                                    '==========',
                                    ' ERROR: %s' % ' '.join(argv),
+                                   ' Stdout', out,
+                                   ' Stderr', err,
                                    '==========']))
 
 
 def PrintErrorAndExit(error_message):
   """Prints the error message and exists."""
-  print error_message
+  print(error_message)
   sys.exit(1)
 
 
 def ShowHelpAndExit():
   """Shows the help message."""
-  print 'Usage: postbuilds_win.py [ARGS]'
-  print 'This script only supports Windows'
-  print 'See also the comment in the script for typical usage.'
+  print('Usage: postbuilds_win.py [ARGS]')
+  print('This script only supports Windows')
+  print('See also the comment in the script for typical usage.')
   sys.exit(1)
 
 
@@ -110,7 +113,7 @@ def main():
   opts = ParseOption()
 
   if not opts.targetpath:
-    print '--targetpath is not specified'
+    print('--targetpath is not specified')
     sys.exit(1)
 
   if IsWindows():

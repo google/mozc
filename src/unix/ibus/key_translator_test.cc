@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <memory>
 #include <set>
 
+#include "base/protobuf/protobuf.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
@@ -42,89 +43,89 @@ struct {
   guint ibus_key;
   commands::KeyEvent::SpecialKey mozc_key;
 } kSpecialKeys[] = {
-  {IBUS_space, commands::KeyEvent::SPACE},
-  {IBUS_Return, commands::KeyEvent::ENTER},
-  {IBUS_Left, commands::KeyEvent::LEFT},
-  {IBUS_Right, commands::KeyEvent::RIGHT},
-  {IBUS_Up, commands::KeyEvent::UP},
-  {IBUS_Down, commands::KeyEvent::DOWN},
-  {IBUS_Escape, commands::KeyEvent::ESCAPE},
-  {IBUS_Delete, commands::KeyEvent::DEL},
-  {IBUS_BackSpace, commands::KeyEvent::BACKSPACE},
-  {IBUS_Insert, commands::KeyEvent::INSERT},
-  {IBUS_Henkan, commands::KeyEvent::HENKAN},
-  {IBUS_Muhenkan, commands::KeyEvent::MUHENKAN},
-  {IBUS_Hiragana, commands::KeyEvent::KANA},
-  {IBUS_Katakana, commands::KeyEvent::KATAKANA},
-  {IBUS_Hiragana_Katakana, commands::KeyEvent::KANA},
-  {IBUS_Eisu_toggle, commands::KeyEvent::EISU},
-  {IBUS_Home, commands::KeyEvent::HOME},
-  {IBUS_End, commands::KeyEvent::END},
-  {IBUS_Tab, commands::KeyEvent::TAB},
-  {IBUS_F1, commands::KeyEvent::F1},
-  {IBUS_F2, commands::KeyEvent::F2},
-  {IBUS_F3, commands::KeyEvent::F3},
-  {IBUS_F4, commands::KeyEvent::F4},
-  {IBUS_F5, commands::KeyEvent::F5},
-  {IBUS_F6, commands::KeyEvent::F6},
-  {IBUS_F7, commands::KeyEvent::F7},
-  {IBUS_F8, commands::KeyEvent::F8},
-  {IBUS_F9, commands::KeyEvent::F9},
-  {IBUS_F10, commands::KeyEvent::F10},
-  {IBUS_F11, commands::KeyEvent::F11},
-  {IBUS_F12, commands::KeyEvent::F12},
-  {IBUS_F13, commands::KeyEvent::F13},
-  {IBUS_F14, commands::KeyEvent::F14},
-  {IBUS_F15, commands::KeyEvent::F15},
-  {IBUS_F16, commands::KeyEvent::F16},
-  {IBUS_F17, commands::KeyEvent::F17},
-  {IBUS_F18, commands::KeyEvent::F18},
-  {IBUS_F19, commands::KeyEvent::F19},
-  {IBUS_F20, commands::KeyEvent::F20},
-  {IBUS_F21, commands::KeyEvent::F21},
-  {IBUS_F22, commands::KeyEvent::F22},
-  {IBUS_F23, commands::KeyEvent::F23},
-  {IBUS_F24, commands::KeyEvent::F24},
-  {IBUS_Page_Up, commands::KeyEvent::PAGE_UP},
-  {IBUS_Page_Down, commands::KeyEvent::PAGE_DOWN},
-  {IBUS_KP_0, commands::KeyEvent::NUMPAD0},
-  {IBUS_KP_1, commands::KeyEvent::NUMPAD1},
-  {IBUS_KP_2, commands::KeyEvent::NUMPAD2},
-  {IBUS_KP_3, commands::KeyEvent::NUMPAD3},
-  {IBUS_KP_4, commands::KeyEvent::NUMPAD4},
-  {IBUS_KP_5, commands::KeyEvent::NUMPAD5},
-  {IBUS_KP_6, commands::KeyEvent::NUMPAD6},
-  {IBUS_KP_7, commands::KeyEvent::NUMPAD7},
-  {IBUS_KP_8, commands::KeyEvent::NUMPAD8},
-  {IBUS_KP_9, commands::KeyEvent::NUMPAD9},
-  {IBUS_KP_Equal, commands::KeyEvent::EQUALS},
-  {IBUS_KP_Multiply, commands::KeyEvent::MULTIPLY},
-  {IBUS_KP_Add, commands::KeyEvent::ADD},
-  {IBUS_KP_Separator, commands::KeyEvent::SEPARATOR},
-  {IBUS_KP_Subtract, commands::KeyEvent::SUBTRACT},
-  {IBUS_KP_Decimal, commands::KeyEvent::DECIMAL},
-  {IBUS_KP_Divide, commands::KeyEvent::DIVIDE},
-  {IBUS_KP_Space, commands::KeyEvent::SPACE},
-  {IBUS_KP_Tab, commands::KeyEvent::TAB},
-  {IBUS_KP_Enter, commands::KeyEvent::ENTER},
-  {IBUS_KP_Home, commands::KeyEvent::HOME},
-  {IBUS_KP_Left, commands::KeyEvent::LEFT},
-  {IBUS_KP_Up, commands::KeyEvent::UP},
-  {IBUS_KP_Right, commands::KeyEvent::RIGHT},
-  {IBUS_KP_Down, commands::KeyEvent::DOWN},
-  {IBUS_KP_Page_Up, commands::KeyEvent::PAGE_UP},
-  {IBUS_KP_Page_Down, commands::KeyEvent::PAGE_DOWN},
-  {IBUS_KP_End, commands::KeyEvent::END},
-  {IBUS_KP_Delete, commands::KeyEvent::DEL},
-  {IBUS_KP_Insert, commands::KeyEvent::INSERT},
-  {IBUS_Caps_Lock, commands::KeyEvent::CAPS_LOCK},
-  {IBUS_ISO_Left_Tab, commands::KeyEvent::TAB},
+    {IBUS_space, commands::KeyEvent::SPACE},
+    {IBUS_Return, commands::KeyEvent::ENTER},
+    {IBUS_Left, commands::KeyEvent::LEFT},
+    {IBUS_Right, commands::KeyEvent::RIGHT},
+    {IBUS_Up, commands::KeyEvent::UP},
+    {IBUS_Down, commands::KeyEvent::DOWN},
+    {IBUS_Escape, commands::KeyEvent::ESCAPE},
+    {IBUS_Delete, commands::KeyEvent::DEL},
+    {IBUS_BackSpace, commands::KeyEvent::BACKSPACE},
+    {IBUS_Insert, commands::KeyEvent::INSERT},
+    {IBUS_Henkan, commands::KeyEvent::HENKAN},
+    {IBUS_Muhenkan, commands::KeyEvent::MUHENKAN},
+    {IBUS_Hiragana, commands::KeyEvent::KANA},
+    {IBUS_Katakana, commands::KeyEvent::KATAKANA},
+    {IBUS_Hiragana_Katakana, commands::KeyEvent::KANA},
+    {IBUS_Eisu_toggle, commands::KeyEvent::EISU},
+    {IBUS_Home, commands::KeyEvent::HOME},
+    {IBUS_End, commands::KeyEvent::END},
+    {IBUS_Tab, commands::KeyEvent::TAB},
+    {IBUS_F1, commands::KeyEvent::F1},
+    {IBUS_F2, commands::KeyEvent::F2},
+    {IBUS_F3, commands::KeyEvent::F3},
+    {IBUS_F4, commands::KeyEvent::F4},
+    {IBUS_F5, commands::KeyEvent::F5},
+    {IBUS_F6, commands::KeyEvent::F6},
+    {IBUS_F7, commands::KeyEvent::F7},
+    {IBUS_F8, commands::KeyEvent::F8},
+    {IBUS_F9, commands::KeyEvent::F9},
+    {IBUS_F10, commands::KeyEvent::F10},
+    {IBUS_F11, commands::KeyEvent::F11},
+    {IBUS_F12, commands::KeyEvent::F12},
+    {IBUS_F13, commands::KeyEvent::F13},
+    {IBUS_F14, commands::KeyEvent::F14},
+    {IBUS_F15, commands::KeyEvent::F15},
+    {IBUS_F16, commands::KeyEvent::F16},
+    {IBUS_F17, commands::KeyEvent::F17},
+    {IBUS_F18, commands::KeyEvent::F18},
+    {IBUS_F19, commands::KeyEvent::F19},
+    {IBUS_F20, commands::KeyEvent::F20},
+    {IBUS_F21, commands::KeyEvent::F21},
+    {IBUS_F22, commands::KeyEvent::F22},
+    {IBUS_F23, commands::KeyEvent::F23},
+    {IBUS_F24, commands::KeyEvent::F24},
+    {IBUS_Page_Up, commands::KeyEvent::PAGE_UP},
+    {IBUS_Page_Down, commands::KeyEvent::PAGE_DOWN},
+    {IBUS_KP_0, commands::KeyEvent::NUMPAD0},
+    {IBUS_KP_1, commands::KeyEvent::NUMPAD1},
+    {IBUS_KP_2, commands::KeyEvent::NUMPAD2},
+    {IBUS_KP_3, commands::KeyEvent::NUMPAD3},
+    {IBUS_KP_4, commands::KeyEvent::NUMPAD4},
+    {IBUS_KP_5, commands::KeyEvent::NUMPAD5},
+    {IBUS_KP_6, commands::KeyEvent::NUMPAD6},
+    {IBUS_KP_7, commands::KeyEvent::NUMPAD7},
+    {IBUS_KP_8, commands::KeyEvent::NUMPAD8},
+    {IBUS_KP_9, commands::KeyEvent::NUMPAD9},
+    {IBUS_KP_Equal, commands::KeyEvent::EQUALS},
+    {IBUS_KP_Multiply, commands::KeyEvent::MULTIPLY},
+    {IBUS_KP_Add, commands::KeyEvent::ADD},
+    {IBUS_KP_Separator, commands::KeyEvent::SEPARATOR},
+    {IBUS_KP_Subtract, commands::KeyEvent::SUBTRACT},
+    {IBUS_KP_Decimal, commands::KeyEvent::DECIMAL},
+    {IBUS_KP_Divide, commands::KeyEvent::DIVIDE},
+    {IBUS_KP_Space, commands::KeyEvent::SPACE},
+    {IBUS_KP_Tab, commands::KeyEvent::TAB},
+    {IBUS_KP_Enter, commands::KeyEvent::ENTER},
+    {IBUS_KP_Home, commands::KeyEvent::HOME},
+    {IBUS_KP_Left, commands::KeyEvent::LEFT},
+    {IBUS_KP_Up, commands::KeyEvent::UP},
+    {IBUS_KP_Right, commands::KeyEvent::RIGHT},
+    {IBUS_KP_Down, commands::KeyEvent::DOWN},
+    {IBUS_KP_Page_Up, commands::KeyEvent::PAGE_UP},
+    {IBUS_KP_Page_Down, commands::KeyEvent::PAGE_DOWN},
+    {IBUS_KP_End, commands::KeyEvent::END},
+    {IBUS_KP_Delete, commands::KeyEvent::DEL},
+    {IBUS_KP_Insert, commands::KeyEvent::INSERT},
+    {IBUS_Caps_Lock, commands::KeyEvent::CAPS_LOCK},
+    {IBUS_ISO_Left_Tab, commands::KeyEvent::TAB},
 };
 
 // Checks "container" contains "key" value or not
 bool IsContained(commands::KeyEvent_ModifierKey key,
-                 const ::google::protobuf::RepeatedField<int>& container) {
-  for (int i = 0; i< container.size(); ++i) {
+                 const ::mozc::protobuf::RepeatedField<int>& container) {
+  for (int i = 0; i < container.size(); ++i) {
     if (container.Get(i) == key) {
       return true;
     }
@@ -137,9 +138,7 @@ class KeyTranslatorTest : public testing::Test {
   KeyTranslatorTest() {}
   ~KeyTranslatorTest() {}
 
-  virtual void SetUp() {
-    translator_.reset(new KeyTranslator);
-  }
+  virtual void SetUp() { translator_.reset(new KeyTranslator); }
 
   std::unique_ptr<KeyTranslator> translator_;
 };
@@ -147,15 +146,15 @@ class KeyTranslatorTest : public testing::Test {
 TEST_F(KeyTranslatorTest, TranslateAscii) {
   commands::KeyEvent out;
   // ' ' (0x20) is treated as a special key by Mozc.
-  EXPECT_TRUE(translator_->Translate(0x20, 0, 0, config::Config::ROMAN, true,
-                                     &out));
+  EXPECT_TRUE(
+      translator_->Translate(0x20, 0, 0, config::Config::ROMAN, true, &out));
   EXPECT_FALSE(out.has_key_code());
   EXPECT_TRUE(out.has_special_key());
   EXPECT_EQ(0, out.modifier_keys_size());
 
   for (char c = 0x21; c < 0x7f; ++c) {
-    EXPECT_TRUE(translator_->Translate(c, 0, 0, config::Config::ROMAN, true,
-                                       &out));
+    EXPECT_TRUE(
+        translator_->Translate(c, 0, 0, config::Config::ROMAN, true, &out));
     EXPECT_TRUE(out.has_key_code());
     EXPECT_FALSE(out.has_special_key());
     EXPECT_EQ(c, out.key_code());
@@ -542,43 +541,43 @@ TEST_F(KeyTranslatorTest, TranslateModiferOnly) {
   commands::KeyEvent out;
 
   // Just tap left_shift key
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Shift_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Shift_L, 0, 0, config::Config::ROMAN,
+                                     true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
 
   // Just tap right_shift key
   out.Clear();
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Shift_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Shift_R, 0, 0, config::Config::ROMAN,
+                                     true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::SHIFT, out.modifier_keys(0));
 
   // Just tap left_ctrl key
   out.Clear();
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Control_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Control_L, 0, 0,
+                                     config::Config::ROMAN, true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
 
   // Just tap right_ctrl key
   out.Clear();
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Control_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Control_R, 0, 0,
+                                     config::Config::ROMAN, true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::CTRL, out.modifier_keys(0));
 
   // Just tap left_alt key
   out.Clear();
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Alt_L, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Alt_L, 0, 0, config::Config::ROMAN,
+                                     true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
 
   // Just tap right_alt key
   out.Clear();
-  EXPECT_TRUE(translator_->Translate(
-      IBUS_Alt_R, 0, 0, config::Config::ROMAN, true, &out));
+  EXPECT_TRUE(translator_->Translate(IBUS_Alt_R, 0, 0, config::Config::ROMAN,
+                                     true, &out));
   EXPECT_EQ(1, out.modifier_keys_size());
   EXPECT_EQ(commands::KeyEvent::ALT, out.modifier_keys(0));
 }

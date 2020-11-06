@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 
 """Utilities to handle pos related stuff for source code generation."""
 
-__author__ = "hidehiko"
+from __future__ import absolute_import
 
-
-from collections import defaultdict
+import codecs
+import collections
 import logging
 import re
 
@@ -42,19 +42,20 @@ from build_tools import code_generator_util
 
 class PosDataBase(object):
   """Utility to look up data in id.def and special_pos.def."""
+
   def __init__(self):
     self.id_list = []
 
   def Parse(self, id_file, special_pos_file):
     id_list = []
-    with open(id_file, 'r') as stream:
+    with codecs.open(id_file, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.SkipLineComment(stream)
       stream = code_generator_util.ParseColumnStream(stream, num_column=2)
       for pos_id, feature in stream:
         id_list.append((feature, int(pos_id)))
 
     max_id = max(pos_id for _, pos_id in id_list)
-    with open(special_pos_file, 'r') as stream:
+    with codecs.open(special_pos_file, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.SkipLineComment(stream)
       for pos_id, line in enumerate(stream, start=max_id + 1):
         id_list.append((line, pos_id))
@@ -89,12 +90,13 @@ class PosDataBase(object):
 
 
 class PosMatcher(object):
+
   def __init__(self, pos_database):
     self.pos_database = pos_database
     self._match_rule_map = {}
 
   def Parse(self, pos_matcher_rule_file):
-    with open(pos_matcher_rule_file, 'r') as stream:
+    with codecs.open(pos_matcher_rule_file, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.SkipLineComment(stream)
       stream = code_generator_util.ParseColumnStream(stream, num_column=2)
       self._match_rule_map = dict(
@@ -104,7 +106,7 @@ class PosMatcher(object):
   def GetRuleNameList(self):
     """Returns a list of rule names in the original file's order."""
     sorted_rule_list = sorted(
-        self._match_rule_map.items(), key=lambda item:item[1][2])
+        list(self._match_rule_map.items()), key=lambda item: item[1][2])
     return [rule_name for rule_name, _ in sorted_rule_list]
 
   def GetRange(self, name):
@@ -122,12 +124,13 @@ class InflectionMap(object):
 
   Inflection map is a map from key to (form, value_suffix, key_suffix).
   """
+
   def __init__(self):
     self._map = {}
 
   def Parse(self, filepath):
-    result = defaultdict(list)
-    with open(filepath, 'r') as stream:
+    result = collections.defaultdict(list)
+    with codecs.open(filepath, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.SkipLineComment(stream)
       stream = code_generator_util.ParseColumnStream(stream, num_column=4)
       for key, form, value_suffix, key_suffix in stream:
@@ -147,6 +150,7 @@ class UserPos(object):
   The data is assoc list from user_pos (string) to conjugation_list.
   conjugation_list is a list of (value_suffix, key_suffix, pos_id).
   """
+
   def __init__(self, pos_database, inflection_map):
     self._pos_database = pos_database
     self._inflection_map = inflection_map
@@ -154,7 +158,7 @@ class UserPos(object):
 
   def Parse(self, filepath):
     result = []
-    with open(filepath, 'r') as stream:
+    with codecs.open(filepath, 'r', encoding='utf-8') as stream:
       stream = code_generator_util.SkipLineComment(stream)
       stream = code_generator_util.ParseColumnStream(stream, num_column=4)
       for user_pos, _, ctype, feature in stream:

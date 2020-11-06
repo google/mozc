@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@
             '<(gen_out_dir)/pos_list.h',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/embed_file.py',
+            '<(python)', '<(mozc_dir)/build_tools/embed_file.py',
             '--input=<(pos_list)',
             '--name=kPosArray',
             '--output=<(gen_out_dir)/pos_list.h',
@@ -125,7 +125,7 @@
             '<(pos_list)',
           ],
           'action': [
-            'python', '<(mozc_dir)/dictionary/gen_user_pos_data.py',
+            '<(python)', '<(mozc_dir)/dictionary/gen_user_pos_data.py',
             '--id_file=<(id_def)',
             '--special_pos_file=<(special_pos)',
             '--user_pos_file=<(user_pos)',
@@ -164,7 +164,7 @@
             '<(pos_matcher_data)',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/dictionary/gen_pos_matcher_code.py',
             '--id_file=<(id_def)',
             '--special_pos_file=<(special_pos)',

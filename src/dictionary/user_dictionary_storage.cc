@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,6 @@
 #include "base/mutex.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
-#include "base/protobuf/coded_stream.h"
-#include "base/protobuf/descriptor.h"
-#include "base/protobuf/message.h"
-#include "base/protobuf/protobuf.h"
-#include "base/protobuf/repeated_field.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_util.h"
@@ -60,7 +55,6 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-const char kAutoRegisteredDictionaryName[] = "自動登録単語";
 const char kDefaultSyncDictionaryName[] = "Sync Dictionary";
 const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";
 
@@ -68,18 +62,16 @@ const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";
 
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
-UserDictionaryStorage::UserDictionaryStorage(const string &file_name)
+UserDictionaryStorage::UserDictionaryStorage(const std::string &file_name)
     : file_name_(file_name),
       locked_(false),
       last_error_type_(USER_DICTIONARY_STORAGE_NO_ERROR),
       local_mutex_(new Mutex),
       process_mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
 
-UserDictionaryStorage::~UserDictionaryStorage() {
-  UnLock();
-}
+UserDictionaryStorage::~UserDictionaryStorage() { UnLock(); }
 
-const string &UserDictionaryStorage::filename() const {
+const std::string &UserDictionaryStorage::filename() const {
   return file_name_;
 }
 
@@ -108,16 +100,14 @@ bool UserDictionaryStorage::LoadInternal() {
   // wants to use more than 512MB.
   mozc::protobuf::io::IstreamInputStream zero_copy_input(&ifs);
   mozc::protobuf::io::CodedInputStream decoder(&zero_copy_input);
-  decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit, -1);
-  if (!ParseFromCodedStream(&decoder)) {
-    LOG(ERROR) << "Failed to parse";
-    if (!decoder.ConsumedEntireMessage() || !ifs.eof()) {
-      LOG(ERROR) << "ParseFromStream failed: file seems broken";
-      last_error_type_ = BROKEN_FILE;
-      return false;
-    }
+  decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit);
+  if (!proto_.ParseFromCodedStream(&decoder) ||
+      !decoder.ConsumedEntireMessage() ||
+      !ifs.eof()) {
+    LOG(ERROR) << "ParseFromStream failed: file seems broken";
+    last_error_type_ = BROKEN_FILE;
+    return false;
   }
-
   return true;
 }
 
@@ -137,11 +127,11 @@ bool UserDictionaryStorage::Load() {
   }
 
   // Check dictionary id here. if id is 0, assign random ID.
-  for (int i = 0; i < dictionaries_size(); ++i) {
-    const UserDictionary &dict = dictionaries(i);
+  for (int i = 0; i < proto_.dictionaries_size(); ++i) {
+    const UserDictionary &dict = proto_.dictionaries(i);
     if (dict.id() == 0) {
-      mutable_dictionaries(i)->set_id(
-          UserDictionaryUtil::CreateNewDictionaryId(*this));
+      proto_.mutable_dictionaries(i)->set_id(
+          UserDictionaryUtil::CreateNewDictionaryId(proto_));
     }
   }
 
@@ -161,7 +151,7 @@ bool UserDictionaryStorage::Save() {
     }
   }
 
-  const string tmp_file_name = file_name_ + ".tmp";
+  const std::string tmp_file_name = file_name_ + ".tmp";
   {
     OutputFileStream ofs(tmp_file_name.c_str(),
                          std::ios::out | std::ios::binary | std::ios::trunc);
@@ -171,7 +161,7 @@ bool UserDictionaryStorage::Save() {
       return false;
     }
 
-    if (!SerializeToOstream(&ofs)) {
+    if (!proto_.SerializeToOstream(&ofs)) {
       LOG(ERROR) << "SerializeToString failed";
       last_error_type_ = SYNC_FAILURE;
       return false;
@@ -211,8 +201,8 @@ bool UserDictionaryStorage::UnLock() {
   return true;
 }
 
-bool UserDictionaryStorage::ExportDictionary(
-    uint64 dic_id, const string &file_name) {
+bool UserDictionaryStorage::ExportDictionary(uint64 dic_id,
+                                             const std::string &file_name) {
   const int index = GetUserDictionaryIndex(dic_id);
   if (index < 0) {
     last_error_type_ = INVALID_DICTIONARY_ID;
@@ -227,7 +217,7 @@ bool UserDictionaryStorage::ExportDictionary(
     return false;
   }
 
-  const UserDictionary &dic = dictionaries(index);
+  const UserDictionary &dic = proto_.dictionaries(index);
   for (size_t i = 0; i < dic.entries_size(); ++i) {
     const UserDictionaryEntry &entry = dic.entries(i);
     ofs << entry.key() << "\t" << entry.value() << "\t"
@@ -238,10 +228,10 @@ bool UserDictionaryStorage::ExportDictionary(
   return true;
 }
 
-bool UserDictionaryStorage::CreateDictionary(
-    const string &dic_name, uint64 *new_dic_id) {
+bool UserDictionaryStorage::CreateDictionary(const std::string &dic_name,
+                                             uint64 *new_dic_id) {
   UserDictionaryCommandStatus::Status status =
-      UserDictionaryUtil::CreateDictionary(this, dic_name, new_dic_id);
+      UserDictionaryUtil::CreateDictionary(&proto_, dic_name, new_dic_id);
   // Update last_error_type_
   switch (status) {
     case UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY:
@@ -250,8 +240,8 @@ bool UserDictionaryStorage::CreateDictionary(
     case UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG:
       last_error_type_ = TOO_LONG_DICTIONARY_NAME;
       break;
-    case UserDictionaryCommandStatus
-        ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
+    case UserDictionaryCommandStatus ::
+        DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
       last_error_type_ = INVALID_CHARACTERS_IN_DICTIONARY_NAME;
       break;
     case UserDictionaryCommandStatus::DICTIONARY_NAME_DUPLICATED:
@@ -268,12 +258,12 @@ bool UserDictionaryStorage::CreateDictionary(
       break;
   }
 
-  return
-      status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
+  return status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
 bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
-  if (!UserDictionaryUtil::DeleteDictionary(this, dic_id, NULL, NULL)) {
+  if (!UserDictionaryUtil::DeleteDictionary(&proto_, dic_id, nullptr,
+                                            nullptr)) {
     // Failed to delete dictionary.
     last_error_type_ = INVALID_DICTIONARY_ID;
     return false;
@@ -284,7 +274,7 @@ bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
 }
 
 bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
-                                             const string &dic_name) {
+                                             const std::string &dic_name) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   if (!UserDictionaryStorage::IsValidDictionaryName(dic_name)) {
@@ -293,7 +283,7 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
   }
 
   UserDictionary *dic = GetUserDictionary(dic_id);
-  if (dic == NULL) {
+  if (dic == nullptr) {
     last_error_type_ = INVALID_DICTIONARY_ID;
     LOG(ERROR) << "Invalid dictionary id: " << dic_id;
     return false;
@@ -304,8 +294,8 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
     return true;
   }
 
-  for (int i = 0; i < dictionaries_size(); ++i) {
-    if (dic_name == dictionaries(i).name()) {
+  for (int i = 0; i < proto_.dictionaries_size(); ++i) {
+    if (dic_name == proto_.dictionaries(i).name()) {
       last_error_type_ = DUPLICATED_DICTIONARY_NAME;
       LOG(ERROR) << "duplicated dictionary name";
       return false;
@@ -318,14 +308,14 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
 }
 
 int UserDictionaryStorage::GetUserDictionaryIndex(uint64 dic_id) const {
-  return UserDictionaryUtil::GetUserDictionaryIndexById(*this, dic_id);
+  return UserDictionaryUtil::GetUserDictionaryIndexById(proto_, dic_id);
 }
 
-bool UserDictionaryStorage::GetUserDictionaryId(const string &dic_name,
+bool UserDictionaryStorage::GetUserDictionaryId(const std::string &dic_name,
                                                 uint64 *dic_id) {
-  for (size_t i = 0; i < dictionaries_size(); ++i) {
-    if (dic_name == dictionaries(i).name()) {
-      *dic_id = dictionaries(i).id();
+  for (size_t i = 0; i < proto_.dictionaries_size(); ++i) {
+    if (dic_name == proto_.dictionaries(i).name()) {
+      *dic_id = proto_.dictionaries(i).id();
       return true;
     }
   }
@@ -335,7 +325,7 @@ bool UserDictionaryStorage::GetUserDictionaryId(const string &dic_name,
 
 user_dictionary::UserDictionary *UserDictionaryStorage::GetUserDictionary(
     uint64 dic_id) {
-  return UserDictionaryUtil::GetMutableUserDictionaryById(this, dic_id);
+  return UserDictionaryUtil::GetMutableUserDictionaryById(&proto_, dic_id);
 }
 
 UserDictionaryStorage::UserDictionaryStorageErrorType
@@ -343,80 +333,14 @@ UserDictionaryStorage::GetLastError() const {
   return last_error_type_;
 }
 
-// Add new entry to the auto registered dictionary.
-bool UserDictionaryStorage::AddToAutoRegisteredDictionary(
-    const string &key, const string &value, UserDictionary::PosType pos) {
-  if (!Lock()) {
-    LOG(ERROR) << "cannot lock the user dictionary storage";
-    return false;
-  }
-
-  int auto_index = -1;
-  for (int i = 0; i < dictionaries_size(); ++i) {
-    if (dictionaries(i).name() == kAutoRegisteredDictionaryName) {
-      auto_index = i;
-      break;
-    }
-  }
-
-  UserDictionary *dic = NULL;
-  if (auto_index == -1) {
-    if (UserDictionaryUtil::IsStorageFull(*this)) {
-      last_error_type_ = TOO_MANY_DICTIONARIES;
-      LOG(ERROR) << "too many dictionaries";
-      UnLock();
-      return false;
-    }
-    dic = add_dictionaries();
-    dic->set_id(UserDictionaryUtil::CreateNewDictionaryId(*this));
-    dic->set_name(kAutoRegisteredDictionaryName);
-  } else {
-    dic = mutable_dictionaries(auto_index);
-  }
-
-  if (dic == NULL) {
-    LOG(ERROR) << "cannot add a new dictionary.";
-    UnLock();
-    return false;
-  }
-
-  if (dic->entries_size() >= max_entry_size()) {
-    last_error_type_ = TOO_MANY_ENTRIES;
-    LOG(ERROR) << "too many entries";
-    UnLock();
-    return false;
-  }
-
-  UserDictionaryEntry *entry = dic->add_entries();
-  if (entry == NULL) {
-    LOG(ERROR) << "cannot add new entry";
-    UnLock();
-    return false;
-  }
-
-  entry->set_key(key);
-  entry->set_value(value);
-  entry->set_pos(pos);
-  entry->set_auto_registered(true);
-
-  if (!Save()) {
-    UnLock();
-    LOG(ERROR) << "cannot save the user dictionary storage";
-    return false;
-  }
-
-  UnLock();
-  return true;
-}
-
 bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
-  if (CountSyncableDictionaries(*this) == 0) {
+  if (CountSyncableDictionaries(proto_) == 0) {
     return false;
   }
 
-  for (int dictionary_index = dictionaries_size() - 1;
+  for (int dictionary_index = proto_.dictionaries_size() - 1;
        dictionary_index >= 0; --dictionary_index) {
-    UserDictionary *dic = mutable_dictionaries(dictionary_index);
+    UserDictionary *dic = proto_.mutable_dictionaries(dictionary_index);
     if (!dic->syncable()) {
       continue;
     }
@@ -433,20 +357,20 @@ bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
 
     // Delete removed or unused sync dictionaries.
     if (dic->removed() || dic->entries_size() == 0) {
-      for (int i = dictionary_index + 1; i < dictionaries_size(); ++i) {
-        mutable_dictionaries()->SwapElements(i - 1, i);
+      for (int i = dictionary_index + 1; i < proto_.dictionaries_size(); ++i) {
+        proto_.mutable_dictionaries()->SwapElements(i - 1, i);
       }
-      mutable_dictionaries()->RemoveLast();
+      proto_.mutable_dictionaries()->RemoveLast();
       continue;
     }
 
     if (dic->name() == default_sync_dictionary_name()) {
-      string new_dictionary_name =
+      std::string new_dictionary_name =
           kDictionaryNameConvertedFromSyncableDictionary;
       int index = 0;
-      while (UserDictionaryUtil::ValidateDictionaryName(
-                 *this, new_dictionary_name)
-             != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
+      while (UserDictionaryUtil::ValidateDictionaryName(proto_,
+                                                        new_dictionary_name) !=
+             UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
         ++index;
         new_dictionary_name = Util::StringPrintf(
             "%s_%d", kDictionaryNameConvertedFromSyncableDictionary, index);
@@ -456,7 +380,7 @@ bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
     dic->set_syncable(false);
   }
 
-  DCHECK_EQ(0, CountSyncableDictionaries(*this));
+  DCHECK_EQ(0, CountSyncableDictionaries(proto_));
 
   return true;
 }
@@ -484,10 +408,10 @@ size_t UserDictionaryStorage::max_dictionary_size() {
   return UserDictionaryUtil::max_entry_size();
 }
 
-bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
+bool UserDictionaryStorage::IsValidDictionaryName(const std::string &name) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::ValidateDictionaryName(
-          UserDictionaryStorage::default_instance(), name);
+          user_dictionary::UserDictionaryStorage::default_instance(), name);
 
   // Update last_error_type_.
   switch (status) {
@@ -502,8 +426,8 @@ bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
     case UserDictionaryCommandStatus::DICTIONARY_NAME_TOO_LONG:
       last_error_type_ = TOO_LONG_DICTIONARY_NAME;
       return false;
-    case UserDictionaryCommandStatus
-        ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
+    case UserDictionaryCommandStatus ::
+        DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER:
       last_error_type_ = INVALID_CHARACTERS_IN_DICTIONARY_NAME;
       return false;
     default:
@@ -513,8 +437,8 @@ bool UserDictionaryStorage::IsValidDictionaryName(const string &name) {
   // Should never reach here.
 }
 
-string UserDictionaryStorage::default_sync_dictionary_name() {
-  return string(kDefaultSyncDictionaryName);
+std::string UserDictionaryStorage::default_sync_dictionary_name() {
+  return std::string(kDefaultSyncDictionaryName);
 }
 
 }  // namespace mozc

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,27 +39,27 @@ namespace client {
 #define MockConstBoolImplementation(method_name, argument) \
   bool ClientMock::method_name(argument) const {           \
     function_counter_[#method_name]++;                     \
-    std::map<string, bool>::const_iterator it =                 \
+    std::map<std::string, bool>::const_iterator it =       \
         return_bool_values_.find(#method_name);            \
     if (it != return_bool_values_.end()) {                 \
       return it->second;                                   \
     }                                                      \
     return false;                                          \
   }
-#define MockBoolImplementation(method_name, argument)      \
-  bool ClientMock::method_name(argument) {                 \
-    function_counter_[#method_name]++;                     \
-    std::map<string, bool>::const_iterator it =                 \
-        return_bool_values_.find(#method_name);            \
-    if (it != return_bool_values_.end()) {                 \
-      return it->second;                                   \
-    }                                                      \
-    return false;                                          \
+#define MockBoolImplementation(method_name, argument) \
+  bool ClientMock::method_name(argument) {            \
+    function_counter_[#method_name]++;                \
+    std::map<std::string, bool>::const_iterator it =  \
+        return_bool_values_.find(#method_name);       \
+    if (it != return_bool_values_.end()) {            \
+      return it->second;                              \
+    }                                                 \
+    return false;                                     \
   }
-#define MockVoidImplementation(method_name, argument)      \
-  void ClientMock::method_name(argument) {                 \
-    function_counter_[#method_name]++;                     \
-    return;                                                \
+#define MockVoidImplementation(method_name, argument) \
+  void ClientMock::method_name(argument) {            \
+    function_counter_[#method_name]++;                \
+    return;                                           \
   }
 
 MockVoidImplementation(SetIPCClientFactory,
@@ -83,12 +83,12 @@ MockBoolImplementation(NoOperation, void);
 MockVoidImplementation(EnableCascadingWindow, bool enable);
 MockVoidImplementation(set_timeout, int timeout);
 MockVoidImplementation(set_restricted, bool restricted);
-MockVoidImplementation(set_server_program, const string &program_path);
+MockVoidImplementation(set_server_program, const std::string &program_path);
 MockVoidImplementation(set_suppress_error_dialog, bool suppress_error_dialog);
 MockVoidImplementation(set_client_capability,
                        const commands::Capability &capability);
 MockBoolImplementation(LaunchToolWithProtoBuf, const commands::Output &output);
-MockBoolImplementation(OpenBrowser, const string &url);
+MockBoolImplementation(OpenBrowser, const std::string &url);
 
 #undef MockConstImplementation
 #undef MockBoolImplementation
@@ -102,12 +102,12 @@ MockBoolImplementation(OpenBrowser, const string &url);
                                commands::Output *output) {           \
     function_counter_[#method_name]++;                               \
     called_##method_name##_.CopyFrom(argument);                      \
-    std::map<string, commands::Output>::const_iterator it =          \
+    std::map<std::string, commands::Output>::const_iterator it =     \
         outputs_.find(#method_name);                                 \
     if (it != outputs_.end()) {                                      \
       output->CopyFrom(it->second);                                  \
     }                                                                \
-    std::map<string, bool>::const_iterator retval =                  \
+    std::map<std::string, bool>::const_iterator retval =             \
         return_bool_values_.find(#method_name);                      \
     if (retval != return_bool_values_.end()) {                       \
       return retval->second;                                         \
@@ -124,13 +124,12 @@ MockImplementationWithContextAndOutput(SendCommandWithContext,
 
 #undef MockImplementationWithContextAndOutput
 
-
 // Exceptional methods.
 // GetConfig needs to obtain the "called_config_".
 bool ClientMock::GetConfig(config::Config *config) {
   function_counter_["GetConfig"]++;
   config->CopyFrom(called_config_);
-  std::map<string, bool>::const_iterator it =
+  std::map<std::string, bool>::const_iterator it =
       return_bool_values_.find("GetConfig");
   if (it != return_bool_values_.end()) {
     return it->second;
@@ -142,7 +141,7 @@ bool ClientMock::GetConfig(config::Config *config) {
 bool ClientMock::SetConfig(const config::Config &config) {
   function_counter_["SetConfig"]++;
   called_config_.CopyFrom(config);
-  std::map<string, bool>::const_iterator it =
+  std::map<std::string, bool>::const_iterator it =
       return_bool_values_.find("SetConfig");
   if (it != return_bool_values_.end()) {
     return it->second;
@@ -151,7 +150,8 @@ bool ClientMock::SetConfig(const config::Config &config) {
 }
 
 // LaunchTool arguments are quite different from other methods.
-bool ClientMock::LaunchTool(const string &mode, const string &extra_arg) {
+bool ClientMock::LaunchTool(const std::string &mode,
+                            const std::string &extra_arg) {
   function_counter_["LaunchTool"]++;
   return return_bool_values_["LaunchTool"];
 }
@@ -159,17 +159,17 @@ bool ClientMock::LaunchTool(const string &mode, const string &extra_arg) {
 // Other methods to deal with internal data such like operations over
 // function counters or setting the expected return values.
 void ClientMock::ClearFunctionCounter() {
-  for (std::map<string, int>::iterator it = function_counter_.begin();
+  for (std::map<std::string, int>::iterator it = function_counter_.begin();
        it != function_counter_.end(); it++) {
     it->second = 0;
   }
 }
 
-void ClientMock::SetBoolFunctionReturn(string func_name, bool value) {
+void ClientMock::SetBoolFunctionReturn(std::string func_name, bool value) {
   return_bool_values_[func_name] = value;
 }
 
-int ClientMock::GetFunctionCallCount(string key) {
+int ClientMock::GetFunctionCallCount(std::string key) {
   return function_counter_[key];
 }
 

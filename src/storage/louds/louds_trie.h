@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@
 #include <memory>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "storage/louds/louds.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace storage {
@@ -44,7 +44,7 @@ namespace louds {
 class LoudsTrie {
  public:
   // The max depth of the trie.
-  static const size_t kMaxDepth = 256;
+  static constexpr size_t kMaxDepth = 256;
 
   // This class stores a traversal state.
   typedef Louds::Node Node;
@@ -56,18 +56,13 @@ class LoudsTrie {
   // cache sizes are passed to the underlying LOUDS.  See louds.h for more
   // information of cache size.  The last one is passed to the underlying
   // terminal bit vector.  This class doesn't own the "data", so it is caller's
-  // reponsibility to keep the data alive until Close is invoked.  See .cc file
+  // responsibility to keep the data alive until Close is invoked.  See .cc file
   // for the detailed format of the binary image.
-  bool Open(const uint8 *data,
-            size_t louds_lb0_cache_size,
-            size_t louds_lb1_cache_size,
-            size_t louds_select0_cache_size,
-            size_t louds_select1_cache_size,
-            size_t termvec_lb1_cache_size);
+  bool Open(const uint8 *data, size_t louds_lb0_cache_size,
+            size_t louds_lb1_cache_size, size_t louds_select0_cache_size,
+            size_t louds_select1_cache_size, size_t termvec_lb1_cache_size);
 
-  bool Open(const uint8 *data) {
-    return Open(data, 0, 0, 0, 0, 0);
-  }
+  bool Open(const uint8 *data) { return Open(data, 0, 0, 0, 0, 0); }
 
   // Destructs the internal data structure explicitly (the destructor will do
   // clean up too).
@@ -110,35 +105,30 @@ class LoudsTrie {
   }
 
   // Restores the key string that reaches to |node|.  The caller is
-  // responsible for allocating a buffer for the result StringPiece, which needs
-  // to be passed in |buf|.  The returned StringPiece points to a piece of
+  // responsible for allocating a buffer for the result string view, which needs
+  // to be passed in |buf|.  The returned string view points to a piece of
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
-  StringPiece RestoreKeyString(Node node, char *buf) const;
+  absl::string_view RestoreKeyString(Node node, char *buf) const;
 
   // Restores the key string corresponding to |key_id|.  The caller is
-  // responsible for allocating a buffer for the result StringPiece, which needs
-  // to be passed in |buf|.  The returned StringPiece points to a piece of
+  // responsible for allocating a buffer for the result string view, which needs
+  // to be passed in |buf|.  The returned string view points to a piece of
   // |buf|.
   // REQUIRES: |buf| is longer than kMaxDepth + 1.
-  StringPiece RestoreKeyString(int key_id, char *buf) const {
+  absl::string_view RestoreKeyString(int key_id, char *buf) const {
     // TODO(noriyukit): Check if it's necessary to handle negative IDs.
-    return key_id < 0
-        ? StringPiece()
-        : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
+    return key_id < 0 ? absl::string_view()
+                      : RestoreKeyString(GetTerminalNodeFromKeyId(key_id), buf);
   }
 
   // Methods for moving node exported from Louds class; see louds.h.
-  void MoveToFirstChild(Node *node) const {
-    louds_.MoveToFirstChild(node);
-  }
+  void MoveToFirstChild(Node *node) const { louds_.MoveToFirstChild(node); }
   Node MoveToFirstChild(Node node) const {
     MoveToFirstChild(&node);
     return node;
   }
-  static void MoveToNextSibling(Node *node) {
-    Louds::MoveToNextSibling(node);
-  }
+  static void MoveToNextSibling(Node *node) { Louds::MoveToNextSibling(node); }
   static Node MoveToNextSibling(Node node) {
     MoveToNextSibling(&node);
     return node;
@@ -151,12 +141,12 @@ class LoudsTrie {
   // Traverses a trie for |key|, starting from |node|, and modifies |node| to
   // the destination terminal node.  Here, |node| is not necessarily the root.
   // Returns false if there's no node reachable by |key|.
-  bool Traverse(StringPiece key, Node *node) const;
+  bool Traverse(absl::string_view key, Node *node) const;
 
   // Higher level APIs.
 
   // Returns true if |key| is in this trie.
-  bool HasKey(StringPiece key) const {
+  bool HasKey(absl::string_view key) const {
     Node node;  // Root
     return Traverse(key, &node) && IsTerminalNode(node);
   }
@@ -165,7 +155,7 @@ class LoudsTrie {
   // -1 if such key doesn't exist.
   // NOTE: When you only need to check if |key| is in this trie, use HasKey()
   // method, which is more efficient.
-  int ExactSearch(StringPiece key) const;
+  int ExactSearch(absl::string_view key) const;
 
   // Runs a functor for the prefixes of |key| that exist in the trie.
   // |callback| needs to have the following signature:
@@ -181,9 +171,9 @@ class LoudsTrie {
   //   node: The location information, from which key ID can be recovered by
   //         LoudsTrie::GetKeyIdOfTerminalNode() method.
   template <typename Func>
-  void PrefixSearch(StringPiece key, Func callback) const {
+  void PrefixSearch(absl::string_view key, Func callback) const {
     Node node;
-    for (StringPiece::size_type i = 0; i < key.size(); ) {
+    for (absl::string_view::size_type i = 0; i < key.size();) {
       if (!MoveToChildByLabel(key[i], &node)) {
         return;
       }

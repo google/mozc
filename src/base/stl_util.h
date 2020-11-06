@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,7 @@
 namespace mozc {
 
 template <class ForwardIterator>
-void STLDeleteContainerPointers(ForwardIterator begin,
-                                ForwardIterator end) {
+void STLDeleteContainerPointers(ForwardIterator begin, ForwardIterator end) {
   while (begin != end) {
     ForwardIterator temp = begin;
     ++begin;
@@ -51,7 +50,7 @@ void STLDeleteElements(T *container) {
   if (!container) {
     return;
   }
-  STLDeleteContainerPointers(container->begin(), container->end());
+  mozc::STLDeleteContainerPointers(container->begin(), container->end());
   container->clear();
 }
 
@@ -72,14 +71,12 @@ class ScopedElementsDeleter {
 template <typename Key, typename Comparator>
 class OrderBy {
  public:
-  OrderBy() {
-  }
+  OrderBy() {}
 
   OrderBy(const Key &key, const Comparator &comparator)
-      : key_(key), comparator_(comparator) {
-  }
+      : key_(key), comparator_(comparator) {}
 
-  template<typename T>
+  template <typename T>
   bool operator()(const T &lhs, const T &rhs) const {
     return comparator_(key_(lhs), key_(rhs));
   }
@@ -91,7 +88,7 @@ class OrderBy {
 
 // Function object to return pair<T1, T2>::first.
 struct FirstKey {
-  template<typename T>
+  template <typename T>
   const typename T::first_type &operator()(const T &value) const {
     return value.first;
   }
@@ -99,16 +96,16 @@ struct FirstKey {
 
 // Function object to return pair<T1, T2>::second.
 struct SecondKey {
-  template<typename T>
+  template <typename T>
   const typename T::second_type &operator()(const T &value) const {
     return value.second;
   }
 };
 
 // Simple wrapper of binary predicator in functional.
-template<template<typename T> class Comparator>
+template <template <typename T> class Comparator>
 struct FunctionalComparator {
-  template<typename T>
+  template <typename T>
   bool operator()(const T &lhs, const T &rhs) const {
     return Comparator<T>()(lhs, rhs);
   }

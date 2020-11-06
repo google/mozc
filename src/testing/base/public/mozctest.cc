@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,36 +34,45 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace testing {
 
-string GetSourcePath(const std::vector<StringPiece> &components) {
-  std::vector<StringPiece> abs_components = {
-    FLAGS_test_srcdir,
+std::string GetSourcePath(const std::vector<absl::string_view> &components) {
+  std::vector<absl::string_view> abs_components = {
+      FLAGS_test_srcdir,
   };
-  abs_components.insert(abs_components.end(),
-                        components.begin(), components.end());
+
+  const char *workspace = std::getenv("TEST_WORKSPACE");
+  if (workspace && workspace[0]) {
+    abs_components.push_back(workspace);
+  }
+
+  abs_components.insert(abs_components.end(), components.begin(),
+                        components.end());
   return FileUtil::JoinPath(abs_components);
 }
 
-string GetSourceFileOrDie(const std::vector<StringPiece> &components) {
-  const string path = GetSourcePath(components);
+std::string GetSourceFileOrDie(
+    const std::vector<absl::string_view> &components) {
+  const std::string path = GetSourcePath(components);
   CHECK(FileUtil::FileExists(path)) << "File doesn't exist: " << path;
   return path;
 }
 
-string GetSourceDirOrDie(const std::vector<StringPiece> &components) {
-  const string path = GetSourcePath(components);
+std::string GetSourceDirOrDie(
+    const std::vector<absl::string_view> &components) {
+  const std::string path = GetSourcePath(components);
   CHECK(FileUtil::DirectoryExists(path)) << "Directory doesn't exist: " << path;
   return path;
 }
 
-std::vector<string> GetSourceFilesInDirOrDie(
-    const std::vector<StringPiece> &dir_components,
-    const std::vector<StringPiece> &filenames) {
-  const string dir = GetSourceDirOrDie(dir_components);
-  std::vector<string> paths;
+std::vector<std::string> GetSourceFilesInDirOrDie(
+    const std::vector<absl::string_view> &dir_components,
+    const std::vector<absl::string_view> &filenames) {
+  const std::string dir = GetSourceDirOrDie(dir_components);
+  std::vector<std::string> paths;
   for (size_t i = 0; i < filenames.size(); ++i) {
     paths.push_back(FileUtil::JoinPath({dir, filenames[i]}));
     CHECK(FileUtil::FileExists(paths.back()))

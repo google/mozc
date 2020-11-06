@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,9 @@
 
 #include <algorithm>
 #include <climits>
+#include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -49,18 +51,18 @@
 #include "rewriter/rewriter_interface.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
-
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::SuppressionDictionary;
-using mozc::usage_stats::UsageStats;
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
 
+using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::usage_stats::UsageStats;
+
 const size_t kErrorIndex = static_cast<size_t>(-1);
 
-size_t GetSegmentIndex(const Segments *segments,
-                       size_t segment_index) {
+size_t GetSegmentIndex(const Segments *segments, size_t segment_index) {
   const size_t history_segments_size = segments->history_segments_size();
   const size_t result = history_segments_size + segment_index;
   if (result >= segments->segments_size()) {
@@ -69,7 +71,7 @@ size_t GetSegmentIndex(const Segments *segments,
   return result;
 }
 
-void SetKey(Segments *segments, const string &key) {
+void SetKey(Segments *segments, const std::string &key) {
   segments->set_max_history_segments_size(4);
   segments->clear_conversion_segments();
 
@@ -85,7 +87,7 @@ void SetKey(Segments *segments, const string &key) {
 
 bool IsMobile(const ConversionRequest &request) {
   return request.request().zero_query_suggestion() &&
-      request.request().mixed_conversion();
+         request.request().mixed_conversion();
 }
 
 bool IsValidSegments(const ConversionRequest &request,
@@ -116,8 +118,8 @@ bool IsValidSegments(const ConversionRequest &request,
 //   - "C60" -> "60" / NUMBER
 //   - "200x" -> "x" / ALPHABET
 //   (currently only NUMBER and ALPHABET are supported)
-bool ExtractLastTokenWithScriptType(const string &text,
-                                    string *last_token,
+bool ExtractLastTokenWithScriptType(const std::string &text,
+                                    std::string *last_token,
                                     Util::ScriptType *last_script_type) {
   last_token->clear();
   *last_script_type = Util::SCRIPT_TYPE_SIZE;
@@ -162,7 +164,7 @@ bool ExtractLastTokenWithScriptType(const string &text,
 // and math symbols are converted to their half-width equivalents except for
 // some special symbols, e.g., "×", "÷", and "・". Returns false if the input
 // string contains non-math characters.
-bool TryNormalizingKeyAsMathExpression(StringPiece s, string *key) {
+bool TryNormalizingKeyAsMathExpression(absl::string_view s, std::string *key) {
   key->reserve(s.size());
   for (ConstChar32Iterator iter(s); !iter.Done(); iter.Next()) {
     // Half-width arabic numbers.
@@ -177,26 +179,36 @@ bool TryNormalizingKeyAsMathExpression(StringPiece s, string *key) {
       continue;
     }
     switch (iter.Get()) {
-      case 0x002B: case 0xFF0B:  // "+", "＋"
+      case 0x002B:
+      case 0xFF0B:  // "+", "＋"
         key->append(1, '+');
         break;
-      case 0x002D: case 0x30FC:  // "-", "ー"
+      case 0x002D:
+      case 0x30FC:  // "-", "ー"
         key->append(1, '-');
         break;
-      case 0x002A: case 0xFF0A: case 0x00D7:  // "*", "＊", "×"
+      case 0x002A:
+      case 0xFF0A:
+      case 0x00D7:  // "*", "＊", "×"
         key->append(1, '*');
         break;
-      case 0x002F: case 0xFF0F: case 0x30FB: case 0x00F7:
+      case 0x002F:
+      case 0xFF0F:
+      case 0x30FB:
+      case 0x00F7:
         // "/",  "／", "・", "÷"
         key->append(1, '/');
         break;
-      case 0x0028: case 0xFF08:  // "(", "（"
+      case 0x0028:
+      case 0xFF08:  // "(", "（"
         key->append(1, '(');
         break;
-      case 0x0029: case 0xFF09:  // ")", "）"
+      case 0x0029:
+      case 0xFF09:  // ")", "）"
         key->append(1, ')');
         break;
-      case 0x003D: case 0xFF1D:  // "=", "＝"
+      case 0x003D:
+      case 0xFF1D:  // "=", "＝"
         key->append(1, '=');
         break;
       default:
@@ -208,23 +220,23 @@ bool TryNormalizingKeyAsMathExpression(StringPiece s, string *key) {
 
 }  // namespace
 
-ConverterImpl::ConverterImpl() : pos_matcher_(NULL),
-                                 immutable_converter_(NULL),
-                                 general_noun_id_(kuint16max) {
-}
+ConverterImpl::ConverterImpl()
+    : pos_matcher_(nullptr),
+      immutable_converter_(nullptr),
+      general_noun_id_(std::numeric_limits<uint16>::max()) {}
 
-ConverterImpl::~ConverterImpl() {}
+ConverterImpl::~ConverterImpl() = default;
 
 void ConverterImpl::Init(const POSMatcher *pos_matcher,
                          const SuppressionDictionary *suppression_dictionary,
-                         PredictorInterface *predictor,
-                         RewriterInterface *rewriter,
+                         std::unique_ptr<PredictorInterface> predictor,
+                         std::unique_ptr<RewriterInterface> rewriter,
                          ImmutableConverterInterface *immutable_converter) {
   // Initializes in order of declaration.
   pos_matcher_ = pos_matcher;
   suppression_dictionary_ = suppression_dictionary;
-  predictor_.reset(predictor);
-  rewriter_.reset(rewriter);
+  predictor_ = std::move(predictor);
+  rewriter_ = std::move(rewriter);
   immutable_converter_ = immutable_converter;
   general_noun_id_ = pos_matcher_->GetGeneralNounId();
 }
@@ -236,7 +248,7 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
     return false;
   }
 
-  string conversion_key;
+  std::string conversion_key;
   switch (request.composer_key_selection()) {
     case ConversionRequest::CONVERSION_KEY:
       request.composer().GetQueryForConversion(&conversion_key);
@@ -260,7 +272,7 @@ bool ConverterImpl::StartConversionForRequest(const ConversionRequest &request,
 }
 
 bool ConverterImpl::StartConversion(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   if (key.empty()) {
     return false;
   }
@@ -274,7 +286,7 @@ bool ConverterImpl::StartConversion(Segments *segments,
 }
 
 bool ConverterImpl::StartReverseConversion(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   segments->Clear();
   if (key.empty()) {
     return false;
@@ -285,7 +297,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   // chance to get the correct reading by the immutable converter.  Rather,
   // simply returns normalized value.
   {
-    string value;
+    std::string value;
     if (TryNormalizingKeyAsMathExpression(key, &value)) {
       Segment::Candidate *cand =
           segments->mutable_segment(0)->push_back_candidate();
@@ -306,8 +318,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
   }
   for (int i = 0; i < segments->segments_size(); ++i) {
     const mozc::Segment &seg = segments->segment(i);
-    if (seg.candidates_size() == 0 ||
-        seg.candidate(0).value.empty()) {
+    if (seg.candidates_size() == 0 || seg.candidate(0).value.empty()) {
       segments->Clear();
       LOG(WARNING) << "got an empty segment from reverse conversion";
       return false;
@@ -318,7 +329,7 @@ bool ConverterImpl::StartReverseConversion(Segments *segments,
 
 // static
 void ConverterImpl::MaybeSetConsumedKeySizeToCandidate(
-    size_t consumed_key_size, Segment::Candidate* candidate) {
+    size_t consumed_key_size, Segment::Candidate *candidate) {
   if (candidate->attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
     // If PARTIALLY_KEY_CONSUMED is set already,
     // the candidate has set appropriate attribute and size by predictor.
@@ -330,7 +341,7 @@ void ConverterImpl::MaybeSetConsumedKeySizeToCandidate(
 
 // static
 void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
-                                                     Segment* segment) {
+                                                     Segment *segment) {
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     MaybeSetConsumedKeySizeToCandidate(consumed_key_size,
                                        segment->mutable_candidate(i));
@@ -343,7 +354,7 @@ void ConverterImpl::MaybeSetConsumedKeySizeToSegment(size_t consumed_key_size,
 
 // TODO(noriyukit): |key| can be a member of ConversionRequest.
 bool ConverterImpl::Predict(const ConversionRequest &request,
-                            const string &key,
+                            const std::string &key,
                             const Segments::RequestType request_type,
                             Segments *segments) const {
   const Segments::RequestType original_request_type = segments->request_type();
@@ -387,12 +398,11 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
     // If partial prediction/suggestion candidate is submitted,
     // all the characters which are located from the head to the cursor
     // should be submitted (in above case "わた" should be submitted).
-    // To do this, PARTIALLY_KEY_CONSUMED and consumed_key_sizconsumed_key_size
-    // should be set.
+    // To do this, PARTIALLY_KEY_CONSUMED and consumed_key_size should be set.
     // Note that this process should be done in a predictor because
     // we have to do this on the candidates created by rewriters.
-    MaybeSetConsumedKeySizeToSegment(
-        Util::CharsLen(key), segments->mutable_conversion_segment(0));
+    MaybeSetConsumedKeySizeToSegment(Util::CharsLen(key),
+                                     segments->mutable_conversion_segment(0));
   }
   return IsValidSegments(request, *segments);
 }
@@ -400,23 +410,23 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
 bool ConverterImpl::StartPredictionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   if (!request.has_composer()) {
-    LOG(ERROR) << "Composer is NULL";
+    LOG(ERROR) << "Composer is nullptr";
     return false;
   }
 
-  string prediction_key;
+  std::string prediction_key;
   request.composer().GetQueryForPrediction(&prediction_key);
   return Predict(request, prediction_key, Segments::PREDICTION, segments);
 }
 
 bool ConverterImpl::StartPrediction(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PREDICTION, segments);
 }
 
 bool ConverterImpl::StartSuggestion(Segments *segments,
-                                    const string &key) const {
+                                    const std::string &key) const {
   const ConversionRequest default_request;
   return Predict(default_request, key, Segments::SUGGESTION, segments);
 }
@@ -424,13 +434,13 @@ bool ConverterImpl::StartSuggestion(Segments *segments,
 bool ConverterImpl::StartSuggestionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   DCHECK(request.has_composer());
-  string prediction_key;
+  std::string prediction_key;
   request.composer().GetQueryForPrediction(&prediction_key);
   return Predict(request, prediction_key, Segments::SUGGESTION, segments);
 }
 
 bool ConverterImpl::StartPartialSuggestion(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PARTIAL_SUGGESTION, segments);
 }
@@ -443,15 +453,15 @@ bool ConverterImpl::StartPartialSuggestionForRequest(
     return StartSuggestionForRequest(request, segments);
   }
 
-  string conversion_key;
+  std::string conversion_key;
   request.composer().GetQueryForConversion(&conversion_key);
-  conversion_key = Util::SubString(conversion_key, 0, cursor);
-  return Predict(request, conversion_key,
-                 Segments::PARTIAL_SUGGESTION, segments);
+  conversion_key = std::string(Util::Utf8SubString(conversion_key, 0, cursor));
+  return Predict(request, conversion_key, Segments::PARTIAL_SUGGESTION,
+                 segments);
 }
 
 bool ConverterImpl::StartPartialPrediction(Segments *segments,
-                                           const string &key) const {
+                                           const std::string &key) const {
   const ConversionRequest default_request;
   return Predict(default_request, key, Segments::PARTIAL_PREDICTION, segments);
 }
@@ -464,12 +474,12 @@ bool ConverterImpl::StartPartialPredictionForRequest(
     return StartPredictionForRequest(request, segments);
   }
 
-  string conversion_key;
+  std::string conversion_key;
   request.composer().GetQueryForConversion(&conversion_key);
-  conversion_key = Util::SubString(conversion_key, 0, cursor);
+  conversion_key = std::string(Util::Utf8SubString(conversion_key, 0, cursor));
 
-  return Predict(request, conversion_key,
-                 Segments::PARTIAL_PREDICTION, segments);
+  return Predict(request, conversion_key, Segments::PARTIAL_PREDICTION,
+                 segments);
 }
 
 bool ConverterImpl::FinishConversion(const ConversionRequest &request,
@@ -535,12 +545,12 @@ bool ConverterImpl::RevertConversion(Segments *segments) const {
   return true;
 }
 
-bool ConverterImpl::ReconstructHistory(Segments *segments,
-                                       const string &preceding_text) const {
+bool ConverterImpl::ReconstructHistory(
+    Segments *segments, const std::string &preceding_text) const {
   segments->Clear();
 
-  string key;
-  string value;
+  std::string key;
+  std::string value;
   uint16 id;
   if (!GetLastConnectivePart(preceding_text, &key, &value, &id)) {
     return false;
@@ -593,7 +603,8 @@ bool ConverterImpl::CommitSegmentValue(Segments *segments, size_t segment_index,
 
 bool ConverterImpl::CommitPartialSuggestionSegmentValue(
     Segments *segments, size_t segment_index, int candidate_index,
-    const string &current_segment_key, const string &new_segment_key) const {
+    absl::string_view current_segment_key,
+    absl::string_view new_segment_key) const {
   DCHECK_GT(segments->conversion_segments_size(), 0);
 
   const size_t raw_segment_index = GetSegmentIndex(segments, segment_index);
@@ -623,9 +634,8 @@ bool ConverterImpl::CommitPartialSuggestionSegmentValue(
   return true;
 }
 
-bool ConverterImpl::FocusSegmentValue(Segments *segments,
-                                      size_t segment_index,
-                                      int    candidate_index) const {
+bool ConverterImpl::FocusSegmentValue(Segments *segments, size_t segment_index,
+                                      int candidate_index) const {
   segment_index = GetSegmentIndex(segments, segment_index);
   if (segment_index == kErrorIndex) {
     return false;
@@ -652,8 +662,7 @@ bool ConverterImpl::FreeSegmentValue(Segments *segments,
 }
 
 bool ConverterImpl::CommitSegments(
-    Segments *segments,
-    const std::vector<size_t> &candidate_index) const {
+    Segments *segments, const std::vector<size_t> &candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();
   for (size_t i = 0; i < candidate_index.size(); ++i) {
     // 2nd argument must always be 0 because on each iteration
@@ -699,22 +708,22 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  const string cur_segment_key = cur_segment.key();
+  const std::string cur_segment_key = cur_segment.key();
 
   if (offset_length > 0) {
     int length = offset_length;
-    string last_key;
+    std::string last_key;
     size_t last_clen = 0;
     {
-      string new_key = cur_segment_key;
+      std::string new_key = cur_segment_key;
       while (segment_index + 1 < segments->segments_size()) {
         last_key = segments->segment(segment_index + 1).key();
         segments->erase_segment(segment_index + 1);
         last_clen = Util::CharsLen(last_key.c_str(), last_key.size());
         length -= static_cast<int>(last_clen);
         if (length <= 0) {
-          string tmp;
-          Util::SubString(last_key, 0, length + last_clen, &tmp);
+          std::string tmp;
+          Util::Utf8SubString(last_key, 0, length + last_clen, &tmp);
           new_key += tmp;
           break;
         }
@@ -730,10 +739,9 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     if (length < 0) {  // remaining part
       Segment *segment = segments->insert_segment(segment_index + 1);
       segment->set_segment_type(Segment::FREE);
-      string new_key;
-      Util::SubString(last_key,
-                      static_cast<size_t>(length + last_clen),
-                      static_cast<size_t>(-length), &new_key);
+      std::string new_key;
+      Util::Utf8SubString(last_key, static_cast<size_t>(length + last_clen),
+                          static_cast<size_t>(-length), &new_key);
       segment->set_key(new_key);
     }
   } else if (offset_length < 0) {
@@ -741,19 +749,17 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
       Segment *segment1 = segments->mutable_segment(segment_index);
       segment1->Clear();
       segment1->set_segment_type(Segment::FIXED_BOUNDARY);
-      string new_key;
-      Util::SubString(cur_segment_key,
-                      0,
-                      cur_length + offset_length,
-                      &new_key);
+      std::string new_key;
+      Util::Utf8SubString(cur_segment_key, 0, cur_length + offset_length,
+                          &new_key);
       segment1->set_key(new_key);
     }
 
     if (segment_index + 1 < segments->segments_size()) {
       Segment *segment2 = segments->mutable_segment(segment_index + 1);
       segment2->set_segment_type(Segment::FREE);
-      string tmp;
-      Util::SubString(
+      std::string tmp;
+      Util::Utf8SubString(
           cur_segment_key,
           std::max(static_cast<size_t>(0), cur_length + offset_length),
           cur_length, &tmp);
@@ -762,8 +768,8 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     } else {
       Segment *segment2 = segments->add_segment();
       segment2->set_segment_type(Segment::FREE);
-      string new_key;
-      Util::SubString(
+      std::string new_key;
+      Util::Utf8SubString(
           cur_segment_key,
           std::max(static_cast<size_t>(0), cur_length + offset_length),
           cur_length, &new_key);
@@ -799,7 +805,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  string key;
+  std::string key;
   for (size_t i = start_segment_index; i < end_segment_index; ++i) {
     key += segments->segment(i).key();
   }
@@ -810,17 +816,19 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   size_t consumed = 0;
   const size_t key_len = Util::CharsLen(key);
-  std::vector<string> new_keys;
+  std::vector<std::string> new_keys;
   new_keys.reserve(array_size + 1);
 
   for (size_t i = 0; i < array_size; ++i) {
     if (new_size_array[i] != 0 && consumed < key_len) {
-      new_keys.push_back(Util::SubString(key, consumed, new_size_array[i]));
+      new_keys.push_back(
+          std::string(Util::Utf8SubString(key, consumed, new_size_array[i])));
       consumed += new_size_array[i];
     }
   }
   if (consumed < key_len) {
-    new_keys.push_back(Util::SubString(key, consumed, key_len - consumed));
+    new_keys.push_back(
+        std::string(Util::Utf8SubString(key, consumed, key_len - consumed)));
   }
 
   segments->erase_segments(start_segment_index, segments_size);
@@ -856,7 +864,7 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
   const size_t kExpandSizeStart = 5;
   const size_t kExpandSizeDiff = 50;
   const size_t kExpandSizeMax = 80;
-  // In almost all cases, user choses the top candidate.
+  // In almost all cases, user chooses the top candidate.
   // In order to reduce the latency, first, expand 5 candidates.
   // If no valid candidates are found within 5 candidates, expand
   // candidates step-by-step.
@@ -914,7 +922,7 @@ void ConverterImpl::RewriteAndSuppressCandidates(
   // converter.
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *seg = segments->mutable_conversion_segment(i);
-    for (size_t j = 0; j < seg->candidates_size(); ) {
+    for (size_t j = 0; j < seg->candidates_size();) {
       const Segment::Candidate &cand = seg->candidate(j);
       if (suppression_dictionary_->SuppressEntry(cand.key, cand.value)) {
         seg->erase_candidate(j);
@@ -977,18 +985,16 @@ void ConverterImpl::CommitUsageStats(const Segments *segments,
   UsageStats::IncrementCountBy("SubmittedTotalLength", submitted_total_length);
 }
 
-bool ConverterImpl::GetLastConnectivePart(const string &preceding_text,
-                                          string *key,
-                                          string *value,
+bool ConverterImpl::GetLastConnectivePart(const std::string &preceding_text,
+                                          std::string *key, std::string *value,
                                           uint16 *id) const {
   key->clear();
   value->clear();
   *id = general_noun_id_;
 
   Util::ScriptType last_script_type = Util::SCRIPT_TYPE_SIZE;
-  string last_token;
-  if (!ExtractLastTokenWithScriptType(preceding_text,
-                                      &last_token,
+  std::string last_token;
+  if (!ExtractLastTokenWithScriptType(preceding_text, &last_token,
                                       &last_script_type)) {
     return false;
   }

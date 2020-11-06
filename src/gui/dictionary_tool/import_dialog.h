@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,13 +46,12 @@ class UserDicStorageInterface;
 
 namespace gui {
 
-class ImportDialog : public QDialog,
-                     private Ui::ImportDialog {
+class ImportDialog : public QDialog, private Ui::ImportDialog {
   Q_OBJECT
 
  public:
   ImportDialog(QWidget *parent = 0);
-  virtual ~ImportDialog();
+  ~ImportDialog() override;
 
   // Accessor methods to get form values.
   const QString file_name() const;

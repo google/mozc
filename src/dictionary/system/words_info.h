@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ struct TokenInfo {
     token = t;
   }
   void Clear() {
-    token = NULL;
+    token = nullptr;
     id_in_value_trie = -1;
     id_in_frequent_pos_map = -1;
     pos_type = DEFAULT_POS;

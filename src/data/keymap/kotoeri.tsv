@@ -50,6 +50,9 @@ Composition	Option z	DisplayAsHiragana
 Composition	Right	MoveCursorRight
 Composition	Space	Convert
 Composition	Tab	PredictAndConvert
+Composition	VirtualLeft	MoveCursorLeft
+Composition	VirtualRight	MoveCursorRight
+Composition	VirtualEnter	Commit
 Conversion	Backspace	Cancel
 Conversion	Ctrl ;	DisplayAsHalfWidth
 Conversion	Ctrl :	DisplayAsHalfAlphanumeric
@@ -115,6 +118,9 @@ Conversion	Shift Up	ConvertPrevPage
 Conversion	Space	ConvertNext
 Conversion	Tab	PredictAndConvert
 Conversion	Up	ConvertPrev
+Conversion	VirtualLeft	SegmentWidthShrink
+Conversion	VirtualRight	SegmentWidthExpand
+Conversion	VirtualEnter	CommitOnlyFirstSegment
 DirectInput	Ctrl Shift r	Reconvert
 DirectInput	Hankaku/Zenkaku	IMEOn
 DirectInput	Kanji	IMEOn

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,6 @@ bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
 }
 }  // namespace
 
-
 // ------------------------------------------------------------------------
 // InfolistWindow
 // ------------------------------------------------------------------------
@@ -129,9 +128,9 @@ void InfolistWindow::OnPaint(CDCHandle dc) {
   if (dc != nullptr) {
     CMemoryDC memdc(dc, client_rect);
     DoPaint(memdc.m_hDC);
-  } else  {
+  } else {
     CPaintDC paint_dc(this->m_hWnd);
-    { // Create a copy of |paint_dc| and render the candidate strings in it.
+    {  // Create a copy of |paint_dc| and render the candidate strings in it.
       // The image rendered to this |memdc| is to be copied into the original
       // |paint_dc| in its destructor. So, we don't have to explicitly call
       // any functions that copy this |memdc| to the |paint_dc| but putting
@@ -142,9 +141,7 @@ void InfolistWindow::OnPaint(CDCHandle dc) {
   }
 }
 
-void InfolistWindow::OnPrintClient(CDCHandle dc, UINT uFlags) {
-  OnPaint(dc);
-}
+void InfolistWindow::OnPrintClient(CDCHandle dc, UINT uFlags) { OnPaint(dc); }
 
 Size InfolistWindow::DoPaint(CDCHandle dc) {
   if (dc.m_hDC != nullptr) {
@@ -156,33 +153,31 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
   int ypos = infostyle.window_border();
 
   if ((dc.m_hDC != nullptr) && infostyle.has_caption_string()) {
-    const RendererStyle::TextStyle &caption_style =
-      infostyle.caption_style();
+    const RendererStyle::TextStyle &caption_style = infostyle.caption_style();
     const int caption_height = infostyle.caption_height();
-    const Rect backgrounnd_rect(infostyle.window_border(), ypos,
-      infostyle.window_width() - infostyle.window_border() * 2,
-      caption_height);
+    const Rect backgrounnd_rect(
+        infostyle.window_border(), ypos,
+        infostyle.window_width() - infostyle.window_border() * 2,
+        caption_height);
     const CRect background_crect(
         backgrounnd_rect.Left(), backgrounnd_rect.Top(),
         backgrounnd_rect.Right(), backgrounnd_rect.Bottom());
 
     dc.FillSolidRect(&background_crect,
-        RGB(infostyle.caption_background_color().r(),
-            infostyle.caption_background_color().g(),
-            infostyle.caption_background_color().b()));
+                     RGB(infostyle.caption_background_color().r(),
+                         infostyle.caption_background_color().g(),
+                         infostyle.caption_background_color().b()));
 
     std::wstring caption_str;
     const Rect caption_rect(
-      infostyle.window_border() + infostyle.caption_padding()
-      + caption_style.left_padding(),
-      ypos + infostyle.caption_padding(),
-      infostyle.window_width() - infostyle.window_border() * 2,
-      caption_height);
+        infostyle.window_border() + infostyle.caption_padding() +
+            caption_style.left_padding(),
+        ypos + infostyle.caption_padding(),
+        infostyle.window_width() - infostyle.window_border() * 2,
+        caption_height);
     mozc::Util::UTF8ToWide(infostyle.caption_string(), &caption_str);
 
-    text_renderer_->RenderText(dc,
-                               caption_str,
-                               caption_rect,
+    text_renderer_->RenderText(dc, caption_str, caption_rect,
                                TextRenderer::FONTSET_INFOLIST_CAPTION);
   }
   ypos += infostyle.caption_height();
@@ -195,14 +190,11 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
 
   if (dc.m_hDC != nullptr) {
     const CRect rect(0, 0, infostyle.window_width(), ypos);
-    dc.SetDCBrushColor(
-        RGB(infostyle.border_color().r(),
-            infostyle.border_color().g(),
-            infostyle.border_color().b()));
-    dc.FrameRect(&rect,
-                 static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+    dc.SetDCBrushColor(RGB(infostyle.border_color().r(),
+                           infostyle.border_color().g(),
+                           infostyle.border_color().b()));
+    dc.FrameRect(&rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
   }
-
 
   return Size(style_->infolist_style().window_width(), ypos);
 }
@@ -212,14 +204,14 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
   const InformationList &usages = candidates_->usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
   const RendererStyle::TextStyle &desc_style = infostyle.description_style();
-  const int title_width = infostyle.window_width() -
-      title_style.left_padding() - title_style.right_padding() -
-      infostyle.window_border() * 2 -
+  const int title_width =
+      infostyle.window_width() - title_style.left_padding() -
+      title_style.right_padding() - infostyle.window_border() * 2 -
       infostyle.row_rect_padding() * 2;
-  const int desc_width = infostyle.window_width() -
-      desc_style.left_padding() - desc_style.right_padding() -
-      infostyle.window_border() * 2 -
-      infostyle.row_rect_padding() * 2;
+  const int desc_width = infostyle.window_width() - desc_style.left_padding() -
+                         desc_style.right_padding() -
+                         infostyle.window_border() * 2 -
+                         infostyle.row_rect_padding() * 2;
   const Information &info = usages.information(row);
 
   std::wstring title_str;
@@ -232,73 +224,71 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
   const Size desc_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_DESCRIPTION, desc_str, desc_width);
 
-  int row_height = title_size.height + desc_size.height +
-                   infostyle.row_rect_padding() * 2;
+  int row_height =
+      title_size.height + desc_size.height + infostyle.row_rect_padding() * 2;
 
   if (dc.m_hDC == nullptr) {
     return Size(0, row_height);
   }
   const Rect title_rect(
       infostyle.window_border() + infostyle.row_rect_padding() +
-      title_style.left_padding(),
-      ypos + infostyle.row_rect_padding(),
-      title_width, title_size.height);
+          title_style.left_padding(),
+      ypos + infostyle.row_rect_padding(), title_width, title_size.height);
   const Rect desc_rect(
       infostyle.window_border() + infostyle.row_rect_padding() +
-      desc_style.left_padding(),
-      ypos + infostyle.row_rect_padding() + title_rect.size.height,
-      desc_width, desc_size.height);
+          desc_style.left_padding(),
+      ypos + infostyle.row_rect_padding() + title_rect.size.height, desc_width,
+      desc_size.height);
 
-  const CRect title_back_crect(infostyle.window_border(), ypos,
+  const CRect title_back_crect(
+      infostyle.window_border(), ypos,
       infostyle.window_width() - infostyle.window_border(),
       ypos + title_rect.size.height + infostyle.row_rect_padding());
 
-  const CRect desc_back_crect(infostyle.window_border(),
+  const CRect desc_back_crect(
+      infostyle.window_border(),
       ypos + title_rect.size.height + infostyle.row_rect_padding(),
       infostyle.window_width() - infostyle.window_border(),
       ypos + title_rect.size.height + infostyle.row_rect_padding() +
-      desc_rect.size.height + infostyle.row_rect_padding());
+          desc_rect.size.height + infostyle.row_rect_padding());
 
   if (usages.has_focused_index() && (row == usages.focused_index())) {
-    const CRect selected_rect(infostyle.window_border(), ypos,
+    const CRect selected_rect(
+        infostyle.window_border(), ypos,
         infostyle.window_width() - infostyle.window_border(),
-        ypos + title_rect.size.height + desc_rect.size.height
-         + infostyle.row_rect_padding() * 2);
+        ypos + title_rect.size.height + desc_rect.size.height +
+            infostyle.row_rect_padding() * 2);
     dc.FillSolidRect(&selected_rect,
-        RGB(infostyle.focused_background_color().r(),
-            infostyle.focused_background_color().g(),
-            infostyle.focused_background_color().b()));
-    dc.SetDCBrushColor(
-        RGB(infostyle.focused_border_color().r(),
-            infostyle.focused_border_color().g(),
-            infostyle.focused_border_color().b()));
-    dc.FrameRect(&selected_rect,
-        static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
+                     RGB(infostyle.focused_background_color().r(),
+                         infostyle.focused_background_color().g(),
+                         infostyle.focused_background_color().b()));
+    dc.SetDCBrushColor(RGB(infostyle.focused_border_color().r(),
+                           infostyle.focused_border_color().g(),
+                           infostyle.focused_border_color().b()));
+    dc.FrameRect(&selected_rect, static_cast<HBRUSH>(GetStockObject(DC_BRUSH)));
   } else {
     if (title_style.has_background_color()) {
       dc.FillSolidRect(&title_back_crect,
-          RGB(title_style.background_color().r(),
-              title_style.background_color().g(),
-              title_style.background_color().b()));
+                       RGB(title_style.background_color().r(),
+                           title_style.background_color().g(),
+                           title_style.background_color().b()));
     } else {
-      dc.FillSolidRect(&title_back_crect,
-          RGB(255, 255, 255));
+      dc.FillSolidRect(&title_back_crect, RGB(255, 255, 255));
     }
     if (desc_style.has_background_color()) {
       dc.FillSolidRect(&desc_back_crect,
-          RGB(title_style.background_color().r(),
-              title_style.background_color().g(),
-              title_style.background_color().b()));
+                       RGB(title_style.background_color().r(),
+                           title_style.background_color().g(),
+                           title_style.background_color().b()));
     } else {
-      dc.FillSolidRect(&desc_back_crect,
-          RGB(255, 255, 255));
+      dc.FillSolidRect(&desc_back_crect, RGB(255, 255, 255));
     }
   }
 
-  text_renderer_->RenderText(dc,  title_str,  title_rect,
-      TextRenderer::FONTSET_INFOLIST_TITLE);
+  text_renderer_->RenderText(dc, title_str, title_rect,
+                             TextRenderer::FONTSET_INFOLIST_TITLE);
   text_renderer_->RenderText(dc, desc_str, desc_rect,
-      TextRenderer::FONTSET_INFOLIST_DESCRIPTION);
+                             TextRenderer::FONTSET_INFOLIST_DESCRIPTION);
   return Size(0, row_height);
 }
 
@@ -337,11 +327,11 @@ void InfolistWindow::DelayShow(UINT mseconds) {
   if (mseconds <= 0) {
     const bool current_visible = (IsWindowVisible() != FALSE);
     SetWindowPos(HWND_TOPMOST, 0, 0, 0, 0,
-        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
     SendMessageW(WM_NCACTIVATE, FALSE);
     if (!current_visible) {
       SendUsageStatsEvent(send_command_interface_,
-          SessionCommand::INFOLIST_WINDOW_SHOW);
+                          SessionCommand::INFOLIST_WINDOW_SHOW);
     }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
@@ -356,7 +346,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
     ShowWindow(SW_HIDE);
     if (current_visible) {
       SendUsageStatsEvent(send_command_interface_,
-          SessionCommand::INFOLIST_WINDOW_HIDE);
+                          SessionCommand::INFOLIST_WINDOW_HIDE);
     }
   } else {
     SetTimer(kIdDelayShowHideTimer, mseconds, nullptr);
@@ -374,7 +364,7 @@ void InfolistWindow::UpdateLayout(const commands::Candidates &candidates) {
 }
 
 void InfolistWindow::SetSendCommandInterface(
-  client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface *send_command_interface) {
   send_command_interface_ = send_command_interface;
 }
 

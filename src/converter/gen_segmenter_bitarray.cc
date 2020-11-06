@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -55,17 +56,17 @@ class StateTable {
   }
 
   // |str| is an 1-dimentional row (or column) represented in byte array.
-  void Add(uint16 id, const string &str) {
+  void Add(uint16 id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
-    idarray_[id] = str;
+    idarray_[id] = std::string(str);
   }
 
   void Build() {
     compressed_table_.resize(idarray_.size());
     uint16 id = 0;
-    std::map<string, uint16> dup;
+    std::map<std::string, uint16> dup;
     for (size_t i = 0; i < idarray_.size(); ++i) {
-      std::map<string, uint16>::const_iterator it = dup.find(idarray_[i]);
+      std::map<std::string, uint16>::const_iterator it = dup.find(idarray_[i]);
       if (it != dup.end()) {
         compressed_table_[i] = it->second;
       } else {
@@ -94,13 +95,13 @@ class StateTable {
   size_t compressed_size() const { return compressed_size_; }
 
   void Output(std::ostream *os) {
-    const char* data = reinterpret_cast<const char*>(compressed_table_.data());
+    const char *data = reinterpret_cast<const char *>(compressed_table_.data());
     const size_t bytelen = compressed_table_.size() * sizeof(uint16);
     os->write(data, bytelen);
   }
 
  private:
-  std::vector<string> idarray_;
+  std::vector<std::string> idarray_;
   std::vector<uint16> compressed_table_;
   size_t compressed_size_;
 
@@ -109,9 +110,9 @@ class StateTable {
 }  // namespace
 
 void SegmenterBitarrayGenerator::GenerateBitarray(
-    int lsize, int rsize, IsBoundaryFunc func, const string &output_size_info,
-    const string &output_ltable, const string &output_rtable,
-    const string &output_bitarray) {
+    int lsize, int rsize, IsBoundaryFunc func,
+    const std::string &output_size_info, const std::string &output_ltable,
+    const std::string &output_rtable, const std::string &output_bitarray) {
   // Load the original matrix into an array
   std::vector<uint8> array((lsize + 1) * (rsize + 1));
 
@@ -134,7 +135,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   // Reduce left states (remove dupliacate rows)
   StateTable ltable(lsize + 1);
   for (size_t rid = 0; rid <= lsize; ++rid) {
-    string buf;
+    std::string buf;
     for (size_t lid = 0; lid <= rsize; ++lid) {
       const uint32 index = rid + lsize * lid;
       buf += array[index];
@@ -145,7 +146,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   // Reduce right states (remove dupliacate columns)
   StateTable rtable(rsize + 1);
   for (size_t lid = 0; lid <= rsize; ++lid) {
-    string buf;
+    std::string buf;
     for (size_t rid = 0; rid <= lsize; ++rid) {
       const uint32 index = rid + lsize * lid;
       buf += array[index];
@@ -189,8 +190,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   CHECK(barray.array());
   CHECK_GT(barray.size(), 0);
 
-  CHECK(Util::IsLittleEndian())
-      << "Architecture must be little endian";
+  CHECK(Util::IsLittleEndian()) << "Architecture must be little endian";
   {
     mozc::converter::SegmenterDataSizeInfo pb;
     pb.set_compressed_lsize(kCompressedLSize);

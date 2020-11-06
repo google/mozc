@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-
-DECLARE_string(test_tmpdir);
-
 namespace mozc {
 namespace {
 void SetBoundedSegments(Segments *segments, bool fixed) {
@@ -82,9 +79,7 @@ void SetSegments(Segments *segments, bool fixed) {
 
 class UserBoundaryHistoryRewriterTest : public ::testing::Test {
  protected:
-  UserBoundaryHistoryRewriterTest() {
-    request_.set_config(&config_);
-  }
+  UserBoundaryHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
@@ -98,13 +93,9 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
-  ConverterMock &mock() {
-    return mock_;
-  }
+  ConverterMock &mock() { return mock_; }
 
-  void SetIncognito(bool incognito) {
-    config_.set_incognito_mode(incognito);
-  }
+  void SetIncognito(bool incognito) { config_.set_incognito_mode(incognito); }
 
   void SetLearningLevel(config::Config::HistoryLearningLevel level) {
     config_.set_history_learning_level(level);
@@ -121,7 +112,7 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
 
 TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   UserBoundaryHistoryRewriter rewriter(&mock());
-  const string history_file = FLAGS_test_tmpdir + "/boundary.db";
+  const std::string history_file = FLAGS_test_tmpdir + "/boundary.db";
   EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 
@@ -136,14 +127,14 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
 
   EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   // "たんぽぽ" -> "たん|ぽぽ"
   // make length of segment 0 from 4 to 2|2
@@ -151,9 +142,9 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   size_t input_start, input_size;
   uint8 *input_array;
   size_t input_array_size;
-  mock().GetResizeSegment2(&input_seg, &input_start, &input_size,
-                          &input_array, &input_array_size);
-  const string input_seg_str = input_seg.DebugString();
+  mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
+                           &input_array_size);
+  const std::string input_seg_str = input_seg.DebugString();
   EXPECT_EQ(segments_str, input_seg_str);
   EXPECT_EQ(0, input_start);
   EXPECT_EQ(1, input_size);
@@ -181,14 +172,14 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &segments);
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, false);
   bounded_segments.set_user_history_enabled(true);
 
   EXPECT_TRUE(rewriter.Rewrite(request_, &bounded_segments));
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   // "たん|ぽぽ" -> "たんぽぽ"
   // make length of segment 0 from 2 to 4
@@ -196,9 +187,9 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   size_t input_start, input_size;
   uint8 *input_array;
   size_t input_array_size;
-  mock().GetResizeSegment2(&input_seg, &input_start, &input_size,
-                          &input_array, &input_array_size);
-  const string input_seg_str = input_seg.DebugString();
+  mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
+                           &input_array_size);
+  const std::string input_seg_str = input_seg.DebugString();
   EXPECT_EQ(bounded_segments_str, input_seg_str);
   EXPECT_EQ(0, input_start);
   EXPECT_EQ(2, input_size);
@@ -224,17 +215,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   SetIncognito(false);  // no_incognito when rewrite
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -248,16 +239,16 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -271,16 +262,16 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   bounded_segments.set_user_history_enabled(false);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -294,16 +285,16 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -317,7 +308,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
@@ -326,10 +317,10 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   // clear history
   rewriter.Clear();
 
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -343,17 +334,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
 
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
   SetIncognito(true);
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -367,17 +358,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
 
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
   SetLearningLevel(config::Config::NO_HISTORY);
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -391,16 +382,16 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(false);
 
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 
@@ -414,17 +405,17 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
-  const string bounded_segments_str = bounded_segments.DebugString();
+  const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
   segments.set_user_history_enabled(true);
   segments.set_resized(true);
 
-  const string segments_str = segments.DebugString();
+  const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const string segments_rewrited_str = segments.DebugString();
+  const std::string segments_rewrited_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewrited_str);
 }
 }  // namespace mozc

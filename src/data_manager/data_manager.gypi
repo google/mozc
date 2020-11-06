@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,7 @@
         '<(dataset_tag)_data_manager.cc',
       ],
       'dependencies': [
+        '<(mozc_dir)/base/absl.gyp:absl_strings',
         '<(mozc_dir)/base/base.gyp:base',
         '<(mozc_dir)/data_manager/data_manager_base.gyp:data_manager',
         'gen_embedded_mozc_dataset_for_<(dataset_tag)#host',
@@ -89,7 +90,7 @@
             '<(gen_out_dir)/<(out_mozc_data_header)',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/embed_file.py',
+            '<(python)', '<(mozc_dir)/build_tools/embed_file.py',
             '--input=<(gen_out_dir)/<(out_mozc_data)',
             '--name=<(mozc_data_varname)',
             '--output=<(gen_out_dir)/<(out_mozc_data_header)',
@@ -330,7 +331,7 @@
             '<(gen_out_dir)/pos_group.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/dictionary/gen_pos_rewrite_rule.py',
             '--id_def=<(platform_data_dir)/id.def',
             '--special_pos=<(common_data_dir)/rules/special_pos.def',
@@ -360,7 +361,7 @@
             '<(gen_out_dir)/connection_single_column.txt',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/zlib_util.py', 'decompress',
+            '<(python)', '<(mozc_dir)/build_tools/zlib_util.py', 'decompress',
             '<(connection_deflate)',
             '<(gen_out_dir)/connection_single_column.txt',
           ],
@@ -398,7 +399,7 @@
             '<(gen_out_dir)/connection.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/data_manager/gen_connection_data.py',
+            '<(python)', '<(mozc_dir)/data_manager/gen_connection_data.py',
             '--text_connection_file',
             '<(text_connection_file)',
             '--id_file',
@@ -472,7 +473,7 @@
             '<(gen_out_dir)/segmenter_inl.inc',
           ],
           'action': [
-            'python', '<(mozc_dir)/build_tools/redirect.py',
+            '<(python)', '<(mozc_dir)/build_tools/redirect.py',
             '<(gen_out_dir)/segmenter_inl.inc',
             '<(mozc_dir)/converter/gen_segmenter_code.py',
             '<@(input_files)',
@@ -552,7 +553,7 @@
             '<(gen_out_dir)/boundary.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/converter/gen_boundary_data.py',
             '--boundary_def=<(boundary_def)',
             '--id_def=<(platform_data_dir)/id.def',
@@ -586,7 +587,7 @@
             '<(gen_out_dir)/suffix_token.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/dictionary/gen_suffix_data.py',
             '--input=<(platform_data_dir)/suffix.txt',
             '--output_key_array=<(gen_out_dir)/suffix_key.data',
@@ -620,7 +621,7 @@
             '<(gen_out_dir)/reading_correction_correction.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/rewriter/gen_reading_correction_data.py',
+            '<(python)', '<(mozc_dir)/rewriter/gen_reading_correction_data.py',
             '--input=<@(input_files)',
             '--output_value_array=<(gen_out_dir)/reading_correction_value.data',
             '--output_error_array=<(gen_out_dir)/reading_correction_error.data',
@@ -830,7 +831,7 @@
             '<(gen_out_dir)/emoji_string.data',
           ],
           'action': [
-            'python', '<(generator)',
+            '<(python)', '<(generator)',
             '--input=<(mozc_dir)/data/emoji/emoji_data.tsv',
             '--output_token_array=<(gen_out_dir)/emoji_token.data',
             '--output_string_array=<(gen_out_dir)/emoji_string.data',
@@ -867,7 +868,7 @@
             '<(gen_out_dir)/single_kanji_variant_string.data',
           ],
           'action': [
-            'python', '<(generator)',
+            '<(python)', '<(generator)',
             '--single_kanji_file=<(single_kanji_file)',
             '--variant_file=<(variant_file)',
             '--output_single_kanji_token=<(gen_out_dir)/single_kanji_token.data',
@@ -918,7 +919,7 @@
             '<(gen_out_dir)/counter_suffix.data',
           ],
           'action': [
-            'python', '<(mozc_dir)/rewriter/gen_counter_suffix_array.py',
+            '<(python)', '<(mozc_dir)/rewriter/gen_counter_suffix_array.py',
             '--id_file=<(id_file)',
             '--output=<(gen_out_dir)/counter_suffix.data',
             '<@(input_files)',
@@ -953,7 +954,7 @@
             '<(gen_out_dir)/zero_query_string.data',
           ],
           'action': [
-            'python', '<(generator)',
+            '<(python)', '<(generator)',
             '--input_rule=<(mozc_dir)/data/zero_query/zero_query.def',
             '--input_symbol=<(mozc_dir)/data/symbol/symbol.tsv',
             '--input_emoji=<(mozc_dir)/data/emoji/emoji_data.tsv',
@@ -979,7 +980,7 @@
             '<(gen_out_dir)/zero_query_number_string.data',
           ],
           'action': [
-            'python', '<(generator)',
+            '<(python)', '<(generator)',
             '--input=<(mozc_dir)/data/zero_query/zero_query_number.def',
             '--output_token_array=<(gen_out_dir)/zero_query_number_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_number_string.data',
@@ -1007,7 +1008,7 @@
             '<(gen_out_dir)/typing_model_qwerty_mobile-hiragana.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/composer/internal/gen_typing_model.py',
             '--input_path',
             '<@(input_files)',
@@ -1030,7 +1031,7 @@
             '<(gen_out_dir)/typing_model_12keys-hiragana.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/composer/internal/gen_typing_model.py',
             '--input_path',
             '<@(input_files)',
@@ -1053,7 +1054,7 @@
             '<(gen_out_dir)/typing_model_flick-hiragana.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/composer/internal/gen_typing_model.py',
             '--input_path',
             '<@(input_files)',
@@ -1076,7 +1077,7 @@
             '<(gen_out_dir)/typing_model_godan-hiragana.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/composer/internal/gen_typing_model.py',
             '--input_path',
             '<@(input_files)',
@@ -1099,7 +1100,7 @@
             '<(gen_out_dir)/typing_model_toggle_flick-hiragana.data',
           ],
           'action': [
-            'python',
+            '<(python)',
             '<(mozc_dir)/composer/internal/gen_typing_model.py',
             '--input_path',
             '<@(input_files)',
@@ -1128,7 +1129,7 @@
             '<(gen_out_dir)/version.data',
           ],
           'action': [
-            'python', '<(generator)',
+            '<(python)', '<(generator)',
             '--tag=<(dataset_tag)',
             '--mozc_version_template=<(version_file)',
             '--output=<(gen_out_dir)/version.data',

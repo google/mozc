@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,21 +59,18 @@ using ::mozc::commands::Output;
 typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 
 struct UIElementInfo {
-  UIElementInfo()
-      : id(TF_INVALID_UIELEMENTID) {
-  }
+  UIElementInfo() : id(TF_INVALID_UIELEMENTID) {}
   DWORD id;
   CComPtr<ITfUIElement> element;
 };
 
-HRESULT BeginUI(ITfUIElementMgr *ui_element_manager,
-                ITfUIElement *ui_element,
+HRESULT BeginUI(ITfUIElementMgr *ui_element_manager, ITfUIElement *ui_element,
                 DWORD *new_element_id) {
   BOOL show = FALSE;
   *new_element_id = TF_INVALID_UIELEMENTID;
   CComPtr<ITfUIElement> element(ui_element);
-  const HRESULT result = ui_element_manager->BeginUIElement(
-      element, &show, new_element_id);
+  const HRESULT result =
+      ui_element_manager->BeginUIElement(element, &show, new_element_id);
   if (FAILED(result)) {
     return result;
   }
@@ -95,8 +92,7 @@ HRESULT EndUI(ITfUIElementMgr *ui_element_manager, DWORD element_id) {
 
 class TipUiElementManager::UiElementMap
     : public std::unordered_map<TipUiElementManager::UIElementFlags,
-                                UIElementInfo> {
-};
+                                UIElementInfo> {};
 
 TipUiElementManager::TipUiElementManager()
     : ui_element_map_(new UiElementMap) {}
@@ -119,15 +115,14 @@ DWORD TipUiElementManager::GetElementId(UIElementFlags element) const {
   return it->second.id;
 }
 
-HRESULT TipUiElementManager::OnUpdate(
-    TipTextService *text_service, ITfContext *context) {
+HRESULT TipUiElementManager::OnUpdate(TipTextService *text_service,
+                                      ITfContext *context) {
   CComQIPtr<ITfUIElementMgr> ui_element_manager =
       text_service->GetThreadManager();
   if (!ui_element_manager) {
     return E_FAIL;
   }
-  TipPrivateContext *private_context =
-        text_service->GetPrivateContext(context);
+  TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context == nullptr) {
     return E_FAIL;
   }
@@ -149,8 +144,9 @@ HRESULT TipUiElementManager::OnUpdate(
     }
   }
   if (private_context->input_behavior().use_mode_indicator &&
-      text_service->GetThreadContext()->GetInputModeManager()->
-          IsIndicatorVisible()) {
+      text_service->GetThreadContext()
+          ->GetInputModeManager()
+          ->IsIndicatorVisible()) {
     existence_bits |= kIndicatorWindow;
   }
 
@@ -261,9 +257,8 @@ HRESULT TipUiElementManager::OnUpdate(
         TipUiHandler::kSuggestWindow, text_service, context);
     if (suggest_ui) {
       DWORD new_suggest_ui_id = TF_INVALID_UIELEMENTID;
-      if (SUCCEEDED(BeginUI(ui_element_manager,
-                            suggest_ui,
-                            &new_suggest_ui_id))) {
+      if (SUCCEEDED(
+              BeginUI(ui_element_manager, suggest_ui, &new_suggest_ui_id))) {
         (*ui_element_map_)[kSuggestWindow].element = suggest_ui;
         (*ui_element_map_)[kSuggestWindow].id = new_suggest_ui_id;
         suggest_ui_id = new_suggest_ui_id;
@@ -275,8 +270,7 @@ HRESULT TipUiElementManager::OnUpdate(
         TipUiHandler::kCandidateWindow, text_service, context);
     if (candidate_ui) {
       DWORD new_candidate_ui_id = TF_INVALID_UIELEMENTID;
-      if (SUCCEEDED(BeginUI(ui_element_manager,
-                            candidate_ui,
+      if (SUCCEEDED(BeginUI(ui_element_manager, candidate_ui,
                             &new_candidate_ui_id))) {
         (*ui_element_map_)[kCandidateWindow].element = candidate_ui;
         (*ui_element_map_)[kCandidateWindow].id = new_candidate_ui_id;
@@ -289,8 +283,7 @@ HRESULT TipUiElementManager::OnUpdate(
         TipUiHandler::kIndicatorWindow, text_service, context);
     if (indicator_ui) {
       DWORD new_indicator_ui_id = TF_INVALID_UIELEMENTID;
-      if (SUCCEEDED(BeginUI(ui_element_manager,
-                            indicator_ui,
+      if (SUCCEEDED(BeginUI(ui_element_manager, indicator_ui,
                             &new_indicator_ui_id))) {
         (*ui_element_map_)[kIndicatorWindow].element = indicator_ui;
         (*ui_element_map_)[kIndicatorWindow].id = new_indicator_ui_id;

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,26 +33,25 @@
 #include <memory>
 
 #include "base/port.h"
+#include "base/status.h"
+#include "base/statusor.h"
+#include "converter/connector.h"
+#include "converter/converter.h"
+#include "converter/immutable_converter_interface.h"
+#include "converter/segmenter.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_group.h"
+#include "dictionary/pos_matcher.h"
+#include "dictionary/user_dictionary.h"
 #include "engine/engine_interface.h"
+#include "engine/user_data_manager_interface.h"
+#include "prediction/predictor_interface.h"
+#include "prediction/suggestion_filter.h"
+#include "rewriter/rewriter_interface.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
-
-class Connector;
-class ConverterInterface;
-class ImmutableConverterInterface;
-class PredictorInterface;
-class RewriterInterface;
-class Segmenter;
-class SuggestionFilter;
-class UserDataManagerInterface;
-
-namespace dictionary {
-class POSMatcher;
-class UserDictionary;
-}  // namespace dictionary
 
 // Builds and manages a set of modules that are necessary for conversion engine.
 class Engine : public EngineInterface {
@@ -64,34 +63,35 @@ class Engine : public EngineInterface {
 
   // Creates an instance with desktop configuration from a data manager.  The
   // ownership of data manager is passed to the engine instance.
-  static std::unique_ptr<Engine> CreateDesktopEngine(
+  static mozc::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngine(
       std::unique_ptr<const DataManagerInterface> data_manager);
 
   // Helper function for the above factory, where data manager is instantiated
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
-  static std::unique_ptr<Engine> CreateDesktopEngineHelper() {
-    return CreateDesktopEngine(
-        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  static mozc::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngineHelper() {
+    return CreateDesktopEngine(absl::make_unique<const DataManagerType>());
   }
 
   // Creates an instance with mobile configuration from a data manager.  The
   // ownership of data manager is passed to the engine instance.
-  static std::unique_ptr<Engine> CreateMobileEngine(
+  static mozc::StatusOr<std::unique_ptr<Engine>> CreateMobileEngine(
       std::unique_ptr<const DataManagerInterface> data_manager);
 
   // Helper function for the above factory, where data manager is instantiated
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
-  static std::unique_ptr<Engine> CreateMobileEngineHelper() {
-    return CreateMobileEngine(
-        std::unique_ptr<const DataManagerType>(new DataManagerType()));
+  static mozc::StatusOr<std::unique_ptr<Engine>> CreateMobileEngineHelper() {
+    return CreateMobileEngine(absl::make_unique<const DataManagerType>());
   }
 
   Engine();
   ~Engine() override;
 
-  ConverterInterface *GetConverter() const override { return converter_.get(); }
+  Engine(const Engine &) = delete;
+  Engine &operator=(const Engine &) = delete;
+
+  ConverterImpl *GetConverter() const override { return converter_.get(); }
   PredictorInterface *GetPredictor() const override { return predictor_; }
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
     return suppression_dictionary_.get();
@@ -103,7 +103,7 @@ class Engine : public EngineInterface {
     return user_data_manager_.get();
   }
 
-  StringPiece GetDataVersion() const override {
+  absl::string_view GetDataVersion() const override {
     return data_manager_->GetDataVersion();
   }
 
@@ -115,10 +115,11 @@ class Engine : public EngineInterface {
   // Initializes the object by the given data manager and predictor factory
   // function.  Predictor factory is used to select DefaultPredictor and
   // MobilePredictor.
-  void Init(const DataManagerInterface *data_manager,
-            PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                                     PredictorInterface *),
-            bool enable_content_word_learning);
+  mozc::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
+                    std::unique_ptr<PredictorInterface> (*predictor_factory)(
+                        std::unique_ptr<PredictorInterface>,
+                        std::unique_ptr<PredictorInterface>),
+                    bool enable_content_word_learning);
 
   std::unique_ptr<const DataManagerInterface> data_manager_;
   std::unique_ptr<const dictionary::POSMatcher> pos_matcher_;
@@ -135,13 +136,11 @@ class Engine : public EngineInterface {
   // TODO(noriyukit): Currently predictor and rewriter are created by this class
   // but owned by converter_. Since this class creates these two, it'd be better
   // if Engine class owns these two instances.
-  PredictorInterface *predictor_;
-  RewriterInterface *rewriter_;
+  PredictorInterface *predictor_ = nullptr;
+  RewriterInterface *rewriter_ = nullptr;
 
-  std::unique_ptr<ConverterInterface> converter_;
+  std::unique_ptr<ConverterImpl> converter_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
-
-  DISALLOW_COPY_AND_ASSIGN(Engine);
 };
 
 }  // namespace mozc

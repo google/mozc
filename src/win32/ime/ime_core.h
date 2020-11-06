@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,27 +69,18 @@ class ImeCore {
  public:
   // Main implementation of ImeProcessKey callback.
   static KeyEventHandlerResult ImeProcessKey(
-      mozc::client::ClientInterface *client,
-      const VirtualKey &virtual_key,
-      const LParamKeyInfo &lparam,
-      const KeyboardStatus &keyboard_status,
-      const InputBehavior &behavior,
-      const InputState &initial_state,
-      const commands::Context &context,
-      InputState *next_state,
+      mozc::client::ClientInterface *client, const VirtualKey &virtual_key,
+      const LParamKeyInfo &lparam, const KeyboardStatus &keyboard_status,
+      const InputBehavior &behavior, const InputState &initial_state,
+      const commands::Context &context, InputState *next_state,
       commands::Output *output);
 
   // Main implementation of ImeToAsciiEx callback.
   static KeyEventHandlerResult ImeToAsciiEx(
-      mozc::client::ClientInterface *client,
-      const VirtualKey &virtual_key,
-      BYTE scan_code,
-      bool is_key_down,
-      const KeyboardStatus &keyboard_status,
-      const InputBehavior &behavior,
-      const InputState &initial_state,
-      const commands::Context &context,
-      InputState *next_state,
+      mozc::client::ClientInterface *client, const VirtualKey &virtual_key,
+      BYTE scan_code, bool is_key_down, const KeyboardStatus &keyboard_status,
+      const InputBehavior &behavior, const InputState &initial_state,
+      const commands::Context &context, InputState *next_state,
       commands::Output *output);
 
   // Update |context| if surrounding text is available.
@@ -102,8 +93,7 @@ class ImeCore {
 
   // This function sends IME close message to the server w/o generating any UI
   // messages.
-  static bool CloseIME(mozc::client::ClientInterface *client,
-                       DWORD next_mode,
+  static bool CloseIME(mozc::client::ClientInterface *client, DWORD next_mode,
                        commands::Output *output);
 
   // Some of the following functions have a flag named |generate_message| in
@@ -129,8 +119,8 @@ class ImeCore {
   // input context.  If |generate_message| is false, this function will not
   // generate any UI message.
   // Returns true if the operation completed successfully.
-  static bool SwitchInputMode(
-      HIMC himc, DWORD native_mode, bool generate_message);
+  static bool SwitchInputMode(HIMC himc, DWORD native_mode,
+                              bool generate_message);
 
   // Removes and modifies unsupported bits from |raw_conversion_mode|.
   // Returns normalized conversion mode.
@@ -154,8 +144,7 @@ class ImeCore {
   // UI messages into |message_queue|.  If |message_queue| is NULL, this
   // function will not generate any UI message.
   // Returns true if the operation completed successfully.
-  static bool UpdateContext(HIMC himc,
-                            const InputState &next_state,
+  static bool UpdateContext(HIMC himc, const InputState &next_state,
                             const commands::Output &new_output,
                             MessageQueue *message_queue);
 
@@ -214,18 +203,15 @@ class ImeCore {
   static void SortIMEMessages(
       const std::vector<UIMessage> &composition_messages,
       const std::vector<UIMessage> &candidate_messages,
-      bool previous_open_status,
-      DWORD previous_conversion_mode,
-      bool next_open_status,
-      DWORD next_conversion_mode,
+      bool previous_open_status, DWORD previous_conversion_mode,
+      bool next_open_status, DWORD next_conversion_mode,
       std::vector<UIMessage> *sorted_messages);
 
   // Internal use only.
   // This method implements main part of UpdateContext. Note that this method
   // ignores callback field, which is supposed to be handled in the
   // UpdateContext before this method is called.
-  static bool UpdateContextMain(HIMC himc,
-                                const InputState &next_state,
+  static bool UpdateContextMain(HIMC himc, const InputState &next_state,
                                 const commands::Output &new_output,
                                 MessageQueue *message_queue);
 

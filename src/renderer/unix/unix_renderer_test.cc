@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,13 +34,12 @@
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "renderer/unix/window_manager_mock.h"
 #include "testing/base/public/gmock.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DECLARE_string(test_tmpdir);
-
+using testing::_;
 using testing::Return;
 using testing::StrictMock;
-using testing::_;
 
 namespace mozc {
 namespace renderer {

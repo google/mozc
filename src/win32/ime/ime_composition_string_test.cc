@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,20 +39,9 @@ namespace mozc {
 namespace win32 {
 namespace {
 const size_t kNumCandidates = 13;
-const char* kValueList[kNumCandidates] = {
-    "Beta",
-    "ベータ",
-    "BETA",
-    "beta",
-    "β",
-    "Β",
-    "㌼",
-    "Beta",
-    "べーた",
-    "ベータ",
-    "be-ta",
-    "ｂｅ－ｔａ",
-    "ﾍﾞｰﾀ",
+const char *kValueList[kNumCandidates] = {
+    "Beta", "ベータ", "BETA",   "beta",  "β",          "Β",    "㌼",
+    "Beta", "べーた", "ベータ", "be-ta", "ｂｅ－ｔａ", "ﾍﾞｰﾀ",
 };
 const int32 kValueLengths[kNumCandidates] = {
     4, 3, 4, 4, 1, 1, 1, 4, 3, 3, 5, 5, 4,
@@ -61,9 +50,9 @@ const int32 kIDs[kNumCandidates] = {
     0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -7, -11,
 };
 
-string GetStringImpl(const CompositionString &composition,
-                     const DWORD offset, const DWORD length) {
-  const BYTE *addr = reinterpret_cast<const BYTE*>(&composition);
+string GetStringImpl(const CompositionString &composition, const DWORD offset,
+                     const DWORD length) {
+  const BYTE *addr = reinterpret_cast<const BYTE *>(&composition);
   const wchar_t *string_start =
       reinterpret_cast<const wchar_t *>(addr + offset);
   const std::wstring wstr(string_start, string_start + length);
@@ -72,24 +61,22 @@ string GetStringImpl(const CompositionString &composition,
   return str;
 }
 
-BYTE GetAttributeImpl(const CompositionString &composition,
-                      const DWORD offset, const DWORD length, size_t index) {
-  const BYTE *addr = reinterpret_cast<const BYTE*>(&composition);
+BYTE GetAttributeImpl(const CompositionString &composition, const DWORD offset,
+                      const DWORD length, size_t index) {
+  const BYTE *addr = reinterpret_cast<const BYTE *>(&composition);
   const BYTE *attribute_start = addr + offset;
   EXPECT_LE(0, index);
   EXPECT_LT(index, length);
   return attribute_start[index];
 }
 
-#define GET_STRING(composition, field_name)                                  \
-    GetStringImpl((composition), (composition).info.dw##field_name##Offset,  \
-                  (composition).info.dw##field_name##Len)
+#define GET_STRING(composition, field_name)                               \
+  GetStringImpl((composition), (composition).info.dw##field_name##Offset, \
+                (composition).info.dw##field_name##Len)
 
 #define GET_ATTRIBUTE(composition, field_name, index)                        \
-    GetAttributeImpl((composition),                                          \
-                     (composition).info.dw##field_name##Offset,              \
-                     (composition).info.dw##field_name##Len,                 \
-                     (index))
+  GetAttributeImpl((composition), (composition).info.dw##field_name##Offset, \
+                   (composition).info.dw##field_name##Len, (index))
 
 // TODO(yukawa): Make a common library for this function.
 void FillOutputForSuggestion(commands::Output *output) {
@@ -237,8 +224,8 @@ void FillOutputForPrediction(commands::Output *output) {
 }
 
 // TODO(yukawa): Make a common library for this function.
-void FillOutputForConversion(
-    commands::Output *output, int focused_index, bool has_candidates) {
+void FillOutputForConversion(commands::Output *output, int focused_index,
+                             bool has_candidates) {
   DCHECK_LE(0, focused_index);
   DCHECK_GT(kNumCandidates, focused_index);
   DCHECK_NE(nullptr, output);
@@ -501,10 +488,10 @@ TEST(ImeCompositionStringTest, StartCompositionTest) {
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
-  EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-             GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-             GCS_DELTASTART),
-            messages[1].lparam());
+  EXPECT_EQ(
+      (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
+      messages[1].lparam());
 
   EXPECT_EQ(0, compstr.focused_character_index_);
   EXPECT_EQ(2, compstr.info.dwCompReadAttrLen);
@@ -718,12 +705,12 @@ TEST(ImeCompositionStringTest,
   // should be sent regardless of which field is actually updated. Otherwise,
   // some applications such as wordpad OOo Writer 3.0 will not update
   // composition window and caret state properly.
-  EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-             GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-             GCS_DELTASTART) |
-            (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
-             GCS_RESULTCLAUSE),
-            messages[0].lparam());
+  EXPECT_EQ(
+      (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART) |
+          (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR |
+           GCS_RESULTCLAUSE),
+      messages[0].lparam());
 
   EXPECT_EQ(0, compstr.focused_character_index_);
   EXPECT_EQ(2, compstr.info.dwCompReadAttrLen);
@@ -766,10 +753,10 @@ TEST(ImeCompositionStringTest, Suggest) {
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
-  EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-             GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-             GCS_DELTASTART),
-            messages[1].lparam());
+  EXPECT_EQ(
+      (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
+      messages[1].lparam());
 
   EXPECT_EQ(0, compstr.focused_character_index_);
   EXPECT_EQ(4, compstr.info.dwCompReadAttrLen);
@@ -820,10 +807,10 @@ TEST(ImeCompositionStringTest, Predict) {
   // regardless of which field is actually updated. Otherwise, some
   // applications such as wordpad OOo Writer 3.0 will not update composition
   // window and caret state properly.
-  EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-             GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-             GCS_DELTASTART),
-            messages[1].lparam());
+  EXPECT_EQ(
+      (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+       GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
+      messages[1].lparam());
 
   EXPECT_EQ(0, compstr.focused_character_index_);
   EXPECT_EQ(4, compstr.info.dwCompReadAttrLen);
@@ -840,7 +827,7 @@ TEST(ImeCompositionStringTest, Predict) {
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
   EXPECT_EQ("ｱﾙﾌｧ", GET_STRING(compstr, CompReadStr));
-  EXPECT_EQ("AlphaBeta",  GET_STRING(compstr, CompStr));
+  EXPECT_EQ("AlphaBeta", GET_STRING(compstr, CompStr));
 
   EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
   EXPECT_EQ(ATTR_TARGET_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
@@ -886,10 +873,10 @@ TEST(ImeCompositionStringTest, Convert) {
     // regardless of which field is actually updated. Otherwise, some
     // applications such as wordpad OOo Writer 3.0 will not update composition
     // window and caret state properly.
-    EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-               GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-               GCS_DELTASTART),
-              messages[1].lparam());
+    EXPECT_EQ(
+        (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
+        messages[1].lparam());
 
     EXPECT_EQ(5, compstr.focused_character_index_);
     EXPECT_EQ(8, compstr.info.dwCompReadAttrLen);
@@ -906,7 +893,7 @@ TEST(ImeCompositionStringTest, Convert) {
     EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
     EXPECT_EQ("ｱﾙﾌｧﾍﾞｰﾀ", GET_STRING(compstr, CompReadStr));
-    EXPECT_EQ("AlphaBeta",  GET_STRING(compstr, CompStr));
+    EXPECT_EQ("AlphaBeta", GET_STRING(compstr, CompStr));
 
     EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
     EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));
@@ -941,10 +928,10 @@ TEST(ImeCompositionStringTest, Convert) {
     // regardless of which field is actually updated. Otherwise, some
     // applications such as wordpad OOo Writer 3.0 will not update composition
     // window and caret state properly.
-    EXPECT_EQ((GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE |
-               GCS_COMPSTR | GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS |
-               GCS_DELTASTART),
-              messages[0].lparam());
+    EXPECT_EQ(
+        (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
+         GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART),
+        messages[0].lparam());
 
     EXPECT_EQ(5, compstr.focused_character_index_);
     EXPECT_EQ(8, compstr.info.dwCompReadAttrLen);
@@ -1043,8 +1030,7 @@ TEST(ImeCompositionStringTest, SurrogatePairSupport) {
   EXPECT_EQ(0, compstr.info.dwResultClauseLen);
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 
-  EXPECT_EQ("ｼｶﾙﾄｼｶﾙ",
-            GET_STRING(compstr, CompReadStr));
+  EXPECT_EQ("ｼｶﾙﾄｼｶﾙ", GET_STRING(compstr, CompReadStr));
 
   EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 0));
   EXPECT_EQ(ATTR_CONVERTED, GET_ATTRIBUTE(compstr, CompReadAttr, 1));

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
 //
 // class MyProcessWatchDog {
 //   void Signaled(SignalType sginal_type) {
-//      cout << "signaled! " << endl;
+//      std::cout << "signaled! " << std::endl;
 //   }
 // }
 //
@@ -58,16 +58,16 @@ class Mutex;
 class ProcessWatchDog : public Thread {
  public:
   enum SignalType {
-    UNKNOWN_SIGNALED               = 0,  // default value. nerver be signaled.
-    PROCESS_SIGNALED               = 1,  // process is signaled,
-    PROCESS_NOT_FOUND_SIGNALED     = 3,  // process id was not found
+    UNKNOWN_SIGNALED = 0,                // default value. nerver be signaled.
+    PROCESS_SIGNALED = 1,                // process is signaled,
+    PROCESS_NOT_FOUND_SIGNALED = 3,      // process id was not found
     PROCESS_ACCESS_DENIED_SIGNALED = 4,  // operation was not allowed
-    PROCESS_ERROR_SIGNALED         = 5,  // unkown error in getting process info
-    THREAD_SIGNALED                = 6,  // thread is signaled
-    THREAD_NOT_FOUND_SIGNALED      = 7,  // thread id was not found
-    THREAD_ACCESS_DENIED_SIGNALED  = 8,  // operation was not allowed
-    THREAD_ERROR_SIGNALED          = 9,  // unkown error in getting thread info
-    TIMEOUT_SIGNALED               = 10, // timeout is signaled
+    PROCESS_ERROR_SIGNALED = 5,          // unkown error in getting process info
+    THREAD_SIGNALED = 6,                 // thread is signaled
+    THREAD_NOT_FOUND_SIGNALED = 7,       // thread id was not found
+    THREAD_ACCESS_DENIED_SIGNALED = 8,   // operation was not allowed
+    THREAD_ERROR_SIGNALED = 9,           // unkown error in getting thread info
+    TIMEOUT_SIGNALED = 10,               // timeout is signaled
   };
 
 #ifdef OS_WIN
@@ -81,8 +81,8 @@ class ProcessWatchDog : public Thread {
   typedef uint32 ThreadID;
 #endif
 
-  static const ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
-  static const ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
+  static constexpr ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
+  static constexpr ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
 
   // Define a signal handler.
   // if the given process or thread is terminated, Signaled() is called

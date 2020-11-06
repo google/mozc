@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,14 +44,14 @@ namespace {
 
 IBusBus *g_bus = NULL;
 
-#ifndef NO_LOGGING
+#ifndef MOZC_NO_LOGGING
 void EnableVerboseLog() {
   const int kDefaultVerboseLevel = 1;
   if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
     mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
   }
 }
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
 
 void IgnoreSigChild() {
   // Don't wait() child process termination.
@@ -66,25 +66,17 @@ void IgnoreSigChild() {
 // Creates a IBusComponent object and add engine(s) to the object.
 IBusComponent *GetIBusComponent() {
   IBusComponent *component = ibus_component_new(
-      kComponentName,
-      kComponentDescription,
-      mozc::Version::GetMozcVersion().c_str(),
-      kComponentLicense,
-      kComponentAuthor,
-      kComponentHomepage,
-      "",
-      kComponentTextdomain);
-  const string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
+      kComponentName, kComponentDescription,
+      mozc::Version::GetMozcVersion().c_str(), kComponentLicense,
+      kComponentAuthor, kComponentHomepage, "", kComponentTextdomain);
+  const std::string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
   for (size_t i = 0; i < kEngineArrayLen; ++i) {
-    ibus_component_add_engine(component,
-                              ibus_engine_desc_new(kEngineNameArray[i],
-                                                   kEngineLongnameArray[i],
-                                                   kEngineDescription,
-                                                   kEngineLanguage,
-                                                   kComponentLicense,
-                                                   kComponentAuthor,
-                                                   icon_path.c_str(),
-                                                   kEngineLayoutArray[i]));
+    ibus_component_add_engine(
+        component,
+        ibus_engine_desc_new(kEngineNameArray[i], kEngineLongnameArray[i],
+                             kEngineDescription, kEngineLanguage,
+                             kComponentLicense, kComponentAuthor,
+                             icon_path.c_str(), kEngineLayoutArray[i]));
   }
   return component;
 }
@@ -92,19 +84,17 @@ IBusComponent *GetIBusComponent() {
 // Initializes ibus components and adds Mozc engine.
 void InitIBusComponent(bool executed_by_ibus_daemon) {
   g_bus = ibus_bus_new();
-  g_signal_connect(g_bus,
-                   "disconnected",
-                   G_CALLBACK(mozc::ibus::MozcEngine::Disconnected),
-                   NULL);
+  g_signal_connect(g_bus, "disconnected",
+                   G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), NULL);
 
   IBusComponent *component = GetIBusComponent();
   IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(g_bus));
   GList *engines = ibus_component_get_engines(component);
   for (GList *p = engines; p; p = p->next) {
-    IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc*>(p->data);
-    const gchar * const engine_name = ibus_engine_desc_get_name(engine);
-    ibus_factory_add_engine(
-        factory, engine_name, mozc::ibus::MozcEngine::GetType());
+    IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc *>(p->data);
+    const gchar *const engine_name = ibus_engine_desc_get_name(engine);
+    ibus_factory_add_engine(factory, engine_name,
+                            mozc::ibus::MozcEngine::GetType());
   }
 
   if (executed_by_ibus_daemon) {
@@ -118,12 +108,12 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 }  // namespace
 
 int main(gint argc, gchar **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv, true);
+  mozc::InitMozc(argv[0], &argc, &argv);
   ibus_init();
   InitIBusComponent(FLAGS_ibus);
-#ifndef NO_LOGGING
+#ifndef MOZC_NO_LOGGING
   EnableVerboseLog();
-#endif  // NO_LOGGING
+#endif  // MOZC_NO_LOGGING
   IgnoreSigChild();
   ibus_main();
   return 0;

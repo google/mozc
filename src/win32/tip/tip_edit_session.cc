@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -49,8 +49,8 @@
 #include "win32/tip/tip_edit_session_impl.h"
 #include "win32/tip/tip_input_mode_manager.h"
 #include "win32/tip/tip_private_context.h"
-#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_range_util.h"
+#include "win32/tip/tip_ref_count.h"
 #include "win32/tip/tip_status.h"
 #include "win32/tip/tip_surrounding_text.h"
 #include "win32/tip/tip_text_service.h"
@@ -75,8 +75,8 @@ typedef ::mozc::commands::KeyEvent_SpecialKey SpecialKey;
 typedef ::mozc::commands::SessionCommand::CommandType CommandType;
 typedef ::mozc::commands::SessionCommand::UsageStatsEvent UsageStatsEvent;
 
-HRESULT QueryInterfaceImpl(
-    ITfEditSession *edit_session, REFIID interface_id, void **object) {
+HRESULT QueryInterfaceImpl(ITfEditSession *edit_session, REFIID interface_id,
+                           void **object) {
   if (!object) {
     return E_INVALIDARG;
   }
@@ -103,9 +103,7 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
  public:
   AsyncLayoutChangeEditSessionImpl(CComPtr<TipTextService> text_service,
                                    CComPtr<ITfContext> context)
-    : text_service_(text_service),
-      context_(context) {
-  }
+      : text_service_(text_service), context_(context) {}
   ~AsyncLayoutChangeEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -113,9 +111,7 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -131,8 +127,9 @@ class AsyncLayoutChangeEditSessionImpl : public ITfEditSession {
   virtual STDMETHODIMP DoEditSession(TfEditCookie read_cookie) {
     // Ignore the returned code as TipUiHandler::UpdateUI will be called
     // anyway.
-    text_service_->GetThreadContext()->GetInputModeManager()->
-        OnMoveFocusedWindow();
+    text_service_->GetThreadContext()
+        ->GetInputModeManager()
+        ->OnMoveFocusedWindow();
 
     TipEditSessionImpl::UpdateUI(text_service_, context_, read_cookie);
     return S_OK;
@@ -156,15 +153,13 @@ bool OnLayoutChangedAsyncImpl(TipTextService *text_service,
     return false;
   }
 
-  CComPtr<ITfEditSession> edit_session(new AsyncLayoutChangeEditSessionImpl(
-      text_service, context));
+  CComPtr<ITfEditSession> edit_session(
+      new AsyncLayoutChangeEditSessionImpl(text_service, context));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      TF_ES_ASYNCDONTCARE | TF_ES_READ,
-      &edit_session_result);
+      text_service->GetClientID(), edit_session,
+      TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -178,9 +173,7 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
  public:
   AsyncSetFocusEditSessionImpl(CComPtr<TipTextService> text_service,
                                CComPtr<ITfContext> context)
-    : text_service_(text_service),
-      context_(context) {
-  }
+      : text_service_(text_service), context_(context) {}
   ~AsyncSetFocusEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -188,9 +181,7 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -209,15 +200,13 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
     TfActiveSelEnd active_sel_end = TF_AE_NONE;
     if (SUCCEEDED(TipRangeUtil::GetDefaultSelection(
             context_, read_cookie, &selection_range, &active_sel_end))) {
-      TipRangeUtil::GetInputScopes(
-          selection_range, read_cookie, &input_scopes);
+      TipRangeUtil::GetInputScopes(selection_range, read_cookie, &input_scopes);
     }
     ITfThreadMgr *thread_manager = text_service_->GetThreadManager();
     TipThreadContext *thread_context = text_service_->GetThreadContext();
     DWORD system_input_mode = 0;
-    if (!TipStatus::GetInputModeConversion(thread_manager,
-                                           text_service_->GetClientID(),
-                                           &system_input_mode)) {
+    if (!TipStatus::GetInputModeConversion(
+            thread_manager, text_service_->GetClientID(), &system_input_mode)) {
       return E_FAIL;
     }
     const auto action = thread_context->GetInputModeManager()->OnSetFocus(
@@ -236,11 +225,11 @@ class AsyncSetFocusEditSessionImpl : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(AsyncSetFocusEditSessionImpl);
 };
 
-bool OnUpdateOnOffModeAsync(TipTextService *text_service,
-                            ITfContext *context,
+bool OnUpdateOnOffModeAsync(TipTextService *text_service, ITfContext *context,
                             bool open) {
-  const auto action = text_service->GetThreadContext()->GetInputModeManager()->
-      OnChangeOpenClose(open);
+  const auto action = text_service->GetThreadContext()
+                          ->GetInputModeManager()
+                          ->OnChangeOpenClose(open);
   if (action == TipInputModeManager::kUpdateUI) {
     return OnLayoutChangedAsyncImpl(text_service, context);
   }
@@ -253,14 +242,12 @@ bool OnUpdateOnOffModeAsync(TipTextService *text_service,
 class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
  public:
   AsyncSwitchInputModeEditSessionImpl(CComPtr<TipTextService> text_service,
-                                      CComPtr<ITfContext> context,
-                                      bool open,
+                                      CComPtr<ITfContext> context, bool open,
                                       uint32 native_mode)
       : text_service_(text_service),
         context_(context),
         open_(open),
-        native_mode_(native_mode) {
-  }
+        native_mode_(native_mode) {}
   ~AsyncSwitchInputModeEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -268,9 +255,7 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -285,7 +270,7 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
     TipPrivateContext *private_context =
-      text_service_->GetPrivateContext(context_);
+        text_service_->GetPrivateContext(context_);
     if (!private_context) {
       // This is an unmanaged context. It's OK. Nothing to do.
       return S_OK;
@@ -327,8 +312,8 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
         return E_FAIL;
       }
     }
-    return TipEditSessionImpl::UpdateContext(
-        text_service_, context_, write_cookie, output);
+    return TipEditSessionImpl::UpdateContext(text_service_, context_,
+                                             write_cookie, output);
   }
 
  private:
@@ -341,10 +326,8 @@ class AsyncSwitchInputModeEditSessionImpl : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(AsyncSwitchInputModeEditSessionImpl);
 };
 
-bool OnSwitchInputModeAsync(TipTextService *text_service,
-                            ITfContext *context,
-                            bool open,
-                            uint32 native_mode) {
+bool OnSwitchInputModeAsync(TipTextService *text_service, ITfContext *context,
+                            bool open, uint32 native_mode) {
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
@@ -353,10 +336,8 @@ bool OnSwitchInputModeAsync(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
-      &edit_session_result);
+      text_service->GetClientID(), edit_session,
+      TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -371,8 +352,7 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
   AsyncSessionCommandEditSessionImpl(CComPtr<TipTextService> text_service,
                                      CComPtr<ITfContext> context,
                                      const SessionCommand &session_command)
-      : text_service_(text_service),
-        context_(context) {
+      : text_service_(text_service), context_(context) {
     session_command_.CopyFrom(session_command);
   }
   ~AsyncSessionCommandEditSessionImpl() {}
@@ -382,9 +362,7 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -407,8 +385,8 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
     if (!private_context->GetClient()->SendCommand(session_command_, &output)) {
       return E_FAIL;
     }
-    return TipEditSessionImpl::UpdateContext(
-        text_service_, context_, write_cookie, output);
+    return TipEditSessionImpl::UpdateContext(text_service_, context_,
+                                             write_cookie, output);
   }
 
  private:
@@ -420,8 +398,7 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
   DISALLOW_COPY_AND_ASSIGN(AsyncSessionCommandEditSessionImpl);
 };
 
-bool OnSessionCommandAsync(TipTextService *text_service,
-                           ITfContext *context,
+bool OnSessionCommandAsync(TipTextService *text_service, ITfContext *context,
                            const SessionCommand &session_command) {
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
@@ -431,10 +408,8 @@ bool OnSessionCommandAsync(TipTextService *text_service,
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
-      &edit_session_result);
+      text_service->GetClientID(), edit_session,
+      TF_ES_ASYNCDONTCARE | TF_ES_READWRITE, &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -462,8 +437,9 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
   string text_utf8;
   Util::WideToUTF8(info.selected_text, &text_utf8);
   if (text_utf8.empty()) {
-    const bool open = text_service->GetThreadContext()->GetInputModeManager()->
-        GetEffectiveOpenClose();
+    const bool open = text_service->GetThreadContext()
+                          ->GetInputModeManager()
+                          ->GetEffectiveOpenClose();
     if (open) {
       return true;
     }
@@ -489,8 +465,7 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
     }
   }
 
-  if (output.has_callback() &&
-      output.callback().has_session_command() &&
+  if (output.has_callback() && output.callback().has_session_command() &&
       output.callback().session_command().has_type()) {
     // do not allow recursive call.
     return false;
@@ -547,13 +522,12 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
     // actually |next_state| will be ignored in TSF Mozc.
     // So it is OK to pass the default value.
     InputState next_state;
-    private_context->GetDeleter()->BeginDeletion(
-        deletion_range.length(), pending_output, next_state);
+    private_context->GetDeleter()->BeginDeletion(deletion_range.length(),
+                                                 pending_output, next_state);
     return true;
   }
 
-  if (output.has_callback() &&
-      output.callback().has_session_command() &&
+  if (output.has_callback() && output.callback().has_session_command() &&
       output.callback().session_command().has_type()) {
     // do not allow recursive call.
     return false;
@@ -591,10 +565,8 @@ bool IsCandidateFocused(const Output &output, uint32 candidate_id) {
 class SyncEditSessionImpl : public ITfEditSession {
  public:
   SyncEditSessionImpl(CComPtr<TipTextService> text_service,
-                      CComPtr<ITfContext> context,
-                      const Output &output)
-      : text_service_(text_service),
-        context_(context) {
+                      CComPtr<ITfContext> context, const Output &output)
+      : text_service_(text_service), context_(context) {
     output_.CopyFrom(output);
   }
   ~SyncEditSessionImpl() {}
@@ -604,9 +576,7 @@ class SyncEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -620,8 +590,8 @@ class SyncEditSessionImpl : public ITfEditSession {
   // This function is called back by the TSF thread manager when an edit
   // request is granted.
   virtual STDMETHODIMP DoEditSession(TfEditCookie write_cookie) {
-    return TipEditSessionImpl::UpdateContext(
-        text_service_, context_, write_cookie, output_);
+    return TipEditSessionImpl::UpdateContext(text_service_, context_,
+                                             write_cookie, output_);
   }
 
  private:
@@ -639,10 +609,8 @@ enum EditSessionMode {
   kSync,
 };
 
-bool OnOutputReceivedImpl(TipTextService *text_service,
-                          ITfContext *context,
-                          const Output &new_output,
-                          EditSessionMode mode) {
+bool OnOutputReceivedImpl(TipTextService *text_service, ITfContext *context,
+                          const Output &new_output, EditSessionMode mode) {
   if (new_output.has_callback() &&
       new_output.callback().has_session_command() &&
       new_output.callback().session_command().has_type()) {
@@ -660,8 +628,8 @@ bool OnOutputReceivedImpl(TipTextService *text_service,
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(new SyncEditSessionImpl(
-      text_service, context, new_output));
+  CComPtr<ITfEditSession> edit_session(
+      new SyncEditSessionImpl(text_service, context, new_output));
 
   DWORD edit_session_flag = TF_ES_READWRITE;
   switch (mode) {
@@ -680,11 +648,9 @@ bool OnOutputReceivedImpl(TipTextService *text_service,
   }
 
   HRESULT edit_session_result = S_OK;
-  const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      edit_session_flag,
-      &edit_session_result);
+  const HRESULT hr =
+      context->RequestEditSession(text_service->GetClientID(), edit_session,
+                                  edit_session_flag, &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -697,9 +663,7 @@ bool OnOutputReceivedImpl(TipTextService *text_service,
 class SyncGetTextEditSessionImpl : public ITfEditSession {
  public:
   SyncGetTextEditSessionImpl(TipTextService *text_service, ITfRange *range)
-      : text_service_(text_service),
-        range_(range) {
-  }
+      : text_service_(text_service), range_(range) {}
   ~SyncGetTextEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -707,9 +671,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -727,9 +689,7 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
     return S_OK;
   }
 
-  const std::wstring &text() const {
-    return text_;
-  }
+  const std::wstring &text() const { return text_; }
 
  private:
   TipRefCount ref_count_;
@@ -746,12 +706,8 @@ class SyncGetTextEditSessionImpl : public ITfEditSession {
 class AsyncSetTextEditSessionImpl : public ITfEditSession {
  public:
   AsyncSetTextEditSessionImpl(TipTextService *text_service,
-                              const std::wstring &text,
-                              ITfRange *range)
-      : text_service_(text_service),
-        text_(text),
-        range_(range) {
-  }
+                              const std::wstring &text, ITfRange *range)
+      : text_service_(text_service), text_(text), range_(range) {}
   ~AsyncSetTextEditSessionImpl() {}
 
   // The IUnknown interface methods.
@@ -759,9 +715,7 @@ class AsyncSetTextEditSessionImpl : public ITfEditSession {
     return QueryInterfaceImpl(this, interface_id, object);
   }
 
-  STDMETHODIMP_(ULONG) AddRef() {
-    return ref_count_.AddRefImpl();
-  }
+  STDMETHODIMP_(ULONG) AddRef() { return ref_count_.AddRefImpl(); }
 
   STDMETHODIMP_(ULONG) Release() {
     const ULONG count = ref_count_.ReleaseImpl();
@@ -802,8 +756,8 @@ bool TipEditSession::OnOutputReceivedAsync(TipTextService *text_service,
   return OnOutputReceivedImpl(text_service, context, new_output, kAsync);
 }
 
-bool TipEditSession::OnLayoutChangedAsync(
-    TipTextService *text_service, ITfContext *context) {
+bool TipEditSession::OnLayoutChangedAsync(TipTextService *text_service,
+                                          ITfContext *context) {
   return OnLayoutChangedAsyncImpl(text_service, context);
 }
 
@@ -822,15 +776,13 @@ bool TipEditSession::OnSetFocusAsync(TipTextService *text_service,
   // When RequestEditSession fails, it does not maintain the reference count.
   // So we need to ensure that AddRef/Release should be called at least once
   // per object.
-  CComPtr<ITfEditSession> edit_session(new AsyncSetFocusEditSessionImpl(
-      text_service, context));
+  CComPtr<ITfEditSession> edit_session(
+      new AsyncSetFocusEditSessionImpl(text_service, context));
 
   HRESULT edit_session_result = S_OK;
   const HRESULT hr = context->RequestEditSession(
-      text_service->GetClientID(),
-      edit_session,
-      TF_ES_ASYNCDONTCARE | TF_ES_READ,
-      &edit_session_result);
+      text_service->GetClientID(), edit_session,
+      TF_ES_ASYNCDONTCARE | TF_ES_READ, &edit_session_result);
   if (FAILED(hr)) {
     return false;
   }
@@ -857,16 +809,16 @@ bool TipEditSession::OnModeChangedAsync(TipTextService *text_service) {
     return false;
   }
   DWORD native_mode = false;
-  if (!TipStatus::GetInputModeConversion(
-          text_service->GetThreadManager(),
-          text_service->GetClientID(),
-          &native_mode)) {
+  if (!TipStatus::GetInputModeConversion(text_service->GetThreadManager(),
+                                         text_service->GetClientID(),
+                                         &native_mode)) {
     return false;
   }
-  const auto action = text_service->GetThreadContext()->GetInputModeManager()->
-      OnChangeConversionMode(native_mode);
+  const auto action = text_service->GetThreadContext()
+                          ->GetInputModeManager()
+                          ->OnChangeConversionMode(native_mode);
   if (action == TipInputModeManager::kUpdateUI) {
-      return OnLayoutChangedAsyncImpl(text_service, context);
+    return OnLayoutChangedAsyncImpl(text_service, context);
   }
   return true;
 }
@@ -886,14 +838,12 @@ bool TipEditSession::OnOpenCloseChangedAsync(TipTextService *text_service) {
     return false;
   }
   return OnUpdateOnOffModeAsync(
-      text_service,
-      context,
+      text_service, context,
       TipStatus::IsOpen(text_service->GetThreadManager()));
 }
 
 bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
-                                             ITfContext *context,
-                                             WPARAM wparam,
+                                             ITfContext *context, WPARAM wparam,
                                              LPARAM lparam) {
   const CommandType type = static_cast<CommandType>(wparam);
   switch (type) {
@@ -927,8 +877,8 @@ bool TipEditSession::OnRendererCallbackAsync(TipTextService *text_service,
       command.set_type(type);
       command.set_usage_stats_event(event_id);
       Output output_ignored;  // Discard the response in this case.
-      if (!private_context->GetClient()->SendCommand(
-              command, &output_ignored)) {
+      if (!private_context->GetClient()->SendCommand(command,
+                                                     &output_ignored)) {
         return false;
       }
       return true;
@@ -951,8 +901,8 @@ bool TipEditSession::SubmitAsync(TipTextService *text_service,
   return OnSessionCommandAsync(text_service, context, session_command);
 }
 
-bool TipEditSession::CancelCompositionAsync(
-    TipTextService *text_service, ITfContext *context) {
+bool TipEditSession::CancelCompositionAsync(TipTextService *text_service,
+                                            ITfContext *context) {
   SessionCommand command;
   command.set_type(SessionCommand::REVERT);
   return OnSessionCommandAsync(text_service, context, command);
@@ -1092,8 +1042,7 @@ bool TipEditSession::SwitchInputModeAsync(TipTextService *text_service,
   return OnSwitchInputModeAsync(text_service, context, true, native_mode);
 }
 
-bool TipEditSession::GetTextSync(TipTextService *text_service,
-                                 ITfRange *range,
+bool TipEditSession::GetTextSync(TipTextService *text_service, ITfRange *range,
                                  std::wstring *text) {
   CComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
@@ -1104,10 +1053,8 @@ bool TipEditSession::GetTextSync(TipTextService *text_service,
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(),
-                                   get_text,
-                                   TF_ES_SYNC | TF_ES_READ,
-                                   &hr_session);
+  hr = context->RequestEditSession(text_service->GetClientID(), get_text,
+                                   TF_ES_SYNC | TF_ES_READ, &hr_session);
   if (FAILED(hr)) {
     return false;
   }
@@ -1117,8 +1064,7 @@ bool TipEditSession::GetTextSync(TipTextService *text_service,
 
 // static
 bool TipEditSession::SetTextAsync(TipTextService *text_service,
-                                  const std::wstring &text,
-                                  ITfRange *range) {
+                                  const std::wstring &text, ITfRange *range) {
   CComPtr<ITfContext> context;
   if (FAILED(range->GetContext(&context))) {
     return false;
@@ -1128,8 +1074,7 @@ bool TipEditSession::SetTextAsync(TipTextService *text_service,
 
   HRESULT hr = S_OK;
   HRESULT hr_session = S_OK;
-  hr = context->RequestEditSession(text_service->GetClientID(),
-                                   set_text,
+  hr = context->RequestEditSession(text_service->GetClientID(), set_text,
                                    TF_ES_ASYNCDONTCARE | TF_ES_READWRITE,
                                    &hr_session);
   if (FAILED(hr)) {

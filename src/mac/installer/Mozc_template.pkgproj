@@ -25,22 +25,6 @@
 											<key>GID</key>
 											<integer>0</integer>
 											<key>PATH</key>
-											<string>${BUILD_DIR}/CharacterPalette.app</string>
-											<key>PATH_TYPE</key>
-											<integer>0</integer>
-											<key>PERMISSIONS</key>
-											<integer>493</integer>
-											<key>TYPE</key>
-											<integer>3</integer>
-											<key>UID</key>
-											<integer>0</integer>
-										</dict>
-										<dict>
-											<key>CHILDREN</key>
-											<array/>
-											<key>GID</key>
-											<integer>0</integer>
-											<key>PATH</key>
 											<string>${BUILD_DIR}/ConfigDialog.app</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
@@ -58,22 +42,6 @@
 											<integer>0</integer>
 											<key>PATH</key>
 											<string>${BUILD_DIR}/DictionaryTool.app</string>
-											<key>PATH_TYPE</key>
-											<integer>0</integer>
-											<key>PERMISSIONS</key>
-											<integer>493</integer>
-											<key>TYPE</key>
-											<integer>3</integer>
-											<key>UID</key>
-											<integer>0</integer>
-										</dict>
-										<dict>
-											<key>CHILDREN</key>
-											<array/>
-											<key>GID</key>
-											<integer>0</integer>
-											<key>PATH</key>
-											<string>${BUILD_DIR}/HandWriting.app</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
 											<key>PERMISSIONS</key>
@@ -814,7 +782,7 @@
 						<key>IC_REQUIREMENT_OS_DISTRIBUTION_TYPE</key>
 						<integer>0</integer>
 						<key>IC_REQUIREMENT_OS_MINIMUM_VERSION</key>
-						<integer>100900</integer>
+						<integer>101200</integer>
 					</dict>
 					<key>IC_REQUIREMENT_CHECK_TYPE</key>
 					<integer>1</integer>
@@ -826,7 +794,7 @@
 							<key>LANGUAGE</key>
 							<string>English</string>
 							<key>VALUE</key>
-							<string>Mozc requires Mac OS X 10.9 or later.</string>
+							<string>Mozc requires Mac OS X 10.12 or later.</string>
 						</dict>
 						<dict>
 							<key>LANGUAGE</key>
@@ -834,7 +802,7 @@
 							<key>SECONDARY_VALUE</key>
 							<string></string>
 							<key>VALUE</key>
-							<string>Mozc は Mac OS X 10.9 以降で動作します。</string>
+							<string>Mozc は Mac OS X 10.12 以降で動作します。</string>
 						</dict>
 					</array>
 					<key>NAME</key>

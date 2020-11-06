@@ -1,0 +1,266 @@
+# -*- coding: utf-8 -*-
+# Copyright 2010-2020, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load(
+    "//:build_defs.bzl",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+    "cc_test_mozc",
+    "py_binary_mozc",
+    "select_mozc",
+)
+
+package(default_visibility = ["//:__subpackages__"])
+
+IBUS_MOZC_ICON_PATH = "/usr/share/ibus-mozc/product_icon.png"
+
+IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
+
+MOZC_SERVER_DIRECTORY = "/usr/lib/mozc"
+
+py_binary_mozc(
+    name = "gen_mozc_xml_main",
+    srcs = ["gen_mozc_xml.py"],
+)
+
+# This genrule uses pkg-config in gen_mozc_xml_main.
+genrule(
+    name = "gen_mozc_xml",
+    outs = ["mozc.xml"],
+    cmd = select_mozc(
+        default = "touch $@",  # This is stub.
+        linux = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
+                 " --server_dir=" + MOZC_SERVER_DIRECTORY +
+                 " --ibus_mozc_path=" + IBUS_MOZC_PATH +
+                 " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
+                 " > $@"),
+    ),
+    exec_tools = [":gen_mozc_xml_main"],
+)
+
+# This genrule uses pkg-config in gen_mozc_xml_main.
+genrule(
+    name = "gen_main_h",
+    outs = ["main.h"],
+    cmd = select_mozc(
+        default = "touch $@",  # This is stub.
+        linux = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
+                 " --output_cpp" +
+                 " --ibus_mozc_path=" + IBUS_MOZC_PATH +
+                 " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
+                 " > $@"),
+    ),
+    exec_tools = [":gen_mozc_xml_main"],
+)
+
+cc_library_mozc(
+    name = "ibus_mozc_metadata",
+    srcs = ["mozc_engine_property.cc"],
+    hdrs = ["mozc_engine_property.h"],
+    deps = [
+        "//base:base",
+        "//base:port",
+        "//protocol:commands_proto",
+    ] + select_mozc(linux = ["@ibus//:ibus"]),
+)
+
+cc_library_mozc(
+    name = "ibus_property_handler",
+    srcs = select_mozc(linux = ["property_handler.cc"]),
+    hdrs = select_mozc(
+        linux = [
+            "ibus_header.h",
+            "property_handler.h",
+            "property_handler_interface.h",
+        ],
+    ),
+    deps = [
+        ":ibus_utils",
+        ":ibus_mozc_metadata",
+        "//base:port",
+        "//client:client",
+        "//protocol:commands_proto",
+    ] + select_mozc(linux = ["@ibus//:ibus"]),
+)
+
+cc_library_mozc(
+    name = "ibus_utils",
+    srcs = [
+        "message_translator.cc",
+        "path_util.cc",
+    ],
+    hdrs = [
+        "message_translator.h",
+        "path_util.h",
+    ],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+    ],
+)
+
+cc_test_mozc(
+    name = "ibus_utils_test",
+    size = "small",
+    srcs = [
+        "message_translator_test.cc",
+        "path_util_test.cc",
+    ],
+    deps = [
+        ":ibus_utils",
+        "//base",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "ibus_mozc_lib",
+    srcs = select_mozc(
+        linux = [
+            "engine_registrar.cc",
+            "ibus_candidate_window_handler.cc",
+            "key_event_handler.cc",
+            "key_translator.cc",
+            "mozc_engine.cc",
+            "preedit_handler.cc",
+            "surrounding_text_util.cc",
+        ],
+    ),
+    hdrs = select_mozc(
+        linux = [
+            "candidate_window_handler_interface.h",
+            "engine_interface.h",
+            "engine_registrar.h",
+            "ibus_candidate_window_handler.h",
+            "key_event_handler.h",
+            "key_translator.h",
+            "mozc_engine.h",
+            "preedit_handler.h",
+            "preedit_handler_interface.h",
+            "surrounding_text_util.h",
+        ],
+    ),
+    deps = [
+        ":gtk_candidate_window_handler",
+        ":ibus_property_handler",
+        ":ibus_utils",
+        ":x11_selection_monitor",
+        "//client",
+        "//protocol:commands_proto",
+        "//session:ime_switch_util",
+    ],
+)
+
+cc_binary_mozc(
+    name = "ibus_mozc",
+    srcs = select_mozc(
+        default = ["main_stub.cc"],
+        linux = [
+            "main.cc",
+            ":gen_main_h",
+        ],
+    ),
+    data = [":gen_mozc_xml"],
+    deps = [
+        ":ibus_mozc_lib",
+        ":ibus_mozc_metadata",
+        "//base",
+        "//base:init_mozc",
+    ],
+)
+
+cc_test_mozc(
+    name = "ibus_mozc_test",
+    size = "small",
+    srcs = select_mozc(
+        linux = [
+            "key_event_handler_test.cc",
+            "key_translator_test.cc",
+            "mozc_engine_test.cc",
+            "surrounding_text_util_test.cc",
+        ],
+    ),
+    deps = [
+        ":ibus_mozc_lib",
+        ":ibus_mozc_metadata",
+        "//base",
+        "//base/protobuf",
+        "//client",
+        "//client:client_mock",
+        "//composer:key_event_util",
+        "//protocol:commands_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "gtk_candidate_window_handler",
+    srcs = select_mozc(linux = ["gtk_candidate_window_handler.cc"]),
+    hdrs = select_mozc(
+        linux = [
+            "candidate_window_handler_interface.h",
+            "gtk_candidate_window_handler.h",
+            "ibus_header.h",
+        ],
+    ),
+    deps = [
+        "//base:coordinates",
+        "//protocol:renderer_proto",
+        "//renderer:renderer_client",
+        "//renderer:renderer_interface",
+        "//renderer:unix_const",
+    ] + select_mozc(linux = ["@ibus//:ibus"]),
+)
+
+cc_test_mozc(
+    name = "gtk_candidate_window_handler_test",
+    srcs = select_mozc(linux = ["gtk_candidate_window_handler_test.cc"]),
+    deps = [
+        ":gtk_candidate_window_handler",
+        "//renderer:renderer_mock",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
+    name = "x11_selection_monitor",
+    srcs = select_mozc(linux = ["selection_monitor.cc"]),
+    hdrs = select_mozc(linux = ["selection_monitor.h"]),
+    defines = ["MOZC_ENABLE_X11_SELECTION_MONITOR"],
+    linkopts = select_mozc(
+        linux = [
+            "-lxcb",
+            "-lxcb-xfixes",
+        ],
+    ),
+    deps = ["//base"],
+)

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,10 +35,11 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
+#include "dictionary/dictionary_interface.h"
 #include "rewriter/rewriter_interface.h"
 // for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -53,6 +54,7 @@ class Composer;
 
 class DateRewriter : public RewriterInterface {
  public:
+  explicit DateRewriter(const dictionary::DictionaryInterface *dictionary);
   DateRewriter();
   ~DateRewriter() override;
 
@@ -64,21 +66,19 @@ class DateRewriter : public RewriterInterface {
  private:
   FRIEND_TEST(DateRewriterTest, ADToERA);
   FRIEND_TEST(DateRewriterTest, ERAToAD);
+  FRIEND_TEST(DateRewriterTest, ADToERAWithNewName);
+  FRIEND_TEST(DateRewriterTest, NewEraNameTest);
   FRIEND_TEST(DateRewriterTest, ConvertTime);
   FRIEND_TEST(DateRewriterTest, ConvertDateTest);
 
-  static bool RewriteTime(Segment *segment,
-                          const char *key,
-                          const char *value,
-                          const char *description,
-                          int type, int diff);
+  static bool RewriteTime(Segment *segment, const char *key, const char *value,
+                          const char *description, int type, int diff);
   static bool RewriteDate(Segment *segment);
   static bool RewriteMonth(Segment *segment);
   static bool RewriteYear(Segment *segment);
   static bool RewriteCurrentTime(Segment *segment);
   static bool RewriteDateAndCurrentTime(Segment *segment);
-  static bool RewriteEra(Segment *current_segment,
-                         const Segment &next_segment);
+  static bool RewriteEra(Segment *current_segment, const Segment &next_segment);
   static bool RewriteAd(Segment *segment);
   static bool RewriteWeekday(Segment *segment);
 
@@ -92,21 +92,31 @@ class DateRewriter : public RewriterInterface {
   //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
   //   123  -> "1月23日、01/23、1:23"
   static bool RewriteConsecutiveDigits(const composer::Composer &composer,
-                                       int insert_position,
-                                       Segments *segments);
+                                       int insert_position, Segments *segments);
 
   // Helper functions for RewriteConsecutiveDigits().
   static bool RewriteConsecutiveTwoDigits(
-      StringPiece str,
-      std::vector<std::pair<string, const char *>> *results);
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
   static bool RewriteConsecutiveThreeDigits(
-      StringPiece str,
-      std::vector<std::pair<string, const char *>> *results);
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
   static bool RewriteConsecutiveFourDigits(
-      StringPiece str,
-      std::vector<std::pair<string, const char *>> *results);
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
 
-  static bool AdToEra(int year, std::vector<string> *results);
+  // In general, Japanese era can be identified without the month.
+  // However, during the era migration time, we have to check the month., i.e.,
+  // 2019/01-04 => Heisei, 2019/05- => new era.
+  // The `month` field is only checked at the year of 2019.
+  // The case o year=2019 and month=0 is treated as "entire year" and returns
+  // both Heisei and the new e
+  static bool AdToEra(int year, int month, std::vector<std::string> *results);
+
+  // For backward compatibility
+  static bool AdToEra(int year, std::vector<std::string> *results) {
+    return AdToEra(year, 1, results);
+  }
 
   // Converts AD to Japanese ERA.
   // If given string is invalid, this function does not nothing and
@@ -121,8 +131,8 @@ class DateRewriter : public RewriterInterface {
   //                        "1313年", "１３１３年", "一三一三年" },
   //                       {"昭和2年", "昭和2年", "昭和2年",
   //                        "正和2年", "正和2年", "正和2年"}
-  static bool EraToAd(const string &key, std::vector<string> *results,
-                      std::vector<string> *descriptions);
+  static bool EraToAd(const std::string &key, std::vector<std::string> *results,
+                      std::vector<std::string> *descriptions);
 
   // Converts given time to string expression.
   // If given time information is invalid, this function does nothing and
@@ -136,7 +146,7 @@ class DateRewriter : public RewriterInterface {
   //    1   :  30 -> "1時30分、午前1時30分、午前1時半、1時半、1:30"
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
   static bool ConvertTime(uint32 hour, uint32 min,
-                          std::vector<string> *results);
+                          std::vector<std::string> *results);
 
   // Converts given date to string expression.
   // If given date information is invalid, this function does nothing and
@@ -151,7 +161,7 @@ class DateRewriter : public RewriterInterface {
   //   2011:  5  : 18 -> "平成23年5月18日,2011年5月18日,2011-05-18,2011/05/18"
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
   static bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
-                                  std::vector<string> *results);
+                                  std::vector<std::string> *results);
 };
 
 }  // namespace mozc

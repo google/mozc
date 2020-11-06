@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/status.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
@@ -59,43 +60,45 @@
 #include "prediction/user_history_predictor.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
-
-using mozc::dictionary::DictionaryImpl;
-using mozc::dictionary::PosGroup;
-using mozc::dictionary::SuffixDictionary;
-using mozc::dictionary::SuppressionDictionary;
-using mozc::dictionary::SystemDictionary;
-using mozc::dictionary::UserDictionary;
-using mozc::dictionary::UserPOS;
-using mozc::dictionary::ValueDictionary;
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
 
+using ::mozc::dictionary::DictionaryImpl;
+using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::SuffixDictionary;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::SystemDictionary;
+using ::mozc::dictionary::UserDictionary;
+using ::mozc::dictionary::UserPOS;
+using ::mozc::dictionary::ValueDictionary;
+
 class UserDataManagerImpl final : public UserDataManagerInterface {
  public:
-  explicit UserDataManagerImpl(PredictorInterface *predictor,
-                               RewriterInterface *rewriter)
+  UserDataManagerImpl(PredictorInterface *predictor,
+                      RewriterInterface *rewriter)
       : predictor_(predictor), rewriter_(rewriter) {}
   ~UserDataManagerImpl() override;
+
+  UserDataManagerImpl(const UserDataManagerImpl &) = delete;
+  UserDataManagerImpl &operator=(const UserDataManagerImpl &) = delete;
 
   bool Sync() override;
   bool Reload() override;
   bool ClearUserHistory() override;
   bool ClearUserPrediction() override;
   bool ClearUnusedUserPrediction() override;
-  bool ClearUserPredictionEntry(
-      const string &key, const string &value) override;
+  bool ClearUserPredictionEntry(const std::string &key,
+                                const std::string &value) override;
   bool Wait() override;
 
  private:
   PredictorInterface *predictor_;
   RewriterInterface *rewriter_;
-
-  DISALLOW_COPY_AND_ASSIGN(UserDataManagerImpl);
 };
 
-UserDataManagerImpl::~UserDataManagerImpl() {}
+UserDataManagerImpl::~UserDataManagerImpl() = default;
 
 bool UserDataManagerImpl::Sync() {
   // TODO(noriyukit): In the current implementation, if rewriter_->Sync() fails,
@@ -124,33 +127,46 @@ bool UserDataManagerImpl::ClearUnusedUserPrediction() {
   return true;
 }
 
-bool UserDataManagerImpl::ClearUserPredictionEntry(const string &key,
-                                                   const string &value) {
+bool UserDataManagerImpl::ClearUserPredictionEntry(const std::string &key,
+                                                   const std::string &value) {
   return predictor_->ClearHistoryEntry(key, value);
 }
 
-bool UserDataManagerImpl::Wait() {
-  return predictor_->Wait();
-}
+bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
 
 }  // namespace
 
-std::unique_ptr<Engine> Engine::CreateDesktopEngine(
+mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
-  std::unique_ptr<Engine> engine(new Engine());
-  engine->Init(data_manager.release(),
-               &DefaultPredictor::CreateDefaultPredictor,
-               false);
+  auto engine = absl::make_unique<Engine>();
+  auto status = engine->Init(std::move(data_manager),
+                             &DefaultPredictor::CreateDefaultPredictor, false);
+  if (!status.ok()) {
+    return status;
+  }
+#ifdef OS_NACL
+  // TODO(noriyukit): This wrapping std::move() is normally unnecessary but NaCl
+  // compiler doesn't work without it.  Remove this workaround when possible.
+  return std::move(engine);
+#else   // OS_NACL
   return engine;
+#endif  // OS_NACL
 }
 
-std::unique_ptr<Engine> Engine::CreateMobileEngine(
+mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
-  std::unique_ptr<Engine> engine(new Engine());
-  engine->Init(data_manager.release(),
-               &MobilePredictor::CreateMobilePredictor,
-               true);
+  auto engine = absl::make_unique<Engine>();
+  auto status = engine->Init(std::move(data_manager),
+                             &MobilePredictor::CreateMobilePredictor, true);
+  if (!status.ok()) {
+    return status;
+  }
+#ifdef OS_NACL
+  // TODO(noriyukit): Remove std::move() if possible; see the above comment.
+  return std::move(engine);
+#else   // OS_NACL
   return engine;
+#endif  // OS_NACL
 }
 
 Engine::Engine() = default;
@@ -158,134 +174,139 @@ Engine::~Engine() = default;
 
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
-void Engine::Init(
-    const DataManagerInterface *data_manager,
-    PredictorInterface *(*predictor_factory)(PredictorInterface *,
-                                             PredictorInterface *),
+mozc::Status Engine::Init(
+    std::unique_ptr<const DataManagerInterface> data_manager,
+    std::unique_ptr<PredictorInterface> (*predictor_factory)(
+        std::unique_ptr<PredictorInterface>,
+        std::unique_ptr<PredictorInterface>),
     bool enable_content_word_learning) {
-  CHECK(data_manager);
-  CHECK(predictor_factory);
+  if (!data_manager || !predictor_factory) {
+    return mozc::InvalidArgumentError(absl::StrCat(
+        "engine.cc: data_manager=", data_manager ? "non-null" : "null",
+        ", predictor_factory=", predictor_factory ? "non-null" : ":null"));
+  }
 
-  suppression_dictionary_.reset(new SuppressionDictionary);
-  CHECK(suppression_dictionary_.get());
+#define RETURN_IF_NULL(ptr)                                                 \
+  do {                                                                      \
+    if (!(ptr))                                                             \
+      return mozc::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
+  } while (false)
 
-  pos_matcher_.reset(
-      new dictionary::POSMatcher(data_manager->GetPOSMatcherData()));
+  suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+  RETURN_IF_NULL(suppression_dictionary_);
 
-  user_dictionary_.reset(
-      new UserDictionary(UserPOS::CreateFromDataManager(*data_manager),
-                         *pos_matcher_,
-                         suppression_dictionary_.get()));
-  CHECK(user_dictionary_.get());
+  pos_matcher_ = absl::make_unique<dictionary::POSMatcher>(
+      data_manager->GetPOSMatcherData());
+  RETURN_IF_NULL(pos_matcher_);
 
-  const char *dictionary_data = NULL;
+  user_dictionary_ = absl::make_unique<UserDictionary>(
+      UserPOS::CreateFromDataManager(*data_manager), *pos_matcher_,
+      suppression_dictionary_.get());
+  RETURN_IF_NULL(user_dictionary_);
+
+  const char *dictionary_data = nullptr;
   int dictionary_size = 0;
   data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-  SystemDictionary *sysdic =
+  mozc::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
-  dictionary_.reset(new DictionaryImpl(
-      sysdic,  // DictionaryImpl takes the ownership
-      new ValueDictionary(*pos_matcher_, &sysdic->value_trie()),
-      user_dictionary_.get(),
-      suppression_dictionary_.get(),
-      pos_matcher_.get()));
-  CHECK(dictionary_.get());
+  if (!sysdic.ok()) {
+    return std::move(sysdic).status();
+  }
+  auto value_dic = absl::make_unique<ValueDictionary>(*pos_matcher_,
+                                                      &(*sysdic)->value_trie());
+  dictionary_ = absl::make_unique<DictionaryImpl>(
+      *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
+      suppression_dictionary_.get(), pos_matcher_.get());
+  RETURN_IF_NULL(dictionary_);
 
-  StringPiece suffix_key_array_data, suffix_value_array_data;
-  const uint32 *token_array;
+  absl::string_view suffix_key_array_data, suffix_value_array_data;
+  const uint32 *token_array = nullptr;
   data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
-                                        &suffix_value_array_data,
-                                        &token_array);
-  suffix_dictionary_.reset(new SuffixDictionary(suffix_key_array_data,
-                                                suffix_value_array_data,
-                                                token_array));
-  CHECK(suffix_dictionary_.get());
+                                        &suffix_value_array_data, &token_array);
+  suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
+      suffix_key_array_data, suffix_value_array_data, token_array);
+  RETURN_IF_NULL(suffix_dictionary_);
 
-  connector_.reset(Connector::CreateFromDataManager(*data_manager));
-  CHECK(connector_.get());
+  auto status_or_connector = Connector::CreateFromDataManager(*data_manager);
+  if (!status_or_connector.ok()) {
+    return std::move(status_or_connector).status();
+  }
+  connector_ = *std::move(status_or_connector);
 
   segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager));
-  CHECK(segmenter_.get());
+  RETURN_IF_NULL(segmenter_);
 
-  pos_group_.reset(new PosGroup(data_manager->GetPosGroupData()));
-  CHECK(pos_group_.get());
+  pos_group_ = absl::make_unique<PosGroup>(data_manager->GetPosGroupData());
+  RETURN_IF_NULL(pos_group_);
 
   {
-    const char *data = NULL;
+    const char *suggestion_filter_data = nullptr;
     size_t size = 0;
-    data_manager->GetSuggestionFilterData(&data, &size);
-    CHECK(data);
-    suggestion_filter_.reset(new SuggestionFilter(data, size));
+    data_manager->GetSuggestionFilterData(&suggestion_filter_data, &size);
+    RETURN_IF_NULL(suggestion_filter_data);
+    suggestion_filter_ =
+        absl::make_unique<SuggestionFilter>(suggestion_filter_data, size);
   }
 
-  immutable_converter_.reset(new ImmutableConverterImpl(
-      dictionary_.get(),
-      suffix_dictionary_.get(),
-      suppression_dictionary_.get(),
-      connector_.get(),
-      segmenter_.get(),
-      pos_matcher_.get(),
-      pos_group_.get(),
-      suggestion_filter_.get()));
-  CHECK(immutable_converter_.get());
+  immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+      dictionary_.get(), suffix_dictionary_.get(),
+      suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
+      pos_matcher_.get(), pos_group_.get(), suggestion_filter_.get());
+  RETURN_IF_NULL(immutable_converter_);
 
-  // Since predictor and rewriter require a pointer to a converter instace,
+  // Since predictor and rewriter require a pointer to a converter instance,
   // allocate it first without initialization. It is initialized at the end of
   // this method.
   // TODO(noriyukit): This circular dependency is a bad design as careful
   // handling is necessary to avoid infinite loop. Find more beautiful design
   // and fix it!
-  ConverterImpl *converter_impl = new ConverterImpl;
-  converter_.reset(converter_impl);  // Involves cast to ConverterInterface*.
-  CHECK(converter_.get());
+  converter_ = absl::make_unique<ConverterImpl>();
+  RETURN_IF_NULL(converter_);
 
+  std::unique_ptr<PredictorInterface> predictor;
   {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
-    PredictorInterface *dictionary_predictor =
-        new DictionaryPredictor(*data_manager,
-                                converter_.get(),
-                                immutable_converter_.get(),
-                                dictionary_.get(),
-                                suffix_dictionary_.get(),
-                                connector_.get(),
-                                segmenter_.get(),
-                                pos_matcher_.get(),
-                                suggestion_filter_.get());
-    CHECK(dictionary_predictor);
+    auto dictionary_predictor = absl::make_unique<DictionaryPredictor>(
+        *data_manager, converter_.get(), immutable_converter_.get(),
+        dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
+        segmenter_.get(), pos_matcher_.get(), suggestion_filter_.get());
+    RETURN_IF_NULL(dictionary_predictor);
 
-    PredictorInterface *user_history_predictor =
-        new UserHistoryPredictor(dictionary_.get(),
-                                 pos_matcher_.get(),
-                                 suppression_dictionary_.get(),
-                                 enable_content_word_learning);
-    CHECK(user_history_predictor);
+    auto user_history_predictor = absl::make_unique<UserHistoryPredictor>(
+        dictionary_.get(), pos_matcher_.get(), suppression_dictionary_.get(),
+        enable_content_word_learning);
+    RETURN_IF_NULL(user_history_predictor);
 
-    predictor_ = (*predictor_factory)(dictionary_predictor,
-                                      user_history_predictor);
-    CHECK(predictor_);
+    predictor = (*predictor_factory)(std::move(dictionary_predictor),
+                                     std::move(user_history_predictor));
+    RETURN_IF_NULL(predictor);
   }
+  predictor_ = predictor.get();  // Keep the reference
 
-  rewriter_ = new RewriterImpl(converter_impl,
-                               data_manager,
-                               pos_group_.get(),
-                               dictionary_.get());
-  CHECK(rewriter_);
+  auto rewriter =
+      absl::make_unique<RewriterImpl>(converter_.get(), data_manager.get(),
+                                      pos_group_.get(), dictionary_.get());
+  RETURN_IF_NULL(rewriter);
+  rewriter_ = rewriter.get();  // Keep the reference
 
-  converter_impl->Init(pos_matcher_.get(),
-                       suppression_dictionary_.get(),
-                       predictor_,
-                       rewriter_,
-                       immutable_converter_.get());
+  converter_->Init(pos_matcher_.get(), suppression_dictionary_.get(),
+                   std::move(predictor), std::move(rewriter),
+                   immutable_converter_.get());
 
-  user_data_manager_.reset(new UserDataManagerImpl(predictor_, rewriter_));
+  user_data_manager_ =
+      absl::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
 
-  data_manager_.reset(data_manager);
+  data_manager_ = std::move(data_manager);
+
+  return mozc::Status();
+
+#undef RETURN_IF_NULL
 }
 
 bool Engine::Reload() {
-  if (!user_dictionary_.get()) {
+  if (!user_dictionary_) {
     return true;
   }
   VLOG(1) << "Reloading user dictionary";

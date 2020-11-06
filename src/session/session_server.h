@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,16 +55,14 @@ class SessionUsageObserver;
 // server.LoopAndReturn();   // make a thread
 // ..
 // server.Wait();
-class SessionServer: public IPCServer {
+class SessionServer : public IPCServer {
  public:
   SessionServer();
   ~SessionServer() override;
 
   bool Connected() const;
 
-  bool Process(const char *request,
-               size_t request_size,
-               char *response,
+  bool Process(const char *request, size_t request_size, char *response,
                size_t *response_size) override;
 
  private:

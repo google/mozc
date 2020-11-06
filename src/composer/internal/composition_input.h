@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,13 +48,13 @@ class CompositionInput {
   bool Empty() const;
   void CopyFrom(const CompositionInput &input);
 
-  const string &raw() const;
-  string *mutable_raw();
-  void set_raw(const string &raw);
+  const std::string &raw() const;
+  std::string *mutable_raw();
+  void set_raw(const std::string &raw);
 
-  const string &conversion() const;
-  string *mutable_conversion();
-  void set_conversion(const string &conversion);
+  const std::string &conversion() const;
+  std::string *mutable_conversion();
+  void set_conversion(const std::string &conversion);
   bool has_conversion() const;
 
   bool is_new_input() const;
@@ -64,8 +64,8 @@ class CompositionInput {
   void set_transliterator(const TransliteratorInterface *transliterator);
 
  private:
-  string raw_;
-  string conversion_;
+  std::string raw_;
+  std::string conversion_;
   bool has_conversion_;
   bool is_new_input_;
   const TransliteratorInterface *transliterator_;

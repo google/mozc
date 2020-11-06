@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,24 +46,24 @@ Segmenter *Segmenter::CreateFromDataManager(
   size_t bitarray_num_bytes = 0;
   const char *bitarray_data = nullptr;
   const uint16 *boundary_data = nullptr;
-  data_manager.GetSegmenterData(&l_num_elements, &r_num_elements,
-                                &l_table, &r_table,
-                                &bitarray_num_bytes, &bitarray_data,
+  data_manager.GetSegmenterData(&l_num_elements, &r_num_elements, &l_table,
+                                &r_table, &bitarray_num_bytes, &bitarray_data,
                                 &boundary_data);
-  return new Segmenter(l_num_elements, r_num_elements,
-                       l_table, r_table,
-                       bitarray_num_bytes, bitarray_data,
-                       boundary_data);
+  return new Segmenter(l_num_elements, r_num_elements, l_table, r_table,
+                       bitarray_num_bytes, bitarray_data, boundary_data);
 }
 
-Segmenter::Segmenter(
-    size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
-    const uint16 *r_table, size_t bitarray_num_bytes,
-    const char *bitarray_data, const uint16 *boundary_data)
-    : l_num_elements_(l_num_elements), r_num_elements_(r_num_elements),
-      l_table_(l_table), r_table_(r_table),
+Segmenter::Segmenter(size_t l_num_elements, size_t r_num_elements,
+                     const uint16 *l_table, const uint16 *r_table,
+                     size_t bitarray_num_bytes, const char *bitarray_data,
+                     const uint16 *boundary_data)
+    : l_num_elements_(l_num_elements),
+      r_num_elements_(r_num_elements),
+      l_table_(l_table),
+      r_table_(r_table),
       bitarray_num_bytes_(bitarray_num_bytes),
-      bitarray_data_(bitarray_data), boundary_data_(boundary_data) {
+      bitarray_data_(bitarray_data),
+      boundary_data_(boundary_data) {
   DCHECK(l_table_);
   DCHECK(r_table_);
   DCHECK(bitarray_data_);
@@ -75,8 +75,7 @@ Segmenter::~Segmenter() {}
 
 bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
                            bool is_single_segment) const {
-  if (lnode.node_type == Node::BOS_NODE ||
-      rnode.node_type == Node::EOS_NODE) {
+  if (lnode.node_type == Node::BOS_NODE || rnode.node_type == Node::EOS_NODE) {
     return true;
   }
 
@@ -103,7 +102,7 @@ bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
 
 bool Segmenter::IsBoundary(uint16 rid, uint16 lid) const {
   const uint32 bitarray_index = l_table_[rid] + l_num_elements_ * r_table_[lid];
-  return BitArray::GetValue(reinterpret_cast<const char*>(bitarray_data_),
+  return BitArray::GetValue(reinterpret_cast<const char *>(bitarray_data_),
                             bitarray_index);
 }
 

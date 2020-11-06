@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,9 @@ class UIVisibilityTracker {
   // To conform to this protocol, the IME should call
   // BeginVisibilityTestForCompositionWindow before the message is posted when
   // this function returns true.
-  static bool IsVisibilityTestMessageForComposiwionWindow(
-      UINT message, WPARAM wParam, LPARAM lParam);
+  static bool IsVisibilityTestMessageForComposiwionWindow(UINT message,
+                                                          WPARAM wParam,
+                                                          LPARAM lParam);
 
   // Returns true if the given message is a visibility-test-message for the
   // candidate window.  If a visibility-test-message is trapped by the
@@ -57,8 +58,9 @@ class UIVisibilityTracker {
   // To conform to this protocol, the IME should call
   // BeginVisibilityTestForCandidateWindow before the message is posted when
   // this function returns true.
-  static bool IsVisibilityTestMessageForCandidateWindow(
-      UINT message, WPARAM wParam, LPARAM lParam);
+  static bool IsVisibilityTestMessageForCandidateWindow(UINT message,
+                                                        WPARAM wParam,
+                                                        LPARAM lParam);
 
   // Start visibility test for composition window.  This method can be called
   // multiple times.

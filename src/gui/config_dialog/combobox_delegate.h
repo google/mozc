@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,24 +44,20 @@ namespace gui {
 class ComboBoxDelegate : public QItemDelegate {
   Q_OBJECT
  public:
-  explicit ComboBoxDelegate(QObject *parent = NULL);
-  virtual ~ComboBoxDelegate();
+  explicit ComboBoxDelegate(QObject *parent = nullptr);
+  ~ComboBoxDelegate() override;
 
   void SetItemList(const QStringList &item_list);
 
-  QWidget *createEditor(QWidget *parent,
-                        const QStyleOptionViewItem &option,
-                        const QModelIndex &index) const;
+  QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                        const QModelIndex &index) const override;
 
-  void setEditorData(QWidget *editor,
-                     const QModelIndex &index) const;
-  void setModelData(QWidget *editor,
-                    QAbstractItemModel *model,
-                    const QModelIndex &index) const;
+  void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+  void setModelData(QWidget *editor, QAbstractItemModel *model,
+                    const QModelIndex &index) const override;
 
-  void updateEditorGeometry(QWidget *editor,
-                            const QStyleOptionViewItem &option,
-                            const QModelIndex &index) const;
+  void updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option,
+                            const QModelIndex &index) const override;
 
  private slots:
   void CommitAndCloseEditor(const QString &str);

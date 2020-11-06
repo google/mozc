@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 
 // Represents the entry point of this module.
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved) {
-  switch (reason)  {
+  switch (reason) {
     case DLL_PROCESS_ATTACH:
-    // We disable thread library calls only when the dynamic CRT is specified.
-    // This can be determined by checking the _DLL macro.
-    // http://msdn.microsoft.com/en-us/library/b0084kay.aspx
+      // We disable thread library calls only when the dynamic CRT is specified.
+      // This can be determined by checking the _DLL macro.
+      // http://msdn.microsoft.com/en-us/library/b0084kay.aspx
 #if defined(_DLL)
       if (::DisableThreadLibraryCalls(instance) == 0) {
         // DisableThreadLibraryCalls failed.

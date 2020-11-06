@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -126,8 +126,7 @@ class VKBackBasedDeleter {
   explicit VKBackBasedDeleter(Win32KeyboardInterface *keyboard_mock);
 
   // Initializes the deleter.
-  void BeginDeletion(int deletion_count,
-                     const mozc::commands::Output &output,
+  void BeginDeletion(int deletion_count, const mozc::commands::Output &output,
                      const InputState &ime_state);
 
   // Uninitializes the deleter.  You must call this method whenever OnKeyEvent

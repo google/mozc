@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,35 +66,34 @@ namespace testing {
 
 namespace internal {
 ::testing::AssertionResult EqualsProtoFormat(
-    const char *expect_string,
-    const char *actual_string,
+    const char *expect_string, const char *actual_string,
     const mozc::protobuf::Message &expect,
-    const mozc::protobuf::Message &actual,
-    bool is_partial);
+    const mozc::protobuf::Message &actual, bool is_partial);
 }  // namespace internal
 
 // Thin wrapper of EqualsProto to check if expect and actual has same type
 // on compile time.
-template<typename T>
-::testing::AssertionResult EqualsProto(
-    const char *expect_string, const char *actual_string,
-    const T &expect, const T &actual) {
+template <typename T>
+::testing::AssertionResult EqualsProto(const char *expect_string,
+                                       const char *actual_string,
+                                       const T &expect, const T &actual) {
   return ::mozc::testing::internal::EqualsProtoFormat(
       expect_string, actual_string, expect, actual, false);
 }
 
 // To accept string constant, we also define a function takeing const char *.
-::testing::AssertionResult EqualsProto(
-    const char *expect_string, const char *actual_string,
-    const char *expect, const mozc::protobuf::Message &actual);
+::testing::AssertionResult EqualsProto(const char *expect_string,
+                                       const char *actual_string,
+                                       const char *expect,
+                                       const mozc::protobuf::Message &actual);
 
 #define EXPECT_PROTO_EQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::EqualsProto, expect, actual)
 
 // To accept string constant, we also define a function takeing const char *.
 ::testing::AssertionResult PartiallyEqualsProto(
-    const char *expect_string, const char *actual_string,
-    const char *expect, const mozc::protobuf::Message &actual);
+    const char *expect_string, const char *actual_string, const char *expect,
+    const mozc::protobuf::Message &actual);
 
 #define EXPECT_PROTO_PEQ(expect, actual) \
   EXPECT_PRED_FORMAT2(::mozc::testing::PartiallyEqualsProto, expect, actual)

@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,8 +62,10 @@
           'convert_from_hiragana_to_t13n.txt',
           'delete_history.txt',
           'desktop_t13n_candidates.txt',
+          'domain_suggestion.txt',
           'input_mode.txt',
           'insert_characters.txt',
+          'mobile_partial_variant_candidates.txt',
           'mobile_qwerty_transliteration_scenario.txt',
           'mobile_t13n_candidates.txt',
           'on_off_cancel.txt',

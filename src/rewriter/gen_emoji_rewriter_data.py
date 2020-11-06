@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,14 +47,18 @@ File format:
   "mozc/data/emoji/emoji_data.tsv".
 """
 
-__author__ = "peria"
+from __future__ import absolute_import
+from __future__ import print_function
 
-from collections import defaultdict
+import codecs
+import collections
 import logging
 import optparse
 import re
 import struct
 import sys
+
+import six
 
 from build_tools import code_generator_util
 from build_tools import serialized_string_array_builder
@@ -79,21 +83,22 @@ def ParseCodePoint(s):
   return int(s, 16)
 
 
-_FULLWIDTH_RE = re.compile(ur'[！-～]')   # U+FF01 - U+FF5E
+_FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
 
 
 def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
   offset = ord(u'Ａ') - ord(u'A')
-  return _FULLWIDTH_RE.sub(lambda x: unichr(ord(x.group(0)) - offset),
-                           unicode(string, 'utf-8')).encode('utf-8')
+  normalized = _FULLWIDTH_RE.sub(lambda x: six.unichr(ord(x.group(0)) - offset),
+                                 six.ensure_text(string))
+  return normalized
 
 
 def ReadEmojiTsv(stream):
   """Parses emoji_data.tsv file and builds the emoji_data_list and reading map.
   """
   emoji_data_list = []
-  token_dict = defaultdict(list)
+  token_dict = collections.defaultdict(list)
 
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
@@ -101,7 +106,6 @@ def ReadEmojiTsv(stream):
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
-    code_points = columns[0].split(' ')
     # Emoji code point.
     emoji = columns[1] if columns[1] else ''
     android_pua = ParseCodePoint(columns[2])
@@ -116,15 +120,6 @@ def ReadEmojiTsv(stream):
     docomo_description = columns[9] if columns[9] else ''
     softbank_description = columns[10] if columns[10] else ''
     kddi_description = columns[11] if columns[11] else ''
-
-    if not android_pua or len(code_points) > 1:
-      # Skip some emoji, which is not supported on old devices.
-      # - Unicode 6.1 or later emoji which doesn't have PUA code point.
-      # - Composite emoji which has multiple code point.
-      # NOTE: Some Unicode 6.0 emoji don't have PUA, and it is also omitted.
-      # TODO(hsumita): Check the availability of such emoji and enable it.
-      logging.info('Skip %s', ' '.join(code_points))
-      continue
 
     # Check consistency between carrier PUA codes and descriptions for Android
     # just in case.
@@ -159,7 +154,7 @@ def ReadEmojiTsv(stream):
 def OutputData(emoji_data_list, token_dict,
                token_array_file, string_array_file):
   """Output token and string arrays to files."""
-  sorted_token_dict = sorted(token_dict.iteritems())
+  sorted_token_dict = sorted(six.iteritems(token_dict))
 
   strings = {}
   for reading, _ in sorted_token_dict:
@@ -171,7 +166,7 @@ def OutputData(emoji_data_list, token_dict,
     strings[docomo_description] = 0
     strings[softbank_description] = 0
     strings[kddi_description] = 0
-  sorted_strings = sorted(strings.iterkeys())
+  sorted_strings = sorted(strings.keys())
   for index, s in enumerate(sorted_strings):
     strings[s] = index
 
@@ -205,7 +200,7 @@ def ParseOptions():
 
 def main():
   options = ParseOptions()
-  with open(options.input, 'r') as input_stream:
+  with codecs.open(options.input, 'r', encoding='utf-8') as input_stream:
     (emoji_data_list, token_dict) = ReadEmojiTsv(input_stream)
 
   OutputData(emoji_data_list, token_dict,

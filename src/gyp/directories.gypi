@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
   'variables': {
     # Top directory of third party libraries.
     'third_party_dir': '<(DEPTH)/third_party',
+    'absl_dir': '<(DEPTH)/third_party/abseil-cpp',
 
     # Top directory of additional third party libraries.
     'ext_third_party_dir%': '<(abs_depth)/third_party',
@@ -61,31 +62,6 @@
     'conditions': [
       ['target_platform=="Windows"', {
         'wtl_dir': '<(ext_third_party_dir)/wtl',
-      }, 'target_platform=="NaCl"', {
-        'pnacl_bin_dir%': '<(nacl_sdk_root)/toolchain/linux_pnacl/bin',
-      }, 'target_platform=="Android"', {
-        'ndk_bin_dir%':
-        '<(mozc_build_tools_dir)/ndk-standalone-toolchain/<(android_arch)/bin',
-      }],
-
-      # zinnia_model_file.
-      ['branding=="GoogleJapaneseInput"', {
-        # Test:
-        #     this file is copied to a directory for testing.
-        # Win / Mac:
-        #     this file content is copied the release packages and
-        #     other file path is used internally.
-        # Linux:
-        #     this file path is ignored, and used a preinstalled data.
-        'zinnia_model_file%':
-        '<(third_party_dir)/zinnia/tomoe/handwriting-light-ja.model',
-      }, {
-        # Test:
-        #     this file is copied to a directory for testing.
-        # Win / Mac / Linux:
-        #     this file path is directory used by binaries without copying.
-        'zinnia_model_file%':
-        '/usr/share/tegaki/models/zinnia/handwriting-ja.model',
       }],
     ],
   },

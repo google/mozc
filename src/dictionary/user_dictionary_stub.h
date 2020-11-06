@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,44 +31,35 @@
 #define MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 
 #include "dictionary/dictionary_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
 
 class UserDictionaryStub : public DictionaryInterface {
  public:
-  virtual bool HasKey(StringPiece key) const {
-    return false;
-  }
-  virtual bool HasValue(StringPiece value) const {
-    return false;
-  }
+  bool HasKey(absl::string_view key) const override { return false; }
+  bool HasValue(absl::string_view value) const override { return false; }
 
-  virtual void LookupPredictive(
-      StringPiece key,
-      const ConversionRequest &conversion_request,
-      Callback *callback) const {}
+  void LookupPredictive(absl::string_view key,
+                        const ConversionRequest &conversion_request,
+                        Callback *callback) const override {}
 
-  virtual void LookupPrefix(
-      StringPiece key,
-      const ConversionRequest &conversion_request,
-      Callback *callback) const {}
+  void LookupPrefix(absl::string_view key,
+                    const ConversionRequest &conversion_request,
+                    Callback *callback) const override {}
 
-  virtual void LookupExact(
-      StringPiece key,
-      const ConversionRequest &conversion_request,
-      Callback *callback) const {}
+  void LookupExact(absl::string_view key,
+                   const ConversionRequest &conversion_request,
+                   Callback *callback) const override {}
 
-  virtual void LookupReverse(
-      StringPiece str,
-      const ConversionRequest &conversion_request,
-      Callback *callback) const {}
+  void LookupReverse(absl::string_view str,
+                     const ConversionRequest &conversion_request,
+                     Callback *callback) const override {}
 
-  virtual bool LookupComment(
-      StringPiece key,
-      StringPiece value,
-      const ConversionRequest &conversion_request,
-      string *comment) const {
+  bool LookupComment(absl::string_view key, absl::string_view value,
+                     const ConversionRequest &conversion_request,
+                     std::string *comment) const override {
     if (key == "comment" || value == "comment") {
       comment->assign("UserDictionaryStub");
       return true;

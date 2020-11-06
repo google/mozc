@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -91,13 +91,15 @@ class Session : public SessionInterface {
   bool EchoBackAndClearUndoContext(mozc::commands::Command *command);
   bool DoNothing(mozc::commands::Command *command);
 
-  // Tries deleting the focused candidate from the user prediction history. If
+  // Tries deleting the specified candidate from the user prediction history.
+  // The candidate is determined by command.input.command.id, or the current
+  // focused candidate if that ....command.id is not specified. If
   // that candidate, as a key value pair, doesn't exist in the user history,
   // nothing happens. Regardless of the result of internal history deletion,
   // invoking this method has the same effect as ConvertCancel() from the
   // viewpoint of session, meaning that the session state gets back to
   // composition.
-  bool DeleteSelectedCandidateFromHistory(mozc::commands::Command *command);
+  bool DeleteCandidateFromHistory(mozc::commands::Command *command);
 
   // Resets the composer and clear conversion segments.
   // History segments will not be cleared.
@@ -230,6 +232,10 @@ class Session : public SessionInterface {
 
   // Undo if pre-composition is empty. Rewind KANA cycle othrewise.
   bool UndoOrRewind(mozc::commands::Command *command);
+
+  // Stops key toggling in the composer.
+  bool StopKeyToggling(mozc::commands::Command *command);
+
   // Send a command to the composer to append a special string.
   bool SendComposerCommand(
       const mozc::composer::Composer::InternalCommand composer_command,
@@ -314,7 +320,7 @@ class Session : public SessionInterface {
   void CommitCompositionDirectly(commands::Command *command);
   void CommitSourceTextDirectly(commands::Command *command);
   void CommitRawTextDirectly(commands::Command *command);
-  void CommitStringDirectly(const string &key, const string &preedit,
+  void CommitStringDirectly(const std::string &key, const std::string &preedit,
                             commands::Command *command);
   bool CommitInternal(commands::Command *command,
                       bool trigger_zero_query_suggest);

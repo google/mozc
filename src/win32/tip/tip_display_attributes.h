@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,7 @@ namespace win32 {
 namespace tsf {
 
 // Defines the base class of the display attributes used in this module.
-class TipDisplayAttribute
-    : public ITfDisplayAttributeInfo {
+class TipDisplayAttribute : public ITfDisplayAttributeInfo {
  public:
   virtual ~TipDisplayAttribute();
 
@@ -56,15 +55,14 @@ class TipDisplayAttribute
   // ITfDisplayAttributeInfo interface methods
   virtual HRESULT STDMETHODCALLTYPE GetGUID(GUID *guid);
   virtual HRESULT STDMETHODCALLTYPE GetDescription(BSTR *descriptoin);
-  virtual HRESULT STDMETHODCALLTYPE GetAttributeInfo(
-      TF_DISPLAYATTRIBUTE *attribute);
-  virtual HRESULT STDMETHODCALLTYPE SetAttributeInfo(
-      const TF_DISPLAYATTRIBUTE *attribute);
+  virtual HRESULT STDMETHODCALLTYPE
+  GetAttributeInfo(TF_DISPLAYATTRIBUTE *attribute);
+  virtual HRESULT STDMETHODCALLTYPE
+  SetAttributeInfo(const TF_DISPLAYATTRIBUTE *attribute);
   virtual HRESULT STDMETHODCALLTYPE Reset();
 
  protected:
-  TipDisplayAttribute(const GUID &guid,
-                      const TF_DISPLAYATTRIBUTE &attribute,
+  TipDisplayAttribute(const GUID &guid, const TF_DISPLAYATTRIBUTE &attribute,
                       const std::wstring &description);
 
  private:
@@ -78,23 +76,23 @@ class TipDisplayAttribute
 };
 
 // Represents the display attributes for input characters.
-class TipDisplayAttributeInput
-    : public TipDisplayAttribute {
+class TipDisplayAttributeInput : public TipDisplayAttribute {
  public:
   TipDisplayAttributeInput();
 
   static const GUID &guid();
+
  private:
   DISALLOW_COPY_AND_ASSIGN(TipDisplayAttributeInput);
 };
 
 // Represents the display attributes for converted characters.
-class TipDisplayAttributeConverted
-    : public TipDisplayAttribute {
+class TipDisplayAttributeConverted : public TipDisplayAttribute {
  public:
   TipDisplayAttributeConverted();
 
   static const GUID &guid();
+
  private:
   DISALLOW_COPY_AND_ASSIGN(TipDisplayAttributeConverted);
 };

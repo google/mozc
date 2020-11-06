@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,14 +41,11 @@ class SimpleSuccinctBitVectorIndexTest
     : public ::testing::TestWithParam<CacheSizeParam> {};
 
 #define INSTANTIATE_TEST_CASE(Generator)                            \
-  INSTANTIATE_TEST_CASE_P(                                          \
+  INSTANTIATE_TEST_SUITE_P(                                         \
       Generator, SimpleSuccinctBitVectorIndexTest,                  \
-      ::testing::Values(CacheSizeParam(0, 0),                       \
-                        CacheSizeParam(0, 1),                       \
-                        CacheSizeParam(1, 0),                       \
-                        CacheSizeParam(1, 1),                       \
-                        CacheSizeParam(2, 2),                       \
-                        CacheSizeParam(8, 8),                       \
+      ::testing::Values(CacheSizeParam(0, 0), CacheSizeParam(0, 1), \
+                        CacheSizeParam(1, 0), CacheSizeParam(1, 1), \
+                        CacheSizeParam(2, 2), CacheSizeParam(8, 8), \
                         CacheSizeParam(1024, 1024)));
 
 TEST_P(SimpleSuccinctBitVectorIndexTest, Rank) {
@@ -57,8 +54,8 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Rank) {
   static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
-  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8,
-                  param.first, param.second);
+  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8, param.first,
+                  param.second);
   EXPECT_EQ(32, bit_vector.GetNum0Bits());
   EXPECT_EQ(32, bit_vector.GetNum1Bits());
   EXPECT_EQ(0, bit_vector.Rank0(0));
@@ -92,8 +89,8 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Select) {
   static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
-  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8,
-                  param.first, param.second);
+  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8, param.first,
+                  param.second);
   EXPECT_EQ(32, bit_vector.GetNum0Bits());
   EXPECT_EQ(32, bit_vector.GetNum1Bits());
 
@@ -116,7 +113,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern1) {
   const CacheSizeParam &param = GetParam();
 
   // Repeat the bit pattern '0b10101010'.
-  const string data(1024, '\xAA');
+  const std::string data(1024, '\xAA');
 
   SimpleSuccinctBitVectorIndex bit_vector;
   bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length(),
@@ -155,7 +152,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern2) {
   const CacheSizeParam &param = GetParam();
 
   // Repeat the bit pattern '0b11001100'.
-  const string data(1024, '\xCC');
+  const std::string data(1024, '\xCC');
 
   SimpleSuccinctBitVectorIndex bit_vector;
   bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length(),
@@ -175,7 +172,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern2) {
 
     EXPECT_EQ(i * 4, bit_vector.Rank1(i * 8)) << i;
     EXPECT_EQ(i * 4, bit_vector.Rank1(i * 8 + 1)) << i;
-    EXPECT_EQ(i * 4 , bit_vector.Rank1(i * 8 + 2)) << i;
+    EXPECT_EQ(i * 4, bit_vector.Rank1(i * 8 + 2)) << i;
     EXPECT_EQ(i * 4 + 1, bit_vector.Rank1(i * 8 + 3)) << i;
     EXPECT_EQ(i * 4 + 2, bit_vector.Rank1(i * 8 + 4)) << i;
     EXPECT_EQ(i * 4 + 2, bit_vector.Rank1(i * 8 + 5)) << i;
@@ -185,7 +182,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern2) {
 
   for (int i = 0; i < 1024 * 4; ++i) {
     EXPECT_EQ((i * 2) - (i % 2), bit_vector.Select0(i + 1)) << i;
-    EXPECT_EQ((i * 2 + 1) + ((i + 1) % 2) , bit_vector.Select1(i + 1)) << i;
+    EXPECT_EQ((i * 2 + 1) + ((i + 1) % 2), bit_vector.Select1(i + 1)) << i;
   }
 }
 INSTANTIATE_TEST_CASE(GenPattern2Test);

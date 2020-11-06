@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #ifndef MOZC_BASE_MAC_UTIL_H_
 #define MOZC_BASE_MAC_UTIL_H_
 
-#ifdef OS_MACOSX
+#ifdef __APPLE__
 #include <string>
 #include "base/port.h"
 
@@ -61,6 +61,7 @@ class MacUtil {
   // Returns the machine serial number.
   static string GetSerialNumber();
 
+#ifndef OS_IOS
   // Starts the specified service by using launchd.  "service_name" is
   // a suffix for the service label (like "Converter" or "Renderer").
   // If "pid" is non-null, it will store the pid of the launched
@@ -86,6 +87,7 @@ class MacUtil {
   // the window specified by |name| and |owner|.
   static bool IsSuppressSuggestionWindow(const string &name,
                                          const string &owner);
+#endif
 
  private:
   MacUtil() {}
@@ -93,5 +95,5 @@ class MacUtil {
 };
 }  // namespace mozc
 
-#endif  // OS_MACOSX
+#endif  // __APPLE__
 #endif  // MOZC_BASE_MAC_UTIL_H_

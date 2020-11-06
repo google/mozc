@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,19 +44,19 @@ class CandidateListTest : public testing::Test {
     sub_list_2_.reset(new CandidateList(true));
     sub_sub_list_2_1_.reset(new CandidateList(false));
 
-    main_list_->AddCandidate(0, "0");  // main0
-    main_list_->AddCandidate(1, "1");  // main1
+    main_list_->AddCandidate(0, "0");                           // main0
+    main_list_->AddCandidate(1, "1");                           // main1
     sub_list_1_ = main_list_->AllocateSubCandidateList(false);  // main2
-    main_list_->AddCandidate(2, "2");  // main3
-    main_list_->AddCandidate(3, "3");  // main4
-    main_list_->AddCandidate(4, "4");  // main5
-    main_list_->AddCandidate(5, "5");  // main6
-    main_list_->AddSubCandidateList(sub_list_2_.get());  // main7
-    main_list_->AddCandidate(6, "6");  // main8
-    main_list_->AddCandidate(7, "7");  // main9
-    main_list_->AddCandidate(8, "8");  // main10
-    main_list_->AddCandidate(9, "9");  // main11
-    main_list_->AddCandidate(10, "10");  // main12
+    main_list_->AddCandidate(2, "2");                           // main3
+    main_list_->AddCandidate(3, "3");                           // main4
+    main_list_->AddCandidate(4, "4");                           // main5
+    main_list_->AddCandidate(5, "5");                           // main6
+    main_list_->AddSubCandidateList(sub_list_2_.get());         // main7
+    main_list_->AddCandidate(6, "6");                           // main8
+    main_list_->AddCandidate(7, "7");                           // main9
+    main_list_->AddCandidate(8, "8");                           // main10
+    main_list_->AddCandidate(9, "9");                           // main11
+    main_list_->AddCandidate(10, "10");                         // main12
 
     sub_list_1_->AddCandidate(-1, "-1");  // sub10
     sub_list_1_->AddCandidate(-2, "-2");  // sub11
@@ -65,11 +65,11 @@ class CandidateListTest : public testing::Test {
     sub_list_1_->AddCandidate(-5, "-5");  // sub14
 
     sub_list_2_->AddSubCandidateList(sub_sub_list_2_1_.get());  // sub20
-    sub_list_2_->AddCandidate(21, "21");  // sub21
-    sub_list_2_->AddCandidate(22, "22");  // sub22
-    sub_list_2_->AddCandidate(23, "23");  // sub23
-    sub_list_2_->AddCandidate(24, "24");  // sub24
-    sub_list_2_->AddCandidate(25, "25");  // sub25
+    sub_list_2_->AddCandidate(21, "21");                        // sub21
+    sub_list_2_->AddCandidate(22, "22");                        // sub22
+    sub_list_2_->AddCandidate(23, "23");                        // sub23
+    sub_list_2_->AddCandidate(24, "24");                        // sub24
+    sub_list_2_->AddCandidate(25, "25");                        // sub25
 
     sub_sub_list_2_1_->AddCandidate(210, "210");  // subsub210
     sub_sub_list_2_1_->AddCandidate(211, "211");  // subsub211
@@ -112,7 +112,6 @@ TEST_F(CandidateListTest, MoveToId) {
   EXPECT_FALSE(main_list_->MoveToId(-6));
   EXPECT_FALSE(main_list_->MoveToId(9999));
 }
-
 
 TEST_F(CandidateListTest, MoveNext) {
   // main0 -> main1
@@ -364,8 +363,7 @@ TEST_F(CandidateListTest, Attributes2) {
   main_list.AddCandidateWithAttributes(2, "f_dvd", HIRAGANA);
   // id#3 is dup
   main_list.AddCandidateWithAttributes(3, "f_dvd", FULL_WIDTH | KATAKANA);
-  main_list.AddCandidateWithAttributes(4, "h_dvd",
-                                       (HALF_WIDTH | ASCII));
+  main_list.AddCandidateWithAttributes(4, "h_dvd", (HALF_WIDTH | ASCII));
   // id#5 is dup
   main_list.AddCandidateWithAttributes(5, "h_dvd",
                                        (HALF_WIDTH | ASCII | LOWER));
@@ -374,8 +372,7 @@ TEST_F(CandidateListTest, Attributes2) {
   main_list.AddCandidateWithAttributes(7, "h_Dvd",
                                        (HALF_WIDTH | ASCII | CAPITALIZED));
   // id#8 is dup
-  main_list.AddCandidateWithAttributes(8, "f_dvd",
-                                       (FULL_WIDTH | ASCII));
+  main_list.AddCandidateWithAttributes(8, "f_dvd", (FULL_WIDTH | ASCII));
   // id#9 is dup
   main_list.AddCandidateWithAttributes(9, "f_dvd",
                                        (FULL_WIDTH | ASCII | LOWER));

@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,8 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace dictionary {
@@ -99,9 +101,7 @@ const char kUserDictionary0[] =
 
 const char kUserDictionary1[] = "end\tend\tverb\n";
 
-void PushBackToken(const string &key,
-                   const string &value,
-                   uint16 id,
+void PushBackToken(const std::string &key, const std::string &value, uint16 id,
                    std::vector<UserPOS::Token> *tokens) {
   tokens->resize(tokens->size() + 1);
   UserPOS::Token *t = &tokens->back();
@@ -117,13 +117,15 @@ void PushBackToken(const string &key,
 // inflection.
 class UserPOSMock : public UserPOSInterface {
  public:
-  UserPOSMock() {}
-  virtual ~UserPOSMock() {}
+  UserPOSMock() = default;
+
+  UserPOSMock(const UserPOSMock &) = delete;
+  UserPOSMock &operator=(const UserPOSMock &) = delete;
+
+  ~UserPOSMock() override = default;
 
   // This method returns true if the given pos is "noun" or "verb".
-  virtual bool IsValidPOS(const string &pos) const {
-    return true;
-  }
+  bool IsValidPOS(const std::string &pos) const override { return true; }
 
   static const char *kNoun;
   static const char *kVerb;
@@ -140,14 +142,10 @@ class UserPOSMock : public UserPOSInterface {
   //  verb (base form) | 200 | 200
   //  verb (-ed form)  | 210 | 210
   //  verb (-ing form) | 220 | 220
-  virtual bool GetTokens(const string &key,
-                         const string &value,
-                         const string &pos,
-                         std::vector<UserPOS::Token> *tokens) const {
-    if (key.empty() ||
-        value.empty() ||
-        pos.empty() ||
-        tokens == nullptr) {
+  bool GetTokens(const std::string &key, const std::string &value,
+                 const std::string &pos, const std::string &locale,
+                 std::vector<UserPOS::Token> *tokens) const override {
+    if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
       return false;
     }
 
@@ -165,21 +163,18 @@ class UserPOSMock : public UserPOSInterface {
     }
   }
 
-  virtual void GetPOSList(std::vector<string> *pos_list) const {}
+  void GetPOSList(std::vector<std::string> *pos_list) const override {}
 
-  virtual bool GetPOSIDs(const string &pos, uint16 *id) const {
+  bool GetPOSIDs(const std::string &pos, uint16 *id) const override {
     return false;
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(UserPOSMock);
 };
 
 const char *UserPOSMock::kNoun = "名詞";
 const char *UserPOSMock::kVerb = "動詞ワ行五段";
 
-string GenRandomAlphabet(int size) {
-  string result;
+std::string GenRandomAlphabet(int size) {
+  std::string result;
   const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
     const char32 l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
@@ -190,9 +185,7 @@ string GenRandomAlphabet(int size) {
 
 class UserDictionaryTest : public ::testing::Test {
  protected:
-  UserDictionaryTest() {
-    convreq_.set_config(&config_);
-  }
+  UserDictionaryTest() { convreq_.set_config(&config_); }
 
   void SetUp() override {
     suppression_dictionary_.reset(new SuppressionDictionary);
@@ -215,7 +208,7 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
     return new UserDictionary(
-        new UserPOSMock(),
+        absl::make_unique<UserPOSMock>(),
         dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
         suppression_dictionary_.get());
   }
@@ -229,17 +222,17 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   struct Entry {
-    string key;
-    string value;
+    std::string key;
+    std::string value;
     uint16 lid;
     uint16 rid;
   };
 
   class EntryCollector : public DictionaryInterface::Callback {
    public:
-    virtual ResultType OnToken(StringPiece,  // key
-                               StringPiece,  // actual_key
-                               const Token &token) {
+    ResultType OnToken(absl::string_view,  // key
+                       absl::string_view,  // actual_key
+                       const Token &token) override {
       // Collect only user dictionary entries.
       if (token.attributes & Token::USER_DICTIONARY) {
         entries_.push_back(Entry());
@@ -257,9 +250,8 @@ class UserDictionaryTest : public ::testing::Test {
     std::vector<Entry> entries_;
   };
 
-  void TestLookupPredictiveHelper(const Entry *expected,
-                                  size_t expected_size,
-                                  StringPiece key,
+  void TestLookupPredictiveHelper(const Entry *expected, size_t expected_size,
+                                  absl::string_view key,
                                   const UserDictionary &dic) {
     EntryCollector collector;
     dic.LookupPredictive(key, convreq_, &collector);
@@ -272,13 +264,11 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
-  void TestLookupPrefixHelper(const Entry *expected,
-                              size_t expected_size,
-                              const char *key,
-                              size_t key_size,
+  void TestLookupPrefixHelper(const Entry *expected, size_t expected_size,
+                              const char *key, size_t key_size,
                               const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupPrefix(StringPiece(key, key_size), convreq_, &collector);
+    dic.LookupPrefix(absl::string_view(key, key_size), convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
@@ -288,13 +278,11 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
-  void TestLookupExactHelper(const Entry *expected,
-                             size_t expected_size,
-                             const char *key,
-                             size_t key_size,
+  void TestLookupExactHelper(const Entry *expected, size_t expected_size,
+                             const char *key, size_t key_size,
                              const UserDictionary &dic) {
     EntryCollector collector;
-    dic.LookupExact(StringPiece(key, key_size), convreq_, &collector);
+    dic.LookupExact(absl::string_view(key, key_size), convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
       EXPECT_TRUE(collector.entries().empty());
@@ -304,51 +292,48 @@ class UserDictionaryTest : public ::testing::Test {
     }
   }
 
-  static string EncodeEntry(const Entry &entry) {
-    return entry.key + "\t" +
-           entry.value + "\t" +
-           std::to_string(entry.lid) + "\t" +
-           std::to_string(entry.rid) + "\n";
+  static std::string EncodeEntry(const Entry &entry) {
+    return entry.key + "\t" + entry.value + "\t" + std::to_string(entry.lid) +
+           "\t" + std::to_string(entry.rid) + "\n";
   }
 
-  static string EncodeEntries(const Entry *array, size_t size) {
-    std::vector<string> encoded_items;
+  static std::string EncodeEntries(const Entry *array, size_t size) {
+    std::vector<std::string> encoded_items;
     for (size_t i = 0; i < size; ++i) {
       encoded_items.push_back(EncodeEntry(array[i]));
     }
     std::sort(encoded_items.begin(), encoded_items.end());
-    string result;
+    std::string result;
     Util::JoinStrings(encoded_items, "", &result);
     return result;
   }
 
   static void CompareEntries(const Entry *expected, size_t expected_size,
                              const std::vector<Entry> &actual) {
-    const string expected_encoded = EncodeEntries(expected, expected_size);
-    const string actual_encoded = EncodeEntries(&actual[0], actual.size());
+    const std::string expected_encoded = EncodeEntries(expected, expected_size);
+    const std::string actual_encoded = EncodeEntries(&actual[0], actual.size());
     EXPECT_EQ(expected_encoded, actual_encoded);
   }
 
-  static void LoadFromString(const string &contents,
+  static void LoadFromString(const std::string &contents,
                              UserDictionaryStorage *storage) {
     std::istringstream is(contents);
     CHECK(is.good());
 
-    storage->Clear();
-    UserDictionaryStorage::UserDictionary *dic
-        = storage->add_dictionaries();
+    storage->GetProto().Clear();
+    UserDictionaryStorage::UserDictionary *dic =
+        storage->GetProto().add_dictionaries();
     CHECK(dic);
 
-    string line;
+    std::string line;
     while (!getline(is, line).fail()) {
       if (line.empty() || line[0] == '#') {
         continue;
       }
-      std::vector<string> fields;
+      std::vector<std::string> fields;
       Util::SplitStringAllowEmpty(line, "\t", &fields);
       EXPECT_GE(fields.size(), 3) << line;
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       CHECK(entry);
       entry->set_key(fields[0]);
       entry->set_value(fields[1]);
@@ -364,9 +349,9 @@ class UserDictionaryTest : public ::testing::Test {
   }
 
   // Helper function to lookup comment string from |dic|.
-  string LookupComment(const UserDictionary& dic,
-                       StringPiece key, StringPiece value) {
-    string comment;
+  std::string LookupComment(const UserDictionary &dic, absl::string_view key,
+                            absl::string_view value) {
+    std::string comment;
     dic.LookupComment(key, value, convreq_, &comment);
     return comment;
   }
@@ -389,33 +374,27 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
   {
     UserDictionaryStorage storage("");
     UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // A normal lookup operation.
   const Entry kExpected0[] = {
-    { "start", "start", 200, 200 },
-    { "started", "started", 210, 210 },
-    { "starting", "starting", 100, 100 },
-    { "starting", "starting", 220, 220 },
+      {"start", "start", 200, 200},
+      {"started", "started", 210, 210},
+      {"starting", "starting", 100, 100},
+      {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected0, arraysize(kExpected0),
-                             "start", *dic);
+  TestLookupPredictiveHelper(kExpected0, arraysize(kExpected0), "start", *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
-    { "stamp", "stamp", 100, 100 },
-    { "stand", "stand", 200, 200 },
-    { "standed", "standed", 210, 210 },
-    { "standing", "standing", 220, 220 },
-    { "star", "star", 100, 100 },
-    { "start", "start", 200, 200 },
-    { "started", "started", 210, 210 },
-    { "starting", "starting", 100, 100 },
-    { "starting", "starting", 220, 220 },
+      {"stamp", "stamp", 100, 100},       {"stand", "stand", 200, 200},
+      {"standed", "standed", 210, 210},   {"standing", "standing", 220, 220},
+      {"star", "star", 100, 100},         {"start", "start", 200, 200},
+      {"started", "started", 210, 210},   {"starting", "starting", 100, 100},
+      {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected1, arraysize(kExpected1),
-                             "st", *dic);
+  TestLookupPredictiveHelper(kExpected1, arraysize(kExpected1), "st", *dic);
 
   // Invalid input values should be just ignored.
   TestLookupPredictiveHelper(nullptr, 0, "", *dic);
@@ -425,17 +404,16 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
   {
     UserDictionaryStorage storage("");
     LoadFromString(kUserDictionary1, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // A normal lookup again.
   const Entry kExpected2[] = {
-    { "end", "end", 200, 200 },
-    { "ended", "ended", 210, 210 },
-    { "ending", "ending", 220, 220 },
+      {"end", "end", 200, 200},
+      {"ended", "ended", 210, 210},
+      {"ending", "ending", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected2, arraysize(kExpected2),
-                             "end", *dic);
+  TestLookupPredictiveHelper(kExpected2, arraysize(kExpected2), "end", *dic);
 
   // Entries in the dictionary before reloading cannot be looked up.
   TestLookupPredictiveHelper(nullptr, 0, "start", *dic);
@@ -450,24 +428,23 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
   {
     UserDictionaryStorage storage("");
     LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // A normal lookup operation.
   const Entry kExpected0[] = {
-    { "star", "star", 100, 100 },
-    { "start", "start", 200, 200 },
-    { "started", "started", 210, 210 },
+      {"star", "star", 100, 100},
+      {"start", "start", 200, 200},
+      {"started", "started", 210, 210},
   };
-  TestLookupPrefixHelper(kExpected0, arraysize(kExpected0),
-                         "started", 7, *dic);
+  TestLookupPrefixHelper(kExpected0, arraysize(kExpected0), "started", 7, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
-    { "star", "star", 100, 100 },
-    { "start", "start", 200, 200 },
-    { "starting", "starting", 100, 100 },
-    { "starting", "starting", 220, 220 },
+      {"star", "star", 100, 100},
+      {"start", "start", 200, 200},
+      {"starting", "starting", 100, 100},
+      {"starting", "starting", 220, 220},
   };
   TestLookupPrefixHelper(kExpected1, arraysize(kExpected1), "starting", 8,
                          *dic);
@@ -480,16 +457,15 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
   {
     UserDictionaryStorage storage("");
     LoadFromString(kUserDictionary1, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // A normal lookup.
   const Entry kExpected2[] = {
-    { "end", "end", 200, 200 },
-    { "ending", "ending", 220, 220 },
+      {"end", "end", 200, 200},
+      {"ending", "ending", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected2, arraysize(kExpected2),
-                                     "ending", 6, *dic);
+  TestLookupPrefixHelper(kExpected2, arraysize(kExpected2), "ending", 6, *dic);
 
   // Lookup for entries which are gone should returns empty result.
   TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic);
@@ -504,23 +480,21 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
   {
     UserDictionaryStorage storage("");
     LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // A normal lookup operation.
   const Entry kExpected0[] = {
-    { "start", "start", 200, 200 },
+      {"start", "start", 200, 200},
   };
-  TestLookupExactHelper(kExpected0, arraysize(kExpected0),
-                        "start", 5, *dic);
+  TestLookupExactHelper(kExpected0, arraysize(kExpected0), "start", 5, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
-    { "starting", "starting", 100, 100 },
-    { "starting", "starting", 220, 220 },
+      {"starting", "starting", 100, 100},
+      {"starting", "starting", 220, 220},
   };
-  TestLookupExactHelper(kExpected1, arraysize(kExpected1),
-                        "starting", 8, *dic);
+  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "starting", 8, *dic);
 
   // Invalid input values should be just ignored.
   TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
@@ -532,19 +506,18 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   user_dic->WaitForReloader();
 
   // Create dictionary
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                             "suggestion_only_test.db");
+  const std::string filename =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "suggestion_only_test.db");
   FileUtil::Unlink(filename);
   UserDictionaryStorage storage(filename);
   {
     uint64 id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
+        storage.GetProto().mutable_dictionaries(0);
 
     // "名詞"
-    UserDictionaryStorage::UserDictionaryEntry *entry =
-        dic->add_entries();
+    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
     entry->set_key("key");
     entry->set_value("noun");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -555,7 +528,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
     entry->set_value("suggest_only");
     entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
 
-    user_dic->Load(storage);
+    user_dic->Load(storage.GetProto());
   }
 
   // "suggestion_only" should not be looked up.
@@ -564,8 +537,8 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
       mock_data_manager.GetPOSMatcherData());
   const uint16 kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
-  TestLookupExactHelper(kExpected1, arraysize(kExpected1),
-                        "key", 3, *user_dic.get());
+  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "key", 3,
+                        *user_dic.get());
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
@@ -577,7 +550,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
   {
     UserDictionaryStorage storage("");
     UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   TestLookupPrefixHelper(nullptr, 0, "start", 4, *dic);
@@ -597,12 +570,12 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                             "async_load_test.db");
+  const std::string filename =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "async_load_test.db");
   FileUtil::Unlink(filename);
 
   // Create dictionary
-  std::vector<string> keys;
+  std::vector<std::string> keys;
   {
     UserDictionaryStorage storage(filename);
 
@@ -612,10 +585,9 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     uint64 id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
+        storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key(GenRandomAlphabet(10));
       entry->set_value(GenRandomAlphabet(10));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -647,96 +619,12 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   FileUtil::Unlink(filename);
 }
 
-TEST_F(UserDictionaryTest, AddToAutoRegisteredDictionary) {
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                             "add_to_auto_registered.db");
-  FileUtil::Unlink(filename);
-
-  // Create dictionary
-  {
-    UserDictionaryStorage storage(filename);
-    EXPECT_FALSE(storage.Load());
-    EXPECT_TRUE(storage.Lock());
-    EXPECT_TRUE(storage.Save());
-    EXPECT_TRUE(storage.UnLock());
-  }
-
-  // Add entries.
-  {
-    unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
-    dic->WaitForReloader();
-    dic->SetUserDictionaryName(filename);
-    for (int i = 0; i < 100; ++i) {
-      EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
-                      "key" + std::to_string(i),
-                      "value" + std::to_string(i),
-                      convreq_,
-                      user_dictionary::UserDictionary::NOUN));
-      dic->WaitForReloader();
-    }
-  }
-
-  // Verify the contents.
-  {
-    UserDictionaryStorage storage(filename);
-    EXPECT_TRUE(storage.Load());
-    int index = 0;
-    EXPECT_EQ(1, storage.dictionaries_size());
-    EXPECT_EQ(100, storage.dictionaries(index).entries_size());
-    for (int i = 0; i < 100; ++i) {
-      EXPECT_EQ("key" + std::to_string(i),
-                storage.dictionaries(index).entries(i).key());
-      EXPECT_EQ("value" + std::to_string(i),
-                storage.dictionaries(index).entries(i).value());
-      EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-                storage.dictionaries(index).entries(i).pos());
-    }
-  }
-
-  FileUtil::Unlink(filename);
-
-  // Create dictionary
-  {
-    UserDictionaryStorage storage(filename);
-    EXPECT_FALSE(storage.Load());
-    EXPECT_TRUE(storage.Lock());
-    EXPECT_TRUE(storage.Save());
-    EXPECT_TRUE(storage.UnLock());
-  }
-
-  // Add same entries.
-  {
-    unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
-    dic->WaitForReloader();
-    dic->SetUserDictionaryName(filename);
-    EXPECT_TRUE(dic->AddToAutoRegisteredDictionary(
-        "key", "value", convreq_, user_dictionary::UserDictionary::NOUN));
-    dic->WaitForReloader();
-    // Duplicated one is not registered.
-    EXPECT_FALSE(dic->AddToAutoRegisteredDictionary(
-        "key", "value", convreq_, user_dictionary::UserDictionary::NOUN));
-    dic->WaitForReloader();
-  }
-
-  // Verify the contents.
-  {
-    UserDictionaryStorage storage(filename);
-    EXPECT_TRUE(storage.Load());
-    EXPECT_EQ(1, storage.dictionaries_size());
-    EXPECT_EQ(1, storage.dictionaries(0).entries_size());
-    EXPECT_EQ("key", storage.dictionaries(0).entries(0).key());
-    EXPECT_EQ("value", storage.dictionaries(0).entries(0).value());
-    EXPECT_EQ(user_dictionary::UserDictionary::NOUN,
-              storage.dictionaries(0).entries(0).pos());
-  }
-}
-
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                             "suppression_test.db");
+  const std::string filename =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "suppression_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
@@ -746,10 +634,9 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     uint64 id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
+        storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key("no_suppress_key" +
                      std::to_string(static_cast<uint32>(j)));
       entry->set_value("no_suppress_value" +
@@ -758,19 +645,17 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
     }
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
-      entry->set_key(
-          "suppress_key" + std::to_string(static_cast<uint32>(j)));
-      entry->set_value(
-          "suppress_value" + std::to_string(static_cast<uint32>(j)));
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      entry->set_key("suppress_key" + std::to_string(static_cast<uint32>(j)));
+      entry->set_value("suppress_value" +
+                       std::to_string(static_cast<uint32>(j)));
       // entry->set_pos("抑制単語");
       entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
 
     suppression_dictionary_->Lock();
     EXPECT_TRUE(suppression_dictionary_->IsLocked());
-    user_dic->Load(storage);
+    user_dic->Load(storage.GetProto());
     EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
@@ -782,23 +667,22 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
   // Remove suppression entry
   {
-    storage.Clear();
+    storage.GetProto().Clear();
     uint64 id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
+        storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
-      entry->set_key(
-          "no_suppress_key" + std::to_string(static_cast<uint32>(j)));
-      entry->set_value(
-          "no_suppress_value" + std::to_string(static_cast<uint32>(j)));
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+      entry->set_key("no_suppress_key" +
+                     std::to_string(static_cast<uint32>(j)));
+      entry->set_value("no_suppress_value" +
+                       std::to_string(static_cast<uint32>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     suppression_dictionary_->Lock();
-    user_dic->Load(storage);
+    user_dic->Load(storage.GetProto());
     EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
@@ -814,8 +698,8 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir,
-                                             "suggestion_only_test.db");
+  const std::string filename =
+      FileUtil::JoinPath(FLAGS_test_tmpdir, "suggestion_only_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
@@ -825,11 +709,10 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     uint64 id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
-        storage.mutable_dictionaries(0);
+        storage.GetProto().mutable_dictionaries(0);
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value("default");
       // "名詞"
@@ -837,15 +720,14 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     }
 
     for (size_t j = 0; j < 10; ++j) {
-      UserDictionaryStorage::UserDictionaryEntry *entry =
-          dic->add_entries();
+      UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
       entry->set_value("suggest_only");
       // "サジェストのみ"
       entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
     }
 
-    user_dic->Load(storage);
+    user_dic->Load(storage.GetProto());
   }
 
   {
@@ -878,7 +760,8 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
   UserDictionaryStorage storage("");
 
   {
-    UserDictionaryStorage::UserDictionary *dic1 = storage.add_dictionaries();
+    UserDictionaryStorage::UserDictionary *dic1 =
+        storage.GetProto().add_dictionaries();
     CHECK(dic1);
     UserDictionaryStorage::UserDictionaryEntry *entry;
     entry = dic1->add_entries();
@@ -893,7 +776,8 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
   {
-    UserDictionaryStorage::UserDictionary *dic2 = storage.add_dictionaries();
+    UserDictionaryStorage::UserDictionary *dic2 =
+        storage.GetProto().add_dictionaries();
     CHECK(dic2);
     UserDictionaryStorage::UserDictionaryEntry *entry;
     entry = dic2->add_entries();
@@ -912,7 +796,7 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
     entry->set_value("value5");
     entry->set_pos(user_dictionary::UserDictionary::NOUN);
   }
-  dic->Load(storage);
+  dic->Load(storage.GetProto());
 
   EXPECT_INTEGER_STATS("UserRegisteredWord", 5);
 }
@@ -925,30 +809,30 @@ TEST_F(UserDictionaryTest, LookupComment) {
   {
     UserDictionaryStorage storage("");
     UserDictionaryTest::LoadFromString(kUserDictionary0, &storage);
-    dic->Load(storage);
+    dic->Load(storage.GetProto());
   }
 
   // Entry is in user dictionary but has no comment.
-  string comment;
+  std::string comment;
   comment = "prev comment";
-  EXPECT_FALSE(dic->LookupComment(
-      "comment_key1", "comment_value2", convreq_, &comment));
+  EXPECT_FALSE(
+      dic->LookupComment("comment_key1", "comment_value2", convreq_, &comment));
   EXPECT_EQ("prev comment", comment);
 
   // Usual case: single key-value pair with comment.
-  EXPECT_TRUE(dic->LookupComment(
-      "comment_key2", "comment_value2", convreq_, &comment));
+  EXPECT_TRUE(
+      dic->LookupComment("comment_key2", "comment_value2", convreq_, &comment));
   EXPECT_EQ("comment", comment);
 
   // There exist two entries having the same key, value and POS.  Since POS is
   // irrelevant to comment lookup, the first nonempty comment should be found.
-  EXPECT_TRUE(dic->LookupComment(
-      "comment_key3", "comment_value3", convreq_, &comment));
+  EXPECT_TRUE(
+      dic->LookupComment("comment_key3", "comment_value3", convreq_, &comment));
   EXPECT_EQ("comment1", comment);
 
   // White-space only comments should be cleared.
-  EXPECT_FALSE(dic->LookupComment(
-      "comment_key4", "comment_value4", convreq_, &comment));
+  EXPECT_FALSE(
+      dic->LookupComment("comment_key4", "comment_value4", convreq_, &comment));
   // The previous comment should remain.
   EXPECT_EQ("comment1", comment);
 

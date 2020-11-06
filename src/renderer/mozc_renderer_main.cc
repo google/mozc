@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 #include "base/win_util.h"
 #include "base/winmain.h"
 #include "renderer/win32/win32_server.h"
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/mac_server.h"
 #include "renderer/mac/mac_server_send_command.h"
@@ -62,7 +62,7 @@
 #include "renderer/unix/unix_renderer.h"
 #include "renderer/unix/unix_server.h"
 #include "renderer/unix/window_manager.h"
-#endif  // OS_WIN, OS_MACOSX, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, __APPLE__, ENABLE_GTK_RENDERER
 
 DECLARE_bool(restricted);
 
@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
   gtk_set_locale();
 #if !GLIB_CHECK_VERSION(2, 31, 0)
   // There are not g_thread_init function in glib>=2.31.0.
-  //http://developer.gnome.org/glib/2.31/glib-Deprecated-Thread-APIs.html#g-thread-init
-  g_thread_init(NULL);
+  // http://developer.gnome.org/glib/2.31/glib-Deprecated-Thread-APIs.html#g-thread-init
+  g_thread_init(nullptr);
 #endif  // GLIB>=2.31.0
   gdk_threads_init();
   gtk_init(&argc, &argv);
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   if (mozc::config::StatsConfigUtil::IsEnabled()) {
     mozc::CrashReportHandler::Initialize(false);
   }
-  mozc::InitMozc(argv[0], &argc, &argv, false);
+  mozc::InitMozc(argv[0], &argc, &argv);
 
   int result_code = 0;
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     mozc::renderer::win32::Win32Server server;
     server.SetRendererInterface(&server);
     result_code = server.StartServer();
-#elif defined(OS_MACOSX)
+#elif defined(__APPLE__)
     mozc::renderer::mac::MacServer::Init();
     mozc::renderer::mac::MacServer server(argc, (const char **)argv);
     mozc::renderer::mac::CandidateController renderer;
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     renderer.Initialize();
     server.SetRendererInterface(&renderer);
     result_code = server.StartServer();
-#endif  // OS_WIN, OS_MACOSX, ENABLE_GTK_RENDERER
+#endif  // OS_WIN, __APPLE__, ENABLE_GTK_RENDERER
   }
 
   return result_code;

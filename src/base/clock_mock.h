@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,15 +40,19 @@ namespace mozc {
 class ClockMock : public ClockInterface {
  public:
   ClockMock(uint64 sec, uint32 usec);
-  virtual ~ClockMock();
 
-  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec);
-  virtual uint64 GetTime();
-  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output);
-  virtual uint64 GetFrequency();
-  virtual uint64 GetTicks();
+  ClockMock(const ClockMock &) = delete;
+  ClockMock &operator=(const ClockMock &) = delete;
+
+  ~ClockMock() override;
+
+  void GetTimeOfDay(uint64 *sec, uint32 *usec) override;
+  uint64 GetTime() override;
+  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) override;
+  uint64 GetFrequency() override;
+  uint64 GetTicks() override;
 #ifdef OS_NACL
-  virtual void SetTimezoneOffset(int32 timezone_offset_sec);
+  void SetTimezoneOffset(int32 timezone_offset_sec) override;
 #endif  // OS_NACL
 
   // Puts this clock forward.
@@ -79,8 +83,25 @@ class ClockMock : public ClockInterface {
   // internal clock.
   uint64 delta_seconds_;
   uint32 delta_micro_seconds_;
+};
 
-  DISALLOW_COPY_AND_ASSIGN(ClockMock);
+// Changes the global clock with a mock during the life time of this object.
+class ScopedClockMock {
+ public:
+  ScopedClockMock(uint64 sec, uint32 usec) : mock_(sec, usec) {
+    Clock::SetClockForUnitTest(&mock_);
+  }
+
+  ScopedClockMock(const ScopedClockMock &) = delete;
+  ScopedClockMock &operator=(const ScopedClockMock &) = delete;
+
+  ~ScopedClockMock() { Clock::SetClockForUnitTest(nullptr); }
+
+  ClockMock *operator->() { return &mock_; }
+  const ClockMock *operator->() const { return &mock_; }
+
+ private:
+  ClockMock mock_;
 };
 
 }  // namespace mozc

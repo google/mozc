@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 
 #include "ipc/ipc.h"
 
-#include <Windows.h>
 #include <Sddl.h>
+#include <Windows.h>
 
 #include <algorithm>
 #include <string>
@@ -129,8 +129,8 @@ class IPCClientMutexBase {
     // When using this technique, you should set the
     // bInitialOwner flag to FALSE; otherwise, it can be difficult to be
     // certain which process has initial ownership.
-    ipc_mutex_.reset(::CreateMutex(security_attributes_ptr,
-                                   FALSE, wmutex_name.c_str()));
+    ipc_mutex_.reset(
+        ::CreateMutex(security_attributes_ptr, FALSE, wmutex_name.c_str()));
     if (security_attributes_ptr != nullptr) {
       ::LocalFree(security_attributes_ptr->lpSecurityDescriptor);
     }
@@ -144,9 +144,7 @@ class IPCClientMutexBase {
 
   virtual ~IPCClientMutexBase() {}
 
-  HANDLE get() const {
-    return ipc_mutex_.get();
-  }
+  HANDLE get() const { return ipc_mutex_.get(); }
 
  private:
   ScopedHandle ipc_mutex_;
@@ -154,8 +152,7 @@ class IPCClientMutexBase {
 
 class ConverterClientMutex : public IPCClientMutexBase {
  public:
-  ConverterClientMutex()
-      : IPCClientMutexBase("converter") {}
+  ConverterClientMutex() : IPCClientMutexBase("converter") {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ConverterClientMutex);
@@ -163,8 +160,7 @@ class ConverterClientMutex : public IPCClientMutexBase {
 
 class RendererClientMutex : public IPCClientMutexBase {
  public:
-  RendererClientMutex()
-      : IPCClientMutexBase("renderer") {}
+  RendererClientMutex() : IPCClientMutexBase("renderer") {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(RendererClientMutex);
@@ -172,8 +168,7 @@ class RendererClientMutex : public IPCClientMutexBase {
 
 class FallbackClientMutex : public IPCClientMutexBase {
  public:
-  FallbackClientMutex()
-      : IPCClientMutexBase("fallback") {}
+  FallbackClientMutex() : IPCClientMutexBase("fallback") {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(FallbackClientMutex);
@@ -197,8 +192,7 @@ HANDLE GetClientMutex(const string &ipc_name) {
 // RAII class for calling ReleaseMutex in destructor.
 class ScopedReleaseMutex {
  public:
-  explicit ScopedReleaseMutex(HANDLE handle)
-      : pipe_handle_(handle) {}
+  explicit ScopedReleaseMutex(HANDLE handle) : pipe_handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
     if (nullptr != pipe_handle_) {
@@ -207,9 +201,7 @@ class ScopedReleaseMutex {
     pipe_handle_ = nullptr;
   }
 
-  HANDLE get() const {
-    return pipe_handle_;
-  }
+  HANDLE get() const { return pipe_handle_; }
 
  private:
   HANDLE pipe_handle_;
@@ -223,7 +215,7 @@ uint32 GetServerProcessIdImpl(HANDLE handle) {
     const DWORD get_named_pipe_server_process_id_error = ::GetLastError();
     LOG(ERROR) << "GetNamedPipeServerProcessId failed: "
                << get_named_pipe_server_process_id_error;
-    return static_cast<uint32>(-1);   // always deny the connection
+    return static_cast<uint32>(-1);  // always deny the connection
   }
 
   VLOG(1) << "Got server ProcessID: " << pid;
@@ -243,14 +235,12 @@ void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
   ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), INFINITE);
 }
 
-bool WaitForQuitOrIOImpl(
-    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
-    OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
-  const HANDLE events[] = {
-    quit_event, GetEventHandleFromOverlapped(overlapped)
-  };
-  const DWORD wait_result = ::WaitForMultipleObjects(
-      ARRAYSIZE(events), events, FALSE, timeout);
+bool WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event, DWORD timeout,
+                         OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+  const HANDLE events[] = {quit_event,
+                           GetEventHandleFromOverlapped(overlapped)};
+  const DWORD wait_result =
+      ::WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, timeout);
   const DWORD wait_error = ::GetLastError();
   // Clear the I/O operation if still exists.
   if (!HasOverlappedIoCompleted(overlapped)) {
@@ -277,10 +267,10 @@ bool WaitForQuitOrIOImpl(
   return true;
 }
 
-bool WaitForIOImpl(HANDLE device_handle, DWORD timeout,
-                   OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
-  const DWORD wait_result = ::WaitForSingleObject(
-      GetEventHandleFromOverlapped(overlapped), timeout);
+bool WaitForIOImpl(HANDLE device_handle, DWORD timeout, OVERLAPPED *overlapped,
+                   IPCErrorType *last_ipc_error) {
+  const DWORD wait_result =
+      ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), timeout);
   // Clear the I/O operation if still exists.
   if (!HasOverlappedIoCompleted(overlapped)) {
     // This is not safe because this operation may be blocked forever.
@@ -300,27 +290,26 @@ bool WaitForIOImpl(HANDLE device_handle, DWORD timeout,
   return true;
 }
 
-bool WaitForQuitOrIO(
-    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
-    OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+bool WaitForQuitOrIO(HANDLE device_handle, HANDLE quit_event, DWORD timeout,
+                     OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
   if (quit_event != nullptr) {
-    return WaitForQuitOrIOImpl(device_handle, quit_event, timeout,
-                               overlapped, last_ipc_error);
+    return WaitForQuitOrIOImpl(device_handle, quit_event, timeout, overlapped,
+                               last_ipc_error);
   }
   return WaitForIOImpl(device_handle, timeout, overlapped, last_ipc_error);
 }
 
 // To work around a bug of GetOverlappedResult in Vista
 // http://msdn.microsoft.com/en-us/library/dd371711.aspx
-bool SafeWaitOverlappedResult(
-    HANDLE device_handle, HANDLE quit_event, DWORD timeout,
-    OVERLAPPED *overlapped, DWORD *num_bytes_updated,
-    IPCErrorType *last_ipc_error, bool wait_ack) {
+bool SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
+                              DWORD timeout, OVERLAPPED *overlapped,
+                              DWORD *num_bytes_updated,
+                              IPCErrorType *last_ipc_error, bool wait_ack) {
   DCHECK(overlapped);
   DCHECK(num_bytes_updated);
   DCHECK(last_ipc_error);
-  if (!WaitForQuitOrIO(device_handle, quit_event, timeout,
-                       overlapped, last_ipc_error)) {
+  if (!WaitForQuitOrIO(device_handle, quit_event, timeout, overlapped,
+                       last_ipc_error)) {
     return false;
   }
 
@@ -360,9 +349,9 @@ bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
     return false;
   }
 
-  const bool write_file_result = (::WriteFile(
-      device_handle, buf, static_cast<DWORD>(buf_length),
-      &num_bytes_written, &overlapped) != FALSE);
+  const bool write_file_result =
+      (::WriteFile(device_handle, buf, static_cast<DWORD>(buf_length),
+                   &num_bytes_written, &overlapped) != FALSE);
   const DWORD write_file_error = ::GetLastError();
   if (write_file_result) {
     // ::WriteFile is done as sync operation.
@@ -372,9 +361,9 @@ bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
       *last_ipc_error = IPC_WRITE_ERROR;
       return false;
     }
-    if (!SafeWaitOverlappedResult(
-            device_handle, nullptr, timeout, &overlapped,
-            &num_bytes_written, last_ipc_error, kSendTypeData)) {
+    if (!SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
+                                  &num_bytes_written, last_ipc_error,
+                                  kSendTypeData)) {
       return false;
     }
   }
@@ -406,9 +395,9 @@ bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
   }
 
   DWORD num_bytes_read = 0;
-  const bool read_file_result = (::ReadFile(
-      device_handle, buf, static_cast<DWORD>(*buf_length), &num_bytes_read,
-      &overlapped) != FALSE);
+  const bool read_file_result =
+      (::ReadFile(device_handle, buf, static_cast<DWORD>(*buf_length),
+                  &num_bytes_read, &overlapped) != FALSE);
   const DWORD read_file_error = ::GetLastError();
   if (read_file_result) {
     // ::ReadFile is done as sync operation.
@@ -424,9 +413,9 @@ bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
       return false;
     }
     // Actually this is an async operation. Let's wait for its completion.
-    if (!SafeWaitOverlappedResult(
-            device_handle, nullptr, timeout, &overlapped,
-            &num_bytes_read, last_ipc_error, read_type_ack)) {
+    if (!SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
+                                  &num_bytes_read, last_ipc_error,
+                                  read_type_ack)) {
       return false;
     }
   }
@@ -455,9 +444,7 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 }  // namespace
 
-IPCServer::IPCServer(const string &name,
-                     int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
     : connected_(false),
       pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
@@ -486,19 +473,12 @@ IPCServer::IPCServer(const string &name,
   // Create a named pipe.
   std::wstring wserver_address;
   Util::UTF8ToWide(server_address, &wserver_address);
-  HANDLE handle = ::CreateNamedPipe(wserver_address.c_str(),
-                                    PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED |
-                                    FILE_FLAG_FIRST_PIPE_INSTANCE,
-                                    PIPE_TYPE_MESSAGE |
-                                    PIPE_READMODE_MESSAGE |
-                                    PIPE_WAIT,
-                                    (num_connections <= 0
-                                     ? PIPE_UNLIMITED_INSTANCES
-                                     : num_connections),
-                                    sizeof(request_),
-                                    sizeof(response_),
-                                    0,
-                                    &security_attributes);
+  HANDLE handle = ::CreateNamedPipe(
+      wserver_address.c_str(),
+      PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
+      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+      (num_connections <= 0 ? PIPE_UNLIMITED_INSTANCES : num_connections),
+      sizeof(request_), sizeof(response_), 0, &security_attributes);
   const DWORD create_named_pipe_error = ::GetLastError();
   ::LocalFree(security_attributes.lpSecurityDescriptor);
 
@@ -519,13 +499,9 @@ IPCServer::IPCServer(const string &name,
   connected_ = true;
 }
 
-IPCServer::~IPCServer() {
-  Terminate();
-}
+IPCServer::~IPCServer() { Terminate(); }
 
-bool IPCServer::Connected() const {
-  return connected_;
-}
+bool IPCServer::Connected() const { return connected_; }
 
 void IPCServer::Terminate() {
   if (server_thread_.get() == nullptr) {
@@ -600,12 +576,11 @@ void IPCServer::Loop() {
     successive_connection_failure_count = 0;
     // Retrieve an incoming message.
     size_t request_size = sizeof(request_);
-    if (RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(),
-                       &request_[0], &request_size, timeout_,
-                       kReadTypeData, &last_ipc_error)) {
+    if (RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), &request_[0],
+                       &request_size, timeout_, kReadTypeData,
+                       &last_ipc_error)) {
       size_t response_size = sizeof(response_);
-      if (!Process(&request_[0], request_size,
-                   &response_[0], &response_size)) {
+      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
         connected_ = false;
       }
 
@@ -618,8 +593,8 @@ void IPCServer::Loop() {
       }
 
       // Send a response
-      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(),
-                     &response_[0], response_size, timeout_, &last_ipc_error);
+      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), &response_[0],
+                     response_size, timeout_, &last_ipc_error);
     }
 
     // Special treatment for Windows per discussion with thatanaka:
@@ -636,14 +611,14 @@ void IPCServer::Loop() {
     char ack_request[1] = {0};
     size_t ack_request_size = 1;
     static const int kAckTimeout = 100;
-    if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(),
-                        ack_request, &ack_request_size, kAckTimeout,
-                        kReadTypeACK, &last_ipc_error)) {
+    if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), ack_request,
+                        &ack_request_size, kAckTimeout, kReadTypeACK,
+                        &last_ipc_error)) {
       // This case happens when the client did not recive the server's response
       // within timeout. Anyway we will close the connection so that the server
       // will not be blocked.
-      LOG(WARNING) << "Client didn't respond within "
-                   << kAckTimeout << " msec.";
+      LOG(WARNING) << "Client didn't respond within " << kAckTimeout
+                   << " msec.";
     }
     ::DisconnectNamedPipe(pipe_handle_.get());
   }
@@ -730,14 +705,12 @@ void IPCClient::Init(const string &name, const string &server_path) {
       ::WaitNamedPipe(wserver_address.c_str(), kMinWaitTimeForWaitNamedPipe);
     }
 
-    ScopedHandle new_handle(::CreateFile(wserver_address.c_str(),
-                                         GENERIC_READ | GENERIC_WRITE,
-                                         0, nullptr, OPEN_EXISTING,
-                                         FILE_FLAG_OVERLAPPED |
-                                         SECURITY_SQOS_PRESENT |
-                                         SECURITY_IDENTIFICATION |
-                                         SECURITY_EFFECTIVE_ONLY,
-                                         nullptr));
+    ScopedHandle new_handle(
+        ::CreateFile(wserver_address.c_str(), GENERIC_READ | GENERIC_WRITE, 0,
+                     nullptr, OPEN_EXISTING,
+                     FILE_FLAG_OVERLAPPED | SECURITY_SQOS_PRESENT |
+                         SECURITY_IDENTIFICATION | SECURITY_EFFECTIVE_ONLY,
+                     nullptr));
     const DWORD create_file_error = ::GetLastError();
     // ScopedHandle returns nullptr even when it received INVALID_HANDLE_VALUE.
     if (new_handle.get() != nullptr) {
@@ -764,34 +737,30 @@ void IPCClient::Init(const string &name, const string &server_path) {
     // wait for 10 second until server is ready
     // TODO(taku): control the timeout via flag.
 #ifdef DEBUG
-    const int kNamedPipeTimeout = 100000;   // 100 sec
+    const int kNamedPipeTimeout = 100000;  // 100 sec
 #else
-    const int kNamedPipeTimeout = 10000;    // 10 sec
+    const int kNamedPipeTimeout = 10000;  // 10 sec
 #endif
-    DLOG(ERROR) << "Server is busy. waiting for "
-                << kNamedPipeTimeout << " msec";
-    if (!::WaitNamedPipe(wserver_address.c_str(),
-                         kNamedPipeTimeout)) {
+    DLOG(ERROR) << "Server is busy. waiting for " << kNamedPipeTimeout
+                << " msec";
+    if (!::WaitNamedPipe(wserver_address.c_str(), kNamedPipeTimeout)) {
       const DWORD wait_named_pipe_error = ::GetLastError();
       LOG(ERROR) << "WaitNamedPipe failed: " << wait_named_pipe_error;
       if ((trial + 1) == kMaxTrial) {
         last_ipc_error_ = IPC_TIMEOUT_ERROR;
         return;
       }
-      continue;   // go 2nd trial
+      continue;  // go 2nd trial
     }
   }
 }
 
 IPCClient::~IPCClient() {}
 
-bool IPCClient::Connected() const {
-  return connected_;
-}
+bool IPCClient::Connected() const { return connected_; }
 
-bool IPCClient::Call(const char *request, size_t request_size,
-                     char *response, size_t *response_size,
-                     int32 timeout) {
+bool IPCClient::Call(const char *request, size_t request_size, char *response,
+                     size_t *response_size, int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";

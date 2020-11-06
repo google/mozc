@@ -1,4 +1,4 @@
-# Copyright 2010-2018, Google Inc.
+# Copyright 2010-2020, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
         {
           'postbuild_name': 'Change the reference to frameworks',
           'action': [
-            'python', '../build_tools/change_reference_mac.py',
+            '<(python)', '../build_tools/change_reference_mac.py',
             '--qtdir', '<(qt_dir)',
             '--target',
             '${BUILT_PRODUCTS_DIR}/<(product_name).app/Contents/MacOS/<(product_name)',

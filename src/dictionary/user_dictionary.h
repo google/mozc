@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,12 +35,12 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/string_piece.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -50,35 +50,35 @@ namespace dictionary {
 
 class UserDictionary : public DictionaryInterface {
  public:
-  UserDictionary(const UserPOSInterface *user_pos,
+  UserDictionary(std::unique_ptr<const UserPOSInterface> user_pos,
                  POSMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
   ~UserDictionary() override;
 
-  bool HasKey(StringPiece key) const override;
-  bool HasValue(StringPiece value) const override;
+  bool HasKey(absl::string_view key) const override;
+  bool HasValue(absl::string_view value) const override;
 
   // Lookup methods don't support kana modifier insensitive lookup, i.e.,
   // Callback::OnActualKey() is never called.
-  void LookupPredictive(StringPiece key,
+  void LookupPredictive(absl::string_view key,
                         const ConversionRequest &conversion_request,
                         Callback *callback) const override;
-  void LookupPrefix(StringPiece key,
+  void LookupPrefix(absl::string_view key,
                     const ConversionRequest &conversion_request,
                     Callback *callback) const override;
-  void LookupExact(StringPiece key,
+  void LookupExact(absl::string_view key,
                    const ConversionRequest &conversion_request,
                    Callback *callback) const override;
-  void LookupReverse(StringPiece str,
+  void LookupReverse(absl::string_view key,
                      const ConversionRequest &conversion_request,
                      Callback *callback) const override;
 
   // Looks up a user comment from a pair of key and value.  When (key, value)
   // doesn't exist in this dictionary or user comment is empty, bool is
   // returned and string is kept as-is.
-  bool LookupComment(StringPiece key, StringPiece value,
+  bool LookupComment(absl::string_view key, absl::string_view value,
                      const ConversionRequest &conversion_request,
-                     string *comment) const override;
+                     std::string *comment) const override;
 
   // Loads dictionary from UserDictionaryStorage.
   // mainly for unittesting
@@ -90,19 +90,8 @@ class UserDictionary : public DictionaryInterface {
   // Waits until reloader finishes
   void WaitForReloader();
 
-  // Adds new word to auto registered dictionary and reload asynchronously.
-  // Note that this method will not guarantee that
-  // new word is added successfully, since the actual
-  // dictionary modification is done by other thread.
-  // Also, this method should be called by the main converter thread which
-  // is executed synchronously with user input.
-  bool AddToAutoRegisteredDictionary(
-      const string &key, const string &value,
-      const ConversionRequest &conversion_request,
-      user_dictionary::UserDictionary::PosType pos);
-
   // Sets user dicitonary filename for unittesting
-  static void SetUserDictionaryName(const string &filename);
+  static void SetUserDictionaryName(const std::string &filename);
 
  private:
   class TokensIndex;

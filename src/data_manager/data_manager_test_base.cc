@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -49,21 +50,20 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
-
-using mozc::dictionary::POSMatcher;
+#include "absl/strings/string_view.h"
 
 namespace mozc {
+namespace {
+using ::mozc::dictionary::POSMatcher;
+}  // namespace
 
 DataManagerTestBase::DataManagerTestBase(
-    DataManagerInterface *data_manager,
-    const size_t lsize,
-    const size_t rsize,
-    IsBoundaryFunc is_boundary,
-    const string &connection_txt_file,
+    DataManagerInterface *data_manager, const size_t lsize, const size_t rsize,
+    IsBoundaryFunc is_boundary, const std::string &connection_txt_file,
     const int expected_resolution,
-    const std::vector<string> &dictionary_files,
-    const std::vector<string> &suggestion_filter_files,
-    const std::vector<std::pair<string, string>> &typing_model_files)
+    const std::vector<std::string> &dictionary_files,
+    const std::vector<std::string> &suggestion_filter_files,
+    const std::vector<std::pair<std::string, std::string>> &typing_model_files)
     : data_manager_(data_manager),
       lsize_(lsize),
       rsize_(rsize),
@@ -83,8 +83,8 @@ void DataManagerTestBase::SegmenterTest_SameAsInternal() {
       Segmenter::CreateFromDataManager(*data_manager_));
   for (size_t rid = 0; rid < lsize_; ++rid) {
     for (size_t lid = 0; lid < rsize_; ++lid) {
-      EXPECT_EQ(is_boundary_(rid, lid),
-                segmenter->IsBoundary(rid, lid)) << rid << " " << lid;
+      EXPECT_EQ(is_boundary_(rid, lid), segmenter->IsBoundary(rid, lid))
+          << rid << " " << lid;
     }
   }
 }
@@ -164,13 +164,13 @@ void DataManagerTestBase::SegmenterTest_ParticleTest() {
 }
 
 void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
-  std::unique_ptr<const Connector> connector(
-      Connector::CreateFromDataManager(*data_manager_));
-  ASSERT_TRUE(connector.get() != NULL);
+  auto status_or_connector = Connector::CreateFromDataManager(*data_manager_);
+  ASSERT_TRUE(status_or_connector.ok()) << status_or_connector.status();
+  auto connector = std::move(status_or_connector).value();
 
   EXPECT_EQ(expected_resolution_, connector->GetResolution());
-  for (ConnectionFileReader reader(connection_txt_file_);
-       !reader.done(); reader.Next()) {
+  for (ConnectionFileReader reader(connection_txt_file_); !reader.done();
+       reader.Next()) {
     // Randomly sample test entries because connection data have several
     // millions of entries.
     if (Util::Random(100000) != 0) {
@@ -178,9 +178,8 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
     }
     const int cost = reader.cost();
     EXPECT_GE(cost, 0);
-    const int actual_cost =
-        connector->GetTransitionCost(reader.rid_of_left_node(),
-                                     reader.lid_of_right_node());
+    const int actual_cost = connector->GetTransitionCost(
+        reader.rid_of_left_node(), reader.lid_of_right_node());
     if (cost == Connector::kInvalidCost) {
       EXPECT_EQ(cost, actual_cost);
     } else {
@@ -197,19 +196,19 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   // Load embedded suggestion filter (bloom filter)
   std::unique_ptr<SuggestionFilter> suggestion_filter;
   {
-    const char *data = NULL;
+    const char *data = nullptr;
     size_t size;
     data_manager_->GetSuggestionFilterData(&data, &size);
     suggestion_filter.reset(new SuggestionFilter(data, size));
   }
 
   // Load the original suggestion filter from file.
-  mozc_hash_set<string> suggestion_filter_set;
+  mozc_hash_set<std::string> suggestion_filter_set;
 
   for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
     InputFileStream input(suggestion_filter_files_[i].c_str());
     CHECK(input) << "cannot open: " << suggestion_filter_files_[i];
-    string line;
+    std::string line;
     while (getline(input, line)) {
       if (line.empty() || line[0] == '#') {
         continue;
@@ -226,19 +225,19 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   for (size_t i = 0; i < dictionary_files_.size(); ++i) {
     InputFileStream input(dictionary_files_[i].c_str());
     CHECK(input) << "cannot open: " << dictionary_files_[i];
-    std::vector<string> fields;
-    string line;
+    std::vector<std::string> fields;
+    std::string line;
     while (getline(input, line)) {
       fields.clear();
       Util::SplitStringUsing(line, "\t", &fields);
       CHECK_GE(fields.size(), 5);
-      string value = fields[4];
+      std::string value = fields[4];
       Util::LowerString(&value);
 
       const bool true_result =
           (suggestion_filter_set.find(value) != suggestion_filter_set.end());
-      const bool bloom_filter_result
-          = suggestion_filter->IsBadSuggestion(value);
+      const bool bloom_filter_result =
+          suggestion_filter->IsBadSuggestion(value);
 
       // never emits false negative
       if (true_result) {
@@ -266,12 +265,12 @@ void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
   data_manager_->GetCounterSuffixSortedArray(&data, &data_size);
 
   SerializedStringArray suffix_array;
-  ASSERT_TRUE(suffix_array.Init(StringPiece(data, data_size)));
+  ASSERT_TRUE(suffix_array.Init(absl::string_view(data, data_size)));
 
   // Check if the array is sorted in ascending order.
-  StringPiece prev_suffix;  // The smallest string.
+  absl::string_view prev_suffix;  // The smallest string.
   for (size_t i = 0; i < suffix_array.size(); ++i) {
-    const StringPiece suffix = suffix_array[i];
+    const absl::string_view suffix = suffix_array[i];
     EXPECT_LE(prev_suffix, suffix);
     prev_suffix = suffix;
   }

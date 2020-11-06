@@ -1,4 +1,4 @@
-// Copyright 2010-2018, Google Inc.
+// Copyright 2010-2020, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,23 +54,23 @@ namespace mozc {
 namespace {
 
 #ifdef OS_WIN
-const char  kPasswordFile[] = "encrypt_key.db";
+const char kPasswordFile[] = "encrypt_key.db";
 #else
-const char  kPasswordFile[] = ".encrypt_key.db";   // dot-file (hidden file)
+const char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
 #endif
 
-const size_t kPasswordSize  = 32;
+const size_t kPasswordSize = 32;
 
-string CreateRandomPassword() {
+std::string CreateRandomPassword() {
   char buf[kPasswordSize];
   Util::GetRandomSequence(buf, sizeof(buf));
-  return string(buf, sizeof(buf));
+  return std::string(buf, sizeof(buf));
 }
 
 // RAII class to make a given file writable/read-only
 class ScopedReadWriteFile {
  public:
-  explicit ScopedReadWriteFile(const string &filename)
+  explicit ScopedReadWriteFile(const std::string &filename)
       : filename_(filename) {
     if (!FileUtil::FileExists(filename_)) {
       LOG(WARNING) << "file not found: " << filename;
@@ -82,8 +82,8 @@ class ScopedReadWriteFile {
     if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
-#elif !defined(MOZC_USE_PEPPER_FILE_IO)
-    chmod(filename_.c_str(), 0600);  // write temporary
+#else
+    chmod(filename_.c_str(), 0600);              // write temporary
 #endif
   }
 
@@ -97,22 +97,22 @@ class ScopedReadWriteFile {
                                                FILE_ATTRIBUTE_READONLY)) {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
-#elif !defined(MOZC_USE_PEPPER_FILE_IO)
-    chmod(filename_.c_str(), 0400);  // read only
+#else
+    chmod(filename_.c_str(), 0400);              // read only
 #endif
   }
 
  private:
-  string filename_;
+  std::string filename_;
 };
 
-string GetFileName() {
+std::string GetFileName() {
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                             kPasswordFile);
 }
 
-bool SavePassword(const string &password) {
-  const string filename = GetFileName();
+bool SavePassword(const std::string &password) {
+  const std::string filename = GetFileName();
   ScopedReadWriteFile l(filename);
 
   {
@@ -127,8 +127,8 @@ bool SavePassword(const string &password) {
   return true;
 }
 
-bool LoadPassword(string *password) {
-  const string filename = GetFileName();
+bool LoadPassword(std::string *password) {
+  const std::string filename = GetFileName();
   Mmap mmap;
   if (!mmap.Open(filename.c_str(), "r")) {
     LOG(ERROR) << "cannot open: " << filename;
@@ -150,7 +150,7 @@ bool LoadPassword(string *password) {
 }
 
 bool RemovePasswordFile() {
-  const string filename = GetFileName();
+  const std::string filename = GetFileName();
   ScopedReadWriteFile l(filename);
   return FileUtil::Unlink(filename);
 }
@@ -160,12 +160,12 @@ bool RemovePasswordFile() {
 // PlainPasswordManager
 class PlainPasswordManager : public PasswordManagerInterface {
  public:
-  virtual bool SetPassword(const string &password) const;
-  virtual bool GetPassword(string *password) const;
+  virtual bool SetPassword(const std::string &password) const;
+  virtual bool GetPassword(std::string *password) const;
   virtual bool RemovePassword() const;
 };
 
-bool PlainPasswordManager::SetPassword(const string &password) const {
+bool PlainPasswordManager::SetPassword(const std::string &password) const {
   if (password.size() != kPasswordSize) {
     LOG(ERROR) << "Invalid password given";
     return false;
@@ -179,9 +179,9 @@ bool PlainPasswordManager::SetPassword(const string &password) const {
   return true;
 }
 
-bool PlainPasswordManager::GetPassword(string *password) const {
-  if (password == NULL) {
-    LOG(ERROR) << "password is NULL";
+bool PlainPasswordManager::GetPassword(std::string *password) const {
+  if (password == nullptr) {
+    LOG(ERROR) << "password is nullptr";
     return false;
   }
 
@@ -207,7 +207,7 @@ bool PlainPasswordManager::RemovePassword() const {
 //////////////////////////////////////////////////////////////////
 // WinPasswordManager
 // We use this manager with both Windows and Mac
-#if (defined(OS_WIN) || defined(OS_MACOSX))
+#if (defined(OS_WIN) || defined(__APPLE__))
 class WinMacPasswordManager : public PasswordManagerInterface {
  public:
   virtual bool SetPassword(const string &password) const;
@@ -231,8 +231,8 @@ bool WinMacPasswordManager::SetPassword(const string &password) const {
 }
 
 bool WinMacPasswordManager::GetPassword(string *password) const {
-  if (password == NULL) {
-    LOG(ERROR) << "password is NULL";
+  if (password == nullptr) {
+    LOG(ERROR) << "password is nullptr";
     return false;
   }
 
@@ -259,17 +259,18 @@ bool WinMacPasswordManager::GetPassword(string *password) const {
 bool WinMacPasswordManager::RemovePassword() const {
   return RemovePasswordFile();
 }
-#endif  // OS_WIN | OS_MACOSX
+#endif  // OS_WIN | __APPLE__
 
 // We use plain text file for password storage on Linux. If you port this module
 // to other Linux distro, you might want to implement a new password manager
 // which adopts some secure mechanism such like gnome-keyring.
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
+    defined(OS_WASM)
 typedef PlainPasswordManager DefaultPasswordManager;
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL
 
 // Windows or Mac
-#if (defined(OS_WIN) || defined(OS_MACOSX))
+#if (defined(OS_WIN) || defined(__APPLE__))
 typedef WinMacPasswordManager DefaultPasswordManager;
 #endif
 
@@ -278,11 +279,11 @@ class PasswordManagerImpl {
  public:
   PasswordManagerImpl() {
     password_manager_ = Singleton<DefaultPasswordManager>::get();
-    DCHECK(password_manager_ != NULL);
+    DCHECK(password_manager_ != nullptr);
   }
 
   bool InitPassword() {
-    string password;
+    std::string password;
     if (password_manager_->GetPassword(&password)) {
       return true;
     }
@@ -291,7 +292,7 @@ class PasswordManagerImpl {
     return password_manager_->SetPassword(password);
   }
 
-  bool GetPassword(string *password) {
+  bool GetPassword(std::string *password) {
     scoped_lock l(&mutex_);
     if (password_manager_->GetPassword(password)) {
       return true;
@@ -332,7 +333,7 @@ bool PasswordManager::InitPassword() {
   return Singleton<PasswordManagerImpl>::get()->InitPassword();
 }
 
-bool PasswordManager::GetPassword(string *password) {
+bool PasswordManager::GetPassword(std::string *password) {
   return Singleton<PasswordManagerImpl>::get()->GetPassword(password);
 }
 
