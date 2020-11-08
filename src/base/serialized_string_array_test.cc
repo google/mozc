@@ -35,8 +35,8 @@
 #include <string>
 
 #include "base/port.h"
-#include "absl/strings/string_view.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {

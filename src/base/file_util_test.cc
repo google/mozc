@@ -305,7 +305,7 @@ TEST_F(FileUtilTest, AtomicRename) {
     InputFileStream ifs(to.c_str());
     EXPECT_TRUE(ifs.good());
     std::string line;
-    getline(ifs, line);
+    std::getline(ifs, line);
     EXPECT_EQ("test", line);
   }
 

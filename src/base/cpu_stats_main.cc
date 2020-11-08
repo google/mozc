@@ -46,7 +46,7 @@ namespace {
 class DummyThread : public mozc::Thread {
  public:
   DummyThread() {}
-  void Run() {
+  void Run() override {
     volatile uint64 n = 0;
     while (true) {
       ++n;

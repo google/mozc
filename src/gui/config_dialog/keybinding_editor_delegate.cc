@@ -41,7 +41,7 @@ namespace gui {
 
 class KeyBindingEditorTriggerButton : public QPushButton {
  public:
-  KeyBindingEditorTriggerButton(QWidget *parent)
+  explicit KeyBindingEditorTriggerButton(QWidget *parent)
       : QPushButton(parent), editor_(new KeyBindingEditor(parent, this)) {
     editor_->setModal(true);  // create a modal dialog
     setFocusProxy(editor_.get());

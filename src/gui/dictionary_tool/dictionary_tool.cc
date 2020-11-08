@@ -84,6 +84,14 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySession;
 using ::mozc::user_dictionary::UserDictionaryStorage;
 
+inline QString QUtf8(const char str[]) {
+  return QString::fromUtf8(str);
+}
+
+inline QString QUtf8(const string &str) {
+  return QString::fromUtf8(str.c_str());
+}
+
 // set longer timeout because it takes longer time
 // to reload all user dictionary.
 const int kSessionTimeout = 100000;
@@ -91,13 +99,14 @@ const int kSessionTimeout = 100000;
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almsot square
-  const QRect rect = QFontMetrics(widget->font()).boundingRect("龍");
+  const QRect rect = QFontMetrics(widget->font()).boundingRect(QUtf8("龍"));
   return static_cast<int>(rect.height() * 1.4);
 }
 
 QProgressDialog *CreateProgressDialog(QString message, QWidget *parent,
                                       int size) {
-  QProgressDialog *progress = new QProgressDialog(message, "", 0, size, parent);
+  QProgressDialog *progress =
+      new QProgressDialog(message, QLatin1String(""), 0, size, parent);
   CHECK(progress);
   progress->setWindowFlags(Qt::Window | Qt::CustomizeWindowHint |
                            Qt::WindowCloseButtonHint);
@@ -398,7 +407,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   pos_list_provider_->GetPOSList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
-    pos_list.append(tmp_pos_vec[i].c_str());
+    pos_list.append(QUtf8(tmp_pos_vec[i]));
   }
   ComboBoxDelegate *delegate = new ComboBoxDelegate;
   delegate->SetItemList(pos_list);
@@ -514,7 +523,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   sort_state_.sorted = false;
 
   // If this is the first time for the user dictionary is used, create
-  // a defautl dictionary.
+  // a default dictionary.
   if (!session_->mutable_storage()->Exists()) {
     CreateDictionaryHelper(tr("User Dictionary 1"));
   }
@@ -630,16 +639,14 @@ void DictionaryTool::SetupDicContentEditor(const DictionaryInfo &dic_info) {
         tr("Updating the current view data..."), this, dic->entries_size()));
 
     for (size_t i = 0; i < dic->entries_size(); ++i) {
-      dic_content_->setItem(
-          i, 0, new QTableWidgetItem(dic->entries(i).key().c_str()));
-      dic_content_->setItem(
-          i, 1, new QTableWidgetItem(dic->entries(i).value().c_str()));
+      const UserDictionary::Entry &entry = dic->entries(i);
+      dic_content_->setItem(i, 0, new QTableWidgetItem(QUtf8(entry.key())));
+      dic_content_->setItem(i, 1, new QTableWidgetItem(QUtf8(entry.value())));
       dic_content_->setItem(
           i, 2,
           new QTableWidgetItem(
-              UserDictionaryUtil::GetStringPosType(dic->entries(i).pos())));
-      dic_content_->setItem(
-          i, 3, new QTableWidgetItem(dic->entries(i).comment().c_str()));
+              QUtf8(UserDictionaryUtil::GetStringPosType(entry.pos()))));
+      dic_content_->setItem(i, 3, new QTableWidgetItem(QUtf8(entry.comment())));
       progress->setValue(i);
     }
   }
@@ -669,8 +676,8 @@ void DictionaryTool::CreateDictionary() {
     return;
   }
 
-  const QString dic_name =
-      PromptForDictionaryName("", tr("Name of the new dictionary"));
+  const QString dic_name = PromptForDictionaryName(
+      QLatin1String(""), tr("Name of the new dictionary"));
   if (dic_name.isEmpty()) {
     return;  // canceld by user
   }
@@ -792,7 +799,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
       QMessageBox::information(this, window_title_,
                                tr("%1 entries are imported to %2.")
                                    .arg(added_entries_size)
-                                   .arg(dic_name.c_str()));
+                                   .arg(QUtf8(dic_name)));
       break;
     case UserDictionaryImporter::IMPORT_NOT_SUPPORTED:
       QMessageBox::information(this, window_title_,
@@ -808,7 +815,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
           tr("%1 doesn't have enough space to import all words in "
              "the file. First %2 entries "
              "are imported.")
-              .arg(dic_name.c_str())
+              .arg(QUtf8(dic_name))
               .arg(added_entries_size));
       break;
     case UserDictionaryImporter::IMPORT_INVALID_ENTRIES:
@@ -818,7 +825,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
              "words were not recognized by %3. "
              "Please check the original import file.")
               .arg(added_entries_size)
-              .arg(dic_name.c_str())
+              .arg(QUtf8(dic_name))
               .arg(window_title_));
       break;
     case UserDictionaryImporter::IMPORT_FATAL:
@@ -837,7 +844,7 @@ void DictionaryTool::ImportHelper(
   if (!IsReadableToImport(file_name)) {
     LOG(ERROR) << "File is not readable to import.";
     QMessageBox::critical(this, window_title_,
-                          tr("Can't open %1.").arg(file_name.c_str()));
+                          tr("Can't open %1.").arg(QUtf8(file_name)));
     return;
   }
 
@@ -975,7 +982,7 @@ void DictionaryTool::ExportDictionary() {
   if (!IsWritableToExport(file_name)) {
     LOG(ERROR) << "File is not writable to export.";
     QMessageBox::critical(this, window_title_,
-                          tr("Can't open %1.").arg(file_name.c_str()));
+                          tr("Can't open %1.").arg(QUtf8(file_name)));
     return;
   }
 
@@ -1002,10 +1009,10 @@ void DictionaryTool::AddWord() {
   }
 
   dic_content_->insertRow(row);
-  dic_content_->setItem(row, 0, new QTableWidgetItem(""));
-  dic_content_->setItem(row, 1, new QTableWidgetItem(""));
+  dic_content_->setItem(row, 0, new QTableWidgetItem(QLatin1String("")));
+  dic_content_->setItem(row, 1, new QTableWidgetItem(QLatin1String("")));
   dic_content_->setItem(row, 2, new QTableWidgetItem(default_pos_));
-  dic_content_->setItem(row, 3, new QTableWidgetItem(""));
+  dic_content_->setItem(row, 3, new QTableWidgetItem(QLatin1String("")));
 
   if (row + 1 >= max_entry_size_) {
     new_word_button_->setEnabled(false);
@@ -1053,7 +1060,7 @@ QListWidgetItem *DictionaryTool::GetFirstSelectedDictionary() const {
 void DictionaryTool::DeleteWord() {
   std::vector<int> rows;
   GetSortedSelectedRows(&rows);
-  if (rows.size() == 0) {
+  if (rows.empty()) {
     return;
   }
 
@@ -1132,7 +1139,7 @@ void DictionaryTool::MoveTo(int dictionary_row) {
 
   std::vector<int> rows;
   GetSortedSelectedRows(&rows);
-  if (rows.size() == 0) {
+  if (rows.empty()) {
     return;
   }
 
@@ -1195,8 +1202,8 @@ void DictionaryTool::EditComment() {
 
   bool ok = false;
   const QString new_comment = QInputDialog::getText(
-      this, window_title_, tr("New comment"), QLineEdit::Normal, "", &ok,
-      Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
+      this, window_title_, tr("New comment"), QLineEdit::Normal,
+      QLatin1String(""), &ok, Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
 
   if (!ok) {
     return;
@@ -1264,7 +1271,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
   QString delete_menu_text = tr("Delete this word");
   QString move_to_menu_text = tr("Move this word to");
-  if (items.size() > 0) {
+  if (!items.empty()) {
     const int first_row = items[0]->row();
     for (int i = 1; i < items.size(); ++i) {
       if (items[i]->row() != first_row) {
@@ -1538,12 +1545,12 @@ void DictionaryTool::SaveAndReloadServer() {
 }
 
 bool DictionaryTool::IsReadableToImport(const std::string &file_name) {
-  QFileInfo file_info(file_name.c_str());
+  QFileInfo file_info(QUtf8(file_name));
   return file_info.isFile() && file_info.isReadable();
 }
 
 bool DictionaryTool::IsWritableToExport(const std::string &file_name) {
-  QFileInfo file_info(file_name.c_str());
+  QFileInfo file_info(QUtf8(file_name));
   if (file_info.exists()) {
     return file_info.isFile() && file_info.isWritable();
   } else {

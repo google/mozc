@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   std::string command;
   std::string left, focused, right;
 
-  while (getline(std::cin, command)) {
+  while (std::getline(std::cin, command)) {
     if (command == "<") {
       composer->MoveCursorLeft();
     } else if (command == "<<") {

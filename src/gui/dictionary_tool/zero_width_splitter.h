@@ -48,7 +48,7 @@ class ZeroWidthSplitterHandle : public QSplitterHandle {
 
 class ZeroWidthSplitter : public QSplitter {
  public:
-  ZeroWidthSplitter(QWidget *parent);
+  explicit ZeroWidthSplitter(QWidget *parent);
   QSplitterHandle *createHandle() override;
 };
 

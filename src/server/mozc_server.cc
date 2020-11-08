@@ -92,8 +92,6 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
     VLOG(1) << "Mozc server starts with timeout mode";
     FLAGS_restricted = true;
   }
-
-  return;
 }
 
 int MozcServer::Run() {

@@ -493,7 +493,7 @@ int main(int argc, char **argv) {
   mozc::Segments segments;
   std::string line;
 
-  while (!getline(std::cin, line).fail()) {
+  while (!std::getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, &segments, line, request)) {
       if (FLAGS_output_debug_string) {
         mozc::PrintSegments(segments, &std::cout);

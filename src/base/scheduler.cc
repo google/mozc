@@ -172,9 +172,9 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
   }
 
-  virtual ~SchedulerImpl() { RemoveAllJobs(); }
+  ~SchedulerImpl() override { RemoveAllJobs(); }
 
-  virtual void RemoveAllJobs() {
+  void RemoveAllJobs() override {
     scoped_lock l(&mutex_);
     jobs_.clear();
   }
@@ -187,7 +187,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     DCHECK(job_setting.callback() != nullptr);
   }
 
-  virtual bool AddJob(const Scheduler::JobSetting &job_setting) {
+  bool AddJob(const Scheduler::JobSetting &job_setting) override {
     scoped_lock l(&mutex_);
 
     ValidateSetting(job_setting);
@@ -218,7 +218,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return true;
   }
 
-  virtual bool RemoveJob(const std::string &name) {
+  bool RemoveJob(const std::string &name) override {
     scoped_lock l(&mutex_);
     if (!HasJob(name)) {
       LOG(WARNING) << "Job " << name << " is not registered";
@@ -227,7 +227,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     return (jobs_.erase(name) != 0);
   }
 
-  virtual bool HasJob(const std::string &name) const {
+  bool HasJob(const std::string &name) const override {
     return (jobs_.find(name) != jobs_.end());
   }
 

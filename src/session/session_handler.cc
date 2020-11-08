@@ -377,7 +377,7 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
   const commands::GenericStorageEntry &storage_entry =
       command->input().storage_entry();
   if (!storage_entry.has_type() || !storage_entry.has_key() ||
-      storage_entry.value().size() == 0) {
+      storage_entry.value().empty()) {
     LOG(WARNING) << "storage_entry lacks some fields.";
     return false;
   }

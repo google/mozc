@@ -256,7 +256,7 @@ bool Mmap::Open(const char *filename, const char *mode) {
     prot |= PROT_WRITE;
   }
 
-  void *ptr = mmap(0, st.st_size, prot, MAP_SHARED, fd, 0);
+  void *ptr = mmap(nullptr, st.st_size, prot, MAP_SHARED, fd, 0);
   if (ptr == MAP_FAILED) {
     LOG(WARNING) << "mmap() failed: " << filename;
     return false;

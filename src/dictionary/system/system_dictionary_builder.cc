@@ -243,7 +243,7 @@ void SystemDictionaryBuilder::ReadTokens(const std::vector<Token *> &tokens,
 
   // Step 2.
   key_info_list->clear();
-  if (reduce_buffer.size() == 0) {
+  if (reduce_buffer.empty()) {
     return;
   }
   KeyInfo last_key_info;

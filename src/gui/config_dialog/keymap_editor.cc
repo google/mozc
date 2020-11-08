@@ -507,8 +507,6 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
   } else if (action == actions_[EXPORT_TO_FILE_INDEX]) {
     Export();
   }
-
-  return;
 }
 
 // static

@@ -50,24 +50,32 @@ void defaultLinkActivated(const QString &str) {
   Process::OpenBrowser(std::string(utf8.data(), utf8.length()));
 }
 
+inline void Replace(QString &str, const char pattern[], const char repl[]) {
+  str.replace(QLatin1String(pattern), QLatin1String(repl));
+}
+
+inline void Replace(QString &str, const char pattern[], const QString &repl) {
+  str.replace(QLatin1String(pattern), repl);
+}
+
 QString ReplaceString(const QString &str) {
   QString replaced(str);
-  replaced.replace("[ProductName]", GuiUtil::ProductName());
+  Replace(replaced, "[ProductName]", GuiUtil::ProductName());
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  replaced.replace("[ProductUrl]", "https://www.google.co.jp/ime/");
-  replaced.replace("[ForumUrl]",
-                   "https://support.google.com/gboard/community?hl=ja");
-  replaced.replace("[ForumName]", QObject::tr("issues"));
+  Replace(replaced, "[ProductUrl]", "https://www.google.co.jp/ime/");
+  Replace(replaced, "[ForumUrl]",
+          "https://support.google.com/gboard/community?hl=ja");
+  Replace(replaced, "[ForumName]", QObject::tr("issues"));
 #else
-  replaced.replace("[ProductUrl]", "https://github.com/google/mozc");
-  replaced.replace("[ForumUrl]", "https://github.com/google/mozc/issues");
-  replaced.replace("[ForumName]", QObject::tr("issues"));
+  Replace(replaced, "[ProductUrl]", "https://github.com/google/mozc");
+  Replace(replaced, "[ForumUrl]", "https://github.com/google/mozc/issues");
+  Replace(replaced, "[ForumName]", QObject::tr("issues"));
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   const std::string credit_filepath =
       FileUtil::JoinPath(SystemUtil::GetDocumentDirectory(), "credits_en.html");
-  replaced.replace("credits_en.html", credit_filepath.c_str());
+  Replace(replaced, "credits_en.html", credit_filepath.c_str());
 
   return replaced;
 }
@@ -86,10 +94,8 @@ AboutDialog::AboutDialog(QWidget *parent)
   window_palette.setColor(QPalette::Window, QColor(255, 255, 255));
   setPalette(window_palette);
   setAutoFillBackground(true);
-  QString version_info("(");
-  version_info += Version::GetMozcVersion().c_str();
-  version_info += ")";
-  version_label->setText(version_info);
+  std::string version_info = "(" + Version::GetMozcVersion() + ")";
+  version_label->setText(QLatin1String(version_info.c_str()));
   GuiUtil::ReplaceWidgetLabels(this);
 
   QPalette palette;
@@ -112,7 +118,8 @@ AboutDialog::AboutDialog(QWidget *parent)
   SetLabelText(label_terms);
   SetLabelText(label_credits);
 
-  product_image_ = absl::make_unique<QImage>(":/product_logo.png");
+  product_image_ =
+      absl::make_unique<QImage>(QLatin1String(":/product_logo.png"));
 }
 
 void AboutDialog::paintEvent(QPaintEvent *event) {
@@ -123,7 +130,7 @@ void AboutDialog::paintEvent(QPaintEvent *event) {
   const QRect draw_rect(std::max(5, width() - image_rect.width() - 15),
                         std::max(0, color_frame->y() - image_rect.height()),
                         image_rect.width(), image_rect.height());
-  painter.drawImage(draw_rect, *product_image_.get());
+  painter.drawImage(draw_rect, *product_image_);
 }
 
 void AboutDialog::SetLinkCallback(LinkCallbackInterface *callback) {

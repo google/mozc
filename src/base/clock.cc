@@ -54,9 +54,9 @@ class ClockImpl : public ClockInterface {
   ClockImpl() : timezone_offset_sec_(0) {}
 #endif  // OS_NACL
 
-  virtual ~ClockImpl() {}
+  ~ClockImpl() override {}
 
-  virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) {
+  void GetTimeOfDay(uint64 *sec, uint32 *usec) override {
 #ifdef OS_WIN
     FILETIME file_time;
     GetSystemTimeAsFileTime(&file_time);
@@ -83,7 +83,7 @@ class ClockImpl : public ClockInterface {
 #endif  // OS_WIN
   }
 
-  virtual uint64 GetTime() {
+  uint64 GetTime() override {
 #ifdef OS_WIN
     return static_cast<uint64>(_time64(nullptr));
 #else
@@ -91,7 +91,7 @@ class ClockImpl : public ClockInterface {
 #endif  // OS_WIN
   }
 
-  virtual bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
+  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) override {
     const time_t current_sec = static_cast<time_t>(this->GetTime());
     const time_t modified_sec = current_sec + offset_sec;
 
@@ -112,7 +112,7 @@ class ClockImpl : public ClockInterface {
     return true;
   }
 
-  virtual uint64 GetFrequency() {
+  uint64 GetFrequency() override {
 #if defined(OS_WIN)
     LARGE_INTEGER timestamp;
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
@@ -132,7 +132,7 @@ class ClockImpl : public ClockInterface {
 #endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
   }
 
-  virtual uint64 GetTicks() {
+  uint64 GetTicks() override {
     // TODO(team): Use functions in <chrono> once the use of it is approved.
 #if defined(OS_WIN)
     LARGE_INTEGER timestamp;

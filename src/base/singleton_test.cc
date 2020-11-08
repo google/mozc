@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/singleton.h"
+
 #include <stdlib.h>
+
 #include "base/thread.h"
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
@@ -55,7 +57,7 @@ class ThreadInstance {
 
 class ThreadTest : public Thread {
  public:
-  void Run() { instance_ = Singleton<ThreadInstance>::get(); }
+  void Run() override { instance_ = Singleton<ThreadInstance>::get(); }
 
   ThreadInstance *get() { return instance_; }
 

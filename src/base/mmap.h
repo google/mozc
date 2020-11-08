@@ -49,7 +49,7 @@ class Mmap : public MmapSyncInterface {
 #endif  // OS_NACL
 
   Mmap();
-  virtual ~Mmap() { Close(); }
+  ~Mmap() override { Close(); }
 
   bool Open(const char *filename, const char *mode = "r");
   void Close();

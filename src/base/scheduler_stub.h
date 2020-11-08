@@ -53,13 +53,13 @@ namespace mozc {
 class SchedulerStub : public Scheduler::SchedulerInterface {
  public:
   SchedulerStub();
-  virtual ~SchedulerStub();
+  ~SchedulerStub() override;
 
   // |random_delay| will be ignored.
-  virtual bool AddJob(const Scheduler::JobSetting &job_setting);
-  virtual bool RemoveJob(const std::string &name);
-  virtual void RemoveAllJobs();
-  virtual bool HasJob(const std::string &name) const;
+  bool AddJob(const Scheduler::JobSetting &job_setting) override;
+  bool RemoveJob(const std::string &name) override;
+  void RemoveAllJobs() override;
+  bool HasJob(const std::string &name) const override;
 
   // Puts stub internal clock forward.
   // Jobs will be executed according to forwarded time.

@@ -153,7 +153,7 @@ void CharacterFormEditor::Load(const config::Config &config) {
     // Preedit Katakan is always FULLWIDTH
     // This item should not be editable
     if (group == QObject::tr("Katakana")) {
-      item_preedit->setFlags(0);  // disable flag
+      item_preedit->setFlags(nullptr);  // disable flag
     }
 
     setItem(row, 0, item_group);

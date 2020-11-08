@@ -49,11 +49,11 @@ InputMultiFile::InputMultiFile(const std::string &filenames,
 InputMultiFile::~InputMultiFile() { ifs_.reset(); }
 
 bool InputMultiFile::ReadLine(std::string *line) {
-  if (ifs_.get() == nullptr) {
+  if (ifs_ == nullptr) {
     return false;
   }
   do {
-    if (!getline(*ifs_, *line).fail()) {
+    if (!std::getline(*ifs_, *line).fail()) {
       return true;
     }
   } while (OpenNext());

@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "base/clock_mock.h"
+
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

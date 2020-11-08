@@ -220,10 +220,10 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   // are pressed. If Hiragana/Eisu key is pressed, we assume that
   // the key is already released at the same time.
   // Hankaku/Zenkaku key is preserved key and modifier keys are ignored.
-  if (modifier_non_required_key_ == "Hiragana" ||
-      modifier_non_required_key_ == "Katakana" ||
-      modifier_non_required_key_ == "Eisu" ||
-      modifier_non_required_key_ == "Hankaku/Zenkaku") {
+  if (modifier_non_required_key_ == QLatin1String("Hiragana") ||
+      modifier_non_required_key_ == QLatin1String("Katakana") ||
+      modifier_non_required_key_ == QLatin1String("Eisu") ||
+      modifier_non_required_key_ == QLatin1String("Hankaku/Zenkaku")) {
     *result = modifier_non_required_key_;
     return KeyBindingFilter::SUBMIT_KEY;
   }
@@ -231,16 +231,16 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   QStringList results;
 
   if (ctrl_pressed_) {
-    results << "Ctrl";
+    results << QLatin1String("Ctrl");
   }
 
   if (shift_pressed_) {
-    results << "Shift";
+    results << QLatin1String("Shift");
   }
 
   if (alt_pressed_) {
 #ifdef __APPLE__
-    results << "Option";
+    results << QLatin1String("Option");
 #else
     // Do not support and show keybindings with alt for Windows
     // results << "Alt";
@@ -365,7 +365,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   for (size_t i = 0; i < arraysize(kQtKeyModifierNonRequiredTable); ++i) {
     if (kQtKeyModifierNonRequiredTable[i].qt_key == qt_key) {
       modifier_non_required_key_ =
-          kQtKeyModifierNonRequiredTable[i].mozc_key_name;
+          QLatin1String(kQtKeyModifierNonRequiredTable[i].mozc_key_name);
       return Encode(result);
     }
   }
@@ -376,8 +376,8 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   for (size_t i = 0; i < arraysize(kWinVirtualKeyModifierNonRequiredTable);
        ++i) {
     if (kWinVirtualKeyModifierNonRequiredTable[i].virtual_key == virtual_key) {
-      modifier_non_required_key_ =
-          kWinVirtualKeyModifierNonRequiredTable[i].mozc_key_name;
+      modifier_non_required_key_ = QLatin1String(
+          kWinVirtualKeyModifierNonRequiredTable[i].mozc_key_name);
       return Encode(result);
     }
   }
@@ -402,24 +402,25 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   //   3. Press "Hiragana/Katakana"  (shift_pressed_ == false)
   const bool with_shift = (key_event.modifiers() & Qt::ShiftModifier) != 0;
   if (with_shift && (qt_key == Qt::Key_Hiragana_Katakana)) {
-    modifier_non_required_key_ = "Katakana";
+    modifier_non_required_key_ = QLatin1String("Katakana");
     return Encode(result);
   }
 #endif
 
   if (qt_key == Qt::Key_yen) {
     // Japanese Yen mark, treat it as backslash for compatibility
-    modifier_non_required_key_ = "\\";
+    modifier_non_required_key_ = QLatin1String("\\");
     return Encode(result);
   }
 
   // printable command, which requires modifier keys
   if ((qt_key >= 0x21 && qt_key <= 0x60) ||
       (qt_key >= 0x7B && qt_key <= 0x7E)) {
+    const char key_char = static_cast<char>(qt_key);
     if (qt_key >= 0x41 && qt_key <= 0x5A) {
-      modifier_required_key_ = static_cast<char>(qt_key - 'A' + 'a');
+      modifier_required_key_ = QLatin1Char(key_char - 'A' + 'a');
     } else {
-      modifier_required_key_ = static_cast<char>(qt_key);
+      modifier_required_key_ = QLatin1Char(key_char);
     }
     return Encode(result);
   }
@@ -441,7 +442,7 @@ bool KeyBindingFilter::eventFilter(QObject *obj, QEvent *event) {
   }
 
   // TODO(taku): the following sequence doesn't work as once
-  // user relase any of keys, the statues goes to "submitted"
+  // user release any of keys, the statues goes to "submitted"
   // 1. Press Ctrl + a
   // 2. Release a, but keep pressing Ctrl
   // 3. Press b  (the result should be "Ctrl + b").

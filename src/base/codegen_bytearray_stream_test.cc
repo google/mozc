@@ -47,13 +47,13 @@ namespace {
 
 class CodeGenByteArrayStreamTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     result_stream_.reset(new std::ostringstream());
     codegen_stream_.reset(new mozc::CodeGenByteArrayOutputStream(
         result_stream_.get(), mozc::codegenstream::NOT_OWN_STREAM));
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     codegen_stream_.reset();
     result_stream_.reset();
   }

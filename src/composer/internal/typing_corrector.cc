@@ -94,7 +94,7 @@ TypingCorrector::~TypingCorrector() {}
 void TypingCorrector::InsertCharacter(
     const absl::string_view key, const ProbableKeyEvents &probable_key_events) {
   raw_key_.append(key.data(), key.size());
-  if (!IsAvailable() || probable_key_events.size() == 0) {
+  if (!IsAvailable() || probable_key_events.empty()) {
     // If this corrector is not available or no ProbableKeyEvent is available,
     // just append |key| to each corrections.
     for (size_t i = 0; i < top_n_.size(); ++i) {

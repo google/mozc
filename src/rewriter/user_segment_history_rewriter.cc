@@ -355,7 +355,6 @@ void GetValueByType(const Segment *segment,
       return;
     }
   }
-  return;
 }
 
 // NormalizeCandidate using config

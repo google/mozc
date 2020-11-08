@@ -75,7 +75,7 @@ TEST(RegistryTest, TinyStorageTest) {
   {
     bool value = true;
     EXPECT_TRUE(Registry::Insert("bool", value));
-    bool expected = 0;
+    bool expected = false;
     EXPECT_TRUE(Registry::Lookup("bool", &expected));
     EXPECT_EQ(expected, value);
   }

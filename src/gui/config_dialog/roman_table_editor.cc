@@ -97,7 +97,7 @@ std::string RomanTableEditorDialog::GetDefaultRomanTable() {
   CHECK(ifs.get() != nullptr);  // should never happen
   std::string line, result;
   std::vector<std::string> fields;
-  while (std::getline(*ifs.get(), line)) {
+  while (std::getline(*ifs, line)) {
     if (line.empty()) {
       continue;
     }
@@ -259,8 +259,6 @@ void RomanTableEditorDialog::OnEditMenuAction(QAction *action) {
   } else if (action == actions_[EXPORT_TO_FILE_INDEX]) {
     Export();
   }
-
-  return;
 }
 
 // static

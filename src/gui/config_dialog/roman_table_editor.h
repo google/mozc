@@ -50,8 +50,8 @@ class RomanTableEditorDialog : public GenericTableEditorDialog {
   ~RomanTableEditorDialog() override;
 
   // show a modal dialog
-  static bool Show(QWidget *parent, const std::string &current_keymap,
-                   std::string *new_keymap);
+  static bool Show(QWidget *parent, const std::string &current_roman_table,
+                   std::string *new_roman_table);
 
  protected slots:
   void UpdateMenuStatus() override;

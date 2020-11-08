@@ -396,11 +396,10 @@ std::string SystemUtil::GetServerDirectory() {
 # else
   return "/usr/lib/mozc";
 # endif  // MOZC_SERVER_DIRECTORY
-
-#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
-# error "unknown platform"
-
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 std::string SystemUtil::GetServerPath() {
@@ -473,11 +472,15 @@ std::string SystemUtil::GetUserNameAsString() {
   return ppw->pw_name;
 #endif  // OS_ANDROID
 
-  // __APPLE__, OS_LINUX or OS_NACL
+#if defined(__APPLE__) || defined(OS_LINUX) || defined(OS_WASM)
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   return pw.pw_name;
+#endif  // __APPLE__ || OS_LINUX || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 #ifdef OS_WIN
@@ -886,11 +889,10 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
 # else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 # endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-
-#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
-# error "unknown platform"
-
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 }  // namespace mozc

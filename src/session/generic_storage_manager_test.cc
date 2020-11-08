@@ -50,7 +50,7 @@ TEST(GenericStorageManagerFactoryTest, GetStorage) {
   GenericStorageInterface *emoticon = GenericStorageManagerFactory::GetStorage(
       commands::GenericStorageEntry::EMOTICON_HISTORY);
   GenericStorageInterface *invalid = GenericStorageManagerFactory::GetStorage(
-      (commands::GenericStorageEntry::StorageType)(100));
+      static_cast<commands::GenericStorageEntry::StorageType>(100));
 
   EXPECT_NE(nullptr, symbol);
   EXPECT_NE(nullptr, emoticon);

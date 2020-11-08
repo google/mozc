@@ -27,9 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/encryptor.h"
+
 #include <memory>
 
-#include "base/encryptor.h"
 #include "base/password_manager.h"
 #include "base/system_util.h"
 #include "base/util.h"

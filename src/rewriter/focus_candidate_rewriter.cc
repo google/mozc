@@ -241,7 +241,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
   {
     if (IsNumberCandidate(seg.candidate(candidate_index))) {
-      bool modified = 0;
+      bool modified = false;
       int distance = 0;
       for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
         Segment *target_right_seg = segments->mutable_segment(i);

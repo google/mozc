@@ -140,7 +140,7 @@ TEST(CalculatorTest, StressTest) {
   std::ifstream finput(filename.c_str());
   std::string line;
   int lineno = 0;
-  while (getline(finput, line)) {
+  while (std::getline(finput, line)) {
     ++lineno;
 
     // |line| is of format "expression=answer".

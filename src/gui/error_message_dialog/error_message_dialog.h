@@ -51,7 +51,7 @@ class DeleyedMessageDialogHandler : public QObject {
   Q_OBJECT
 
  public:
-  DeleyedMessageDialogHandler(QMessageBox *message_box);
+  explicit DeleyedMessageDialogHandler(QMessageBox *message_box);
   ~DeleyedMessageDialogHandler() override;
 
   void Exec();

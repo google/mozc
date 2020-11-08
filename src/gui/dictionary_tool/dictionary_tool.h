@@ -63,7 +63,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   Q_OBJECT
 
  public:
-  explicit DictionaryTool(QWidget *parent = 0);
+  explicit DictionaryTool(QWidget *parent = nullptr);
   ~DictionaryTool() override;
 
   // return true DictionaryTool is available.

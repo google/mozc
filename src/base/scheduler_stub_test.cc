@@ -44,12 +44,12 @@ bool TestFunc(void *data) {
 
 class SchedulerStubTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     g_counter = 0;
     g_result = true;
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     g_counter = 0;
     g_result = true;
   }

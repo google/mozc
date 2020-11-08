@@ -1508,7 +1508,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     // "[半] アルファベット"
     std::string expectation = VariantsRewriter::kHalfWidth;
     const std::string alphabet = VariantsRewriter::kAlphabet;
-    if (alphabet.size() != 0) {
+    if (!alphabet.empty()) {
       expectation += ' ' + alphabet;
     }
     EXPECT_EQ(expectation, segments.segment(0).candidate(0).description);

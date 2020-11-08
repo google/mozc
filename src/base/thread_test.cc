@@ -38,9 +38,9 @@ namespace {
 class TestThread : public Thread {
  public:
   explicit TestThread(int time) : time_(time), invoked_(false) {}
-  virtual ~TestThread() {}
+  ~TestThread() override {}
 
-  virtual void Run() {
+  void Run() override {
     invoked_ = true;
     Util::Sleep(time_);
   }

@@ -1282,7 +1282,7 @@ void Util::DecodeURI(const std::string &src, std::string *output) {
 void Util::AppendCGIParams(
     const std::vector<std::pair<std::string, std::string> > &params,
     std::string *base) {
-  if (params.size() == 0 || base == nullptr) {
+  if (params.empty() || base == nullptr) {
     return;
   }
 

@@ -41,7 +41,9 @@
 namespace mozc {
 namespace gui {
 
+#ifdef OS_WIN
 using mozc::config::StatsConfigUtil;
+#endif  // OS_WIN
 
 AdministrationDialog::AdministrationDialog()
     : dialog_title_(
@@ -65,7 +67,7 @@ AdministrationDialog::AdministrationDialog()
 
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
-#endif
+#endif  // CHANNEL_DEV
 
   usageStatsCheckBox->setChecked(StatsConfigUtil::IsEnabled());
 
@@ -133,11 +135,10 @@ void AdministrationDialog::clicked(QAbstractButton *button) {
               ElevatedProcessDisabledcheckBox->isChecked()) {
         if (!RunLevel::SetElevatedProcessDisabled(
                 ElevatedProcessDisabledcheckBox->isChecked())) {
-          QMessageBox::critical(
-              this, dialog_title_,
-              tr("Failed to save the UAC policy setting. "
-                 "Administrator privilege is required to "
-                 "change UAC settings."));
+          QMessageBox::critical(this, dialog_title_,
+                                tr("Failed to save the UAC policy setting. "
+                                   "Administrator privilege is required to "
+                                   "change UAC settings."));
         }
       }
       QWidget::close();

@@ -68,7 +68,7 @@ void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
 
   // Read tsv file.
   std::string line;
-  while (!getline(finput, line).fail()) {
+  while (!std::getline(finput, line).fail()) {
     if (Util::StartsWith(line, "#")) {
       // Skip comment line.
       continue;

@@ -80,7 +80,7 @@ QString GetEnv(const char *envname) {
   const DWORD buffer_size =
       ::GetEnvironmentVariable(wenvname.c_str(), nullptr, 0);
   if (buffer_size == 0) {
-    return "";
+    return QLatin1String("");
   }
   std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_size]);
   const DWORD num_copied =
@@ -95,13 +95,13 @@ QString GetEnv(const char *envname) {
       return QString::fromUcs4(reinterpret_cast<const uint *>(buffer.get()));
     }
   }
-  return "";
+  return QLatin1String("");
 #endif  // OS_WIN
 #if defined(__APPLE__) || defined(OS_LINUX)
-  return ::getenv(envname);
+  return QString::fromUtf8(::getenv(envname));
 #endif  // __APPLE__ or OS_LINUX
   // TODO(team): Support other platforms.
-  return "";
+  return QLatin1String("");
 }
 }  // namespace
 
@@ -155,9 +155,9 @@ WordRegisterDialog::WordRegisterDialog()
   pos_list_provider_->GetPOSList(&pos_set);
   CHECK(!pos_set.empty());
 
-  for (size_t i = 0; i < pos_set.size(); ++i) {
-    CHECK(!pos_set[i].empty());
-    PartOfSpeechcomboBox->addItem(pos_set[i].c_str());
+  for (const string &pos : pos_set) {
+    CHECK(!pos.empty());
+    PartOfSpeechcomboBox->addItem(QString::fromUtf8(pos.c_str()));
   }
 
   // Create new dictionary if empty
@@ -177,8 +177,8 @@ WordRegisterDialog::WordRegisterDialog()
   {
     const UserDictionaryStorage &storage = session_->storage();
     CHECK_GT(storage.dictionaries_size(), 0);
-    for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-      DictionarycomboBox->addItem(storage.dictionaries(i).name().c_str());
+    for (const auto &dictionary : storage.dictionaries()) {
+      DictionarycomboBox->addItem(QString::fromUtf8(dictionary.name().c_str()));
     }
   }
 
@@ -305,7 +305,7 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   CHECK(dic);
 
   if (dic->name() != DictionarycomboBox->currentText().toStdString().c_str()) {
-    LOG(ERROR) << "Inconsitent dictionary name";
+    LOG(ERROR) << "Inconsistent dictionary name";
     return FATAL_ERROR;
   }
 
@@ -352,12 +352,12 @@ void WordRegisterDialog::LaunchDictionaryTool() {
 const QString WordRegisterDialog::GetReading(const QString &str) {
   if (str.isEmpty()) {
     LOG(ERROR) << "given string is empty";
-    return "";
+    return QLatin1String("");
   }
 
   if (str.count() >= kMaxReverseConversionLength) {
     LOG(ERROR) << "too long input";
-    return "";
+    return QLatin1String("");
   }
 
   commands::Output output;
@@ -366,7 +366,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
     key.set_special_key(commands::KeyEvent::ON);
     if (!client_->SendKey(key, &output)) {
       LOG(ERROR) << "SendKey failed";
-      return "";
+      return QLatin1String("");
     }
 
     commands::SessionCommand command;
@@ -375,7 +375,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
 
     if (!client_->SendCommand(command, &output)) {
       LOG(ERROR) << "SendCommand failed";
-      return "";
+      return QLatin1String("");
     }
 
     commands::Output dummy_output;
@@ -385,7 +385,7 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
 
   if (!output.has_preedit()) {
     LOG(ERROR) << "No preedit";
-    return "";
+    return QLatin1String("");
   }
 
   std::string key;
@@ -395,17 +395,17 @@ const QString WordRegisterDialog::GetReading(const QString &str) {
         output.preedit().segment(segment_index);
     if (!segment.has_key()) {
       LOG(ERROR) << "No segment";
-      return "";
+      return QLatin1String("");
     }
     key.append(segment.key());
   }
 
   if (key.empty() || !UserDictionaryUtil::IsValidReading(key)) {
     LOG(WARNING) << "containing invalid characters";
-    return "";
+    return QLatin1String("");
   }
 
-  return QString(key.c_str());
+  return QString::fromUtf8(key.c_str());
 }
 
 // Get default value from Clipboard
@@ -453,8 +453,6 @@ void WordRegisterDialog::CopyCurrentSelectionToClipboard() {
     LOG(ERROR) << "SendMessageTimeout() failed: " << ::GetLastError();
   }
 #endif  // OS_WIN
-
-  return;
 }
 
 bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
@@ -475,7 +473,9 @@ bool WordRegisterDialog::SetDefaultEntryFromEnvironmentVariable() {
 }
 
 const QString WordRegisterDialog::TrimValue(const QString &str) const {
-  return str.trimmed().replace('\r', "").replace('\n', "");
+  return str.trimmed()
+      .replace(QLatin1Char('\r'), QLatin1String(""))
+      .replace(QLatin1Char('\n'), QLatin1String(""));
 }
 
 void WordRegisterDialog::EnableIME() {

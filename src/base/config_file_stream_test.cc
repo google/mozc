@@ -27,12 +27,13 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "base/config_file_stream.h"
+
 #include <cstddef>
 #include <ios>
 #include <istream>
 #include <memory>
 
-#include "base/config_file_stream.h"
 #include "base/file_util.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
@@ -70,12 +71,12 @@ bool IsEof(std::istream *input_stream) {
 
 class ConfigFileStreamTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     default_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     SystemUtil::SetUserProfileDirectory(default_profile_directory_);
   }
 
@@ -207,7 +208,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
     ASSERT_NE(nullptr, ifs.get());
     std::string line;
     int line_number = 0;  // note that this is 1-origin.
-    while (!getline(*ifs.get(), line).fail()) {
+    while (!std::getline(*ifs, line).fail()) {
       ++line_number;
       ASSERT_LE(line_number, arraysize(kExpectedLines));
       EXPECT_EQ(line, kExpectedLines[line_number - 1])

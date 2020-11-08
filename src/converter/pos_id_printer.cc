@@ -50,7 +50,7 @@ PosIdPrinter::PosIdPrinter(std::istream *id_def) {
 
   std::string line;
   std::vector<std::string> columns;
-  while (getline(*id_def, line)) {
+  while (std::getline(*id_def, line)) {
     columns.clear();
     Util::SplitStringUsing(line, " ", &columns);
     CHECK_EQ(2, columns.size());

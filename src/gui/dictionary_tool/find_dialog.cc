@@ -74,7 +74,7 @@ void FindDialog::showEvent(QShowEvent *event) {
 }
 
 void FindDialog::closeEvent(QCloseEvent *event) {
-  table_->setStyleSheet("");
+  table_->setStyleSheet(QLatin1String(""));
   last_item_ = nullptr;
 }
 
@@ -144,7 +144,7 @@ FOUND:
     QTableWidgetItem *item = table_->item(matched_row, matched_column);
     DCHECK(item);
     last_item_ = item;
-    table_->setStyleSheet(kYellowSelectionStyleSheet);
+    table_->setStyleSheet(QLatin1String(kYellowSelectionStyleSheet));
     table_->setCurrentItem(item);
     table_->scrollToItem(item);
   } else {
