@@ -50,10 +50,6 @@ FCITX_CONFIGURATION(
                               toolCommand("--mode=config_dialog")};
     ExternalOption dictTool{this, "Dictionary Tool", _("Dictionary Tool"),
                             toolCommand("--mode=dictionary_tool")};
-    ExternalOption handWriting{this, "Hand Writing", _("Hand Writing"),
-                               toolCommand("--mode=hand_writing")};
-    ExternalOption charTool{this, "Character Palette", _("Character Palette"),
-                            toolCommand("--mode=character_palette")};
     ExternalOption addTool{this, "Add Word", _("Add Word"),
                            toolCommand("--mode=word_register_dialog")};
     ExternalOption aboutTool{this, "About Mozc", _("About Mozc"),
@@ -112,8 +108,8 @@ class MozcEngine final : public InputMethodEngine {
   SimpleAction toolAction_;
   std::vector<std::unique_ptr<MozcModeSubAction>> modeActions_;
 
-  SimpleAction configToolAction_, dictionaryToolAction_, handWritingAction_,
-      characterPaletteAction_, addWordAction_, aboutAction_;
+  SimpleAction configToolAction_, dictionaryToolAction_, addWordAction_,
+      aboutAction_;
   Menu toolMenu_;
   Menu modeMenu_;
   MozcEngineConfig config_;

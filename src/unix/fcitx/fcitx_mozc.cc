@@ -448,15 +448,9 @@ boolean ToolMenuAction(struct _FcitxUIMenu *menu, int index)
             args = "--mode=dictionary_tool";
             break;
         case 2:
-            args = "--mode=hand_writing";
-            break;
-        case 3:
-            args = "--mode=character_palette";
-            break;
-        case 4:
             args = "--mode=word_register_dialog";
             break;
-        case 5:
+        case 3:
             args = "--mode=about_dialog";
             break;
     }
@@ -493,8 +487,6 @@ void FcitxMozc::InitializeMenu()
     toolMenu.isSubMenu = false;
     FcitxMenuAddMenuItem(&toolMenu, _("Configuration Tool"), MENUTYPE_SIMPLE, NULL);
     FcitxMenuAddMenuItem(&toolMenu, _("Dictionary Tool"), MENUTYPE_SIMPLE, NULL);
-    FcitxMenuAddMenuItem(&toolMenu, _("Hand Writing"), MENUTYPE_SIMPLE, NULL);
-    FcitxMenuAddMenuItem(&toolMenu, _("Character Palette"), MENUTYPE_SIMPLE, NULL);
     FcitxMenuAddMenuItem(&toolMenu, _("Add Word"), MENUTYPE_SIMPLE, NULL);
     FcitxMenuAddMenuItem(&toolMenu, _("About Mozc"), MENUTYPE_SIMPLE, NULL);
     FcitxUIRegisterMenu(instance, &toolMenu);

@@ -183,20 +183,6 @@ MozcEngine::MozcEngine(Instance *instance)
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=dictionary_tool");
   });
 
-  instance_->userInterfaceManager().registerAction("mozc-tool-handwriting",
-                                                   &handWritingAction_);
-  handWritingAction_.setShortText(_("Hand Writing"));
-  handWritingAction_.connect<SimpleAction::Activated>([](InputContext *) {
-    mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=hand_writing");
-  });
-
-  instance_->userInterfaceManager().registerAction("mozc-tool-character",
-                                                   &characterPaletteAction_);
-  characterPaletteAction_.setShortText(_("Character Palette"));
-  characterPaletteAction_.connect<SimpleAction::Activated>([](InputContext *) {
-    mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=character_palette");
-  });
-
   instance_->userInterfaceManager().registerAction("mozc-tool-add",
                                                    &addWordAction_);
   addWordAction_.setShortText(_("Add Word"));
@@ -213,8 +199,6 @@ MozcEngine::MozcEngine(Instance *instance)
 
   toolMenu_.addAction(&configToolAction_);
   toolMenu_.addAction(&dictionaryToolAction_);
-  toolMenu_.addAction(&handWritingAction_);
-  toolMenu_.addAction(&characterPaletteAction_);
   toolMenu_.addAction(&addWordAction_);
   toolMenu_.addAction(&aboutAction_);
 
