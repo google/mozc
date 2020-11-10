@@ -44,7 +44,7 @@
   'conditions': [['use_fcitx5=="YES"', {
   'targets': [
     {
-      # Meta target to set up build environment for ibus. Required 'cflags'
+      # Meta target to set up build environment for fcitx5. Required 'cflags'
       # and 'link_settings' will be automatically injected into any target
       # which directly or indirectly depends on this target.
       'target_name': 'fcitx5_build_environment',
@@ -104,6 +104,7 @@
         'mozc_connection.cc',
         'mozc_response_parser.cc',
         'mozc_engine.cc',
+        'mozc_engine_factory.cc',
         'mozc_state.cc',
       ],
       'dependencies': [

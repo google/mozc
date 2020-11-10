@@ -117,12 +117,6 @@ class MozcEngine final : public InputMethodEngine {
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());
 };
 
-class MozcEngineFactory : public AddonFactory {
- public:
-  AddonInstance *create(AddonManager *manager) override {
-    return new MozcEngine(manager->instance());
-  }
-};
 }  // namespace fcitx
 
 #endif  // _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_

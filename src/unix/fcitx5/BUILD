@@ -33,6 +33,9 @@ cc_library_mozc(
         "mozc_response_parser.h",
         "mozc_state.h"
     ],
+    local_defines = [
+        'FCITX_GETTEXT_DOMAIN=\\"fcitx5-mozc\\"',
+    ],
     deps = [
         ":mozc_connection",
         ":fcitx_key_util",
@@ -85,12 +88,12 @@ cc_library_mozc(
 )
 
 cc_binary_mozc(
-    name = "mozc.so",
+    name = "fcitx5-mozc.so",
+    srcs = [
+        "mozc_engine_factory.cc"
+    ],
     deps = [
         ":mozc_engine",
-    ],
-    local_defines = [
-        'LOCALEDIR=\\"/usr/share/locale\\"',
     ],
     linkstatic = 1,
     linkshared = 1,

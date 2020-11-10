@@ -260,5 +260,3 @@ void MozcEngine::compositionModeUpdated(InputContext *ic) {
 
 AddonInstance *MozcEngine::clipboardAddon() { return clipboard(); }
 }  // namespace fcitx
-
-FCITX_ADDON_FACTORY(fcitx::MozcEngineFactory)
