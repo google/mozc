@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-05-08 00:01-0700\n"
+"POT-Creation-Date: 2020-11-10 00:02-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,16 +15,12 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: mozc_engine.cc:209 mozc_engine.h:59
+#: mozc_engine.cc:195 mozc_engine.h:55
 msgid "About Mozc"
 msgstr ""
 
-#: mozc_engine.cc:202 mozc_engine.h:57
+#: mozc_engine.cc:188 mozc_engine.h:53
 msgid "Add Word"
-msgstr ""
-
-#: mozc_engine.cc:195 mozc_engine.h:55
-msgid "Character Palette"
 msgstr ""
 
 #: mozc_engine.cc:93
@@ -60,10 +56,6 @@ msgstr ""
 #. Half width Katakana letter A.
 #: mozc_state.cc:93 mozc_engine.cc:86
 msgid "Half Katakana"
-msgstr ""
-
-#: mozc_engine.cc:188 mozc_engine.h:53
-msgid "Hand Writing"
 msgstr ""
 
 #. Hiragana letter A in UTF-8.

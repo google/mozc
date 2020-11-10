@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-05-11 00:01-0700\n"
+"POT-Creation-Date: 2020-11-10 00:02-0800\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: scootergrisen, 2020\n"
 "Language-Team: Danish (https://www.transifex.com/fcitx/teams/12005/da/)\n"
@@ -19,17 +19,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mozc_engine.cc:209 mozc_engine.h:59
+#: mozc_engine.cc:195 mozc_engine.h:55
 msgid "About Mozc"
 msgstr "Om Mozc"
 
-#: mozc_engine.cc:202 mozc_engine.h:57
+#: mozc_engine.cc:188 mozc_engine.h:53
 msgid "Add Word"
 msgstr "Tilføj ord"
-
-#: mozc_engine.cc:195 mozc_engine.h:55
-msgid "Character Palette"
-msgstr "Tegnpalet"
 
 #: mozc_engine.cc:93
 msgid "Composition Mode"
@@ -65,10 +61,6 @@ msgstr "Halv ASCII"
 #: mozc_state.cc:93 mozc_engine.cc:86
 msgid "Half Katakana"
 msgstr "Halv Katakana"
-
-#: mozc_engine.cc:188 mozc_engine.h:53
-msgid "Hand Writing"
-msgstr "Håndskrift"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_state.cc:69 mozc_engine.cc:56

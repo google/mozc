@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# Omeritzics Games, 2020
+# Omer I.S., 2020
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-10-28 12:14-0700\n"
+"POT-Creation-Date: 2020-11-10 00:02-0800\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Omeritzics Games, 2020\n"
+"Last-Translator: Omer I.S., 2020\n"
 "Language-Team: Hebrew (https://www.transifex.com/fcitx/teams/12005/he/)\n"
 "Language: he\n"
 "MIME-Version: 1.0\n"
@@ -20,16 +20,12 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n == 2 && n % "
 "1 == 0) ? 1: (n % 10 == 0 && n % 1 == 0 && n > 10) ? 2 : 3;\n"
 
-#: mozc_engine.cc:209 mozc_engine.h:59
+#: mozc_engine.cc:195 mozc_engine.h:55
 msgid "About Mozc"
 msgstr "על אודות Mozc"
 
-#: mozc_engine.cc:202 mozc_engine.h:57
+#: mozc_engine.cc:188 mozc_engine.h:53
 msgid "Add Word"
-msgstr ""
-
-#: mozc_engine.cc:195 mozc_engine.h:55
-msgid "Character Palette"
 msgstr ""
 
 #: mozc_engine.cc:93
@@ -65,10 +61,6 @@ msgstr ""
 #. Half width Katakana letter A.
 #: mozc_state.cc:93 mozc_engine.cc:86
 msgid "Half Katakana"
-msgstr ""
-
-#: mozc_engine.cc:188 mozc_engine.h:53
-msgid "Hand Writing"
 msgstr ""
 
 #. Hiragana letter A in UTF-8.
