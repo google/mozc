@@ -3,6 +3,7 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# csslayer <wengxt@gmail.com>, 2012-2013
 # csslayer <wengxt@gmail.com>, 2013
 # csslayer <wengxt@gmail.com>, 2012
 # wwj402 <wwj402@gmail.com>, 2013
@@ -12,10 +13,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2015-07-21 12:01+0200\n"
-"PO-Revision-Date: 2013-11-16 14:13+0000\n"
+"POT-Creation-Date: 2020-11-11 00:03-0800\n"
+"PO-Revision-Date: 2020-11-10 08:03+0000\n"
 "Last-Translator: csslayer <wengxt@gmail.com>\n"
-"Language-Team: Chinese (China) (http://www.transifex.com/projects/p/fcitx/"
+"Language-Team: Chinese (China) (http://www.transifex.com/fcitx/fcitx/"
 "language/zh_CN/)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -23,7 +24,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../eim.cc:181
+#: ../eim.cc:187
 msgid "Press Escape to go back"
 msgstr "按下 Escape 返回"
 
@@ -51,42 +52,34 @@ msgstr "全角 ASCII"
 msgid "Half Katakana"
 msgstr "半角片假名"
 
-#: ../fcitx_mozc.cc:405 ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:474
+#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:469
 msgid "Composition Mode"
 msgstr "编辑模式"
 
-#: ../fcitx_mozc.cc:416 ../fcitx_mozc.cc:417
+#: ../fcitx_mozc.cc:417 ../fcitx_mozc.cc:418
 msgid "Tool"
 msgstr "工具"
 
-#: ../fcitx_mozc.cc:487
+#: ../fcitx_mozc.cc:482
 msgid "Mozc Tool"
 msgstr "Mozc 工具"
 
-#: ../fcitx_mozc.cc:493
+#: ../fcitx_mozc.cc:488
 msgid "Configuration Tool"
 msgstr "配置工具"
 
-#: ../fcitx_mozc.cc:494
+#: ../fcitx_mozc.cc:489
 msgid "Dictionary Tool"
 msgstr "词典工具"
 
-#: ../fcitx_mozc.cc:495
-msgid "Hand Writing"
-msgstr "手写输入"
-
-#: ../fcitx_mozc.cc:496
-msgid "Character Palette"
-msgstr "字符映射表"
-
-#: ../fcitx_mozc.cc:497
+#: ../fcitx_mozc.cc:490
 msgid "Add Word"
 msgstr "添加单词"
 
-#: ../fcitx_mozc.cc:498
+#: ../fcitx_mozc.cc:491
 msgid "About Mozc"
 msgstr "关于 Mozc"
 
-#: ../mozc_response_parser.cc:366
+#: ../mozc_response_parser.cc:365
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr "按下 Ctrl+Alt+H 显示用法。"

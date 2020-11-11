@@ -4,9 +4,11 @@
 #
 # Translators:
 # しろう, 2013
-# AWASHIRO Ikuya <ikunya@gmail.com>, 2013
-# AWASHIRO Ikuya <ikunya@gmail.com>, 2012-2013
-# WAKAYAMA Shirou <shirou.faw@gmail.com>, 2013
+# あわしろいくや <ikunya@gmail.com>, 2013
+# csslayer <wengxt@gmail.com>, 2012-2013
+# あわしろいくや <ikunya@gmail.com>, 2013
+# あわしろいくや <ikunya@gmail.com>, 2012-2013
+# shirou - しろう <shirou.faw@gmail.com>, 2013
 # csslayer <wengxt@gmail.com>, 2013
 # csslayer <wengxt@gmail.com>, 2012
 # csslayer <wengxt@gmail.com>, 2012-2013
@@ -14,8 +16,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2015-08-03 18:01+0200\n"
-"PO-Revision-Date: 2013-11-16 14:13+0000\n"
+"POT-Creation-Date: 2020-11-11 00:03-0800\n"
+"PO-Revision-Date: 2020-11-10 08:03+0000\n"
 "Last-Translator: csslayer <wengxt@gmail.com>\n"
 "Language-Team: Japanese (http://www.transifex.com/fcitx/fcitx/language/ja/)\n"
 "Language: ja\n"
@@ -24,7 +26,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../eim.cc:181
+#: ../eim.cc:187
 msgid "Press Escape to go back"
 msgstr "Escキーを押して戻る"
 
@@ -52,7 +54,7 @@ msgstr "全角英数"
 msgid "Half Katakana"
 msgstr "半角カタカナ"
 
-#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:475
+#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:469
 msgid "Composition Mode"
 msgstr "変換モード"
 
@@ -60,34 +62,26 @@ msgstr "変換モード"
 msgid "Tool"
 msgstr "ツール"
 
-#: ../fcitx_mozc.cc:488
+#: ../fcitx_mozc.cc:482
 msgid "Mozc Tool"
 msgstr "Mozc ツール"
 
-#: ../fcitx_mozc.cc:494
+#: ../fcitx_mozc.cc:488
 msgid "Configuration Tool"
 msgstr "設定ツール"
 
-#: ../fcitx_mozc.cc:495
+#: ../fcitx_mozc.cc:489
 msgid "Dictionary Tool"
 msgstr "辞書ツール"
 
-#: ../fcitx_mozc.cc:496
-msgid "Hand Writing"
-msgstr "手書き文字認識"
-
-#: ../fcitx_mozc.cc:497
-msgid "Character Palette"
-msgstr "文字パレット"
-
-#: ../fcitx_mozc.cc:498
+#: ../fcitx_mozc.cc:490
 msgid "Add Word"
 msgstr "単語登録"
 
-#: ../fcitx_mozc.cc:499
+#: ../fcitx_mozc.cc:491
 msgid "About Mozc"
 msgstr "Mozc について"
 
-#: ../mozc_response_parser.cc:366
+#: ../mozc_response_parser.cc:365
 msgid "Press Ctrl+Alt+H to show usages."
 msgstr "Ctrl+Alt+H キーを押して用例を表示"
