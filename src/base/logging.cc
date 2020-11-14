@@ -60,6 +60,7 @@
 #include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "absl/strings/str_cat.h"
 
 DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
 DEFINE_bool(logtostderr, false,
@@ -92,53 +93,41 @@ COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 
 // Use the same implementation both for Opt and Debug.
 string Logging::GetLogMessageHeader() {
-#ifndef OS_ANDROID
-  tm tm_time;
-  Clock::GetCurrentTm(&tm_time);
-
-  char buf[512];
-  snprintf(buf, sizeof(buf),
-           "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d %u "
-#if defined(OS_NACL)
-           "%p",
-#elif defined(OS_LINUX)
-           "%lu",
-#elif defined(__APPLE__) && defined(__LP64__)
-           "%llu",
-#else  // OS_WIN or __APPLE__(32bit)
-           "%u",
-#endif
-           1900 + tm_time.tm_year, 1 + tm_time.tm_mon, tm_time.tm_mday,
-           tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec,
-#if defined(OS_WIN)
-           ::GetCurrentProcessId(), ::GetCurrentThreadId()
-#elif defined(__APPLE__)
-           ::getpid(),
-#ifdef __LP64__
-           reinterpret_cast<uint64>(pthread_self())
-#else   // __LP64__
-           reinterpret_cast<uint32>(pthread_self())
-#endif  // __LP64__
-#elif defined(OS_WASM)
-           ::getpid(), static_cast<unsigned int>(pthread_self())
-#elif defined(OS_NACL)
-           ::getpid(),
-           // pthread_self() returns __nc_basic_thread_data*.
-           static_cast<void *>(pthread_self())
-#else  // = OS_LINUX
-           ::getpid(),
-           // It returns unsigned long.
-           pthread_self()
-#endif
-  );
-  return buf;
-#else   // OS_ANDROID
+#ifdef OS_ANDROID
   // On Android, other records are not needed because they are added by
   // Android's logging framework.
-  char buf[32];
-  snprintf(buf, sizeof(buf), "%lu ",
-           pthread_self());  // returns unsigned long.
-  return buf;
+  return absl::StrCat(pthread_self(), " ");  // returns unsigned long.
+
+#else  // OS_ANDROID
+
+  const absl::Time at = Clock::GetAbslTime();
+  const absl::TimeZone tz = Clock::GetTimeZone();
+  const std::string timestamp = absl::FormatTime("%Y-%m-%d %H:%M:%S ", at, tz);
+
+# if defined(OS_NACL)
+  return absl::StrCat(timestamp, ::getpid(), " ",
+                      // pthread_self() returns __nc_basic_thread_data*.
+                      static_cast<void *>(pthread_self());
+# elif defined(OS_WASM)
+  return absl::StrCat(timestamp, ::getpid(), " ",
+                      static_cast<unsigned int>(pthread_self());
+# elif defined(OS_LINUX)
+  return absl::StrCat(timestamp, ::getpid(), " ",
+                      // It returns unsigned long.
+                      pthread_self());
+# elif defined(__APPLE__)
+#  ifdef __LP64__
+  return absl::StrCat(timestamp, ::getpid(), " ",
+                      reinterpret_cast<uint64>(pthread_self()));
+#  else  // __LP64__
+  return absl::StrCat(timestamp, ::getpid(), " ",
+                      ::getpid(),
+                      reinterpret_cast<uint32>(pthread_self()));
+#  endif  // __LP64__
+# elif defined(OS_WIN)
+  return absl::StrCat(timestamp, ::GetCurrentProcessId(), " ",
+                      ::GetCurrentThreadId());
+# endif  // OS_WIN
 #endif  // OS_ANDROID
 }
 
@@ -281,11 +270,7 @@ void LogStreamImpl::Reset() {
   delete real_log_stream_;
   real_log_stream_ = nullptr;
   config_verbose_level_ = 0;
-#if defined(OS_NACL)
-  // In NaCl, we only use stderr to output logs.
-  use_cerr_ = true;
-  support_color_ = false;
-#elif defined(OS_ANDROID)
+#if defined(OS_ANDROID)
   // Android uses Android's log library.
   use_cerr_ = false;
   support_color_ = false;
@@ -295,10 +280,10 @@ void LogStreamImpl::Reset() {
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
   use_cerr_ = FLAGS_logtostderr;
   support_color_ = false;
-#else   // OS_NACL, OS_ANDROID, OS_WIN
+#else   // OS_ANDROID, OS_WIN
   use_cerr_ = FLAGS_logtostderr;
   support_color_ = use_cerr_ && FLAGS_colored_log && ::isatty(::fileno(stderr));
-#endif  // OS_NACL, OS_ANDROID, OS_WIN
+#endif  // OS_ANDROID, OS_WIN
 }
 
 LogStreamImpl::~LogStreamImpl() { Reset(); }

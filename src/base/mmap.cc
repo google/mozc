@@ -47,103 +47,13 @@
 #include "base/port.h"
 #include "base/util.h"
 
-#ifdef OS_NACL
-#include <set>
-
-#include "base/file_stream.h"
-#include "base/mutex.h"
-#elif defined(OS_WIN)  // !OS_NACL
+#if defined(OS_WIN)
 #include "base/scoped_handle.h"
-#endif  // !OS_NACL
+#endif  // OS_WIN
 
 namespace mozc {
 
-#ifdef OS_NACL
-namespace {
-Mutex mmap_set_lock;  // NOLINT
-std::set<Mmap *> mmap_set;
-}  // namespace
-
-Mmap::Mmap() : write_mode_(false), size_(0) {}
-
-bool Mmap::Open(const char *filename, const char *mode) {
-  Close();
-
-  if (strcmp(mode, "r") == 0) {
-    write_mode_ = false;
-  } else if (strcmp(mode, "r+") == 0) {
-    write_mode_ = true;
-  } else {
-    LOG(WARNING) << "unknown open mode: " << filename;
-    return false;
-  }
-  InputFileStream ifs(filename);
-  if (!ifs) {
-    LOG(WARNING) << "open failed: " << filename;
-  }
-  // get length of file:
-  ifs.seekg(0, ifs.end);
-  int64 length = ifs.tellg();
-  ifs.seekg(0, ifs.beg);
-  if (length <= 0) {
-    LOG(WARNING) << "file size = 0: " << filename;
-    return false;
-  }
-  buffer_.reset(new char[length]);
-  ifs.read(buffer_.get(), length);
-  if (!ifs) {
-    LOG(WARNING) << "read failed: " << filename;
-    return false;
-  }
-  ifs.close();
-  filename_ = filename;
-  size_ = length;
-  if (write_mode_) {
-    scoped_lock lock(&mmap_set_lock);
-    mmap_set.insert(this);
-  }
-  return true;
-}
-
-void Mmap::Close() {
-  if (write_mode_) {
-    {
-      scoped_lock lock(&mmap_set_lock);
-      mmap_set.erase(this);
-    }
-    OutputFileStream ofs;
-    ofs.open(filename_.c_str());
-    ofs.write(buffer_.get(), size_);
-
-    if (!ofs) {
-      LOG(WARNING) << "write failed: " << filename_;
-    }
-  }
-  buffer_.reset();
-  size_ = 0;
-}
-
-bool Mmap::SyncToFile() {
-  if (!write_mode_) {
-    LOG(ERROR) << "Mmap::SyncToFile error. This file is opened in read mode: "
-               << filename_;
-    return false;
-  }
-  OutputFileStream ofs;
-  ofs.open(filename_.c_str());
-  ofs.write(buffer_.get(), size_);
-  return !!ofs;
-}
-
-bool Mmap::SyncMmapToFile() {
-  scoped_lock lock(&mmap_set_lock);
-  for (Mmap* m : mmap_set) {
-    m->SyncToFile();
-  }
-  return true;
-}
-
-#elif defined(OS_WIN)  // !OS_NACL
+#if defined(OS_WIN)
 
 Mmap::Mmap() : text_(nullptr), size_(0) {}
 
@@ -204,7 +114,7 @@ void Mmap::Close() {
   size_ = 0;
 }
 
-#else  // !OS_NACL || !OS_WIN
+#else  // !OS_WIN
 
 Mmap::Mmap() : text_(nullptr), size_(0) {}
 
@@ -277,7 +187,7 @@ void Mmap::Close() {
   text_ = nullptr;
   size_ = 0;
 }
-#endif  // !OS_NACL || !OS_WIN
+#endif  // !OS_WIN
 
 // Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
 

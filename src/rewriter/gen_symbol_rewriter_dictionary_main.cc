@@ -89,7 +89,7 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
     std::vector<std::string> fields;
     Util::SplitStringUsing(line, "\t ", &fields);
     CHECK_GE(fields.size(), 2);
-    const char32 ucs4 = strtol(fields[1].c_str(), NULL, 16);
+    const char32 ucs4 = strtol(fields[1].c_str(), nullptr, 16);
     std::string utf8;
     Util::UCS4ToUTF8(ucs4, &utf8);
     if (sorting_map->find(utf8) != sorting_map->end()) {

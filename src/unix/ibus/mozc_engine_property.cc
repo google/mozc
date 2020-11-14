@@ -105,7 +105,7 @@ const MozcEngineToolProperty kMozcEngineToolPropertiesArray[] = {
         "Tool.AboutDialog",
         "about_dialog",
         "About Mozc",
-        NULL,
+        nullptr,
     },
 };
 }  // namespace

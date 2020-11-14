@@ -176,7 +176,7 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
 
 bool CommandRewriter::Rewrite(const ConversionRequest &request,
                               Segments *segments) const {
-  if (segments == NULL || segments->conversion_segments_size() != 1) {
+  if (segments == nullptr || segments->conversion_segments_size() != 1) {
     return false;
   }
 

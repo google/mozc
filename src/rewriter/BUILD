@@ -244,6 +244,7 @@ cc_library_mozc(
         "//request:conversion_request",
         "//testing:gunit_prod",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
     alwayslink = 1,
 )

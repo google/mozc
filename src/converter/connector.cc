@@ -207,13 +207,7 @@ mozc::StatusOr<std::unique_ptr<Connector>> Connector::Create(
   if (!status.ok()) {
     return status;
   }
-#ifdef OS_NACL
-  // TODO(noriyukit): This wrapping std::move() is normally unnecessary but NaCl
-  // compiler doesn't work without it.  Remove this workaround when possible.
-  return std::move(connector);
-#else   // OS_NACL
   return connector;
-#endif  // OS_NACL
 }
 
 Connector::Connector() = default;

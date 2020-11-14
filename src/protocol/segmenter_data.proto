@@ -32,6 +32,6 @@ syntax = "proto2";
 package mozc.converter;
 
 message SegmenterDataSizeInfo {
-  optional uint64 compressed_lsize = 1;
-  optional uint64 compressed_rsize = 2;
+  optional uint64 compressed_lsize = 1 [jstype = JS_STRING];
+  optional uint64 compressed_rsize = 2 [jstype = JS_STRING];
 }

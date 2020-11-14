@@ -37,9 +37,9 @@ import "protocol/commands.proto";
 
 message SessionState {
   // session id
-  required uint64 id = 1;
+  required uint64 id = 1 [jstype = JS_STRING];
   // session created time
-  optional uint64 created_time = 2;
+  optional uint64 created_time = 2 [jstype = JS_STRING];
 
   // whether session is just after commitment
   optional bool committed = 3 [default = false];
@@ -48,11 +48,11 @@ message SessionState {
 
   reserved 5;  // Deprecated mode
 
-  optional uint64 start_preedit_time = 10;
-  optional uint64 start_conversion_window_time = 11;
-  optional uint64 start_prediction_window_time = 12;
-  optional uint64 start_suggestion_window_time = 13;
-  optional uint64 start_infolist_window_time = 14;
+  optional uint64 start_preedit_time = 10 [jstype = JS_STRING];
+  optional uint64 start_conversion_window_time = 11 [jstype = JS_STRING];
+  optional uint64 start_prediction_window_time = 12 [jstype = JS_STRING];
+  optional uint64 start_suggestion_window_time = 13 [jstype = JS_STRING];
+  optional uint64 start_infolist_window_time = 14 [jstype = JS_STRING];
 
   // last preedit state
   optional mozc.commands.Preedit preedit = 20;

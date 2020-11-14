@@ -88,11 +88,11 @@ void RunTest(LRUStorage *storage, uint32 size) {
     const uint32 *v2 = reinterpret_cast<const uint32 *>(
         storage->Lookup(values[i].first, &last_access_time));
     const uint32 *v3 = reinterpret_cast<const uint32 *>(value_list[i].data());
-    EXPECT_TRUE(v1 != NULL);
+    EXPECT_TRUE(v1 != nullptr);
     EXPECT_EQ(*v1, values[i].second);
-    EXPECT_TRUE(v2 != NULL);
+    EXPECT_TRUE(v2 != nullptr);
     EXPECT_EQ(*v2, values[i].second);
-    EXPECT_TRUE(v3 != NULL);
+    EXPECT_TRUE(v3 != nullptr);
     EXPECT_EQ(*v3, values[i].second);
   }
 
@@ -100,8 +100,8 @@ void RunTest(LRUStorage *storage, uint32 size) {
     const uint32 *v1 = cache.Lookup(values[i].first);
     const uint32 *v2 = reinterpret_cast<const uint32 *>(
         storage->Lookup(values[i].first, &last_access_time));
-    EXPECT_TRUE(v1 == NULL);
-    EXPECT_TRUE(v2 == NULL);
+    EXPECT_TRUE(v1 == nullptr);
+    EXPECT_TRUE(v2 == nullptr);
   }
 }
 
@@ -334,14 +334,14 @@ TEST_F(LRUStorageTest, Merge) {
 
 TEST_F(LRUStorageTest, InvalidFileOpenTest) {
   LRUStorage storage;
-  EXPECT_FALSE(storage.Insert("test", NULL));
+  EXPECT_FALSE(storage.Insert("test", nullptr));
 
   const std::string filename = GetTemporaryFilePath();
   FileUtil::Unlink(filename);
 
   // cannot open
   EXPECT_FALSE(storage.Open(filename.c_str()));
-  EXPECT_FALSE(storage.Insert("test", NULL));
+  EXPECT_FALSE(storage.Insert("test", nullptr));
 }
 
 TEST_F(LRUStorageTest, OpenOrCreateTest) {

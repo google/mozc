@@ -462,7 +462,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     NormalizeCandidate(segment, old_position, &normalized_value);
 
     if (normalized_value != candidate->value) {
-      const Segment::Candidate *normalized_cand = NULL;
+      const Segment::Candidate *normalized_cand = nullptr;
       for (size_t l = 0; l < segment->candidates_size(); ++l) {
         if (segment->candidate(l).value == normalized_value) {
           normalized_cand = &segment->candidate(l);
@@ -470,7 +470,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
         }
       }
 
-      if (normalized_cand != NULL) {
+      if (normalized_cand != nullptr) {
         if (seen.find(normalized_value) == seen.end()) {
           const int pos = segment->indexOf(normalized_cand);
           DCHECK(pos != segment->candidates_size());
@@ -759,7 +759,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
     return false;
   }
 
-  if (storage_.get() == NULL) {
+  if (storage_.get() == nullptr) {
     VLOG(2) << "storage is NULL";
     return false;
   }
@@ -850,16 +850,16 @@ bool UserSegmentHistoryRewriter::ShouldRewrite(
   const KeyTriggerValue *v1 = reinterpret_cast<const KeyTriggerValue *>(
       storage_->Lookup(segment.key()));
 
-  const KeyTriggerValue *v2 = NULL;
+  const KeyTriggerValue *v2 = nullptr;
   if (segment.key() != segment.candidate(0).content_key) {
     v2 = reinterpret_cast<const KeyTriggerValue *>(
         storage_->Lookup(segment.candidate(0).content_key));
   }
 
   const size_t v1_size =
-      (v1 == NULL || !v1->IsValid()) ? 0 : v1->candidates_size();
+      (v1 == nullptr || !v1->IsValid()) ? 0 : v1->candidates_size();
   const size_t v2_size =
-      (v2 == NULL || !v2->IsValid()) ? 0 : v2->candidates_size();
+      (v2 == nullptr || !v2->IsValid()) ? 0 : v2->candidates_size();
 
   *max_candidates_size = std::max(v1_size, v2_size);
 
@@ -909,7 +909,7 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
     GetFeatureN(segment->candidate(j).style, &feature_key);
     const FeatureValue *v = reinterpret_cast<const FeatureValue *>(
         storage_->Lookup(feature_key, &last_access_time));
-    if (v != NULL && v->IsValid()) {
+    if (v != nullptr && v->IsValid()) {
       score = 10;
       // Workaround for separated arabic.
       // Because separated arabic and normal number is learned at the
@@ -1017,7 +1017,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
 }
 
 void UserSegmentHistoryRewriter::Clear() {
-  if (storage_.get() != NULL) {
+  if (storage_.get() != nullptr) {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }

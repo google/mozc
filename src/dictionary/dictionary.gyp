@@ -83,6 +83,7 @@
         'gen_system_dictionary_data_main.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_base',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../data_manager/data_manager_base.gyp:data_manager',

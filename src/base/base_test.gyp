@@ -147,6 +147,9 @@
       'sources': [
         'clock_mock.cc'
       ],
+      'dependencies': [
+        'absl.gyp:absl_time',
+      ],
     },
     {
       'target_name': 'clock_mock_test',

@@ -47,7 +47,7 @@ namespace session {
 Candidate::Candidate()
     : id_(0),
       attributes_(NO_ATTRIBUTES),
-      subcandidate_list_(NULL),
+      subcandidate_list_(nullptr),
       subcandidate_list_owner_(false) {}
 
 Candidate::~Candidate() {}
@@ -55,10 +55,10 @@ Candidate::~Candidate() {}
 void Candidate::Clear() {
   id_ = 0;
   attributes_ = NO_ATTRIBUTES;
-  if (subcandidate_list_owner_ && subcandidate_list_ != NULL) {
+  if (subcandidate_list_owner_ && subcandidate_list_ != nullptr) {
     delete subcandidate_list_;
   }
-  subcandidate_list_ = NULL;
+  subcandidate_list_ = nullptr;
   subcandidate_list_owner_ = false;
 }
 
@@ -81,7 +81,7 @@ bool Candidate::has_attributes(const Attributes attributes) const {
 }
 
 bool Candidate::IsSubcandidateList() const {
-  return (subcandidate_list_ != NULL);
+  return (subcandidate_list_ != nullptr);
 }
 
 const CandidateList &Candidate::subcandidate_list() const {

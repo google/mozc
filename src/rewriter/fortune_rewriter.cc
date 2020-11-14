@@ -66,39 +66,38 @@ bool IsValidFortuneType(FortuneType fortune_type) {
 
 class FortuneData {
  public:
-  FortuneData()
-      : fortune_type_(FORTUNE_TYPE_EXCELLENT_LUCK),
-        last_update_yday_(-1),
-        last_update_year_(-1) {
+  FortuneData() : fortune_type_(FORTUNE_TYPE_EXCELLENT_LUCK) {
     ChangeFortune();
   }
 
   void ChangeFortune() {
     const int *levels = kNormalLevels;
-    tm today;
-    if (Clock::GetCurrentTm(&today)) {
-      // Modify once per one day
-      if (today.tm_yday == last_update_yday_ &&
-          today.tm_year == last_update_year_) {
-        return;
-      }
-      last_update_yday_ = today.tm_yday;
-      last_update_year_ = today.tm_year;
-      // More happy at New Year's Day
-      if (today.tm_yday == 0) {
-        levels = kNewYearLevels;
-      } else if (today.tm_mon == 2 && today.tm_mday == 3) {
-        // It's my birthday :)
-        levels = kMyBirthdayLevels;
-      } else if (today.tm_mday == 13 && today.tm_wday == 5) {
-        // Friday the 13th
-        levels = kFriday13Levels;
-      }
+
+    const absl::Time at = Clock::GetAbslTime();
+    const absl::TimeZone &tz = Clock::GetTimeZone();
+    const absl::CivilDay today = absl::ToCivilDay(at, tz);
+
+    // Modify once per one day
+    if (today == last_updated_day_) {
+      return;
+    }
+    last_updated_day_ = today;
+
+    // More happy at New Year's Day
+    if (today.month() == 1 && today.day() == 1) {
+      levels = kNewYearLevels;
+    } else if (today.month() == 3 && today.day() == 3) {
+      // It's my birthday :)
+      levels = kMyBirthdayLevels;
+    } else if (today.day() == 13 &&
+               absl::GetWeekday(today) == absl::Weekday::friday) {
+      // Friday the 13th
+      levels = kFriday13Levels;
     }
     uint32 random = 0;
     Util::GetRandomSequence(reinterpret_cast<char *>(&random), sizeof(random));
     const int level = random % kMaxLevel;
-    for (int i = 0; i < arraysize(kNormalLevels); ++i) {
+    for (int i = 0; i < std::size(kNormalLevels); ++i) {
       if (level <= levels[i]) {
         fortune_type_ = static_cast<FortuneType>(i);
         break;
@@ -111,8 +110,7 @@ class FortuneData {
 
  private:
   FortuneType fortune_type_;
-  int last_update_yday_;
-  int last_update_year_;
+  absl::CivilDay last_updated_day_;
 };
 
 // Insert Fortune message into the |segment|
@@ -129,7 +127,7 @@ bool InsertCandidate(FortuneType fortune_type, size_t insert_pos,
   size_t offset = std::min(insert_pos, segment->candidates_size());
 
   Segment::Candidate *c = segment->insert_candidate(offset);
-  if (c == NULL) {
+  if (c == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
   }

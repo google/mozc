@@ -212,7 +212,7 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(new composer::Composer(NULL, &context->GetRequest(),
+  context->set_composer(new composer::Composer(nullptr, &context->GetRequest(),
                                                &context->GetConfig()));
   context->set_converter(new SessionConverter(
       engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
@@ -1506,7 +1506,7 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   std::unique_ptr<composer::Composer> temporary_composer;
   if (input.has_key() && input.key().has_mode()) {
     // Allocate an object only when it is necessary.
-    temporary_composer.reset(new composer::Composer(NULL, NULL, NULL));
+    temporary_composer.reset(new composer::Composer(nullptr, nullptr, nullptr));
     // Copy the current composer state just in case.
     temporary_composer->CopyFrom(context_->composer());
     ApplyInputMode(input.key().mode(), temporary_composer.get());
@@ -1869,7 +1869,7 @@ void Session::CommitStringDirectly(const std::string &key,
   context_->mutable_converter()->Reset();
 
   commands::Result *result = command->mutable_output()->mutable_result();
-  DCHECK(result != NULL);
+  DCHECK(result != nullptr);
   result->set_type(commands::Result::STRING);
   result->mutable_key()->append(key);
   result->mutable_value()->append(preedit);

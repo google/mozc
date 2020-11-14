@@ -60,7 +60,7 @@ TEST(ImeContextTest, DefaultValues) {
   // Don't access composer().
   // Before using composer, set_composer() must be called with non-null-value.
 
-  EXPECT_TRUE(NULL == context.mutable_converter());
+  EXPECT_TRUE(nullptr == context.mutable_converter());
 
   EXPECT_EQ(ImeContext::NONE, context.state());
 
@@ -81,7 +81,7 @@ TEST(ImeContextTest, BasicTest) {
 
   // The ownership of composer is moved to context.
   composer::Composer *composer =
-      new composer::Composer(NULL, &request, &config);
+      new composer::Composer(nullptr, &request, &config);
   context.set_composer(composer);
   EXPECT_EQ(composer, &context.composer());
   EXPECT_EQ(composer, context.mutable_composer());
@@ -228,7 +228,7 @@ TEST(ImeContextTest, CustomKeymap) {
   // Set composer
   const commands::Request request;
   composer::Composer *composer =
-      new composer::Composer(NULL, &request, &config);
+      new composer::Composer(nullptr, &request, &config);
   context.set_composer(composer);
 
   // Set converter

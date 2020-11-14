@@ -48,7 +48,7 @@ class TipTextService;
 class TipCompositionUtil {
  public:
   // Returns composition view object if there is an composition which belongs
-  // to Mozc in |context|. Otherwise returns NULL.
+  // to Mozc in |context|. Otherwise returns nullptr.
   static ATL::CComPtr<ITfCompositionView> GetComposition(
       ATL::CComPtr<ITfContext> context, TfEditCookie edit_cookie);
 

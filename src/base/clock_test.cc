@@ -56,33 +56,36 @@ TEST(ClockTest, TimeTestWithMock) {
     EXPECT_EQ(kTestMicroSeconds, current_usec);
   }
 
-  // GetCurrentTm
+  // GetAbslTime
   // 2020-12-23 13:24:35 (Wed)
   {
-    tm current_tm;
-    Clock::GetCurrentTm(&current_tm);
-    EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11, current_tm.tm_mon);
-    EXPECT_EQ(23, current_tm.tm_mday);
-    EXPECT_EQ(13, current_tm.tm_hour);
-    EXPECT_EQ(24, current_tm.tm_min);
-    EXPECT_EQ(35, current_tm.tm_sec);
-    EXPECT_EQ(3, current_tm.tm_wday);
+    const absl::Time at = Clock::GetAbslTime();
+    const absl::TimeZone &tz = Clock::GetTimeZone();
+    const absl::CivilSecond cs = absl::ToCivilSecond(at, tz);
+
+    EXPECT_EQ(2020, cs.year());
+    EXPECT_EQ(12, cs.month());
+    EXPECT_EQ(23, cs.day());
+    EXPECT_EQ(13, cs.hour());
+    EXPECT_EQ(24, cs.minute());
+    EXPECT_EQ(35, cs.second());
+    EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
   }
 
-  // GetTmWithoutOffsetSecond
+  // GetAbslTime + offset
   // 2024/02/23 23:11:15 (Fri)
   {
     const int offset_seconds = 100000000;
-    tm offset_tm;
-    Clock::GetTmWithOffsetSecond(&offset_tm, offset_seconds);
-    EXPECT_EQ(124, offset_tm.tm_year);
-    EXPECT_EQ(1, offset_tm.tm_mon);
-    EXPECT_EQ(23, offset_tm.tm_mday);
-    EXPECT_EQ(23, offset_tm.tm_hour);
-    EXPECT_EQ(11, offset_tm.tm_min);
-    EXPECT_EQ(15, offset_tm.tm_sec);
-    EXPECT_EQ(5, offset_tm.tm_wday);
+    const absl::Time at = Clock::GetAbslTime();
+    const absl::TimeZone &tz = Clock::GetTimeZone();
+    const absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset_seconds;
+    EXPECT_EQ(2024, cs.year());
+    EXPECT_EQ(2, cs.month());
+    EXPECT_EQ(23, cs.day());
+    EXPECT_EQ(23, cs.hour());
+    EXPECT_EQ(11, cs.minute());
+    EXPECT_EQ(15, cs.second());
+    EXPECT_EQ(absl::Weekday::friday, absl::GetWeekday(cs));
   }
 
   // GetFrequency / GetTicks

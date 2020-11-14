@@ -124,6 +124,7 @@ cc_binary_mozc(
         "//base:init_mozc",
         "//base:logging",
         "//base:process",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -142,6 +143,7 @@ cc_binary_mozc(
         "//protocol:renderer_proto",
         "//renderer:renderer_client",
         "//session:random_keyevents_generator",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -163,6 +165,7 @@ cc_binary_mozc(
         "//protocol:commands_proto",
         "//protocol:renderer_proto",
         "//renderer:renderer_client",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -185,6 +188,7 @@ cc_binary_mozc(
         "//config:config_handler",
         "//protocol:commands_proto",
         "//session:random_keyevents_generator",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -233,6 +237,7 @@ cc_binary_mozc(
         "//base:util",
         "//evaluation:scorer",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

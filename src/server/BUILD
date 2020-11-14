@@ -60,6 +60,7 @@ cc_binary_mozc(
         "//config:stats_config_util",
         "//session",
         "//session:session_server",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -78,5 +79,6 @@ cc_binary_mozc(
         "//session:random_keyevents_generator",
         "//session:session_handler",
         "//session:session_usage_observer",
+        "@com_google_absl//absl/flags:flag",
     ],
 )

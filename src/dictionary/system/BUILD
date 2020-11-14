@@ -177,6 +177,7 @@ cc_library_mozc(
         "//dictionary/file:codec_interface",
         "//storage/louds:bit_vector_based_array_builder",
         "//storage/louds:louds_trie_builder",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -199,6 +200,7 @@ cc_test_mozc(
         ":system_dictionary",
         ":system_dictionary_builder",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:stl_util",
@@ -215,6 +217,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

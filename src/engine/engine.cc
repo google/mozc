@@ -144,13 +144,7 @@ mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
   if (!status.ok()) {
     return status;
   }
-#ifdef OS_NACL
-  // TODO(noriyukit): This wrapping std::move() is normally unnecessary but NaCl
-  // compiler doesn't work without it.  Remove this workaround when possible.
-  return std::move(engine);
-#else   // OS_NACL
   return engine;
-#endif  // OS_NACL
 }
 
 mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
@@ -161,12 +155,7 @@ mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
   if (!status.ok()) {
     return status;
   }
-#ifdef OS_NACL
-  // TODO(noriyukit): Remove std::move() if possible; see the above comment.
-  return std::move(engine);
-#else   // OS_NACL
   return engine;
-#endif  // OS_NACL
 }
 
 Engine::Engine() = default;

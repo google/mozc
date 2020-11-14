@@ -475,13 +475,7 @@ SystemDictionary::Builder::Build() {
     return mozc::UnknownError("Failed to create system dictionary");
   }
 
-#ifdef OS_NACL
-  // TODO(noriyukit): This wrapping std::move() is normally unnecessary but NaCl
-  // compiler doesn't work without it.  Remove this workaround when possible.
-  return std::move(instance);
-#else   // OS_NACL
   return instance;
-#endif  // OS_NACL
 }
 
 SystemDictionary::SystemDictionary(

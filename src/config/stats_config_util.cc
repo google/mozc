@@ -244,23 +244,6 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 };
 #endif  // OS_ANDROID
 
-#ifdef OS_NACL
-class NaclStatsConfigUtilImpl : public StatsConfigUtilInterface {
- public:
-  NaclStatsConfigUtilImpl() {}
-  virtual ~NaclStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() {
-    Config config;
-    ConfigHandler::GetConfig(&config);
-    return config.general_config().upload_usage_stats();
-  }
-  virtual bool SetEnabled(bool val) { return false; }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NaclStatsConfigUtilImpl);
-};
-#endif  // OS_NACL
-
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {

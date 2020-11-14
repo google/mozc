@@ -44,11 +44,11 @@ struct MozcEngineProperty {
   const char *icon;
 };
 
-// This pointer should be NULL when properties size is 0.
+// This pointer should be nullptr when properties size is 0.
 extern const MozcEngineProperty *kMozcEngineProperties;
 extern const size_t kMozcEnginePropertiesSize;
 
-// If kMozcEnginePropertiesIMEOffState is NULL, it means IME should be always
+// If kMozcEnginePropertiesIMEOffState is nullptr, it means IME should be always
 // On.
 extern const MozcEngineProperty *kMozcEnginePropertyIMEOffState;
 
@@ -61,7 +61,7 @@ struct MozcEngineToolProperty {
   const char *icon;   // icon
 };
 
-// This pointer should be NULL when properties size is 0.
+// This pointer should be nullptr when properties size is 0.
 extern const MozcEngineToolProperty *kMozcEngineToolProperties;
 extern const size_t kMozcEngineToolPropertiesSize;
 

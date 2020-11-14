@@ -45,7 +45,7 @@ namespace {
 
 mozc::Mutex g_storage_ensure_mutex;
 
-mozc::GenericStorageManagerInterface *g_storage_manager = NULL;
+mozc::GenericStorageManagerInterface *g_storage_manager = nullptr;
 
 const char kSymbolStorageFileName[] = "user://symbol_history.db";
 // 32 characters * 3 bytes(typical byte size per character)
@@ -106,7 +106,7 @@ GenericStorageInterface *GenericStorageManagerImpl::GetStorage(
     default:
       LOG(WARNING) << "Invalid storage type";
   }
-  return NULL;
+  return nullptr;
 }
 
 bool GenericStorageManagerImpl::SyncAll() {
@@ -181,7 +181,7 @@ bool GenericLruStorage::Insert(const std::string &key, const char *value) {
 
 const char *GenericLruStorage::Lookup(const std::string &key) {
   if (!EnsureStorage()) {
-    return NULL;
+    return nullptr;
   }
   return lru_storage_->Lookup(key);
 }

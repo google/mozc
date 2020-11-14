@@ -239,11 +239,11 @@ bool CalculatorImpl::CalculateTokens(const TokenSequence &tokens,
   return true;
 }
 
-CalculatorInterface *g_calculator = NULL;
+CalculatorInterface *g_calculator = nullptr;
 }  // namespace
 
 CalculatorInterface *CalculatorFactory::GetCalculator() {
-  if (g_calculator == NULL) {
+  if (g_calculator == nullptr) {
     return Singleton<CalculatorImpl>::get();
   } else {
     return g_calculator;

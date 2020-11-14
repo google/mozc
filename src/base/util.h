@@ -120,7 +120,7 @@ class Util {
   static void SplitStringToUtf8Chars(absl::string_view str,
                                      std::vector<std::string> *output);
 
-  static void SplitCSV(const std::string &str,
+  static void SplitCSV(const std::string &input,
                        std::vector<std::string> *output);
 
   template <typename Range>
@@ -153,12 +153,12 @@ class Util {
                             absl::string_view newsub, bool replace_all,
                             std::string *res);
 
-  static void LowerString(std::string *output);
-  static void UpperString(std::string *output);
+  static void LowerString(std::string *str);
+  static void UpperString(std::string *str);
 
   // Transforms the first character to the upper case and tailing characters to
   // the lower cases.  ex. "abCd" => "Abcd".
-  static void CapitalizeString(std::string *output);
+  static void CapitalizeString(std::string *str);
 
   // Returns true if the characters in [first, last) are all in lower case
   // ASCII.
@@ -183,10 +183,11 @@ class Util {
   // Strips the leading/trailing white spaces from the input and stores it to
   // the output.  If the input does not have such white spaces, this method just
   // copies the input into the output.  It clears the output always.
-  static void StripWhiteSpaces(const std::string &str, std::string *output);
+  static void StripWhiteSpaces(const std::string &input, std::string *output);
 
   static size_t OneCharLen(const char *src);
 
+  // Returns the lengths of [src, src+size] encoded in UTF8.
   static size_t CharsLen(const char *src, size_t size);
 
   static size_t CharsLen(absl::string_view str) {
@@ -342,7 +343,7 @@ class Util {
   static bool IsKanaSymbolContained(const std::string &input);
 
   // Returns true if |input| looks like a pure English word.
-  static bool IsEnglishTransliteration(const std::string &input);
+  static bool IsEnglishTransliteration(const std::string &value);
 
   static void NormalizeVoicedSoundMark(absl::string_view input,
                                        std::string *output);

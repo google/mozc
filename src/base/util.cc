@@ -43,10 +43,6 @@
 #include <mach/mach_time.h>
 #endif  // __APPLE__
 
-#if defined(OS_NACL)
-#include <irt.h>
-#endif  // OS_NACL
-
 #ifndef OS_WIN
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -473,15 +469,15 @@ size_t Util::OneCharLen(const char *src) {
   return kUTF8LenTbl[*reinterpret_cast<const uint8 *>(src)];
 }
 
-size_t Util::CharsLen(const char *src, size_t length) {
+size_t Util::CharsLen(const char *src, size_t size) {
   const char *begin = src;
-  const char *end = src + length;
-  int result = 0;
+  const char *end = src + size;
+  int length = 0;
   while (begin < end) {
-    ++result;
+    ++length;
     begin += OneCharLen(begin);
   }
-  return result;
+  return length;
 }
 
 char32 Util::UTF8ToUCS4(const char *begin, const char *end, size_t *mblen) {
@@ -841,28 +837,6 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
   ::CryptReleaseContext(hprov, 0);
   return true;
 #endif  // OS_WIN
-
-#if defined(OS_NACL)
-  struct nacl_irt_random interface;
-
-  if (nacl_interface_query(NACL_IRT_RANDOM_v0_1, &interface,
-                           sizeof(interface)) != sizeof(interface)) {
-    DLOG(ERROR) << "Cannot get NACL_IRT_RANDOM_v0_1 interface";
-    return false;
-  }
-
-  size_t nread;
-  const int error = interface.get_random_bytes(buf, buf_size, &nread);
-  if (error != 0) {
-    LOG(ERROR) << "interface.get_random_bytes error: " << error;
-    return false;
-  } else if (nread != buf_size) {
-    LOG(ERROR) << "interface.get_random_bytes error. nread: " << nread
-               << " buf_size: " << buf_size;
-    return false;
-  }
-  return true;
-#endif
 
 #if defined(OS_CHROMEOS)
   // TODO(googleo): b/171939770 Accessing "/dev/urandom" is not allowed in
@@ -1258,10 +1232,10 @@ void Util::EncodeURI(const std::string &input, std::string *output) {
   }
 }
 
-void Util::DecodeURI(const std::string &src, std::string *output) {
+void Util::DecodeURI(const std::string &input, std::string *output) {
   output->clear();
-  const char *p = src.data();
-  const char *end = src.data() + src.size();
+  const char *p = input.data();
+  const char *end = input.data() + input.size();
   while (p < end) {
     if (*p == '%' && p + 2 < end) {
       const char h = toupper(p[1]);

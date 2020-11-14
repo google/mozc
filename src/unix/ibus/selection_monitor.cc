@@ -51,10 +51,10 @@ using std::unique_ptr;
 
 class ScopedXcbGenericError {
  public:
-  ScopedXcbGenericError() : error_(NULL) {}
+  ScopedXcbGenericError() : error_(nullptr) {}
   ~ScopedXcbGenericError() {
     free(error_);
-    error_ = NULL;
+    error_ = nullptr;
   }
   const xcb_generic_error_t *get() const { return error_; }
   xcb_generic_error_t **mutable_get() { return &error_; }
@@ -99,7 +99,7 @@ struct XcbAtoms {
 class SelectionMonitorServer {
  public:
   SelectionMonitorServer()
-      : connection_(NULL),
+      : connection_(nullptr),
         requestor_window_(0),
         root_window_(0),
         xfixes_first_event_(0),
@@ -108,8 +108,8 @@ class SelectionMonitorServer {
   ~SelectionMonitorServer() { Release(); }
 
   bool Init() {
-    connection_ = ::xcb_connect(NULL, NULL);
-    if (connection_ == NULL) {
+    connection_ = ::xcb_connect(nullptr, nullptr);
+    if (connection_ == nullptr) {
       return false;
     }
 
@@ -150,7 +150,7 @@ class SelectionMonitorServer {
     }
     if (::xcb_connection_has_error(connection_)) {
       LOG(ERROR) << "XCB connection has error.";
-      connection_ = NULL;
+      connection_ = nullptr;
       return false;
     }
     return true;
@@ -166,8 +166,8 @@ class SelectionMonitorServer {
     unique_ptr<xcb_generic_event_t, void (*)(void *)> event(
         ::xcb_wait_for_event(connection_), &std::free);
 
-    if (event.get() == NULL) {
-      LOG(ERROR) << "NULL event returned.";
+    if (event.get() == nullptr) {
+      LOG(ERROR) << "nullptr event returned.";
       return false;
     }
 
@@ -209,7 +209,7 @@ class SelectionMonitorServer {
   void Release() {
     if (connection_) {
       ::xcb_disconnect(connection_);
-      connection_ = NULL;
+      connection_ = nullptr;
     }
   }
 
@@ -220,8 +220,8 @@ class SelectionMonitorServer {
         ::xcb_intern_atom(connection_, false, name.size(), name.c_str());
     ScopedXcbInternAtomReply reply(
         ::xcb_intern_atom_reply(connection_, cookie, 0));
-    if (reply.get() == NULL) {
-      LOG(ERROR) << "xcb_intern_atom_reply returned NULL reply.";
+    if (reply.get() == nullptr) {
+      LOG(ERROR) << "xcb_intern_atom_reply returned nullptr reply.";
       return false;
     }
     if (reply->atom == XCB_NONE) {
@@ -242,8 +242,8 @@ class SelectionMonitorServer {
   bool InitXFixes() {
     const xcb_query_extension_reply_t *ext_reply =
         ::xcb_get_extension_data(connection_, &xcb_xfixes_id);
-    if (ext_reply == NULL) {
-      LOG(ERROR) << "xcb_get_extension_data returns NULL.";
+    if (ext_reply == nullptr) {
+      LOG(ERROR) << "xcb_get_extension_data returns nullptr.";
       return false;
     }
 
@@ -254,12 +254,12 @@ class SelectionMonitorServer {
     ScopedXcbXFixesQueqyVersionReply xfixes_query(
         ::xcb_xfixes_query_version_reply(connection_, xfixes_query_cookie,
                                          xcb_error.mutable_get()));
-    if (xcb_error.get() != NULL) {
+    if (xcb_error.get() != nullptr) {
       LOG(ERROR) << "xcb_xfixes_query_version_reply failed. error_code: "
                  << static_cast<uint32>(xcb_error.get()->error_code);
       return false;
     }
-    if (xfixes_query.get() == NULL) {
+    if (xfixes_query.get() == nullptr) {
       return false;
     }
 
@@ -284,13 +284,13 @@ class SelectionMonitorServer {
     ScopedXcbGenericError xcb_error;
     ScopedXcbGetAtomNameReply reply(::xcb_get_atom_name_reply(
         connection_, cookie, xcb_error.mutable_get()));
-    if (xcb_error.get() != NULL) {
+    if (xcb_error.get() != nullptr) {
       LOG(ERROR) << "xcb_get_atom_name_reply failed. error_code: "
                  << static_cast<uint32>(xcb_error.get()->error_code);
       return "";
     }
-    if (reply.get() == NULL) {
-      VLOG(2) << "reply is NULL";
+    if (reply.get() == nullptr) {
+      VLOG(2) << "reply is nullptr";
       return "";
     }
 
@@ -311,8 +311,8 @@ class SelectionMonitorServer {
           connection_, false, window, property_atom, property_type_atom, 0, 0);
       ScopedXcbGetPropertyReply reply(
           ::xcb_get_property_reply(connection_, cookie, 0));
-      if (reply.get() == NULL) {
-        VLOG(2) << "reply is NULL";
+      if (reply.get() == nullptr) {
+        VLOG(2) << "reply is nullptr";
         return false;
       }
       if (reply->type == XCB_NONE) {
@@ -353,8 +353,8 @@ class SelectionMonitorServer {
                              property_type_atom, byte_offset, max_bytes);
       ScopedXcbGetPropertyReply reply(
           ::xcb_get_property_reply(connection_, cookie, 0));
-      if (reply.get() == NULL) {
-        VLOG(2) << "reply is NULL";
+      if (reply.get() == nullptr) {
+        VLOG(2) << "reply is nullptr";
         return false;
       }
       if (reply->format != element_bit_size) {
@@ -380,8 +380,8 @@ class SelectionMonitorServer {
                            XCB_ATOM_CARDINAL, 0, sizeof(T) * 8);
     ScopedXcbGetPropertyReply reply(
         ::xcb_get_property_reply(connection_, cookie, 0));
-    if (reply.get() == NULL) {
-      VLOG(2) << "reply is NULL";
+    if (reply.get() == nullptr) {
+      VLOG(2) << "reply is nullptr";
       return false;
     }
 
@@ -564,7 +564,7 @@ SelectionMonitorInterface *SelectionMonitorFactory::Create(
     size_t max_text_bytes) {
   unique_ptr<SelectionMonitorServer> server(new SelectionMonitorServer());
   if (!server->Init()) {
-    return NULL;
+    return nullptr;
   }
   return new SelectionMonitorImpl(server.release(), max_text_bytes);
 }

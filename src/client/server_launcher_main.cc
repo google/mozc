@@ -33,6 +33,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "client/client.h"
+#include "absl/flags/flag.h"
 
 DEFINE_bool(shutdown, false, "shutdown server if mozc_server is running");
 
@@ -41,7 +42,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::client::Client client;
 
-  if (FLAGS_shutdown) {
+  if (mozc::GetFlag(FLAGS_shutdown)) {
     client.Shutdown();
   }
 

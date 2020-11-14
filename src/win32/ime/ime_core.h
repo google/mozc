@@ -141,7 +141,7 @@ class ImeCore {
   // - hCandInfo
   // - hPrivate
   // Based on which field is actually updated, this function generates
-  // UI messages into |message_queue|.  If |message_queue| is NULL, this
+  // UI messages into |message_queue|.  If |message_queue| is nullptr, this
   // function will not generate any UI message.
   // Returns true if the operation completed successfully.
   static bool UpdateContext(HIMC himc, const InputState &next_state,

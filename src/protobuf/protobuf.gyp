@@ -182,6 +182,7 @@
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
                 '-Wno-tautological-constant-out-of-range-compare',
+                '-Wno-unused-const-variable',
                 '-Wno-unused-function',
               ],
             }],

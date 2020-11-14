@@ -30,38 +30,4 @@
 #ifndef MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 #define MOZC_CHROME_NACL_URL_LOADER_UTIL_H_
 
-#ifdef OS_NACL
-
-#include <ppapi/cpp/completion_callback.h>
-
-#include <string>
-
-#include "base/port.h"
-
-namespace pp {
-class Instance;
-}  // namespace pp
-
-namespace mozc {
-namespace chrome {
-namespace nacl {
-
-// Utility class to handle pp::URLLoader.
-class URLLoaderUtil {
- public:
-  // Downloads the file from url to file_name on HTML5 filesystem.
-  static void StartDownloadToFile(pp::Instance *instance, const string &url,
-                                  const string &file_name,
-                                  pp::CompletionCallback callback);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(URLLoaderUtil);
-};
-
-}  // namespace nacl
-}  // namespace chrome
-}  // namespace mozc
-
-#endif  // OS_NACL
-
 #endif  // MOZC_CHROME_NACL_URL_LOADER_UTIL_H_

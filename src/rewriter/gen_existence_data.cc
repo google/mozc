@@ -70,7 +70,7 @@ void GenExistenceData(const std::vector<std::string> &entries,
 void OutputExistenceHeader(const std::vector<std::string> &entries,
                            const std::string &data_namespace, std::ostream *ofs,
                            double error_rate) {
-  char *existence_data = NULL;
+  char *existence_data = nullptr;
   size_t existence_data_size = 0;
   GenExistenceData(entries, error_rate, &existence_data, &existence_data_size);
 
@@ -89,7 +89,7 @@ void OutputExistenceHeader(const std::vector<std::string> &entries,
 
 void OutputExistenceBinary(const std::vector<std::string> &entries,
                            std::ostream *ofs, double error_rate) {
-  char *existence_data = NULL;
+  char *existence_data = nullptr;
   size_t existence_data_size = 0;
   GenExistenceData(entries, error_rate, &existence_data, &existence_data_size);
   ofs->write(existence_data, existence_data_size);

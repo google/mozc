@@ -187,7 +187,7 @@ HRESULT TipRangeUtil::GetInputScopes(ITfRange *range, TfEditCookie read_cookie,
   }
 
   CComQIPtr<ITfInputScope> input_scope = variant.punkVal;
-  InputScope *input_scopes_buffer = NULL;
+  InputScope *input_scopes_buffer = nullptr;
   UINT num_input_scopes = 0;
   result = input_scope->GetInputScopes(&input_scopes_buffer, &num_input_scopes);
   if (FAILED(result)) {

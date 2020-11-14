@@ -183,7 +183,7 @@ bool ConversionModeUtil::ToNativeMode(mozc::commands::CompositionMode mode,
 bool ConversionModeUtil::ToMozcMode(uint32 flag,
                                     mozc::commands::CompositionMode *mode) {
   if (mode == nullptr) {
-    LOG(ERROR) << "|mode| is NULL";
+    LOG(ERROR) << "|mode| is nullptr";
     return false;
   }
 

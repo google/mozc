@@ -42,18 +42,14 @@
 #endif  // OS_WIN
 
 #include "base/singleton.h"
+#include "absl/time/clock.h"
 
 namespace mozc {
 namespace {
 
 class ClockImpl : public ClockInterface {
  public:
-#ifndef OS_NACL
-  ClockImpl() {}
-#else   // OS_NACL
-  ClockImpl() : timezone_offset_sec_(0) {}
-#endif  // OS_NACL
-
+  ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {}
   ~ClockImpl() override {}
 
   void GetTimeOfDay(uint64 *sec, uint32 *usec) override {
@@ -91,25 +87,8 @@ class ClockImpl : public ClockInterface {
 #endif  // OS_WIN
   }
 
-  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) override {
-    const time_t current_sec = static_cast<time_t>(this->GetTime());
-    const time_t modified_sec = current_sec + offset_sec;
-
-#ifdef OS_WIN
-    if (_localtime64_s(output, &modified_sec) != 0) {
-      return false;
-    }
-#elif defined(OS_NACL)
-    const time_t localtime_sec = modified_sec + timezone_offset_sec_;
-    if (gmtime_r(&localtime_sec, output) == nullptr) {
-      return false;
-    }
-#else   // !OS_WIN && !OS_NACL
-    if (localtime_r(&modified_sec, output) == nullptr) {
-      return false;
-    }
-#endif  // OS_WIN
-    return true;
+  absl::Time GetAbslTime() override {
+    return absl::Now();
   }
 
   uint64 GetFrequency() override {
@@ -153,14 +132,18 @@ class ClockImpl : public ClockInterface {
 #endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
   }
 
-#ifdef OS_NACL
-  virtual void SetTimezoneOffset(int32 timezone_offset_sec) {
+  const absl::TimeZone& GetTimeZone() override {
+    return timezone_;
+  }
+
+  void SetTimeZoneOffset(int32 timezone_offset_sec) override {
     timezone_offset_sec_ = timezone_offset_sec;
+    timezone_ = absl::FixedTimeZone(timezone_offset_sec);
   }
 
  private:
   int32 timezone_offset_sec_;
-#endif  // OS_NACL
+  absl::TimeZone timezone_;
 };
 
 ClockInterface *g_clock = nullptr;
@@ -177,20 +160,21 @@ void Clock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
 
 uint64 Clock::GetTime() { return GetClock()->GetTime(); }
 
-bool Clock::GetTmWithOffsetSecond(tm *time_with_offset, int offset_sec) {
-  return GetClock()->GetTmWithOffsetSecond(offset_sec, time_with_offset);
-}
+absl::Time Clock::GetAbslTime() { return GetClock()->GetAbslTime(); }
 
 uint64 Clock::GetFrequency() { return GetClock()->GetFrequency(); }
 
 uint64 Clock::GetTicks() { return GetClock()->GetTicks(); }
 
-#ifdef OS_NACL
-void Clock::SetTimezoneOffset(int32 timezone_offset_sec) {
-  return GetClock()->SetTimezoneOffset(timezone_offset_sec);
+const absl::TimeZone& Clock::GetTimeZone() {
+  return GetClock()->GetTimeZone();
 }
-#endif  // OS_NACL
+
+void Clock::SetTimeZoneOffset(int32 timezone_offset_sec) {
+  return GetClock()->SetTimeZoneOffset(timezone_offset_sec);
+}
 
 void Clock::SetClockForUnitTest(ClockInterface *clock) { g_clock = clock; }
+
 
 }  // namespace mozc

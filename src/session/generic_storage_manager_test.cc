@@ -77,7 +77,7 @@ TEST(GenericLruStorageTest, BasicOperations) {
   }
 
   // First inserted entry is already pushed out.
-  EXPECT_EQ(NULL, storage.Lookup("0"));
+  EXPECT_EQ(nullptr, storage.Lookup("0"));
   for (size_t i = 1; i < kSize + 1; ++i) {
     const std::string value = Util::StringPrintf(kPrintFormat, i);
     const std::string key = std::string("key") + value;

@@ -38,9 +38,8 @@ ClockMock::ClockMock(uint64 sec, uint32 usec)
       micro_seconds_(usec),
       frequency_(1000000000),
       ticks_(0),
-#ifdef OS_NACL
+      timezone_(absl::UTCTimeZone()),
       timezone_offset_sec_(0),
-#endif  // OS_NACL
       delta_seconds_(0),
       delta_micro_seconds_(0) {
 }
@@ -59,38 +58,24 @@ uint64 ClockMock::GetTime() {
   return ret_sec;
 }
 
-bool ClockMock::GetTmWithOffsetSecond(time_t offset_sec, tm *output) {
-  const time_t current_sec = static_cast<time_t>(seconds_);
-  const time_t modified_sec = current_sec + offset_sec;
-
-#ifdef OS_WIN
-  if (_gmtime64_s(output, &modified_sec) != 0) {
-    return false;
-  }
-#elif defined(OS_NACL)
-  const time_t localtime_sec = modified_sec + timezone_offset_sec_;
-  if (gmtime_r(&localtime_sec, output) == nullptr) {
-    return false;
-  }
-#else  // !OS_WIN && !OS_NACL
-  if (gmtime_r(&modified_sec, output) == nullptr) {
-    return false;
-  }
-#endif
+absl::Time ClockMock::GetAbslTime() {
+  absl::Time at = absl::FromUnixSeconds(seconds_);
   PutClockForward(delta_seconds_, delta_micro_seconds_);
-
-  return true;
+  return at;
 }
 
 uint64 ClockMock::GetFrequency() { return frequency_; }
 
 uint64 ClockMock::GetTicks() { return ticks_; }
 
-#ifdef OS_NACL
-void ClockMock::SetTimezoneOffset(int32 timezone_offset_sec) {
-  timezone_offset_sec_ = timezone_offset_sec;
+const absl::TimeZone& ClockMock::GetTimeZone() {
+  return timezone_;
 }
-#endif  // OS_NACL
+
+void ClockMock::SetTimeZoneOffset(int32 timezone_offset_sec) {
+  timezone_offset_sec_ = timezone_offset_sec;
+  timezone_ = absl::FixedTimeZone(timezone_offset_sec);
+}
 
 void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
   const uint32 one_second = 1000000u;

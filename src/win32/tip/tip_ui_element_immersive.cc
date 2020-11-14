@@ -429,7 +429,7 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
         }
         return ::DefWindowProcW(window_handle, message, wparam, lparam);
       case WM_SETCURSOR:
-        ::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+        ::SetCursor(::LoadCursor(nullptr, IDC_ARROW));
         return 0;
       default:
         return ::DefWindowProcW(window_handle, message, wparam, lparam);

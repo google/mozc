@@ -46,6 +46,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
+#include "absl/flags/flag.h"
 
 DEFINE_string(server_path, "", "specify server path");
 DEFINE_string(log_path, "", "specify log output file path");
@@ -99,7 +100,7 @@ class TestScenarioInterface {
   virtual void Run(Result *result) = 0;
 
   TestScenarioInterface() {
-    if (!FLAGS_server_path.empty()) {
+    if (!mozc::GetFlag(FLAGS_server_path).empty()) {
       client_.set_server_program(FLAGS_server_path);
     }
     CHECK(client_.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -377,7 +378,7 @@ int main(int argc, char **argv) {
   CHECK_EQ(results.size(), tests.size());
 
   std::ostream *ofs = &std::cout;
-  if (!FLAGS_log_path.empty()) {
+  if (!mozc::GetFlag(FLAGS_log_path).empty()) {
     ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
   }
 

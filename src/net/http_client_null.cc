@@ -31,10 +31,6 @@
 
 #include "net/http_client_null.h"
 
-#ifdef OS_NACL
-#include <ppapi/cpp/instance.h>
-#endif  // OS_NACL
-
 #include "base/logging.h"
 
 namespace mozc {
@@ -53,15 +49,6 @@ bool NullHTTPRequestHandler::Request(HTTPMethodType type, const string &url,
   Error();
   return false;
 }
-
-#ifdef OS_NACL
-void RegisterPepperInstanceForHTTPClient(pp::Instance *instance) { Error(); }
-
-pp::Instance *GetPepperInstanceForHTTPClient() {
-  Error();
-  return nullptr;
-}
-#endif  // OS_NACL
 
 }  // namespace mozc
 

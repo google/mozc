@@ -51,7 +51,7 @@ bool GetString(GVariant *value, std::string *out_string) {
   if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
     return false;
   }
-  *out_string = static_cast<const char *>(g_variant_get_string(value, NULL));
+  *out_string = static_cast<const char *>(g_variant_get_string(value, nullptr));
   return true;
 }
 

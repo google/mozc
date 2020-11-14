@@ -37,12 +37,6 @@
 #include "net/http_client.h"
 #include "net/http_client_common.h"
 
-#ifdef OS_NACL
-namespace pp {
-class Instance;
-}  // namespace pp
-#endif  // OS_NACL
-
 namespace mozc {
 class NullHTTPRequestHandler {
  public:
@@ -53,11 +47,6 @@ class NullHTTPRequestHandler {
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(NullHTTPRequestHandler);
 };
-
-#ifdef OS_NACL
-void RegisterPepperInstanceForHTTPClient(pp::Instance *instance);
-pp::Instance *GetPepperInstanceForHTTPClient();
-#endif  // OS_NACL
 
 }  // namespace mozc
 

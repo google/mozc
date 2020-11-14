@@ -54,7 +54,7 @@ const char kRegistryFileName[] = ".registry.db";  // hidden file
 class StorageInitializer {
  public:
   StorageInitializer()
-      : default_storage_(TinyStorage::New()), current_storage_(NULL) {
+      : default_storage_(TinyStorage::New()), current_storage_(nullptr) {
     if (!default_storage_->Open(FileUtil::JoinPath(
             SystemUtil::GetUserProfileDirectory(), kRegistryFileName))) {
       LOG(ERROR) << "cannot open registry";
@@ -62,7 +62,7 @@ class StorageInitializer {
   }
 
   StorageInterface *GetStorage() const {
-    if (current_storage_ == NULL) {
+    if (current_storage_ == nullptr) {
       return default_storage_.get();
     } else {
       return current_storage_;

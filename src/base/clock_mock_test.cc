@@ -64,36 +64,38 @@ TEST(ClockMockTest, GetCurrentTmWithOffsetTest) {
   // 2020-12-23 13:24:00 (Wed)
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
   const int offset = -35;
-  tm current_tm;
 
-  EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
-  EXPECT_EQ(120, current_tm.tm_year);
-  EXPECT_EQ(11, current_tm.tm_mon);
-  EXPECT_EQ(23, current_tm.tm_mday);
-  EXPECT_EQ(13, current_tm.tm_hour);
-  EXPECT_EQ(24, current_tm.tm_min);
-  EXPECT_EQ(0, current_tm.tm_sec);
-  EXPECT_EQ(3, current_tm.tm_wday);
+  const absl::Time at = mock.GetAbslTime();
+  const absl::TimeZone &tz = mock.GetTimeZone();
+  const absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset;
+
+  EXPECT_EQ(2020, cs.year());
+  EXPECT_EQ(12, cs.month());
+  EXPECT_EQ(23, cs.day());
+  EXPECT_EQ(13, cs.hour());
+  EXPECT_EQ(24, cs.minute());
+  EXPECT_EQ(0, cs.second());
+  EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
 }
 
-#ifdef OS_NACL
-TEST(ClockMockTest, GetCurrentTmWithOffsetWithTimezoneOffsetTest) {
+TEST(ClockMockTest, GetCurrentTmWithOffsetWithTimeZoneOffsetTest) {
   // 2020-12-23 13:24:00 (Wed)
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
-  mock.SetTimezoneOffset(3600);
+  mock.SetTimeZoneOffset(3600);
   const int offset = -35;
-  tm current_tm;
 
-  EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
-  EXPECT_EQ(120, current_tm.tm_year);
-  EXPECT_EQ(11, current_tm.tm_mon);
-  EXPECT_EQ(23, current_tm.tm_mday);
-  EXPECT_EQ(14, current_tm.tm_hour);
-  EXPECT_EQ(24, current_tm.tm_min);
-  EXPECT_EQ(0, current_tm.tm_sec);
-  EXPECT_EQ(3, current_tm.tm_wday);
+  const absl::Time at = mock.GetAbslTime();
+  const absl::TimeZone &tz = mock.GetTimeZone();
+  const absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset;
+
+  EXPECT_EQ(2020, cs.year());
+  EXPECT_EQ(12, cs.month());
+  EXPECT_EQ(23, cs.day());
+  EXPECT_EQ(14, cs.hour());
+  EXPECT_EQ(24, cs.minute());
+  EXPECT_EQ(0, cs.second());
+  EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
 }
-#endif  // OS_NACL
 
 TEST(ClockMockTest, GetFrequencyAndTicks) {
   ClockMock mock(0, 0);
@@ -190,25 +192,28 @@ TEST(ClockMockTest, AutoPutForwardTest) {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
     mock.SetAutoPutClockForward(kDeltaSeconds, kDeltaMicroSeconds);
     const int offset = -35;
-    tm current_tm;
 
-    EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
-    EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11, current_tm.tm_mon);
-    EXPECT_EQ(23, current_tm.tm_mday);
-    EXPECT_EQ(13, current_tm.tm_hour);
-    EXPECT_EQ(24, current_tm.tm_min);
-    EXPECT_EQ(0, current_tm.tm_sec);
-    EXPECT_EQ(3, current_tm.tm_wday);
+    const absl::Time at = mock.GetAbslTime();
+    const absl::TimeZone &tz = mock.GetTimeZone();
+    absl::CivilSecond cs = absl::ToCivilSecond(at, tz) + offset;
 
-    EXPECT_TRUE(mock.GetTmWithOffsetSecond(offset, &current_tm));
-    EXPECT_EQ(120, current_tm.tm_year);
-    EXPECT_EQ(11, current_tm.tm_mon);
-    EXPECT_EQ(23, current_tm.tm_mday);
-    EXPECT_EQ(13, current_tm.tm_hour);
-    EXPECT_EQ(24, current_tm.tm_min);
-    EXPECT_EQ(kDeltaSeconds, current_tm.tm_sec);
-    EXPECT_EQ(3, current_tm.tm_wday);
+    EXPECT_EQ(2020, cs.year());
+    EXPECT_EQ(12, cs.month());
+    EXPECT_EQ(23, cs.day());
+    EXPECT_EQ(13, cs.hour());
+    EXPECT_EQ(24, cs.minute());
+    EXPECT_EQ(0, cs.second());
+    EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
+
+    const absl::Time at2 = mock.GetAbslTime();
+    cs = absl::ToCivilSecond(at2, tz) + offset;
+    EXPECT_EQ(2020, cs.year());
+    EXPECT_EQ(12, cs.month());
+    EXPECT_EQ(23, cs.day());
+    EXPECT_EQ(13, cs.hour());
+    EXPECT_EQ(24, cs.minute());
+    EXPECT_EQ(kDeltaSeconds, cs.second());
+    EXPECT_EQ(absl::Weekday::wednesday, absl::GetWeekday(cs));
   }
 }
 

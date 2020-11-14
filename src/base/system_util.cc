@@ -203,14 +203,14 @@ class LocalAppDataDirectoryCache {
 #endif  // OS_WIN
 
 UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
-#if defined(OS_NACL) || defined(OS_CHROMEOS)
+#if defined(OS_CHROMEOS)
   // TODO(toka): Must use passed in user profile dir which passed in. If mojo
   // platform the user profile is determined on runtime.
   // It's hack, the user profile dir should be passed in. Although the value in
   // NaCL platform is correct.
   dir_ = "/mutable";
   return;
-#endif  // OS_NACL || OS_CHROMEOS
+#endif  // OS_CHROMEOS
 
 #if defined(OS_WASM)
   // Do nothing for WebAssembly.
@@ -446,11 +446,6 @@ std::string SystemUtil::GetCrashReportDirectory() {
 }
 
 std::string SystemUtil::GetUserNameAsString() {
-#ifdef OS_NACL
-  LOG(ERROR) << "SystemUtil::GetUserNameAsString() is not implemented in NaCl.";
-  return "username";
-#endif  // OS_NACL
-
 #if defined(OS_WIN)
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;

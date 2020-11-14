@@ -39,7 +39,6 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <ctime>
 #include <string>
 #include <vector>
 
@@ -56,86 +55,79 @@
 #include "request/conversion_request.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
+#include "absl/time/time.h"
 
 namespace mozc {
 namespace {
-
-struct DateData {
-  const char *key;
-  const char *value;
-  const char *description;
-  int diff;  // diff from the current time in day or month or year
+enum {
+  YEAR,
+  MONTH,
+  DATE,
+  WEEKDAY,
+  CURRENT_TIME,
+  DATE_AND_CURRENT_TIME,
 };
 
-const struct DateData kDateData[] = {
-    {// きょう will show today's date
-     "きょう", "今日", "今日の日付", 0},
-    {// あした will show tomorrow's date
-     "あした", "明日", "明日の日付", 1},
-    {// あす will show tomorrow's date
-     "あす", "明日", "明日の日付", 1},
-    {// さくじつ will show yesterday's date
-     "さくじつ", "昨日", "昨日の日付", -1},
-    {// きのう will show yesterday's date
-     "きのう", "昨日", "昨日の日付", -1},
-    {// おととい will show the date of 2 days ago
-     "おととい", "一昨日", "2日前の日付", -2},
-    {// おとつい will show the date of 2 days ago
-     "おとつい", "一昨日", "2日前の日付", -2},
-    {// いっさくじつ will show the date of 2 days ago
-     "いっさくじつ", "一昨日", "2日前の日付", -2},
-    {// さきおととい will show the date of 3 days ago
-     "さきおととい", "一昨昨日", "3日前の日付", -3},
-    {
-        // あさって will show the date of 2 days from now
-        "あさって",
-        "明後日",
-        "明後日の日付",
-        2,
-    },
-    {// みょうごにち will show the date of 2 days from now
-     "みょうごにち", "明後日", "明後日の日付", 2},
-    {// しあさって will show the date of 3 days from now
-     "しあさって", "明明後日",
-     "明明後日の"
-     "日付",
-     3}};
+const struct DateRewriter::DateData kDateData[] = {
+    // Date rewrites.
+    {"きょう", "今日", "今日の日付", 0, DATE},
+    {"あした", "明日", "明日の日付", 1, DATE},
+    {"あす", "明日", "明日の日付", 1, DATE},
+    {"さくじつ", "昨日", "昨日の日付", -1, DATE},
+    {"きのう", "昨日", "昨日の日付", -1, DATE},
+    {"おととい", "一昨日", "2日前の日付", -2, DATE},
+    {"おとつい", "一昨日", "2日前の日付", -2, DATE},
+    {"いっさくじつ", "一昨日", "2日前の日付", -2, DATE},
+    {"さきおととい", "一昨昨日", "3日前の日付", -3, DATE},
+    {"あさって", "明後日", "明後日の日付", 2, DATE},
+    {"みょうごにち", "明後日", "明後日の日付", 2, DATE},
+    {"しあさって", "明明後日", "明明後日の日付", 3, DATE},
 
-const struct DateData kWeekDayData[] = {
-    {"にちようび", "日曜日", "次の日曜日", 0},
-    {"げつようび", "月曜日", "次の月曜日", 1},
-    {"かようび", "火曜日", "次の火曜日", 2},
-    {"すいようび", "水曜日", "次の水曜日", 3},
-    {"もくようび", "木曜日", "次の木曜日", 4},
-    {"きんようび", "金曜日", "次の金曜日", 5},
-    {"どようび", "土曜日", "次の土曜日", 6},
-    {"にちよう", "日曜", "次の日曜日", 0},
-    {"げつよう", "月曜", "次の月曜日", 1},
-    {"かよう", "火曜", "次の火曜日", 2},
-    {"すいよう", "水曜", "次の水曜日", 3},
-    {"もくよう", "木曜", "次の木曜日", 4},
-    {"きんよう", "金曜", "次の金曜日", 5},
-    {"どよう", "土曜", "次の土曜日", 6}};
+    // Weekday rewrites
+    // Absl::Weekday starts from Monday, while std::tm.tm_wday starts from
+    // Sunday.
+    {"げつようび", "月曜日", "次の月曜日", 0, WEEKDAY},
+    {"かようび", "火曜日", "次の火曜日", 1, WEEKDAY},
+    {"すいようび", "水曜日", "次の水曜日", 2, WEEKDAY},
+    {"もくようび", "木曜日", "次の木曜日", 3, WEEKDAY},
+    {"きんようび", "金曜日", "次の金曜日", 4, WEEKDAY},
+    {"どようび", "土曜日", "次の土曜日", 5, WEEKDAY},
+    {"にちようび", "日曜日", "次の日曜日", 6, WEEKDAY},
+    {"げつよう", "月曜", "次の月曜日", 0, WEEKDAY},
+    {"かよう", "火曜", "次の火曜日", 1, WEEKDAY},
+    {"すいよう", "水曜", "次の水曜日", 2, WEEKDAY},
+    {"もくよう", "木曜", "次の木曜日", 3, WEEKDAY},
+    {"きんよう", "金曜", "次の金曜日", 4, WEEKDAY},
+    {"どよう", "土曜", "次の土曜日", 5, WEEKDAY},
+    {"にちよう", "日曜", "次の日曜日", 6, WEEKDAY},
 
-const struct DateData kYearData[] = {{"ことし", "今年", "今年", 0},
-                                     {"らいねん", "来年", "来年", 1},
-                                     {"さくねん", "昨年", "昨年", -1},
-                                     {"きょねん", "去年", "去年", -1},
-                                     {"おととし", "一昨年", "一昨年", -2},
-                                     {"さらいねん", "再来年", "再来年", 2}};
+    // Year rewrites
+    {"ことし", "今年", "今年", 0, YEAR},
+    {"らいねん", "来年", "来年", 1, YEAR},
+    {"さくねん", "昨年", "昨年", -1, YEAR},
+    {"きょねん", "去年", "去年", -1, YEAR},
+    {"おととし", "一昨年", "一昨年", -2, YEAR},
+    {"さらいねん", "再来年", "再来年", 2, YEAR},
 
-const struct DateData kMonthData[] = {{"こんげつ", "今月", "今月", 0},
-                                      {"らいげつ", "来月", "来月", 1},
-                                      {"せんげつ", "先月", "先月", -1},
-                                      {"せんせんげつ", "先々月", "先々月", -2},
-                                      {"さらいげつ", "再来月", "再来月", 2}};
+    // Month rewrites
+    {"こんげつ", "今月", "今月", 0, MONTH},
+    {"らいげつ", "来月", "来月", 1, MONTH},
+    {"せんげつ", "先月", "先月", -1, MONTH},
+    {"せんせんげつ", "先々月", "先々月", -2, MONTH},
+    {"さらいげつ", "再来月", "再来月", 2, MONTH},
 
-const struct DateData kCurrentTimeData[] = {
-    {"いま", "今", "現在の時刻", 0}, {"じこく", "時刻", "現在の時刻", 0}};
+    // Time rewrites.
+    {"いま", "今", "現在の時刻", 0, CURRENT_TIME},
+    {"じこく", "時刻", "現在の時刻", 0, CURRENT_TIME},
 
-const struct DateData kDateAndCurrentTimeData[] = {
-    {"にちじ", "日時", "現在の日時", 0},
-};
+    // Date and time rewrites.
+    {"にちじ", "日時", "現在の日時", 0, DATE_AND_CURRENT_TIME}};
+
+// Absl::Weekday starts from Monday, while std::tm.tm_wday starts from Sunday.
+const char *kWeekDayString[] = {"月", "火", "水", "木", "金", "土", "日"};
+
+const char kDateDescription[] = "日付";
+const char kTimeDescription[] = "時刻";
 
 struct YearData {
   int ad;           // AD year
@@ -145,1276 +137,260 @@ struct YearData {
 
 const YearData kEraData[] = {
     // "元徳", "建武" and "明徳" are used for both south and north courts.
-    {
-        645,
-        "大化",
-        "たいか",
-    },
-    {
-        650,
-        "白雉",
-        "はくち",
-    },
-    {
-        686,
-        "朱鳥",
-        "しゅちょう",
-    },
-    {
-        701,
-        "大宝",
-        "たいほう",
-    },
-    {
-        704,
-        "慶雲",
-        "けいうん",
-    },
-    {
-        708,
-        "和銅",
-        "わどう",
-    },
-    {
-        715,
-        "霊亀",
-        "れいき",
-    },
-    {
-        717,
-        "養老",
-        "ようろう",
-    },
-    {
-        724,
-        "神亀",
-        "じんき",
-    },
-    {
-        729,
-        "天平",
-        "てんぴょう",
-    },
-    {
-        749,
-        "天平感宝",
-        "てんぴょう"
-        "かんぽう",
-    },
-    {
-        749,
-        "天平勝宝",
-        "てんぴょう"
-        "しょうほう",
-    },
-    {
-        757,
-        "天平宝字",
-        "てんぴょう"
-        "ほうじ",
-    },
-    {
-        765,
-        "天平神護",
-        "てんぴょう"
-        "じんご",
-    },
-    {
-        767,
-        "神護景雲",
-        "じんご"
-        "けいうん",
-    },
-    {
-        770,
-        "宝亀",
-        "ほうき",
-    },
-    {
-        781,
-        "天応",
-        "てんおう",
-    },
-    {
-        782,
-        "延暦",
-        "えんりゃく",
-    },
-    {
-        806,
-        "大同",
-        "たいどう",
-    },
-    {
-        810,
-        "弘仁",
-        "こうにん",
-    },
-    {
-        824,
-        "天長",
-        "てんちょう",
-    },
-    {
-        834,
-        "承和",
-        "じょうわ",
-    },
-    {
-        848,
-        "嘉祥",
-        "かしょう",
-    },
-    {
-        851,
-        "仁寿",
-        "にんじゅ",
-    },
-    {
-        854,
-        "斉衡",
-        "さいこう",
-    },
-    {
-        857,
-        "天安",
-        "てんなん",
-    },
-    {
-        859,
-        "貞観",
-        "じょうかん",
-    },
-    {
-        877,
-        "元慶",
-        "がんぎょう",
-    },
-    {
-        885,
-        "仁和",
-        "にんな",
-    },
-    {
-        889,
-        "寛平",
-        "かんぴょう",
-    },
-    {
-        898,
-        "昌泰",
-        "しょうたい",
-    },
-    {
-        901,
-        "延喜",
-        "えんぎ",
-    },
-    {
-        923,
-        "延長",
-        "えんちょう",
-    },
-    {
-        931,
-        "承平",
-        "じょうへい",
-    },
-    {
-        938,
-        "天慶",
-        "てんぎょう",
-    },
-    {
-        947,
-        "天暦",
-        "てんりゃく",
-    },
-    {
-        957,
-        "天徳",
-        "てんとく",
-    },
-    {
-        961,
-        "応和",
-        "おうわ",
-    },
-    {
-        964,
-        "康保",
-        "こうほう",
-    },
-    {
-        968,
-        "安和",
-        "あんな",
-    },
-    {
-        970,
-        "天禄",
-        "てんろく",
-    },
-    {
-        973,
-        "天延",
-        "てんえん",
-    },
-    {
-        976,
-        "貞元",
-        "じょうげん",
-    },
-    {
-        978,
-        "天元",
-        "てんげん",
-    },
-    {
-        983,
-        "永観",
-        "えいかん",
-    },
-    {
-        985,
-        "寛和",
-        "かんな",
-    },
-    {
-        987,
-        "永延",
-        "えいえん",
-    },
-    {
-        989,
-        "永祚",
-        "えいそ",
-    },
-    {
-        990,
-        "正暦",
-        "しょうりゃく",
-    },
-    {
-        995,
-        "長徳",
-        "ちょうとく",
-    },
-    {
-        999,
-        "長保",
-        "ちょうほう",
-    },
-    {
-        1004,
-        "寛弘",
-        "かんこう",
-    },
-    {
-        1012,
-        "長和",
-        "ちょうわ",
-    },
-    {
-        1017,
-        "寛仁",
-        "かんにん",
-    },
-    {
-        1021,
-        "治安",
-        "じあん",
-    },
-    {
-        1024,
-        "万寿",
-        "まんじゅ",
-    },
-    {
-        1028,
-        "長元",
-        "ちょうげん",
-    },
-    {
-        1037,
-        "長暦",
-        "ちょうりゃく",
-    },
-    {
-        1040,
-        "長久",
-        "ちょうきゅう",
-    },
-    {
-        1044,
-        "寛徳",
-        "かんとく",
-    },
-    {
-        1046,
-        "永承",
-        "えいしょう",
-    },
-    {
-        1053,
-        "天喜",
-        "てんき",
-    },
-    {
-        1058,
-        "康平",
-        "こうへい",
-    },
-    {
-        1065,
-        "治暦",
-        "じりゃく",
-    },
-    {
-        1069,
-        "延久",
-        "えんきゅう",
-    },
-    {
-        1074,
-        "承保",
-        "じょうほう",
-    },
-    {
-        1077,
-        "承暦",
-        "じょうりゃく",
-    },
-    {
-        1081,
-        "永保",
-        "えいほ",
-    },
-    {
-        1084,
-        "応徳",
-        "おうとく",
-    },
-    {
-        1087,
-        "寛治",
-        "かんじ",
-    },
-    {
-        1094,
-        "嘉保",
-        "かほう",
-    },
-    {
-        1096,
-        "永長",
-        "えいちょう",
-    },
-    {
-        1097,
-        "承徳",
-        "じょうとく",
-    },
-    {
-        1099,
-        "康和",
-        "こうわ",
-    },
-    {
-        1104,
-        "長治",
-        "ちょうじ",
-    },
-    {
-        1106,
-        "嘉承",
-        "かしょう",
-    },
-    {
-        1108,
-        "天仁",
-        "てんにん",
-    },
-    {
-        1110,
-        "天永",
-        "てんえい",
-    },
-    {
-        1113,
-        "永久",
-        "えいきゅう",
-    },
-    {
-        1118,
-        "元永",
-        "げんえい",
-    },
-    {
-        1120,
-        "保安",
-        "ほうあん",
-    },
-    {
-        1124,
-        "天治",
-        "てんじ",
-    },
-    {
-        1126,
-        "大治",
-        "だいじ",
-    },
-    {
-        1131,
-        "天承",
-        "てんじょう",
-    },
-    {
-        1132,
-        "長承",
-        "ちょうじょう",
-    },
-    {
-        1135,
-        "保延",
-        "ほうえん",
-    },
-    {
-        1141,
-        "永治",
-        "えいじ",
-    },
-    {
-        1142,
-        "康治",
-        "こうじ",
-    },
-    {
-        1144,
-        "天養",
-        "てんよう",
-    },
-    {
-        1145,
-        "久安",
-        "きゅうあん",
-    },
-    {
-        1151,
-        "仁平",
-        "にんぺい",
-    },
-    {
-        1154,
-        "久寿",
-        "きゅうじゅ",
-    },
-    {
-        1156,
-        "保元",
-        "ほうげん",
-    },
-    {
-        1159,
-        "平治",
-        "へいじ",
-    },
-    {
-        1160,
-        "永暦",
-        "えいりゃく",
-    },
-    {
-        1161,
-        "応保",
-        "おうほ",
-    },
-    {
-        1163,
-        "長寛",
-        "ちょうかん",
-    },
-    {
-        1165,
-        "永万",
-        "えいまん",
-    },
-    {
-        1166,
-        "仁安",
-        "にんあん",
-    },
-    {
-        1169,
-        "嘉応",
-        "かおう",
-    },
-    {
-        1171,
-        "承安",
-        "しょうあん",
-    },
-    {
-        1175,
-        "安元",
-        "あんげん",
-    },
-    {
-        1177,
-        "治承",
-        "じしょう",
-    },
-    {
-        1181,
-        "養和",
-        "ようわ",
-    },
-    {
-        1182,
-        "寿永",
-        "じゅえい",
-    },
-    {
-        1184,
-        "元暦",
-        "げんりゃく",
-    },
-    {
-        1185,
-        "文治",
-        "ぶんじ",
-    },
-    {
-        1190,
-        "建久",
-        "けんきゅう",
-    },
-    {
-        1199,
-        "正治",
-        "しょうじ",
-    },
-    {
-        1201,
-        "建仁",
-        "けんにん",
-    },
-    {
-        1204,
-        "元久",
-        "げんきゅう",
-    },
-    {
-        1206,
-        "建永",
-        "けんえい",
-    },
-    {
-        1207,
-        "承元",
-        "じょうげん",
-    },
-    {
-        1211,
-        "建暦",
-        "けんりゃく",
-    },
-    {
-        1213,
-        "建保",
-        "けんぽう",
-    },
-    {
-        1219,
-        "承久",
-        "しょうきゅう",
-    },
-    {
-        1222,
-        "貞応",
-        "じょうおう",
-    },
-    {
-        1224,
-        "元仁",
-        "げんにん",
-    },
-    {
-        1225,
-        "嘉禄",
-        "かろく",
-    },
-    {
-        1227,
-        "安貞",
-        "あんてい",
-    },
-    {
-        1229,
-        "寛喜",
-        "かんき",
-    },
-    {
-        1232,
-        "貞永",
-        "じょうえい",
-    },
-    {
-        1233,
-        "天福",
-        "てんぷく",
-    },
-    {
-        1234,
-        "文暦",
-        "ぶんりゃく",
-    },
-    {
-        1235,
-        "嘉禎",
-        "かてい",
-    },
-    {
-        1238,
-        "暦仁",
-        "りゃくにん",
-    },
-    {
-        1239,
-        "延応",
-        "えんおう",
-    },
-    {
-        1240,
-        "仁治",
-        "にんじゅ",
-    },
-    {
-        1243,
-        "寛元",
-        "かんげん",
-    },
-    {
-        1247,
-        "宝治",
-        "ほうじ",
-    },
-    {
-        1249,
-        "建長",
-        "けんちょう",
-    },
-    {
-        1256,
-        "康元",
-        "こうげん",
-    },
-    {
-        1257,
-        "正嘉",
-        "しょうか",
-    },
-    {
-        1259,
-        "正元",
-        "しょうげん",
-    },
-    {
-        1260,
-        "文応",
-        "ぶんおう",
-    },
-    {
-        1261,
-        "弘長",
-        "こうちょう",
-    },
-    {
-        1264,
-        "文永",
-        "ぶんえい",
-    },
-    {
-        1275,
-        "建治",
-        "けんじ",
-    },
-    {
-        1278,
-        "弘安",
-        "こうあん",
-    },
-    {
-        1288,
-        "正応",
-        "しょうおう",
-    },
-    {
-        1293,
-        "永仁",
-        "えいにん",
-    },
-    {
-        1299,
-        "正安",
-        "しょうあん",
-    },
-    {
-        1302,
-        "乾元",
-        "けんげん",
-    },
-    {
-        1303,
-        "嘉元",
-        "かげん",
-    },
-    {
-        1306,
-        "徳治",
-        "とくじ",
-    },
-    {
-        1308,
-        "延慶",
-        "えんぎょう",
-    },
-    {
-        1311,
-        "応長",
-        "おうちょう",
-    },
-    {
-        1312,
-        "正和",
-        "しょうわ",
-    },
-    {
-        1317,
-        "文保",
-        "ぶんぽう",
-    },
-    {
-        1319,
-        "元応",
-        "げんおう",
-    },
-    {
-        1321,
-        "元亨",
-        "げんこう",
-    },
-    {
-        1324,
-        "正中",
-        "しょうちゅう",
-    },
-    {
-        1326,
-        "嘉暦",
-        "かりゃく",
-    },
-    {
-        1329,
-        "元徳",
-        "げんとく",
-    },
-    {
-        1331,
-        "元弘",
-        "げんこう",
-    },
-    {
-        1334,
-        "建武",
-        "けんむ",
-    },
-    {
-        1336,
-        "延元",
-        "えんげん",
-    },
-    {
-        1340,
-        "興国",
-        "こうこく",
-    },
-    {
-        1346,
-        "正平",
-        "しょうへい",
-    },
-    {
-        1370,
-        "建徳",
-        "けんとく",
-    },
-    {
-        1372,
-        "文中",
-        "ぶんちゅう",
-    },
-    {
-        1375,
-        "天授",
-        "てんじゅ",
-    },
-    {
-        1381,
-        "弘和",
-        "こうわ",
-    },
-    {
-        1384,
-        "元中",
-        "げんちゅう",
-    },
-    {
-        1390,
-        "明徳",
-        "めいとく",
-    },
-    {
-        1394,
-        "応永",
-        "おうえい",
-    },
-    {
-        1428,
-        "正長",
-        "しょうちょう",
-    },
-    {
-        1429,
-        "永享",
-        "えいきょう",
-    },
-    {
-        1441,
-        "嘉吉",
-        "かきつ",
-    },
-    {
-        1444,
-        "文安",
-        "ぶんあん",
-    },
-    {
-        1449,
-        "宝徳",
-        "ほうとく",
-    },
-    {
-        1452,
-        "享徳",
-        "きょうとく",
-    },
-    {
-        1455,
-        "康正",
-        "こうしょう",
-    },
-    {
-        1457,
-        "長禄",
-        "ちょうろく",
-    },
-    {
-        1460,
-        "寛正",
-        "かんしょう",
-    },
-    {
-        1466,
-        "文正",
-        "ぶんしょう",
-    },
-    {
-        1467,
-        "応仁",
-        "おうにん",
-    },
-    {
-        1469,
-        "文明",
-        "ぶんめい",
-    },
-    {
-        1487,
-        "長享",
-        "ちょうきょう",
-    },
-    {
-        1489,
-        "延徳",
-        "えんとく",
-    },
-    {
-        1492,
-        "明応",
-        "めいおう",
-    },
-    {
-        1501,
-        "文亀",
-        "ぶんき",
-    },
-    {
-        1504,
-        "永正",
-        "えいしょう",
-    },
-    {
-        1521,
-        "大永",
-        "だいえい",
-    },
-    {
-        1528,
-        "享禄",
-        "きょうろく",
-    },
-    {
-        1532,
-        "天文",
-        "てんぶん",
-    },
-    {
-        1555,
-        "弘治",
-        "こうじ",
-    },
-    {
-        1558,
-        "永禄",
-        "えいろく",
-    },
-    {
-        1570,
-        "元亀",
-        "げんき",
-    },
-    {
-        1573,
-        "天正",
-        "てんしょう",
-    },
-    {
-        1592,
-        "文禄",
-        "ぶんろく",
-    },
-    {
-        1596,
-        "慶長",
-        "けいちょう",
-    },
-    {
-        1615,
-        "元和",
-        "げんな",
-    },
-    {
-        1624,
-        "寛永",
-        "かんえい",
-    },
-    {
-        1644,
-        "正保",
-        "しょうほう",
-    },
-    {
-        1648,
-        "慶安",
-        "けいあん",
-    },
-    {
-        1652,
-        "承応",
-        "じょうおう",
-    },
-    {
-        1655,
-        "明暦",
-        "めいれき",
-    },
-    {
-        1658,
-        "万治",
-        "まんじ",
-    },
-    {
-        1661,
-        "寛文",
-        "かんぶん",
-    },
-    {
-        1673,
-        "延宝",
-        "えんぽう",
-    },
-    {
-        1681,
-        "天和",
-        "てんな",
-    },
-    {
-        1684,
-        "貞享",
-        "じょうきょう",
-    },
-    {
-        1688,
-        "元禄",
-        "げんろく",
-    },
-    {
-        1704,
-        "宝永",
-        "ほうえい",
-    },
-    {
-        1711,
-        "正徳",
-        "しょうとく",
-    },
-    {
-        1716,
-        "享保",
-        "きょうほ",
-    },
-    {
-        1736,
-        "元文",
-        "げんぶん",
-    },
-    {
-        1741,
-        "寛保",
-        "かんぽ",
-    },
-    {
-        1744,
-        "延享",
-        "えんきょう",
-    },
-    {
-        1748,
-        "寛延",
-        "かんえん",
-    },
-    {
-        1751,
-        "宝暦",
-        "ほうれき",
-    },
-    {
-        1764,
-        "明和",
-        "めいわ",
-    },
-    {
-        1772,
-        "安永",
-        "あんえい",
-    },
-    {
-        1781,
-        "天明",
-        "てんめい",
-    },
-    {
-        1789,
-        "寛政",
-        "かんせい",
-    },
-    {
-        1801,
-        "享和",
-        "きょうわ",
-    },
-    {
-        1804,
-        "文化",
-        "ぶんか",
-    },
-    {
-        1818,
-        "文政",
-        "ぶんせい",
-    },
-    {
-        1830,
-        "天保",
-        "てんぽう",
-    },
-    {
-        1844,
-        "弘化",
-        "こうか",
-    },
-    {
-        1848,
-        "嘉永",
-        "かえい",
-    },
-    {
-        1854,
-        "安政",
-        "あんせい",
-    },
-    {
-        1860,
-        "万延",
-        "まんえん",
-    },
-    {
-        1861,
-        "文久",
-        "ぶんきゅう",
-    },
-    {
-        1864,
-        "元治",
-        "げんじ",
-    },
-    {
-        1865,
-        "慶応",
-        "けいおう",
-    },
-    {
-        1868,
-        "明治",
-        "めいじ",
-    },
-    {
-        1912,
-        "大正",
-        "たいしょう",
-    },
-    {
-        1926,
-        "昭和",
-        "しょうわ",
-    },
-    {
-        1989,
-        "平成",
-        "へいせい",
-    },
-    {
-        2019,
-        "令和",
-        "れいわ",
-    }};
+    {645, "大化", "たいか"},
+    {650, "白雉", "はくち"},
+    {686, "朱鳥", "しゅちょう"},
+    {701, "大宝", "たいほう"},
+    {704, "慶雲", "けいうん"},
+    {708, "和銅", "わどう"},
+    {715, "霊亀", "れいき"},
+    {717, "養老", "ようろう"},
+    {724, "神亀", "じんき"},
+    {729, "天平", "てんぴょう"},
+    {749, "天平感宝", "てんぴょうかんぽう"},
+    {749, "天平勝宝", "てんぴょうしょうほう"},
+    {757, "天平宝字", "てんぴょうほうじ"},
+    {765, "天平神護", "てんぴょうじんご"},
+    {767, "神護景雲", "じんごけいうん"},
+    {770, "宝亀", "ほうき"},
+    {781, "天応", "てんおう"},
+    {782, "延暦", "えんりゃく"},
+    {806, "大同", "たいどう"},
+    {810, "弘仁", "こうにん"},
+    {824, "天長", "てんちょう"},
+    {834, "承和", "じょうわ"},
+    {848, "嘉祥", "かしょう"},
+    {851, "仁寿", "にんじゅ"},
+    {854, "斉衡", "さいこう"},
+    {857, "天安", "てんなん"},
+    {859, "貞観", "じょうかん"},
+    {877, "元慶", "がんぎょう"},
+    {885, "仁和", "にんな"},
+    {889, "寛平", "かんぴょう"},
+    {898, "昌泰", "しょうたい"},
+    {901, "延喜", "えんぎ"},
+    {923, "延長", "えんちょう"},
+    {931, "承平", "じょうへい"},
+    {938, "天慶", "てんぎょう"},
+    {947, "天暦", "てんりゃく"},
+    {957, "天徳", "てんとく"},
+    {961, "応和", "おうわ"},
+    {964, "康保", "こうほう"},
+    {968, "安和", "あんな"},
+    {970, "天禄", "てんろく"},
+    {973, "天延", "てんえん"},
+    {976, "貞元", "じょうげん"},
+    {978, "天元", "てんげん"},
+    {983, "永観", "えいかん"},
+    {985, "寛和", "かんな"},
+    {987, "永延", "えいえん"},
+    {989, "永祚", "えいそ"},
+    {990, "正暦", "しょうりゃく"},
+    {995, "長徳", "ちょうとく"},
+    {999, "長保", "ちょうほう"},
+    {1004, "寛弘", "かんこう"},
+    {1012, "長和", "ちょうわ"},
+    {1017, "寛仁", "かんにん"},
+    {1021, "治安", "じあん"},
+    {1024, "万寿", "まんじゅ"},
+    {1028, "長元", "ちょうげん"},
+    {1037, "長暦", "ちょうりゃく"},
+    {1040, "長久", "ちょうきゅう"},
+    {1044, "寛徳", "かんとく"},
+    {1046, "永承", "えいしょう"},
+    {1053, "天喜", "てんき"},
+    {1058, "康平", "こうへい"},
+    {1065, "治暦", "じりゃく"},
+    {1069, "延久", "えんきゅう"},
+    {1074, "承保", "じょうほう"},
+    {1077, "承暦", "じょうりゃく"},
+    {1081, "永保", "えいほ"},
+    {1084, "応徳", "おうとく"},
+    {1087, "寛治", "かんじ"},
+    {1094, "嘉保", "かほう"},
+    {1096, "永長", "えいちょう"},
+    {1097, "承徳", "じょうとく"},
+    {1099, "康和", "こうわ"},
+    {1104, "長治", "ちょうじ"},
+    {1106, "嘉承", "かしょう"},
+    {1108, "天仁", "てんにん"},
+    {1110, "天永", "てんえい"},
+    {1113, "永久", "えいきゅう"},
+    {1118, "元永", "げんえい"},
+    {1120, "保安", "ほうあん"},
+    {1124, "天治", "てんじ"},
+    {1126, "大治", "だいじ"},
+    {1131, "天承", "てんじょう"},
+    {1132, "長承", "ちょうじょう"},
+    {1135, "保延", "ほうえん"},
+    {1141, "永治", "えいじ"},
+    {1142, "康治", "こうじ"},
+    {1144, "天養", "てんよう"},
+    {1145, "久安", "きゅうあん"},
+    {1151, "仁平", "にんぺい"},
+    {1154, "久寿", "きゅうじゅ"},
+    {1156, "保元", "ほうげん"},
+    {1159, "平治", "へいじ"},
+    {1160, "永暦", "えいりゃく"},
+    {1161, "応保", "おうほ"},
+    {1163, "長寛", "ちょうかん"},
+    {1165, "永万", "えいまん"},
+    {1166, "仁安", "にんあん"},
+    {1169, "嘉応", "かおう"},
+    {1171, "承安", "しょうあん"},
+    {1175, "安元", "あんげん"},
+    {1177, "治承", "じしょう"},
+    {1181, "養和", "ようわ"},
+    {1182, "寿永", "じゅえい"},
+    {1184, "元暦", "げんりゃく"},
+    {1185, "文治", "ぶんじ"},
+    {1190, "建久", "けんきゅう"},
+    {1199, "正治", "しょうじ"},
+    {1201, "建仁", "けんにん"},
+    {1204, "元久", "げんきゅう"},
+    {1206, "建永", "けんえい"},
+    {1207, "承元", "じょうげん"},
+    {1211, "建暦", "けんりゃく"},
+    {1213, "建保", "けんぽう"},
+    {1219, "承久", "しょうきゅう"},
+    {1222, "貞応", "じょうおう"},
+    {1224, "元仁", "げんにん"},
+    {1225, "嘉禄", "かろく"},
+    {1227, "安貞", "あんてい"},
+    {1229, "寛喜", "かんき"},
+    {1232, "貞永", "じょうえい"},
+    {1233, "天福", "てんぷく"},
+    {1234, "文暦", "ぶんりゃく"},
+    {1235, "嘉禎", "かてい"},
+    {1238, "暦仁", "りゃくにん"},
+    {1239, "延応", "えんおう"},
+    {1240, "仁治", "にんじゅ"},
+    {1243, "寛元", "かんげん"},
+    {1247, "宝治", "ほうじ"},
+    {1249, "建長", "けんちょう"},
+    {1256, "康元", "こうげん"},
+    {1257, "正嘉", "しょうか"},
+    {1259, "正元", "しょうげん"},
+    {1260, "文応", "ぶんおう"},
+    {1261, "弘長", "こうちょう"},
+    {1264, "文永", "ぶんえい"},
+    {1275, "建治", "けんじ"},
+    {1278, "弘安", "こうあん"},
+    {1288, "正応", "しょうおう"},
+    {1293, "永仁", "えいにん"},
+    {1299, "正安", "しょうあん"},
+    {1302, "乾元", "けんげん"},
+    {1303, "嘉元", "かげん"},
+    {1306, "徳治", "とくじ"},
+    {1308, "延慶", "えんぎょう"},
+    {1311, "応長", "おうちょう"},
+    {1312, "正和", "しょうわ"},
+    {1317, "文保", "ぶんぽう"},
+    {1319, "元応", "げんおう"},
+    {1321, "元亨", "げんこう"},
+    {1324, "正中", "しょうちゅう"},
+    {1326, "嘉暦", "かりゃく"},
+    {1329, "元徳", "げんとく"},
+    {1331, "元弘", "げんこう"},
+    {1334, "建武", "けんむ"},
+    {1336, "延元", "えんげん"},
+    {1340, "興国", "こうこく"},
+    {1346, "正平", "しょうへい"},
+    {1370, "建徳", "けんとく"},
+    {1372, "文中", "ぶんちゅう"},
+    {1375, "天授", "てんじゅ"},
+    {1381, "弘和", "こうわ"},
+    {1384, "元中", "げんちゅう"},
+    {1390, "明徳", "めいとく"},
+    {1394, "応永", "おうえい"},
+    {1428, "正長", "しょうちょう"},
+    {1429, "永享", "えいきょう"},
+    {1441, "嘉吉", "かきつ"},
+    {1444, "文安", "ぶんあん"},
+    {1449, "宝徳", "ほうとく"},
+    {1452, "享徳", "きょうとく"},
+    {1455, "康正", "こうしょう"},
+    {1457, "長禄", "ちょうろく"},
+    {1460, "寛正", "かんしょう"},
+    {1466, "文正", "ぶんしょう"},
+    {1467, "応仁", "おうにん"},
+    {1469, "文明", "ぶんめい"},
+    {1487, "長享", "ちょうきょう"},
+    {1489, "延徳", "えんとく"},
+    {1492, "明応", "めいおう"},
+    {1501, "文亀", "ぶんき"},
+    {1504, "永正", "えいしょう"},
+    {1521, "大永", "だいえい"},
+    {1528, "享禄", "きょうろく"},
+    {1532, "天文", "てんぶん"},
+    {1555, "弘治", "こうじ"},
+    {1558, "永禄", "えいろく"},
+    {1570, "元亀", "げんき"},
+    {1573, "天正", "てんしょう"},
+    {1592, "文禄", "ぶんろく"},
+    {1596, "慶長", "けいちょう"},
+    {1615, "元和", "げんな"},
+    {1624, "寛永", "かんえい"},
+    {1644, "正保", "しょうほう"},
+    {1648, "慶安", "けいあん"},
+    {1652, "承応", "じょうおう"},
+    {1655, "明暦", "めいれき"},
+    {1658, "万治", "まんじ"},
+    {1661, "寛文", "かんぶん"},
+    {1673, "延宝", "えんぽう"},
+    {1681, "天和", "てんな"},
+    {1684, "貞享", "じょうきょう"},
+    {1688, "元禄", "げんろく"},
+    {1704, "宝永", "ほうえい"},
+    {1711, "正徳", "しょうとく"},
+    {1716, "享保", "きょうほ"},
+    {1736, "元文", "げんぶん"},
+    {1741, "寛保", "かんぽ"},
+    {1744, "延享", "えんきょう"},
+    {1748, "寛延", "かんえん"},
+    {1751, "宝暦", "ほうれき"},
+    {1764, "明和", "めいわ"},
+    {1772, "安永", "あんえい"},
+    {1781, "天明", "てんめい"},
+    {1789, "寛政", "かんせい"},
+    {1801, "享和", "きょうわ"},
+    {1804, "文化", "ぶんか"},
+    {1818, "文政", "ぶんせい"},
+    {1830, "天保", "てんぽう"},
+    {1844, "弘化", "こうか"},
+    {1848, "嘉永", "かえい"},
+    {1854, "安政", "あんせい"},
+    {1860, "万延", "まんえん"},
+    {1861, "文久", "ぶんきゅう"},
+    {1864, "元治", "げんじ"},
+    {1865, "慶応", "けいおう"},
+    {1868, "明治", "めいじ"},
+    {1912, "大正", "たいしょう"},
+    {1926, "昭和", "しょうわ"},
+    {1989, "平成", "へいせい"},
+    {2019, "令和", "れいわ"}};
 
 const YearData kNorthEraData[] = {
     // "元徳", "建武" and "明徳" are used for both south and north courts.
-    {
-        1329,
-        "元徳",
-        "げんとく",
-    },
-    {
-        1332,
-        "正慶",
-        "しょうけい",
-    },
-    {
-        1334,
-        "建武",
-        "けんむ",
-    },
-    {
-        1338,
-        "暦応",
-        "りゃくおう",
-    },
-    {
-        1342,
-        "康永",
-        "こうえい",
-    },
-    {
-        1345,
-        "貞和",
-        "じょうわ",
-    },
-    {
-        1350,
-        "観応",
-        "かんおう",
-    },
-    {
-        1352,
-        "文和",
-        "ぶんわ",
-    },
-    {
-        1356,
-        "延文",
-        "えんぶん",
-    },
-    {
-        1361,
-        "康安",
-        "こうあん",
-    },
-    {
-        1362,
-        "貞治",
-        "じょうじ",
-    },
-    {
-        1368,
-        "応安",
-        "おうあん",
-    },
-    {
-        1375,
-        "永和",
-        "えいわ",
-    },
-    {
-        1379,
-        "康暦",
-        "こうりゃく",
-    },
-    {
-        1381,
-        "永徳",
-        "えいとく",
-    },
-    {
-        1384,
-        "至徳",
-        "しとく",
-    },
-    {
-        1387,
-        "嘉慶",
-        "かけい",
-    },
-    {
-        1389,
-        "康応",
-        "こうおう",
-    },
-    {
-        1390,
-        "明徳",
-        "めいとく",
-    }};
-
-const char *kWeekDayString[] = {
-    "日", "月", "火", "水", "木", "金", "土",
-};
-
-const char kDateDescription[] = "日付";
-const char kTimeDescription[] = "時刻";
+    {1329, "元徳", "げんとく"},
+    {1332, "正慶", "しょうけい"},
+    {1334, "建武", "けんむ"},
+    {1338, "暦応", "りゃくおう"},
+    {1342, "康永", "こうえい"},
+    {1345, "貞和", "じょうわ"},
+    {1350, "観応", "かんおう"},
+    {1352, "文和", "ぶんわ"},
+    {1356, "延文", "えんぶん"},
+    {1361, "康安", "こうあん"},
+    {1362, "貞治", "じょうじ"},
+    {1368, "応安", "おうあん"},
+    {1375, "永和", "えいわ"},
+    {1379, "康暦", "こうりゃく"},
+    {1381, "永徳", "えいとく"},
+    {1384, "至徳", "しとく"},
+    {1387, "嘉慶", "かけい"},
+    {1389, "康応", "こうおう"},
+    {1390, "明徳", "めいとく"}};
 
 bool PrintUint32(const char *format, uint32 num, char *buf, size_t buf_size) {
   const int ret = std::snprintf(buf, buf_size, format, num);
@@ -1525,14 +501,6 @@ void Insert(const Segment::Candidate &base_candidate, int position,
     c->description = description;
   }
 }
-
-enum {
-  REWRITE_YEAR,
-  REWRITE_DATE,
-  REWRITE_MONTH,
-  REWRITE_CURRENT_TIME,
-  REWRITE_DATE_AND_CURRENT_TIME
-};
 
 bool AdToEraForCourt(const YearData *data, int size, int year,
                      std::vector<std::string> *results) {
@@ -1771,9 +739,9 @@ bool DateRewriter::AdToEra(int year, int month,
   // The order is south to north.
   std::vector<std::string> eras;
   bool r = false;
-  r = AdToEraForCourt(kEraData, arraysize(kEraData), year, &eras);
+  r = AdToEraForCourt(kEraData, std::size(kEraData), year, &eras);
   if (year > 1331 && year < 1393) {
-    r |= AdToEraForCourt(kNorthEraData, arraysize(kNorthEraData), year, &eras);
+    r |= AdToEraForCourt(kNorthEraData, std::size(kNorthEraData), year, &eras);
   }
   // 1334 requires dedupe
   for (int i = 0; i < eras.size(); ++i) {
@@ -1795,9 +763,9 @@ bool DateRewriter::EraToAd(const std::string &key,
                            std::vector<std::string> *descriptions) {
   bool ret = false;
   // The order is south to north, older to newer
-  ret |= EraToAdForCourt(kEraData, arraysize(kEraData), key, results,
+  ret |= EraToAdForCourt(kEraData, std::size(kEraData), key, results,
                          descriptions);
-  ret |= EraToAdForCourt(kNorthEraData, arraysize(kNorthEraData), key, results,
+  ret |= EraToAdForCourt(kNorthEraData, std::size(kNorthEraData), key, results,
                          descriptions);
   return ret;
 }
@@ -1842,205 +810,133 @@ bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
   return true;
 }
 
-bool DateRewriter::RewriteTime(Segment *segment, const char *key,
-                               const char *value, const char *description,
-                               int type, int diff) {
-  if (segment->key() != key) {  // only exact match
-    return false;
+namespace {
+absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff) {
+  const absl::Time at = Clock::GetAbslTime();
+  const absl::TimeZone &tz = Clock::GetTimeZone();
+
+  if (type == DATE) {
+    const absl::CivilDay c_day = absl::ToCivilDay(at, tz) + diff;
+    return absl::CivilMinute(c_day);
+  }
+  if (type == MONTH) {
+    const absl::CivilMonth c_mon = absl::ToCivilMonth(at, tz) + diff;
+    return absl::CivilMinute(c_mon);
+  }
+  if (type == YEAR) {
+    const absl::CivilYear c_year = absl::ToCivilYear(at, tz) + diff;
+    return absl::CivilMinute(c_year);
+  }
+  if (type == WEEKDAY) {
+    const absl::CivilDay c_day = absl::ToCivilDay(at, tz);
+    const int weekday = static_cast<int>(absl::GetWeekday(c_day));
+    const int weekday_diff = (diff + 7 - weekday) % 7;
+    return c_day + weekday_diff;
   }
 
-  const size_t kMinSize = 10;
-  const size_t size = std::min(kMinSize, segment->candidates_size());
-
-  for (size_t cand_idx = 0; cand_idx < size; ++cand_idx) {
-    const Segment::Candidate &cand = segment->candidate(cand_idx);
-    if (cand.value != value) {
-      continue;
-    }
-    // Date candidates are too many, therefore highest candidate show at most
-    // 3rd.
-    // TODO(nona): learn date candidate even if the date is changed.
-    const size_t kMinimumDateCandidateIdx = 3;
-    const size_t insert_idx =
-        (size < kMinimumDateCandidateIdx)
-            ? size
-            : std::max(cand_idx + 1, kMinimumDateCandidateIdx);
-
-    struct tm t_st;
-    std::vector<std::string> era;
-    switch (type) {
-      case REWRITE_DATE: {
-        if (!Clock::GetTmWithOffsetSecond(&t_st, diff * 86400)) {
-          LOG(ERROR) << "GetTmWithOffsetSecond() failed";
-          return false;
-        }
-        std::vector<std::string> results;
-        ConvertDateWithYear(t_st.tm_year + 1900, t_st.tm_mon + 1, t_st.tm_mday,
-                            &results);
-        if (AdToEra(t_st.tm_year + 1900, t_st.tm_mon + 1, &era) &&
-            !era.empty()) {
-          results.push_back(Util::StringPrintf("%s年%d月%d日", era[0].c_str(),
-                                               t_st.tm_mon + 1, t_st.tm_mday));
-        }
-        results.push_back(
-            Util::StringPrintf("%s曜日", kWeekDayString[t_st.tm_wday]));
-
-        for (std::vector<std::string>::reverse_iterator rit = results.rbegin();
-             rit != results.rend(); ++rit) {
-          Insert(cand, insert_idx, *rit, description, segment);
-        }
-        return true;
-      }
-
-      case REWRITE_MONTH: {
-        if (!Clock::GetCurrentTm(&t_st)) {
-          LOG(ERROR) << "GetCurrentTm failed";
-          return false;
-        }
-        const int month = (t_st.tm_mon + diff + 12) % 12 + 1;
-        Insert(cand, insert_idx, Util::StringPrintf("%d月", month), description,
-               segment);
-        Insert(cand, insert_idx, Util::StringPrintf("%d", month), description,
-               segment);
-        return true;
-      }
-
-      case REWRITE_YEAR: {
-        if (!Clock::GetCurrentTm(&t_st)) {
-          LOG(ERROR) << "GetCurrentTm failed";
-          return false;
-        }
-        const int year = (t_st.tm_year + diff + 1900);
-        if (AdToEra(year, 0, /* unknown mounth */ &era) && !era.empty()) {
-          for (const auto &e : era) {
-            Insert(cand, insert_idx, Util::StringPrintf("%s年", e.c_str()),
-                   description, segment);
-          }
-        }
-        Insert(cand, insert_idx, Util::StringPrintf("%d年", year), description,
-               segment);
-        Insert(cand, insert_idx, Util::StringPrintf("%d", year), description,
-               segment);
-        return true;
-      }
-
-      case REWRITE_CURRENT_TIME: {
-        if (!Clock::GetCurrentTm(&t_st)) {
-          LOG(ERROR) << "GetCurrentTm failed";
-          return false;
-        }
-        std::vector<std::string> times;
-        ConvertTime(t_st.tm_hour, t_st.tm_min, &times);
-        for (std::vector<std::string>::reverse_iterator rit = times.rbegin();
-             rit != times.rend(); ++rit) {
-          Insert(cand, insert_idx, *rit, description, segment);
-        }
-        return true;
-      }
-
-      case REWRITE_DATE_AND_CURRENT_TIME: {
-        if (!Clock::GetCurrentTm(&t_st)) {
-          LOG(ERROR) << "GetCurrentTm failed";
-          return false;
-        }
-        // Y/MM/DD H:MM
-        const std::string ymmddhmm = Util::StringPrintf(
-            "%d/%2.2d/%2.2d %2d:%2.2d", t_st.tm_year + 1900, t_st.tm_mon + 1,
-            t_st.tm_mday, t_st.tm_hour, t_st.tm_min);
-        Insert(cand, insert_idx, ymmddhmm, description, segment);
-        return true;
-      }
-    }
-  }
-
-  return false;
+  return absl::ToCivilMinute(at, tz);
 }
+
+std::vector<std::string> GetConversions(const DateRewriter::DateData &data) {
+  std::vector<std::string> results;
+  const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff);
+
+  switch (data.type) {
+    case DATE:
+    case WEEKDAY: {
+      DateRewriter::ConvertDateWithYear(cm.year(), cm.month(), cm.day(),
+                                        &results);
+      std::vector<std::string> era;
+      if (DateRewriter::AdToEra(cm.year(), cm.month(), &era) && !era.empty()) {
+        results.push_back(
+            Util::StringPrintf("%s年%d月%d日", era[0], cm.month(), cm.day()));
+      }
+      const int weekday = static_cast<int>(absl::GetWeekday(cm));
+      results.push_back(Util::StringPrintf("%s曜日", kWeekDayString[weekday]));
+      break;
+    }
+
+    case MONTH: {
+      results.push_back(Util::StringPrintf("%d", cm.month()));
+      results.push_back(Util::StringPrintf("%d月", cm.month()));
+      break;
+    }
+
+    case YEAR: {
+      results.push_back(Util::StringPrintf("%d", cm.year()));
+      results.push_back(Util::StringPrintf("%d年", cm.year()));
+
+      std::vector<std::string> era;
+      if (DateRewriter::AdToEra(cm.year(), 0, /* unknown mounth */ &era) &&
+          !era.empty()) {
+        for (auto rit = era.crbegin(); rit != era.crend(); ++rit) {
+          results.push_back(Util::StringPrintf("%s年", *rit));
+        }
+      }
+      break;
+    }
+
+    case CURRENT_TIME: {
+      DateRewriter::ConvertTime(cm.hour(), cm.minute(), &results);
+      break;
+    }
+
+    case DATE_AND_CURRENT_TIME: {
+      // Y/MM/DD H:MM
+      const std::string ymmddhmm =
+          Util::StringPrintf("%d/%2.2d/%2.2d %2d:%2.2d", cm.year(), cm.month(),
+                             cm.day(), cm.hour(), cm.minute());
+      results.push_back(ymmddhmm);
+      break;
+    }
+
+    default: {
+      // Unknown type
+    }
+  }
+  return results;
+}
+}  // namespace
 
 bool DateRewriter::RewriteDate(Segment *segment) {
-  for (size_t i = 0; i < arraysize(kDateData); ++i) {
-    if (RewriteTime(segment, kDateData[i].key, kDateData[i].value,
-                    kDateData[i].description, REWRITE_DATE,
-                    kDateData[i].diff)) {
-      VLOG(1) << "RewriteDate: " << kDateData[i].key << " "
-              << kDateData[i].value;
-      return true;
-    }
+  const std::string &key = segment->key();
+  auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
+                          [&key](auto data) { return key == data.key; });
+  if (rit == std::end(kDateData)) {
+    return false;
   }
-  return false;
-}
+  const DateData &data = *rit;
+  const std::vector<std::string> &conversions = GetConversions(data);
 
-bool DateRewriter::RewriteMonth(Segment *segment) {
-  for (size_t i = 0; i < arraysize(kMonthData); ++i) {
-    if (RewriteTime(segment, kMonthData[i].key, kMonthData[i].value,
-                    kMonthData[i].description, REWRITE_MONTH,
-                    kMonthData[i].diff)) {
-      VLOG(1) << "RewriteMonth: " << kMonthData[i].key << " "
-              << kMonthData[i].value;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool DateRewriter::RewriteYear(Segment *segment) {
-  for (size_t i = 0; i < arraysize(kYearData); ++i) {
-    if (RewriteTime(segment, kYearData[i].key, kYearData[i].value,
-                    kYearData[i].description, REWRITE_YEAR,
-                    kYearData[i].diff)) {
-      VLOG(1) << "RewriteYear: " << kYearData[i].key << " "
-              << kYearData[i].value;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool DateRewriter::RewriteWeekday(Segment *segment) {
-  struct tm t_st;
-  if (!Clock::GetCurrentTm(&t_st)) {
-    LOG(ERROR) << "GetCurrentTm failed";
+  if (conversions.empty()) {
     return false;
   }
 
-  for (size_t i = 0; i < arraysize(kWeekDayData); ++i) {
-    const int weekday = kWeekDayData[i].diff % 7;
-    const int additional_dates = (weekday + 7 - t_st.tm_wday) % 7;
-    if (RewriteTime(segment, kWeekDayData[i].key, kWeekDayData[i].value,
-                    kWeekDayData[i].description, REWRITE_DATE,
-                    additional_dates)) {
-      VLOG(1) << "RewriteWeekday: " << kWeekDayData[i].key << " "
-              << kWeekDayData[i].value;
-      return true;
+  // Calculate insert_idx
+  // Candidates will be inserted less than 10th candidate.
+  const size_t kMaxIdx = 10;
+  const size_t end_idx = std::min(kMaxIdx, segment->candidates_size());
+  size_t cand_idx = 0;
+  for (cand_idx = 0; cand_idx < end_idx; ++cand_idx) {
+    if (segment->candidate(cand_idx).value == data.value) {
+      break;
     }
   }
-
-  return false;
-}
-
-bool DateRewriter::RewriteCurrentTime(Segment *segment) {
-  for (size_t i = 0; i < arraysize(kCurrentTimeData); ++i) {
-    if (RewriteTime(segment, kCurrentTimeData[i].key, kCurrentTimeData[i].value,
-                    kCurrentTimeData[i].description, REWRITE_CURRENT_TIME, 0)) {
-      VLOG(1) << "RewriteCurrentTime: " << kCurrentTimeData[i].key << " "
-              << kCurrentTimeData[i].value;
-      return true;
-    }
+  if (cand_idx == end_idx) {
+    return false;
   }
-  return false;
-}
 
-bool DateRewriter::RewriteDateAndCurrentTime(Segment *segment) {
-  for (size_t i = 0; i < arraysize(kDateAndCurrentTimeData); ++i) {
-    if (RewriteTime(segment, kDateAndCurrentTimeData[i].key,
-                    kDateAndCurrentTimeData[i].value,
-                    kDateAndCurrentTimeData[i].description,
-                    REWRITE_DATE_AND_CURRENT_TIME, 0)) {
-      VLOG(1) << "RewriteDateAndCurrentTime: " << kDateAndCurrentTimeData[i].key
-              << " " << kDateAndCurrentTimeData[i].value;
-      return true;
-    }
+  // Date candidates are too many, therefore highest candidate show at most 3rd.
+  // TODO(nona): learn date candidate even if the date is changed.
+  const size_t kMinIdx = 3;
+  size_t insert_idx = std::min(std::max(kMinIdx, cand_idx + 1), end_idx);
+
+  // Insert words.
+  const Segment::Candidate &base_cand = segment->candidate(cand_idx);
+  for (const string &conversion : conversions) {
+    Insert(base_cand, insert_idx++, conversion, data.description, segment);
   }
-  return false;
+  return true;
 }
 
 bool DateRewriter::RewriteEra(Segment *current_segment,
@@ -2086,8 +982,8 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
       kInsertPosition, static_cast<int>(current_segment->candidates_size()));
 
   const char kDescription[] = "和暦";
-  for (int i = static_cast<int>(results.size()) - 1; i >= 0; --i) {
-    Insert(current_segment->candidate(0), position, results[i], kDescription,
+  for (auto rit = results.crbegin(); rit != results.crend(); ++rit) {
+    Insert(current_segment->candidate(0), position, *rit, kDescription,
            current_segment);
     current_segment->mutable_candidate(position)->attributes &=
         ~Segment::Candidate::NO_VARIANTS_EXPANSION;
@@ -2404,9 +1300,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       return false;
     }
 
-    if (RewriteDate(seg) || RewriteWeekday(seg) || RewriteMonth(seg) ||
-        RewriteYear(seg) || RewriteCurrentTime(seg) ||
-        RewriteDateAndCurrentTime(seg)) {
+    if (RewriteDate(seg)) {
       modified = true;
     } else if (i + 1 < segments->segments_size() &&
                RewriteEra(seg, segments->segment(i + 1))) {

@@ -118,18 +118,22 @@ struct IsNonnegativeAndLessThan<std::false_type> {
 void ModifyT13nsForGodan(const std::string &key,
                          std::vector<std::string> *t13ns) {
   static const char *const kKeycodeToT13nMap[] = {
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, "", "ya",  "axtu", "ixtu", "uxtu", "",     0,     0,  0,      "xi",
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      "",     "ann",  "extu", "inn", 0,  "oxtu", 0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      "nn",   0,      "yu",   "xe",  "", 0,      0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  0,     0,      0,      0,      0,      0,     0,  0,      0,
-      0, 0,  "unn", "yo",   "enn",  "onn",  0,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, "",      "ya",    "axtu",  "ixtu",  "uxtu",  "",
+      nullptr, nullptr, nullptr, "xi",    nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, "",      "ann",   "extu",  "inn",   nullptr,
+      "oxtu",  nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, "nn",    nullptr, "yu",    "xe",
+      "",      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+      nullptr, nullptr, nullptr, "unn",   "yo",    "enn",   "onn",   nullptr,
   };
 
   const std::string &src = (*t13ns)[transliteration::HALF_ASCII];
@@ -138,7 +142,7 @@ void ModifyT13nsForGodan(const std::string &key,
     using IsNonnegativeAndLessThanType = IsNonnegativeAndLessThan<
         std::is_unsigned<std::string::value_type>::type>;
     if (IsNonnegativeAndLessThanType()(*c, arraysize(kKeycodeToT13nMap)) &&
-        kKeycodeToT13nMap[*c] != NULL) {
+        kKeycodeToT13nMap[*c] != nullptr) {
       dst.append(kKeycodeToT13nMap[*c]);
     } else {
       dst.append(1, *c);
