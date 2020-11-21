@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   std::string result;
   size_t pos = 0;
 
-  while (getline(std::cin, command)) {
+  while (std::getline(std::cin, command)) {
     char initial = command[0];
     if (initial == '-' || (initial >= '0' && initial <= '9')) {
       std::stringstream ss;

@@ -69,7 +69,7 @@ void Convert() {
     InputFileStream ifs(FLAGS_suppression_data.c_str());
     std::string line;
 
-    while (!getline(ifs, line).fail()) {
+    while (!std::getline(ifs, line).fail()) {
       if (line.empty()) {
         continue;
       }

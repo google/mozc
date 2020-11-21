@@ -146,7 +146,7 @@ void LoadConjugation(
 
   std::string line;
   std::vector<std::string> fields;
-  while (!getline(ifs, line).fail()) {
+  while (!std::getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
@@ -182,7 +182,7 @@ void LoadUsage(const std::string &filename,
   std::map<std::string, int> conjugation_id_map;
 
   int conjugation_id = 0;
-  while (!getline(ifs, line).fail()) {
+  while (!std::getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       // starting with '#' is a comment line.
       continue;

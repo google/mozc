@@ -57,7 +57,7 @@ void Loop(std::istream *input, std::ostream *output) {
 
   commands::Command command;
   std::string line;
-  while (getline(*input, line)) {
+  while (std::getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
       continue;

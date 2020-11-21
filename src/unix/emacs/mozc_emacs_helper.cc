@@ -77,7 +77,7 @@ void ProcessLoop() {
   mozc::commands::Command command;
   std::string line;
 
-  while (getline(std::cin, line)) {
+  while (std::getline(std::cin, line)) {
     command.clear_input();
     command.clear_output();
     uint32 event_id = 0;

@@ -60,9 +60,9 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
   std::vector<KeyInformation> result;
 
   std::string line;
-  getline(*ifs, line);  // Skip the first line.
+  std::getline(*ifs, line);  // Skip the first line.
   while (!ifs->eof()) {
-    getline(*ifs, line);
+    std::getline(*ifs, line);
     Util::ChopReturns(&line);
     if (line.empty() || line[0] == '#') {
       // empty or comment

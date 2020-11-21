@@ -135,6 +135,7 @@ def ParseOption():
   parser.add_option("--verify", dest="verify", action="store_true",
                     default=False)
   parser.add_option("--notarization_id", dest="notarization_id")
+  parser.add_option("--output", dest="output")
   (options, unused_args) = parser.parse_args()
 
   if not options.target:
@@ -176,6 +177,10 @@ def main():
   if opts.notarization_id:
     Notarize(opts.target, opts.notarization_id)
 
+  # Output something to make the processes trackable.
+  if opts.output:
+    with open(opts.output, "w") as output:
+      output.write("Done")
 
 if __name__ == "__main__":
   main()

@@ -62,7 +62,7 @@ void LoadTokens(std::istream *ifs, std::map<std::string, TokenList> *dic) {
   dic->clear();
   std::string line;
   std::vector<std::string> fields;
-  while (!getline(*ifs, line).fail()) {
+  while (!std::getline(*ifs, line).fail()) {
     fields.clear();
     Util::SplitStringUsing(line, "\t", &fields);
     CHECK_GE(fields.size(), 4);

@@ -209,7 +209,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
     InputFileStream input(suggestion_filter_files_[i].c_str());
     CHECK(input) << "cannot open: " << suggestion_filter_files_[i];
     std::string line;
-    while (getline(input, line)) {
+    while (std::getline(input, line)) {
       if (line.empty() || line[0] == '#') {
         continue;
       }
@@ -227,7 +227,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
     CHECK(input) << "cannot open: " << dictionary_files_[i];
     std::vector<std::string> fields;
     std::string line;
-    while (getline(input, line)) {
+    while (std::getline(input, line)) {
       fields.clear();
       Util::SplitStringUsing(line, "\t", &fields);
       CHECK_GE(fields.size(), 5);
