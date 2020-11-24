@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-11-10 00:02-0800\n"
+"POT-Creation-Date: 2020-11-24 09:36-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,32 +35,40 @@ msgstr ""
 msgid "Dictionary Tool"
 msgstr ""
 
-#: mozc_state.cc:63 mozc_engine.cc:49
+#: mozc_engine.cc:49 mozc_state.cc:63
 msgid "Direct"
 msgstr ""
 
 #. Full width ASCII letter A.
-#: mozc_state.cc:87 mozc_engine.cc:79
+#: mozc_engine.cc:79 mozc_state.cc:87
 msgid "Full ASCII"
 msgstr ""
 
 #. Katakana letter A.
-#: mozc_state.cc:75 mozc_engine.cc:63
+#: mozc_engine.cc:63 mozc_state.cc:75
 msgid "Full Katakana"
 msgstr ""
 
-#: mozc_state.cc:81 mozc_engine.cc:71
+#: mozc_engine.cc:71 mozc_state.cc:81
 msgid "Half ASCII"
 msgstr ""
 
 #. Half width Katakana letter A.
-#: mozc_state.cc:93 mozc_engine.cc:86
+#: mozc_engine.cc:86 mozc_state.cc:93
 msgid "Half Katakana"
 msgstr ""
 
 #. Hiragana letter A in UTF-8.
-#: mozc_state.cc:69 mozc_engine.cc:56
+#: mozc_engine.cc:56 mozc_state.cc:69
 msgid "Hiragana"
+msgstr ""
+
+#: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
+msgid "Japanese input method based on Mozc"
+msgstr ""
+
+#: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
+msgid "Mozc for Fcitx 5"
 msgstr ""
 
 #: mozc_response_parser.cc:144
