@@ -1,5 +1,6 @@
 #!/bin/sh
 
 TARGETS="server/server.gyp:mozc_server gui/gui.gyp:mozc_tool unix/fcitx/fcitx.gyp:fcitx-mozc"
+_bldtype="${_bldtype:-Debug}"
 
-python build_mozc.py build ${TARGETS} -c Debug
+python build_mozc.py build ${TARGETS} -c ${_bldtype}
