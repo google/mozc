@@ -432,7 +432,7 @@ std::string ContextAwareConvert(const std::string &first_key,
 
   std::string converted;
   int segment_num = 0;
-  while (1) {
+  while (true) {
     int position = -1;
     for (size_t i = 0; i < segments.segment(segment_num).candidates_size();
          ++i) {

@@ -1344,7 +1344,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   request.composer().GetStringForPreedit(input_key);
   std::set<std::string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
-  if (expanded_set.size() > 0) {
+  if (!expanded_set.empty()) {
     expanded->reset(new Trie<std::string>);
     for (std::set<std::string>::const_iterator itr = expanded_set.begin();
          itr != expanded_set.end(); ++itr) {
@@ -1762,7 +1762,6 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   }
 
   InsertHistory(request_type, is_suggestion, last_access_time, segments);
-  return;
 }
 
 void UserHistoryPredictor::MakeLearningSegments(
@@ -1917,8 +1916,6 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
       }
     }
   }
-
-  return;
 }
 
 void UserHistoryPredictor::Revert(Segments *segments) {

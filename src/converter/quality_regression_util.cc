@@ -166,7 +166,7 @@ bool QualityRegressionUtil::ParseFile(const std::string &filename,
     return false;
   }
   std::string line;
-  while (!getline(ifs, line).fail()) {
+  while (!std::getline(ifs, line).fail()) {
     if (line.empty() || line.c_str()[0] == '#') {
       continue;
     }

@@ -44,7 +44,7 @@ class UnnamedEventNotifierThread : public Thread {
       : event_(event), timeout_(timeout) {}
 
  public:
-  virtual void Run() {
+  void Run() override {
     Util::Sleep(timeout_);
     LOG(INFO) << "Notify event";
     event_->Notify();

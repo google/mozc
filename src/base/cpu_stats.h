@@ -60,16 +60,16 @@ class CPUStatsInterface {
 class CPUStats : public CPUStatsInterface {
  public:
   CPUStats();
-  virtual ~CPUStats();
+  ~CPUStats() override;
 
   // return 0.0 if CPU load is unknown
-  float GetSystemCPULoad();
+  float GetSystemCPULoad() override;
 
   // return 0.0 if CPU load is unknown
-  float GetCurrentProcessCPULoad();
+  float GetCurrentProcessCPULoad() override;
 
   // return the number of processors
-  size_t GetNumberOfProcessors() const;
+  size_t GetNumberOfProcessors() const override;
 
  private:
   uint64 prev_system_total_times_;

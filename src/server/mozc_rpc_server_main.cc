@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "absl/flags/flag.h"
 #ifdef OS_WIN
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -143,7 +144,7 @@ class RPCServer {
 #endif
 
     ::memset(&sin, 0, sizeof(sin));
-    sin.sin_port = htons(FLAGS_port);
+    sin.sin_port = htons(mozc::GetFlag(FLAGS_port));
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
 
@@ -181,7 +182,7 @@ class RPCServer {
       uint32 request_size = 0;
       // Receive the size of data.
       if (!Recv(client_socket, reinterpret_cast<char *>(&request_size),
-                sizeof(request_size), FLAGS_rpc_timeout)) {
+                sizeof(request_size), mozc::GetFlag(FLAGS_rpc_timeout))) {
         LOG(ERROR) << "Cannot receive request_size header.";
         CloseSocket(client_socket);
         continue;
@@ -193,7 +194,7 @@ class RPCServer {
       // Receive the body of serialized protobuf.
       std::unique_ptr<char[]> request_str(new char[request_size]);
       if (!Recv(client_socket, request_str.get(), request_size,
-                FLAGS_rpc_timeout)) {
+                mozc::GetFlag(FLAGS_rpc_timeout))) {
         LOG(ERROR) << "cannot receive body of request.";
         CloseSocket(client_socket);
         continue;
@@ -219,9 +220,9 @@ class RPCServer {
       output_size = htonl(output_size);
 
       if (!Send(client_socket, reinterpret_cast<char *>(&output_size),
-                sizeof(output_size), FLAGS_rpc_timeout) ||
+                sizeof(output_size), mozc::GetFlag(FLAGS_rpc_timeout)) ||
           !Send(client_socket, output_str.data(), output_str.size(),
-                FLAGS_rpc_timeout)) {
+                mozc::GetFlag(FLAGS_rpc_timeout))) {
         LOG(ERROR) << "Cannot send reply.";
       }
 
@@ -283,8 +284,9 @@ class RPCClient {
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_family = AF_INET;
 
-    const std::string port_str = std::to_string(FLAGS_port);
-    CHECK_EQ(::getaddrinfo(FLAGS_host.c_str(), port_str.c_str(), &hints, &res),
+    const std::string port_str = std::to_string(mozc::GetFlag(FLAGS_port));
+    CHECK_EQ(::getaddrinfo(mozc::GetFlag(FLAGS_host).c_str(), port_str.c_str(),
+                           &hints, &res),
              0)
         << "getaddrinfo failed";
 
@@ -302,20 +304,20 @@ class RPCClient {
     request_size = htonl(request_size);
 
     CHECK(Send(client_socket, reinterpret_cast<char *>(&request_size),
-               sizeof(request_size), FLAGS_rpc_timeout));
+               sizeof(request_size), mozc::GetFlag(FLAGS_rpc_timeout)));
     CHECK(Send(client_socket, request_str.data(), request_str.size(),
-               FLAGS_rpc_timeout));
+               mozc::GetFlag(FLAGS_rpc_timeout)));
 
     uint32 output_size = 0;
     CHECK(Recv(client_socket, reinterpret_cast<char *>(&output_size),
-               sizeof(output_size), FLAGS_rpc_timeout));
+               sizeof(output_size), mozc::GetFlag(FLAGS_rpc_timeout)));
     output_size = ntohl(output_size);
     CHECK_GT(output_size, 0);
     CHECK_LT(output_size, kMaxOutputSize);
 
     std::unique_ptr<char[]> output_str(new char[output_size]);
-    CHECK(
-        Recv(client_socket, output_str.get(), output_size, FLAGS_rpc_timeout));
+    CHECK(Recv(client_socket, output_str.get(), output_size,
+               mozc::GetFlag(FLAGS_rpc_timeout)));
 
     CHECK(output->ParseFromArray(output_str.get(), output_size));
 
@@ -353,16 +355,16 @@ int main(int argc, char *argv[]) {
 
   mozc::ScopedWSAData wsadata;
 
-  if (!FLAGS_user_profile_directory.empty()) {
+  if (!mozc::GetFlag(FLAGS_user_profile_directory).empty()) {
     LOG(INFO) << "Setting user profile directory to "
               << FLAGS_user_profile_directory;
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_directory);
   }
 
-  if (FLAGS_client) {
+  if (mozc::GetFlag(FLAGS_client)) {
     mozc::RPCClient client;
     CHECK(client.CreateSession());
-    for (int n = 0; n < FLAGS_client_test_size; ++n) {
+    for (int n = 0; n < mozc::GetFlag(FLAGS_client_test_size); ++n) {
       std::vector<mozc::commands::KeyEvent> keys;
       mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
       for (size_t i = 0; i < keys.size(); ++i) {
@@ -374,7 +376,7 @@ int main(int argc, char *argv[]) {
     }
     CHECK(client.DeleteSession());
     return 0;
-  } else if (FLAGS_server) {
+  } else if (mozc::GetFlag(FLAGS_server)) {
     mozc::RPCServer server;
     server.Loop();
   } else {

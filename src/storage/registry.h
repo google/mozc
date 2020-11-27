@@ -100,7 +100,7 @@ class Registry {
 
   // Insert key and bool value
   // It is not guaranteed that the data is synced to the disk
-  static bool Insert(const std::string &key, const bool &value) {
+  static bool Insert(const std::string &key, const bool value) {
     const uint8 tmp = static_cast<uint8>(value);
     return Insert<uint8>(key, tmp);
   }

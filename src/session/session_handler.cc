@@ -377,7 +377,7 @@ bool SessionHandler::InsertToStorage(commands::Command *command) {
   const commands::GenericStorageEntry &storage_entry =
       command->input().storage_entry();
   if (!storage_entry.has_type() || !storage_entry.has_key() ||
-      storage_entry.value().size() == 0) {
+      storage_entry.value().empty()) {
     LOG(WARNING) << "storage_entry lacks some fields.";
     return false;
   }
@@ -589,7 +589,7 @@ void SessionHandler::MaybeUpdateStoredConfig(commands::Command *command) {
 bool SessionHandler::SendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == NULL || *session == NULL) {
+  if (session == nullptr || *session == nullptr) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -601,7 +601,7 @@ bool SessionHandler::SendKey(commands::Command *command) {
 bool SessionHandler::TestSendKey(commands::Command *command) {
   const SessionID id = command->input().id();
   session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == NULL || *session == NULL) {
+  if (session == nullptr || *session == nullptr) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -613,7 +613,7 @@ bool SessionHandler::SendCommand(commands::Command *command) {
   const SessionID id = command->input().id();
   session::SessionInterface **session =
       const_cast<session::SessionInterface **>(session_map_->Lookup(id));
-  if (session == NULL || *session == NULL) {
+  if (session == nullptr || *session == nullptr) {
     LOG(WARNING) << "SessionID " << id << " is not available";
     return false;
   }
@@ -638,10 +638,10 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   last_create_session_time_ = current_time;
 
   // if session map is FULL, remove the oldest item from the LRU
-  SessionElement *oldest_element = NULL;
+  SessionElement *oldest_element = nullptr;
   if (session_map_->Size() >= max_session_size_) {
     oldest_element = const_cast<SessionElement *>(session_map_->Tail());
-    if (oldest_element == NULL) {
+    if (oldest_element == nullptr) {
       LOG(ERROR) << "oldest SessionElement is NULL";
       return false;
     }
@@ -671,7 +671,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   }
 
   session::SessionInterface *session = NewSession();
-  if (session == NULL) {
+  if (session == nullptr) {
     LOG(ERROR) << "Cannot allocate new Session";
     return false;
   }
@@ -682,7 +682,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   command->mutable_output()->set_id(new_id);
 
   // The oldes item should be reused
-  DCHECK(oldest_element == NULL || oldest_element == element);
+  DCHECK(oldest_element == nullptr || oldest_element == element);
 
   if (command->input().has_capability()) {
     session->set_client_capability(command->input().capability());
@@ -690,12 +690,6 @@ bool SessionHandler::CreateSession(commands::Command *command) {
 
   if (command->input().has_application_info()) {
     session->set_application_info(command->input().application_info());
-#ifdef OS_NACL
-    if (command->input().application_info().has_timezone_offset()) {
-      Clock::SetTimezoneOffset(
-          command->input().application_info().timezone_offset());
-    }
-#endif  // OS_NACL
   }
 
   // Ensure the onmemory config is same as the locally stored one
@@ -762,7 +756,7 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   std::vector<SessionID> remove_ids;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
-       element != NULL; element = element->next) {
+       element != nullptr; element = element->next) {
     session::SessionInterface *session = element->value;
     if (!IsApplicationAlive(session)) {
       VLOG(2) << "Application is not alive. Removing: " << element->key;
@@ -847,7 +841,7 @@ SessionID SessionHandler::CreateNewSessionID() {
 
 bool SessionHandler::DeleteSessionID(SessionID id) {
   session::SessionInterface **session = session_map_->MutableLookup(id);
-  if (session == NULL || *session == NULL) {
+  if (session == nullptr || *session == nullptr) {
     LOG_IF(WARNING, id != 0) << "cannot find SessionID " << id;
     return false;
   }

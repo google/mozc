@@ -63,9 +63,6 @@ class EngineBuilderTest : public ::testing::Test {
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
-// Most of tests are disabled on NaCl as it uses mock file system for tests.
-#ifndef OS_NACL
-
 TEST_F(EngineBuilderTest, PrepareAsync) {
   {
     // Test request without install.
@@ -211,8 +208,6 @@ TEST_F(EngineBuilderTest, FailureCase_DataBroken) {
   builder_.GetResponse(&response_);
   ASSERT_EQ(EngineReloadResponse::DATA_BROKEN, response_.status());
 }
-
-#endif  // !OS_NACL
 
 TEST_F(EngineBuilderTest, FailureCase_FileDoesNotExist) {
   // Test the case where input file doesn't exist.

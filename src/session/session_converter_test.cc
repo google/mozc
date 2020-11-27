@@ -2572,7 +2572,7 @@ TEST_F(SessionConverterTest, Clone) {
   {  // validation
     // Copy and validate
     std::unique_ptr<SessionConverter> dest(src.Clone());
-    ASSERT_TRUE(dest.get() != NULL);
+    ASSERT_TRUE(dest.get() != nullptr);
     ExpectSameSessionConverter(src, *dest);
 
     // Convert source
@@ -2585,7 +2585,7 @@ TEST_F(SessionConverterTest, Clone) {
 
     // Copy converted and validate
     dest.reset(src.Clone());
-    ASSERT_TRUE(dest.get() != NULL);
+    ASSERT_TRUE(dest.get() != nullptr);
     ExpectSameSessionConverter(src, *dest);
   }
 }

@@ -47,6 +47,9 @@
         '<(absl_srcdir)/base/internal/thread_identity.cc',
         '<(absl_srcdir)/base/internal/throw_delegate.cc',
         '<(absl_srcdir)/base/internal/unscaledcycleclock.cc',
+        '<(absl_srcdir)/container/internal/raw_hash_set.cc',
+        '<(absl_srcdir)/hash/internal/city.cc',
+        '<(absl_srcdir)/hash/internal/hash.cc',
       ],
       'msvs_disabled_warnings': [
         # 'type' : forcing value to bool 'true' or 'false'
@@ -103,6 +106,36 @@
         '<(absl_srcdir)/strings/str_split.cc',
         '<(absl_srcdir)/strings/string_view.cc',
         '<(absl_srcdir)/strings/substitute.cc',
+      ],
+      'dependencies': [
+        'absl_base',
+        'absl_numeric',
+        'absl_strings_internal',
+      ],
+    },
+    {
+      'target_name': 'absl_time',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        '<(absl_srcdir)/time/civil_time.cc',
+        '<(absl_srcdir)/time/clock.cc',
+        '<(absl_srcdir)/time/duration.cc',
+        '<(absl_srcdir)/time/format.cc',
+        '<(absl_srcdir)/time/time.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/civil_time_detail.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_fixed.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_format.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_if.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_impl.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_info.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_libc.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_lookup.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/time_zone_posix.cc',
+        '<(absl_srcdir)/time/internal/cctz/src/zone_info_source.cc',
+      ],
+      'cflags': [
+        '-Wno-error',
       ],
       'dependencies': [
         'absl_base',

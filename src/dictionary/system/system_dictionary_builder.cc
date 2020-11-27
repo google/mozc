@@ -49,6 +49,7 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "absl/flags/flag.h"
 
 DEFINE_bool(preserve_intermediate_dictionary, false,
             "preserve inetemediate dictionary file.");
@@ -162,7 +163,7 @@ void SystemDictionaryBuilder::WriteToStream(
       file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
 
-  if (FLAGS_preserve_intermediate_dictionary &&
+  if (mozc::GetFlag(FLAGS_preserve_intermediate_dictionary) &&
       !intermediate_output_file_base_path.empty()) {
     // Write out intermediate results to files.
     const std::string &basepath = intermediate_output_file_base_path;
@@ -243,7 +244,7 @@ void SystemDictionaryBuilder::ReadTokens(const std::vector<Token *> &tokens,
 
   // Step 2.
   key_info_list->clear();
-  if (reduce_buffer.size() == 0) {
+  if (reduce_buffer.empty()) {
     return;
   }
   KeyInfo last_key_info;
@@ -364,7 +365,8 @@ void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
     for (size_t i = 0; i < key_info->tokens.size(); ++i) {
       TokenInfo *token_info = &key_info->tokens[i];
       const int key_len = Util::CharsLen(token_info->token->key);
-      if (key_len >= FLAGS_min_key_length_to_use_small_cost_encoding) {
+      if (key_len >=
+          mozc::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding)) {
         token_info->cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
       }
     }

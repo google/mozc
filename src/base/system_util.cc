@@ -203,14 +203,14 @@ class LocalAppDataDirectoryCache {
 #endif  // OS_WIN
 
 UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
-#if defined(OS_NACL) || defined(OS_CHROMEOS)
+#if defined(OS_CHROMEOS)
   // TODO(toka): Must use passed in user profile dir which passed in. If mojo
   // platform the user profile is determined on runtime.
   // It's hack, the user profile dir should be passed in. Although the value in
   // NaCL platform is correct.
   dir_ = "/mutable";
   return;
-#endif  // OS_NACL || OS_CHROMEOS
+#endif  // OS_CHROMEOS
 
 #if defined(OS_WASM)
   // Do nothing for WebAssembly.
@@ -396,11 +396,10 @@ std::string SystemUtil::GetServerDirectory() {
 # else
   return "/usr/lib/mozc";
 # endif  // MOZC_SERVER_DIRECTORY
-
-#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
-# error "unknown platform"
-
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 std::string SystemUtil::GetServerPath() {
@@ -447,11 +446,6 @@ std::string SystemUtil::GetCrashReportDirectory() {
 }
 
 std::string SystemUtil::GetUserNameAsString() {
-#ifdef OS_NACL
-  LOG(ERROR) << "SystemUtil::GetUserNameAsString() is not implemented in NaCl.";
-  return "username";
-#endif  // OS_NACL
-
 #if defined(OS_WIN)
   wchar_t wusername[UNLEN + 1];
   DWORD name_size = UNLEN + 1;
@@ -473,11 +467,15 @@ std::string SystemUtil::GetUserNameAsString() {
   return ppw->pw_name;
 #endif  // OS_ANDROID
 
-  // __APPLE__, OS_LINUX or OS_NACL
+#if defined(__APPLE__) || defined(OS_LINUX) || defined(OS_WASM)
   struct passwd pw, *ppw;
   char buf[1024];
   CHECK_EQ(0, getpwuid_r(geteuid(), &pw, buf, sizeof(buf), &ppw));
   return pw.pw_name;
+#endif  // __APPLE__ || OS_LINUX || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 #ifdef OS_WIN
@@ -886,11 +884,10 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
 # else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 # endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-
-#else  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
-# error "unknown platform"
-
 #endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+
+  // If none of the above platforms is specified, the compiler raises an error
+  // because of no return value.
 }
 
 }  // namespace mozc

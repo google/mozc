@@ -50,7 +50,7 @@ using std::string;
 #endif  // OS_ANDROID
 
 #ifdef OS_NACL
-#define MOZC_OS_DEFINED
+#error "We no longer support NaCl. Still need? Report to b/158959918 ASAP."
 #endif  // OS_NACL
 
 #ifdef OS_LINUX

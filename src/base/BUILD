@@ -269,14 +269,6 @@ cc_library_mozc(
     deps = [":port"],
 )
 
-LOGGING_APP_BUILD_DEPS = [
-    ":const",
-    ":clock",
-    ":flags",
-    ":mutex",
-    ":singleton",
-]
-
 cc_library_mozc(
     name = "logging",
     srcs = ["logging.cc"],
@@ -286,7 +278,14 @@ cc_library_mozc(
         android = ["-llog"],
     ),
     deps = select_mozc(
-        client = LOGGING_APP_BUILD_DEPS,
+        client = [
+            ":clock",
+            ":const",
+            ":flags",
+            ":mutex",
+            ":singleton",
+            "@com_google_absl//absl/strings",
+        ],
         default = [
             "//base",
             "//base:logging_extensions",
@@ -457,25 +456,15 @@ cc_test_mozc(
 cc_library_mozc(
     name = "mozc_hash_map",
     hdrs = ["mozc_hash_map.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = select_mozc(
-        default = ["@com_google_absl//absl/container:flat_hash_map"],
-        linux = [],
-        oss = [],
-    ),
+    visibility = ["//:__subpackages__"],
+    deps = ["@com_google_absl//absl/container:flat_hash_map"],
 )
 
 cc_library_mozc(
     name = "mozc_hash_set",
     hdrs = ["mozc_hash_set.h"],
     visibility = ["//:__subpackages__"],
-    deps = select_mozc(
-        default = ["@com_google_absl//absl/container:flat_hash_set"],
-        linux = [],
-        oss = [],
-    ),
+    deps = ["@com_google_absl//absl/container:flat_hash_set"],
 )
 
 py_binary_mozc(
@@ -542,6 +531,7 @@ cc_library_mozc(
     deps = [
         ":port",
         ":singleton",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -746,6 +736,7 @@ cc_library_mozc(
     deps = [
         ":port",
         ":util",
+        "@com_google_absl//absl/time",
     ],
 )
 

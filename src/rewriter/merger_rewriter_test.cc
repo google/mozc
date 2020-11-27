@@ -264,7 +264,7 @@ TEST_F(MergerRewriterTest, Focus) {
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
-  EXPECT_FALSE(merger.Focus(NULL, 0, 0));
+  EXPECT_FALSE(merger.Focus(nullptr, 0, 0));
   EXPECT_EQ(
       "a.Focus();"
       "b.Focus();"
@@ -272,7 +272,7 @@ TEST_F(MergerRewriterTest, Focus) {
       call_result);
   merger.AddRewriter(new TestRewriter(&call_result, "d", true));
   call_result.clear();
-  EXPECT_TRUE(merger.Focus(NULL, 0, 0));
+  EXPECT_TRUE(merger.Focus(nullptr, 0, 0));
   EXPECT_EQ(
       "a.Focus();"
       "b.Focus();"
@@ -288,7 +288,7 @@ TEST_F(MergerRewriterTest, Finish) {
   merger.AddRewriter(new TestRewriter(&call_result, "a", false));
   merger.AddRewriter(new TestRewriter(&call_result, "b", false));
   merger.AddRewriter(new TestRewriter(&call_result, "c", false));
-  merger.Finish(request, NULL);
+  merger.Finish(request, nullptr);
   EXPECT_EQ(
       "a.Finish();"
       "b.Finish();"

@@ -33,10 +33,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef OS_NACL
-#include "testing/base/public/nacl_mock_module.h"
-#endif  // OS_NACL
-
 int main(int argc, char **argv) {
   // TODO(yukawa, team): Implement b/2805528 so that you can specify any option
   // given by gunit.
@@ -52,10 +48,6 @@ int main(int argc, char **argv) {
   // Without this flag, ::RaiseException makes the job stuck.
   // See b/2805521 for details.
   testing::GTEST_FLAG(catch_exceptions) = true;
-
-#ifdef OS_NACL
-  mozc::testing::WorkAroundEmptyFunctionToAvoidLinkError();
-#endif  // OS_NACL
 
   return RUN_ALL_TESTS();
 }

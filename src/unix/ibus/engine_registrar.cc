@@ -33,7 +33,7 @@
 #include "unix/ibus/engine_interface.h"
 
 namespace {
-mozc::ibus::EngineInterface *g_engine = NULL;
+mozc::ibus::EngineInterface *g_engine = nullptr;
 }
 
 namespace mozc {
@@ -41,7 +41,7 @@ namespace ibus {
 
 bool EngineRegistrar::Register(EngineInterface *engine,
                                IBusEngineClass *engine_class) {
-  DCHECK(engine) << "engine is NULL";
+  DCHECK(engine) << "engine is nullptr";
   DCHECK(!g_engine) << "engine is already registered";
 
   g_engine = engine;
@@ -72,29 +72,29 @@ bool EngineRegistrar::Register(EngineInterface *engine,
 EngineInterface *EngineRegistrar::Unregister(IBusEngineClass *engine_class) {
   DCHECK(g_engine) << "engine is not registered";
 
-  engine_class->cursor_down = NULL;
-  engine_class->candidate_clicked = NULL;
-  engine_class->cursor_down = NULL;
-  engine_class->cursor_up = NULL;
-  engine_class->disable = NULL;
-  engine_class->enable = NULL;
-  engine_class->focus_in = NULL;
-  engine_class->focus_out = NULL;
-  engine_class->page_down = NULL;
-  engine_class->page_up = NULL;
-  engine_class->process_key_event = NULL;
-  engine_class->property_activate = NULL;
-  engine_class->property_hide = NULL;
-  engine_class->property_show = NULL;
-  engine_class->reset = NULL;
-  engine_class->set_capabilities = NULL;
-  engine_class->set_cursor_location = NULL;
+  engine_class->cursor_down = nullptr;
+  engine_class->candidate_clicked = nullptr;
+  engine_class->cursor_down = nullptr;
+  engine_class->cursor_up = nullptr;
+  engine_class->disable = nullptr;
+  engine_class->enable = nullptr;
+  engine_class->focus_in = nullptr;
+  engine_class->focus_out = nullptr;
+  engine_class->page_down = nullptr;
+  engine_class->page_up = nullptr;
+  engine_class->process_key_event = nullptr;
+  engine_class->property_activate = nullptr;
+  engine_class->property_hide = nullptr;
+  engine_class->property_show = nullptr;
+  engine_class->reset = nullptr;
+  engine_class->set_capabilities = nullptr;
+  engine_class->set_cursor_location = nullptr;
 #if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
-  engine_class->set_content_type = NULL;
+  engine_class->set_content_type = nullptr;
 #endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
 
   mozc::ibus::EngineInterface *previous = g_engine;
-  g_engine = NULL;
+  g_engine = nullptr;
   return previous;
 }
 

@@ -326,7 +326,7 @@ class UserDictionaryTest : public ::testing::Test {
     CHECK(dic);
 
     std::string line;
-    while (!getline(is, line).fail()) {
+    while (!std::getline(is, line).fail()) {
       if (line.empty() || line[0] == '#') {
         continue;
       }

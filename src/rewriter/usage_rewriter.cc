@@ -208,7 +208,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
       ++usage_id_for_user_comment;
 
       // First, search the user dictionary for comment.
-      if (dictionary_ != NULL) {
+      if (dictionary_ != nullptr) {
         if (dictionary_->LookupComment(segment->candidate(j).content_key,
                                        segment->candidate(j).content_value,
                                        request, &comment)) {

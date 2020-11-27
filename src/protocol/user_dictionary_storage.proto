@@ -88,7 +88,7 @@ message UserDictionary {
   }
 
   // ID of this dictionary
-  optional uint64 id = 1 [default = 0];
+  optional uint64 id = 1 [default = 0, jstype = JS_STRING];
 
   // set false if this dictionary is not used.
   // Even if |enabled| is false, the dictionary
@@ -254,8 +254,8 @@ message UserDictionaryCommand {
   }
 
   required CommandType type = 1;
-  optional uint64 session_id = 2;
-  optional uint64 dictionary_id = 3;
+  optional uint64 session_id = 2 [jstype = JS_STRING];
+  optional uint64 dictionary_id = 3 [jstype = JS_STRING];
   optional string dictionary_name = 4;
   repeated int32 entry_index = 5;
   optional UserDictionary.Entry entry = 6;
@@ -317,11 +317,11 @@ message UserDictionaryCommandStatus {
   }
 
   required Status status = 1;
-  optional uint64 session_id = 2;
+  optional uint64 session_id = 2 [jstype = JS_STRING];
   optional UserDictionaryStorage storage = 3;
   // Use entries field instead.
   reserved 4;  // Deprecated entry
-  optional uint64 dictionary_id = 5;
+  optional uint64 dictionary_id = 5 [jstype = JS_STRING];
   optional uint32 entry_size = 6;
   repeated UserDictionary.Entry entries = 7;
 }

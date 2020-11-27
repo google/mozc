@@ -51,7 +51,7 @@ char *strdup_with_new(const char *str) {
 
 class FlagsTest : public testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     FLAGS_test_string = "hogehoge";
     FLAGS_test_int32 = 20;
     FLAGS_test_int64 = 29051773239673121LL;

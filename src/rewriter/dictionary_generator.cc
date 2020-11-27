@@ -90,7 +90,7 @@ DictionaryGenerator::DictionaryGenerator(
 DictionaryGenerator::~DictionaryGenerator() {}
 
 void DictionaryGenerator::AddToken(const Token &token) {
-  Token *new_token = NULL;
+  Token *new_token = nullptr;
   std::map<uint64, Token *>::const_iterator it =
       token_map_->find(token.GetID());
   if (it != token_map_->end()) {

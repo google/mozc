@@ -50,7 +50,7 @@ class MergerRewriter : public RewriterInterface {
   // return true if rewriter can be called with the segments.
   bool CheckCapablity(const ConversionRequest &request, Segments *segments,
                       RewriterInterface *rewriter) const {
-    if (segments == NULL) {
+    if (segments == nullptr) {
       return false;
     }
     switch (segments->request_type()) {

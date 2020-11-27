@@ -42,7 +42,7 @@ DEFINE_bool(ibus, false, "The engine is started by ibus-daemon");
 
 namespace {
 
-IBusBus *g_bus = NULL;
+IBusBus *g_bus = nullptr;
 
 #ifndef MOZC_NO_LOGGING
 void EnableVerboseLog() {
@@ -59,7 +59,7 @@ void IgnoreSigChild() {
   sa.sa_handler = SIG_IGN;
   ::sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  CHECK_EQ(0, ::sigaction(SIGCHLD, &sa, NULL));
+  CHECK_EQ(0, ::sigaction(SIGCHLD, &sa, nullptr));
   // TODO(taku): move this function inside client::Session::LaunchTool
 }
 
@@ -85,7 +85,7 @@ IBusComponent *GetIBusComponent() {
 void InitIBusComponent(bool executed_by_ibus_daemon) {
   g_bus = ibus_bus_new();
   g_signal_connect(g_bus, "disconnected",
-                   G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), NULL);
+                   G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), nullptr);
 
   IBusComponent *component = GetIBusComponent();
   IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(g_bus));

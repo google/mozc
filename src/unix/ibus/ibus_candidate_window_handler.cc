@@ -42,12 +42,12 @@ namespace ibus {
 namespace {
 
 // Returns an IBusText used for showing the auxiliary text in the candidate
-// window. Returns NULL if no text has to be shown. Caller must release the
+// window. Returns nullptr if no text has to be shown. Caller must release the
 // returned IBusText object.
 IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
   if (!candidates.has_footer()) {
     // We don't have to show the auxiliary text.
-    return NULL;
+    return nullptr;
   }
   const commands::Footer &footer = candidates.footer();
 
@@ -74,7 +74,7 @@ IBusText *ComposeAuxiliaryText(const commands::Candidates &candidates) {
     auxiliary_text += index_buf;
   }
   return auxiliary_text.empty()
-             ? NULL
+             ? nullptr
              : ibus_text_new_from_string(auxiliary_text.c_str());
 }
 }  // namespace

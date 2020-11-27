@@ -50,6 +50,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 
 DEFINE_string(input, "", "Input file");
@@ -95,7 +96,7 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
 
 int Loop(std::istream *input) {
   mozc::client::Client client;
-  if (!FLAGS_server_path.empty()) {
+  if (!mozc::GetFlag(FLAGS_server_path).empty()) {
     client.set_server_program(FLAGS_server_path);
   }
 
@@ -106,7 +107,7 @@ int Loop(std::istream *input) {
   std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
-  if (FLAGS_test_renderer) {
+  if (mozc::GetFlag(FLAGS_test_renderer)) {
 #if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
@@ -137,9 +138,9 @@ int Loop(std::istream *input) {
   while (ReadKeys(input, &keys, &answer)) {
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      Util::Sleep(FLAGS_key_duration);
+      Util::Sleep(mozc::GetFlag(FLAGS_key_duration));
 
-      if (FLAGS_test_testsendkey) {
+      if (mozc::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();
@@ -173,7 +174,7 @@ int Loop(std::istream *input) {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (!FLAGS_profile_dir.empty()) {
+  if (!mozc::GetFlag(FLAGS_profile_dir).empty()) {
     mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
   }
@@ -181,7 +182,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::istream *input = nullptr;
 
-  if (!FLAGS_input.empty()) {
+  if (!mozc::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
     input_file.reset(new mozc::InputFileStream(FLAGS_input.c_str()));
     if (input_file->fail()) {

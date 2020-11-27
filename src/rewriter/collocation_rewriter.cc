@@ -152,9 +152,9 @@ void ResolveCompoundSegment(const std::string &top_value,
                     {kPat7, arraysize(kPat7) - 1},
                     {kPat8, arraysize(kPat8) - 1},
                     {kPat9, arraysize(kPat9) - 1},
-                    {NULL, 0}};
+                    {nullptr, 0}};
 
-  for (size_t i = 0; kParticles[i].pat != NULL; ++i) {
+  for (size_t i = 0; kParticles[i].pat != nullptr; ++i) {
     const absl::string_view particle(kParticles[i].pat, kParticles[i].len);
     absl::string_view first_content, second;
     if (!ParseCompound(top_value, particle, &first_content, &second)) {
@@ -551,7 +551,7 @@ CollocationRewriter::CollocationRewriter(
     : pos_matcher_(data_manager->GetPOSMatcherData()),
       first_name_id_(pos_matcher_.GetFirstNameId()),
       last_name_id_(pos_matcher_.GetLastNameId()) {
-  const char *data = NULL;
+  const char *data = nullptr;
   size_t size = 0;
 
   data_manager->GetCollocationData(&data, &size);

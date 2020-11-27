@@ -141,15 +141,13 @@ void Thread::Start(const std::string &thread_name) {
     state_->is_running = false;
     state_->handle.reset();
   } else {
-#if defined(OS_NACL)
-    // NaCl doesn't support setname.
-#elif defined(OS_WASM)
-    // WASM also doesn't support setname?
-#elif defined(__APPLE__)
+#if defined(OS_WASM)
+    // WASM doesn't support setname?
+#elif defined(__APPLE__)  // !OS_WASM
     pthread_setname_np(thread_name.c_str());
-#else   // !(OS_NACL | __APPLE__)
+#else                     // !(OS_WASM | __APPLE__)
     pthread_setname_np(*state_->handle, thread_name.c_str());
-#endif  // !(OS_NACL | __APPLE__)
+#endif                    // !(OS_WASM | __APPLE__)
   }
 }
 

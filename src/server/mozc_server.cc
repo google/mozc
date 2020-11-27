@@ -29,6 +29,8 @@
 
 #include "server/mozc_server.h"
 
+#include "absl/flags/flag.h"
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif
@@ -90,10 +92,8 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";
-    FLAGS_restricted = true;
+    mozc::SetFlag(&FLAGS_restricted, true);
   }
-
-  return;
 }
 
 int MozcServer::Run() {

@@ -143,7 +143,7 @@ bool CalculatorRewriter::InsertCandidate(const std::string &value,
   for (int n = 0; n < 2; ++n) {
     int current_offset = offset + n;
     Segment::Candidate *candidate = segment->insert_candidate(current_offset);
-    if (candidate == NULL) {
+    if (candidate == nullptr) {
       LOG(ERROR) << "cannot insert candidate at " << current_offset;
       return false;
     }

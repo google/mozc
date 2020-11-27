@@ -78,7 +78,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
 
   const size_t offset = std::min(insert_pos, segment->candidates_size());
   Segment::Candidate *candidate = segment->insert_candidate(offset);
-  if (candidate == NULL) {
+  if (candidate == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
   }

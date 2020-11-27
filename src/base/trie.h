@@ -37,8 +37,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "absl/strings/string_view.h"
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -94,7 +94,7 @@ class Trie {
       delete sub_trie;
       trie_.erase(std::string(GetKeyHead(key)));
       // If the size of trie_ is 0, This trie should be deleted.
-      return trie_.size() == 0;
+      return trie_.empty();
     } else {
       return false;
     }

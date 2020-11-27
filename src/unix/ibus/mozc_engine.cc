@@ -114,7 +114,7 @@ struct IBusMozcEngine {
   mozc::ibus::MozcEngine *engine;
 };
 
-IBusEngineClass *g_parent_class = NULL;
+IBusEngineClass *g_parent_class = nullptr;
 
 GObject *MozcEngineClassConstructor(
     GType type, guint n_construct_properties,
@@ -176,12 +176,12 @@ bool GetSurroundingText(IBusEngine *engine,
   guint anchor_pos = 0;
   // DO NOT call g_object_unref against this.
   // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
-  IBusText *text = NULL;
+  IBusText *text = nullptr;
   ibus_engine_get_surrounding_text(engine, &text, &cursor_pos, &anchor_pos);
   const std::string surrounding_text(ibus_text_get_text(text));
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-  if (cursor_pos == anchor_pos && selection_monitor != NULL) {
+  if (cursor_pos == anchor_pos && selection_monitor != nullptr) {
     const SelectionInfo &info = selection_monitor->GetSelectionInfo();
     guint new_anchor_pos = 0;
     if (SurroundingTextUtil::GetAnchorPosFromSelection(
@@ -253,7 +253,7 @@ MozcEngine::MozcEngine()
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-  if (selection_monitor_.get() != NULL) {
+  if (selection_monitor_ != nullptr) {
     selection_monitor_->StartMonitoring();
   }
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
@@ -308,7 +308,7 @@ void MozcEngine::Enable(IBusEngine *engine) {
 
   // If engine wants to use surrounding text, we should call
   // ibus_engine_get_surrounding_text once when the engine enabled.
-  ibus_engine_get_surrounding_text(engine, NULL, NULL, NULL);
+  ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
@@ -432,9 +432,9 @@ GType MozcEngine::GetType() {
   static GType type = 0;
 
   static const GTypeInfo type_info = {
-      sizeof(IBusMozcEngineClass), NULL, NULL,
-      MozcEngineClassInit,         NULL, NULL,
-      sizeof(IBusMozcEngine),      0,    MozcEngineInstanceInit,
+      sizeof(IBusMozcEngineClass), nullptr, nullptr,
+      MozcEngineClassInit,         nullptr, nullptr,
+      sizeof(IBusMozcEngine),      0,       MozcEngineInstanceInit,
   };
 
   if (type == 0) {
@@ -522,7 +522,7 @@ void MozcEngine::UpdatePreeditMethod() {
 }
 
 void MozcEngine::SyncData(bool force) {
-  if (client_.get() == NULL) {
+  if (client_ == nullptr) {
     return;
   }
 

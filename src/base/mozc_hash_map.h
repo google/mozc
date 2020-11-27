@@ -30,14 +30,14 @@
 #ifndef MOZC_BASE_MOZC_HASH_MAP_H_
 #define MOZC_BASE_MOZC_HASH_MAP_H_
 
-#include <unordered_map>
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 
 template <typename K, typename V, typename Hash = std::hash<K>,
           typename Eq = std::equal_to<K>,
           typename Allocator = std::allocator<std::pair<const K, V>>>
-using mozc_hash_map = std::unordered_map<K, V, Hash, Eq, Allocator>;
+using mozc_hash_map = absl::flat_hash_map<K, V, Hash, Eq, Allocator>;
 
 }  // namespace mozc
 

@@ -78,6 +78,6 @@ TEST_F(SessionServerTest, SetSchedulerJobTest) {
   Scheduler::SetSchedulerHandler(job_recorder.get());
   std::unique_ptr<SessionServer> session_server(new SessionServer);
   EXPECT_EQ(0, job_recorder->job_settings().size());
-  Scheduler::SetSchedulerHandler(NULL);
+  Scheduler::SetSchedulerHandler(nullptr);
 }
 }  // namespace mozc

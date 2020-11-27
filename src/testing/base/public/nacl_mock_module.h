@@ -30,24 +30,4 @@
 #ifndef MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 #define MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_
 
-#ifdef OS_NACL
-
-namespace mozc {
-namespace testing {
-
-// This method does nothing, and is just for avoiding link errors.
-//
-// This method should be called in somewhere. Otherwise, the object file
-// generated from this file will be avoided by clang++ since there is no code
-// which uses this module.
-// Actually, pp::CreateModule() in this module is called if NaCl module is
-// loaded on Chrome, so we need to link this module.
-// TODO(hsumita): Remove this workaround.
-void WorkAroundEmptyFunctionToAvoidLinkError();
-
-}  // namespace testing
-}  // namespace mozc
-
-#endif  // OS_NACL
-
 #endif  // MOZC_TESTING_BASE_PUBLIC_NACL_MOCK_MODULE_H_

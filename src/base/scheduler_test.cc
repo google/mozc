@@ -62,7 +62,7 @@ class SchedulerTest : public testing::Test {
   };
 
  protected:
-  virtual void TearDown() { Scheduler::RemoveAllJobs(); }
+  void TearDown() override { Scheduler::RemoveAllJobs(); }
 };
 
 TEST_F(SchedulerTest, SimpleJob) {
@@ -256,12 +256,14 @@ class NameCheckScheduler : public Scheduler::SchedulerInterface {
   explicit NameCheckScheduler(const std::string &expected_name)
       : expected_name_(expected_name) {}
 
-  void RemoveAllJobs() {}
-  bool RemoveJob(const std::string &name) { return true; }
-  bool AddJob(const Scheduler::JobSetting &job_setting) {
+  void RemoveAllJobs() override {}
+  bool RemoveJob(const std::string &name) override { return true; }
+  bool AddJob(const Scheduler::JobSetting &job_setting) override {
     return (expected_name_ == job_setting.name());
   }
-  bool HasJob(const std::string &name) const { return expected_name_ == name; }
+  bool HasJob(const std::string &name) const override {
+    return expected_name_ == name;
+  }
 
  private:
   const std::string expected_name_;

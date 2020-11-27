@@ -51,8 +51,6 @@ struct ConnectionDataEntry {
   int cost;
 };
 
-#ifndef OS_NACL
-// Disabled on NaCl since it uses a mock file system.
 TEST(ConnectorTest, CompareWithRawData) {
   const std::string path = testing::GetSourceFileOrDie(
       {"data_manager", "testing", "connection.data"});
@@ -140,7 +138,6 @@ TEST(ConnectorTest, BrokenData) {
     EXPECT_FALSE(status.ok());
   }
 }
-#endif  // !OS_NACL
 
 }  // namespace
 }  // namespace mozc

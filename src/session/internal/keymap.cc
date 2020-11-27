@@ -88,7 +88,7 @@ bool KeyMapManager::Initialize(const config::Config::SessionKeymap keymap) {
   Reset();
 
   const char *keymap_file = GetKeyMapFileName(keymap);
-  if (keymap != config::Config::CUSTOM && keymap_file != NULL &&
+  if (keymap != config::Config::CUSTOM && keymap_file != nullptr &&
       LoadFile(keymap_file)) {
     return true;
   }
@@ -167,7 +167,7 @@ const char *KeyMapManager::GetKeyMapFileName(
 
 bool KeyMapManager::LoadFile(const char *filename) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
-  if (ifs.get() == NULL) {
+  if (ifs.get() == nullptr) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
     return false;
   }

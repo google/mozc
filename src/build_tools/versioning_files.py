@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Creates versioned files and information files of the files.
+r"""Creates versioned files and information files of the files.
 
   When the version is "1.2.3.4", the following command creates these four files.
     /PATH/TO/file1-1.2.3.4.ext      : Copied from /PATH/TO/file1.ext
@@ -54,6 +54,7 @@ import logging
 import optparse
 import os
 import shutil
+import six
 
 from build_tools import mozc_version
 
@@ -89,8 +90,12 @@ def _VersioningFile(version_string, is_debug, file_path):
   package = os.path.basename(new_file_path)
   file_size = os.path.getsize(new_file_path)
   sha1_digest = _GetSha1Digest(new_file_path)
-  sha1_hash = base64.b64encode(sha1_digest)
-  sha1_hash_hex = sha1_digest.encode('hex')
+  if six.PY3:
+    sha1_hash = base64.b64encode(sha1_digest).decode('latin1')
+    sha1_hash_hex = sha1_digest.hex()
+  else:
+    sha1_hash = base64.b64encode(sha1_digest)
+    sha1_hash_hex = sha1_digest.encode('hex')
   with open('%s.info' % new_file_path, 'w') as output:
     output.write('package\t%s\n' % package)
     output.write('build_id\t%s\n' % build_id)

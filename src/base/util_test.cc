@@ -48,8 +48,6 @@
 namespace mozc {
 namespace {
 
-#ifndef OS_NACL
-// Disabled on NaCl since it uses a mock file system.
 void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
   CHECK(test_map);
   const std::string &path = testing::GetSourceFileOrDie(
@@ -68,7 +66,7 @@ void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
 
   // Read tsv file.
   std::string line;
-  while (!getline(finput, line).fail()) {
+  while (!std::getline(finput, line).fail()) {
     if (Util::StartsWith(line, "#")) {
       // Skip comment line.
       continue;
@@ -86,7 +84,6 @@ void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
     test_map->insert(std::make_pair(ucs4, itr->second));
   }
 }
-#endif  // !OS_NACL
 
 Util::CharacterSet GetExpectedCharacterSet(
     const std::map<char32, Util::CharacterSet> &test_map, char32 ucs4) {
@@ -1474,12 +1471,9 @@ TEST(UtilTest, FormType) {
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
 
-#ifndef OS_NACL
 // We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
 // data/test/character_set/character_set.tsv.
 // Compare the result for each character just in case.
-//
-// Disabled on NaCl since it uses a mock file system.
 TEST(UtilTest, CharacterSetFullTest) {
   std::map<char32, Util::CharacterSet> test_set;
   FillTestCharacterSetMap(&test_set);
@@ -1492,7 +1486,6 @@ TEST(UtilTest, CharacterSetFullTest) {
         << "Character set changed at " << ucs4;
   }
 }
-#endif  // OS_NACL
 
 TEST(UtilTest, CharacterSet_gen_character_set) {
   // [0x00, 0x7f] are ASCII

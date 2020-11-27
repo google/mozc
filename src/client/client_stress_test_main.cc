@@ -30,6 +30,7 @@
 #include <iostream>
 
 #include "client/client.h"
+#include "absl/flags/flag.h"
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
   mozc::SetFlag(&FLAGS_logtostderr, true);
 
   mozc::client::Client client;
-  if (!FLAGS_server_path.empty()) {
+  if (!mozc::GetFlag(FLAGS_server_path).empty()) {
     client.set_server_program(FLAGS_server_path);
   }
 
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
-  if (FLAGS_test_renderer) {
+  if (mozc::GetFlag(FLAGS_test_renderer)) {
 #if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
@@ -110,17 +111,17 @@ int main(int argc, char **argv) {
     mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      mozc::Util::Sleep(FLAGS_key_duration);
+      mozc::Util::Sleep(mozc::GetFlag(FLAGS_key_duration));
       keyevents_size++;
       if (keyevents_size % 100 == 0) {
         std::cout << keyevents_size << " key events finished" << std::endl;
       }
-      if (FLAGS_max_keyevents < keyevents_size) {
-        std::cout << "key events reached to " << FLAGS_max_keyevents
-                  << std::endl;
+      if (mozc::GetFlag(FLAGS_max_keyevents) < keyevents_size) {
+        std::cout << "key events reached to "
+                  << mozc::GetFlag(FLAGS_max_keyevents) << std::endl;
         return 0;
       }
-      if (FLAGS_test_testsendkey) {
+      if (mozc::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();

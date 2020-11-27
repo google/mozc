@@ -35,21 +35,13 @@
 #include "base/mmap_sync_interface.h"
 #include "base/port.h"
 
-#ifdef OS_NACL
-#include <memory>
-#endif  // OS_NACL
 
 namespace mozc {
 
 class Mmap : public MmapSyncInterface {
  public:
-#ifdef OS_NACL
-  // Save the all the mmap data in memory to the file.
-  static bool SyncMmapToFile();
-#endif  // OS_NACL
-
   Mmap();
-  virtual ~Mmap() { Close(); }
+  ~Mmap() override { Close(); }
 
   bool Open(const char *filename, const char *mode = "r");
   void Close();
@@ -69,33 +61,17 @@ class Mmap : public MmapSyncInterface {
   static int MaybeMLock(const void *addr, size_t len);
   static int MaybeMUnlock(const void *addr, size_t len);
 
-#ifdef OS_NACL
-  char &operator[](size_t n) { return *(buffer_.get() + n); }
-  char operator[](size_t n) const { return *(buffer_.get() + n); }
-  char *begin() { return buffer_.get(); }
-  const char *begin() const { return buffer_.get(); }
-  char *end() { return buffer_.get() + size_; }
-  const char *end() const { return buffer_.get() + size_; }
-#else   // !OS_NACL
   char &operator[](size_t n) { return *(text_ + n); }
   char operator[](size_t n) const { return *(text_ + n); }
   char *begin() { return text_; }
   const char *begin() const { return text_; }
   char *end() { return text_ + size_; }
   const char *end() const { return text_ + size_; }
-#endif  // !OS_NACL
 
   size_t size() const { return size_; }
 
  private:
-#ifdef OS_NACL
-  bool SyncToFile();
-  string filename_;
-  std::unique_ptr<char[]> buffer_;
-  bool write_mode_;
-#else   // OS_NACL
   char *text_;
-#endif  // OS_NACL
   size_t size_;
 
   DISALLOW_COPY_AND_ASSIGN(Mmap);

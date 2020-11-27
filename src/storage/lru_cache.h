@@ -168,7 +168,7 @@ void LRUCache<Key, Value>::AddBlock() {
     // Add new elements to free list
     for (size_t i = 0; i < next_block_size_; ++i) {
       Element* e = &((blocks_[block_count_])[i]);
-      e->prev = NULL;  // free list is not doubly linked
+      e->prev = nullptr;  // free list is not doubly linked
       e->next = free_list_;
       free_list_ = e;
     }
@@ -189,7 +189,7 @@ void LRUCache<Key, Value>::AddBlock() {
 
 template <typename Key, typename Value>
 void LRUCache<Key, Value>::PushFreeList(Element* element) {
-  element->prev = NULL;
+  element->prev = nullptr;
   element->next = free_list_;
   free_list_ = element;
 }
@@ -197,13 +197,13 @@ void LRUCache<Key, Value>::PushFreeList(Element* element) {
 template <typename Key, typename Value>
 typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::PopFreeList() {
   Element* r = free_list_;
-  if (r != NULL) {
-    CHECK(r->prev == NULL);
+  if (r != nullptr) {
+    CHECK(r->prev == nullptr);
     free_list_ = r->next;
-    if (free_list_ != NULL) {
-      free_list_->prev = NULL;
+    if (free_list_ != nullptr) {
+      free_list_->prev = nullptr;
     }
-    r->next = NULL;
+    r->next = nullptr;
   }
   return r;
 }
@@ -212,7 +212,7 @@ template <typename Key, typename Value>
 typename LRUCache<Key, Value>::Element*
 LRUCache<Key, Value>::NextFreeElement() {
   Element* r = PopFreeList();
-  if (r == NULL) {
+  if (r == nullptr) {
     AddBlock();
     r = PopFreeList();
   }
@@ -226,7 +226,7 @@ typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::LookupInternal(
   if (iter != table_->end()) {
     return iter->second;
   }
-  return NULL;
+  return nullptr;
 }
 
 template <typename Key, typename Value>
@@ -237,14 +237,14 @@ void LRUCache<Key, Value>::RemoveFromLRU(Element* element) {
   if (lru_tail_ == element) {
     lru_tail_ = element->prev;
   }
-  if (element->prev != NULL) {
+  if (element->prev != nullptr) {
     element->prev->next = element->next;
   }
-  if (element->next != NULL) {
+  if (element->next != nullptr) {
     element->next->prev = element->prev;
   }
-  element->prev = NULL;
-  element->next = NULL;
+  element->prev = nullptr;
+  element->next = nullptr;
 }
 
 template <typename Key, typename Value>
@@ -256,17 +256,17 @@ void LRUCache<Key, Value>::PushLRUHead(Element* element) {
   RemoveFromLRU(element);
   element->next = lru_head_;
   lru_head_ = element;
-  if (element->next != NULL) {
+  if (element->next != nullptr) {
     element->next->prev = element;
   }
-  if (lru_tail_ == NULL) {
+  if (lru_tail_ == nullptr) {
     lru_tail_ = element;
   }
 }
 
 template <typename Key, typename Value>
 bool LRUCache<Key, Value>::Evict(Element* e) {
-  if (e != NULL) {
+  if (e != nullptr) {
     int erased = table_->erase(e->key);
     CHECK_EQ(erased, 1);
     RemoveFromLRU(e);
@@ -278,9 +278,9 @@ bool LRUCache<Key, Value>::Evict(Element* e) {
 
 template <typename Key, typename Value>
 LRUCache<Key, Value>::LRUCache(size_t max_elements)
-    : free_list_(NULL),
-      lru_head_(NULL),
-      lru_tail_(NULL),
+    : free_list_(nullptr),
+      lru_head_(nullptr),
+      lru_tail_(nullptr),
       block_count_(0),
       block_capacity_(0),
       max_elements_(max_elements) {
@@ -316,7 +316,7 @@ LRUCache<Key, Value>::~LRUCache() {
 template <typename Key, typename Value>
 void LRUCache<Key, Value>::Insert(const Key& key, const Value& value) {
   Element* e = Insert(key);
-  if (e != NULL) {
+  if (e != nullptr) {
     e->value = value;
   }
 }
@@ -326,19 +326,19 @@ typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::Insert(
     const Key& key) {
   bool erased = false;
   Element* e = LookupInternal(key);
-  if (e != NULL) {
+  if (e != nullptr) {
     erased = Evict(e);
     CHECK(erased);
   }
 
   e = NextFreeElement();
-  if (e == NULL) {
+  if (e == nullptr) {
     // no free elements, I have to replace an existing element
     e = lru_tail_;
     erased = Evict(e);
     CHECK(erased);
     e = NextFreeElement();
-    CHECK(e != NULL);
+    CHECK(e != nullptr);
   }
   e->key = key;
   (*table_)[key] = e;
@@ -350,11 +350,11 @@ typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::Insert(
 template <typename Key, typename Value>
 Value* LRUCache<Key, Value>::MutableLookup(const Key& key) {
   Element* e = LookupInternal(key);
-  if (e != NULL) {
+  if (e != nullptr) {
     PushLRUHead(e);
     return &(e->value);
   }
-  return NULL;
+  return nullptr;
 }
 
 template <typename Key, typename Value>
@@ -365,10 +365,10 @@ const Value* LRUCache<Key, Value>::Lookup(const Key& key) {
 template <typename Key, typename Value>
 Value* LRUCache<Key, Value>::MutableLookupWithoutInsert(const Key& key) const {
   Element* e = LookupInternal(key);
-  if (e != NULL) {
+  if (e != nullptr) {
     return &(e->value);
   }
-  return NULL;
+  return nullptr;
 }
 
 template <typename Key, typename Value>
@@ -386,12 +386,12 @@ template <typename Key, typename Value>
 void LRUCache<Key, Value>::Clear() {
   table_->clear();
   Element* e = lru_head_;
-  while (e != NULL) {
+  while (e != nullptr) {
     Element* next = e->next;
     PushFreeList(e);
     e = next;
   }
-  lru_head_ = lru_tail_ = NULL;
+  lru_head_ = lru_tail_ = nullptr;
 }
 
 template <typename Key, typename Value>

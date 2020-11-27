@@ -50,35 +50,35 @@ class UnverifiedAES256 {
   // Does AES256 CBC transformation.
   // CAVEATS: See the above comment.
   static void TransformCBC(const uint8 (&key)[kKeyBytes],
-                           const uint8 (&iv)[kBlockBytes], uint8 *buffer,
+                           const uint8 (&iv)[kBlockBytes], uint8 *block,
                            size_t block_count);
 
   // Does AES256 CBC inverse transformation.
   // CAVEATS: See the above comment.
   static void InverseTransformCBC(const uint8 (&key)[kKeyBytes],
-                                  const uint8 (&iv)[kBlockBytes], uint8 *buffer,
+                                  const uint8 (&iv)[kBlockBytes], uint8 *block,
                                   size_t block_count);
 
  protected:
   // Does AES256 ECB transformation.
   // CAVEATS: See the above comment.
   static void TransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                           uint8 buffer[kBlockBytes]);
+                           uint8 block[kBlockBytes]);
 
   // Does AES256 ECB inverse transformation.
   // CAVEATS: See the above comment.
   static void InverseTransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                                  uint8 buffer[kBlockBytes]);
+                                  uint8 block[kBlockBytes]);
 
   // Declared as protected for unit test.
   static void MakeKeySchedule(const uint8 (&key)[kKeyBytes],
                               uint8 w[kKeyScheduleBytes]);
-  static void SubBytes(uint8 buf[kBlockBytes]);
-  static void InvSubBytes(uint8 buf[kBlockBytes]);
-  static void MixColumns(uint8 buf[kBlockBytes]);
-  static void InvMixColumns(uint8 buf[kBlockBytes]);
-  static void ShiftRows(uint8 buf[kBlockBytes]);
-  static void InvShiftRows(uint8 buf[kBlockBytes]);
+  static void SubBytes(uint8 block[kBlockBytes]);
+  static void InvSubBytes(uint8 block[kBlockBytes]);
+  static void MixColumns(uint8 block[kBlockBytes]);
+  static void InvMixColumns(uint8 block[kBlockBytes]);
+  static void ShiftRows(uint8 block[kBlockBytes]);
+  static void InvShiftRows(uint8 block[kBlockBytes]);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UnverifiedAES256);

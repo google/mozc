@@ -85,5 +85,5 @@ void DictionaryContentTableWidget::mouseDoubleClickEvent(QMouseEvent *event) {
 }
 
 void DictionaryContentTableWidget::focusInEvent(QFocusEvent *event) {
-  setStyleSheet("");
+  setStyleSheet(QLatin1String(""));
 }

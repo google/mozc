@@ -31,6 +31,7 @@
 #define MOZC_BASE_VERSION_H_
 
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc {

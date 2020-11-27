@@ -63,47 +63,13 @@ class DateRewriter : public RewriterInterface {
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
 
- private:
-  FRIEND_TEST(DateRewriterTest, ADToERA);
-  FRIEND_TEST(DateRewriterTest, ERAToAD);
-  FRIEND_TEST(DateRewriterTest, ADToERAWithNewName);
-  FRIEND_TEST(DateRewriterTest, NewEraNameTest);
-  FRIEND_TEST(DateRewriterTest, ConvertTime);
-  FRIEND_TEST(DateRewriterTest, ConvertDateTest);
-
-  static bool RewriteTime(Segment *segment, const char *key, const char *value,
-                          const char *description, int type, int diff);
-  static bool RewriteDate(Segment *segment);
-  static bool RewriteMonth(Segment *segment);
-  static bool RewriteYear(Segment *segment);
-  static bool RewriteCurrentTime(Segment *segment);
-  static bool RewriteDateAndCurrentTime(Segment *segment);
-  static bool RewriteEra(Segment *current_segment, const Segment &next_segment);
-  static bool RewriteAd(Segment *segment);
-  static bool RewriteWeekday(Segment *segment);
-
-  // When only one conversion segment has consecutive number characters,
-  // this function adds date and time candidates.
-  // e.g.)
-  //   key  -> candidates will be added
-  //   ------------------------------------------------
-  //   0101 -> "1月1日、01/01、1時1分,午前1時1分、1:01"
-  //   2020 -> "20時20分、午後8時20分、20:20"
-  //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
-  //   123  -> "1月23日、01/23、1:23"
-  static bool RewriteConsecutiveDigits(const composer::Composer &composer,
-                                       int insert_position, Segments *segments);
-
-  // Helper functions for RewriteConsecutiveDigits().
-  static bool RewriteConsecutiveTwoDigits(
-      absl::string_view str,
-      std::vector<std::pair<std::string, const char *>> *results);
-  static bool RewriteConsecutiveThreeDigits(
-      absl::string_view str,
-      std::vector<std::pair<std::string, const char *>> *results);
-  static bool RewriteConsecutiveFourDigits(
-      absl::string_view str,
-      std::vector<std::pair<std::string, const char *>> *results);
+  struct DateData {
+    const char *key;
+    const char *value;
+    const char *description;
+    int diff;  // diff from the current time in day or month or year
+    int type;  // type of diff (e.g. year, month, date, etc).
+  };
 
   // In general, Japanese era can be identified without the month.
   // However, during the era migration time, we have to check the month., i.e.,
@@ -162,6 +128,34 @@ class DateRewriter : public RewriterInterface {
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
   static bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
                                   std::vector<std::string> *results);
+
+ private:
+  static bool RewriteDate(Segment *segment);
+  static bool RewriteEra(Segment *current_segment, const Segment &next_segment);
+  static bool RewriteAd(Segment *segment);
+
+  // When only one conversion segment has consecutive number characters,
+  // this function adds date and time candidates.
+  // e.g.)
+  //   key  -> candidates will be added
+  //   ------------------------------------------------
+  //   0101 -> "1月1日、01/01、1時1分,午前1時1分、1:01"
+  //   2020 -> "20時20分、午後8時20分、20:20"
+  //   2930 -> "29時30分、29時半、午前5時30分、午前5時半"
+  //   123  -> "1月23日、01/23、1:23"
+  static bool RewriteConsecutiveDigits(const composer::Composer &composer,
+                                       int insert_position, Segments *segments);
+
+  // Helper functions for RewriteConsecutiveDigits().
+  static bool RewriteConsecutiveTwoDigits(
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
+  static bool RewriteConsecutiveThreeDigits(
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
+  static bool RewriteConsecutiveFourDigits(
+      absl::string_view str,
+      std::vector<std::pair<std::string, const char *>> *results);
 };
 
 }  // namespace mozc

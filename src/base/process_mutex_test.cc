@@ -31,6 +31,7 @@
 
 #ifndef OS_WIN
 #include <unistd.h>
+
 #include <cstdlib>
 #endif  // OS_WIN
 
@@ -47,12 +48,12 @@ static const char kName[] = "process_mutex_test";
 
 class ProcessMutexTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     ProcessMutex mutex(kName);
     if (FileUtil::FileExists(mutex.lock_filename())) {
       LOG(FATAL) << "Lock file unexpectedly remains: " << mutex.lock_filename();

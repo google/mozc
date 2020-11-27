@@ -925,7 +925,7 @@ message Input {
   required CommandType type = 1;
 
   // Session ID created by CREATE_SESSION.
-  optional uint64 id = 2;
+  optional uint64 id = 2 [jstype = JS_STRING];
 
   // Key combinations used for SEND_KEY or TEST_SEND_KEY.
   optional KeyEvent key = 3;
@@ -1100,7 +1100,7 @@ message DeletionRange {
 }
 
 message Output {
-  optional uint64 id = 1;
+  optional uint64 id = 1 [jstype = JS_STRING];
 
   // This variable is going to be obsolete.
   optional CompositionMode mode = 2;

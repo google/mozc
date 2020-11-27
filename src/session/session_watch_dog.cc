@@ -65,8 +65,8 @@ const float kMinimumLatestCPULoad = 0.66f;
 
 SessionWatchDog::SessionWatchDog(int32 interval_sec)
     : interval_sec_(interval_sec),
-      client_(NULL),
-      cpu_stats_(NULL),
+      client_(nullptr),
+      cpu_stats_(nullptr),
       event_(new UnnamedEvent) {
   // allow [1..600].
   interval_sec_ = std::max(1, std::min(interval_sec_, 600));
@@ -98,14 +98,14 @@ void SessionWatchDog::Terminate() {
 
 void SessionWatchDog::Run() {
   std::unique_ptr<client::ClientInterface> client_impl;
-  if (client_ == NULL) {
+  if (client_ == nullptr) {
     VLOG(2) << "default client is used";
     client_impl.reset(client::ClientFactory::NewClient());
     client_ = client_impl.get();
   }
 
   std::unique_ptr<CPUStatsInterface> cpu_stats_impl;
-  if (cpu_stats_ == NULL) {
+  if (cpu_stats_ == nullptr) {
     VLOG(2) << "default cpu_stats is used";
     cpu_stats_impl.reset(new CPUStats);
     cpu_stats_ = cpu_stats_impl.get();

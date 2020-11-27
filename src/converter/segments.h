@@ -470,7 +470,7 @@ class Segments {
   // Let converter know the maximum size of
   // candidates converter can generate.
   // NOTE: This field is used as an "optional" field.
-  // Rewriter might insert more than |size| candiates.
+  // Rewriter might insert more than |size| candidates.
   // Default setting is 200.
   void set_max_conversion_candidates_size(size_t size);
   size_t max_conversion_candidates_size() const;

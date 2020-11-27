@@ -40,14 +40,14 @@ namespace mozc {
 
 class StopwatchTest : public testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     clock_mock_.reset(new ClockMock(0, 0));
     // 1GHz (Accuracy = 1ns)
     clock_mock_->SetFrequency(uint64{1000000000});
     Clock::SetClockForUnitTest(clock_mock_.get());
   }
 
-  void TearDown() { Clock::SetClockForUnitTest(nullptr); }
+  void TearDown() override { Clock::SetClockForUnitTest(nullptr); }
 
   void PutForwardNanoseconds(uint64 nano_sec) {
     clock_mock_->PutClockForwardByTicks(nano_sec);

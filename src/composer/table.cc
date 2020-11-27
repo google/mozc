@@ -445,7 +445,7 @@ bool Table::LoadFromStream(std::istream *is) {
   std::string line;
   const std::string empty_pending("");
   while (!is->eof()) {
-    getline(*is, line);
+    std::getline(*is, line);
     Util::ChopReturns(&line);
     if (line.empty()) {
       continue;

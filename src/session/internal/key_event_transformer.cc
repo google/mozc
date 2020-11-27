@@ -97,7 +97,7 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
 }
 
 bool KeyEventTransformer::TransformKeyEvent(KeyEvent *key_event) const {
-  if (key_event == NULL) {
+  if (key_event == nullptr) {
     LOG(ERROR) << "key_event is NULL";
     return false;
   }

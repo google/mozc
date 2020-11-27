@@ -114,7 +114,7 @@ ExistenceFilter::BlockBitmap::BlockBitmap(uint32 length, bool is_mutable)
 
   // Allocate full blocks
   for (size_t i = 0; i < num_blocks_ - 1; ++i) {
-    block_[i] = is_mutable_ ? new uint32[kBlockWords] : NULL;
+    block_[i] = is_mutable_ ? new uint32[kBlockWords] : nullptr;
   }
 
   // Allocate the last block
@@ -126,7 +126,7 @@ ExistenceFilter::BlockBitmap::BlockBitmap(uint32 length, bool is_mutable)
   CHECK_EQ(bytes_in_last_ % sizeof(uint32), 0);
 
   block_[num_blocks_ - 1] =
-      is_mutable_ ? new uint32[bytes_in_last_ / sizeof(uint32)] : NULL;
+      is_mutable_ ? new uint32[bytes_in_last_ / sizeof(uint32)] : nullptr;
 }
 
 ExistenceFilter::BlockBitmap::~BlockBitmap() {
@@ -284,7 +284,7 @@ void ExistenceFilter::Write(char **buf, size_t *size) {
             << expected_nelts_ << " num_hashes " << num_hashes_;
 
   // write bitmap
-  char **fragment_ptr = NULL;
+  char **fragment_ptr = nullptr;
   size_t bytes = 0;
   size_t write = 0;
   for (uint32 iter = 0;
@@ -318,12 +318,12 @@ ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
       sizeof(header.m) + sizeof(header.n) + sizeof(header.k);
   if (size < header_bytes) {
     LOG(ERROR) << "Not enough bufsize: could not read header";
-    return NULL;
+    return nullptr;
   }
 
   if (!ReadHeader(buf, &header)) {
     LOG(ERROR) << "Invalid format: could not read header";
-    return NULL;
+    return nullptr;
   }
   buf += header_bytes;
 
@@ -334,12 +334,12 @@ ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
 
   if (size < header_bytes + filter_bytes) {
     LOG(ERROR) << "Not enough bufsize: could not read filter";
-    return NULL;
+    return nullptr;
   }
 
   ExistenceFilter *filter = ExistenceFilter::CreateImmutableExietenceFilter(
       header.m, header.n, header.k);
-  char **ptr = NULL;
+  char **ptr = nullptr;
   size_t n = 0;
   size_t read = 0;
   for (uint32 iter = 0; filter->rep_->GetMutableFragment(&iter, &ptr, &n);) {
@@ -350,7 +350,7 @@ ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
   if (read != filter_bytes) {
     LOG(ERROR) << "Read " << read << " bytes instead of " << filter_bytes;
     delete filter;
-    return NULL;
+    return nullptr;
   }
   return filter;
 }

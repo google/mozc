@@ -84,7 +84,7 @@ class FileUtil {
   static bool FileExists(const std::string &filename);
 
   // Returns true if the directory exists.
-  static bool DirectoryExists(const std::string &filename);
+  static bool DirectoryExists(const std::string &dirname);
 
 #ifdef OS_WIN
   // Adds file attributes to the file to hide it.

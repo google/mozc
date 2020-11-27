@@ -57,7 +57,7 @@ void Loop(std::istream *input, std::ostream *output) {
 
   commands::Command command;
   std::string line;
-  while (getline(*input, line)) {
+  while (std::getline(*input, line)) {
     Util::ChopReturns(&line);
     if (line.size() > 1 && line[0] == '#' && line[1] == '#') {
       continue;
@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::unique_ptr<mozc::OutputFileStream> output_file;
-  std::istream *input = NULL;
-  std::ostream *output = NULL;
+  std::istream *input = nullptr;
+  std::ostream *output = nullptr;
 
   if (!FLAGS_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.

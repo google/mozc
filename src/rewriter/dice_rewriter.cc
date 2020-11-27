@@ -60,7 +60,7 @@ bool InsertCandidate(int top_face_number, size_t insert_pos, Segment *segment) {
   size_t offset = std::min(insert_pos, segment->candidates_size());
 
   Segment::Candidate *c = segment->insert_candidate(offset);
-  if (c == NULL) {
+  if (c == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << offset;
     return false;
   }

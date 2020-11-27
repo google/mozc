@@ -48,7 +48,7 @@ message GeneralConfig {
   optional string last_modified_product_version = 2 [default = "0.0.0.0"];
 
   // last modified time in UTC second
-  optional uint64 last_modified_time = 3 [default = 0];
+  optional uint64 last_modified_time = 3 [default = 0, jstype = JS_STRING];
 
   // These fields are not used now
   // platform of machine that wrote this config

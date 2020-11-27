@@ -58,7 +58,7 @@ void Convert() {
   InputFileStream ifs(FLAGS_collocation_data.c_str());
   std::string line;
   std::vector<std::string> entries;
-  while (!getline(ifs, line).fail()) {
+  while (!std::getline(ifs, line).fail()) {
     if (line.empty()) {
       continue;
     }

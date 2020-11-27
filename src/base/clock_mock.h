@@ -48,12 +48,12 @@ class ClockMock : public ClockInterface {
 
   void GetTimeOfDay(uint64 *sec, uint32 *usec) override;
   uint64 GetTime() override;
-  bool GetTmWithOffsetSecond(time_t offset_sec, tm *output) override;
+  absl::Time GetAbslTime() override;
   uint64 GetFrequency() override;
   uint64 GetTicks() override;
-#ifdef OS_NACL
-  void SetTimezoneOffset(int32 timezone_offset_sec) override;
-#endif  // OS_NACL
+
+  const absl::TimeZone& GetTimeZone() override;
+  void SetTimeZoneOffset(int32 timezone_offset_sec) override;
 
   // Puts this clock forward.
   // It has no impact on ticks.
@@ -76,9 +76,8 @@ class ClockMock : public ClockInterface {
   uint32 micro_seconds_;
   uint64 frequency_;
   uint64 ticks_;
-#ifdef OS_NACL
+  absl::TimeZone timezone_;
   int32 timezone_offset_sec_;
-#endif  // OS_NACL
   // Everytime user requests time clock, following time is added to the
   // internal clock.
   uint64 delta_seconds_;

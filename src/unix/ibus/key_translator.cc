@@ -307,7 +307,7 @@ bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
                               config::Config::PreeditMethod method,
                               bool layout_is_jp,
                               commands::KeyEvent *out_event) const {
-  DCHECK(out_event) << "out_event is NULL";
+  DCHECK(out_event) << "out_event is nullptr";
   out_event->Clear();
 
   // Due to historical reasons, many linux ditributions set Hiragana_Katakana

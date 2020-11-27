@@ -64,7 +64,7 @@ void AddSegment(const std::string &key, Segments *segments) {
 
 // Make a segments which has some dummy candidates.
 void MakeSegments(Segments *segments, const std::string &key,
-                  const int &num_segment, const int &num_dummy_candidate) {
+                  const int num_segment, const int num_dummy_candidate) {
   segments->Clear();
 
   AddSegment(key, segments);

@@ -70,7 +70,7 @@ bool InsertCandidate(absl::string_view key, absl::string_view value,
                      absl::string_view description, int cost, Segment *segment,
                      size_t *insert_position) {
   Segment::Candidate *candidate = segment->insert_candidate(*insert_position);
-  if (candidate == NULL) {
+  if (candidate == nullptr) {
     LOG(ERROR) << "cannot insert candidate at " << insert_position
                << "th position nor tail of candidates.";
     return false;
@@ -199,7 +199,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  CHECK(segments != NULL);
+  CHECK(segments != nullptr);
   return RewriteCandidates(segments);
 }
 

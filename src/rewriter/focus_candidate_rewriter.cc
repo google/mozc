@@ -141,7 +141,7 @@ FocusCandidateRewriter::~FocusCandidateRewriter() {}
 
 bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
                                    int candidate_index) const {
-  if (segments == NULL) {
+  if (segments == nullptr) {
     LOG(ERROR) << "Segments is NULL";
     return false;
   }
@@ -178,7 +178,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
       int num_nest = 1;
       for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
         Segment *target_right_seg = segments->mutable_segment(i);
-        if (target_right_seg == NULL ||
+        if (target_right_seg == nullptr ||
             target_right_seg->candidates_size() <= 0) {
           LOG(WARNING) << "target right seg is not valid";
           return false;
@@ -214,7 +214,7 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
       int num_nest = 1;
       for (int i = segment_index - 1; i >= 0; --i) {
         Segment *target_left_seg = segments->mutable_segment(i);
-        if (target_left_seg == NULL ||
+        if (target_left_seg == nullptr ||
             target_left_seg->candidates_size() <= 0) {
           LOG(WARNING) << "target left seg is not valid";
           return false;
@@ -241,11 +241,11 @@ bool FocusCandidateRewriter::Focus(Segments *segments, size_t segment_index,
 
   {
     if (IsNumberCandidate(seg.candidate(candidate_index))) {
-      bool modified = 0;
+      bool modified = false;
       int distance = 0;
       for (size_t i = segment_index + 1; i < segments->segments_size(); ++i) {
         Segment *target_right_seg = segments->mutable_segment(i);
-        if (target_right_seg == NULL ||
+        if (target_right_seg == nullptr ||
             target_right_seg->candidates_size() <= 0) {
           LOG(WARNING) << "target right seg is not valid";
           return false;

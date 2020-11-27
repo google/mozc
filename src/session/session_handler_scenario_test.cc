@@ -27,9 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef OS_NACL
-// Disabled on NaCl since it uses a mock file system.
-
 #include <memory>
 
 #include "base/file_stream.h"
@@ -352,7 +349,7 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
   std::string line_text;
   int line_number = 0;
   std::vector<std::string> columns;
-  while (getline(input_stream, line_text)) {
+  while (std::getline(input_stream, line_text)) {
     ++line_number;
     SCOPED_TRACE(Util::StringPrintf("Scenario: %s [%s:%d]", line_text.c_str(),
                                     scenario_path.c_str(), line_number));
@@ -613,5 +610,3 @@ TEST_P(SessionHandlerScenarioTest, TestImpl) {
 #undef EXPECT_NOT_IN_ALL_CANDIDATE_WORDS
 
 }  // namespace
-
-#endif  // !OS_NACL

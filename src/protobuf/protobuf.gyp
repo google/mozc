@@ -181,6 +181,8 @@
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
+                '-Wno-tautological-constant-out-of-range-compare',
+                '-Wno-unused-const-variable',
                 '-Wno-unused-function',
               ],
             }],
@@ -221,6 +223,7 @@
             ['(_toolset=="target" and (compiler_target=="clang" or compiler_target=="gcc")) or '
              '(_toolset=="host" and (compiler_host=="clang" or compiler_host=="gcc"))', {
               'cflags': [
+                '-Wno-tautological-constant-out-of-range-compare',
                 '-Wno-unused-const-variable',
                 '-Wno-unused-function',
                 '-Wno-unused-private-field',

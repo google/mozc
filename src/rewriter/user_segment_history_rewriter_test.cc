@@ -124,15 +124,15 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     }
     CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config_);
 
-    Clock::SetClockForUnitTest(NULL);
+    Clock::SetClockForUnitTest(nullptr);
 
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
-    ASSERT_TRUE(pos_group_.get() != NULL);
+    ASSERT_TRUE(pos_group_.get() != nullptr);
   }
 
   void TearDown() override {
-    Clock::SetClockForUnitTest(NULL);
+    Clock::SetClockForUnitTest(nullptr);
 
     std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
         CreateUserSegmentHistoryRewriter());
@@ -1508,7 +1508,7 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     // "[半] アルファベット"
     std::string expectation = VariantsRewriter::kHalfWidth;
     const std::string alphabet = VariantsRewriter::kAlphabet;
-    if (alphabet.size() != 0) {
+    if (!alphabet.empty()) {
       expectation += ' ' + alphabet;
     }
     EXPECT_EQ(expectation, segments.segment(0).candidate(0).description);

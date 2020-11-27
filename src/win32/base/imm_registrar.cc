@@ -163,7 +163,7 @@ LONG RetrievePreloadValues(HKEY preload_key, PreloadValueMap *keys) {
     DWORD value_name_length = kMaxValueNameLength;
     DWORD value_length = kMaxValueLength;
     LONG result = RegEnumValue(preload_key, i, value_name, &value_name_length,
-                               nullptr,  // reserved (must be NULL)
+                               nullptr,  // reserved (must be nullptr)
                                nullptr,  // type (optional)
                                value, &value_length);
 
@@ -226,7 +226,7 @@ bool RemoveHotKey(HKL hkl) {
       continue;
     }
     // ImmSetHotKey fails when both 2nd and 3rd arguments are valid while 4th
-    // argument is NULL.  To remove the HotKey, pass 0 to them.
+    // argument is nullptr.  To remove the HotKey, pass 0 to them.
     result = ::ImmSetHotKey(id, 0, 0, nullptr);
     if (result == FALSE) {
       succeeded = false;

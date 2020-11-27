@@ -328,7 +328,7 @@ StorageInterface *TinyStorage::Create(const char *filename) {
   std::unique_ptr<TinyStorageImpl> storage(new TinyStorageImpl);
   if (!storage->Open(filename)) {
     LOG(ERROR) << "cannot open " << filename;
-    return NULL;
+    return nullptr;
   }
   return storage.release();
 }

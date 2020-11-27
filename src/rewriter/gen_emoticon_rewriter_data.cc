@@ -81,11 +81,11 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
   InputFileStream ifs(path.c_str());
 
   std::string line;
-  getline(ifs, line);  // Skip header
+  std::getline(ifs, line);  // Skip header
 
   std::vector<std::pair<std::string, KeyList>> data;
   mozc_hash_map<std::string, int> key_count;
-  while (getline(ifs, line)) {
+  while (std::getline(ifs, line)) {
     std::vector<absl::string_view> field_list;
     Util::SplitStringUsing(line, "\t", &field_list);
     CHECK_GE(field_list.size(), 2) << "Format error: " << line;

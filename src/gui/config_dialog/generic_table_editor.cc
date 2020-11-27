@@ -38,8 +38,8 @@
 #include <algorithm>  // for unique
 #include <cctype>
 #include <sstream>
+#include <set>
 #include <string>
-#include <vector>
 
 #include "base/file_stream.h"
 #include "base/logging.h"
@@ -55,7 +55,8 @@ const size_t kMaxEntrySize = 10000;
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
   // Here we use "龍" to calc font size, as it looks almost square
-  const QRect rect = QFontMetrics(widget->font()).boundingRect("龍");
+  const QRect rect =
+      QFontMetrics(widget->font()).boundingRect(QString::fromUtf8("龍"));
 #ifdef OS_WIN
   return static_cast<int>(rect.height() * 1.3);
 #else
@@ -132,39 +133,38 @@ bool GenericTableEditorDialog::LoadFromString(const string &str) {
 }
 
 void GenericTableEditorDialog::DeleteSelectedItems() {
-  std::vector<int> rows;
+  std::set<int> rows;
   QList<QTableWidgetItem *> selected = editorTableWidget->selectedItems();
 
-  // remember the last column as user chooses the
-  // last rows from top to bottom in general.
-  const int column = selected.isEmpty() ? 0 : selected.back()->column();
-
-  for (int i = 0; i < selected.size(); ++i) {
-    rows.push_back(selected[i]->row());
+  for (auto item : selected) {
+    rows.insert(item->row());
   }
-
-  std::vector<int>::iterator last = std::unique(rows.begin(), rows.end());
-  rows.erase(last, rows.end());
 
   if (rows.empty()) {
     QMessageBox::warning(this, windowTitle(), tr("No entry is selected"));
     return;
   }
 
-  // Choose next or prev item.
-  QTableWidgetItem *item = editorTableWidget->item(rows.back() + 1, column);
-  if (item == nullptr) {
-    item = editorTableWidget->item(rows.back() - 1, column);
+  // Keep the current cursor position after the deletion.
+  {
+    // remember the last column as user chooses the
+    // last rows from top to bottom in general.
+    const int cur_col = selected.back()->column();
+    const int cur_row = selected.back()->row();
+    QTableWidgetItem *cur_item = editorTableWidget->item(cur_row + 1, cur_col);
+    if (cur_item == nullptr) {
+      cur_item = editorTableWidget->item(cur_row - 1, cur_col);
+    }
+
+    // select item
+    if (cur_item != nullptr) {
+      editorTableWidget->setCurrentItem(cur_item);
+    }
   }
 
-  // select item
-  if (item != nullptr) {
-    editorTableWidget->setCurrentItem(item);
-  }
-
-  // remove from the buttom
-  for (int i = rows.size() - 1; i >= 0; --i) {
-    editorTableWidget->removeRow(rows[i]);
+  // remove from the bottom
+  for (auto rit = rows.rbegin(); rit != rows.rend(); ++rit) {
+    editorTableWidget->removeRow(*rit);
   }
 
   UpdateMenuStatus();
@@ -185,7 +185,7 @@ void GenericTableEditorDialog::InsertEmptyItem(int row) {
 
   editorTableWidget->insertRow(row);
   for (size_t i = 0; i < column_size_; ++i) {
-    editorTableWidget->setItem(row, i, new QTableWidgetItem(""));
+    editorTableWidget->setItem(row, i, new QTableWidgetItem(QLatin1String("")));
   }
   QTableWidgetItem *item = editorTableWidget->item(row, 0);
   if (item != nullptr) {
@@ -259,10 +259,10 @@ void GenericTableEditorDialog::Export() {
     return;
   }
 
-  const QString filename =
-      QFileDialog::getSaveFileName(this, tr("export to file"),
-                                   QDir::homePath() + QDir::separator() +
-                                       QString(GetDefaultFilename().c_str()));
+  const QString filename = QFileDialog::getSaveFileName(
+      this, tr("export to file"),
+      QDir::homePath() + QDir::separator() +
+          QString::fromUtf8(GetDefaultFilename().c_str()));
   if (filename.isEmpty()) {
     return;
   }

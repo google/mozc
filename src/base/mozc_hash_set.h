@@ -30,14 +30,15 @@
 #ifndef MOZC_BASE_MOZC_HASH_SET_H_
 #define MOZC_BASE_MOZC_HASH_SET_H_
 
-#include <unordered_set>
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 
-template <typename T, typename Hash = std::hash<T>,
-          typename Eq = std::equal_to<T>,
+template <typename T,
+          typename Hash = typename absl::flat_hash_set<T>::hasher,
+          typename Eq = typename absl::flat_hash_set<T, Hash>::key_equal,
           typename Allocator = std::allocator<T>>
-using mozc_hash_set = std::unordered_set<T, Hash, Eq, Allocator>;
+using mozc_hash_set = absl::flat_hash_set<T, Hash, Eq, Allocator>;
 
 }  // namespace mozc
 

@@ -168,7 +168,7 @@ class TipLangBarButton : public ITfLangBarItemButton,
   void SetDescription(const std::wstring &description);
 
   // Returns the i-th data in the language bar menu.
-  // Returns NULL if i is out of bounds.
+  // Returns nullptr if i is out of bounds.
   TipLangBarMenuData *menu_data(size_t i);
 
   // Returns the size of the language bar menu.

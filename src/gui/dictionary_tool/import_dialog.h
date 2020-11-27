@@ -50,7 +50,7 @@ class ImportDialog : public QDialog, private Ui::ImportDialog {
   Q_OBJECT
 
  public:
-  ImportDialog(QWidget *parent = 0);
+  explicit ImportDialog(QWidget *parent = nullptr);
   ~ImportDialog() override;
 
   // Accessor methods to get form values.

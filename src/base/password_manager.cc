@@ -160,9 +160,9 @@ bool RemovePasswordFile() {
 // PlainPasswordManager
 class PlainPasswordManager : public PasswordManagerInterface {
  public:
-  virtual bool SetPassword(const std::string &password) const;
-  virtual bool GetPassword(std::string *password) const;
-  virtual bool RemovePassword() const;
+  bool SetPassword(const std::string &password) const override;
+  bool GetPassword(std::string *password) const override;
+  bool RemovePassword() const override;
 };
 
 bool PlainPasswordManager::SetPassword(const std::string &password) const {

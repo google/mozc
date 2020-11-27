@@ -61,11 +61,9 @@ TEST_F(SystemUtilTest, SetIsWindowsX64ModeForTest) {
       SystemUtil::IS_WINDOWS_X64_DEFAULT_MODE);
 }
 
-#ifndef OS_NACL
 TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
   EXPECT_GT(SystemUtil::GetTotalPhysicalMemory(), 0);
 }
-#endif  // OS_NACL
 
 #ifdef OS_ANDROID
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {

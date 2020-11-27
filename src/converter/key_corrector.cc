@@ -410,7 +410,7 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
     return false;
   }
 
-  if (key.size() == 0 || key.size() >= kMaxSize) {
+  if (key.empty() || key.size() >= kMaxSize) {
     VLOG(1) << "invalid key length";
     return false;
   }

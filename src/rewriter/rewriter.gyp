@@ -77,6 +77,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../base/base.gyp:serialized_string_array',

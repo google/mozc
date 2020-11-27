@@ -34,6 +34,7 @@
 #else
 #include <string.h>
 #include <sys/stat.h>
+
 #include <cerrno>
 #endif  // OS_WIN
 
@@ -41,6 +42,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <spawn.h>  // for posix_spawn().
+
 #include "base/mac_process.h"
 #endif  // __APPLE__
 

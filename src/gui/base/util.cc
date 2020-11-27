@@ -72,8 +72,9 @@ void InstallDefaultTranslator() {
 
   // Load "<translation_path>/qt_<lang>.qm" from a qrc file.
   bool loaded = translator->load(
-      QLocale::system(), "qt", "_",
-      QLibraryInfo::location(QLibraryInfo::TranslationsPath), ".qm");
+      QLocale::system(), QLatin1String("qt"), QLatin1String("_"),
+      QLibraryInfo::location(QLibraryInfo::TranslationsPath),
+      QLatin1String(".qm"));
   if (loaded) {
     qApp->installTranslator(translator);
   } else {
@@ -88,7 +89,7 @@ void InstallDefaultTranslator() {
 
 // static
 std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
-  QApplication::setStyle(QStyleFactory::create("fusion"));
+  QApplication::setStyle(QStyleFactory::create(QLatin1String("fusion")));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
@@ -115,7 +116,9 @@ void GuiUtil::InstallTranslator(const char *resource_name) {
   std::unique_ptr<QTranslator> translator(new QTranslator);
 
   // Load ":/<resource_name>_<lang>.qm" from a qrc file.
-  if (translator->load(QLocale::system(), resource_name, "_", ":/", ".qm")) {
+  if (translator->load(QLocale::system(), QLatin1String(resource_name),
+                       QLatin1String("_"), QLatin1String(":/"),
+                       QLatin1String(".qm"))) {
     qApp->installTranslator(translator.get());
     translators->emplace(resource_name, std::move(translator));
   }
@@ -156,7 +159,8 @@ void GuiUtil::ReplaceTitle(QWidget *widget) {
 // static
 QString GuiUtil::ReplaceString(const QString &str) {
   QString replaced(str);
-  return replaced.replace("[ProductName]", GuiUtil::ProductName());
+  return replaced.replace(QLatin1String("[ProductName]"),
+                          GuiUtil::ProductName());
 }
 
 }  // namespace gui

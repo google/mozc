@@ -63,7 +63,7 @@ void BitVectorBasedArray::Close() {
   index_.Reset();
   base_length_ = 0;
   step_length_ = 0;
-  data_ = 0;
+  data_ = nullptr;
 }
 
 const char *BitVectorBasedArray::Get(size_t index, size_t *length) const {

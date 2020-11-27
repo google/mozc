@@ -40,7 +40,7 @@ ConnectionFileReader::ConnectionFileReader(const std::string &filename)
     : stream_(filename.c_str()), done_(false), array_index_(-1), cost_(0) {
   LOG(INFO) << "Loading " << filename;
   std::string header;
-  CHECK(!getline(stream_, header).fail()) << filename << " is empty.";
+  CHECK(!std::getline(stream_, header).fail()) << filename << " is empty.";
   pos_size_ = NumberUtil::SimpleAtoi(header);
   Next();
 }
@@ -55,7 +55,7 @@ void ConnectionFileReader::Next() {
     return;
   }
   std::string line;
-  done_ = getline(stream_, line).fail();
+  done_ = std::getline(stream_, line).fail();
   if (done_) {
     return;
   }

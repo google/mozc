@@ -45,7 +45,7 @@ bool WindowTitleModifier::eventFilter(QObject *obj, QEvent *event) {
     return QObject::eventFilter(obj, event);
   }
 
-  const QString prefix = " (Dev ";
+  const QString prefix = QLatin1String(" (Dev ");
   const QString& title = w->windowTitle();
   // The window title can be empty, even if it is specified.
   // See: https://doc.qt.io/qt-5/qmessagebox.html#setWindowTitle

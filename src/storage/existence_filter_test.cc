@@ -73,7 +73,7 @@ void RunTest(int m, int n) {
 
   CheckValues(filter, m, n);
 
-  char *buf = NULL;
+  char *buf = nullptr;
   size_t size = 0;
   filter->Write(&buf, &size);
   LOG(INFO) << "write size: " << size;
@@ -117,7 +117,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
     filter->Insert(Hash::Fingerprint(words[i]));
   }
 
-  char *buf = NULL;
+  char *buf = nullptr;
   size_t size = 0;
   filter->Write(&buf, &size);
   std::unique_ptr<ExistenceFilter> filter_read(

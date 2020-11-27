@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
   std::string command;
   std::string result;
-  while (getline(std::cin, command)) {
+  while (std::getline(std::cin, command)) {
     converter.Convert(command, &result);
     std::cout << result << std::endl;
   }

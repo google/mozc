@@ -118,6 +118,7 @@
         'mutex',
         'singleton',
         'absl.gyp:absl_strings',
+        'absl.gyp:absl_time',
       ],
       'conditions': [
         ['OS=="win"', {
@@ -202,6 +203,7 @@
       ],
       'dependencies': [
         'singleton',
+        'absl.gyp:absl_time',
       ],
     },
     {

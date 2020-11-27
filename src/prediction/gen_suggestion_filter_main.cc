@@ -50,7 +50,7 @@ namespace {
 void ReadWords(const std::string &name, std::vector<uint64> *words) {
   std::string line;
   mozc::InputFileStream input(name.c_str());
-  while (getline(input, line)) {
+  while (std::getline(input, line)) {
     if (line.empty() || line[0] == '#') {
       continue;
     }

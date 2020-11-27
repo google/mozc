@@ -125,7 +125,7 @@ class CalculatorRewriterTest : public ::testing::Test {
 
   virtual void TearDown() {
     // Clear the mock test calculator
-    CalculatorFactory::SetCalculator(NULL);
+    CalculatorFactory::SetCalculator(nullptr);
   }
 
   ConversionRequest convreq_;

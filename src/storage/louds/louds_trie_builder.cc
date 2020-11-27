@@ -226,7 +226,7 @@ int LoudsTrieBuilder::GetId(const std::string &word) const {
     return -1;
   }
 
-  return id_list_[distance(word_list_.begin(), iter)];
+  return id_list_[std::distance(word_list_.begin(), iter)];
 }
 
 }  // namespace louds

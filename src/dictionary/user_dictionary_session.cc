@@ -254,7 +254,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
     // Move instances to backup vector.
     std::vector<UserDictionary::Entry *> backup(entries->pointer_begin(),
                                                 entries->pointer_end());
-    while (entries->size() > 0) {
+    while (!entries->empty()) {
       entries->ReleaseLast();
     }
 
