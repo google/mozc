@@ -1,0 +1,10 @@
+#!/bin/sh
+
+_bldtype=Debug
+pkgdir=
+
+install -D -m 755 out_linux/${_bldtype}/mozc_server "${pkgdir}/usr/lib/mozc/mozc_server"
+install    -m 755 out_linux/${_bldtype}/mozc_tool   "${pkgdir}/usr/lib/mozc/mozc_tool"
+install -d "${pkgdir}/usr/lib/mozc/documents/"
+install    -m 644 data/installer/*.html "${pkgdir}/usr/lib/mozc/documents/"
+

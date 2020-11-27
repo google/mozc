@@ -1,9 +1,7 @@
 #!/bin/sh
 
-_bldtype=${_bldtype:-Debug}
+_bldtype=Debug
 PREFIX="${PREFIX:-/usr}"
 
-install -D -m 755 "out_linux/${_bldtype}/mozc_server" "${PREFIX}/lib/mozc/mozc_server"
-install -D -m 755 "out_linux/${_bldtype}/mozc_tool"   "${PREFIX}/lib/mozc/mozc_tool"
-install -d "${PREFIX}/share/doc/mozc/"
-install -m 644 data/installer/*.html "${PREFIX}/share/doc/mozc/"
+install -Dm 755 out_linux/Debug/mozc_server $PREFIX/lib/mozc/mozc_server
+install -Dm 755 out_linux/Debug/mozc_tool $PREFIX/lib/mozc/mozc_tool
