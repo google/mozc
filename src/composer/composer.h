@@ -65,6 +65,7 @@ class Composer {
     STOP_KEY_TOGGLING,
   };
 
+  Composer();
   Composer(const Table *table, const commands::Request *request,
            const config::Config *config);
   virtual ~Composer();

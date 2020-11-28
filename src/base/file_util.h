@@ -61,6 +61,18 @@
 
 namespace mozc {
 
+class FileUtilInterface {
+ public:
+  virtual ~FileUtilInterface() = default;
+
+  virtual bool CreateDirectory(const std::string &path) = 0;
+  virtual bool DirectoryExists(const std::string &dirname) = 0;
+
+ protected:
+  FileUtilInterface() = default;
+};
+
+
 #if defined(OS_WIN)
 using FileTimeStamp = uint64;
 #elif defined(OS_NACL)
@@ -135,6 +147,9 @@ class FileUtil {
   // Returns false if something went wrong.
   static bool GetModificationTime(const std::string &filename,
                                   FileTimeStamp *modified_at);
+
+  // Sets a mock for unittest.
+  static void SetMockForUnitTest(FileUtilInterface *mock);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtil);

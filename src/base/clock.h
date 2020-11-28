@@ -39,7 +39,7 @@ namespace mozc {
 
 class ClockInterface {
  public:
-  virtual ~ClockInterface() {}
+  virtual ~ClockInterface() = default;
 
   virtual void GetTimeOfDay(uint64 *sec, uint32 *usec) = 0;
   virtual uint64 GetTime() = 0;
@@ -53,7 +53,7 @@ class ClockInterface {
   virtual void SetTimeZoneOffset(int32 timezone_offset_sec) = 0;
 
  protected:
-  ClockInterface() {}
+  ClockInterface() = default;
 };
 
 class Clock {

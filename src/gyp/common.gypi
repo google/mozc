@@ -393,6 +393,9 @@
           ],
           'SYMROOT': '<(build_base)',
           'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
+          'OTHER_LDFLAGS': [
+            '-headerpad_max_install_names',
+          ],
         },
         'link_settings': {
           'libraries': [

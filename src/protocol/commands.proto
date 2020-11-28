@@ -910,6 +910,7 @@ message Input {
     // Send a command for user dictionary session.
     SEND_USER_DICTIONARY_COMMAND = 26;
 
+    // Send an engine_reload_request (ID: 15) to reload the engine.
     SEND_ENGINE_RELOAD_REQUEST = 27;
 
     // Number of commands.

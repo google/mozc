@@ -622,6 +622,15 @@ std::string Table::DeleteSpecialKey(const std::string &input) {
   return output;
 }
 
+// static
+const Table &Table::GetDefaultTable() {
+  static Table *default_table = nullptr;
+  if (!default_table) {
+    default_table = new Table();
+  }
+  return *default_table;
+}
+
 // ========================================
 // TableContainer
 // ========================================

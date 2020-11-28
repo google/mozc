@@ -69,7 +69,7 @@ enum TableAttribute {
   // This flag suppresses any transliteration performed in CharChunk
   // and treated as an as-is key event.
   NO_TRANSLITERATION = 2,
-  // This flag indicates that the composition should be ended and commited.
+  // This flag indicates that the composition should be ended and committed.
   DIRECT_INPUT = 4,
 
   // This flag treats the next typing as a new input.  This flag is
@@ -143,6 +143,9 @@ class Table {
   // Delete invisible special keys wrapped with ("\x0F", "\x0E") and
   // return the trimmed visible string.
   static std::string DeleteSpecialKey(const std::string &input);
+
+  // Return the default table.
+  static const Table &GetDefaultTable();
 
  private:
   friend class mozc::DictionaryPredictorTest;

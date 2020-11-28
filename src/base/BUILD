@@ -815,6 +815,22 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "environ",
+    srcs = ["environ.cc"],
+    hdrs = ["environ.h"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":singleton",
+    ],
+)
+
+cc_library_mozc(
+    name = "environ_mock",
+    hdrs = ["environ_mock.h"],
+    deps = [":environ"],
+)
+
+cc_library_mozc(
     name = "file_util",
     srcs = ["file_util.cc"],
     hdrs = ["file_util.h"],
@@ -826,10 +842,17 @@ cc_library_mozc(
         ":mutex",
         ":port",
         ":scoped_handle",
+        ":singleton",
         ":util",
         ":win_util",
         "@com_google_absl//absl/strings",
     ],
+)
+
+cc_library_mozc(
+    name = "file_util_mock",
+    hdrs = ["file_util_mock.h"],
+    deps = [":file_util"],
 )
 
 cc_test_mozc(
@@ -849,36 +872,35 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "system_util",
-    srcs = select_mozc(
+    srcs = ["system_util.cc"] + select_mozc(
         android = ["android_util.cc"],
-    ) + ["system_util.cc"],
-    hdrs = select_mozc(
+    ),
+    hdrs = ["system_util.h"] + select_mozc(
         android = ["android_util.h"],
-    ) + ["system_util.h"],
+    ),
     local_defines = select_mozc(
-        linux = ["MOZC_SERVER_DIR=\"/usr/lib/mozc\""],
+        linux = ["MOZC_SERVER_DIRECTORY=\\\"/usr/lib/mozc\\\""],
     ),
     visibility = [
         "//:__subpackages__",
     ],
-    deps = select_mozc(
+    deps = [
+        ":const",
+        ":environ",
+        ":file_util",
+        ":logging",
+        ":mutex",
+        ":port",
+        ":singleton",
+        ":util",
+        ":win_util",
+    ] + select_mozc(
         android = [
             # android_util.h includes this for FRIEND_TEST
             "//testing:gunit_prod",
         ],
         ios = [":mac_util"],
-    ) + [
-        ":const",
-        ":file_util",
-        ":logging",
-        ":number_util",
-        ":port",
-        ":singleton",
-        ":util",
-    ] + [
-        ":mutex",
-        ":win_util",
-    ],
+    ),
 )
 
 cc_test_mozc(
@@ -887,7 +909,9 @@ cc_test_mozc(
     requires_full_emulation = False,
     visibility = ["//visibility:private"],
     deps = [
-        ":number_util",
+        ":environ_mock",
+        ":file_util",
+        ":file_util_mock",
         ":port",
         ":system_util",
         ":util",

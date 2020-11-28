@@ -145,36 +145,33 @@ class ClockImpl : public ClockInterface {
   int32 timezone_offset_sec_;
   absl::TimeZone timezone_;
 };
-
-ClockInterface *g_clock = nullptr;
-
-inline ClockInterface *GetClock() {
-  return g_clock != nullptr ? g_clock : Singleton<ClockImpl>::get();
-}
-
 }  // namespace
 
+using ClockSingleton = SingletonMockable<ClockInterface, ClockImpl>;
+
 void Clock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
-  GetClock()->GetTimeOfDay(sec, usec);
+  ClockSingleton::Get()->GetTimeOfDay(sec, usec);
 }
 
-uint64 Clock::GetTime() { return GetClock()->GetTime(); }
+uint64 Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
 
-absl::Time Clock::GetAbslTime() { return GetClock()->GetAbslTime(); }
+absl::Time Clock::GetAbslTime() { return ClockSingleton::Get()->GetAbslTime(); }
 
-uint64 Clock::GetFrequency() { return GetClock()->GetFrequency(); }
+uint64 Clock::GetFrequency() { return ClockSingleton::Get()->GetFrequency(); }
 
-uint64 Clock::GetTicks() { return GetClock()->GetTicks(); }
+uint64 Clock::GetTicks() { return ClockSingleton::Get()->GetTicks(); }
 
 const absl::TimeZone& Clock::GetTimeZone() {
-  return GetClock()->GetTimeZone();
+  return ClockSingleton::Get()->GetTimeZone();
 }
 
 void Clock::SetTimeZoneOffset(int32 timezone_offset_sec) {
-  return GetClock()->SetTimeZoneOffset(timezone_offset_sec);
+  return ClockSingleton::Get()->SetTimeZoneOffset(timezone_offset_sec);
 }
 
-void Clock::SetClockForUnitTest(ClockInterface *clock) { g_clock = clock; }
+void Clock::SetClockForUnitTest(ClockInterface *clock) {
+  ClockSingleton::SetMock(clock);
+}
 
 
 }  // namespace mozc
