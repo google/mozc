@@ -72,28 +72,6 @@
       },
     },
     {
-      'target_name': 'gen_fcitx_mozc_i18n',
-      'type': 'none',
-      'actions': [
-        {
-          'action_name': 'gen_fcitx_mozc_i18n',
-          'inputs': [
-            './gen_fcitx_mozc_i18n.sh'
-          ],
-          'outputs': [
-            '<(gen_out_dir)/po/zh_CN.mo',
-            '<(gen_out_dir)/po/zh_TW.mo',
-            '<(gen_out_dir)/po/ja.mo',
-            '<(gen_out_dir)/po/de.mo',
-          ],
-          'action': [
-            'sh',
-            './gen_fcitx_mozc_i18n.sh',
-            '<(gen_out_dir)/po',
-          ],
-        }],
-    },
-    {
       'target_name': 'fcitx5-mozc',
       'product_prefix': '',
       'type': 'loadable_module',
