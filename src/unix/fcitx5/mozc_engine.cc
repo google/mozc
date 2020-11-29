@@ -44,21 +44,21 @@ const struct CompositionMode {
 } kPropCompositionModes[] = {
     {
         "mozc-mode-direct",
-        "mozc-direct.png",
+        "fcitx-mozc-direct",
         "A",
         N_("Direct"),
         mozc::commands::DIRECT,
     },
     {
         "mozc-mode-hiragana",
-        "mozc-hiragana.png",
+        "fcitx-mozc-hiragana",
         "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
         N_("Hiragana"),
         mozc::commands::HIRAGANA,
     },
     {
         "mozc-mode-katakana_full",
-        "mozc-katakana_full.png",
+        "fcitx-mozc-katakana-full",
         "\xe3\x82\xa2",  // Katakana letter A.
         N_("Full Katakana"),
         mozc::commands::FULL_KATAKANA,
@@ -66,7 +66,7 @@ const struct CompositionMode {
     {
 
         "mozc-mode-alpha_half",
-        "mozc-alpha_half.png",
+        "fcitx-mozc-alpha-half",
         "A",
         N_("Half ASCII"),
         mozc::commands::HALF_ASCII,
@@ -74,14 +74,14 @@ const struct CompositionMode {
     {
 
         "mozc-mode-alpha_full",
-        "mozc-alpha_full.png",
+        "fcitx-mozc-alpha-full",
         "\xef\xbc\xa1",  // Full width ASCII letter A.
         N_("Full ASCII"),
         mozc::commands::FULL_ASCII,
     },
     {
         "mozc-mode-katakana_full",
-        "mozc-katakana_half.png",
+        "fcitx-mozc-katakana-full",
         "\xef\xbd\xb1",  // Half width Katakana letter A.
         N_("Half Katakana"),
         mozc::commands::HALF_KATAKANA,
@@ -100,9 +100,7 @@ std::string MozcModeAction::longText(InputContext *ic) const {
 
 std::string MozcModeAction::icon(InputContext *ic) const {
   auto mozc_state = engine_->mozcState(ic);
-  return stringutils::joinPath(
-      StandardPath::global().fcitxPath("pkgdatadir"), "mozc/icon",
-      kPropCompositionModes[mozc_state->GetCompositionMode()].icon);
+  return kPropCompositionModes[mozc_state->GetCompositionMode()].icon;
 }
 
 MozcModeSubAction::MozcModeSubAction(MozcEngine *engine,
@@ -110,8 +108,7 @@ MozcModeSubAction::MozcModeSubAction(MozcEngine *engine,
     : engine_(engine), mode_(mode) {
   setShortText(kPropCompositionModes[mode].label);
   setLongText(_(kPropCompositionModes[mode].description));
-  setIcon(stringutils::joinPath(StandardPath::global().fcitxPath("pkgdatadir"),
-                                "mozc/icon", kPropCompositionModes[mode].icon));
+  setIcon(kPropCompositionModes[mode].icon);
   setCheckable(true);
 }
 
@@ -157,9 +154,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool", &toolAction_);
   toolAction_.setShortText(_("Tool"));
   toolAction_.setLongText(_("Tool"));
-  toolAction_.setIcon(
-      stringutils::joinPath(StandardPath::global().fcitxPath("pkgdatadir"),
-                            "mozc/icon", "mozc-tool.png"));
+  toolAction_.setIcon("fcitx-mozc-tool");
 
   int i = 0;
   for (auto &modeAction : modeActions_) {
@@ -172,6 +167,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool-config",
                                                    &configToolAction_);
   configToolAction_.setShortText(_("Configuration Tool"));
+  configToolAction_.setIcon("fcitx-mozc-tool");
   configToolAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=config_dialog");
   });
@@ -179,6 +175,7 @@ MozcEngine::MozcEngine(Instance *instance)
   instance_->userInterfaceManager().registerAction("mozc-tool-dict",
                                                    &dictionaryToolAction_);
   dictionaryToolAction_.setShortText(_("Dictionary Tool"));
+  dictionaryToolAction_.setIcon("fcitx-mozc-dictionary");
   dictionaryToolAction_.connect<SimpleAction::Activated>([](InputContext *) {
     mozc::Process::SpawnMozcProcess("mozc_tool", "--mode=dictionary_tool");
   });
