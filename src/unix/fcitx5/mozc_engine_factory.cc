@@ -16,17 +16,58 @@
  * License along with this library; see the file COPYING. If not,
  * see <http://www.gnu.org/licenses/>.
  */
+#include <fcitx-utils/i18n.h>
+#include <fcitx-utils/misc.h>
+#include <fcitx-utils/stringutils.h>
 #include <fcitx/addonfactory.h>
+#include <stdlib.h>
+
+#include <string_view>
+
+#include "base/system_util.h"
 #include "mozc_engine.h"
 
 namespace fcitx {
 class MozcEngineFactory : public AddonFactory {
  public:
   AddonInstance *create(AddonManager *manager) override {
+    // We don't have a direct way to detect, so we simply try.
+    auto baseDirectory = makeUniqueCPtr(
+        realpath(mozc::SystemUtil::GetServerDirectory().data(), nullptr));
+    int numberOfSlash = 0;
+    if (baseDirectory) {
+      std::string_view view(baseDirectory.get());
+      for (auto c : view) {
+        if (c == '/') {
+          numberOfSlash += 1;
+        }
+      }
+      if (view.empty()) {
+        baseDirectory.reset();
+      }
+    }
+
+    // Make sure we don't deadloop.
+    while (baseDirectory && numberOfSlash >= 0) {
+      auto path = stringutils::joinPath(baseDirectory.get(), "share/locale");
+      if (fs::isdir(path)) {
+        registerDomain("fcitx5-mozc", path.data());
+      }
+      baseDirectory = cdUp(baseDirectory.get());
+      if (baseDirectory && std::string_view(baseDirectory.get()).empty()) {
+        baseDirectory.reset();
+      }
+      numberOfSlash -= 1;
+    }
     return new MozcEngine(manager->instance());
+  }
+
+ private:
+  UniqueCPtr<char> cdUp(const char *path) {
+    return makeUniqueCPtr(
+        realpath(stringutils::joinPath(path, "..").data(), nullptr));
   }
 };
 }  // namespace fcitx
-
 
 FCITX_ADDON_FACTORY(fcitx::MozcEngineFactory)

@@ -34,6 +34,7 @@
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/candidatelist.h>
 #include <fcitx/inputpanel.h>
+
 #include <string>
 
 #include "base/const.h"

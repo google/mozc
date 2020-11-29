@@ -31,6 +31,7 @@
 
 #include <fcitx-module/clipboard/clipboard_public.h>
 #include <fcitx/inputcontext.h>
+
 #include <limits>
 #include <string>
 
@@ -208,9 +209,12 @@ bool GetSurroundingText(InputContext *ic, SurroundingTextInfo *info,
 
   const size_t selection_start = std::min(cursor_pos, anchor_pos);
   const size_t selection_length = std::abs(info->relative_selected_length);
-  info->preceding_text = Util::Utf8SubString(surrounding_text, 0, selection_start);
-  info->selection_text = Util::Utf8SubString(surrounding_text, selection_start, selection_length);
-  info->following_text = Util::Utf8SubString(surrounding_text, selection_start + selection_length);
+  info->preceding_text =
+      Util::Utf8SubString(surrounding_text, 0, selection_start);
+  info->selection_text =
+      Util::Utf8SubString(surrounding_text, selection_start, selection_length);
+  info->following_text =
+      Util::Utf8SubString(surrounding_text, selection_start + selection_length);
   return true;
 }
 
