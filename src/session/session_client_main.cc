@@ -79,8 +79,8 @@ void Loop(std::istream *input, std::ostream *output) {
       LOG(ERROR) << "Command failure";
     }
 
-    *output << command.DebugString();
-    LOG(INFO) << command.DebugString();
+    *output << command.Utf8DebugString();
+    LOG(INFO) << command.Utf8DebugString();
   }
 }
 

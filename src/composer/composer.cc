@@ -192,6 +192,11 @@ const size_t kMaxPreeditLength = 256;
 
 }  // namespace
 
+Composer::Composer()
+    : Composer(&Table::GetDefaultTable(),
+               &commands::Request::default_instance(),
+               &config::ConfigHandler::DefaultConfig()) {}
+
 Composer::Composer(const Table *table, const commands::Request *request,
                    const config::Config *config)
     : position_(0),

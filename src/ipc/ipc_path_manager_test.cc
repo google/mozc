@@ -54,7 +54,7 @@ namespace {
 
 class CreateThread : public Thread {
  public:
-  virtual void Run() {
+  void Run() override {
     IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
     EXPECT_TRUE(manager->CreateNewPathName());
     EXPECT_TRUE(manager->SavePathName());
@@ -93,7 +93,7 @@ class IPCPathManagerTest : public ::testing::Test {
 TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   CreateThread t;
   t.Start("IPCPathManagerTest");
-  Util::Sleep(1000);
+  t.Join();
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test");
   EXPECT_TRUE(manager->CreateNewPathName());
   EXPECT_TRUE(manager->SavePathName());

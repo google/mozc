@@ -212,8 +212,9 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(new composer::Composer(nullptr, &context->GetRequest(),
-                                               &context->GetConfig()));
+  context->set_composer(
+      new composer::Composer(&composer::Table::GetDefaultTable(),
+                             &context->GetRequest(), &context->GetConfig()));
   context->set_converter(new SessionConverter(
       engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
 #ifdef OS_WIN
@@ -1502,24 +1503,25 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
   //   input.key().mode()   : HALF_KATAKANA
   // To achieve this, we create a temporary composer object to which the
   // new input mode will be stored when |input| has a new input mode.
-  const composer::Composer *target_composer = &context_->composer();
-  std::unique_ptr<composer::Composer> temporary_composer;
-  if (input.has_key() && input.key().has_mode()) {
-    // Allocate an object only when it is necessary.
-    temporary_composer.reset(new composer::Composer(nullptr, nullptr, nullptr));
+  auto get_input_mode = [this, &input]() {
+    const bool has_mode = (input.has_key() && input.key().has_mode());
+    if (!has_mode) {
+      return context_->composer().GetInputMode();
+    }
+
+    composer::Composer temporary_composer;
     // Copy the current composer state just in case.
-    temporary_composer->CopyFrom(context_->composer());
-    ApplyInputMode(input.key().mode(), temporary_composer.get());
+    temporary_composer.CopyFrom(context_->composer());
+    ApplyInputMode(input.key().mode(), &temporary_composer);
     // Refer to this temporary composer in this method.
-    target_composer = temporary_composer.get();
-  }
+    return temporary_composer.GetInputMode();
+  };
 
   // Check the current config and the current input status.
   bool is_full_width = false;
   switch (context_->GetConfig().space_character_form()) {
     case config::Config::FUNDAMENTAL_INPUT_MODE: {
-      const transliteration::TransliterationType input_mode =
-          target_composer->GetInputMode();
+      const transliteration::TransliterationType input_mode = get_input_mode();
       if (transliteration::T13n::IsInHalfAsciiTypes(input_mode) ||
           transliteration::T13n::IsInHalfKatakanaTypes(input_mode)) {
         is_full_width = false;

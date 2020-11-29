@@ -43,6 +43,7 @@
 #include "base/mmap.h"
 #include "base/mutex.h"
 #include "base/scoped_handle.h"
+#include "base/singleton.h"
 #include "base/util.h"
 #include "base/win_util.h"
 
@@ -72,6 +73,19 @@ const char kFileDelimiter = '/';
 #endif  // CopyFile
 
 namespace mozc {
+namespace {
+class FileUtilImpl : public FileUtilInterface {
+ public:
+  FileUtilImpl() = default;
+  ~FileUtilImpl() override = default;
+
+  bool CreateDirectory(const std::string &path) override;
+  bool DirectoryExists(const std::string &dirname) override;
+};
+
+using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
+
+}  // namespace
 
 #ifdef OS_WIN
 namespace {
@@ -98,6 +112,10 @@ void StripWritePreventingAttributesIfExists(const string &filename) {
 #endif  // OS_WIN
 
 bool FileUtil::CreateDirectory(const std::string &path) {
+  return FileUtilSingleton::Get()->CreateDirectory(path);
+}
+
+bool FileUtilImpl::CreateDirectory(const std::string &path) {
 #if defined(OS_WIN)
   std::wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
@@ -140,6 +158,10 @@ bool FileUtil::FileExists(const std::string &filename) {
 }
 
 bool FileUtil::DirectoryExists(const std::string &dirname) {
+  return FileUtilSingleton::Get()->DirectoryExists(dirname);
+}
+
+bool FileUtilImpl::DirectoryExists(const std::string &dirname) {
 #ifdef OS_WIN
   std::wstring wide;
   if (Util::UTF8ToWide(dirname, &wide) <= 0) {
@@ -390,6 +412,10 @@ bool FileUtil::GetModificationTime(const std::string &filename,
   *modified_at = stat_info.st_mtime;
   return true;
 #endif  // OS_WIN
+}
+
+void FileUtil::SetMockForUnitTest(FileUtilInterface *mock) {
+  FileUtilSingleton::SetMock(mock);
 }
 
 }  // namespace mozc

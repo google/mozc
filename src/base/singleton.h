@@ -86,6 +86,40 @@ once_t Singleton<T>::once_ = MOZC_ONCE_INIT;
 
 template <typename T>
 T *Singleton<T>::instance_ = nullptr;
+
+
+// SingletonMockable class.
+// Usage: (quote from clock.cc)
+//
+//   using ClockSingleton = SingletonMockable<ClockInterface, ClockImpl>;
+//
+//   uint64 Clock::GetTime() {
+//     return ClockSingleton::Get()->GetTime();
+//   }
+//
+//   void Clock::SetClockForUnitTest(ClockInterface *clock_mock) {
+//    ClockSingleton::SetMock(clock_mock);
+//   }
+template <class Interface, class Impl>
+class SingletonMockable {
+ public:
+  static Interface *Get() {
+    if (mock_) {
+      return mock_;
+    }
+    static Impl *impl = new Impl();
+    return impl;
+  }
+  static void SetMock(Interface *mock) {
+    mock_ = mock;
+  }
+ private:
+  static Interface *mock_;
+};
+
+template <class Interface, class Impl>
+Interface *SingletonMockable<Interface, Impl>::mock_ = nullptr;
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_SINGLETON_H_

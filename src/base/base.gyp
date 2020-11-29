@@ -95,6 +95,7 @@
       'sources': [
         '<(gen_out_dir)/character_set.inc',
         '<(gen_out_dir)/version_def.h',
+        'environ.cc',
         'file_stream.cc',
         'file_util.cc',
         'init_mozc.cc',

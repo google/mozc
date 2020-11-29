@@ -64,6 +64,7 @@
 #endif  // OS_ANDROID
 
 #include "base/const.h"
+#include "base/environ.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 
@@ -83,13 +84,34 @@ namespace mozc {
 namespace {
 class UserProfileDirectoryImpl {
  public:
-  UserProfileDirectoryImpl();
-  std::string get() { return dir_; }
-  void set(const std::string &dir) { dir_ = dir; }
+  UserProfileDirectoryImpl() = default;
+  virtual ~UserProfileDirectoryImpl() = default;
+
+  std::string GetDir();
+  void SetDir(const std::string &dir);
 
  private:
+  std::string GetUserProfileDirectory() const;
   std::string dir_;
 };
+
+std::string UserProfileDirectoryImpl::GetDir() {
+  if (!dir_.empty()) {
+    return dir_;
+  }
+  const std::string dir = GetUserProfileDirectory();
+  FileUtil::CreateDirectory(dir);
+  if (!FileUtil::DirectoryExists(dir)) {
+    LOG(ERROR) << "Failed to create directory: " << dir;
+  }
+
+  dir_ = dir;
+  return dir_;
+}
+
+void UserProfileDirectoryImpl::SetDir(const std::string &dir) {
+  dir_ = dir;
+}
 
 #ifdef OS_WIN
 // TODO(yukawa): Use API wrapper so that unit test can emulate any case.
@@ -202,87 +224,88 @@ class LocalAppDataDirectoryCache {
 };
 #endif  // OS_WIN
 
-UserProfileDirectoryImpl::UserProfileDirectoryImpl() {
+std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 #if defined(OS_CHROMEOS)
   // TODO(toka): Must use passed in user profile dir which passed in. If mojo
   // platform the user profile is determined on runtime.
   // It's hack, the user profile dir should be passed in. Although the value in
   // NaCL platform is correct.
-  dir_ = "/mutable";
-  return;
-#endif  // OS_CHROMEOS
+  return "/mutable";
 
-#if defined(OS_WASM)
+#elif defined(OS_WASM)
   // Do nothing for WebAssembly.
-  return;
-#endif  // OS_WASM
+  return "";
 
-#if defined(OS_ANDROID)
+#elif defined(OS_ANDROID)
   // For android, we do nothing here because user profile directory,
   // of which the path depends on active user,
   // is injected from Java layer.
-  return;
-#endif  // OS_ANDROID
+  return "";
 
-  std::string dir;
-
-#ifdef OS_IOS
+#elif defined(OS_IOS)
   // OS_IOS block must be placed before __APPLE__ because both macros are
   // currently defined on iOS.
   //
   // On iOS, use Caches directory instead of Application Spport directory
   // because the support directory doesn't exist by default.  Also, it is backed
   // up by iTunes and iCloud.
-  dir = FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
-#endif  // OS_IOS
+  return FileUtil::JoinPath({MacUtil::GetCachesDirectory(), kProductPrefix});
 
-#if defined(OS_WIN)
+#elif defined(OS_WIN)
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
-  dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
+  std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
+
 # ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
   FileUtil::CreateDirectory(dir);
 # endif  // GOOGLE_JAPANESE_INPUT_BUILD
-  dir = FileUtil::JoinPath(dir, kProductNameInEnglish);
-#endif  // OS_WIN
+  return FileUtil::JoinPath(dir, kProductNameInEnglish);
 
-#if defined(__APPLE__)
-  dir = MacUtil::GetApplicationSupportDirectory();
+
+#elif defined(__APPLE__)
+  std::string dir = MacUtil::GetApplicationSupportDirectory();
 # ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Google");
   // The permission of ~/Library/Application Support/Google seems to be 0755.
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
-  dir = FileUtil::JoinPath(dir, "JapaneseInput");
+  return FileUtil::JoinPath(dir, "JapaneseInput");
 # else   //  GOOGLE_JAPANESE_INPUT_BUILD
-  dir = FileUtil::JoinPath(dir, "Mozc");
+  return FileUtil::JoinPath(dir, "Mozc");
 # endif  //  GOOGLE_JAPANESE_INPUT_BUILD
-#endif  // __APPLE__
 
-#if defined(OS_LINUX)
-  char buf[1024];
-  struct passwd pw, *ppw;
-  const uid_t uid = geteuid();
-  CHECK_EQ(0, getpwuid_r(uid, &pw, buf, sizeof(buf), &ppw))
-      << "Can't get passwd entry for uid " << uid << ".";
-  CHECK_LT(0, strlen(pw.pw_dir))
-      << "Home directory for uid " << uid << " is not set.";
-  dir = FileUtil::JoinPath(pw.pw_dir, ".mozc");
-#endif  // OS_LINUX
 
-  FileUtil::CreateDirectory(dir);
-  if (!FileUtil::DirectoryExists(dir)) {
-    LOG(ERROR) << "Failed to create directory: " << dir;
+#elif defined(OS_LINUX)
+  // 1. If "$HOME/.mozc" already exists,
+  //    use "$HOME/.mozc" for backward compatibility.
+  // 2. If $XDG_CONFIG_HOME is defined
+  //    use "$XDG_CONFIG_HOME/mozc".
+  // 3. Otherwise
+  //    use "$HOME/.config/mozc" as the default value of $XDG_CONFIG_HOME
+  // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  const char *home = Environ::GetEnv("HOME");
+  CHECK(home) << "$HOME was not defined.";
+  const std::string old_dir = FileUtil::JoinPath(home, ".mozc");
+  if (FileUtil::DirectoryExists(old_dir)) {
+    return old_dir;
   }
 
-  // set User profile directory
-  dir_ = dir;
+  const char *xdg_config_home = Environ::GetEnv("XDG_CONFIG_HOME");
+  if (xdg_config_home) {
+    return FileUtil::JoinPath(xdg_config_home, "mozc");
+  }
+  return FileUtil::JoinPath(home, ".config/mozc");
+
+#else
+#error Undefined target platform.
+
+#endif
 }
 
 }  // namespace
 
 std::string SystemUtil::GetUserProfileDirectory() {
-  return Singleton<UserProfileDirectoryImpl>::get()->get();
+  return Singleton<UserProfileDirectoryImpl>::get()->GetDir();
 }
 
 std::string SystemUtil::GetLoggingDirectory() {
@@ -296,7 +319,7 @@ std::string SystemUtil::GetLoggingDirectory() {
 }
 
 void SystemUtil::SetUserProfileDirectory(const std::string &path) {
-  Singleton<UserProfileDirectoryImpl>::get()->set(path);
+  Singleton<UserProfileDirectoryImpl>::get()->SetDir(path);
 }
 
 #ifdef OS_WIN
@@ -632,7 +655,7 @@ string GetSessionIdString() {
 std::string SystemUtil::GetDesktopNameAsString() {
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
     defined(OS_WASM)
-  const char *display = getenv("DISPLAY");
+  const char *display = Environ::GetEnv("DISPLAY");
   if (display == nullptr) {
     return "";
   }
