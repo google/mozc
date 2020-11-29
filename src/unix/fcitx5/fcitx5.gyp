@@ -87,7 +87,6 @@
       ],
       'dependencies': [
         '<@(fcitx_dependencies)',
-        'gen_fcitx_mozc_i18n',
         'fcitx5_build_environment',
       ],
       'cflags_cc': [
