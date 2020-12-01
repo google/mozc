@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-11-24 09:36-0800\n"
+"POT-Creation-Date: 2020-12-02 00:02+0100\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: JungHee Lee <daemul72@gmail.com>, 2020\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
@@ -20,52 +20,68 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: mozc_engine.cc:195 mozc_engine.h:55
+#: mozc_engine.h:67 mozc_engine.cc:193
 msgid "About Mozc"
 msgstr "Mozc 정보"
 
-#: mozc_engine.cc:188 mozc_engine.h:53
+#: mozc_engine.h:65 mozc_engine.cc:186
 msgid "Add Word"
 msgstr "단어 추가"
 
-#: mozc_engine.cc:93
+#: mozc_engine.h:46
+msgid "Always"
+msgstr ""
+
+#: mozc_engine.cc:94
 msgid "Composition Mode"
 msgstr ""
 
-#: mozc_engine.cc:174 mozc_engine.h:49
+#: mozc_engine.h:61 mozc_engine.cc:170
 msgid "Configuration Tool"
 msgstr "환경설정 도구"
 
-#: mozc_engine.cc:181 mozc_engine.h:51
+#: mozc_engine.h:63 mozc_engine.cc:178
 msgid "Dictionary Tool"
 msgstr "사전 도구"
 
-#: mozc_engine.cc:49 mozc_state.cc:63
+#: mozc_engine.cc:50 mozc_state.cc:64
 msgid "Direct"
 msgstr ""
 
+#: mozc_engine.h:57
+msgid "Expand Usage"
+msgstr ""
+
 #. Full width ASCII letter A.
-#: mozc_engine.cc:79 mozc_state.cc:87
+#: mozc_engine.cc:80 mozc_state.cc:88
 msgid "Full ASCII"
 msgstr ""
 
 #. Katakana letter A.
-#: mozc_engine.cc:63 mozc_state.cc:75
+#: mozc_engine.cc:64 mozc_state.cc:76
 msgid "Full Katakana"
 msgstr ""
 
-#: mozc_engine.cc:71 mozc_state.cc:81
+#: mozc_engine.cc:72 mozc_state.cc:82
 msgid "Half ASCII"
 msgstr ""
 
 #. Half width Katakana letter A.
-#: mozc_engine.cc:86 mozc_state.cc:93
+#: mozc_engine.cc:87 mozc_state.cc:94
 msgid "Half Katakana"
 msgstr ""
 
 #. Hiragana letter A in UTF-8.
-#: mozc_engine.cc:56 mozc_state.cc:69
+#: mozc_engine.cc:57 mozc_state.cc:70
 msgid "Hiragana"
+msgstr ""
+
+#: mozc_engine.h:47
+msgid "Hotkey"
+msgstr ""
+
+#: mozc_engine.h:58
+msgid "Hotkey to expand usage"
 msgstr ""
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
@@ -76,14 +92,19 @@ msgstr ""
 msgid "Mozc for Fcitx 5"
 msgstr ""
 
-#: mozc_response_parser.cc:144
-msgid "Press Ctrl+Alt+H to show usages."
+#: mozc_engine.h:46
+msgid "On Focus"
 msgstr ""
 
-#: mozc_state.cc:435
+#: mozc_response_parser.cc:173
+#, c-format
+msgid "Press %s to show usages."
+msgstr ""
+
+#: mozc_state.cc:437
 msgid "Press Escape to go back"
 msgstr ""
 
-#: mozc_engine.cc:158 mozc_engine.cc:159
+#: mozc_engine.cc:156 mozc_engine.cc:157
 msgid "Tool"
 msgstr ""
