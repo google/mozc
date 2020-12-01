@@ -248,7 +248,8 @@ bool MozcState::ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
     return true;
   }
 
-  if (normalized_key.check(Key(FcitxKey_H, KeyState::Ctrl_Alt))) {
+  if (*engine_->config().expandMode == ExpandMode::Hotkey &&
+      normalized_key.check(*engine_->config().expand)) {
     if (!title_.empty() || !description_.empty()) {
       DisplayUsage();
       return true;

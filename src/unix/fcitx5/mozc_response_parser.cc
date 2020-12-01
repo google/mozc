@@ -86,7 +86,9 @@ class MozcCandidateList final : public CandidateList,
                                 public PageableCandidateList {
  public:
   MozcCandidateList(const mozc::commands::Candidates &candidates,
-                    InputContext *ic, MozcEngine *engine, bool use_annotation) {
+                    InputContext *ic, MozcEngine *engine, bool use_annotation)
+      : ic_(ic), engine_(engine) {
+    auto state = engine->mozcState(ic);
     setPageable(this);
     bool index_visible = false;
     if (candidates.has_footer()) {
@@ -114,6 +116,17 @@ class MozcCandidateList final : public CandidateList,
       focused_index = candidates.focused_index();
     }
 
+    std::map<int32, std::pair<string, string>> usage_map;
+    if (candidates.has_usages()) {
+      const mozc::commands::InformationList &usages = candidates.usages();
+      for (size_t i = 0; i < usages.information().size(); ++i) {
+        const mozc::commands::Information &information = usages.information(i);
+        if (!information.has_id() || !information.has_description()) continue;
+        usage_map[information.id()].first = information.title();
+        usage_map[information.id()].second = information.description();
+      }
+    }
+
     labels_.reserve(candidates.candidate_size());
 
     for (int i = 0; i < candidates.candidate_size(); ++i) {
@@ -138,19 +151,35 @@ class MozcCandidateList final : public CandidateList,
         value += CreateDescriptionString(candidate.annotation().description());
       }
 
-      if (use_annotation && candidates.has_focused_index() &&
-          index == focused_index) {
-        if (candidate.has_information_id()) {
-          value +=
-              CreateDescriptionString(_("Press Ctrl+Alt+H to show usages."));
-        }
+      const bool is_current =
+          candidates.has_focused_index() && index == focused_index;
+      if (is_current) {
         cursor_ = i;
+      }
+      if (use_annotation && candidate.has_information_id()) {
+        auto it = usage_map.find(candidate.information_id());
+        if (it != usage_map.end()) {
+          if (*engine_->config().expandMode == ExpandMode::Always ||
+              (*engine_->config().expandMode == ExpandMode::OnFocus &&
+               is_current)) {
+            if (it->second.first != candidate.value()) {
+              value.append("\n").append(it->second.first);
+            }
+            value.append("\n").append(it->second.second);
+          } else if (*engine_->config().expandMode == ExpandMode::Hotkey &&
+                     is_current && engine_->config().expand->isValid()) {
+            state->SetUsage(it->second.first, it->second.second);
+            value += CreateDescriptionString(
+                absl::StrFormat(_("Press %s to show usages."),
+                                engine_->config().expand->toString()));
+          }
+        }
       }
 
       if (candidate.has_annotation() && candidate.annotation().has_shortcut()) {
-        labels_.emplace_back(candidate.annotation().shortcut());
+        labels_.emplace_back(candidate.annotation().shortcut() + ". ");
       } else if (index_visible) {
-        labels_.emplace_back(std::to_string(i + 1));
+        labels_.emplace_back(std::to_string(i + 1) + ". ");
       } else {
         labels_.emplace_back();
       }
@@ -408,38 +437,6 @@ void MozcResponseParser::ParseCandidates(
 
   ic->inputPanel().setCandidateList(std::make_unique<MozcCandidateList>(
       candidates, ic, engine_, use_annotation_));
-
-  int focused_index = -1;
-  if (candidates.has_focused_index()) {
-    focused_index = candidates.focused_index();
-  }
-
-  if (focused_index >= 0) {
-    std::map<int32, std::pair<string, string>> usage_map;
-    if (candidates.has_usages()) {
-      const mozc::commands::InformationList &usages = candidates.usages();
-      for (size_t i = 0; i < usages.information().size(); ++i) {
-        const mozc::commands::Information &information = usages.information(i);
-        if (!information.has_id() || !information.has_description()) continue;
-        usage_map[information.id()].first = information.title();
-        usage_map[information.id()].second = information.description();
-      }
-    }
-
-    for (int i = 0; i < candidates.candidate_size(); ++i) {
-      const mozc::commands::Candidates::Candidate &candidate =
-          candidates.candidate(i);
-      const uint32 index = candidate.index();
-      if (use_annotation_ && index == focused_index &&
-          candidate.has_information_id()) {
-        std::map<int32, std::pair<string, string>>::iterator it =
-            usage_map.find(candidate.information_id());
-        if (it != usage_map.end()) {
-          mozc_state->SetUsage(it->second.first, it->second.second);
-        }
-      }
-    }
-  }
 }
 
 void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,

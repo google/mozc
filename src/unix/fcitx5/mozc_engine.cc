@@ -19,6 +19,7 @@
 
 #include "unix/fcitx5/mozc_engine.h"
 
+#include <fcitx-config/iniparser.h>
 #include <fcitx-utils/i18n.h>
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/standardpath.h>
@@ -201,11 +202,18 @@ MozcEngine::MozcEngine(Instance *instance)
 
   modeAction_.setMenu(&modeMenu_);
   toolAction_.setMenu(&toolMenu_);
+
+  reloadConfig();
 }
 
 MozcEngine::~MozcEngine() {}
 
-void MozcEngine::reloadConfig() {}
+void MozcEngine::setConfig(const RawConfig &config) {
+  config_.load(config, true);
+  safeSaveAsIni(config_, "conf/mozc.conf");
+}
+
+void MozcEngine::reloadConfig() { readAsIni(config_, "conf/mozc.conf"); }
 void MozcEngine::activate(const fcitx::InputMethodEntry &,
                           fcitx::InputContextEvent &event) {
   auto ic = event.inputContext();

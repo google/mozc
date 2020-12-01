@@ -20,7 +20,9 @@
 #define _FCITX_UNIX_FCITX5_MOZC_ENGINE_H_
 
 #include <fcitx-config/configuration.h>
+#include <fcitx-config/enum.h>
 #include <fcitx-utils/i18n.h>
+#include <fcitx-utils/key.h>
 #include <fcitx-utils/stringutils.h>
 #include <fcitx/action.h>
 #include <fcitx/addonfactory.h>
@@ -39,12 +41,22 @@ class MozcConnection;
 class MozcResponseParser;
 class MozcEngine;
 
+enum class ExpandMode { Always, OnFocus, Hotkey };
+
+FCITX_CONFIG_ENUM_NAME_WITH_I18N(ExpandMode, N_("Always"), N_("On Focus"),
+                                 N_("Hotkey"));
+
 FCITX_CONFIGURATION(
     MozcEngineConfig, const std::string toolPath_ = mozc::FileUtil::JoinPath(
                           mozc::SystemUtil::GetServerDirectory(), "mozc_tool");
     std::string toolCommand(const char *arg) {
       return stringutils::concat(toolPath_, " ", arg);
     }
+
+    OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation>
+        expandMode{this, "ExpandMode", _("Expand Usage"), ExpandMode::OnFocus};
+    Option<Key> expand{this, "ExpandKey", _("Hotkey to expand usage"),
+                       Key("Control+Alt+H")};
 
     ExternalOption configTool{this, "ConfigTool", _("Configuration Tool"),
                               toolCommand("--mode=config_dialog")};
@@ -94,6 +106,10 @@ class MozcEngine final : public InputMethodEngine {
   std::string subMode(const fcitx::InputMethodEntry &,
                       fcitx::InputContext &) override;
   const Configuration *getConfig() const override { return &config_; }
+  void setConfig(const RawConfig &config) override;
+
+  auto &config() const { return config_; }
+  auto factory() const { return &factory_; }
 
   MozcState *mozcState(InputContext *ic);
   AddonInstance *clipboardAddon();
