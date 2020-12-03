@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-12-02 00:02+0100\n"
+"POT-Creation-Date: 2020-12-04 00:02+0100\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: csslayer <wengxt@gmail.com>, 2020\n"
 "Language-Team: Chinese (China) (https://www.transifex.com/fcitx/teams/12005/"
@@ -30,7 +30,7 @@ msgstr "添加词组"
 
 #: mozc_engine.h:46
 msgid "Always"
-msgstr ""
+msgstr "总是"
 
 #: mozc_engine.cc:94
 msgid "Composition Mode"
@@ -50,7 +50,7 @@ msgstr "直接键盘输入"
 
 #: mozc_engine.h:57
 msgid "Expand Usage"
-msgstr ""
+msgstr "展开用法"
 
 #. Full width ASCII letter A.
 #: mozc_engine.cc:80 mozc_state.cc:88
@@ -78,11 +78,11 @@ msgstr "平假名"
 
 #: mozc_engine.h:47
 msgid "Hotkey"
-msgstr ""
+msgstr "快捷键"
 
 #: mozc_engine.h:58
 msgid "Hotkey to expand usage"
-msgstr ""
+msgstr "展开用法的快捷键"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
@@ -94,12 +94,14 @@ msgstr "Fcitx 5 的 Mozc 支持"
 
 #: mozc_engine.h:46
 msgid "On Focus"
-msgstr ""
+msgstr "选中时"
 
-#: mozc_response_parser.cc:173
+#. We don't have a good library option for this, just do the simple
+#. replace. absl's runtime parsed format string is too copmlex.
+#: mozc_response_parser.cc:174
 #, c-format
 msgid "Press %s to show usages."
-msgstr ""
+msgstr "按下 %s 显示用法。"
 
 #: mozc_state.cc:437
 msgid "Press Escape to go back"

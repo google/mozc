@@ -4,14 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
+# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-12-02 00:02+0100\n"
+"POT-Creation-Date: 2020-12-04 00:02+0100\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -21,19 +22,19 @@ msgstr ""
 
 #: mozc_engine.h:67 mozc_engine.cc:193
 msgid "About Mozc"
-msgstr ""
+msgstr "Mozcについて"
 
 #: mozc_engine.h:65 mozc_engine.cc:186
 msgid "Add Word"
-msgstr ""
+msgstr "単語を追加"
 
 #: mozc_engine.h:46
 msgid "Always"
-msgstr ""
+msgstr "常に"
 
 #: mozc_engine.cc:94
 msgid "Composition Mode"
-msgstr ""
+msgstr "文字種"
 
 #: mozc_engine.h:61 mozc_engine.cc:170
 msgid "Configuration Tool"
@@ -45,65 +46,67 @@ msgstr "辞書ツール"
 
 #: mozc_engine.cc:50 mozc_state.cc:64
 msgid "Direct"
-msgstr ""
+msgstr "直接入力"
 
 #: mozc_engine.h:57
 msgid "Expand Usage"
-msgstr ""
+msgstr "用例を表示"
 
 #. Full width ASCII letter A.
 #: mozc_engine.cc:80 mozc_state.cc:88
 msgid "Full ASCII"
-msgstr ""
+msgstr "全角英数"
 
 #. Katakana letter A.
 #: mozc_engine.cc:64 mozc_state.cc:76
 msgid "Full Katakana"
-msgstr ""
+msgstr "全角カナ"
 
 #: mozc_engine.cc:72 mozc_state.cc:82
 msgid "Half ASCII"
-msgstr ""
+msgstr "半角英数"
 
 #. Half width Katakana letter A.
 #: mozc_engine.cc:87 mozc_state.cc:94
 msgid "Half Katakana"
-msgstr ""
+msgstr "半角カナ"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_engine.cc:57 mozc_state.cc:70
 msgid "Hiragana"
-msgstr ""
+msgstr "全角かな"
 
 #: mozc_engine.h:47
 msgid "Hotkey"
-msgstr ""
+msgstr "ホットキー"
 
 #: mozc_engine.h:58
 msgid "Hotkey to expand usage"
-msgstr ""
+msgstr "用例を表示するホットキー"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
-msgstr ""
+msgstr "Mozcに基づく日本語入力メソッド"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
-msgstr ""
+msgstr "Mozc for Fcitx 5"
 
 #: mozc_engine.h:46
 msgid "On Focus"
-msgstr ""
+msgstr "フォーカス時"
 
-#: mozc_response_parser.cc:173
+#. We don't have a good library option for this, just do the simple
+#. replace. absl's runtime parsed format string is too copmlex.
+#: mozc_response_parser.cc:174
 #, c-format
 msgid "Press %s to show usages."
-msgstr ""
+msgstr "%s を押すと用例を表示"
 
 #: mozc_state.cc:437
 msgid "Press Escape to go back"
-msgstr ""
+msgstr "Escを押すと戻る"
 
 #: mozc_engine.cc:156 mozc_engine.cc:157
 msgid "Tool"
-msgstr ""
+msgstr "ツール"
