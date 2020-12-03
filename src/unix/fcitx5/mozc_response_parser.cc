@@ -169,9 +169,12 @@ class MozcCandidateList final : public CandidateList,
           } else if (*engine_->config().expandMode == ExpandMode::Hotkey &&
                      is_current && engine_->config().expand->isValid()) {
             state->SetUsage(it->second.first, it->second.second);
-            value += CreateDescriptionString(
-                absl::StrFormat(_("Press %s to show usages."),
-                                engine_->config().expand->toString()));
+            // We don't have a good library option for this, just do the simple
+            // replace. absl's runtime parsed format string is too copmlex.
+            std::string msg = _("Press %s to show usages.");
+            msg = stringutils::replaceAll(msg, "%s",
+                                          engine_->config().expand->toString());
+            value += CreateDescriptionString(msg);
           }
         }
       }
