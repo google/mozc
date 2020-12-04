@@ -5,14 +5,15 @@
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
 # UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020
+# Takuro Onoue <kusanaginoturugi@gmail.com>, 2020
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-12-04 00:02+0100\n"
+"POT-Creation-Date: 2020-12-05 00:03+0100\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020\n"
+"Last-Translator: Takuro Onoue <kusanaginoturugi@gmail.com>, 2020\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -105,7 +106,7 @@ msgstr "%s を押すと用例を表示"
 
 #: mozc_state.cc:437
 msgid "Press Escape to go back"
-msgstr "Escを押すと戻る"
+msgstr "Escキーを押して戻る"
 
 #: mozc_engine.cc:156 mozc_engine.cc:157
 msgid "Tool"
