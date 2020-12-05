@@ -856,6 +856,17 @@ cc_library_mozc(
 )
 
 cc_test_mozc(
+    name = "file_util_mock_test",
+    size = "small",
+    srcs = ["file_util_mock_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":file_util_mock",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
     name = "file_util_test",
     size = "small",
     srcs = ["file_util_test.cc"],
