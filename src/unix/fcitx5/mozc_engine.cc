@@ -25,6 +25,7 @@
 #include <fcitx-utils/standardpath.h>
 #include <fcitx/inputcontext.h>
 #include <fcitx/inputcontextmanager.h>
+#include <fcitx/inputmethodmanager.h>
 #include <fcitx/userinterfacemanager.h>
 
 #include <vector>
@@ -228,12 +229,19 @@ void MozcEngine::deactivate(const fcitx::InputMethodEntry &,
   auto mozc_state = mozcState(ic);
   mozc_state->FocusOut();
 }
-void MozcEngine::keyEvent(const InputMethodEntry &, KeyEvent &event) {
+void MozcEngine::keyEvent(const InputMethodEntry &entry, KeyEvent &event) {
   auto mozc_state = mozcState(event.inputContext());
 
-  // TODO: check layout
+  auto &group = instance_->inputMethodManager().currentGroup();
+  std::string layout = group.layoutFor(entry.uniqueName());
+  if (layout.empty()) {
+    layout = group.defaultLayout();
+  }
+
+  const bool isJP = (layout == "jp" || stringutils::startsWith(layout, "jp-"));
+
   if (mozc_state->ProcessKeyEvent(event.rawKey().sym(), event.rawKey().code(),
-                                  event.rawKey().states(), false,
+                                  event.rawKey().states(), isJP,
                                   event.isRelease())) {
     event.filterAndAccept();
   }
