@@ -90,7 +90,8 @@ message RendererCommand {
   // An equivalent to COMPOSITIONFORM in IMM32. (For Windows only)
   // TODO(yukawa): make a common composition form format for all platforms.
   message CompositionForm {
-    reserved 1;  // Deprecated style
+    reserved 1;
+    reserved "style";
     optional Point current_position = 2;
     optional Rectangle area = 3;
     // Used as bit flags in |style_bits|.
@@ -107,7 +108,8 @@ message RendererCommand {
   // An equivalent to CANDIDATEFORM in IMM32. (For Windows only)
   // TODO(yukawa): make a common candidate form format for all platforms.
   message CandidateForm {
-    reserved 1;  // Deprecated style
+    reserved 1;
+    reserved "style";
     optional Point current_position = 2;
     optional Rectangle area = 3;
     // Used as bit flags in |style_bits|.
@@ -203,7 +205,8 @@ message RendererCommand {
     // Represents caret information.
     optional CaretInfo caret_info = 11;
 
-    reserved 12;  // Deprecated message_sender_type
+    reserved 12;
+    reserved "message_sender_type";
 
     // A string representation of PangoFontDescription
     // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string

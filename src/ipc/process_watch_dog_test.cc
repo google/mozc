@@ -61,9 +61,11 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
     exit(0);
   } else if (pid > 0) {
     TestProcessWatchDog dog;
+    dog.StartWatchDog();
     dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
               ProcessWatchDog::UnknownThreadID, -1);
     Util::Sleep(4000);
+    dog.StopWatchDog();
   } else {
     LOG(ERROR) << "cannot execute fork";
   }

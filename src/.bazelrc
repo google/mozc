@@ -10,8 +10,8 @@ build --host_copt "-Wno-char-subscripts"
 build --objccopt "-fsigned-char"
 
 # Linux
-build:linux --define TARGET=oss_linux
-build:oss_linux --define TARGET=oss_linux
+build:linux --define TARGET=oss_linux --copt "-fPIC"
+build:oss_linux --define TARGET=oss_linux --copt "-fPIC"
 
 # Android
 build:android --define TARGET=oss_android \

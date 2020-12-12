@@ -164,6 +164,9 @@ TEST_F(SessionUsageStatsUtilTest, AddSendCommandInputStats) {
 
   // Smoke test to make sure it works without crash.
   for (int i = 0; i < SessionCommand::CommandType_ARRAYSIZE; ++i) {
+    if (!SessionCommand::CommandType_IsValid(i)) {
+      continue;
+    }
     input.Clear();
     input.set_type(Input::SEND_COMMAND);
     input.mutable_command()->set_type(

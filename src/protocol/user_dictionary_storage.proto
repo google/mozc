@@ -204,7 +204,8 @@ message UserDictionaryCommand {
     GET_ENTRY_SIZE = 10;
 
     // Use GET_ENTRIES instead.
-    OBSOLETE_GET_ENTRY = 11;
+    reserved 11;
+    reserved "OBSOLETE_GET_ENTRY";
 
     // Returns if it is possible to add new dictionary or not.
     // The result is returned by using status code.

@@ -56,17 +56,27 @@ ProcessWatchDog::ProcessWatchDog()
     LOG(ERROR) << "::CreateEvent() failed.";
     return;
   }
-  Thread::Start("WatchDog");  // start
 }
 
 ProcessWatchDog::~ProcessWatchDog() {
-  is_finished_ = true;  // set the flag to terminate the thread
+  StopWatchDog();
+}
+
+void ProcessWatchDog::StartWatchDog() {
+  Thread::Start("WatchDog");
+}
+
+void ProcessWatchDog::StopWatchDog() {
+  {
+    scoped_lock l(mutex_.get());
+    is_finished_ = true;  // set the flag to terminate the thread
+  }
 
   if (event_.get() != nullptr) {
     ::SetEvent(event_.get());  // wake up WaitForMultipleObjects
   }
 
-  Join();  // wait for the thread
+  Join();
 }
 
 bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
@@ -82,7 +92,7 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
     return true;
   }
 
-  // rewrite the valeus
+  // rewrite the values
   {
     scoped_lock l(mutex_.get());
     process_id_ = process_id;
@@ -97,7 +107,14 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
 }
 
 void ProcessWatchDog::Run() {
-  while (!is_finished_) {
+  while (true) {
+    {
+      scoped_lock l(mutex_.get());
+      if (is_finished_) {
+        break;
+      }
+    }
+
     ScopedHandle process_handle;
     ScopedHandle thread_handle;
     int timeout = -1;
@@ -219,12 +236,23 @@ ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
       thread_id_(UnknownProcessID),
       is_finished_(false),
-      mutex_(new Mutex) {
+      mutex_(new Mutex) {}
+
+ProcessWatchDog::~ProcessWatchDog() {
+  // StopWatchDog() should be called before the deconstructor.
+  // This call is a fallback.
+  StopWatchDog();
+}
+
+void ProcessWatchDog::StartWatchDog() {
   Thread::Start("WatchDog");
 }
 
-ProcessWatchDog::~ProcessWatchDog() {
-  is_finished_ = true;
+void ProcessWatchDog::StopWatchDog() {
+  {
+    scoped_lock l(mutex_.get());
+    is_finished_ = true;  // set the flag to terminate the thread
+  }
   Join();
 }
 
@@ -267,10 +295,20 @@ void ProcessWatchDog::Run() {
   // reuse same process id in 250ms or write to is_finished_ stays
   // forever in another CPU's local cache.
   // TODO(team): use kqueue with EVFILT_PROC/NOTE_EXIT for Mac.
-  while (!is_finished_) {
+  while (true) {
+    {
+      scoped_lock l(mutex_.get());
+      if (is_finished_) {
+        break;
+      }
+    }
+
     Util::Sleep(250);
-    if (process_id_ == UnknownProcessID) {
-      continue;
+    {
+      scoped_lock l(mutex_.get());
+      if (process_id_ == UnknownProcessID) {
+        continue;
+      }
     }
     if (::kill(process_id_, 0) != 0) {
       if (errno == EPERM) {

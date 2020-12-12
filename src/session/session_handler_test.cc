@@ -47,7 +47,6 @@
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "session/generic_storage_manager.h"
 #include "session/session_handler_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -149,11 +148,9 @@ class SessionHandlerTest : public SessionHandlerTestBase {
   void SetUp() override {
     SessionHandlerTestBase::SetUp();
     Clock::SetClockForUnitTest(nullptr);
-    GenericStorageManagerFactory::SetGenericStorageManager(nullptr);
   }
 
   void TearDown() override {
-    GenericStorageManagerFactory::SetGenericStorageManager(nullptr);
     Clock::SetClockForUnitTest(nullptr);
     SessionHandlerTestBase::TearDown();
   }
@@ -437,154 +434,6 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     handler.EvalCommand(&command);
     EXPECT_EQ(1, user_data_mgr_mock->GetFunctionCallCount("Sync"));
   }
-}
-
-const char *kStorageTestData[] = {
-    "angel",
-    "bishop",
-    "chariot",
-    "dragon",
-};
-
-class MockStorage : public GenericStorageInterface {
- public:
-  int insert_count;
-  int clear_count;
-  const char **insert_expect;
-
-  MockStorage() : insert_count(0), clear_count(0) {}
-  ~MockStorage() override = default;
-
-  bool Insert(const std::string &key, const char *value) override {
-    EXPECT_EQ(std::string(insert_expect[insert_count]), key);
-    EXPECT_EQ(std::string(insert_expect[insert_count]), std::string(value));
-    ++insert_count;
-    return true;
-  }
-
-  const char *Lookup(const std::string &key) override { return nullptr; }
-
-  bool GetAllValues(std::vector<std::string> *values) override {
-    values->clear();
-    for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
-      values->push_back(kStorageTestData[i]);
-    }
-    return true;
-  }
-
-  bool Clear() override {
-    ++clear_count;
-    return true;
-  }
-
-  bool Sync() override { return true; }
-
-  void SetInsertExpect(const char **expect) { insert_expect = expect; }
-};
-
-class MockStorageManager : public GenericStorageManagerInterface {
- public:
-  GenericStorageInterface *GetStorage(
-      commands::GenericStorageEntry::StorageType storage_type) override {
-    return storage;
-  }
-
-  void SetStorage(MockStorage *newStorage) { storage = newStorage; }
-
-  bool SyncAll() override {
-    if (storage == nullptr) {
-      return true;
-    }
-    return storage->Sync();
-  }
-
- private:
-  MockStorage *storage;
-};
-
-// Tests basic behavior of InsertToStorage and ReadAllFromStorage methods.
-TEST_F(SessionHandlerTest, StorageTest) {
-  // Inject mock objects.
-  MockStorageManager storageManager;
-  GenericStorageManagerFactory::SetGenericStorageManager(&storageManager);
-  SessionHandler handler(CreateMockDataEngine());
-  {
-    // InsertToStorage
-    MockStorage mock_storage;
-    mock_storage.SetInsertExpect(kStorageTestData);
-    storageManager.SetStorage(&mock_storage);
-    commands::Command command;
-    command.mutable_input()->set_type(commands::Input::INSERT_TO_STORAGE);
-    commands::GenericStorageEntry *storage_entry =
-        command.mutable_input()->mutable_storage_entry();
-    storage_entry->set_type(commands::GenericStorageEntry::SYMBOL_HISTORY);
-    storage_entry->mutable_key()->assign("dummy key");
-    for (size_t i = 0; i < arraysize(kStorageTestData); ++i) {
-      storage_entry->mutable_value()->Add()->assign(kStorageTestData[i]);
-    }
-    EXPECT_TRUE(handler.InsertToStorage(&command));
-    EXPECT_EQ(arraysize(kStorageTestData), mock_storage.insert_count);
-  }
-  {
-    // ReadAllFromStorage
-    MockStorage mock_storage;
-    storageManager.SetStorage(&mock_storage);
-    commands::Command command;
-    command.mutable_input()->set_type(commands::Input::READ_ALL_FROM_STORAGE);
-    commands::GenericStorageEntry *storage_entry =
-        command.mutable_input()->mutable_storage_entry();
-    storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
-    EXPECT_TRUE(handler.ReadAllFromStorage(&command));
-    EXPECT_EQ(commands::GenericStorageEntry::EMOTICON_HISTORY,
-              command.output().storage_entry().type());
-    EXPECT_EQ(arraysize(kStorageTestData),
-              command.output().storage_entry().value().size());
-  }
-  {
-    // Clear
-    MockStorage mock_storage;
-    storageManager.SetStorage(&mock_storage);
-    commands::Command command;
-    command.mutable_input()->set_type(commands::Input::CLEAR_STORAGE);
-    commands::GenericStorageEntry *storage_entry =
-        command.mutable_input()->mutable_storage_entry();
-    storage_entry->set_type(commands::GenericStorageEntry::EMOTICON_HISTORY);
-    EXPECT_TRUE(handler.ClearStorage(&command));
-    EXPECT_EQ(commands::GenericStorageEntry::EMOTICON_HISTORY,
-              command.output().storage_entry().type());
-    EXPECT_EQ(1, mock_storage.clear_count);
-  }
-}
-
-TEST_F(SessionHandlerTest, EmojiUsageStatsTest) {
-  SessionHandler handler(CreateMockDataEngine());
-
-  commands::Command command;
-  command.mutable_input()->set_type(commands::Input::INSERT_TO_STORAGE);
-  commands::GenericStorageEntry *storage_entry =
-      command.mutable_input()->mutable_storage_entry();
-  storage_entry->set_type(commands::GenericStorageEntry::EMOJI_HISTORY);
-  storage_entry->mutable_key()->assign("dummy key");
-
-  // Carrier emoji "BLACK SUN WITH RAYS"
-  storage_entry->mutable_value()->Clear();
-  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\x80\x80");
-  EXPECT_TRUE(handler.EvalCommand(&command));
-  EXPECT_COUNT_STATS("CommitCarrierEmoji", 1);
-  EXPECT_COUNT_STATS("CommitUnicodeEmoji", 0);
-
-  storage_entry->mutable_value()->Clear();
-  // Carrier emoji "BLACK SUN WITH RAYS"
-  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\x80\x80");
-  // Carrier emoji "GOOGLE"
-  storage_entry->mutable_value()->Add()->assign("\xF3\xBE\xBA\xA0");
-  // Unicode emoji "BLACK SUN WITH RAYS"
-  storage_entry->mutable_value()->Add()->assign("☀");
-  // Unicode emoji "RABBIT FACE"
-  storage_entry->mutable_value()->Add()->assign("🐰");
-  EXPECT_TRUE(handler.EvalCommand(&command));
-  EXPECT_COUNT_STATS("CommitCarrierEmoji", 3);
-  EXPECT_COUNT_STATS("CommitUnicodeEmoji", 2);
 }
 
 // Tests the interaction with EngineBuilderInterface for successful Engine

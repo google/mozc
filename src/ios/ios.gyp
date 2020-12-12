@@ -97,7 +97,6 @@
           '<(PRODUCT_DIR)/libengine_builder.a',
           '<(PRODUCT_DIR)/libengine_builder_proto.a',
           '<(PRODUCT_DIR)/libflags.a',
-          '<(PRODUCT_DIR)/libgeneric_storage_manager.a',
           '<(PRODUCT_DIR)/libgoogle_data_manager.a',
           '<(PRODUCT_DIR)/libhash.a',
           '<(PRODUCT_DIR)/libimmutable_converter.a',

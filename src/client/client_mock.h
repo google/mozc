@@ -32,6 +32,7 @@
 
 #include <map>
 #include <string>
+#include "base/mutex.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 
@@ -107,6 +108,10 @@ class ClientMock : public client::ClientInterface {
   std::map<std::string, commands::Output> outputs_;
 
   config::Config called_config_;
+
+  // ClientMock is called from a thread in SessionWatchDog, and
+  // SessionWatchDogTest. So a mutex lock is required.
+  mutable Mutex mutex_;
 };
 }  // namespace client
 }  // namespace mozc

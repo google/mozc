@@ -1109,7 +1109,10 @@ genrule(
         "version_def_template.h",
     ],
     outs = ["version_def.h"],
-    cmd = "$(location //build_tools:replace_version) --version_file=$(location mozc_version.txt) --input=$(location version_def_template.h) --output=$(OUTS) --branding=GoogleJapaneseInput",
+    cmd = ("$(location //build_tools:replace_version)" +
+           " --version_file=$(location mozc_version.txt) " +
+           " --input=$(location version_def_template.h) --output=$(OUTS)" +
+           " --branding=Mozc"),
     exec_tools = ["//build_tools:replace_version"],
     visibility = ["//visibility:private"],
 )

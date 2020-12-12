@@ -62,11 +62,11 @@ class ProcessWatchDog : public Thread {
     PROCESS_SIGNALED = 1,                // process is signaled,
     PROCESS_NOT_FOUND_SIGNALED = 3,      // process id was not found
     PROCESS_ACCESS_DENIED_SIGNALED = 4,  // operation was not allowed
-    PROCESS_ERROR_SIGNALED = 5,          // unkown error in getting process info
+    PROCESS_ERROR_SIGNALED = 5,         // unknown error in getting process info
     THREAD_SIGNALED = 6,                 // thread is signaled
     THREAD_NOT_FOUND_SIGNALED = 7,       // thread id was not found
     THREAD_ACCESS_DENIED_SIGNALED = 8,   // operation was not allowed
-    THREAD_ERROR_SIGNALED = 9,           // unkown error in getting thread info
+    THREAD_ERROR_SIGNALED = 9,           // unknown error in getting thread info
     TIMEOUT_SIGNALED = 10,               // timeout is signaled
   };
 
@@ -103,6 +103,8 @@ class ProcessWatchDog : public Thread {
 
   ProcessWatchDog();
   virtual ~ProcessWatchDog();
+  void StartWatchDog();
+  void StopWatchDog();
 
  private:
 #ifdef OS_WIN

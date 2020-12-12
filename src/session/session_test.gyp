@@ -283,21 +283,6 @@
       },
     },
     {
-      'target_name': 'generic_storage_manager_test',
-      'type': 'executable',
-      'sources': [
-        'generic_storage_manager_test.cc'
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../testing/testing.gyp:gtest_main',
-        'session_base.gyp:generic_storage_manager',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'request_test_util_test',
       'type': 'executable',
       'sources': [
@@ -341,7 +326,6 @@
       'target_name': 'session_all_test',
       'type': 'none',
       'dependencies': [
-        'generic_storage_manager_test',
         'random_keyevents_generator_test',
         'request_test_util_test',
         'session_converter_stress_test',

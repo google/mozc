@@ -130,9 +130,6 @@ class SessionHandler : public SessionHandlerInterface {
   bool SetImposedConfig(commands::Command *command);
   bool SetRequest(commands::Command *command);
 
-  bool InsertToStorage(commands::Command *command);
-  bool ReadAllFromStorage(commands::Command *command);
-  bool ClearStorage(commands::Command *command);
   bool Cleanup(commands::Command *command);
   bool SendUserDictionaryCommand(commands::Command *command);
   bool SendEngineReloadRequest(commands::Command *command);

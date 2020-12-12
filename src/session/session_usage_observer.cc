@@ -91,8 +91,6 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
     case commands::Input::CLEAR_USER_HISTORY:
     case commands::Input::CLEAR_USER_PREDICTION:
     case commands::Input::CLEAR_UNUSED_USER_PREDICTION:
-    case commands::Input::CLEAR_STORAGE:
-    case commands::Input::READ_ALL_FROM_STORAGE:
     case commands::Input::RELOAD:
     case commands::Input::SEND_USER_DICTIONARY_COMMAND:
       return true;

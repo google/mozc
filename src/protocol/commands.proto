@@ -410,15 +410,18 @@ message SessionCommand {
     EXPAND_SUGGESTION = 15;
 
     // Obsolete command. Used only in old IBus client.
-    OBSOLETE_SEND_CARET_LOCATION = 16;
+    reserved 16;
+    reserved "SEND_CARET_LOCATION";
 
     // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
     // TODO(team): Replace this command by useful one.
-    OBSOLETE_SEND_LANGUAGE_BAR_COMMAND = 17;
+    reserved 17;
+    reserved "SEND_LANGUAGE_BAR_COMMAND";
 
     // Obsolete command. Don't simply remove this command for NUM_OF_COMMANDS.
     // TODO(team): Replace this command by useful one.
-    OBSOLETE_GET_ASYNC_RESULT = 18;
+    reserved 18;
+    reserved "GET_ASYNC_RESULT";
 
     // Commit the raw text of the composed string.
     COMMIT_RAW_TEXT = 19;
@@ -658,11 +661,10 @@ message Request {
     NOTOUCH_TO_HALFWIDTHASCII = 41;
 
     // Obsolete items.
-    OBSOLETE_TWELVE_KEYS_TO_NUMBER = 12;
-    OBSOLETE_FLICK_TO_NUMBER = 15;
-    OBSOLETE_GODAN_TO_NUMBER = 32;
-    OBSOLETE_QWERTY_MOBILE_TO_HIRAGANA_NUMBER = 21;
-    OBSOLETE_TOGGLE_FLICK_TO_NUMBER = 18;
+    reserved 12, 15, 32, 21, 18;
+    reserved "TWELVE_KEYS_TO_NUMBER";
+    reserved "GODAN_TO_NUMBER";
+    reserved "QWERTY_MOBILE_TO_HIRAGANA_NUMBER";
   }
 
   // Use special Romanji table.
@@ -898,14 +900,15 @@ message Input {
     NO_OPERATION = 14;
 
     // Sync feature is deprecated since 1.13 dev.
-    // TODO(mozc-team): Remove following variables.
-    OBSOLETE_START_CLOUD_SYNC = 18;
-    OBSOLETE_GET_CLOUD_SYNC_STATUS = 23;
-    OBSOLETE_ADD_AUTH_CODE = 24;
+    reserved 18, 23, 24;
+    reserved "START_CLOUD_SYNC";
+    reserved "GET_CLOUD_SYNC_STATUS";
+    reserved "ADD_AUTH_CODE";
 
-    INSERT_TO_STORAGE = 20;
-    READ_ALL_FROM_STORAGE = 21;
-    CLEAR_STORAGE = 25;
+    reserved 20, 21, 25;
+    reserved "INSERT_TO_STORAGE";
+    reserved "READ_ALL_FROM_STORAGE";
+    reserved "CLEAR_STORAGE";
 
     // Send a command for user dictionary session.
     SEND_USER_DICTIONARY_COMMAND = 26;
