@@ -34,11 +34,13 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
+#include "unix/ibus/ibus_config.h"
 #include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
 
 DEFINE_bool(ibus, false, "The engine is started by ibus-daemon");
+DEFINE_bool(xml, false, "Output xml data for the engine.");
 
 namespace {
 
@@ -70,13 +72,16 @@ IBusComponent *GetIBusComponent() {
       mozc::Version::GetMozcVersion().c_str(), kComponentLicense,
       kComponentAuthor, kComponentHomepage, "", kComponentTextdomain);
   const std::string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
-  for (size_t i = 0; i < kEngineArrayLen; ++i) {
+
+  mozc::IbusConfig ibus_config;
+  ibus_config.InitEnginesXml();
+  for (const mozc::ibus::Engine &engine : ibus_config.GetConfig().engines()) {
     ibus_component_add_engine(
         component,
-        ibus_engine_desc_new(kEngineNameArray[i], kEngineLongnameArray[i],
+        ibus_engine_desc_new(engine.name().c_str(), engine.longname().c_str(),
                              kEngineDescription, kEngineLanguage,
                              kComponentLicense, kComponentAuthor,
-                             icon_path.c_str(), kEngineLayoutArray[i]));
+                             icon_path.c_str(), engine.layout().c_str()));
   }
   return component;
 }
@@ -105,12 +110,22 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
   g_object_unref(component);
 }
 
+void OutputXml() {
+  mozc::IbusConfig ibus_config;
+  std::cout << ibus_config.InitEnginesXml() << std::endl;
+}
+
 }  // namespace
 
 int main(gint argc, gchar **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
+  if (mozc::GetFlag(FLAGS_xml)) {
+    OutputXml();
+    return 0;
+  }
+
   ibus_init();
-  InitIBusComponent(FLAGS_ibus);
+  InitIBusComponent(mozc::GetFlag(FLAGS_ibus));
 #ifndef MOZC_NO_LOGGING
   EnableVerboseLog();
 #endif  // MOZC_NO_LOGGING

@@ -27,29 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
+syntax = "proto2";
 
-#include "base/flags.h"
-#include "base/init_mozc.h"
-#include "unix/ibus/ibus_config.h"
+package mozc.ibus;
 
-DEFINE_bool(xml, false, "Output xml data for the engine.");
-
-namespace {
-void OutputXml() {
-  mozc::IbusConfig ibus_config;
-  std::cout << ibus_config.InitEnginesXml() << std::endl;
+message Config {
+  repeated Engine engines = 1;
 }
-}  // namespace
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-  if (mozc::GetFlag(FLAGS_xml)) {
-    OutputXml();
-    return 0;
-  }
-
-  // This is a stub used by platforms which do not support iBus
-  // (i.e. non Linux environments).
-  return 1;
+message Engine {
+  optional string name = 1;
+  optional string longname = 2;
+  optional string layout = 3;
 }

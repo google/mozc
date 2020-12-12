@@ -27,29 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
+#ifndef MOZC_UNIX_IBUS_IBUS_CONFIG_H_
+#define MOZC_UNIX_IBUS_IBUS_CONFIG_H_
 
-#include "base/flags.h"
-#include "base/init_mozc.h"
-#include "unix/ibus/ibus_config.h"
+#include <map>
+#include <string>
 
-DEFINE_bool(xml, false, "Output xml data for the engine.");
+#include "unix/ibus/ibus_config.pb.h"
 
-namespace {
-void OutputXml() {
-  mozc::IbusConfig ibus_config;
-  std::cout << ibus_config.InitEnginesXml() << std::endl;
-}
-}  // namespace
+namespace mozc {
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-  if (mozc::GetFlag(FLAGS_xml)) {
-    OutputXml();
-    return 0;
-  }
+class IbusConfig {
+ public:
+  IbusConfig() : default_layout_("default") {}
+  virtual ~IbusConfig() = default;
 
-  // This is a stub used by platforms which do not support iBus
-  // (i.e. non Linux environments).
-  return 1;
-}
+  // Disallow implicit constructors.
+  IbusConfig(const IbusConfig&) = delete;
+  IbusConfig& operator=(const IbusConfig&) = delete;
+
+  const std::string &InitEnginesXml();
+  const std::string &GetLayout(const std::string &name) const;
+  const ibus::Config &GetConfig() const;
+
+ private:
+  std::string default_layout_;
+  std::string engine_xml_;
+  ibus::Config config_;
+};
+
+}  // namespace mozc
+
+#endif  // MOZC_UNIX_IBUS_IBUS_CONFIG_H_

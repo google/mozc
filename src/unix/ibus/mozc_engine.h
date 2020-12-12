@@ -38,6 +38,7 @@
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
+#include "unix/ibus/ibus_config.h"
 
 namespace mozc {
 
@@ -148,6 +149,7 @@ class MozcEngine : public EngineInterface {
 
   // Unique IDs of candidates that are currently shown.
   std::vector<int32> unique_candidate_ids_;
+  IbusConfig ibus_config_;
 
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
