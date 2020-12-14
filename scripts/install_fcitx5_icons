@@ -15,7 +15,8 @@ install -D -m 644 ../scripts/icons/ui-properties.png "${PREFIX}/share/icons/hico
 install -D -m 644 ../scripts/icons/ui-tool.png "${PREFIX}/share/icons/hicolor/48x48/apps/org.fcitx.Fcitx5.fcitx-mozc-tool.png"
 
 ln -sf org.fcitx.Fcitx5.fcitx-mozc.png "${PREFIX}/share/icons/hicolor/128x128/apps/fcitx-mozc.png"
-ln -sf org.fcitx.Fcitx5.fcitx-mozc-alpha-full.png "${PREFIX}/share/icons/hicolor/32x32/apps/fcitx-mozc-alpha-full.png"
+ln -sf org.fcitx.Fcitx5.fcitx-mozc.png "${PREFIX}/share/icons/hicolor/32x32/apps/fcitx-mozc.png"
+ln -sf org.fcitx.Fcitx5.fcitx-mozc-alpha-full.png "${PREFIX}/share/icons/hicolor/48x48/apps/fcitx-mozc-alpha-full.png"
 ln -sf org.fcitx.Fcitx5.fcitx-mozc-alpha-half.png "${PREFIX}/share/icons/hicolor/48x48/apps/fcitx-mozc-alpha-half.png"
 ln -sf org.fcitx.Fcitx5.fcitx-mozc-direct.png "${PREFIX}/share/icons/hicolor/48x48/apps/fcitx-mozc-direct.png"
 ln -sf org.fcitx.Fcitx5.fcitx-mozc-hiragana.png "${PREFIX}/share/icons/hicolor/48x48/apps/fcitx-mozc-hiragana.png"
