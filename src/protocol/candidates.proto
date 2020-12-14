@@ -212,9 +212,12 @@ message Candidates {
   }
   optional Direction direction = 14 [default = VERTICAL];
 
-  reserved 15;  // Deprecated composition_rectangle
-  reserved 16;  // Deprecated caret_rectangle
-  reserved 17;  // Deprecated window_location
+  reserved 15;
+  reserved "composition_rectangle";
+  reserved 16;
+  reserved "caret_rectangle";
+  reserved 17;
+  reserved "window_location";
 
   // The number of candidates per page.
   optional uint32 page_size = 18 [default = 9];

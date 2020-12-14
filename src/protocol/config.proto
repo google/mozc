@@ -77,7 +77,8 @@ message Config {
   // set verbose level of logging library (FLAGS_v)
   optional int32 verbose_level = 10 [default = 0];
 
-  reserved 11;  // Deprecated log_all_commands
+  reserved 11;
+  reserved "log_all_commands";
 
   //////////////////////////////////////////////////////////////
   //
@@ -88,7 +89,8 @@ message Config {
   // Disable all mutable operation if incognito_mode is true
   optional bool incognito_mode = 20 [default = false];
 
-  reserved 21;  // Deprecated upload_usage_stats
+  reserved 21;
+  reserved "upload_usage_stats";
 
   // whether to show the set default dialog on startup
   optional bool check_default = 22 [default = true];
@@ -301,8 +303,10 @@ message Config {
 
   message InformationListConfig {
     optional bool use_local_usage_dictionary = 1 [default = true];
-    reserved 2;   // Deprecated use_web_usage_dictionary
-    reserved 10;  // Deprecated web_service_entries
+    reserved 2;
+    reserved "use_web_usage_dictionary";
+    reserved 10;
+    reserved "web_service_entries";
   }
   optional InformationListConfig information_list_config = 90;
 
@@ -334,9 +338,14 @@ message Config {
   // Cloud (300-319)
   //
   // Configuration for cloud sync feature. This field is obsolete.
-  reserved 300;  // Deprecated sync_config
-  reserved 301;  // Deprecated allow_cloud_handwriting
-  reserved 996;  // Deprecated pinyin_config
-  reserved 998;  // Deprecated hangul_config
-  reserved 999;  // Deprecated chewing_config
+  reserved 300;
+  reserved "sync_config";
+  reserved 301;
+  reserved "allow_cloud_handwriting";
+  reserved 996;
+  reserved "pinyin_config";
+  reserved 998;
+  reserved "hangul_config";
+  reserved 999;
+  reserved "chewing_config";
 }

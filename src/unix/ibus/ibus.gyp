@@ -135,11 +135,38 @@
       ],
     },
     {
+      'target_name': 'genproto_ibus_config_proto',
+      'type': 'none',
+      'toolsets': ['host'],
+      'sources': [
+        'ibus_config.proto',
+      ],
+      'includes': [
+        '../../protobuf/genproto.gypi',
+      ],
+    },
+    {
+      'target_name': 'ibus_config_proto',
+      'type': 'static_library',
+      'hard_dependency': 1,
+      'sources': [
+        '<(proto_out_dir)/unix/ibus/ibus_config.pb.cc',
+      ],
+      'dependencies': [
+        '../../protobuf/protobuf.gyp:protobuf',
+        'genproto_ibus_config_proto#host',
+      ],
+      'export_dependent_settings': [
+        'genproto_ibus_config_proto#host',
+      ],
+    },
+    {
       'target_name': 'ibus_mozc_lib',
       'type': 'static_library',
       'sources': [
         'engine_registrar.cc',
         'ibus_candidate_window_handler.cc',
+        'ibus_config.cc',
         'key_event_handler.cc',
         'key_translator.cc',
         'mozc_engine.cc',
@@ -147,9 +174,12 @@
         'surrounding_text_util.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../client/client.gyp:client',
         '../../protocol/protocol.gyp:commands_proto',
         '../../session/session_base.gyp:ime_switch_util',
+        'gen_ibus_mozc_files',
+        'ibus_config_proto',
         'ibus_property_handler',
         'message_translator',
         'path_util',
@@ -168,12 +198,8 @@
       ],
     },
     {
-      'target_name': 'ibus_mozc',
-      'type': 'executable',
-      'sources': [
-        'main.cc',
-        '<(gen_out_dir)/main.h',
-      ],
+      'target_name': 'gen_ibus_mozc_files',
+      'type': 'none',
       'actions': [
         {
           'action_name': 'gen_main_h',
@@ -195,7 +221,19 @@
         },
       ],
       'dependencies': [
+        'gen_mozc_xml',
+      ],
+    },
+    {
+      'target_name': 'ibus_mozc',
+      'type': 'executable',
+      'sources': [
+        'main.cc',
+        '<(gen_out_dir)/main.h',
+      ],
+      'dependencies': [
         '../../base/base.gyp:base',
+        'gen_ibus_mozc_files',
         'gen_mozc_xml',
         'ibus_mozc_lib',
         'ibus_mozc_metadata',

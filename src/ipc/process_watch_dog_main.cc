@@ -34,6 +34,7 @@
 #include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "ipc/process_watch_dog.h"
@@ -53,11 +54,12 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::TestProcessWatchDog dog;
+  dog.StartWatchDog();
 
   string line;
   std::vector<string> fields;
 
-  while (getline(cin, line)) {
+  while (std::getline(std::cin, line)) {
     fields.clear();
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
     if (line == "exit") {
@@ -68,8 +70,8 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    const int32 process_id = atoi32(fields[0].c_str());
-    const int32 thread_id = atoi32(fields[1].c_str());
+    const int32 process_id = mozc::NumberUtil::SimpleAtoi(fields[0]);
+    const int32 thread_id = mozc::NumberUtil::SimpleAtoi(fields[1]);
 
     if (!dog.SetID(static_cast<mozc::ProcessWatchDog::ProcessID>(process_id),
                    static_cast<mozc::ProcessWatchDog::ThreadID>(thread_id),

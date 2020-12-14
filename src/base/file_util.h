@@ -61,18 +61,6 @@
 
 namespace mozc {
 
-class FileUtilInterface {
- public:
-  virtual ~FileUtilInterface() = default;
-
-  virtual bool CreateDirectory(const std::string &path) = 0;
-  virtual bool DirectoryExists(const std::string &dirname) = 0;
-
- protected:
-  FileUtilInterface() = default;
-};
-
-
 #if defined(OS_WIN)
 using FileTimeStamp = uint64;
 #elif defined(OS_NACL)
@@ -80,6 +68,28 @@ using FileTimeStamp = PP_Time;
 #else
 using FileTimeStamp = time_t;
 #endif  // OS_WIN or OS_NACL
+
+class FileUtilInterface {
+ public:
+  virtual ~FileUtilInterface() = default;
+
+  virtual bool CreateDirectory(const std::string &path) const = 0;
+  virtual bool RemoveDirectory(const std::string &dirname) const = 0;
+  virtual bool Unlink(const std::string &filename) const = 0;
+  virtual bool FileExists(const std::string &filename) const = 0;
+  virtual bool DirectoryExists(const std::string &dirname) const = 0;
+  virtual bool CopyFile(const std::string &from,
+                        const std::string &to) const = 0;
+  virtual bool IsEqualFile(const std::string &filename1,
+                          const std::string &filename2) const = 0;
+  virtual bool AtomicRename(const std::string &from,
+                            const std::string &to) const = 0;
+  virtual bool GetModificationTime(const std::string &filename,
+                                  FileTimeStamp *modified_at) const = 0;
+
+ protected:
+  FileUtilInterface() = default;
+};
 
 class FileUtil {
  public:

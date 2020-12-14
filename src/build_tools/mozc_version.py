@@ -170,14 +170,14 @@ def _GetChangelistNumber(build_override, build_changelist_file):
     return build_override
 
   if not build_changelist_file:
-    return '0'
+    return None
 
   with open(build_changelist_file, 'r') as cl_file:
     for line in cl_file:
       if line.startswith('BUILD_CHANGELIST'):
         return line.rstrip().split(' ')[1]
 
-  return '0'
+  return None
 
 
 def GenerateVersionFileFromTemplate(template_path,

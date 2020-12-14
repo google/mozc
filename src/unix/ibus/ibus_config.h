@@ -27,48 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/process_watch_dog.h"
+#ifndef MOZC_UNIX_IBUS_IBUS_CONFIG_H_
+#define MOZC_UNIX_IBUS_IBUS_CONFIG_H_
 
-#include "base/clock.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/util.h"
-#include "testing/base/public/gunit.h"
+#include <map>
+#include <string>
+
+#include "unix/ibus/ibus_config.pb.h"
 
 namespace mozc {
-namespace {
-uint64 g_current_time = 0;
-}
 
-class TestProcessWatchDog : public ProcessWatchDog {
+class IbusConfig {
  public:
-  void Signaled(ProcessWatchDog::SignalType type) {
-    EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64 diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(2, diff);  // allow 1-sec error
-  }
+  IbusConfig() : default_layout_("default") {}
+  virtual ~IbusConfig() = default;
+
+  // Disallow implicit constructors.
+  IbusConfig(const IbusConfig&) = delete;
+  IbusConfig& operator=(const IbusConfig&) = delete;
+
+  const std::string &InitEnginesXml();
+  const std::string &GetLayout(const std::string &name) const;
+  const ibus::Config &GetConfig() const;
+
+ private:
+  std::string default_layout_;
+  std::string engine_xml_;
+  ibus::Config config_;
 };
 
-TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Clock::GetTime();
-
-#ifndef OS_WIN
-  // revoke myself with different parameter
-  pid_t pid = fork();
-  if (pid == 0) {
-    // Child;
-    Util::Sleep(2000);
-    exit(0);
-  } else if (pid > 0) {
-    TestProcessWatchDog dog;
-    dog.StartWatchDog();
-    dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
-              ProcessWatchDog::UnknownThreadID, -1);
-    Util::Sleep(4000);
-    dog.StopWatchDog();
-  } else {
-    LOG(ERROR) << "cannot execute fork";
-  }
-#endif
-}
 }  // namespace mozc
+
+#endif  // MOZC_UNIX_IBUS_IBUS_CONFIG_H_

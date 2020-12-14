@@ -27,48 +27,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/process_watch_dog.h"
+#include "base/file_util_mock.h"
 
-#include "base/clock.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/util.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-namespace {
-uint64 g_current_time = 0;
+
+// class FileUtilMockTest : public testing::Test {};
+
+TEST(FileUtilMockTest, DirectoryMockTests) {
+  FileUtilMock mock;
+
+  EXPECT_TRUE(FileUtil::CreateDirectory("/tmp/mozc"));
+  EXPECT_TRUE(FileUtil::RemoveDirectory("/tmp/mozc"));
+  EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/no_mozc"));
+  EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/"));  // Limitation of mock.
 }
 
-class TestProcessWatchDog : public ProcessWatchDog {
- public:
-  void Signaled(ProcessWatchDog::SignalType type) {
-    EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64 diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(2, diff);  // allow 1-sec error
-  }
-};
+TEST(FileUtilMockTest, FileMockTests) {
+  FileUtilMock mock;
 
-TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Clock::GetTime();
+  mock.CreateFile("/mozc/file.txt");
+  EXPECT_TRUE(FileUtil::Unlink("/mozc/file.txt"));
+  EXPECT_FALSE(FileUtil::FileExists("/mozc/file.txt"));
 
-#ifndef OS_WIN
-  // revoke myself with different parameter
-  pid_t pid = fork();
-  if (pid == 0) {
-    // Child;
-    Util::Sleep(2000);
-    exit(0);
-  } else if (pid > 0) {
-    TestProcessWatchDog dog;
-    dog.StartWatchDog();
-    dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
-              ProcessWatchDog::UnknownThreadID, -1);
-    Util::Sleep(4000);
-    dog.StopWatchDog();
-  } else {
-    LOG(ERROR) << "cannot execute fork";
-  }
-#endif
+  mock.CreateFile("/mozc/file1.txt");
+  mock.CreateFile("/mozc/file2.txt");
+  EXPECT_FALSE(FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
+
+  EXPECT_TRUE(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
+  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
+
+  EXPECT_TRUE(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));
+  EXPECT_FALSE(FileUtil::FileExists("/mozc/file3.txt"));
+  EXPECT_TRUE(FileUtil::FileExists("/mozc/file4.txt"));
+  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
+
+  FileTimeStamp time1;
+  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file1.txt", &time1));
+  FileTimeStamp time2;
+  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file2.txt", &time2));
+  EXPECT_NE(time1, time2);
+
+  FileTimeStamp time3;
+  EXPECT_FALSE(FileUtil::GetModificationTime("/mozc/file3.txt", &time3));
+  FileTimeStamp time4;
+  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file4.txt", &time4));
+  EXPECT_EQ(time2, time4);
 }
+
 }  // namespace mozc

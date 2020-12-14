@@ -49,6 +49,7 @@
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
+#include "absl/memory/memory.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -169,9 +170,9 @@ RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
       timeout_(0),
       renderer_interface_(nullptr),
-      ALLOW_THIS_IN_INITIALIZER_LIST(
-          watch_dog_(new ParentApplicationWatchDog(this))),
       send_command_(new RendererServerSendCommand) {
+  watch_dog_ = absl::make_unique<ParentApplicationWatchDog>(this);
+  watch_dog_->StartWatchDog();
   if (FLAGS_restricted) {
     FLAGS_timeout =
         std::min(FLAGS_timeout, 60);  // set 60sec with restricted mode
@@ -187,7 +188,9 @@ RendererServer::RendererServer()
 #endif  // MOZC_NO_LOGGING
 }
 
-RendererServer::~RendererServer() {}
+RendererServer::~RendererServer() {
+  watch_dog_->StopWatchDog();
+}
 
 void RendererServer::SetRendererInterface(
     RendererInterface *renderer_interface) {
@@ -224,7 +227,7 @@ bool RendererServer::Process(const char *request, size_t request_size,
   // different threads, we have to use heap to share the serialized message.
   // If we use stack, this program will be crashed.
   //
-  // The reciver of command_str takes the ownership of this string.
+  // The receiver of command_str takes the ownership of this string.
   std::string *command_str = new std::string(request, request_size);
 
   // no need to set the result code.

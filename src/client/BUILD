@@ -110,6 +110,7 @@ cc_library_mozc(
         ":client_interface",
         "//base",
         "//base:logging",
+        "//base:mutex",
         "//protocol:commands_proto",
     ],
 )

@@ -79,8 +79,18 @@ class FileUtilImpl : public FileUtilInterface {
   FileUtilImpl() = default;
   ~FileUtilImpl() override = default;
 
-  bool CreateDirectory(const std::string &path) override;
-  bool DirectoryExists(const std::string &dirname) override;
+  bool CreateDirectory(const std::string &path) const override;
+  bool RemoveDirectory(const std::string &dirname) const override;
+  bool Unlink(const std::string &filename) const override;
+  bool FileExists(const std::string &filename) const override;
+  bool DirectoryExists(const std::string &dirname) const override;
+  bool CopyFile(const std::string &from, const std::string &to) const override;
+  bool IsEqualFile(const std::string &filename1,
+                   const std::string &filename2) const override;
+  bool AtomicRename(const std::string &from,
+                    const std::string &to) const override;
+  bool GetModificationTime(const std::string &filename,
+                           FileTimeStamp *modified_at) const override;
 };
 
 using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
@@ -115,7 +125,7 @@ bool FileUtil::CreateDirectory(const std::string &path) {
   return FileUtilSingleton::Get()->CreateDirectory(path);
 }
 
-bool FileUtilImpl::CreateDirectory(const std::string &path) {
+bool FileUtilImpl::CreateDirectory(const std::string &path) const {
 #if defined(OS_WIN)
   std::wstring wide;
   return (Util::UTF8ToWide(path, &wide) > 0 &&
@@ -126,6 +136,10 @@ bool FileUtilImpl::CreateDirectory(const std::string &path) {
 }
 
 bool FileUtil::RemoveDirectory(const std::string &dirname) {
+  return FileUtilSingleton::Get()->RemoveDirectory(dirname);
+}
+
+bool FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
   return (Util::UTF8ToWide(dirname, &wide) > 0 &&
@@ -136,6 +150,10 @@ bool FileUtil::RemoveDirectory(const std::string &dirname) {
 }
 
 bool FileUtil::Unlink(const std::string &filename) {
+  return FileUtilSingleton::Get()->Unlink(filename);
+}
+
+bool FileUtilImpl::Unlink(const std::string &filename) const {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
   std::wstring wide;
@@ -147,6 +165,10 @@ bool FileUtil::Unlink(const std::string &filename) {
 }
 
 bool FileUtil::FileExists(const std::string &filename) {
+  return FileUtilSingleton::Get()->FileExists(filename);
+}
+
+bool FileUtilImpl::FileExists(const std::string &filename) const {
 #ifdef OS_WIN
   std::wstring wide;
   return (Util::UTF8ToWide(filename, &wide) > 0 &&
@@ -161,7 +183,7 @@ bool FileUtil::DirectoryExists(const std::string &dirname) {
   return FileUtilSingleton::Get()->DirectoryExists(dirname);
 }
 
-bool FileUtilImpl::DirectoryExists(const std::string &dirname) {
+bool FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
   if (Util::UTF8ToWide(dirname, &wide) <= 0) {
@@ -250,6 +272,11 @@ bool FileUtil::HideFileWithExtraAttributes(const string &filename,
 #endif  // OS_WIN
 
 bool FileUtil::CopyFile(const std::string &from, const std::string &to) {
+  return FileUtilSingleton::Get()->CopyFile(from, to);
+}
+
+bool FileUtilImpl::CopyFile(const std::string &from,
+                            const std::string &to) const {
   InputFileStream ifs(from.c_str(), std::ios::binary);
   if (!ifs) {
     LOG(ERROR) << "Can't open input file. " << from;
@@ -287,6 +314,11 @@ bool FileUtil::CopyFile(const std::string &from, const std::string &to) {
 
 bool FileUtil::IsEqualFile(const std::string &filename1,
                            const std::string &filename2) {
+  return FileUtilSingleton::Get()->IsEqualFile(filename1, filename2);
+}
+
+bool FileUtilImpl::IsEqualFile(const std::string &filename1,
+                               const std::string &filename2) const {
   Mmap mmap1, mmap2;
 
   if (!mmap1.Open(filename1.c_str(), "r")) {
@@ -307,6 +339,11 @@ bool FileUtil::IsEqualFile(const std::string &filename1,
 }
 
 bool FileUtil::AtomicRename(const std::string &from, const std::string &to) {
+  return FileUtilSingleton::Get()->AtomicRename(from, to);
+}
+
+bool FileUtilImpl::AtomicRename(const std::string &from,
+                                const std::string &to) const {
 #ifdef OS_WIN
   std::wstring fromw, tow;
   Util::UTF8ToWide(from, &fromw);
@@ -388,6 +425,11 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 
 bool FileUtil::GetModificationTime(const std::string &filename,
                                    FileTimeStamp *modified_at) {
+  return FileUtilSingleton::Get()->GetModificationTime(filename, modified_at);
+}
+
+bool FileUtilImpl::GetModificationTime(const std::string &filename,
+                                       FileTimeStamp *modified_at) const {
 #if defined(OS_WIN)
   std::wstring wide;
   if (!Util::UTF8ToWide(filename, &wide)) {

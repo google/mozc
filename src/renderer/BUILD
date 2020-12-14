@@ -108,6 +108,7 @@ cc_library_mozc(
         "//ipc:process_watch_dog",
         "//protocol:config_proto",
         "//protocol:renderer_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
 

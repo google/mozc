@@ -130,18 +130,5 @@
         '../usage_stats/usage_stats_base.gyp:usage_stats',
       ],
     },
-    {
-      'target_name': 'generic_storage_manager',
-      'type': 'static_library',
-      'sources': [
-        'generic_storage_manager.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../base/base.gyp:config_file_stream',
-        '../protocol/protocol.gyp:commands_proto',
-        '../storage/storage.gyp:storage',
-      ]
-    },
   ],
 }

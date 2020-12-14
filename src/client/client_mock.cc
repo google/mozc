@@ -38,6 +38,7 @@ namespace client {
 // boilerplates for those methods.
 #define MockConstBoolImplementation(method_name, argument) \
   bool ClientMock::method_name(argument) const {           \
+    scoped_lock l(&mutex_);                                \
     function_counter_[#method_name]++;                     \
     std::map<std::string, bool>::const_iterator it =       \
         return_bool_values_.find(#method_name);            \
@@ -48,6 +49,7 @@ namespace client {
   }
 #define MockBoolImplementation(method_name, argument) \
   bool ClientMock::method_name(argument) {            \
+    scoped_lock l(&mutex_);                           \
     function_counter_[#method_name]++;                \
     std::map<std::string, bool>::const_iterator it =  \
         return_bool_values_.find(#method_name);       \
@@ -58,6 +60,7 @@ namespace client {
   }
 #define MockVoidImplementation(method_name, argument) \
   void ClientMock::method_name(argument) {            \
+    scoped_lock l(&mutex_);                           \
     function_counter_[#method_name]++;                \
     return;                                           \
   }
@@ -100,6 +103,7 @@ MockBoolImplementation(OpenBrowser, const std::string &url);
   bool ClientMock::method_name(argtype argument,                     \
                                const commands::Context &context,     \
                                commands::Output *output) {           \
+    scoped_lock l(&mutex_);                                          \
     function_counter_[#method_name]++;                               \
     called_##method_name##_.CopyFrom(argument);                      \
     std::map<std::string, commands::Output>::const_iterator it =     \
@@ -127,6 +131,7 @@ MockImplementationWithContextAndOutput(SendCommandWithContext,
 // Exceptional methods.
 // GetConfig needs to obtain the "called_config_".
 bool ClientMock::GetConfig(config::Config *config) {
+  scoped_lock l(&mutex_);
   function_counter_["GetConfig"]++;
   config->CopyFrom(called_config_);
   std::map<std::string, bool>::const_iterator it =
@@ -139,6 +144,7 @@ bool ClientMock::GetConfig(config::Config *config) {
 
 // SetConfig needs to set the "called_config_".
 bool ClientMock::SetConfig(const config::Config &config) {
+  scoped_lock l(&mutex_);
   function_counter_["SetConfig"]++;
   called_config_.CopyFrom(config);
   std::map<std::string, bool>::const_iterator it =
@@ -152,6 +158,7 @@ bool ClientMock::SetConfig(const config::Config &config) {
 // LaunchTool arguments are quite different from other methods.
 bool ClientMock::LaunchTool(const std::string &mode,
                             const std::string &extra_arg) {
+  scoped_lock l(&mutex_);
   function_counter_["LaunchTool"]++;
   return return_bool_values_["LaunchTool"];
 }
@@ -159,6 +166,7 @@ bool ClientMock::LaunchTool(const std::string &mode,
 // Other methods to deal with internal data such like operations over
 // function counters or setting the expected return values.
 void ClientMock::ClearFunctionCounter() {
+  scoped_lock l(&mutex_);
   for (std::map<std::string, int>::iterator it = function_counter_.begin();
        it != function_counter_.end(); it++) {
     it->second = 0;
@@ -166,10 +174,12 @@ void ClientMock::ClearFunctionCounter() {
 }
 
 void ClientMock::SetBoolFunctionReturn(std::string func_name, bool value) {
+  scoped_lock l(&mutex_);
   return_bool_values_[func_name] = value;
 }
 
 int ClientMock::GetFunctionCallCount(std::string key) {
+  scoped_lock l(&mutex_);
   return function_counter_[key];
 }
 

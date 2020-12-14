@@ -36,6 +36,7 @@ load(
     "py_binary_mozc",
     "select_mozc",
 )
+load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -50,33 +51,25 @@ py_binary_mozc(
     srcs = ["gen_mozc_xml.py"],
 )
 
-# This genrule uses pkg-config in gen_mozc_xml_main.
 genrule(
     name = "gen_mozc_xml",
     outs = ["mozc.xml"],
-    cmd = select_mozc(
-        default = "touch $@",  # This is stub.
-        linux = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
-                 " --server_dir=" + MOZC_SERVER_DIRECTORY +
-                 " --ibus_mozc_path=" + IBUS_MOZC_PATH +
-                 " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
-                 " > $@"),
-    ),
+    cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
+           " --server_dir=" + MOZC_SERVER_DIRECTORY +
+           " --ibus_mozc_path=" + IBUS_MOZC_PATH +
+           " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
+           " > $@"),
     exec_tools = [":gen_mozc_xml_main"],
 )
 
-# This genrule uses pkg-config in gen_mozc_xml_main.
 genrule(
     name = "gen_main_h",
     outs = ["main.h"],
-    cmd = select_mozc(
-        default = "touch $@",  # This is stub.
-        linux = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
-                 " --output_cpp" +
-                 " --ibus_mozc_path=" + IBUS_MOZC_PATH +
-                 " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
-                 " > $@"),
-    ),
+    cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
+           " --output_cpp" +
+           " --ibus_mozc_path=" + IBUS_MOZC_PATH +
+           " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
+           " > $@"),
     exec_tools = [":gen_mozc_xml_main"],
 )
 
@@ -169,14 +162,54 @@ cc_library_mozc(
             "surrounding_text_util.h",
         ],
     ),
+    defines = [
+        "ENABLE_GTK_RENDERER",
+        "MOZC_ENABLE_X11_SELECTION_MONITOR",
+    ],
     deps = [
         ":gtk_candidate_window_handler",
+        ":ibus_config",
         ":ibus_property_handler",
         ":ibus_utils",
         ":x11_selection_monitor",
         "//client",
         "//protocol:commands_proto",
         "//session:ime_switch_util",
+    ],
+)
+
+proto_library(
+    name = "ibus_config_proto_full",
+    srcs = [
+        "ibus_config.proto",
+    ],
+)
+
+portable_proto_library(
+    name = "ibus_config_proto",
+    config_string = "allow_all: true",
+    header_outs = [
+        "ibus_config.pb.h",
+    ],
+    proto_deps = ["ibus_config_proto_full"],
+)
+
+cc_library_mozc(
+    name = "ibus_config",
+    srcs = ["ibus_config.cc"],
+    hdrs = [
+        "ibus_config.h",
+        ":gen_main_h",
+    ],
+    copts = ["-Wno-unused-variable"],
+    deps = [
+        ":ibus_config_proto",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:system_util",
+        "//base/protobuf:text_format",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -191,9 +224,11 @@ cc_binary_mozc(
     ),
     data = [":gen_mozc_xml"],
     deps = [
+        ":ibus_config",
         ":ibus_mozc_lib",
         ":ibus_mozc_metadata",
         "//base",
+        "//base:flags",
         "//base:init_mozc",
     ],
 )

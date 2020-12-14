@@ -27,48 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ipc/process_watch_dog.h"
+syntax = "proto2";
 
-#include "base/clock.h"
-#include "base/logging.h"
-#include "base/port.h"
-#include "base/util.h"
-#include "testing/base/public/gunit.h"
+package mozc.ibus;
 
-namespace mozc {
-namespace {
-uint64 g_current_time = 0;
+message Config {
+  repeated Engine engines = 1;
 }
 
-class TestProcessWatchDog : public ProcessWatchDog {
- public:
-  void Signaled(ProcessWatchDog::SignalType type) {
-    EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64 diff = Clock::GetTime() - g_current_time;
-    EXPECT_EQ(2, diff);  // allow 1-sec error
-  }
-};
-
-TEST(ProcessWatchDog, ProcessWatchDogTest) {
-  g_current_time = Clock::GetTime();
-
-#ifndef OS_WIN
-  // revoke myself with different parameter
-  pid_t pid = fork();
-  if (pid == 0) {
-    // Child;
-    Util::Sleep(2000);
-    exit(0);
-  } else if (pid > 0) {
-    TestProcessWatchDog dog;
-    dog.StartWatchDog();
-    dog.SetID(static_cast<ProcessWatchDog::ProcessID>(pid),
-              ProcessWatchDog::UnknownThreadID, -1);
-    Util::Sleep(4000);
-    dog.StopWatchDog();
-  } else {
-    LOG(ERROR) << "cannot execute fork";
-  }
-#endif
+message Engine {
+  optional string name = 1;
+  optional string longname = 2;
+  optional string layout = 3;
 }
-}  // namespace mozc

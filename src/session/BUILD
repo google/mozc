@@ -51,7 +51,6 @@ test_suite(
 test_suite(
     name = "android_test",
     tests = [
-        ":generic_storage_manager_test_android",
         ":ime_switch_util_test_android",
         ":key_info_util_test_android",
         ":output_util_test_android",
@@ -317,7 +316,6 @@ cc_library_mozc(
             "//base:process",
         ],
     ) + [
-        ":generic_storage_manager",
         ":session",
         ":session_handler_interface",
         ":session_observer_handler",
@@ -395,7 +393,6 @@ cc_test_mozc(
     ],
     requires_full_emulation = False,
     deps = [
-        ":generic_storage_manager",
         ":session_handler",
         ":session_handler_test_util",
         "//base",
@@ -772,22 +769,6 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "generic_storage_manager",
-    srcs = ["generic_storage_manager.cc"],
-    hdrs = ["generic_storage_manager.h"],
-    deps = [
-        "//base",
-        "//base:config_file_stream",
-        "//base:logging",
-        "//base:mutex",
-        "//base:port",
-        "//base:singleton",
-        "//protocol:commands_proto",
-        "//storage:lru_storage",
-    ],
-)
-
-cc_library_mozc(
     name = "session_handler_interface",
     hdrs = ["session_handler_interface.h"],
     visibility = [
@@ -817,17 +798,4 @@ cc_library_mozc(
     hdrs = ["session_observer_interface.h"],
     visibility = ["//visibility:private"],
     deps = ["//base:port"],
-)
-
-cc_test_mozc(
-    name = "generic_storage_manager_test",
-    size = "small",
-    srcs = ["generic_storage_manager_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":generic_storage_manager",
-        "//base:file_util",
-        "//base:util",
-        "//testing:gunit_main",
-    ],
 )

@@ -56,7 +56,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "session/generic_storage_manager.h"
 #include "session/session.h"
 #include "session/session_observer_handler.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -124,19 +123,6 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
   // android version supports base/process.cc
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
-}
-
-bool IsCarrierEmoji(const std::string &utf8_str) {
-  if (Util::CharsLen(utf8_str) != 1) {
-    return false;
-  }
-  const char *utf8_begin = utf8_str.c_str();
-  size_t mblen = 0;
-  const uint32 ucs4_val = static_cast<uint32>(
-      Util::UTF8ToUCS4(utf8_begin, utf8_begin + utf8_str.size(), &mblen));
-  const uint32 kMinEmojiPuaCodePoint = 0xFE000;
-  const uint32 kMaxEmojiPuaCodePoint = 0xFEEA0;
-  return kMinEmojiPuaCodePoint <= ucs4_val && ucs4_val <= kMaxEmojiPuaCodePoint;
 }
 }  // namespace
 
@@ -263,7 +249,6 @@ void SessionHandler::SetConfig(const config::Config &config) {
 bool SessionHandler::SyncData(commands::Command *command) {
   VLOG(1) << "Syncing user data";
   engine_->GetUserDataManager()->Sync();
-  GenericStorageManagerFactory::SyncAll();
   return true;
 }
 
@@ -368,99 +353,6 @@ bool SessionHandler::SetRequest(commands::Command *command) {
   return true;
 }
 
-bool SessionHandler::InsertToStorage(commands::Command *command) {
-  VLOG(1) << "Insert to generic storage";
-  if (!command->input().has_storage_entry()) {
-    LOG(WARNING) << "No storage_entry";
-    return false;
-  }
-  const commands::GenericStorageEntry &storage_entry =
-      command->input().storage_entry();
-  if (!storage_entry.has_type() || !storage_entry.has_key() ||
-      storage_entry.value().empty()) {
-    LOG(WARNING) << "storage_entry lacks some fields.";
-    return false;
-  }
-
-  GenericStorageInterface *storage =
-      GenericStorageManagerFactory::GetStorage(storage_entry.type());
-  if (!storage) {
-    LOG(WARNING) << "No storage found";
-    return false;
-  }
-
-  for (int i = 0; i < storage_entry.value_size(); ++i) {
-    const std::string &value = storage_entry.value(i);
-    storage->Insert(value, value.c_str());
-  }
-
-  if (storage_entry.type() == commands::GenericStorageEntry::EMOJI_HISTORY) {
-    for (int i = 0; i < storage_entry.value_size(); ++i) {
-      if (IsCarrierEmoji(storage_entry.value(i))) {
-        UsageStats::IncrementCount("CommitCarrierEmoji");
-      } else {
-        UsageStats::IncrementCount("CommitUnicodeEmoji");
-      }
-    }
-  }
-
-  return true;
-}
-
-bool SessionHandler::ReadAllFromStorage(commands::Command *command) {
-  VLOG(1) << "Read all from storage";
-  commands::Output *output = command->mutable_output();
-  if (!command->input().has_storage_entry()) {
-    LOG(WARNING) << "No storage_entry";
-    return false;
-  }
-  if (!command->input().storage_entry().has_type()) {
-    LOG(WARNING) << "storage_entry lacks type fields.";
-    return false;
-  }
-
-  commands::GenericStorageEntry::StorageType storage_type =
-      command->input().storage_entry().type();
-  GenericStorageInterface *storage =
-      GenericStorageManagerFactory::GetStorage(storage_type);
-  if (!storage) {
-    LOG(WARNING) << "No storage found";
-    return false;
-  }
-
-  std::vector<std::string> result;
-  storage->GetAllValues(&result);
-  output->mutable_storage_entry()->set_type(storage_type);
-  for (size_t i = 0; i < result.size(); ++i) {
-    output->mutable_storage_entry()->add_value(result[i]);
-  }
-  return true;
-}
-
-bool SessionHandler::ClearStorage(commands::Command *command) {
-  VLOG(1) << "Clear storage";
-  commands::Output *output = command->mutable_output();
-  if (!command->input().has_storage_entry()) {
-    LOG(WARNING) << "No storage_entry";
-    return false;
-  }
-  if (!command->input().storage_entry().has_type()) {
-    LOG(WARNING) << "storage_entry lacks type fields.";
-    return false;
-  }
-
-  commands::GenericStorageEntry::StorageType storage_type =
-      command->input().storage_entry().type();
-  GenericStorageInterface *storage =
-      GenericStorageManagerFactory::GetStorage(storage_type);
-  if (!storage) {
-    LOG(WARNING) << "No storage found";
-    return false;
-  }
-  output->mutable_storage_entry()->set_type(storage_type);
-  return storage->Clear();
-}
-
 bool SessionHandler::EvalCommand(commands::Command *command) {
   if (!is_available_) {
     LOG(ERROR) << "SessionHandler is not available.";
@@ -519,15 +411,6 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
       break;
     case commands::Input::CLEANUP:
       eval_succeeded = Cleanup(command);
-      break;
-    case commands::Input::INSERT_TO_STORAGE:
-      eval_succeeded = InsertToStorage(command);
-      break;
-    case commands::Input::READ_ALL_FROM_STORAGE:
-      eval_succeeded = ReadAllFromStorage(command);
-      break;
-    case commands::Input::CLEAR_STORAGE:
-      eval_succeeded = ClearStorage(command);
       break;
     case commands::Input::SEND_USER_DICTIONARY_COMMAND:
       eval_succeeded = SendUserDictionaryCommand(command);
@@ -713,7 +596,6 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
   if (engine_->GetUserDataManager()) {
     engine_->GetUserDataManager()->Sync();
   }
-  GenericStorageManagerFactory::SyncAll();
   return true;
 }
 
@@ -782,7 +664,6 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 
   // Sync all data. This is a regression bug fix http://b/3033708
   engine_->GetUserDataManager()->Sync();
-  GenericStorageManagerFactory::SyncAll();
 
   // timeout is enabled.
   if (FLAGS_timeout > 0 && last_session_empty_time_ != 0 &&

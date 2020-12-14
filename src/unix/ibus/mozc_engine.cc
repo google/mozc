@@ -258,6 +258,8 @@ MozcEngine::MozcEngine()
   }
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
+  ibus_config_.InitEnginesXml();
+
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.
 }
@@ -349,8 +351,10 @@ gboolean MozcEngine::ProcessKeyEvent(IBusEngine *engine, guint keyval,
     return FALSE;
   }
 
-  // TODO(yusukes): use |layout| in IBusEngineDesc if possible.
-  const bool layout_is_jp = !g_strcmp0(ibus_engine_get_name(engine), "mozc-jp");
+  // layout_is_jp is only used determine Kana input with US layout.
+  const std::string &layout =
+      ibus_config_.GetLayout(ibus_engine_get_name(engine));
+  const bool layout_is_jp = (layout != "us");
 
   commands::KeyEvent key;
   if (!key_event_handler_->GetKeyEvent(keyval, keycode, modifiers,

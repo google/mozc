@@ -257,10 +257,20 @@ cc_library_mozc(
 )
 
 ##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "process_watch_dog_main",
-##           srcs = ["process_watch_dog_main.cc",],
-##           deps = [":process_watch_dog",
-##                   "//base:base",])
+# cc_binary_mozc(
+#     name = "process_watch_dog_main",
+#     srcs = ["process_watch_dog_main.cc"],
+#     deps = [
+#         ":process_watch_dog",
+#         "//base",
+#         "//base:flags",
+#         "//base:init_mozc",
+#         "//base:logging",
+#         "//base:number_util",
+#         "//base:port",
+#         "//base:util",
+#     ],
+# )
 
 cc_test_mozc(
     name = "process_watch_dog_test",
