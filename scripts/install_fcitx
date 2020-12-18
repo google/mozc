@@ -3,7 +3,7 @@
 _bldtype="${_bldtype:-Debug}"
 PREFIX="${PREFIX:-/usr}"
 
-for mofile in "out_linux/${_bldtype}/gen/unix/fcitx/po/*.mo"
+for mofile in out_linux/${_bldtype}/gen/unix/fcitx/po/*.mo
 do
     filename=`basename $mofile`
     lang=${filename/.mo/}
