@@ -387,19 +387,27 @@ void MozcState::ClearAll() {
 }
 
 void MozcState::DrawAll() {
-  Text preedit = preedit_;
+  string aux;
   if (!aux_.empty()) {
-    string aux;
-    if (preedit.size()) {
-      aux += " ";
-    }
     aux += "[";
     aux += aux_;
     aux += "]";
-    preedit.append(aux);
   }
-  ic_->inputPanel().setPreedit(std::move(preedit));
-  ic_->inputPanel().setClientPreedit(preedit_);
+  if (ic_->capabilityFlags().test(CapabilityFlag::Preedit)) {
+    ic_->inputPanel().setClientPreedit(preedit_);
+    if (!aux_.empty()) {
+      ic_->inputPanel().setAuxUp(Text(aux));
+    }
+  } else {
+    Text preedit = preedit_;
+    if (preedit.size()) {
+      preedit.append(" ");
+      preedit.append(aux);
+      ic_->inputPanel().setPreedit(std::move(preedit));
+    } else if (!aux_.empty()) {
+      ic_->inputPanel().setAuxUp(Text(aux));
+    }
+  }
   ic_->updatePreedit();
   ic_->updateUserInterface(UserInterfaceComponent::InputPanel);
 }
