@@ -54,7 +54,7 @@
 #include "base/port.h"
 #include "base/util.h"
 
-namespace {
+namespace mozc {
 // Wrapper Class for WinMain Command Line:
 // WinMain's entry point is not argc and argv style.
 // WinCommandLine() internally converts the argument and
@@ -96,7 +96,7 @@ class WinCommandLine {
 
   DISALLOW_COPY_AND_ASSIGN(WinCommandLine);
 };
-}  // namespace
+}  // namespace mozc
 // force to use WinMain.
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 
@@ -118,7 +118,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DWORD vt = 0;
     HKEY hKey = 0;
     if (ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, mozc::kMozcRegKey,
-                                         nullptr, KEY_READ, &hKey)) {
+                                         0, KEY_READ, &hKey)) {
       if (ERROR_SUCCESS == ::RegQueryValueExW(
                                hKey, L"debug_sleep_time", nullptr, &vt,
                                reinterpret_cast<BYTE *>(&sleep_time), &size) &&
@@ -130,7 +130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 #endif
 
-  WinCommandLine cmd;
+  mozc::WinCommandLine cmd;
   int argc = cmd.argc();
   char **argv = cmd.argv();
 

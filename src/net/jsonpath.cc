@@ -135,10 +135,10 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       return false;
     }
 
-    if (jsonpath.find("(") != std::string::npos ||
-        jsonpath.find(")") != std::string::npos ||
-        jsonpath.find("@") != std::string::npos ||
-        jsonpath.find("?") != std::string::npos) {
+    if (jsonpath.find('(') != std::string::npos ||
+        jsonpath.find(')') != std::string::npos ||
+        jsonpath.find('@') != std::string::npos ||
+        jsonpath.find('?') != std::string::npos) {
       LOG(ERROR) << "script expression/current node are not supported: "
                  << jsonpath;
       return false;

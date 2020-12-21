@@ -54,7 +54,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
   }
 
   // multi-word
-  if (input.find(" ") != std::string::npos) {
+  if (input.find(' ') != std::string::npos) {
     return false;
   }
 

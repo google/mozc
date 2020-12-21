@@ -427,7 +427,10 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'abs_depth=%s' % MOZC_ROOT])
   gyp_options.extend(['-D', 'ext_third_party_dir=%s' % EXT_THIRD_PARTY_DIR])
 
-  gyp_options.extend(['-D', 'python=%s' % sys.executable])
+  if IsWindows():
+    gyp_options.extend(['-D', 'python="%s"' % sys.executable])
+  else:
+    gyp_options.extend(['-D', 'python=%s' % sys.executable])
 
   gyp_options.extend(gyp_file_names)
 
@@ -838,7 +841,6 @@ def ShowHelpAndExit():
   print('  clean        Clean all the build files and directories.')
   print('')
   print('See also the comment in the script for typical usage.')
-  sys.exit(1)
 
 
 def main():
@@ -847,6 +849,7 @@ def main():
 
   if len(sys.argv) < 2:
     ShowHelpAndExit()
+    return 0
 
   # Move to the Mozc root source directory only once since os.chdir
   # affects functions in os.path and that causes troublesome errors.
@@ -854,6 +857,11 @@ def main():
 
   command = sys.argv[1]
   args = sys.argv[2:]
+
+  if IsWindows() and (not os.environ.get('VCToolsRedistDir', '')):
+    print('VCToolsRedistDir is not defined.')
+    print('Please use Developer Command Prompt or run vcvarsamd64_x86.bat')
+    return 1
 
   if command == 'gyp':
     (cmd_opts, cmd_args) = ParseGypOptions(args)
@@ -870,7 +878,9 @@ def main():
   else:
     logging.error('Unknown command: %s', command)
     ShowHelpAndExit()
+    return 1
+  return 0
 
 
 if __name__ == '__main__':
-  main()
+  sys.exit(main())

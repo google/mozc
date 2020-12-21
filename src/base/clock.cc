@@ -49,7 +49,22 @@ namespace {
 
 class ClockImpl : public ClockInterface {
  public:
-  ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {}
+  ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {
+#if OS_WIN
+    // Because absl::LocalTimeZone() always returns UTC timezone on Windows,
+    // a work-around for Windows is required.
+    int offset_sec = 9 * 60 * 60;  // JST as fallback
+    const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
+    const std::tm *offset = std::localtime(&epoch);
+    if (offset) {
+      offset_sec =
+          (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
+          + offset->tm_hour * 60 * 60  // hour offset from 00 am.
+          + offset->tm_min * 60;  // minute offset.
+    }
+    timezone_ = absl::FixedTimeZone(offset_sec);
+#endif  // OS_WIN
+  }
   ~ClockImpl() override {}
 
   void GetTimeOfDay(uint64 *sec, uint32 *usec) override {
