@@ -108,7 +108,7 @@ std::string MozcModeAction::icon(InputContext *ic) const {
 MozcModeSubAction::MozcModeSubAction(MozcEngine *engine,
                                      mozc::commands::CompositionMode mode)
     : engine_(engine), mode_(mode) {
-  setShortText(kPropCompositionModes[mode].label);
+  setShortText(kPropCompositionModes[mode].description);
   setLongText(_(kPropCompositionModes[mode].description));
   setIcon(kPropCompositionModes[mode].icon);
   setCheckable(true);
