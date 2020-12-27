@@ -50,61 +50,6 @@
 #include "unix/fcitx5/mozc_response_parser.h"
 #include "unix/fcitx5/surrounding_text_util.h"
 
-namespace {
-
-const struct CompositionMode {
-  const char* icon;
-  const char* label;
-  const char* description;
-  mozc::commands::CompositionMode mode;
-} kPropCompositionModes[] = {
-    {
-        "mozc-direct.png",
-        "A",
-        N_("Direct"),
-        mozc::commands::DIRECT,
-    },
-    {
-        "mozc-hiragana.png",
-        "\xe3\x81\x82",  // Hiragana letter A in UTF-8.
-        N_("Hiragana"),
-        mozc::commands::HIRAGANA,
-    },
-    {
-        "mozc-katakana_full.png",
-        "\xe3\x82\xa2",  // Katakana letter A.
-        N_("Full Katakana"),
-        mozc::commands::FULL_KATAKANA,
-    },
-    {
-        "mozc-alpha_half.png",
-        "A",
-        N_("Half ASCII"),
-        mozc::commands::HALF_ASCII,
-    },
-    {
-        "mozc-alpha_full.png",
-        "\xef\xbc\xa1",  // Full width ASCII letter A.
-        N_("Full ASCII"),
-        mozc::commands::FULL_ASCII,
-    },
-    {
-        "mozc-katakana_half.png",
-        "\xef\xbd\xb1",  // Half width Katakana letter A.
-        N_("Half Katakana"),
-        mozc::commands::HALF_KATAKANA,
-    },
-};
-const size_t kNumCompositionModes = arraysize(kPropCompositionModes);
-
-// This array must correspond with the CompositionMode enum in the
-// mozc/session/command.proto file.
-static_assert(mozc::commands::NUM_OF_COMPOSITIONS ==
-                  arraysize(kPropCompositionModes),
-              "number of modes must match");
-
-}  // namespace
-
 namespace fcitx {
 
 // For unittests.
@@ -359,7 +304,7 @@ void MozcState::SetAuxString(const string& str) { aux_ = str; }
 
 void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode) {
   composition_mode_ = mode;
-  DCHECK(composition_mode_ < kNumCompositionModes);
+  DCHECK(composition_mode_ < mozc::commands::NUM_OF_COMPOSITIONS);
   engine_->compositionModeUpdated(ic_);
 }
 
@@ -367,8 +312,7 @@ void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   // Send the SWITCH_INPUT_MODE command.
   string error;
   mozc::commands::Output raw_response;
-  if (TrySendCompositionMode(kPropCompositionModes[mode].mode, &raw_response,
-                             &error)) {
+  if (TrySendCompositionMode(mode, &raw_response, &error)) {
     auto oldMode = composition_mode_;
     parser_->ParseResponse(raw_response, ic_);
     if (oldMode != composition_mode_) {
