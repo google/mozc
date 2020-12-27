@@ -82,8 +82,8 @@ const struct CompositionMode {
         mozc::commands::FULL_ASCII,
     },
     {
-        "mozc-mode-katakana_full",
-        "fcitx-mozc-katakana-full",
+        "mozc-mode-katakana_half",
+        "fcitx-mozc-katakana-half",
         "\xef\xbd\xb1",  // Half width Katakana letter A.
         N_("Half Katakana"),
         mozc::commands::HALF_KATAKANA,
