@@ -308,7 +308,7 @@ void FcitxMozc::SendCompositionMode(mozc::commands::CompositionMode mode)
     string error;
     mozc::commands::Output raw_response;
     if (connection_->TrySendCompositionMode(
-            kPropCompositionModes[mode].mode, &raw_response, &error)) {
+            kPropCompositionModes[mode].mode, composition_mode_, &raw_response, &error)) {
         parser_->ParseResponse(raw_response, this);
     }
 }

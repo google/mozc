@@ -152,14 +152,20 @@ bool MozcConnection::TrySendClick(int32 unique_id,
 
 bool MozcConnection::TrySendCompositionMode(
     mozc::commands::CompositionMode mode,
+    mozc::commands::CompositionMode old_mode,
     mozc::commands::Output *out,
     string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
   mozc::commands::SessionCommand command;
-  command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
-  command.set_composition_mode(mode);
+  if (mode == mozc::commands::DIRECT) {
+    command.set_type(mozc::commands::SessionCommand::TURN_OFF_IME);
+    command.set_composition_mode(old_mode);
+  } else {
+    command.set_type(mozc::commands::SessionCommand::SWITCH_INPUT_MODE);
+    command.set_composition_mode(mode);
+  }
   return TrySendRawCommand(command, out, out_error);
 }
 

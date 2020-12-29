@@ -75,6 +75,7 @@ class MozcConnectionInterface {
                             mozc::commands::Output *out,
                             string *out_error) const = 0;
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
+                                      mozc::commands::CompositionMode old_mode,
                                       mozc::commands::Output *out,
                                       string *out_error) const = 0;
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
@@ -114,6 +115,7 @@ class MozcConnection : public MozcConnectionInterface {
 
   // Sends composition mode to the server.
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
+                                      mozc::commands::CompositionMode old_mode,
                                       mozc::commands::Output *out,
                                       string *out_error) const;
 
