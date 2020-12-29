@@ -123,17 +123,17 @@ class IPCClient : public IPCClientInterface {
   // same as IPCClient(name, "");
   explicit IPCClient(const std::string &name);
 
-  virtual ~IPCClient();
+  ~IPCClient() override;
 
   // Return true if the connection is available
-  bool Connected() const;
+  bool Connected() const override;
 
   // Return server protocol version
-  uint32 GetServerProtocolVersion() const;
+  uint32 GetServerProtocolVersion() const override;
 
-  const std::string &GetServerProductVersion() const;
+  const std::string &GetServerProductVersion() const override;
 
-  uint32 GetServerProcessId() const;
+  uint32 GetServerProcessId() const override;
 
   // Synchronous IPC call:
   // Client request is encoded in 'request' whose size is request_size.
@@ -146,9 +146,9 @@ class IPCClient : public IPCClientInterface {
   // cannot call the Call() function more than once.
   bool Call(const char *request, size_t request_size, char *response,
             size_t *response_size,
-            int32 timeout);  // msec
+            int32 timeout) override;  // msec
 
-  IPCErrorType GetLastIPCError() const { return last_ipc_error_; }
+  IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
 
   // terminate the server process named |name|
   // Do not use it unless version mismatch happens
@@ -192,15 +192,15 @@ class IPCClientFactoryInterface {
 // Creates IPCClient object.
 class IPCClientFactory : public IPCClientFactoryInterface {
  public:
-  virtual ~IPCClientFactory();
+  ~IPCClientFactory() override;
 
   // new inteface
-  virtual IPCClientInterface *NewClient(const std::string &name,
-                                        const std::string &path_name);
+  IPCClientInterface *NewClient(const std::string &name,
+                                const std::string &path_name) override;
 
   // old interface for backward compatiblity.
   // same as NewClient(name, "");
-  virtual IPCClientInterface *NewClient(const std::string &name);
+  IPCClientInterface *NewClient(const std::string &name) override;
 
   // Return a singleton instance.
   static IPCClientFactory *GetIPCClientFactory();

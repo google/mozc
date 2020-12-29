@@ -58,10 +58,10 @@ class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
  public:
   IPCClientFactoryOnMemory() {}
 
-  virtual IPCClientInterface *NewClient(const std::string &name,
-                                        const std::string &port_name);
+  IPCClientInterface *NewClient(const std::string &name,
+                                const std::string &port_name) override;
 
-  virtual IPCClientInterface *NewClient(const std::string &name);
+  IPCClientInterface *NewClient(const std::string &name) override;
 
 #ifdef __APPLE__
   // Returns MachPortManager to share the mach port between client and server.

@@ -137,6 +137,11 @@ bzl_library(
     srcs = ["build_defs.bzl"],
     parse_tests = False,
     visibility = ["//:__subpackages__"],
+    deps = [
+        "//devtools/build_cleaner/skylark:build_defs_lib",
+        "//tools/build_defs:stubs.bzl",
+        "//tools/build_rules/android_cc_test:def",
+    ],
 )
 
 filegroup(

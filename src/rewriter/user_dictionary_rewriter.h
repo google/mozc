@@ -41,12 +41,12 @@ class Segments;
 class UserDictionaryRewriter : public RewriterInterface {
  public:
   UserDictionaryRewriter();
-  virtual ~UserDictionaryRewriter();
+  ~UserDictionaryRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 };
 
 }  // namespace mozc

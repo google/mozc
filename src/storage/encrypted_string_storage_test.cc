@@ -79,7 +79,7 @@ typedef EncryptedStringStorage TestEncryptedStringStorage;
 
 class EncryptedStringStorageTest : public testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");

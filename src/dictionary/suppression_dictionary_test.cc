@@ -104,7 +104,7 @@ TEST(SupressionDictionary, BasicTest) {
 
 class DictionaryLoaderThread : public Thread {
  public:
-  virtual void Run() {
+  void Run() override {
     SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
     CHECK(dic);
     dic->Lock();

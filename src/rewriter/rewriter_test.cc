@@ -65,7 +65,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
 
 class RewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     converter_mock_.reset(new ConverterMock);
     const testing::MockDataManager data_manager;

@@ -44,12 +44,12 @@ class Segments;
 class RemoveRedundantCandidateRewriter : public RewriterInterface {
  public:
   RemoveRedundantCandidateRewriter();
-  virtual ~RemoveRedundantCandidateRewriter();
+  ~RemoveRedundantCandidateRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
-  int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 };
 
 }  // namespace mozc

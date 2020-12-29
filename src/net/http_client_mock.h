@@ -73,11 +73,12 @@ class HTTPClientMock : public HTTPClientInterface {
   HTTPClientMock() : failure_mode_(false), execution_time_(0) {}
 
   bool Get(const std::string &url, const HTTPClient::Option &option,
-           std::string *output) const;
+           std::string *output) const override;
   bool Head(const std::string &url, const HTTPClient::Option &option,
-            std::string *output) const;
+            std::string *output) const override;
   bool Post(const std::string &url, const std::string &data,
-            const HTTPClient::Option &option, std::string *output) const;
+            const HTTPClient::Option &option,
+            std::string *output) const override;
 
   struct Result {
     std::string expected_url;

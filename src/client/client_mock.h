@@ -41,42 +41,43 @@ namespace client {
 
 class ClientMock : public client::ClientInterface {
  public:
-  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory);
-  void SetServerLauncher(ServerLauncherInterface *server_launcher);
-  bool IsValidRunLevel() const;
-  bool EnsureConnection();
-  bool EnsureSession();
-  bool CheckVersionOrRestartServer();
+  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
+  void SetServerLauncher(ServerLauncherInterface *server_launcher) override;
+  bool IsValidRunLevel() const override;
+  bool EnsureConnection() override;
+  bool EnsureSession() override;
+  bool CheckVersionOrRestartServer() override;
   bool SendKeyWithContext(const commands::KeyEvent &key,
                           const commands::Context &context,
-                          commands::Output *output);
+                          commands::Output *output) override;
   bool TestSendKeyWithContext(const commands::KeyEvent &key,
                               const commands::Context &context,
-                              commands::Output *output);
+                              commands::Output *output) override;
   bool SendCommandWithContext(const commands::SessionCommand &command,
                               const commands::Context &context,
-                              commands::Output *output);
-  bool GetConfig(config::Config *config);
-  bool SetConfig(const config::Config &config);
-  bool ClearUserHistory();
-  bool ClearUserPrediction();
-  bool ClearUnusedUserPrediction();
-  bool Shutdown();
-  bool SyncData();
-  bool Reload();
-  virtual bool Cleanup();
-  virtual void Reset();
-  bool PingServer() const;
-  bool NoOperation();
-  virtual void EnableCascadingWindow(bool enable);
-  virtual void set_timeout(int timeout);
-  virtual void set_restricted(bool restricted);
-  virtual void set_server_program(const std::string &program_path);
-  virtual void set_suppress_error_dialog(bool suppress);
-  virtual void set_client_capability(const commands::Capability &capability);
-  bool LaunchTool(const std::string &mode, const std::string &extra_arg);
-  bool LaunchToolWithProtoBuf(const commands::Output &output);
-  bool OpenBrowser(const std::string &url);
+                              commands::Output *output) override;
+  bool GetConfig(config::Config *config) override;
+  bool SetConfig(const config::Config &config) override;
+  bool ClearUserHistory() override;
+  bool ClearUserPrediction() override;
+  bool ClearUnusedUserPrediction() override;
+  bool Shutdown() override;
+  bool SyncData() override;
+  bool Reload() override;
+  bool Cleanup() override;
+  void Reset() override;
+  bool PingServer() const override;
+  bool NoOperation() override;
+  void EnableCascadingWindow(bool enable) override;
+  void set_timeout(int timeout) override;
+  void set_restricted(bool restricted) override;
+  void set_server_program(const std::string &program_path) override;
+  void set_suppress_error_dialog(bool suppress) override;
+  void set_client_capability(const commands::Capability &capability) override;
+  bool LaunchTool(const std::string &mode,
+                  const std::string &extra_arg) override;
+  bool LaunchToolWithProtoBuf(const commands::Output &output) override;
+  bool OpenBrowser(const std::string &url) override;
 
   void ClearFunctionCounter();
   void SetBoolFunctionReturn(std::string func_name, bool value);

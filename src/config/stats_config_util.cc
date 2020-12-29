@@ -249,9 +249,9 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
-  virtual ~NullStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() { return false; }
-  virtual bool SetEnabled(bool val) { return true; }
+  ~NullStatsConfigUtilImpl() override {}
+  bool IsEnabled() override { return false; }
+  bool SetEnabled(bool val) override { return true; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);

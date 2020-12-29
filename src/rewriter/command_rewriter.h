@@ -45,10 +45,10 @@ class Segment;
 class CommandRewriter : public RewriterInterface {
  public:
   CommandRewriter();
-  virtual ~CommandRewriter();
+  ~CommandRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   bool RewriteSegment(const config::Config &config, Segment *segment) const;

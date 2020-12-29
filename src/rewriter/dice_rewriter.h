@@ -40,10 +40,10 @@ class Segments;
 class DiceRewriter : public RewriterInterface {
  public:
   DiceRewriter();
-  virtual ~DiceRewriter();
+  ~DiceRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 };
 
 }  // namespace mozc

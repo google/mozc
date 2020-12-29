@@ -63,13 +63,13 @@ std::string GenRandomString(int size) {
 
 class UserDictionaryStorageTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     FileUtil::Unlink(GetUserDictionaryFile());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     FileUtil::Unlink(GetUserDictionaryFile());
     SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
   }

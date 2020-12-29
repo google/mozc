@@ -65,7 +65,7 @@ class UserPOSInterface : public POSListProviderInterface {
     std::string comment;  // This field comes from user dictionary.
   };
 
-  virtual ~UserPOSInterface() = default;
+  ~UserPOSInterface() override = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
   virtual bool IsValidPOS(const std::string &pos) const = 0;

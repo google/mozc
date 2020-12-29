@@ -38,7 +38,7 @@ namespace mozc {
 
 class HTTPClientMockTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SetDefaultResult();
     client_.set_option(HTTPClient::Option());
   }

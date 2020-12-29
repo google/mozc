@@ -73,8 +73,8 @@ class ProxyManagerInterface {
 // class is the default proxy manager for Windows/Linux.
 class DummyProxyManager : public ProxyManagerInterface {
  public:
-  virtual bool GetProxyData(const std::string &url, std::string *hostdata,
-                            std::string *authdata);
+  bool GetProxyData(const std::string &url, std::string *hostdata,
+                    std::string *authdata) override;
 };
 
 }  // namespace mozc

@@ -42,13 +42,13 @@ namespace mozc {
 namespace {
 class JobRecorder : public Scheduler::SchedulerInterface {
  public:
-  void RemoveAllJobs() {}
-  bool RemoveJob(const std::string &name) { return true; }
-  bool AddJob(const Scheduler::JobSetting &job_setting) {
+  void RemoveAllJobs() override {}
+  bool RemoveJob(const std::string &name) override { return true; }
+  bool AddJob(const Scheduler::JobSetting &job_setting) override {
     job_settings_.push_back(job_setting);
     return true;
   }
-  bool HasJob(const std::string &name) const {
+  bool HasJob(const std::string &name) const override {
     for (size_t i = 0; i < job_settings_.size(); ++i) {
       if (job_settings_[i].name() == name) {
         return true;

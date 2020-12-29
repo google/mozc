@@ -51,7 +51,7 @@ namespace keymap {
 
 class KeyMapTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 

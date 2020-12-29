@@ -48,10 +48,10 @@ class StringStorageInterface {
 class EncryptedStringStorage : public StringStorageInterface {
  public:
   explicit EncryptedStringStorage(const std::string &filename);
-  virtual ~EncryptedStringStorage();
+  ~EncryptedStringStorage() override;
 
-  virtual bool Load(std::string *output) const;
-  virtual bool Save(const std::string &input) const;
+  bool Load(std::string *output) const override;
+  bool Save(const std::string &input) const override;
 
  protected:
   virtual bool Encrypt(const std::string &salt, std::string *data) const;

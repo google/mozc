@@ -814,4 +814,5 @@ bzl_library(
     srcs = ["quality_regression_test.bzl"],
     parse_tests = False,
     visibility = ["//visibility:private"],
+    deps = ["//:build_defs_bzl"],
 )

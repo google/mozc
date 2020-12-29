@@ -46,11 +46,11 @@ namespace session {
 
 class SessionUsageStatsUtilTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 

@@ -39,7 +39,7 @@ namespace session {
 
 class CandidateListTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     main_list_.reset(new CandidateList(true));
     sub_list_2_.reset(new CandidateList(true));
     sub_sub_list_2_1_.reset(new CandidateList(false));

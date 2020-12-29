@@ -69,7 +69,7 @@ class SessionConverterStressTest : public ::testing::Test {
     Util::SetRandomSeed(static_cast<uint32>(FLAGS_test_srand_seed));
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);

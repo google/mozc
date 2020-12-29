@@ -53,9 +53,9 @@ namespace session {
 class SessionUsageObserver : public SessionObserverInterface {
  public:
   SessionUsageObserver();
-  virtual ~SessionUsageObserver();
+  ~SessionUsageObserver() override;
 
-  virtual void EvalCommandHandler(const commands::Command &command);
+  void EvalCommandHandler(const commands::Command &command) override;
 
  private:
   struct UsageCache {

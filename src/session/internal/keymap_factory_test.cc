@@ -60,9 +60,9 @@ namespace {
 
 class KeyMapFactoryTest : public testing::Test {
  protected:
-  virtual void SetUp() { TestKeyMapFactoryProxy::Clear(); }
+  void SetUp() override { TestKeyMapFactoryProxy::Clear(); }
 
-  virtual void TearDown() { TestKeyMapFactoryProxy::Clear(); }
+  void TearDown() override { TestKeyMapFactoryProxy::Clear(); }
 };
 
 }  // namespace

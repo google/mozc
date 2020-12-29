@@ -42,9 +42,9 @@ class DataManagerInterface;
 class CollocationRewriter : public RewriterInterface {
  public:
   explicit CollocationRewriter(const DataManagerInterface *data_manager);
-  virtual ~CollocationRewriter();
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  ~CollocationRewriter() override;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   class CollocationFilter;

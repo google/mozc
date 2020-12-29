@@ -41,14 +41,14 @@ namespace {
 
 class MemoryStorageImpl : public storage::StorageInterface {
  public:
-  virtual bool Open(const std::string &filename) {
+  bool Open(const std::string &filename) override {
     data_.clear();
     return true;
   }
 
-  virtual bool Sync() { return true; }
+  bool Sync() override { return true; }
 
-  virtual bool Lookup(const std::string &key, std::string *value) const {
+  bool Lookup(const std::string &key, std::string *value) const override {
     CHECK(value);
     std::map<std::string, std::string>::const_iterator it = data_.find(key);
     if (it == data_.end()) {
@@ -58,12 +58,12 @@ class MemoryStorageImpl : public storage::StorageInterface {
     return true;
   }
 
-  virtual bool Insert(const std::string &key, const std::string &value) {
+  bool Insert(const std::string &key, const std::string &value) override {
     data_[key] = value;
     return true;
   }
 
-  virtual bool Erase(const std::string &key) {
+  bool Erase(const std::string &key) override {
     std::map<std::string, std::string>::iterator it = data_.find(key);
     if (it != data_.end()) {
       data_.erase(it);
@@ -72,15 +72,15 @@ class MemoryStorageImpl : public storage::StorageInterface {
     return false;
   }
 
-  virtual bool Clear() {
+  bool Clear() override {
     data_.clear();
     return true;
   }
 
-  virtual size_t Size() const { return data_.size(); }
+  size_t Size() const override { return data_.size(); }
 
   MemoryStorageImpl() {}
-  virtual ~MemoryStorageImpl() {}
+  ~MemoryStorageImpl() override {}
 
  private:
   std::map<std::string, std::string> data_;

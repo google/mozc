@@ -70,7 +70,7 @@ class CalculatorImpl : public CalculatorInterface {
  public:
   CalculatorImpl();
 
-  virtual bool CalculateString(const string &key, string *result) const;
+  bool CalculateString(const string &key, string *result) const override;
 
  private:
   typedef std::vector<std::pair<int, double> > TokenSequence;

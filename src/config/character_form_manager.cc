@@ -129,7 +129,7 @@ class PreeditCharacterFormManagerImpl : public CharacterFormManagerImpl {
  public:
   PreeditCharacterFormManagerImpl() { SetDefaultRule(); }
 
-  virtual void SetDefaultRule() {
+  void SetDefaultRule() override {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
     AddRule("ア", Config::FULL_WIDTH);
@@ -157,7 +157,7 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
  public:
   ConversionCharacterFormManagerImpl() { SetDefaultRule(); }
 
-  virtual void SetDefaultRule() {
+  void SetDefaultRule() override {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
     // don't like half-width

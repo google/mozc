@@ -81,13 +81,13 @@ std::string GetCandidates(const Segments &segments) {
 class UserDictionaryRewriterTest : public testing::Test {
  protected:
   UserDictionaryRewriterTest() {}
-  ~UserDictionaryRewriterTest() {}
+  ~UserDictionaryRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 
-  virtual void TearDown() {}
+  void TearDown() override {}
 };
 
 TEST_F(UserDictionaryRewriterTest, RewriteTest) {

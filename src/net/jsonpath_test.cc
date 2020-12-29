@@ -39,7 +39,7 @@ namespace net {
 
 class JsonPathTest : public testing::Test {
  public:
-  virtual void SetUp() {}
+  void SetUp() override {}
 
   std::string Parse(const std::string &json, const std::string &jsonpath) {
     Json::Reader reader;
@@ -63,7 +63,7 @@ class JsonPathTest : public testing::Test {
     return result;
   }
 
-  virtual void TearDown() {}
+  void TearDown() override {}
 };
 
 TEST_F(JsonPathTest, BasicTest) {

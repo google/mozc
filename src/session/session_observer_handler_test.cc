@@ -38,9 +38,9 @@ namespace session {
 class SessionObserverMock : public SessionObserverInterface {
  public:
   SessionObserverMock() : eval_count_(0) {}
-  virtual ~SessionObserverMock() {}
+  ~SessionObserverMock() override {}
 
-  void EvalCommandHandler(const commands::Command &command) {
+  void EvalCommandHandler(const commands::Command &command) override {
     command_.CopyFrom(command);
     ++eval_count_;
   }

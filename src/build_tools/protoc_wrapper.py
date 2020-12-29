@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Script to invoke protoc with considering project root directory.
+r"""Script to invoke protoc with considering project root directory.
 
   % python protoc_wrapper.py               \
       --protoc_command=protoc              \
@@ -45,6 +45,7 @@ import optparse
 import os
 import subprocess
 import sys
+
 
 def ParseOption():
   """Parse command line options."""
@@ -64,6 +65,13 @@ def ParseOption():
   (opts, _) = parser.parse_args()
 
   return opts
+
+
+def CreateProtoH(cpp_out, proto_file):
+  proto_h = os.path.join(cpp_out, proto_file + '.h')
+  pb_h = proto_file.rstrip('.proto') + '.pb.h'
+  with open(proto_h, 'w') as output:
+    output.write('#include "%s"\n' % pb_h)
 
 
 def main():
@@ -94,6 +102,10 @@ def main():
   if proto_path:
     rel_proto_path = os.path.relpath(proto_path, project_root)
     commands += ['--proto_path=' + rel_proto_path]
+
+  for proto_file in proto_files:
+    CreateProtoH(cpp_out, proto_file)
+
   sys.exit(subprocess.call(commands))
 
 

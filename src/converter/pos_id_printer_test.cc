@@ -43,7 +43,7 @@ namespace internal {
 
 class PosIdPrinterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     const std::string test_id_def_path =
         testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"});
     pos_id_.reset(new InputFileStream(test_id_def_path.c_str()));

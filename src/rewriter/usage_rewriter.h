@@ -52,12 +52,12 @@ class UsageRewriter : public RewriterInterface {
  public:
   UsageRewriter(const DataManagerInterface *data_manager,
                 const dictionary::DictionaryInterface *dictionary);
-  virtual ~UsageRewriter();
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  ~UsageRewriter() override;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
   // better to show usage when user type "tab" key.
-  virtual int capability(const ConversionRequest &request) const {
+  int capability(const ConversionRequest &request) const override {
     return CONVERSION | PREDICTION;
   }
 

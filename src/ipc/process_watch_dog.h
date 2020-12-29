@@ -99,10 +99,10 @@ class ProcessWatchDog : public Thread {
   bool SetID(ProcessID process_id, ThreadID thread_id, int timeout);
 
   // internally used by thread
-  void Run();
+  void Run() override;
 
   ProcessWatchDog();
-  virtual ~ProcessWatchDog();
+  ~ProcessWatchDog() override;
   void StartWatchDog();
   void StopWatchDog();
 

@@ -79,7 +79,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   virtual void Wait() {}
   virtual void Error() {}
 
-  virtual bool StartServer(ClientInterface *client) {
+  bool StartServer(ClientInterface *client) override {
     if (!response_.empty()) {
       factory_->SetMockResponse(response_);
     }
@@ -91,14 +91,14 @@ class TestServerLauncher : public ServerLauncherInterface {
     return start_server_result_;
   }
 
-  virtual bool ForceTerminateServer(const std::string &name) {
+  bool ForceTerminateServer(const std::string &name) override {
     force_terminate_server_called_ = true;
     return force_terminate_server_result_;
   }
 
-  virtual bool WaitServer(uint32 pid) { return true; }
+  bool WaitServer(uint32 pid) override { return true; }
 
-  virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {
+  void OnFatal(ServerLauncherInterface::ServerErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);
     error_map_[static_cast<int>(type)]++;
   }
@@ -121,16 +121,16 @@ class TestServerLauncher : public ServerLauncherInterface {
     force_terminate_server_called_ = force_terminate_server_called;
   }
 
-  void set_server_program(const std::string &server_path) {}
+  void set_server_program(const std::string &server_path) override {}
 
-  virtual const std::string &server_program() const {
+  const std::string &server_program() const override {
     static const std::string path;
     return path;
   }
 
-  void set_restricted(bool restricted) {}
+  void set_restricted(bool restricted) override {}
 
-  void set_suppress_error_dialog(bool suppress) {}
+  void set_suppress_error_dialog(bool suppress) override {}
 
   void set_start_server_result(const bool result) {
     start_server_result_ = result;
@@ -168,7 +168,7 @@ class ClientTest : public testing::Test {
  protected:
   ClientTest() : version_diff_(0) {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     client_factory_.reset(new IPCClientFactoryMock);
     client_.reset(new Client);
     client_->SetIPCClientFactory(client_factory_.get());
@@ -177,7 +177,7 @@ class ClientTest : public testing::Test {
     client_->SetServerLauncher(server_launcher_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     client_.reset();
     client_factory_.reset();
   }
@@ -671,7 +671,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   virtual void Wait() {}
   virtual void Error() {}
 
-  virtual bool StartServer(ClientInterface *client) {
+  bool StartServer(ClientInterface *client) override {
     if (!response_.empty()) {
       factory_->SetMockResponse(response_);
     }
@@ -683,26 +683,26 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
     return start_server_result_;
   }
 
-  virtual bool ForceTerminateServer(const std::string &name) {
+  bool ForceTerminateServer(const std::string &name) override {
     force_terminate_server_called_ = true;
     return force_terminate_server_result_;
   }
 
-  virtual bool WaitServer(uint32 pid) { return true; }
+  bool WaitServer(uint32 pid) override { return true; }
 
-  virtual void OnFatal(ServerLauncherInterface::ServerErrorType type) {}
+  void OnFatal(ServerLauncherInterface::ServerErrorType type) override {}
 
-  void set_server_program(const std::string &server_path) {}
+  void set_server_program(const std::string &server_path) override {}
 
-  void set_restricted(bool restricted) {}
+  void set_restricted(bool restricted) override {}
 
-  void set_suppress_error_dialog(bool suppress) {}
+  void set_suppress_error_dialog(bool suppress) override {}
 
   void set_start_server_result(const bool result) {
     start_server_result_ = result;
   }
 
-  virtual const std::string &server_program() const {
+  const std::string &server_program() const override {
     static const std::string path;
     return path;
   }
@@ -722,9 +722,9 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
 class SessionPlaybackTest : public testing::Test {
  protected:
   SessionPlaybackTest() {}
-  virtual ~SessionPlaybackTest() {}
+  ~SessionPlaybackTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     ipc_client_factory_.reset(new IPCClientFactoryMock);
     ipc_client_.reset(
         reinterpret_cast<IPCClientMock *>(ipc_client_factory_->NewClient("")));
@@ -735,7 +735,7 @@ class SessionPlaybackTest : public testing::Test {
     client_->SetServerLauncher(server_launcher_);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     client_.reset();
     ipc_client_factory_.reset();
   }

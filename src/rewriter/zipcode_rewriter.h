@@ -41,10 +41,10 @@ namespace mozc {
 class ZipcodeRewriter : public RewriterInterface {
  public:
   explicit ZipcodeRewriter(const dictionary::POSMatcher *pos_matcher);
-  virtual ~ZipcodeRewriter();
+  ~ZipcodeRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   bool GetZipcodeCandidatePositions(const Segment &seg, std::string *zipcode,

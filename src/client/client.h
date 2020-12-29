@@ -56,32 +56,32 @@ namespace client {
 // to launch server process
 class ServerLauncher : public ServerLauncherInterface {
  public:
-  bool StartServer(ClientInterface *client);
+  bool StartServer(ClientInterface *client) override;
 
-  bool ForceTerminateServer(const std::string &name);
+  bool ForceTerminateServer(const std::string &name) override;
 
-  bool WaitServer(uint32 pid);
+  bool WaitServer(uint32 pid) override;
 
-  void OnFatal(ServerLauncherInterface::ServerErrorType type);
+  void OnFatal(ServerLauncherInterface::ServerErrorType type) override;
 
   // specify server program. On Mac, we need to specify the server path
   // using this method.
-  void set_server_program(const std::string &server_program) {
+  void set_server_program(const std::string &server_program) override {
     server_program_ = server_program;
   }
 
   // return server program
-  const std::string &server_program() const { return server_program_; }
+  const std::string &server_program() const override { return server_program_; }
 
-  void set_restricted(bool restricted) { restricted_ = restricted; }
+  void set_restricted(bool restricted) override { restricted_ = restricted; }
 
   // Sets the flag of error dialog suppression.
-  void set_suppress_error_dialog(bool suppress) {
+  void set_suppress_error_dialog(bool suppress) override {
     suppress_error_dialog_ = suppress;
   }
 
   ServerLauncher();
-  virtual ~ServerLauncher();
+  ~ServerLauncher() override;
 
  private:
   std::string server_program_;
@@ -92,65 +92,65 @@ class ServerLauncher : public ServerLauncherInterface {
 class Client : public ClientInterface {
  public:
   Client();
-  virtual ~Client();
-  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory);
+  ~Client() override;
+  void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
 
   // set ServerLauncher.
   // ServerLauncher is used as default
   // NOTE: Client class takes the owership of start_server_handler.
-  void SetServerLauncher(ServerLauncherInterface *server_launcher);
+  void SetServerLauncher(ServerLauncherInterface *server_launcher) override;
 
-  bool IsValidRunLevel() const;
+  bool IsValidRunLevel() const override;
 
-  bool EnsureConnection();
+  bool EnsureConnection() override;
 
-  bool EnsureSession();
+  bool EnsureSession() override;
 
-  bool CheckVersionOrRestartServer();
+  bool CheckVersionOrRestartServer() override;
 
   bool SendKeyWithContext(const commands::KeyEvent &key,
                           const commands::Context &context,
-                          commands::Output *output);
+                          commands::Output *output) override;
   bool TestSendKeyWithContext(const commands::KeyEvent &key,
                               const commands::Context &context,
-                              commands::Output *output);
+                              commands::Output *output) override;
   bool SendCommandWithContext(const commands::SessionCommand &command,
                               const commands::Context &context,
-                              commands::Output *output);
+                              commands::Output *output) override;
 
-  bool GetConfig(config::Config *config);
-  bool SetConfig(const config::Config &config);
+  bool GetConfig(config::Config *config) override;
+  bool SetConfig(const config::Config &config) override;
 
-  bool ClearUserHistory();
-  bool ClearUserPrediction();
-  bool ClearUnusedUserPrediction();
-  bool Shutdown();
-  bool SyncData();
-  bool Reload();
-  bool Cleanup();
+  bool ClearUserHistory() override;
+  bool ClearUserPrediction() override;
+  bool ClearUnusedUserPrediction() override;
+  bool Shutdown() override;
+  bool SyncData() override;
+  bool Reload() override;
+  bool Cleanup() override;
 
-  bool NoOperation();
-  bool PingServer() const;
+  bool NoOperation() override;
+  bool PingServer() const override;
 
-  void Reset();
+  void Reset() override;
 
-  void EnableCascadingWindow(bool enable);
+  void EnableCascadingWindow(bool enable) override;
 
-  void set_timeout(int timeout);
-  void set_restricted(bool restricted);
-  void set_server_program(const std::string &server_program);
-  void set_suppress_error_dialog(bool suppress);
-  void set_client_capability(const commands::Capability &capability);
+  void set_timeout(int timeout) override;
+  void set_restricted(bool restricted) override;
+  void set_server_program(const std::string &server_program) override;
+  void set_suppress_error_dialog(bool suppress) override;
+  void set_client_capability(const commands::Capability &capability) override;
 
-  bool LaunchTool(const std::string &mode, const std::string &arg);
-  bool LaunchToolWithProtoBuf(const commands::Output &output);
+  bool LaunchTool(const std::string &mode, const std::string &arg) override;
+  bool LaunchToolWithProtoBuf(const commands::Output &output) override;
   // Converts Output message from server to corresponding mozc_tool arguments
   // If launch_tool_mode is not set or NO_TOOL is set or an invalid value is
   // set, this function will return false and do nothing.
   static bool TranslateProtoBufToMozcToolArg(const commands::Output &output,
                                              std::string *mode);
 
-  bool OpenBrowser(const std::string &url);
+  bool OpenBrowser(const std::string &url) override;
 
  private:
   FRIEND_TEST(SessionPlaybackTest, PushAndResetHistoryWithNoModeTest);

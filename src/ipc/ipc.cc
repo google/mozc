@@ -52,8 +52,8 @@ namespace {
 class IPCServerThread : public Thread {
  public:
   explicit IPCServerThread(IPCServer *server) : server_(server) {}
-  virtual ~IPCServerThread() {}
-  virtual void Run() {
+  ~IPCServerThread() override {}
+  void Run() override {
     if (server_ != nullptr) {
       server_->Loop();
     }

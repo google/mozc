@@ -245,6 +245,7 @@
         '../testing/testing.gyp:gtest_main',
         'session.gyp:random_keyevents_generator',
         'session.gyp:session',
+        'session.gyp:session_handler_tool',
         'session.gyp:session_server',
         'session_handler_test_util',
       ],
@@ -305,6 +306,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:status',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '../engine/engine.gyp:mock_data_engine_factory',
@@ -313,6 +315,7 @@
         '../testing/testing.gyp:mozctest',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session_handler',
+        'session.gyp:session_handler_tool',
         'session_base.gyp:request_test_util',
         'session_handler_test_util',
       ],

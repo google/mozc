@@ -58,39 +58,39 @@ class TestRewriter : public RewriterInterface {
         return_value_(return_value),
         capability_(capability) {}
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const {
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override {
     buffer_->append(name_ + ".Rewrite();");
     return return_value_;
   }
 
   virtual void set_capability(int capability) { capability_ = capability; }
 
-  virtual int capability(const ConversionRequest &request) const {
+  int capability(const ConversionRequest &request) const override {
     return capability_;
   }
 
-  virtual bool Focus(Segments *segments, size_t segment_index,
-                     int candidate_index) const {
+  bool Focus(Segments *segments, size_t segment_index,
+             int candidate_index) const override {
     buffer_->append(name_ + ".Focus();");
     return return_value_;
   }
 
-  virtual void Finish(const ConversionRequest &request, Segments *segments) {
+  void Finish(const ConversionRequest &request, Segments *segments) override {
     buffer_->append(name_ + ".Finish();");
   }
 
-  virtual bool Sync() {
+  bool Sync() override {
     buffer_->append(name_ + ".Sync();");
     return return_value_;
   }
 
-  virtual bool Reload() {
+  bool Reload() override {
     buffer_->append(name_ + ".Reload();");
     return return_value_;
   }
 
-  virtual void Clear() { buffer_->append(name_ + ".Clear();"); }
+  void Clear() override { buffer_->append(name_ + ".Clear();"); }
 
  private:
   std::string *buffer_;
@@ -101,7 +101,7 @@ class TestRewriter : public RewriterInterface {
 
 class MergerRewriterTest : public testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };

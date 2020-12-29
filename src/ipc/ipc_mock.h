@@ -40,14 +40,14 @@ class IPCClientFactoryMock;  // declared below.
 class IPCClientMock : public IPCClientInterface {
  public:
   explicit IPCClientMock(IPCClientFactoryMock *caller);
-  virtual bool Connected() const;
-  virtual uint32 GetServerProtocolVersion() const;
-  virtual const std::string &GetServerProductVersion() const;
-  virtual uint32 GetServerProcessId() const;
+  bool Connected() const override;
+  uint32 GetServerProtocolVersion() const override;
+  const std::string &GetServerProductVersion() const override;
+  uint32 GetServerProcessId() const override;
   virtual bool Call(const char *request, size_t request_size, char *response,
                     size_t *response_size, int32 timeout);
 
-  virtual IPCErrorType GetLastIPCError() const { return IPC_NO_ERROR; }
+  IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
 
   void set_connection(const bool connection) { connected_ = connection; }
   void set_result(const bool result) { result_ = result; }
@@ -78,10 +78,10 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
  public:
   IPCClientFactoryMock();
 
-  virtual IPCClientInterface *NewClient(const std::string &unused_name,
-                                        const std::string &path_name);
+  IPCClientInterface *NewClient(const std::string &unused_name,
+                                const std::string &path_name) override;
 
-  virtual IPCClientInterface *NewClient(const std::string &unused_name);
+  IPCClientInterface *NewClient(const std::string &unused_name) override;
 
   // This function is supporsed to be used by unittests.
   const std::string &GetGeneratedRequest() const;

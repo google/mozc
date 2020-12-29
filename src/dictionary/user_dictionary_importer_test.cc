@@ -48,9 +48,9 @@ class TestInputIterator
  public:
   TestInputIterator() : index_(0), is_available_(false), entries_(nullptr) {}
 
-  bool IsAvailable() const { return is_available_; }
+  bool IsAvailable() const override { return is_available_; }
 
-  bool Next(UserDictionaryImporter::RawEntry *entry) {
+  bool Next(UserDictionaryImporter::RawEntry *entry) override {
     if (!is_available_) {
       return false;
     }

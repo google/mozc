@@ -541,19 +541,19 @@ bool RequestInternal(HTTPMethodType type, const string &url,
 
 class HTTPClientImpl : public HTTPClientInterface {
  public:
-  virtual bool Get(const std::string &url, const HTTPClient::Option &option,
-                   std::string *output_string) const {
+  bool Get(const std::string &url, const HTTPClient::Option &option,
+           std::string *output_string) const override {
     return RequestInternal(HTTP_GET, url, nullptr, 0, option, output_string);
   }
 
-  virtual bool Head(const std::string &url, const HTTPClient::Option &option,
-                    std::string *output_string) const {
+  bool Head(const std::string &url, const HTTPClient::Option &option,
+            std::string *output_string) const override {
     return RequestInternal(HTTP_HEAD, url, nullptr, 0, option, output_string);
   }
 
-  virtual bool Post(const std::string &url, const std::string &data,
-                    const HTTPClient::Option &option,
-                    std::string *output_string) const {
+  bool Post(const std::string &url, const std::string &data,
+            const HTTPClient::Option &option,
+            std::string *output_string) const override {
     return RequestInternal(HTTP_POST, url, data.data(), data.size(), option,
                            output_string);
   }

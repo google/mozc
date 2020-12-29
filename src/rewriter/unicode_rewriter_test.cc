@@ -83,9 +83,9 @@ class UnicodeRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   UnicodeRewriterTest() {}
-  virtual ~UnicodeRewriterTest() {}
+  ~UnicodeRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     engine_.reset(MockDataEngineFactory::Create());
   }

@@ -41,7 +41,7 @@ namespace mozc {
 class ConverterMock : public ConverterInterface {
  public:
   ConverterMock();
-  virtual ~ConverterMock();
+  ~ConverterMock() override;
 
   // set next output of respective functions
   void SetStartConversionForRequest(Segments *segments, bool result);

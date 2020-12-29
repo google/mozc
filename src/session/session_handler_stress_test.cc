@@ -39,7 +39,7 @@
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
-#include "session/session_handler_test_util.h"
+#include "session/session_handler_tool.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -59,14 +59,13 @@ DEFINE_uint64(random_seed, GenerateRandomSeed(),
 namespace mozc {
 namespace {
 
-using session::testing::SessionHandlerTestBase;
-using session::testing::TestSessionClient;
+using session::SessionHandlerTool;
 
 TEST(SessionHandlerStressTest, BasicStressTest) {
   std::vector<commands::KeyEvent> keys;
   commands::Output output;
   std::unique_ptr<Engine> engine(EngineFactory::Create());
-  TestSessionClient client(std::move(engine));
+  SessionHandlerTool client(std::move(engine));
   size_t keyevents_size = 0;
   const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());

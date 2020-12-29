@@ -60,7 +60,7 @@ class SessionWatchDog : public Thread {
   void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
 
   explicit SessionWatchDog(int32 interval_sec);
-  virtual ~SessionWatchDog();
+  ~SessionWatchDog() override;
 
   // inherited from Thread class
   void Terminate();
@@ -79,7 +79,7 @@ class SessionWatchDog : public Thread {
                              uint64 last_cleanup_time) const;
 
  private:
-  virtual void Run();
+  void Run() override;
 
   int32 interval_sec_;
   client::ClientInterface *client_;

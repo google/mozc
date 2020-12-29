@@ -64,9 +64,9 @@ class TinyStorageTest : public testing::Test {
  protected:
   TinyStorageTest() {}
 
-  virtual void SetUp() { UnlinkDBFileIfExists(); }
+  void SetUp() override { UnlinkDBFileIfExists(); }
 
-  virtual void TearDown() { UnlinkDBFileIfExists(); }
+  void TearDown() override { UnlinkDBFileIfExists(); }
 
   static void UnlinkDBFileIfExists() {
     const std::string path = GetTemporaryFilePath();

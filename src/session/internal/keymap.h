@@ -55,8 +55,9 @@ class KeyMap : public KeyMapInterface<typename T::Commands> {
   typedef typename T::Commands CommandsType;
 
   bool GetCommand(const commands::KeyEvent &key_event,
-                  CommandsType *command) const;
-  bool AddRule(const commands::KeyEvent &key_event, CommandsType command);
+                  CommandsType *command) const override;
+  bool AddRule(const commands::KeyEvent &key_event,
+               CommandsType command) override;
   void Clear();
 
  private:

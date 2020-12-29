@@ -40,10 +40,9 @@ class Segments;
 class FortuneRewriter : public RewriterInterface {
  public:
   FortuneRewriter();
-  virtual ~FortuneRewriter();
+  ~FortuneRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request, Segments *segments) const;
 };
 
 }  // namespace mozc

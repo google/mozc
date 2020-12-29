@@ -87,15 +87,15 @@ bool IsInvalid(const std::string &key, const std::string &value, size_t size) {
 class TinyStorageImpl : public StorageInterface {
  public:
   TinyStorageImpl();
-  virtual ~TinyStorageImpl();
+  ~TinyStorageImpl() override;
 
-  virtual bool Open(const std::string &filename);
-  virtual bool Sync();
-  virtual bool Lookup(const std::string &key, std::string *value) const;
-  virtual bool Insert(const std::string &key, const std::string &value);
-  virtual bool Erase(const std::string &key);
-  virtual bool Clear();
-  virtual size_t Size() const { return dic_.size(); }
+  bool Open(const std::string &filename) override;
+  bool Sync() override;
+  bool Lookup(const std::string &key, std::string *value) const override;
+  bool Insert(const std::string &key, const std::string &value) override;
+  bool Erase(const std::string &key) override;
+  bool Clear() override;
+  size_t Size() const override { return dic_.size(); }
 
  private:
   std::string filename_;

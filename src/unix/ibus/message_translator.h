@@ -56,7 +56,7 @@ class NullMessageTranslator : public MessageTranslatorInterface {
   NullMessageTranslator();
 
   // Always returns |message|.
-  virtual std::string MaybeTranslate(const std::string &message) const;
+  std::string MaybeTranslate(const std::string &message) const override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullMessageTranslator);
@@ -67,7 +67,7 @@ class NullMessageTranslator : public MessageTranslatorInterface {
 class LocaleBasedMessageTranslator : public MessageTranslatorInterface {
  public:
   explicit LocaleBasedMessageTranslator(const std::string &locale_name);
-  virtual std::string MaybeTranslate(const std::string &message) const;
+  std::string MaybeTranslate(const std::string &message) const override;
 
  private:
   std::map<std::string, std::string> utf8_japanese_map_;

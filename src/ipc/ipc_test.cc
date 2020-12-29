@@ -73,7 +73,7 @@ class MultiConnections : public mozc::Thread {
   }
 #endif
 
-  void Run() {
+  void Run() override {
     char buf[8192];
     mozc::Util::Sleep(2000);
     for (int i = 0; i < kNumRequests; ++i) {
@@ -103,8 +103,8 @@ class EchoServer : public mozc::IPCServer {
  public:
   EchoServer(const std::string &path, int32 num_connections, int32 timeout)
       : IPCServer(path, num_connections, timeout) {}
-  virtual bool Process(const char *input_buffer, size_t input_length,
-                       char *output_buffer, size_t *output_length) {
+  bool Process(const char *input_buffer, size_t input_length,
+               char *output_buffer, size_t *output_length) override {
     if (::memcmp("kill", input_buffer, 4) == 0) {
       *output_length = 0;
       return false;

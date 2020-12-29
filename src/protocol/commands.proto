@@ -580,7 +580,7 @@ message DecoderExperimentParams {
 
 // Clients' request to the server.
 // Users cannot modify this.
-// In the future each request may be able to be overwirtten by Config.
+// In the future each request may be able to be overwritten by Config.
 // The server does not have to obey this request.
 message Request {
   // Enable zero query suggestion.

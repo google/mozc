@@ -43,14 +43,14 @@ namespace mozc {
 class TransliterationRewriter : public RewriterInterface {
  public:
   explicit TransliterationRewriter(const dictionary::POSMatcher &pos_matcher);
-  virtual ~TransliterationRewriter();
+  ~TransliterationRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
+  bool Rewrite(const ConversionRequest &request,
                        Segments *segments) const;
 
-  virtual void Finish(const ConversionRequest &request, Segments *segments) {}
+  void Finish(const ConversionRequest &request, Segments *segments) override {}
 
  private:
   void InitT13nCandidate(const std::string &key, const std::string &value,

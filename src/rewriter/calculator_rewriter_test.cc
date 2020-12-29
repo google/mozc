@@ -113,7 +113,7 @@ class CalculatorRewriterTest : public ::testing::Test {
     return new CalculatorRewriter(converter_mock_.get());
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
 
     // use mock
@@ -123,7 +123,7 @@ class CalculatorRewriterTest : public ::testing::Test {
     config_.set_use_calculator(true);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     // Clear the mock test calculator
     CalculatorFactory::SetCalculator(nullptr);
   }

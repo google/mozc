@@ -116,6 +116,24 @@
       ],
     },
     {
+      'target_name': 'session_handler_tool',
+      'type': 'static_library',
+      'sources': [
+        'session_handler_tool.cc',
+      ],
+      'dependencies': [
+        ':session',
+        ':session_handler',
+        ':session_usage_observer',
+        '../base/absl.gyp:absl_strings',
+        '../base/base.gyp:base',
+        '../config/config.gyp:config_handler',
+        '../engine/engine.gyp:engine_factory',
+        '../protocol/protocol.gyp:commands_proto',
+        '../protocol/protocol.gyp:config_proto',
+      ],
+    },
+    {
       'target_name': 'session_usage_observer',
       'type': 'static_library',
       'hard_dependency': 1,

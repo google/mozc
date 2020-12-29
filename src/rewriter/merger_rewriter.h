@@ -45,7 +45,7 @@ namespace mozc {
 class MergerRewriter : public RewriterInterface {
  public:
   MergerRewriter() {}
-  virtual ~MergerRewriter() { STLDeleteElements(&rewriters_); }
+  ~MergerRewriter() override { STLDeleteElements(&rewriters_); }
 
   // return true if rewriter can be called with the segments.
   bool CheckCapablity(const ConversionRequest &request, Segments *segments,
@@ -79,8 +79,8 @@ class MergerRewriter : public RewriterInterface {
     rewriters_.push_back(rewriter);
   }
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const {
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       if (CheckCapablity(request, segments, rewriters_[i])) {
@@ -107,8 +107,8 @@ class MergerRewriter : public RewriterInterface {
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
-  virtual bool Focus(Segments *segments, size_t segment_index,
-                     int candidate_index) const {
+  bool Focus(Segments *segments, size_t segment_index,
+             int candidate_index) const override {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       result |= rewriters_[i]->Focus(segments, segment_index, candidate_index);
@@ -117,14 +117,14 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // Hook(s) for all mutable operations
-  virtual void Finish(const ConversionRequest &request, Segments *segments) {
+  void Finish(const ConversionRequest &request, Segments *segments) override {
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       rewriters_[i]->Finish(request, segments);
     }
   }
 
   // Syncs internal data to local file system.
-  virtual bool Sync() {
+  bool Sync() override {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       result |= rewriters_[i]->Sync();
@@ -133,7 +133,7 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // Reloads internal data from local file system.
-  virtual bool Reload() {
+  bool Reload() override {
     bool result = false;
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       result |= rewriters_[i]->Reload();
@@ -142,7 +142,7 @@ class MergerRewriter : public RewriterInterface {
   }
 
   // Clears internal data
-  virtual void Clear() {
+  void Clear() override {
     for (size_t i = 0; i < rewriters_.size(); ++i) {
       rewriters_[i]->Clear();
     }

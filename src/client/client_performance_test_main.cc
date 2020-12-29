@@ -210,7 +210,7 @@ class PreeditCommon : public TestScenarioInterface {
 
 class PreeditWithoutSuggestion : public PreeditCommon {
  public:
-  virtual void Run(Result *result) {
+  void Run(Result *result) override {
     result->test_name = "preedit_without_suggestion";
     ResetConfig();
     IMEOn();
@@ -223,7 +223,7 @@ class PreeditWithoutSuggestion : public PreeditCommon {
 
 class PreeditWithSuggestion : public PreeditCommon {
  public:
-  virtual void Run(Result *result) {
+  void Run(Result *result) override {
     result->test_name = "preedit_with_suggestion";
     ResetConfig();
     IMEOn();
@@ -309,7 +309,7 @@ class PredictionCommon : public TestScenarioInterface {
 
 class PredictionWithOneChar : public PredictionCommon {
  public:
-  virtual void Run(Result *result) {
+  void Run(Result *result) override {
     result->test_name = "prediction_one_char";
     RunTest(ONE_CHAR, result);
   }
@@ -317,7 +317,7 @@ class PredictionWithOneChar : public PredictionCommon {
 
 class PredictionWithTwoChars : public PredictionCommon {
  public:
-  virtual void Run(Result *result) {
+  void Run(Result *result) override {
     result->test_name = "prediction_two_chars";
     RunTest(TWO_CHARS, result);
   }
@@ -325,7 +325,7 @@ class PredictionWithTwoChars : public PredictionCommon {
 
 class Conversion : public TestScenarioInterface {
  public:
-  virtual void Run(Result *result) {
+  void Run(Result *result) override {
     result->test_name = "conversion";
     ResetConfig();
     DisableSuggestion();

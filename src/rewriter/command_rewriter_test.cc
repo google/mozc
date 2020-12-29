@@ -71,13 +71,13 @@ class CommandRewriterTest : public ::testing::Test {
     convreq_.set_config(&config_);
   }
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&config_);
     request_.Clear();
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     config::ConfigHandler::GetDefaultConfig(&config_);
     request_.Clear();
   }

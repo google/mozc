@@ -41,10 +41,10 @@ class Segments;
 class UnicodeRewriter : public RewriterInterface {
  public:
   explicit UnicodeRewriter(const ConverterInterface *parent_converter);
-  virtual ~UnicodeRewriter();
+  ~UnicodeRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   bool RewriteToUnicodeCharFormat(const ConversionRequest &request,

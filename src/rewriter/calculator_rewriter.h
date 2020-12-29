@@ -47,12 +47,12 @@ class CalculatorRewriter : public RewriterInterface {
   friend class CalculatorRewriterTest;
 
   explicit CalculatorRewriter(const ConverterInterface *parent_converter);
-  virtual ~CalculatorRewriter();
+  ~CalculatorRewriter() override;
 
-  virtual int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   // Inserts a candidate with the string into the |segment|.

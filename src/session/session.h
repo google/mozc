@@ -63,15 +63,15 @@ class ImeContext;
 class Session : public SessionInterface {
  public:
   explicit Session(EngineInterface *engine);
-  virtual ~Session();
+  ~Session() override;
 
-  virtual bool SendKey(mozc::commands::Command *command);
+  bool SendKey(mozc::commands::Command *command) override;
 
   // Check if the input key event will be consumed by the session.
-  virtual bool TestSendKey(mozc::commands::Command *command);
+  bool TestSendKey(mozc::commands::Command *command) override;
 
   // Perform the SEND_COMMAND command defined commands.proto.
-  virtual bool SendCommand(mozc::commands::Command *command);
+  bool SendCommand(mozc::commands::Command *command) override;
 
   // Turn on IME. Do nothing (but the keyevent is consumed) when IME is already
   // turned on.
@@ -243,28 +243,28 @@ class Session : public SessionInterface {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  virtual void SetConfig(mozc::config::Config *config);
+  void SetConfig(mozc::config::Config *config) override;
 
-  virtual void SetRequest(const mozc::commands::Request *request);
+  void SetRequest(const mozc::commands::Request *request) override;
 
-  virtual void SetTable(const mozc::composer::Table *table);
+  void SetTable(const mozc::composer::Table *table) override;
 
   // Set client capability for this session.  Used by unittest.
-  virtual void set_client_capability(
-      const mozc::commands::Capability &capability);
+  void set_client_capability(
+      const mozc::commands::Capability &capability) override;
 
   // Set application information for this session.
-  virtual void set_application_info(
-      const mozc::commands::ApplicationInfo &application_info);
+  void set_application_info(
+      const mozc::commands::ApplicationInfo &application_info) override;
 
   // Get application information
-  virtual const mozc::commands::ApplicationInfo &application_info() const;
+  const mozc::commands::ApplicationInfo &application_info() const override;
 
   // Return the time when this instance was created.
-  virtual uint64 create_session_time() const;
+  uint64 create_session_time() const override;
 
   // return 0 (default value) if no command is executed in this session.
-  virtual uint64 last_command_time() const;
+  uint64 last_command_time() const override;
 
   // TODO(komatsu): delete this funciton.
   // For unittest only

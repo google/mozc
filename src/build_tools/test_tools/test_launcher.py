@@ -148,7 +148,7 @@ def _ExecuteTest(command_and_gtest_report_dir):
     logging.info('%s %s', label, binary)
   else:
     label = util.ColoredText('[ FAILED ]', logging.ERROR)
-    logging.error('Failed. Detail output:\n%s', output.decode('ascii'))
+    logging.error('Failed. Detail output:\n%s', output.decode('utf-8'))
     logging.info('%s %s', label, binary)
 
   return {'command': command, 'result': result}

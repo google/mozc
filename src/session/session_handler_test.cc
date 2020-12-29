@@ -60,10 +60,6 @@ DECLARE_int32(last_create_session_timeout);
 
 namespace mozc {
 
-using mozc::session::testing::CleanUp;
-using mozc::session::testing::CreateSession;
-using mozc::session::testing::DeleteSession;
-using mozc::session::testing::IsGoodSession;
 using mozc::session::testing::SessionHandlerTestBase;
 
 namespace {
@@ -141,6 +137,42 @@ EngineReloadResponse::Status SendDummyEngineCommand(SessionHandler *handler) {
   return command.output().engine_reload_response().status();
 }
 
+bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
+  commands::Command command;
+  command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
+  command.mutable_input()->mutable_capability()->set_text_deletion(
+      commands::Capability::DELETE_PRECEDING_TEXT);
+  handler->EvalCommand(&command);
+  if (id != nullptr) {
+    *id = command.has_output() ? command.output().id() : 0;
+  }
+  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
+}
+
+bool DeleteSession(SessionHandlerInterface *handler, uint64 id) {
+  commands::Command command;
+  command.mutable_input()->set_id(id);
+  command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
+  return handler->EvalCommand(&command);
+}
+
+bool CleanUp(SessionHandlerInterface *handler, uint64 id) {
+  commands::Command command;
+  command.mutable_input()->set_id(id);
+  command.mutable_input()->set_type(commands::Input::CLEANUP);
+  return handler->EvalCommand(&command);
+}
+
+bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
+  commands::Command command;
+  command.mutable_input()->set_id(id);
+  command.mutable_input()->set_type(commands::Input::SEND_KEY);
+  command.mutable_input()->mutable_key()->set_special_key(
+      commands::KeyEvent::SPACE);
+  handler->EvalCommand(&command);
+  return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
+}
+
 }  // namespace
 
 class SessionHandlerTest : public SessionHandlerTestBase {
@@ -186,7 +218,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     for (int i = static_cast<int>(ids.size() - 1); i >= 0; --i) {
       if (i > 0) {  // this id is alive
         EXPECT_TRUE(IsGoodSession(&handler, ids[i]));
-      } else {  // the first id shuold be removed
+      } else {  // the first id should be removed
         EXPECT_FALSE(IsGoodSession(&handler, ids[i]));
       }
     }

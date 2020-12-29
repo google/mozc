@@ -48,15 +48,17 @@ class TestCPUStats : public CPUStatsInterface {
  public:
   TestCPUStats() : cpu_loads_index_(0) {}
 
-  float GetSystemCPULoad() {
+  float GetSystemCPULoad() override {
     scoped_lock l(&mutex_);
     CHECK_LT(cpu_loads_index_, cpu_loads_.size());
     return cpu_loads_[cpu_loads_index_++];
   }
 
-  float GetCurrentProcessCPULoad() { return 0.0; }
+  float GetCurrentProcessCPULoad() override { return 0.0; }
 
-  size_t GetNumberOfProcessors() const { return static_cast<size_t>(1); }
+  size_t GetNumberOfProcessors() const override {
+    return static_cast<size_t>(1);
+  }
 
   void SetCPULoads(const std::vector<float> &cpu_loads) {
     scoped_lock l(&mutex_);
