@@ -37,6 +37,8 @@ RUN apt-get update
 RUN apt install -y clang libc++-dev libc++abi-dev python python-six python3-six pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
 RUN apt install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
+## Packages for misc tools
+RUN apt install -y nano
 
 ## For Bazel
 ## https://docs.bazel.build/versions/master/install-ubuntu.html
