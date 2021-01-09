@@ -93,7 +93,8 @@ string GetTestTmpdir() {
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g like "/spam/eggs/foo_unittest".
 string GetProgramPath() {
-  const string &program_invocation_name = FLAGS_program_invocation_name;
+  const string& program_invocation_name =
+      mozc::GetFlag(FLAGS_program_invocation_name);
   if (program_invocation_name.empty() || program_invocation_name[0] == '/') {
     return program_invocation_name;
   }

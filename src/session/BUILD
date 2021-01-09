@@ -782,6 +782,7 @@ cc_binary_mozc(
         "//data_manager/oss:oss_data_manager",
         "//engine",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -45,7 +45,11 @@ void SetSegments(Segments *segments, absl::string_view cand_value) {
   Segment *segment = segments->add_segment();
   segment->set_key("Testてすと");
   Segment::Candidate *candidate = segment->add_candidate();
+#ifdef ABSL_USES_STD_STRING_VIEW
+  candidate->value = cand_value;
+#else
   candidate->value = std::string(cand_value);
+#endif  // ABSL_USES_STD_STRING_VIEW
 
   // Add meta candidates
   Segment::Candidate *meta_cand = segment->add_meta_candidate();

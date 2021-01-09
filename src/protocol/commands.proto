@@ -1186,6 +1186,9 @@ message Output {
       user_dictionary_command_status = 21;
 
   optional mozc.EngineReloadResponse engine_reload_response = 22;
+
+  // For debug. Candidate words removed throuth the conversion process.
+  optional CandidateList removed_candidate_words_for_debug = 23;
 }
 
 message Command {

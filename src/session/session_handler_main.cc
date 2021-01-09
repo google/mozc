@@ -27,6 +27,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// session_handler_main.cc
+//
+// Usage:
+// session_handler_main --logtostderr --input input.txt --profile /tmp/mozc
+//                      --dictionary oss --engine desktop
+//
+/* Example of input.txt
+# Enable IME
+SEND_KEY        ON
+
+SET_MOBILE_REQUEST
+
+RESET_CONTEXT
+UPDATE_MOBILE_KEYBOARD  QWERTY_MOBILE_TO_HIRAGANA
+SWITCH_INPUT_MODE       HIRAGANA
+
+SEND_KEYS       arigatou
+SEND_KEY        Enter
+# EXPAND_SUGGESTION
+# SHOW_OUTPUT
+SHOW
+SHOW_LOG_BY_VALUE       ございます
+SHOW_LOG_BY_VALUE       ございました
+*/
+
 #include <iostream>
 #include <string>
 
@@ -41,6 +66,7 @@
 #include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
+#include "absl/strings/str_split.h"
 
 DEFINE_string(input, "", "Input file");
 DEFINE_string(profile, "", "User profile directory");
@@ -50,20 +76,61 @@ DEFINE_string(dictionary, "", "Dictionary: 'google', 'android' or 'oss'");
 namespace mozc {
 void Show(const commands::Output &output) {
   for (const auto &segment : output.preedit().segment()) {
-    std::cout << segment.value() << " " << std::endl;
+    std::cout << segment.value() << " ";
   }
+  std::cout << std::endl;
   for (const auto &candidate : output.candidates().candidate()) {
     std::cout << candidate.id() << ": " << candidate.value() << std::endl;
   }
 }
 
+void ShowLog(const commands::Output &output, const int cand_id) {
+  for (const auto &candidate : output.all_candidate_words().candidates()) {
+    if (candidate.id() == cand_id) {
+      std::cout << candidate.value() << std::endl;
+      std::cout << candidate.log() << std::endl;
+      return;
+    }
+  }
+
+  for (const auto &candidate :
+       output.removed_candidate_words_for_debug().candidates()) {
+    if (candidate.id() == cand_id) {
+      std::cout << candidate.value() << std::endl;
+      std::cout << candidate.log() << std::endl;
+      return;
+    }
+  }
+}
+
 void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
-  if (line == "SHOW_OUTPUT") {
+  std::vector<std::string> columns = absl::StrSplit(line, '\t');
+  const std::string &command = columns[0];
+
+  if (command == "SHOW_OUTPUT") {
     std::cout << handler.LastOutput().Utf8DebugString() << std::endl;
     return;
   }
-  if (line == "SHOW") {
+  if (command == "SHOW") {
     Show(handler.LastOutput());
+    return;
+  }
+  if (command == "SHOW_LOG") {
+    uint32 id;
+    if (columns.size() == 2 && absl::SimpleAtoi(columns[1], &id)) {
+      ShowLog(handler.LastOutput(), id);
+    } else {
+      std::cout << "ERROR: " << line << std::endl;
+    }
+    return;
+  }
+  if (command == "SHOW_LOG_BY_VALUE") {
+    uint32 id;
+    if (columns.size() == 2 && handler.GetCandidateIdByValue(columns[1], &id)) {
+      ShowLog(handler.LastOutput(), id);
+    } else {
+      std::cout << "ERROR: " << line << std::endl;
+    }
     return;
   }
 

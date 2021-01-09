@@ -43,8 +43,8 @@ import datetime
 import logging
 import optparse
 import sys
-import mozc_version
-import tweak_data
+from build_tools import mozc_version
+from build_tools import tweak_data
 
 
 _COPYRIGHT_YEAR = datetime.date.today().year

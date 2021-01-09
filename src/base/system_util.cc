@@ -284,7 +284,17 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   //    use "$HOME/.config/mozc" as the default value of $XDG_CONFIG_HOME
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
   const char *home = Environ::GetEnv("HOME");
-  CHECK(home) << "$HOME was not defined.";
+  if (home == nullptr) {
+    char buf[1024];
+    struct passwd pw, *ppw;
+    const uid_t uid = geteuid();
+    CHECK_EQ(0, getpwuid_r(uid, &pw, buf, sizeof(buf), &ppw))
+        << "Can't get passwd entry for uid " << uid << ".";
+    CHECK_LT(0, strlen(pw.pw_dir))
+        << "Home directory for uid " << uid << " is not set.";
+    return FileUtil::JoinPath(pw.pw_dir, ".mozc");
+  }
+
   const std::string old_dir = FileUtil::JoinPath(home, ".mozc");
   if (FileUtil::DirectoryExists(old_dir)) {
     return old_dir;

@@ -73,35 +73,19 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
   return is_modified;
 }
 
-void FillAllCandidateWordsInternal(
-    const Segment &segment, const CandidateList &candidate_list,
-    const int focused_id, commands::CandidateList *candidate_list_proto) {
-  for (size_t i = 0; i < candidate_list.size(); ++i) {
-    const Candidate &candidate = candidate_list.candidate(i);
-    if (candidate.IsSubcandidateList()) {
-      FillAllCandidateWordsInternal(segment, candidate.subcandidate_list(),
-                                    focused_id, candidate_list_proto);
-      continue;
-    }
+void FillCandidateWord(
+    const Segment::Candidate &segment_candidate,
+    const int id, const int index, const std::string base_key,
+    commands::CandidateWord *candidate_word_proto) {
 
-    commands::CandidateWord *candidate_word_proto =
-        candidate_list_proto->add_candidates();
     // id
-    const int id = candidate.id();
     candidate_word_proto->set_id(id);
 
     // index
-    const int index = candidate_list_proto->candidates_size() - 1;
     candidate_word_proto->set_index(index);
 
-    // check focused id
-    if (id == focused_id && candidate_list.focused()) {
-      candidate_list_proto->set_focused_index(index);
-    }
-
-    const Segment::Candidate &segment_candidate = segment.candidate(id);
     // key
-    if (segment.key() != segment_candidate.content_key) {
+    if (base_key != segment_candidate.content_key) {
       candidate_word_proto->set_key(segment_candidate.content_key);
     }
     // value
@@ -134,9 +118,42 @@ void FillAllCandidateWordsInternal(
       candidate_word_proto->set_num_segments_in_candidate(
           segment_candidate.inner_segment_boundary.size());
     }
-  }
+
+#ifndef NDEBUG
+    candidate_word_proto->set_log(segment_candidate.DebugString() +
+                                  segment_candidate.log);
+#endif  // NDEBUG
 }
 
+void FillAllCandidateWordsInternal(
+    const Segment &segment, const CandidateList &candidate_list,
+    const int focused_id, commands::CandidateList *candidate_list_proto) {
+  for (size_t i = 0; i < candidate_list.size(); ++i) {
+    const Candidate &candidate = candidate_list.candidate(i);
+    if (candidate.IsSubcandidateList()) {
+      FillAllCandidateWordsInternal(segment, candidate.subcandidate_list(),
+                                    focused_id, candidate_list_proto);
+      continue;
+    }
+
+    commands::CandidateWord *candidate_word_proto =
+        candidate_list_proto->add_candidates();
+    // id
+    const int id = candidate.id();
+
+    // index
+    const int index = candidate_list_proto->candidates_size() - 1;
+
+    // check focused id
+    if (id == focused_id && candidate_list.focused()) {
+      candidate_list_proto->set_focused_index(index);
+    }
+
+    const Segment::Candidate &segment_candidate = segment.candidate(id);
+    FillCandidateWord(segment_candidate, id, index, segment.key(),
+                      candidate_word_proto);
+  }
+}
 }  // namespace
 
 // static
@@ -209,6 +226,20 @@ void SessionOutput::FillAllCandidateWords(
   FillAllCandidateWordsInternal(segment, candidate_list,
                                 candidate_list.focused_id(),
                                 candidate_list_proto);
+}
+
+// static
+void SessionOutput::FillRemovedCandidates(
+    const Segment &segment, commands::CandidateList *candidate_list_proto) {
+  int index = 1000;
+  const std::vector<Segment::Candidate> &candidates =
+      segment.removed_candidates_for_debug_;
+  for (const Segment::Candidate &candidate : candidates) {
+    commands::CandidateWord *candidate_word_proto =
+        candidate_list_proto->add_candidates();
+    FillCandidateWord(candidate, index, index, "", candidate_word_proto);
+    index++;
+  }
 }
 
 // static

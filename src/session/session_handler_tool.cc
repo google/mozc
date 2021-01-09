@@ -364,20 +364,31 @@ const Output& SessionHandlerInterpreter::LastOutput() const {
 }
 
 
-bool GetCandidateIdByValue(const absl::string_view value, const Output &output,
-                           uint32 *id) {
-  if (!output.has_all_candidate_words()) {
+bool SessionHandlerInterpreter::GetCandidateIdByValue(
+    const absl::string_view value, uint32 *id) {
+  const Output &output = LastOutput();
+
+  auto find_id = [&value](const CandidateList &candidate_list,
+                          uint32 *id) -> bool {
+    for (const CandidateWord &candidate : candidate_list.candidates()) {
+      if (candidate.has_value() && candidate.value() == value) {
+        *id = candidate.id();
+        return true;
+      }
+    }
     return false;
+  };
+
+  if (output.has_all_candidate_words() &&
+      find_id(output.all_candidate_words(), id)) {
+    return true;
   }
 
-  const CandidateList &all_candidate_words = output.all_candidate_words();
-  for (int i = 0; i < all_candidate_words.candidates_size(); ++i) {
-    const CandidateWord &candidate_word = all_candidate_words.candidates(i);
-    if (candidate_word.has_value() && candidate_word.value() == value) {
-      *id = candidate_word.id();
-      return true;
-    }
+  if (output.has_removed_candidate_words_for_debug() &&
+      find_id(output.removed_candidate_words_for_debug(), id)) {
+    return true;
   }
+
   return false;
 }
 
@@ -522,7 +533,7 @@ Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
   } else if (command == "SELECT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, columns.size());
     uint32 id;
-    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], *last_output_, &id));
+    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], &id));
     MOZC_ASSERT_TRUE(client_->SelectCandidate(id, last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE") {
     MOZC_ASSERT_EQ(2, columns.size());
@@ -531,7 +542,7 @@ Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
   } else if (command == "SUBMIT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, columns.size());
     uint32 id;
-    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], *last_output_, &id));
+    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], &id));
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(id, last_output_.get()));
   } else if (command == "EXPAND_SUGGESTION") {
     MOZC_ASSERT_TRUE(client_->ExpandSuggestion(last_output_.get()));

@@ -31,17 +31,24 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
-load("//:build_defs.bzl", "cc_binary_mozc")
+load("//:build_defs.bzl", "cc_binary_mozc", "cc_library_mozc")
+load("//third_party/bazel_rules/rules_apple/apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
 
-# -*- mode: python; -*-
 cc_binary_mozc(
     name = "mozc_server",
+    deps = [":mozc_server_lib"],
+)
+
+cc_library_mozc(
+    name = "mozc_server_lib",
     srcs = [
         "mozc_server.cc",
-        "mozc_server.h",
         "mozc_server_main.cc",
+    ],
+    hdrs = [
+        "mozc_server.h",
     ],
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # mozc_server.cc
     deps = [
@@ -56,7 +63,6 @@ cc_binary_mozc(
         "//base:singleton",
         "//base:system_util",
         "//base:util",
-        "//base:winmain",
         "//config:stats_config_util",
         "//session",
         "//session:session_server",
@@ -81,4 +87,39 @@ cc_binary_mozc(
         "//session:session_usage_observer",
         "@com_google_absl//absl/flags:flag",
     ],
+)
+
+BRANDING = "Mozc"
+
+BUNDLE_ID = "org.mozc.inputmethod.Japanese.Converter"
+
+MIN_OS_VER = "10.12"
+
+genrule(
+    name = "gen_mozc_server_info_plist",
+    srcs = [
+        "//base:mozc_version_txt",
+        "//data/mac:mozc_server_info",
+    ],
+    outs = ["mozc_server_info.plist"],
+    cmd = ("$(location //build_tools:tweak_info_plist)" +
+           " --output $@" +
+           " --input $(location //data/mac:mozc_server_info)" +
+           " --version_file $(location //base:mozc_version_txt)" +
+           " --branding " + BRANDING),
+    exec_tools = ["//build_tools:tweak_info_plist"],
+)
+
+macos_application(
+    name = "mozc_server_macos",
+    app_icons = ["//data/images/mac:product_icon.icns"],
+    bundle_id = BUNDLE_ID,
+    bundle_name = BRANDING + "Converter",
+    infoplists = [":gen_mozc_server_info_plist"],
+    minimum_os_version = MIN_OS_VER,
+    deps = [":mozc_server_lib"],
+    # When we support Breakpad, uncomment the following block.
+    # additional_contents = {
+    #     "[Breakpad]" : "Frameworks",
+    # },
 )

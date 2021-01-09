@@ -926,8 +926,8 @@
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="193"/>
-        <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function is disabled with this new mapping.</source>
-        <translation>入力フィールドに大文字のアルファベットが含まれています。新しい設定では「シフトキーによる入力切替」は無効になります。</translation>
+        <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function should be Off with this new mapping.</source>
+        <translation>入力フィールドに大文字のアルファベットが含まれています。新しい設定では「シフトキーによる入力切替」をオフにしてください。</translation>
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="220"/>

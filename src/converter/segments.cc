@@ -87,6 +87,10 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
   command = src.command;
 
   inner_segment_boundary = src.inner_segment_boundary;
+
+#ifndef NDEBUG
+  log = src.log;
+#endif  // NDEBUG
 }
 
 bool Segment::Candidate::IsValid() const {

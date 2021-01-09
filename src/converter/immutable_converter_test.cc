@@ -79,10 +79,17 @@ void SetCandidate(absl::string_view key, absl::string_view value,
   segment->set_key(key);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();
+#ifdef ABSL_USES_STD_STRING_VIEW
+  candidate->key = key;
+  candidate->value = value;
+  candidate->content_key = key;
+  candidate->content_value = value;
+#else
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(key);
   candidate->content_value = std::string(value);
+#endif  // ABSL_USES_STD_STRING_VIEW
 }
 
 const ConversionRequest &GetSimplifiedRankingConversionRequest() {

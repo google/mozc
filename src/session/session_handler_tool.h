@@ -105,6 +105,7 @@ class SessionHandlerInterpreter {
   void ClearUserPrediction();
   void ClearUsageStats();
   const commands::Output& LastOutput() const;
+  bool GetCandidateIdByValue(const absl::string_view value, uint32 *id);
   Status ParseLine(const std::string &line_text);
 
  private:

@@ -1488,10 +1488,11 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
       // "グーグルアドセンス", "グーグル", "アドセンス"
       // are in the dictionary.
       if (results[i].value == "グーグルアドセンス") {
-        EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].types);
+        EXPECT_FALSE(results[i].removed);
       } else {
-        EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[i].types);
+        EXPECT_TRUE(results[i].removed);
       }
+      EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].types);
       EXPECT_TRUE(Util::StartsWith(results[i].key, kHistoryKey));
       EXPECT_TRUE(Util::StartsWith(results[i].value, kHistoryValue));
       // Not zero query
@@ -2443,9 +2444,12 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
     predictor->RemoveMissSpelledCandidates(1, &results);
     ASSERT_EQ(3, results.size());
 
-    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[0].types);
+    EXPECT_TRUE(results[0].removed);
+    EXPECT_FALSE(results[1].removed);
+    EXPECT_TRUE(results[2].removed);
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[0].types);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[1].types);
-    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[2].types);
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[2].types);
   }
 
   {
@@ -2494,8 +2498,8 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
     predictor->RemoveMissSpelledCandidates(1, &results);
     CHECK_EQ(2, results.size());
 
-    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[0].types);
-    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[1].types);
+    EXPECT_TRUE(results[0].removed);
+    EXPECT_TRUE(results[1].removed);
   }
 
   {
@@ -2519,8 +2523,10 @@ TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
     predictor->RemoveMissSpelledCandidates(3, &results);
     CHECK_EQ(2, results.size());
 
+    EXPECT_FALSE(results[0].removed);
+    EXPECT_TRUE(results[1].removed);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[0].types);
-    EXPECT_EQ(DictionaryPredictor::NO_PREDICTION, results[1].types);
+    EXPECT_EQ(DictionaryPredictor::UNIGRAM, results[1].types);
   }
 }
 

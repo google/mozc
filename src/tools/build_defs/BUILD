@@ -56,4 +56,5 @@ bzl_library(
     srcs = ["qt.bzl"],
     parse_tests = False,
     visibility = ["//visibility:private"],
+    deps = ["//:build_defs_bzl"],
 )

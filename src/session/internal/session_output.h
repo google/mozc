@@ -71,6 +71,12 @@ class SessionOutput {
       const commands::Category category,
       commands::CandidateList *candidate_list_proto);
 
+  // For debug. Fill the CandidateList protobuf with the
+  // removed_candidates_for_debug in the segment.
+  static void FillRemovedCandidates(
+      const Segment &segment,
+      commands::CandidateList *candidate_list_proto);
+
   // Check if the usages should be rendered on the current CandidateList status.
   static bool ShouldShowUsages(const Segment &segment,
                                const CandidateList &cand_list);

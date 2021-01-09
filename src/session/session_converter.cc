@@ -556,7 +556,7 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // We want prediction candidates,
   // but want to set candidates' category SUGGESTION.
   // TODO(matsuzakit or yamaguchi): Refactor following lines,
-  //     after implemention of partial conversion.
+  //     after implementation of partial conversion.
 
   // Initialize the segments for prediction.
   SetConversionPreferences(preferences, segments_.get());
@@ -1138,6 +1138,13 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   // All candidate words
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
+  }
+
+  // For debug. Removed candidate words through the conversion process.
+  if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
+    SessionOutput::FillRemovedCandidates(
+        segments_->conversion_segment(segment_index_),
+        output->mutable_removed_candidate_words_for_debug());
   }
 }
 

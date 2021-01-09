@@ -159,3 +159,18 @@ py_library_mozc(
     visibility = ["//:__subpackages__"],
     deps = [],
 )
+
+py_library_mozc(
+    name = "tweak_data",
+    srcs = ["tweak_data.py"],
+)
+
+py_binary_mozc(
+    name = "tweak_info_plist",
+    srcs = ["tweak_info_plist.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":mozc_version_lib",
+        ":tweak_data",
+    ],
+)
