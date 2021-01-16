@@ -40,10 +40,6 @@ load(
     "py_library_mozc",
 )
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "dictionary_interface",
     hdrs = ["dictionary_interface.h"],

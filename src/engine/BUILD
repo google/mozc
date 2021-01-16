@@ -39,10 +39,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "engine_builder_interface",
     hdrs = ["engine_builder_interface.h"],
@@ -109,7 +105,6 @@ cc_library_mozc(
     hdrs = ["engine.h"],
     visibility = [
         "//android/jni:__pkg__",
-        "//chrome/nacl:__pkg__",
         "//converter:__pkg__",
         "//ios:__pkg__",
         "//session:__pkg__",
@@ -226,17 +221,6 @@ cc_library_mozc(
         ":engine",
         "//base:logging",
         "//data_manager/android:android_data_manager",
-    ],
-)
-
-cc_library_mozc(
-    name = "chromeos_engine_factory",
-    hdrs = ["chromeos_engine_factory.h"],
-    visibility = ["//evaluation:__subpackages__"],
-    deps = [
-        ":engine",
-        "//base:logging",
-        "//data_manager/chromeos:chromeos_data_manager",
     ],
 )
 

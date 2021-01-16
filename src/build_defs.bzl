@@ -165,6 +165,7 @@ def select_mozc(
         linux = None,
         oss_android = None,
         oss_linux = None,
+        oss_macos = None,
         wasm = None):
     """select wrapper for target os selection.
 
@@ -185,6 +186,7 @@ def select_mozc(
       linux: value for Linux build.
       oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
+      oss_macos: value for OSS macOS build.
       wasm: value for wasm build.
 
     Returns:
@@ -198,5 +200,6 @@ def select_mozc(
         "//tools/cc_target_os:linux": _get_value([linux, client, default]),
         "//tools/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
         "//tools/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
+        "//tools/cc_target_os:oss_macos": _get_value([oss_macos, oss, ios, client, default]),
         "//conditions:default": default,
     })

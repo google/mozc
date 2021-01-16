@@ -39,13 +39,7 @@ load(
 )
 load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
-
-test_suite(
-    name = "nacl_test",
-)
+package(default_visibility = ["//:__subpackages__"])
 
 portable_proto_library(
     name = "usage_stats_proto",

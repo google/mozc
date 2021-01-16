@@ -273,7 +273,6 @@ cc_library_mozc(
         android = ["//data_manager/android:pos_list.h"],
         client = ["//data_manager/google:pos_list.h"],
         default = [],
-        nacl = ["//data_manager/chromeos:pos_list.h"],
         oss = ["//data_manager/oss:pos_list.h"],
     ),
     deps = [

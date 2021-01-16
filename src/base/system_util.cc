@@ -422,14 +422,13 @@ std::string SystemUtil::GetServerDirectory() {
   return MacUtil::GetServerDirectory();
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
-    defined(OS_WASM)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
 # if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
 # else
   return "/usr/lib/mozc";
 # endif  // MOZC_SERVER_DIRECTORY
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+#endif   // OS_LINUX || OS_ANDROID || OS_WASM
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
@@ -663,14 +662,13 @@ string GetSessionIdString() {
 #endif  // OS_WIN
 
 std::string SystemUtil::GetDesktopNameAsString() {
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
-    defined(OS_WASM)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
   const char *display = Environ::GetEnv("DISPLAY");
   if (display == nullptr) {
     return "";
   }
   return display;
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+#endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
 #if defined(__APPLE__)
   return "";
@@ -861,7 +859,7 @@ std::string SystemUtil::GetOSVersionString() {
   const string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
-#elif defined(OS_LINUX) || defined(OS_NACL)
+#elif defined(OS_LINUX)
   const std::string ret = "Linux";
   return ret;
 #else   // !OS_WIN && !__APPLE__ && !OS_LINUX
@@ -903,8 +901,7 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
   return total_memory;
 #endif  // __APPLE__
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
-    defined(OS_WASM)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
 # if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const int32 page_size = sysconf(_SC_PAGESIZE);
   const int32 number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
@@ -917,7 +914,7 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
 # else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 # endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL || OS_WASM
+#endif   // OS_LINUX || OS_ANDROID || OS_WASM
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.

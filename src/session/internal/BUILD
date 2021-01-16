@@ -39,10 +39,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "ime_context",
     srcs = ["ime_context.cc"],

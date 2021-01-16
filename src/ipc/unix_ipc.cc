@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// OS_LINUX only. Note that OS_ANDROID/OS_NACL don't reach here.
+// OS_LINUX only. Note that OS_ANDROID/OS_WASM don't reach here.
 #if defined(OS_LINUX)
 
 #include <arpa/inet.h>

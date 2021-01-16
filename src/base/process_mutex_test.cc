@@ -66,7 +66,7 @@ class ProcessMutexTest : public testing::Test {
   std::string original_user_profile_dir_;
 };
 
-#if !defined(OS_WIN) && !defined(OS_NACL)
+#if !defined(OS_WIN)
 TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   const pid_t pid = ::fork();
   if (pid == 0) {  // child process
@@ -91,7 +91,7 @@ TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
     LOG(FATAL) << "fork() failed";
   }
 }
-#endif  // !OS_WIN && !OS_NACL
+#endif  // !OS_WIN
 
 TEST_F(ProcessMutexTest, BasicTest) {
   ProcessMutex m1(kName);

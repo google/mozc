@@ -55,7 +55,6 @@ class QualityRegressionUtil {
     OSS = 2,
     MOBILE = 4,
     MOBILE_AMBIGUOUS = 8,
-    CHROMEOS = 16,
   };
 
   struct TestItem {

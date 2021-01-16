@@ -64,6 +64,13 @@ config_setting(
 )
 
 config_setting(
+    name = "oss_macos",
+    values = {
+        "define": "TARGET=oss_macos",
+    },
+)
+
+config_setting(
     name = "nacl",
     values = {
         "define": "TARGET=nacl",

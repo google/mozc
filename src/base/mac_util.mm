@@ -43,7 +43,7 @@
 #include "base/logging.h"
 #include "base/scoped_cftyperef.h"
 #include "base/singleton.h"
-#include "base/util.h"
+#include "third_party/absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -385,10 +385,10 @@ bool MacUtil::IsSuppressSuggestionWindow(const string &name,
   return (("Google Chrome" == owner) ||
           ("Safari" == owner)) &&
          (("Google" == name) ||
-          Util::EndsWith(
+          absl::EndsWith(
               name,
               " - Google \xE6\xA4\x9C\xE7\xB4\xA2") ||  // " - Google 検索"
-          Util::EndsWith(name, " - Google Search"));
+          absl::EndsWith(name, " - Google Search"));
 }
 #endif  // OS_IOS
 

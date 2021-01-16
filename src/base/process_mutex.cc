@@ -135,55 +135,7 @@ bool ProcessMutex::UnLock() {
   return true;
 }
 
-#elif defined(OS_NACL)  // OS_WIN
-namespace {
-
-// In NaCl we can't consider about the processes.
-// So we just implement inprocess named lock service.
-class NamedLockManager {
- public:
-  NamedLockManager() {}
-  ~NamedLockManager() {}
-  bool Lock(const string &filename, const string &message) {
-    scoped_lock l(&mutex_);
-    return lock_map_.insert(std::make_pair(filename, message)).second;
-  }
-  void UnLock(const string &filename) {
-    scoped_lock l(&mutex_);
-    lock_map_.erase(filename);
-    return;
-  }
-
- private:
-  Mutex mutex_;
-  std::map<string, string> lock_map_;
-  DISALLOW_COPY_AND_ASSIGN(NamedLockManager);
-};
-
-}  // namespace
-
-ProcessMutex::ProcessMutex(const char *name) : locked_(false) {
-  filename_ = CreateProcessMutexFileName(name);
-}
-
-ProcessMutex::~ProcessMutex() { UnLock(); }
-
-bool ProcessMutex::LockAndWrite(const string &message) {
-  if (!Singleton<NamedLockManager>::get()->Lock(filename_, message)) {
-    VLOG(1) << filename_ << " is already locked";
-    return false;
-  }
-  locked_ = true;
-  return true;
-}
-
-bool ProcessMutex::UnLock() {
-  Singleton<NamedLockManager>::get()->UnLock(filename_);
-  locked_ = false;
-  return true;
-}
-
-#else   // !OS_WIN && !OS_NACL
+#else   // !OS_WIN
 
 namespace {
 // Special workaround for the bad treatment of fcntl.
@@ -325,5 +277,5 @@ bool ProcessMutex::UnLock() {
   locked_ = false;
   return true;
 }
-#endif  // !OS_WIN && !OS_NACL
+#endif  // !OS_WIN
 }  // namespace mozc

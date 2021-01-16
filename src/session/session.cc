@@ -229,9 +229,9 @@ void Session::InitContext(ImeContext *context) const {
   context->SetConfig(&context->GetConfig());
 
 #if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_LINUX) || \
-    defined(OS_NACL)
+    defined(OS_WASM)
   context->mutable_converter()->set_use_cascading_window(false);
-#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_NACL
+#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_WASM
 }
 
 void Session::PushUndoContext() {
@@ -964,14 +964,14 @@ void Session::UpdatePreferences(commands::Command *command) {
   }
 
 #if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_LINUX) || \
-    defined(OS_NACL)
+    defined(OS_WASM)
   context_->mutable_converter()->set_use_cascading_window(false);
-#else   // OS_LINUX || OS_ANDROID || OS_NACL
+#else   // OS_LINUX || OS_ANDROID || OS_WASM
   if (config.has_use_cascading_window()) {
     context_->mutable_converter()->set_use_cascading_window(
         config.use_cascading_window());
   }
-#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_NACL
+#endif  // OS_ANDROID || OS_IOS || OS_LINUX || OS_WASM
 }
 
 bool Session::IMEOn(commands::Command *command) {

@@ -104,11 +104,7 @@ string Logging::GetLogMessageHeader() {
   const absl::TimeZone tz = Clock::GetTimeZone();
   const std::string timestamp = absl::FormatTime("%Y-%m-%d %H:%M:%S ", at, tz);
 
-# if defined(OS_NACL)
-  return absl::StrCat(timestamp, ::getpid(), " ",
-                      // pthread_self() returns __nc_basic_thread_data*.
-                      static_cast<void *>(pthread_self());
-# elif defined(OS_WASM)
+# if defined(OS_WASM)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       static_cast<unsigned int>(pthread_self());
 # elif defined(OS_LINUX)
@@ -234,7 +230,6 @@ LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
 // After initialization, use_cerr_ and real_log_stream_ become like following:
 // OS, --logtostderr => use_cerr_, real_log_stream_
 // Android, *     => false, nullptr
-// NaCl,    *     => true,  nullptr
 // Others,  true  => true,  nullptr
 // Others,  false => true,  non-null
 void LogStreamImpl::Init(const string &log_file_path) {
@@ -242,7 +237,6 @@ void LogStreamImpl::Init(const string &log_file_path) {
   Reset();
 
   if (use_cerr_) {
-    // OS_NACL always reaches here.
     return;
   }
 #if defined(OS_WIN)

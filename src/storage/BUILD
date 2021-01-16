@@ -39,10 +39,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "lru_storage",
     srcs = ["lru_storage.cc"],

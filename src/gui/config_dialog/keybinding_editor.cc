@@ -29,9 +29,9 @@
 
 #include "gui/config_dialog/keybinding_editor.h"
 
-#if defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_NACL
+#endif  // OS_ANDROID || OS_WASM
 
 #ifdef OS_WIN
 // clang-format off

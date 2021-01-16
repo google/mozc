@@ -106,9 +106,6 @@ uint32 GetPlatformFromString(absl::string_view str) {
   if (str == "mobile_ambiguous") {
     return QualityRegressionUtil::MOBILE_AMBIGUOUS;
   }
-  if (str == "chromeos") {
-    return QualityRegressionUtil::CHROMEOS;
-  }
   LOG(FATAL) << "Unknown platform name: " << str;
   return QualityRegressionUtil::DESKTOP;
 }
@@ -264,9 +261,6 @@ std::string QualityRegressionUtil::GetPlatformString(uint32 platform_bitfiled) {
   }
   if (platform_bitfiled & MOBILE_AMBIGUOUS) {
     v.push_back("MOBILE_AMBIGUOUS");
-  }
-  if (platform_bitfiled & CHROMEOS) {
-    v.push_back("CHROMEOS");
   }
   if (v.empty()) {
     v.push_back("UNKNOWN");

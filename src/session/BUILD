@@ -44,11 +44,6 @@ package(default_visibility = [
 ])
 
 test_suite(
-    name = "nacl_test",
-    tags = ["-disable_on_nacl_test"],
-)
-
-test_suite(
     name = "android_test",
     tests = [
         ":ime_switch_util_test_android",
@@ -315,6 +310,10 @@ cc_library_mozc(
             ":session_watch_dog",
             "//base:process",
         ],
+        oss_macos = [
+            ":session_watch_dog",
+            "//base:process",
+        ],
     ) + [
         ":session",
         ":session_handler_interface",
@@ -442,10 +441,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["session_server_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":session_server",
         "//base",
@@ -545,10 +541,7 @@ cc_test_mozc(
     size = "large",
     srcs = ["session_watch_dog_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":session_watch_dog",
         "//base",

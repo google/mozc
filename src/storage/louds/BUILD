@@ -37,10 +37,6 @@ load(
     "cc_test_mozc",
 )
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "louds",
     srcs = ["louds.cc"],

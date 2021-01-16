@@ -32,7 +32,7 @@
 # and update any rules that should be different.
 
 load("//:build_defs.bzl", "cc_binary_mozc", "cc_library_mozc")
-load("//third_party/bazel_rules/rules_apple/apple:macos.bzl", "macos_application")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
 

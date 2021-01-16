@@ -13,6 +13,10 @@ build --objccopt "-fsigned-char"
 build:linux --define TARGET=oss_linux --copt "-fPIC"
 build:oss_linux --define TARGET=oss_linux --copt "-fPIC"
 
+# macOS
+build:macos --define TARGET=oss_macos
+build:oss_macos --define TARGET=oss_macos
+
 # Android
 build:android --define TARGET=oss_android \
     --copt "-DOS_ANDROID" \

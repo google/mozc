@@ -69,10 +69,7 @@ cc_test_mozc(
     size = "medium",
     srcs = ["renderer_client_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
@@ -117,10 +114,7 @@ cc_test_mozc(
     size = "medium",
     srcs = ["renderer_server_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
@@ -159,10 +153,7 @@ cc_test_mozc(
         "table_layout_test.cc",
     ],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":table_layout",
         "//base",
@@ -206,10 +197,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["window_util_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":window_util",
         "//base",

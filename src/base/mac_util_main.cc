@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -49,11 +50,14 @@ DEFINE_bool(start_launchd_service, false,
 DEFINE_string(suffix, "", "The argument for GetLabelForSuffix");
 DEFINE_string(service_name, "", "The service name to be launched");
 
+#ifdef __APPLE__
 using mozc::MacUtil;
+#endif  // __APPLE__
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
+#ifdef __APPLE__
   if (FLAGS_label_for_suffix) {
     std::cout << MacUtil::GetLabelForSuffix(FLAGS_suffix) << std::endl;
   }
@@ -87,6 +91,9 @@ int main(int argc, char **argv) {
       std::cout << "pid: " << pid << std::endl;
     }
   }
+#else
+  std::cout << "This command works on macOS or iOS only." << std::endl;
+#endif  // __APPLE__
 
   return 0;
 }

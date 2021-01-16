@@ -82,31 +82,7 @@ cc_library_mozc(
         client = [
             "//base:init_mozc",
         ],
-        nacl = [
-            "//testing:nacl_mock_module",
-            "//base:init_mozc",
-        ],
     ),
-)
-
-cc_library_mozc(
-    name = "nacl_mock_module",
-    testonly = 1,
-    srcs = ["base/public/nacl_mock_module.cc"],
-    hdrs = ["base/public/nacl_mock_module.h"],
-    deps = select_mozc(
-        nacl = [
-            ":gunit",
-            "//base",
-            "//base:init_mozc",
-            "//base:nacl_linkopts",
-            "//net:http_client",
-        ],
-    ) + [
-        "//base:logging",
-        "//base:port",
-    ],
-    alwayslink = 1,
 )
 
 cc_library_mozc(

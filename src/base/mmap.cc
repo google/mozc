@@ -192,12 +192,11 @@ void Mmap::Close() {
 // Define a macro (MOZC_HAVE_MLOCK) to indicate mlock support.
 
 // Caveat: Currently |OS_IOS| and |__APPLE__| are not exclusive.
-#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_NACL) || \
-    defined(OS_WIN)
+#if defined(OS_ANDROID) || defined(OS_IOS) || defined(OS_WIN)
 #define MOZC_HAVE_MLOCK 0
-#else  // OS_ANDROID || OS_IOS || OS_NACL || OS_WIN
+#else  // OS_ANDROID || OS_IOS || OS_WIN
 #define MOZC_HAVE_MLOCK 1
-#endif  // OS_ANDROID || OS_IOS || OS_NACL || OS_WIN
+#endif  // OS_ANDROID || OS_IOS || OS_WIN
 
 
 #ifndef MOZC_HAVE_MLOCK

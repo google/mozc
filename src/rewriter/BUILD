@@ -42,10 +42,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "rewriter_interface",
     textual_hdrs = ["rewriter_interface.h"],

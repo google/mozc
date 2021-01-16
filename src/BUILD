@@ -39,41 +39,6 @@ package_group(
     packages = ["//..."],
 )
 
-# White listed tests which are enabled on NaCl.
-# data_manager tests are excluded since they require files on real file system.
-# TODO(hsumita): Add chrome/nacl:nacl_test.
-NACL_COMMON_TESTS = [
-    "//base:nacl_test",
-    "//composer:nacl_test",
-    "//composer/internal:nacl_test",
-    "//config:nacl_test",
-    "//dictionary:nacl_test",
-    "//engine:nacl_test",
-    "//net:nacl_test",
-    "//prediction:nacl_test",
-    "//rewriter:nacl_test",
-    "//session:nacl_test",
-    "//session/internal:nacl_test",
-    "//storage:nacl_test",
-    "//storage/louds:nacl_test",
-    "//transliteration:nacl_test",
-    "//usage_stats:nacl_test",
-]
-
-test_suite(
-    name = "nacl_test",
-    tests = NACL_COMMON_TESTS + [
-        "//converter:nacl_test",
-    ],
-)
-
-test_suite(
-    name = "nacl_tap_test",
-    tests = NACL_COMMON_TESTS + [
-        "//converter:nacl_tap_test",
-    ],
-)
-
 test_suite(
     name = "android_test",
     tests = [
@@ -103,6 +68,7 @@ cc_library(
         ],
         ios = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
+            "MOZC_USE_MOZC_GOOGLETEST",
             "NO_USAGE_REWRITER",
         ],
         linux = [
@@ -121,6 +87,9 @@ cc_library(
         oss_linux = [
             "MOZC_BUILD",
             "OS_LINUX",
+        ],
+        oss_macos = [
+            "MOZC_BUILD",
         ],
         wasm = [
             "GOOGLE_JAPANESE_INPUT_BUILD",

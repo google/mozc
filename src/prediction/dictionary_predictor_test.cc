@@ -667,8 +667,8 @@ class DictionaryPredictorTest : public ::testing::Test {
   bool FindResultByValue(
       const std::vector<TestableDictionaryPredictor::Result> &results,
       const std::string &value) {
-    for (size_t i = 0; i < results.size(); ++i) {
-      if (results[i].value == value) {
+    for (const auto& result : results) {
+      if (result.value == value && !result.removed) {
         return true;
       }
     }
@@ -1553,6 +1553,67 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+    }
+  }
+
+  {
+    constexpr char kHistory[] = "ありがとう";
+
+    DictionaryMock *mock = data_and_predictor->mutable_dictionary();
+    mock->AddLookupPrefix(kHistory, kHistory, kHistory, Token::NONE);
+
+    auto add_word = [&mock](const std::string &key, const std::string &value) {
+      mock->AddLookupPredictive("ありがとう", key, value, Token::NONE);
+    };
+    add_word("ありがとうございます", "ありがとうございます");
+    add_word("ありがとうございます", "ありがとう御座います");
+    add_word("ありがとうございました", "ありがとうございました");
+    add_word("ありがとうございました", "ありがとう御座いました");
+
+    add_word("ございます", "ございます");
+    add_word("ございます", "御座います");
+    // ("ございました", "ございました") is not in the dictionary.
+    add_word("ございました", "御座いました");
+
+    // Word less than 10.
+    add_word("ありがとうね", "ありがとうね");
+    add_word("ね", "ね");
+
+    Segments segments;
+
+    // Zero query
+    MakeSegmentsForSuggestion("", &segments);
+
+    PrependHistorySegments(kHistory, kHistory, &segments);
+
+    std::vector<DictionaryPredictor::Result> results;
+
+    predictor->AggregateBigramPrediction(
+        *convreq_, segments,
+        Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM, &results);
+    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results.size(), 5);
+
+    EXPECT_TRUE(FindResultByValue(results, "ありがとうございます"));
+    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座います"));
+    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座いました"));
+    // "ございました" is not in the dictionary, but suggested
+    // because it is used as the key of other words (i.e. 御座いました).
+    EXPECT_TRUE(FindResultByValue(results, "ありがとうございました"));
+    // "ね" is in the dictionary, but filtered due to the word length.
+    EXPECT_FALSE(FindResultByValue(results, "ありがとうね"));
+
+    for (const auto &result : results) {
+      EXPECT_TRUE(Util::StartsWith(result.key, kHistory));
+      EXPECT_TRUE(Util::StartsWith(result.value, kHistory));
+      // Zero query
+      EXPECT_FALSE(result.source_info &
+                   Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+      if (result.key == "ありがとうね") {
+        EXPECT_TRUE(result.removed);
+      } else {
+        EXPECT_FALSE(result.removed);
+      }
     }
   }
 }

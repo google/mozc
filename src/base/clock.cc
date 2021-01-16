@@ -35,9 +35,7 @@
 #else  // OS_WIN
 #ifdef __APPLE__
 #include <mach/mach_time.h>
-#elif defined(OS_NACL)  // __APPLE__
-#include <irt.h>
-#endif  // __APPLE__ or OS_NACL
+#endif  // __APPLE__
 #include <sys/time.h>
 #endif  // OS_WIN
 
@@ -118,8 +116,7 @@ class ClockImpl : public ClockInterface {
     mach_timebase_info(&timebase_info);
     return static_cast<uint64>(1.0e9 * timebase_info.denom /
                                timebase_info.numer);
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
-    defined(OS_WASM)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     return 1000000uLL;
 #else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
 #error "Not supported platform"
@@ -136,8 +133,7 @@ class ClockImpl : public ClockInterface {
     return static_cast<uint64>(timestamp.QuadPart);
 #elif defined(__APPLE__)
     return static_cast<uint64>(mach_absolute_time());
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL) || \
-    defined(OS_WASM)
+#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     uint64 sec;
     uint32 usec;
     GetTimeOfDay(&sec, &usec);

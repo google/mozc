@@ -39,10 +39,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "config_handler",
     srcs = ["config_handler.cc"],

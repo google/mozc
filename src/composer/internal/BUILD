@@ -41,10 +41,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "transliterator_interface",
     hdrs = ["transliterator_interface.h"],

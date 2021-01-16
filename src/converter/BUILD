@@ -42,19 +42,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-    tags = ["-disable_on_nacl_test"],
-)
-
-test_suite(
-    name = "nacl_tap_test",
-    tags = [
-        "-disable_on_nacl_tap_test",
-        "-disable_on_nacl_test",
-    ],
-)
-
 cc_library_mozc(
     name = "segments",
     srcs = [
@@ -560,8 +547,6 @@ cc_test_mozc(
     size = "medium",
     srcs = ["converter_regression_test.cc"],
     requires_full_emulation = False,
-    # Disable on NaCl TAP since GoogleDataManager is too large to build on ARM.
-    tags = ["disable_on_nacl_tap_test"],
     deps = [
         ":converter",
         ":converter_interface",
@@ -622,11 +607,9 @@ cc_binary_mozc(
     data = [
         "//data/dictionary:id.def",
         "//data/dictionary_android:id.def",
-        "//data/dictionary_chromeos:id.def",
         "//data/dictionary_oss:id.def",
         "//data/test/dictionary:id.def",
         "//data_manager/android:mozc.data",
-        "//data_manager/chromeos:zipped_data_chromeos",
         "//data_manager/google:mozc.data",
         "//data_manager/oss:mozc.data",
         "//data_manager/testing:mock_mozc.data",
