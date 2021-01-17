@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,7 @@ class CalculatorImpl : public CalculatorInterface {
  public:
   CalculatorImpl();
 
-  virtual bool CalculateString(const string &key, string *result) const;
+  bool CalculateString(const string &key, string *result) const override;
 
  private:
   typedef std::vector<std::pair<int, double> > TokenSequence;

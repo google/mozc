@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ class CreateThread : public Thread {
 
 class BatchGetPathNameThread : public Thread {
  public:
-  virtual void Run() {
+  void Run() override {
     for (int i = 0; i < 100; ++i) {
       IPCPathManager *manager = IPCPathManager::GetIPCPathManager("test2");
       std::string path;
@@ -85,7 +85,7 @@ class BatchGetPathNameThread : public Thread {
 
 class IPCPathManagerTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
   }
 };

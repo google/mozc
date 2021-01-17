@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -120,6 +120,21 @@ TEST(ClockTest, TimeTestWithoutMock) {
   EXPECT_NEAR(get_time_of_day_sec, get_time_sec, margin)
       << ": This test have possibilities to fail "
       << "when system is busy and slow.";
+}
+
+TEST(ClockTest, TimeZone) {
+  const absl::TimeZone tz = Clock::GetTimeZone();
+  const absl::TimeZone::CivilInfo ci = tz.At(absl::UnixEpoch());
+  const int absl_offset = ci.offset;
+
+  const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
+  const std::tm *offset = std::localtime(&epoch);
+  const int tm_offset =
+      (offset->tm_mday - 2) * 24 * 60 * 60  // date offset from Jan 2.
+      + offset->tm_hour * 60 * 60  // hour offset from 00 am.
+      + offset->tm_min * 60;  // minute offset.
+
+  EXPECT_EQ(absl_offset, tm_offset);
 }
 
 }  // namespace

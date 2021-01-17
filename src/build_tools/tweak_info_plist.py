@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,8 @@ import datetime
 import logging
 import optparse
 import sys
-import mozc_version
-import tweak_data
+from build_tools import mozc_version
+from build_tools import tweak_data
 
 
 _COPYRIGHT_YEAR = datetime.date.today().year

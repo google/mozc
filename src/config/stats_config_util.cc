@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -249,9 +249,9 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
-  virtual ~NullStatsConfigUtilImpl() {}
-  virtual bool IsEnabled() { return false; }
-  virtual bool SetEnabled(bool val) { return true; }
+  ~NullStatsConfigUtilImpl() override {}
+  bool IsEnabled() override { return false; }
+  bool SetEnabled(bool val) override { return true; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);

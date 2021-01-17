@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,12 +55,12 @@ class VariantsRewriter : public RewriterInterface {
   static const char *kYenKigou;
 
   explicit VariantsRewriter(dictionary::POSMatcher pos_matcher);
-  virtual ~VariantsRewriter();
-  virtual int capability(const ConversionRequest &request) const;
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
-  virtual void Finish(const ConversionRequest &request, Segments *segments);
-  virtual void Clear();
+  ~VariantsRewriter() override;
+  int capability(const ConversionRequest &request) const override;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
+  void Finish(const ConversionRequest &request, Segments *segments) override;
+  void Clear() override;
 
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.

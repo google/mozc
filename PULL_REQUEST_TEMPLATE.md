@@ -1,4 +1,4 @@
-**Mozc team is not accepting pull requests at the moment.**
+**Mozc team is not accepting pull requests for files under src/.**
 
 Although Google company policy certainly allows Mozc team to accept pull
 requests, to do so Mozc team needs to move all Mozc source files into

@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,11 +46,11 @@ namespace session {
 
 class SessionUsageStatsUtilTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 

@@ -901,7 +901,7 @@
     </message>
     <message>
         <location filename="roman_table_editor.cc" line="193"/>
-        <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function is disabled with this new mapping.</source>
+        <source>Input fields contain capital characters. &quot;Shift-mode-switch&quot; function should be Off with this new mapping.</source>
         <translation></translation>
     </message>
     <message>

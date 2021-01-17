@@ -1,5 +1,5 @@
-#!/bin/bash
-# Copyright 2010-2018, Google Inc.
+# -*- coding: utf-8 -*-
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,4 +28,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-docker build --rm -t $USER/mozc_ubuntu14.04 .
+exports_files([
+    "mozc_server_info",
+])

@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ typedef EncryptedStringStorage TestEncryptedStringStorage;
 
 class EncryptedStringStorageTest : public testing::Test {
  protected:
-  void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");

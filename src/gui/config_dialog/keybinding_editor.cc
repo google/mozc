@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -142,7 +142,7 @@ const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
 #endif
 
 // On Windows Hiragana/Eisu keys only emits KEY_DOWN event.
-// for these keys we don't hanlde auto-key repeat.
+// for these keys we don't handle auto-key repeat.
 bool IsDownOnlyKey(const QKeyEvent &key_event) {
 #ifdef OS_WIN
   const DWORD virtual_key = key_event.nativeVirtualKey();
@@ -425,9 +425,9 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     return Encode(result);
   }
 
-  unknown_key_.sprintf("<UNK:0x%x 0x%x 0x%x>", key_event.key(),
-                       key_event.nativeScanCode(),
-                       key_event.nativeVirtualKey());
+  unknown_key_.asprintf("<UNK:0x%x 0x%x 0x%x>", key_event.key(),
+                        key_event.nativeScanCode(),
+                        key_event.nativeVirtualKey());
 
   return Encode(result);
 }

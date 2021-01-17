@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,8 +73,8 @@ class ProxyManagerInterface {
 // class is the default proxy manager for Windows/Linux.
 class DummyProxyManager : public ProxyManagerInterface {
  public:
-  virtual bool GetProxyData(const std::string &url, std::string *hostdata,
-                            std::string *authdata);
+  bool GetProxyData(const std::string &url, std::string *hostdata,
+                    std::string *authdata) override;
 };
 
 }  // namespace mozc

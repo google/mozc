@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1099,7 +1099,7 @@ genrule(
            ' --output="$(OUTS)"' +
            " --target_platform=" + TARGET_PLATFORM),
     exec_tools = ["//build_tools:mozc_version"],
-    visibility = ["//visibility:private"],
+    visibility = ["//:__subpackages__"],
 )
 
 genrule(
@@ -1469,6 +1469,11 @@ objc_library_mozc(
         "scoped_cftyperef.h",
     ],
     hdrs = ["mac_util.h"],
+    sdk_frameworks = [
+        "CoreGraphics",
+        "CoreServices",
+        "IOKit",
+    ],
     visibility = ["//:__subpackages__"],
     deps = [
         ":const",

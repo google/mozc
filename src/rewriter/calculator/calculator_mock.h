@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ namespace mozc {
 class CalculatorMock : public CalculatorInterface {
  public:
   CalculatorMock();
-  virtual ~CalculatorMock();
+  ~CalculatorMock() override;
 
   // Injects the behavior that CalculateString converts |key| to |value| and
   // returns |return_value|.
@@ -57,8 +57,8 @@ class CalculatorMock : public CalculatorInterface {
   // If |key| has been set by SetCalculatePair, then sets |*result| to the
   // corresponding value and returns |return_value|, otherwise clear |*result|
   // and returns false.
-  virtual bool CalculateString(const std::string &key,
-                               std::string *result) const;
+  bool CalculateString(const std::string &key,
+                       std::string *result) const override;
 
  private:
   typedef std::map<std::string, std::pair<std::string, bool> > CalculationMap;

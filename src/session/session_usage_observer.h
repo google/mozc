@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -53,9 +53,9 @@ namespace session {
 class SessionUsageObserver : public SessionObserverInterface {
  public:
   SessionUsageObserver();
-  virtual ~SessionUsageObserver();
+  ~SessionUsageObserver() override;
 
-  virtual void EvalCommandHandler(const commands::Command &command);
+  void EvalCommandHandler(const commands::Command &command) override;
 
  private:
   struct UsageCache {

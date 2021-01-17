@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,18 @@
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
+
+#ifndef NDEBUG
+#define MOZC_DEBUG
+#define MOZC_WORD_LOG_MESSAGE(message) \
+  absl::StrCat(__FILE__, ":", __LINE__, " ", message, "\n")
+#define MOZC_WORD_LOG(result, message) \
+  (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
+
+#else
+#define MOZC_WORD_LOG(result, message) {}
+
+#endif  // NDEBUG
 
 namespace mozc {
 namespace {
@@ -592,85 +604,31 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
   mozc_hash_map<std::string, int32> merged_types;
 
-#ifdef DEBUG
+#ifndef NDEBUG
   const bool is_debug = true;
 #else
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   const bool is_debug = request.config().verbose_level() >= 1;
-#endif  // DEBUG
+#endif  // NDEBUG
 
   if (is_debug || IsSimplifiedRankingEnabled(request)) {
     for (const auto &result : *results) {
-      merged_types[result.value] |= result.types;
+      if (!result.removed) {
+        merged_types[result.value] |= result.types;
+      }
     }
     if (IsSimplifiedRankingEnabled(request)) {
       for (auto &result : *results) {
-        result.types = merged_types[result.value];
+        if (!result.removed) {
+          result.types = merged_types[result.value];
+        }
       }
     }
   }
 
-  for (size_t i = 0; i < results->size(); ++i) {
-    // Pop a result from a heap. Please pay attention not to use results->at(i).
-    std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
-    const Result &result = results->at(results->size() - i - 1);
-
-    if (added >= size || result.cost >= kInfinity) {
-      break;
-    }
-
-    if (result.types == NO_PREDICTION) {
-      continue;
-    }
-
-    // When |include_exact_key| is true, we don't filter the results
-    // which have the exactly same key as the input even if it's a bad
-    // suggestion.
-    if (!(include_exact_key && (result.key == input_key)) &&
-        suggestion_filter_->IsBadSuggestion(result.value)) {
-      continue;
-    }
-
-    // Don't suggest exactly the same candidate as key.
-    // if |include_exact_key| is true, that's not the case.
-    if (!include_exact_key && !(result.types & REALTIME) &&
-        (((result.types & BIGRAM) && exact_bigram_key == result.value) ||
-         (!(result.types & BIGRAM) && input_key == result.value))) {
-      continue;
-    }
-
-    std::string key, value;
-    if (result.types & BIGRAM) {
-      // remove the prefix of history key and history value.
-      key = result.key.substr(history_key.size(),
-                              result.key.size() - history_key.size());
-      value = result.value.substr(history_value.size(),
-                                  result.value.size() - history_value.size());
-    } else {
-      key = result.key;
-      value = result.value;
-    }
-
-    if (!seen.insert(value).second) {
-      continue;
-    }
-
-    // User input: "おーすとり" (len = 5)
-    // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
-    if ((result.candidate_attributes &
-         Segment::Candidate::SPELLING_CORRECTION) &&
-        key != input_key &&
-        input_key_len <= GetMissSpelledPosition(key, value) + 1) {
-      continue;
-    }
-
-    if (result.types == SUFFIX && added_suffix++ >= 20) {
-      // TODO(toshiyuki): Need refactoring for controlling suffix
-      // prediction number after we will fix the appropriate number.
-      continue;
-    }
-
-    Segment::Candidate *candidate = segment->push_back_candidate();
+  auto add_candidate = [&](const Result &result, const std::string &key,
+                           const std::string &value,
+                           Segment::Candidate *candidate) {
     DCHECK(candidate);
 
     candidate->Init();
@@ -716,11 +674,111 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     if (is_debug) {
       SetDebugDescription(merged_types[result.value], &candidate->description);
     }
+#ifdef MOZC_DEBUG
+    candidate->log += "\n" + result.log;
+#endif  // MOZC_DEBUG
+  };
 
+#ifdef MOZC_DEBUG
+  auto add_debug_candidate = [&](Result result, const std::string &log) {
+    std::string key, value;
+    if (result.types & BIGRAM) {
+      // remove the prefix of history key and history value.
+      key = result.key.substr(history_key.size(),
+                              result.key.size() - history_key.size());
+      value = result.value.substr(history_value.size(),
+                                  result.value.size() - history_value.size());
+    } else {
+      key = result.key;
+      value = result.value;
+    }
+
+    result.log.append(log);
+    Segment::Candidate candidate;
+    add_candidate(result, key, value, &candidate);
+    segment->removed_candidates_for_debug_.push_back(std::move(candidate));
+  };
+#define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
+  add_debug_candidate(result, MOZC_WORD_LOG_MESSAGE(log))
+
+#else
+#define MOZC_ADD_DEBUG_CANDIDATE(result, log) {}
+
+#endif  // MOZC_DEBUG
+
+  for (size_t i = 0; i < results->size(); ++i) {
+    // Pop a result from a heap. Please pay attention not to use results->at(i).
+    std::pop_heap(results->begin(), results->end() - i, ResultCostLess());
+    const Result &result = results->at(results->size() - i - 1);
+
+    if (added >= size || result.cost >= kInfinity) {
+      break;
+    }
+
+    if (result.removed) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Removed flag is on");
+      continue;
+    }
+
+    // When |include_exact_key| is true, we don't filter the results
+    // which have the exactly same key as the input even if it's a bad
+    // suggestion.
+    if (!(include_exact_key && (result.key == input_key)) &&
+        suggestion_filter_->IsBadSuggestion(result.value)) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Bad suggestion");
+      continue;
+    }
+
+    // Don't suggest exactly the same candidate as key.
+    // if |include_exact_key| is true, that's not the case.
+    if (!include_exact_key && !(result.types & REALTIME) &&
+        (((result.types & BIGRAM) && exact_bigram_key == result.value) ||
+         (!(result.types & BIGRAM) && input_key == result.value))) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Key == candidate");
+      continue;
+    }
+
+    std::string key, value;
+    if (result.types & BIGRAM) {
+      // remove the prefix of history key and history value.
+      key = result.key.substr(history_key.size(),
+                              result.key.size() - history_key.size());
+      value = result.value.substr(history_value.size(),
+                                  result.value.size() - history_value.size());
+    } else {
+      key = result.key;
+      value = result.value;
+    }
+
+    if (!seen.insert(value).second) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Duplicated");
+      continue;
+    }
+
+    // User input: "おーすとり" (len = 5)
+    // key/value:  "おーすとりら" "オーストラリア" (miss match pos = 4)
+    if ((result.candidate_attributes &
+         Segment::Candidate::SPELLING_CORRECTION) &&
+        key != input_key &&
+        input_key_len <= GetMissSpelledPosition(key, value) + 1) {
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Spelling correction");
+      continue;
+    }
+
+    if (result.types == SUFFIX && added_suffix++ >= 20) {
+      // TODO(toshiyuki): Need refactoring for controlling suffix
+      // prediction number after we will fix the appropriate number.
+      MOZC_ADD_DEBUG_CANDIDATE(result, "Added suffix >= 20");
+      continue;
+    }
+
+    Segment::Candidate *candidate = segment->push_back_candidate();
+    add_candidate(result, key, value, candidate);
     ++added;
   }
 
   return added > 0;
+#undef MOZC_ADD_DEBUG_CANDIDATE
 }
 
 DictionaryPredictor::PredictionTypes
@@ -1073,6 +1131,8 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       Util::CharsLen(segments.conversion_segment(0).key());
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
+    MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
+
     // Demote filtered word here, because they are not filtered for exact match.
     // Even for exact match, we don't want to show aggressive words with high
     // ranking.
@@ -1081,6 +1141,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // 3453 = 500 * log(1000)
       const int kBadSuggestionPenalty = 3453;
       cost += kBadSuggestionPenalty;
+      MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
     }
 
     // Make exact candidates to have higher ranking.
@@ -1089,12 +1150,14 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
     if (result.types & (UNIGRAM | TYPING_CORRECTION)) {
       const size_t key_len = Util::CharsLen(result.key);
       if (key_len > input_key_len) {
-        // Cost penalty means that exact candiates are evaluated
+        // Cost penalty means that exact candidates are evaluated
         // 50 times bigger in frequency.
         // Note that the cost is calculated by cost = -500 * log(prob)
         // 1956 = 500 * log(50)
         const int kNotExactPenalty = 1956;
         cost += kNotExactPenalty;
+        MOZC_WORD_LOG(result,
+                      absl::StrCat("Unigram | Typing correction: ", cost));
       }
     }
     if (result.types & BIGRAM) {
@@ -1112,6 +1175,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // Promoting bigram candidates.
       const int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
+      MOZC_WORD_LOG(result, absl::StrCat("Bigram: ", cost));
     }
     if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&
         result.lid != general_symbol_id_) {
@@ -1124,10 +1188,12 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       const int kUserDictionaryCostUpperLimit = 1000;
       cost = std::min(cost - kUserDictionaryPromotionFactor,
                       kUserDictionaryCostUpperLimit);
+      MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
     }
     // Note that the cost is defined as -500 * log(prob).
     // Even after the ad hoc manipulations, cost must remain larger than 0.
     result.cost = std::max(1, cost);
+    MOZC_WORD_LOG(result, absl::StrCat("SetLMCost: ", result.cost));
   }
 }
 
@@ -1136,19 +1202,20 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   if (segments.conversion_segments_size() == 0) {
     return;
   }
-  // Cost penalty 1151 means that expanded candiates are evaluated
+  // Cost penalty 1151 means that expanded candidates are evaluated
   // 10 times smaller in frequency.
   // Note that the cost is calcurated by cost = -500 * log(prob)
   // 1151 = 500 * log(10)
   const int kKeyExpansionPenalty = 1151;
   const std::string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
-    const Result &result = results->at(i);
+    Result &result = results->at(i);
     if (result.types & TYPING_CORRECTION) {
       continue;
     }
     if (!Util::StartsWith(result.key, conversion_key)) {
-      results->at(i).cost += kKeyExpansionPenalty;
+      result.cost += kKeyExpansionPenalty;
+      MOZC_WORD_LOG(result, absl::StrCat("KeyExpansionPenalty: ", result.cost));
     }
   }
 }
@@ -1224,18 +1291,23 @@ void DictionaryPredictor::RemoveMissSpelledCandidates(
 
     // delete same_key_index and same_value_index
     if (!same_key_index.empty() && !same_value_index.empty()) {
-      results->at(i).types = NO_PREDICTION;
+      results->at(i).removed = true;
+      MOZC_WORD_LOG(results->at(i), "Removed. same_(key|value)_index.");
       for (size_t k = 0; k < same_key_index.size(); ++k) {
-        results->at(same_key_index[k]).types = NO_PREDICTION;
+        results->at(same_key_index[k]).removed = true;
+        MOZC_WORD_LOG(results->at(i), "Removed. same_(key|value)_index.");
       }
     } else if (same_key_index.empty() && !same_value_index.empty()) {
-      results->at(i).types = NO_PREDICTION;
+      results->at(i).removed = true;
+      MOZC_WORD_LOG(results->at(i), "Removed. same_value_index.");
     } else if (!same_key_index.empty() && same_value_index.empty()) {
       for (size_t k = 0; k < same_key_index.size(); ++k) {
-        results->at(same_key_index[k]).types = NO_PREDICTION;
+        results->at(same_key_index[k]).removed = true;
+        MOZC_WORD_LOG(results->at(i), "Removed. same_key_index.");
       }
       if (request_key_len <= GetMissSpelledPosition(result.key, result.value)) {
-        results->at(i).types = NO_PREDICTION;
+        results->at(i).removed = true;
+        MOZC_WORD_LOG(results->at(i), "Removed. Invalid MissSpelledPosition.");
       }
     }
   }
@@ -1655,7 +1727,8 @@ void DictionaryPredictor::CheckBigramResult(
 
   // Don't suggest 0-length key/value.
   if (key.empty() || value.empty()) {
-    result->types = NO_PREDICTION;
+    result->removed = true;
+    MOZC_WORD_LOG(*result, "Removed. key, value or both are empty.");
     return;
   }
 
@@ -1664,6 +1737,7 @@ void DictionaryPredictor::CheckBigramResult(
 
   if (history_ctype == Util::KANJI && ctype == Util::KATAKANA) {
     // Do not filter "六本木ヒルズ"
+    MOZC_WORD_LOG(*result, "Valid bigram. Kanji + Katakana pattern.");
     return;
   }
 
@@ -1672,7 +1746,9 @@ void DictionaryPredictor::CheckBigramResult(
   // suggested when user type "アメ".
   // Note that wcost = -500 * log(prob).
   if (ctype != Util::KANJI && history_token.cost > result->wcost) {
-    result->types = NO_PREDICTION;
+    result->removed = true;
+    MOZC_WORD_LOG(*result,
+                  "Removed. The prefix's score is lower than the whole.");
     return;
   }
 
@@ -1683,7 +1759,8 @@ void DictionaryPredictor::CheckBigramResult(
   if (ctype == last_history_ctype &&
       (ctype == Util::HIRAGANA ||
        (ctype == Util::KATAKANA && Util::CharsLen(result->key) <= 5))) {
-    result->types = NO_PREDICTION;
+    result->removed = true;
+    MOZC_WORD_LOG(*result, "Removed. Short Hiragana (<= 9) or Katakana (<= 5)");
     return;
   }
 
@@ -1698,15 +1775,19 @@ void DictionaryPredictor::CheckBigramResult(
     // Do not filter this.
     // TODO(toshiyuki): one-length kanji prediciton may be annoying other than
     // some exceptions, "駅", "口", etc
+    MOZC_WORD_LOG(*result, "Valid bigram. Kanji suffix (>= 2).");
     return;
   }
 
   FindValueCallback callback(value);
   dictionary_->LookupPrefix(key, request, &callback);
   if (!callback.found()) {
-    result->types = NO_PREDICTION;
+    result->removed = true;
+    MOZC_WORD_LOG(*result, "Removed. No prefix found.");
     return;
   }
+
+  MOZC_WORD_LOG(*result, "Valid bigram.");
 }
 
 void DictionaryPredictor::GetPredictiveResults(
@@ -2117,3 +2198,6 @@ bool DictionaryPredictor::IsZipCodeRequest(const std::string &key) {
 }
 
 }  // namespace mozc
+
+#undef MOZC_WORD_LOG_MESSAGE
+#undef MOZC_WORD_LOG

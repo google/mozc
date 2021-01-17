@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -130,7 +130,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], **kwargs):
+def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], sdk_frameworks = [], **kwargs):
     # objc_library's hdrs are somehow not exposed, so the library is defined as
     # {name}_lib and wraps it by cc_library below.
     native.objc_library(
@@ -138,6 +138,7 @@ def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], **kwargs):
         srcs = srcs,
         hdrs = hdrs,
         deps = deps,
+        sdk_frameworks = sdk_frameworks,
         **kwargs
     )
 

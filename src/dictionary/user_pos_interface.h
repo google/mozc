@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ class UserPOSInterface : public POSListProviderInterface {
     std::string comment;  // This field comes from user dictionary.
   };
 
-  virtual ~UserPOSInterface() = default;
+  ~UserPOSInterface() override = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
   virtual bool IsValidPOS(const std::string &pos) const = 0;

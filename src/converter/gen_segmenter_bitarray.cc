@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,11 @@ class StateTable {
   // |str| is an 1-dimentional row (or column) represented in byte array.
   void Add(uint16 id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
+#ifdef ABSL_USES_STD_STRING_VIEW
+    idarray_[id] = str;
+#else
     idarray_[id] = std::string(str);
+#endif  // ABSL_USES_STD_STRING_VIEW
   }
 
   void Build() {

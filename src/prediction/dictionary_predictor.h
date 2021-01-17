@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -115,7 +115,8 @@ class DictionaryPredictor : public PredictorInterface {
           rid(0),
           candidate_attributes(0),
           source_info(0),
-          consumed_key_size(0) {}
+          consumed_key_size(0),
+          removed(false) {}
 
     void InitializeByTokenAndTypes(const dictionary::Token &token,
                                    PredictionTypes types);
@@ -150,6 +151,11 @@ class DictionaryPredictor : public PredictorInterface {
     // Will be used for usage stats.
     uint32 source_info;
     size_t consumed_key_size;
+    // If removed is true, this result is not used for a candidate.
+    bool removed;
+#ifndef NDEBUG
+    std::string log;
+#endif  // NDEBUG
   };
 
   using AggregateUnigramFn = PredictionType (DictionaryPredictor::*)(

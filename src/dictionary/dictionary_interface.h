@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -117,14 +117,20 @@ class DictionaryInterface {
   // Returns true if the dictionary has an entry for the given value.
   virtual bool HasValue(absl::string_view value) const = 0;
 
+  // Looks up values whose keys start from the key.
+  // (e.g. key = "abc" -> {"abc": "ABC", "abcd": "ABCD"})
   virtual void LookupPredictive(absl::string_view key,
                                 const ConversionRequest &conversion_request,
                                 Callback *callback) const = 0;
 
+  // Looks up values whose keys are prefixes of the key.
+  // (e.g. key = "abc" -> {"abc": "ABC", "a": "A"})
   virtual void LookupPrefix(absl::string_view key,
                             const ConversionRequest &conversion_request,
                             Callback *callback) const = 0;
 
+  // Looks up values whose keys are same with the key.
+  // (e.g. key = "abc" -> {"abc": "ABC"})
   virtual void LookupExact(absl::string_view key,
                            const ConversionRequest &conversion_request,
                            Callback *callback) const = 0;

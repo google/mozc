@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,9 +83,9 @@ class UnicodeRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   UnicodeRewriterTest() {}
-  virtual ~UnicodeRewriterTest() {}
+  ~UnicodeRewriterTest() override {}
 
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     engine_.reset(MockDataEngineFactory::Create());
   }

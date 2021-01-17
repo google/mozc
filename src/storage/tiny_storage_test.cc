@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,9 +64,9 @@ class TinyStorageTest : public testing::Test {
  protected:
   TinyStorageTest() {}
 
-  virtual void SetUp() { UnlinkDBFileIfExists(); }
+  void SetUp() override { UnlinkDBFileIfExists(); }
 
-  virtual void TearDown() { UnlinkDBFileIfExists(); }
+  void TearDown() override { UnlinkDBFileIfExists(); }
 
   static void UnlinkDBFileIfExists() {
     const std::string path = GetTemporaryFilePath();

@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ namespace {
 
 class ConfigHandlerTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     default_config_filename_ = ConfigHandler::GetConfigFileName();
     Config default_config;
@@ -62,7 +62,7 @@ class ConfigHandlerTest : public ::testing::Test {
     ConfigHandler::SetConfig(default_config);
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     ConfigHandler::SetConfigFileName(default_config_filename_);
     Config default_config;
     ConfigHandler::GetDefaultConfig(&default_config);

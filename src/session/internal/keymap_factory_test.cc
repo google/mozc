@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,9 +60,9 @@ namespace {
 
 class KeyMapFactoryTest : public testing::Test {
  protected:
-  virtual void SetUp() { TestKeyMapFactoryProxy::Clear(); }
+  void SetUp() override { TestKeyMapFactoryProxy::Clear(); }
 
-  virtual void TearDown() { TestKeyMapFactoryProxy::Clear(); }
+  void TearDown() override { TestKeyMapFactoryProxy::Clear(); }
 };
 
 }  // namespace

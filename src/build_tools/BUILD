@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -158,4 +158,19 @@ py_library_mozc(
     srcs = ["serialized_string_array_builder.py"],
     visibility = ["//:__subpackages__"],
     deps = [],
+)
+
+py_library_mozc(
+    name = "tweak_data",
+    srcs = ["tweak_data.py"],
+)
+
+py_binary_mozc(
+    name = "tweak_info_plist",
+    srcs = ["tweak_info_plist.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":mozc_version_lib",
+        ":tweak_data",
+    ],
 )

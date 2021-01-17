@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,6 +59,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -1538,6 +1539,8 @@ bool Util::DeserializeUint64(absl::string_view s, uint64 *x) {
     return false;
   }
   // The following operations assume `char` is unsigned (i.e. -funsigned-char).
+  static_assert(std::is_unsigned_v<char>,
+                "`char` is not unsigned. Use -funsigned-char.");
   *x = static_cast<uint64>(s[0]) << 56 | static_cast<uint64>(s[1]) << 48 |
        static_cast<uint64>(s[2]) << 40 | static_cast<uint64>(s[3]) << 32 |
        static_cast<uint64>(s[4]) << 24 | static_cast<uint64>(s[5]) << 16 |

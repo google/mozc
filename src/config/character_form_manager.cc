@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -129,7 +129,7 @@ class PreeditCharacterFormManagerImpl : public CharacterFormManagerImpl {
  public:
   PreeditCharacterFormManagerImpl() { SetDefaultRule(); }
 
-  virtual void SetDefaultRule() {
+  void SetDefaultRule() override {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
     AddRule("ア", Config::FULL_WIDTH);
@@ -157,7 +157,7 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
  public:
   ConversionCharacterFormManagerImpl() { SetDefaultRule(); }
 
-  virtual void SetDefaultRule() {
+  void SetDefaultRule() override {
     Clear();
     // AddRule("ア", Config::FULL_WIDTH);
     // don't like half-width

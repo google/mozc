@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,12 @@ class SessionOutput {
   static void FillAllCandidateWords(
       const Segment &segment, const CandidateList &candidate_list,
       const commands::Category category,
+      commands::CandidateList *candidate_list_proto);
+
+  // For debug. Fill the CandidateList protobuf with the
+  // removed_candidates_for_debug in the segment.
+  static void FillRemovedCandidates(
+      const Segment &segment,
       commands::CandidateList *candidate_list_proto);
 
   // Check if the usages should be rendered on the current CandidateList status.

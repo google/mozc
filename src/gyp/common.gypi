@@ -1,4 +1,4 @@
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -205,6 +205,7 @@
               '-Wtype-limits',
             ],
             'cflags_cc': [
+              '-stdlib=libc++',
               '-Wno-covered-switch-default',
               '-Wno-unnamed-type-template-args',
               '-Wno-c++11-narrowing',
@@ -213,7 +214,6 @@
           ['compiler_target=="clang" or compiler_target=="gcc"', {
             'cflags_cc': [
               '-std=c++17',
-              '-stdlib=libc++',
             ],
           }],
         ],
@@ -225,6 +225,7 @@
               '-Wtype-limits',
             ],
             'cflags_cc': [
+              '-stdlib=libc++',
               '-Wno-covered-switch-default',
               '-Wno-unnamed-type-template-args',
               '-Wno-c++11-narrowing',
@@ -233,7 +234,6 @@
           ['compiler_host=="clang" or compiler_host=="gcc"', {
             'cflags_cc': [
               '-std=c++17',
-              '-stdlib=libc++',
             ],
           }],
         ],

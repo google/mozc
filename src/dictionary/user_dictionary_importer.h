@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,11 +108,11 @@ class UserDictionaryImporter {
   class StringTextLineIterator : public TextLineIteratorInterface {
    public:
     explicit StringTextLineIterator(absl::string_view data);
-    virtual ~StringTextLineIterator();
+    ~StringTextLineIterator() override;
 
-    virtual bool IsAvailable() const;
-    virtual bool Next(std::string *line);
-    virtual void Reset();
+    bool IsAvailable() const override;
+    bool Next(std::string *line) override;
+    void Reset() override;
 
    private:
     const absl::string_view data_;
@@ -157,10 +157,10 @@ class UserDictionaryImporter {
   class TextInputIterator : public InputIteratorInterface {
    public:
     TextInputIterator(IMEType ime_type, TextLineIteratorInterface *iter);
-    virtual ~TextInputIterator();
+    ~TextInputIterator() override;
 
-    virtual bool IsAvailable() const;
-    virtual bool Next(RawEntry *entry);
+    bool IsAvailable() const override;
+    bool Next(RawEntry *entry) override;
     IMEType ime_type() const { return ime_type_; }
 
    private:

@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ class SessionWatchDog : public Thread {
   void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
 
   explicit SessionWatchDog(int32 interval_sec);
-  virtual ~SessionWatchDog();
+  ~SessionWatchDog() override;
 
   // inherited from Thread class
   void Terminate();
@@ -79,7 +79,7 @@ class SessionWatchDog : public Thread {
                              uint64 last_cleanup_time) const;
 
  private:
-  virtual void Run();
+  void Run() override;
 
   int32 interval_sec_;
   client::ClientInterface *client_;

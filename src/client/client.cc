@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -904,7 +904,7 @@ bool Client::OpenBrowser(const std::string &url) {
 namespace {
 class DefaultClientFactory : public ClientFactoryInterface {
  public:
-  virtual ClientInterface *NewClient() { return new Client; }
+  ClientInterface *NewClient() override { return new Client; }
 };
 
 ClientFactoryInterface *g_client_factory = nullptr;

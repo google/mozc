@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,10 @@ void Segment::Candidate::CopyFrom(const Candidate &src) {
   command = src.command;
 
   inner_segment_boundary = src.inner_segment_boundary;
+
+#ifndef NDEBUG
+  log = src.log;
+#endif  // NDEBUG
 }
 
 bool Segment::Candidate::IsValid() const {

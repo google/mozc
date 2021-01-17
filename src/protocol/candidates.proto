@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -138,6 +138,8 @@ message CandidateWord {
   // The number of segments for logging.
   // If the candidate is "今日は|晴れ", the number of segments is 2.
   optional int32 num_segments_in_candidate = 7;
+  // Debug log for this candidate word.
+  optional string log = 100;
 }
 
 message CandidateList {
@@ -145,7 +147,7 @@ message CandidateList {
   // |candidates|.  If the |candidates| is a part of the whole
   // candidate words (as a result of paging), this value indicates the
   // position from the beginning of that part.  (ex. where
-  // |candidates| contatins 10th to 18th candidates, focused_index=0
+  // |candidates| contains 10th to 18th candidates, focused_index=0
   // means the 10th candidate, but not 1st candidate.
   //
   // The existense of |focused_index| does not represents whether this

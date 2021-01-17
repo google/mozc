@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,12 +44,12 @@ class Segments;
 class RemoveRedundantCandidateRewriter : public RewriterInterface {
  public:
   RemoveRedundantCandidateRewriter();
-  virtual ~RemoveRedundantCandidateRewriter();
+  ~RemoveRedundantCandidateRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
-  int capability(const ConversionRequest &request) const;
+  int capability(const ConversionRequest &request) const override;
 };
 
 }  // namespace mozc

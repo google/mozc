@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,10 @@ class Segment;
 class CommandRewriter : public RewriterInterface {
  public:
   CommandRewriter();
-  virtual ~CommandRewriter();
+  ~CommandRewriter() override;
 
-  virtual bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 
  private:
   bool RewriteSegment(const config::Config &config, Segment *segment) const;

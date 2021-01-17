@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ void AddCandidateWithContentValue(Segment *segment, const std::string &value,
 
 class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {
+  void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
   }

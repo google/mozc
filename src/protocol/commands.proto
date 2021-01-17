@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -580,7 +580,7 @@ message DecoderExperimentParams {
 
 // Clients' request to the server.
 // Users cannot modify this.
-// In the future each request may be able to be overwirtten by Config.
+// In the future each request may be able to be overwritten by Config.
 // The server does not have to obey this request.
 message Request {
   // Enable zero query suggestion.
@@ -1186,6 +1186,9 @@ message Output {
       user_dictionary_command_status = 21;
 
   optional mozc.EngineReloadResponse engine_reload_response = 22;
+
+  // For debug. Candidate words removed throuth the conversion process.
+  optional CandidateList removed_candidate_words_for_debug = 23;
 }
 
 message Command {

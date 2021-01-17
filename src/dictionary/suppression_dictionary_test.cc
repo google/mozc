@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ TEST(SupressionDictionary, BasicTest) {
 
 class DictionaryLoaderThread : public Thread {
  public:
-  virtual void Run() {
+  void Run() override {
     SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
     CHECK(dic);
     dic->Lock();

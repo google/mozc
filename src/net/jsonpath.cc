@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -135,10 +135,10 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       return false;
     }
 
-    if (jsonpath.find("(") != std::string::npos ||
-        jsonpath.find(")") != std::string::npos ||
-        jsonpath.find("@") != std::string::npos ||
-        jsonpath.find("?") != std::string::npos) {
+    if (jsonpath.find('(') != std::string::npos ||
+        jsonpath.find(')') != std::string::npos ||
+        jsonpath.find('@') != std::string::npos ||
+        jsonpath.find('?') != std::string::npos) {
       LOG(ERROR) << "script expression/current node are not supported: "
                  << jsonpath;
       return false;

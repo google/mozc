@@ -1,4 +1,4 @@
-// Copyright 2010-2020, Google Inc.
+// Copyright 2010-2021, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -192,6 +192,10 @@ class Segment {
     // lengths of key, value, content key and content value.
     std::vector<uint32> inner_segment_boundary;
 
+#ifndef NDEBUG
+    std::string log;
+#endif  // NDEBUG
+
     static bool EncodeLengths(size_t key_len, size_t value_len,
                               size_t content_key_len, size_t content_value_len,
                               uint32 *result);
@@ -264,6 +268,9 @@ class Segment {
       style = NumberUtil::NumberString::DEFAULT_STYLE;
       command = DEFAULT_COMMAND;
       inner_segment_boundary.clear();
+#ifndef NDEBUG
+      log.clear();
+#endif  // NDEBUG
     }
 
     Candidate()
@@ -354,6 +361,9 @@ class Segment {
   void clear() { Clear(); }
 
   std::string DebugString() const;
+
+  // For debug. Candidate words removed through conversion process.
+  std::vector<Candidate> removed_candidates_for_debug_;
 
  private:
   SegmentType segment_type_;

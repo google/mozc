@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2010-2020, Google Inc.
+# Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -184,11 +184,6 @@ def OutputCpp(param_dict, component, engine_common, engines, setup_arg):
   for key in engine_common:
     OutputCppVariable(param_dict, 'Engine', key, engine_common[key])
   OutputCppVariable(param_dict, 'Engine', 'Setup', ' '.join(setup_arg))
-  for key in engines:
-    print('const char* kEngine%sArray[] = {' % key.capitalize())
-    for i in range(len(engines[key])):
-      print('"%s",' % (engines[key][i] % param_dict))
-    print('};')
   print('const size_t kEngineArrayLen = %s;' % len(engines['name']))
   print('const char kEnginesXml[] = R"#(', end='')
   print(GetEnginesXml(param_dict, engine_common, engines, setup_arg))
