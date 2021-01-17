@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<component type="inputmethod">
+<component type="addon">
   <id>org.fcitx.Fcitx5.Addon.Mozc</id>
-  <extends>org.fcitx.Fcitx5.desktop</extends>
+  <extends>org.fcitx.Fcitx5</extends>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0+</project_license>
   <name>Mozc for Fcitx 5</name>
   <summary>Japanese input method based on Mozc</summary>
   <url type="homepage">https://fcitx-im.org</url>
+  <url type="bugtracker">https://github.com/fcitx/mozc/issues</url>
+  <project_group>Fcitx</project_group>
   <releases>
+    <release version="2.26.4220.106.1" date="2021-01-16"/>
     <release version="2.25.4150.102.1" date="2020-11-10"/>
   </releases>
 </component>
