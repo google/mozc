@@ -759,7 +759,7 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
     return false;
   }
 
-  if (storage_.get() == nullptr) {
+  if (storage_ == nullptr) {
     VLOG(2) << "storage is NULL";
     return false;
   }
@@ -1017,7 +1017,7 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
 }
 
 void UserSegmentHistoryRewriter::Clear() {
-  if (storage_.get() != nullptr) {
+  if (storage_ != nullptr) {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }

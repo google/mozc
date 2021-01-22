@@ -31,7 +31,6 @@
 # Description:
 #   Contains tools which are required to build mozc.
 
-load("//tools/build_defs:stubs.bzl", "py2and3_test")
 load(
     "//:build_defs.bzl",
     "py_binary_mozc",
@@ -50,10 +49,12 @@ py_binary_mozc(
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
-py2and3_test(
+py_test(
     name = "replace_macros_test",
     size = "small",
     srcs = ["replace_macros_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":replace_macros_lib",
         "//testing/pybase",
@@ -92,10 +93,12 @@ py_binary_mozc(
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
-py2and3_test(
+py_test(
     name = "mozc_version_test",
     size = "small",
     srcs = ["mozc_version_test.py"],
+    python_version = "PY3",
+    srcs_version = "PY3",
     deps = [
         ":mozc_version_lib",
         "//testing/pybase",

@@ -41,6 +41,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -66,7 +67,7 @@ class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    rewriter_.reset(new FocusCandidateRewriter(&mock_data_manager_));
+    rewriter_ = absl::make_unique<FocusCandidateRewriter>(&mock_data_manager_);
   }
 
   const RewriterInterface *GetRewriter() { return rewriter_.get(); }

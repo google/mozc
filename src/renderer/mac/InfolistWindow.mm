@@ -71,7 +71,7 @@ namespace mac {
 
 namespace {
 bool SendUsageStatsEvent(client::SendCommandInterface *command_sender,
-                         const SessionCommand::UsageStatsEvent &event) {
+                         const SessionCommand::UsageStatsEvent event) {
   if (command_sender == nullptr) {
     return false;
   }

@@ -56,6 +56,7 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -206,14 +207,14 @@ class UserHistoryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    request_.reset(new Request);
-    config_.reset(new Config);
+    request_ = absl::make_unique<Request>();
+    config_ = absl::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_.reset(new composer::Table);
-    composer_.reset(
-        new composer::Composer(table_.get(), request_.get(), config_.get()));
-    convreq_.reset(
-        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+    table_ = absl::make_unique<composer::Table>();
+    composer_ = absl::make_unique<composer::Composer>(
+        table_.get(), request_.get(), config_.get());
+    convreq_ = absl::make_unique<ConversionRequest>(
+        composer_.get(), request_.get(), config_.get());
     data_and_predictor_.reset(CreateDataAndPredictor());
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -376,12 +377,12 @@ class UserHistoryPredictorTest : public ::testing::Test {
   DataAndPredictor *CreateDataAndPredictor() const {
     DataAndPredictor *ret = new DataAndPredictor;
     testing::MockDataManager data_manager;
-    ret->dictionary.reset(new DictionaryMock);
-    ret->suppression_dictionary.reset(new SuppressionDictionary);
+    ret->dictionary = absl::make_unique<DictionaryMock>();
+    ret->suppression_dictionary = absl::make_unique<SuppressionDictionary>();
     ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
-    ret->predictor.reset(
-        new UserHistoryPredictor(ret->dictionary.get(), &ret->pos_matcher,
-                                 ret->suppression_dictionary.get(), false));
+    ret->predictor = absl::make_unique<UserHistoryPredictor>(
+        ret->dictionary.get(), &ret->pos_matcher,
+        ret->suppression_dictionary.get(), false);
     ret->predictor->WaitForSyncer();
     return ret;
   }

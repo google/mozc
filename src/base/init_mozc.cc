@@ -67,14 +67,14 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
 
 string GetLogFilePathFromProgramName(const string &program_name) {
   const string basename = FileUtil::Basename(program_name) + ".log";
-  if (FLAGS_log_dir.empty()) {
+  if (mozc::GetFlag(FLAGS_log_dir).empty()) {
 #ifdef MOZC_BUILDTOOL_BUILD
     return basename;
 #else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
 #endif  // MOZC_BUILDTOOL_BUILD
   }
-  return FileUtil::JoinPath(FLAGS_log_dir, basename);
+  return FileUtil::JoinPath(mozc::GetFlag(FLAGS_log_dir), basename);
 }
 
 }  // namespace

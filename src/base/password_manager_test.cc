@@ -29,13 +29,14 @@
 
 #include "base/password_manager.h"
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 TEST(PasswordManager, PasswordManagerTest) {
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
   std::string password1, password2;
   EXPECT_TRUE(PasswordManager::InitPassword());

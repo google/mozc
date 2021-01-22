@@ -43,6 +43,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -51,7 +52,7 @@ using dictionary::POSMatcher;
 class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
   SingleKanjiRewriterTest() {
-    data_manager_.reset(new testing::MockDataManager);
+    data_manager_ = absl::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPOSMatcherData());
   }
 

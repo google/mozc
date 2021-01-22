@@ -76,6 +76,7 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -136,6 +137,7 @@ cc_library_mozc(
         "//base:util",
         "//protocol:config_proto",
         "//storage:lru_storage",
+        "@com_google_absl//absl/memory",
     ],
 )
 

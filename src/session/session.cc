@@ -59,6 +59,7 @@
 #include "session/session_converter.h"
 #include "session/session_usage_stats_util.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace session {
@@ -236,14 +237,14 @@ void Session::InitContext(ImeContext *context) const {
 
 void Session::PushUndoContext() {
   // TODO(komatsu): Support multiple undo.
-  prev_context_.reset(new ImeContext);
+  prev_context_ = absl::make_unique<ImeContext>();
   InitContext(prev_context_.get());
   ImeContext::CopyContext(*context_, prev_context_.get());
 }
 
 void Session::PopUndoContext() {
   // TODO(komatsu): Support multiple undo.
-  if (!prev_context_.get()) {
+  if (!prev_context_) {
     return;
   }
   context_.swap(prev_context_);
@@ -466,8 +467,7 @@ bool Session::TestSendKey(commands::Command *command) {
 
     // If undo context is empty, echoes back the key event so that it can be
     // handled by the application. b/5553298
-    if (key_command == keymap::PrecompositionState::UNDO &&
-        !prev_context_.get()) {
+    if (key_command == keymap::PrecompositionState::UNDO && !prev_context_) {
       return EchoBack(command);
     }
 
@@ -1198,7 +1198,7 @@ bool Session::RequestUndo(commands::Command *command) {
 
   // If undo context is empty, echoes back the key event so that it can be
   // handled by the application. b/5553298
-  if (context_->state() == ImeContext::PRECOMPOSITION && !prev_context_.get()) {
+  if (context_->state() == ImeContext::PRECOMPOSITION && !prev_context_) {
     return EchoBack(command);
   }
 
@@ -1221,7 +1221,7 @@ bool Session::Undo(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
 
   // Check the undo context
-  if (!prev_context_.get()) {
+  if (!prev_context_) {
     return DoNothing(command);
   }
 
@@ -2204,7 +2204,7 @@ bool Session::UndoOrRewind(commands::Command *command) {
   }
 
   // Undo if we can order UNDO command.
-  if (prev_context_.get()) {
+  if (prev_context_) {
     return Undo(command);
   }
 

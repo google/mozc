@@ -35,6 +35,7 @@
 #include <utility>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -57,6 +58,7 @@
 #include "session/session_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 DECLARE_bool(use_history_rewriter);
 
@@ -89,10 +91,10 @@ void InitSessionToPrecomposition(session::Session *session) {
 class SessionRegressionTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
-    orig_use_history_rewriter_ = FLAGS_use_history_rewriter;
-    FLAGS_use_history_rewriter = true;
+    orig_use_history_rewriter_ = mozc::GetFlag(FLAGS_use_history_rewriter);
+    mozc::SetFlag(&FLAGS_use_history_rewriter, true);
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
@@ -104,7 +106,7 @@ class SessionRegressionTest : public ::testing::Test {
     engine->GetUserDataManager()->ClearUserPrediction();
     engine->GetUserDataManager()->Wait();
 
-    handler_.reset(new SessionHandler(std::move(engine)));
+    handler_ = absl::make_unique<SessionHandler>(std::move(engine));
     ResetSession();
     CHECK(session_.get());
   }
@@ -115,7 +117,7 @@ class SessionRegressionTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
 
-    FLAGS_use_history_rewriter = orig_use_history_rewriter_;
+    mozc::SetFlag(&FLAGS_use_history_rewriter, orig_use_history_rewriter_);
   }
 
   bool SendKey(const std::string &key, commands::Command *command) {
@@ -164,7 +166,7 @@ class SessionRegressionTest : public ::testing::Test {
   void ResetSession() {
     session_.reset(static_cast<session::Session *>(handler_->NewSession()));
     commands::Request request;
-    table_.reset(new composer::Table());
+    table_ = absl::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(request, config_, data_manager_);
     session_->SetTable(table_.get());
   }

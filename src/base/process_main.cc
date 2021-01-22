@@ -39,14 +39,14 @@ DEFINE_string(spawn_process, "", "path");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (!FLAGS_open_browser.empty()) {
-    if (!mozc::Process::OpenBrowser(FLAGS_open_browser)) {
-      LOG(INFO) << "Failed to open: " << FLAGS_open_browser;
+  if (!mozc::GetFlag(FLAGS_open_browser).empty()) {
+    if (!mozc::Process::OpenBrowser(mozc::GetFlag(FLAGS_open_browser))) {
+      LOG(INFO) << "Failed to open: " << mozc::GetFlag(FLAGS_open_browser);
     }
   }
-  if (!FLAGS_spawn_process.empty()) {
-    if (!mozc::Process::SpawnProcess(FLAGS_spawn_process, "")) {
-      LOG(INFO) << "Failed to spawn: " << FLAGS_spawn_process;
+  if (!mozc::GetFlag(FLAGS_spawn_process).empty()) {
+    if (!mozc::Process::SpawnProcess(mozc::GetFlag(FLAGS_spawn_process), "")) {
+      LOG(INFO) << "Failed to spawn: " << mozc::GetFlag(FLAGS_spawn_process);
     }
   }
   return 0;

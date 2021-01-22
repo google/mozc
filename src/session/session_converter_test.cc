@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -61,6 +62,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace session {
@@ -83,19 +85,19 @@ class SessionConverterTest : public ::testing::Test {
   ~SessionConverterTest() override {}
 
   void SetUp() override {
-    convertermock_.reset(new ConverterMock());
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    convertermock_ = absl::make_unique<ConverterMock>();
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
-    config_.reset(new Config);
+    config_ = absl::make_unique<Config>();
     config_->set_use_cascading_window(true);
-    request_.reset(new Request);
+    request_ = absl::make_unique<Request>();
 
-    table_.reset(new composer::Table);
+    table_ = absl::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(*request_, *config_,
                                            mock_data_manager_);
-    composer_.reset(
-        new composer::Composer(table_.get(), request_.get(), config_.get()));
+    composer_ = absl::make_unique<composer::Composer>(
+        table_.get(), request_.get(), config_.get());
   }
 
   void TearDown() override {
@@ -107,7 +109,7 @@ class SessionConverterTest : public ::testing::Test {
 
   static void GetSegments(const SessionConverter &converter, Segments *dest) {
     CHECK(dest);
-    dest->CopyFrom(*converter.segments_.get());
+    dest->CopyFrom(*converter.segments_);
   }
 
   static void SetSegments(const Segments &src, SessionConverter *converter) {
@@ -1535,12 +1537,12 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   }
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(
-      std::unique_ptr<Segments>(new Segments).get(), true);
+  convertermock_->SetFinishConversion(absl::make_unique<Segments>().get(),
+                                      true);
 
   size_t committed_key_size = 0;
-  converter.CommitSuggestionByIndex(
-      1, *composer_.get(), Context::default_instance(), &committed_key_size);
+  converter.CommitSuggestionByIndex(1, *composer_, Context::default_instance(),
+                                    &committed_key_size);
   expected_indices.clear();
   composer_->Reset();
   EXPECT_FALSE(IsCandidateListVisible(converter));
@@ -1597,13 +1599,13 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(
-      std::unique_ptr<Segments>(new Segments).get(), true);
+  convertermock_->SetFinishConversion(absl::make_unique<Segments>().get(),
+                                      true);
 
   const int kCandidateIndex = 1;
   size_t committed_key_size = 0;
   convertermock_->SetCommitSegmentValue(&segments, true);
-  converter.CommitSuggestionById(kCandidateIndex, *composer_.get(),
+  converter.CommitSuggestionById(kCandidateIndex, *composer_,
                                  Context::default_instance(),
                                  &committed_key_size);
   expected_indices.clear();
@@ -1726,8 +1728,8 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   size_t committed_key_size = 0;
   convertermock_->SetStartSuggestionForRequest(&segments2, true);
   convertermock_->SetStartPartialSuggestion(&segments2, false);
-  converter.CommitSuggestionById(
-      0, *composer_.get(), Context::default_instance(), &committed_key_size);
+  converter.CommitSuggestionById(0, *composer_, Context::default_instance(),
+                                 &committed_key_size);
   EXPECT_EQ(Util::CharsLen(kChars_Kokode), committed_key_size);
   // Indices should be {0} since there is another segment.
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);

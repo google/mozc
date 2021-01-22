@@ -40,6 +40,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -77,11 +78,11 @@ class CorrectionRewriterTest : public testing::Test {
     const std::vector<absl::string_view> values = {"TSUKIGIME"};
     const std::vector<absl::string_view> errors = {"gekkyoku"};
     const std::vector<absl::string_view> corrections = {"tsukigime"};
-    rewriter_.reset(new CorrectionRewriter(
+    rewriter_ = absl::make_unique<CorrectionRewriter>(
         SerializedStringArray::SerializeToBuffer(values, &values_buf_),
         SerializedStringArray::SerializeToBuffer(errors, &errors_buf_),
         SerializedStringArray::SerializeToBuffer(corrections,
-                                                 &corrections_buf_)));
+                                                 &corrections_buf_));
     config::ConfigHandler::GetDefaultConfig(&config_);
     config_.set_use_spelling_correction(true);
   }

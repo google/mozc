@@ -76,6 +76,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -203,7 +204,7 @@ class MockDataAndPredictor {
   void Init(const DictionaryInterface *dictionary = nullptr,
             const DictionaryInterface *suffix_dictionary = nullptr) {
     pos_matcher_.Set(data_manager_.GetPOSMatcherData());
-    suppression_dictionary_.reset(new SuppressionDictionary);
+    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
     if (!dictionary) {
       dictionary_mock_ = new DictionaryMock;
       dictionary_.reset(dictionary_mock_);
@@ -224,17 +225,17 @@ class MockDataAndPredictor {
     segmenter_.reset(Segmenter::CreateFromDataManager(data_manager_));
     CHECK(segmenter_.get());
 
-    pos_group_.reset(new PosGroup(data_manager_.GetPosGroupData()));
+    pos_group_ = absl::make_unique<PosGroup>(data_manager_.GetPosGroupData());
     suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));
-    immutable_converter_.reset(new ImmutableConverterImpl(
+    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary_.get(),
         suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
-        &pos_matcher_, pos_group_.get(), suggestion_filter_.get()));
-    converter_.reset(new ConverterMock());
-    dictionary_predictor_.reset(new TestableDictionaryPredictor(
+        &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
+    converter_ = absl::make_unique<ConverterMock>();
+    dictionary_predictor_ = absl::make_unique<TestableDictionaryPredictor>(
         data_manager_, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
-        segmenter_.get(), &pos_matcher_, suggestion_filter_.get()));
+        segmenter_.get(), &pos_matcher_, suggestion_filter_.get());
   }
 
   const POSMatcher &pos_matcher() const { return pos_matcher_; }
@@ -362,14 +363,14 @@ class DictionaryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    request_.reset(new commands::Request);
-    config_.reset(new config::Config);
+    request_ = absl::make_unique<commands::Request>();
+    config_ = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_.reset(new composer::Table);
-    composer_.reset(
-        new composer::Composer(table_.get(), request_.get(), config_.get()));
-    convreq_.reset(
-        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+    table_ = absl::make_unique<composer::Table>();
+    composer_ = absl::make_unique<composer::Composer>(
+        table_.get(), request_.get(), config_.get());
+    convreq_ = absl::make_unique<ConversionRequest>(
+        composer_.get(), request_.get(), config_.get());
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
@@ -722,7 +723,7 @@ class DictionaryPredictorTest : public ::testing::Test {
         data_and_predictor->dictionary_predictor();
 
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table_->typing_model_.reset(new MockTypingModel());
+    table_->typing_model_ = absl::make_unique<MockTypingModel>();
     InsertInputSequenceForProbableKeyEvent(key, corrected_key_codes,
                                            composer_.get());
 

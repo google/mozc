@@ -40,6 +40,7 @@
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -97,18 +98,18 @@ class NamedEventTest : public testing::Test {
 };
 
 TEST_F(NamedEventTest, NamedEventBasicTest) {
-  NamedEventListenerThread listner(kName, 0, 50, 100);
-  listner.Start("NamedEventBasicTest");
+  NamedEventListenerThread listener(kName, 0, 50, 100);
+  listener.Start("NamedEventBasicTest");
   Util::Sleep(200);
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
   const uint64 notify_ticks = Clock::GetTicks();
   notifier.Notify();
-  listner.Join();
+  listener.Join();
 
-  // There is a chance that |listner| is not triggered.
-  if (listner.IsTriggered()) {
-    EXPECT_LT(notify_ticks, listner.first_triggered_ticks());
+  // There is a chance that |listener| is not triggered.
+  if (listener.IsTriggered()) {
+    EXPECT_LT(notify_ticks, listener.first_triggered_ticks());
   }
 }
 
@@ -120,7 +121,7 @@ TEST_F(NamedEventTest, IsAvailableTest) {
     EXPECT_TRUE(n.IsAvailable());
   }
 
-  // no listner
+  // no listener
   {
     NamedEventNotifier n(kName);
     EXPECT_FALSE(n.IsAvailable());
@@ -144,7 +145,8 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   std::vector<std::unique_ptr<NamedEventListenerThread>> listeners(
       kNumRequests);
   for (size_t i = 0; i < kNumRequests; ++i) {
-    listeners[i].reset(new NamedEventListenerThread(kName, 33 * i, 50, 100));
+    listeners[i] =
+        absl::make_unique<NamedEventListenerThread>(kName, 33 * i, 50, 100);
     listeners[i]->Start("NamedEventMultipleListenerTest");
   }
 

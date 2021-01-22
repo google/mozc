@@ -42,6 +42,7 @@
 #include "base/system_util.h"
 #include "base/unnamed_event.h"
 #include "client/client_interface.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -107,7 +108,7 @@ void SessionWatchDog::Run() {
   std::unique_ptr<CPUStatsInterface> cpu_stats_impl;
   if (cpu_stats_ == nullptr) {
     VLOG(2) << "default cpu_stats is used";
-    cpu_stats_impl.reset(new CPUStats);
+    cpu_stats_impl = absl::make_unique<CPUStats>();
     cpu_stats_ = cpu_stats_impl.get();
   }
 

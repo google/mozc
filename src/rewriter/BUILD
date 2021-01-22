@@ -93,6 +93,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//request:conversion_request",
         "//storage:existence_filter",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -112,6 +113,7 @@ cc_test_mozc(
         "//dictionary:pos_matcher_lib",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -172,6 +174,7 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -184,6 +187,7 @@ cc_library_mozc(
         "//base",
         "//base:config_file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -208,6 +212,7 @@ cc_test_mozc(
         ":user_boundary_history_rewriter",
         "//base",
         "//base:file_util",
+        "//base:flags",
         "//base:system_util",
         "//config:config_handler",
         "//converter:converter_mock",
@@ -428,6 +433,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -445,6 +451,7 @@ cc_library_mozc(
         "//converter:segments",
         "//protocol:commands_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -488,6 +495,7 @@ cc_library_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -514,6 +522,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -535,6 +544,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -751,6 +761,7 @@ cc_test_mozc(
         "//rewriter/calculator",
         "//rewriter/calculator:calculator_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -966,6 +977,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -989,6 +1001,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -1042,6 +1055,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1103,6 +1117,7 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "//transliteration",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1184,6 +1199,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1349,6 +1365,7 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1409,6 +1426,7 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1506,6 +1524,7 @@ cc_test_mozc(
         "//dictionary:pos_group",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 

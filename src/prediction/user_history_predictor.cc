@@ -59,6 +59,7 @@
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -393,7 +394,7 @@ std::string UserHistoryPredictor::GetUserHistoryFileName() {
 uint16 UserHistoryPredictor::revert_id() { return kRevertId; }
 
 void UserHistoryPredictor::WaitForSyncer() {
-  if (syncer_.get() != nullptr) {
+  if (syncer_ != nullptr) {
     syncer_->Join();
     syncer_.reset();
   }
@@ -405,7 +406,7 @@ bool UserHistoryPredictor::Wait() {
 }
 
 bool UserHistoryPredictor::CheckSyncerAndDelete() const {
-  if (syncer_.get() != nullptr) {
+  if (syncer_ != nullptr) {
     if (syncer_->IsRunning()) {
       return false;
     } else {
@@ -431,8 +432,8 @@ bool UserHistoryPredictor::AsyncLoad() {
     return true;
   }
 
-  syncer_.reset(
-      new UserHistoryPredictorSyncer(this, UserHistoryPredictorSyncer::LOAD));
+  syncer_ = absl::make_unique<UserHistoryPredictorSyncer>(
+      this, UserHistoryPredictorSyncer::LOAD);
   syncer_->Start("UserHistoryPredictor:Load");
 
   return true;
@@ -447,8 +448,8 @@ bool UserHistoryPredictor::AsyncSave() {
     return true;
   }
 
-  syncer_.reset(
-      new UserHistoryPredictorSyncer(this, UserHistoryPredictorSyncer::SAVE));
+  syncer_ = absl::make_unique<UserHistoryPredictorSyncer>(
+      this, UserHistoryPredictorSyncer::SAVE);
   syncer_->Start("UserHistoryPredictor:Save");
 
   return true;
@@ -519,7 +520,7 @@ bool UserHistoryPredictor::ClearAllHistory() {
   VLOG(1) << "Clearing user prediction";
   // Renews DicCache as LRUCache tries to reuse the internal value by
   // using FreeList
-  dic_.reset(new DicCache(UserHistoryPredictor::cache_size()));
+  dic_ = absl::make_unique<DicCache>(UserHistoryPredictor::cache_size());
 
   // insert a dummy event entry.
   InsertEvent(Entry::CLEAN_ALL_EVENT);
@@ -1345,7 +1346,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   std::set<std::string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
   if (!expanded_set.empty()) {
-    expanded->reset(new Trie<std::string>);
+    *expanded = absl::make_unique<Trie<std::string>>();
     for (std::set<std::string>::const_iterator itr = expanded_set.begin();
          itr != expanded_set.end(); ++itr) {
       // For getting matched key, insert values

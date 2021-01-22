@@ -58,36 +58,37 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
 #ifdef __APPLE__
-  if (FLAGS_label_for_suffix) {
-    std::cout << MacUtil::GetLabelForSuffix(FLAGS_suffix) << std::endl;
+  if (mozc::GetFlag(FLAGS_label_for_suffix)) {
+    std::cout << MacUtil::GetLabelForSuffix(mozc::GetFlag(FLAGS_suffix))
+              << std::endl;
   }
 
-  if (FLAGS_application_support_directory) {
+  if (mozc::GetFlag(FLAGS_application_support_directory)) {
     std::cout << MacUtil::GetApplicationSupportDirectory() << std::endl;
   }
 
-  if (FLAGS_logging_directory) {
+  if (mozc::GetFlag(FLAGS_logging_directory)) {
     std::cout << MacUtil::GetLoggingDirectory() << std::endl;
   }
 
-  if (FLAGS_os_version_string) {
+  if (mozc::GetFlag(FLAGS_os_version_string)) {
     std::cout << MacUtil::GetOSVersionString() << std::endl;
   }
 
-  if (FLAGS_server_directory) {
+  if (mozc::GetFlag(FLAGS_server_directory)) {
     std::cout << MacUtil::GetServerDirectory() << std::endl;
   }
 
-  if (FLAGS_serial_number) {
+  if (mozc::GetFlag(FLAGS_serial_number)) {
     std::cout << MacUtil::GetSerialNumber() << std::endl;
   }
 
-  if (FLAGS_start_launchd_service) {
-    if (FLAGS_service_name.empty()) {
+  if (mozc::GetFlag(FLAGS_start_launchd_service)) {
+    if (mozc::GetFlag(FLAGS_service_name).empty()) {
       std::cout << "Specify the service name to be launched" << std::endl;
     } else {
       pid_t pid;
-      MacUtil::StartLaunchdService(FLAGS_service_name, &pid);
+      MacUtil::StartLaunchdService(mozc::GetFlag(FLAGS_service_name), &pid);
       std::cout << "pid: " << pid << std::endl;
     }
   }

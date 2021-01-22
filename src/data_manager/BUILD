@@ -98,6 +98,7 @@ cc_library_mozc(
         "//dictionary:pos_matcher_lib",
         "//prediction:suggestion_filter",
         "//testing",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

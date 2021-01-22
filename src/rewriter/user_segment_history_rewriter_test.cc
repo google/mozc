@@ -51,6 +51,7 @@
 #include "rewriter/variants_rewriter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -127,7 +128,8 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     Clock::SetClockForUnitTest(nullptr);
 
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
-    pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
+    pos_group_ =
+        absl::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
     ASSERT_TRUE(pos_group_.get() != nullptr);
   }
 

@@ -38,6 +38,7 @@
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -84,7 +85,7 @@ class EncryptedStringStorageTest : public testing::Test {
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");
 
-    storage_.reset(new TestEncryptedStringStorage(filename_));
+    storage_ = absl::make_unique<TestEncryptedStringStorage>(filename_);
   }
 
   std::string filename_;

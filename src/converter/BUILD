@@ -264,6 +264,7 @@ cc_test_mozc(
         "//dictionary:suppression_dictionary",
         "//prediction:suggestion_filter",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -364,6 +365,7 @@ cc_library_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -597,6 +599,7 @@ cc_test_mozc(
         "//base:flags",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -741,6 +744,7 @@ cc_test_mozc(
         "//base",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

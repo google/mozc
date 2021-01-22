@@ -47,6 +47,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace config {
@@ -251,11 +252,9 @@ TEST_F(ConfigHandlerTest, SetConfigFileName) {
   EXPECT_EQ(default_incognito_mode, updated_config.incognito_mode());
 }
 
-#if !defined(OS_ANDROID) && !defined(OS_NACL)
+#if !defined(OS_ANDROID)
 // Temporarily disable this test because FileUtil::CopyFile fails on
-// Android for some reason, and on NaCl since it uses mock file system and the
-// mock file system doesn't have a source file.
-// TODO(hsumita): Enable this test on Android and NaCl.
+// Android for some reason.
 TEST_F(ConfigHandlerTest, LoadTestConfig) {
   // TODO(yukawa): Generate test data automatically so that we can keep
   //     the compatibility among variety of config files.
@@ -296,7 +295,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
     EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
-#endif  // !OS_ANDROID && !OS_NACL
+#endif  // !OS_ANDROID
 
 TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   Config output;
@@ -305,11 +304,11 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   ConfigHandler::GetDefaultConfig(&output);
 #ifdef __APPLE__
   EXPECT_EQ(output.session_keymap(), Config::KOTOERI);
-#elif defined(OS_NACL)  // __APPLE__
+#elif defined(OS_CHROMEOS)  // __APPLE__
   EXPECT_EQ(output.session_keymap(), Config::CHROMEOS);
-#else                   // __APPLE__ || OS_NACL
+#else                   // __APPLE__ || OS_CHROMEOS
   EXPECT_EQ(output.session_keymap(), Config::MSIME);
-#endif                  // __APPLE__ || OS_NACL
+#endif                  // __APPLE__ || OS_CHROMEOS
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
@@ -493,13 +492,12 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     // Set up background threads for concurrent access.
     std::vector<std::unique_ptr<SetConfigThread>> set_threads;
     for (size_t i = 0; i < kNumSetThread; ++i) {
-      set_threads.emplace_back(
-          std::unique_ptr<SetConfigThread>(new SetConfigThread(configs)));
+      set_threads.emplace_back(absl::make_unique<SetConfigThread>(configs));
     }
     std::vector<std::unique_ptr<GetConfigThread>> get_threads;
     for (size_t i = 0; i < kNumGetThread; ++i) {
-      get_threads.emplace_back(std::unique_ptr<GetConfigThread>(
-          new GetConfigThread(character_form_rules_set)));
+      get_threads.emplace_back(
+          absl::make_unique<GetConfigThread>(character_form_rules_set));
     }
     // Let background threads start accessing ConfigHandler from multiple
     // background threads.

@@ -64,6 +64,7 @@ cc_library_mozc(
         "//base:thread",
         "//data_manager",
         "//protocol:engine_builder_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
 

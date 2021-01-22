@@ -33,6 +33,7 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/character_form_manager.h"
@@ -109,15 +110,18 @@ SessionHandlerTestBase::SessionHandlerTestBase() {}
 SessionHandlerTestBase::~SessionHandlerTestBase() {}
 
 void SessionHandlerTestBase::SetUp() {
-  flags_max_session_size_backup_ = FLAGS_max_session_size;
-  flags_create_session_min_interval_backup_ = FLAGS_create_session_min_interval;
-  flags_watch_dog_interval_backup_ = FLAGS_watch_dog_interval;
-  flags_last_command_timeout_backup_ = FLAGS_last_command_timeout;
-  flags_last_create_session_timeout_backup_ = FLAGS_last_create_session_timeout;
-  flags_restricted_backup_ = FLAGS_restricted;
+  flags_max_session_size_backup_ = mozc::GetFlag(FLAGS_max_session_size);
+  flags_create_session_min_interval_backup_ =
+      mozc::GetFlag(FLAGS_create_session_min_interval);
+  flags_watch_dog_interval_backup_ = mozc::GetFlag(FLAGS_watch_dog_interval);
+  flags_last_command_timeout_backup_ =
+      mozc::GetFlag(FLAGS_last_command_timeout);
+  flags_last_create_session_timeout_backup_ =
+      mozc::GetFlag(FLAGS_last_create_session_timeout);
+  flags_restricted_backup_ = mozc::GetFlag(FLAGS_restricted);
 
   user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   ConfigHandler::GetConfig(&config_backup_);
   ClearState();
 }
@@ -127,12 +131,15 @@ void SessionHandlerTestBase::TearDown() {
   ConfigHandler::SetConfig(config_backup_);
   SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
 
-  FLAGS_max_session_size = flags_max_session_size_backup_;
-  FLAGS_create_session_min_interval = flags_create_session_min_interval_backup_;
-  FLAGS_watch_dog_interval = flags_watch_dog_interval_backup_;
-  FLAGS_last_command_timeout = flags_last_command_timeout_backup_;
-  FLAGS_last_create_session_timeout = flags_last_create_session_timeout_backup_;
-  FLAGS_restricted = flags_restricted_backup_;
+  mozc::SetFlag(&FLAGS_max_session_size, flags_max_session_size_backup_);
+  mozc::SetFlag(&FLAGS_create_session_min_interval,
+                flags_create_session_min_interval_backup_);
+  mozc::SetFlag(&FLAGS_watch_dog_interval, flags_watch_dog_interval_backup_);
+  mozc::SetFlag(&FLAGS_last_command_timeout,
+                flags_last_command_timeout_backup_);
+  mozc::SetFlag(&FLAGS_last_create_session_timeout,
+                flags_last_create_session_timeout_backup_);
+  mozc::SetFlag(&FLAGS_restricted, flags_restricted_backup_);
 }
 
 void SessionHandlerTestBase::ClearState() {
@@ -151,7 +158,6 @@ void SessionHandlerTestBase::ClearState() {
   FileUtil::Unlink(ConfigFileStream::GetFileName("user://segment.db"));
   FileUtil::Unlink(UserHistoryPredictor::GetUserHistoryFileName());
 }
-
 
 }  // namespace testing
 }  // namespace session

@@ -34,6 +34,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -151,7 +152,7 @@ void ExistenceFilter::BlockBitmap::Clear() {
 ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k)
     : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);
-  rep_.reset(new BlockBitmap(m ? m : 1, true));
+  rep_ = absl::make_unique<BlockBitmap>(m ? m : 1, true);
   rep_->Clear();
 }
 
@@ -159,7 +160,7 @@ ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k)
 ExistenceFilter::ExistenceFilter(uint32 m, uint32 n, int k, bool is_mutable)
     : vec_size_(m ? m : 1), expected_nelts_(n), num_hashes_(k) {
   CHECK_LT(num_hashes_, 8);
-  rep_.reset(new BlockBitmap(m ? m : 1, is_mutable));
+  rep_ = absl::make_unique<BlockBitmap>(m ? m : 1, is_mutable);
   rep_->Clear();
 }
 

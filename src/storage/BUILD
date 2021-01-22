@@ -55,6 +55,7 @@ cc_library_mozc(
         "//base:mozc_hash_set",
         "//base:port",
         "//base:util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -87,6 +88,7 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -244,5 +246,6 @@ cc_test_mozc(
         "//base:logging",
         "//base:system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )

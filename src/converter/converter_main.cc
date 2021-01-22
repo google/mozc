@@ -237,7 +237,7 @@ void PrintSegment(size_t num, size_t segments_size, const Segment &segment,
         << SegmentTypeToString(segment.segment_type()) << "] ----------"
         << std::endl
         << segment.key() << std::endl;
-  if (FLAGS_show_meta_candidates) {
+  if (mozc::GetFlag(FLAGS_show_meta_candidates)) {
     for (int i = 0; i < segment.meta_candidates_size(); ++i) {
       PrintCandidate(segment, -i - 1, segment.meta_candidate(i), os);
     }
@@ -270,7 +270,7 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
   const Config config;
 
   segments->set_max_conversion_candidates_size(
-      FLAGS_max_conversion_candidates_size);
+      mozc::GetFlag(FLAGS_max_conversion_candidates_size));
 
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
@@ -440,25 +440,26 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (!FLAGS_user_profile_dir.empty()) {
+  if (!mozc::GetFlag(FLAGS_user_profile_dir).empty()) {
     mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_dir);
   }
 
   std::string mozc_runfiles_dir = ".";
-  if (FLAGS_engine_data_path.empty()) {
+  if (mozc::GetFlag(FLAGS_engine_data_path).empty()) {
     const auto path_and_magic =
         mozc::SelectDataFileFromName(mozc_runfiles_dir, FLAGS_engine_name);
-    FLAGS_engine_data_path = path_and_magic.first;
-    FLAGS_magic = path_and_magic.second;
+    mozc::SetFlag(&FLAGS_engine_data_path, path_and_magic.first);
+    mozc::SetFlag(&FLAGS_magic, path_and_magic.second);
   }
-  CHECK(!FLAGS_engine_data_path.empty())
+  CHECK(!mozc::GetFlag(FLAGS_engine_data_path).empty())
       << "--engine_data_path or --engine is invalid: "
       << "--engine_data_path=" << FLAGS_engine_data_path << " "
       << "--engine_name=" << FLAGS_engine_name;
 
-  if (FLAGS_id_def.empty()) {
-    FLAGS_id_def =
-        mozc::SelectIdDefFromName(mozc_runfiles_dir, FLAGS_engine_name);
+  if (mozc::GetFlag(FLAGS_id_def).empty()) {
+    mozc::SetFlag(&FLAGS_id_def,
+                  mozc::SelectIdDefFromName(mozc_runfiles_dir,
+                                            mozc::GetFlag(FLAGS_engine_name)));
   }
 
   std::cout << "Engine type: " << FLAGS_engine_type
@@ -495,7 +496,7 @@ int main(int argc, char **argv) {
 
   while (!std::getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, &segments, line, request)) {
-      if (FLAGS_output_debug_string) {
+      if (mozc::GetFlag(FLAGS_output_debug_string)) {
         mozc::PrintSegments(segments, &std::cout);
       }
     } else {

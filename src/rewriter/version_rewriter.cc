@@ -41,6 +41,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -98,8 +99,8 @@ class VersionRewriter::VersionDataImpl {
     version_string.append(1, '+');
     version_string.append(data_version.data(), data_version.size());
     for (int i = 0; i < arraysize(kKeyCandList); ++i) {
-      entries_[kKeyCandList[i].key].reset(
-          new VersionEntry(kKeyCandList[i].base_candidate, version_string, 9));
+      entries_[kKeyCandList[i].key] = absl::make_unique<VersionEntry>(
+          kKeyCandList[i].base_candidate, version_string, 9);
     }
   }
 

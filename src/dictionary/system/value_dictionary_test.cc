@@ -39,6 +39,7 @@
 #include "request/conversion_request.h"
 #include "storage/louds/louds_trie_builder.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 using mozc::storage::louds::LoudsTrie;
 using mozc::storage::louds::LoudsTrieBuilder;
@@ -50,8 +51,8 @@ class ValueDictionaryTest : public ::testing::Test {
  protected:
   void SetUp() override {
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
-    louds_trie_builder_.reset(new LoudsTrieBuilder);
-    louds_trie_.reset(new LoudsTrie);
+    louds_trie_builder_ = absl::make_unique<LoudsTrieBuilder>();
+    louds_trie_ = absl::make_unique<LoudsTrie>();
   }
 
   void TearDown() override {

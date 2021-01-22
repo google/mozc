@@ -52,23 +52,23 @@ char *strdup_with_new(const char *str) {
 class FlagsTest : public testing::Test {
  protected:
   void SetUp() override {
-    FLAGS_test_string = "hogehoge";
-    FLAGS_test_int32 = 20;
-    FLAGS_test_int64 = 29051773239673121LL;
-    FLAGS_test_uint64 = 84467440737095516LL;
-    FLAGS_test_bool = false;
-    FLAGS_test_double = 0.5;
+    mozc::SetFlag(&FLAGS_test_string, "hogehoge");
+    mozc::SetFlag(&FLAGS_test_int32, 20);
+    mozc::SetFlag(&FLAGS_test_int64, 29051773239673121LL);
+    mozc::SetFlag(&FLAGS_test_uint64, 84467440737095516LL);
+    mozc::SetFlag(&FLAGS_test_bool, false);
+    mozc::SetFlag(&FLAGS_test_double, 0.5);
   }
 };
 
 TEST_F(FlagsTest, FlagsBasicTest) {
-  EXPECT_FALSE(FLAGS_test_bool);
-  EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
-  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
-  EXPECT_EQ("hogehoge", FLAGS_test_string);
-  EXPECT_LT(0.4, FLAGS_test_double);
-  EXPECT_GT(0.6, FLAGS_test_double);
+  EXPECT_FALSE(mozc::GetFlag(FLAGS_test_bool));
+  EXPECT_EQ(20, mozc::GetFlag(FLAGS_test_int32));
+  EXPECT_EQ(int64{29051773239673121}, mozc::GetFlag(FLAGS_test_int64));
+  EXPECT_EQ(int64{84467440737095516}, mozc::GetFlag(FLAGS_test_uint64));
+  EXPECT_EQ("hogehoge", mozc::GetFlag(FLAGS_test_string));
+  EXPECT_LT(0.4, mozc::GetFlag(FLAGS_test_double));
+  EXPECT_GT(0.6, mozc::GetFlag(FLAGS_test_double));
 
   char **argv = new char *[8];
   argv[0] = strdup_with_new("test");
@@ -87,23 +87,23 @@ TEST_F(FlagsTest, FlagsBasicTest) {
   delete[] argv;
 
   EXPECT_EQ(8u, used_argc);
-  EXPECT_EQ(true, FLAGS_test_bool);
-  EXPECT_EQ(11214141, FLAGS_test_int32);
-  EXPECT_EQ(8172141141413124LL, FLAGS_test_int64);
-  EXPECT_EQ(9414041694169841LL, FLAGS_test_uint64);
-  EXPECT_EQ("test", FLAGS_test_string);
-  EXPECT_LT(1.4, FLAGS_test_double);
-  EXPECT_GT(1.6, FLAGS_test_double);
+  EXPECT_EQ(true, mozc::GetFlag(FLAGS_test_bool));
+  EXPECT_EQ(11214141, mozc::GetFlag(FLAGS_test_int32));
+  EXPECT_EQ(8172141141413124LL, mozc::GetFlag(FLAGS_test_int64));
+  EXPECT_EQ(9414041694169841LL, mozc::GetFlag(FLAGS_test_uint64));
+  EXPECT_EQ("test", mozc::GetFlag(FLAGS_test_string));
+  EXPECT_LT(1.4, mozc::GetFlag(FLAGS_test_double));
+  EXPECT_GT(1.6, mozc::GetFlag(FLAGS_test_double));
 }
 
 TEST_F(FlagsTest, NoValuesFlagsTest) {
-  EXPECT_FALSE(FLAGS_test_bool);
-  EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(int64{29051773239673121}, FLAGS_test_int64);
-  EXPECT_EQ(int64{84467440737095516}, FLAGS_test_uint64);
-  EXPECT_EQ("hogehoge", FLAGS_test_string);
-  EXPECT_LT(0.4, FLAGS_test_double);
-  EXPECT_GT(0.6, FLAGS_test_double);
+  EXPECT_FALSE(mozc::GetFlag(FLAGS_test_bool));
+  EXPECT_EQ(20, mozc::GetFlag(FLAGS_test_int32));
+  EXPECT_EQ(int64{29051773239673121}, mozc::GetFlag(FLAGS_test_int64));
+  EXPECT_EQ(int64{84467440737095516}, mozc::GetFlag(FLAGS_test_uint64));
+  EXPECT_EQ("hogehoge", mozc::GetFlag(FLAGS_test_string));
+  EXPECT_LT(0.4, mozc::GetFlag(FLAGS_test_double));
+  EXPECT_GT(0.6, mozc::GetFlag(FLAGS_test_double));
 
   char **argv = new char *[3];
   // We set only boolean and string values, because other types will stops
@@ -119,36 +119,36 @@ TEST_F(FlagsTest, NoValuesFlagsTest) {
   delete[] argv;
 
   EXPECT_EQ(3u, used_argc);
-  EXPECT_TRUE(FLAGS_test_bool);
-  EXPECT_EQ("", FLAGS_test_string);
+  EXPECT_TRUE(mozc::GetFlag(FLAGS_test_bool));
+  EXPECT_EQ("", mozc::GetFlag(FLAGS_test_string));
   // Following values are kept as default.
-  EXPECT_EQ(20, FLAGS_test_int32);
-  EXPECT_EQ(29051773239673121LL, FLAGS_test_int64);
-  EXPECT_EQ(84467440737095516LL, FLAGS_test_uint64);
-  EXPECT_LT(0.4, FLAGS_test_double);
-  EXPECT_GT(0.6, FLAGS_test_double);
+  EXPECT_EQ(20, mozc::GetFlag(FLAGS_test_int32));
+  EXPECT_EQ(29051773239673121LL, mozc::GetFlag(FLAGS_test_int64));
+  EXPECT_EQ(84467440737095516LL, mozc::GetFlag(FLAGS_test_uint64));
+  EXPECT_LT(0.4, mozc::GetFlag(FLAGS_test_double));
+  EXPECT_GT(0.6, mozc::GetFlag(FLAGS_test_double));
 }
 
 TEST_F(FlagsTest, SetFlag) {
   mozc_flags::SetFlag("test_bool", "true");
-  EXPECT_TRUE(FLAGS_test_bool);
+  EXPECT_TRUE(mozc::GetFlag(FLAGS_test_bool));
   mozc_flags::SetFlag("test_bool", "false");
-  EXPECT_FALSE(FLAGS_test_bool);
+  EXPECT_FALSE(mozc::GetFlag(FLAGS_test_bool));
 
   mozc_flags::SetFlag("test_int32", "12345");
-  EXPECT_EQ(12345, FLAGS_test_int32);
+  EXPECT_EQ(12345, mozc::GetFlag(FLAGS_test_int32));
 
   mozc_flags::SetFlag("test_int64", "10000000000000000");
-  EXPECT_EQ(10000000000000000LL, FLAGS_test_int64);
+  EXPECT_EQ(10000000000000000LL, mozc::GetFlag(FLAGS_test_int64));
 
   mozc_flags::SetFlag("test_uint64", "50000000000000000");
-  EXPECT_EQ(50000000000000000LL, FLAGS_test_uint64);
+  EXPECT_EQ(50000000000000000LL, mozc::GetFlag(FLAGS_test_uint64));
 
   mozc_flags::SetFlag("test_string", "Tokyo");
-  EXPECT_EQ("Tokyo", FLAGS_test_string);
+  EXPECT_EQ("Tokyo", mozc::GetFlag(FLAGS_test_string));
 
   mozc_flags::SetFlag("test_double", "3.14");
-  EXPECT_DOUBLE_EQ(3.14, FLAGS_test_double);
+  EXPECT_DOUBLE_EQ(3.14, mozc::GetFlag(FLAGS_test_double));
 }
 
 }  // namespace

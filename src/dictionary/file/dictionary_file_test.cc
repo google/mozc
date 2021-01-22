@@ -45,9 +45,9 @@ namespace dictionary {
 namespace {
 
 TEST(DictionaryFileTest, Basic) {
-  const std::string dfn = FLAGS_test_tmpdir + "/test-dictionary";
-  const std::string fn1 = FLAGS_test_tmpdir + "/sec1";
-  const std::string fn2 = FLAGS_test_tmpdir + "/sec2";
+  const std::string dfn = mozc::GetFlag(FLAGS_test_tmpdir) + "/test-dictionary";
+  const std::string fn1 = mozc::GetFlag(FLAGS_test_tmpdir) + "/sec1";
+  const std::string fn2 = mozc::GetFlag(FLAGS_test_tmpdir) + "/sec2";
 
   FILE *fp1 = fopen(fn1.c_str(), "w");
   CHECK(fp1) << "failed to open temporary file";

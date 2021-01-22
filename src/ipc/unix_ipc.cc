@@ -407,7 +407,7 @@ IPCServer::IPCServer(const std::string &name, int32 num_connections,
 }
 
 IPCServer::~IPCServer() {
-  if (server_thread_.get() != nullptr) {
+  if (server_thread_ != nullptr) {
     server_thread_->Terminate();
   }
   ::shutdown(socket_, SHUT_RDWR);

@@ -86,12 +86,12 @@ int main(int argc, char **argv) {
                         params[2]);
   }
 
-  CHECK(!FLAGS_output.empty()) << "--output is required";
+  CHECK(!mozc::GetFlag(FLAGS_output).empty()) << "--output is required";
 
   // DataSetWriter directly writes to the specified stream, so if it fails for
   // an input, the output contains a partial result.  To avoid such partial file
   // creation, write to a temporary file then rename it.
-  const std::string tmpfile = FLAGS_output + ".tmp";
+  const std::string tmpfile = mozc::GetFlag(FLAGS_output) + ".tmp";
   {
     mozc::DataSetWriter writer(magic);
     for (const auto &input : inputs) {

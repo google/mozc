@@ -272,11 +272,12 @@ void LogStreamImpl::Reset() {
   // Coloring is disabled on windows
   // because cmd.exe doesn't support ANSI color escape sequences.
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
-  use_cerr_ = FLAGS_logtostderr;
+  use_cerr_ = mozc::GetFlag(FLAGS_logtostderr);
   support_color_ = false;
 #else   // OS_ANDROID, OS_WIN
-  use_cerr_ = FLAGS_logtostderr;
-  support_color_ = use_cerr_ && FLAGS_colored_log && ::isatty(::fileno(stderr));
+  use_cerr_ = mozc::GetFlag(FLAGS_logtostderr);
+  support_color_ = (use_cerr_ && mozc::GetFlag(FLAGS_colored_log) &&
+                    ::isatty(::fileno(stderr)));
 #endif  // OS_ANDROID, OS_WIN
 }
 

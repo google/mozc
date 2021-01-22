@@ -44,6 +44,7 @@
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "session/session.h"
+#include "absl/memory/memory.h"
 
 DEFINE_string(input, "", "Input file");
 DEFINE_string(output, "", "Output file");
@@ -63,7 +64,7 @@ void Loop(std::istream *input, std::ostream *output) {
       continue;
     }
     if (line.empty()) {
-      session.reset(new session::Session(engine.get()));
+      session = absl::make_unique<session::Session>(engine.get());
       *output << std::endl << "## New session" << std::endl << std::endl;
       continue;
     }
@@ -93,18 +94,22 @@ int main(int argc, char **argv) {
   std::istream *input = nullptr;
   std::ostream *output = nullptr;
 
-  if (!FLAGS_profile_dir.empty()) {
+  const std::string flags_profile_dir = mozc::GetFlag(FLAGS_profile_dir);
+  const std::string flags_input = mozc::GetFlag(FLAGS_input);
+  const std::string flags_output = mozc::GetFlag(FLAGS_output);
+
+  if (!flags_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.
-    mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
-    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
+    mozc::FileUtil::CreateDirectory(flags_profile_dir);
+    mozc::SystemUtil::SetUserProfileDirectory(flags_profile_dir);
   }
 
-  if (!FLAGS_input.empty()) {
+  if (!flags_input.empty()) {
     // Batch mode loading the input file.
-    input_file.reset(new mozc::InputFileStream(FLAGS_input.c_str()));
+    input_file = absl::make_unique<mozc::InputFileStream>(flags_input.c_str());
     if (input_file->fail()) {
-      LOG(ERROR) << "File not opend: " << FLAGS_input;
-      std::cerr << "File not opend: " << FLAGS_input << std::endl;
+      LOG(ERROR) << "File not opend: " << flags_input;
+      std::cerr << "File not opend: " << flags_input << std::endl;
       return 1;
     }
     input = input_file.get();
@@ -113,11 +118,12 @@ int main(int argc, char **argv) {
     input = &std::cin;
   }
 
-  if (!FLAGS_output.empty()) {
-    output_file.reset(new mozc::OutputFileStream(FLAGS_output.c_str()));
+  if (!flags_output.empty()) {
+    output_file =
+        absl::make_unique<mozc::OutputFileStream>(flags_output.c_str());
     if (output_file->fail()) {
-      LOG(ERROR) << "File not opend: " << FLAGS_output;
-      std::cerr << "File not opend: " << FLAGS_output << std::endl;
+      LOG(ERROR) << "File not opend: " << flags_output;
+      std::cerr << "File not opend: " << flags_output << std::endl;
       return 1;
     }
     output = output_file.get();

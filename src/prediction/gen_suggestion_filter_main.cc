@@ -70,9 +70,10 @@ using mozc::storage::ExistenceFilter;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((FLAGS_input.empty() || FLAGS_output.empty()) && argc > 2) {
-    FLAGS_input = argv[1];
-    FLAGS_output = argv[2];
+  if ((mozc::GetFlag(FLAGS_input).empty() ||
+       mozc::GetFlag(FLAGS_output).empty()) && argc > 2) {
+    mozc::SetFlag(&FLAGS_input, argv[1]);
+    mozc::SetFlag(&FLAGS_output, argv[2]);
   }
 
   std::vector<uint64> words;
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
   LOG(INFO) << "writing bloomfilter: " << FLAGS_output;
   filter->Write(&buf, &size);
 
-  if (FLAGS_header) {
+  if (mozc::GetFlag(FLAGS_header)) {
     mozc::OutputFileStream ofs(FLAGS_output.c_str());
     mozc::CodeGenByteArrayOutputStream codegen_stream(
         &ofs, mozc::codegenstream::NOT_OWN_STREAM);

@@ -49,7 +49,7 @@ DEFINE_bool(decrypt, false, "decrypt mode");
 DEFINE_string(input_file, "", "input file");
 DEFINE_string(output_file, "", "input file");
 
-// perform encryption/decription with test_input.
+// perform encryption/decryption with test_input.
 // used for making a golden data for unittesting
 DEFINE_string(test_input, "", "test input string");
 
@@ -64,42 +64,49 @@ std::string Escape(const std::string &buf) {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (!FLAGS_iv.empty()) {
-    CHECK_EQ(16, FLAGS_iv.size()) << "iv size must be 16 byte";
+  if (!mozc::GetFlag(FLAGS_iv).empty()) {
+    CHECK_EQ(16, mozc::GetFlag(FLAGS_iv).size()) << "iv size must be 16 byte";
   }
 
-  const uint8 *iv = FLAGS_iv.empty()
-                        ? nullptr
-                        : reinterpret_cast<const uint8 *>(FLAGS_iv.data());
+  const std::string iv_str = mozc::GetFlag(FLAGS_iv);
+  const uint8 *iv =
+      iv_str.empty() ? nullptr : reinterpret_cast<const uint8 *>(iv_str.data());
 
-  if (!FLAGS_input_file.empty() && !FLAGS_output_file.empty()) {
+  if (!mozc::GetFlag(FLAGS_input_file).empty() &&
+      !mozc::GetFlag(FLAGS_output_file).empty()) {
     mozc::Encryptor::Key key;
-    CHECK(key.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
+    CHECK(key.DeriveFromPassword(mozc::GetFlag(FLAGS_password),
+                                 mozc::GetFlag(FLAGS_salt), iv));
 
     mozc::Mmap mmap;
-    CHECK(mmap.Open(FLAGS_input_file.c_str(), "r"));
+    CHECK(mmap.Open(mozc::GetFlag(FLAGS_input_file).c_str(), "r"));
     std::string buf(mmap.begin(), mmap.size());
-    if (FLAGS_encrypt) {
+    if (mozc::GetFlag(FLAGS_encrypt)) {
       CHECK(mozc::Encryptor::EncryptString(key, &buf));
-    } else if (FLAGS_decrypt) {
+    } else if (mozc::GetFlag(FLAGS_decrypt)) {
       CHECK(mozc::Encryptor::DecryptString(key, &buf));
     } else {
       LOG(FATAL) << "unknown mode. set --encrypt or --decrypt";
     }
-    mozc::OutputFileStream ofs(FLAGS_output_file.c_str(), std::ios::binary);
+    mozc::OutputFileStream ofs(mozc::GetFlag(FLAGS_output_file).c_str(),
+                               std::ios::binary);
     CHECK(ofs);
     ofs.write(buf.data(), buf.size());
-  } else if (!FLAGS_test_input.empty()) {
+  } else if (!mozc::GetFlag(FLAGS_test_input).empty()) {
     mozc::Encryptor::Key key1, key2;
-    CHECK(key1.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
-    CHECK(key2.DeriveFromPassword(FLAGS_password, FLAGS_salt, iv));
+    CHECK(key1.DeriveFromPassword(mozc::GetFlag(FLAGS_password),
+                                  mozc::GetFlag(FLAGS_salt), iv));
+    CHECK(key2.DeriveFromPassword(mozc::GetFlag(FLAGS_password),
+                                  mozc::GetFlag(FLAGS_salt), iv));
 
-    std::string buf = FLAGS_test_input;
+    std::string buf = mozc::GetFlag(FLAGS_test_input);
     std::string iv_buf(reinterpret_cast<const char *>(key1.iv()),
                        key1.iv_size());
 
-    std::cout << "Password:  \"" << Escape(FLAGS_password) << "\"" << std::endl;
-    std::cout << "Salt:      \"" << Escape(FLAGS_salt) << "\"" << std::endl;
+    std::cout << "Password:  \"" << Escape(mozc::GetFlag(FLAGS_password))
+              << "\"" << std::endl;
+    std::cout << "Salt:      \"" << Escape(mozc::GetFlag(FLAGS_salt)) << "\""
+              << std::endl;
     std::cout << "IV:        \"" << Escape(iv_buf) << "\"" << std::endl;
     std::cout << "Input:     \"" << Escape(buf) << "\"" << std::endl;
     CHECK(mozc::Encryptor::EncryptString(key1, &buf));

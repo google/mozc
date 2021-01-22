@@ -55,13 +55,18 @@ config_setting(
     visibility = ["//:__subpackages__"],
 )
 
-# Special target so as to define special macros for Android and CrOS (NaCl).
+# Special target so as to define special macros for each platforms.
 # Don't depend on this directly. Use cc_(library|binary|test)_mozc rule instead.
 cc_library(
     name = "macro",
     defines = select_mozc(
         android = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
+            "NO_USAGE_REWRITER",
+        ],
+        chromiumos = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "MOZC_USE_MOZC_TESTING",
             "NO_USAGE_REWRITER",
         ],
         default = [
@@ -75,10 +80,8 @@ cc_library(
             "GOOGLE_JAPANESE_INPUT_BUILD",
             "OS_LINUX",
         ],
-        nacl = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
-            "MOZC_USE_MOZC_TESTING",
-            "NO_USAGE_REWRITER",
+        macos = [
+            "GOOGLE_JAPANESE_INPUT_BUILD",
         ],
         oss_android = [
             "MOZC_DISABLE_SESSION_WATCHDOG",

@@ -28,79 +28,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package(
-    default_visibility = ["//visibility:public"],
-)
+load("//:build_defs.bzl", "objc_library_mozc")
 
-config_setting(
-    name = "android",
-    values = {
-        "define": "TARGET=android",
-        # "cc_target_os": "android",
-    },
-)
+package(default_visibility = ["//:__subpackages__"])
 
-config_setting(
-    name = "oss_android",
-    values = {
-        "define": "TARGET=oss_android",
-    },
-)
-
-config_setting(
-    name = "ios",
-    values = {
-        "define": "TARGET=ios",
-        # "cc_target_os": "apple",
-    },
-)
-
-# apple is used for both iOS and macOS.
-config_setting(
-    name = "apple",
-    constraint_values = [
-        "@bazel_tools//platforms:osx",
-    ],
-)
-
-config_setting(
-    name = "darwin",
-    values = {
-        "define": "TARGET=macos",
-    },
-)
-
-config_setting(
-    name = "oss_macos",
-    values = {
-        "define": "TARGET=oss_macos",
-    },
-)
-
-config_setting(
-    name = "chromiumos",
-    values = {
-        "define": "TARGET=chromiumos",
-    },
-)
-
-config_setting(
-    name = "linux",
-    values = {
-        "define": "TARGET=linux",
-    },
-)
-
-config_setting(
-    name = "oss_linux",
-    values = {
-        "define": "TARGET=oss_linux",
-    },
-)
-
-config_setting(
-    name = "wasm",
-    values = {
-        "define": "TARGET=wasm",
-    },
+objc_library_mozc(
+    name = "common",
+    hdrs = ["common.h"],
 )

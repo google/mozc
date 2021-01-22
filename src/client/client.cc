@@ -53,6 +53,7 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/memory/memory.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
@@ -61,6 +62,8 @@
 #ifdef __APPLE__
 #include "base/mac_process.h"
 #endif  // __APPLE__
+
+#include "absl/base/attributes.h"
 
 namespace mozc {
 namespace client {
@@ -142,9 +145,10 @@ bool Client::EnsureConnection() {
     case SERVER_SHUTDOWN:
 #ifdef DEBUG
       OnFatal(ServerLauncherInterface::SERVER_SHUTDOWN);
+#endif  // DEBUG
       // don't break here as SERVER_SHUTDOWN and SERVER_UNKNOWN
       // have basically the same treatment.
-#endif  // DEBUG
+      ABSL_FALLTHROUGH_INTENDED;
     case SERVER_UNKNOWN:
       if (StartServer()) {
         server_status_ = SERVER_INVALID_SESSION;
@@ -394,7 +398,7 @@ bool Client::EnsureCallCommand(commands::Input *input,
 
 void Client::EnableCascadingWindow(const bool enable) {
   if (preferences_ == nullptr) {
-    preferences_.reset(new config::Config);
+    preferences_ = absl::make_unique<config::Config>();
   }
   preferences_->set_use_cascading_window(enable);
 }
@@ -863,8 +867,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
     return false;
   }
 
-#if defined(OS_WIN) || defined(OS_LINUX) || defined(OS_ANDROID) || \
-    defined(OS_NACL)
+#if defined(OS_WIN) || defined(OS_LINUX) || defined(OS_ANDROID)
   std::string arg = "--mode=" + mode;
   if (!extra_arg.empty()) {
     arg += " ";
@@ -874,7 +877,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
     LOG(ERROR) << "Cannot execute: " << kMozcTool << " " << arg;
     return false;
   }
-#endif  // OS_WIN || OS_LINUX || OS_ANDROID || OS_NACL
+#endif  // OS_WIN || OS_LINUX || OS_ANDROID
 
   // TODO(taku): move MacProcess inside SpawnMozcProcess.
   // TODO(taku): support extra_arg.

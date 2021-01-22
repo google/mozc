@@ -41,6 +41,7 @@
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -169,8 +170,8 @@ class ClientTest : public testing::Test {
   ClientTest() : version_diff_(0) {}
 
   void SetUp() override {
-    client_factory_.reset(new IPCClientFactoryMock);
-    client_.reset(new Client);
+    client_factory_ = absl::make_unique<IPCClientFactoryMock>();
+    client_ = absl::make_unique<Client>();
     client_->SetIPCClientFactory(client_factory_.get());
 
     server_launcher_ = new TestServerLauncher(client_factory_.get());
@@ -725,10 +726,10 @@ class SessionPlaybackTest : public testing::Test {
   ~SessionPlaybackTest() override {}
 
   void SetUp() override {
-    ipc_client_factory_.reset(new IPCClientFactoryMock);
+    ipc_client_factory_ = absl::make_unique<IPCClientFactoryMock>();
     ipc_client_.reset(
         reinterpret_cast<IPCClientMock *>(ipc_client_factory_->NewClient("")));
-    client_.reset(new Client);
+    client_ = absl::make_unique<Client>();
     client_->SetIPCClientFactory(ipc_client_factory_.get());
     server_launcher_ =
         new SessionPlaybackTestServerLauncher(ipc_client_factory_.get());

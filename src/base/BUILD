@@ -177,18 +177,6 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "nacl_linkopts",
-    linkopts = select({
-        "//tools/cc_target_os:nacl": [
-            "-lppapi",
-            "-lppapi_cpp",
-        ],
-        "//conditions:default": [],
-    }),
-    visibility = ["//:__subpackages__"],
-)
-
-cc_library_mozc(
     name = "port",
     hdrs = ["port.h"],
     deps = select_mozc(
@@ -197,11 +185,6 @@ cc_library_mozc(
             "//base:port",
         ],
         linux = ["@com_google_absl//absl/base:core_headers"],
-        nacl = [
-            # TODO(hsumita): Move :nacl_linkopts to more suitable position.
-            ":nacl_linkopts",
-            "//base:base",
-        ],
         oss = ["@com_google_absl//absl/base:core_headers"],
     ),
 )
@@ -282,6 +265,7 @@ cc_test_mozc(
         ":codegen_bytearray_stream",
         ":port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -810,6 +794,7 @@ cc_test_mozc(
     deps = [
         ":file_stream",
         ":file_util",
+        ":flags",
         ":logging",
         ":number_util",
         ":util",
@@ -882,15 +867,18 @@ cc_library_mozc(
         ":win_util",
         "@com_google_absl//absl/strings",
     ] + select_mozc(
-        oss_macos = ["mac_process"],
+        macos = ["mac_process"],
     ),
 )
 
 objc_library_mozc(
     name = "mac_process",
-    srcs = select_mozc(oss_macos = ["mac_process.mm"]),
-    hdrs = select_mozc(oss_macos = ["mac_process.h"]),
-    deps = [":mac_util"],
+    srcs = select_mozc(macos = ["mac_process.mm"]),
+    hdrs = select_mozc(macos = ["mac_process.h"]),
+    deps = [
+        ":mac_util",
+        ":util",
+    ],
 )
 
 cc_binary_mozc(
@@ -929,6 +917,7 @@ cc_test_mozc(
     deps = [
         "logging",
         ":file_util",
+        ":flags",
         ":process_mutex",
         ":system_util",
         ":util",
@@ -1019,6 +1008,7 @@ cc_test_mozc(
     deps = [
         ":config_file_stream",
         ":file_util",
+        ":flags",
         ":system_util",
         "//testing:gunit_main",
     ],
@@ -1027,6 +1017,7 @@ cc_test_mozc(
 TARGET_PLATFORM = select({
     "//tools/cc_target_os:oss_android": "Android",
     "//tools/cc_target_os:android": "Android",
+    "//tools/cc_target_os:chromiumos": "ChromeOS",
     "//tools/cc_target_os:wasm": "Wasm",
     "//tools/cc_target_os:linux": "Linux",
     "//tools/cc_target_os:oss_linux": "Linux",
@@ -1170,6 +1161,7 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
+        ":flags",
         ":system_util",
         ":util",
         "//testing:gunit_main",
@@ -1293,6 +1285,7 @@ cc_binary_mozc(
         ":port",
         ":thread",
         ":util",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1317,6 +1310,7 @@ cc_test_mozc(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1367,6 +1361,7 @@ cc_library_mozc(
         ":logging",
         ":port",
         ":util",
+        "@com_google_absl//absl/memory",
     ],
 )
 

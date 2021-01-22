@@ -126,16 +126,16 @@ class MockPredictor : public PredictorInterface {
 class MobilePredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    config_.reset(new config::Config);
+    config_ = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
 
-    request_.reset(new commands::Request);
+    request_ = absl::make_unique<commands::Request>();
     commands::RequestForUnitTest::FillMobileRequest(request_.get());
-    composer_.reset(
-        new composer::Composer(nullptr, request_.get(), config_.get()));
+    composer_ = absl::make_unique<composer::Composer>(nullptr, request_.get(),
+                                                      config_.get());
 
-    convreq_.reset(
-        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+    convreq_ = absl::make_unique<ConversionRequest>(
+        composer_.get(), request_.get(), config_.get());
   }
 
   std::unique_ptr<mozc::composer::Composer> composer_;

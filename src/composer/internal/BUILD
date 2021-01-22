@@ -175,6 +175,7 @@ cc_test_mozc(
         "//composer:composition_interface",
         "//composer:table",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 

@@ -31,7 +31,14 @@
 # Visibility:  please choose a more appropriate default for the package,
 # and update any rules that should be different.
 
-load("//:build_defs.bzl", "cc_binary_mozc", "cc_library_mozc")
+load(
+    "//:build_defs.bzl",
+    "BRANDING",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
+    "cc_binary_mozc",
+    "cc_library_mozc",
+)
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
@@ -89,12 +96,6 @@ cc_binary_mozc(
     ],
 )
 
-BRANDING = "Mozc"
-
-BUNDLE_ID = "org.mozc.inputmethod.Japanese.Converter"
-
-MIN_OS_VER = "10.12"
-
 genrule(
     name = "gen_mozc_server_info_plist",
     srcs = [
@@ -113,10 +114,10 @@ genrule(
 macos_application(
     name = "mozc_server_macos",
     app_icons = ["//data/images/mac:product_icon.icns"],
-    bundle_id = BUNDLE_ID,
+    bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",
     bundle_name = BRANDING + "Converter",
     infoplists = [":gen_mozc_server_info_plist"],
-    minimum_os_version = MIN_OS_VER,
+    minimum_os_version = MACOS_MIN_OS_VER,
     deps = [":mozc_server_lib"],
     # When we support Breakpad, uncomment the following block.
     # additional_contents = {

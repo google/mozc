@@ -62,7 +62,7 @@ void Convert() {
   const char kSeparator[] = "\t";
   std::vector<std::string> entries;
 
-  if (FLAGS_suppression_data.empty()) {
+  if (mozc::GetFlag(FLAGS_suppression_data).empty()) {
     const std::string kDummyStr = "__NO_DATA__";
     entries.push_back(kDummyStr + kSeparator + kDummyStr);
   } else {
@@ -81,8 +81,8 @@ void Convert() {
   }
 
   std::ostream *ofs = &std::cout;
-  if (!FLAGS_output.empty()) {
-    if (FLAGS_binary_mode) {
+  if (!mozc::GetFlag(FLAGS_output).empty()) {
+    if (mozc::GetFlag(FLAGS_binary_mode)) {
       ofs = new OutputFileStream(FLAGS_output.c_str(),
                                  std::ios::out | std::ios::binary);
     } else {
@@ -90,11 +90,12 @@ void Convert() {
     }
   }
 
-  if (FLAGS_binary_mode) {
-    OutputExistenceBinary(entries, ofs, FLAGS_error_rate);
+  if (mozc::GetFlag(FLAGS_binary_mode)) {
+    OutputExistenceBinary(entries, ofs, mozc::GetFlag(FLAGS_error_rate));
   } else {
     const std::string kNameSpace = "CollocationSuppressionData";
-    OutputExistenceHeader(entries, kNameSpace, ofs, FLAGS_error_rate);
+    OutputExistenceHeader(entries, kNameSpace, ofs,
+                          mozc::GetFlag(FLAGS_error_rate));
   }
 
   if (ofs != &std::cout) {

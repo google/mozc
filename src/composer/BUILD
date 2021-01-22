@@ -253,5 +253,6 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//testing:mozctest",
         "//testing/base/public:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )

@@ -48,6 +48,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -80,12 +81,12 @@ class UsageRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
     config::ConfigHandler::GetDefaultConfig(&config_);
 
-    data_manager_.reset(new testing::MockDataManager);
+    data_manager_ = absl::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPOSMatcherData());
-    suppression_dictionary_.reset(new SuppressionDictionary);
-    user_dictionary_.reset(
-        new UserDictionary(UserPOS::CreateFromDataManager(*data_manager_),
-                           pos_matcher_, suppression_dictionary_.get()));
+    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    user_dictionary_ = absl::make_unique<UserDictionary>(
+        UserPOS::CreateFromDataManager(*data_manager_), pos_matcher_,
+        suppression_dictionary_.get());
   }
 
   void TearDown() override {

@@ -42,15 +42,16 @@
 
 #include "base/port.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace {
 
 class CodeGenByteArrayStreamTest : public testing::Test {
  protected:
   void SetUp() override {
-    result_stream_.reset(new std::ostringstream());
-    codegen_stream_.reset(new mozc::CodeGenByteArrayOutputStream(
-        result_stream_.get(), mozc::codegenstream::NOT_OWN_STREAM));
+    result_stream_ = absl::make_unique<std::ostringstream>();
+    codegen_stream_ = absl::make_unique<mozc::CodeGenByteArrayOutputStream>(
+        result_stream_.get(), mozc::codegenstream::NOT_OWN_STREAM);
   }
 
   void TearDown() override {

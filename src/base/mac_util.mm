@@ -43,7 +43,7 @@
 #include "base/logging.h"
 #include "base/scoped_cftyperef.h"
 #include "base/singleton.h"
-#include "third_party/absl/strings/match.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {

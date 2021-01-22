@@ -93,7 +93,7 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromFile(
     const std::string &filename) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
-  if (ifs.get() == nullptr) {
+  if (ifs == nullptr) {
     DLOG(FATAL) << "could not open file: " << filename;
     return std::vector<KeyInformation>();
   }
