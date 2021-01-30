@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
@@ -115,7 +116,7 @@ class CalculatorRewriterTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);

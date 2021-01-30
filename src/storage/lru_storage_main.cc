@@ -29,6 +29,7 @@
 
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -43,13 +44,14 @@ using mozc::storage::LRUStorage;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (FLAGS_create_db) {
-    CHECK(LRUStorage::CreateStorageFile(
-        FLAGS_file.c_str(), static_cast<uint32>(4), FLAGS_size, 0xff02));
+  if (mozc::GetFlag(FLAGS_create_db)) {
+    CHECK(LRUStorage::CreateStorageFile(FLAGS_file.c_str(),
+                                        static_cast<uint32>(4),
+                                        mozc::GetFlag(FLAGS_size), 0xff02));
   }
 
   LRUStorage s;
-  CHECK(s.Open(FLAGS_file.c_str()));
+  CHECK(s.Open(mozc::GetFlag(FLAGS_file).c_str()));
 
   LOG(INFO) << "size=" << s.size();
   LOG(INFO) << "used_size=" << s.used_size();

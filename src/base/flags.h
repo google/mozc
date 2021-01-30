@@ -99,6 +99,12 @@ bool SetFlag(const string &key, const string &value);
   DEFINE_VARIABLE(string, S, name, value, help)
 #define DECLARE_string(name) DECLARE_VARIABLE(string, S, name)
 
+#define MOZC_FLAG(type, name, value, help) \
+  DEFINE_##type(name, value, help)
+
+#define MOZC_DECLARE_FLAG(type, name) \
+  DECLARE_##type(name)
+
 namespace mozc {
 
 inline bool GetFlag(bool flag) { return flag; }

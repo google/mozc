@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
@@ -79,7 +80,7 @@ class CollocationRewriterTest : public ::testing::Test {
   ~CollocationRewriterTest() override = default;
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     const mozc::testing::MockDataManager data_manager;
     pos_matcher_.Set(data_manager.GetPOSMatcherData());

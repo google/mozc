@@ -155,7 +155,7 @@ WordRegisterDialog::WordRegisterDialog()
   pos_list_provider_->GetPOSList(&pos_set);
   CHECK(!pos_set.empty());
 
-  for (const string &pos : pos_set) {
+  for (const std::string &pos : pos_set) {
     CHECK(!pos.empty());
     PartOfSpeechcomboBox->addItem(QString::fromUtf8(pos.c_str()));
   }

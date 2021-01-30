@@ -27,10 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "storage/registry.h"
+
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
-#include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -38,7 +40,7 @@ namespace mozc {
 namespace storage {
 
 TEST(RegistryTest, TinyStorageTest) {
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
   {
     uint64 value = 20;

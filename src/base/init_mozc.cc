@@ -37,7 +37,10 @@
 #include <string>
 
 #include "base/file_util.h"
+
+
 #include "base/flags.h"
+
 #include "base/logging.h"
 #ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
@@ -80,7 +83,7 @@ string GetLogFilePathFromProgramName(const string &program_name) {
 }  // namespace
 
 void InitMozc(const char *arg0, int *argc, char ***argv) {
-  FLAGS_program_invocation_name = *argv[0];
+  mozc::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
 #ifdef OS_WIN
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.

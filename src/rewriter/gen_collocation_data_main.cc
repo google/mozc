@@ -55,7 +55,7 @@ namespace mozc {
 namespace {
 
 void Convert() {
-  InputFileStream ifs(FLAGS_collocation_data.c_str());
+  InputFileStream ifs(mozc::GetFlag(FLAGS_collocation_data).c_str());
   std::string line;
   std::vector<std::string> entries;
   while (!std::getline(ifs, line).fail()) {
@@ -68,10 +68,10 @@ void Convert() {
   std::ostream *ofs = &std::cout;
   if (!mozc::GetFlag(FLAGS_output).empty()) {
     if (mozc::GetFlag(FLAGS_binary_mode)) {
-      ofs = new OutputFileStream(FLAGS_output.c_str(),
+      ofs = new OutputFileStream(mozc::GetFlag(FLAGS_output).c_str(),
                                  std::ios::out | std::ios::binary);
     } else {
-      ofs = new OutputFileStream(FLAGS_output.c_str());
+      ofs = new OutputFileStream(mozc::GetFlag(FLAGS_output).c_str());
     }
   }
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     mozc::SetFlag(&FLAGS_collocation_data, argv[1]);
   }
 
-  LOG(INFO) << FLAGS_collocation_data;
+  LOG(INFO) << mozc::GetFlag(FLAGS_collocation_data);
 
   mozc::Convert();
 

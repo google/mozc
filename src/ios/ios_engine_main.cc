@@ -69,7 +69,7 @@ void Convert(const std::string &query, mozc::ios::IosEngine *engine,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::ios::IosEngine ios_engine(FLAGS_datafile);
+  mozc::ios::IosEngine ios_engine(mozc::GetFlag(FLAGS_datafile));
 
   mozc::commands::Command command;
   mozc::config::Config config;

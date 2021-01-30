@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/clock.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -86,7 +87,7 @@ class NamedEventListenerThread : public Thread {
 class NamedEventTest : public testing::Test {
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {

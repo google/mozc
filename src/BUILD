@@ -128,5 +128,10 @@ filegroup(
             "//renderer:mozc_renderer",
             "//server:mozc_server",
         ],
+        oss_macos = [
+            "//gui/about_dialog:about_dialog_macos",
+            "//renderer:mozc_renderer_macos",
+            "//server:mozc_server_macos",
+        ],
     ),
 )

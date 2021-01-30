@@ -45,18 +45,18 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(FLAGS_name);
+      mozc::IPCPathManager::GetIPCPathManager(mozc::GetFlag(FLAGS_name));
   CHECK(manager);
 
   string path;
 
-  if (FLAGS_client) {
+  if (mozc::GetFlag(FLAGS_client)) {
     CHECK(manager->GetPathName(&path));
     LOG(INFO) << "PathName: " << path;
     return 0;
   }
 
-  if (FLAGS_server) {
+  if (mozc::GetFlag(FLAGS_server)) {
     CHECK(manager->CreateNewPathName());
     CHECK(manager->SavePathName());
     CHECK(manager->GetPathName(&path));

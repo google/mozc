@@ -88,7 +88,7 @@ inline QString QUtf8(const char str[]) {
   return QString::fromUtf8(str);
 }
 
-inline QString QUtf8(const string &str) {
+inline QString QUtf8(const std::string &str) {
   return QString::fromUtf8(str.c_str());
 }
 

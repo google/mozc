@@ -27,17 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/text_dictionary_loader.h"
+
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
-#include "dictionary/text_dictionary_loader.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
@@ -87,7 +89,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.tsv");
   {
     OutputFileStream ofs(filename.c_str());
     ofs << kTextLines;
@@ -212,9 +214,9 @@ TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
 
 TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   const std::string filename1 =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "test1.tsv");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test1.tsv");
   const std::string filename2 =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "test2.tsv");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test2.tsv");
   const std::string filename = filename1 + "," + filename2;
 
   {
@@ -240,9 +242,9 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
 
   const std::string dic_filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "test.tsv");
-  const std::string reading_correction_filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "reading_correction.tsv");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.tsv");
+  const std::string reading_correction_filename = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "reading_correction.tsv");
 
   {
     OutputFileStream ofs(dic_filename.c_str());

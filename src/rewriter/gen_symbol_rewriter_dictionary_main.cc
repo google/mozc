@@ -218,16 +218,17 @@ int main(int argc, char **argv) {
   const char *kMagciNumber = "";
   mozc::DataManager data_manager;
   const mozc::DataManager::Status status =
-      data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
-                                                  kMagciNumber);
+      data_manager.InitUserPosManagerDataFromFile(
+          mozc::GetFlag(FLAGS_user_pos_manager_data), kMagciNumber);
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
-  mozc::MakeDictionary(FLAGS_input, FLAGS_sorting_table, FLAGS_ordering_rule,
-                       &dictionary);
+  mozc::MakeDictionary(FLAGS_input, mozc::GetFlag(FLAGS_sorting_table),
+                       mozc::GetFlag(FLAGS_ordering_rule), &dictionary);
   dictionary.Output(tmp_text_file);
   mozc::SerializedDictionary::CompileToFiles(
-      tmp_text_file, FLAGS_output_token_array, FLAGS_output_string_array);
+      tmp_text_file, mozc::GetFlag(FLAGS_output_token_array),
+      mozc::GetFlag(FLAGS_output_string_array));
   mozc::FileUtil::Unlink(tmp_text_file);
 
   return 0;

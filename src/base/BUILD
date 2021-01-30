@@ -143,16 +143,6 @@ cc_test_mozc(
     ],
 )
 
-INIT_MOZC_BUILDTOOL_DEPS = [
-    ":file_util",
-    ":flags",
-    ":logging",
-]
-
-INIT_MOZC_APP_BUILD_DEPS = INIT_MOZC_BUILDTOOL_DEPS + [
-    ":system_util",
-]
-
 cc_library_mozc(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
@@ -160,9 +150,16 @@ cc_library_mozc(
     copts = ["-DMOZC_BUILDTOOL_BUILD"],
     visibility = ["//:__subpackages__"],
     deps = select_mozc(
-        client = INIT_MOZC_BUILDTOOL_DEPS,
-        default = ["//base"],
-    ) + [":system_util"],
+        client = [
+            ":file_util",
+            ":flags",
+            ":logging",
+        ],
+        default = [
+            "//base",
+            ":flags",
+        ],
+    ),
 )
 
 cc_library_mozc(
@@ -171,8 +168,16 @@ cc_library_mozc(
     hdrs = ["init_mozc.h"],
     visibility = ["//:__subpackages__"],
     deps = select_mozc(
-        client = INIT_MOZC_APP_BUILD_DEPS,
-        default = ["//base"],
+        client = [
+            ":file_util",
+            ":flags",
+            ":logging",
+            ":system_util",
+        ],
+        default = [
+            "//base",
+            ":flags",
+        ],
     ),
 )
 

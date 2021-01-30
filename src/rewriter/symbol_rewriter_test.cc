@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -101,7 +102,7 @@ class SymbolRewriterTest : public ::testing::Test {
   ~SymbolRewriterTest() override = default;
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     // We cannot use mock converter here because SymbolRewriter uses
     // ResizeSegment of converter implementation. However, SymbolRewriter is

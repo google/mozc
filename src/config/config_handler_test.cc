@@ -37,6 +37,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mozc_hash_set.h"
 #include "base/port.h"
@@ -56,7 +57,7 @@ namespace {
 class ConfigHandlerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     default_config_filename_ = ConfigHandler::GetConfigFileName();
     Config default_config;
     ConfigHandler::GetDefaultConfig(&default_config);
@@ -95,8 +96,8 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   Config input;
   Config output;
 
-  const std::string config_file =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc_config_test_tmp");
+  const std::string config_file = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
   FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
@@ -155,8 +156,8 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
   Config input;
   Config output;
 
-  const std::string config_file =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc_config_test_tmp");
+  const std::string config_file = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
   FileUtil::Unlink(config_file);
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   ASSERT_TRUE(ConfigHandler::Reload())
@@ -231,7 +232,7 @@ TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
       std::string("config") + std::to_string(config::CONFIG_VERSION);
 
   const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, config_file);
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), config_file);
   FileUtil::Unlink(filename);
   Config input;
   ConfigHandler::SetConfig(input);

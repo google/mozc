@@ -125,6 +125,7 @@ cc_test_mozc(
         ":renderer_interface",
         ":renderer_server",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",

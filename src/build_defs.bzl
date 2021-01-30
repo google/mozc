@@ -42,6 +42,15 @@ MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
 
 MACOS_MIN_OS_VER = "10.12"
 
+## Qt paths
+QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
+QT_BIN_PATH = "/usr/bin/"
+
+## For macOS
+## QT_BASE_PATH should be a directory compiled with -developer_build option.
+# QT_BASE_PATH = "/tmp/qt"
+# QT_BIN_PATH = QT_BASE_PATH + "/bin/"
+
 def cc_library_mozc(deps = [], **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
@@ -137,13 +146,11 @@ register_extension_info(
 )
 
 def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], sdk_frameworks = [], **kwargs):
-    # objc_library's hdrs are somehow not exposed, so the library is defined as
-    # {name}_lib and wraps it by cc_library below.
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
-        deps = deps,
+        deps = deps + ["//:macro"],
         sdk_frameworks = sdk_frameworks,
         **kwargs
     )

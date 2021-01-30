@@ -362,7 +362,7 @@ class MockTypingModel : public mozc::composer::TypingModel {
 class DictionaryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     request_ = absl::make_unique<commands::Request>();
     config_ = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());

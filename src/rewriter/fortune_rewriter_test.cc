@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "converter/segments.h"
@@ -73,7 +74,7 @@ bool HasFortune(const Segments &segments) {
 class FortuneRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

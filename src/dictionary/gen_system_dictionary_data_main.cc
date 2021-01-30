@@ -95,18 +95,18 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string system_dictionary_input, reading_correction_input;
-  mozc::GetInputFileName(FLAGS_input, &system_dictionary_input,
+  mozc::GetInputFileName(mozc::GetFlag(FLAGS_input), &system_dictionary_input,
                          &reading_correction_input);
 
   // User POS manager data for build tools has no magic number.
   const char *kMagicNumber = "";
   mozc::DataManager data_manager;
   const mozc::DataManager::Status status =
-      data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
-                                                  kMagicNumber);
+      data_manager.InitUserPosManagerDataFromFile(
+          mozc::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
   CHECK_EQ(status, mozc::DataManager::Status::OK)
       << "Failed to initialize data manager from "
-      << FLAGS_user_pos_manager_data;
+      << mozc::GetFlag(FLAGS_user_pos_manager_data);
 
   const mozc::dictionary::POSMatcher pos_matcher(
       data_manager.GetPOSMatcherData());
@@ -118,8 +118,8 @@ int main(int argc, char **argv) {
   builder.BuildFromTokens(loader.tokens());
 
   std::unique_ptr<std::ostream> output_stream(new mozc::OutputFileStream(
-      FLAGS_output.c_str(), std::ios::out | std::ios::binary));
-  builder.WriteToStream(FLAGS_output, output_stream.get());
+      mozc::GetFlag(FLAGS_output).c_str(), std::ios::out | std::ios::binary));
+  builder.WriteToStream(mozc::GetFlag(FLAGS_output), output_stream.get());
 
   return 0;
 }

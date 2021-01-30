@@ -44,12 +44,13 @@
 #include "base/logging.h"
 #include "base/util.h"
 
-DEFINE_string(test_srcdir, "",
-              "A directory that contains the input data files for a test.");
+MOZC_FLAG(string, test_srcdir, "",
+          "A directory that contains the input data files for a test.");
 
-DEFINE_string(test_tmpdir, "", "Directory for all temporary testing files.");
+MOZC_FLAG(string, test_tmpdir, "",
+          "Directory for all temporary testing files.");
 
-DECLARE_string(program_invocation_name);
+MOZC_DECLARE_FLAG(string, program_invocation_name);
 
 namespace mozc {
 namespace {
@@ -143,11 +144,11 @@ string GetTestTmpdir() {
 }  // namespace
 
 void InitTestFlags() {
-  if (FLAGS_test_srcdir.empty()) {
-    FLAGS_test_srcdir = GetTestSrcdir();
+  if (mozc::GetFlag(FLAGS_test_srcdir).empty()) {
+    mozc::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
   }
-  if (FLAGS_test_tmpdir.empty()) {
-    FLAGS_test_tmpdir = GetTestTmpdir();
+  if (mozc::GetFlag(FLAGS_test_tmpdir).empty()) {
+    mozc::SetFlag(&FLAGS_test_tmpdir, GetTestTmpdir());
   }
 }
 

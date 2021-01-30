@@ -32,6 +32,7 @@
 #include <map>
 #include <string>
 
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "config/stats_config_util.h"
@@ -48,7 +49,7 @@ namespace usage_stats {
 class UsageStatsTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     EXPECT_TRUE(storage::Registry::Clear());
     mozc::config::StatsConfigUtil::SetHandler(&stats_config_util_);
   }

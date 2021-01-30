@@ -83,7 +83,7 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
   UserBoundaryHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 

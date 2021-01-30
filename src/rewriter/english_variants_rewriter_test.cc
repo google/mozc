@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
@@ -44,7 +45,7 @@ namespace mozc {
 class EnglishVariantsRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 
   bool GetRankFromValue(const Segment &segment, const std::string &value,

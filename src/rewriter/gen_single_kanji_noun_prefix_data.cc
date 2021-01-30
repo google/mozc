@@ -98,7 +98,8 @@ int main(int argc, char **argv) {
     token->cost = entry.rank;
     tokens[entry.key].emplace_back(std::move(token));
   }
-  mozc::SerializedDictionary::CompileToFiles(tokens, FLAGS_output_token_array,
-                                             FLAGS_output_string_array);
+  mozc::SerializedDictionary::CompileToFiles(
+      tokens, mozc::GetFlag(FLAGS_output_token_array),
+      mozc::GetFlag(FLAGS_output_string_array));
   return 0;
 }

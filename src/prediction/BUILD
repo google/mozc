@@ -117,6 +117,7 @@ cc_test_mozc(
         "//base:clock_mock",
         "//base:encryptor",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",

@@ -98,7 +98,7 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
 int Loop(std::istream *input) {
   mozc::client::Client client;
   if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(FLAGS_server_path);
+    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -176,8 +176,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!mozc::GetFlag(FLAGS_profile_dir).empty()) {
-    mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
-    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
+    mozc::FileUtil::CreateDirectory(mozc::GetFlag(FLAGS_profile_dir));
+    mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_profile_dir));
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
@@ -185,9 +185,10 @@ int main(int argc, char **argv) {
 
   if (!mozc::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
-    input_file = absl::make_unique<mozc::InputFileStream>(FLAGS_input.c_str());
+    input_file = absl::make_unique<mozc::InputFileStream>(
+        mozc::GetFlag(FLAGS_input).c_str());
     if (input_file->fail()) {
-      LOG(ERROR) << "File not opened: " << FLAGS_input;
+      LOG(ERROR) << "File not opened: " << mozc::GetFlag(FLAGS_input);
       return 1;
     }
     input = input_file.get();

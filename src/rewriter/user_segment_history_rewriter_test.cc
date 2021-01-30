@@ -35,6 +35,7 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
@@ -112,7 +113,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     ConfigHandler::GetDefaultConfig(&config_);
     for (int i = 0; i < config_.character_form_rules_size(); ++i) {
@@ -180,7 +181,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const std::string history_file =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "/segment.db");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "/segment.db");
   EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 

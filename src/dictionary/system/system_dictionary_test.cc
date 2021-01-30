@@ -37,8 +37,8 @@
 #include <utility>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/stl_util.h"
@@ -73,7 +73,8 @@ class SystemDictionaryTest : public ::testing::Test {
   SystemDictionaryTest()
       : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
         text_dict_(new TextDictionaryLoader(pos_matcher_)),
-        dic_fn_(FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc.dic")) {
+        dic_fn_(
+            FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
     const std::string dic_path = mozc::testing::GetSourceFileOrDie(
         {"data", "dictionary_oss", "dictionary00.txt"});
     text_dict_->LoadWithLineLimit(dic_path, "",

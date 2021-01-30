@@ -33,12 +33,12 @@
 
 #include "testing/base/public/gunit.h"
 
-DEFINE_string(test_string, "hogehoge", "test_string");
-DEFINE_int32(test_int32, 20, "test_int32");
-DEFINE_int64(test_int64, 29051773239673121LL, "test_int64");
-DEFINE_uint64(test_uint64, 84467440737095516LL, "test_uint64");
-DEFINE_bool(test_bool, false, "test_bool");
-DEFINE_double(test_double, 0.5, "test_double");
+MOZC_FLAG(string, test_string, "hogehoge", "test_string");
+MOZC_FLAG(int32, test_int32, 20, "test_int32");
+MOZC_FLAG(int64, test_int64, 29051773239673121LL, "test_int64");
+MOZC_FLAG(uint64, test_uint64, 84467440737095516LL, "test_uint64");
+MOZC_FLAG(bool, test_bool, false, "test_bool");
+MOZC_FLAG(double, test_double, 0.5, "test_double");
 
 namespace mozc {
 namespace {

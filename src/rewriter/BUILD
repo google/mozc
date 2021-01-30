@@ -60,6 +60,7 @@ cc_test_mozc(
     deps = [
         ":merger_rewriter",
         "//base",
+        "//base:flags",
         "//base:stl_util",
         "//base:system_util",
         "//config:config_handler",
@@ -106,6 +107,7 @@ cc_test_mozc(
     deps = [
         ":collocation_rewriter",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//config:config_handler",
@@ -160,6 +162,7 @@ cc_test_mozc(
         "//base:clock",
         "//base:clock_mock",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:number_util",
         "//base:system_util",
@@ -464,6 +467,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":version_rewriter",
+        "//base:flags",
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
@@ -510,6 +514,7 @@ cc_test_mozc(
     deps = [
         ":symbol_rewriter",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -642,6 +647,7 @@ cc_test_mozc(
     deps = [
         ":english_variants_rewriter",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//converter:segments",
         "//protocol:commands_proto",
@@ -677,6 +683,7 @@ cc_test_mozc(
     deps = [
         ":fortune_rewriter",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//converter:segments",
@@ -710,6 +717,7 @@ cc_test_mozc(
     deps = [
         ":dice_rewriter",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//converter:segments",
         "//request:conversion_request",
@@ -747,6 +755,7 @@ cc_test_mozc(
     deps = [
         ":calculator_rewriter",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//config:config_handler",
@@ -793,6 +802,7 @@ cc_test_mozc(
     deps = [
         ":unicode_rewriter",
         "//base",
+        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//base:util",
@@ -834,6 +844,7 @@ cc_test_mozc(
     deps = [
         ":user_dictionary_rewriter",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -1045,6 +1056,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":single_kanji_rewriter",
+        "//base:flags",
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
@@ -1110,6 +1122,7 @@ cc_test_mozc(
     deps = [
         ":focus_candidate_rewriter",
         "//base",
+        "//base:flags",
         "//base:number_util",
         "//base:system_util",
         "//config:config_handler",
@@ -1230,6 +1243,7 @@ cc_test_mozc(
     deps = [
         ":command_rewriter",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//config:config_handler",
         "//converter:segments",
@@ -1264,6 +1278,7 @@ cc_test_mozc(
     deps = [
         ":normalization_rewriter",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//converter:segments",
         "//request:conversion_request",
@@ -1352,6 +1367,7 @@ cc_test_mozc(
         ":rewriter_interface",
         ":usage_rewriter",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//config:config_handler",
         "//converter:segments",
@@ -1516,6 +1532,7 @@ cc_test_mozc(
         "rewriter",
         ":rewriter_interface",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//config:config_handler",
         "//converter:converter_mock",

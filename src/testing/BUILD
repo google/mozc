@@ -173,6 +173,7 @@ cc_library_mozc(
         ":googletest",
         "//base",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",

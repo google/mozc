@@ -60,7 +60,7 @@ int RunConfirmationDialog(int argc, char *argv[]) {
 
   mozc::gui::GuiUtil::InstallTranslator("confirmation_dialog");
 
-  if (FLAGS_confirmation_type != "log_out") {
+  if (mozc::GetFlag(FLAGS_confirmation_type) != "log_out") {
     if (mozc::gui::ConfirmationDialog::Show()) {
       return 0;  // Yes.
     }

@@ -35,6 +35,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -62,7 +63,7 @@ void SetUpMetaData(uint32 last_upload_time) {
 class UsageStatsUploaderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     EXPECT_TRUE(storage::Registry::Clear());
   }
 

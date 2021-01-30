@@ -82,36 +82,36 @@ void DeleyedMessageDialogHandler::EnableOkButton() {
 void ErrorMessageDialog::Show() {
   // defining all literal messages inside Show() method
   // for easy i18n/i10n
-  if (FLAGS_error_type == "server_timeout") {
+  if (mozc::GetFlag(FLAGS_error_type) == "server_timeout") {
     OnFatal(
         QObject::tr("Conversion engine is not responding. "
                     "Please restart this application."));
-  } else if (FLAGS_error_type == "server_broken_message") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "server_broken_message") {
     OnFatal(QObject::tr(
         "Connecting to an incompatible conversion engine. "
         "Please restart your computer to enable [ProductName]. "
         "If this problem persists, please uninstall [ProductName] "
         "and install it again."));
-  } else if (FLAGS_error_type == "server_version_mismatch") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "server_version_mismatch") {
     OnFatal(QObject::tr(
         "Conversion engine has been upgraded. "
         "Please restart this application to enable conversion engine. "
         "If the problem persists, please restart your computer."));
-  } else if (FLAGS_error_type == "server_shutdown") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "server_shutdown") {
     OnFatal(
         QObject::tr("Conversion engine is killed unexceptionally. "
                     "Restarting the engine..."));
-  } else if (FLAGS_error_type == "server_fatal") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "server_fatal") {
     OnFatal(
         QObject::tr("Cannot start conversion engine. "
                     "Please restart your computer."));
-  } else if (FLAGS_error_type == "renderer_version_mismatch") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "renderer_version_mismatch") {
     OnFatal(
         QObject::tr("Candidate window renderer has been upgraded. "
                     "Please restart this application to enable new candidate "
                     "window renderer. "
                     "If the problem persists, please restart your computer."));
-  } else if (FLAGS_error_type == "renderer_fatal") {
+  } else if (mozc::GetFlag(FLAGS_error_type) == "renderer_fatal") {
     OnFatal(
         QObject::tr("Cannot start candidate window renderer. "
                     "Please restart your computer."));

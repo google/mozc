@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "storage/storage_interface.h"
 #include "testing/base/public/googletest.h"
@@ -79,7 +80,8 @@ class TinyStorageTest : public testing::Test {
 
   static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return FileUtil::JoinPath(FLAGS_test_tmpdir, "TinyStorageTest_test.db");
+    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+                              "TinyStorageTest_test.db");
   }
 
  private:

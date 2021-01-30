@@ -66,7 +66,7 @@ void Convert() {
     const std::string kDummyStr = "__NO_DATA__";
     entries.push_back(kDummyStr + kSeparator + kDummyStr);
   } else {
-    InputFileStream ifs(FLAGS_suppression_data.c_str());
+    InputFileStream ifs(mozc::GetFlag(FLAGS_suppression_data).c_str());
     std::string line;
 
     while (!std::getline(ifs, line).fail()) {
@@ -83,10 +83,10 @@ void Convert() {
   std::ostream *ofs = &std::cout;
   if (!mozc::GetFlag(FLAGS_output).empty()) {
     if (mozc::GetFlag(FLAGS_binary_mode)) {
-      ofs = new OutputFileStream(FLAGS_output.c_str(),
+      ofs = new OutputFileStream(mozc::GetFlag(FLAGS_output).c_str(),
                                  std::ios::out | std::ios::binary);
     } else {
-      ofs = new OutputFileStream(FLAGS_output.c_str());
+      ofs = new OutputFileStream(mozc::GetFlag(FLAGS_output).c_str());
     }
   }
 
@@ -108,7 +108,7 @@ void Convert() {
 int main(int argc, char *argv[]) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  LOG(INFO) << FLAGS_suppression_data;
+  LOG(INFO) << mozc::GetFlag(FLAGS_suppression_data);
 
   mozc::Convert();
 

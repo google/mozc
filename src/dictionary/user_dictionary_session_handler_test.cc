@@ -35,6 +35,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
@@ -67,7 +68,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     FileUtil::Unlink(GetUserDictionaryFile());
 
     handler_ = absl::make_unique<UserDictionarySessionHandler>();
@@ -88,7 +89,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   static std::string GetUserDictionaryFile() {
-    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
+    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
   uint64 CreateSession() {

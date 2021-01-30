@@ -30,4 +30,5 @@
 
 exports_files([
     "mozc_server_info",
+    "mozc_tool_info",
 ])

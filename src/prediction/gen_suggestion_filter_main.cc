@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
   std::vector<uint64> words;
 
-  ReadWords(FLAGS_input, &words);
+  ReadWords(mozc::GetFlag(FLAGS_input), &words);
 
   LOG(INFO) << words.size() << " words found";
 
@@ -99,20 +99,20 @@ int main(int argc, char **argv) {
   char *buf = nullptr;
   size_t size = 0;
 
-  LOG(INFO) << "writing bloomfilter: " << FLAGS_output;
+  LOG(INFO) << "writing bloomfilter: " << mozc::GetFlag(FLAGS_output);
   filter->Write(&buf, &size);
 
   if (mozc::GetFlag(FLAGS_header)) {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str());
+    mozc::OutputFileStream ofs(mozc::GetFlag(FLAGS_output).c_str());
     mozc::CodeGenByteArrayOutputStream codegen_stream(
         &ofs, mozc::codegenstream::NOT_OWN_STREAM);
-    codegen_stream.OpenVarDef(FLAGS_name);
+    codegen_stream.OpenVarDef(mozc::GetFlag(FLAGS_name));
     codegen_stream.write(buf, size);
     codegen_stream.CloseVarDef();
   } else {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str(), std::ios::out |
-                                                         std::ios::trunc |
-                                                         std::ios::binary);
+    mozc::OutputFileStream ofs(
+        mozc::GetFlag(FLAGS_output).c_str(),
+        std::ios::out | std::ios::trunc | std::ios::binary);
     ofs.write(buf, size);
   }
 

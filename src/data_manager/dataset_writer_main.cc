@@ -30,9 +30,9 @@
 // Tool to pack multiple files into one file.
 //
 // Usage
-// $ ./path/to/artifacts/dataset_writer_main \
-//   --magic=\xNN\xNN\xNN \
-//   --output=/path/to/output \
+// $ ./path/to/artifacts/dataset_writer_main
+//   --magic=\xNN\xNN\xNN
+//   --output=/path/to/output
 //   [arg1, [arg2, ...]]
 //
 // Here, each argument has the following form:
@@ -61,8 +61,9 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string magic;
-  CHECK(mozc::Util::Unescape(FLAGS_magic, &magic))
-      << "magic number is not a proper hex-escaped string: " << FLAGS_magic;
+  CHECK(mozc::Util::Unescape(mozc::GetFlag(FLAGS_magic), &magic))
+      << "magic number is not a proper hex-escaped string: "
+      << mozc::GetFlag(FLAGS_magic);
 
   struct Input {
     Input(const std::string &n, int a, const std::string &f)
@@ -104,8 +105,9 @@ int main(int argc, char **argv) {
     writer.Finish(&output);
     output.close();
   }
-  CHECK(mozc::FileUtil::AtomicRename(tmpfile, FLAGS_output))
-      << "Failed to rename " << tmpfile << " to " << FLAGS_output;
+  CHECK(mozc::FileUtil::AtomicRename(tmpfile, mozc::GetFlag(FLAGS_output)))
+      << "Failed to rename " << tmpfile << " to "
+      << mozc::GetFlag(FLAGS_output);
 
   return 0;
 }

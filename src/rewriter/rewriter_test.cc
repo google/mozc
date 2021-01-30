@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
@@ -67,7 +68,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
 class RewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     converter_mock_ = absl::make_unique<ConverterMock>();
     const testing::MockDataManager data_manager;
     pos_group_ = absl::make_unique<PosGroup>(data_manager.GetPosGroupData());

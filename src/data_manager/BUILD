@@ -172,6 +172,7 @@ cc_test_mozc(
         ":dataset_writer",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:obfuscator_support",
         "//base:util",
         "//testing:gunit_main",

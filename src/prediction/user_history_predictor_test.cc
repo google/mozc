@@ -35,6 +35,7 @@
 
 #include "base/clock_mock.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/port.h"
@@ -206,7 +207,7 @@ bool FindCandidateByValue(const std::string &value, const Segments &segments) {
 class UserHistoryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     request_ = absl::make_unique<Request>();
     config_ = absl::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
@@ -2236,7 +2237,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Load().
   {
     const std::string filename =
-        FileUtil::JoinPath(FLAGS_test_tmpdir, "testload");
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testload");
     // Write directly to the file to keep old entries for testing.
     storage::EncryptedStringStorage file_storage(filename);
     ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
@@ -2255,7 +2256,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Save().
   {
     const std::string filename =
-        FileUtil::JoinPath(FLAGS_test_tmpdir, "testsave");
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testsave");
     UserHistoryStorage storage(filename);
     storage.GetProto() = history;
     ASSERT_TRUE(storage.Save());

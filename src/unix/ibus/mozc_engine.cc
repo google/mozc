@@ -221,7 +221,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
 #ifdef ENABLE_GTK_RENDERER
 CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
     ::mozc::renderer::RendererClient *renderer_client) {
-  if (!FLAGS_use_mozc_renderer) {
+  if (!mozc::GetFlag(FLAGS_use_mozc_renderer)) {
     return nullptr;
   }
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {

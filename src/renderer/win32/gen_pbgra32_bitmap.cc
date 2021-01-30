@@ -61,7 +61,7 @@ const uint32 kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
   std::wstring wide_src;
-  mozc::Util::UTF8ToWide(FLAGS_src, &wide_src);
+  mozc::Util::UTF8ToWide(mozc::GetFlag(FLAGS_src), &wide_src);
   std::unique_ptr<Gdiplus::Bitmap> image(
       Gdiplus::Bitmap::FromFile(wide_src.c_str()));
 
@@ -119,7 +119,8 @@ bool ConvertMain() {
   header.pixel_data_size = pixel_data_bytes;
 
   mozc::OutputFileStream output_file(
-      FLAGS_dest.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+      mozc::GetFlag(FLAGS_dest).c_str(),
+      std::ios::out | std::ios::binary | std::ios::trunc);
   if (!output_file.good()) {
     return false;
   }
@@ -144,11 +145,11 @@ bool ConvertMain() {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (FLAGS_src.empty()) {
+  if (mozc::GetFlag(FLAGS_src).empty()) {
     std::cout << "Specify --src option";
     return kErrorLevelFail;
   }
-  if (FLAGS_dest.empty()) {
+  if (mozc::GetFlag(FLAGS_dest).empty()) {
     std::cout << "Specify --dest option";
     return kErrorLevelFail;
   }

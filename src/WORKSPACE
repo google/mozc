@@ -1,6 +1,7 @@
 # An identifier for this repository.
 workspace(name = "mozc")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("//:build_defs.bzl", "QT_BASE_PATH")
 
 # This rule reffers $ANDROID_SDK_HOME
 android_sdk_repository(name = "androidsdk")
@@ -70,8 +71,8 @@ new_local_repository(
 new_local_repository(
     name = "io_qt",
     # This path should be updated per the environment.
-    path = "/usr/include/x86_64-linux-gnu/qt5",  # For Debian
-    build_file = "BUILD.qt"
+    path = QT_BASE_PATH,
+    build_file = "BUILD.qt",
 )
 
 # Python

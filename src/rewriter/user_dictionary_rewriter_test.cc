@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -84,7 +85,7 @@ class UserDictionaryRewriterTest : public testing::Test {
   ~UserDictionaryRewriterTest() override {}
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {}

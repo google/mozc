@@ -30,6 +30,7 @@
 #include "testing/base/public/mozctest.h"
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -40,9 +41,8 @@ namespace mozc {
 namespace testing {
 
 std::string GetSourcePath(const std::vector<absl::string_view> &components) {
-  std::vector<absl::string_view> abs_components = {
-      FLAGS_test_srcdir,
-  };
+  const std::string test_srcdir = mozc::GetFlag(FLAGS_test_srcdir);
+  std::vector<absl::string_view> abs_components = { test_srcdir };
 
   const char *workspace = std::getenv("TEST_WORKSPACE");
   if (workspace && workspace[0]) {
@@ -83,7 +83,7 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
 
 ScopedTmpUserProfileDirectory::ScopedTmpUserProfileDirectory()
     : original_dir_(SystemUtil::GetUserProfileDirectory()) {
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 }
 
 ScopedTmpUserProfileDirectory::~ScopedTmpUserProfileDirectory() {

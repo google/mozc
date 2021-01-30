@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 
   mozc::client::Client client;
   if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(FLAGS_server_path);
+    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";

@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -78,7 +79,7 @@ class UsageRewriterTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_ = absl::make_unique<testing::MockDataManager>();
