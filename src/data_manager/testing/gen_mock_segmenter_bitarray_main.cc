@@ -43,7 +43,8 @@ DEFINE_string(output_bitarray, "", "Segmenter bitarray");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
-      kLSize, kRSize, &IsBoundaryInternal, FLAGS_output_size_info,
-      FLAGS_output_ltable, FLAGS_output_rtable, FLAGS_output_bitarray);
+      kLSize, kRSize, &IsBoundaryInternal,
+      mozc::GetFlag(FLAGS_output_size_info), mozc::GetFlag(FLAGS_output_ltable),
+      mozc::GetFlag(FLAGS_output_rtable), mozc::GetFlag(FLAGS_output_bitarray));
   return 0;
 }

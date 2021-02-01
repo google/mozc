@@ -60,12 +60,9 @@
 #include "session/session_observer_handler.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-// Session watch dog is not aviable from android mozc and nacl mozc for now.
-// TODO(kkojima): Remove this guard after
-// enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 #include "usage_stats/usage_stats.h"
+#include "absl/memory/memory.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -117,10 +114,6 @@ bool IsApplicationAlive(const session::SessionInterface *session) {
                                    true);
   }
 #endif  // OS_WIN
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Currently the process is not available through android mozc and nacl mozc.
-  // TODO(kkojima): remove this guard after
-  // android version supports base/process.cc
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   return true;
 }
@@ -146,41 +139,39 @@ void SessionHandler::Init(
   last_create_session_time_ = 0;
   engine_ = std::move(engine);
   engine_builder_ = std::move(engine_builder);
-  observer_handler_.reset(new session::SessionObserverHandler());
-  stopwatch_.reset(new Stopwatch);
-  user_dictionary_session_handler_.reset(
-      new user_dictionary::UserDictionarySessionHandler);
-  table_manager_.reset(new composer::TableManager);
-  request_.reset(new commands::Request);
-  config_.reset(new config::Config);
+  observer_handler_ = absl::make_unique<session::SessionObserverHandler>();
+  stopwatch_ = absl::make_unique<Stopwatch>();
+  user_dictionary_session_handler_ =
+      absl::make_unique<user_dictionary::UserDictionarySessionHandler>();
+  table_manager_ = absl::make_unique<composer::TableManager>();
+  request_ = absl::make_unique<commands::Request>();
+  config_ = absl::make_unique<config::Config>();
 
-  if (FLAGS_restricted) {
+  if (mozc::GetFlag(FLAGS_restricted)) {
     VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
     // The typical case is Startup processes on Vista.
     // On Vista, StartUp processes are in Job for 60 seconds. In order
     // to launch new mozc_server inside sandbox, we set the timeout
     // to be 60sec. Client application hopefully re-launch mozc_server.
-    FLAGS_timeout = 60;
-    FLAGS_max_session_size = 8;
-    FLAGS_watch_dog_interval = 15;
-    FLAGS_last_create_session_timeout = 60;
-    FLAGS_last_command_timeout = 60;
+    mozc::SetFlag(&FLAGS_timeout, 60);
+    mozc::SetFlag(&FLAGS_max_session_size, 8);
+    mozc::SetFlag(&FLAGS_watch_dog_interval, 15);
+    mozc::SetFlag(&FLAGS_last_create_session_timeout, 60);
+    mozc::SetFlag(&FLAGS_last_command_timeout, 60);
   }
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  session_watch_dog_.reset(new SessionWatchDog(FLAGS_watch_dog_interval));
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Session watch dog is not aviable from android mozc and nacl mozc for now.
-  // TODO(kkojima): Remove this guard after
-  // enabling session watch dog for android.
+  session_watch_dog_ = absl::make_unique<SessionWatchDog>(
+      mozc::GetFlag(FLAGS_watch_dog_interval));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   config::ConfigHandler::GetConfig(config_.get());
 
   // allow [2..128] sessions
-  max_session_size_ = std::max(2, std::min(FLAGS_max_session_size, 128));
-  session_map_.reset(new SessionMap(max_session_size_));
+  max_session_size_ =
+      std::max(2, std::min(mozc::GetFlag(FLAGS_max_session_size), 128));
+  session_map_ = absl::make_unique<SessionMap>(max_session_size_);
 
   if (!engine_) {
     return;
@@ -202,10 +193,6 @@ SessionHandler::~SessionHandler() {
   if (session_watch_dog_->IsRunning()) {
     session_watch_dog_->Terminate();
   }
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Session watch dog is not aviable from android mozc and nacl mozc for now.
-  // TODO(kkojima): Remove this guard after
-  // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
 
@@ -218,9 +205,6 @@ bool SessionHandler::StartWatchDog() {
   }
   return session_watch_dog_->IsRunning();
 #else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Session watch dog is not aviable from android mozc and nacl mozc for now.
-  // TODO(kkojima): Remove this guard after
-  // enabling session watch dog for android.
   return false;
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 }
@@ -509,7 +493,8 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
   const int create_session_minimum_interval =
-      std::max(0, std::min(FLAGS_create_session_min_interval, 10));
+      std::max(0, std::min(mozc::GetFlag(FLAGS_create_session_min_interval),
+                           10));
 
   uint64 current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
@@ -620,20 +605,18 @@ bool SessionHandler::Cleanup(commands::Command *command) {
     LOG(WARNING) << "server went to suspend mode for " << suspend_time
                  << " sec";
   }
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Session watch dog is not aviable from android mozc and nacl mozc for now.
-  // TODO(kkojima): Remove this guard after
-  // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [1..600] sec. default: 300
   const uint64 create_session_timeout =
       suspend_time +
-      std::max(1, std::min(FLAGS_last_create_session_timeout, 600));
+      std::max(1, std::min(mozc::GetFlag(FLAGS_last_create_session_timeout),
+                           600));
 
   // allow [10..7200] sec. default 3600
   const uint64 last_command_timeout =
-      suspend_time + std::max(10, std::min(FLAGS_last_command_timeout, 7200));
+      suspend_time +
+      std::max(10, std::min(mozc::GetFlag(FLAGS_last_command_timeout), 7200));
 
   std::vector<SessionID> remove_ids;
   for (SessionElement *element =
@@ -666,9 +649,9 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   engine_->GetUserDataManager()->Sync();
 
   // timeout is enabled.
-  if (FLAGS_timeout > 0 && last_session_empty_time_ != 0 &&
+  if (mozc::GetFlag(FLAGS_timeout) > 0 && last_session_empty_time_ != 0 &&
       (current_time - last_session_empty_time_) >=
-          suspend_time + FLAGS_timeout) {
+          suspend_time + mozc::GetFlag(FLAGS_timeout)) {
     Shutdown(command);
   }
 

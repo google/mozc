@@ -39,6 +39,7 @@
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace composer {
@@ -79,8 +80,8 @@ size_t InsertCharacters(const std::string& input, size_t pos,
 class CompositionTest : public testing::Test {
  protected:
   void SetUp() override {
-    table_.reset(new Table);
-    composition_.reset(new Composition(table_.get()));
+    table_ = absl::make_unique<Table>();
+    composition_ = absl::make_unique<Composition>(table_.get());
     composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 

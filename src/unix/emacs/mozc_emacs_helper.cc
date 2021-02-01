@@ -125,7 +125,7 @@ void ProcessLoop() {
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (FLAGS_suppress_stderr) {
+  if (mozc::GetFlag(FLAGS_suppress_stderr)) {
 #ifdef OS_WIN
     const char path[] = "NUL";
 #else

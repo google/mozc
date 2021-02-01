@@ -39,10 +39,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "lru_storage",
     srcs = ["lru_storage.cc"],
@@ -59,6 +55,7 @@ cc_library_mozc(
         "//base:mozc_hash_set",
         "//base:port",
         "//base:util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -91,6 +88,7 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -111,6 +109,7 @@ cc_test_mozc(
         "//base:clock_mock",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -162,6 +161,7 @@ cc_test_mozc(
         ":tiny_storage",
         "//base",
         "//base:file_util",
+        "//base:flags",
         "//base:port",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
@@ -216,6 +216,7 @@ cc_test_mozc(
     deps = [
         ":registry",
         "//base",
+        "//base:flags",
         "//base:system_util",
         "//testing:gunit_main",
     ],
@@ -245,8 +246,10 @@ cc_test_mozc(
         ":encrypted_string_storage",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )

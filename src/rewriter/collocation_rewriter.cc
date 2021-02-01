@@ -44,6 +44,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -555,17 +556,17 @@ CollocationRewriter::CollocationRewriter(
   size_t size = 0;
 
   data_manager->GetCollocationData(&data, &size);
-  collocation_filter_.reset(new CollocationFilter(data, size));
+  collocation_filter_ = absl::make_unique<CollocationFilter>(data, size);
 
   data_manager->GetCollocationSuppressionData(&data, &size);
-  suppression_filter_.reset(new SuppressionFilter(data, size));
+  suppression_filter_ = absl::make_unique<SuppressionFilter>(data, size);
 }
 
 CollocationRewriter::~CollocationRewriter() {}
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  if (!FLAGS_use_collocation) {
+  if (!mozc::GetFlag(FLAGS_use_collocation)) {
     return false;
   }
   return RewriteCollocation(segments);

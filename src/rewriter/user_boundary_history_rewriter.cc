@@ -135,7 +135,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     return;
   }
 
-  if (storage_.get() == nullptr) {
+  if (storage_ == nullptr) {
     VLOG(2) << "storage is NULL";
     return;
   }
@@ -175,7 +175,7 @@ bool UserBoundaryHistoryRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  if (storage_.get() == nullptr) {
+  if (storage_ == nullptr) {
     VLOG(2) << "storage is NULL";
     return false;
   }
@@ -325,7 +325,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
 }
 
 void UserBoundaryHistoryRewriter::Clear() {
-  if (storage_.get() != nullptr) {
+  if (storage_ != nullptr) {
     VLOG(1) << "Clearing user segment data";
     storage_->Clear();
   }

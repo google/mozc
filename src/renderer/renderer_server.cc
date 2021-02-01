@@ -173,12 +173,14 @@ RendererServer::RendererServer()
       send_command_(new RendererServerSendCommand) {
   watch_dog_ = absl::make_unique<ParentApplicationWatchDog>(this);
   watch_dog_->StartWatchDog();
-  if (FLAGS_restricted) {
-    FLAGS_timeout =
-        std::min(FLAGS_timeout, 60);  // set 60sec with restricted mode
+  if (mozc::GetFlag(FLAGS_restricted)) {
+    mozc::SetFlag(&FLAGS_timeout,
+                  // set 60sec with restricted mode
+                  std::min(mozc::GetFlag(FLAGS_timeout), 60));
   }
 
-  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60, FLAGS_timeout));
+  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
+                                         mozc::GetFlag(FLAGS_timeout)));
   VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING

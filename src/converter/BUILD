@@ -42,19 +42,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-    tags = ["-disable_on_nacl_test"],
-)
-
-test_suite(
-    name = "nacl_tap_test",
-    tags = [
-        "-disable_on_nacl_tap_test",
-        "-disable_on_nacl_test",
-    ],
-)
-
 cc_library_mozc(
     name = "segments",
     srcs = [
@@ -277,6 +264,7 @@ cc_test_mozc(
         "//dictionary:suppression_dictionary",
         "//prediction:suggestion_filter",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -377,6 +365,7 @@ cc_library_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -560,8 +549,6 @@ cc_test_mozc(
     size = "medium",
     srcs = ["converter_regression_test.cc"],
     requires_full_emulation = False,
-    # Disable on NaCl TAP since GoogleDataManager is too large to build on ARM.
-    tags = ["disable_on_nacl_tap_test"],
     deps = [
         ":converter",
         ":converter_interface",
@@ -612,6 +599,7 @@ cc_test_mozc(
         "//base:flags",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -622,11 +610,9 @@ cc_binary_mozc(
     data = [
         "//data/dictionary:id.def",
         "//data/dictionary_android:id.def",
-        "//data/dictionary_chromeos:id.def",
         "//data/dictionary_oss:id.def",
         "//data/test/dictionary:id.def",
         "//data_manager/android:mozc.data",
-        "//data_manager/chromeos:zipped_data_chromeos",
         "//data_manager/google:mozc.data",
         "//data_manager/oss:mozc.data",
         "//data_manager/testing:mock_mozc.data",
@@ -758,6 +744,7 @@ cc_test_mozc(
         "//base",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

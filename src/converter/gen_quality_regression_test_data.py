@@ -50,12 +50,7 @@ def EscapeString(s):
   Returns:
     an escaped string.
   """
-  result = ''
-  for c in s:
-    hexstr = hex(ord(c))
-    # because hexstr contains '0x', remove the prefix and add our prefix
-    result += '\\x' + hexstr[2:]
-  return result
+  return ''.join([r'\x%02X' % c for c in s.encode('utf-8')])
 
 _DISABLED = 'false'
 _ENABLED = 'true'
@@ -79,7 +74,8 @@ def GetText(node):
 
 
 def ParseXML(file):
-  dom = xml.dom.minidom.parse(file)
+  contents = codecs.open(file, 'r', encoding='utf-8').read()
+  dom = xml.dom.minidom.parseString(contents)
   for issue in dom.getElementsByTagName('issue'):
     status = GetText(issue.getElementsByTagName('status'))
     enabled = (_DISABLED if status != 'Fixed' and status != 'Verified'
@@ -93,7 +89,7 @@ def ParseXML(file):
         fields.append(GetText(detail.getElementsByTagName(key)))
       if target:
         fields.append(target)
-      tsv_line = ('\t'.join(fields)).encode('utf-8')
+      tsv_line = '\t'.join(fields)
       yield (enabled, tsv_line)
 
 
@@ -115,8 +111,8 @@ def GenerateHeader(files):
     try:
       for enabled, line in ParseFile(file):
         print(' {%s, "%s"},' % (enabled, EscapeString(line)))
-    except:
-      print('cannot open %s' % file)
+    except Exception as e:  # pylint: disable=broad-except
+      print('cannot open %s: %s' % (file, e))
       sys.exit(1)
 
   print('  {false, nullptr},')

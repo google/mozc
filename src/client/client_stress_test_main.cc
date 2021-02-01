@@ -30,7 +30,6 @@
 #include <iostream>
 
 #include "client/client.h"
-#include "absl/flags/flag.h"
 
 #ifdef OS_WIN
 #include <windows.h>
@@ -50,6 +49,7 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "session/random_keyevents_generator.h"
+#include "absl/flags/flag.h"
 
 // TODO(taku)
 // 1. multi-thread testing
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 
   mozc::client::Client client;
   if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(FLAGS_server_path);
+    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -80,22 +80,22 @@ int main(int argc, char **argv) {
   mozc::commands::RendererCommand renderer_command;
 
   if (mozc::GetFlag(FLAGS_test_renderer)) {
-#if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id(
         ::GetCurrentThreadId());
 #endif  // OS_WIN
+#if defined(OS_WIN) || defined(__APPLE__)
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
+    renderer_client = absl::make_unique<mozc::renderer::RendererClient>();
+    CHECK(renderer_client->Activate());
 #else
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
 #endif  // OS_WIN || __APPLE__
-    renderer_client.reset(new mozc::renderer::RendererClient);
-    CHECK(renderer_client->Activate());
   }
 
   std::vector<mozc::commands::KeyEvent> keys;

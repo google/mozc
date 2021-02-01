@@ -28,13 +28,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# cc_(library|binary|test) wrappers to add base:macro dependency.
-# base:macro declares defines attribute for Android and CrOS (NaCl)
-# so required macros are defined by depending on it.
+# cc_(library|binary|test) wrappers to add :macro dependency.
+# :macro defines attributes for each platforms so required macros are defined by
+# depending on it.
 
 load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
+
+BRANDING = "Mozc"
+
+MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
+
+MACOS_MIN_OS_VER = "10.12"
+
+## Qt paths
+QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
+QT_BIN_PATH = "/usr/bin/"
+
+## For macOS
+## QT_BASE_PATH should be a directory compiled with -developer_build option.
+# QT_BASE_PATH = "/tmp/qt"
+# QT_BIN_PATH = QT_BASE_PATH + "/bin/"
 
 def cc_library_mozc(deps = [], **kwargs):
     """
@@ -131,21 +146,12 @@ register_extension_info(
 )
 
 def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], sdk_frameworks = [], **kwargs):
-    # objc_library's hdrs are somehow not exposed, so the library is defined as
-    # {name}_lib and wraps it by cc_library below.
     native.objc_library(
-        name = name + "_lib",
+        name = name,
         srcs = srcs,
         hdrs = hdrs,
-        deps = deps,
+        deps = deps + ["//:macro"],
         sdk_frameworks = sdk_frameworks,
-        **kwargs
-    )
-
-    cc_library_mozc(
-        name = name,
-        hdrs = hdrs,  # Export headers.
-        deps = [":" + name + "_lib"],
         **kwargs
     )
 
@@ -161,30 +167,34 @@ def select_mozc(
         oss = None,
         android = None,
         ios = None,
-        nacl = None,
+        chromiumos = None,
         linux = None,
+        macos = None,
         oss_android = None,
         oss_linux = None,
+        oss_macos = None,
         wasm = None):
     """select wrapper for target os selection.
 
     The priority of value checking:
       android: android > client > default
-      ios,nacl,wasm,linux: same with android.
+      ios,chromiumos,wasm,linux: same with android.
       oss_linux: oss_linux > oss > linux > client > default
 
     Args:
       default: default fallback value.
-      client: default value for android, ios, nacl, wasm and oss_linux.
+      client: default value for android, ios, chromiumos, wasm and oss_linux.
         If client is not specified, default is used.
       oss: default value for OSS build.
         If oss or specific platform is not specified, client is used.
       android: value for Android build.
       ios: value for iOS build.
-      nacl: value for NaCl build.
+      chromiumos: value for ChromeOS build.
       linux: value for Linux build.
+      macos: value for Linux build.
       oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
+      oss_macos: value for OSS macOS build.
       wasm: value for wasm build.
 
     Returns:
@@ -193,10 +203,12 @@ def select_mozc(
     return select({
         "//tools/cc_target_os:android": _get_value([android, client, default]),
         "//tools/cc_target_os:apple": _get_value([ios, client, default]),
-        "//tools/cc_target_os:nacl": _get_value([nacl, client, default]),
+        "//tools/cc_target_os:chromiumos": _get_value([chromiumos, client, default]),
         "//tools/cc_target_os:wasm": _get_value([wasm, client, default]),
+        "//tools/cc_target_os:darwin": _get_value([macos, ios, client, default]),
         "//tools/cc_target_os:linux": _get_value([linux, client, default]),
         "//tools/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
         "//tools/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
+        "//tools/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
         "//conditions:default": default,
     })

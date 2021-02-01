@@ -127,10 +127,11 @@ class ComposerTest : public ::testing::Test {
   ~ComposerTest() override = default;
 
   void SetUp() override {
-    table_.reset(new Table);
-    config_.reset(new Config);
-    request_.reset(new Request);
-    composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
+    table_ = absl::make_unique<Table>();
+    config_ = absl::make_unique<Config>();
+    request_ = absl::make_unique<Request>();
+    composer_ = absl::make_unique<Composer>(table_.get(), request_.get(),
+                                            config_.get());
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -897,7 +898,8 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
+  composer_ =
+      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {
     // "a" → "あ" (Hiragana)
@@ -1337,7 +1339,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
     EXPECT_EQ(transliteration::HIRAGANA, composer_->GetInputMode());
   }
 
-  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
+  composer_ =
+      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1402,7 +1405,8 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   config_->set_shift_key_mode_switch(Config::OFF);
-  composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
+  composer_ =
+      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -2806,19 +2810,20 @@ class MockTypingModel : public TypingModel {
 class TypingCorrectionTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    config_.reset(new Config);
+    config_ = absl::make_unique<Config>();
     ConfigHandler::GetDefaultConfig(config_.get());
     config_->set_use_typing_correction(true);
 
-    table_.reset(new Table);
+    table_ = absl::make_unique<Table>();
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
 
-    request_.reset(new Request);
+    request_ = absl::make_unique<Request>();
     request_->set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    composer_.reset(new Composer(table_.get(), request_.get(), config_.get()));
+    composer_ = absl::make_unique<Composer>(table_.get(), request_.get(),
+                                            config_.get());
 
-    table_->typing_model_.reset(new MockTypingModel());
+    table_->typing_model_ = absl::make_unique<MockTypingModel>();
   }
 
   static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {

@@ -199,16 +199,6 @@ void PThreadCancel(pthread_t thread_id) {
   }
 }
 
-#elif defined(OS_NACL)
-
-void InitPThreadCancel() {
-  // Nothing is required.
-}
-
-void PThreadCancel(pthread_t thread_id) {
-  LOG(ERROR) << "In NaCl we have no way to cancel a thread.";
-}
-
 #else
 
 void InitPThreadCancel() {
@@ -217,7 +207,7 @@ void InitPThreadCancel() {
 
 void PThreadCancel(pthread_t thread_id) { pthread_cancel(thread_id); }
 
-#endif  // OS_ANDROID or OS_NACL or others
+#endif  // OS_ANDROID or others
 
 void PThreadCleanupRoutine(void *ptr) {
   auto *is_running = static_cast<std::atomic<bool> *>(ptr);

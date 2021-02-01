@@ -55,10 +55,10 @@ using std::string;
 
 #ifdef OS_LINUX
 // TODO(matsuzakit): Remove following guard.
-// Currently OS_LINUX and (OS_ANDROID or OS_NACL) are defined at the same time.
-#if !defined(OS_ANDROID) && !defined(OS_NACL)
+// Currently OS_LINUX and OS_ANDROID are defined at the same time.
+#if !defined(OS_ANDROID)
 #define MOZC_OS_DEFINED
-#endif  // !OS_ANDROID && !OS_NACL
+#endif  // !OS_ANDROID
 #endif  // OS_LINUX
 
 #ifdef OS_IOS

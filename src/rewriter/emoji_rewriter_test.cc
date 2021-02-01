@@ -49,6 +49,7 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -220,8 +221,8 @@ class EmojiRewriterTest : public ::testing::Test {
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
-    rewriter_.reset(new EmojiRewriter(test_data_manager_));
-    full_data_rewriter_.reset(new EmojiRewriter(mock_data_manager_));
+    rewriter_ = absl::make_unique<EmojiRewriter>(test_data_manager_);
+    full_data_rewriter_ = absl::make_unique<EmojiRewriter>(mock_data_manager_);
   }
 
   void TearDown() override {

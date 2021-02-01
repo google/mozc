@@ -38,6 +38,7 @@
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -136,7 +137,8 @@ class LRUStorageTest : public ::testing::Test {
 
   static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return FileUtil::JoinPath(FLAGS_test_tmpdir, "LRUStorageTest_test.db");
+    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+                              "LRUStorageTest_test.db");
   }
 
  private:

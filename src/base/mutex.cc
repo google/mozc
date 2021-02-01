@@ -41,7 +41,7 @@
 
 #if defined(OS_WIN)
 // We do not use pthread on Windows
-#elif defined(OS_NACL) || defined(OS_WASM)
+#elif defined(OS_WASM)
 // TODO(team): Consider to use glibc rwlock.
 #else
 #define MOZC_PTHREAD_HAS_READER_WRITER_LOCK
@@ -150,7 +150,7 @@ Mutex::Mutex() {
   pthread_mutexattr_init(&attr);
 #if defined(__APPLE__) || defined(OS_WASM)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-#elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#elif defined(OS_LINUX) || defined(OS_ANDROID)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
 #else
 #error "This platform is not supported."

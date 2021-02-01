@@ -48,45 +48,6 @@ exports_files([
     "util.h",
 ])
 
-test_suite(
-    name = "nacl_test",
-    tests = [
-        ":bitarray_test",
-        ":clock_mock_test",
-        ":clock_test",
-        ":cpu_stats_test",
-        ":embedded_file_test",
-        ":flags_test",
-        ":hash_test",
-        ":iterator_adapter_test",
-        ":logging_test",
-        ":mutex_test",
-        ":number_util_test",
-        ":obfuscator_support_test",
-        ":scheduler_stub_test",
-        ":scheduler_test",
-        ":serialized_string_array_test",
-        ":singleton_test",
-        ":stl_util_test",
-        ":stopwatch_test",
-        ":system_util_test",
-        ":text_normalizer_test",
-        ":thread_test",
-        ":trie_test",
-        ":unnamed_event_test",
-        ":url_test",
-        ":util_test",
-        ":version_test",
-        # Disabled tests due to file IO error.
-        # ":config_file_stream_test",
-        # ":encryptor_test",
-        # ":file_util_test",
-        # ":mmap_test",
-        # ":multifile_test",
-        # ":process_mutex_test",
-    ],
-)
-
 # Test suite needs to have exact test names,
 # because android tests are tagged "manual".
 test_suite(
@@ -182,53 +143,42 @@ cc_test_mozc(
     ],
 )
 
-INIT_MOZC_BUILDTOOL_DEPS = [
-    ":file_util",
-    ":flags",
-    ":logging",
-]
-
-INIT_MOZC_APP_BUILD_DEPS = INIT_MOZC_BUILDTOOL_DEPS + [
-    ":system_util",
-]
-
 cc_library_mozc(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
     copts = ["-DMOZC_BUILDTOOL_BUILD"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = select_mozc(
-        client = INIT_MOZC_BUILDTOOL_DEPS,
-        default = ["//base"],
-    ) + [":system_util"],
+        client = [
+            ":file_util",
+            ":flags",
+            ":logging",
+        ],
+        default = [
+            "//base",
+            ":flags",
+        ],
+    ),
 )
 
 cc_library_mozc(
     name = "init_mozc",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = select_mozc(
-        client = INIT_MOZC_APP_BUILD_DEPS,
-        default = ["//base"],
-    ),
-)
-
-cc_library_mozc(
-    name = "nacl_linkopts",
-    linkopts = select({
-        "//tools/cc_target_os:nacl": [
-            "-lppapi",
-            "-lppapi_cpp",
-        ],
-        "//conditions:default": [],
-    }),
     visibility = ["//:__subpackages__"],
+    deps = select_mozc(
+        client = [
+            ":file_util",
+            ":flags",
+            ":logging",
+            ":system_util",
+        ],
+        default = [
+            "//base",
+            ":flags",
+        ],
+    ),
 )
 
 cc_library_mozc(
@@ -240,11 +190,6 @@ cc_library_mozc(
             "//base:port",
         ],
         linux = ["@com_google_absl//absl/base:core_headers"],
-        nacl = [
-            # TODO(hsumita): Move :nacl_linkopts to more suitable position.
-            ":nacl_linkopts",
-            "//base:base",
-        ],
         oss = ["@com_google_absl//absl/base:core_headers"],
     ),
 )
@@ -308,9 +253,7 @@ cc_library_mozc(
     name = "codegen_bytearray_stream",
     srcs = ["codegen_bytearray_stream.cc"],
     hdrs = ["codegen_bytearray_stream.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":port",
     ],
@@ -327,6 +270,7 @@ cc_test_mozc(
         ":codegen_bytearray_stream",
         ":port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -361,9 +305,7 @@ cc_library_mozc(
     name = "thread",
     srcs = ["thread.cc"],
     hdrs = ["thread.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":logging",
         ":port",
@@ -415,9 +357,7 @@ cc_test_mozc(
 cc_library_mozc(
     name = "iterator_adapter",
     hdrs = ["iterator_adapter.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
 )
 
 cc_test_mozc(
@@ -596,9 +536,7 @@ cc_library_mozc(
     linkopts = select_mozc(
         linux = ["-pthread"],
     ),
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":port",
         ":win_util",
@@ -628,9 +566,7 @@ cc_library_mozc(
     name = "file_stream",
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
 )
 
 cc_binary_mozc(
@@ -651,9 +587,7 @@ cc_library_mozc(
     name = "number_util",
     srcs = ["number_util.cc"],
     hdrs = ["number_util.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":double_array_def",
         ":japanese_util_rule",
@@ -787,16 +721,7 @@ cc_library_mozc(
         ":port",
         ":scoped_handle",
         ":util",
-    ] + select(
-        {
-            "//tools/cc_target_os:nacl": [
-                ":mutex",
-                ":file_stream",
-                "@com_google_absl//absl/base",
-            ],
-            "//conditions:default": [],
-        },
-    ),
+    ],
 )
 
 cc_test_mozc(
@@ -874,6 +799,7 @@ cc_test_mozc(
     deps = [
         ":file_stream",
         ":file_util",
+        ":flags",
         ":logging",
         ":number_util",
         ":util",
@@ -945,6 +871,18 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/strings",
+    ] + select_mozc(
+        macos = ["mac_process"],
+    ),
+)
+
+objc_library_mozc(
+    name = "mac_process",
+    srcs = select_mozc(macos = ["mac_process.mm"]),
+    hdrs = select_mozc(macos = ["mac_process.h"]),
+    deps = [
+        ":mac_util",
+        ":util",
     ],
 )
 
@@ -984,6 +922,7 @@ cc_test_mozc(
     deps = [
         "logging",
         ":file_util",
+        ":flags",
         ":process_mutex",
         ":system_util",
         ":util",
@@ -1074,6 +1013,7 @@ cc_test_mozc(
     deps = [
         ":config_file_stream",
         ":file_util",
+        ":flags",
         ":system_util",
         "//testing:gunit_main",
     ],
@@ -1082,10 +1022,11 @@ cc_test_mozc(
 TARGET_PLATFORM = select({
     "//tools/cc_target_os:oss_android": "Android",
     "//tools/cc_target_os:android": "Android",
-    "//tools/cc_target_os:nacl": "NaCl",
+    "//tools/cc_target_os:chromiumos": "ChromeOS",
     "//tools/cc_target_os:wasm": "Wasm",
     "//tools/cc_target_os:linux": "Linux",
     "//tools/cc_target_os:oss_linux": "Linux",
+    "//tools/cc_target_os:oss_macos": "Mac",
 })
 
 genrule(
@@ -1225,6 +1166,7 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
+        ":flags",
         ":system_util",
         ":util",
         "//testing:gunit_main",
@@ -1348,6 +1290,7 @@ cc_binary_mozc(
         ":port",
         ":thread",
         ":util",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1372,6 +1315,7 @@ cc_test_mozc(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1416,14 +1360,13 @@ cc_library_mozc(
     name = "multifile",
     srcs = ["multifile.cc"],
     hdrs = ["multifile.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":file_stream",
         ":logging",
         ":port",
         ":util",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1480,8 +1423,23 @@ objc_library_mozc(
         ":logging",
         ":port",
         ":singleton",
-        ":util",
+        "@com_google_absl//absl/strings",
     ],
+)
+
+# Only for macOS.
+cc_binary_mozc(
+    name = "mac_util_main",
+    srcs = [
+        "mac_util.h",
+        "mac_util_main.cc",
+    ],
+    deps = [
+        ":init_mozc",
+        ":flags",
+        ":util",
+        "@com_google_absl//absl/strings",
+    ] + select_mozc(ios = [":mac_util"]),
 )
 
 cc_library_mozc(

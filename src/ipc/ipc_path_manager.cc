@@ -29,11 +29,12 @@
 
 #include "ipc/ipc_path_manager.h"
 
+#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
-#if defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_NACL
+#endif  // OS_ANDROID || OS_WASM
 
 #include <errno.h>
 
@@ -208,7 +209,7 @@ bool IPCPathManager::SavePathName() {
     return true;
   }
 
-  path_mutex_.reset(new ProcessMutex("ipc"));
+  path_mutex_ = absl::make_unique<ProcessMutex>("ipc");
 
   path_mutex_->set_lock_filename(GetIPCKeyFileName(name_));
 

@@ -34,6 +34,7 @@
 #endif  // OS_WIN
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
@@ -60,7 +61,7 @@ class UserDictionarySessionTest : public ::testing::Test {
  protected:
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     FileUtil::Unlink(GetUserDictionaryFile());
   }
 
@@ -71,9 +72,9 @@ class UserDictionarySessionTest : public ::testing::Test {
 
   static std::string GetUserDictionaryFile() {
 #ifndef OS_WIN
-    chmod(FLAGS_test_tmpdir.c_str(), 0777);
+    chmod(mozc::GetFlag(FLAGS_test_tmpdir).c_str(), 0777);
 #endif  // OS_WIN
-    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
+    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
   void ResetEntry(const std::string &key, const std::string &value,

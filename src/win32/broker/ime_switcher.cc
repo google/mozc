@@ -144,7 +144,7 @@ int RunSetDefaultWin8() {
     return kErrorLevelGeneralError;
   }
 
-  if (FLAGS_set_default_do_not_ask_again) {
+  if (mozc::GetFlag(FLAGS_set_default_do_not_ask_again)) {
     if (!ClearCheckDefault()) {
       // Notify the error to user but never treat this as an error.
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
@@ -183,7 +183,7 @@ int RunSetDefault(int argc, char *argv[]) {
     return kErrorLevelGeneralError;
   }
 
-  if (FLAGS_set_default_do_not_ask_again) {
+  if (mozc::GetFlag(FLAGS_set_default_do_not_ask_again)) {
     if (!ClearCheckDefault()) {
       // Notify the error to user but never treat this as an error.
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);

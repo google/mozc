@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -86,7 +87,7 @@ class UnicodeRewriterTest : public ::testing::Test {
   ~UnicodeRewriterTest() override {}
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     engine_.reset(MockDataEngineFactory::Create());
   }
 

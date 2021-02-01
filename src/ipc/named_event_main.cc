@@ -44,23 +44,24 @@ DEFINE_string(name, "named_event_test", "name for named event");
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (FLAGS_notifier) {
-    mozc::NamedEventNotifier notifier(FLAGS_name.c_str());
+  if (mozc::GetFlag(FLAGS_notifier)) {
+    mozc::NamedEventNotifier notifier(mozc::GetFlag(FLAGS_name).c_str());
     CHECK(notifier.IsAvailable()) << "NamedEventNotifier is not available";
 
     notifier.Notify();
     LOG(INFO) << "Notification has been sent";
 
-  } else if (FLAGS_listener) {
-    mozc::NamedEventListener listener(FLAGS_name.c_str());
+  } else if (mozc::GetFlag(FLAGS_listener)) {
+    mozc::NamedEventListener listener(mozc::GetFlag(FLAGS_name).c_str());
     CHECK(listener.IsAvailable()) << "NamedEventListener is not available";
 
     LOG_IF(INFO, listener.IsOwner()) << "This instance owns event handle";
 
-    LOG(INFO) << "Waiting event " << FLAGS_name;
-    if (FLAGS_pid != -1) {
-      switch (listener.WaitEventOrProcess(FLAGS_timeout,
-                                          static_cast<size_t>(FLAGS_pid))) {
+    LOG(INFO) << "Waiting event " << mozc::GetFlag(FLAGS_name);
+    if (mozc::GetFlag(FLAGS_pid) != -1) {
+      switch (listener.WaitEventOrProcess(
+          mozc::GetFlag(FLAGS_timeout),
+          static_cast<size_t>(mozc::GetFlag(FLAGS_pid)))) {
         case mozc::NamedEventListener::TIMEOUT:
           LOG(INFO) << "timeout";
           break;
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
           break;
       }
     } else {
-      if (listener.Wait(FLAGS_timeout)) {
+      if (listener.Wait(mozc::GetFlag(FLAGS_timeout))) {
         LOG(INFO) << "Event comes";
       }
     }

@@ -45,9 +45,9 @@ int main(int argc, char **argv) {
 
   mozc::RunLevel::RequestType type = mozc::RunLevel::SERVER;
 
-  if (FLAGS_client) {
+  if (mozc::GetFlag(FLAGS_client)) {
     type = mozc::RunLevel::CLIENT;
-  } else if (FLAGS_server) {
+  } else if (mozc::GetFlag(FLAGS_server)) {
     type = mozc::RunLevel::SERVER;
   }
 

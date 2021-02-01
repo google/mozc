@@ -53,7 +53,7 @@ bool ConfirmationDialog::Show() {
       QMessageBox::Yes | QMessageBox::No, nullptr,
       Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint | Qt::WindowStaysOnTopHint);
 
-  if (FLAGS_confirmation_type == "update") {
+  if (mozc::GetFlag(FLAGS_confirmation_type) == "update") {
     message_box.setText(
         QObject::tr("[ProductName] has been updated.  "
                     "Would you like to activate the new version now?  "
@@ -67,7 +67,7 @@ bool ConfirmationDialog::Show() {
     if (no_button != nullptr) {
       no_button->setText(QObject::tr("Wait until logout"));
     }
-  } else if (FLAGS_confirmation_type == "log_out") {
+  } else if (mozc::GetFlag(FLAGS_confirmation_type) == "log_out") {
     message_box.setText(
         QObject::tr("[ProductName] has been updated.  "
                     "Please log out and back in to enable the new version."));

@@ -70,14 +70,15 @@ using mozc::storage::ExistenceFilter;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((FLAGS_input.empty() || FLAGS_output.empty()) && argc > 2) {
-    FLAGS_input = argv[1];
-    FLAGS_output = argv[2];
+  if ((mozc::GetFlag(FLAGS_input).empty() ||
+       mozc::GetFlag(FLAGS_output).empty()) && argc > 2) {
+    mozc::SetFlag(&FLAGS_input, argv[1]);
+    mozc::SetFlag(&FLAGS_output, argv[2]);
   }
 
   std::vector<uint64> words;
 
-  ReadWords(FLAGS_input, &words);
+  ReadWords(mozc::GetFlag(FLAGS_input), &words);
 
   LOG(INFO) << words.size() << " words found";
 
@@ -98,20 +99,20 @@ int main(int argc, char **argv) {
   char *buf = nullptr;
   size_t size = 0;
 
-  LOG(INFO) << "writing bloomfilter: " << FLAGS_output;
+  LOG(INFO) << "writing bloomfilter: " << mozc::GetFlag(FLAGS_output);
   filter->Write(&buf, &size);
 
-  if (FLAGS_header) {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str());
+  if (mozc::GetFlag(FLAGS_header)) {
+    mozc::OutputFileStream ofs(mozc::GetFlag(FLAGS_output).c_str());
     mozc::CodeGenByteArrayOutputStream codegen_stream(
         &ofs, mozc::codegenstream::NOT_OWN_STREAM);
-    codegen_stream.OpenVarDef(FLAGS_name);
+    codegen_stream.OpenVarDef(mozc::GetFlag(FLAGS_name));
     codegen_stream.write(buf, size);
     codegen_stream.CloseVarDef();
   } else {
-    mozc::OutputFileStream ofs(FLAGS_output.c_str(), std::ios::out |
-                                                         std::ios::trunc |
-                                                         std::ios::binary);
+    mozc::OutputFileStream ofs(
+        mozc::GetFlag(FLAGS_output).c_str(),
+        std::ios::out | std::ios::trunc | std::ios::binary);
     ofs.write(buf, size);
   }
 

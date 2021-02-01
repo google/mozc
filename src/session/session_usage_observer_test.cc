@@ -34,6 +34,7 @@
 
 #include "base/clock.h"
 #include "base/clock_mock.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/scheduler.h"
 #include "base/scheduler_stub.h"
@@ -47,6 +48,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 
 using mozc::usage_stats::Stats;
 using mozc::usage_stats::UsageStats;
@@ -57,15 +59,15 @@ namespace session {
 class SessionUsageObserverTest : public testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     UsageStats::ClearAllStatsForTest();
 
     Clock::SetClockForUnitTest(nullptr);
 
-    scheduler_stub_.reset(new SchedulerStub);
+    scheduler_stub_ = absl::make_unique<SchedulerStub>();
     Scheduler::SetSchedulerHandler(scheduler_stub_.get());
 
-    stats_config_util_mock_.reset(new config::StatsConfigUtilMock);
+    stats_config_util_mock_ = absl::make_unique<config::StatsConfigUtilMock>();
     config::StatsConfigUtil::SetHandler(stats_config_util_mock_.get());
   }
 

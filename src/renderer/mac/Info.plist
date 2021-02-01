@@ -11,7 +11,7 @@
   <key>CFBundleIconFile</key>
   <string>product_icon.icns</string>
   <key>CFBundleIdentifier</key>
-  <string>${DOMAIN_SUFFIX}.inputmethod.Japanese.Renderer</string>
+  <string>${DOMAIN_PREFIX}.inputmethod.Japanese.Renderer</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>

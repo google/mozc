@@ -1,3 +1,5 @@
+load("@build_bazel_rules_apple//apple:apple.bzl",
+     "apple_dynamic_framework_import")
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -15,4 +17,61 @@ cc_library(
         "-lQt5Gui",
         "-lQt5Widgets",
     ],
+)
+
+cc_library(
+    name = "qt_mac",
+    hdrs = glob(
+        include = [
+            "include/QtCore/**",
+            "include/QtGui/**",
+            "include/QtWidgets/**",
+            "src/corelib/**",
+            "src/gui/**",
+            "src/widgets/**",
+        ],
+        exclude = [
+            "**/.obj/**",
+        ],
+    ),
+    includes = [
+      "include",
+    ],
+)
+
+# Versions/5/QtCore and QtCore are same and redudant, it should be merged.
+# Versions/5/QtCore is actually used by the binary (see: otool -l).
+# QtCore is necessary for build. (see: imported_dynamic_framework_processor.py).
+
+apple_dynamic_framework_import(
+    name = "QtCore_mac",
+    framework_imports = glob(
+        include = [
+            "lib/QtCore.framework/Versions/5/QtCore",
+            "lib/QtCore.framework/QtCore",
+            "lib/QtCore.framework/Resoures/**",
+        ],
+    ),
+)
+
+apple_dynamic_framework_import(
+    name = "QtGui_mac",
+    framework_imports = glob(
+        include = [
+          "lib/QtGui.framework/Versions/5/QtGui",
+          "lib/QtGui.framework/QtGui",
+          "lib/QtGui.framework/Resoures/**",
+        ],
+    ),
+)
+
+apple_dynamic_framework_import(
+    name = "QtWidgets_mac",
+    framework_imports = glob(
+        include = [
+          "lib/QtWidgets.framework/Versions/5/QtWidgets",
+          "lib/QtWidgets.framework/QtWidgets",
+          "lib/QtWidgets.framework/Resoures/**",
+        ],
+    ),
 )

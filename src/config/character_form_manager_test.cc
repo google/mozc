@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
@@ -44,7 +45,7 @@ class CharacterFormManagerTest : public ::testing::Test {
  public:
   void SetUp() override {
     // set default user profile directory
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     CharacterFormManager *manager =
         CharacterFormManager::GetCharacterFormManager();
     manager->SetDefaultRule();

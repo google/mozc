@@ -66,13 +66,13 @@ int main(int argc, char *argv[]) {
 
   int result = 0;
 #ifdef OS_WIN
-  if (FLAGS_mode == "register_ime") {
+  if (mozc::GetFlag(FLAGS_mode) == "register_ime") {
     result = mozc::win32::RunRegisterIME(argc, argv);
-  } else if (FLAGS_mode == "set_default") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "set_default") {
     result = mozc::win32::RunSetDefault(argc, argv);
-  } else if (FLAGS_mode == "unregister_ime") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "unregister_ime") {
     result = mozc::win32::RunUnregisterIME(argc, argv);
-  } else if (FLAGS_mode == "prelaunch_processes") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
 #endif  // OS_WIN

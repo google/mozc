@@ -202,30 +202,33 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((FLAGS_input.empty() || FLAGS_sorting_table.empty() ||
-       FLAGS_ordering_rule.empty()) &&
+  if ((mozc::GetFlag(FLAGS_input).empty() ||
+       mozc::GetFlag(FLAGS_sorting_table).empty() ||
+       mozc::GetFlag(FLAGS_ordering_rule).empty()) &&
       argc > 3) {
-    FLAGS_input = argv[1];
-    FLAGS_sorting_table = argv[2];
-    FLAGS_ordering_rule = argv[3];
+    mozc::SetFlag(&FLAGS_input, argv[1]);
+    mozc::SetFlag(&FLAGS_sorting_table, argv[2]);
+    mozc::SetFlag(&FLAGS_ordering_rule, argv[3]);
   }
 
-  const std::string tmp_text_file = FLAGS_output_token_array + ".txt";
+  const std::string tmp_text_file =
+      mozc::GetFlag(FLAGS_output_token_array) + ".txt";
 
   // User pos manager data for build tools has no magic number.
   const char *kMagciNumber = "";
   mozc::DataManager data_manager;
   const mozc::DataManager::Status status =
-      data_manager.InitUserPosManagerDataFromFile(FLAGS_user_pos_manager_data,
-                                                  kMagciNumber);
+      data_manager.InitUserPosManagerDataFromFile(
+          mozc::GetFlag(FLAGS_user_pos_manager_data), kMagciNumber);
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
-  mozc::MakeDictionary(FLAGS_input, FLAGS_sorting_table, FLAGS_ordering_rule,
-                       &dictionary);
+  mozc::MakeDictionary(FLAGS_input, mozc::GetFlag(FLAGS_sorting_table),
+                       mozc::GetFlag(FLAGS_ordering_rule), &dictionary);
   dictionary.Output(tmp_text_file);
   mozc::SerializedDictionary::CompileToFiles(
-      tmp_text_file, FLAGS_output_token_array, FLAGS_output_string_array);
+      tmp_text_file, mozc::GetFlag(FLAGS_output_token_array),
+      mozc::GetFlag(FLAGS_output_string_array));
   mozc::FileUtil::Unlink(tmp_text_file);
 
   return 0;

@@ -428,7 +428,7 @@ bool SessionConverter::SuggestWithPreferences(
     conversion_request.set_create_partial_candidates(
         request_->auto_partial_suggestion());
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        FLAGS_use_actual_converter_for_realtime_conversion);
+        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (!converter_->StartSuggestionForRequest(conversion_request,
                                                segments_.get())) {
       // TODO(komatsu): Because suggestion is a prefix search, once
@@ -504,7 +504,7 @@ bool SessionConverter::PredictWithPreferences(
   if (predict_expand || predict_first) {
     ConversionRequest conversion_request(&composer, request_, config_);
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        FLAGS_use_actual_converter_for_realtime_conversion);
+        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
@@ -576,7 +576,7 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
     conversion_request.set_create_partial_candidates(
         request_->auto_partial_suggestion());
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        FLAGS_use_actual_converter_for_realtime_conversion);
+        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     // This is abuse of StartPrediction().
     // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
     //    to Converter class.

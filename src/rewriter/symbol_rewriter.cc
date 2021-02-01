@@ -46,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 // SymbolRewriter:
@@ -345,8 +346,8 @@ SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
   absl::string_view token_array_data, string_array_data;
   data_manager->GetSymbolRewriterData(&token_array_data, &string_array_data);
   DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
-  dictionary_.reset(
-      new SerializedDictionary(token_array_data, string_array_data));
+  dictionary_ = absl::make_unique<SerializedDictionary>(token_array_data,
+                                                        string_array_data);
 }
 
 SymbolRewriter::~SymbolRewriter() {}

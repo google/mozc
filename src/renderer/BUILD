@@ -30,11 +30,16 @@
 
 load(
     "//:build_defs.bzl",
+    "BRANDING",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
+    "objc_library_mozc",
     "select_mozc",
 )
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -69,10 +74,7 @@ cc_test_mozc(
     size = "medium",
     srcs = ["renderer_client_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
@@ -117,15 +119,13 @@ cc_test_mozc(
     size = "medium",
     srcs = ["renderer_server_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":renderer_client",
         ":renderer_interface",
         ":renderer_server",
         "//base",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -159,10 +159,7 @@ cc_test_mozc(
         "table_layout_test.cc",
     ],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":table_layout",
         "//base",
@@ -206,10 +203,7 @@ cc_test_mozc(
     size = "small",
     srcs = ["window_util_test.cc"],
     requires_full_emulation = False,
-    tags = [
-        "disable_on_nacl_test",
-        "no_android",
-    ],
+    tags = ["no_android"],
     deps = [
         ":window_util",
         "//base",
@@ -364,4 +358,104 @@ cc_test_mozc(
     ] + select_mozc(
         oss_linux = ["@gtk2//:gtk2"],
     ),
+)
+
+# macOS
+macos_application(
+    name = "mozc_renderer_macos",
+    app_icons = ["//data/images/mac:product_icon.icns"],
+    bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Renderer",
+    bundle_name = BRANDING + "Renderer",
+    infoplists = [":gen_mozc_renderer_info_plist"],
+    minimum_os_version = MACOS_MIN_OS_VER,
+    resources = ["//data/images/mac:candidate_window_logo.tiff"],
+    deps = [":mozc_renderer_main_macos"],
+    # When we support Breakpad, uncomment the following block.
+    # additional_contents = {
+    #     "[Breakpad]" : "Frameworks",
+    # },
+)
+
+cc_library_mozc(
+    name = "mozc_renderer_main_macos",
+    srcs = select_mozc(macos = ["mozc_renderer_main.cc"]),
+    deps = [
+        ":mozc_renderer_lib_macos",
+        "//base:crash_report_handler",
+        "//base:flags",
+        "//base:init_mozc",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:util",
+        "//config:stats_config_util",
+    ],
+)
+
+# Because proto_library cannot be in deps of objc_library,
+# cc_library as a wrapper is necessary as a workaround.
+cc_library_mozc(
+    name = "proto_wrapper",
+    deps = [
+        "//protocol:commands_proto",
+        "//protocol:config_proto",
+        "//protocol:renderer_proto",
+    ],
+)
+
+objc_library_mozc(
+    name = "mozc_renderer_lib_macos",
+    srcs = select_mozc(macos = [
+        "mac/mac_server.mm",
+        "mac/mac_server_send_command.mm",
+        "mac/CandidateController.mm",
+        "mac/CandidateWindow.mm",
+        "mac/CandidateView.mm",
+        "mac/InfolistWindow.mm",
+        "mac/InfolistView.mm",
+        "mac/RendererBaseWindow.mm",
+        "mac/mac_view_util.mm",
+    ]),
+    hdrs = select_mozc(macos = [
+        "mac/mac_server.h",
+        "mac/mac_server_send_command.h",
+        "mac/CandidateController.h",
+        "mac/CandidateWindow.h",
+        "mac/CandidateView.h",
+        "mac/InfolistWindow.h",
+        "mac/InfolistView.h",
+        "mac/RendererBaseWindow.h",
+        "mac/mac_view_util.h",
+    ]),
+    sdk_frameworks = [
+        "Carbon",
+        "Foundation",
+    ],
+    deps = select_mozc(macos = [
+        "//base:base",
+        "//base:crash_report_handler",
+        "//client:client",
+        "//config:stats_config_util",
+        "//ipc:ipc",
+        "//mac:common",
+        ":proto_wrapper",
+        ":renderer_server",
+        ":renderer_style_handler",
+        ":table_layout",
+        ":window_util",
+    ]),
+)
+
+genrule(
+    name = "gen_mozc_renderer_info_plist",
+    srcs = [
+        "mac/Info.plist",
+        "//base:mozc_version_txt",
+    ],
+    outs = ["Info.plist"],
+    cmd = ("$(location //build_tools:tweak_info_plist)" +
+           " --output $@" +
+           " --input $(location mac/Info.plist)" +
+           " --version_file $(location //base:mozc_version_txt)" +
+           " --branding " + BRANDING),
+    exec_tools = ["//build_tools:tweak_info_plist"],
 )

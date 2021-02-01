@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     if (!dog.SetID(static_cast<mozc::ProcessWatchDog::ProcessID>(process_id),
                    static_cast<mozc::ProcessWatchDog::ThreadID>(thread_id),
-                   FLAGS_timeout)) {
+                   mozc::GetFlag(FLAGS_timeout))) {
       std::cout << "Error" << std::endl;
     } else {
       std::cout << "OK" << std::endl;

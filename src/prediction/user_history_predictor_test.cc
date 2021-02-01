@@ -35,6 +35,7 @@
 
 #include "base/clock_mock.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/port.h"
@@ -56,6 +57,7 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -205,15 +207,15 @@ bool FindCandidateByValue(const std::string &value, const Segments &segments) {
 class UserHistoryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    request_.reset(new Request);
-    config_.reset(new Config);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    request_ = absl::make_unique<Request>();
+    config_ = absl::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_.reset(new composer::Table);
-    composer_.reset(
-        new composer::Composer(table_.get(), request_.get(), config_.get()));
-    convreq_.reset(
-        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+    table_ = absl::make_unique<composer::Table>();
+    composer_ = absl::make_unique<composer::Composer>(
+        table_.get(), request_.get(), config_.get());
+    convreq_ = absl::make_unique<ConversionRequest>(
+        composer_.get(), request_.get(), config_.get());
     data_and_predictor_.reset(CreateDataAndPredictor());
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -376,12 +378,12 @@ class UserHistoryPredictorTest : public ::testing::Test {
   DataAndPredictor *CreateDataAndPredictor() const {
     DataAndPredictor *ret = new DataAndPredictor;
     testing::MockDataManager data_manager;
-    ret->dictionary.reset(new DictionaryMock);
-    ret->suppression_dictionary.reset(new SuppressionDictionary);
+    ret->dictionary = absl::make_unique<DictionaryMock>();
+    ret->suppression_dictionary = absl::make_unique<SuppressionDictionary>();
     ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
-    ret->predictor.reset(
-        new UserHistoryPredictor(ret->dictionary.get(), &ret->pos_matcher,
-                                 ret->suppression_dictionary.get(), false));
+    ret->predictor = absl::make_unique<UserHistoryPredictor>(
+        ret->dictionary.get(), &ret->pos_matcher,
+        ret->suppression_dictionary.get(), false);
     ret->predictor->WaitForSyncer();
     return ret;
   }
@@ -2235,7 +2237,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Load().
   {
     const std::string filename =
-        FileUtil::JoinPath(FLAGS_test_tmpdir, "testload");
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testload");
     // Write directly to the file to keep old entries for testing.
     storage::EncryptedStringStorage file_storage(filename);
     ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
@@ -2254,7 +2256,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Save().
   {
     const std::string filename =
-        FileUtil::JoinPath(FLAGS_test_tmpdir, "testsave");
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testsave");
     UserHistoryStorage storage(filename);
     storage.GetProto() = history;
     ASSERT_TRUE(storage.Save());

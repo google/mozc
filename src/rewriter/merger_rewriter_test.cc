@@ -31,6 +31,7 @@
 
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -102,7 +103,7 @@ class TestRewriter : public RewriterInterface {
 class MergerRewriterTest : public testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

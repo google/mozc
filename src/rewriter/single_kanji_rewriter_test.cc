@@ -33,6 +33,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -43,6 +44,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -51,14 +53,14 @@ using dictionary::POSMatcher;
 class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
   SingleKanjiRewriterTest() {
-    data_manager_.reset(new testing::MockDataManager);
+    data_manager_ = absl::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPOSMatcherData());
   }
 
   ~SingleKanjiRewriterTest() override = default;
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {

@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/flags.h"
 #include "base/password_manager.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -225,7 +226,7 @@ TEST(EncryptorTest, EncryptBatch) {
 }
 
 TEST(EncryptorTest, ProtectData) {
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   const size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {

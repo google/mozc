@@ -59,6 +59,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 using mozc::dictionary::DictionaryInterface;
@@ -1638,7 +1639,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
     if (request.config().preedit_method() != config::Config::ROMAN) {
       mode = KeyCorrector::KANA;
     }
-    key_corrector.reset(new KeyCorrector(key, mode, history_key.size()));
+    key_corrector =
+        absl::make_unique<KeyCorrector>(key, mode, history_key.size());
   }
 
   const bool is_reverse =

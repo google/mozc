@@ -1753,12 +1753,11 @@ void DictionaryPredictor::CheckBigramResult(
   }
 
   // If character type doesn't change, this boundary might NOT
-  // be a word boundary. If character type is HIRAGANA,
-  // we don't trust it. If Katakana, only trust iif the
-  // entire key is reasonably long.
+  // be a word boundary. Only use iif the entire key is reasonably long.
+  const size_t key_len = Util::CharsLen(result->key);
   if (ctype == last_history_ctype &&
-      (ctype == Util::HIRAGANA ||
-       (ctype == Util::KATAKANA && Util::CharsLen(result->key) <= 5))) {
+      ((ctype == Util::HIRAGANA && key_len <= 9) ||
+       (ctype == Util::KATAKANA && key_len <= 5))) {
     result->removed = true;
     MOZC_WORD_LOG(*result, "Removed. Short Hiragana (<= 9) or Katakana (<= 5)");
     return;
@@ -1779,12 +1778,25 @@ void DictionaryPredictor::CheckBigramResult(
     return;
   }
 
-  FindValueCallback callback(value);
-  dictionary_->LookupPrefix(key, request, &callback);
-  if (!callback.found()) {
-    result->removed = true;
-    MOZC_WORD_LOG(*result, "Removed. No prefix found.");
-    return;
+  // Check if the word is in the dictionary or not.
+  // For Hiragana words, check if that word is in a key of values.
+  // This is for a situation that
+  // ありがとうございました is not in the dictionary, but
+  // ありがとう御座いました is in the dictionary.
+  if (ctype == Util::HIRAGANA) {
+    if (!dictionary_->HasKey(key)) {
+      result->removed = true;
+      MOZC_WORD_LOG(*result, "Removed. No keys are found.");
+      return;
+    }
+  } else {
+    FindValueCallback callback(value);
+    dictionary_->LookupPrefix(key, request, &callback);
+    if (!callback.found()) {
+      result->removed = true;
+      MOZC_WORD_LOG(*result, "Removed. No prefix found.");
+      return;
+    }
   }
 
   MOZC_WORD_LOG(*result, "Valid bigram.");

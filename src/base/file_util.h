@@ -32,9 +32,7 @@
 
 #if defined(OS_WIN)
 #include <windows.h>
-#elif defined(OS_NACL)
-#include <ppapi/c/pp_file_info.h>
-#else  // OS_WIN or OS_NACL
+#else  // OS_WIN
 #include <sys/types.h>
 #endif
 
@@ -63,11 +61,9 @@ namespace mozc {
 
 #if defined(OS_WIN)
 using FileTimeStamp = uint64;
-#elif defined(OS_NACL)
-using FileTimeStamp = PP_Time;
 #else
 using FileTimeStamp = time_t;
-#endif  // OS_WIN or OS_NACL
+#endif  // OS_WIN
 
 class FileUtilInterface {
  public:

@@ -76,6 +76,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -203,7 +204,7 @@ class MockDataAndPredictor {
   void Init(const DictionaryInterface *dictionary = nullptr,
             const DictionaryInterface *suffix_dictionary = nullptr) {
     pos_matcher_.Set(data_manager_.GetPOSMatcherData());
-    suppression_dictionary_.reset(new SuppressionDictionary);
+    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
     if (!dictionary) {
       dictionary_mock_ = new DictionaryMock;
       dictionary_.reset(dictionary_mock_);
@@ -224,17 +225,17 @@ class MockDataAndPredictor {
     segmenter_.reset(Segmenter::CreateFromDataManager(data_manager_));
     CHECK(segmenter_.get());
 
-    pos_group_.reset(new PosGroup(data_manager_.GetPosGroupData()));
+    pos_group_ = absl::make_unique<PosGroup>(data_manager_.GetPosGroupData());
     suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));
-    immutable_converter_.reset(new ImmutableConverterImpl(
+    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary_.get(),
         suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
-        &pos_matcher_, pos_group_.get(), suggestion_filter_.get()));
-    converter_.reset(new ConverterMock());
-    dictionary_predictor_.reset(new TestableDictionaryPredictor(
+        &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
+    converter_ = absl::make_unique<ConverterMock>();
+    dictionary_predictor_ = absl::make_unique<TestableDictionaryPredictor>(
         data_manager_, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
-        segmenter_.get(), &pos_matcher_, suggestion_filter_.get()));
+        segmenter_.get(), &pos_matcher_, suggestion_filter_.get());
   }
 
   const POSMatcher &pos_matcher() const { return pos_matcher_; }
@@ -361,15 +362,15 @@ class MockTypingModel : public mozc::composer::TypingModel {
 class DictionaryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
-    request_.reset(new commands::Request);
-    config_.reset(new config::Config);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    request_ = absl::make_unique<commands::Request>();
+    config_ = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_.reset(new composer::Table);
-    composer_.reset(
-        new composer::Composer(table_.get(), request_.get(), config_.get()));
-    convreq_.reset(
-        new ConversionRequest(composer_.get(), request_.get(), config_.get()));
+    table_ = absl::make_unique<composer::Table>();
+    composer_ = absl::make_unique<composer::Composer>(
+        table_.get(), request_.get(), config_.get());
+    convreq_ = absl::make_unique<ConversionRequest>(
+        composer_.get(), request_.get(), config_.get());
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
@@ -667,8 +668,8 @@ class DictionaryPredictorTest : public ::testing::Test {
   bool FindResultByValue(
       const std::vector<TestableDictionaryPredictor::Result> &results,
       const std::string &value) {
-    for (size_t i = 0; i < results.size(); ++i) {
-      if (results[i].value == value) {
+    for (const auto& result : results) {
+      if (result.value == value && !result.removed) {
         return true;
       }
     }
@@ -722,7 +723,7 @@ class DictionaryPredictorTest : public ::testing::Test {
         data_and_predictor->dictionary_predictor();
 
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table_->typing_model_.reset(new MockTypingModel());
+    table_->typing_model_ = absl::make_unique<MockTypingModel>();
     InsertInputSequenceForProbableKeyEvent(key, corrected_key_codes,
                                            composer_.get());
 
@@ -1553,6 +1554,67 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+    }
+  }
+
+  {
+    constexpr char kHistory[] = "ありがとう";
+
+    DictionaryMock *mock = data_and_predictor->mutable_dictionary();
+    mock->AddLookupPrefix(kHistory, kHistory, kHistory, Token::NONE);
+
+    auto add_word = [&mock](const std::string &key, const std::string &value) {
+      mock->AddLookupPredictive("ありがとう", key, value, Token::NONE);
+    };
+    add_word("ありがとうございます", "ありがとうございます");
+    add_word("ありがとうございます", "ありがとう御座います");
+    add_word("ありがとうございました", "ありがとうございました");
+    add_word("ありがとうございました", "ありがとう御座いました");
+
+    add_word("ございます", "ございます");
+    add_word("ございます", "御座います");
+    // ("ございました", "ございました") is not in the dictionary.
+    add_word("ございました", "御座いました");
+
+    // Word less than 10.
+    add_word("ありがとうね", "ありがとうね");
+    add_word("ね", "ね");
+
+    Segments segments;
+
+    // Zero query
+    MakeSegmentsForSuggestion("", &segments);
+
+    PrependHistorySegments(kHistory, kHistory, &segments);
+
+    std::vector<DictionaryPredictor::Result> results;
+
+    predictor->AggregateBigramPrediction(
+        *convreq_, segments,
+        Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM, &results);
+    EXPECT_FALSE(results.empty());
+    EXPECT_EQ(results.size(), 5);
+
+    EXPECT_TRUE(FindResultByValue(results, "ありがとうございます"));
+    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座います"));
+    EXPECT_TRUE(FindResultByValue(results, "ありがとう御座いました"));
+    // "ございました" is not in the dictionary, but suggested
+    // because it is used as the key of other words (i.e. 御座いました).
+    EXPECT_TRUE(FindResultByValue(results, "ありがとうございました"));
+    // "ね" is in the dictionary, but filtered due to the word length.
+    EXPECT_FALSE(FindResultByValue(results, "ありがとうね"));
+
+    for (const auto &result : results) {
+      EXPECT_TRUE(Util::StartsWith(result.key, kHistory));
+      EXPECT_TRUE(Util::StartsWith(result.value, kHistory));
+      // Zero query
+      EXPECT_FALSE(result.source_info &
+                   Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
+      if (result.key == "ありがとうね") {
+        EXPECT_TRUE(result.removed);
+      } else {
+        EXPECT_FALSE(result.removed);
+      }
     }
   }
 }

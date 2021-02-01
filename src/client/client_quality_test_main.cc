@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
 
   mozc::client::Client client;
   if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(FLAGS_server_path);
+    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
 
   std::ostream* ofs = &std::cout;
   if (!mozc::GetFlag(FLAGS_log_path).empty()) {
-    ofs = new mozc::OutputFileStream(FLAGS_log_path.c_str());
+    ofs = new mozc::OutputFileStream(mozc::GetFlag(FLAGS_log_path).c_str());
   }
 
   // Average the scores

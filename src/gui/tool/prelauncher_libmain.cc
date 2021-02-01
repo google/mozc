@@ -44,7 +44,7 @@ DEFINE_bool(register_prelauncher, false, "Register prelauncher to login item.");
 
 int RunPrelaunchProcesses(int argc, char *argv[]) {
 #ifdef __APPLE__
-  if (FLAGS_register_prelauncher) {
+  if (mozc::GetFlag(FLAGS_register_prelauncher)) {
     mozc::MacUtil::AddPrelauncherLoginItem();
   }
 #endif  // __APPLE__

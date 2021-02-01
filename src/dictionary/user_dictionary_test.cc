@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -188,7 +189,7 @@ class UserDictionaryTest : public ::testing::Test {
   UserDictionaryTest() { convreq_.set_config(&config_); }
 
   void SetUp() override {
-    suppression_dictionary_.reset(new SuppressionDictionary);
+    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&config_);
@@ -506,8 +507,8 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   user_dic->WaitForReloader();
 
   // Create dictionary
-  const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "suggestion_only_test.db");
+  const std::string filename = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
   FileUtil::Unlink(filename);
   UserDictionaryStorage storage(filename);
   {
@@ -537,8 +538,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
       mock_data_manager.GetPOSMatcherData());
   const uint16 kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
-  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "key", 3,
-                        *user_dic.get());
+  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "key", 3, *user_dic);
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
@@ -570,8 +570,8 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 }
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
-  const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "async_load_test.db");
+  const std::string filename = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
   FileUtil::Unlink(filename);
 
   // Create dictionary
@@ -623,8 +623,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
-  const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "suppression_test.db");
+  const std::string filename = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "suppression_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
@@ -698,8 +698,8 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
-  const std::string filename =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "suggestion_only_test.db");
+  const std::string filename = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);

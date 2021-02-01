@@ -131,7 +131,7 @@ const char kEventPathPrefix[] = "GoogleJapaneseInput.event.";
 #else   // GOOGLE_JAPANESE_INPUT_BUILD
 const char kEventPathPrefix[] = "Mozc.event.";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
-#else   // OS_LINUX including OS_ANDROID and OS_NACL
+#else   // OS_LINUX including OS_ANDROID
 const char kMozcServerName[] = "mozc_server";
 const char kMozcRenderer[] = "mozc_renderer";
 const char kEventPathPrefix[] = "mozc.event.";

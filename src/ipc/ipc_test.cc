@@ -117,7 +117,7 @@ class EchoServer : public mozc::IPCServer {
 }  // namespace
 
 TEST(IPCTest, IPCTest) {
-  mozc::SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 #ifdef __APPLE__
   mozc::TestMachPortManager manager;
 #endif

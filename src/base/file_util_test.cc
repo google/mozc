@@ -37,6 +37,7 @@
 #include <string>
 
 #include "base/file_stream.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
@@ -70,9 +71,10 @@ void CreateTestFile(const std::string &filename, const std::string &data) {
 }  // namespace
 
 TEST_F(FileUtilTest, CreateDirectory) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
+  EXPECT_TRUE(FileUtil::DirectoryExists(mozc::GetFlag(FLAGS_test_tmpdir)));
   // dirpath = FLAGS_test_tmpdir/testdir
-  const std::string dirpath = FileUtil::JoinPath(FLAGS_test_tmpdir, "testdir");
+  const std::string dirpath =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testdir");
 
   // Delete dirpath, if it exists.
   if (FileUtil::FileExists(dirpath)) {
@@ -90,9 +92,9 @@ TEST_F(FileUtilTest, CreateDirectory) {
 }
 
 TEST_F(FileUtilTest, DirectoryExists) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
+  EXPECT_TRUE(FileUtil::DirectoryExists(mozc::GetFlag(FLAGS_test_tmpdir)));
   const std::string filepath =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testfile");
 
   // Delete filepath, if it exists.
   if (FileUtil::FileExists(filepath)) {
@@ -112,7 +114,7 @@ TEST_F(FileUtilTest, DirectoryExists) {
 
 TEST_F(FileUtilTest, Unlink) {
   const std::string filepath =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testfile");
   FileUtil::Unlink(filepath);
   EXPECT_FALSE(FileUtil::FileExists(filepath));
 
@@ -147,7 +149,8 @@ TEST_F(FileUtilTest, Unlink) {
 
 #ifdef OS_WIN
 TEST_F(FileUtilTest, HideFile) {
-  const string filename = FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");
+  const string filename =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testfile");
   FileUtil::Unlink(filename);
 
   EXPECT_FALSE(FileUtil::HideFile(filename));
@@ -194,8 +197,10 @@ TEST_F(FileUtilTest, HideFile) {
 #endif  // OS_WIN
 
 TEST_F(FileUtilTest, IsEqualFile) {
-  const std::string filename1 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test1");
-  const std::string filename2 = FileUtil::JoinPath(FLAGS_test_tmpdir, "test2");
+  const std::string filename1 =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test1");
+  const std::string filename2 =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test2");
   FileUtil::Unlink(filename1);
   FileUtil::Unlink(filename2);
   EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
@@ -218,8 +223,10 @@ TEST_F(FileUtilTest, IsEqualFile) {
 
 TEST_F(FileUtilTest, CopyFile) {
   // just test rename operation works as intended
-  const std::string from = FileUtil::JoinPath(FLAGS_test_tmpdir, "copy_from");
-  const std::string to = FileUtil::JoinPath(FLAGS_test_tmpdir, "copy_to");
+  const std::string from =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "copy_from");
+  const std::string to =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "copy_to");
   FileUtil::Unlink(from);
   FileUtil::Unlink(to);
 
@@ -285,10 +292,10 @@ TEST_F(FileUtilTest, CopyFile) {
 
 TEST_F(FileUtilTest, AtomicRename) {
   // just test rename operation works as intended
-  const std::string from =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "atomic_rename_test_from");
-  const std::string to =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "atomic_rename_test_to");
+  const std::string from = FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+                                              "atomic_rename_test_from");
+  const std::string to = FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+                                            "atomic_rename_test_to");
   FileUtil::Unlink(from);
   FileUtil::Unlink(to);
 
@@ -447,7 +454,8 @@ TEST_F(FileUtilTest, GetModificationTime) {
   FileTimeStamp time_stamp = 0;
   EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file", &time_stamp));
 
-  const std::string &path = FileUtil::JoinPath(FLAGS_test_tmpdir, "testfile");
+  const std::string &path =
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testfile");
   CreateTestFile(path, "content");
   EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp));
   EXPECT_NE(0, time_stamp);

@@ -41,10 +41,6 @@ package(default_visibility = [
     "//:__subpackages__",
 ])
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "transliterator_interface",
     hdrs = ["transliterator_interface.h"],
@@ -179,6 +175,7 @@ cc_test_mozc(
         "//composer:composition_interface",
         "//composer:table",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 

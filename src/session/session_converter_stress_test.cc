@@ -31,6 +31,7 @@
 #include <string>
 
 #include "base/clock.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -63,14 +64,16 @@ namespace session {
 class SessionConverterStressTest : public ::testing::Test {
  public:
   SessionConverterStressTest() {
-    if (!FLAGS_test_deterministic) {
-      FLAGS_test_srand_seed = static_cast<int32>(Clock::GetTime());
+    if (!mozc::GetFlag(FLAGS_test_deterministic)) {
+      mozc::SetFlag(&FLAGS_test_srand_seed,
+                    static_cast<int32>(Clock::GetTime()));
     }
-    Util::SetRandomSeed(static_cast<uint32>(FLAGS_test_srand_seed));
+    Util::SetRandomSeed(
+        static_cast<uint32>(mozc::GetFlag(FLAGS_test_srand_seed)));
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);

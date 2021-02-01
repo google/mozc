@@ -29,6 +29,7 @@
 
 #include "renderer/unix/unix_server.h"
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "testing/base/public/googletest.h"
@@ -45,7 +46,7 @@ namespace gtk {
 class UnixServerTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

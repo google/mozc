@@ -357,8 +357,9 @@ int main(int argc, char *argv[]) {
 
   if (!mozc::GetFlag(FLAGS_user_profile_directory).empty()) {
     LOG(INFO) << "Setting user profile directory to "
-              << FLAGS_user_profile_directory;
-    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_user_profile_directory);
+              << mozc::GetFlag(FLAGS_user_profile_directory);
+    mozc::SystemUtil::SetUserProfileDirectory(
+        mozc::GetFlag(FLAGS_user_profile_directory));
   }
 
   if (mozc::GetFlag(FLAGS_client)) {

@@ -933,7 +933,7 @@ bool DateRewriter::RewriteDate(Segment *segment) {
 
   // Insert words.
   const Segment::Candidate &base_cand = segment->candidate(cand_idx);
-  for (const string &conversion : conversions) {
+  for (const std::string &conversion : conversions) {
     Insert(base_cand, insert_idx++, conversion, data.description, segment);
   }
   return true;

@@ -35,6 +35,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/protobuf/protobuf.h"
 #include "base/protobuf/repeated_field.h"
 #include "base/system_util.h"
@@ -42,6 +43,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -66,12 +68,12 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     FileUtil::Unlink(GetUserDictionaryFile());
 
-    handler_.reset(new UserDictionarySessionHandler);
-    command_.reset(new UserDictionaryCommand);
-    status_.reset(new UserDictionaryCommandStatus);
+    handler_ = absl::make_unique<UserDictionarySessionHandler>();
+    command_ = absl::make_unique<UserDictionaryCommand>();
+    status_ = absl::make_unique<UserDictionaryCommandStatus>();
 
     handler_->set_dictionary_path(GetUserDictionaryFile());
   }
@@ -87,7 +89,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   static std::string GetUserDictionaryFile() {
-    return FileUtil::JoinPath(FLAGS_test_tmpdir, "test.db");
+    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
   uint64 CreateSession() {

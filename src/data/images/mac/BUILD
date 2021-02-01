@@ -29,5 +29,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 exports_files([
+    "candidate_window_logo.tiff",
     "product_icon.icns",
 ])

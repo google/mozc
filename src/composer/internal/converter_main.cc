@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
-  table.LoadFromFile(FLAGS_table.c_str());
+  table.LoadFromFile(mozc::GetFlag(FLAGS_table).c_str());
 
   mozc::composer::Converter converter(table);
 

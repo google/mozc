@@ -50,10 +50,6 @@ namespace mozc {
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 class SessionWatchDog;
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-// Session watch dog is not aviable from android mozc for now.
-// TODO(kkojima): Remove this guard after
-// enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 class Stopwatch;
 
@@ -141,10 +137,6 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<SessionMap> session_map_;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   std::unique_ptr<SessionWatchDog> session_watch_dog_;
-#else   // MOZC_DISABLE_SESSION_WATCHDOG
-  // Session watch dog is not aviable from android mozc and nacl mozc for now.
-  // TODO(kkojima): Remove this guard after
-  // enabling session watch dog for android.
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_ = false;
   uint32 max_session_size_ = 0;

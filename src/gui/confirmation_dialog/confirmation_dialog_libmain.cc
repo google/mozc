@@ -60,7 +60,7 @@ int RunConfirmationDialog(int argc, char *argv[]) {
 
   mozc::gui::GuiUtil::InstallTranslator("confirmation_dialog");
 
-  if (FLAGS_confirmation_type != "log_out") {
+  if (mozc::GetFlag(FLAGS_confirmation_type) != "log_out") {
     if (mozc::gui::ConfirmationDialog::Show()) {
       return 0;  // Yes.
     }
@@ -72,7 +72,8 @@ int RunConfirmationDialog(int argc, char *argv[]) {
     if (mozc::gui::ConfirmationDialog::Show()) {
       return 0;  // Yes.
     }
-    mozc::Util::Sleep(FLAGS_confirmation_wait_time * 1000 /* msec */);
+    mozc::Util::Sleep(
+        mozc::GetFlag(FLAGS_confirmation_wait_time) * 1000 /* msec */);
   }
 
   // Code will not reach here but put the return value just in case.

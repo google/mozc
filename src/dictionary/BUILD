@@ -40,10 +40,6 @@ load(
     "py_library_mozc",
 )
 
-test_suite(
-    name = "nacl_test",
-)
-
 cc_library_mozc(
     name = "dictionary_interface",
     hdrs = ["dictionary_interface.h"],
@@ -192,6 +188,7 @@ cc_test_mozc(
         ":user_pos",
         ":user_pos_interface",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:singleton",
@@ -302,6 +299,7 @@ cc_test_mozc(
         ":user_dictionary_storage",
         "//base",
         "//base:file_util",
+        "//base:flags",
         "//base:system_util",
         "//protocol:user_dictionary_storage_proto",
         "//testing:gunit_main",
@@ -326,6 +324,7 @@ cc_library_mozc(
         "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_proto",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -338,12 +337,14 @@ cc_test_mozc(
         ":user_dictionary_session_handler",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:system_util",
         "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_proto",
         "//testing:gunit_main",
         "//testing:testing_util",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -379,6 +380,7 @@ cc_test_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:mmap",
         "//base:system_util",
@@ -505,6 +507,7 @@ cc_test_mozc(
         ":text_dictionary_loader",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:util",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
@@ -543,6 +546,7 @@ cc_test_mozc(
         "//base:util",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -713,6 +717,7 @@ cc_test_mozc(
         "//base:util",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -747,6 +752,7 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

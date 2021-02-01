@@ -59,6 +59,7 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -494,14 +495,14 @@ class SessionTest : public ::testing::Test {
   void SetUp() override {
     UsageStats::ClearAllStatsForTest();
 
-    mobile_request_.reset(new Request);
+    mobile_request_ = absl::make_unique<Request>();
     commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_.reset(MockDataEngineFactory::Create());
-    engine_.reset(new MockConverterEngine);
+    engine_ = absl::make_unique<MockConverterEngine>();
 
-    t13n_rewriter_.reset(new TransliterationRewriter(
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData())));
+    t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(
+        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()));
   }
 
   void TearDown() override { UsageStats::ClearAllStatsForTest(); }
@@ -621,7 +622,7 @@ class SessionTest : public ::testing::Test {
   void InitSessionWithRequest(Session *session,
                               const commands::Request &request) {
     session->SetRequest(&request);
-    table_.reset(new composer::Table());
+    table_ = absl::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session->SetTable(table_.get());
@@ -896,7 +897,7 @@ TEST_F(SessionTest, SendCommand) {
   // test of reseting the history segements
   std::unique_ptr<MockConverterEngineForReset> engine(
       new MockConverterEngineForReset);
-  session.reset(new Session(engine.get()));
+  session = absl::make_unique<Session>(engine.get());
   InitSessionToPrecomposition(session.get());
   SendCommand(commands::SessionCommand::RESET_CONTEXT, session.get(), &command);
   EXPECT_FALSE(command.output().consumed());
@@ -1973,11 +1974,11 @@ TEST_F(SessionTest, UpdatePreferences) {
   const size_t cascading_cand_size =
       command.output().candidates().candidate_size();
 
-#if defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
+#if defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
   EXPECT_EQ(no_cascading_cand_size, cascading_cand_size);
-#else   // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
+#else   // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
   EXPECT_GT(no_cascading_cand_size, cascading_cand_size);
-#endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_NACL
+#endif  // defined(OS_LINUX) || defined(OS_ANDROID) || OS_WASM
 
   command.Clear();
   session->ConvertCancel(&command);
@@ -2148,7 +2149,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(0, output.all_candidate_words().focused_index());
     EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2158,13 +2159,13 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else   // OS_LINUX || OS_ANDROID || OS_NACL
+#else   // OS_LINUX || OS_ANDROID || OS_WASM
     // [ "あいうえお", "アイウエオ", "アイウエオ" (t13n), "あいうえお" (t13n),
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(11, output.all_candidate_words().candidates_size());
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL
+#endif  // OS_LINUX || OS_ANDROID || OS_WASM
   }
 
   command.Clear();
@@ -2176,7 +2177,7 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 
     EXPECT_EQ(1, output.all_candidate_words().focused_index());
     EXPECT_EQ(commands::CONVERSION, output.all_candidate_words().category());
-#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
     // Cascading window is not supported on Linux, so the size of
     // candidate words is different from other platform.
     // TODO(komatsu): Modify the client for Linux to explicitly change
@@ -2186,13 +2187,13 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(9, output.all_candidate_words().candidates_size());
-#else   // OS_LINUX || OS_ANDROID || OS_NACL
+#else   // OS_LINUX || OS_ANDROID || OS_WASM
     // [ "あいうえお", "アイウエオ",
     //   "aiueo" (t13n), "AIUEO" (t13n), "Aieuo" (t13n),
     //   "ａｉｕｅｏ"  (t13n), "ＡＩＵＥＯ" (t13n), "Ａｉｅｕｏ" (t13n),
     //   "ｱｲｳｴｵ" (t13n) ]
     EXPECT_EQ(11, output.all_candidate_words().candidates_size());
-#endif  // OS_LINUX || OS_ANDROID || OS_NACL
+#endif  // OS_LINUX || OS_ANDROID || OS_WASM
   }
 }
 
@@ -5055,7 +5056,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    session.reset(new Session(engine_.get()));
+    session = absl::make_unique<Session>(engine_.get());
     session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
@@ -5088,7 +5089,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-    session.reset(new Session(engine_.get()));
+    session = absl::make_unique<Session>(engine_.get());
     session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
@@ -5120,7 +5121,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'FULL' -- all mode except for DIRECT emits
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-    session.reset(new Session(engine_.get()));
+    session = absl::make_unique<Session>(engine_.get());
     session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
@@ -5155,7 +5156,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    session.reset(new Session(engine_.get()));
+    session = absl::make_unique<Session>(engine_.get());
     session->SetConfig(&config);
     InitSessionToPrecomposition(session.get());
 
@@ -7025,7 +7026,7 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   GetConverterMock()->SetFinishConversion(
-      std::unique_ptr<Segments>(new Segments).get(), true);
+      absl::make_unique<Segments>().get(), true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
   session->SendCommand(&command);
@@ -7112,7 +7113,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 #else
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
   GetConverterMock()->SetFinishConversion(
-      std::unique_ptr<Segments>(new Segments).get(), true);
+      absl::make_unique<Segments>().get(), true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
   session->SendCommand(&command);
@@ -7530,7 +7531,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
     command.Clear();
     // FinishConversion is expected to return empty Segments.
     GetConverterMock()->SetFinishConversion(
-        std::unique_ptr<Segments>(new Segments).get(), true);
+        absl::make_unique<Segments>().get(), true);
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
@@ -7652,7 +7653,7 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
-  table.reset(new composer::Table());
+  table = absl::make_unique<composer::Table>();
   table->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());

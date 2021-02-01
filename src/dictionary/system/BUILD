@@ -237,6 +237,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//storage/louds:louds_trie_builder",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   QualityRegressionUtil util(engine->GetConverter());
 
   std::vector<QualityRegressionUtil::TestItem> items;
-  QualityRegressionUtil::ParseFile(FLAGS_test_file, &items);
+  QualityRegressionUtil::ParseFile(mozc::GetFlag(FLAGS_test_file), &items);
 
   for (size_t i = 0; i < items.size(); ++i) {
     std::string actual_value;

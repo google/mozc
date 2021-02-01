@@ -32,6 +32,8 @@
 
 #include <Cocoa/Cocoa.h>
 
+#include "base/port.h"
+
 namespace mozc {
 namespace renderer {
 namespace mac {

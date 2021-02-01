@@ -44,6 +44,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace converter {
@@ -66,14 +67,14 @@ class CandidateFilterTest : public ::testing::Test {
   CandidateFilterTest() {}
 
   void SetUp() override {
-    candidate_freelist_.reset(new FreeList<Segment::Candidate>(1024));
-    node_freelist_.reset(new FreeList<Node>(1024));
+    candidate_freelist_ = absl::make_unique<FreeList<Segment::Candidate>>(1024);
+    node_freelist_ = absl::make_unique<FreeList<Node>>(1024);
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
     {
       const char *data = nullptr;
       size_t size = 0;
       mock_data_manager_.GetSuggestionFilterData(&data, &size);
-      suggestion_filter_.reset(new SuggestionFilter(data, size));
+      suggestion_filter_ = absl::make_unique<SuggestionFilter>(data, size);
     }
   }
 

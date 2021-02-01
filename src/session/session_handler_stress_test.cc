@@ -27,18 +27,18 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "session/session_handler.h"
-
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
+#include "session/session_handler.h"
 #include "session/session_handler_tool.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -70,7 +70,8 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
-  const uint32 random_seed = static_cast<uint32>(FLAGS_random_seed);
+  const uint32 random_seed =
+      static_cast<uint32>(mozc::GetFlag(FLAGS_random_seed));
   LOG(INFO) << "Random seed: " << random_seed;
   session::RandomKeyEventsGenerator::InitSeed(random_seed);
   while (keyevents_size < kMaxEventSize) {

@@ -32,18 +32,18 @@
 
 load(
     "//:build_defs.bzl",
+    "QT_BIN_PATH",
     "cc_binary_mozc",
     "cc_library_mozc",
     "select_mozc",
 )
-
-bin_path = "/usr/bin/"
 
 def cc_qt_library_mozc(name, deps = [], **kwargs):
     cc_library_mozc(
         name = name,
         deps = deps + select_mozc(
             oss_linux = ["@io_qt//:qt"],
+            oss_macos = ["@io_qt//:qt_mac"],
             default = ["//third_party/qt:qt_native"],
         ),
         **kwargs
@@ -54,6 +54,7 @@ def cc_qt_binary_mozc(name, deps = [], **kwargs):
         name = name,
         deps = deps + select_mozc(
             oss_linux = ["@io_qt//:qt"],
+            oss_macos = ["@io_qt//:qt_mac"],
             default = ["//third_party/qt:qt_native"],
         ),
         **kwargs
@@ -65,11 +66,11 @@ def qt_moc_mozc(name, srcs, outs):
         srcs = srcs,
         outs = outs,
         cmd = select_mozc(
-            oss_linux = bin_path + "moc -p $$(dirname $<) -o $@ $(SRCS)",
+            oss = QT_BIN_PATH + "moc -p $$(dirname $<) -o $@ $(SRCS)",
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
-            oss_linux = [],
+            oss = [],
             default = ["//third_party/qt:moc"],
         ),
     )
@@ -80,11 +81,11 @@ def qt_uic_mozc(name, srcs, outs):
         srcs = srcs,
         outs = outs,
         cmd = select_mozc(
-            oss_linux = bin_path + "uic -o $@ $(SRCS)",
+            oss = QT_BIN_PATH + "uic -o $@ $(SRCS)",
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
-            oss_linux = [],
+            oss = [],
             default = ["//third_party/qt:uic"],
         ),
     )
@@ -95,11 +96,11 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         srcs = [qrc_file] + srcs,
         outs = outs,
         cmd = select_mozc(
-            oss_linux = bin_path + "rcc -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss = QT_BIN_PATH + "rcc -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
         ),
         tools = select_mozc(
-            oss_linux = [],
+            oss = [],
             default = ["//third_party/qt:rcc"],
         ),
     )

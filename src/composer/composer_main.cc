@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
-  table.LoadFromFile(FLAGS_table.c_str());
+  table.LoadFromFile(mozc::GetFlag(FLAGS_table).c_str());
   std::unique_ptr<mozc::composer::Composer> composer(
       new mozc::composer::Composer(&table, &Request::default_instance(),
                                    &Config::default_instance()));

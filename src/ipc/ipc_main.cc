@@ -53,8 +53,9 @@ class MultiConnections : public Thread {
  public:
   void Run() {
     char buf[8192];
-    for (int i = 0; i < FLAGS_num_requests; ++i) {
-      mozc::IPCClient con(FLAGS_server_address, FLAGS_server_path);
+    for (int i = 0; i < mozc::GetFlag(FLAGS_num_requests); ++i) {
+      mozc::IPCClient con(FLAGS_server_address,
+                          mozc::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
       string input = "testtesttesttest";
       size_t length = sizeof(buf);
@@ -93,13 +94,13 @@ class EchoServerThread : public Thread {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (FLAGS_test) {
-    mozc::EchoServer con(FLAGS_server_address, 10, 1000);
+  if (mozc::GetFlag(FLAGS_test)) {
+    mozc::EchoServer con(mozc::GetFlag(FLAGS_server_address), 10, 1000);
     mozc::EchoServerThread server_thread_main(&con);
     server_thread_main.SetJoinable(true);
     server_thread_main.Start("IpcMain");
 
-    std::vector<mozc::MultiConnections> cons(FLAGS_num_threads);
+    std::vector<mozc::MultiConnections> cons(mozc::GetFlag(FLAGS_num_threads));
     for (size_t i = 0; i < cons.size(); ++i) {
       cons[i].SetJoinable(true);
       cons[i].Start("MultiConnections");
@@ -108,7 +109,8 @@ int main(int argc, char **argv) {
       cons[i].Join();
     }
 
-    mozc::IPCClient kill(FLAGS_server_address, FLAGS_server_path);
+    mozc::IPCClient kill(FLAGS_server_address,
+                         mozc::GetFlag(FLAGS_server_path));
     const char kill_cmd[32] = "kill";
     char output[32];
     size_t output_size = sizeof(output);
@@ -117,16 +119,17 @@ int main(int argc, char **argv) {
 
     LOG(INFO) << "Done";
 
-  } else if (FLAGS_server) {
-    mozc::EchoServer con(FLAGS_server_address, 10, -1);
+  } else if (mozc::GetFlag(FLAGS_server)) {
+    mozc::EchoServer con(mozc::GetFlag(FLAGS_server_address), 10, -1);
     CHECK(con.Connected());
-    LOG(INFO) << "Start Server at " << FLAGS_server_address;
+    LOG(INFO) << "Start Server at " << mozc::GetFlag(FLAGS_server_address);
     con.Loop();
-  } else if (FLAGS_client) {
+  } else if (mozc::GetFlag(FLAGS_client)) {
     string line;
     char response[8192];
     while (getline(cin, line)) {
-      mozc::IPCClient con(FLAGS_server_address, FLAGS_server_path);
+      mozc::IPCClient con(FLAGS_server_address,
+                          mozc::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
       size_t response_size = sizeof(response);
       CHECK(con.Call(line.data(), line.size(), response, &response_size, 1000));

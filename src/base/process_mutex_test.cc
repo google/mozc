@@ -36,6 +36,7 @@
 #endif  // OS_WIN
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -50,7 +51,7 @@ class ProcessMutexTest : public testing::Test {
  protected:
   void SetUp() override {
     original_user_profile_dir_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {
@@ -66,7 +67,7 @@ class ProcessMutexTest : public testing::Test {
   std::string original_user_profile_dir_;
 };
 
-#if !defined(OS_WIN) && !defined(OS_NACL)
+#if !defined(OS_WIN)
 TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
   const pid_t pid = ::fork();
   if (pid == 0) {  // child process
@@ -91,7 +92,7 @@ TEST_F(ProcessMutexTest, ForkProcessMutexTest) {
     LOG(FATAL) << "fork() failed";
   }
 }
-#endif  // !OS_WIN && !OS_NACL
+#endif  // !OS_WIN
 
 TEST_F(ProcessMutexTest, BasicTest) {
   ProcessMutex m1(kName);

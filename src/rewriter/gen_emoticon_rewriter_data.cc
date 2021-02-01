@@ -129,8 +129,9 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  const auto &input_data = mozc::ReadEmoticonTsv(FLAGS_input);
+  const auto &input_data = mozc::ReadEmoticonTsv(mozc::GetFlag(FLAGS_input));
   mozc::SerializedDictionary::CompileToFiles(
-      input_data, FLAGS_output_token_array, FLAGS_output_string_array);
+      input_data, mozc::GetFlag(FLAGS_output_token_array),
+      mozc::GetFlag(FLAGS_output_string_array));
   return 0;
 }

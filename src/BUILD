@@ -39,41 +39,6 @@ package_group(
     packages = ["//..."],
 )
 
-# White listed tests which are enabled on NaCl.
-# data_manager tests are excluded since they require files on real file system.
-# TODO(hsumita): Add chrome/nacl:nacl_test.
-NACL_COMMON_TESTS = [
-    "//base:nacl_test",
-    "//composer:nacl_test",
-    "//composer/internal:nacl_test",
-    "//config:nacl_test",
-    "//dictionary:nacl_test",
-    "//engine:nacl_test",
-    "//net:nacl_test",
-    "//prediction:nacl_test",
-    "//rewriter:nacl_test",
-    "//session:nacl_test",
-    "//session/internal:nacl_test",
-    "//storage:nacl_test",
-    "//storage/louds:nacl_test",
-    "//transliteration:nacl_test",
-    "//usage_stats:nacl_test",
-]
-
-test_suite(
-    name = "nacl_test",
-    tests = NACL_COMMON_TESTS + [
-        "//converter:nacl_test",
-    ],
-)
-
-test_suite(
-    name = "nacl_tap_test",
-    tests = NACL_COMMON_TESTS + [
-        "//converter:nacl_tap_test",
-    ],
-)
-
 test_suite(
     name = "android_test",
     tests = [
@@ -90,7 +55,7 @@ config_setting(
     visibility = ["//:__subpackages__"],
 )
 
-# Special target so as to define special macros for Android and CrOS (NaCl).
+# Special target so as to define special macros for each platforms.
 # Don't depend on this directly. Use cc_(library|binary|test)_mozc rule instead.
 cc_library(
     name = "macro",
@@ -99,20 +64,24 @@ cc_library(
             "MOZC_DISABLE_SESSION_WATCHDOG",
             "NO_USAGE_REWRITER",
         ],
+        chromiumos = [
+            "MOZC_DISABLE_SESSION_WATCHDOG",
+            "MOZC_USE_MOZC_TESTING",
+            "NO_USAGE_REWRITER",
+        ],
         default = [
         ],
         ios = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
+            "MOZC_USE_MOZC_GOOGLETEST",
             "NO_USAGE_REWRITER",
         ],
         linux = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
             "OS_LINUX",
         ],
-        nacl = [
-            "MOZC_DISABLE_SESSION_WATCHDOG",
-            "MOZC_USE_MOZC_TESTING",
-            "NO_USAGE_REWRITER",
+        macos = [
+            "GOOGLE_JAPANESE_INPUT_BUILD",
         ],
         oss_android = [
             "MOZC_DISABLE_SESSION_WATCHDOG",
@@ -121,6 +90,9 @@ cc_library(
         oss_linux = [
             "MOZC_BUILD",
             "OS_LINUX",
+        ],
+        oss_macos = [
+            "MOZC_BUILD",
         ],
         wasm = [
             "GOOGLE_JAPANESE_INPUT_BUILD",
@@ -155,6 +127,11 @@ filegroup(
             "//unix/ibus:ibus_mozc",
             "//renderer:mozc_renderer",
             "//server:mozc_server",
+        ],
+        oss_macos = [
+            "//gui/about_dialog:about_dialog_macos",
+            "//renderer:mozc_renderer_macos",
+            "//server:mozc_server_macos",
         ],
     ),
 )

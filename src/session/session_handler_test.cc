@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "base/clock_mock.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -52,6 +53,7 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/memory/memory.h"
 
 DECLARE_int32(max_session_size);
 DECLARE_int32(create_session_min_interval);
@@ -194,13 +196,14 @@ class SessionHandlerTest : public SessionHandlerTestBase {
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32 expected_session_created_num = 0;
-  const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
+  const int32 interval_time = 10;  // 10 sec
+  mozc::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is removed
   const size_t session_size = 3;
-  FLAGS_max_session_size = static_cast<int32>(session_size);
+  mozc::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
@@ -224,7 +227,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     }
   }
 
-  FLAGS_max_session_size = static_cast<int32>(session_size);
+  mozc::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
@@ -261,7 +264,8 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 }
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
-  const int32 interval_time = FLAGS_create_session_min_interval = 10;  // 10 sec
+  const int32 interval_time = 10;  // 10 sec
+  mozc::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
@@ -281,7 +285,8 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 }
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
-  const int32 timeout = FLAGS_last_create_session_timeout = 10;  // 10 sec
+  const int32 timeout = 10;  // 10 sec
+  mozc::SetFlag(&FLAGS_last_create_session_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
@@ -300,7 +305,8 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 }
 
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
-  const int32 timeout = FLAGS_last_command_timeout = 10;  // 10 sec
+  const int32 timeout = 10;  // 10 sec
+  mozc::SetFlag(&FLAGS_last_command_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
@@ -472,7 +478,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
 // reload event.
 TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+  SessionHandler handler(absl::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Session handler receives reload request when engine builder is not running.
@@ -496,7 +502,7 @@ TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
 // async data load is already running.
 TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+  SessionHandler handler(absl::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where async data load is running.
@@ -519,7 +525,7 @@ TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+  SessionHandler handler(absl::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where requested data is broken.
@@ -537,7 +543,7 @@ TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(std::unique_ptr<EngineStub>(new EngineStub()),
+  SessionHandler handler(absl::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // A session is created before data is loaded.

@@ -53,8 +53,8 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 
   // Signle path
   {
-    const std::string path =
-        FileUtil::JoinPath(FLAGS_test_tmpdir, "this_file_does_not_exist");
+    const std::string path = FileUtil::JoinPath(
+        mozc::GetFlag(FLAGS_test_tmpdir), "this_file_does_not_exist");
     InputMultiFile multfile(path);
     std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
@@ -65,9 +65,12 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
   // Multiple paths
   {
     std::vector<std::string> filenames;
-    filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "these_files"));
-    filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "do_not"));
-    filenames.push_back(FileUtil::JoinPath(FLAGS_test_tmpdir, "exists"));
+    filenames.push_back(
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "these_files"));
+    filenames.push_back(
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "do_not"));
+    filenames.push_back(
+        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "exists"));
 
     std::string joined_path;
     Util::JoinStrings(filenames, ",", &joined_path);
@@ -80,9 +83,9 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 }
 
 TEST(InputMultiFileTest, ReadSingleFileTest) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
+  EXPECT_TRUE(FileUtil::DirectoryExists(mozc::GetFlag(FLAGS_test_tmpdir)));
   const std::string path =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "i_am_a_test_file");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "i_am_a_test_file");
 
   // Create a test file
   std::vector<std::string> expected_lines;
@@ -110,7 +113,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 }
 
 TEST(InputMultiFileTest, ReadMultipleFilesTest) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(FLAGS_test_tmpdir));
+  EXPECT_TRUE(FileUtil::DirectoryExists(mozc::GetFlag(FLAGS_test_tmpdir)));
 
   const int kNumFile = 3;
   const int kNumLinesPerFile = 10;
@@ -122,7 +125,8 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
     int serial_line_no = 0;
     for (int fileno = 0; fileno < kNumFile; ++fileno) {
       std::string filename = Util::StringPrintf("testfile%d", fileno);
-      std::string path = FileUtil::JoinPath(FLAGS_test_tmpdir, filename);
+      std::string path =
+          FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), filename);
       paths.push_back(path);
 
       OutputFileStream ofs(path.c_str());

@@ -207,8 +207,9 @@ Composer::Composer(const Table *table, const commands::Request *request,
       input_field_type_(commands::Context::NORMAL),
       shifted_sequence_count_(0),
       composition_(new Composition(table)),
-      typing_corrector_(table, FLAGS_max_typing_correction_query_candidates,
-                        FLAGS_max_typing_correction_query_results),
+      typing_corrector_(
+          table, mozc::GetFlag(FLAGS_max_typing_correction_query_candidates),
+          mozc::GetFlag(FLAGS_max_typing_correction_query_results)),
       max_length_(kMaxPreeditLength),
       request_(request),
       config_(config) {

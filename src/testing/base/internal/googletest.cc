@@ -44,12 +44,13 @@
 #include "base/logging.h"
 #include "base/util.h"
 
-DEFINE_string(test_srcdir, "",
-              "A directory that contains the input data files for a test.");
+MOZC_FLAG(string, test_srcdir, "",
+          "A directory that contains the input data files for a test.");
 
-DEFINE_string(test_tmpdir, "", "Directory for all temporary testing files.");
+MOZC_FLAG(string, test_tmpdir, "",
+          "Directory for all temporary testing files.");
 
-DECLARE_string(program_invocation_name);
+MOZC_DECLARE_FLAG(string, program_invocation_name);
 
 namespace mozc {
 namespace {
@@ -114,14 +115,13 @@ string GetTestSrcdir() {
 
   const string srcdir(kMozcDataDir);
 
-#if !defined(OS_NACL) && !defined(OS_ANDROID)
-  // TestSrcdir is not supported in NaCl and Android.
-  // TODO(horo): Consider how to implement TestSrcdir in NaCl.
+#if !defined(OS_ANDROID)
+  // TestSrcdir is not supported in Android.
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
   CHECK_EQ(access(srcdir.c_str(), R_OK | X_OK), 0)
       << "Access failure: " << srcdir;
-#endif  // !defined(OS_NACL) && !defined(OS_ANDROID)
+#endif  // !defined(OS_ANDROID)
   return srcdir;
 }
 
@@ -144,11 +144,11 @@ string GetTestTmpdir() {
 }  // namespace
 
 void InitTestFlags() {
-  if (FLAGS_test_srcdir.empty()) {
-    FLAGS_test_srcdir = GetTestSrcdir();
+  if (mozc::GetFlag(FLAGS_test_srcdir).empty()) {
+    mozc::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
   }
-  if (FLAGS_test_tmpdir.empty()) {
-    FLAGS_test_tmpdir = GetTestTmpdir();
+  if (mozc::GetFlag(FLAGS_test_tmpdir).empty()) {
+    mozc::SetFlag(&FLAGS_test_tmpdir, GetTestTmpdir());
   }
 }
 

@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "absl/memory/memory.h"
 
 DEFINE_int32(iterations, 1000, "number of iterations");
 DEFINE_int32(polling_duration, 1000, "duration period in msec");
@@ -64,9 +65,10 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<DummyThread[]> threads;
 
-  if (FLAGS_dummy_threads_size > 0) {
-    threads.reset(new DummyThread[FLAGS_dummy_threads_size]);
-    for (int i = 0; i < FLAGS_dummy_threads_size; ++i) {
+  if (mozc::GetFlag(FLAGS_dummy_threads_size) > 0) {
+    threads = absl::make_unique<DummyThread[]>(
+        mozc::GetFlag(FLAGS_dummy_threads_size));
+    for (int i = 0; i < mozc::GetFlag(FLAGS_dummy_threads_size); ++i) {
       threads[i].Start("CpuStatsMain");
     }
   }
@@ -74,10 +76,10 @@ int main(int argc, char **argv) {
   mozc::CPUStats stats;
   std::cout << "NumberOfProcessors: " << stats.GetNumberOfProcessors()
             << std::endl;
-  for (int i = 0; i < FLAGS_iterations; ++i) {
+  for (int i = 0; i < mozc::GetFlag(FLAGS_iterations); ++i) {
     std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
               << stats.GetCurrentProcessCPULoad() << std::endl;
-    mozc::Util::Sleep(FLAGS_polling_duration);
+    mozc::Util::Sleep(mozc::GetFlag(FLAGS_polling_duration));
   }
 
   return 0;

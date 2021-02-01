@@ -51,6 +51,7 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
 DEFINE_string(input, "", "Input file");
@@ -97,7 +98,7 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
 int Loop(std::istream *input) {
   mozc::client::Client client;
   if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(FLAGS_server_path);
+    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -108,22 +109,22 @@ int Loop(std::istream *input) {
   mozc::commands::RendererCommand renderer_command;
 
   if (mozc::GetFlag(FLAGS_test_renderer)) {
-#if defined(OS_WIN) || defined(__APPLE__)
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id(
         ::GetCurrentThreadId());
 #endif
+#if defined(OS_WIN) || defined(__APPLE__)
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
+    renderer_client = absl::make_unique<renderer::RendererClient>();
+    CHECK(renderer_client->Activate());
 #else
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
 #endif
-    renderer_client.reset(new renderer::RendererClient);
-    CHECK(renderer_client->Activate());
   }
 
   commands::Command command;
@@ -175,8 +176,8 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!mozc::GetFlag(FLAGS_profile_dir).empty()) {
-    mozc::FileUtil::CreateDirectory(FLAGS_profile_dir);
-    mozc::SystemUtil::SetUserProfileDirectory(FLAGS_profile_dir);
+    mozc::FileUtil::CreateDirectory(mozc::GetFlag(FLAGS_profile_dir));
+    mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_profile_dir));
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
@@ -184,9 +185,10 @@ int main(int argc, char **argv) {
 
   if (!mozc::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
-    input_file.reset(new mozc::InputFileStream(FLAGS_input.c_str()));
+    input_file = absl::make_unique<mozc::InputFileStream>(
+        mozc::GetFlag(FLAGS_input).c_str());
     if (input_file->fail()) {
-      LOG(ERROR) << "File not opened: " << FLAGS_input;
+      LOG(ERROR) << "File not opened: " << mozc::GetFlag(FLAGS_input);
       return 1;
     }
     input = input_file.get();

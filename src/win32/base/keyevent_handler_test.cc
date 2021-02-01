@@ -36,6 +36,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -244,7 +245,7 @@ class KeyEventHandlerTest : public testing::Test {
   KeyEventHandlerTest() {}
   virtual ~KeyEventHandlerTest() {}
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }

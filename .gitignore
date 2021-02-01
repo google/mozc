@@ -7,14 +7,21 @@
 # Python compiled objects
 *.pyc
 
+# Hidden files
+.DS_Store
+
 # Temporary dir for Docker
 /docker/ubuntu20.04/src/
 
-# Mozc build artifacts by Bazel
-/src/bazel-bin/
-/src/bazel-out/
-/src/bazel-src/
-/src/bazel-testlogs/
+# Temporary working dirs
+/src-*
+/src_*
+
+# Mozc build artifacts by Bazel (symbolic links)
+/src/bazel-bin
+/src/bazel-out
+/src/bazel-src
+/src/bazel-testlogs
 
 # Mozc build artifacts by GYP
 /src/out_android/

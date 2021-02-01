@@ -36,6 +36,12 @@ load(
     "qt_rcc_mozc",
     "qt_uic_mozc",
 )
+load(
+    "//:build_defs.bzl",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
+)
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
@@ -100,5 +106,31 @@ cc_qt_binary_mozc(
         ":about_dialog",
         "//base:init_mozc",
         "//gui/base:gui_base",
+    ],
+)
+
+cc_qt_library_mozc(
+    name = "about_dialog_main_lib",
+    srcs = ["about_dialog_main.cc"],
+    deps = [
+        ":about_dialog",
+        "//base:init_mozc",
+        "//gui/base:gui_base",
+    ],
+)
+
+macos_application(
+    name = "about_dialog_macos",
+    app_icons = ["//data/images/mac:product_icon.icns"],
+    bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Tool.AboutDialog",
+    bundle_name = "AboutDialog",
+    infoplists = ["//gui:gen_mozc_tool_info_plist"],
+    minimum_os_version = MACOS_MIN_OS_VER,
+    resources = ["//data/images/mac:candidate_window_logo.tiff"],
+    deps = [
+        ":about_dialog_main_lib",
+        "@io_qt//:QtCore_mac",
+        "@io_qt//:QtGui_mac",
+        "@io_qt//:QtWidgets_mac",
     ],
 )

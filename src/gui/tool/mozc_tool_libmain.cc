@@ -86,7 +86,7 @@ int RunPrelaunchProcesses(int argc, char *argv[]);
 namespace {
 
 void SetFlagFromEnv(const string &key) {
-  const string flag_name = "FLAGS_" + key;
+  const string flag_name = "mozc::GetFlag(FLAGS_)" + key;
   const char *env = getenv(flag_name.c_str());
   if (env == nullptr) {
     return;
@@ -120,24 +120,24 @@ int RunMozcTool(int argc, char *argv[]) {
   // name.
   string binary_name = mozc::FileUtil::Basename(argv[0]);
   if (binary_name == "AboutDialog") {
-    FLAGS_mode = "about_dialog";
+    mozc::SetFlag(&FLAGS_mode, "about_dialog");
   } else if (binary_name == "ConfigDialog") {
-    FLAGS_mode = "config_dialog";
+    mozc::SetFlag(&FLAGS_mode, "config_dialog");
   } else if (binary_name == "DictionaryTool") {
-    FLAGS_mode = "dictionary_tool";
+    mozc::SetFlag(&FLAGS_mode, "dictionary_tool");
   } else if (binary_name == "ErrorMessageDialog") {
-    FLAGS_mode = "error_message_dialog";
+    mozc::SetFlag(&FLAGS_mode, "error_message_dialog");
   } else if (binary_name == "WordRegisterDialog") {
-    FLAGS_mode = "word_register_dialog";
+    mozc::SetFlag(&FLAGS_mode, "word_register_dialog");
   } else if (binary_name == kProductPrefix "Prelauncher") {
     // The binary name of prelauncher is user visible in
     // "System Preferences" -> "Accounts" -> "Login items".
     // So we set kProductPrefix to the binary name.
-    FLAGS_mode = "prelauncher";
+    mozc::SetFlag(&FLAGS_mode, "prelauncher");
   }
 #endif
 
-  if (FLAGS_mode != "administration_dialog" &&
+  if (mozc::GetFlag(FLAGS_mode) != "administration_dialog" &&
       !mozc::RunLevel::IsValidClientRunLevel()) {
     return -1;
   }
@@ -150,37 +150,37 @@ int RunMozcTool(int argc, char *argv[]) {
   mozc::gui::WinUtil::KeepJumpListUpToDate();
 #endif  // OS_WIN
 
-  if (FLAGS_mode == "config_dialog") {
+  if (mozc::GetFlag(FLAGS_mode) == "config_dialog") {
     return RunConfigDialog(argc, argv);
-  } else if (FLAGS_mode == "dictionary_tool") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "dictionary_tool") {
     return RunDictionaryTool(argc, argv);
-  } else if (FLAGS_mode == "word_register_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "word_register_dialog") {
     return RunWordRegisterDialog(argc, argv);
-  } else if (FLAGS_mode == "error_message_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "error_message_dialog") {
     return RunErrorMessageDialog(argc, argv);
-  } else if (FLAGS_mode == "about_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "about_dialog") {
     return RunAboutDialog(argc, argv);
 #ifdef OS_WIN
-  } else if (FLAGS_mode == "set_default_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
     return RunSetDefaultDialog(argc, argv);
-  } else if (FLAGS_mode == "post_install_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "post_install_dialog") {
     // post_install_dialog is used on Windows only.
     return RunPostInstallDialog(argc, argv);
-  } else if (FLAGS_mode == "administration_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "administration_dialog") {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
 #endif  // OS_WIN
 #ifdef __APPLE__
-  } else if (FLAGS_mode == "confirmation_dialog") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "confirmation_dialog") {
     // Confirmation Dialog is used for the update dialog on Mac only.
     return RunConfirmationDialog(argc, argv);
-  } else if (FLAGS_mode == "prelauncher") {
+  } else if (mozc::GetFlag(FLAGS_mode) == "prelauncher") {
     // Prelauncher is used on Mac only.
     return RunPrelaunchProcesses(argc, argv);
 #endif  // __APPLE__
   } else {
-    LOG(ERROR) << "Unknown mode: " << FLAGS_mode;
+    LOG(ERROR) << "Unknown mode: " << mozc::GetFlag(FLAGS_mode);
     return -1;
   }
 

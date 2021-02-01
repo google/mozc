@@ -29,9 +29,9 @@
 
 #include "gui/dictionary_tool/dictionary_tool.h"
 
-#if defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_NACL
+#endif  // OS_ANDROID || OS_WASM
 
 #include <QtCore/QTimer>
 #include <QtGui/QtGui>
@@ -88,7 +88,7 @@ inline QString QUtf8(const char str[]) {
   return QString::fromUtf8(str);
 }
 
-inline QString QUtf8(const string &str) {
+inline QString QUtf8(const std::string &str) {
   return QString::fromUtf8(str.c_str());
 }
 

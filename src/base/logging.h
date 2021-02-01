@@ -292,7 +292,6 @@ class NullLogFinalizer {
 #define DVLOG(verboselevel) DLOG_IF(INFO, VLOG_IS_ON(verboselevel))
 
 
-
 #ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))

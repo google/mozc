@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -45,6 +46,7 @@
 #include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -100,7 +102,7 @@ class SymbolRewriterTest : public ::testing::Test {
   ~SymbolRewriterTest() override = default;
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     // We cannot use mock converter here because SymbolRewriter uses
     // ResizeSegment of converter implementation. However, SymbolRewriter is
@@ -109,7 +111,7 @@ class SymbolRewriterTest : public ::testing::Test {
     engine_.reset(MockDataEngineFactory::Create());
     converter_ = engine_->GetConverter();
 
-    data_manager_.reset(new testing::MockDataManager);
+    data_manager_ = absl::make_unique<testing::MockDataManager>();
   }
 
   std::unique_ptr<EngineInterface> engine_;

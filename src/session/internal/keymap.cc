@@ -167,7 +167,7 @@ const char *KeyMapManager::GetKeyMapFileName(
 
 bool KeyMapManager::LoadFile(const char *filename) {
   std::unique_ptr<std::istream> ifs(ConfigFileStream::LegacyOpen(filename));
-  if (ifs.get() == nullptr) {
+  if (ifs == nullptr) {
     LOG(WARNING) << "cannot load keymap table: " << filename;
     return false;
   }

@@ -39,13 +39,7 @@ load(
 )
 load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
-package(default_visibility = [
-    "//:__subpackages__",
-])
-
-test_suite(
-    name = "nacl_test",
-)
+package(default_visibility = ["//:__subpackages__"])
 
 portable_proto_library(
     name = "usage_stats_proto",
@@ -92,6 +86,7 @@ cc_test_mozc(
     deps = [
         ":usage_stats",
         ":usage_stats_proto",
+        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//config:stats_config_util",
@@ -128,6 +123,7 @@ cc_test_mozc(
         ":usage_stats_testing_util",
         ":usage_stats_uploader",
         "//base",
+        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//base:version",

@@ -76,8 +76,13 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
     ] + select_mozc(
-        ios = ["//base:mac_util"],
+        ios = [
+            "//base:mac_process",
+            "//base:mac_util",
+        ],
     ),
 )
 
@@ -97,6 +102,7 @@ cc_test_mozc(
         "//ipc:ipc_mock",
         "//protocol:commands_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -167,6 +173,7 @@ cc_binary_mozc(
         "//protocol:renderer_proto",
         "//renderer:renderer_client",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

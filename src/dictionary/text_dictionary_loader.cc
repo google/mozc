@@ -168,7 +168,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
 
   // Roughly allocate buffers for Token pointers.
   if (limit < 0) {
-    tokens_.reserve(FLAGS_tokens_reserve_size);
+    tokens_.reserve(mozc::GetFlag(FLAGS_tokens_reserve_size));
     limit = std::numeric_limits<int>::max();
   } else {
     tokens_.reserve(limit);

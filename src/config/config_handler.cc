@@ -322,11 +322,11 @@ void ConfigHandler::SetMetaData(Config *config) {
 Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
 #if defined(__APPLE__)
   return config::Config::KOTOERI;
-#elif defined(OS_NACL)  // __APPLE__
+#elif defined(OS_CHROMEOS)  // __APPLE__
   return config::Config::CHROMEOS;
-#else                   // __APPLE__ or OS_NACL
+#else                   // __APPLE__ or OS_CHROMEOS
   return config::Config::MSIME;
-#endif                  // __APPLE__ or OS_NACL
+#endif                  // __APPLE__ or OS_CHROMEOS
 }
 
 }  // namespace config

@@ -166,6 +166,7 @@ cc_test_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:util",
         "//testing:gunit_main",

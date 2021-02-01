@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 
   // restricted mode
   if (run_level == mozc::RunLevel::RESTRICTED) {
-    FLAGS_restricted = true;
+    mozc::SetFlag(&FLAGS_restricted, true);
   }
 
   if (mozc::config::StatsConfigUtil::IsEnabled()) {

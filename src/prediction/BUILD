@@ -43,10 +43,6 @@ load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
 
-test_suite(
-    name = "nacl_test",
-)
-
 # c.f., //protocol:portable_proto
 portable_proto_library(
     name = "user_history_predictor_proto",
@@ -103,6 +99,7 @@ cc_library_mozc(
         "//storage:lru_cache",
         "//testing:gunit_prod",
         "//usage_stats",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -120,6 +117,7 @@ cc_test_mozc(
         "//base:clock_mock",
         "//base:encryptor",
         "//base:file_util",
+        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -139,6 +137,7 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -149,10 +148,6 @@ cc_library_mozc(
         "dictionary_predictor.cc",
     ],
     hdrs = ["dictionary_predictor.h"],
-    nocopts = select({
-        "//tools/cc_target_os:nacl": "-fPIC",
-        "//conditions:default": "",
-    }),
     deps = [
         ":predictor_interface",
         ":suggestion_filter",
@@ -235,6 +230,7 @@ cc_test_mozc(
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

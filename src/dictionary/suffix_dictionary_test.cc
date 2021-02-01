@@ -37,6 +37,7 @@
 #include "dictionary/dictionary_test_util.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -53,8 +54,8 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
     const uint32 *token_array = nullptr;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
                                     &token_array);
-    dic.reset(
-        new SuffixDictionary(key_array_data, value_arra_data, token_array));
+    dic = absl::make_unique<SuffixDictionary>(key_array_data, value_arra_data,
+                                              token_array);
     ASSERT_NE(nullptr, dic.get());
   }
 

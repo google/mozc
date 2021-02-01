@@ -52,10 +52,10 @@
 #include "base/mutex.h"
 #endif
 
-#if defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_ANDROID)
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
-#endif  // OS_ANDROID || OS_NACL
+#endif  // OS_ANDROID
 
 #include "base/file_util.h"
 #include "base/singleton.h"
@@ -270,8 +270,6 @@ typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_ANDROID)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
-#elif defined(OS_NACL)
-typedef NaclStatsConfigUtilImpl DefaultConfigUtilImpl;
 #else
 // Fall back mode.  Use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;

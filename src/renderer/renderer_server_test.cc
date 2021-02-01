@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -120,12 +121,12 @@ class DummyRendererLauncher : public RendererLauncherInterface {
 class RendererServerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 
 TEST_F(RendererServerTest, IPCTest) {
-  SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   mozc::IPCClientFactoryOnMemory on_memory_client_factory;
 
   std::unique_ptr<TestRendererServer> server(new TestRendererServer);

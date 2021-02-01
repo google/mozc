@@ -50,6 +50,7 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -199,7 +200,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
     const char *data = nullptr;
     size_t size;
     data_manager_->GetSuggestionFilterData(&data, &size);
-    suggestion_filter.reset(new SuggestionFilter(data, size));
+    suggestion_filter = absl::make_unique<SuggestionFilter>(data, size);
   }
 
   // Load the original suggestion filter from file.

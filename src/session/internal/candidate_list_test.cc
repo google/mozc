@@ -33,6 +33,7 @@
 #include <string>
 
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace session {
@@ -40,9 +41,9 @@ namespace session {
 class CandidateListTest : public testing::Test {
  protected:
   void SetUp() override {
-    main_list_.reset(new CandidateList(true));
-    sub_list_2_.reset(new CandidateList(true));
-    sub_sub_list_2_1_.reset(new CandidateList(false));
+    main_list_ = absl::make_unique<CandidateList>(true);
+    sub_list_2_ = absl::make_unique<CandidateList>(true);
+    sub_sub_list_2_1_ = absl::make_unique<CandidateList>(false);
 
     main_list_->AddCandidate(0, "0");                           // main0
     main_list_->AddCandidate(1, "1");                           // main1

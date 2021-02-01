@@ -29,15 +29,16 @@
 
 #include "ipc/ipc_path_manager.h"
 
-#if defined(OS_ANDROID) || defined(OS_NACL)
+#if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
-#endif  // OS_ANDROID || OS_NACL
+#endif  // OS_ANDROID || OS_WASM
 
 #include <string>
 #include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
@@ -86,7 +87,7 @@ class BatchGetPathNameThread : public Thread {
 class IPCPathManagerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

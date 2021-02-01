@@ -34,10 +34,12 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -80,11 +82,11 @@ typedef EncryptedStringStorage TestEncryptedStringStorage;
 class EncryptedStringStorageTest : public testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");
 
-    storage_.reset(new TestEncryptedStringStorage(filename_));
+    storage_ = absl::make_unique<TestEncryptedStringStorage>(filename_);
   }
 
   std::string filename_;

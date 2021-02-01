@@ -35,6 +35,7 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
@@ -51,6 +52,7 @@
 #include "rewriter/variants_rewriter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -111,7 +113,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
   UserSegmentHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     ConfigHandler::GetDefaultConfig(&config_);
     for (int i = 0; i < config_.character_form_rules_size(); ++i) {
@@ -127,7 +129,8 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     Clock::SetClockForUnitTest(nullptr);
 
     pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
-    pos_group_.reset(new PosGroup(mock_data_manager_.GetPosGroupData()));
+    pos_group_ =
+        absl::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
     ASSERT_TRUE(pos_group_.get() != nullptr);
   }
 
@@ -178,7 +181,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
   const std::string history_file =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "/segment.db");
+      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "/segment.db");
   EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 

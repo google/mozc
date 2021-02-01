@@ -69,7 +69,7 @@ void Convert(const std::string &query, mozc::ios::IosEngine *engine,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::ios::IosEngine ios_engine(FLAGS_datafile);
+  mozc::ios::IosEngine ios_engine(mozc::GetFlag(FLAGS_datafile));
 
   mozc::commands::Command command;
   mozc::config::Config config;
@@ -97,13 +97,14 @@ int main(int argc, char **argv) {
 
     Convert(query, &ios_engine, &command);
 
-    if (FLAGS_show_full) {
+    if (mozc::GetFlag(FLAGS_show_full)) {
       std::cout << command.Utf8DebugString() << std::endl;
     } else {
       std::cout << "----- preedit -----\n"
                 << command.output().preedit().Utf8DebugString() << std::endl;
       const auto &cands = command.output().candidates();
-      const int size = std::min(FLAGS_candsize, cands.candidate_size());
+      const int size = std::min(mozc::GetFlag(FLAGS_candsize),
+                                cands.candidate_size());
       for (int i = 0; i < size; ++i) {
         std::cout << "----- candidate " << i << " -----\n"
                   << cands.candidate(i).Utf8DebugString() << std::endl;

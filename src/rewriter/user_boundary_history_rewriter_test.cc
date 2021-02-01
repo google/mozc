@@ -34,6 +34,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
@@ -82,7 +83,7 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
   UserBoundaryHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
@@ -112,7 +113,8 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
 
 TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   UserBoundaryHistoryRewriter rewriter(&mock());
-  const std::string history_file = FLAGS_test_tmpdir + "/boundary.db";
+  const std::string history_file =
+      mozc::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
   EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 

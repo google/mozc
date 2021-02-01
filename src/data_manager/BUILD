@@ -98,6 +98,7 @@ cc_library_mozc(
         "//dictionary:pos_matcher_lib",
         "//prediction:suggestion_filter",
         "//testing",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -171,6 +172,7 @@ cc_test_mozc(
         ":dataset_writer",
         "//base:file_stream",
         "//base:file_util",
+        "//base:flags",
         "//base:obfuscator_support",
         "//base:util",
         "//testing:gunit_main",
@@ -273,7 +275,6 @@ cc_library_mozc(
         android = ["//data_manager/android:pos_list.h"],
         client = ["//data_manager/google:pos_list.h"],
         default = [],
-        nacl = ["//data_manager/chromeos:pos_list.h"],
         oss = ["//data_manager/oss:pos_list.h"],
     ),
     deps = [

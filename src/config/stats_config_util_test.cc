@@ -33,6 +33,7 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "base/flags.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/win_api_test_helper.h"
@@ -670,8 +671,8 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 
 #ifdef OS_ANDROID
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const string config_file =
-      FileUtil::JoinPath(FLAGS_test_tmpdir, "mozc_stats_config_util_test_tmp");
+  const string config_file = FileUtil::JoinPath(
+      mozc::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
   FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
@@ -684,11 +685,11 @@ TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
 }
 #endif  // OS_ANDROID
 
-#if defined(OS_LINUX) || defined(OS_NACL)
+#if defined(OS_LINUX)
 TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif  // OS_LINUX || OS_NACL
+#endif  // OS_LINUX
 
 #else  // !GOOGLE_JAPANESE_INPUT_BUILD
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {

@@ -37,7 +37,10 @@
 #include <string>
 
 #include "base/file_util.h"
+
+
 #include "base/flags.h"
+
 #include "base/logging.h"
 #ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
@@ -67,20 +70,20 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
 
 string GetLogFilePathFromProgramName(const string &program_name) {
   const string basename = FileUtil::Basename(program_name) + ".log";
-  if (FLAGS_log_dir.empty()) {
+  if (mozc::GetFlag(FLAGS_log_dir).empty()) {
 #ifdef MOZC_BUILDTOOL_BUILD
     return basename;
 #else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
 #endif  // MOZC_BUILDTOOL_BUILD
   }
-  return FileUtil::JoinPath(FLAGS_log_dir, basename);
+  return FileUtil::JoinPath(mozc::GetFlag(FLAGS_log_dir), basename);
 }
 
 }  // namespace
 
 void InitMozc(const char *arg0, int *argc, char ***argv) {
-  FLAGS_program_invocation_name = *argv[0];
+  mozc::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
 #ifdef OS_WIN
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.

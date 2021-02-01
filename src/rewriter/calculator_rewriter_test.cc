@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
@@ -47,6 +48,7 @@
 #include "rewriter/calculator/calculator_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -109,12 +111,12 @@ class CalculatorRewriterTest : public ::testing::Test {
   CalculatorMock &calculator_mock() { return calculator_mock_; }
 
   CalculatorRewriter *BuildCalculatorRewriterWithConverterMock() {
-    converter_mock_.reset(new ConverterMock);
+    converter_mock_ = absl::make_unique<ConverterMock>();
     return new CalculatorRewriter(converter_mock_.get());
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
 
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);

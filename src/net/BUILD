@@ -30,10 +30,8 @@
 
 load(
     "//:build_defs.bzl",
-    "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
-    "select_mozc",
 )
 load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
@@ -46,99 +44,10 @@ package_group(
     ],
 )
 
-test_suite(
-    name = "nacl_test",
-)
-
-cc_library_mozc(
-    name = "http_client_common_header",
-    hdrs = [
-        "http_client.h",
-        "http_client_common.h",
-    ],
-    deps = ["//base:port"],
-)
-
-COMMON_HTTP_CLIENT_SRCS = [
-    "http_client.cc",
-    "http_client_null.cc",
-    "proxy_manager.cc",
-]
-
-COMMON_HTTP_CLIENT_HDRS = [
-    "http_client.h",
-    "http_client_common.h",
-    "http_client_null.h",
-    "proxy_manager.h",
-]
-
-cc_library_mozc(
-    name = "http_client",
-    srcs = COMMON_HTTP_CLIENT_SRCS,
-    hdrs = COMMON_HTTP_CLIENT_HDRS,
-    visibility = [
-        "//:__subpackages__",
-    ],
-    deps = select_mozc(
-        client = [],
-        default = ["//third_party/curl"],
-    ) + [
-        "//base",
-        "//base:stopwatch",
-    ] + select_mozc(
-        ios = ["//base:mac_util"],
-    ) + [
-        "//base:logging",
-        "//base:mutex",
-        "//base:port",
-        "//base:singleton",
-        "//base:util",
-    ],
-)
-
-cc_binary_mozc(
-    name = "http_client_main",
-    srcs = ["http_client_main.cc"],
-    deps = [
-        ":http_client",
-        "//base",
-        "//base:file_stream",
-        "//base:flags",
-        "//base:init_mozc",
-        "//base:port",
-    ],
-)
-
-cc_library_mozc(
-    name = "http_client_mock",
-    testonly = 1,
-    srcs = ["http_client_mock.cc"],
-    hdrs = ["http_client_mock.h"],
-    deps = [
-        ":http_client",
-        "//base",
-        "//base:logging",
-        "//base:util",
-    ],
-)
-
-cc_test_mozc(
-    name = "http_client_mock_test",
-    srcs = ["http_client_mock_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":http_client",
-        ":http_client_mock",
-        "//testing:gunit_main",
-    ],
-)
-
 cc_library_mozc(
     name = "jsoncpp",
     hdrs = ["jsoncpp.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         "//third_party/jsoncpp:json",
     ],
@@ -173,9 +82,7 @@ cc_library_mozc(
     name = "json_util",
     srcs = ["json_util.cc"],
     hdrs = ["json_util.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":jsoncpp",
         "//base",

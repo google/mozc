@@ -32,6 +32,7 @@
 #include <cstddef>
 #include <string>
 
+#include "base/flags.h"
 #include "base/system_util.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
@@ -110,7 +111,7 @@ size_t GetDiceNumberIndex(const Segment &segment) {
 class DiceRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(FLAGS_test_tmpdir);
+    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
   }
 };
 
