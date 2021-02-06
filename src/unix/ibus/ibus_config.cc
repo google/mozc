@@ -89,13 +89,17 @@ std::string CreateEnginesXml(const ibus::Config &config) {
         "  <description>", kEngineDescription, "</description>\n",
         "  <language>", kEngineLanguage, "</language>\n",
         "  <icon>", kEngineIcon, "</icon>\n",
-        "  <rank>", kEngineRank, "</rank>\n",
+        "  <rank>", engine.rank(), "</rank>\n",
         "  <icon_prop_key>", kEngineIcon_prop_key, "</icon_prop_key>\n",
         "  <symbol>", kEngineSymbol, "</symbol>\n",
         "  <setup>", kEngineSetup, "</setup>\n",
         "  <name>", EscapeXmlValue(engine.name()), "</name>\n",
         "  <longname>", EscapeXmlValue(engine.longname()), "</longname>\n",
         "  <layout>", EscapeXmlValue(engine.layout()), "</layout>\n",
+        "  <layout_variant>", EscapeXmlValue(engine.layout_variant()),
+        "</layout_variant>\n",
+        "  <layout_option>", EscapeXmlValue(engine.layout_option()),
+        "</layout_option>\n",
         "</engine>\n");
   }
   absl::StrAppend(&output, "</engines>\n");
