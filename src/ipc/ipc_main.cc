@@ -39,13 +39,13 @@
 #include "base/thread.h"
 #include "ipc/ipc.h"
 
-DEFINE_string(server_address, "ipc_test", "");
-DEFINE_bool(test, false, "automatic test mode");
-DEFINE_bool(server, false, "invoke as server mode");
-DEFINE_bool(client, false, "invoke as client mode");
-DEFINE_string(server_path, "", "server path");
-DEFINE_int32(num_threads, 10, "number of threads");
-DEFINE_int32(num_requests, 100, "number of requests");
+MOZC_FLAG(string, server_address, "ipc_test", "");
+MOZC_FLAG(bool, test, false, "automatic test mode");
+MOZC_FLAG(bool, server, false, "invoke as server mode");
+MOZC_FLAG(bool, client, false, "invoke as client mode");
+MOZC_FLAG(string, server_path, "", "server path");
+MOZC_FLAG(int32, num_threads, 10, "number of threads");
+MOZC_FLAG(int32, num_requests, 100, "number of requests");
 
 namespace mozc {
 

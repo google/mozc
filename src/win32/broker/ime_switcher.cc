@@ -46,8 +46,8 @@
 #include "win32/base/imm_util.h"
 #include "win32/base/migration_util.h"
 
-DEFINE_bool(set_default_do_not_ask_again, false,
-            "Set true if SetDefaultDialog should not be displayed again.");
+MOZC_FLAG(bool, set_default_do_not_ask_again, false,
+          "Set true if SetDefaultDialog should not be displayed again.");
 
 namespace mozc {
 namespace win32 {

@@ -28,70 +28,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load(
-    "//tools/build_defs:qt.bzl",
-    "cc_qt_binary_mozc",
-    "cc_qt_library_mozc",
-    "qt_moc_mozc",
-    "qt_rcc_mozc",
-)
+BRANDING = "Mozc"
 
-package(
-    default_visibility = ["//gui:__subpackages__"],
-)
+LINUX_MOZC_SERVER_DIRECTORY = "/usr/lib/mozc"
+IBUS_MOZC_ICON_PATH = "/usr/share/ibus-mozc/product_icon.png"
+IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
 
-qt_moc_mozc(
-    name = "moc_confirmation_dialog",
-    srcs = ["confirmation_dialog.h"],
-    outs = ["moc_confirmation_dialog.cc"],
-)
+MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
+MACOS_MIN_OS_VER = "10.12"
 
-qt_rcc_mozc(
-    name = "qrc_confirmation_dialog",
-    srcs = [
-        "confirmation_dialog_en.qm",
-        "confirmation_dialog_ja.qm",
-        "//gui/base:tr_en.qm",
-        "//gui/base:tr_ja.qm",
-    ],
-    outs = ["qrc_confirmation_dialog.cc"],
-    qrc_file = "confirmation_dialog.qrc",
-    qrc_name = "qrc_confirmation_dialog",
-)
+## Qt paths
+QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
+QT_BIN_PATH = "/usr/bin/"
 
-cc_qt_library_mozc(
-    name = "confirmation_dialog",
-    srcs = [
-        "confirmation_dialog.cc",
-        "confirmation_dialog_libmain.cc",
-        ":moc_confirmation_dialog",
-        ":qrc_confirmation_dialog",
-    ],
-    hdrs = [
-        "confirmation_dialog.h",
-    ],
-    deps = [
-        "//base:file_util",
-        "//base:flags",
-        "//base:logging",
-        "//base:port",
-        "//base:process",
-        "//base:process_mutex",
-        "//base:run_level",
-        "//base:system_util",
-        "//base:util",
-        "//base:version",
-        "//gui/base:gui_base",
-        "//gui/base:singleton_window_helper",
-    ],
-)
-
-cc_qt_binary_mozc(
-    name = "confirmation_dialog_main",
-    srcs = ["confirmation_dialog_main.cc"],
-    deps = [
-        ":confirmation_dialog",
-        "//base:init_mozc",
-        "//gui/base:gui_base",
-    ],
-)
+## For macOS
+## QT_BASE_PATH should be a directory compiled with -developer_build option.
+# QT_BASE_PATH = "/tmp/qt"
+# QT_BIN_PATH = QT_BASE_PATH + "/bin/"

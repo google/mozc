@@ -43,7 +43,7 @@ int RunErrorMessageDialog(int argc, char *argv[]) {
   mozc::SystemUtil::DisableIME();
   auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  string name = "error_message_dialog.";
+  std::string name = "error_message_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());

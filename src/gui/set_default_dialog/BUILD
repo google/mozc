@@ -32,6 +32,7 @@ load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
+    "macos_qt_application_mozc",
     "qt_moc_mozc",
     "qt_rcc_mozc",
     "qt_uic_mozc",
@@ -96,12 +97,23 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
-    name = "set_default_dialog_main",
+cc_qt_library_mozc(
+    name = "set_default_dialog_main_lib",
     srcs = ["set_default_dialog_main.cc"],
     deps = [
         ":set_default_dialog",
         "//base:init_mozc",
         "//gui/base:gui_base",
     ],
+)
+
+cc_qt_binary_mozc(
+    name = "set_default_dialog_main",
+    deps = [":set_default_dialog_main_lib"],
+)
+
+macos_qt_application_mozc(
+    name = "set_default_dialog_macos",
+    bundle_name = "SetDefaultDialog",
+    deps = [":set_default_dialog_main_lib"],
 )

@@ -51,7 +51,7 @@
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
 
-DECLARE_bool(restricted);  // in SessionHandler
+MOZC_DECLARE_FLAG(bool, restricted);  // in SessionHandler
 
 namespace {
 mozc::SessionServer *g_session_server = NULL;

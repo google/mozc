@@ -58,7 +58,6 @@ import codecs
 import collections
 import optparse
 import struct
-import six
 
 UNDEFINED_COST = -1
 MAX_UINT16 = struct.unpack('H', b'\xFF\xFF')[0]
@@ -168,7 +167,7 @@ def WriteResult(romaji_transition_cost, output_path):
                              romaji_transition_cost)
   with open(output_path, 'wb') as f:
     f.write(struct.pack('<I', len(unique_characters)))
-    f.write(six.ensure_binary(''.join(unique_characters)))
+    f.write(''.join(unique_characters).encode('utf-8'))
     offset = 4 + len(unique_characters)
 
     # Add padding to place value list size at 4-byte boundary.

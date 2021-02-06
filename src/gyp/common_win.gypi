@@ -330,6 +330,7 @@
         'AdditionalOptions': [
           '/Zc:strictStrings',
           '/utf-8',
+          '/std:c++17',
         ],
       },
       'VCLinkerTool': {

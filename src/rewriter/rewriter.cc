@@ -67,7 +67,7 @@
 #include "rewriter/usage_rewriter.h"
 #endif  // NO_USAGE_REWRITER
 
-DEFINE_bool(use_history_rewriter, true, "Use history rewriter or not.");
+MOZC_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
 namespace {

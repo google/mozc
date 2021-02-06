@@ -60,7 +60,8 @@
 #include "gui/base/win_util.h"
 #endif  // OS_WIN
 
-DEFINE_string(mode, "about_dialog", "mozc_tool mode");
+MOZC_FLAG(string, mode, "about_dialog", "mozc_tool mode");
+MOZC_DECLARE_FLAG(string, error_type);
 
 // Run* are defiend in each qt module
 int RunAboutDialog(int argc, char *argv[]);
@@ -77,24 +78,21 @@ int RunAdministrationDialog(int argc, char *argv[]);
 #endif  // OS_WIN
 
 #ifdef __APPLE__
-// Confirmation Dialog is used for the update dialog on Mac only.
-int RunConfirmationDialog(int argc, char *argv[]);
 int RunPrelaunchProcesses(int argc, char *argv[]);
 #endif  // __APPLE__
 
 #ifdef __APPLE__
 namespace {
 
-void SetFlagFromEnv(const string &key) {
-  const string flag_name = "mozc::GetFlag(FLAGS_)" + key;
-  const char *env = getenv(flag_name.c_str());
-  if (env == nullptr) {
-    return;
+void SetFlagsFromEnv() {
+  const char *mode = std::getenv("FLAGS_mode");
+  if (mode != nullptr) {
+    mozc::SetFlag(&FLAGS_mode, mode);
   }
-  if (!mozc_flags::SetFlag(key, env)) {
-#ifndef IGNORE_INVALID_FLAG
-    std::cerr << "Unknown/Invalid flag " << key << std::endl;
-#endif
+
+  const char *error_type = std::getenv("FLAGS_error_type");
+  if (error_type != nullptr) {
+    mozc::SetFlag(&FLAGS_error_type, error_type);
   }
 }
 
@@ -108,10 +106,7 @@ int RunMozcTool(int argc, char *argv[]) {
 #ifdef __APPLE__
   // OSX's app won't accept command line flags.  Here we preset flags from
   // environment variables.
-  SetFlagFromEnv("mode");
-  SetFlagFromEnv("error_type");
-  SetFlagFromEnv("confirmation_type");
-  SetFlagFromEnv("register_prelauncher");
+  SetFlagsFromEnv();
 #endif  // __APPLE__
   mozc::InitMozc(argv[0], &argc, &argv);
 
@@ -172,9 +167,6 @@ int RunMozcTool(int argc, char *argv[]) {
     return RunAdministrationDialog(argc, argv);
 #endif  // OS_WIN
 #ifdef __APPLE__
-  } else if (mozc::GetFlag(FLAGS_mode) == "confirmation_dialog") {
-    // Confirmation Dialog is used for the update dialog on Mac only.
-    return RunConfirmationDialog(argc, argv);
   } else if (mozc::GetFlag(FLAGS_mode) == "prelauncher") {
     // Prelauncher is used on Mac only.
     return RunPrelaunchProcesses(argc, argv);

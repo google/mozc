@@ -51,7 +51,7 @@ int RunDictionaryTool(int argc, char *argv[]) {
   Q_INIT_RESOURCE(qrc_dictionary_tool);
   auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 
-  string name = "dictionary_tool.";
+  std::string name = "dictionary_tool.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
   mozc::gui::SingletonWindowHelper window_helper(name);
   if (window_helper.FindPreviousWindow()) {

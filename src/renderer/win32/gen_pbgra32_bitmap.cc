@@ -40,8 +40,8 @@
 #include "base/port.h"
 #include "base/util.h"
 
-DEFINE_string(src, "", "path to the input PNG file");
-DEFINE_string(dest, "", "path to the output BMP file");
+MOZC_FLAG(string, src, "", "path to the input PNG file");
+MOZC_FLAG(string, dest, "", "path to the output BMP file");
 
 using ::std::max;
 using ::std::min;

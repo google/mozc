@@ -35,9 +35,9 @@
 #include "base/util.h"
 #include "storage/lru_storage.h"
 
-DEFINE_bool(create_db, false, "initialize database");
-DEFINE_string(file, "test.db", "");
-DEFINE_int32(size, 10, "size");
+MOZC_FLAG(bool, create_db, false, "initialize database");
+MOZC_FLAG(string, file, "test.db", "");
+MOZC_FLAG(int32, size, 10, "size");
 
 using mozc::storage::LRUStorage;
 

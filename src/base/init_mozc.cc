@@ -49,12 +49,13 @@
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
 // initialized in the very early initialization stage.
-DEFINE_string(log_dir, "",
-              "If specified, logfiles are written into this directory "
-              "instead of the default logging directory.");
+MOZC_FLAG(string, log_dir, "",
+          "If specified, logfiles are written into this directory "
+          "instead of the default logging directory.");
 
 
-DEFINE_string(program_invocation_name, "", "Program name copied from argv[0].");
+MOZC_FLAG(string, program_invocation_name, "",
+          "Program name copied from argv[0].");
 
 namespace mozc {
 namespace {

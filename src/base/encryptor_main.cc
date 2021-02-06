@@ -38,20 +38,20 @@
 #include "base/mmap.h"
 #include "base/util.h"
 
-DEFINE_string(password, "", "password");
-DEFINE_string(salt, "", "salt");
-DEFINE_string(iv, "", "initialization vector");
+MOZC_FLAG(string, password, "", "password");
+MOZC_FLAG(string, salt, "", "salt");
+MOZC_FLAG(string, iv, "", "initialization vector");
 
-DEFINE_bool(encrypt, false, "encrypt mode");
-DEFINE_bool(decrypt, false, "decrypt mode");
+MOZC_FLAG(bool, encrypt, false, "encrypt mode");
+MOZC_FLAG(bool, decrypt, false, "decrypt mode");
 
 // encrypt/decrypt files
-DEFINE_string(input_file, "", "input file");
-DEFINE_string(output_file, "", "input file");
+MOZC_FLAG(string, input_file, "", "input file");
+MOZC_FLAG(string, output_file, "", "input file");
 
 // perform encryption/decryption with test_input.
 // used for making a golden data for unittesting
-DEFINE_string(test_input, "", "test input string");
+MOZC_FLAG(string, test_input, "", "test input string");
 
 namespace {
 std::string Escape(const std::string &buf) {

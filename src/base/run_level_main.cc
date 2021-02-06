@@ -35,8 +35,8 @@
 #include "base/init_mozc.h"
 #include "base/run_level.h"
 
-DEFINE_bool(server, false, "server mode");
-DEFINE_bool(client, false, "client mode");
+MOZC_FLAG(bool, server, false, "server mode");
+MOZC_FLAG(bool, client, false, "client mode");
 
 // This is a simple command line tool
 // too check RunLevel class

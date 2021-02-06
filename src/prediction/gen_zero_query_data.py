@@ -72,7 +72,7 @@ def ParseCodePoint(s):
 
 
 def NormalizeString(string):
-  normalized = unicodedata.normalize('NFKC', six.ensure_text(string))
+  normalized = unicodedata.normalize('NFKC', string)
   if six.PY2:
     return normalized.encode('utf-8').replace('~', '〜')
   else:
@@ -218,7 +218,7 @@ def ReadSymbolTsv(stream):
     symbol = columns[1]
     readings = columns[2]
 
-    symbol_unicode = six.ensure_text(symbol)
+    symbol_unicode = symbol
     if len(symbol_unicode) != 1:
       continue
 

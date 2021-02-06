@@ -70,7 +70,8 @@ class CalculatorImpl : public CalculatorInterface {
  public:
   CalculatorImpl();
 
-  bool CalculateString(const string &key, string *result) const override;
+  bool CalculateString(const std::string &key,
+                       std::string *result) const override;
 
  private:
   typedef std::vector<std::pair<int, double> > TokenSequence;
@@ -90,7 +91,7 @@ class CalculatorImpl : public CalculatorInterface {
 
   // Mapping from operator character such as '+' to the corresponding
   // token type such as PLUS.
-  std::map<string, int> operator_map_;
+  std::map<std::string, int> operator_map_;
 };
 
 CalculatorImpl::CalculatorImpl() {
@@ -111,13 +112,14 @@ CalculatorImpl::CalculatorImpl() {
 
 // Basic arithmetic operations are available.
 // TODO(tok): Add more number of operators.
-bool CalculatorImpl::CalculateString(const string &key, string *result) const {
+bool CalculatorImpl::CalculateString(const std::string &key,
+                                     std::string *result) const {
   DCHECK(result);
   if (key.empty()) {
     LOG(ERROR) << "Key is empty.";
     return false;
   }
-  string normalized_key;
+  std::string normalized_key;
   Util::FullWidthAsciiToHalfWidthAscii(key, &normalized_key);
 
   absl::string_view expression_body;
@@ -177,7 +179,7 @@ bool CalculatorImpl::Tokenize(absl::string_view expression_body,
       ++current;
     }
     if (token_begin < current) {
-      string number_token(token_begin, current - token_begin);
+      std::string number_token(token_begin, current - token_begin);
       double value = 0.0;
       if (!NumberUtil::SafeStrToDouble(number_token, &value)) {
         return false;
@@ -193,8 +195,9 @@ bool CalculatorImpl::Tokenize(absl::string_view expression_body,
         // Invalid token
         return false;
       }
-      string window(current, length);
-      std::map<string, int>::const_iterator op_it = operator_map_.find(window);
+      std::string window(current, length);
+      std::map<std::string, int>::const_iterator op_it =
+          operator_map_.find(window);
       if (op_it == operator_map_.end()) {
         continue;
       }

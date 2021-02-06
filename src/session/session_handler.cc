@@ -66,31 +66,31 @@
 
 using mozc::usage_stats::UsageStats;
 
-DEFINE_int32(timeout, -1,
-             "server timeout. "
-             "if sessions get empty for \"timeout\", "
-             "shutdown message is automatically emitted");
+MOZC_FLAG(int32, timeout, -1,
+          "server timeout. "
+          "if sessions get empty for \"timeout\", "
+          "shutdown message is automatically emitted");
 
-DEFINE_int32(max_session_size, 64,
-             "maximum sessions size. "
-             "if size of sessions reaches to \"max_session_size\", "
-             "oldest session is removed");
+MOZC_FLAG(int32, max_session_size, 64,
+          "maximum sessions size. "
+          "if size of sessions reaches to \"max_session_size\", "
+          "oldest session is removed");
 
-DEFINE_int32(create_session_min_interval, 0,
-             "minimum interval (sec) for create session");
+MOZC_FLAG(int32, create_session_min_interval, 0,
+          "minimum interval (sec) for create session");
 
-DEFINE_int32(watch_dog_interval, 180, "watch dog timer intaval (sec)");
+MOZC_FLAG(int32, watch_dog_interval, 180, "watch dog timer intaval (sec)");
 
-DEFINE_int32(last_command_timeout, 3600,
-             "remove session if it is not accessed for "
-             "\"last_command_timeout\" sec");
+MOZC_FLAG(int32, last_command_timeout, 3600,
+          "remove session if it is not accessed for "
+          "\"last_command_timeout\" sec");
 
-DEFINE_int32(last_create_session_timeout, 300,
-             "remove session if it is not accessed for "
-             "\"last_create_session_timeout\" sec "
-             "after create session command");
+MOZC_FLAG(int32, last_create_session_timeout, 300,
+          "remove session if it is not accessed for "
+          "\"last_create_session_timeout\" sec "
+          "after create session command");
 
-DEFINE_bool(restricted, false, "Launch server with restricted setting");
+MOZC_FLAG(bool, restricted, false, "Launch server with restricted setting");
 
 namespace mozc {
 

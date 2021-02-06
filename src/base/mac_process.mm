@@ -76,7 +76,7 @@ bool MacProcess::OpenApplication(const string &path) {
 namespace {
 bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
-  setenv("mozc::GetFlag(FLAGS_error_type)", error_type.c_str(), 1);
+  setenv("FLAGS_error_type", error_type.c_str(), 1);
 
   // If normal expected tool_name is specified, we invoke specific application.
   NSString *appName = nil;
@@ -105,7 +105,7 @@ bool LaunchMozcToolInternal(const string &tool_name, const string &error_type) {
   } else {
     // Otherwise, we tries to invoke the application by settings FLAGS_mode.
     // use --fromenv option to specify tool name
-    setenv("mozc::GetFlag(FLAGS_mode)", tool_name.c_str(), 1);
+    setenv("FLAGS_mode", tool_name.c_str(), 1);
     toolAppPath = [toolAppPath
                     stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
   }

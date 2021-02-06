@@ -32,6 +32,7 @@ load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
+    "macos_qt_application_mozc",
     "qt_moc_mozc",
     "qt_rcc_mozc",
     "qt_uic_mozc",
@@ -174,8 +175,8 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
-    name = "dictionary_tool_main",
+cc_qt_library_mozc(
+    name = "dictionary_tool_main_lib",
     srcs = ["dictionary_tool_main.cc"],
     deps = [
         ":dictionary_tool",
@@ -183,4 +184,15 @@ cc_qt_binary_mozc(
         "//base:init_mozc",
         "//gui/base:gui_base",
     ],
+)
+
+cc_qt_binary_mozc(
+    name = "dictionary_tool_main",
+    deps = [":dictionary_tool_main_lib"],
+)
+
+macos_qt_application_mozc(
+    name = "dictionary_tool_macos",
+    bundle_name = "DictionaryTool",
+    deps = [":dictionary_tool_main_lib"],
 )

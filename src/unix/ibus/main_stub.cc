@@ -33,7 +33,7 @@
 #include "base/init_mozc.h"
 #include "unix/ibus/ibus_config.h"
 
-DEFINE_bool(xml, false, "Output xml data for the engine.");
+MOZC_FLAG(bool, xml, false, "Output xml data for the engine.");
 
 namespace {
 void OutputXml() {

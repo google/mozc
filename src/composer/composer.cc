@@ -48,10 +48,10 @@
 #include "protocol/config.pb.h"
 
 // Use flags instead of constant for performance evaluation.
-DEFINE_uint64(max_typing_correction_query_candidates, 40,
-              "Maximum # of typing correction query temporary candidates.");
-DEFINE_uint64(max_typing_correction_query_results, 8,
-              "Maximum # of typing correction query results.");
+MOZC_FLAG(uint64, max_typing_correction_query_candidates, 40,
+          "Maximum # of typing correction query temporary candidates.");
+MOZC_FLAG(uint64, max_typing_correction_query_results, 8,
+          "Maximum # of typing correction query results.");
 
 namespace mozc {
 namespace composer {

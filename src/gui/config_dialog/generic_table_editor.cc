@@ -121,13 +121,13 @@ QTableWidget *GenericTableEditorDialog::mutable_table_widget() {
   return editorTableWidget;
 }
 
-const string &GenericTableEditorDialog::table() const { return table_; }
+const std::string &GenericTableEditorDialog::table() const { return table_; }
 
-string *GenericTableEditorDialog::mutable_table() { return &table_; }
+std::string *GenericTableEditorDialog::mutable_table() { return &table_; }
 
 QMenu *GenericTableEditorDialog::mutable_edit_menu() { return edit_menu_; }
 
-bool GenericTableEditorDialog::LoadFromString(const string &str) {
+bool GenericTableEditorDialog::LoadFromString(const std::string &str) {
   std::istringstream istr(str);
   return LoadFromStream(&istr);
 }

@@ -46,15 +46,16 @@
 namespace mozc {
 namespace {
 
-Segment *AddSegment(const string &key, Segments *segments) {
+Segment *AddSegment(const std::string &key, Segments *segments) {
   Segment *segment = segments->push_back_segment();
   segment->set_key(key);
   return segment;
 }
 
-Segment::Candidate *AddCandidate(const string &key, const string &value,
-                                 const string &content_key,
-                                 const string &content_value,
+Segment::Candidate *AddCandidate(const std::string &key,
+                                 const std::string &value,
+                                 const std::string &content_key,
+                                 const std::string &content_value,
                                  Segment *segment) {
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->Init();

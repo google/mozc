@@ -32,19 +32,25 @@
 
 load(
     "//:build_defs.bzl",
-    "QT_BIN_PATH",
     "cc_binary_mozc",
     "cc_library_mozc",
     "select_mozc",
 )
+load(
+    "//:config.bzl",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
+    "QT_BIN_PATH",
+)
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 def cc_qt_library_mozc(name, deps = [], **kwargs):
     cc_library_mozc(
         name = name,
         deps = deps + select_mozc(
+            default = ["//third_party/qt:qt_native"],
             oss_linux = ["@io_qt//:qt"],
             oss_macos = ["@io_qt//:qt_mac"],
-            default = ["//third_party/qt:qt_native"],
         ),
         **kwargs
     )
@@ -53,9 +59,9 @@ def cc_qt_binary_mozc(name, deps = [], **kwargs):
     cc_binary_mozc(
         name = name,
         deps = deps + select_mozc(
+            default = ["//third_party/qt:qt_native"],
             oss_linux = ["@io_qt//:qt"],
             oss_macos = ["@io_qt//:qt_mac"],
-            default = ["//third_party/qt:qt_native"],
         ),
         **kwargs
     )
@@ -66,12 +72,12 @@ def qt_moc_mozc(name, srcs, outs):
         srcs = srcs,
         outs = outs,
         cmd = select_mozc(
-            oss = QT_BIN_PATH + "moc -p $$(dirname $<) -o $@ $(SRCS)",
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
+            oss = QT_BIN_PATH + "moc -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
-            oss = [],
             default = ["//third_party/qt:moc"],
+            oss = [],
         ),
     )
 
@@ -81,12 +87,12 @@ def qt_uic_mozc(name, srcs, outs):
         srcs = srcs,
         outs = outs,
         cmd = select_mozc(
-            oss = QT_BIN_PATH + "uic -o $@ $(SRCS)",
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
+            oss = QT_BIN_PATH + "uic -o $@ $(SRCS)",
         ),
         tools = select_mozc(
-            oss = [],
             default = ["//third_party/qt:uic"],
+            oss = [],
         ),
     )
 
@@ -96,11 +102,28 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         srcs = [qrc_file] + srcs,
         outs = outs,
         cmd = select_mozc(
-            oss = QT_BIN_PATH + "rcc -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
+            oss = QT_BIN_PATH + "rcc -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = select_mozc(
-            oss = [],
             default = ["//third_party/qt:rcc"],
+            oss = [],
         ),
+    )
+
+def macos_qt_application_mozc(name, bundle_name, deps):
+    macos_application(
+        name = name,
+        app_icons = ["//data/images/mac:product_icon.icns"],
+        bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Tool." + bundle_name,
+        bundle_name = bundle_name,
+        infoplists = ["//gui:gen_mozc_tool_info_plist"],
+        minimum_os_version = MACOS_MIN_OS_VER,
+        resources = ["//data/images/mac:candidate_window_logo.tiff"],
+        visibility = ["//:__subpackages__"],
+        deps = deps + [
+            "@io_qt//:QtCore_mac",
+            "@io_qt//:QtGui_mac",
+            "@io_qt//:QtWidgets_mac",
+        ],
     )

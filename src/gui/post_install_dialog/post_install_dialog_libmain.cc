@@ -49,7 +49,7 @@ int RunPostInstallDialog(int argc, char *argv[]) {
 
   mozc::SystemUtil::DisableIME();
 
-  string name = "post_install_dialog.";
+  std::string name = "post_install_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());

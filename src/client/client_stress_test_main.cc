@@ -55,12 +55,12 @@
 // 1. multi-thread testing
 // 2. change/config the senario
 
-DEFINE_int32(max_keyevents, 100000,
-             "test at most |max_keyevents| key sequences");
-DEFINE_string(server_path, "", "specify server path");
-DEFINE_int32(key_duration, 10, "key duration (msec)");
-DEFINE_bool(test_renderer, false, "test renderer");
-DEFINE_bool(test_testsendkey, true, "test TestSendKey");
+MOZC_FLAG(int32, max_keyevents, 100000,
+          "test at most |max_keyevents| key sequences");
+MOZC_FLAG(string, server_path, "", "specify server path");
+MOZC_FLAG(int32, key_duration, 10, "key duration (msec)");
+MOZC_FLAG(bool, test_renderer, false, "test renderer");
+MOZC_FLAG(bool, test_testsendkey, true, "test TestSendKey");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

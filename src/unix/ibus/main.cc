@@ -39,8 +39,8 @@
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
 
-DEFINE_bool(ibus, false, "The engine is started by ibus-daemon");
-DEFINE_bool(xml, false, "Output xml data for the engine.");
+MOZC_FLAG(bool, ibus, false, "The engine is started by ibus-daemon");
+MOZC_FLAG(bool, xml, false, "Output xml data for the engine.");
 
 namespace {
 

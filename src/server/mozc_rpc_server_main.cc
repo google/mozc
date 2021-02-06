@@ -57,13 +57,13 @@ using ssize_t = SSIZE_T;
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 
-DEFINE_string(host, "localhost", "server host name");
-DEFINE_bool(server, true, "server mode");
-DEFINE_bool(client, false, "client mode");
-DEFINE_int32(client_test_size, 100, "client test size");
-DEFINE_int32(port, 8000, "port of RPC server");
-DEFINE_int32(rpc_timeout, 60000, "timeout");
-DEFINE_string(user_profile_directory, "", "user profile directory");
+MOZC_FLAG(string, host, "localhost", "server host name");
+MOZC_FLAG(bool, server, true, "server mode");
+MOZC_FLAG(bool, client, false, "client mode");
+MOZC_FLAG(int32, client_test_size, 100, "client test size");
+MOZC_FLAG(int32, port, 8000, "port of RPC server");
+MOZC_FLAG(int32, rpc_timeout, 60000, "timeout");
+MOZC_FLAG(string, user_profile_directory, "", "user profile directory");
 
 namespace mozc {
 

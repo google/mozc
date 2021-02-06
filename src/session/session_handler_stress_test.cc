@@ -52,9 +52,9 @@ uint32 GenerateRandomSeed() {
 }  // namespace
 
 // There is no DEFINE_uint32.
-DEFINE_uint64(random_seed, GenerateRandomSeed(),
-              "Random seed value. "
-              "This value will be interpreted as uint32.");
+MOZC_FLAG(uint64, random_seed, GenerateRandomSeed(),
+          "Random seed value. "
+          "This value will be interpreted as uint32.");
 
 namespace mozc {
 namespace {

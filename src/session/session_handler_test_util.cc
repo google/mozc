@@ -48,12 +48,12 @@
 #include "storage/registry.h"
 #include "testing/base/public/googletest.h"
 
-DECLARE_int32(max_session_size);
-DECLARE_int32(create_session_min_interval);
-DECLARE_int32(watch_dog_interval);
-DECLARE_int32(last_command_timeout);
-DECLARE_int32(last_create_session_timeout);
-DECLARE_bool(restricted);
+MOZC_DECLARE_FLAG(int32, max_session_size);
+MOZC_DECLARE_FLAG(int32, create_session_min_interval);
+MOZC_DECLARE_FLAG(int32, watch_dog_interval);
+MOZC_DECLARE_FLAG(int32, last_command_timeout);
+MOZC_DECLARE_FLAG(int32, last_create_session_timeout);
+MOZC_DECLARE_FLAG(bool, restricted);
 
 namespace mozc {
 namespace session {

@@ -35,7 +35,7 @@
 #include "base/stopwatch.h"
 #include "base/util.h"
 
-DEFINE_int32(sleep_time, 1000, "sleep time");
+MOZC_FLAG(int32, sleep_time, 1000, "sleep time");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

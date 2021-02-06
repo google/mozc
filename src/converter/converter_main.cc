@@ -57,24 +57,25 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 
-DEFINE_int32(max_conversion_candidates_size, 200, "maximum candidates size");
-DEFINE_string(user_profile_dir, "", "path to user profile directory");
-DEFINE_string(
-    engine_name, "default",
-    "Shortcut to select engine_data_path from name: (default|oss|mock)");
-DEFINE_string(engine_type, "desktop", "Engine type: (desktop|mobile)");
-DEFINE_bool(output_debug_string, true, "output debug string for each input");
-DEFINE_bool(show_meta_candidates, false, "if true, show meta candidates");
+MOZC_FLAG(int32, max_conversion_candidates_size, 200,
+          "maximum candidates size");
+MOZC_FLAG(string, user_profile_dir, "", "path to user profile directory");
+MOZC_FLAG(string, engine_name, "default",
+          "Shortcut to select engine_data_path from name: (default|oss|mock)");
+MOZC_FLAG(string, engine_type, "desktop", "Engine type: (desktop|mobile)");
+MOZC_FLAG(bool, output_debug_string, true,
+          "output debug string for each input");
+MOZC_FLAG(bool, show_meta_candidates, false, "if true, show meta candidates");
 
 // Advanced options for data files.  These are automatically set when --engine
 // is used but they can be overridden by specifying these flags.
-DEFINE_string(engine_data_path, "",
-              "Path to engine data file. This overrides the default data path "
-              "for engine_name.");
-DEFINE_string(magic, "", "Expected magic number of data file");
-DEFINE_string(id_def, "",
-              "id.def file for POS IDs. If provided, show human readable "
-              "POS instead of ID number");
+MOZC_FLAG(string, engine_data_path, "",
+          "Path to engine data file. This overrides the default data path "
+          "for engine_name.");
+MOZC_FLAG(string, magic, "", "Expected magic number of data file");
+MOZC_FLAG(string, id_def, "",
+          "id.def file for POS IDs. If provided, show human readable "
+          "POS instead of ID number");
 
 namespace mozc {
 namespace {
@@ -468,8 +469,8 @@ int main(int argc, char **argv) {
             << "\nid.def: " << mozc::GetFlag(FLAGS_id_def) << std::endl;
 
   std::unique_ptr<mozc::DataManager> data_manager(new mozc::DataManager);
-  const auto status = data_manager->InitFromFile(FLAGS_engine_data_path,
-                                                 mozc::GetFlag(FLAGS_magic));
+  const auto status = data_manager->InitFromFile(
+      mozc::GetFlag(FLAGS_engine_data_path), mozc::GetFlag(FLAGS_magic));
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::commands::Request request;

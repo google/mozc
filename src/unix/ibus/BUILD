@@ -36,15 +36,15 @@ load(
     "py_binary_mozc",
     "select_mozc",
 )
+load(
+    "//:config.bzl",
+    "IBUS_MOZC_ICON_PATH",
+    "IBUS_MOZC_PATH",
+    "LINUX_MOZC_SERVER_DIRECTORY",
+)
 load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
-
-IBUS_MOZC_ICON_PATH = "/usr/share/ibus-mozc/product_icon.png"
-
-IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
-
-LINUX_MOZC_SERVER_DIRECTORY = "/usr/lib/mozc"
 
 py_binary_mozc(
     name = "gen_mozc_xml_main",

@@ -30,14 +30,17 @@
 
 load(
     "//:build_defs.bzl",
-    "BRANDING",
-    "MACOS_BUNDLE_ID_PREFIX",
-    "MACOS_MIN_OS_VER",
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
     "objc_library_mozc",
     "select_mozc",
+)
+load(
+    "//:config.bzl",
+    "BRANDING",
+    "MACOS_BUNDLE_ID_PREFIX",
+    "MACOS_MIN_OS_VER",
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 

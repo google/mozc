@@ -53,8 +53,9 @@
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
-DEFINE_int32(timeout, 10 * 60, "timeout of candidate server (sec)");
-DEFINE_bool(restricted, false, "launch candidates server with restricted mode");
+MOZC_FLAG(int32, timeout, 10 * 60, "timeout of candidate server (sec)");
+MOZC_FLAG(bool, restricted, false,
+          "launch candidates server with restricted mode");
 
 namespace mozc {
 

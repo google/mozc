@@ -60,7 +60,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
 
-DECLARE_bool(use_history_rewriter);
+MOZC_DECLARE_FLAG(bool, use_history_rewriter);
 
 namespace mozc {
 namespace {

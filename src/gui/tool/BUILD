@@ -28,11 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "cc_library_mozc")
+load("//:build_defs.bzl", "cc_library_mozc", "select_mozc")
 load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
+    "macos_qt_application_mozc",
 )
 
 cc_library_mozc(
@@ -73,22 +74,32 @@ cc_qt_library_mozc(
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
         "//gui/config_dialog",
-        "//gui/confirmation_dialog",
         "//gui/dictionary_tool",
         "//gui/error_message_dialog",
         "//gui/post_install_dialog",
         "//gui/set_default_dialog",
         "//gui/word_register_dialog",
-    ],
+    ] + select_mozc(macos = [":prelauncher_lib"]),
 )
 
-cc_qt_binary_mozc(
-    name = "mozc_tool",
+cc_qt_library_mozc(
+    name = "mozc_tool_main_lib",
     srcs = ["mozc_tool_main.cc"],
-    visibility = ["//:__pkg__"],
     deps = [
         ":mozc_tool_lib",
         "//base:init_mozc",
         "//gui/base:gui_base",
     ],
+)
+
+cc_qt_binary_mozc(
+    name = "mozc_tool",
+    visibility = ["//:__pkg__"],
+    deps = [":mozc_tool_main_lib"],
+)
+
+macos_qt_application_mozc(
+    name = "mozc_tool_macos",
+    bundle_name = "MozcTool",
+    deps = [":mozc_tool_main_lib"],
 )

@@ -337,14 +337,14 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
     with open(os.path.join(abs_dir, 'environment.x86'), 'wb') as x86_file:
       x86_file.write(x86_content)
       print('== x86_content ==')
-      print(six.ensure_str(x86_content))
+      print(x86_content.decode('utf-8'))
     with open(os.path.join(abs_dir, 'environment.x64'), 'rb') as x64_file:
       x64_content = (x64_file.read()[:-1] +
                      six.b('PYTHONPATH' + '=' + python_path + nul + nul))
     with open(os.path.join(abs_dir, 'environment.x64'), 'wb') as x64_file:
       x64_file.write(x64_content)
       print('== x64_content ==')
-      print(six.ensure_str(x64_content))
+      print(x64_content.decode('utf-8'))
 
 
 def GypMain(options, unused_args):

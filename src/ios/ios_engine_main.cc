@@ -39,9 +39,9 @@
 #include "protocol/candidates.pb.h"
 
 // mozc/data_manager/testing:mozc_dataset_for_testing is one of datafile.
-DEFINE_string(datafile, "", "Path to a data file to be used");
-DEFINE_int32(candsize, 3, "Maximum number of candidates");
-DEFINE_bool(show_full, false, "Display the debug string of output command");
+MOZC_FLAG(string, datafile, "", "Path to a data file to be used");
+MOZC_FLAG(int32, candsize, 3, "Maximum number of candidates");
+MOZC_FLAG(bool, show_full, false, "Display the debug string of output command");
 
 namespace {
 

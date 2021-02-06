@@ -58,7 +58,6 @@ import optparse
 import re
 import sys
 import unicodedata
-import six
 
 from dictionary import zip_code_util
 
@@ -85,7 +84,7 @@ class ZipEntry(object):
     address = unicodedata.normalize('NFKC', self.address)
     line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
                       address, ZIP_CODE_LABEL])
-    print(six.ensure_str(line))
+    print(line)
 
 
 def ProcessZipCodeCSV(file_name):

@@ -107,14 +107,16 @@
 #include "base/util.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_string(usage_data_file, "", "usage data file");
-DEFINE_string(cforms_file, "", "cforms file");
-DEFINE_string(output_base_conjugation_suffix, "",
-              "output base conjugation suffix array");
-DEFINE_string(output_conjugation_suffix, "", "output conjugation suffix array");
-DEFINE_string(output_conjugation_index, "", "output conjugation index array");
-DEFINE_string(output_usage_item_array, "", "output array of usage items");
-DEFINE_string(output_string_array, "", "output string array");
+MOZC_FLAG(string, usage_data_file, "", "usage data file");
+MOZC_FLAG(string, cforms_file, "", "cforms file");
+MOZC_FLAG(string, output_base_conjugation_suffix, "",
+          "output base conjugation suffix array");
+MOZC_FLAG(string, output_conjugation_suffix, "",
+          "output conjugation suffix array");
+MOZC_FLAG(string, output_conjugation_index, "",
+          "output conjugation index array");
+MOZC_FLAG(string, output_usage_item_array, "", "output array of usage items");
+MOZC_FLAG(string, output_string_array, "", "output string array");
 
 namespace mozc {
 namespace {

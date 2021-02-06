@@ -42,7 +42,7 @@
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 #include "absl/strings/str_format.h"
 
-DEFINE_bool(suppress_stderr, false, "Discards all the output to stderr.");
+MOZC_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
 
 namespace {
 

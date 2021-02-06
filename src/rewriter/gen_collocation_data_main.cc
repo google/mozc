@@ -46,10 +46,10 @@
 #include "base/logging.h"
 #include "rewriter/gen_existence_data.h"
 
-DEFINE_string(collocation_data, "", "collocation data text");
-DEFINE_string(output, "", "output file name (default: stdout)");
-DEFINE_double(error_rate, 0.00001, "error rate");
-DEFINE_bool(binary_mode, false, "outputs binary file");
+MOZC_FLAG(string, collocation_data, "", "collocation data text");
+MOZC_FLAG(string, output, "", "output file name (default: stdout)");
+MOZC_FLAG(double, error_rate, 0.00001, "error rate");
+MOZC_FLAG(bool, binary_mode, false, "outputs binary file");
 
 namespace mozc {
 namespace {

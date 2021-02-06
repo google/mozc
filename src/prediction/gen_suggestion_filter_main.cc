@@ -40,11 +40,11 @@
 #include "base/util.h"
 #include "storage/existence_filter.h"
 
-DEFINE_string(input, "", "per-line suggestion filter list");
-DEFINE_string(output, "", "output bloom filter");
-DEFINE_bool(header, true, "make header file instead of raw bloom filter");
-DEFINE_string(name, "SuggestionFilterData",
-              "name for variable name in the header file");
+MOZC_FLAG(string, input, "", "per-line suggestion filter list");
+MOZC_FLAG(string, output, "", "output bloom filter");
+MOZC_FLAG(bool, header, true, "make header file instead of raw bloom filter");
+MOZC_FLAG(string, name, "SuggestionFilterData",
+          "name for variable name in the header file");
 
 namespace {
 void ReadWords(const std::string &name, std::vector<uint64> *words) {

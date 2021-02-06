@@ -90,7 +90,7 @@ def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
   offset = ord(u'Ａ') - ord(u'A')
   normalized = _FULLWIDTH_RE.sub(lambda x: six.unichr(ord(x.group(0)) - offset),
-                                 six.ensure_text(string))
+                                 string)
   return normalized
 
 

@@ -39,9 +39,9 @@
 #include "base/util.h"
 #include "absl/memory/memory.h"
 
-DEFINE_int32(iterations, 1000, "number of iterations");
-DEFINE_int32(polling_duration, 1000, "duration period in msec");
-DEFINE_int32(dummy_threads_size, 0, "number of dummy threads");
+MOZC_FLAG(int32, iterations, 1000, "number of iterations");
+MOZC_FLAG(int32, polling_duration, 1000, "duration period in msec");
+MOZC_FLAG(int32, dummy_threads_size, 0, "number of dummy threads");
 
 namespace {
 class DummyThread : public mozc::Thread {
