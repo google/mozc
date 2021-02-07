@@ -16,7 +16,7 @@ Building Mozc on Windows requires the following software.
 
 # Get dependent prebuilt binaries
 
-If you do not have `git`, `python 2.7`, and `ninja` in your build environment, you can use prebuilt binaries in [depot\_tools](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html).  You need to manually unzip `depot_tools.zip` and add the extracted directory into your `PATH`.
+If you do not have `git`, `python3`, and `ninja` in your build environment, you can use prebuilt binaries in [depot\_tools](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html).  You need to manually unzip `depot_tools.zip` and add the extracted directory into your `PATH`.
 
 ```
 set PATH=%PATH%;c:\work\depot_tools
