@@ -4,6 +4,9 @@
 # backup files (vim)
 .*.swp
 
+# backup files (mercurial)
+*.orig
+
 # Python compiled objects
 *.pyc
 
