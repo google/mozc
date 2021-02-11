@@ -58,7 +58,7 @@ ModeSwitchingHandler::ModeSwitchingHandler() {
 ModeSwitchingHandler::~ModeSwitchingHandler() {}
 
 bool ModeSwitchingHandler::GetModeSwitchingRule(
-    const string &key, ModeSwitching *display_mode,
+    const std::string &key, ModeSwitching *display_mode,
     ModeSwitching *input_mode) const {
   if (display_mode == nullptr || input_mode == nullptr) {
     LOG(ERROR) << "display_mode/input_mode is nullptr.";
@@ -83,11 +83,11 @@ bool ModeSwitchingHandler::GetModeSwitchingRule(
   return false;
 }
 
-bool ModeSwitchingHandler::IsDriveLetter(const string &key) {
+bool ModeSwitchingHandler::IsDriveLetter(const std::string &key) {
   return key.size() == 3 && isalpha(key[0]) && key[1] == ':' && key[2] == '\\';
 }
 
-void ModeSwitchingHandler::AddRule(const string &key,
+void ModeSwitchingHandler::AddRule(const std::string &key,
                                    const ModeSwitching display_mode,
                                    const ModeSwitching input_mode) {
   patterns_.emplace(key, std::make_pair(display_mode, input_mode));

@@ -54,13 +54,13 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
-DEFINE_string(input, "", "Input file");
-DEFINE_int32(key_duration, 10, "Key duration (msec)");
-DEFINE_string(profile_dir, "", "Profile dir");
-DEFINE_bool(sentence_mode, false, "Use input as sentences");
-DEFINE_string(server_path, "", "Specify server path");
-DEFINE_bool(test_renderer, false, "Test renderer");
-DEFINE_bool(test_testsendkey, true, "Test TestSendKey");
+MOZC_FLAG(string, input, "", "Input file");
+MOZC_FLAG(int32, key_duration, 10, "Key duration (msec)");
+MOZC_FLAG(string, profile_dir, "", "Profile dir");
+MOZC_FLAG(bool, sentence_mode, false, "Use input as sentences");
+MOZC_FLAG(string, server_path, "", "Specify server path");
+MOZC_FLAG(bool, test_renderer, false, "Test renderer");
+MOZC_FLAG(bool, test_testsendkey, true, "Test TestSendKey");
 
 namespace mozc {
 namespace {

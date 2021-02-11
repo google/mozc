@@ -33,6 +33,8 @@
 
 #include "testing/base/public/gunit.h"
 
+using std::string;
+
 MOZC_FLAG(string, test_string, "hogehoge", "test_string");
 MOZC_FLAG(int32, test_int32, 20, "test_int32");
 MOZC_FLAG(int64, test_int64, 29051773239673121LL, "test_int64");

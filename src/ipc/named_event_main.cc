@@ -35,11 +35,11 @@
 #include "base/port.h"
 #include "ipc/named_event.h"
 
-DEFINE_bool(listener, true, "listener mode");
-DEFINE_bool(notifier, false, "notifier mode");
-DEFINE_int32(timeout, -1, "timeout (msec)");
-DEFINE_int32(pid, -1, "process id");
-DEFINE_string(name, "named_event_test", "name for named event");
+MOZC_FLAG(bool, listener, true, "listener mode");
+MOZC_FLAG(bool, notifier, false, "notifier mode");
+MOZC_FLAG(int32, timeout, -1, "timeout (msec)");
+MOZC_FLAG(int32, pid, -1, "process id");
+MOZC_FLAG(string, name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

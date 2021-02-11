@@ -35,7 +35,7 @@
 #include "client/client.h"
 #include "absl/flags/flag.h"
 
-DEFINE_bool(shutdown, false, "shutdown server if mozc_server is running");
+MOZC_FLAG(bool, shutdown, false, "shutdown server if mozc_server is running");
 
 // simple command line tool to launch mozc server
 int main(int argc, char **argv) {

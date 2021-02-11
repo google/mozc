@@ -51,8 +51,8 @@
 #include "dictionary/pos_matcher.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_int32(tokens_reserve_size, 1400000,
-             "Reserve the specified size of token buffer in advance.");
+MOZC_FLAG(int32, tokens_reserve_size, 1400000,
+          "Reserve the specified size of token buffer in advance.");
 
 namespace mozc {
 namespace dictionary {

@@ -49,10 +49,10 @@
 #include "client/client_quality_test_data.inc"
 #include "absl/flags/flag.h"
 
-DEFINE_string(server_path, "", "specify server path");
-DEFINE_string(log_path, "", "specify log output file path");
-DEFINE_int32(max_case_for_source, 500,
-             "specify max test case number for each test sources");
+MOZC_FLAG(string, server_path, "", "specify server path");
+MOZC_FLAG(string, log_path, "", "specify log output file path");
+MOZC_FLAG(int32, max_case_for_source, 500,
+          "specify max test case number for each test sources");
 
 namespace mozc {
 bool IsValidSourceSentence(const std::string& str) {

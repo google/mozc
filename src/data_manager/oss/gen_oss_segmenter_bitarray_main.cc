@@ -35,10 +35,10 @@ namespace {
 #include "data_manager/oss/segmenter_inl.inc"
 }
 
-DEFINE_string(output_size_info, "", "Serialized SegmenterDataSizeInfo");
-DEFINE_string(output_ltable, "", "LTable array");
-DEFINE_string(output_rtable, "", "RTable array");
-DEFINE_string(output_bitarray, "", "Segmenter bitarray");
+MOZC_FLAG(string, output_size_info, "", "Serialized SegmenterDataSizeInfo");
+MOZC_FLAG(string, output_ltable, "", "LTable array");
+MOZC_FLAG(string, output_rtable, "", "RTable array");
+MOZC_FLAG(string, output_bitarray, "", "Segmenter bitarray");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

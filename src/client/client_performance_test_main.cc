@@ -48,8 +48,8 @@
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 
-DEFINE_string(server_path, "", "specify server path");
-DEFINE_string(log_path, "", "specify log output file path");
+MOZC_FLAG(string, server_path, "", "specify server path");
+MOZC_FLAG(string, log_path, "", "specify log output file path");
 
 namespace mozc {
 namespace {

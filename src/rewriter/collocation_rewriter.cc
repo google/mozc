@@ -48,7 +48,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_bool(use_collocation, true, "use collocation rewrite");
+MOZC_FLAG(bool, use_collocation, true, "use collocation rewrite");
 
 namespace mozc {
 

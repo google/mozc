@@ -116,6 +116,13 @@ bzl_library(
     ],
 )
 
+bzl_library(
+    name = "config_bzl",
+    srcs = ["config.bzl"],
+    parse_tests = False,
+    visibility = ["//:__subpackages__"],
+)
+
 filegroup(
     name = "package",
     srcs = select_mozc(

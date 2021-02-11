@@ -64,7 +64,7 @@
 #include "renderer/unix/window_manager.h"
 #endif  // OS_WIN, __APPLE__, ENABLE_GTK_RENDERER
 
-DECLARE_bool(restricted);
+MOZC_DECLARE_FLAG(bool, restricted);
 
 int main(int argc, char *argv[]) {
   const mozc::RunLevel::RunLevelType run_level =

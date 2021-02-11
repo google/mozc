@@ -37,7 +37,7 @@
 #include "base/flags.h"
 #include "gui/base/util.h"
 
-DEFINE_string(error_type, "", "type of error");
+MOZC_FLAG(string, error_type, "", "type of error");
 
 namespace mozc {
 namespace gui {

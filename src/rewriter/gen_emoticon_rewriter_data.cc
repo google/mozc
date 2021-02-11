@@ -41,9 +41,9 @@
 #include "data_manager/serialized_dictionary.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_string(input, "", "Emoticon dictionary file");
-DEFINE_string(output_token_array, "", "Output token array");
-DEFINE_string(output_string_array, "", "Output string array");
+MOZC_FLAG(string, input, "", "Emoticon dictionary file");
+MOZC_FLAG(string, output_token_array, "", "Output token array");
+MOZC_FLAG(string, output_string_array, "", "Output string array");
 
 namespace mozc {
 namespace {

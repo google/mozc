@@ -53,12 +53,12 @@
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
 
-DEFINE_string(sorting_table, "", "sorting table file");
-DEFINE_string(ordering_rule, "", "sorting order file");
-DEFINE_string(input, "", "symbol dictionary file");
-DEFINE_string(user_pos_manager_data, "", "user pos manager data file");
-DEFINE_string(output_token_array, "", "output token array binary file");
-DEFINE_string(output_string_array, "", "output string array binary file");
+MOZC_FLAG(string, sorting_table, "", "sorting table file");
+MOZC_FLAG(string, ordering_rule, "", "sorting order file");
+MOZC_FLAG(string, input, "", "symbol dictionary file");
+MOZC_FLAG(string, user_pos_manager_data, "", "user pos manager data file");
+MOZC_FLAG(string, output_token_array, "", "output token array binary file");
+MOZC_FLAG(string, output_string_array, "", "output string array binary file");
 
 namespace mozc {
 namespace {
@@ -223,7 +223,8 @@ int main(int argc, char **argv) {
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
-  mozc::MakeDictionary(FLAGS_input, mozc::GetFlag(FLAGS_sorting_table),
+  mozc::MakeDictionary(mozc::GetFlag(FLAGS_input),
+                       mozc::GetFlag(FLAGS_sorting_table),
                        mozc::GetFlag(FLAGS_ordering_rule), &dictionary);
   dictionary.Output(tmp_text_file);
   mozc::SerializedDictionary::CompileToFiles(

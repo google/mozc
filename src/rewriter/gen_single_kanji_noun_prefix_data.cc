@@ -35,10 +35,10 @@
 #include "base/port.h"
 #include "data_manager/serialized_dictionary.h"
 
-DEFINE_string(output_token_array, "",
-              "Output token array of noun prefix dictionary");
-DEFINE_string(output_string_array, "",
-              "Output string array of noun prefix dictionary");
+MOZC_FLAG(string, output_token_array, "",
+          "Output token array of noun prefix dictionary");
+MOZC_FLAG(string, output_string_array, "",
+          "Output string array of noun prefix dictionary");
 
 namespace {
 

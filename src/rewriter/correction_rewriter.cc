@@ -57,7 +57,7 @@ void CorrectionRewriter::SetCandidate(const ReadingCorrectionItem &item,
 }
 
 bool CorrectionRewriter::LookupCorrection(
-    const string &key, const string &value,
+    const std::string &key, const std::string &value,
     std::vector<ReadingCorrectionItem> *results) const {
   CHECK(results);
   results->clear();

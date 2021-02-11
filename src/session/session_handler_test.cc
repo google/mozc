@@ -55,10 +55,10 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/memory/memory.h"
 
-DECLARE_int32(max_session_size);
-DECLARE_int32(create_session_min_interval);
-DECLARE_int32(last_command_timeout);
-DECLARE_int32(last_create_session_timeout);
+MOZC_DECLARE_FLAG(int32, max_session_size);
+MOZC_DECLARE_FLAG(int32, create_session_min_interval);
+MOZC_DECLARE_FLAG(int32, last_command_timeout);
+MOZC_DECLARE_FLAG(int32, last_create_session_timeout);
 
 namespace mozc {
 

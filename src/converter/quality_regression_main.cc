@@ -39,7 +39,7 @@
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
 
-DEFINE_string(test_file, "", "regression test file");
+MOZC_FLAG(string, test_file, "", "regression test file");
 
 using mozc::EngineFactory;
 using mozc::EngineInterface;

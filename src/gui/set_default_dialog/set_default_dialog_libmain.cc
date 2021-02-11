@@ -49,7 +49,7 @@ int RunSetDefaultDialog(int argc, char *argv[]) {
 
   mozc::SystemUtil::DisableIME();
 
-  string name = "set_default_dialog.";
+  std::string name = "set_default_dialog.";
   name += mozc::SystemUtil::GetDesktopNameAsString();
 
   mozc::ProcessMutex mutex(name.c_str());

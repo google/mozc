@@ -36,9 +36,9 @@
 #include "base/util.h"
 #include "ipc/ipc_path_manager.h"
 
-DEFINE_bool(client, false, "client mode");
-DEFINE_bool(server, false, "server mode");
-DEFINE_string(name, "test", "ipc name");
+MOZC_FLAG(bool, client, false, "client mode");
+MOZC_FLAG(bool, server, false, "server mode");
+MOZC_FLAG(string, name, "test", "ipc name");
 
 // command line tool to check the behavior of IPCPathManager
 int main(int argc, char **argv) {

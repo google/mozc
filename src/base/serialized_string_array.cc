@@ -147,7 +147,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
 }
 
 void SerializedStringArray::SerializeToFile(
-    const std::vector<absl::string_view> &strs, const string &filepath) {
+    const std::vector<absl::string_view> &strs, const std::string &filepath) {
   std::unique_ptr<uint32[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
   OutputFileStream ofs(filepath.c_str(),

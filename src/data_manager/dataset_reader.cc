@@ -136,7 +136,8 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   return true;
 }
 
-bool DataSetReader::Get(const string& name, absl::string_view* data) const {
+bool DataSetReader::Get(const std::string& name,
+                        absl::string_view* data) const {
   auto iter = name_to_data_map_.find(name);
   if (iter == name_to_data_map_.end()) {
     return false;
@@ -150,7 +151,7 @@ bool DataSetReader::VerifyChecksum(absl::string_view memblock) {
     return false;
   }
   // Checksum is computed for all but last 28 bytes.
-  const string& actual_checksum = internal::UnverifiedSHA1::MakeDigest(
+  const std::string& actual_checksum = internal::UnverifiedSHA1::MakeDigest(
       memblock.substr(0, memblock.size() - 28));
 
   // Extract the stored SHA1; see dataset.proto for file format.

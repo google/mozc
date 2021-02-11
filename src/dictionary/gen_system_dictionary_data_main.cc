@@ -50,9 +50,9 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_string(input, "", "space separated input text files");
-DEFINE_string(user_pos_manager_data, "", "user pos manager data");
-DEFINE_string(output, "", "output binary file");
+MOZC_FLAG(string, input, "", "space separated input text files");
+MOZC_FLAG(string, user_pos_manager_data, "", "user pos manager data");
+MOZC_FLAG(string, output, "", "output binary file");
 
 namespace mozc {
 namespace {

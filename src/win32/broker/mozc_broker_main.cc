@@ -40,7 +40,7 @@
 #endif  // OS_WIN
 #include "config/stats_config_util.h"
 
-DEFINE_string(mode, "", "mozc_broker mode");
+MOZC_FLAG(string, mode, "", "mozc_broker mode");
 
 #ifdef OS_WIN
 namespace mozc {

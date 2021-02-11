@@ -40,8 +40,8 @@
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
-DEFINE_string(table, "system://romanji-hiragana.tsv",
-              "preedit conversion table file.");
+MOZC_FLAG(string, table, "system://romanji-hiragana.tsv",
+          "preedit conversion table file.");
 
 using ::mozc::commands::Request;
 using ::mozc::config::Config;

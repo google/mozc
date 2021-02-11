@@ -36,21 +36,6 @@ load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
 
-BRANDING = "Mozc"
-
-MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
-
-MACOS_MIN_OS_VER = "10.12"
-
-## Qt paths
-QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
-QT_BIN_PATH = "/usr/bin/"
-
-## For macOS
-## QT_BASE_PATH should be a directory compiled with -developer_build option.
-# QT_BASE_PATH = "/tmp/qt"
-# QT_BIN_PATH = QT_BASE_PATH + "/bin/"
-
 def cc_library_mozc(deps = [], **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
@@ -108,7 +93,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_library_mozc(name, srcs, srcs_version = "PY2AND3", **kwargs):
+def py_library_mozc(name, srcs, srcs_version = "PY3", **kwargs):
     """py_library wrapper generating import-modified python scripts for iOS."""
     pytype_strict_library(
         name = name,
@@ -122,7 +107,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY2AND3", **kwargs):
+def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
     To use this rule, corresponding py_library_mozc needs to be defined to

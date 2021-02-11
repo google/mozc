@@ -44,10 +44,10 @@ namespace {
 class SerializedStringArrayTest : public ::testing::Test {
  protected:
   absl::string_view AlignString(const char *s, size_t len) {
-    return AlignString(string(s, len));
+    return AlignString(std::string(s, len));
   }
 
-  absl::string_view AlignString(const string &s) {
+  absl::string_view AlignString(const std::string &s) {
     buf_.reset(new uint32[(s.size() + 3) / 4]);
     return absl::string_view(
         static_cast<const char *>(memcpy(buf_.get(), s.data(), s.size())),
@@ -93,7 +93,7 @@ TEST_F(SerializedStringArrayTest, SerializeToBuffer) {
 
 TEST_F(SerializedStringArrayTest, Basic) {
   const absl::string_view data =
-      AlignString(string(kTestData, arraysize(kTestData) - 1));
+      AlignString(std::string(kTestData, arraysize(kTestData) - 1));
 
   ASSERT_TRUE(SerializedStringArray::VerifyData(data));
 
@@ -118,7 +118,7 @@ TEST_F(SerializedStringArrayTest, Basic) {
 
 TEST_F(SerializedStringArrayTest, Iterator) {
   const absl::string_view data =
-      AlignString(string(kTestData, arraysize(kTestData) - 1));
+      AlignString(std::string(kTestData, arraysize(kTestData) - 1));
 
   ASSERT_TRUE(SerializedStringArray::VerifyData(data));
 

@@ -60,7 +60,8 @@ using mozc::commands::Request;
 const char kEmoji[] = "えもじ";
 
 // Makes |segments| to have only a segment with a key-value paired candidate.
-void SetSegment(const string &key, const string &value, Segments *segments) {
+void SetSegment(const std::string &key, const std::string &value,
+                Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
   seg->set_key(key);
@@ -87,7 +88,7 @@ int CountEmojiCandidates(const Segments &segments) {
 
 // Checks if the first segment has a specific candidate.
 bool HasExpectedCandidate(const Segments &segments,
-                          const string &expect_value) {
+                          const std::string &expect_value) {
   CHECK_LE(1, segments.segments_size());
   const Segment &segment = segments.segment(0);
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -158,7 +159,7 @@ class TestDataManager : public testing::MockDataManager {
  public:
   TestDataManager() {
     // Collect all the strings and temporarily assign 0 as index.
-    std::map<string, size_t> string_index;
+    std::map<std::string, size_t> string_index;
     for (const EmojiData &data : kTestEmojiList) {
       string_index[data.key] = 0;
       string_index[data.unicode] = 0;
@@ -411,14 +412,14 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
   const Segment &segment = segments.segment(0);
   for (int i = 0; i < segment.candidates_size(); ++i) {
     const Segment::Candidate &candidate = segment.candidate(i);
-    const string &description = candidate.description;
+    const std::string &description = candidate.description;
     // Skip non emoji candidates.
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
       continue;
     }
-    EXPECT_NE(string::npos, description.find("<機種依存文字>"))
+    EXPECT_NE(std::string::npos, description.find("<機種依存文字>"))
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
-    EXPECT_EQ(string::npos, description.find("[全]"))
+    EXPECT_EQ(std::string::npos, description.find("[全]"))
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
   }
 }
@@ -436,7 +437,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
     Segment *segment = segments.push_back_segment();
     segment->set_key("Neko");
     for (int i = 0; i < kExpectPosition * 2; ++i) {
-      string value = "candidate" + std::to_string(i);
+      std::string value = "candidate" + std::to_string(i);
       Segment::Candidate *candidate = segment->add_candidate();
       candidate->Init();
       candidate->value = value;

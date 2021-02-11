@@ -68,10 +68,10 @@ SHOW_LOG_BY_VALUE       ございました
 #include "session/session_handler_tool.h"
 #include "absl/strings/str_split.h"
 
-DEFINE_string(input, "", "Input file");
-DEFINE_string(profile, "", "User profile directory");
-DEFINE_string(engine, "", "Conversion engine: 'mobile' or 'desktop'");
-DEFINE_string(dictionary, "", "Dictionary: 'google', 'android' or 'oss'");
+MOZC_FLAG(string, input, "", "Input file");
+MOZC_FLAG(string, profile, "", "User profile directory");
+MOZC_FLAG(string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
+MOZC_FLAG(string, dictionary, "", "Dictionary: 'google', 'android' or 'oss'");
 
 namespace mozc {
 void Show(const commands::Output &output) {

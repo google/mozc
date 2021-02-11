@@ -46,9 +46,9 @@
 #include "session/session.h"
 #include "absl/memory/memory.h"
 
-DEFINE_string(input, "", "Input file");
-DEFINE_string(output, "", "Output file");
-DEFINE_string(profile_dir, "", "Profile dir");
+MOZC_FLAG(string, input, "", "Input file");
+MOZC_FLAG(string, output, "", "Output file");
+MOZC_FLAG(string, profile_dir, "", "Profile dir");
 
 namespace mozc {
 

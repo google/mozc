@@ -51,10 +51,10 @@
 #include "storage/louds/louds_trie_builder.h"
 #include "absl/flags/flag.h"
 
-DEFINE_bool(preserve_intermediate_dictionary, false,
-            "preserve inetemediate dictionary file.");
-DEFINE_int32(min_key_length_to_use_small_cost_encoding, 6,
-             "minimum key length to use 1 byte cost encoding.");
+MOZC_FLAG(bool, preserve_intermediate_dictionary, false,
+          "preserve inetemediate dictionary file.");
+MOZC_FLAG(int32, min_key_length_to_use_small_cost_encoding, 6,
+          "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
 namespace dictionary {

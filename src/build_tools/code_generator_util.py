@@ -45,24 +45,12 @@ def ToCppStringLiteral(s):
   if s is None:
     return 'NULL'
 
-  if six.PY3:
-    # Python3
-    if all(0x20 <= ord(c) <= 0x7E for c in s):
-      # All characters are in ascii code.
-      return '"%s"' % s.replace('\\', r'\\').replace('"', r'\"')
-    else:
-      # One or more characters are non-ascii.
-      return '"%s"' % ''.join(r'\x%02X' % c for c in s.encode('utf-8'))
-
+  if all(0x20 <= ord(c) <= 0x7E for c in s):
+    # All characters are in ascii code.
+    return '"%s"' % s.replace('\\', r'\\').replace('"', r'\"')
   else:
-    # Python2
-    s = six.ensure_str(s)
-    if all(0x20 <= ord(c) <= 0x7E for c in s):
-      # All characters are in ascii code.
-      return '"%s"' % s.replace('\\', r'\\').replace('"', r'\"')
-    else:
-      # One or more characters are non-ascii.
-      return '"%s"' % ''.join(r'\x%02X' % ord(c) for c in s)
+    # One or more characters are non-ascii.
+    return '"%s"' % ''.join(r'\x%02X' % c for c in s.encode('utf-8'))
 
 
 def FormatWithCppEscape(format_text, *args):

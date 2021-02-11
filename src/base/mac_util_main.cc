@@ -36,19 +36,22 @@
 #include "base/mac_util.h"
 #include "base/util.h"
 
-DEFINE_bool(label_for_suffix, false, "call GetLabelForSuffix when specified");
-DEFINE_bool(application_support_directory, false,
-            "call GetApplicationSupportDirectory when specified");
-DEFINE_bool(logging_directory, false,
-            "call GetLoggingDirectory when specified");
-DEFINE_bool(os_version_string, false, "call GetOSVersionString when specified");
-DEFINE_bool(server_directory, false, "call GetServerDirectory when specified");
-DEFINE_bool(serial_number, false, "call GetSerialNumber when specified");
-DEFINE_bool(start_launchd_service, false,
-            "call StartLaunchdService when specified");
+MOZC_FLAG(bool, label_for_suffix, false,
+          "call GetLabelForSuffix when specified");
+MOZC_FLAG(bool, application_support_directory, false,
+          "call GetApplicationSupportDirectory when specified");
+MOZC_FLAG(bool, logging_directory, false,
+          "call GetLoggingDirectory when specified");
+MOZC_FLAG(bool, os_version_string, false,
+          "call GetOSVersionString when specified");
+MOZC_FLAG(bool, server_directory, false,
+          "call GetServerDirectory when specified");
+MOZC_FLAG(bool, serial_number, false, "call GetSerialNumber when specified");
+MOZC_FLAG(bool, start_launchd_service, false,
+          "call StartLaunchdService when specified");
 
-DEFINE_string(suffix, "", "The argument for GetLabelForSuffix");
-DEFINE_string(service_name, "", "The service name to be launched");
+MOZC_FLAG(string, suffix, "", "The argument for GetLabelForSuffix");
+MOZC_FLAG(string, service_name, "", "The service name to be launched");
 
 #ifdef __APPLE__
 using mozc::MacUtil;

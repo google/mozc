@@ -39,7 +39,7 @@
 #include "base/util.h"
 #include "ipc/process_watch_dog.h"
 
-DEFINE_int32(timeout, -1, "set timeout");
+MOZC_FLAG(int32, timeout, -1, "set timeout");
 
 namespace mozc {
 class TestProcessWatchDog : public ProcessWatchDog {

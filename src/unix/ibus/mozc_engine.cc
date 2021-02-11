@@ -69,8 +69,8 @@
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
 #ifdef ENABLE_GTK_RENDERER
-DEFINE_bool(use_mozc_renderer, true,
-            "The engine tries to use mozc_renderer if available.");
+MOZC_FLAG(bool, use_mozc_renderer, true,
+          "The engine tries to use mozc_renderer if available.");
 #endif  // ENABLE_GTK_RENDERER
 
 namespace {

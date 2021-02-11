@@ -215,6 +215,7 @@
             './gen_mozc_xml.py',
             '--branding=Mozc',
             '--output_cpp',
+            '--server_dir=<(server_dir)',
             '--ibus_mozc_path=<(ibus_mozc_path)',
             '--ibus_mozc_icon_path=<(ibus_mozc_icon_path)',
           ],

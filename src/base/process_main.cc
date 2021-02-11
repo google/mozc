@@ -34,8 +34,8 @@
 #include "base/logging.h"
 #include "base/process.h"
 
-DEFINE_string(open_browser, "", "URL");
-DEFINE_string(spawn_process, "", "path");
+MOZC_FLAG(string, open_browser, "", "URL");
+MOZC_FLAG(string, spawn_process, "", "path");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

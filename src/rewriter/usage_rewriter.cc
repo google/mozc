@@ -102,9 +102,10 @@ UsageRewriter::~UsageRewriter() {}
 
 // static
 // "合いました" => "合い"
-string UsageRewriter::GetKanjiPrefixAndOneHiragana(const string &word) {
+std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
+    const std::string &word) {
   // TODO(hidehiko): Refactor more based on ConstChar32Iterator.
-  string result;
+  std::string result;
   int pos = 0;
   bool has_kanji = false;
   bool has_hiragana = false;
@@ -145,7 +146,8 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
     return UsageDictItemIterator();
   }
 
-  const string value = GetKanjiPrefixAndOneHiragana(candidate.content_value);
+  const std::string value =
+      GetKanjiPrefixAndOneHiragana(candidate.content_value);
   if (value.empty()) {
     return UsageDictItemIterator();
   }
@@ -167,8 +169,8 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
 
 UsageRewriter::UsageDictItemIterator UsageRewriter::LookupUsage(
     const Segment::Candidate &candidate) const {
-  const string &key = candidate.content_key;
-  const string &value = candidate.content_value;
+  const std::string &key = candidate.content_key;
+  const std::string &value = candidate.content_value;
   StrPair key_value(key, value);
   const auto itr = key_value_usageitem_map_.find(key_value);
   if (itr != key_value_usageitem_map_.end()) {
@@ -200,7 +202,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
   // usage from the user dictionary, we simply assign sequential numbers larger
   // than the maximum ID of the embedded usage dictionary.
   int32 usage_id_for_user_comment = key_value_usageitem_map_.size();
-  string comment;
+  std::string comment;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     DCHECK(segment);

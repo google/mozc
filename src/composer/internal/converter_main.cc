@@ -35,8 +35,8 @@
 #include "composer/internal/converter.h"
 #include "composer/table.h"
 
-DEFINE_string(table, "system://romanji-hiragana.tsv",
-              "preedit conversion table file.");
+MOZC_FLAG(string, table, "system://romanji-hiragana.tsv",
+          "preedit conversion table file.");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

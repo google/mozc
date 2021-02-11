@@ -38,6 +38,7 @@ load(
     "py_library_mozc",
     "select_mozc",
 )
+load("//:config.bzl", "LINUX_MOZC_SERVER_DIRECTORY")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -816,7 +817,9 @@ cc_library_mozc(
         android = ["android_util.h"],
     ),
     local_defines = select_mozc(
-        linux = ["MOZC_SERVER_DIRECTORY=\\\"/usr/lib/mozc\\\""],
+        linux = [
+            "MOZC_SERVER_DIRECTORY=\\\"" + LINUX_MOZC_SERVER_DIRECTORY + "\\\"",
+        ],
     ),
     visibility = [
         "//:__subpackages__",

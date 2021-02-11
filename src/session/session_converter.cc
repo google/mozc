@@ -62,10 +62,10 @@ const bool kDefaultUseActualConverterForRealtimeConversion = false;
 const bool kDefaultUseActualConverterForRealtimeConversion = true;
 #endif  // OS_ANDROID
 
-DEFINE_bool(use_actual_converter_for_realtime_conversion,
-            kDefaultUseActualConverterForRealtimeConversion,
-            "If true, use the actual (non-immutable) converter for real "
-            "time conversion.");
+MOZC_FLAG(bool, use_actual_converter_for_realtime_conversion,
+          kDefaultUseActualConverterForRealtimeConversion,
+          "If true, use the actual (non-immutable) converter for real "
+          "time conversion.");
 
 namespace mozc {
 namespace session {

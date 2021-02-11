@@ -34,8 +34,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import io
 import struct
-import six
-from six.moves import range
 
 
 def SerializeToFile(strings, filename):
@@ -54,8 +52,9 @@ def SerializeToFile(strings, filename):
   offsets = []
   lengths = []
   offset = 4 + 8 * array_size  # The start offset of strings chunk
-  for s in strings:
-    data = six.ensure_binary(s)
+  for data in strings:
+    if isinstance(data, str):
+      data = data.encode('utf-8')
     offsets.append(offset)
     lengths.append(len(data))
     offset += len(data) + 1  # Include one byte for the trailing '\0'

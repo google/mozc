@@ -77,7 +77,7 @@ class StorageInitializer {
 };
 }  // namespace
 
-bool Registry::Erase(const string &key) {
+bool Registry::Erase(const std::string &key) {
   scoped_lock l(&g_mutex);
   return Singleton<StorageInitializer>::get()->GetStorage()->Erase(key);
 }
@@ -99,12 +99,13 @@ void Registry::SetStorage(StorageInterface *handler) {
   Singleton<StorageInitializer>::get()->SetStorage(handler);
 }
 
-bool Registry::LookupInternal(const string &key, string *value) {
+bool Registry::LookupInternal(const std::string &key, std::string *value) {
   scoped_lock l(&g_mutex);  // just for safe
   return Singleton<StorageInitializer>::get()->GetStorage()->Lookup(key, value);
 }
 
-bool Registry::InsertInternal(const string &key, const string &value) {
+bool Registry::InsertInternal(const std::string &key,
+                              const std::string &value) {
   scoped_lock l(&g_mutex);
   return Singleton<StorageInitializer>::get()->GetStorage()->Insert(key, value);
 }

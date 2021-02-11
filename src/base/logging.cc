@@ -62,10 +62,11 @@
 #include "base/singleton.h"
 #include "absl/strings/str_cat.h"
 
-DEFINE_bool(colored_log, true, "Enables colored log messages on tty devices");
-DEFINE_bool(logtostderr, false,
-            "log messages go to stderr instead of logfiles");
-DEFINE_int32(v, 0, "verbose level");
+MOZC_FLAG(bool, colored_log, true,
+          "Enables colored log messages on tty devices");
+MOZC_FLAG(bool, logtostderr, false,
+          "log messages go to stderr instead of logfiles");
+MOZC_FLAG(int32, v, 0, "verbose level");
 
 namespace mozc {
 

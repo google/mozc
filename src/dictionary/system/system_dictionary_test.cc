@@ -60,10 +60,11 @@
 #include "testing/base/public/mozctest.h"
 #include "absl/strings/string_view.h"
 
-DEFINE_int32(dictionary_test_size, 100000, "Dictionary size for this test.");
-DEFINE_int32(dictionary_reverse_lookup_test_size, 1000,
-             "Number of tokens to run reverse lookup test.");
-DECLARE_int32(min_key_length_to_use_small_cost_encoding);
+MOZC_FLAG(int32, dictionary_test_size, 100000,
+          "Dictionary size for this test.");
+MOZC_FLAG(int32, dictionary_reverse_lookup_test_size, 1000,
+          "Number of tokens to run reverse lookup test.");
+MOZC_DECLARE_FLAG(int32, min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {

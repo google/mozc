@@ -330,52 +330,6 @@
       ],
     },
     {
-      'target_name': 'qrc_confirmation_dialog',
-      'type': 'none',
-      'variables': {
-        'subdir': 'confirmation_dialog',
-        'qrc_base_name': 'confirmation_dialog',
-        'qrc_inputs': [
-          '<(subdir)/<(qrc_base_name).qrc',
-          '<(subdir)/<(qrc_base_name)_en.qm',
-          '<(subdir)/<(qrc_base_name)_ja.qm',
-        ],
-      },
-      'includes': [
-        'qt_rcc.gypi',
-      ],
-    },
-    {
-      'target_name': 'confirmation_dialog_lib',
-      'type': 'static_library',
-      'sources': [
-        '<(gen_out_dir)/confirmation_dialog/qrc_confirmation_dialog.cc',
-        'confirmation_dialog/confirmation_dialog.cc',
-        'confirmation_dialog/confirmation_dialog_libmain.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        'qrc_confirmation_dialog',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
-      'target_name': 'confirmation_dialog_main',
-      'type': 'executable',
-      'sources': [
-        'confirmation_dialog/confirmation_dialog_main.cc',
-      ],
-      'dependencies': [
-        'confirmation_dialog_lib',
-        'gui_base',
-      ],
-      'includes': [
-        'qt_libraries.gypi',
-      ],
-    },
-    {
       'target_name': 'gen_dictionary_tool_files',
       'type': 'none',
       'variables': {
@@ -763,7 +717,6 @@
         'about_dialog_lib',
         'administration_dialog_lib',
         'config_dialog_lib',
-        'confirmation_dialog_lib',
         'dictionary_tool_lib',
         'error_message_dialog_lib',
         'gui_base',

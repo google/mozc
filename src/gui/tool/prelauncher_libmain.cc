@@ -39,7 +39,8 @@
 #include "renderer/renderer_client.h"
 
 #ifdef __APPLE__
-DEFINE_bool(register_prelauncher, false, "Register prelauncher to login item.");
+MOZC_FLAG(bool, register_prelauncher, false,
+          "Register prelauncher to login item.");
 #endif  // __APPLE__
 
 int RunPrelaunchProcesses(int argc, char *argv[]) {

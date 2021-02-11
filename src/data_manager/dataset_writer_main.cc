@@ -54,8 +54,8 @@
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 
-DEFINE_string(magic, "", "Hex-encoded magic number to be embedded");
-DEFINE_string(output, "", "Output file");
+MOZC_FLAG(string, magic, "", "Hex-encoded magic number to be embedded");
+MOZC_FLAG(string, output, "", "Output file");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

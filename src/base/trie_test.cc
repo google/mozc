@@ -35,7 +35,7 @@ namespace mozc {
 namespace {
 
 TEST(TrieTest, Trie) {
-  Trie<string> trie;
+  Trie<std::string> trie;
 
   enum TestType {
     LOOKUP,
@@ -44,10 +44,10 @@ TEST(TrieTest, Trie) {
   };
   static const struct TestCase {
     const int type;
-    const string key;
-    const string value;
+    const std::string key;
+    const std::string value;
     const bool expected_found;
-    const string expected_value;
+    const std::string expected_value;
   } test_cases[] = {
       {ADD, "abc", "data_abc", true, "data_abc"},
       {ADD, "abd", "data_abd", true, "data_abd"},
@@ -83,7 +83,7 @@ TEST(TrieTest, Trie) {
         // do nothing
         break;
     }
-    string data;
+    std::string data;
     const bool found = trie.LookUp(test.key, &data);
     EXPECT_EQ(found, test.expected_found);
     if (found) {
@@ -93,12 +93,12 @@ TEST(TrieTest, Trie) {
 }
 
 TEST(TrieTest, LookUpPrefix) {
-  Trie<string> trie;
+  Trie<std::string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");
 
-  string value;
+  std::string value;
   size_t key_length = 0;
   bool has_subtrie = false;
   EXPECT_TRUE(trie.LookUpPrefix("abc", &value, &key_length, &has_subtrie));
@@ -127,15 +127,15 @@ TEST(TrieTest, LookUpPrefix) {
 }
 
 TEST(TrieTest, Empty) {
-  Trie<string> trie;
+  Trie<std::string> trie;
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("a", &values);
     EXPECT_EQ(0, values.size());
   }
 
   {
-    string value;
+    std::string value;
     size_t key_length = 0;
     bool has_subtrie = false;
     EXPECT_FALSE(trie.LookUpPrefix("a", &value, &key_length, &has_subtrie));
@@ -145,7 +145,7 @@ TEST(TrieTest, Empty) {
 }
 
 TEST(TrieTest, UTF8LookUpPrefix) {
-  Trie<string> trie;
+  Trie<std::string> trie;
   trie.AddEntry("きゃ", "");
   trie.AddEntry("きゅ", "");
   trie.AddEntry("きょ", "");
@@ -156,57 +156,57 @@ TEST(TrieTest, UTF8LookUpPrefix) {
   trie.AddEntry("け", "");
   trie.AddEntry("こ", "");
 
-  string value;
+  std::string value;
   size_t key_length = 0;
   bool has_subtrie = false;
   {
     key_length = 0;
-    const string query = "か";
+    const std::string query = "か";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "きゅ";
+    const std::string query = "きゅ";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "くぁ";
+    const std::string query = "くぁ";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "っあ";
+    const std::string query = "っあ";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "き";
+    const std::string query = "き";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "かかかかかか";
+    const std::string query = "かかかかかか";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "きゅあああ";
+    const std::string query = "きゅあああ";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "きあああ";
+    const std::string query = "きあああ";
     EXPECT_TRUE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
   {
     key_length = 0;
-    const string query = "も";
+    const std::string query = "も";
     EXPECT_FALSE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
 }
 
-bool HasData(const std::vector<string> &values, const string &value) {
+bool HasData(const std::vector<std::string> &values, const std::string &value) {
   for (size_t i = 0; i < values.size(); ++i) {
     if (values[i] == value) {
       return true;
@@ -216,13 +216,13 @@ bool HasData(const std::vector<string> &values, const string &value) {
 }
 
 TEST(TrieTest, LookUpPredictiveAll) {
-  Trie<string> trie;
+  Trie<std::string> trie;
   trie.AddEntry("abc", "[ABC]");
   trie.AddEntry("abd", "[ABD]");
   trie.AddEntry("a", "[A]");
 
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("a", &values);
     EXPECT_EQ(3, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -231,7 +231,7 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("ab", &values);
     EXPECT_EQ(2, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -239,14 +239,14 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("abc", &values);
     EXPECT_EQ(1, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
   }
 
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("", &values);
     EXPECT_EQ(3, values.size());
     EXPECT_TRUE(HasData(values, "[ABC]"));
@@ -255,7 +255,7 @@ TEST(TrieTest, LookUpPredictiveAll) {
   }
 
   {
-    std::vector<string> values;
+    std::vector<std::string> values;
     trie.LookUpPredictiveAll("x", &values);
     EXPECT_EQ(0, values.size());
   }

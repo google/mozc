@@ -64,21 +64,22 @@ class QualityRegressionTest : public ::testing::Test {
  protected:
   static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
     CHECK(util);
-    std::map<string, std::vector<std::pair<float, string>>> results,
+    std::map<std::string, std::vector<std::pair<float, std::string>>> results,
         disabled_results;
 
     int num_executed_cases = 0, num_disabled_cases = 0;
     for (size_t i = 0; kTestData[i].line; ++i) {
-      const string &tsv_line = kTestData[i].line;
+      const std::string &tsv_line = kTestData[i].line;
       QualityRegressionUtil::TestItem item;
       CHECK(item.ParseFromTSV(tsv_line));
       if (!(item.platform & platform)) {
         continue;
       }
-      string actual_value;
+      std::string actual_value;
       const bool test_result = util->ConvertAndTest(item, &actual_value);
 
-      std::map<string, std::vector<std::pair<float, string>>> *table = nullptr;
+      std::map<std::string, std::vector<std::pair<float, std::string>>> *table =
+          nullptr;
       if (kTestData[i].enabled) {
         ++num_executed_cases;
         table = &results;
@@ -88,8 +89,8 @@ class QualityRegressionTest : public ::testing::Test {
         table = &disabled_results;
       }
 
-      const string &label = item.label;
-      string line = tsv_line;
+      const std::string &label = item.label;
+      std::string line = tsv_line;
       line.append("\tActual: ").append(actual_value);
       if (test_result) {
         // use "-1.0" as a dummy expected ratio
@@ -112,9 +113,10 @@ class QualityRegressionTest : public ::testing::Test {
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
       const bool enabled, uint32 platform,
-      std::map<string, std::vector<std::pair<float, string>>> *results) {
+      std::map<std::string, std::vector<std::pair<float, std::string>>>
+          *results) {
     for (auto it = results->begin(); it != results->end(); ++it) {
-      std::vector<std::pair<float, string>> *values = &it->second;
+      std::vector<std::pair<float, std::string>> *values = &it->second;
       std::sort(values->begin(), values->end());
       size_t correct = 0;
       bool all_passed = true;
@@ -155,9 +157,9 @@ class QualityRegressionTest : public ::testing::Test {
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
-std::unique_ptr<EngineInterface> CreateEngine(const string &data_file_path,
-                                              const string &magic_number,
-                                              const string &engine_type) {
+std::unique_ptr<EngineInterface> CreateEngine(const std::string &data_file_path,
+                                              const std::string &magic_number,
+                                              const std::string &engine_type) {
   std::unique_ptr<DataManager> data_manager(new DataManager);
   const auto status = data_manager->InitFromFile(data_file_path, magic_number);
   if (status != DataManager::Status::OK) {

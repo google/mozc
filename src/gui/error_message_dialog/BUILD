@@ -32,6 +32,7 @@ load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
+    "macos_qt_application_mozc",
     "qt_moc_mozc",
     "qt_rcc_mozc",
 )
@@ -86,12 +87,23 @@ cc_qt_library_mozc(
     ],
 )
 
-cc_qt_binary_mozc(
-    name = "error_message_dialog_main",
+cc_qt_library_mozc(
+    name = "error_message_dialog_main_lib",
     srcs = ["error_message_dialog_main.cc"],
     deps = [
         ":error_message_dialog",
         "//base:init_mozc",
         "//gui/base:gui_base",
     ],
+)
+
+cc_qt_binary_mozc(
+    name = "error_message_dialog_main",
+    deps = [":error_message_dialog_main_lib"],
+)
+
+macos_qt_application_mozc(
+    name = "error_message_dialog_macos",
+    bundle_name = "ErrorMessageDialog",
+    deps = [":error_message_dialog_main_lib"],
 )

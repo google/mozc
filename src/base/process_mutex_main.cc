@@ -38,8 +38,8 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 
-DEFINE_int32(sleep_time, 30, "sleep 30 sec");
-DEFINE_string(name, "named_event_test", "name for named event");
+MOZC_FLAG(int32, sleep_time, 30, "sleep 30 sec");
+MOZC_FLAG(string, name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);

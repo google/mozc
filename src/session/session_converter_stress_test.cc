@@ -46,14 +46,14 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 
-DEFINE_bool(test_deterministic, true,
-            "if true, srand() is initialized by \"test_srand_seed\"."
-            "if false, srand() is initialized by current time "
-            "and \"test_srand_seed\" is ignored");
+MOZC_FLAG(bool, test_deterministic, true,
+          "if true, srand() is initialized by \"test_srand_seed\"."
+          "if false, srand() is initialized by current time "
+          "and \"test_srand_seed\" is ignored");
 
-DEFINE_int32(test_srand_seed, 0,
-             "seed number for srand(). "
-             "used only when \"test_deterministic\" is true");
+MOZC_FLAG(int32, test_srand_seed, 0,
+          "seed number for srand(). "
+          "used only when \"test_deterministic\" is true");
 
 namespace mozc {
 

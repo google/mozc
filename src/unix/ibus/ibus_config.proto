@@ -39,4 +39,7 @@ message Engine {
   optional string name = 1;
   optional string longname = 2;
   optional string layout = 3;
+  optional string layout_variant = 4;
+  optional string layout_option = 5;
+  optional int32 rank = 6 [default = 80];
 }
