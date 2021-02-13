@@ -127,7 +127,6 @@ cc_binary_mozc(
     deps = [
         ":client",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:process",
@@ -142,7 +141,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -162,7 +160,6 @@ cc_binary_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -185,7 +182,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -206,9 +202,9 @@ cc_binary_mozc(
     deps = [
         ":client",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -237,7 +233,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:multifile",

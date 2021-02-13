@@ -81,8 +81,8 @@ TEST(SingletonTest, BasicTest) {
 }
 
 TEST(SingletonTest, ThreadTest) {
-  // call Singelton::get() at the same time from
-  // different threds. Make sure that get() returns
+  // call Singleton::get() at the same time from
+  // different threads. Make sure that get() returns
   // the same instance
 
   g_counter = 0;

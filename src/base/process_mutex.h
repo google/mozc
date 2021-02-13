@@ -50,7 +50,7 @@
 // }
 //
 // foo.Lock();
-// /* process named "foo" is never instatiated inside this block */
+// /* process named "foo" is never instantiated inside this block */
 // foo.Unlock();
 
 namespace mozc {

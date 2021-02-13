@@ -47,7 +47,7 @@
 # values of ans are really correct, the script itself does "test-for-test"
 # using python's eval() function. Namely, after building an expression tree,
 # we generate a python expression corresponding to the tree and compare its
-# value with that of the the direct evaluation. This test runs automatically
+# value with that of the direct evaluation. This test runs automatically
 # inside the script, but you can also write it to a file by specifying
 # --py_output option. Furthermore, passing --cc_output options enables you to
 # generate C++ code, respectively, that warns about expressions if results in
@@ -287,7 +287,7 @@ class UnaryExpr(Expr):
 
   def build_test_expr(self):
     # If the child expression is one of the following, then we can omit
-    # parentheses becase of precedence.
+    # parentheses because of precedence.
     if (isinstance(self._expr, Number) or
         isinstance(self._expr, UnaryExpr) or
         isinstance(self._expr, Group)):

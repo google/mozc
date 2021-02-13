@@ -83,7 +83,7 @@ class SessionHandler : public SessionHandlerInterface {
   // Starts watch dog timer to cleanup sessions.
   bool StartWatchDog() override;
 
-  // NewSession returns new Sessoin.
+  // NewSession returns new Session.
   // Client needs to delete it properly
   session::SessionInterface *NewSession();
 

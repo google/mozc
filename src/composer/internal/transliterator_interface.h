@@ -52,7 +52,7 @@ class TransliteratorInterface {
   // Split raw and converted strings based on the transliteration
   // rule.  If raw or converted could not be deterministically split,
   // fall back strings are fill and false is returned.  The first
-  // arugment, position, is in character (rather than byte).
+  // argument, position, is in character (rather than byte).
   //
   // Expected usage examples:
   // - HiraganaTransliterator(1, "kk", "っk") => true

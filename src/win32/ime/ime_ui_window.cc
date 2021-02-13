@@ -82,7 +82,7 @@ using WTL::CRect;
 using ::mozc::renderer::win32::Win32RendererClient;
 using ::std::unique_ptr;
 
-// True if the the DLL received DLL_PROCESS_DETACH notification.
+// True if the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
 
 // As filed in b/3088049 or b/4271156, the IME module (e.g. GIMEJa.ime) is
@@ -979,7 +979,7 @@ class DefaultUIWindow {
 //   [N] kMessageReceiverMessageName / SELECT_CANDIDATE
 //                      any other message(s)
 //
-//   In this case, messages from [1] to [3] can be removed and and start
+//   In this case, messages from [1] to [3] can be removed and start
 //   handling the message [4] as if it the handler just received it.
 //
 //
@@ -992,7 +992,7 @@ class DefaultUIWindow {
 //   [N] kMessageReceiverMessageName / HIGHLIGHT_CANDIDATE
 //                      any other message(s)
 //
-//   In this case, messages from [1] to [2] can be removed and and start
+//   In this case, messages from [1] to [2] can be removed and start
 //   handling the message [4] as if it the handler just received it.
 //
 //

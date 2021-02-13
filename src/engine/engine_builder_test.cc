@@ -32,11 +32,11 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "prediction/predictor_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -83,11 +83,11 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     // Test request with install.  Since the requested file is moved,
     // |mock_data_path_| is copied to a temporary file.
     const std::string src_path =
-        FileUtil::JoinPath({mozc::GetFlag(FLAGS_test_tmpdir), "src.data"});
+        FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
     ASSERT_TRUE(FileUtil::CopyFile(mock_data_path_, src_path));
 
     const std::string install_path =
-        FileUtil::JoinPath({mozc::GetFlag(FLAGS_test_tmpdir), "dst.data"});
+        FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});
     request_.set_engine_type(EngineReloadRequest::MOBILE);
     request_.set_file_path(src_path);
     request_.set_install_location(install_path);
@@ -152,9 +152,9 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
       {EngineReloadRequest::MOBILE, "MobilePredictor"},
   };
   const std::string &tmp_src =
-      FileUtil::JoinPath({mozc::GetFlag(FLAGS_test_tmpdir), "src.data"});
+      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
   const std::string install_path =
-      FileUtil::JoinPath({mozc::GetFlag(FLAGS_test_tmpdir), "dst.data"});
+      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});
 
   for (const auto &test_case : kTestCases) {
     Clear();

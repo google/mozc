@@ -58,7 +58,7 @@ class StringUtil {
 
   // Returns a UTF8 string converted from the result of KeyToReading.
   // This function is mainly for unittest.
-  static string KeyToReadingA(absl::string_view key);
+  static std::string KeyToReadingA(absl::string_view key);
 
   // Joins all segment strings in |preedit| and returns it.
   static std::wstring ComposePreeditText(

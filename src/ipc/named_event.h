@@ -47,7 +47,7 @@
 // Example:
 //
 // (Process 1)
-// NamedEventListener listner("foo");   // Create named event listener named foo
+// NamedEventListener listener("foo");  // Create named event listener named foo
 // CHECK(listener.IsAvailable());
 // listener.Wait(10000);  // Wait until an event comes.
 // Access shared resource
@@ -107,8 +107,8 @@ class NamedEventListener {
   // Return true if NamedEventListener is available
   bool IsAvailable() const;
 
-  // return true if NamedEventListner is created by this instance.
-  // If NamedEventListner opened an exiting handle, return false.
+  // return true if NamedEventListener is created by this instance.
+  // If NamedEventListener opened an exiting handle, return false.
   bool IsOwner() const;
 
   // Wait until the listener receives a notification
@@ -118,7 +118,7 @@ class NamedEventListener {
   bool Wait(int msec);
 
   // Wait until the listener receives a notification or
-  // the process specfied with pid is terminated.
+  // the process specified with pid is terminated.
   // return TIMEOUT: reached timeout
   // return EVENT_SIGNALED: event is signaled.
   // return PROCESS_SIGNALED: process is signaled.

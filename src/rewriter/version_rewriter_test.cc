@@ -32,7 +32,6 @@
 #include <cstddef>
 #include <string>
 
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -41,6 +40,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -52,7 +52,7 @@ const char *kDummyDataVersion = "dataversion";
 class VersionRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   static void AddSegment(const std::string &key, const std::string &value,

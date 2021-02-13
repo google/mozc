@@ -389,7 +389,7 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
 namespace {
 
 // use default for wide Arabic, because half/full width for
-// normal number is learned by charactor form manager.
+// normal number is learned by character form manager.
 const NumberStringVariation kSingleDigitsVariations[] = {
     {kNumKanjiDigits, 10, "漢数字", nullptr, nullptr,
      NumberUtil::NumberString::NUMBER_KANJI_ARABIC},

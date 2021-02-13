@@ -154,7 +154,7 @@ CComPtr<ITfComposition> CreateComposition(TipTextService *text_service,
 //      interpreted as the "committed text".
 //   4. Update the caret position explicitly. Note that some applications
 //      such as WPF's TextBox do not update the caret position automatically
-//      when an composition is commited.
+//      when an composition is committed.
 // See also b/8406545 and b/9747361.
 CComPtr<ITfComposition> CommitText(TipTextService *text_service,
                                    ITfContext *context,

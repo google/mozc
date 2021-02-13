@@ -40,7 +40,6 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -62,6 +61,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -86,7 +86,7 @@ class SessionConverterTest : public ::testing::Test {
 
   void SetUp() override {
     convertermock_ = absl::make_unique<ConverterMock>();
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
     config_ = absl::make_unique<Config>();
@@ -352,13 +352,13 @@ class SessionConverterTest : public ::testing::Test {
   }
 
   static void SetCommandCandidate(Segments *segments, int segment_index,
-                                  int canidate_index,
+                                  int candidate_index,
                                   Segment::Candidate::Command command) {
     segments->mutable_conversion_segment(segment_index)
-        ->mutable_candidate(canidate_index)
+        ->mutable_candidate(candidate_index)
         ->attributes |= Segment::Candidate::COMMAND_CANDIDATE;
     segments->mutable_conversion_segment(segment_index)
-        ->mutable_candidate(canidate_index)
+        ->mutable_candidate(candidate_index)
         ->command = command;
   }
 

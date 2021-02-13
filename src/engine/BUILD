@@ -79,11 +79,11 @@ cc_test_mozc(
     deps = [
         ":engine_builder",
         "//base:file_util",
-        "//base:flags",
         "//prediction:predictor_interface",
         "//protocol:engine_builder_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

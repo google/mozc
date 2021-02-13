@@ -29,8 +29,6 @@
 
 #include "server/mozc_server.h"
 
-#include "absl/flags/flag.h"
-
 #ifdef OS_WIN
 #include <windows.h>
 #endif
@@ -40,7 +38,6 @@
 #include <string>
 
 #include "base/crash_report_handler.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
@@ -50,8 +47,10 @@
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "session/session_server.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
-MOZC_DECLARE_FLAG(bool, restricted);  // in SessionHandler
+ABSL_DECLARE_FLAG(bool, restricted);  // in SessionHandler
 
 namespace {
 mozc::SessionServer *g_session_server = NULL;
@@ -92,7 +91,7 @@ void InitMozcAndMozcServer(const char *arg0, int *argc, char ***argv,
 
   if (run_level == mozc::RunLevel::RESTRICTED) {
     VLOG(1) << "Mozc server starts with timeout mode";
-    mozc::SetFlag(&FLAGS_restricted, true);
+    absl::SetFlag(&FLAGS_restricted, true);
   }
 }
 

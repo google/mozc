@@ -626,7 +626,7 @@ bool ImeCore::UpdateContextMain(HIMC himc, const InputState &next_state,
 
   if (generate_message) {
     // In order to minimize the risk of application compatibility problem,
-    // we might want to send these messages in the the same order to MS-IME.
+    // we might want to send these messages in the same order to MS-IME.
     // See b/3488848 for details.
     std::vector<UIMessage> sorted_messages;
     SortIMEMessages(composition_messages, candidate_messages, previous_open,

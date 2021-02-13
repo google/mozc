@@ -65,7 +65,7 @@ class Process {
   static bool WaitProcess(size_t pid, int timeout);
 
   // Returns true if a process having |pid| is still alive.
-  // if the the current thread has no permission to get the status or
+  // if the current thread has no permission to get the status or
   // operation failed in system call, it returns |default_result|.
   // TODO(all):
   // Note that there is the case where the specified thread/process has already

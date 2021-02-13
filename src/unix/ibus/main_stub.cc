@@ -29,11 +29,11 @@
 
 #include <iostream>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "unix/ibus/ibus_config.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, xml, false, "Output xml data for the engine.");
+ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
 
 namespace {
 void OutputXml() {
@@ -44,7 +44,7 @@ void OutputXml() {
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (mozc::GetFlag(FLAGS_xml)) {
+  if (absl::GetFlag(FLAGS_xml)) {
     OutputXml();
     return 0;
   }

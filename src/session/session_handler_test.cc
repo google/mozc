@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/clock_mock.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -53,12 +52,14 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-MOZC_DECLARE_FLAG(int32, max_session_size);
-MOZC_DECLARE_FLAG(int32, create_session_min_interval);
-MOZC_DECLARE_FLAG(int32, last_command_timeout);
-MOZC_DECLARE_FLAG(int32, last_create_session_timeout);
+ABSL_DECLARE_FLAG(int32, max_session_size);
+ABSL_DECLARE_FLAG(int32, create_session_min_interval);
+ABSL_DECLARE_FLAG(int32, last_command_timeout);
+ABSL_DECLARE_FLAG(int32, last_create_session_timeout);
 
 namespace mozc {
 
@@ -197,13 +198,13 @@ class SessionHandlerTest : public SessionHandlerTestBase {
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
   uint32 expected_session_created_num = 0;
   const int32 interval_time = 10;  // 10 sec
-  mozc::SetFlag(&FLAGS_create_session_min_interval, interval_time);
+  absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is removed
   const size_t session_size = 3;
-  mozc::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
+  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
@@ -227,7 +228,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     }
   }
 
-  mozc::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
+  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
@@ -265,7 +266,7 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
   const int32 interval_time = 10;  // 10 sec
-  mozc::SetFlag(&FLAGS_create_session_min_interval, interval_time);
+  absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
@@ -286,7 +287,7 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
   const int32 timeout = 10;  // 10 sec
-  mozc::SetFlag(&FLAGS_last_create_session_timeout, timeout);
+  absl::SetFlag(&FLAGS_last_create_session_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
@@ -306,7 +307,7 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
   const int32 timeout = 10;  // 10 sec
-  mozc::SetFlag(&FLAGS_last_command_timeout, timeout);
+  absl::SetFlag(&FLAGS_last_command_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 

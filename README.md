@@ -1,7 +1,7 @@
 [Mozc - a Japanese Input Method Editor designed for multi-platform](https://github.com/google/mozc)
 ===================================
 
-Copyright 2010-2020, Google Inc.
+Copyright 2010-2021, Google Inc.
 
 Mozc is a Japanese Input Method Editor (IME) designed for multi-platform such as
 Android OS, Apple OS X, Chromium OS, GNU/Linux and Microsoft Windows.  This

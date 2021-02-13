@@ -48,7 +48,6 @@ cc_binary_mozc(
     deps = [
         ":mozc_emacs_helper_lib",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:util",
@@ -57,6 +56,7 @@ cc_binary_mozc(
         "//config:config_handler",
         "//ipc",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

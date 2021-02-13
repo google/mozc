@@ -521,7 +521,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
   //    VK_A         -> 'a'
   //    VK_A + SHIFT -> '('
   // Unfortunately, the current Mozc protocol cannot handle these cases because
-  // there is serious ambiguity betwen 'Key' and 'Character' in Mozc key
+  // there is serious ambiguity between 'Key' and 'Character' in Mozc key
   // bindings.
   const bool is_vk_alpha =
       ('A' <= virtual_key.virtual_key() && virtual_key.virtual_key() <= 'Z');
@@ -924,7 +924,7 @@ bool KeyEventHandler::ConvertToKeyEvent(
     const InputState &ime_state, const KeyboardStatus &keyboard_status,
     Win32KeyboardInterface *keyboard, mozc::commands::KeyEvent *key) {
   // Since Mozc protocol requires tricky conditions for modifiers, using set
-  // container makes the the main part of key event conversion simple rather
+  // container makes the main part of key event conversion simple rather
   // than using vector-like container.
   std::set<KeyEvent::ModifierKey> modifiers;
   const bool result = ConvertToKeyEventMain(

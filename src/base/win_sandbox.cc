@@ -257,7 +257,7 @@ std::wstring WinSandbox::GetSDDL(ObjectSecurityType shareble_object_type,
                                  bool is_windows_8_or_later) {
   // See
   // http://social.msdn.microsoft.com/Forums/en-US/windowssecurity/thread/e92502b1-0b9f-4e02-9d72-e4e47e924a8f/
-  // for how to acess named objects from an AppContainer.
+  // for how to access named objects from an AppContainer.
 
   std::wstring dacl;
   std::wstring sacl;
@@ -1393,12 +1393,12 @@ bool WinSandbox::EnsureAllApplicationPackagesPermisssion(
   // Check if the desired ACE is already specified or not.
   for (UINT i = 0; i < dacl.GetAceCount(); ++i) {
     CSid ace_sid;
-    ACCESS_MASK acess_mask = 0;
+    ACCESS_MASK access_mask = 0;
     BYTE ace_type = 0;
-    dacl.GetAclEntry(i, &ace_sid, &acess_mask, &ace_type);
+    dacl.GetAclEntry(i, &ace_sid, &access_mask, &ace_type);
     if (ace_sid == all_application_packages &&
         ace_type == ACCESS_ALLOWED_ACE_TYPE &&
-        (acess_mask & kDesiredMask) == kDesiredMask) {
+        (access_mask & kDesiredMask) == kDesiredMask) {
       // This is the desired ACE.  There is nothing to do.
       return true;
     }

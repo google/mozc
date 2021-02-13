@@ -310,7 +310,7 @@ message GenericStorageEntry {
   // Such byte stream cannot be treaed by Java's String class, which
   // is used for PB's string type.
   // Instead, PB's bytes type is converted into ByteString in Java,
-  // which can treat C laguage style string described above.
+  // which can treat C language style string described above.
   repeated bytes value = 3;
 }
 
@@ -361,7 +361,7 @@ message SessionCommand {
     // submitting segments from first one to focused one (inclusive).
     //
     // If no focused candidate (Suggestion, including ZeroQuery suggestion),
-    // first (and only) segment's candiadte of which id is equal to id field of
+    // first (and only) segment's candidate of which id is equal to id field of
     // Input message is submitted.
     // This behavior should be fixed because current cursor position affects
     // nothing. In future, the characters after the cursor should be kept
@@ -683,7 +683,7 @@ message Request {
     // input, the previous composition will be committed.  For
     // example, "ab<space>dc" results "ab " as a committed string and
     // "dc" as a composition.
-    SPACE_OR_CONVERT_COMMITING_COMPOSITION = 1;
+    SPACE_OR_CONVERT_COMMITTING_COMPOSITION = 1;
 
     // Commit the composition and a space.
     COMMIT = 2;
@@ -779,7 +779,7 @@ message Request {
     // cursor key, we'd like to commit the abcde and move the caret to right.
     // So the user will get:
     //   XXXXabcdeY|YYYY
-    // Here, what we need is commiting the "abcde" with the appropriate
+    // Here, what we need is committing the "abcde" with the appropriate
     // caret position. (Note that we need to handle the left cursor key, too).
     // Also, we should *NOT* consume the key, so that the key event will be
     // handled appropriately by the target application.

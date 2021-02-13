@@ -35,7 +35,6 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/port.h"
 #include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
@@ -44,6 +43,7 @@
 #include "composer/type_corrected_query.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

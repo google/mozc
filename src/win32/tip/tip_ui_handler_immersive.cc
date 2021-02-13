@@ -69,7 +69,7 @@ typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
 
-// True if the the DLL received DLL_PROCESS_DETACH notification.
+// True if the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
 
 // Thread Local Storage (TLS) index to specify the current UI thread is

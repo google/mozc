@@ -31,7 +31,6 @@
 
 #include "composer/composer.h"
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -46,11 +45,12 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/flags/flag.h"
 
 // Use flags instead of constant for performance evaluation.
-MOZC_FLAG(uint64, max_typing_correction_query_candidates, 40,
+ABSL_FLAG(uint64, max_typing_correction_query_candidates, 40,
           "Maximum # of typing correction query temporary candidates.");
-MOZC_FLAG(uint64, max_typing_correction_query_results, 8,
+ABSL_FLAG(uint64, max_typing_correction_query_results, 8,
           "Maximum # of typing correction query results.");
 
 namespace mozc {
@@ -208,8 +208,8 @@ Composer::Composer(const Table *table, const commands::Request *request,
       shifted_sequence_count_(0),
       composition_(new Composition(table)),
       typing_corrector_(
-          table, mozc::GetFlag(FLAGS_max_typing_correction_query_candidates),
-          mozc::GetFlag(FLAGS_max_typing_correction_query_results)),
+          table, absl::GetFlag(FLAGS_max_typing_correction_query_candidates),
+          absl::GetFlag(FLAGS_max_typing_correction_query_results)),
       max_length_(kMaxPreeditLength),
       request_(request),
       config_(config) {

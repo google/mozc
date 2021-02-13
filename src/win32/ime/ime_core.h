@@ -217,7 +217,7 @@ class ImeCore {
 
   // Returns the target string in UTF8 for the reconversion invoked by IME.
   // Returns an empty string if the target strin is not available.
-  static string GetTextForReconversionFromIME(HIMC himc);
+  static std::string GetTextForReconversionFromIME(HIMC himc);
 
   FRIEND_TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest);
   FRIEND_TEST(ImeCoreTest, CandidateMessageOrderTest);

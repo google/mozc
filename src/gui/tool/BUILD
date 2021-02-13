@@ -40,11 +40,11 @@ cc_library_mozc(
     name = "prelauncher_lib",
     srcs = ["prelauncher_libmain.cc"],
     deps = [
-        "//base:flags",
         "//base:mac_util",
         "//client",
         "//client:client_interface",
         "//renderer:renderer_client",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -59,7 +59,7 @@ cc_qt_library_mozc(
     deps = [
         "//base:crash_report_handler",
         "//base:file_util",
-        "//base:flags",
+        "@com_google_absl//absl/flags:flag",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",

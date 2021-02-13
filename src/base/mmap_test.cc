@@ -34,17 +34,17 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
 
 TEST(MmapTest, MmapTest) {
   const std::string filename =
-      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
 
   const size_t kFileNameSize[] = {1, 100, 1024, 8192};
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {

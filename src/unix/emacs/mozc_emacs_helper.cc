@@ -30,7 +30,6 @@
 #include <cstdio>
 #include <iostream>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -40,9 +39,10 @@
 #include "protocol/commands.pb.h"
 #include "unix/emacs/client_pool.h"
 #include "unix/emacs/mozc_emacs_helper_lib.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 
-MOZC_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
+ABSL_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
 
 namespace {
 
@@ -125,7 +125,7 @@ void ProcessLoop() {
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (mozc::GetFlag(FLAGS_suppress_stderr)) {
+  if (absl::GetFlag(FLAGS_suppress_stderr)) {
 #ifdef OS_WIN
     const char path[] = "NUL";
 #else

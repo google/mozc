@@ -33,21 +33,21 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file_builder.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
 
 TEST(DictionaryFileTest, Basic) {
-  const std::string dfn = mozc::GetFlag(FLAGS_test_tmpdir) + "/test-dictionary";
-  const std::string fn1 = mozc::GetFlag(FLAGS_test_tmpdir) + "/sec1";
-  const std::string fn2 = mozc::GetFlag(FLAGS_test_tmpdir) + "/sec2";
+  const std::string dfn = absl::GetFlag(FLAGS_test_tmpdir) + "/test-dictionary";
+  const std::string fn1 = absl::GetFlag(FLAGS_test_tmpdir) + "/sec1";
+  const std::string fn2 = absl::GetFlag(FLAGS_test_tmpdir) + "/sec2";
 
   FILE *fp1 = fopen(fn1.c_str(), "w");
   CHECK(fp1) << "failed to open temporary file";

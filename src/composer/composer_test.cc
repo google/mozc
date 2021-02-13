@@ -2514,7 +2514,7 @@ TEST_F(ComposerTest, InputModesChangeWhenCursorMoves) {
   }
 }
 
-TEST_F(ComposerTest, ShuoldCommit) {
+TEST_F(ComposerTest, ShouldCommit) {
   table_->AddRuleWithAttributes("ka", "[KA]", "", DIRECT_INPUT);
   table_->AddRuleWithAttributes("tt", "[X]", "t", DIRECT_INPUT);
   table_->AddRuleWithAttributes("ta", "[TA]", "", NO_TABLE_ATTRIBUTE);

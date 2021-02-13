@@ -48,7 +48,7 @@ class Lattice {
 
   NodeAllocator *node_allocator() const;
 
-  // set key and initalizes lattice with key.
+  // set key and initializes lattice with key.
   void SetKey(absl::string_view key);
 
   // return key.

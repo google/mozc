@@ -40,7 +40,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mozc_hash_map.h"
 #include "base/number_util.h"
@@ -61,6 +60,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 #ifndef NDEBUG
@@ -233,7 +233,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     // If the token is from user dictionary and its POS is unknown, it is
     // suggest-only words.  Such words are looked up only when their keys
     // exactly match |key|.  Otherwise, unigram suggestion can be annoying.  For
-    // example, suppose a user registers his/her email address as める.  Then,
+    // example, suppose a user registers their email address as める.  Then,
     // we don't want to show the email address from め but exactly from める.
     if ((token.attributes & Token::USER_DICTIONARY) != 0 &&
         token.lid == unknown_id_) {

@@ -130,7 +130,6 @@ cc_test_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:port",
         "//base:process_mutex",
         "//base:system_util",
@@ -138,6 +137,7 @@ cc_test_mozc(
         "//base:util",
         "//base:version",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -174,12 +174,12 @@ cc_test_mozc(
         ":ipc",
         ":ipc_test_util",
         "//base",
-        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//base:thread",
         "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -221,12 +221,12 @@ cc_test_mozc(
         ":named_event",
         "//base",
         "//base:clock",
-        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//base:thread",
         "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -268,12 +268,12 @@ cc_library_mozc(
 #     deps = [
 #         ":process_watch_dog",
 #         "//base",
-#         "//base:flags",
 #         "//base:init_mozc",
 #         "//base:logging",
 #         "//base:number_util",
 #         "//base:port",
 #         "//base:util",
+#         "@com_google_absl//absl/flags:flag",
 #     ],
 # )
 

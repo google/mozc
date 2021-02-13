@@ -117,7 +117,7 @@ def macos_qt_application_mozc(name, bundle_name, deps):
         app_icons = ["//data/images/mac:product_icon.icns"],
         bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Tool." + bundle_name,
         bundle_name = bundle_name,
-        infoplists = ["//gui:gen_mozc_tool_info_plist"],
+        infoplists = ["//gui:mozc_tool_info_plist"],
         minimum_os_version = MACOS_MIN_OS_VER,
         resources = ["//data/images/mac:candidate_window_logo.tiff"],
         visibility = ["//:__subpackages__"],

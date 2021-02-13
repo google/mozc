@@ -404,10 +404,10 @@ def mozc_dataset(
         copts = ["-Wno-parentheses"],
         deps = [
             "//base",
-            "//base:flags",
             "//base:init_mozc_buildtool",
             "//converter:gen_segmenter_bitarray",
             "//:macro",
+            "@com_google_absl//absl/flags:flag",
         ],
     )
 

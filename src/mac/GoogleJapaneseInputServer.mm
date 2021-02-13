@@ -29,8 +29,6 @@
 
 #import "mac/GoogleJapaneseInputServer.h"
 
-#import "mac/GoogleJapaneseInputController.h"
-
 #include <string>
 
 #include "base/const.h"

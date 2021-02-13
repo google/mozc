@@ -124,7 +124,7 @@ TEST(ImeUIVisibilityTrackerTest,
 }
 
 // When a user changes the input method by the LangBar, WM_IME_SETCONTEXT will
-// not be sent.  Even in this case, the candiate window can be visible,
+// not be sent.  Even in this case, the candidate window can be visible,
 // without any focus change, which finally invokes ImeSetActiveContext.
 TEST(ImeUIVisibilityTrackerTest,
      CandidateWindowCanBeShownWhenImeIsChangedByLangBar) {

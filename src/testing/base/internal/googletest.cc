@@ -40,17 +40,18 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, test_srcdir, "",
+ABSL_FLAG(std::string, test_srcdir, "",
           "A directory that contains the input data files for a test.");
 
-MOZC_FLAG(string, test_tmpdir, "",
+ABSL_FLAG(std::string, test_tmpdir, "",
           "Directory for all temporary testing files.");
 
-MOZC_DECLARE_FLAG(string, program_invocation_name);
+ABSL_DECLARE_FLAG(string, program_invocation_name);
 
 namespace mozc {
 namespace {
@@ -95,7 +96,7 @@ string GetTestTmpdir() {
 // directory information. E.g like "/spam/eggs/foo_unittest".
 string GetProgramPath() {
   const string& program_invocation_name =
-      mozc::GetFlag(FLAGS_program_invocation_name);
+      absl::GetFlag(FLAGS_program_invocation_name);
   if (program_invocation_name.empty() || program_invocation_name[0] == '/') {
     return program_invocation_name;
   }
@@ -144,11 +145,11 @@ string GetTestTmpdir() {
 }  // namespace
 
 void InitTestFlags() {
-  if (mozc::GetFlag(FLAGS_test_srcdir).empty()) {
-    mozc::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
+  if (absl::GetFlag(FLAGS_test_srcdir).empty()) {
+    absl::SetFlag(&FLAGS_test_srcdir, GetTestSrcdir());
   }
-  if (mozc::GetFlag(FLAGS_test_tmpdir).empty()) {
-    mozc::SetFlag(&FLAGS_test_tmpdir, GetTestTmpdir());
+  if (absl::GetFlag(FLAGS_test_tmpdir).empty()) {
+    absl::SetFlag(&FLAGS_test_tmpdir, GetTestTmpdir());
   }
 }
 

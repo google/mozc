@@ -98,7 +98,7 @@ bool SuppressionDictionary::IsEmpty() const {
 bool SuppressionDictionary::SuppressEntry(const std::string &key,
                                           const std::string &value) const {
   if (dic_.empty()) {
-    // Almost all users don't use word supresssion function.
+    // Almost all users don't use word suppression function.
     // We can return false as early as possible
     return false;
   }

@@ -72,7 +72,7 @@ message EngineReloadResponse {
 
     // The following are errors.
 
-    // Failed to start reload becuase another reload job is currently running.
+    // Failed to start reload because another reload job is currently running.
     ALREADY_RUNNING = 3;
 
     // Erros in data file.

@@ -29,12 +29,12 @@
 
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/existence_filter.h"
+#include "absl/flags/flag.h"
 
 using mozc::storage::ExistenceFilter;
 

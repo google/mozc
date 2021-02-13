@@ -145,7 +145,7 @@ class CodePointCategorizer(object):
         0x301C,  # WAVE DASH
         0xFF5E,  # FULL WIDTH TILDE
         0x2016,  # DOUBLE VERTICAL LINE
-        0x2225,  # PARALEL TO
+        0x2225,  # PARALLEL TO
         0x2212,  # MINUS SIGN
         0xFF0D,  # FULL WIDTH HYPHEN MINUS
         0x00A2,  # CENT SIGN

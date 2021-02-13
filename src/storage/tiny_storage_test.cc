@@ -37,11 +37,11 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "storage/storage_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -80,7 +80,7 @@ class TinyStorageTest : public testing::Test {
 
   static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                               "TinyStorageTest_test.db");
   }
 

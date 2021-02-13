@@ -34,13 +34,13 @@
 #include <string>
 
 #include "base/clock.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -87,7 +87,7 @@ class NamedEventListenerThread : public Thread {
 class NamedEventTest : public testing::Test {
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {

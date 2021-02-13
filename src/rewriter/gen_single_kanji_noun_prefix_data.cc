@@ -30,14 +30,14 @@
 #include <map>
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/port.h"
 #include "data_manager/serialized_dictionary.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, output_token_array, "",
+ABSL_FLAG(std::string, output_token_array, "",
           "Output token array of noun prefix dictionary");
-MOZC_FLAG(string, output_string_array, "",
+ABSL_FLAG(std::string, output_string_array, "",
           "Output string array of noun prefix dictionary");
 
 namespace {
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     tokens[entry.key].emplace_back(std::move(token));
   }
   mozc::SerializedDictionary::CompileToFiles(
-      tokens, mozc::GetFlag(FLAGS_output_token_array),
-      mozc::GetFlag(FLAGS_output_string_array));
+      tokens, absl::GetFlag(FLAGS_output_token_array),
+      absl::GetFlag(FLAGS_output_string_array));
   return 0;
 }

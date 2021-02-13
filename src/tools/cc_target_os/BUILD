@@ -104,3 +104,10 @@ config_setting(
         "define": "TARGET=wasm",
     },
 )
+
+config_setting(
+    name = "windows",
+    values = {
+        "define": "TARGET=windows",
+    },
+)

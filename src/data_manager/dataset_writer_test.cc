@@ -34,12 +34,12 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -54,7 +54,7 @@ void SetEntry(const string &name, uint64 offset, uint64 size,
 TEST(DatasetWriterTest, Write) {
   // Create a dummy file to be packed.
   const string &in =
-      FileUtil::JoinPath({mozc::GetFlag(FLAGS_test_tmpdir), "in"});
+      FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "in"});
   {
     OutputFileStream f(in.c_str(), std::ios_base::out | std::ios_base::binary);
     f.write("m\0zc\xEF", 5);

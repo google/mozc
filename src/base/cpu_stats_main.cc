@@ -32,16 +32,16 @@
 #include <string>
 
 #include "base/cpu_stats.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-MOZC_FLAG(int32, iterations, 1000, "number of iterations");
-MOZC_FLAG(int32, polling_duration, 1000, "duration period in msec");
-MOZC_FLAG(int32, dummy_threads_size, 0, "number of dummy threads");
+ABSL_FLAG(int32, iterations, 1000, "number of iterations");
+ABSL_FLAG(int32, polling_duration, 1000, "duration period in msec");
+ABSL_FLAG(int32, dummy_threads_size, 0, "number of dummy threads");
 
 namespace {
 class DummyThread : public mozc::Thread {
@@ -65,10 +65,10 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<DummyThread[]> threads;
 
-  if (mozc::GetFlag(FLAGS_dummy_threads_size) > 0) {
+  if (absl::GetFlag(FLAGS_dummy_threads_size) > 0) {
     threads = absl::make_unique<DummyThread[]>(
-        mozc::GetFlag(FLAGS_dummy_threads_size));
-    for (int i = 0; i < mozc::GetFlag(FLAGS_dummy_threads_size); ++i) {
+        absl::GetFlag(FLAGS_dummy_threads_size));
+    for (int i = 0; i < absl::GetFlag(FLAGS_dummy_threads_size); ++i) {
       threads[i].Start("CpuStatsMain");
     }
   }
@@ -76,10 +76,10 @@ int main(int argc, char **argv) {
   mozc::CPUStats stats;
   std::cout << "NumberOfProcessors: " << stats.GetNumberOfProcessors()
             << std::endl;
-  for (int i = 0; i < mozc::GetFlag(FLAGS_iterations); ++i) {
+  for (int i = 0; i < absl::GetFlag(FLAGS_iterations); ++i) {
     std::cout << "CPUStats: " << stats.GetSystemCPULoad() << " "
               << stats.GetCurrentProcessCPULoad() << std::endl;
-    mozc::Util::Sleep(mozc::GetFlag(FLAGS_polling_duration));
+    mozc::Util::Sleep(absl::GetFlag(FLAGS_polling_duration));
   }
 
   return 0;

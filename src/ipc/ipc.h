@@ -184,7 +184,7 @@ class IPCClientFactoryInterface {
   virtual IPCClientInterface *NewClient(const std::string &name,
                                         const std::string &path_name) = 0;
 
-  // old interface for backward compatiblity.
+  // old interface for backward compatibility.
   // same as NewClient(name, "");
   virtual IPCClientInterface *NewClient(const std::string &name) = 0;
 };
@@ -194,11 +194,11 @@ class IPCClientFactory : public IPCClientFactoryInterface {
  public:
   ~IPCClientFactory() override;
 
-  // new inteface
+  // new interface
   IPCClientInterface *NewClient(const std::string &name,
                                 const std::string &path_name) override;
 
-  // old interface for backward compatiblity.
+  // old interface for backward compatibility.
   // same as NewClient(name, "");
   IPCClientInterface *NewClient(const std::string &name) override;
 
@@ -232,7 +232,7 @@ class IPCServer {
   IPCServer(const std::string &name, int32 num_connections, int32 timeout);
   virtual ~IPCServer();
 
-  // Return true if the connectoin is available
+  // Return true if the connection is available
   bool Connected() const;
 
   // Implement a server algorithm in subclass.

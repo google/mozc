@@ -78,13 +78,13 @@ class InfolistWindow : public GtkWindowBase {
 
   void Draw();
 
-  // Draws specified description row and returns it's height.
+  // Draws specified description row and returns its height.
   int DrawRow(int row, int ypos);
 
   // Gets target rendering rects.
   RenderingRowRects GetRowRects(int row, int ypos);
 
-  // Draws caption string and returns it's height.
+  // Draws caption string and returns its height.
   int DrawCaption();
 
   // Draws infolist window frame line.

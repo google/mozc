@@ -48,7 +48,7 @@ class EngineBuilderInterface {
 
   // Accepts data load request and sets |response->status()| to one of the
   // following values:
-  //   * ACCEPTED: Request is successfuly accepted.
+  //   * ACCEPTED: Request is successfully accepted.
   //   * ALREADY_RUNNING: The previous request is still being processed.
   virtual void PrepareAsync(const EngineReloadRequest &request,
                             EngineReloadResponse *response) = 0;

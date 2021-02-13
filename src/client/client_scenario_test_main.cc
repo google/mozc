@@ -39,7 +39,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -54,13 +53,13 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
-MOZC_FLAG(string, input, "", "Input file");
-MOZC_FLAG(int32, key_duration, 10, "Key duration (msec)");
-MOZC_FLAG(string, profile_dir, "", "Profile dir");
-MOZC_FLAG(bool, sentence_mode, false, "Use input as sentences");
-MOZC_FLAG(string, server_path, "", "Specify server path");
-MOZC_FLAG(bool, test_renderer, false, "Test renderer");
-MOZC_FLAG(bool, test_testsendkey, true, "Test TestSendKey");
+ABSL_FLAG(std::string, input, "", "Input file");
+ABSL_FLAG(int32, key_duration, 10, "Key duration (msec)");
+ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
+ABSL_FLAG(bool, sentence_mode, false, "Use input as sentences");
+ABSL_FLAG(std::string, server_path, "", "Specify server path");
+ABSL_FLAG(bool, test_renderer, false, "Test renderer");
+ABSL_FLAG(bool, test_testsendkey, true, "Test TestSendKey");
 
 namespace mozc {
 namespace {
@@ -97,8 +96,8 @@ bool ReadKeys(std::istream *input, std::vector<commands::KeyEvent> *keys,
 
 int Loop(std::istream *input) {
   mozc::client::Client client;
-  if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
+  if (!absl::GetFlag(FLAGS_server_path).empty()) {
+    client.set_server_program(absl::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -108,7 +107,7 @@ int Loop(std::istream *input) {
   std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
-  if (mozc::GetFlag(FLAGS_test_renderer)) {
+  if (absl::GetFlag(FLAGS_test_renderer)) {
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
@@ -139,9 +138,9 @@ int Loop(std::istream *input) {
   while (ReadKeys(input, &keys, &answer)) {
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      Util::Sleep(mozc::GetFlag(FLAGS_key_duration));
+      Util::Sleep(absl::GetFlag(FLAGS_key_duration));
 
-      if (mozc::GetFlag(FLAGS_test_testsendkey)) {
+      if (absl::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();
@@ -175,20 +174,20 @@ int Loop(std::istream *input) {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (!mozc::GetFlag(FLAGS_profile_dir).empty()) {
-    mozc::FileUtil::CreateDirectory(mozc::GetFlag(FLAGS_profile_dir));
-    mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_profile_dir));
+  if (!absl::GetFlag(FLAGS_profile_dir).empty()) {
+    mozc::FileUtil::CreateDirectory(absl::GetFlag(FLAGS_profile_dir));
+    mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile_dir));
   }
 
   std::unique_ptr<mozc::InputFileStream> input_file;
   std::istream *input = nullptr;
 
-  if (!mozc::GetFlag(FLAGS_input).empty()) {
+  if (!absl::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
     input_file = absl::make_unique<mozc::InputFileStream>(
-        mozc::GetFlag(FLAGS_input).c_str());
+        absl::GetFlag(FLAGS_input).c_str());
     if (input_file->fail()) {
-      LOG(ERROR) << "File not opened: " << mozc::GetFlag(FLAGS_input);
+      LOG(ERROR) << "File not opened: " << absl::GetFlag(FLAGS_input);
       return 1;
     }
     input = input_file.get();

@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -41,6 +40,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 
@@ -85,7 +85,7 @@ class UserDictionaryRewriterTest : public testing::Test {
   ~UserDictionaryRewriterTest() override {}
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {}

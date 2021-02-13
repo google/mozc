@@ -57,7 +57,7 @@ bool NormalizeCandidate(Segment::Candidate *candidate, CandidateType type) {
       TextNormalizer::NormalizeText(candidate->content_value, &content_value);
       break;
     default:
-      LOG(ERROR) << "unkown type";
+      LOG(ERROR) << "unknown type";
       return false;
   }
 

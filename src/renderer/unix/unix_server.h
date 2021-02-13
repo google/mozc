@@ -67,9 +67,9 @@ class UnixServer : public RendererServer {
   Mutex mutex_;
   std::unique_ptr<GtkWrapperInterface> gtk_;
 
-  // Following pipe is used to communicate IPC recieving thread and
+  // Following pipe is used to communicate IPC receiving thread and
   // rendering(gtk-main) thread. The gtk-main loop polls following pipe and IPC
-  // recieving thread writes small data to notify gtk-main thread to update when
+  // receiving thread writes small data to notify gtk-main thread to update when
   // new packet is arrived.
   int pipefd_[2];
 

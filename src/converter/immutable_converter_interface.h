@@ -48,7 +48,7 @@ class ImmutableConverterInterface {
   virtual bool Convert(Segments *segments) const;
 
   // This method should be pure-virtual method in theory.
-  // However, to keep the backward compatibility untill the deprecation of
+  // However, to keep the backward compatibility until the deprecation of
   // Conversion method, we provide the default implementation.
   // Please see the .cc file.
   virtual bool ConvertForRequest(const ConversionRequest &request,

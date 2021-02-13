@@ -28,23 +28,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:config.bzl", "BRANDING")
+load("//:build_defs.bzl", "info_plist_mozc")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-genrule(
-    name = "gen_mozc_tool_info_plist",
-    srcs = [
-        "//base:mozc_version_txt",
-        "//data/mac:mozc_tool_info",
-    ],
+info_plist_mozc(
+    name = "mozc_tool_info_plist",
+    srcs = ["//data/mac:mozc_tool_info"],
     outs = ["mozc_tool_info.plist"],
-    cmd = ("$(location //build_tools:tweak_info_plist)" +
-           " --output $@" +
-           " --input $(location //data/mac:mozc_tool_info)" +
-           " --version_file $(location //base:mozc_version_txt)" +
-           " --branding " + BRANDING),
-    exec_tools = ["//build_tools:tweak_info_plist"],
 )

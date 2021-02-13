@@ -29,7 +29,6 @@
 
 #include "rewriter/rewriter.h"
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
@@ -63,11 +62,12 @@
 #include "rewriter/variants_rewriter.h"
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
+#include "absl/flags/flag.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
 #endif  // NO_USAGE_REWRITER
 
-MOZC_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
+ABSL_FLAG(bool, use_history_rewriter, true, "Use history rewriter or not.");
 
 namespace mozc {
 namespace {
@@ -104,7 +104,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(new ZipcodeRewriter(&pos_matcher_));
   AddRewriter(new DiceRewriter);
 
-  if (mozc::GetFlag(FLAGS_use_history_rewriter)) {
+  if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(new UserBoundaryHistoryRewriter(parent_converter));
     AddRewriter(new UserSegmentHistoryRewriter(&pos_matcher_, pos_group));
   }

@@ -116,7 +116,7 @@ bool CompositionString::Update(const mozc::commands::Output &output,
     // In OOo, we need this message to restore caret status.
     // We should not send this null-WM_IME_COMPOSITION when
     // |info.dwResultStrLen != 0|.  Otherwise, the result string will be
-    // commited twice in wordpad.exe.
+    // committed twice in wordpad.exe.
     if (info.dwResultStrLen == 0) {
       messages->push_back(UIMessage(WM_IME_COMPOSITION, 0, 0));
     }

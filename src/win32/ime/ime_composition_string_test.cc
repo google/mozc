@@ -555,9 +555,9 @@ TEST(ImeCompositionStringTest, EndCompositionWhenCompositionBecomesEmpty) {
   EXPECT_EQ(0, compstr.info.dwResultStrLen);
 }
 
-TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommited) {
+TEST(ImeCompositionStringTest, EndCompositionWhenCompositionIsCommitted) {
   // WM_IME_COMPOSITION should be sent up to once.
-  // Otherwise, the result string will be commited twice in wordpad.exe.
+  // Otherwise, the result string will be committed twice in wordpad.exe.
 
   CompositionString compstr;
   EXPECT_TRUE(compstr.Initialize());
@@ -666,9 +666,9 @@ TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585) {
 }
 
 TEST(ImeCompositionStringTest,
-     EndCompositionWhenCompositionIsCommitedWithPreedit) {
+     EndCompositionWhenCompositionIsCommittedWithPreedit) {
   // WM_IME_COMPOSITION should be sent up to once.
-  // Otherwise, the result string will be commited twice in wordpad.exe.
+  // Otherwise, the result string will be committed twice in wordpad.exe.
 
   CompositionString compstr;
   EXPECT_TRUE(compstr.Initialize());

@@ -55,7 +55,7 @@ class Transliterators {
     // Returns half ascii.
     HALF_ASCII,
     // Special transliterator.
-    // Use locally asigned transliterator.
+    // Use locally assigned transliterator.
     // Many methods don't accept this value.
     LOCAL,
 

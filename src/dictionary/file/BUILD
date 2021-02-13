@@ -84,9 +84,9 @@ cc_test_mozc(
         ":dictionary_file_builder",
         "//base",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -166,10 +166,10 @@ cc_test_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )

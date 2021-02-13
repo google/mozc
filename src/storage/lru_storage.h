@@ -54,7 +54,7 @@ class LRUStorage {
   bool Open(const char *filename);
   void Close();
 
-  // Try to open exisiting database
+  // Try to open existing database
   // If the file is broken or cannot open, tries to recreate
   // new file
   bool OpenOrCreate(const char *filename, size_t new_value_size,

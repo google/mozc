@@ -33,7 +33,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/file/codec_factory.h"
@@ -41,6 +40,7 @@
 #include "dictionary/file/section.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -49,7 +49,7 @@ namespace {
 
 class CodecTest : public ::testing::Test {
  public:
-  CodecTest() : test_file_(mozc::GetFlag(FLAGS_test_tmpdir) + "testfile.txt") {}
+  CodecTest() : test_file_(absl::GetFlag(FLAGS_test_tmpdir) + "testfile.txt") {}
 
  protected:
   void SetUp() override {

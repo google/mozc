@@ -108,8 +108,8 @@ class IosEngine {
   //   * Another thread is using the underlying engine.
   // The second case is expected because this method is intended to be called by
   // a timer thread only when there's no key event for a while after a key press
-  // event is occured.  The use of underlying engine means some events have
-  // occured when the timer thread calls this method, so it's expected not to
+  // event is occurred.  The use of underlying engine means some events have
+  // occurred when the timer thread calls this method, so it's expected not to
   // send the special key to the engine.
   bool MaybeCreateNewChunk(commands::Command *command);
 

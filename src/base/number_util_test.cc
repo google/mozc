@@ -583,7 +583,7 @@ TEST(NumberUtilTest, KanjiNumberToArabicNumber) {
 }
 
 TEST(NumberUtilTest, NormalizeNumbers) {
-  // An element has input, expected Kanji output, and exepcted Arabic output.
+  // An element has input, expected Kanji output, and expected Arabic output.
   const char *success_data[][3] = {
       {"一", "一", "1"},
       {"九", "九", "9"},
@@ -641,7 +641,7 @@ TEST(NumberUtilTest, NormalizeNumbers) {
     EXPECT_EQ(success_data[i][2], arabic_output);
   }
 
-  // An element has input, expected Kanji output, and exepcted Arabic output.
+  // An element has input, expected Kanji output, and expected Arabic output.
   const char *success_notrim_data[][3] = {
       {"０１２", "〇一二", "012"},
       {"０00", "〇〇〇", "000"},

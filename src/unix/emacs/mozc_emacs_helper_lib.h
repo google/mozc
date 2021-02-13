@@ -110,7 +110,7 @@ void ErrorExit(const std::string &error, const std::string &message);
 // Removes unused usage information from output protocol buffers.
 // Usage data may contain line breaks, which have not been supported yet for IPC
 // in S-expression. Only single line S-expressions are supported so far.
-// This function retuns true if usage data is removed.
+// This function returns true if usage data is removed.
 bool RemoveUsageData(mozc::commands::Output *output);
 
 }  // namespace emacs

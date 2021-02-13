@@ -44,7 +44,7 @@ class SurrogatePairObserver {
   // Return code which represents the expected action of the IME DLL.
   enum ClientActionType {
     // This key event is not a VK_PACKET-related event.
-    // The the caller must do the default action.
+    // The caller must do the default action.
     DO_DEFAULT_ACTION = 0,
     // This key event is a VK_PACKET-related event.
     // The caller replace the VirtualKey instance with new one which conatins

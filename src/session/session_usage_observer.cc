@@ -101,13 +101,13 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
 }  // namespace
 
 SessionUsageObserver::SessionUsageObserver() {
-  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // Explicitly calls Sync() to delete usage stats existing data including
   // metadata for migration.
   UsageStats::Sync();
 }
 
 SessionUsageObserver::~SessionUsageObserver() {
-  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // Explicitly calls Sync() to delete usage stats existing data including
   // metadata for migration.
   UsageStats::Sync();
 }

@@ -37,7 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/serialized_string_array.h"
@@ -76,6 +75,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -362,7 +362,7 @@ class MockTypingModel : public mozc::composer::TypingModel {
 class DictionaryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = absl::make_unique<commands::Request>();
     config_ = absl::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
@@ -2837,42 +2837,42 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
   {
     // Cost of words in user dictionary should be decreased.
-    const int kOrigianlWordCost = 10000;
+    const int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
-        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
     predictor->SetLMCost(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
-    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_GT(kOriginalWordCost, results[0].cost);
     EXPECT_LE(1, results[0].cost);
   }
 
   {
     // Cost of words in user dictionary should not be decreased to below 1.
-    const int kOrigianlWordCost = 10;
+    const int kOriginalWordCost = 10;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
-        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
     predictor->SetLMCost(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
-    EXPECT_GT(kOrigianlWordCost, results[0].cost);
+    EXPECT_GT(kOriginalWordCost, results[0].cost);
     EXPECT_LE(1, results[0].cost);
   }
 
   {
     // Cost of general symbols should not be decreased.
-    const int kOrigianlWordCost = 10000;
+    const int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
-        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
     ASSERT_EQ(1, results.size());
     results[0].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
@@ -2881,22 +2881,22 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
-    EXPECT_LE(kOrigianlWordCost, results[0].cost);
+    EXPECT_LE(kOriginalWordCost, results[0].cost);
   }
 
   {
     // Cost of words not in user dictionary should not be decreased.
-    const int kOrigianlWordCost = 10000;
+    const int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
-        kAikaHiragana, kAikaKanji, kOrigianlWordCost,
+        kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::NONE, &results);
 
     predictor->SetLMCost(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
-    EXPECT_EQ(kOrigianlWordCost, results[0].cost);
+    EXPECT_EQ(kOriginalWordCost, results[0].cost);
   }
 }
 

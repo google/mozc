@@ -70,7 +70,7 @@ class GenericTableEditorDialog : public QDialog,
   QTableWidget *mutable_table_widget();
   QMenu *mutable_edit_menu();
 
-  // impliments a method which returns default fileame
+  // implements a method which returns default fileame
   virtual std::string GetDefaultFilename() const = 0;
 
   // implements a method which loads

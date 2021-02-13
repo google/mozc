@@ -155,7 +155,7 @@ message RendererCommand {
     // HWND of the window where composition is displayed.
     optional uint32 target_window_handle = 4;
     // used in Windows:
-    // Preffered font for composition string.
+    // Preferred font for composition string.
     optional WinLogFont composition_font = 5;
 
     // Represents IM Framework used in the client.
@@ -185,7 +185,7 @@ message RendererCommand {
 
     // used in Windows:
     // Indicates if a UI element is expected to be displayed or not.  Note
-    // taht |RendererCommand::visible| should be prior to these flags, that is,
+    // that |RendererCommand::visible| should be prior to these flags, that is,
     // you should hide all UI elements if |RendererCommand::visible| is false
     // regardless of the visibility specified in this field.
     enum UIVisibility {

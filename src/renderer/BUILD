@@ -33,6 +33,8 @@ load(
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
+    "info_plist_mozc",
+    "macos_application_mozc",
     "objc_library_mozc",
     "select_mozc",
 )
@@ -40,9 +42,7 @@ load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
-    "MACOS_MIN_OS_VER",
 )
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -101,7 +101,6 @@ cc_library_mozc(
     deps = [
         ":renderer_interface",
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -113,6 +112,7 @@ cc_library_mozc(
         "//ipc:process_watch_dog",
         "//protocol:config_proto",
         "//protocol:renderer_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -128,7 +128,6 @@ cc_test_mozc(
         ":renderer_interface",
         ":renderer_server",
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -136,6 +135,7 @@ cc_test_mozc(
         "//ipc:ipc_test_util",
         "//protocol:renderer_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -310,7 +310,7 @@ cc_binary_mozc(
     deps = [
         ":mozc_renderer_lib",
         "//base:crash_report_handler",
-        "//base:flags",
+        "@com_google_absl//absl/flags:flag",
         "//base:init_mozc",
         "//base:run_level",
         "//base:system_util",
@@ -364,13 +364,12 @@ cc_test_mozc(
 )
 
 # macOS
-macos_application(
+macos_application_mozc(
     name = "mozc_renderer_macos",
     app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Renderer",
     bundle_name = BRANDING + "Renderer",
-    infoplists = [":gen_mozc_renderer_info_plist"],
-    minimum_os_version = MACOS_MIN_OS_VER,
+    infoplists = [":mozc_renderer_info_plist"],
     resources = ["//data/images/mac:candidate_window_logo.tiff"],
     deps = [":mozc_renderer_main_macos"],
     # When we support Breakpad, uncomment the following block.
@@ -385,12 +384,12 @@ cc_library_mozc(
     deps = [
         ":mozc_renderer_lib_macos",
         "//base:crash_report_handler",
-        "//base:flags",
         "//base:init_mozc",
         "//base:run_level",
         "//base:system_util",
         "//base:util",
         "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -448,17 +447,8 @@ objc_library_mozc(
     ]),
 )
 
-genrule(
-    name = "gen_mozc_renderer_info_plist",
-    srcs = [
-        "mac/Info.plist",
-        "//base:mozc_version_txt",
-    ],
+info_plist_mozc(
+    name = "mozc_renderer_info_plist",
+    srcs = ["mac/Info.plist"],
     outs = ["Info.plist"],
-    cmd = ("$(location //build_tools:tweak_info_plist)" +
-           " --output $@" +
-           " --input $(location mac/Info.plist)" +
-           " --version_file $(location //base:mozc_version_txt)" +
-           " --branding " + BRANDING),
-    exec_tools = ["//build_tools:tweak_info_plist"],
 )

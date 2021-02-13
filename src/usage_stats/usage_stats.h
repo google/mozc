@@ -80,7 +80,7 @@ class UsageStats {
   // Synchronizes (writes) usage data into disk. Returns false on failure.
   static bool Sync();
 
-  // Clears existing data exept for Integer and Boolean stats.
+  // Clears existing data except for Integer and Boolean stats.
   static void ClearStats();
 
   // Clears all data.

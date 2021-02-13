@@ -75,7 +75,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
                       size_t initial_insert_pos, size_t initial_insert_size,
                       bool is_no_learning, Segment *segment) {
   if (segment->candidates_size() == 0) {
-    LOG(WARNING) << "candiadtes_size is 0";
+    LOG(WARNING) << "candidates_size is 0";
     return;
   }
 
@@ -90,7 +90,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
 
   std::sort(sorted_value.begin(), sorted_value.end(), ValueCostCompare());
 
-  // after sorting the valeus by |cost|, adjacent candidates
+  // after sorting the values by |cost|, adjacent candidates
   // will have the same value. It is almost OK to use std::unique to
   // remove dup entries, it is not a perfect way though.
   sorted_value.erase(

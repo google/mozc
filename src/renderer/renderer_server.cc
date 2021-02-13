@@ -37,7 +37,6 @@
 
 #include "base/compiler_specific.h"
 #include "base/const.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -49,12 +48,13 @@
 #include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
-MOZC_FLAG(int32, timeout, 10 * 60, "timeout of candidate server (sec)");
-MOZC_FLAG(bool, restricted, false,
+ABSL_FLAG(int32, timeout, 10 * 60, "timeout of candidate server (sec)");
+ABSL_FLAG(bool, restricted, false,
           "launch candidates server with restricted mode");
 
 namespace mozc {
@@ -174,14 +174,14 @@ RendererServer::RendererServer()
       send_command_(new RendererServerSendCommand) {
   watch_dog_ = absl::make_unique<ParentApplicationWatchDog>(this);
   watch_dog_->StartWatchDog();
-  if (mozc::GetFlag(FLAGS_restricted)) {
-    mozc::SetFlag(&FLAGS_timeout,
+  if (absl::GetFlag(FLAGS_restricted)) {
+    absl::SetFlag(&FLAGS_timeout,
                   // set 60sec with restricted mode
-                  std::min(mozc::GetFlag(FLAGS_timeout), 60));
+                  std::min(absl::GetFlag(FLAGS_timeout), 60));
   }
 
   timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
-                                         mozc::GetFlag(FLAGS_timeout)));
+                                         absl::GetFlag(FLAGS_timeout)));
   VLOG(2) << "timeout is set to be : " << timeout_;
 
 #ifndef MOZC_NO_LOGGING

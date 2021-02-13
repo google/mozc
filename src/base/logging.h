@@ -34,8 +34,8 @@
 #include <iostream>
 #include <string>
 
-#include "base/flags.h"
 #include "base/port.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 

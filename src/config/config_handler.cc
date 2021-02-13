@@ -131,7 +131,7 @@ bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
   return true;
 }
 
-// set config and rewirte internal data
+// set config and rewrite internal data
 bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   stored_config_.CopyFrom(config);
 

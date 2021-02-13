@@ -35,7 +35,6 @@
 #include <limits>
 #include <string>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/text_normalizer.h"
@@ -53,6 +52,7 @@
 #include "session/session_usage_stats_util.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -62,7 +62,7 @@ const bool kDefaultUseActualConverterForRealtimeConversion = false;
 const bool kDefaultUseActualConverterForRealtimeConversion = true;
 #endif  // OS_ANDROID
 
-MOZC_FLAG(bool, use_actual_converter_for_realtime_conversion,
+ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion,
           kDefaultUseActualConverterForRealtimeConversion,
           "If true, use the actual (non-immutable) converter for real "
           "time conversion.");
@@ -428,7 +428,7 @@ bool SessionConverter::SuggestWithPreferences(
     conversion_request.set_create_partial_candidates(
         request_->auto_partial_suggestion());
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (!converter_->StartSuggestionForRequest(conversion_request,
                                                segments_.get())) {
       // TODO(komatsu): Because suggestion is a prefix search, once
@@ -504,7 +504,7 @@ bool SessionConverter::PredictWithPreferences(
   if (predict_expand || predict_first) {
     ConversionRequest conversion_request(&composer, request_, config_);
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
@@ -576,7 +576,7 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
     conversion_request.set_create_partial_candidates(
         request_->auto_partial_suggestion());
     conversion_request.set_use_actual_converter_for_realtime_conversion(
-        mozc::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     // This is abuse of StartPrediction().
     // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
     //    to Converter class.

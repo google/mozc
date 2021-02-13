@@ -33,7 +33,6 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/character_form_manager.h"
@@ -47,13 +46,15 @@
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "testing/base/public/googletest.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
-MOZC_DECLARE_FLAG(int32, max_session_size);
-MOZC_DECLARE_FLAG(int32, create_session_min_interval);
-MOZC_DECLARE_FLAG(int32, watch_dog_interval);
-MOZC_DECLARE_FLAG(int32, last_command_timeout);
-MOZC_DECLARE_FLAG(int32, last_create_session_timeout);
-MOZC_DECLARE_FLAG(bool, restricted);
+ABSL_DECLARE_FLAG(int32, max_session_size);
+ABSL_DECLARE_FLAG(int32, create_session_min_interval);
+ABSL_DECLARE_FLAG(int32, watch_dog_interval);
+ABSL_DECLARE_FLAG(int32, last_command_timeout);
+ABSL_DECLARE_FLAG(int32, last_create_session_timeout);
+ABSL_DECLARE_FLAG(bool, restricted);
 
 namespace mozc {
 namespace session {
@@ -110,18 +111,18 @@ SessionHandlerTestBase::SessionHandlerTestBase() {}
 SessionHandlerTestBase::~SessionHandlerTestBase() {}
 
 void SessionHandlerTestBase::SetUp() {
-  flags_max_session_size_backup_ = mozc::GetFlag(FLAGS_max_session_size);
+  flags_max_session_size_backup_ = absl::GetFlag(FLAGS_max_session_size);
   flags_create_session_min_interval_backup_ =
-      mozc::GetFlag(FLAGS_create_session_min_interval);
-  flags_watch_dog_interval_backup_ = mozc::GetFlag(FLAGS_watch_dog_interval);
+      absl::GetFlag(FLAGS_create_session_min_interval);
+  flags_watch_dog_interval_backup_ = absl::GetFlag(FLAGS_watch_dog_interval);
   flags_last_command_timeout_backup_ =
-      mozc::GetFlag(FLAGS_last_command_timeout);
+      absl::GetFlag(FLAGS_last_command_timeout);
   flags_last_create_session_timeout_backup_ =
-      mozc::GetFlag(FLAGS_last_create_session_timeout);
-  flags_restricted_backup_ = mozc::GetFlag(FLAGS_restricted);
+      absl::GetFlag(FLAGS_last_create_session_timeout);
+  flags_restricted_backup_ = absl::GetFlag(FLAGS_restricted);
 
   user_profile_directory_backup_ = SystemUtil::GetUserProfileDirectory();
-  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   ConfigHandler::GetConfig(&config_backup_);
   ClearState();
 }
@@ -131,15 +132,15 @@ void SessionHandlerTestBase::TearDown() {
   ConfigHandler::SetConfig(config_backup_);
   SystemUtil::SetUserProfileDirectory(user_profile_directory_backup_);
 
-  mozc::SetFlag(&FLAGS_max_session_size, flags_max_session_size_backup_);
-  mozc::SetFlag(&FLAGS_create_session_min_interval,
+  absl::SetFlag(&FLAGS_max_session_size, flags_max_session_size_backup_);
+  absl::SetFlag(&FLAGS_create_session_min_interval,
                 flags_create_session_min_interval_backup_);
-  mozc::SetFlag(&FLAGS_watch_dog_interval, flags_watch_dog_interval_backup_);
-  mozc::SetFlag(&FLAGS_last_command_timeout,
+  absl::SetFlag(&FLAGS_watch_dog_interval, flags_watch_dog_interval_backup_);
+  absl::SetFlag(&FLAGS_last_command_timeout,
                 flags_last_command_timeout_backup_);
-  mozc::SetFlag(&FLAGS_last_create_session_timeout,
+  absl::SetFlag(&FLAGS_last_create_session_timeout,
                 flags_last_create_session_timeout_backup_);
-  mozc::SetFlag(&FLAGS_restricted, flags_restricted_backup_);
+  absl::SetFlag(&FLAGS_restricted, flags_restricted_backup_);
 }
 
 void SessionHandlerTestBase::ClearState() {

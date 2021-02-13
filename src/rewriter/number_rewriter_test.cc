@@ -96,7 +96,7 @@ bool HasDescription(const Segment &segment, const std::string &description) {
   return false;
 }
 
-// Find candiadte id
+// Find candidate id
 bool FindCandidateId(const Segment &segment, const std::string &value,
                      int *id) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -835,7 +835,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
 // - POS: GeneralNoun (not *Number*)
 // In this case, NumberRewriter should not clear
 // Segment::Candidate::USER_DICTIONARY bit in the base candidate.
-TEST_F(NumberRewriterTest, PreserveUserDictionaryAttibute) {
+TEST_F(NumberRewriterTest, PreserveUserDictionaryAttribute) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   {
     Segments segments;

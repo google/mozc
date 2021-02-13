@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/number_util.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
@@ -42,6 +41,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "transliteration/transliteration.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -67,7 +67,7 @@ void AddCandidateWithContentValue(Segment *segment, const std::string &value,
 class FocusCandidateRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     rewriter_ = absl::make_unique<FocusCandidateRewriter>(&mock_data_manager_);
   }
 

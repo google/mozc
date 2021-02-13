@@ -35,6 +35,8 @@
 load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
+load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 def cc_library_mozc(deps = [], **kwargs):
     """
@@ -80,12 +82,12 @@ def cc_test_mozc(name, tags = [], deps = [], **kwargs):
     if "no_android" not in tags:
         android_cc_test(
             name = name + "_android",
+            cc_test_name = name,
+            requires_full_emulation = requires_full_emulation,
             # "manual" prevents this target triggered by a wild card.
             # So that "blaze test ..." does not contain this target.
             # Otherwise it is too slow.
             tags = ["manual", "notap"],
-            cc_test_name = name,
-            requires_full_emulation = requires_full_emulation,
         )
 
 register_extension_info(
@@ -130,13 +132,42 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], sdk_frameworks = [], **kwargs):
+def info_plist_mozc(name, srcs = [], outs = []):
+    native.genrule(
+        name = name,
+        srcs = srcs + ["//base:mozc_version_txt"],
+        outs = outs,
+        cmd = ("$(location //build_tools:tweak_info_plist)" +
+               " --output $@" +
+               " --input $(location " + srcs[0] + ")" +
+               " --version_file $(location //base:mozc_version_txt)" +
+               " --branding " + BRANDING),
+        exec_tools = ["//build_tools:tweak_info_plist"],
+    )
+
+def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], proto_deps = [], sdk_frameworks = [], **kwargs):
+    # Because proto_library cannot be in deps of objc_library,
+    # cc_library as a wrapper is necessary as a workaround.
+    proto_deps_name = name + "_proto_deps"
+    native.cc_library(
+        name = proto_deps_name,
+        deps = proto_deps,
+    )
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
-        deps = deps + ["//:macro"],
+        deps = deps + ["//:macro", proto_deps_name],
         sdk_frameworks = sdk_frameworks,
+        **kwargs
+    )
+
+def macos_application_mozc(name, bundle_name, bundle_id = None, **kwargs):
+    macos_application(
+        name = name,
+        bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
+        bundle_name = bundle_name,
+        minimum_os_version = MACOS_MIN_OS_VER,
         **kwargs
     )
 
@@ -158,7 +189,8 @@ def select_mozc(
         oss_android = None,
         oss_linux = None,
         oss_macos = None,
-        wasm = None):
+        wasm = None,
+        windows = None):
     """select wrapper for target os selection.
 
     The priority of value checking:
@@ -181,6 +213,7 @@ def select_mozc(
       oss_linux: value for OSS Linux build.
       oss_macos: value for OSS macOS build.
       wasm: value for wasm build.
+      windows: value for Windows build. (placeholder)
 
     Returns:
       Generated select statement.
@@ -189,8 +222,9 @@ def select_mozc(
         "//tools/cc_target_os:android": _get_value([android, client, default]),
         "//tools/cc_target_os:apple": _get_value([ios, client, default]),
         "//tools/cc_target_os:chromiumos": _get_value([chromiumos, client, default]),
-        "//tools/cc_target_os:wasm": _get_value([wasm, client, default]),
         "//tools/cc_target_os:darwin": _get_value([macos, ios, client, default]),
+        "//tools/cc_target_os:wasm": _get_value([wasm, client, default]),
+        "//tools/cc_target_os:windows": _get_value([windows, client, default]),
         "//tools/cc_target_os:linux": _get_value([linux, client, default]),
         "//tools/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
         "//tools/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),

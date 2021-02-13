@@ -202,7 +202,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
-TEST_F(MobilePredictorTest, CallPredictForRequetMobile) {
+TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
   auto predictor1 = absl::make_unique<MockPredictor>();
   auto predictor2 = absl::make_unique<MockPredictor>();
   EXPECT_CALL(*predictor1, PredictForRequest(_, _))
@@ -310,7 +310,7 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
-TEST_F(PredictorTest, CallPredictForRequet) {
+TEST_F(PredictorTest, CallPredictForRequest) {
   auto predictor1 = absl::make_unique<MockPredictor>();
   auto predictor2 = absl::make_unique<MockPredictor>();
   EXPECT_CALL(*predictor1, PredictForRequest(_, _))

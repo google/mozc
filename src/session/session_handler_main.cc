@@ -56,7 +56,6 @@ SHOW_LOG_BY_VALUE       ございました
 #include <string>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/status.h"
 #include "base/system_util.h"
@@ -66,12 +65,14 @@ SHOW_LOG_BY_VALUE       ございました
 #include "engine/engine.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_split.h"
 
-MOZC_FLAG(string, input, "", "Input file");
-MOZC_FLAG(string, profile, "", "User profile directory");
-MOZC_FLAG(string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
-MOZC_FLAG(string, dictionary, "", "Dictionary: 'google', 'android' or 'oss'");
+ABSL_FLAG(std::string, input, "", "Input file");
+ABSL_FLAG(std::string, profile, "", "User profile directory");
+ABSL_FLAG(std::string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
+ABSL_FLAG(std::string, dictionary, "",
+          "Dictionary: 'google', 'android' or 'oss'");
 
 namespace mozc {
 void Show(const commands::Output &output) {
@@ -175,11 +176,11 @@ mozc::StatusOr<std::unique_ptr<Engine>> CreateEngine(
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (!mozc::GetFlag(FLAGS_profile).empty()) {
-    mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_profile));
+  if (!absl::GetFlag(FLAGS_profile).empty()) {
+    mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile));
   }
-  auto engine = mozc::CreateEngine(mozc::GetFlag(FLAGS_engine),
-                                   mozc::GetFlag(FLAGS_dictionary));
+  auto engine = mozc::CreateEngine(absl::GetFlag(FLAGS_engine),
+                                   absl::GetFlag(FLAGS_dictionary));
   if (!engine.ok()) {
     std::cout << "engine init error" << std::endl;
     return 1;
@@ -187,8 +188,8 @@ int main(int argc, char **argv) {
   mozc::session::SessionHandlerInterpreter handler(*std::move(engine));
 
   std::string line;
-  if (!mozc::GetFlag(FLAGS_input).empty()) {
-    mozc::InputFileStream input(mozc::GetFlag(FLAGS_input).c_str());
+  if (!absl::GetFlag(FLAGS_input).empty()) {
+    mozc::InputFileStream input(absl::GetFlag(FLAGS_input).c_str());
     while (std::getline(input, line)) {
       mozc::ParseLine(handler, line);
     }

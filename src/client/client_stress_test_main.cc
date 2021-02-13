@@ -41,7 +41,6 @@
 #include <memory>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -55,21 +54,21 @@
 // 1. multi-thread testing
 // 2. change/config the senario
 
-MOZC_FLAG(int32, max_keyevents, 100000,
+ABSL_FLAG(int32, max_keyevents, 100000,
           "test at most |max_keyevents| key sequences");
-MOZC_FLAG(string, server_path, "", "specify server path");
-MOZC_FLAG(int32, key_duration, 10, "key duration (msec)");
-MOZC_FLAG(bool, test_renderer, false, "test renderer");
-MOZC_FLAG(bool, test_testsendkey, true, "test TestSendKey");
+ABSL_FLAG(std::string, server_path, "", "specify server path");
+ABSL_FLAG(int32, key_duration, 10, "key duration (msec)");
+ABSL_FLAG(bool, test_renderer, false, "test renderer");
+ABSL_FLAG(bool, test_testsendkey, true, "test TestSendKey");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::SetFlag(&FLAGS_logtostderr, true);
+  absl::SetFlag(&FLAGS_logtostderr, true);
 
   mozc::client::Client client;
-  if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-    client.set_server_program(mozc::GetFlag(FLAGS_server_path));
+  if (!absl::GetFlag(FLAGS_server_path).empty()) {
+    client.set_server_program(absl::GetFlag(FLAGS_server_path));
   }
 
   CHECK(client.IsValidRunLevel()) << "IsValidRunLevel failed";
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<mozc::renderer::RendererClient> renderer_client;
   mozc::commands::RendererCommand renderer_command;
 
-  if (mozc::GetFlag(FLAGS_test_renderer)) {
+  if (absl::GetFlag(FLAGS_test_renderer)) {
 #ifdef OS_WIN
     renderer_command.mutable_application_info()->set_process_id(
         ::GetCurrentProcessId());
@@ -111,17 +110,17 @@ int main(int argc, char **argv) {
     mozc::session::RandomKeyEventsGenerator::GenerateSequence(&keys);
     CHECK(client.NoOperation()) << "Server is not responding";
     for (size_t i = 0; i < keys.size(); ++i) {
-      mozc::Util::Sleep(mozc::GetFlag(FLAGS_key_duration));
+      mozc::Util::Sleep(absl::GetFlag(FLAGS_key_duration));
       keyevents_size++;
       if (keyevents_size % 100 == 0) {
         std::cout << keyevents_size << " key events finished" << std::endl;
       }
-      if (mozc::GetFlag(FLAGS_max_keyevents) < keyevents_size) {
+      if (absl::GetFlag(FLAGS_max_keyevents) < keyevents_size) {
         std::cout << "key events reached to "
-                  << mozc::GetFlag(FLAGS_max_keyevents) << std::endl;
+                  << absl::GetFlag(FLAGS_max_keyevents) << std::endl;
         return 0;
       }
-      if (mozc::GetFlag(FLAGS_test_testsendkey)) {
+      if (absl::GetFlag(FLAGS_test_testsendkey)) {
         VLOG(2) << "Sending to Server: " << keys[i].DebugString();
         client.TestSendKey(keys[i], &output);
         VLOG(2) << "Output of TestSendKey: " << output.DebugString();

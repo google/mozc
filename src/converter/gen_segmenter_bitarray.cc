@@ -55,7 +55,7 @@ class StateTable {
     idarray_.resize(size);
   }
 
-  // |str| is an 1-dimentional row (or column) represented in byte array.
+  // |str| is an 1-dimensional row (or column) represented in byte array.
   void Add(uint16 id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
 #ifdef ABSL_USES_STD_STRING_VIEW

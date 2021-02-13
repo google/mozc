@@ -126,7 +126,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   // Show a dialog and get text for dictionary name from the user. The
   // first parameter is default text printed in a form. The second is
-  // message printed on the dialog. It returns an empty stirng
+  // message printed on the dialog. It returns an empty string
   // whenever a proper value for dictionary name is input.
   QString PromptForDictionaryName(const QString &text, const QString &label);
 
@@ -137,7 +137,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // These two functions are to start/stop monitoring data on the
   // table widget being changed. We validate the value on the widget
   // when the user edit it but the data can be modified
-  // programatically and validation is not necessary.
+  // programmatically and validation is not necessary.
   void StartMonitoringUserEdit();
   void StopMonitoringUserEdit();
 
@@ -155,7 +155,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // send Reload command to the server.
   void SaveAndReloadServer();
 
-  // 1. Shows a dialog box and get new |commnet|.
+  // 1. Shows a dialog box and get new |comment|.
   // 2. Changes the comemnt of all selected.
   void EditComment();
 
@@ -192,12 +192,12 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // not been saved.
   bool modified_;
 
-  // Holds information on whether dictionary entires are sorted, key
+  // Holds information on whether dictionary entries are sorted, key
   // column of sort and order of sort.
   //
   // Current implementation of sort may not be perfect. It doesn't
   // check if entries are already sorted when they are loaded nor
-  // whether modification is made keeping sorted entires sorted.
+  // whether modification is made keeping sorted entries sorted.
   struct SortState {
     bool sorted;
     int column;

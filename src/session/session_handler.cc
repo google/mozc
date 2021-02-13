@@ -38,9 +38,9 @@
 #include <vector>
 
 #include "base/clock.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/flags/flag.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "base/process.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
@@ -66,31 +66,31 @@
 
 using mozc::usage_stats::UsageStats;
 
-MOZC_FLAG(int32, timeout, -1,
+ABSL_FLAG(int32, timeout, -1,
           "server timeout. "
           "if sessions get empty for \"timeout\", "
           "shutdown message is automatically emitted");
 
-MOZC_FLAG(int32, max_session_size, 64,
+ABSL_FLAG(int32, max_session_size, 64,
           "maximum sessions size. "
           "if size of sessions reaches to \"max_session_size\", "
           "oldest session is removed");
 
-MOZC_FLAG(int32, create_session_min_interval, 0,
+ABSL_FLAG(int32, create_session_min_interval, 0,
           "minimum interval (sec) for create session");
 
-MOZC_FLAG(int32, watch_dog_interval, 180, "watch dog timer intaval (sec)");
+ABSL_FLAG(int32, watch_dog_interval, 180, "watch dog timer intaval (sec)");
 
-MOZC_FLAG(int32, last_command_timeout, 3600,
+ABSL_FLAG(int32, last_command_timeout, 3600,
           "remove session if it is not accessed for "
           "\"last_command_timeout\" sec");
 
-MOZC_FLAG(int32, last_create_session_timeout, 300,
+ABSL_FLAG(int32, last_create_session_timeout, 300,
           "remove session if it is not accessed for "
           "\"last_create_session_timeout\" sec "
           "after create session command");
 
-MOZC_FLAG(bool, restricted, false, "Launch server with restricted setting");
+ABSL_FLAG(bool, restricted, false, "Launch server with restricted setting");
 
 namespace mozc {
 
@@ -147,30 +147,30 @@ void SessionHandler::Init(
   request_ = absl::make_unique<commands::Request>();
   config_ = absl::make_unique<config::Config>();
 
-  if (mozc::GetFlag(FLAGS_restricted)) {
+  if (absl::GetFlag(FLAGS_restricted)) {
     VLOG(1) << "Server starts with restricted mode";
     // --restricted is almost always specified when mozc_client is inside Job.
     // The typical case is Startup processes on Vista.
     // On Vista, StartUp processes are in Job for 60 seconds. In order
     // to launch new mozc_server inside sandbox, we set the timeout
     // to be 60sec. Client application hopefully re-launch mozc_server.
-    mozc::SetFlag(&FLAGS_timeout, 60);
-    mozc::SetFlag(&FLAGS_max_session_size, 8);
-    mozc::SetFlag(&FLAGS_watch_dog_interval, 15);
-    mozc::SetFlag(&FLAGS_last_create_session_timeout, 60);
-    mozc::SetFlag(&FLAGS_last_command_timeout, 60);
+    absl::SetFlag(&FLAGS_timeout, 60);
+    absl::SetFlag(&FLAGS_max_session_size, 8);
+    absl::SetFlag(&FLAGS_watch_dog_interval, 15);
+    absl::SetFlag(&FLAGS_last_create_session_timeout, 60);
+    absl::SetFlag(&FLAGS_last_command_timeout, 60);
   }
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   session_watch_dog_ = absl::make_unique<SessionWatchDog>(
-      mozc::GetFlag(FLAGS_watch_dog_interval));
+      absl::GetFlag(FLAGS_watch_dog_interval));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   config::ConfigHandler::GetConfig(config_.get());
 
   // allow [2..128] sessions
   max_session_size_ =
-      std::max(2, std::min(mozc::GetFlag(FLAGS_max_session_size), 128));
+      std::max(2, std::min(absl::GetFlag(FLAGS_max_session_size), 128));
   session_map_ = absl::make_unique<SessionMap>(max_session_size_);
 
   if (!engine_) {
@@ -493,7 +493,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
   const int create_session_minimum_interval =
-      std::max(0, std::min(mozc::GetFlag(FLAGS_create_session_min_interval),
+      std::max(0, std::min(absl::GetFlag(FLAGS_create_session_min_interval),
                            10));
 
   uint64 current_time = Clock::GetTime();
@@ -610,13 +610,13 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   // allow [1..600] sec. default: 300
   const uint64 create_session_timeout =
       suspend_time +
-      std::max(1, std::min(mozc::GetFlag(FLAGS_last_create_session_timeout),
+      std::max(1, std::min(absl::GetFlag(FLAGS_last_create_session_timeout),
                            600));
 
   // allow [10..7200] sec. default 3600
   const uint64 last_command_timeout =
       suspend_time +
-      std::max(10, std::min(mozc::GetFlag(FLAGS_last_command_timeout), 7200));
+      std::max(10, std::min(absl::GetFlag(FLAGS_last_command_timeout), 7200));
 
   std::vector<SessionID> remove_ids;
   for (SessionElement *element =
@@ -649,9 +649,9 @@ bool SessionHandler::Cleanup(commands::Command *command) {
   engine_->GetUserDataManager()->Sync();
 
   // timeout is enabled.
-  if (mozc::GetFlag(FLAGS_timeout) > 0 && last_session_empty_time_ != 0 &&
+  if (absl::GetFlag(FLAGS_timeout) > 0 && last_session_empty_time_ != 0 &&
       (current_time - last_session_empty_time_) >=
-          suspend_time + mozc::GetFlag(FLAGS_timeout)) {
+          suspend_time + absl::GetFlag(FLAGS_timeout)) {
     Shutdown(command);
   }
 

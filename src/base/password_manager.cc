@@ -135,7 +135,7 @@ bool LoadPassword(std::string *password) {
     return false;
   }
 
-  // Seems that the size of DPAPI-encrypted-mesage
+  // Seems that the size of DPAPI-encrypted-message
   // becomes bigger than the original message.
   // Typical file size is 32 * 5 = 160byte.
   // We just set the maximum file size to be 4096byte just in case.

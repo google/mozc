@@ -148,14 +148,14 @@ class SurroudingTextUpdater : public ITfEditSession {
     const TF_HALTCOND halt_cond = {nullptr, TF_ANCHOR_START, TF_HF_OBJECT};
 
     {
-      CComPtr<ITfRange> preceeding_range;
-      LONG preceeding_range_shifted = 0;
-      if (SUCCEEDED(selected_range->Clone(&preceeding_range)) &&
-          SUCCEEDED(preceeding_range->Collapse(edit_cookie, TF_ANCHOR_START)) &&
-          SUCCEEDED(preceeding_range->ShiftStart(
-              edit_cookie, -kMaxSurroundingLength, &preceeding_range_shifted,
+      CComPtr<ITfRange> preceding_range;
+      LONG preceding_range_shifted = 0;
+      if (SUCCEEDED(selected_range->Clone(&preceding_range)) &&
+          SUCCEEDED(preceding_range->Collapse(edit_cookie, TF_ANCHOR_START)) &&
+          SUCCEEDED(preceding_range->ShiftStart(
+              edit_cookie, -kMaxSurroundingLength, &preceding_range_shifted,
               &halt_cond))) {
-        result = TipRangeUtil::GetText(preceeding_range, edit_cookie,
+        result = TipRangeUtil::GetText(preceding_range, edit_cookie,
                                        &result_.preceding_text);
         result_.has_preceding_text = SUCCEEDED(result);
       }
@@ -241,11 +241,11 @@ class PrecedingTextDeleter : public ITfEditSession {
 
     const TF_HALTCOND halt_cond = {nullptr, TF_ANCHOR_START, 0};
 
-    CComPtr<ITfRange> preceeding_range;
-    if (FAILED(selected_range->Clone(&preceeding_range))) {
+    CComPtr<ITfRange> preceding_range;
+    if (FAILED(selected_range->Clone(&preceding_range))) {
       return E_FAIL;
     }
-    if (FAILED(preceeding_range->Collapse(edit_cookie, TF_ANCHOR_START))) {
+    if (FAILED(preceding_range->Collapse(edit_cookie, TF_ANCHOR_START))) {
       return E_FAIL;
     }
 
@@ -256,14 +256,14 @@ class PrecedingTextDeleter : public ITfEditSession {
     }
     const LONG initial_offset_utf16 =
         -static_cast<LONG>(num_characters_in_ucs4_) * 2;
-    LONG preceeding_range_shifted = 0;
-    if (FAILED(preceeding_range->ShiftStart(edit_cookie, initial_offset_utf16,
-                                            &preceeding_range_shifted,
+    LONG preceding_range_shifted = 0;
+    if (FAILED(preceding_range->ShiftStart(edit_cookie, initial_offset_utf16,
+                                            &preceding_range_shifted,
                                             &halt_cond))) {
       return E_FAIL;
     }
     std::wstring total_string;
-    if (FAILED(TipRangeUtil::GetText(preceeding_range, edit_cookie,
+    if (FAILED(TipRangeUtil::GetText(preceding_range, edit_cookie,
                                      &total_string))) {
       return E_FAIL;
     }
@@ -278,15 +278,15 @@ class PrecedingTextDeleter : public ITfEditSession {
     }
 
     const LONG final_offset = total_string.size() - len_in_utf16;
-    if (FAILED(preceeding_range->ShiftStart(edit_cookie, final_offset,
-                                            &preceeding_range_shifted,
+    if (FAILED(preceding_range->ShiftStart(edit_cookie, final_offset,
+                                            &preceding_range_shifted,
                                             &halt_cond))) {
       return E_FAIL;
     }
-    if (final_offset != preceeding_range_shifted) {
+    if (final_offset != preceding_range_shifted) {
       return E_FAIL;
     }
-    if (FAILED(preceeding_range->SetText(edit_cookie, 0, L"", 0))) {
+    if (FAILED(preceding_range->SetText(edit_cookie, 0, L"", 0))) {
       return E_FAIL;
     }
 

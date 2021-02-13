@@ -27,24 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "converter/gen_segmenter_bitarray.h"
+#include "absl/flags/flag.h"
 
 namespace {
 #include "data_manager/testing/segmenter_inl.inc"
 }
 
-MOZC_FLAG(string, output_size_info, "", "Serialized SegmenterDataSizeInfo");
-MOZC_FLAG(string, output_ltable, "", "LTable array");
-MOZC_FLAG(string, output_rtable, "", "RTable array");
-MOZC_FLAG(string, output_bitarray, "", "Segmenter bitarray");
+ABSL_FLAG(std::string, output_size_info, "",
+          "Serialized SegmenterDataSizeInfo");
+ABSL_FLAG(std::string, output_ltable, "", "LTable array");
+ABSL_FLAG(std::string, output_rtable, "", "RTable array");
+ABSL_FLAG(std::string, output_bitarray, "", "Segmenter bitarray");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::SegmenterBitarrayGenerator::GenerateBitarray(
       kLSize, kRSize, &IsBoundaryInternal,
-      mozc::GetFlag(FLAGS_output_size_info), mozc::GetFlag(FLAGS_output_ltable),
-      mozc::GetFlag(FLAGS_output_rtable), mozc::GetFlag(FLAGS_output_bitarray));
+      absl::GetFlag(FLAGS_output_size_info), absl::GetFlag(FLAGS_output_ltable),
+      absl::GetFlag(FLAGS_output_rtable), absl::GetFlag(FLAGS_output_bitarray));
   return 0;
 }

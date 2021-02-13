@@ -29,34 +29,34 @@
 
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "ipc/ipc_path_manager.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, client, false, "client mode");
-MOZC_FLAG(bool, server, false, "server mode");
-MOZC_FLAG(string, name, "test", "ipc name");
+ABSL_FLAG(bool, client, false, "client mode");
+ABSL_FLAG(bool, server, false, "server mode");
+ABSL_FLAG(std::string, name, "test", "ipc name");
 
 // command line tool to check the behavior of IPCPathManager
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::IPCPathManager *manager =
-      mozc::IPCPathManager::GetIPCPathManager(mozc::GetFlag(FLAGS_name));
+      mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
   CHECK(manager);
 
   string path;
 
-  if (mozc::GetFlag(FLAGS_client)) {
+  if (absl::GetFlag(FLAGS_client)) {
     CHECK(manager->GetPathName(&path));
     LOG(INFO) << "PathName: " << path;
     return 0;
   }
 
-  if (mozc::GetFlag(FLAGS_server)) {
+  if (absl::GetFlag(FLAGS_server)) {
     CHECK(manager->CreateNewPathName());
     CHECK(manager->SavePathName());
     CHECK(manager->GetPathName(&path));

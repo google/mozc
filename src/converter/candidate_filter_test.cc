@@ -173,7 +173,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
     filter->Reset();
   }
 
-  // Check if a canidate is active before appending many candidates.
+  // Check if a candidate is active before appending many candidates.
   Segment::Candidate *c4 = NewCandidate();
   for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,

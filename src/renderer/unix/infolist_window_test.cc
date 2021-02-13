@@ -49,7 +49,7 @@ namespace renderer {
 namespace gtk {
 
 namespace {
-// Following variable is used testing and it is contant but due to API
+// Following variable is used testing and it is constant but due to API
 // restriction, can not modify const modifier.
 GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget *>(0x12345678);
 GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget *>(0x87654321);

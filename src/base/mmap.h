@@ -55,7 +55,7 @@ class Mmap : public MmapSyncInterface {
   // - The storage is (usually) solid state thus page-in/out is expected to
   //   be faster.
   // On Linux, in the kernel version >= 2.6.9, user process can mlock. In older
-  // kernel, it fails if the process is running in user priviledge.
+  // kernel, it fails if the process is running in user privilege.
   // TODO(team): Check if mlock is really necessary for Mac.
   static bool IsMLockSupported();
   static int MaybeMLock(const void *addr, size_t len);

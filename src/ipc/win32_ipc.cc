@@ -554,7 +554,7 @@ void IPCServer::Loop() {
                                       INFINITE, &overlapped, &ignored,
                                       &ipc_error, kReadTypeData)) {
           if (ipc_error == IPC_QUIT_EVENT_SIGNALED) {
-            VLOG(1) << "Recived Conrol event from other thread";
+            VLOG(1) << "Received Conrol event from other thread";
             connected_ = false;
             return;
           }
@@ -614,7 +614,7 @@ void IPCServer::Loop() {
     if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), ack_request,
                         &ack_request_size, kAckTimeout, kReadTypeACK,
                         &last_ipc_error)) {
-      // This case happens when the client did not recive the server's response
+      // This case happens when the client did not receive the server's response
       // within timeout. Anyway we will close the connection so that the server
       // will not be blocked.
       LOG(WARNING) << "Client didn't respond within " << kAckTimeout

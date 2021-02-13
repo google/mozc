@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -59,6 +58,7 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -508,7 +508,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 
   // Create dictionary
   const std::string filename = FileUtil::JoinPath(
-      mozc::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
+      absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
   FileUtil::Unlink(filename);
   UserDictionaryStorage storage(filename);
   {
@@ -571,7 +571,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
   const std::string filename = FileUtil::JoinPath(
-      mozc::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
+      absl::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
   FileUtil::Unlink(filename);
 
   // Create dictionary
@@ -624,7 +624,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
   user_dic->WaitForReloader();
 
   const std::string filename = FileUtil::JoinPath(
-      mozc::GetFlag(FLAGS_test_tmpdir), "suppression_test.db");
+      absl::GetFlag(FLAGS_test_tmpdir), "suppression_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);
@@ -699,7 +699,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   user_dic->WaitForReloader();
 
   const std::string filename = FileUtil::JoinPath(
-      mozc::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
+      absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
   FileUtil::Unlink(filename);
 
   UserDictionaryStorage storage(filename);

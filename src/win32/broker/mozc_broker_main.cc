@@ -32,15 +32,15 @@
 #endif  // OS_WIN
 
 #include "base/crash_report_handler.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/system_util.h"
 #ifdef OS_WIN
 #include "base/winmain.h"
 #endif  // OS_WIN
 #include "config/stats_config_util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, mode, "", "mozc_broker mode");
+ABSL_FLAG(std::string, mode, "", "mozc_broker mode");
 
 #ifdef OS_WIN
 namespace mozc {
@@ -66,13 +66,13 @@ int main(int argc, char *argv[]) {
 
   int result = 0;
 #ifdef OS_WIN
-  if (mozc::GetFlag(FLAGS_mode) == "register_ime") {
+  if (absl::GetFlag(FLAGS_mode) == "register_ime") {
     result = mozc::win32::RunRegisterIME(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "set_default") {
+  } else if (absl::GetFlag(FLAGS_mode) == "set_default") {
     result = mozc::win32::RunSetDefault(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "unregister_ime") {
+  } else if (absl::GetFlag(FLAGS_mode) == "unregister_ime") {
     result = mozc::win32::RunUnregisterIME(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "prelaunch_processes") {
+  } else if (absl::GetFlag(FLAGS_mode) == "prelaunch_processes") {
     result = mozc::win32::RunPrelaunchProcesses(argc, argv);
   }
 #endif  // OS_WIN

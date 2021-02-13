@@ -29,11 +29,11 @@
 
 #include "renderer/unix/unix_server.h"
 
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "renderer/unix/gtk_wrapper_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 using testing::_;
 using testing::Return;
@@ -46,7 +46,7 @@ namespace gtk {
 class UnixServerTest : public testing::Test {
  protected:
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

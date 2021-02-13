@@ -449,7 +449,7 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
 
   bool modified = false;
   // Radix conversion is done only for conversion mode.
-  // Showing radix candidates is annoying for an user.
+  // Showing radix candidates is annoying for a user.
   const bool exec_radix_conversion =
       (segments->conversion_segments_size() == 1 &&
        segments->request_type() == Segments::CONVERSION);

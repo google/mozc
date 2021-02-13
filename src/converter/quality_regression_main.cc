@@ -32,14 +32,14 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/util.h"
 #include "converter/quality_regression_util.h"
 #include "engine/engine_factory.h"
 #include "engine/engine_interface.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, test_file, "", "regression test file");
+ABSL_FLAG(std::string, test_file, "", "regression test file");
 
 using mozc::EngineFactory;
 using mozc::EngineInterface;
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   QualityRegressionUtil util(engine->GetConverter());
 
   std::vector<QualityRegressionUtil::TestItem> items;
-  QualityRegressionUtil::ParseFile(mozc::GetFlag(FLAGS_test_file), &items);
+  QualityRegressionUtil::ParseFile(absl::GetFlag(FLAGS_test_file), &items);
 
   for (size_t i = 0; i < items.size(); ++i) {
     std::string actual_value;

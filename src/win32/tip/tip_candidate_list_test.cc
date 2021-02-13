@@ -108,14 +108,14 @@ std::wstring ToWStr(const CComBSTR &bstr) {
 
 AssertionResult ExpectCandidateString(ULONG expected_index,
                                       const std::wstring &expected_text,
-                                      CComPtr<ITfCandidateString> candiate) {
-  if (candiate == nullptr) {
+                                      CComPtr<ITfCandidateString> candidate) {
+  if (candidate == nullptr) {
     return AssertionFailure() << "|actual| should be non-null";
   }
   HRESULT hr = S_OK;
   {
     ULONG index = 0;
-    hr = candiate->GetIndex(&index);
+    hr = candidate->GetIndex(&index);
     if (FAILED(hr)) {
       return AssertionFailure() << "ITfCandidateString::GetIndex failed."
                                 << " hr = " << hr;
@@ -127,7 +127,7 @@ AssertionResult ExpectCandidateString(ULONG expected_index,
   }
   {
     CComBSTR str;
-    hr = candiate->GetString(&str);
+    hr = candidate->GetString(&str);
     if (FAILED(hr)) {
       return AssertionFailure() << "ITfCandidateString::GetString failed."
                                 << " hr = " << hr;
@@ -144,7 +144,7 @@ AssertionResult ExpectCandidateString(ULONG expected_index,
 #define EXPECT_CANDIDATE_STR(expected_index, expected_str, actual) \
   EXPECT_PRED3(ExpectCandidateString, expected_index, expected_str, actual)
 
-TEST(TipCandidateListTest, EmptyCandiate) {
+TEST(TipCandidateListTest, EmptyCandidate) {
   MockCallbackResult result;
 
   std::vector<std::wstring> empty;
@@ -177,7 +177,7 @@ TEST(TipCandidateListTest, EmptyCandiate) {
   EXPECT_FALSE(result.on_finalize_called());
 }
 
-TEST(TipCandidateListTest, NonEmptyCandiates) {
+TEST(TipCandidateListTest, NonEmptyCandidates) {
   MockCallbackResult result;
 
   std::vector<std::wstring> source;

@@ -34,11 +34,11 @@
 #include <utility>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {

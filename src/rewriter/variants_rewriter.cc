@@ -313,7 +313,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     if (original_candidate->attributes &
         Segment::Candidate::NO_VARIANTS_EXPANSION) {
       SetDescriptionForCandidate(pos_matcher_, original_candidate);
-      VLOG(1) << "Canidate has NO_NORMALIZATION node";
+      VLOG(1) << "Candidate has NO_NORMALIZATION node";
       continue;
     }
 

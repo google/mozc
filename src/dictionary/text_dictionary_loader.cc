@@ -40,7 +40,6 @@
 #include <vector>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/iterator_adapter.h"
 #include "base/logging.h"
 #include "base/multifile.h"
@@ -49,9 +48,10 @@
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(int32, tokens_reserve_size, 1400000,
+ABSL_FLAG(int32, tokens_reserve_size, 1400000,
           "Reserve the specified size of token buffer in advance.");
 
 namespace mozc {
@@ -168,7 +168,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
 
   // Roughly allocate buffers for Token pointers.
   if (limit < 0) {
-    tokens_.reserve(mozc::GetFlag(FLAGS_tokens_reserve_size));
+    tokens_.reserve(absl::GetFlag(FLAGS_tokens_reserve_size));
     limit = std::numeric_limits<int>::max();
   } else {
     tokens_.reserve(limit);

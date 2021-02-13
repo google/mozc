@@ -73,7 +73,6 @@ cc_library_mozc(
         ":session_converter_interface",
         ":session_usage_stats_util",
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:text_normalizer",
@@ -90,6 +89,7 @@ cc_library_mozc(
         "//session/internal:session_output",
         "//transliteration",
         "//usage_stats",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -103,7 +103,6 @@ cc_test_mozc(
         ":request_test_util",
         ":session_converter",
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -123,6 +122,7 @@ cc_test_mozc(
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -136,7 +136,6 @@ cc_test_mozc(
         ":session_converter",
         "//base",
         "//base:clock",
-        "//base:flags",
         "//base:port",
         "//base:system_util",
         "//base:util",
@@ -148,6 +147,7 @@ cc_test_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -251,7 +251,6 @@ cc_test_mozc(
         ":session_handler",
         "//base",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -269,6 +268,7 @@ cc_test_mozc(
         "//session/internal:ime_context",
         "//session/internal:keymap",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -341,7 +341,7 @@ cc_library_mozc(
         "//usage_stats",
         "@com_google_absl//absl/memory",
     ] + [
-        "//base:flags",
+        "@com_google_absl//absl/flags:flag",
         "//base:logging",
         "//base:port",
         "//base:singleton",
@@ -371,7 +371,6 @@ cc_library_mozc(
         "//base",
         "//base:config_file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
@@ -389,6 +388,7 @@ cc_library_mozc(
         "//testing",
         "//testing:gunit_prod",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -405,7 +405,6 @@ cc_test_mozc(
         ":session_handler_test_util",
         "//base",
         "//base:clock_mock",
-        "//base:flags",
         "//base:port",
         "//base:stopwatch",
         "//base:util",
@@ -421,6 +420,7 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -456,10 +456,10 @@ cc_test_mozc(
     deps = [
         ":session_server",
         "//base",
-        "//base:flags",
         "//base:scheduler",
         "//base:system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -503,7 +503,6 @@ cc_binary_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -514,6 +513,7 @@ cc_binary_mozc(
         "//engine:engine_interface",
         "//protocol:commands_proto",
         "//protocol:config_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -524,9 +524,9 @@ cc_binary_mozc(
     copts = ["$(STACK_FRAME_UNLIMITED)"],  # session_server_main.cc
     deps = [
         ":session_server",
-        "//base:flags",
         "//base:init_mozc",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -599,7 +599,6 @@ cc_test_mozc(
         ":session_usage_observer",
         "//base",
         "//base:clock_mock",
-        "//base:flags",
         "//base:logging",
         "//base:scheduler",
         "//base:scheduler_stub",
@@ -612,6 +611,7 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_proto",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -782,7 +782,6 @@ cc_binary_mozc(
     deps = [
         ":session_handler_tool",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:status",
         "//base:system_util",
@@ -791,6 +790,7 @@ cc_binary_mozc(
         "//data_manager/oss:oss_data_manager",
         "//engine",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

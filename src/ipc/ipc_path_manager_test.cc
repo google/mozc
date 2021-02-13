@@ -38,7 +38,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/system_util.h"
@@ -49,6 +48,7 @@
 #include "ipc/ipc.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -87,7 +87,7 @@ class BatchGetPathNameThread : public Thread {
 class IPCPathManagerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 };
 

@@ -139,7 +139,7 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
 UsageRewriter::UsageDictItemIterator
 UsageRewriter::LookupUnmatchedUsageHeuristically(
     const Segment::Candidate &candidate) const {
-  // We check Unknwon POS ("名詞,サ変接続") as well, since
+  // We check Unknown POS ("名詞,サ変接続") as well, since
   // target verbs/adjectives may be in web dictionary.
   if (!pos_matcher_.IsContentWordWithConjugation(candidate.lid) &&
       !pos_matcher_.IsUnknown(candidate.lid)) {

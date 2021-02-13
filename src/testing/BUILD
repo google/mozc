@@ -77,7 +77,7 @@ cc_library_mozc(
     deps = [
         ":gunit",
         "//base",
-        "//base:flags",
+        "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
         client = [
             "//base:init_mozc",
@@ -154,7 +154,7 @@ cc_library_mozc(
             "//base",
             "//base:logging",
             "//base:file_util",
-            "//base:flags",
+            "@com_google_absl//absl/flags:flag",
             "//base:util",
         ],
         default = ["//testing/base/public:gunit_for_library_testonly"],
@@ -173,11 +173,11 @@ cc_library_mozc(
         ":googletest",
         "//base",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:system_util",
         "//base:util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

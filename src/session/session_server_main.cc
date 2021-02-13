@@ -30,10 +30,10 @@
 // Mocked Session Server runner used just for testing.
 #include <cstdio>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "protocol/commands.pb.h"
 #include "session/session_server.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 
 static const int kMaxBufSize = 1024;

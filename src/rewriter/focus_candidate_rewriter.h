@@ -73,7 +73,7 @@ class FocusCandidateRewriter : public RewriterInterface {
                              absl::string_view ref_suffix) const;
 
   // Parses the value of a candidate into number and counter suffix.
-  // Simultaneously checks the script type of number.  Here, number candiate is
+  // Simultaneously checks the script type of number.  Here, number candidate is
   // defined to be the following pattern:
   //   * [数][助数詞][並立助詞]?  (e.g., 一階, 二回, ３階や, etc.)
   // Returns false if the value of candidate doesn't match the pattern.

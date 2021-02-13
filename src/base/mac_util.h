@@ -55,7 +55,7 @@ class MacUtil {
   // Returns server directory using OS-specific API.
   static string GetServerDirectory();
 
-  // Returns the "Resouces/" directory in the current application.
+  // Returns the "Resources/" directory in the current application.
   static string GetResourcesDirectory();
 
   // Returns the machine serial number.
@@ -83,7 +83,7 @@ class MacUtil {
   // Returns false if an error occurred.
   static bool GetFrontmostWindowNameAndOwner(string *name, string *owner);
 
-  // Returns true when Mozc's suggestion UI is expected to be surpressed on
+  // Returns true when Mozc's suggestion UI is expected to be suppressed on
   // the window specified by |name| and |owner|.
   static bool IsSuppressSuggestionWindow(const string &name,
                                          const string &owner);

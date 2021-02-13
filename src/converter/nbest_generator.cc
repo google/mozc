@@ -289,7 +289,7 @@ bool NBestGenerator::Next(const std::string &original_key,
   //
   // Example:
   // |left_node| => |node1| => |node2| => |node3| => |right_node|.
-  // |node1| .. |node2| consists of a candidate.
+  // |node1| .. |node3| consists of a candidate.
   //
   // cost = (left_node->cost - begin_node_->cost) +
   //        trans(left_node, node1) + node1->wcost +
@@ -313,7 +313,7 @@ bool NBestGenerator::Next(const std::string &original_key,
   // Insert Viterbi best result here to make sure that
   // the top result is Viterbi best result.
   if (!viterbi_result_checked_) {
-    // Use CandiadteFilter so that filter is initialized with the
+    // Use CandidateFilter so that filter is initialized with the
     // Viterbi-best path.
     switch (InsertTopResult(original_key, candidate, request_type)) {
       case CandidateFilter::GOOD_CANDIDATE:
@@ -495,7 +495,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyMid(
     return VALID;
   }
 
-  // is_boundary is true if there is a grammer-based boundary
+  // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
                             segmenter_->IsBoundary(*lnode, *rnode, false));
@@ -521,7 +521,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckOnlyEdge(
     return VALID;
   }
 
-  // is_boundary is true if there is a grammer-based boundary
+  // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
                             segmenter_->IsBoundary(*lnode, *rnode, true));
@@ -542,7 +542,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
     return VALID;
   }
 
-  // is_boundary is true if there is a grammer-based boundary
+  // is_boundary is true if there is a grammar-based boundary
   // between lnode and rnode
   const bool is_boundary = (lnode->node_type == Node::HIS_NODE ||
                             segmenter_->IsBoundary(*lnode, *rnode, false));

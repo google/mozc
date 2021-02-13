@@ -40,7 +40,6 @@
 #include "base/clock.h"
 #include "base/const.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
@@ -58,6 +57,7 @@
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
+#include "absl/flags/flag.h"
 
 #ifdef ENABLE_GTK_RENDERER
 #include "renderer/renderer_client.h"
@@ -69,7 +69,7 @@
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
 #ifdef ENABLE_GTK_RENDERER
-MOZC_FLAG(bool, use_mozc_renderer, true,
+ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
 #endif  // ENABLE_GTK_RENDERER
 
@@ -221,7 +221,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
 #ifdef ENABLE_GTK_RENDERER
 CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
     ::mozc::renderer::RendererClient *renderer_client) {
-  if (!mozc::GetFlag(FLAGS_use_mozc_renderer)) {
+  if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
     return nullptr;
   }
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {

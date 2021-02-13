@@ -148,14 +148,14 @@ bool DeserializeFromBase64WString(const std::wstring &src,
 //  - It turns out w/o any error that the cache service is not installed.
 //    In this case, |handle| owns a NULL handle.
 // Otherwise, returns false.
-bool GetCacheService(DWORD service_controler_rights, DWORD service_rights,
+bool GetCacheService(DWORD service_controller_rights, DWORD service_rights,
                      ScopedSCHandle *handle) {
   if (NULL == handle) {
     return false;
   }
 
   ScopedSCHandle sc_handle(
-      ::OpenSCManager(NULL, NULL, service_controler_rights));
+      ::OpenSCManager(NULL, NULL, service_controller_rights));
   if (NULL == sc_handle.get()) {
     LOG(ERROR) << "OpenSCManager failed: " << ::GetLastError();
     return false;
@@ -314,7 +314,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
 
   const bool now_running = IsServiceRunning(service_handle);
 
-  // If the service was runnning and is not running now, start it unless the
+  // If the service was running and is not running now, start it unless the
   // load type is not DISABLED.
   if (state.running() && !now_running &&
       (state.load_type() != cache_service::Win32ServiceState::DISABLED)) {
@@ -326,7 +326,7 @@ bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
       }
     }
     return StartServiceInternal(service_handle, arguments);
-    // If the service is now runnning and was not running, stop it.
+    // If the service is now running and was not running, stop it.
   } else if (!state.running() && now_running) {
     return StopService(service_handle);
     // Nothing to do.
@@ -407,7 +407,7 @@ bool CacheServiceManager::IsEnabled() {
   }
 
   // This byte array will contain both QUERY_SERVICE_CONFIG and some
-  // string buffers which are reffered by corresponding members of
+  // string buffers which are referred by corresponding members of
   // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
   // all tasks which use the contents of QUERY_SERVICE_CONFIG.
   std::unique_ptr<char[]> buffer;
@@ -539,7 +539,7 @@ bool CacheServiceManager::BackupStateAsString(std::wstring *result) {
     state.set_running(true);
   } else {
     // This byte array will contain both QUERY_SERVICE_CONFIG and some
-    // string buffers which are reffered by corresponding members of
+    // string buffers which are referred by corresponding members of
     // QUERY_SERVICE_CONFIG.  We have to keep the array until we complete
     // all tasks which use the contents of QUERY_SERVICE_CONFIG.
     std::unique_ptr<char[]> buffer;

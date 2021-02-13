@@ -38,13 +38,13 @@
 #include "base/clock_mock.h"
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace storage {
@@ -137,7 +137,7 @@ class LRUStorageTest : public ::testing::Test {
 
   static std::string GetTemporaryFilePath() {
     // This name should be unique to each test.
-    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir),
+    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                               "LRUStorageTest_test.db");
   }
 
@@ -245,7 +245,7 @@ TEST_F(LRUStorageTest, Merge) {
 
   {
     // Need to mock clock because old entries are removed on Open.  The maximum
-    // timestmap set below is 50, so set the current time to 100.
+    // timestamp set below is 50, so set the current time to 100.
     ScopedClockMock clock(100, 0);
 
     LRUStorage::CreateStorageFile(file1.c_str(), 4, 8, kSeed);
@@ -288,7 +288,7 @@ TEST_F(LRUStorageTest, Merge) {
   // same FP
   {
     // Need to mock clock because old entries are removed on Open.  The maximum
-    // timestmap set below is 50, so set the current time to 100.
+    // timestamp set below is 50, so set the current time to 100.
     ScopedClockMock clock(100, 0);
 
     LRUStorage::CreateStorageFile(file1.c_str(), 4, 8, kSeed);

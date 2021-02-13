@@ -134,7 +134,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
   // The ITfFnReconversion interface method.
   virtual HRESULT STDMETHODCALLTYPE QueryRange(ITfRange *range,
                                                ITfRange **new_range,
-                                               BOOL *convertable) {
+                                               BOOL *convertible) {
     if (range == nullptr) {
       return E_INVALIDARG;
     }
@@ -142,10 +142,10 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
       return E_INVALIDARG;
     }
     BOOL dummy_bool = FALSE;
-    if (convertable == nullptr) {
-      convertable = &dummy_bool;
+    if (convertible == nullptr) {
+      convertible = &dummy_bool;
     }
-    *convertable = FALSE;
+    *convertible = FALSE;
     *new_range = nullptr;
 
     CComPtr<ITfContext> context;
@@ -160,7 +160,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
 
     if (info.in_composition) {
       // on-going composition is found.
-      *convertable = FALSE;
+      *convertible = FALSE;
       *new_range = nullptr;
       return S_OK;
     }
@@ -168,7 +168,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (info.selected_text.find(static_cast<wchar_t>(TS_CHAR_EMBEDDED)) !=
         std::wstring::npos) {
       // embedded object is found.
-      *convertable = FALSE;
+      *convertible = FALSE;
       *new_range = nullptr;
       return S_OK;
     }
@@ -176,7 +176,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (FAILED(range->Clone(new_range))) {
       return E_FAIL;
     }
-    *convertable = TRUE;
+    *convertible = TRUE;
     return S_OK;
   }
 

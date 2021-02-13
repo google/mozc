@@ -35,10 +35,10 @@
 #include <memory>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 
@@ -61,7 +61,7 @@ std::string GetFileData(const std::string &filename) {
 // |input_stream| as a side effect.
 bool IsEof(std::istream *input_stream) {
   return (input_stream->peek() == std::istream::traits_type::eof() &&
-          // On some enviroment (e.g. Mac OS 10.8 w/ Xcode 4.5),
+          // On some environment (e.g. Mac OS 10.8 w/ Xcode 4.5),
           // peek() does not flip eofbit.  So calling get() is also
           // required.
           input_stream->get() == std::istream::traits_type::eof() &&
@@ -74,7 +74,7 @@ class ConfigFileStreamTest : public testing::Test {
  protected:
   void SetUp() override {
     default_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   void TearDown() override {

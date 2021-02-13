@@ -31,16 +31,16 @@
 
 #include <string>
 
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace storage {
 
 TEST(RegistryTest, TinyStorageTest) {
-  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
   {
     uint64 value = 20;

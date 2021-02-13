@@ -29,36 +29,39 @@
 
 #include "base/init_mozc.h"
 
-
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
 
 #include <string>
 
+
 #include "base/file_util.h"
-
-
-#include "base/flags.h"
-
 #include "base/logging.h"
+
 #ifndef MOZC_BUILDTOOL_BUILD
 #include "base/system_util.h"
 #endif  // MOZC_BUILDTOOL_BUILD
 
+
+#include "absl/flags/flag.h"
+
+#include "absl/flags/parse.h"
+
 // Even if log_dir is modified in the middle of the process, the
 // logging directory will not be changed because the logging stream is
 // initialized in the very early initialization stage.
-MOZC_FLAG(string, log_dir, "",
+ABSL_FLAG(std::string, log_dir, "",
           "If specified, logfiles are written into this directory "
           "instead of the default logging directory.");
 
 
-MOZC_FLAG(string, program_invocation_name, "",
+ABSL_FLAG(std::string, program_invocation_name, "",
           "Program name copied from argv[0].");
 
 namespace mozc {
 namespace {
+
 
 #ifdef OS_WIN
 LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
@@ -69,22 +72,33 @@ LONG CALLBACK ExitProcessExceptionFilter(EXCEPTION_POINTERS *ExceptionInfo) {
 }
 #endif  // OS_WIN
 
-string GetLogFilePathFromProgramName(const string &program_name) {
-  const string basename = FileUtil::Basename(program_name) + ".log";
-  if (mozc::GetFlag(FLAGS_log_dir).empty()) {
+std::string GetLogFilePathFromProgramName(const std::string &program_name) {
+  const std::string basename = FileUtil::Basename(program_name) + ".log";
+  if (absl::GetFlag(FLAGS_log_dir).empty()) {
 #ifdef MOZC_BUILDTOOL_BUILD
     return basename;
 #else   // MOZC_BUILDTOOL_BUILD
     return FileUtil::JoinPath(SystemUtil::GetLoggingDirectory(), basename);
 #endif  // MOZC_BUILDTOOL_BUILD
   }
-  return FileUtil::JoinPath(mozc::GetFlag(FLAGS_log_dir), basename);
+  return FileUtil::JoinPath(absl::GetFlag(FLAGS_log_dir), basename);
 }
+
+void ParseCommandLineFlags(int argc, char **argv) {
+  absl::flags_internal::ParseCommandLineImpl(
+      argc, argv,
+      absl::flags_internal::ArgvListAction::kRemoveParsedArgs,
+      // Suppress help messages invoked by --help and others.
+      // Use UsageFlagsAction::kHandleUsage to enable it.
+      absl::flags_internal::UsageFlagsAction::kIgnoreUsage,
+      absl::flags_internal::OnUndefinedFlag::kIgnoreUndefined);
+}
+
 
 }  // namespace
 
 void InitMozc(const char *arg0, int *argc, char ***argv) {
-  mozc::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
+  absl::SetFlag(&FLAGS_program_invocation_name, *argv[0]);
 #ifdef OS_WIN
   // InitMozc() is supposed to be used for code generator or
   // other programs which are not included in the production code.
@@ -93,9 +107,9 @@ void InitMozc(const char *arg0, int *argc, char ***argv) {
   // our continuous build stable.
   ::SetUnhandledExceptionFilter(ExitProcessExceptionFilter);
 #endif  // OS_WIN
-  mozc_flags::ParseCommandLineFlags(argc, argv);
+  ParseCommandLineFlags(*argc, *argv);
 
-  const string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
+  const std::string program_name = *argc > 0 ? (*argv)[0] : "UNKNOWN";
   Logging::InitLogStream(GetLogFilePathFromProgramName(program_name));
 
 }

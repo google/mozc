@@ -35,7 +35,6 @@
 #include <sstream>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mozc_hash_set.h"
 #include "base/util.h"
@@ -51,9 +50,9 @@
 #include "storage/louds/louds_trie_builder.h"
 #include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, preserve_intermediate_dictionary, false,
+ABSL_FLAG(bool, preserve_intermediate_dictionary, false,
           "preserve inetemediate dictionary file.");
-MOZC_FLAG(int32, min_key_length_to_use_small_cost_encoding, 6,
+ABSL_FLAG(int32, min_key_length_to_use_small_cost_encoding, 6,
           "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
@@ -163,7 +162,7 @@ void SystemDictionaryBuilder::WriteToStream(
       file_codec_->GetSectionName(codec_->GetSectionNameForPos()));
   sections.push_back(frequent_pos_section);
 
-  if (mozc::GetFlag(FLAGS_preserve_intermediate_dictionary) &&
+  if (absl::GetFlag(FLAGS_preserve_intermediate_dictionary) &&
       !intermediate_output_file_base_path.empty()) {
     // Write out intermediate results to files.
     const std::string &basepath = intermediate_output_file_base_path;
@@ -366,7 +365,7 @@ void SystemDictionaryBuilder::SetCostType(KeyInfoList *key_info_list) const {
       TokenInfo *token_info = &key_info->tokens[i];
       const int key_len = Util::CharsLen(token_info->token->key);
       if (key_len >=
-          mozc::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding)) {
+          absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding)) {
         token_info->cost_type = TokenInfo::CAN_USE_SMALL_ENCODING;
       }
     }

@@ -29,29 +29,29 @@
 
 #include <string>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/lru_storage.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, create_db, false, "initialize database");
-MOZC_FLAG(string, file, "test.db", "");
-MOZC_FLAG(int32, size, 10, "size");
+ABSL_FLAG(bool, create_db, false, "initialize database");
+ABSL_FLAG(std::string, file, "test.db", "");
+ABSL_FLAG(int32, size, 10, "size");
 
 using mozc::storage::LRUStorage;
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (mozc::GetFlag(FLAGS_create_db)) {
+  if (absl::GetFlag(FLAGS_create_db)) {
     CHECK(LRUStorage::CreateStorageFile(FLAGS_file.c_str(),
                                         static_cast<uint32>(4),
-                                        mozc::GetFlag(FLAGS_size), 0xff02));
+                                        absl::GetFlag(FLAGS_size), 0xff02));
   }
 
   LRUStorage s;
-  CHECK(s.Open(mozc::GetFlag(FLAGS_file).c_str()));
+  CHECK(s.Open(absl::GetFlag(FLAGS_file).c_str()));
 
   LOG(INFO) << "size=" << s.size();
   LOG(INFO) << "used_size=" << s.used_size();

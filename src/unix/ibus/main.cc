@@ -27,20 +27,21 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "unix/ibus/main.h"
+
 #include <cstddef>
 #include <cstdio>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
 #include "unix/ibus/ibus_config.h"
-#include "unix/ibus/main.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, ibus, false, "The engine is started by ibus-daemon");
-MOZC_FLAG(bool, xml, false, "Output xml data for the engine.");
+ABSL_FLAG(bool, ibus, false, "The engine is started by ibus-daemon");
+ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
 
 namespace {
 
@@ -119,13 +120,13 @@ void OutputXml() {
 
 int main(gint argc, gchar **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (mozc::GetFlag(FLAGS_xml)) {
+  if (absl::GetFlag(FLAGS_xml)) {
     OutputXml();
     return 0;
   }
 
   ibus_init();
-  InitIBusComponent(mozc::GetFlag(FLAGS_ibus));
+  InitIBusComponent(absl::GetFlag(FLAGS_ibus));
 #ifndef MOZC_NO_LOGGING
   EnableVerboseLog();
 #endif  // MOZC_NO_LOGGING

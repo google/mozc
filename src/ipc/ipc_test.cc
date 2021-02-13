@@ -32,7 +32,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -40,6 +39,7 @@
 #include "ipc/ipc_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace {
 
@@ -117,7 +117,7 @@ class EchoServer : public mozc::IPCServer {
 }  // namespace
 
 TEST(IPCTest, IPCTest) {
-  mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+  mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 #ifdef __APPLE__
   mozc::TestMachPortManager manager;
 #endif

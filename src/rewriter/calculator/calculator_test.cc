@@ -85,7 +85,7 @@ TEST(CalculatorTest, BasicTest) {
   // These are not expressions
   // apparently
   VerifyRejection(calculator, "test");
-  // Expressoin must be ended with equal '='.
+  // Expression must be ended with equal '='.
   VerifyRejection(calculator, "5+4");
   // Expression must include at least one operator other than parentheses.
   VerifyRejection(calculator, "111=");

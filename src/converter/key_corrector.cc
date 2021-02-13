@@ -452,7 +452,7 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
         rev_alignment_.push_back(len + i);
       }
     } else {
-      // NOT a one to one maping, we take fist/last alignment only
+      // NOT a one to one mapping, we take fist/last alignment only
       alignment_.push_back(org_len);
       for (size_t i = 1; i < mblen; ++i) {
         alignment_.push_back(kInvalidPos);

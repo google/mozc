@@ -38,7 +38,6 @@
 
 #include "base/clock.h"
 #include "base/config_file_stream.h"
-#include "base/flags.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mozc_hash_set.h"
@@ -59,6 +58,7 @@
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -241,7 +241,7 @@ bool UserHistoryStorage::Load() {
       << num_deleted << " old entries were not loaded "
       << proto_.entries_size();
 
-  VLOG(1) << "Loaded user histroy, size=" << proto_.entries_size();
+  VLOG(1) << "Loaded user history, size=" << proto_.entries_size();
   return true;
 }
 
@@ -473,7 +473,7 @@ bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
                  history.GetProto().entries(i));
   }
 
-  VLOG(1) << "Loaded user histroy, size=" << history.GetProto().entries_size();
+  VLOG(1) << "Loaded user history, size=" << history.GetProto().entries_size();
 
   return true;
 }

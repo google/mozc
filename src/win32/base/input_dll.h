@@ -32,7 +32,7 @@
 
 #include <windows.h>
 
-// Structures and flags bellow have not been included header files in Windows
+// Structures and flags below have not been included header files in Windows
 // SDK.  You can see the original source of this information at the following
 // page.
 // - http://msdn.microsoft.com/en-us/library/bb847907.aspx
@@ -183,7 +183,7 @@ extern "C" __declspec(dllimport) BOOL WINAPI
 //     FALSE: An unspecified error occurred.
 //   Observational Facts:
 //     This API seems to be designed to modify per user settings, like HKCU,
-//     so that the current user can modify it with his/her privileges.  In
+//     so that the current user can modify it with their privileges.  In
 //     oother words, no administrative privilege is required.
 //     SetDefaultLayoutOrTipUserReg might be a phantom, which only exists in
 //     MSDN Library.

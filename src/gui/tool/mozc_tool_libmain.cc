@@ -44,13 +44,14 @@
 
 #include "base/crash_report_handler.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/run_level.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
 #include "gui/base/debug_util.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
 #ifdef __APPLE__
 #include "base/const.h"
@@ -60,8 +61,8 @@
 #include "gui/base/win_util.h"
 #endif  // OS_WIN
 
-MOZC_FLAG(string, mode, "about_dialog", "mozc_tool mode");
-MOZC_DECLARE_FLAG(string, error_type);
+ABSL_FLAG(std::string, mode, "about_dialog", "mozc_tool mode");
+ABSL_DECLARE_FLAG(string, error_type);
 
 // Run* are defiend in each qt module
 int RunAboutDialog(int argc, char *argv[]);
@@ -87,12 +88,12 @@ namespace {
 void SetFlagsFromEnv() {
   const char *mode = std::getenv("FLAGS_mode");
   if (mode != nullptr) {
-    mozc::SetFlag(&FLAGS_mode, mode);
+    absl::SetFlag(&FLAGS_mode, mode);
   }
 
   const char *error_type = std::getenv("FLAGS_error_type");
   if (error_type != nullptr) {
-    mozc::SetFlag(&FLAGS_error_type, error_type);
+    absl::SetFlag(&FLAGS_error_type, error_type);
   }
 }
 
@@ -115,24 +116,24 @@ int RunMozcTool(int argc, char *argv[]) {
   // name.
   string binary_name = mozc::FileUtil::Basename(argv[0]);
   if (binary_name == "AboutDialog") {
-    mozc::SetFlag(&FLAGS_mode, "about_dialog");
+    absl::SetFlag(&FLAGS_mode, "about_dialog");
   } else if (binary_name == "ConfigDialog") {
-    mozc::SetFlag(&FLAGS_mode, "config_dialog");
+    absl::SetFlag(&FLAGS_mode, "config_dialog");
   } else if (binary_name == "DictionaryTool") {
-    mozc::SetFlag(&FLAGS_mode, "dictionary_tool");
+    absl::SetFlag(&FLAGS_mode, "dictionary_tool");
   } else if (binary_name == "ErrorMessageDialog") {
-    mozc::SetFlag(&FLAGS_mode, "error_message_dialog");
+    absl::SetFlag(&FLAGS_mode, "error_message_dialog");
   } else if (binary_name == "WordRegisterDialog") {
-    mozc::SetFlag(&FLAGS_mode, "word_register_dialog");
+    absl::SetFlag(&FLAGS_mode, "word_register_dialog");
   } else if (binary_name == kProductPrefix "Prelauncher") {
     // The binary name of prelauncher is user visible in
     // "System Preferences" -> "Accounts" -> "Login items".
     // So we set kProductPrefix to the binary name.
-    mozc::SetFlag(&FLAGS_mode, "prelauncher");
+    absl::SetFlag(&FLAGS_mode, "prelauncher");
   }
 #endif
 
-  if (mozc::GetFlag(FLAGS_mode) != "administration_dialog" &&
+  if (absl::GetFlag(FLAGS_mode) != "administration_dialog" &&
       !mozc::RunLevel::IsValidClientRunLevel()) {
     return -1;
   }
@@ -145,34 +146,34 @@ int RunMozcTool(int argc, char *argv[]) {
   mozc::gui::WinUtil::KeepJumpListUpToDate();
 #endif  // OS_WIN
 
-  if (mozc::GetFlag(FLAGS_mode) == "config_dialog") {
+  if (absl::GetFlag(FLAGS_mode) == "config_dialog") {
     return RunConfigDialog(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "dictionary_tool") {
+  } else if (absl::GetFlag(FLAGS_mode) == "dictionary_tool") {
     return RunDictionaryTool(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "word_register_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "word_register_dialog") {
     return RunWordRegisterDialog(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "error_message_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "error_message_dialog") {
     return RunErrorMessageDialog(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "about_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "about_dialog") {
     return RunAboutDialog(argc, argv);
 #ifdef OS_WIN
-  } else if (mozc::GetFlag(FLAGS_mode) == "set_default_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "set_default_dialog") {
     // set_default_dialog is used on Windows only.
     return RunSetDefaultDialog(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "post_install_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "post_install_dialog") {
     // post_install_dialog is used on Windows only.
     return RunPostInstallDialog(argc, argv);
-  } else if (mozc::GetFlag(FLAGS_mode) == "administration_dialog") {
+  } else if (absl::GetFlag(FLAGS_mode) == "administration_dialog") {
     // administration_dialog is used on Windows only.
     return RunAdministrationDialog(argc, argv);
 #endif  // OS_WIN
 #ifdef __APPLE__
-  } else if (mozc::GetFlag(FLAGS_mode) == "prelauncher") {
+  } else if (absl::GetFlag(FLAGS_mode) == "prelauncher") {
     // Prelauncher is used on Mac only.
     return RunPrelaunchProcesses(argc, argv);
 #endif  // __APPLE__
   } else {
-    LOG(ERROR) << "Unknown mode: " << mozc::GetFlag(FLAGS_mode);
+    LOG(ERROR) << "Unknown mode: " << absl::GetFlag(FLAGS_mode);
     return -1;
   }
 

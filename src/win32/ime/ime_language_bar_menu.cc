@@ -139,9 +139,9 @@ HICON LoadIconFromResource(HINSTANCE instance, UINT icon_id_for_non_theme,
 
 // Retrieves the bitmap handle loaded by using an icon ID.
 // Returns true if the specified icons is available as bitmaps.
-// Caller can set nullptr for |color| and/or |mask| to represent not to recieve
+// Caller can set nullptr for |color| and/or |mask| to represent not to receive
 // the specified handle even if it exists.  Caller should releases any returned
-// bitmap handle and this function releases any handle which is not recieved
+// bitmap handle and this function releases any handle which is not received
 // by the caller.
 bool LoadIconAsBitmap(HINSTANCE instance, UINT icon_id_for_non_theme,
                       UINT icon_id_for_theme, HBITMAP* color, HBITMAP* mask) {
@@ -260,7 +260,7 @@ STDAPI ImeLangBarMenu::GetInfo(TF_LANGBARITEMINFO* item_info) {
 }
 
 // Implements the ITfLangBarItem::GetStatus() function.
-// This fucntion is called by Windows to retrieve the current status of this
+// This function is called by Windows to retrieve the current status of this
 // button menu.
 STDAPI ImeLangBarMenu::GetStatus(DWORD* status) {
   *status = status_;
@@ -271,7 +271,7 @@ STDAPI ImeLangBarMenu::GetStatus(DWORD* status) {
 // This function is called by Windows to notify the display status of this
 // button menu has been updated.
 STDAPI ImeLangBarMenu::Show(BOOL show) {
-  // Just return becasue this button is always shown, i.e. we do not have to
+  // Just return because this button is always shown, i.e. we do not have to
   // manage the display state of this button menu.
   return E_NOTIMPL;
 }
@@ -295,14 +295,14 @@ STDAPI ImeLangBarMenu::OnClick(TfLBIClick click, POINT point,
 }
 
 // Implements the ITfLangBarItemButton::GetText() function.
-// This function is called by Windows to retrive the text label of this
+// This function is called by Windows to retrieve the text label of this
 // button menu.
 STDAPI ImeLangBarMenu::GetText(BSTR* text) {
   *text = ::SysAllocString(&item_info_.szDescription[0]);
   return (*text ? S_OK : E_OUTOFMEMORY);
 }
 
-// Implements the ITfSource::AdviseSink() funtion.
+// Implements the ITfSource::AdviseSink() function.
 STDAPI ImeLangBarMenu::AdviseSink(REFIID interface_id, IUnknown* unknown,
                                   DWORD* cookie) {
   // Return if the caller tries to start advising any events except the

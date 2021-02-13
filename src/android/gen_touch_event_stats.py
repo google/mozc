@@ -112,7 +112,7 @@ def WriteKeyboardData(keyboard_value, stream):
       return 0
     # Cumulative average values are multiplied by 10^7
     # when usage stats are sent to the log server.
-    # Here we get original value by dividing the avarage value.
+    # Here we get original value by dividing the average value.
     return cumulative_average / 1e7 / count
 
   # c.f. usage_stats/usage_stats_uploader.cc

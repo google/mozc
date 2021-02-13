@@ -34,7 +34,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/system_util.h"
@@ -43,6 +42,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -66,7 +66,7 @@ class UserDictionaryStorageTest : public ::testing::Test {
  protected:
   void SetUp() override {
     backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     FileUtil::Unlink(GetUserDictionaryFile());
   }
 
@@ -76,7 +76,7 @@ class UserDictionaryStorageTest : public ::testing::Test {
   }
 
   static std::string GetUserDictionaryFile() {
-    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
+    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
  private:
@@ -217,7 +217,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   }
 
   const std::string export_file =
-      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "export.txt");
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "export.txt");
 
   EXPECT_FALSE(storage.ExportDictionary(id + 1, export_file));
   EXPECT_TRUE(storage.ExportDictionary(id, export_file));
@@ -432,7 +432,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 TEST_F(UserDictionaryStorageTest, Export) {
   const int kDummyDictionaryId = 10;
   const std::string kPath =
-      FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "exported_file");
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "exported_file");
 
   {
     UserDictionaryStorage storage(GetUserDictionaryFile());
