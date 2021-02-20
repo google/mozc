@@ -35,6 +35,7 @@
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
 #include "testing/base/public/gunit.h"

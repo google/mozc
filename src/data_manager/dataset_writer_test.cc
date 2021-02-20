@@ -44,7 +44,7 @@
 namespace mozc {
 namespace {
 
-void SetEntry(const string &name, uint64 offset, uint64 size,
+void SetEntry(const std::string &name, uint64 offset, uint64 size,
               DataSetMetadata::Entry *entry) {
   entry->set_name(name);
   entry->set_offset(offset);
@@ -53,7 +53,7 @@ void SetEntry(const string &name, uint64 offset, uint64 size,
 
 TEST(DatasetWriterTest, Write) {
   // Create a dummy file to be packed.
-  const string &in =
+  const std::string &in =
       FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "in"});
   {
     OutputFileStream f(in.c_str(), std::ios_base::out | std::ios_base::binary);
@@ -62,14 +62,14 @@ TEST(DatasetWriterTest, Write) {
   }
 
   // Generate a packed file into |actual|.
-  string actual;
+  std::string actual;
   {
     DataSetWriter w("magic");
 
-    w.Add("data8", 8, string("data8 \x00\x01", 8));
+    w.Add("data8", 8, std::string("data8 \x00\x01", 8));
     w.Add("data16", 16, "data16 \xAB\xCD\xEF");
-    w.Add("data32", 32, string("data32 \x00\xAB\n\r\n", 12));
-    w.Add("data64", 64, string("data64 \t\t\x00\x00", 11));
+    w.Add("data32", 32, std::string("data32 \x00\xAB\n\r\n", 12));
+    w.Add("data64", 64, std::string("data64 \t\t\x00\x00", 11));
 
     w.AddFile("file8", 8, in);
     w.AddFile("file16", 16, in);
@@ -105,10 +105,11 @@ TEST(DatasetWriterTest, Write) {
   SetEntry("file16", 56, 5, metadata.add_entries());
   SetEntry("file32", 64, 5, metadata.add_entries());
   SetEntry("file64", 72, 5, metadata.add_entries());
-  const string &metadata_chunk = metadata.SerializeAsString();
-  const string &metadata_size = Util::SerializeUint64(metadata_chunk.size());
+  const std::string &metadata_chunk = metadata.SerializeAsString();
+  const std::string &metadata_size =
+      Util::SerializeUint64(metadata_chunk.size());
   // Append data_chunk except for the last '\0'.
-  string expected(data_chunk, sizeof(data_chunk) - 1);
+  std::string expected(data_chunk, sizeof(data_chunk) - 1);
   expected.append(metadata_chunk.data(), metadata_chunk.size());
   expected.append(metadata_size.data(), metadata_size.size());
   expected.append(internal::UnverifiedSHA1::MakeDigest(expected));

@@ -122,7 +122,7 @@ class LocalAppDataDirectoryCache {
   }
   HRESULT result() const { return result_; }
   const bool succeeded() const { return SUCCEEDED(result_); }
-  const string &path() const { return path_; }
+  const std::string &path() const { return path_; }
 
  private:
   // b/5707813 implies that TryGetLocalAppData causes an exception and makes
@@ -135,7 +135,7 @@ class LocalAppDataDirectoryCache {
   // Since Mozc uses /EHs option in common.gypi, we must admit potential
   // memory leakes when any non-C++ exception occues in TryGetLocalAppData.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
-  static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(string *dir) {
+  static HRESULT __declspec(nothrow) SafeTryGetLocalAppData(std::string *dir) {
     __try {
       return TryGetLocalAppData(dir);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -143,7 +143,7 @@ class LocalAppDataDirectoryCache {
     }
   }
 
-  static HRESULT TryGetLocalAppData(string *dir) {
+  static HRESULT TryGetLocalAppData(std::string *dir) {
     if (dir == nullptr) {
       return E_FAIL;
     }
@@ -160,7 +160,7 @@ class LocalAppDataDirectoryCache {
     return TryGetLocalAppDataLow(dir);
   }
 
-  static HRESULT TryGetLocalAppDataForAppContainer(string *dir) {
+  static HRESULT TryGetLocalAppDataForAppContainer(std::string *dir) {
     // User profiles for processes running under AppContainer seem to be as
     // follows, while the scheme is not officially documented.
     //   "%LOCALAPPDATA%\Packages\<package sid>\..."
@@ -187,7 +187,7 @@ class LocalAppDataDirectoryCache {
     return S_OK;
   }
 
-  static HRESULT TryGetLocalAppDataLow(string *dir) {
+  static HRESULT TryGetLocalAppDataLow(std::string *dir) {
     if (dir == nullptr) {
       return E_FAIL;
     }
@@ -210,7 +210,7 @@ class LocalAppDataDirectoryCache {
     std::wstring wpath = task_mem_buffer;
     ::CoTaskMemFree(task_mem_buffer);
 
-    string path;
+    std::string path;
     if (Util::WideToUTF8(wpath, &path) == 0) {
       return E_UNEXPECTED;
     }
@@ -220,7 +220,7 @@ class LocalAppDataDirectoryCache {
   }
 
   HRESULT result_;
-  string path_;
+  std::string path_;
 };
 #endif  // OS_WIN
 
@@ -320,7 +320,7 @@ std::string SystemUtil::GetUserProfileDirectory() {
 
 std::string SystemUtil::GetLoggingDirectory() {
 #ifdef __APPLE__
-  string dir = MacUtil::GetLoggingDirectory();
+  std::string dir = MacUtil::GetLoggingDirectory();
   FileUtil::CreateDirectory(dir);
   return dir;
 #else   // __APPLE__
@@ -342,7 +342,7 @@ class ProgramFilesX86Cache {
   }
   const bool succeeded() const { return SUCCEEDED(result_); }
   const HRESULT result() const { return result_; }
-  const string &path() const { return path_; }
+  const std::string &path() const { return path_; }
 
  private:
   // b/5707813 implies that the Shell API causes an exception in some cases.
@@ -354,7 +354,8 @@ class ProgramFilesX86Cache {
   // Since Mozc uses /EHs option in common.gypi, we must admit potential
   // memory leakes when any non-C++ exception occues in TryProgramFilesPath.
   // See http://msdn.microsoft.com/en-us/library/1deeycx5.aspx
-  static HRESULT __declspec(nothrow) SafeTryProgramFilesPath(string *path) {
+  static HRESULT __declspec(nothrow)
+      SafeTryProgramFilesPath(std::string *path) {
     __try {
       return TryProgramFilesPath(path);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -362,7 +363,7 @@ class ProgramFilesX86Cache {
     }
   }
 
-  static HRESULT TryProgramFilesPath(string *path) {
+  static HRESULT TryProgramFilesPath(std::string *path) {
     if (path == nullptr) {
       return E_FAIL;
     }
@@ -391,7 +392,7 @@ class ProgramFilesX86Cache {
       return result;
     }
 
-    string program_files;
+    std::string program_files;
     if (Util::WideToUTF8(program_files_path_buffer, &program_files) == 0) {
       return E_FAIL;
     }
@@ -399,7 +400,7 @@ class ProgramFilesX86Cache {
     return S_OK;
   }
   HRESULT result_;
-  string path_;
+  std::string path_;
 };
 }  // namespace
 #endif  // OS_WIN
@@ -487,7 +488,7 @@ std::string SystemUtil::GetUserNameAsString() {
   //   or will be impersonated.
   const BOOL result = ::GetUserName(wusername, &name_size);
   DCHECK_NE(FALSE, result);
-  string username;
+  std::string username;
   Util::WideToUTF8(&wusername[0], &username);
   return username;
 #endif  // OS_WIN
@@ -516,10 +517,10 @@ namespace {
 class UserSidImpl {
  public:
   UserSidImpl();
-  const string &get() { return sid_; }
+  const std::string &get() { return sid_; }
 
  private:
-  string sid_;
+  std::string sid_;
 };
 
 UserSidImpl::UserSidImpl() {
@@ -571,7 +572,7 @@ std::string SystemUtil::GetUserSidAsString() {
 #ifdef OS_WIN
 namespace {
 
-string GetObjectNameAsString(HANDLE handle) {
+std::string GetObjectNameAsString(HANDLE handle) {
   if (handle == nullptr) {
     LOG(ERROR) << "Unknown handle";
     return "";
@@ -628,18 +629,18 @@ bool GetCurrentSessionId(uint32 *session_id) {
 // desktop is most appropriate and important desktop for our use case.
 // See
 // http://blogs.adobe.com/asset/2012/10/new-security-capabilities-in-adobe-reader-and-acrobat-xi-now-available.html
-string GetInputDesktopName() {
+std::string GetInputDesktopName() {
   const HDESK desktop_handle =
       ::OpenInputDesktop(0, FALSE, DESKTOP_READOBJECTS);
   if (desktop_handle == nullptr) {
     return "";
   }
-  const string desktop_name = GetObjectNameAsString(desktop_handle);
+  const std::string desktop_name = GetObjectNameAsString(desktop_handle);
   ::CloseDesktop(desktop_handle);
   return desktop_name;
 }
 
-string GetProcessWindowStationName() {
+std::string GetProcessWindowStationName() {
   // We must not close the returned value of GetProcessWindowStation().
   // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683225.aspx
   const HWINSTA window_station = ::GetProcessWindowStation();
@@ -650,7 +651,7 @@ string GetProcessWindowStationName() {
   return GetObjectNameAsString(window_station);
 }
 
-string GetSessionIdString() {
+std::string GetSessionIdString() {
   uint32 session_id = 0;
   if (!GetCurrentSessionId(&session_id)) {
     return "";
@@ -675,19 +676,19 @@ std::string SystemUtil::GetDesktopNameAsString() {
 #endif  // __APPLE__
 
 #if defined(OS_WIN)
-  const string &session_id = GetSessionIdString();
+  const std::string &session_id = GetSessionIdString();
   if (session_id.empty()) {
     DLOG(ERROR) << "Failed to retrieve session id";
     return "";
   }
 
-  const string &window_station_name = GetProcessWindowStationName();
+  const std::string &window_station_name = GetProcessWindowStationName();
   if (window_station_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve window station name";
     return "";
   }
 
-  const string &desktop_name = GetInputDesktopName();
+  const std::string &desktop_name = GetInputDesktopName();
   if (desktop_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve desktop name";
     return "";
@@ -818,14 +819,14 @@ const wchar_t *SystemUtil::GetSystemDir() {
   return Singleton<SystemDirectoryCache>::get()->system_dir();
 }
 
-string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
-  const string &session_id = GetSessionIdString();
+std::string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
+  const std::string &session_id = GetSessionIdString();
   if (session_id.empty()) {
     DLOG(ERROR) << "Failed to retrieve session id";
     return "";
   }
 
-  const string &desktop_name = GetInputDesktopName();
+  const std::string &desktop_name = GetInputDesktopName();
 
   if (desktop_name.empty()) {
     DLOG(ERROR) << "Failed to retrieve desktop name";
@@ -841,7 +842,7 @@ string SystemUtil::GetMSCTFAsmCacheReadyEventName() {
 // version only when initializing.
 std::string SystemUtil::GetOSVersionString() {
 #ifdef OS_WIN
-  string ret = "Windows";
+  std::string ret = "Windows";
   OSVERSIONINFOEX osvi = {0};
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   if (GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&osvi))) {
@@ -856,14 +857,14 @@ std::string SystemUtil::GetOSVersionString() {
   }
   return ret;
 #elif defined(__APPLE__)
-  const string ret = "MacOSX " + MacUtil::GetOSVersionString();
+  const std::string ret = "MacOSX " + MacUtil::GetOSVersionString();
   // TODO(toshiyuki): get more specific info
   return ret;
 #elif defined(OS_LINUX)
   const std::string ret = "Linux";
   return ret;
 #else   // !OS_WIN && !__APPLE__ && !OS_LINUX
-  const string ret = "Unknown";
+  const std::string ret = "Unknown";
   return ret;
 #endif  // OS_WIN, __APPLE__, OS_LINUX
 }

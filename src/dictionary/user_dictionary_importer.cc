@@ -412,11 +412,11 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(
   }
 
   if (*line.begin() == '"' && *line.rbegin() == '"' &&
-      line.find('\t') == std::string::npos) {
+      !absl::StrContains(line, "\t")) {
     return KOTOERI;
   }
 
-  if (*line.begin() == '#' || line.find('\t') != std::string::npos) {
+  if (*line.begin() == '#' || absl::StrContains(line, "\t")) {
     return MOZC;
   }
 

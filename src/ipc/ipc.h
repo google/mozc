@@ -91,11 +91,11 @@ class MachPortManagerInterface {
   // If the mach port can be obtained successfully, set the specified
   // "port" and returns true.  Otherwise port doesn't change and
   // returns false.
-  virtual bool GetMachPort(const string &name, mach_port_t *port) = 0;
+  virtual bool GetMachPort(const std::string &name, mach_port_t *port) = 0;
 
   // Returns true if the connecting server is running, checked via
   // OS-depended way.  This method can be defined differently for testing.
-  virtual bool IsServerRunning(const string &name) const = 0;
+  virtual bool IsServerRunning(const std::string &name) const = 0;
 };
 #endif  // __APPLE__
 
@@ -168,7 +168,7 @@ class IPCClient : public IPCClientInterface {
   ScopedHandle pipe_handle_;
   ScopedHandle pipe_event_;
 #elif defined(__APPLE__)
-  string name_;
+  std::string name_;
   MachPortManagerInterface *mach_port_manager_;
 #else
   int socket_;
@@ -273,7 +273,7 @@ class IPCServer {
   ScopedHandle pipe_event_;
   ScopedHandle quit_event_;
 #elif defined(__APPLE__)
-  string name_;
+  std::string name_;
   MachPortManagerInterface *mach_port_manager_;
 #else
   int socket_;

@@ -32,9 +32,11 @@
 
 #include <map>
 #include <string>
+
 #include "base/mutex.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace client {

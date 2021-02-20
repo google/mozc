@@ -181,7 +181,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
   ConfigFileStream::AtomicUpdate(filename_, output_config.SerializeAsString());
 
 #ifdef DEBUG
-  string debug_content(
+  std::string debug_content(
       "# This is a text-based config file for debugging.\n"
       "# Nothing happens when you edit this file manually.\n");
   debug_content += output_config.DebugString();
@@ -197,7 +197,7 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
   imposed_config_.CopyFrom(config);
 
 #ifdef DEBUG
-  string debug_content(
+  std::string debug_content(
       "# This is a text-based config file for debugging.\n"
       "# Nothing happens when you edit this file manually.\n");
   debug_content += config.DebugString();

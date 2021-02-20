@@ -35,6 +35,7 @@
 
 // Import the generated version_def.h.
 #include "base/version_def.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 
@@ -72,8 +73,7 @@ bool Version::CompareVersion(const std::string &lhs, const std::string &rhs) {
   if (lhs == rhs) {
     return false;
   }
-  if (lhs.find("Unknown") != std::string::npos ||
-      rhs.find("Unknown") != std::string::npos) {
+  if (absl::StrContains(lhs, "Unknown") || absl::StrContains(rhs, "Unknown")) {
     LOG(WARNING) << "Unknown is given as version";
     return false;
   }

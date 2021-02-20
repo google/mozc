@@ -49,6 +49,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -77,8 +78,7 @@ void SetSegment(const std::string &key, const std::string &value,
 const char kCalculationDescription[] = "計算結果";
 
 bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
-  return candidate.description.find(kCalculationDescription) !=
-         std::string::npos;
+  return absl::StrContains(candidate.description, kCalculationDescription);
 }
 
 // If the segment has a candidate which was inserted by CalculatorRewriter,

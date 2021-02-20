@@ -45,6 +45,7 @@ cc_library_mozc(
     deps = [
         "//base:port",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
     ],
 )
 
@@ -101,6 +102,7 @@ cc_test_mozc(
         "//base:version",
         "//ipc:ipc_mock",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
@@ -118,6 +120,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:mutex",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
     ],
 )
 

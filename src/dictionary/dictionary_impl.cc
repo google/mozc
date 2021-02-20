@@ -38,7 +38,7 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

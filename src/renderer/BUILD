@@ -88,6 +88,7 @@ cc_test_mozc(
         "//base:util",
         "//base:version",
         "//ipc",
+        "//protocol:commands_proto",
         "//protocol:renderer_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",

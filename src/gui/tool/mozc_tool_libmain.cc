@@ -62,7 +62,7 @@
 #endif  // OS_WIN
 
 ABSL_FLAG(std::string, mode, "about_dialog", "mozc_tool mode");
-ABSL_DECLARE_FLAG(string, error_type);
+ABSL_DECLARE_FLAG(std::string, error_type);
 
 // Run* are defiend in each qt module
 int RunAboutDialog(int argc, char *argv[]);

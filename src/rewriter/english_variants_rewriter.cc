@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 
@@ -54,7 +55,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
   }
 
   // multi-word
-  if (input.find(' ') != std::string::npos) {
+  if (absl::StrContains(input, " ")) {
     return false;
   }
 

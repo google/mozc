@@ -63,9 +63,11 @@ SHOW_LOG_BY_VALUE       ございました
 #include "data_manager/google/google_data_manager.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
@@ -79,7 +81,7 @@ void Show(const commands::Output &output) {
   for (const auto &segment : output.preedit().segment()) {
     std::cout << segment.value() << " ";
   }
-  std::cout << std::endl;
+  std::cout << "(" << output.preedit().cursor() << ")" << std::endl;
   for (const auto &candidate : output.candidates().candidate()) {
     std::cout << candidate.id() << ": " << candidate.value() << std::endl;
   }
@@ -105,8 +107,11 @@ void ShowLog(const commands::Output &output, const int cand_id) {
 }
 
 void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
-  std::vector<std::string> columns = absl::StrSplit(line, '\t');
-  const std::string &command = columns[0];
+  std::vector<std::string> args = handler.Parse(line);
+  if (args.empty()) {
+    return;
+  }
+  const std::string &command = args[0];
 
   if (command == "SHOW_OUTPUT") {
     std::cout << handler.LastOutput().Utf8DebugString() << std::endl;
@@ -118,7 +123,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   if (command == "SHOW_LOG") {
     uint32 id;
-    if (columns.size() == 2 && absl::SimpleAtoi(columns[1], &id)) {
+    if (args.size() == 2 && absl::SimpleAtoi(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
       std::cout << "ERROR: " << line << std::endl;
@@ -127,7 +132,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   if (command == "SHOW_LOG_BY_VALUE") {
     uint32 id;
-    if (columns.size() == 2 && handler.GetCandidateIdByValue(columns[1], &id)) {
+    if (args.size() == 2 && handler.GetCandidateIdByValue(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
       std::cout << "ERROR: " << line << std::endl;
@@ -135,7 +140,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
 
-  const mozc::Status status = handler.ParseLine(line);
+  const mozc::Status status = handler.Eval(args);
   if (!status.ok()) {
     std::cout << "ERROR: " << status.message() << std::endl;
   }

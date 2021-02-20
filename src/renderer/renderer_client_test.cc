@@ -37,6 +37,7 @@
 #include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/gunit.h"

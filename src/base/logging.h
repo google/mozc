@@ -77,7 +77,7 @@ class NullLogStream;
 class Logging {
  public:
   // Initializes log stream with the output file path and --logtostderr.
-  static void InitLogStream(const string &log_file_path);
+  static void InitLogStream(const std::string &log_file_path);
 
   // Closes the logging stream
   static void CloseLogStream();
@@ -100,7 +100,7 @@ class Logging {
   static const char *GetLogSeverityName(LogSeverity severity);
 
   // Returns "YYYY-MM-DD HH:MM:SS PID TID", e.g. "2008 11-16 19:40:21 100 20"
-  static string GetLogMessageHeader();
+  static std::string GetLogMessageHeader();
 
   // Returns FLAGS_v
   static int GetVerboseLevel();

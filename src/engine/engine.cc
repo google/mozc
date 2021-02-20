@@ -299,7 +299,10 @@ bool Engine::Reload() {
     return true;
   }
   VLOG(1) << "Reloading user dictionary";
-  return user_dictionary_->Reload();
+  bool result_dictionary = user_dictionary_->Reload();
+  VLOG(1) << "Reloading UserDataManager";
+  bool result_user_data = GetUserDataManager()->Reload();
+  return result_dictionary && result_user_data;
 }
 
 }  // namespace mozc

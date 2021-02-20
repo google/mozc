@@ -44,6 +44,7 @@
 #include "converter/converter_interface.h"
 #include "converter/converter_util.h"
 #include "converter/segments.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"

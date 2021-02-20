@@ -58,13 +58,12 @@ TEST(MacUtil, IsSuppressSuggestionWindow) {
       "Google", "Safari"));
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
       "Google", "Firefox"));
-  // "ABC - Google 検索"
   EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google \xE6\xA4\x9C\xE7\xB4\xA2", "Google Chrome"));
+      "ABC - Google 検索", "Google Chrome"));
   EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google \xE6\xA4\x9C\xE7\xB4\xA2", "Safari"));
+      "ABC - Google 検索", "Safari"));
   EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google \xE6\xA4\x9C\xE7\xB4\xA2", "Firefox"));
+      "ABC - Google 検索", "Firefox"));
   EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
       "ABC - Google Search", "Google Chrome"));
   EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(

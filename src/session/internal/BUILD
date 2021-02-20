@@ -142,6 +142,7 @@ cc_library_mozc(
         "//base:version",
         "//composer",
         "//converter:segments",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
     ],
 )
@@ -252,6 +253,7 @@ cc_test_mozc(
         "//base:text_normalizer",
         "//base:util",
         "//converter:segments",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
         "//testing:gunit_main",
     ],

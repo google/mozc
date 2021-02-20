@@ -119,15 +119,6 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "flags",
-    hdrs = ["flags.h"],
-    deps = [
-        ":port",
-        "@com_google_absl//absl/flags:flag",
-    ],
-)
-
-cc_library_mozc(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
@@ -563,7 +554,8 @@ cc_binary_mozc(
         ":logging",
         ":util",
         "@com_google_absl//absl/flags:flag",
-        "//third_party/darts/v0_32",
+        # For OSS, darts is also required.
+        # http://chasen.org/~taku/software/darts/
     ],
 )
 
@@ -1005,15 +997,15 @@ cc_test_mozc(
     ],
 )
 
-TARGET_PLATFORM = select({
-    "//tools/cc_target_os:oss_android": "Android",
-    "//tools/cc_target_os:android": "Android",
-    "//tools/cc_target_os:chromiumos": "ChromeOS",
-    "//tools/cc_target_os:wasm": "Wasm",
-    "//tools/cc_target_os:linux": "Linux",
-    "//tools/cc_target_os:oss_linux": "Linux",
-    "//tools/cc_target_os:oss_macos": "Mac",
-})
+TARGET_PLATFORM = select_mozc(
+    android = "Android",
+    chromiumos = "ChromeOS",
+    default = "",
+    linux = "Linux",
+    macos = "Mac",
+    wasm = "Wasm",
+    windows = "Windows",
+)
 
 genrule(
     name = "mozc_version_txt",
@@ -1059,6 +1051,7 @@ cc_library_mozc(
         ":number_util",
         ":port",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 

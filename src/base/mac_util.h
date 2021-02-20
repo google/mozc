@@ -38,28 +38,28 @@ namespace mozc {
 class MacUtil {
  public:
   // Returns the label commonly used in the project for specified suffix.
-  static string GetLabelForSuffix(const string &suffix);
+  static std::string GetLabelForSuffix(const std::string &suffix);
 
   // Returns (basically) "~/Library/Application Support".
-  static string GetApplicationSupportDirectory();
+  static std::string GetApplicationSupportDirectory();
 
   // Returns (basically) "~/Library/Caches".
-  static string GetCachesDirectory();
+  static std::string GetCachesDirectory();
 
   // Returns (basically) ~/Library/Logs
-  static string GetLoggingDirectory();
+  static std::string GetLoggingDirectory();
 
   // Returns OS version string like, "Version 10.x (Build xXxxx)".
-  static string GetOSVersionString();
+  static std::string GetOSVersionString();
 
   // Returns server directory using OS-specific API.
-  static string GetServerDirectory();
+  static std::string GetServerDirectory();
 
   // Returns the "Resources/" directory in the current application.
-  static string GetResourcesDirectory();
+  static std::string GetResourcesDirectory();
 
   // Returns the machine serial number.
-  static string GetSerialNumber();
+  static std::string GetSerialNumber();
 
 #ifndef OS_IOS
   // Starts the specified service by using launchd.  "service_name" is
@@ -67,7 +67,7 @@ class MacUtil {
   // If "pid" is non-null, it will store the pid of the launched
   // process in it.  Returns true if it successfully launches the
   // process.
-  static bool StartLaunchdService(const string &service_name,
+  static bool StartLaunchdService(const std::string &service_name,
                                   pid_t *pid);
 
   // Checks if the prelauncher is set in "Login Item".
@@ -81,12 +81,13 @@ class MacUtil {
 
   // Gets the name and the owner name of the frontmost window.
   // Returns false if an error occurred.
-  static bool GetFrontmostWindowNameAndOwner(string *name, string *owner);
+  static bool GetFrontmostWindowNameAndOwner(std::string *name,
+                                             std::string *owner);
 
   // Returns true when Mozc's suggestion UI is expected to be suppressed on
   // the window specified by |name| and |owner|.
-  static bool IsSuppressSuggestionWindow(const string &name,
-                                         const string &owner);
+  static bool IsSuppressSuggestionWindow(const std::string &name,
+                                         const std::string &owner);
 #endif
 
  private:

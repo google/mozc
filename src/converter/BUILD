@@ -700,6 +700,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//protocol:config_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 

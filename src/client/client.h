@@ -39,6 +39,7 @@
 #include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 

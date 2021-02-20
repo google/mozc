@@ -113,6 +113,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
         "//usage_stats",
         "@com_google_absl//absl/strings",
     ],

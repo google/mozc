@@ -53,7 +53,7 @@
 ABSL_DECLARE_FLAG(bool, restricted);  // in SessionHandler
 
 namespace {
-mozc::SessionServer *g_session_server = NULL;
+mozc::SessionServer *g_session_server = nullptr;
 }
 
 namespace mozc {

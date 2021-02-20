@@ -133,7 +133,7 @@ void UsageStats::SetBoolean(const std::string &name, bool val) {
 }
 
 bool UsageStats::GetCountForTest(const std::string &name, uint32 *value) {
-  CHECK(value != NULL);
+  CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::COUNT, &stats)) {
     return false;
@@ -148,7 +148,7 @@ bool UsageStats::GetCountForTest(const std::string &name, uint32 *value) {
 }
 
 bool UsageStats::GetIntegerForTest(const std::string &name, int32 *value) {
-  CHECK(value != NULL);
+  CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::INTEGER, &stats)) {
     return false;
@@ -163,7 +163,7 @@ bool UsageStats::GetIntegerForTest(const std::string &name, int32 *value) {
 }
 
 bool UsageStats::GetBooleanForTest(const std::string &name, bool *value) {
-  CHECK(value != NULL);
+  CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::BOOLEAN, &stats)) {
     return false;
@@ -185,28 +185,28 @@ bool UsageStats::GetTimingForTest(const std::string &name, uint64 *total_time,
     return false;
   }
 
-  if ((total_time != NULL && !stats.has_total_time()) ||
-      (num_timings != NULL && !stats.has_num_timings()) ||
-      (avg_time != NULL && !stats.has_avg_time()) ||
-      (min_time != NULL && !stats.has_min_time()) ||
-      (max_time != NULL && !stats.has_max_time())) {
+  if ((total_time != nullptr && !stats.has_total_time()) ||
+      (num_timings != nullptr && !stats.has_num_timings()) ||
+      (avg_time != nullptr && !stats.has_avg_time()) ||
+      (min_time != nullptr && !stats.has_min_time()) ||
+      (max_time != nullptr && !stats.has_max_time())) {
     LOG(WARNING) << "cannot import stats of " << name << ".";
     return false;
   }
 
-  if (total_time != NULL) {
+  if (total_time != nullptr) {
     *total_time = stats.total_time();
   }
-  if (num_timings != NULL) {
+  if (num_timings != nullptr) {
     *num_timings = stats.num_timings();
   }
-  if (avg_time != NULL) {
+  if (avg_time != nullptr) {
     *avg_time = stats.avg_time();
   }
-  if (min_time != NULL) {
+  if (min_time != nullptr) {
     *min_time = stats.min_time();
   }
-  if (max_time != NULL) {
+  if (max_time != nullptr) {
     *max_time = stats.max_time();
   }
 

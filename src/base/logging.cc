@@ -93,7 +93,7 @@ COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 #endif  // OS_ANDROID
 
 // Use the same implementation both for Opt and Debug.
-string Logging::GetLogMessageHeader() {
+std::string Logging::GetLogMessageHeader() {
 #ifdef OS_ANDROID
   // On Android, other records are not needed because they are added by
   // Android's logging framework.
@@ -130,7 +130,7 @@ string Logging::GetLogMessageHeader() {
 
 #ifdef MOZC_NO_LOGGING
 
-void Logging::InitLogStream(const string &log_file_path) {}
+void Logging::InitLogStream(const std::string &log_file_path) {}
 
 void Logging::CloseLogStream() {}
 
@@ -172,7 +172,7 @@ class LogStreamImpl {
   LogStreamImpl();
   ~LogStreamImpl();
 
-  void Init(const string &log_file_path);
+  void Init(const std::string &log_file_path);
   void Reset();
 
   int verbose_level() const {
@@ -191,7 +191,7 @@ class LogStreamImpl {
 
   bool support_color() const { return support_color_; }
 
-  void Write(LogSeverity, const string &log);
+  void Write(LogSeverity, const std::string &log);
 
  private:
   // Real backing log stream.
@@ -204,7 +204,7 @@ class LogStreamImpl {
   Mutex mutex_;
 };
 
-void LogStreamImpl::Write(LogSeverity severity, const string &log) {
+void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
   scoped_lock l(&mutex_);
   if (use_cerr_) {
     std::cerr << log;
@@ -233,7 +233,7 @@ LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
 // Android, *     => false, nullptr
 // Others,  true  => true,  nullptr
 // Others,  false => true,  non-null
-void LogStreamImpl::Init(const string &log_file_path) {
+void LogStreamImpl::Init(const std::string &log_file_path) {
   scoped_lock l(&mutex_);
   Reset();
 
@@ -285,7 +285,7 @@ void LogStreamImpl::Reset() {
 LogStreamImpl::~LogStreamImpl() { Reset(); }
 }  // namespace
 
-void Logging::InitLogStream(const string &log_file_path) {
+void Logging::InitLogStream(const std::string &log_file_path) {
   Singleton<LogStreamImpl>::get()->Init(log_file_path);
   std::ostream &stream = GetWorkingLogStream();
   stream << "Log file created at: " << Logging::GetLogMessageHeader();

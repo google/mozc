@@ -177,3 +177,12 @@ py_binary_mozc(
         ":tweak_data",
     ],
 )
+
+py_binary_mozc(
+    name = "tweak_info_plist_strings",
+    srcs = ["tweak_info_plist_strings.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":tweak_data",
+    ],
+)

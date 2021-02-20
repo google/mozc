@@ -50,7 +50,7 @@ DataSetWriter::DataSetWriter(absl::string_view magic)
 
 DataSetWriter::~DataSetWriter() = default;
 
-void DataSetWriter::Add(const string &name, int alignment,
+void DataSetWriter::Add(const std::string &name, int alignment,
                         absl::string_view data) {
   CHECK(seen_names_.insert(name).second) << name << " was already added";
   AppendPadding(alignment);
@@ -61,8 +61,8 @@ void DataSetWriter::Add(const string &name, int alignment,
   image_.append(data.data(), data.size());
 }
 
-void DataSetWriter::AddFile(const string &name, int alignment,
-                            const string &filepath) {
+void DataSetWriter::AddFile(const std::string &name, int alignment,
+                            const std::string &filepath) {
   mozc::InputFileStream ifs(filepath.c_str(),
                             std::ios_base::in | std::ios_base::binary);
   CHECK(ifs.good()) << "Failed to open " << name;
@@ -70,7 +70,7 @@ void DataSetWriter::AddFile(const string &name, int alignment,
 }
 
 void DataSetWriter::Finish(std::ostream *output) {
-  const string s = metadata_.SerializeAsString();
+  const std::string s = metadata_.SerializeAsString();
   image_.append(s);                                // Metadata
   image_.append(Util::SerializeUint64(s.size()));  // Metadata size
 

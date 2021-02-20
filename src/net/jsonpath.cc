@@ -40,6 +40,7 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace net {
@@ -129,16 +130,13 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       return false;
     }
 
-    if (Util::EndsWith(jsonpath, ".") ||
-        jsonpath.find("...") != std::string::npos) {
+    if (Util::EndsWith(jsonpath, ".") || absl::StrContains(jsonpath, "...")) {
       LOG(ERROR) << "Parse error: " << jsonpath;
       return false;
     }
 
-    if (jsonpath.find('(') != std::string::npos ||
-        jsonpath.find(')') != std::string::npos ||
-        jsonpath.find('@') != std::string::npos ||
-        jsonpath.find('?') != std::string::npos) {
+    if (absl::StrContains(jsonpath, '(') || absl::StrContains(jsonpath, ')') ||
+        absl::StrContains(jsonpath, '@') || absl::StrContains(jsonpath, '?')) {
       LOG(ERROR) << "script expression/current node are not supported: "
                  << jsonpath;
       return false;

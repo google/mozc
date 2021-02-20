@@ -32,6 +32,7 @@
     'relative_dir': 'mac',
     'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
     'build_type': 'stable',
+    'domain_prefix%': 'org.mozc',
     'mac_auto_updater_dir%': '',
   },
   # Add a dummy target because at least one target is needed in a gyp file.
@@ -193,7 +194,8 @@
             '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
           ],
           'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/ActivatePane/Info.plist',
+            'PRODUCT_BUNDLE_IDENTIFIER': '<(domain_prefix).ActivatePane',
+            'INFOPLIST_FILE': 'ActivatePane/Info.plist',
           },
           'link_settings': {
             'libraries': [
@@ -215,6 +217,7 @@
             'DevConfirmPane/Japanese.lproj/Localizable.strings',
           ],
           'xcode_settings': {
+            'PRODUCT_BUNDLE_IDENTIFIER': '<(domain_prefix).DevConfirmPane',
             'INFOPLIST_FILE': 'DevConfirmPane/Info.plist',
           },
           'link_settings': {
@@ -247,7 +250,9 @@
             'Uninstaller/Japanese.lproj/InfoPlist.strings',
           ],
           'xcode_settings': {
-            'INFOPLIST_FILE': '<(gen_out_dir)/Uninstaller/Info.plist',
+            'CURRENT_PROJECT_VERSION': '<(version)',
+            'PRODUCT_BUNDLE_IDENTIFIER': '<(domain_prefix).Uninstall<(branding)',
+            'INFOPLIST_FILE': 'Uninstaller/Info.plist',
           },
           'link_settings': {
             'libraries': [
@@ -299,6 +304,9 @@
             '<(gen_out_dir)/Japanese.lproj/InfoPlist.strings',
           ],
           'xcode_settings': {
+            'CURRENT_PROJECT_VERSION': '<(version)',
+            'MARKETING_VERSION': '<(short_version)',
+            'PRODUCT_BUNDLE_IDENTIFIER': '<(domain_prefix).inputmethod.Japanese',
             'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
           },
@@ -349,38 +357,6 @@
                 '<(python)', '../build_tools/tweak_info_plist.py',
                 '--output', '<(gen_out_dir)/Info.plist',
                 '--input', 'Info.plist',
-                '--version_file', '../mozc_version.txt',
-                '--branding', '<(branding)',
-              ],
-            },
-            {
-              'action_name': 'generateActivatePaneInfoPlist',
-              'inputs': [
-                'ActivatePane/Info.plist',
-              ],
-              'outputs': [
-                '<(gen_out_dir)/ActivatePane/Info.plist',
-              ],
-              'action': [
-                '<(python)', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/ActivatePane/Info.plist',
-                '--input', 'ActivatePane/Info.plist',
-                '--version_file', '../mozc_version.txt',
-                '--branding', '<(branding)',
-              ],
-            },
-            {
-              'action_name': 'generateUninstallerInfoPlist',
-              'inputs': [
-                'Uninstaller/Info.plist',
-              ],
-              'outputs': [
-                '<(gen_out_dir)/Uninstaller/Info.plist',
-              ],
-              'action': [
-                '<(python)', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/Uninstaller/Info.plist',
-                '--input', 'Uninstaller/Info.plist',
                 '--version_file', '../mozc_version.txt',
                 '--branding', '<(branding)',
               ],

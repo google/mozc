@@ -92,7 +92,7 @@ TEST_F(GoogleJapaneseInputServerTest, sendData) {
   command.set_id(0);
   controller.expectedCommand = &command;
 
-  string commandData = command.SerializeAsString();
+  std::string commandData = command.SerializeAsString();
   [server_ sendData:[NSData dataWithBytes:commandData.data()
                                    length:commandData.size()]];
   EXPECT_EQ(1, controller.numSendData);
@@ -109,7 +109,7 @@ TEST_F(GoogleJapaneseInputServerTest, outputResult) {
   output.mutable_result()->set_value("baz");
   controller.expectedData = &output;
 
-  string outputData = output.SerializeAsString();
+  std::string outputData = output.SerializeAsString();
   [server_ outputResult:[NSData dataWithBytes:outputData.data()
                                        length:outputData.size()]];
   EXPECT_EQ(1, controller.numOutputResult);

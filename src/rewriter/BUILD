@@ -635,6 +635,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -771,6 +772,7 @@ cc_test_mozc(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 

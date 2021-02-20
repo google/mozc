@@ -30,6 +30,7 @@
 #include "client/client_mock.h"
 
 #include "base/logging.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 namespace client {

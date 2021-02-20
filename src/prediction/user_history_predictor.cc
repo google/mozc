@@ -60,6 +60,7 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -119,7 +120,7 @@ const uint64 k62DaysInSec = 62 * 24 * 60 * 60;
 //     case, put a similar note to avoid twisted dependency.
 bool IsEmojiEntry(const UserHistoryPredictor::Entry &entry) {
   return (entry.has_description() &&
-          entry.description().find(kEmojiDescription) != std::string::npos);
+          absl::StrContains(entry.description(), kEmojiDescription));
 }
 
 bool IsPunctuation(absl::string_view value) {

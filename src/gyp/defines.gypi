@@ -36,6 +36,11 @@
     # For OSS version, 'Mozc' is only supported.
     'branding%': 'Mozc',
 
+    # Application versions (e.g. "2.26.4200.1" / "2.26.4200").
+    # The values are set by build_mozc.py
+    'version%': '0.0.0.0',
+    'short_version%': '0.0.0',
+
     # a flag whether the current build is dev-channel or not.
     'channel_dev%': '0',
 

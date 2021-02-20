@@ -317,6 +317,14 @@ class MozcVersion(object):
     """
     return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@.@REVISION@')
 
+  def GetShortVersionString(self):
+    """Returns the short version info string.
+
+    Returns:
+      a string in format of "MAJOR.MINOR.BUILD"
+    """
+    return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
+
   def GetVersionInFormat(self, version_format):
     """Returns the version string based on the specified format."""
     return _GetVersionInFormat(self._properties, version_format)

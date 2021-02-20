@@ -145,6 +145,18 @@ def info_plist_mozc(name, srcs = [], outs = []):
         exec_tools = ["//build_tools:tweak_info_plist"],
     )
 
+def info_plist_strings_mozc(name, srcs = [], outs = []):
+    native.genrule(
+        name = name,
+        srcs = srcs,
+        outs = outs,
+        cmd = ("$(location //build_tools:tweak_info_plist_strings)" +
+               " --output $@" +
+               " --input $(location " + srcs[0] + ")" +
+               " --branding " + BRANDING),
+        exec_tools = ["//build_tools:tweak_info_plist_strings"],
+    )
+
 def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], proto_deps = [], sdk_frameworks = [], **kwargs):
     # Because proto_library cannot be in deps of objc_library,
     # cc_library as a wrapper is necessary as a workaround.
@@ -168,6 +180,7 @@ def macos_application_mozc(name, bundle_name, bundle_id = None, **kwargs):
         bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
         bundle_name = bundle_name,
         minimum_os_version = MACOS_MIN_OS_VER,
+        version = "//data/version:version_macos",
         **kwargs
     )
 

@@ -51,7 +51,7 @@ ABSL_FLAG(std::string, test_srcdir, "",
 ABSL_FLAG(std::string, test_tmpdir, "",
           "Directory for all temporary testing files.");
 
-ABSL_DECLARE_FLAG(string, program_invocation_name);
+ABSL_DECLARE_FLAG(std::string, program_invocation_name);
 
 namespace mozc {
 namespace {
@@ -59,7 +59,7 @@ namespace {
 #include "testing/mozc_data_dir.h"
 
 #ifdef OS_WIN
-string GetProgramPath() {
+std::string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
   const DWORD char_size =
       GetModuleFileNameW(nullptr, w_path, arraysize(w_path));
@@ -70,19 +70,19 @@ string GetProgramPath() {
     LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
     return "";
   }
-  string path;
+  std::string path;
   Util::WideToUTF8(w_path, &path);
   return path;
 }
 
-string GetTestSrcdir() {
-  const string srcdir(kMozcDataDir);
+std::string GetTestSrcdir() {
+  const std::string srcdir(kMozcDataDir);
   CHECK(FileUtil::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
   return srcdir;
 }
 
-string GetTestTmpdir() {
-  const string tmpdir = GetProgramPath() + ".tmp";
+std::string GetTestTmpdir() {
+  const std::string tmpdir = GetProgramPath() + ".tmp";
 
   if (!FileUtil::DirectoryExists(tmpdir)) {
     CHECK(FileUtil::CreateDirectory(tmpdir));
@@ -94,8 +94,8 @@ string GetTestTmpdir() {
 
 // Get absolute path to this executable. Corresponds to argv[0] plus
 // directory information. E.g like "/spam/eggs/foo_unittest".
-string GetProgramPath() {
-  const string& program_invocation_name =
+std::string GetProgramPath() {
+  const std::string& program_invocation_name =
       absl::GetFlag(FLAGS_program_invocation_name);
   if (program_invocation_name.empty() || program_invocation_name[0] == '/') {
     return program_invocation_name;
@@ -108,13 +108,13 @@ string GetProgramPath() {
   return FileUtil::JoinPath(cwd_buf, program_invocation_name);
 }
 
-string GetTestSrcdir() {
+std::string GetTestSrcdir() {
   const char* srcdir_env = getenv("TEST_SRCDIR");
   if (srcdir_env && srcdir_env[0]) {
     return srcdir_env;
   }
 
-  const string srcdir(kMozcDataDir);
+  const std::string srcdir(kMozcDataDir);
 
 #if !defined(OS_ANDROID)
   // TestSrcdir is not supported in Android.
@@ -126,7 +126,7 @@ string GetTestSrcdir() {
   return srcdir;
 }
 
-string GetTestTmpdir() {
+std::string GetTestTmpdir() {
   std::string tmpdir;
   const char* value = getenv("TEST_TMPDIR");
   if (value && value[0]) {

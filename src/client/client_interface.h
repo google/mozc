@@ -33,23 +33,14 @@
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
 #include <string>
+
 #include "base/port.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 
 class IPCClientFactoryInterface;
-
-namespace config {
-class Config;
-}
-
-namespace commands {
-class Capability;
-class KeyEvent;
-class Output;
-class SessionCommand;
-}  // namespace commands
 
 namespace client {
 class ClientInterface;

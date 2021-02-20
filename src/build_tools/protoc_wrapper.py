@@ -69,7 +69,7 @@ def ParseOption():
 
 def CreateProtoH(cpp_out, proto_file):
   proto_h = os.path.join(cpp_out, proto_file + '.h')
-  pb_h = proto_file.rstrip('.proto') + '.pb.h'
+  pb_h = proto_file[:-len('.proto')] + '.pb.h'
   with open(proto_h, 'w') as output:
     output.write('#include "%s"\n' % pb_h)
 

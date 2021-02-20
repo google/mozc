@@ -171,7 +171,7 @@ class RPCServer {
     LOG(INFO) << "Start Mozc RPCServer";
 
     while (true) {
-      const int client_socket = ::accept(server_socket_, NULL, NULL);
+      const int client_socket = ::accept(server_socket_, nullptr, nullptr);
 
       if (client_socket == kInvalidSocket) {
         LOG(ERROR) << "accept failed";

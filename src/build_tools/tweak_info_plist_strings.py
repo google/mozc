@@ -39,7 +39,8 @@ import datetime
 import logging
 import optparse
 import sys
-import tweak_data
+
+from build_tools import tweak_data
 
 _COPYRIGHT_YEAR = datetime.date.today().year
 
@@ -72,12 +73,11 @@ def main():
     logging.error('--branding is not specified.')
     sys.exit(-1)
 
-  # \xC2\xA9 is the copyright mark in UTF-8
-  copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR
+  copyright_message = '© %d Google Inc.' % _COPYRIGHT_YEAR
   if options.branding == 'GoogleJapaneseInput':
     variables = {
         'CF_BUNDLE_NAME_EN': 'Google Japanese Input',
-        'CF_BUNDLE_NAME_JA': u'Google 日本語入力',
+        'CF_BUNDLE_NAME_JA': 'Google 日本語入力',
         'NS_HUMAN_READABLE_COPYRIGHT': copyright_message,
         'INPUT_MODE_ANNOTATION': 'Google',
         }
