@@ -33,23 +33,14 @@
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
 #include <string>
+
 #include "base/port.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 
 namespace mozc {
 
 class IPCClientFactoryInterface;
-
-namespace config {
-class Config;
-}
-
-namespace commands {
-class Capability;
-class KeyEvent;
-class Output;
-class SessionCommand;
-}  // namespace commands
 
 namespace client {
 class ClientInterface;
@@ -73,7 +64,7 @@ class ServerLauncherInterface {
   // Wait server until it terminates
   virtual bool WaitServer(uint32 pid) = 0;
 
-  // called when fatal error occured.
+  // called when fatal error occurred.
   virtual void OnFatal(ServerErrorType type) = 0;
 
   // set the full path of server program.
@@ -121,7 +112,7 @@ class ClientInterface {
   // Checks protocol/product version.
   // If a  new version is avaialable, restart the server.
   // return true the server is available.
-  // return false some error happend during the server restart.
+  // return false some error happened during the server restart.
   // This method calls EnsureConnection automatically.
   virtual bool CheckVersionOrRestartServer() = 0;
 
@@ -181,7 +172,7 @@ class ClientInterface {
   // Cleanup un-used sessions
   virtual bool Cleanup() = 0;
 
-  // Resets internal state (changs the state to be SERVER_UNKNWON)
+  // Resets internal state (changs the state to be SERVER_UNKNOWN)
   virtual void Reset() = 0;
 
   // Returns true if server is alive.
@@ -200,7 +191,7 @@ class ClientInterface {
   virtual void set_timeout(int timeout) = 0;
 
   // Sets restricted mode.
-  // server is launched inside restricted enviroment.
+  // server is launched inside restricted environment.
   virtual void set_restricted(bool restricted) = 0;
 
   // Sets server program path.

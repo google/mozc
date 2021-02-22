@@ -39,7 +39,6 @@
 #include <vector>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -48,11 +47,12 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(string, input, "", "space separated input text files");
-MOZC_FLAG(string, user_pos_manager_data, "", "user pos manager data");
-MOZC_FLAG(string, output, "", "output binary file");
+ABSL_FLAG(std::string, input, "", "space separated input text files");
+ABSL_FLAG(std::string, user_pos_manager_data, "", "user pos manager data");
+ABSL_FLAG(std::string, output, "", "output binary file");
 
 namespace mozc {
 namespace {
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string system_dictionary_input, reading_correction_input;
-  mozc::GetInputFileName(mozc::GetFlag(FLAGS_input), &system_dictionary_input,
+  mozc::GetInputFileName(absl::GetFlag(FLAGS_input), &system_dictionary_input,
                          &reading_correction_input);
 
   // User POS manager data for build tools has no magic number.
@@ -103,10 +103,10 @@ int main(int argc, char **argv) {
   mozc::DataManager data_manager;
   const mozc::DataManager::Status status =
       data_manager.InitUserPosManagerDataFromFile(
-          mozc::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
+          absl::GetFlag(FLAGS_user_pos_manager_data), kMagicNumber);
   CHECK_EQ(status, mozc::DataManager::Status::OK)
       << "Failed to initialize data manager from "
-      << mozc::GetFlag(FLAGS_user_pos_manager_data);
+      << absl::GetFlag(FLAGS_user_pos_manager_data);
 
   const mozc::dictionary::POSMatcher pos_matcher(
       data_manager.GetPOSMatcherData());
@@ -118,8 +118,8 @@ int main(int argc, char **argv) {
   builder.BuildFromTokens(loader.tokens());
 
   std::unique_ptr<std::ostream> output_stream(new mozc::OutputFileStream(
-      mozc::GetFlag(FLAGS_output).c_str(), std::ios::out | std::ios::binary));
-  builder.WriteToStream(mozc::GetFlag(FLAGS_output), output_stream.get());
+      absl::GetFlag(FLAGS_output).c_str(), std::ios::out | std::ios::binary));
+  builder.WriteToStream(absl::GetFlag(FLAGS_output), output_stream.get());
 
   return 0;
 }

@@ -92,7 +92,7 @@ message UserDictionary {
 
   // set false if this dictionary is not used.
   // Even if |enabled| is false, the dictionary
-  // it self is visible to user.
+  // itself is visible to user.
   optional bool enabled = 2 [default = true];
 
   // name of dictionary
@@ -284,7 +284,7 @@ message UserDictionaryCommandStatus {
     FILE_NOT_FOUND = 6;
     INVALID_FILE_FORMAT = 7;
 
-    // Note: currently if we recieve this error status,
+    // Note: currently if we receive this error status,
     // the file is actually saved.
     FILE_SIZE_LIMIT_EXCEEDED = 8;
     DICTIONARY_SIZE_LIMIT_EXCEEDED = 9;

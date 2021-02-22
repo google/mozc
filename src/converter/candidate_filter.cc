@@ -65,7 +65,7 @@ const size_t kMaxCandidatesSize = 200;  // how many candidates we expand
 // cost(B) - cost(A) = -500 * [log(prob(B)) - log (C * prob(B)) ]
 //                   = -500 * [-log(C) + log(prob(B)) - log(prob(B))]
 //                   = 500 * log(C)
-// This implies that it is more reasonable to filter candiates
+// This implies that it is more reasonable to filter candidates
 // by an absolute difference of costs between cost(B) and cost(A).
 //
 // Here's "C" and cost-diff relation:

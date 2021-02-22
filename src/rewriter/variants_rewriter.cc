@@ -40,6 +40,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -313,7 +314,7 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
     if (original_candidate->attributes &
         Segment::Candidate::NO_VARIANTS_EXPANSION) {
       SetDescriptionForCandidate(pos_matcher_, original_candidate);
-      VLOG(1) << "Canidate has NO_NORMALIZATION node";
+      VLOG(1) << "Candidate has NO_NORMALIZATION node";
       continue;
     }
 
@@ -531,12 +532,12 @@ void VariantsRewriter::Finish(const ConversionRequest &request,
     // annotation in the description for character width, using it is
     // more reliable than guessing from |candidate.value|.
     if (Util::GetFirstScriptType(candidate.value) == Util::NUMBER) {
-      if (candidate.description.find(kHalfWidth) != std::string::npos) {
+      if (absl::StrContains(candidate.description, kHalfWidth)) {
         CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
             "0", config::Config::HALF_WIDTH);
         continue;
       }
-      if (candidate.description.find(kFullWidth) != std::string::npos) {
+      if (absl::StrContains(candidate.description, kFullWidth)) {
         CharacterFormManager::GetCharacterFormManager()->SetCharacterForm(
             "0", config::Config::FULL_WIDTH);
         continue;

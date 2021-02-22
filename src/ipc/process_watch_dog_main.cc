@@ -31,15 +31,15 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "ipc/process_watch_dog.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(int32, timeout, -1, "set timeout");
+ABSL_FLAG(int32, timeout, -1, "set timeout");
 
 namespace mozc {
 class TestProcessWatchDog : public ProcessWatchDog {
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     if (!dog.SetID(static_cast<mozc::ProcessWatchDog::ProcessID>(process_id),
                    static_cast<mozc::ProcessWatchDog::ThreadID>(thread_id),
-                   mozc::GetFlag(FLAGS_timeout))) {
+                   absl::GetFlag(FLAGS_timeout))) {
       std::cout << "Error" << std::endl;
     } else {
       std::cout << "OK" << std::endl;

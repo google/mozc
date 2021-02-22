@@ -23,14 +23,14 @@ Don't forget to rebuild Docker container when Dockerfile is updated.
 ### Build Mozc for Linux Desktop:
 
 ```
-python build_mozc.py gyp
-python build_mozc.py build -c Release package
+python3 build_mozc.py gyp
+python3 build_mozc.py build -c Release package
 ```
 
 You can also run unittests as follows.
 
 ```
-python build_mozc.py runtests -c Debug
+python3 build_mozc.py runtests -c Debug
 ```
 
 Experimental: Instead of build_mozc.py, you can try to use Bazel.
@@ -64,10 +64,10 @@ bazel build package --config oss_android
 `package` is an alias to build `android/jni:mozc_lib`.
 
 ## Build configurations for Linux desktop
-In `python build_mozc.py gyp` step, there are two different styles to customize configurations.  One is `GYP_DEFINES` environment variable and the other is commandline option.
+In `python3 build_mozc.py gyp` step, there are two different styles to customize configurations.  One is `GYP_DEFINES` environment variable and the other is commandline option.
 
 ```
-[GYP_DEFINES="..."] python build_mozc.py gyp [options]
+[GYP_DEFINES="..."] python3 build_mozc.py gyp [options]
 ```
 
 ### GYP_DEFINES
@@ -81,13 +81,13 @@ Here are examples of GYP variables that you may want to change for Linux desktop
 Note that you can specify multiple GYP variables as follows.
 
 ```
-GYP_DEFINES="ibus_mozc_path=/usr/lib/ibus-mozc/ibus-engine-mozc ibus_mozc_icon_path=/usr/share/ibus-mozc/product_icon.png document_dir=/usr/share/doc/mozc" python build_mozc.py gyp
+GYP_DEFINES="ibus_mozc_path=/usr/lib/ibus-mozc/ibus-engine-mozc ibus_mozc_icon_path=/usr/share/ibus-mozc/product_icon.png document_dir=/usr/share/doc/mozc" python3 build_mozc.py gyp
 ```
 
 ### command line options
 You can find many command line options as follows.
 ```
-python build_mozc.py gyp --help
+python3 build_mozc.py gyp --help
 ```
 Here we show some notable options.
 
@@ -101,5 +101,5 @@ You can use `--server_dir` option to specify the directory name where `mozc_serv
 In `build_mozc.py build` step, you can specify build types (`Release` or `Debug`) and one or more build targets.  Please find each GYP file to see what build targets are defined.
 
 ```
-python build_mozc.py build -c {Release, Debug} [gyp_path_1.gyp:gyp_target_name1] [gyp_path_2.gyp:gyp_target_name2]
+python3 build_mozc.py build -c {Release, Debug} [gyp_path_1.gyp:gyp_target_name1] [gyp_path_2.gyp:gyp_target_name2]
 ```

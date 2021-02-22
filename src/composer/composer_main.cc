@@ -31,7 +31,6 @@
 #include <memory>
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "composer/composer.h"
 #include "composer/composition_interface.h"
@@ -39,8 +38,9 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, table, "system://romanji-hiragana.tsv",
+ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
           "preedit conversion table file.");
 
 using ::mozc::commands::Request;
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
-  table.LoadFromFile(mozc::GetFlag(FLAGS_table).c_str());
+  table.LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
   std::unique_ptr<mozc::composer::Composer> composer(
       new mozc::composer::Composer(&table, &Request::default_instance(),
                                    &Config::default_instance()));

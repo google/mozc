@@ -29,20 +29,19 @@
 
 #include <iostream>  // NOLINT
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "client/client.h"
 #include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, shutdown, false, "shutdown server if mozc_server is running");
+ABSL_FLAG(bool, shutdown, false, "shutdown server if mozc_server is running");
 
 // simple command line tool to launch mozc server
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::client::Client client;
 
-  if (mozc::GetFlag(FLAGS_shutdown)) {
+  if (absl::GetFlag(FLAGS_shutdown)) {
     client.Shutdown();
   }
 

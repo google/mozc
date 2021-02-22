@@ -31,7 +31,6 @@
 #include <string>
 
 #include "base/clock.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -45,13 +44,14 @@
 #include "session/session_converter.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, test_deterministic, true,
+ABSL_FLAG(bool, test_deterministic, true,
           "if true, srand() is initialized by \"test_srand_seed\"."
           "if false, srand() is initialized by current time "
           "and \"test_srand_seed\" is ignored");
 
-MOZC_FLAG(int32, test_srand_seed, 0,
+ABSL_FLAG(int32, test_srand_seed, 0,
           "seed number for srand(). "
           "used only when \"test_deterministic\" is true");
 
@@ -64,16 +64,16 @@ namespace session {
 class SessionConverterStressTest : public ::testing::Test {
  public:
   SessionConverterStressTest() {
-    if (!mozc::GetFlag(FLAGS_test_deterministic)) {
-      mozc::SetFlag(&FLAGS_test_srand_seed,
+    if (!absl::GetFlag(FLAGS_test_deterministic)) {
+      absl::SetFlag(&FLAGS_test_srand_seed,
                     static_cast<int32>(Clock::GetTime()));
     }
     Util::SetRandomSeed(
-        static_cast<uint32>(mozc::GetFlag(FLAGS_test_srand_seed)));
+        static_cast<uint32>(absl::GetFlag(FLAGS_test_srand_seed)));
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::Config config;
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);

@@ -34,6 +34,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -452,7 +453,7 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
         rev_alignment_.push_back(len + i);
       }
     } else {
-      // NOT a one to one maping, we take fist/last alignment only
+      // NOT a one to one mapping, we take fist/last alignment only
       alignment_.push_back(org_len);
       for (size_t i = 1; i < mblen; ++i) {
         alignment_.push_back(kInvalidPos);
@@ -556,8 +557,7 @@ size_t KeyCorrector::InvalidPosition() { return kInvalidPos; }
 // static
 int KeyCorrector::GetCorrectedCostPenalty(const std::string &key) {
   // "んん" and "っっ" must be mis-spelling.
-  if (key.find("んん") != std::string::npos ||
-      key.find("っっ") != std::string::npos) {
+  if (absl::StrContains(key, "んん") || absl::StrContains(key, "っっ")) {
     return 0;
   }
   // add 3000 to the original word cost

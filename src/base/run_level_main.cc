@@ -31,12 +31,12 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/run_level.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, server, false, "server mode");
-MOZC_FLAG(bool, client, false, "client mode");
+ABSL_FLAG(bool, server, false, "server mode");
+ABSL_FLAG(bool, client, false, "client mode");
 
 // This is a simple command line tool
 // too check RunLevel class
@@ -45,9 +45,9 @@ int main(int argc, char **argv) {
 
   mozc::RunLevel::RequestType type = mozc::RunLevel::SERVER;
 
-  if (mozc::GetFlag(FLAGS_client)) {
+  if (absl::GetFlag(FLAGS_client)) {
     type = mozc::RunLevel::CLIENT;
-  } else if (mozc::GetFlag(FLAGS_server)) {
+  } else if (absl::GetFlag(FLAGS_server)) {
     type = mozc::RunLevel::SERVER;
   }
 

@@ -36,7 +36,7 @@
 namespace mozc {
 namespace internal {
 
-// Note that this implemenation is kept just for the backward compatibility
+// Note that this implementation is kept just for the backward compatibility
 // so that we can read previously obfuscated data.
 // !!! Not FIPS-certified.
 // !!! Performance optimization is not well considered.

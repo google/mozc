@@ -596,9 +596,9 @@ cc_test_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -625,7 +625,6 @@ cc_binary_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:number_util",
@@ -641,6 +640,7 @@ cc_binary_mozc(
         "//protocol:config_proto",
         "//request:conversion_request",
         "//session:request_test_util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -700,6 +700,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//protocol:config_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -788,11 +789,11 @@ cc_binary_mozc(
     deps = [
         ":quality_regression_util",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:util",
         "//engine:engine_factory",
         "//engine:engine_interface",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

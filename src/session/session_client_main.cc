@@ -33,7 +33,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -44,11 +43,12 @@
 #include "engine/engine_interface.h"
 #include "protocol/commands.pb.h"
 #include "session/session.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-MOZC_FLAG(string, input, "", "Input file");
-MOZC_FLAG(string, output, "", "Output file");
-MOZC_FLAG(string, profile_dir, "", "Profile dir");
+ABSL_FLAG(std::string, input, "", "Input file");
+ABSL_FLAG(std::string, output, "", "Output file");
+ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
 
 namespace mozc {
 
@@ -94,9 +94,9 @@ int main(int argc, char **argv) {
   std::istream *input = nullptr;
   std::ostream *output = nullptr;
 
-  const std::string flags_profile_dir = mozc::GetFlag(FLAGS_profile_dir);
-  const std::string flags_input = mozc::GetFlag(FLAGS_input);
-  const std::string flags_output = mozc::GetFlag(FLAGS_output);
+  const std::string flags_profile_dir = absl::GetFlag(FLAGS_profile_dir);
+  const std::string flags_input = absl::GetFlag(FLAGS_input);
+  const std::string flags_output = absl::GetFlag(FLAGS_output);
 
   if (!flags_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.

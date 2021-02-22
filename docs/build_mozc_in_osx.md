@@ -31,13 +31,13 @@ First, you'll need to generate Xcode project using a tool called [GYP](https://c
 
 ```
 cd ~/work/mozc/src
-GYP_DEFINES="mac_sdk=10.11 mac_deployment_target=10.9" python build_mozc.py gyp --noqt
+GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp --noqt
 ```
 
 You can customize the SDK version and target OS version here. Then, build Mozc.app and necessary files:
 
 ```
-python build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs
+python3 build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs
 ```
 
 # Executables
@@ -49,7 +49,7 @@ Executables are written in `~/work/mozc/src/out_mac/Release` for Release builds,
 To build GUI tools, you need to specify --qtdir instead of --noqt.
 
 ```
-GYP_DEFINES="mac_sdk=10.11 mac_deployment_target=10.9" python build_mozc.py gyp --qtdir ~/myqt
+GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp --qtdir ~/myqt
 ```
 
 In the above case, `~/myqt` should contain Qt's sources, headers and libraries built from `configure` and `make`.
@@ -57,7 +57,7 @@ In the above case, `~/myqt` should contain Qt's sources, headers and libraries b
 Then you can build `executable`s defined in `gui/gui.gyp`.  Here is an example to build the config dialog.
 
 ```
-python build_mozc.py build -c Release gui/gui.gyp:config_dialog_main
+python3 build_mozc.py build -c Release gui/gui.gyp:config_dialog_main
 ```
 
 These executables are linked with the libraries in `~/myqt`.  You might want to change it with `install_name_tool`.
@@ -68,7 +68,7 @@ These executables are linked with the libraries in `~/myqt`.  You might want to 
 To clean up the tree, execute the following. This will remove executables and intermediate files like object files, generated source files, project files, etc.
 
 ```
-python build_mozc.py clean
+python3 build_mozc.py clean
 ```
 
 # Install built packages

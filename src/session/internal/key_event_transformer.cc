@@ -157,7 +157,7 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   }
 
   // All key event except for KeyEvent::SEPARATOR should have key code
-  // and it's value should represent a ASCII character since it is generated
+  // and its value should represent a ASCII character since it is generated
   // from numpad key.
   DCHECK(key_event->has_key_code());
   const uint32 key_code = key_event->key_code();

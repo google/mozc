@@ -36,7 +36,6 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
@@ -56,24 +55,25 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(int32, max_conversion_candidates_size, 200,
+ABSL_FLAG(int32, max_conversion_candidates_size, 200,
           "maximum candidates size");
-MOZC_FLAG(string, user_profile_dir, "", "path to user profile directory");
-MOZC_FLAG(string, engine_name, "default",
+ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
+ABSL_FLAG(std::string, engine_name, "default",
           "Shortcut to select engine_data_path from name: (default|oss|mock)");
-MOZC_FLAG(string, engine_type, "desktop", "Engine type: (desktop|mobile)");
-MOZC_FLAG(bool, output_debug_string, true,
+ABSL_FLAG(std::string, engine_type, "desktop", "Engine type: (desktop|mobile)");
+ABSL_FLAG(bool, output_debug_string, true,
           "output debug string for each input");
-MOZC_FLAG(bool, show_meta_candidates, false, "if true, show meta candidates");
+ABSL_FLAG(bool, show_meta_candidates, false, "if true, show meta candidates");
 
 // Advanced options for data files.  These are automatically set when --engine
 // is used but they can be overridden by specifying these flags.
-MOZC_FLAG(string, engine_data_path, "",
+ABSL_FLAG(std::string, engine_data_path, "",
           "Path to engine data file. This overrides the default data path "
           "for engine_name.");
-MOZC_FLAG(string, magic, "", "Expected magic number of data file");
-MOZC_FLAG(string, id_def, "",
+ABSL_FLAG(std::string, magic, "", "Expected magic number of data file");
+ABSL_FLAG(std::string, id_def, "",
           "id.def file for POS IDs. If provided, show human readable "
           "POS instead of ID number");
 
@@ -93,7 +93,7 @@ class PosIdPrintUtil {
 
  private:
   PosIdPrintUtil()
-      : pos_id_(new InputFileStream(mozc::GetFlag(FLAGS_id_def).c_str())),
+      : pos_id_(new InputFileStream(absl::GetFlag(FLAGS_id_def).c_str())),
         pos_id_printer_(new internal::PosIdPrinter(pos_id_.get())) {}
 
   std::string IdToStringInternal(int id) const {
@@ -238,7 +238,7 @@ void PrintSegment(size_t num, size_t segments_size, const Segment &segment,
         << SegmentTypeToString(segment.segment_type()) << "] ----------"
         << std::endl
         << segment.key() << std::endl;
-  if (mozc::GetFlag(FLAGS_show_meta_candidates)) {
+  if (absl::GetFlag(FLAGS_show_meta_candidates)) {
     for (int i = 0; i < segment.meta_candidates_size(); ++i) {
       PrintCandidate(segment, -i - 1, segment.meta_candidate(i), os);
     }
@@ -271,7 +271,7 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
   const Config config;
 
   segments->set_max_conversion_candidates_size(
-      mozc::GetFlag(FLAGS_max_conversion_candidates_size));
+      absl::GetFlag(FLAGS_max_conversion_candidates_size));
 
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
@@ -441,56 +441,56 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (!mozc::GetFlag(FLAGS_user_profile_dir).empty()) {
+  if (!absl::GetFlag(FLAGS_user_profile_dir).empty()) {
     mozc::SystemUtil::SetUserProfileDirectory(
-        mozc::GetFlag(FLAGS_user_profile_dir));
+        absl::GetFlag(FLAGS_user_profile_dir));
   }
 
   std::string mozc_runfiles_dir = ".";
-  if (mozc::GetFlag(FLAGS_engine_data_path).empty()) {
+  if (absl::GetFlag(FLAGS_engine_data_path).empty()) {
     const auto path_and_magic = mozc::SelectDataFileFromName(
-        mozc_runfiles_dir, mozc::GetFlag(FLAGS_engine_name));
-    mozc::SetFlag(&FLAGS_engine_data_path, path_and_magic.first);
-    mozc::SetFlag(&FLAGS_magic, path_and_magic.second);
+        mozc_runfiles_dir, absl::GetFlag(FLAGS_engine_name));
+    absl::SetFlag(&FLAGS_engine_data_path, path_and_magic.first);
+    absl::SetFlag(&FLAGS_magic, path_and_magic.second);
   }
-  CHECK(!mozc::GetFlag(FLAGS_engine_data_path).empty())
+  CHECK(!absl::GetFlag(FLAGS_engine_data_path).empty())
       << "--engine_data_path or --engine is invalid: "
-      << "--engine_data_path=" << mozc::GetFlag(FLAGS_engine_data_path) << " "
-      << "--engine_name=" << mozc::GetFlag(FLAGS_engine_name);
+      << "--engine_data_path=" << absl::GetFlag(FLAGS_engine_data_path) << " "
+      << "--engine_name=" << absl::GetFlag(FLAGS_engine_name);
 
-  if (mozc::GetFlag(FLAGS_id_def).empty()) {
-    mozc::SetFlag(&FLAGS_id_def,
+  if (absl::GetFlag(FLAGS_id_def).empty()) {
+    absl::SetFlag(&FLAGS_id_def,
                   mozc::SelectIdDefFromName(mozc_runfiles_dir,
-                                            mozc::GetFlag(FLAGS_engine_name)));
+                                            absl::GetFlag(FLAGS_engine_name)));
   }
 
-  std::cout << "Engine type: " << mozc::GetFlag(FLAGS_engine_type)
-            << "\nData file: " << mozc::GetFlag(FLAGS_engine_data_path)
-            << "\nid.def: " << mozc::GetFlag(FLAGS_id_def) << std::endl;
+  std::cout << "Engine type: " << absl::GetFlag(FLAGS_engine_type)
+            << "\nData file: " << absl::GetFlag(FLAGS_engine_data_path)
+            << "\nid.def: " << absl::GetFlag(FLAGS_id_def) << std::endl;
 
   std::unique_ptr<mozc::DataManager> data_manager(new mozc::DataManager);
   const auto status = data_manager->InitFromFile(
-      mozc::GetFlag(FLAGS_engine_data_path), mozc::GetFlag(FLAGS_magic));
+      absl::GetFlag(FLAGS_engine_data_path), absl::GetFlag(FLAGS_magic));
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;
-  if (mozc::GetFlag(FLAGS_engine_type) == "desktop") {
+  if (absl::GetFlag(FLAGS_engine_type) == "desktop") {
     engine = mozc::Engine::CreateDesktopEngine(std::move(data_manager)).value();
-  } else if (mozc::GetFlag(FLAGS_engine_type) == "mobile") {
+  } else if (absl::GetFlag(FLAGS_engine_type) == "mobile") {
     engine = mozc::Engine::CreateMobileEngine(std::move(data_manager)).value();
     mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
   } else {
     LOG(FATAL) << "Invalid type: --engine_type="
-               << mozc::GetFlag(FLAGS_engine_type);
+               << absl::GetFlag(FLAGS_engine_type);
     return 0;
   }
 
   mozc::ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
-  if (!mozc::IsConsistentEngineNameAndType(mozc::GetFlag(FLAGS_engine_name),
-                                           mozc::GetFlag(FLAGS_engine_type))) {
+  if (!mozc::IsConsistentEngineNameAndType(absl::GetFlag(FLAGS_engine_name),
+                                           absl::GetFlag(FLAGS_engine_type))) {
     LOG(WARNING) << "Engine name and type do not match.";
   }
 
@@ -499,7 +499,7 @@ int main(int argc, char **argv) {
 
   while (!std::getline(std::cin, line).fail()) {
     if (mozc::ExecCommand(*converter, &segments, line, request)) {
-      if (mozc::GetFlag(FLAGS_output_debug_string)) {
+      if (absl::GetFlag(FLAGS_output_debug_string)) {
         mozc::PrintSegments(segments, &std::cout);
       }
     } else {

@@ -34,13 +34,13 @@
 #endif  // OS_WIN
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
+#include "absl/flags/flag.h"
 
 namespace {
 
@@ -61,7 +61,7 @@ class UserDictionarySessionTest : public ::testing::Test {
  protected:
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     FileUtil::Unlink(GetUserDictionaryFile());
   }
 
@@ -72,9 +72,9 @@ class UserDictionarySessionTest : public ::testing::Test {
 
   static std::string GetUserDictionaryFile() {
 #ifndef OS_WIN
-    chmod(mozc::GetFlag(FLAGS_test_tmpdir).c_str(), 0777);
+    chmod(absl::GetFlag(FLAGS_test_tmpdir).c_str(), 0777);
 #endif  // OS_WIN
-    return FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "test.db");
+    return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
   void ResetEntry(const std::string &key, const std::string &value,
@@ -217,7 +217,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionary) {
   EXPECT_EQ(kDummyId, session.storage().dictionaries(0).id());
 }
 
-TEST_F(UserDictionarySessionTest, DeleteDictionaryWithEnsuringNonEmptyStroage) {
+TEST_F(UserDictionarySessionTest, DeleteDictionaryWithEnsuringNonEmptyStorage) {
   UserDictionarySession session(GetUserDictionaryFile());
   session.SetDefaultDictionaryName("abcde");
 

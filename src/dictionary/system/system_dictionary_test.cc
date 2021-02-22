@@ -38,7 +38,6 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/stl_util.h"
@@ -58,13 +57,15 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(int32, dictionary_test_size, 100000,
+ABSL_FLAG(int32, dictionary_test_size, 100000,
           "Dictionary size for this test.");
-MOZC_FLAG(int32, dictionary_reverse_lookup_test_size, 1000,
+ABSL_FLAG(int32, dictionary_reverse_lookup_test_size, 1000,
           "Number of tokens to run reverse lookup test.");
-MOZC_DECLARE_FLAG(int32, min_key_length_to_use_small_cost_encoding);
+ABSL_DECLARE_FLAG(int32, min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
@@ -75,11 +76,11 @@ class SystemDictionaryTest : public ::testing::Test {
       : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
         text_dict_(new TextDictionaryLoader(pos_matcher_)),
         dic_fn_(
-            FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
+            FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
     const std::string dic_path = mozc::testing::GetSourceFileOrDie(
         {"data", "dictionary_oss", "dictionary00.txt"});
     text_dict_->LoadWithLineLimit(dic_path, "",
-                                  mozc::GetFlag(FLAGS_dictionary_test_size));
+                                  absl::GetFlag(FLAGS_dictionary_test_size));
 
     convreq_.set_request(&request_);
     convreq_.set_config(&config_);
@@ -88,8 +89,8 @@ class SystemDictionaryTest : public ::testing::Test {
   void SetUp() override {
     // Don't use small cost encoding by default.
     original_flags_min_key_length_to_use_small_cost_encoding_ =
-        mozc::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding);
-    mozc::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
+        absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding);
+    absl::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
                   std::numeric_limits<int32>::max());
 
     request_.Clear();
@@ -97,7 +98,7 @@ class SystemDictionaryTest : public ::testing::Test {
   }
 
   void TearDown() override {
-    mozc::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
+    absl::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
                   original_flags_min_key_length_to_use_small_cost_encoding_);
 
     // This config initialization will be removed once ConversionRequest can
@@ -265,7 +266,7 @@ TEST_F(SystemDictionaryTest, NormalWord) {
   t0->rid = 70;
   source_tokens.push_back(t0.get());
   BuildSystemDictionary(source_tokens,
-                        mozc::GetFlag(FLAGS_dictionary_test_size));
+                        absl::GetFlag(FLAGS_dictionary_test_size));
 
   std::unique_ptr<SystemDictionary> system_dic =
       SystemDictionary::Builder(dic_fn_).Build().value();
@@ -322,7 +323,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
     source_tokens.push_back(&tokens[i]);
   }
   BuildSystemDictionary(source_tokens,
-                        mozc::GetFlag(FLAGS_dictionary_test_size));
+                        absl::GetFlag(FLAGS_dictionary_test_size));
 
   std::unique_ptr<SystemDictionary> system_dic =
       SystemDictionary::Builder(dic_fn_).Build().value();
@@ -337,7 +338,7 @@ TEST_F(SystemDictionaryTest, SameWord) {
 TEST_F(SystemDictionaryTest, LookupAllWords) {
   const std::vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens,
-                        mozc::GetFlag(FLAGS_dictionary_test_size));
+                        absl::GetFlag(FLAGS_dictionary_test_size));
 
   std::unique_ptr<SystemDictionary> system_dic =
       SystemDictionary::Builder(dic_fn_).Build().value();
@@ -708,7 +709,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
   ASSERT_TRUE(system_dic) << "Failed to open dictionary source:" << dic_fn_;
   const size_t test_size =
       std::min(static_cast<size_t>(
-                   mozc::GetFlag(FLAGS_dictionary_reverse_lookup_test_size)),
+                   absl::GetFlag(FLAGS_dictionary_reverse_lookup_test_size)),
                source_tokens.size());
   for (size_t source_index = 0; source_index < test_size; ++source_index) {
     const Token &source_token = *source_tokens[source_index];
@@ -767,7 +768,7 @@ TEST_F(SystemDictionaryTest, LookupReverse) {
 TEST_F(SystemDictionaryTest, LookupReverseIndex) {
   const std::vector<Token *> &source_tokens = text_dict_->tokens();
   BuildSystemDictionary(source_tokens,
-                        mozc::GetFlag(FLAGS_dictionary_test_size));
+                        absl::GetFlag(FLAGS_dictionary_test_size));
 
   std::unique_ptr<SystemDictionary> system_dic_without_index =
       SystemDictionary::Builder(dic_fn_)
@@ -785,7 +786,7 @@ TEST_F(SystemDictionaryTest, LookupReverseIndex) {
       << "Failed to open dictionary source:" << dic_fn_;
 
   std::vector<Token *>::const_iterator it;
-  int size = mozc::GetFlag(FLAGS_dictionary_reverse_lookup_test_size);
+  int size = absl::GetFlag(FLAGS_dictionary_reverse_lookup_test_size);
   for (it = source_tokens.begin(); size > 0 && it != source_tokens.end();
        ++it, --size) {
     const Token &t = **it;

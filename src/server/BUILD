@@ -64,7 +64,6 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:crash_report_handler",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -85,7 +84,6 @@ cc_binary_mozc(
     srcs = ["mozc_rpc_server_main.cc"],
     deps = [
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:singleton",
         "//base:system_util",

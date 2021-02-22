@@ -30,5 +30,11 @@
 
 exports_files([
     "candidate_window_logo.tiff",
+    "direct.tiff",
+    "full_ascii.tiff",
+    "full_katakana.tiff",
+    "half_ascii.tiff",
+    "half_katakana.tiff",
+    "hiragana.tiff",
     "product_icon.icns",
 ])

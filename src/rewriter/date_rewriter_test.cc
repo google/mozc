@@ -269,7 +269,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
                                      "4月18日",
                                      "月曜日"};
 
-    // If initial count of candidate is 1, date rewrited candidate start from 1.
+    // If initial count of candidate is 1, date rewrote candidate start from 1.
     // "きょう", "今日"
     InitSegment("きょう", "今日", &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
@@ -282,7 +282,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     }
 
     // If initial count of candidate is 5 and target candidate is located at
-    // index 4, date rewrited candidate start from 5.
+    // index 4, date rewrote candidate start from 5.
     // "きょう", "今日"
     InitSegment("きょう", "今日", &segments);
 
@@ -303,7 +303,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     }
 
     // If initial count of candidate is 5 and target candidate is located at
-    // index 0, date rewrited candidate start from kMinimumDateCandidateIdx.
+    // index 0, date rewrote candidate start from kMinimumDateCandidateIdx.
     // "きょう", "今日"
     InitSegment("きょう", "今日", &segments);
 

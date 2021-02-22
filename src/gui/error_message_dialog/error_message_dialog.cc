@@ -34,10 +34,10 @@
 #include <QtWidgets/QAbstractButton>
 #include <QtWidgets/QMessageBox>
 
-#include "base/flags.h"
 #include "gui/base/util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, error_type, "", "type of error");
+ABSL_FLAG(std::string, error_type, "", "type of error");
 
 namespace mozc {
 namespace gui {
@@ -82,36 +82,36 @@ void DeleyedMessageDialogHandler::EnableOkButton() {
 void ErrorMessageDialog::Show() {
   // defining all literal messages inside Show() method
   // for easy i18n/i10n
-  if (mozc::GetFlag(FLAGS_error_type) == "server_timeout") {
+  if (absl::GetFlag(FLAGS_error_type) == "server_timeout") {
     OnFatal(
         QObject::tr("Conversion engine is not responding. "
                     "Please restart this application."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "server_broken_message") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "server_broken_message") {
     OnFatal(QObject::tr(
         "Connecting to an incompatible conversion engine. "
         "Please restart your computer to enable [ProductName]. "
         "If this problem persists, please uninstall [ProductName] "
         "and install it again."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "server_version_mismatch") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "server_version_mismatch") {
     OnFatal(QObject::tr(
         "Conversion engine has been upgraded. "
         "Please restart this application to enable conversion engine. "
         "If the problem persists, please restart your computer."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "server_shutdown") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "server_shutdown") {
     OnFatal(
         QObject::tr("Conversion engine is killed unexceptionally. "
                     "Restarting the engine..."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "server_fatal") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "server_fatal") {
     OnFatal(
         QObject::tr("Cannot start conversion engine. "
                     "Please restart your computer."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "renderer_version_mismatch") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "renderer_version_mismatch") {
     OnFatal(
         QObject::tr("Candidate window renderer has been upgraded. "
                     "Please restart this application to enable new candidate "
                     "window renderer. "
                     "If the problem persists, please restart your computer."));
-  } else if (mozc::GetFlag(FLAGS_error_type) == "renderer_fatal") {
+  } else if (absl::GetFlag(FLAGS_error_type) == "renderer_fatal") {
     OnFatal(
         QObject::tr("Cannot start candidate window renderer. "
                     "Please restart your computer."));

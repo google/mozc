@@ -99,9 +99,9 @@ struct CompositionString {
   FRIEND_TEST(ImeCompositionStringTest,
               EndCompositionWhenCompositionBecomesEmpty);
   FRIEND_TEST(ImeCompositionStringTest,
-              EndCompositionWhenCompositionIsCommited);
+              EndCompositionWhenCompositionIsCommitted);
   FRIEND_TEST(ImeCompositionStringTest,
-              EndCompositionWhenCompositionIsCommitedWithPreedit);
+              EndCompositionWhenCompositionIsCommittedWithPreedit);
   FRIEND_TEST(ImeCompositionStringTest, SpaceKeyWhenIMEIsTurnedOn_Issue3200585);
   FRIEND_TEST(ImeCompositionStringTest, Suggest);
   FRIEND_TEST(ImeCompositionStringTest, Predict);

@@ -56,11 +56,9 @@ const unsigned char kPrelauncherPath[] =
 #endif  // OS_IOS
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-const char kProjectPrefix[] =
-    "com.google.inputmethod.Japanese.";
+const char kProjectPrefix[] = "com.google.inputmethod.Japanese.";
 #elif defined(MOZC_BUILD)
-const char kProjectPrefix[] =
-    "org.mozc.inputmethod.Japanese.";
+const char kProjectPrefix[] = "org.mozc.inputmethod.Japanese.";
 #else
 #error Unknown branding
 #endif
@@ -125,8 +123,8 @@ LSSharedFileListItemRef GetPrelauncherLoginItem() {
 }
 #endif  // OS_IOS
 
-string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
-  string dir;
+std::string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
+  std::string dir;
   @autoreleasepool {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(
         directory, NSUserDomainMask, YES);
@@ -139,20 +137,20 @@ string GetSearchPathForDirectoriesInDomains(NSSearchPathDirectory directory) {
 
 }  // namespace
 
-string MacUtil::GetLabelForSuffix(const string &suffix) {
-  return string(kProjectPrefix) + suffix;
+std::string MacUtil::GetLabelForSuffix(const std::string &suffix) {
+  return std::string(kProjectPrefix) + suffix;
 }
 
-string MacUtil::GetApplicationSupportDirectory() {
+std::string MacUtil::GetApplicationSupportDirectory() {
   return GetSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory);
 }
 
-string MacUtil::GetCachesDirectory() {
+std::string MacUtil::GetCachesDirectory() {
   return GetSearchPathForDirectoriesInDomains(NSCachesDirectory);
 }
 
-string MacUtil::GetLoggingDirectory() {
-  string dir;
+std::string MacUtil::GetLoggingDirectory() {
+  std::string dir;
   @autoreleasepool {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(
         NSLibraryDirectory, NSUserDomainMask, YES);
@@ -166,8 +164,8 @@ string MacUtil::GetLoggingDirectory() {
   return dir;
 }
 
-string MacUtil::GetOSVersionString() {
-  string version;
+std::string MacUtil::GetOSVersionString() {
+  std::string version;
   @autoreleasepool {
     version.assign([[[NSProcessInfo processInfo] operatingSystemVersionString]
                     cStringUsingEncoding:NSUTF8StringEncoding]);
@@ -175,12 +173,12 @@ string MacUtil::GetOSVersionString() {
   return version;
 }
 
-string MacUtil::GetServerDirectory() {
+std::string MacUtil::GetServerDirectory() {
   return kServerDirectory;
 }
 
-string MacUtil::GetResourcesDirectory() {
-  string result;
+std::string MacUtil::GetResourcesDirectory() {
+  std::string result;
   @autoreleasepool {
     NSBundle *mainBundle = [NSBundle mainBundle];
     if (mainBundle) {
@@ -194,8 +192,8 @@ string MacUtil::GetResourcesDirectory() {
 }
 
 #ifdef OS_IOS
-string MacUtil::GetSerialNumber() {
-  string result;
+std::string MacUtil::GetSerialNumber() {
+  std::string result;
   NSString *const kSerialNumberNSString =
       [[UIDevice currentDevice].identifierForVendor UUIDString];
   if (kSerialNumberNSString != nil) {
@@ -204,10 +202,10 @@ string MacUtil::GetSerialNumber() {
   return result;
 }
 #else
-string MacUtil::GetSerialNumber() {
+std::string MacUtil::GetSerialNumber() {
   // Please refer to TN1103 for the details
   // http://developer.apple.com/library/mac/#technotes/tn/tn1103.html
-  string result;
+  std::string result;
   io_service_t platformExpert = IOServiceGetMatchingService(
       kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
 
@@ -228,13 +226,13 @@ string MacUtil::GetSerialNumber() {
   return result;
 }
 
-bool MacUtil::StartLaunchdService(const string &service_name,
+bool MacUtil::StartLaunchdService(const std::string &service_name,
                                   pid_t *pid) {
   int dummy_pid = 0;
   if (pid == nullptr) {
     pid = &dummy_pid;
   }
-  const string label = GetLabelForSuffix(service_name);
+  const std::string label = GetLabelForSuffix(service_name);
 
   launch_data_t start_renderer_command =
       launch_data_alloc(LAUNCH_DATA_DICTIONARY);
@@ -332,7 +330,7 @@ void MacUtil::AddPrelauncherLoginItem() {
   }
 }
 
-bool MacUtil::GetFrontmostWindowNameAndOwner(string *name, string *owner) {
+bool MacUtil::GetFrontmostWindowNameAndOwner(std::string *name, std::string *owner) {
   DCHECK(name);
   DCHECK(owner);
   scoped_cftyperef<CFArrayRef> window_list(
@@ -375,19 +373,16 @@ bool MacUtil::GetFrontmostWindowNameAndOwner(string *name, string *owner) {
   return false;
 }
 
-bool MacUtil::IsSuppressSuggestionWindow(const string &name,
-                                         const string &owner) {
+bool MacUtil::IsSuppressSuggestionWindow(const std::string &name,
+                                         const std::string &owner) {
   // TODO(horo): Make a function to check the name, then share it with the
   //             Windows client.
   // Currently we don't support "Firefox", because in Firefox "activateServer:"
   // of IMKStateSetting Protocol is not called when the user changes the
   // browsing tab.
-  return (("Google Chrome" == owner) ||
-          ("Safari" == owner)) &&
+  return (("Google Chrome" == owner) || ("Safari" == owner)) &&
          (("Google" == name) ||
-          absl::EndsWith(
-              name,
-              " - Google \xE6\xA4\x9C\xE7\xB4\xA2") ||  // " - Google 検索"
+          absl::EndsWith(name, " - Google 検索") ||
           absl::EndsWith(name, " - Google Search"));
 }
 #endif  // OS_IOS

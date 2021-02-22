@@ -102,7 +102,7 @@ struct CompositionState {
     INSERT_ALTERNATE_SPACE,
     INSERT_HALF_SPACE,   // Input half-width space
     INSERT_FULL_SPACE,   // Input full-width space
-    CANCEL,              // Move to Precomposition stauts.
+    CANCEL,              // Move to Precomposition status.
     CANCEL_AND_IME_OFF,  // Cancel composition and turn off IME
     UNDO,
     MOVE_CURSOR_LEFT,

@@ -40,6 +40,7 @@
 #include "base/protobuf/descriptor.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_format.h"
 

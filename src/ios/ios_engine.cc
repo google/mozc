@@ -33,7 +33,6 @@
 #include <string>
 #include <utility>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "config/config_handler.h"
@@ -46,6 +45,7 @@
 #include "session/session.h"
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace ios {
@@ -169,7 +169,7 @@ IosEngine::InputConfigTuple IosEngine::GetInputConfigTupleFromLayoutName(
 void IosEngine::InitMozc() {
   // Output logs to stderr so that they are displayed in XCode's console.
   // This must be set before Logging::InitLogStream().
-  mozc::SetFlag(&FLAGS_logtostderr, true);
+  absl::SetFlag(&FLAGS_logtostderr, true);
   Logging::InitLogStream("MOZC_IOS_ENGINE");
 }
 

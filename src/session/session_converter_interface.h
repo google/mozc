@@ -192,9 +192,9 @@ class SessionConverterInterface {
 
   // Commit prefix of the preedit string represented by Composer.
   // The caller should delete characters from composer based on returned
-  // |commited_size|.
+  // |committed_size|.
   virtual void CommitHead(size_t count, const composer::Composer &composer,
-                          size_t *commited_size) = 0;
+                          size_t *committed_size) = 0;
 
   // Revert the last "Commit" operation
   virtual void Revert() = 0;

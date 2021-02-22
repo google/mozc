@@ -142,6 +142,7 @@ cc_library_mozc(
         "//base:version",
         "//composer",
         "//converter:segments",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
     ],
 )
@@ -187,13 +188,13 @@ cc_test_mozc(
         ":keymap",
         ":keymap_factory",
         "//base:config_file_stream",
-        "//base:flags",
         "//base:system_util",
         "//composer:key_parser",
         "//config:config_handler",
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -252,6 +253,7 @@ cc_test_mozc(
         "//base:text_normalizer",
         "//base:util",
         "//converter:segments",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
         "//testing:gunit_main",
     ],

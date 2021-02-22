@@ -47,6 +47,7 @@
 #include "engine/engine_factory.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/user_history_predictor.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/request_test_util.h"
@@ -57,30 +58,28 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-
-using mozc::commands::CandidateList;
-using mozc::commands::CandidateWord;
-using mozc::commands::CompositionMode;
-using mozc::commands::Input;
-using mozc::commands::KeyEvent;
-using mozc::commands::Output;
-using mozc::commands::Request;
-using mozc::commands::RequestForUnitTest;
-using mozc::config::CharacterFormManager;
-using mozc::config::Config;
-using mozc::config::ConfigHandler;
-using mozc::protobuf::FieldDescriptor;
-using mozc::protobuf::Message;
-using mozc::protobuf::TextFormat;
-using mozc::session::SessionHandlerTool;
 
 namespace mozc {
 namespace session {
 
+using commands::CandidateList;
+using commands::CandidateWord;
 using commands::Command;
+using commands::CompositionMode;
+using commands::Input;
+using commands::KeyEvent;
+using commands::Output;
+using commands::Request;
+using commands::RequestForUnitTest;
 using config::CharacterFormManager;
+using config::Config;
 using config::ConfigHandler;
+using protobuf::FieldDescriptor;
+using protobuf::Message;
+using protobuf::TextFormat;
+using session::SessionHandlerTool;
 
 bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   Command command;
@@ -434,6 +433,28 @@ bool ParseProtobufFromString(const std::string &text, Message *message) {
   return SetOrAddFieldValueFromString(names[names.size() - 1], value, msg);
 }
 
+std::vector<std::string> SessionHandlerInterpreter::Parse(
+    const std::string &line) {
+  std::vector<std::string> args;
+  if (line.empty() || line.front() == '#') {
+    return args;
+  }
+  std::vector<absl::string_view> columns = absl::StrSplit(line, '\t');
+  for (absl::string_view column : columns) {
+    if (column.empty()) {
+      args.push_back("");
+      continue;
+    }
+    // If the first and last characters are doublequotes, trim them.
+    if (column.size() > 1 && column.front() == '"' && column.back() == '"') {
+      column.remove_prefix(1);
+      column.remove_suffix(1);
+    }
+    args.push_back(std::string(column));
+  }
+  return args;
+}
+
 #define MOZC_ASSERT_EQ_MSG(expected, actual, message)  \
   if (expected != actual) {                            \
     return mozc::InvalidArgumentError(message);        \
@@ -451,26 +472,23 @@ bool ParseProtobufFromString(const std::string &text, Message *message) {
     return mozc::InvalidArgumentError("");  \
   }
 
-Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
-  if (line_text.empty() || line_text[0] == '#') {
-    // Skip an empty or comment line.
+Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
+  if (args.empty()) {
+    // Skip empty args
     return Status();
   }
 
   SyncDataToStorage();
 
-  std::vector<std::string> columns;
-  Util::SplitStringUsing(line_text, "\t", &columns);
-  MOZC_ASSERT_TRUE(!columns.empty());
-  const std::string &command = columns[0];
+  const std::string &command = args[0];
   // TODO(hidehiko): Refactor out about each command when the number of
   //   supported commands is increased.
   if (command == "RESET_CONTEXT") {
-    MOZC_ASSERT_EQ(1, columns.size());
+    MOZC_ASSERT_EQ(1, args.size());
     ResetContext();
   } else if (command == "SEND_KEYS") {
-    MOZC_ASSERT_EQ(2, columns.size());
-    const std::string &keys = columns[1];
+    MOZC_ASSERT_EQ(2, args.size());
+    const std::string &keys = args[1];
     KeyEvent key_event;
     for (size_t i = 0; i < keys.size(); ++i) {
       key_event.Clear();
@@ -480,11 +498,11 @@ Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
     }
   } else if (command == "SEND_KANA_KEYS") {
     MOZC_ASSERT_TRUE_MSG(
-        columns.size() >= 3,
-        absl::StrCat("SEND_KEY requires more than or equal to two columns ",
-                     line_text));
-    const std::string &keys = columns[1];
-    const std::string &kanas = columns[2];
+        args.size() >= 3,
+        absl::StrCat("SEND_KEY requires more than or equal to two args ",
+                     absl::StrJoin(args, "\t")));
+    const std::string &keys = args[1];
+    const std::string &kanas = args[2];
     MOZC_ASSERT_EQ_MSG(
         keys.size(), Util::CharsLen(kanas),
         "1st and 2nd column must have the same number of characters.");
@@ -493,65 +511,66 @@ Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
       key_event.Clear();
       key_event.set_key_code(keys[i]);
       key_event.set_key_string(std::string(Util::Utf8SubString(kanas, i, 1)));
-      MOZC_ASSERT_TRUE_MSG(client_->SendKey(key_event, last_output_.get()),
-                           absl::StrCat("Failed at ", i, "th ", line_text));
+      MOZC_ASSERT_TRUE_MSG(
+          client_->SendKey(key_event, last_output_.get()),
+          absl::StrCat("Failed at ", i, "th ", absl::StrJoin(args, "\t")));
     }
   } else if (command == "SEND_KEY") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     KeyEvent key_event;
-    MOZC_ASSERT_TRUE(KeyParser::ParseKey(columns[1], &key_event));
+    MOZC_ASSERT_TRUE(KeyParser::ParseKey(args[1], &key_event));
     MOZC_ASSERT_TRUE(client_->SendKey(key_event, last_output_.get()));
   } else if (command == "SEND_KEY_WITH_OPTION") {
-    MOZC_ASSERT_TRUE(columns.size() >= 3);
+    MOZC_ASSERT_TRUE(args.size() >= 3);
     KeyEvent key_event;
-    MOZC_ASSERT_TRUE(KeyParser::ParseKey(columns[1], &key_event));
+    MOZC_ASSERT_TRUE(KeyParser::ParseKey(args[1], &key_event));
     Input option;
-    for (size_t i = 2; i < columns.size(); ++i) {
-      MOZC_ASSERT_TRUE(ParseProtobufFromString(columns[i], &option));
+    for (size_t i = 2; i < args.size(); ++i) {
+      MOZC_ASSERT_TRUE(ParseProtobufFromString(args[i], &option));
     }
     MOZC_ASSERT_TRUE(
         client_->SendKeyWithOption(key_event, option, last_output_.get()));
   } else if (command == "TEST_SEND_KEY") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     KeyEvent key_event;
-    MOZC_ASSERT_TRUE(KeyParser::ParseKey(columns[1], &key_event));
+    MOZC_ASSERT_TRUE(KeyParser::ParseKey(args[1], &key_event));
     MOZC_ASSERT_TRUE(client_->TestSendKey(key_event, last_output_.get()));
   } else if (command == "TEST_SEND_KEY_WITH_OPTION") {
-    MOZC_ASSERT_TRUE(columns.size() >= 3);
+    MOZC_ASSERT_TRUE(args.size() >= 3);
     KeyEvent key_event;
-    MOZC_ASSERT_TRUE(KeyParser::ParseKey(columns[1], &key_event));
+    MOZC_ASSERT_TRUE(KeyParser::ParseKey(args[1], &key_event));
     Input option;
-    for (size_t i = 2; i < columns.size(); ++i) {
-      MOZC_ASSERT_TRUE(ParseProtobufFromString(columns[i], &option));
+    for (size_t i = 2; i < args.size(); ++i) {
+      MOZC_ASSERT_TRUE(ParseProtobufFromString(args[i], &option));
     }
     MOZC_ASSERT_TRUE(client_->TestSendKeyWithOption(key_event, option,
                                                     last_output_.get()));
   } else if (command == "SELECT_CANDIDATE") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     MOZC_ASSERT_TRUE(client_->SelectCandidate(
-        NumberUtil::SimpleAtoi(columns[1]), last_output_.get()));
+        NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
   } else if (command == "SELECT_CANDIDATE_BY_VALUE") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     uint32 id;
-    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], &id));
+    MOZC_ASSERT_TRUE(GetCandidateIdByValue(args[1], &id));
     MOZC_ASSERT_TRUE(client_->SelectCandidate(id, last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(
-        NumberUtil::SimpleAtoi(columns[1]), last_output_.get()));
+        NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE_BY_VALUE") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     uint32 id;
-    MOZC_ASSERT_TRUE(GetCandidateIdByValue(columns[1], &id));
+    MOZC_ASSERT_TRUE(GetCandidateIdByValue(args[1], &id));
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(id, last_output_.get()));
   } else if (command == "EXPAND_SUGGESTION") {
     MOZC_ASSERT_TRUE(client_->ExpandSuggestion(last_output_.get()));
   } else if (command == "UNDO_OR_REWIND") {
     MOZC_ASSERT_TRUE(client_->UndoOrRewind(last_output_.get()));
   } else if (command == "SWITCH_INPUT_MODE") {
-    MOZC_ASSERT_EQ(2, columns.size());
+    MOZC_ASSERT_EQ(2, args.size());
     CompositionMode composition_mode;
-    MOZC_ASSERT_TRUE_MSG(CompositionMode_Parse(columns[1], &composition_mode),
+    MOZC_ASSERT_TRUE_MSG(CompositionMode_Parse(args[1], &composition_mode),
                          "Unknown CompositionMode");
     MOZC_ASSERT_TRUE(client_->SwitchInputMode(composition_mode));
   } else if (command == "SET_DEFAULT_REQUEST") {
@@ -561,39 +580,39 @@ Status SessionHandlerInterpreter::ParseLine(const std::string &line_text) {
     RequestForUnitTest::FillMobileRequest(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_REQUEST") {
-    MOZC_ASSERT_EQ(3, columns.size());
+    MOZC_ASSERT_EQ(3, args.size());
     MOZC_ASSERT_TRUE(
-        SetOrAddFieldValueFromString(columns[1], columns[2], request_.get()));
+        SetOrAddFieldValueFromString(args[1], args[2], request_.get()));
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_CONFIG") {
-    MOZC_ASSERT_EQ(3, columns.size());
+    MOZC_ASSERT_EQ(3, args.size());
     MOZC_ASSERT_TRUE(
-        SetOrAddFieldValueFromString(columns[1], columns[2], config_.get()));
+        SetOrAddFieldValueFromString(args[1], args[2], config_.get()));
     MOZC_ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
   } else if (command == "SET_SELECTION_TEXT") {
-    MOZC_ASSERT_EQ(2, columns.size());
-    client_->SetCallbackText(columns[1]);
+    MOZC_ASSERT_EQ(2, args.size());
+    client_->SetCallbackText(args[1]);
   } else if (command == "UPDATE_MOBILE_KEYBOARD") {
-    MOZC_ASSERT_EQ(3, columns.size());
+    MOZC_ASSERT_EQ(3, args.size());
     Request::SpecialRomanjiTable special_romanji_table;
-    MOZC_ASSERT_TRUE_MSG(Request::SpecialRomanjiTable_Parse(columns[1],
-                                                        &special_romanji_table),
-                     "Unknown SpecialRomanjiTable");
+    MOZC_ASSERT_TRUE_MSG(
+        Request::SpecialRomanjiTable_Parse(args[1], &special_romanji_table),
+        "Unknown SpecialRomanjiTable");
     Request::SpaceOnAlphanumeric space_on_alphanumeric;
-    MOZC_ASSERT_TRUE_MSG(Request::SpaceOnAlphanumeric_Parse(columns[2],
-                                                        &space_on_alphanumeric),
-                     "Unknown SpaceOnAlphanumeric");
+    MOZC_ASSERT_TRUE_MSG(
+        Request::SpaceOnAlphanumeric_Parse(args[2], &space_on_alphanumeric),
+        "Unknown SpaceOnAlphanumeric");
     request_->set_special_romanji_table(special_romanji_table);
     request_->set_space_on_alphanumeric(space_on_alphanumeric);
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "CLEAR_ALL") {
-    MOZC_ASSERT_EQ(1, columns.size());
+    MOZC_ASSERT_EQ(1, args.size());
     ClearAll();
   } else if (command == "CLEAR_USER_PREDICTION") {
-    MOZC_ASSERT_EQ(1, columns.size());
+    MOZC_ASSERT_EQ(1, args.size());
     ClearUserPrediction();
   } else if (command == "CLEAR_USAGE_STATS") {
-    MOZC_ASSERT_EQ(1, columns.size());
+    MOZC_ASSERT_EQ(1, args.size());
     ClearUsageStats();
   } else {
     return Status(mozc::StatusCode::kUnimplemented, "");

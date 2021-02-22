@@ -39,12 +39,12 @@
 using mozc::commands::KeyEvent;
 
 struct TestCase {
-  string title;
+  std::string title;
   NSString *characters;
   NSString *unmodCharacters;
   int flags;
   uint16 keyCode;
-  string expected;
+  std::string expected;
 };
 
 class KeyCodeMapTest : public testing::Test {

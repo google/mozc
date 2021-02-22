@@ -39,6 +39,7 @@
 #include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
 
@@ -51,7 +52,7 @@ class Config;
 
 namespace client {
 
-// default ServerLauncher implemntation.
+// default ServerLauncher implementation.
 // This class uses fork&exec (linux/mac) and CreateProcess() (Windows)
 // to launch server process
 class ServerLauncher : public ServerLauncherInterface {
@@ -177,8 +178,9 @@ class Client : public ClientInterface {
                            const std::string &label) const;
 
   // Start server:
-  // return true if server is launched sucessfully or server is already running.
-  // return false if server cannot be launched.
+  // * Return true if server is launched successfully or server is already
+  //   running.
+  // * Return false if server cannot be launched.
   // If server_program is empty, which is default setting, the path to
   // GoogleJapaneseInputConverter is determined automatically.
   // Windows: "C:\Program Files\Google\Google Japanese Input\"

@@ -188,11 +188,8 @@
       'target_name': 'flags',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
-      'sources': [
-        'flags.cc',
-      ],
       'dependencies': [
-        'singleton',
+        'absl.gyp:absl_flags',
       ],
     },
     {

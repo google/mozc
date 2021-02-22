@@ -65,6 +65,7 @@ cc_library_mozc(
         "//base:number_util",
         "//base:port",
         "//base:util",
+        "@com_google_absl//absl/strings",
     ],
 )
 

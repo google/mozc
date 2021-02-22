@@ -73,7 +73,6 @@ cc_qt_library_mozc(
     ],
     deps = [
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:process",
@@ -84,6 +83,7 @@ cc_qt_library_mozc(
         "//base:version",
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

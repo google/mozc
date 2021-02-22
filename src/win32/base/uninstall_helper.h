@@ -79,7 +79,7 @@ class UninstallHelper {
   // settings.  Please beware that this method touches HKCU hive especially
   // when you call this method from a custom action.  If you call this
   // function from the deferred custom action which does not use
-  // impersonation, it is highly recomended to set true for
+  // impersonation, it is highly recommended to set true for
   // |disable_hkcu_cache| so that HKCU points HKU/.Default as expected.
   static bool EnsureIMEIsRemovedForCurrentUser(bool disable_hkcu_cache);
 

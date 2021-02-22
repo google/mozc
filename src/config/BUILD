@@ -67,7 +67,6 @@ cc_test_mozc(
         ":config_handler",
         "//base",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:mozc_hash_set",
         "//base:port",
@@ -77,6 +76,7 @@ cc_test_mozc(
         "//protocol:config_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -108,12 +108,12 @@ cc_test_mozc(
         ":config_handler",
         ":stats_config_util",
         "//base:file_util",
-        "//base:flags",
         "//base:singleton",
         "//base:system_util",
         "//base:win_api_test_helper",
         "//protocol:config_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -152,9 +152,9 @@ cc_test_mozc(
         ":character_form_manager",
         ":config_handler",
         "//base",
-        "//base:flags",
         "//base:system_util",
         "//protocol:config_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )

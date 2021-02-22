@@ -170,7 +170,7 @@ void SymbolRewriter::InsertCandidates(
     size_t default_offset, const SerializedDictionary::IterRange &range,
     bool context_sensitive, Segment *segment) {
   if (segment->candidates_size() == 0) {
-    LOG(WARNING) << "candiadtes_size is 0";
+    LOG(WARNING) << "candidates_size is 0";
     return;
   }
 
@@ -181,7 +181,7 @@ void SymbolRewriter::InsertCandidates(
   // register space to CharacterFormManager.
   ExpandSpace(segment);
 
-  // If the original candidates given by ImmutableConveter already
+  // If the original candidates given by ImmutableConverter already
   // include the target symbols, do assign description to these candidates.
   AddDescForCurrentCandidates(range, segment);
 

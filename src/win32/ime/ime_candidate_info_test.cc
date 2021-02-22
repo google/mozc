@@ -104,11 +104,11 @@ const int32 kIDs[kNumCandidates] = {
     0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -7, -11,
 };
 
-class ScopedCanidateInfoBuffer {
+class ScopedCandidateInfoBuffer {
  public:
-  explicit ScopedCanidateInfoBuffer(size_t size)
+  explicit ScopedCandidateInfoBuffer(size_t size)
       : header_(static_cast<CANDIDATEINFO *>(Allocate(size))) {}
-  ~ScopedCanidateInfoBuffer() { ::HeapFree(::GetProcessHeap(), 0, header_); }
+  ~ScopedCandidateInfoBuffer() { ::HeapFree(::GetProcessHeap(), 0, header_); }
   const CANDIDATEINFO *header() const { return header_; }
   CANDIDATEINFO *mutable_header() { return header_; }
   const CANDIDATELIST *GetList(int candidate_list_no) const {
@@ -133,7 +133,7 @@ class ScopedCanidateInfoBuffer {
   }
   CANDIDATEINFO *header_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScopedCanidateInfoBuffer);
+  DISALLOW_COPY_AND_ASSIGN(ScopedCandidateInfoBuffer);
 };
 
 // TODO(yukawa): Make a common library for this function.
@@ -529,7 +529,7 @@ TEST(CandidateInfoUtilTest, WriteResultTest) {
   CandidateInfo info;
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
 
-  ScopedCanidateInfoBuffer buffer(info.candidate_info_size);
+  ScopedCandidateInfoBuffer buffer(info.candidate_info_size);
   CandidateInfoUtil::Write(info, buffer.mutable_header());
 
   EXPECT_CANDIDATEINFO(330, 1, sizeof(CANDIDATEINFO), 0, 0, buffer.header());
@@ -558,7 +558,7 @@ TEST(CandidateInfoUtilTest, PagingEmulation_Issue4077022) {
   CandidateInfo info;
   EXPECT_TRUE(CandidateInfoUtil::Convert(output, &info));
 
-  ScopedCanidateInfoBuffer buffer(info.candidate_info_size);
+  ScopedCandidateInfoBuffer buffer(info.candidate_info_size);
   CandidateInfoUtil::Write(info, buffer.mutable_header());
 
   EXPECT_CANDIDATEINFO(330, 1, sizeof(CANDIDATEINFO), 0, 0, buffer.header());
@@ -573,7 +573,7 @@ TEST(CandidateInfoUtilTest, WriteSafeDefaultTest) {
   CandidateInfo info;
   CandidateInfoUtil::SetSafeDefault(&info);
 
-  ScopedCanidateInfoBuffer buffer(info.candidate_info_size);
+  ScopedCandidateInfoBuffer buffer(info.candidate_info_size);
   CandidateInfoUtil::Write(info, buffer.mutable_header());
 
   EXPECT_CANDIDATEINFO(sizeof(CANDIDATEINFO) + sizeof(CANDIDATELIST), 1,

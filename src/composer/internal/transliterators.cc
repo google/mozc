@@ -90,7 +90,7 @@ class ConversionStringSelector : public TransliteratorInterface {
     return converted;
   }
 
-  // NOTE(komatsu): The first argument, size_t postion, should not be
+  // NOTE(komatsu): The first argument, size_t position, should not be
   // const because this function overrides the virtual function of
   // TransliterateInterface whose first argument is not const.
   // Otherwise the Windows compiler (cl.exe) raises an error.

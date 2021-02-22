@@ -32,7 +32,6 @@
 #include <memory>
 #include <string>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
@@ -48,7 +47,9 @@
 #include "rewriter/calculator/calculator_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -77,8 +78,7 @@ void SetSegment(const std::string &key, const std::string &value,
 const char kCalculationDescription[] = "計算結果";
 
 bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
-  return candidate.description.find(kCalculationDescription) !=
-         std::string::npos;
+  return absl::StrContains(candidate.description, kCalculationDescription);
 }
 
 // If the segment has a candidate which was inserted by CalculatorRewriter,
@@ -116,7 +116,7 @@ class CalculatorRewriterTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
     // use mock
     CalculatorFactory::SetCalculator(&calculator_mock_);

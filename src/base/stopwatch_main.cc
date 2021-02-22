@@ -30,19 +30,19 @@
 #include <iostream>
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/stopwatch.h"
 #include "base/util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(int32, sleep_time, 1000, "sleep time");
+ABSL_FLAG(int32, sleep_time, 1000, "sleep time");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::Stopwatch stopwatch;
   stopwatch.Start();
-  mozc::Util::Sleep(mozc::GetFlag(FLAGS_sleep_time));
+  mozc::Util::Sleep(absl::GetFlag(FLAGS_sleep_time));
   stopwatch.Stop();
   std::cout << stopwatch.GetElapsedMicroseconds() << std::endl;
 

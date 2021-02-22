@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/port.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
@@ -42,6 +41,7 @@
 #include "session/session_handler_tool.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace {
 uint32 GenerateRandomSeed() {
@@ -52,7 +52,7 @@ uint32 GenerateRandomSeed() {
 }  // namespace
 
 // There is no DEFINE_uint32.
-MOZC_FLAG(uint64, random_seed, GenerateRandomSeed(),
+ABSL_FLAG(uint64, random_seed, GenerateRandomSeed(),
           "Random seed value. "
           "This value will be interpreted as uint32.");
 
@@ -71,7 +71,7 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   ASSERT_TRUE(client.CreateSession());
 
   const uint32 random_seed =
-      static_cast<uint32>(mozc::GetFlag(FLAGS_random_seed));
+      static_cast<uint32>(absl::GetFlag(FLAGS_random_seed));
   LOG(INFO) << "Random seed: " << random_seed;
   session::RandomKeyEventsGenerator::InitSeed(random_seed);
   while (keyevents_size < kMaxEventSize) {

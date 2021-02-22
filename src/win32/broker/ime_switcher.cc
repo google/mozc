@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "base/const.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
@@ -45,8 +44,9 @@
 #include "win32/base/imm_registrar.h"
 #include "win32/base/imm_util.h"
 #include "win32/base/migration_util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, set_default_do_not_ask_again, false,
+ABSL_FLAG(bool, set_default_do_not_ask_again, false,
           "Set true if SetDefaultDialog should not be displayed again.");
 
 namespace mozc {
@@ -144,7 +144,7 @@ int RunSetDefaultWin8() {
     return kErrorLevelGeneralError;
   }
 
-  if (mozc::GetFlag(FLAGS_set_default_do_not_ask_again)) {
+  if (absl::GetFlag(FLAGS_set_default_do_not_ask_again)) {
     if (!ClearCheckDefault()) {
       // Notify the error to user but never treat this as an error.
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);
@@ -183,7 +183,7 @@ int RunSetDefault(int argc, char *argv[]) {
     return kErrorLevelGeneralError;
   }
 
-  if (mozc::GetFlag(FLAGS_set_default_do_not_ask_again)) {
+  if (absl::GetFlag(FLAGS_set_default_do_not_ask_again)) {
     if (!ClearCheckDefault()) {
       // Notify the error to user but never treat this as an error.
       NotifyFatalMessage("ClearCheckDefault() failed.", __LINE__);

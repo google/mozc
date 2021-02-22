@@ -71,7 +71,7 @@ class UserDictionarySession {
   // or not), creates an empty dictionary in the storage with the default name.
   UserDictionaryCommandStatus::Status LoadWithEnsuringNonEmptyStorage();
 
-  // Saves the data to local stroage.
+  // Saves the data to local storage.
   UserDictionaryCommandStatus::Status Save();
 
   // Undoes the last operation.

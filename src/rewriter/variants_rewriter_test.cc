@@ -426,7 +426,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "ねずみ";
     candidate.description = "絵文字";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "絵文字 <機種依存文字>" for Desktop, "絵文字 <機種依存>" for Andorid
+    // "絵文字 <機種依存文字>" for Desktop, "絵文字 <機種依存>" for Android
     std::string expected(
         "絵文字"
         " ");

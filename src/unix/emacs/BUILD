@@ -48,7 +48,6 @@ cc_binary_mozc(
     deps = [
         ":mozc_emacs_helper_lib",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:util",
@@ -57,6 +56,7 @@ cc_binary_mozc(
         "//config:config_handler",
         "//ipc",
         "//protocol:commands_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -82,6 +82,7 @@ cc_library_mozc(
         "//base/protobuf:message",
         "//client",
         "//composer:key_parser",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
         "//storage:lru_cache",
         "//storage:lru_storage",
@@ -97,6 +98,7 @@ cc_test_mozc(
         ":mozc_emacs_helper_lib",
         "//base:util",
         "//base/protobuf:message",
+        "//protocol:candidates_proto",
         "//protocol:commands_proto",
         "//testing:gunit_main",
     ],

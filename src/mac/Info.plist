@@ -5,13 +5,13 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>Japanese</string>
   <key>CFBundleDisplayName</key>
-  <string>${BRANDING}</string>
+  <string>${PRODUCT_NAME}</string>
   <key>CFBundleExecutable</key>
   <string>${EXECUTABLE_NAME}</string>
   <key>CFBundleIconFile</key>
   <string>product_icon.icns</string>
   <key>CFBundleIdentifier</key>
-  <string>${DOMAIN_PREFIX}.inputmethod.Japanese</string>
+  <string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -19,9 +19,9 @@
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleVersion</key>
-  <string>${GOOGLE_VERSIONINFO_LONG}</string>
+  <string>${CURRENT_PROJECT_VERSION}</string>
   <key>CFBundleShortVersionString</key>
-  <string>${GOOGLE_VERSIONINFO_SHORT}</string>
+  <string>${MARKETING_VERSION}</string>
   <key>CFBundleGetInfoString</key>
   <string>${GOOGLE_VERSIONINFO_FINDER}</string>
   <key>NSHumanReadableCopyright</key>
@@ -35,7 +35,7 @@
       <key>com.apple.inputmethod.Japanese</key>
       <dict>
         <key>TISInputSourceID</key>
-        <string>${DOMAIN_PREFIX}.inputmethod.Japanese.base</string>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}.base</string>
         <key>TISIntendedLanguage</key>
         <string>ja</string>
         <key>tsInputModeAlternateMenuIconFileKey</key>
@@ -63,7 +63,7 @@
       <key>com.apple.inputmethod.Japanese.Katakana</key>
       <dict>
         <key>TISInputSourceID</key>
-        <string>${DOMAIN_PREFIX}.inputmethod.Japanese.Katakana</string>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}.Katakana</string>
         <key>TISIntendedLanguage</key>
         <string>ja</string>
         <key>tsInputModeAlternateMenuIconFileKey</key>
@@ -91,7 +91,7 @@
       <key>com.apple.inputmethod.Japanese.HalfWidthKana</key>
       <dict>
         <key>TISInputSourceID</key>
-        <string>${DOMAIN_PREFIX}.inputmethod.Japanese.HalfWidthKana</string>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}.HalfWidthKana</string>
         <key>TISIntendedLanguage</key>
         <string>ja</string>
         <key>tsInputModeAlternateMenuIconFileKey</key>
@@ -119,7 +119,7 @@
       <key>com.apple.inputmethod.Japanese.FullWidthRoman</key>
       <dict>
         <key>TISInputSourceID</key>
-        <string>${DOMAIN_PREFIX}.inputmethod.Japanese.FullWidthRoman</string>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}.FullWidthRoman</string>
         <key>TISIntendedLanguage</key>
         <string>ja</string>
         <key>tsInputModeAlternateMenuIconFileKey</key>
@@ -147,7 +147,7 @@
       <key>com.apple.inputmethod.Roman</key>
       <dict>
         <key>TISInputSourceID</key>
-        <string>${DOMAIN_PREFIX}.inputmethod.Japanese.Roman</string>
+        <string>${PRODUCT_BUNDLE_IDENTIFIER}.Roman</string>
         <key>TISIntendedLanguage</key>
         <string>en</string>
         <key>tsInputModeAlternateMenuIconFileKey</key>
@@ -182,7 +182,7 @@
     </array>
   </dict>
   <key>InputMethodConnectionName</key>
-  <string>${BRANDING}_1_Connection</string>
+  <string>${PRODUCT_NAME}_1_Connection</string>
   <key>InputMethodServerControllerClass</key>
   <string>GoogleJapaneseInputController</string>
   <key>InputMethodServerDelegateClass</key>

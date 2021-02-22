@@ -46,10 +46,10 @@ class SuppressionDictionary {
 
   // Locks dictionary.
   // Need to lock before calling AddEntry() or Clear().
-  // When the dictionary is locked, Supress() return false.
+  // When the dictionary is locked, Suppress() return false.
   //
   // NOTE:
-  // Lock() and SupressWord() must be called synchronously.
+  // Lock() and SuppressWord() must be called synchronously.
   void Lock();
 
   // Unlocks dictionary.
@@ -67,7 +67,7 @@ class SuppressionDictionary {
   // Returns true if SuppressionDictionary doesn't have any entries.
   bool IsEmpty() const;
 
-  // Returns true if |word| should be suppressed.  If the current dictionay is
+  // Returns true if |word| should be suppressed.  If the current dictionary is
   // "locked" via Lock() method, this function always return false.  Lock() and
   // SuppressWord() must be called synchronously.
   bool SuppressEntry(const std::string &key, const std::string &value) const;

@@ -44,8 +44,8 @@ class IPCClientMock : public IPCClientInterface {
   uint32 GetServerProtocolVersion() const override;
   const std::string &GetServerProductVersion() const override;
   uint32 GetServerProcessId() const override;
-  virtual bool Call(const char *request, size_t request_size, char *response,
-                    size_t *response_size, int32 timeout);
+  bool Call(const char *request, size_t request_size, char *response,
+            size_t *response_size, int32 timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
 

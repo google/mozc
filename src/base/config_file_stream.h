@@ -74,7 +74,7 @@ class ConfigFileStream {
   //     return Open(filename, ios_base::in);
   //   }
   // As of Mozc 1.3, a number of files had had depended on this method.
-  // However, we did not programatically replaced all of them with
+  // However, we did not programmatically replaced all of them with
   // |OpenReadText| because these existing code do not have enough unit
   // tests to check the treatment of line-end character, especially on Windows.
   // Perhaps |OpenReadBinary| might be more appropriate in some cases.

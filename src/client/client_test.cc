@@ -40,6 +40,7 @@
 #include "base/version.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"

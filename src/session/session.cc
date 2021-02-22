@@ -1443,7 +1443,7 @@ bool Session::InsertCharacter(commands::Command *command) {
   bool should_commit = (context_->state() == ImeContext::CONVERSION);
 
   if (context_->GetRequest().space_on_alphanumeric() ==
-          commands::Request::SPACE_OR_CONVERT_COMMITING_COMPOSITION &&
+          commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION &&
       context_->state() == ImeContext::COMPOSITION &&
       // TODO(komatsu): Support FullWidthSpace
       Util::EndsWith(composition, " ")) {
@@ -2289,7 +2289,7 @@ bool Session::Convert(commands::Command *command) {
         return Commit(command);
       } else {
         // SPACE_OR_CONVERT_KEEPING_COMPOSITION or
-        // SPACE_OR_CONVERT_COMMITING_COMPOSITION.
+        // SPACE_OR_CONVERT_COMMITTING_COMPOSITION.
 
         // If the last character is not space, space is inserted to the
         // composition.

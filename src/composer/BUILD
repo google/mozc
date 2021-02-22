@@ -49,7 +49,6 @@ cc_library_mozc(
         ":table",
         ":type_corrected_query",
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -66,6 +65,7 @@ cc_library_mozc(
         "//protocol:config_proto",
         "//testing:gunit_prod",
         "//transliteration",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -145,12 +145,12 @@ cc_binary_mozc(
         ":composition_interface",
         ":table",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base/protobuf",
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//transliteration",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

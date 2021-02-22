@@ -60,7 +60,6 @@ test_suite(
         ":config_file_stream_test_android",
         ":cpu_stats_test_android",
         ":encryptor_test_android",
-        ":flags_test_android",
         ":hash_test_android",
         ":iterator_adapter_test_android",
         ":logging_test_android",
@@ -101,7 +100,6 @@ cc_library_mozc(
         ":const",
         ":file_stream",
         ":file_util",
-        ":flags",
         ":mmap",
         ":mutex",
         ":number_util",
@@ -121,45 +119,20 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "flags",
-    srcs = ["flags.cc"],
-    hdrs = ["flags.h"],
-    deps = [
-        ":port",
-        "@com_google_absl//absl/flags:flag",
-    ] + select_mozc(
-        client = [":singleton"],
-        default = ["//base"],
-    ),
-)
-
-cc_test_mozc(
-    name = "flags_test",
-    size = "small",
-    srcs = ["flags_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":flags",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_library_mozc(
     name = "init_mozc_buildtool",
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
     copts = ["-DMOZC_BUILDTOOL_BUILD"],
     visibility = ["//:__subpackages__"],
-    deps = select_mozc(
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+    ] + select_mozc(
         client = [
             ":file_util",
-            ":flags",
             ":logging",
+            "@com_google_absl//absl/flags:parse",
         ],
-        default = [
-            "//base",
-            ":flags",
-        ],
+        default = ["//base"],
     ),
 )
 
@@ -168,17 +141,16 @@ cc_library_mozc(
     srcs = ["init_mozc.cc"],
     hdrs = ["init_mozc.h"],
     visibility = ["//:__subpackages__"],
-    deps = select_mozc(
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+    ] + select_mozc(
         client = [
             ":file_util",
-            ":flags",
             ":logging",
             ":system_util",
+            "@com_google_absl//absl/flags:parse",
         ],
-        default = [
-            "//base",
-            ":flags",
-        ],
+        default = ["//base"],
     ),
 )
 
@@ -227,7 +199,6 @@ cc_library_mozc(
         client = [
             ":clock",
             ":const",
-            ":flags",
             ":mutex",
             ":singleton",
             "@com_google_absl//absl/strings",
@@ -236,7 +207,10 @@ cc_library_mozc(
             "//base",
             "//base:logging_extensions",
         ],
-    ) + [":port"],
+    ) + [
+        ":port",
+        "@com_google_absl//absl/flags:flag",
+    ],
 )
 
 cc_test_mozc(
@@ -576,11 +550,12 @@ cc_binary_mozc(
     deps = [
         ":double_array_def",
         ":file_stream",
-        ":flags",
         ":init_mozc_buildtool",
         ":logging",
         ":util",
-        "//third_party/darts/v0_32",
+        "@com_google_absl//absl/flags:flag",
+        # For OSS, darts is also required.
+        # http://chasen.org/~taku/software/darts/
     ],
 )
 
@@ -733,10 +708,10 @@ cc_test_mozc(
     deps = [
         ":file_stream",
         ":file_util",
-        ":flags",
         ":mmap",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -800,11 +775,11 @@ cc_test_mozc(
     deps = [
         ":file_stream",
         ":file_util",
-        ":flags",
         ":logging",
         ":number_util",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -893,10 +868,10 @@ cc_binary_mozc(
     name = "process_main",
     srcs = ["process_main.cc"],
     deps = [
-        ":flags",
         ":init_mozc",
         ":logging",
         ":process",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -925,11 +900,11 @@ cc_test_mozc(
     deps = [
         "logging",
         ":file_util",
-        ":flags",
         ":process_mutex",
         ":system_util",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -956,9 +931,9 @@ cc_binary_mozc(
     name = "run_level_main",
     srcs = ["run_level_main.cc"],
     deps = [
-        ":flags",
         ":init_mozc",
         ":run_level",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -1016,21 +991,21 @@ cc_test_mozc(
     deps = [
         ":config_file_stream",
         ":file_util",
-        ":flags",
         ":system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
-TARGET_PLATFORM = select({
-    "//tools/cc_target_os:oss_android": "Android",
-    "//tools/cc_target_os:android": "Android",
-    "//tools/cc_target_os:chromiumos": "ChromeOS",
-    "//tools/cc_target_os:wasm": "Wasm",
-    "//tools/cc_target_os:linux": "Linux",
-    "//tools/cc_target_os:oss_linux": "Linux",
-    "//tools/cc_target_os:oss_macos": "Mac",
-})
+TARGET_PLATFORM = select_mozc(
+    android = "Android",
+    chromiumos = "ChromeOS",
+    default = "",
+    linux = "Linux",
+    macos = "Mac",
+    wasm = "Wasm",
+    windows = "Windows",
+)
 
 genrule(
     name = "mozc_version_txt",
@@ -1076,6 +1051,7 @@ cc_library_mozc(
         ":number_util",
         ":port",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1169,10 +1145,10 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
-        ":flags",
         ":system_util",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -1183,11 +1159,11 @@ cc_binary_mozc(
     deps = [
         ":encryptor",
         ":file_stream",
-        ":flags",
         ":init_mozc",
         ":logging",
         ":mmap",
         ":util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1198,10 +1174,10 @@ cc_binary_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
-        ":flags",
         ":init_mozc",
         ":logging",
         ":util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -1288,11 +1264,11 @@ cc_binary_mozc(
     srcs = ["cpu_stats_main.cc"],
     deps = [
         ":cpu_stats",
-        ":flags",
         ":init_mozc",
         ":port",
         ":thread",
         ":util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -1326,10 +1302,10 @@ cc_binary_mozc(
     name = "stopwatch_main",
     srcs = ["stopwatch_main.cc"],
     deps = [
-        ":flags",
         ":init_mozc",
         ":stopwatch",
         ":util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -1381,10 +1357,10 @@ cc_test_mozc(
     deps = [
         ":file_stream",
         ":file_util",
-        ":flags",
         ":multifile",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -1439,8 +1415,9 @@ cc_binary_mozc(
     ],
     deps = [
         ":init_mozc",
-        ":flags",
+        ":port",
         ":util",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ] + select_mozc(ios = [":mac_util"]),
 )
@@ -1545,7 +1522,6 @@ cc_library_mozc(
         ],
         oss = [
             ":logging",
-            ":flags",
         ],
     ),
 )

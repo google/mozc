@@ -229,8 +229,8 @@ cc_binary_mozc(
         ":ibus_mozc_lib",
         ":ibus_mozc_metadata",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

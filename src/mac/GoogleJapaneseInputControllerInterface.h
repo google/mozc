@@ -80,7 +80,7 @@
 
 // Set up the client capability
 - (void)setupCapability;
-// Set up the cilent bundle for the sender.
+// Set up the client bundle for the sender.
 - (void)setupClientBundle:(id)sender;
 
 // Launch the word register tool with the current selection range.

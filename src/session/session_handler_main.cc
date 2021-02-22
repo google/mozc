@@ -56,7 +56,6 @@ SHOW_LOG_BY_VALUE       ございました
 #include <string>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/status.h"
 #include "base/system_util.h"
@@ -64,21 +63,25 @@ SHOW_LOG_BY_VALUE       ございました
 #include "data_manager/google/google_data_manager.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
+#include "absl/flags/flag.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
-MOZC_FLAG(string, input, "", "Input file");
-MOZC_FLAG(string, profile, "", "User profile directory");
-MOZC_FLAG(string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
-MOZC_FLAG(string, dictionary, "", "Dictionary: 'google', 'android' or 'oss'");
+ABSL_FLAG(std::string, input, "", "Input file");
+ABSL_FLAG(std::string, profile, "", "User profile directory");
+ABSL_FLAG(std::string, engine, "", "Conversion engine: 'mobile' or 'desktop'");
+ABSL_FLAG(std::string, dictionary, "",
+          "Dictionary: 'google', 'android' or 'oss'");
 
 namespace mozc {
 void Show(const commands::Output &output) {
   for (const auto &segment : output.preedit().segment()) {
     std::cout << segment.value() << " ";
   }
-  std::cout << std::endl;
+  std::cout << "(" << output.preedit().cursor() << ")" << std::endl;
   for (const auto &candidate : output.candidates().candidate()) {
     std::cout << candidate.id() << ": " << candidate.value() << std::endl;
   }
@@ -104,8 +107,11 @@ void ShowLog(const commands::Output &output, const int cand_id) {
 }
 
 void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
-  std::vector<std::string> columns = absl::StrSplit(line, '\t');
-  const std::string &command = columns[0];
+  std::vector<std::string> args = handler.Parse(line);
+  if (args.empty()) {
+    return;
+  }
+  const std::string &command = args[0];
 
   if (command == "SHOW_OUTPUT") {
     std::cout << handler.LastOutput().Utf8DebugString() << std::endl;
@@ -117,7 +123,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   if (command == "SHOW_LOG") {
     uint32 id;
-    if (columns.size() == 2 && absl::SimpleAtoi(columns[1], &id)) {
+    if (args.size() == 2 && absl::SimpleAtoi(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
       std::cout << "ERROR: " << line << std::endl;
@@ -126,7 +132,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
   }
   if (command == "SHOW_LOG_BY_VALUE") {
     uint32 id;
-    if (columns.size() == 2 && handler.GetCandidateIdByValue(columns[1], &id)) {
+    if (args.size() == 2 && handler.GetCandidateIdByValue(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
       std::cout << "ERROR: " << line << std::endl;
@@ -134,7 +140,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
 
-  const mozc::Status status = handler.ParseLine(line);
+  const mozc::Status status = handler.Eval(args);
   if (!status.ok()) {
     std::cout << "ERROR: " << status.message() << std::endl;
   }
@@ -175,11 +181,11 @@ mozc::StatusOr<std::unique_ptr<Engine>> CreateEngine(
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (!mozc::GetFlag(FLAGS_profile).empty()) {
-    mozc::SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_profile));
+  if (!absl::GetFlag(FLAGS_profile).empty()) {
+    mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile));
   }
-  auto engine = mozc::CreateEngine(mozc::GetFlag(FLAGS_engine),
-                                   mozc::GetFlag(FLAGS_dictionary));
+  auto engine = mozc::CreateEngine(absl::GetFlag(FLAGS_engine),
+                                   absl::GetFlag(FLAGS_dictionary));
   if (!engine.ok()) {
     std::cout << "engine init error" << std::endl;
     return 1;
@@ -187,8 +193,8 @@ int main(int argc, char **argv) {
   mozc::session::SessionHandlerInterpreter handler(*std::move(engine));
 
   std::string line;
-  if (!mozc::GetFlag(FLAGS_input).empty()) {
-    mozc::InputFileStream input(mozc::GetFlag(FLAGS_input).c_str());
+  if (!absl::GetFlag(FLAGS_input).empty()) {
+    mozc::InputFileStream input(absl::GetFlag(FLAGS_input).c_str());
     while (std::getline(input, line)) {
       mozc::ParseLine(handler, line);
     }

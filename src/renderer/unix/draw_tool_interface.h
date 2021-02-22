@@ -58,7 +58,7 @@ class DrawToolInterface {
   virtual void Save() = 0;
   virtual void Restore() = 0;
 
-  // Draws rectangle and fill inside of it with spcified color.
+  // Draws rectangle and fill inside of it with specified color.
   virtual void FillRect(const Rect &rect, const RGBA &color) = 0;
 
   // Draws rectangle with specified color.

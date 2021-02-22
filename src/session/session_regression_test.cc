@@ -35,7 +35,6 @@
 #include <utility>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/system_util.h"
@@ -58,9 +57,11 @@
 #include "session/session_handler.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-MOZC_DECLARE_FLAG(bool, use_history_rewriter);
+ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 
 namespace mozc {
 namespace {
@@ -91,10 +92,10 @@ void InitSessionToPrecomposition(session::Session *session) {
 class SessionRegressionTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
-    orig_use_history_rewriter_ = mozc::GetFlag(FLAGS_use_history_rewriter);
-    mozc::SetFlag(&FLAGS_use_history_rewriter, true);
+    orig_use_history_rewriter_ = absl::GetFlag(FLAGS_use_history_rewriter);
+    absl::SetFlag(&FLAGS_use_history_rewriter, true);
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
@@ -117,7 +118,7 @@ class SessionRegressionTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config);
     config::ConfigHandler::SetConfig(config);
 
-    mozc::SetFlag(&FLAGS_use_history_rewriter, orig_use_history_rewriter_);
+    absl::SetFlag(&FLAGS_use_history_rewriter, orig_use_history_rewriter_);
   }
 
   bool SendKey(const std::string &key, commands::Command *command) {
@@ -215,7 +216,7 @@ TEST_F(SessionRegressionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionRegressionTest,
-       ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
+       ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   // This is a regression test against http://b/2977131.
   {
     InitSessionToPrecomposition(session_.get());
@@ -247,7 +248,7 @@ TEST_F(SessionRegressionTest, HistoryLearning) {
   std::string candidate1;
   std::string candidate2;
 
-  {  // First session.  Second candidate is commited.
+  {  // First session.  Second candidate is committed.
     InsertCharacterChars("kanji", &command);
 
     command.Clear();

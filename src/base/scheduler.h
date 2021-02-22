@@ -30,7 +30,7 @@
 // Scheduler is a timer, call registered callback at a given interval.
 // Scheduler has following features.
 //  1. Backoff when the registered callback returns false.
-//    - When the backoff is occured, next try will be after 2 * interval msec.
+//    - When the backoff is occurred, next try will be after 2 * interval msec.
 //    - Interval will be doubled as long as callback returns false, but
 //      will not exceed max_interval.
 //  2. Randomised delayed start to reduce server traffic peak.

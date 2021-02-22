@@ -31,27 +31,27 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/mac_util.h"
 #include "base/util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(bool, label_for_suffix, false,
+ABSL_FLAG(bool, label_for_suffix, false,
           "call GetLabelForSuffix when specified");
-MOZC_FLAG(bool, application_support_directory, false,
+ABSL_FLAG(bool, application_support_directory, false,
           "call GetApplicationSupportDirectory when specified");
-MOZC_FLAG(bool, logging_directory, false,
+ABSL_FLAG(bool, logging_directory, false,
           "call GetLoggingDirectory when specified");
-MOZC_FLAG(bool, os_version_string, false,
+ABSL_FLAG(bool, os_version_string, false,
           "call GetOSVersionString when specified");
-MOZC_FLAG(bool, server_directory, false,
+ABSL_FLAG(bool, server_directory, false,
           "call GetServerDirectory when specified");
-MOZC_FLAG(bool, serial_number, false, "call GetSerialNumber when specified");
-MOZC_FLAG(bool, start_launchd_service, false,
+ABSL_FLAG(bool, serial_number, false, "call GetSerialNumber when specified");
+ABSL_FLAG(bool, start_launchd_service, false,
           "call StartLaunchdService when specified");
 
-MOZC_FLAG(string, suffix, "", "The argument for GetLabelForSuffix");
-MOZC_FLAG(string, service_name, "", "The service name to be launched");
+ABSL_FLAG(std::string, suffix, "", "The argument for GetLabelForSuffix");
+ABSL_FLAG(std::string, service_name, "", "The service name to be launched");
 
 #ifdef __APPLE__
 using mozc::MacUtil;
@@ -61,37 +61,37 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
 #ifdef __APPLE__
-  if (mozc::GetFlag(FLAGS_label_for_suffix)) {
-    std::cout << MacUtil::GetLabelForSuffix(mozc::GetFlag(FLAGS_suffix))
+  if (absl::GetFlag(FLAGS_label_for_suffix)) {
+    std::cout << MacUtil::GetLabelForSuffix(absl::GetFlag(FLAGS_suffix))
               << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_application_support_directory)) {
+  if (absl::GetFlag(FLAGS_application_support_directory)) {
     std::cout << MacUtil::GetApplicationSupportDirectory() << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_logging_directory)) {
+  if (absl::GetFlag(FLAGS_logging_directory)) {
     std::cout << MacUtil::GetLoggingDirectory() << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_os_version_string)) {
+  if (absl::GetFlag(FLAGS_os_version_string)) {
     std::cout << MacUtil::GetOSVersionString() << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_server_directory)) {
+  if (absl::GetFlag(FLAGS_server_directory)) {
     std::cout << MacUtil::GetServerDirectory() << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_serial_number)) {
+  if (absl::GetFlag(FLAGS_serial_number)) {
     std::cout << MacUtil::GetSerialNumber() << std::endl;
   }
 
-  if (mozc::GetFlag(FLAGS_start_launchd_service)) {
-    if (mozc::GetFlag(FLAGS_service_name).empty()) {
+  if (absl::GetFlag(FLAGS_start_launchd_service)) {
+    if (absl::GetFlag(FLAGS_service_name).empty()) {
       std::cout << "Specify the service name to be launched" << std::endl;
     } else {
       pid_t pid;
-      MacUtil::StartLaunchdService(mozc::GetFlag(FLAGS_service_name), &pid);
+      MacUtil::StartLaunchdService(absl::GetFlag(FLAGS_service_name), &pid);
       std::cout << "pid: " << pid << std::endl;
     }
   }

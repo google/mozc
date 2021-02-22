@@ -35,7 +35,6 @@
 
 #include "base/clock_mock.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/password_manager.h"
 #include "base/port.h"
@@ -57,6 +56,7 @@
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -207,7 +207,7 @@ bool FindCandidateByValue(const std::string &value, const Segments &segments) {
 class UserHistoryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     request_ = absl::make_unique<Request>();
     config_ = absl::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
@@ -926,7 +926,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
 
   Segments segments;
 
-  // Scenario 1: A user have commited "亜" by prediction and then commit "。".
+  // Scenario 1: A user have committed "亜" by prediction and then commit "。".
   // Then, the unigram "亜" is learned but the bigram "亜。" shouldn't.
   SetUpInputForPrediction("あ", composer_.get(), &segments);
   AddCandidate(0, "亜", &segments);
@@ -979,7 +979,7 @@ TEST_F(UserHistoryPredictorTest, HistoryToPunctuation) {
   EXPECT_EQ("お疲れ様です。", segments.segment(0).candidate(1).value);
 }
 
-TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPreceedingPunctuation) {
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorPrecedingPunctuation) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   Segments segments;
@@ -2002,7 +2002,7 @@ const bool kNonSensitive = false;
 
 const PrivacySensitiveTestData kNonSensitiveCases[] = {
     {kNonSensitive,  // We might want to revisit this behavior
-     "Type privacy sensitive number but it is commited as full-width number "
+     "Type privacy sensitive number but it is committed as full-width number "
      "by mistake.",
      "0007", "０００７"},
     {kNonSensitive, "Type a ZIP number.", "100-0001", "東京都千代田区千代田"},
@@ -2237,7 +2237,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Load().
   {
     const std::string filename =
-        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testload");
+        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testload");
     // Write directly to the file to keep old entries for testing.
     storage::EncryptedStringStorage file_storage(filename);
     ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
@@ -2256,7 +2256,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   // Test Save().
   {
     const std::string filename =
-        FileUtil::JoinPath(mozc::GetFlag(FLAGS_test_tmpdir), "testsave");
+        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testsave");
     UserHistoryStorage storage(filename);
     storage.GetProto() = history;
     ASSERT_TRUE(storage.Save());

@@ -103,7 +103,7 @@ class SessionUsageObserver : public SessionObserverInterface {
 
   // last_touchevents_ is used to keep the touch_events of last SEND_KEY
   // message.
-  // When the subsequent command will be recieved, if the command is BACKSPACE
+  // When the subsequent command will be received, if the command is BACKSPACE
   // last_touchevents_ will be aggregated to miss_touch_event_stat_cache_,
   // if the command is not BACKSPACE last_touchevents_ will be aggregated to
   // touch_event_stat_cache_.

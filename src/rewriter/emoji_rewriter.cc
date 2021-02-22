@@ -43,6 +43,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 // EmojiRewriter:
@@ -227,7 +228,7 @@ void EmojiRewriter::Finish(const ConversionRequest &request,
 }
 
 bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
-  return candidate.description.find(kEmoji) != std::string::npos;
+  return absl::StrContains(candidate.description, kEmoji);
 }
 
 std::pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>

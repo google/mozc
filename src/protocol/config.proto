@@ -212,7 +212,7 @@ message Config {
   // auto IME turn off feature
   optional bool use_auto_ime_turn_off = 56 [default = true];
 
-  // Toggle to use cascanding window for debuging.
+  // Toggle to use cascanding window for debugging.
   optional bool use_cascading_window = 58 [default = true];
 
   // Shift key mode switch

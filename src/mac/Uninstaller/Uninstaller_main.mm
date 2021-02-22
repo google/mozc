@@ -32,8 +32,8 @@
 #import "DialogsController.h"
 #import "Uninstaller.h"
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
+#include "absl/flags/flag.h"
 
 int main(int argc, char *argv[]) {
   mozc::InitMozc(argv[0], &argc, &argv);

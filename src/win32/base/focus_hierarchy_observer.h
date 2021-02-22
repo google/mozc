@@ -46,8 +46,8 @@ class FocusHierarchyObserver {
   struct WindowInfo {
     WindowInfo();
     HWND window_handle;
-    string title;       // utf8
-    string class_name;  // utf8
+    std::string title;       // utf8
+    std::string class_name;  // utf8
     DWORD process_id;
   };
 
@@ -57,7 +57,7 @@ class FocusHierarchyObserver {
   virtual bool IsAbailable() const = 0;
   virtual std::vector<AccessibleObjectInfo> GetUIHierarchy() const = 0;
   virtual std::vector<WindowInfo> GetWindowHierarchy() const = 0;
-  virtual string GetRootWindowName() const = 0;
+  virtual std::string GetRootWindowName() const = 0;
 
   static FocusHierarchyObserver *Create();
   static void OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);

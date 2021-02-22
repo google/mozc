@@ -180,9 +180,9 @@ cc_qt_library_mozc(
     srcs = ["dictionary_tool_main.cc"],
     deps = [
         ":dictionary_tool",
-        "//base:flags",
         "//base:init_mozc",
         "//gui/base:gui_base",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

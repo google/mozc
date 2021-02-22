@@ -216,7 +216,7 @@ TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
   // keyboard are not assigned Shift-0 character. So that, we expect the client
   // send keycode='0'(\x30) with shift modifier, but currently only send
   // keycode='0'. There are few difficulties because the mapping of Shift-0 are
-  // controled xkb in X11, but the way to get the mapping is unclear.
+  // controlled xkb in X11, but the way to get the mapping is unclear.
 
   // ALT modifier
   // M-F1
@@ -507,7 +507,7 @@ TEST_F(KeyTranslatorTest, MultipleShiftKeysTest) {
   IsContained(commands::KeyEvent::SHIFT, out.modifier_keys());
 }
 
-TEST_F(KeyTranslatorTest, TranslateUnknow) {
+TEST_F(KeyTranslatorTest, TranslateUnknown) {
   commands::KeyEvent out;
   EXPECT_FALSE(translator_->Translate(IBUS_VoidSymbol, 0, 0,
                                       config::Config::ROMAN, true, &out));

@@ -56,15 +56,15 @@ class StorageInterface {
 
   // Looks up key and returns the value.
   // If key is not found, returns false.
-  // It is not guranteed that the data is synced to the disk.
+  // It is not guaranteed that the data is synced to the disk.
   virtual bool Lookup(const std::string &key, std::string *value) const = 0;
 
   // Inserts key and value.
-  // It is not guranteed that the data is synced to the disk.
+  // It is not guaranteed that the data is synced to the disk.
   virtual bool Insert(const std::string &key, const std::string &value) = 0;
 
   // Erases the key-value pair specified by |key|.
-  // It is not guranteed that the data is synced to the disk
+  // It is not guaranteed that the data is synced to the disk
   virtual bool Erase(const std::string &key) = 0;
 
   // clears internal keys and values

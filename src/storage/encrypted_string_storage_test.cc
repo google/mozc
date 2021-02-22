@@ -34,11 +34,11 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -82,7 +82,7 @@ typedef EncryptedStringStorage TestEncryptedStringStorage;
 class EncryptedStringStorageTest : public testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");
 
@@ -122,7 +122,7 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   ASSERT_TRUE(ifs.eof());
   const std::string result(buf, read_size);
 
-  // Saved stirng is longer than original string since it has some data
+  // Saved string is longer than original string since it has some data
   // used for encryption.
   EXPECT_LT(original_data.size(), result.size());
   EXPECT_TRUE(result.find(original_data) == std::string::npos);

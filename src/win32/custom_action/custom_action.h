@@ -96,7 +96,7 @@ UINT __stdcall InitialInstallationCommit(MSIHANDLE msi_handle);
 // RestoreServiceState.
 // Since they are executed as deferred customs actions and most properties
 // cannot be accessible from a deferred custom action, it is necessary to store
-// these data explictly to CustomCationData.
+// these data explicitly to CustomCationData.
 UINT __stdcall SaveCustomActionData(MSIHANDLE msi_handle);
 
 // Restore the settings of the cache service as it was.

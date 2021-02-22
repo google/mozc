@@ -395,7 +395,7 @@ class SessionConverter : public SessionConverterInterface {
   std::vector<int> selected_candidate_indices_;
 
   // Revision number of client context with which the converter determines when
-  // the history segments should be invalidated. See the implemenation of
+  // the history segments should be invalidated. See the implementation of
   // OnStartComposition for details.
   int32 client_revision_;
 

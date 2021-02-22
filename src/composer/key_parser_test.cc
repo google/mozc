@@ -125,7 +125,7 @@ TEST(KeyParserTest, SpecialKeys) {
       std::make_pair("home", commands::KeyEvent::HOME),
       std::make_pair("end", commands::KeyEvent::END),
       std::make_pair("space", commands::KeyEvent::SPACE),
-      std::make_pair("ascii", commands::KeyEvent::TEXT_INPUT),  // depricated
+      std::make_pair("ascii", commands::KeyEvent::TEXT_INPUT),  // deprecated
       std::make_pair("textinput", commands::KeyEvent::TEXT_INPUT),
       std::make_pair("tab", commands::KeyEvent::TAB),
       std::make_pair("pageup", commands::KeyEvent::PAGE_UP),

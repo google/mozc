@@ -45,20 +45,22 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, sorting_table, "", "sorting table file");
-MOZC_FLAG(string, ordering_rule, "", "sorting order file");
-MOZC_FLAG(string, input, "", "symbol dictionary file");
-MOZC_FLAG(string, user_pos_manager_data, "", "user pos manager data file");
-MOZC_FLAG(string, output_token_array, "", "output token array binary file");
-MOZC_FLAG(string, output_string_array, "", "output string array binary file");
+ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
+ABSL_FLAG(std::string, ordering_rule, "", "sorting order file");
+ABSL_FLAG(std::string, input, "", "symbol dictionary file");
+ABSL_FLAG(std::string, user_pos_manager_data, "", "user pos manager data file");
+ABSL_FLAG(std::string, output_token_array, "",
+          "output token array binary file");
+ABSL_FLAG(std::string, output_string_array, "",
+          "output string array binary file");
 
 namespace mozc {
 namespace {
@@ -202,34 +204,34 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if ((mozc::GetFlag(FLAGS_input).empty() ||
-       mozc::GetFlag(FLAGS_sorting_table).empty() ||
-       mozc::GetFlag(FLAGS_ordering_rule).empty()) &&
+  if ((absl::GetFlag(FLAGS_input).empty() ||
+       absl::GetFlag(FLAGS_sorting_table).empty() ||
+       absl::GetFlag(FLAGS_ordering_rule).empty()) &&
       argc > 3) {
-    mozc::SetFlag(&FLAGS_input, argv[1]);
-    mozc::SetFlag(&FLAGS_sorting_table, argv[2]);
-    mozc::SetFlag(&FLAGS_ordering_rule, argv[3]);
+    absl::SetFlag(&FLAGS_input, argv[1]);
+    absl::SetFlag(&FLAGS_sorting_table, argv[2]);
+    absl::SetFlag(&FLAGS_ordering_rule, argv[3]);
   }
 
   const std::string tmp_text_file =
-      mozc::GetFlag(FLAGS_output_token_array) + ".txt";
+      absl::GetFlag(FLAGS_output_token_array) + ".txt";
 
   // User pos manager data for build tools has no magic number.
   const char *kMagciNumber = "";
   mozc::DataManager data_manager;
   const mozc::DataManager::Status status =
       data_manager.InitUserPosManagerDataFromFile(
-          mozc::GetFlag(FLAGS_user_pos_manager_data), kMagciNumber);
+          absl::GetFlag(FLAGS_user_pos_manager_data), kMagciNumber);
   CHECK_EQ(status, mozc::DataManager::Status::OK);
 
   mozc::rewriter::DictionaryGenerator dictionary(data_manager);
-  mozc::MakeDictionary(mozc::GetFlag(FLAGS_input),
-                       mozc::GetFlag(FLAGS_sorting_table),
-                       mozc::GetFlag(FLAGS_ordering_rule), &dictionary);
+  mozc::MakeDictionary(absl::GetFlag(FLAGS_input),
+                       absl::GetFlag(FLAGS_sorting_table),
+                       absl::GetFlag(FLAGS_ordering_rule), &dictionary);
   dictionary.Output(tmp_text_file);
   mozc::SerializedDictionary::CompileToFiles(
-      tmp_text_file, mozc::GetFlag(FLAGS_output_token_array),
-      mozc::GetFlag(FLAGS_output_string_array));
+      tmp_text_file, absl::GetFlag(FLAGS_output_token_array),
+      absl::GetFlag(FLAGS_output_string_array));
   mozc::FileUtil::Unlink(tmp_text_file);
 
   return 0;

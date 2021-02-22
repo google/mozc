@@ -42,7 +42,7 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-TEST(SupressionDictionary, BasicTest) {
+TEST(SuppressionDictionary, BasicTest) {
   SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   CHECK(dic);
 
@@ -126,7 +126,7 @@ class DictionaryLoaderThread : public Thread {
   }
 };
 
-TEST(SupressionDictionary, ThreadTest) {
+TEST(SuppressionDictionary, ThreadTest) {
   SuppressionDictionary *dic = Singleton<SuppressionDictionary>::get();
   CHECK(dic);
 

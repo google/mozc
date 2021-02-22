@@ -60,7 +60,7 @@ namespace renderer {
 namespace gtk {
 
 namespace {
-// Following variable is used testing and it is contant but due to API
+// Following variable is used testing and it is constant but due to API
 // restriction, can not modify const modifier.
 GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget *>(0x12345678);
 GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget *>(0x87654321);
@@ -1395,7 +1395,7 @@ TEST_F(CandidateWindowTest, OnMouseLeftUpTest) {
     FinalizeTestKit(&testkit);
   }
   {
-    SCOPED_TRACE("Exepcted ID will be set by candidate index.");
+    SCOPED_TRACE("Expected ID will be set by candidate index.");
     const size_t kTestRound = 10;
     for (size_t i = 0; i < kTestRound; ++i) {
       SendCommandInterfaceMock interface_mock;

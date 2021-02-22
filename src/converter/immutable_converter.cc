@@ -332,14 +332,14 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
           ? nullptr
           : segment->mutable_candidate(segment->candidates_size() - 1);
 
-  // Insert a dummy candiate whose content_value is katakana.
+  // Insert a dummy candidate whose content_value is katakana.
   // If functional_key() is empty, no need to make a dummy candidate.
   if (segment->candidates_size() > 0 &&
       segment->candidates_size() < expand_size &&
       !segment->candidate(0).functional_key().empty() &&
       Util::GetScriptType(segment->candidate(0).content_key) ==
           Util::HIRAGANA) {
-    // Use last_candidate as a refernce of cost.
+    // Use last_candidate as a reference of cost.
     // Use top_candidate as a refarence of lid/rid and key/value.
     DCHECK(top_candidate);
     DCHECK(last_candidate);
@@ -469,7 +469,7 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
         continue;
       }
 
-      // not compatibile
+      // not compatible
       if (number_value != number_key) {
         LOG(WARNING) << "Incompatible key/value number pair";
         continue;
@@ -545,7 +545,7 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
         continue;
       }
 
-      // not compatibile
+      // not compatible
       if (number_value != number_key) {
         LOG(WARNING) << "Incompatible key/value number pair";
         continue;

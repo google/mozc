@@ -86,7 +86,7 @@ class TipSurroundingText {
                                             TipSurroundingTextInfo *info,
                                             bool *need_async_reconversion);
 
-  // Returns true when succeeds to delete preceeding text from the beginning of
+  // Returns true when succeeds to delete preceding text from the beginning of
   // the selected range.
   // Caveats: |num_characters_to_be_deleted_in_ucs4| is not the number of
   //     elements in UTF16. Beware of surrogate pairs.

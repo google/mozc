@@ -42,7 +42,6 @@ cc_library_mozc(
     ],
     deps = [
         "//base",
-        "//base:flags",
         "//base:logging",
         "//base:mutex",
         "//base:port",
@@ -58,6 +57,7 @@ cc_library_mozc(
         "//session:session_handler",
         "//session:session_handler_interface",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -67,11 +67,11 @@ cc_binary_mozc(
     data = ["//data_manager/google:mozc.data"],
     deps = [
         ":ios_engine",
-        "//base:flags",
         "//base:init_mozc_buildtool",
         "//base:logging",
         "//base:util",
         "//protocol:candidates_proto",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 

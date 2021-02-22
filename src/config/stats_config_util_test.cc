@@ -33,12 +33,12 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/win_api_test_helper.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 #ifdef OS_ANDROID
 #include "config/config_handler.h"
@@ -672,7 +672,7 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 #ifdef OS_ANDROID
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
   const string config_file = FileUtil::JoinPath(
-      mozc::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
+      absl::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
   FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());

@@ -159,7 +159,7 @@ class ConverterInterface {
       Segments *segments, const std::vector<size_t> &candidate_index) const = 0;
 
   // Resize segment_index-th segment by offset_length.
-  // offset_lenth can be negative.
+  // offset_length can be negative.
   virtual bool ResizeSegment(Segments *segments,
                              const ConversionRequest &request,
                              size_t segment_index, int offset_length) const = 0;

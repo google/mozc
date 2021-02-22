@@ -33,7 +33,6 @@
 #include <memory>
 #include <string>
 
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -44,6 +43,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -60,7 +60,7 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   ~SingleKanjiRewriterTest() override = default;
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   SingleKanjiRewriter *CreateSingleKanjiRewriter() const {

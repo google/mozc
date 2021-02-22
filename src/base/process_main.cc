@@ -29,24 +29,24 @@
 
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/process.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, open_browser, "", "URL");
-MOZC_FLAG(string, spawn_process, "", "path");
+ABSL_FLAG(std::string, open_browser, "", "URL");
+ABSL_FLAG(std::string, spawn_process, "", "path");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  if (!mozc::GetFlag(FLAGS_open_browser).empty()) {
-    if (!mozc::Process::OpenBrowser(mozc::GetFlag(FLAGS_open_browser))) {
-      LOG(INFO) << "Failed to open: " << mozc::GetFlag(FLAGS_open_browser);
+  if (!absl::GetFlag(FLAGS_open_browser).empty()) {
+    if (!mozc::Process::OpenBrowser(absl::GetFlag(FLAGS_open_browser))) {
+      LOG(INFO) << "Failed to open: " << absl::GetFlag(FLAGS_open_browser);
     }
   }
-  if (!mozc::GetFlag(FLAGS_spawn_process).empty()) {
-    if (!mozc::Process::SpawnProcess(mozc::GetFlag(FLAGS_spawn_process), "")) {
-      LOG(INFO) << "Failed to spawn: " << mozc::GetFlag(FLAGS_spawn_process);
+  if (!absl::GetFlag(FLAGS_spawn_process).empty()) {
+    if (!mozc::Process::SpawnProcess(absl::GetFlag(FLAGS_spawn_process), "")) {
+      LOG(INFO) << "Failed to spawn: " << absl::GetFlag(FLAGS_spawn_process);
     }
   }
   return 0;

@@ -41,6 +41,7 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "config/stats_config_util.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"
@@ -101,13 +102,13 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
 }  // namespace
 
 SessionUsageObserver::SessionUsageObserver() {
-  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // Explicitly calls Sync() to delete usage stats existing data including
   // metadata for migration.
   UsageStats::Sync();
 }
 
 SessionUsageObserver::~SessionUsageObserver() {
-  // Explicitly calls Sync() to delete usage stats existing data inlcuding
+  // Explicitly calls Sync() to delete usage stats existing data including
   // metadata for migration.
   UsageStats::Sync();
 }

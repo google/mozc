@@ -862,7 +862,7 @@ class ReverseLookupCallbackWrapper : public DictionaryInterface::Callback {
 
 }  // namespace
 
-// Recursive implemention of depth-first prefix search with key expansion.
+// Recursive implementation of depth-first prefix search with key expansion.
 // Input parameters:
 //   key:
 //     The head address of the original key before applying codec.

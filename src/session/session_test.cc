@@ -3212,7 +3212,7 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
 
   {
     request.set_space_on_alphanumeric(
-        commands::Request::SPACE_OR_CONVERT_COMMITING_COMPOSITION);
+        commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION);
 
     Session session(engine_.get());
     InitSessionToPrecomposition(&session, request);
@@ -3687,7 +3687,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 }
 
-TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommitingSugesstion) {
+TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   // This is a unittest against http://b/2977131.
   {
     std::unique_ptr<Session> session(new Session(engine_.get()));
@@ -8638,7 +8638,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
     InitSessionToConversionWithAiueo(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
-    // Actualy this works well because Cancel command in conversion mode
+    // Actually this works well because Cancel command in conversion mode
     // is mapped into ConvertCancel not EditCancel.
     commands::Command command;
     EXPECT_TRUE(TestSendKey("ESC", &session, &command));
@@ -8664,7 +8664,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
     SetupMockForReverseConversion("[MO]", "MO");
     EXPECT_TRUE(session.SendCommand(&command));
 
-    // Actualy this works well because Cancel command in conversion mode
+    // Actually this works well because Cancel command in conversion mode
     // is mapped into ConvertCancel not EditCancel.
     EXPECT_TRUE(TestSendKey("ESC", &session, &command));
     EXPECT_TRUE(command.output().consumed());
@@ -8890,7 +8890,7 @@ TEST_F(SessionTest, SuppressSuggestion) {
   SendKey("d", &session, &command);
   EXPECT_TRUE(command.output().has_candidates());
 
-  // With an invalid identifer.  It should be the same with the
+  // With an invalid identifier.  It should be the same with the
   // default behavior.
   SetSendKeyCommand("i", &command);
   command.mutable_input()->mutable_context()->add_experimental_features(

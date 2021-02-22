@@ -1026,7 +1026,7 @@ TEST(CharChunkTest, Combine) {
     EXPECT_EQ("LRRR", rhs.raw());
   }
 
-  {  // lhs' ambigous is empty.
+  {  // lhs' ambiguous is empty.
     CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
     CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 
@@ -1047,7 +1047,7 @@ TEST(CharChunkTest, Combine) {
     EXPECT_EQ("LRRR", rhs.raw());
   }
 
-  {  // rhs' ambigous is empty.
+  {  // rhs' ambiguous is empty.
     CharChunk lhs(Transliterators::CONVERSION_STRING, nullptr);
     CharChunk rhs(Transliterators::CONVERSION_STRING, nullptr);
 

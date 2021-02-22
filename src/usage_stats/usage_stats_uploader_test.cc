@@ -35,7 +35,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -43,6 +42,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace usage_stats {
@@ -63,7 +63,7 @@ void SetUpMetaData(uint32 last_upload_time) {
 class UsageStatsUploaderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     EXPECT_TRUE(storage::Registry::Clear());
   }
 

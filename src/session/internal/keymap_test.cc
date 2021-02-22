@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "composer/key_parser.h"
 #include "config/config_handler.h"
@@ -46,6 +45,7 @@
 #include "session/internal/keymap_factory.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace keymap {
@@ -53,7 +53,7 @@ namespace keymap {
 class KeyMapTest : public testing::Test {
  protected:
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 
   bool isInputModeXCommandSupported() const {

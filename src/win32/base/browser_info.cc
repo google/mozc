@@ -113,26 +113,26 @@ bool BrowserInfo::IsInIncognitoMode(
     return false;
   }
 
-  const char *sufix_ja = nullptr;
-  const char *sufix_en = nullptr;
+  const char *suffix_ja = nullptr;
+  const char *suffix_en = nullptr;
   switch (GetBrowerType()) {
     case kBrowserTypeChrome:
-      sufix_ja = "（シークレット モード）";
-      sufix_en = "(Incognito)";
+      suffix_ja = "（シークレット モード）";
+      suffix_en = "(Incognito)";
       break;
     case kBrowserTypeFirefox:
-      sufix_ja = " (プライベートブラウジング)";
-      sufix_en = "(Private Browsing)";
+      suffix_ja = " (プライベートブラウジング)";
+      suffix_en = "(Private Browsing)";
       break;
     case kBrowserTypeIE:
-      sufix_ja = "[InPrivate]";
-      sufix_en = "[InPrivate]";
+      suffix_ja = "[InPrivate]";
+      suffix_en = "[InPrivate]";
       break;
   }
-  if (sufix_ja != nullptr && Util::EndsWith(root_window_name, sufix_ja)) {
+  if (suffix_ja != nullptr && Util::EndsWith(root_window_name, suffix_ja)) {
     return true;
   }
-  if (sufix_en != nullptr && Util::EndsWith(root_window_name, sufix_en)) {
+  if (suffix_en != nullptr && Util::EndsWith(root_window_name, suffix_en)) {
     return true;
   }
   return false;

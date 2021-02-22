@@ -30,19 +30,19 @@
 #include <iostream>  // NOLINT
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "composer/internal/converter.h"
 #include "composer/table.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, table, "system://romanji-hiragana.tsv",
+ABSL_FLAG(std::string, table, "system://romanji-hiragana.tsv",
           "preedit conversion table file.");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   mozc::composer::Table table;
-  table.LoadFromFile(mozc::GetFlag(FLAGS_table).c_str());
+  table.LoadFromFile(absl::GetFlag(FLAGS_table).c_str());
 
   mozc::composer::Converter converter(table);
 

@@ -58,7 +58,7 @@ class KeyBindingEditor : public QDialog, private Ui::KeyBindingEditor {
   void SetBinding(const QString &binding);
 
   // For some reason, KeyBindingEditor lanuched by
-  // QItemDelegate looses focus. We overwrite
+  // QItemDelegate loses focus. We overwrite
   // setVisible() function to call raise() and activateWindow().
   void setVisible(bool visible) override {
     QWidget::setVisible(visible);

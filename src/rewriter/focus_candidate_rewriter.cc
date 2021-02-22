@@ -51,7 +51,7 @@ bool IsConnectorSegment(const Segment &segment) {
   return (segment.key() == "と" || segment.key() == "や");
 }
 
-// Finds value from the candidates list and move the canidate to the top.
+// Finds value from the candidates list and move the candidate to the top.
 bool RewriteCandidate(Segment *segment, const std::string &value) {
   for (int i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).content_value == value) {

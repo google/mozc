@@ -34,28 +34,28 @@
 #endif  // OS_WIN
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(int32, sleep_time, 30, "sleep 30 sec");
-MOZC_FLAG(string, name, "named_event_test", "name for named event");
+ABSL_FLAG(int32, sleep_time, 30, "sleep 30 sec");
+ABSL_FLAG(std::string, name, "named_event_test", "name for named event");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::ProcessMutex mutex(mozc::GetFlag(FLAGS_name).c_str());
+  mozc::ProcessMutex mutex(absl::GetFlag(FLAGS_name).c_str());
 
   if (!mutex.Lock()) {
-    LOG(INFO) << "Process " << mozc::GetFlag(FLAGS_name)
+    LOG(INFO) << "Process " << absl::GetFlag(FLAGS_name)
               << " is already running";
     return -1;
   }
 
 #ifdef OS_WIN
-  ::Sleep(mozc::GetFlag(FLAGS_sleep_time) * 1000);
+  ::Sleep(absl::GetFlag(FLAGS_sleep_time) * 1000);
 #else
-  ::sleep(mozc::GetFlag(FLAGS_sleep_time));
+  ::sleep(absl::GetFlag(FLAGS_sleep_time));
 #endif
 
   mutex.UnLock();

@@ -33,17 +33,17 @@
 #include <vector>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/mozc_hash_map.h"
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(string, input, "", "Emoticon dictionary file");
-MOZC_FLAG(string, output_token_array, "", "Output token array");
-MOZC_FLAG(string, output_string_array, "", "Output string array");
+ABSL_FLAG(std::string, input, "", "Emoticon dictionary file");
+ABSL_FLAG(std::string, output_token_array, "", "Output token array");
+ABSL_FLAG(std::string, output_string_array, "", "Output string array");
 
 namespace mozc {
 namespace {
@@ -129,9 +129,9 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  const auto &input_data = mozc::ReadEmoticonTsv(mozc::GetFlag(FLAGS_input));
+  const auto &input_data = mozc::ReadEmoticonTsv(absl::GetFlag(FLAGS_input));
   mozc::SerializedDictionary::CompileToFiles(
-      input_data, mozc::GetFlag(FLAGS_output_token_array),
-      mozc::GetFlag(FLAGS_output_string_array));
+      input_data, absl::GetFlag(FLAGS_output_token_array),
+      absl::GetFlag(FLAGS_output_string_array));
   return 0;
 }

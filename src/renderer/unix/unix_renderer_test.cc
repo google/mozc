@@ -69,7 +69,7 @@ TEST(UnixRendererTest, ExecCommand) {
     EXPECT_FALSE(renderer.ExecCommand(command));
   }
   {
-    SCOPED_TRACE("UPDATE with visibile = true update layout");
+    SCOPED_TRACE("UPDATE with visible = true update layout");
 
     WindowManagerMock *wm_mock = new WindowManagerMock();
     commands::RendererCommand command;
@@ -83,7 +83,7 @@ TEST(UnixRendererTest, ExecCommand) {
     EXPECT_TRUE(renderer.ExecCommand(command));
   }
   {
-    SCOPED_TRACE("UPDATE with visibile = false call HideAllWindows");
+    SCOPED_TRACE("UPDATE with visible = false call HideAllWindows");
 
     WindowManagerMock *wm_mock = new WindowManagerMock();
     commands::RendererCommand command;

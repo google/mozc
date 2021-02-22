@@ -104,7 +104,7 @@ class KeyMapValidator {
 #if defined(__APPLE__)
     // On Mac, we cannot customize keybindings for IME ON/OFF
     // So we do not show them.
-    // TODO(toshiyuki): remove them after implimenting IME ON/OFF for Mac
+    // TODO(toshiyuki): remove them after implementing IME ON/OFF for Mac
     invisible_commands_.insert(kIMEOnCommand);
     invisible_commands_.insert(kIMEOffCommand);
 #endif  // __APPLE__

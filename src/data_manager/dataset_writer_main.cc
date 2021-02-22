@@ -47,23 +47,23 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, magic, "", "Hex-encoded magic number to be embedded");
-MOZC_FLAG(string, output, "", "Output file");
+ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
+ABSL_FLAG(std::string, output, "", "Output file");
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   std::string magic;
-  CHECK(mozc::Util::Unescape(mozc::GetFlag(FLAGS_magic), &magic))
+  CHECK(mozc::Util::Unescape(absl::GetFlag(FLAGS_magic), &magic))
       << "magic number is not a proper hex-escaped string: "
-      << mozc::GetFlag(FLAGS_magic);
+      << absl::GetFlag(FLAGS_magic);
 
   struct Input {
     Input(const std::string &n, int a, const std::string &f)
@@ -87,12 +87,12 @@ int main(int argc, char **argv) {
                         params[2]);
   }
 
-  CHECK(!mozc::GetFlag(FLAGS_output).empty()) << "--output is required";
+  CHECK(!absl::GetFlag(FLAGS_output).empty()) << "--output is required";
 
   // DataSetWriter directly writes to the specified stream, so if it fails for
   // an input, the output contains a partial result.  To avoid such partial file
   // creation, write to a temporary file then rename it.
-  const std::string tmpfile = mozc::GetFlag(FLAGS_output) + ".tmp";
+  const std::string tmpfile = absl::GetFlag(FLAGS_output) + ".tmp";
   {
     mozc::DataSetWriter writer(magic);
     for (const auto &input : inputs) {
@@ -105,9 +105,9 @@ int main(int argc, char **argv) {
     writer.Finish(&output);
     output.close();
   }
-  CHECK(mozc::FileUtil::AtomicRename(tmpfile, mozc::GetFlag(FLAGS_output)))
+  CHECK(mozc::FileUtil::AtomicRename(tmpfile, absl::GetFlag(FLAGS_output)))
       << "Failed to rename " << tmpfile << " to "
-      << mozc::GetFlag(FLAGS_output);
+      << absl::GetFlag(FLAGS_output);
 
   return 0;
 }

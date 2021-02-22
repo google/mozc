@@ -102,7 +102,7 @@ scoped_usage_stats_enabler::scoped_usage_stats_enabler()
 }
 
 scoped_usage_stats_enabler::~scoped_usage_stats_enabler() {
-  mozc::config::StatsConfigUtil::SetHandler(NULL);
+  mozc::config::StatsConfigUtil::SetHandler(nullptr);
 }
 
 }  // namespace usage_stats

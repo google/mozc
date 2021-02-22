@@ -91,7 +91,7 @@ bool Segmenter::IsBoundary(const Node &lnode, const Node &rnode,
   // This hack is for handling ambiguous bunsetsu segmentation.
   // e.g. "かみ|にかく" => "紙|に書く" or "紙二角".
   // If we segment "に書く" into two segments, "二角" is never be shown.
-  // There exits some implicit assumpution that user expects that his/her input
+  // There exits some implicit assumpution that user expects that their input
   // becomes one bunsetu. So, it would be better to keep "二角" even after "紙".
   if (lnode.attributes & Node::STARTS_WITH_PARTICLE) {
     return false;

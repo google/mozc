@@ -184,10 +184,10 @@ cc_binary_mozc(
     srcs = ["composition_main.cc"],
     deps = [
         ":composition",
-        "//base:flags",
         "//base:init_mozc",
         "//composer:composition_interface",
         "//composer:table",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -243,9 +243,9 @@ cc_binary_mozc(
     srcs = ["converter_main.cc"],
     deps = [
         ":converter",
-        "//base:flags",
         "//base:init_mozc",
         "//composer:table",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -301,7 +301,6 @@ cc_library_mozc(
         ":composition_input",
         ":typing_model",
         "//base",
-        "//base:flags",
         "//base:port",
         "//base/protobuf",
         "//base/protobuf:repeated_field",
@@ -310,6 +309,7 @@ cc_library_mozc(
         "//composer:type_corrected_query",
         "//config:config_handler",
         "//protocol:config_proto",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
 )

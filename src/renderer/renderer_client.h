@@ -57,7 +57,7 @@ class RendererLauncherInterface {
   // do not use this method unless protocol version mismatch
   virtual bool ForceTerminateRenderer(const std::string &name) = 0;
 
-  // called when fatal error occured
+  // called when fatal error occurred
   virtual void OnFatal(RendererErrorType type) = 0;
 
   // return true if the renderer is running

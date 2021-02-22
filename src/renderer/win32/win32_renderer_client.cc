@@ -55,7 +55,7 @@ Mutex *g_mutex = nullptr;
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
 
-// True if the the DLL received DLL_PROCESS_DETACH notification.
+// True if the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
 
 // Represents the number of UI threads that are recognized by this module.

@@ -109,11 +109,11 @@ cc_test_mozc(
         "//base:clock_mock",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:port",
         "//base:util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -161,9 +161,9 @@ cc_test_mozc(
         ":tiny_storage",
         "//base",
         "//base:file_util",
-        "//base:flags",
         "//base:port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -216,9 +216,9 @@ cc_test_mozc(
     deps = [
         ":registry",
         "//base",
-        "//base:flags",
         "//base:system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -246,10 +246,10 @@ cc_test_mozc(
         ":encrypted_string_storage",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:logging",
         "//base:system_util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
 )

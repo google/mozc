@@ -34,7 +34,6 @@
 #include <string>
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
@@ -43,6 +42,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace {
@@ -83,7 +83,7 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
   UserBoundaryHistoryRewriterTest() { request_.set_config(&config_); }
 
   void SetUp() override {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
 
@@ -114,7 +114,7 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
 TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   UserBoundaryHistoryRewriter rewriter(&mock());
   const std::string history_file =
-      mozc::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
+      absl::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
   EXPECT_TRUE(FileUtil::FileExists(history_file));
 }
 
@@ -227,8 +227,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   SetIncognito(false);  // no_incognito when rewrite
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
@@ -250,8 +250,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
@@ -273,8 +273,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
@@ -296,8 +296,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
@@ -322,8 +322,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
@@ -346,8 +346,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   SetIncognito(true);
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
@@ -370,8 +370,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   SetLearningLevel(config::Config::NO_HISTORY);
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
@@ -393,8 +393,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
@@ -417,7 +417,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   const std::string segments_str = segments.DebugString();
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
 
-  const std::string segments_rewrited_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewrited_str);
+  const std::string segments_rewritten_str = segments.DebugString();
+  EXPECT_EQ(segments_str, segments_rewritten_str);
 }
 }  // namespace mozc

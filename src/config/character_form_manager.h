@@ -130,7 +130,7 @@ class CharacterFormManager {
   //  form1=Half form2=Full
   //
   // If input1 and input2 have mixed form types and the result
-  // is ambigous, this function returns false.
+  // is ambiguous, this function returns false.
   //
   // Ambiguous case:
   //  input1="ABC１２３" input2="ＡＢＣ123"

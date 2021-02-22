@@ -30,18 +30,18 @@
 #include "testing/base/public/mozctest.h"
 
 #include "base/file_util.h"
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace testing {
 
 std::string GetSourcePath(const std::vector<absl::string_view> &components) {
-  const std::string test_srcdir = mozc::GetFlag(FLAGS_test_srcdir);
+  const std::string test_srcdir = absl::GetFlag(FLAGS_test_srcdir);
   std::vector<absl::string_view> abs_components = { test_srcdir };
 
   const char *workspace = std::getenv("TEST_WORKSPACE");
@@ -83,7 +83,7 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
 
 ScopedTmpUserProfileDirectory::ScopedTmpUserProfileDirectory()
     : original_dir_(SystemUtil::GetUserProfileDirectory()) {
-  SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+  SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 }
 
 ScopedTmpUserProfileDirectory::~ScopedTmpUserProfileDirectory() {

@@ -30,7 +30,9 @@
 
 # Description: Version configuration for Google Japanese Input
 
+load("//data/version:mozc_version_template.bzl", "BUILD", "MAJOR", "MINOR", "REVISION_MACOS")
 load("//tools/build_defs:stubs.bzl", "bzl_library")
+load("@build_bazel_rules_apple//apple:versioning.bzl", "apple_bundle_version")
 
 exports_files(
     ["mozc_version_template.bzl"],
@@ -46,4 +48,11 @@ bzl_library(
     srcs = ["mozc_version_template.bzl"],
     parse_tests = False,
     visibility = ["//visibility:private"],
+)
+
+apple_bundle_version(
+    name = "version_macos",
+    build_version = "%d.%d.%d.%d" % (MAJOR, MINOR, BUILD, REVISION_MACOS),
+    short_version_string = "%d.%d.%d" % (MAJOR, MINOR, BUILD),
+    visibility = ["//:__subpackages__"],
 )

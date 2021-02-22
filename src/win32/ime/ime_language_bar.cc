@@ -47,7 +47,7 @@ using ATL::CComQIPtr;
 namespace {
 // The GUID of the help menu in the system language bar.
 // TODO(mazda): Confirm this GUID is valid permanently for the system help menu
-// since the GUID was programatically obtained.
+// since the GUID was programmatically obtained.
 // It is confirmed that the GUID is valid on Windows XP SP2 and Windows Vista.
 // {ED9D5450-EBE6-4255-8289-F8A31E687228}
 const GUID kSystemLangBarHelpMenu = {

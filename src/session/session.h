@@ -266,7 +266,7 @@ class Session : public SessionInterface {
   // return 0 (default value) if no command is executed in this session.
   uint64 last_command_time() const override;
 
-  // TODO(komatsu): delete this funciton.
+  // TODO(komatsu): delete this function.
   // For unittest only
   mozc::composer::Composer *get_internal_composer_only_for_unittest();
 

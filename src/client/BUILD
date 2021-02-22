@@ -45,6 +45,7 @@ cc_library_mozc(
     deps = [
         "//base:port",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
     ],
 )
 
@@ -101,6 +102,7 @@ cc_test_mozc(
         "//base:version",
         "//ipc:ipc_mock",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
@@ -118,6 +120,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:mutex",
         "//protocol:commands_proto",
+        "//protocol:config_proto",
     ],
 )
 
@@ -127,7 +130,6 @@ cc_binary_mozc(
     deps = [
         ":client",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:process",
@@ -142,7 +144,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -162,7 +163,6 @@ cc_binary_mozc(
         "//base",
         "//base:file_stream",
         "//base:file_util",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -185,7 +185,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:port",
@@ -206,9 +205,9 @@ cc_binary_mozc(
     deps = [
         ":client",
         "//base",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -237,7 +236,6 @@ cc_binary_mozc(
         ":client",
         "//base",
         "//base:file_stream",
-        "//base:flags",
         "//base:init_mozc",
         "//base:logging",
         "//base:multifile",

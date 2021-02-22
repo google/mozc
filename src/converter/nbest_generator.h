@@ -57,7 +57,7 @@ class NBestGenerator {
     //   Candidate edge:      |  candidate  |
     //   Nodes:        |Node A|Node B|Node C|Node D|
 
-    // For normal converison.
+    // For normal conversion.
     //  Candidate boundary is strictly same as inner boundary.
     // A-B: Should be the boundary
     // B-C: Should not be the boundary
@@ -79,7 +79,7 @@ class NBestGenerator {
     ONLY_EDGE,
   };
 
-  // Try to enumurate N-best results between begin_node and end_node.
+  // Try to enumerate N-best results between begin_node and end_node.
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const Segmenter *segmenter, const Connector *connector,

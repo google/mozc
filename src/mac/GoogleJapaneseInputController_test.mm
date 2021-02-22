@@ -79,16 +79,16 @@
   __weak NSString *bundleIdentifier;
   NSRect expectedCursor;
   NSRange expectedRange;
-  string *selectedMode_;
+  std::string selectedMode_;
   NSString *insertedText_;
   NSString *overriddenLayout_;
   NSAttributedString *attributedString_;
-  std::map<string, int> *counters_;
+  std::map<std::string, int> counters_;
 }
 @property(readwrite, weak) NSString *bundleIdentifier;
 @property(readwrite, assign) NSRect expectedCursor;
 @property(readwrite, assign) NSRange expectedRange;
-@property(readonly) string *selectedMode;
+@property(readonly) std::string selectedMode;
 @property(readonly) NSString *insertedText;
 @property(readonly) NSString *overriddenLayout;
 @end
@@ -105,18 +105,14 @@
   self = [super init];
   self.bundleIdentifier = @"com.google.exampleBundle";
   expectedRange = NSMakeRange(NSNotFound, NSNotFound);
-  counters_ = new std::map<string, int>;
-  selectedMode_ = new string;
   return self;
 }
 
 - (void)dealloc {
-  delete counters_;
-  delete selectedMode_;
 }
 
 - (int)getCounter:(const char *)selector {
-  return (*counters_)[selector];
+  return counters_[selector];
 }
 
 - (NSConnection *)connectionForProxy {
@@ -125,24 +121,24 @@
 
 - (NSDictionary *)attributesForCharacterIndex:(int)index
                           lineHeightRectangle:(NSRect *)rect {
-  (*counters_)["attributesForCharacterIndex:lineHeightRectangle:"]++;
+  counters_["attributesForCharacterIndex:lineHeightRectangle:"]++;
   *rect = expectedCursor;
   return nil;
 }
 
 - (NSRange)selectedRange {
-  (*counters_)["selectedRange"]++;
+  counters_["selectedRange"]++;
   return expectedRange;
 }
 
 - (NSRange)markedRange {
-  (*counters_)["markedRange"]++;
+  counters_["markedRange"]++;
   return expectedRange;
 }
 
 - (void)selectInputMode:(NSString *)mode {
-  (*counters_)["selectInputMode:"]++;
-  selectedMode_->assign([mode UTF8String]);
+  counters_["selectInputMode:"]++;
+  selectedMode_.assign([mode UTF8String]);
 }
 
 - (void)setAttributedString:(NSAttributedString *)newString {
@@ -165,12 +161,12 @@
 }
 
 - (void)insertText:(NSString *)result replacementRange:(NSRange)range {
-  (*counters_)["insertText:replacementRange:"]++;
+  counters_["insertText:replacementRange:"]++;
   insertedText_ = result;
 }
 
 - (void)overrideKeyboardWithKeyboardNamed:(NSString *)newLayout {
-  (*counters_)["overrideKeyboardWithKeyboardNamed:"]++;
+  counters_["overrideKeyboardWithKeyboardNamed:"]++;
   overriddenLayout_ = newLayout;
 }
 @end
@@ -610,12 +606,12 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
-  EXPECT_TRUE(mock_client_.selectedMode->empty());
+  EXPECT_TRUE(mock_client_.selectedMode.empty());
   EXPECT_EQ(mozc::commands::DIRECT, controller_.mode);
   [controller_ switchDisplayMode];
   EXPECT_EQ(1, [mock_client_ getCounter:"selectInputMode:"]);
-  string expected = mozc::MacUtil::GetLabelForSuffix("Roman");
-  EXPECT_EQ(expected, *(mock_client_.selectedMode));
+  std::string expected = mozc::MacUtil::GetLabelForSuffix("Roman");
+  EXPECT_EQ(expected, mock_client_.selectedMode);
 
   // Does not change the display mode for MS Word.  See
   // GoogleJapaneseInputController.mm for the detailed information.
@@ -626,7 +622,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
   // still remains 1 and display mode does not change.
   EXPECT_EQ(1, [mock_client_ getCounter:"selectInputMode:"]);
   expected = mozc::MacUtil::GetLabelForSuffix("Roman");
-  EXPECT_EQ(expected, *(mock_client_.selectedMode));
+  EXPECT_EQ(expected, mock_client_.selectedMode);
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, commitText) {

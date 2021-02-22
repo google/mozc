@@ -434,6 +434,9 @@ def GypMain(options, unused_args):
 
   gyp_options.extend(gyp_file_names)
 
+  gyp_options.extend(['-D', 'version=' + version.GetVersionString()])
+  gyp_options.extend(['-D', 'short_version=' + version.GetShortVersionString()])
+
   if options.branding:
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
 

@@ -353,7 +353,7 @@ class MozcDrawableConverter(object):
     stroke_map = {'style': 'stroke', 'shadow': has_shadow}
 
     # Special warning for font-size.
-    # Inkscape often unexpectedly converts from sytle to font-size attribute.
+    # Inkscape often unexpectedly converts from style to font-size attribute.
     if node.get('font-size', ''):
       logging.warning('font-size attribute is not supported.')
 

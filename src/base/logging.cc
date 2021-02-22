@@ -57,16 +57,16 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/clock.h"
-#include "base/flags.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 
-MOZC_FLAG(bool, colored_log, true,
+ABSL_FLAG(bool, colored_log, true,
           "Enables colored log messages on tty devices");
-MOZC_FLAG(bool, logtostderr, false,
+ABSL_FLAG(bool, logtostderr, false,
           "log messages go to stderr instead of logfiles");
-MOZC_FLAG(int32, v, 0, "verbose level");
+ABSL_FLAG(int32, v, 0, "verbose level");
 
 namespace mozc {
 
@@ -93,7 +93,7 @@ COMPARE_LOG_LEVEL(LOG_SILENT, ANDROID_LOG_SILENT);
 #endif  // OS_ANDROID
 
 // Use the same implementation both for Opt and Debug.
-string Logging::GetLogMessageHeader() {
+std::string Logging::GetLogMessageHeader() {
 #ifdef OS_ANDROID
   // On Android, other records are not needed because they are added by
   // Android's logging framework.
@@ -130,7 +130,7 @@ string Logging::GetLogMessageHeader() {
 
 #ifdef MOZC_NO_LOGGING
 
-void Logging::InitLogStream(const string &log_file_path) {}
+void Logging::InitLogStream(const std::string &log_file_path) {}
 
 void Logging::CloseLogStream() {}
 
@@ -172,16 +172,16 @@ class LogStreamImpl {
   LogStreamImpl();
   ~LogStreamImpl();
 
-  void Init(const string &log_file_path);
+  void Init(const std::string &log_file_path);
   void Reset();
 
   int verbose_level() const {
-    return std::max(mozc::GetFlag(FLAGS_v), config_verbose_level_);
+    return std::max(absl::GetFlag(FLAGS_v), config_verbose_level_);
   }
 
   void set_verbose_level(int level) {
     scoped_lock l(&mutex_);
-    mozc::SetFlag(&FLAGS_v, level);
+    absl::SetFlag(&FLAGS_v, level);
   }
 
   void set_config_verbose_level(int level) {
@@ -191,7 +191,7 @@ class LogStreamImpl {
 
   bool support_color() const { return support_color_; }
 
-  void Write(LogSeverity, const string &log);
+  void Write(LogSeverity, const std::string &log);
 
  private:
   // Real backing log stream.
@@ -204,7 +204,7 @@ class LogStreamImpl {
   Mutex mutex_;
 };
 
-void LogStreamImpl::Write(LogSeverity severity, const string &log) {
+void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
   scoped_lock l(&mutex_);
   if (use_cerr_) {
     std::cerr << log;
@@ -233,7 +233,7 @@ LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
 // Android, *     => false, nullptr
 // Others,  true  => true,  nullptr
 // Others,  false => true,  non-null
-void LogStreamImpl::Init(const string &log_file_path) {
+void LogStreamImpl::Init(const std::string &log_file_path) {
   scoped_lock l(&mutex_);
   Reset();
 
@@ -273,11 +273,11 @@ void LogStreamImpl::Reset() {
   // Coloring is disabled on windows
   // because cmd.exe doesn't support ANSI color escape sequences.
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
-  use_cerr_ = mozc::GetFlag(FLAGS_logtostderr);
+  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
   support_color_ = false;
 #else   // OS_ANDROID, OS_WIN
-  use_cerr_ = mozc::GetFlag(FLAGS_logtostderr);
-  support_color_ = (use_cerr_ && mozc::GetFlag(FLAGS_colored_log) &&
+  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
+  support_color_ = (use_cerr_ && absl::GetFlag(FLAGS_colored_log) &&
                     ::isatty(::fileno(stderr)));
 #endif  // OS_ANDROID, OS_WIN
 }
@@ -285,7 +285,7 @@ void LogStreamImpl::Reset() {
 LogStreamImpl::~LogStreamImpl() { Reset(); }
 }  // namespace
 
-void Logging::InitLogStream(const string &log_file_path) {
+void Logging::InitLogStream(const std::string &log_file_path) {
   Singleton<LogStreamImpl>::get()->Init(log_file_path);
   std::ostream &stream = GetWorkingLogStream();
   stream << "Log file created at: " << Logging::GetLogMessageHeader();

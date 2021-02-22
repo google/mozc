@@ -35,7 +35,6 @@
 #include <vector>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -48,8 +47,8 @@
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
 
-MOZC_FLAG(string, server_path, "", "specify server path");
-MOZC_FLAG(string, log_path, "", "specify log output file path");
+ABSL_FLAG(std::string, server_path, "", "specify server path");
+ABSL_FLAG(std::string, log_path, "", "specify log output file path");
 
 namespace mozc {
 namespace {
@@ -100,8 +99,8 @@ class TestScenarioInterface {
   virtual void Run(Result *result) = 0;
 
   TestScenarioInterface() {
-    if (!mozc::GetFlag(FLAGS_server_path).empty()) {
-      client_.set_server_program(mozc::GetFlag(FLAGS_server_path));
+    if (!absl::GetFlag(FLAGS_server_path).empty()) {
+      client_.set_server_program(absl::GetFlag(FLAGS_server_path));
     }
     CHECK(client_.IsValidRunLevel()) << "IsValidRunLevel failed";
     CHECK(client_.EnsureSession()) << "EnsureSession failed";
@@ -378,8 +377,8 @@ int main(int argc, char **argv) {
   CHECK_EQ(results.size(), tests.size());
 
   std::ostream *ofs = &std::cout;
-  if (!mozc::GetFlag(FLAGS_log_path).empty()) {
-    ofs = new mozc::OutputFileStream(mozc::GetFlag(FLAGS_log_path).c_str());
+  if (!absl::GetFlag(FLAGS_log_path).empty()) {
+    ofs = new mozc::OutputFileStream(absl::GetFlag(FLAGS_log_path).c_str());
   }
 
   // TODO(taku): generate histogram with ChartAPI

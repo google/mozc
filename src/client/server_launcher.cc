@@ -77,11 +77,11 @@ const uint32 kTrial = 20;
 #ifdef DEBUG
 // Load special flags for server.
 // This should be enabled on debug build
-const string LoadServerFlags() {
+const std::string LoadServerFlags() {
   const char kServerFlagsFile[] = "mozc_server_flags.txt";
-  const string filename = FileUtil::JoinPath(
+  const std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), kServerFlagsFile);
-  string flags;
+  std::string flags;
   InputFileStream ifs(filename.c_str());
   if (ifs) {
     getline(ifs, flags);
@@ -132,7 +132,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
 #endif
 
 #ifdef DEBUG
-  // In oreder to test the Session treatment (timeout/size constratins),
+  // In order to test the Session treatment (timeout/size constratins),
   // Server flags can be configurable on DEBUG build
   if (!arg.empty()) {
     arg += " ";

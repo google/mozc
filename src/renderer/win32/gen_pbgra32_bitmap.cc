@@ -34,14 +34,14 @@
 #include <memory>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/flags/flag.h"
 
-MOZC_FLAG(string, src, "", "path to the input PNG file");
-MOZC_FLAG(string, dest, "", "path to the output BMP file");
+ABSL_FLAG(std::string, src, "", "path to the input PNG file");
+ABSL_FLAG(std::string, dest, "", "path to the output BMP file");
 
 using ::std::max;
 using ::std::min;
@@ -61,7 +61,7 @@ const uint32 kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
   std::wstring wide_src;
-  mozc::Util::UTF8ToWide(mozc::GetFlag(FLAGS_src), &wide_src);
+  mozc::Util::UTF8ToWide(absl::GetFlag(FLAGS_src), &wide_src);
   std::unique_ptr<Gdiplus::Bitmap> image(
       Gdiplus::Bitmap::FromFile(wide_src.c_str()));
 
@@ -119,7 +119,7 @@ bool ConvertMain() {
   header.pixel_data_size = pixel_data_bytes;
 
   mozc::OutputFileStream output_file(
-      mozc::GetFlag(FLAGS_dest).c_str(),
+      absl::GetFlag(FLAGS_dest).c_str(),
       std::ios::out | std::ios::binary | std::ios::trunc);
   if (!output_file.good()) {
     return false;
@@ -145,11 +145,11 @@ bool ConvertMain() {
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  if (mozc::GetFlag(FLAGS_src).empty()) {
+  if (absl::GetFlag(FLAGS_src).empty()) {
     std::cout << "Specify --src option";
     return kErrorLevelFail;
   }
-  if (mozc::GetFlag(FLAGS_dest).empty()) {
+  if (absl::GetFlag(FLAGS_dest).empty()) {
     std::cout << "Specify --dest option";
     return kErrorLevelFail;
   }

@@ -113,7 +113,7 @@ class UserDictionaryStorage {
   //       is kept as is.
   bool Load();
 
-  // Serialzie user dictionary to local file.
+  // Serialize user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
   bool Save();
 
@@ -166,7 +166,7 @@ class UserDictionaryStorage {
   static int CountSyncableDictionaries(
       const user_dictionary::UserDictionaryStorage &storage);
 
-  // maxium number of dictionaries this storage can hold
+  // maximum number of dictionaries this storage can hold
   static size_t max_dictionary_size();
 
   // maximum number of entries one dictionary can hold

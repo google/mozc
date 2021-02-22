@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 
@@ -54,7 +55,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariants(
   }
 
   // multi-word
-  if (input.find(' ') != std::string::npos) {
+  if (absl::StrContains(input, " ")) {
     return false;
   }
 
@@ -120,7 +121,7 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
     DCHECK(original_candidate);
 
     // http://b/issue?id=5137299
-    // If the entry is comming from user dictionary,
+    // If the entry is coming from user dictionary,
     // expand English variants.
     if (original_candidate->attributes &
             Segment::Candidate::NO_VARIANTS_EXPANSION &&

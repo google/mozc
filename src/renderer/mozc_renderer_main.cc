@@ -34,12 +34,13 @@
 #endif  // OS_WIN, ENABLE_GTK_RENDERER
 
 #include "base/crash_report_handler.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/stats_config_util.h"
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
@@ -64,7 +65,7 @@
 #include "renderer/unix/window_manager.h"
 #endif  // OS_WIN, __APPLE__, ENABLE_GTK_RENDERER
 
-MOZC_DECLARE_FLAG(bool, restricted);
+ABSL_DECLARE_FLAG(bool, restricted);
 
 int main(int argc, char *argv[]) {
   const mozc::RunLevel::RunLevelType run_level =
@@ -91,7 +92,7 @@ int main(int argc, char *argv[]) {
 
   // restricted mode
   if (run_level == mozc::RunLevel::RESTRICTED) {
-    mozc::SetFlag(&FLAGS_restricted, true);
+    absl::SetFlag(&FLAGS_restricted, true);
   }
 
   if (mozc::config::StatsConfigUtil::IsEnabled()) {

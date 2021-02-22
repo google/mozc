@@ -49,7 +49,7 @@ namespace {
 // Since the behavior of launch_msg() is changed from Yosemite (10.10),
 // this function no longer relies on the information from launch_msg().
 // When we add new services, we should update this function too.
-bool GetMachPortName(const string &name, string *port_name) {
+bool GetMachPortName(const std::string &name, std::string *port_name) {
   // Defined in data/mac/com.google.inputmethod.Japanese.Converter.plist
   if (name == "session") {
     port_name->assign(MacUtil::GetLabelForSuffix("") + "Converter.session");
@@ -70,8 +70,8 @@ bool GetMachPortName(const string &name, string *port_name) {
 // starting server as far as possible.
 class DefaultClientMachPortManager : public MachPortManagerInterface {
  public:
-  virtual bool GetMachPort(const string &name, mach_port_t *port) {
-    string port_name;
+  virtual bool GetMachPort(const std::string &name, mach_port_t *port) {
+    std::string port_name;
     if (!GetMachPortName(name, &port_name)) {
       LOG(ERROR) << "Failed to get the port name";
       return false;
@@ -83,8 +83,8 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
     return kr == BOOTSTRAP_SUCCESS;
   }
 
-  virtual bool IsServerRunning(const string &name) const {
-    string server_label = MacUtil::GetLabelForSuffix("");
+  virtual bool IsServerRunning(const std::string &name) const {
+    std::string server_label = MacUtil::GetLabelForSuffix("");
     if (name == "session") {
       server_label += "Converter";
     } else if (name == "renderer") {
@@ -133,15 +133,16 @@ class DefaultClientMachPortManager : public MachPortManagerInterface {
 class DefaultServerMachPortManager : public MachPortManagerInterface {
  public:
   ~DefaultServerMachPortManager() {
-    for (std::map<string, mach_port_t>::const_iterator it = mach_ports_.begin();
+    for (std::map<std::string, mach_port_t>::const_iterator it =
+             mach_ports_.begin();
          it != mach_ports_.end(); ++it) {
       mach_port_destroy(mach_task_self(), it->second);
     }
     mach_ports_.clear();
   }
 
-  virtual bool GetMachPort(const string &name, mach_port_t *port) {
-    string port_name;
+  virtual bool GetMachPort(const std::string &name, mach_port_t *port) {
+    std::string port_name;
     if (!GetMachPortName(name, &port_name)) {
       LOG(ERROR) << "Failed to get the port name";
       return false;
@@ -149,7 +150,7 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
     DLOG(INFO) << "\"" << port_name << "\"";
 
-    std::map<string, mach_port_t>::const_iterator it =
+    std::map<std::string, mach_port_t>::const_iterator it =
         mach_ports_.find(port_name);
     if (it != mach_ports_.end()) {
       *port = it->second;
@@ -164,10 +165,10 @@ class DefaultServerMachPortManager : public MachPortManagerInterface {
 
   // In the server side, it always return "true" because the caller
   // itself is the server.
-  virtual bool IsServerRunning(const string &name) const { return true; }
+  virtual bool IsServerRunning(const std::string &name) const { return true; }
 
  private:
-  std::map<string, mach_port_t> mach_ports_;
+  std::map<std::string, mach_port_t> mach_ports_;
 };
 
 struct mach_ipc_send_message {
@@ -188,12 +189,12 @@ struct mach_ipc_receive_message {
 }  // namespace
 
 // Client implementation
-IPCClient::IPCClient(const string &name)
+IPCClient::IPCClient(const std::string &name)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, "");
 }
 
-IPCClient::IPCClient(const string &name, const string &server_path)
+IPCClient::IPCClient(const std::string &name, const std::string &server_path)
     : name_(name), mach_port_manager_(nullptr), ipc_path_manager_(nullptr) {
   Init(name, server_path);
 }
@@ -202,7 +203,8 @@ IPCClient::~IPCClient() {
   // Do nothing
 }
 
-void IPCClient::Init(const string &name, const string & /*server_path*/) {
+void IPCClient::Init(const std::string &name,
+                     const std::string & /*server_path*/) {
   ipc_path_manager_ = IPCPathManager::GetIPCPathManager(name);
   if (!ipc_path_manager_->LoadPathName()) {
     LOG(ERROR) << "Cannot load IPC path name";
@@ -343,7 +345,8 @@ bool IPCClient::Connected() const {
 }
 
 // Server implementation
-IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32 num_connections,
+                     int32 timeout)
     : name_(name), mach_port_manager_(nullptr), timeout_(timeout) {
   // This is a fake IPC path manager: it just stores the server
   // version and IPC name but we don't use the stored IPC name itself.

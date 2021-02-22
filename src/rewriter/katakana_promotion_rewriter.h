@@ -30,9 +30,9 @@
 // Rewriter to promote katakana transliterated candidate for mobile devices.
 // For mobile, we do not provide the shortcut to input katakana transliterated
 // candidate.
-// If the katakana candiadte is not ranked high, users need to scroll candidate
+// If the katakana candidate is not ranked high, users need to scroll candidate
 // page and find katakana.
-// This rewriter promotes katakana candiate so that users can find katakana
+// This rewriter promotes katakana candidate so that users can find katakana
 // at first glance.
 
 #ifndef MOZC_REWRITER_KATAKANA_PROMOTION_REWRITER_H_

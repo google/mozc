@@ -239,7 +239,7 @@ void CandidateController::AlignWindows() {
   const mozc::Rect display_rect = GetNearestDisplayRect(preedit_rect);
 
   // Align candidate window.
-  // Initialize the the position.  We use (left, bottom) of preedit as
+  // Initialize the position.  We use (left, bottom) of preedit as
   // the top-left position of the window because we want to show the
   // window just below of the preedit.
   const TableLayout *candidate_layout = candidate_window_->GetTableLayout();

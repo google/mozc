@@ -31,7 +31,7 @@
 
 #include <memory>
 
-#include "base/flags.h"
+#include "absl/flags/flag.h"
 #ifdef __APPLE__
 #include "base/mac_util.h"
 #endif  // __APPLE__
@@ -39,13 +39,13 @@
 #include "renderer/renderer_client.h"
 
 #ifdef __APPLE__
-MOZC_FLAG(bool, register_prelauncher, false,
+ABSL_FLAG(bool, register_prelauncher, false,
           "Register prelauncher to login item.");
 #endif  // __APPLE__
 
 int RunPrelaunchProcesses(int argc, char *argv[]) {
 #ifdef __APPLE__
-  if (mozc::GetFlag(FLAGS_register_prelauncher)) {
+  if (absl::GetFlag(FLAGS_register_prelauncher)) {
     mozc::MacUtil::AddPrelauncherLoginItem();
   }
 #endif  // __APPLE__

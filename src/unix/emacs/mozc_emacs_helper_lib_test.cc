@@ -33,6 +33,7 @@
 
 #include "base/protobuf/message.h"
 #include "base/util.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

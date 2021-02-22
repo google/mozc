@@ -836,7 +836,7 @@ TEST_F(ConverterTest, Regression3437022) {
   const std::string kValue2 = "電話";
 
   {
-    // Make sure converte result is one segment
+    // Make sure convert result is one segment
     EXPECT_TRUE(converter->StartConversion(&segments, kKey1 + kKey2));
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(kValue1 + kValue2,

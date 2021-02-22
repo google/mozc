@@ -31,17 +31,17 @@
 #include <iostream>
 #include <string>
 
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "ios/ios_engine.h"
 #include "protocol/candidates.pb.h"
+#include "absl/flags/flag.h"
 
 // mozc/data_manager/testing:mozc_dataset_for_testing is one of datafile.
-MOZC_FLAG(string, datafile, "", "Path to a data file to be used");
-MOZC_FLAG(int32, candsize, 3, "Maximum number of candidates");
-MOZC_FLAG(bool, show_full, false, "Display the debug string of output command");
+ABSL_FLAG(std::string, datafile, "", "Path to a data file to be used");
+ABSL_FLAG(int32, candsize, 3, "Maximum number of candidates");
+ABSL_FLAG(bool, show_full, false, "Display the debug string of output command");
 
 namespace {
 
@@ -69,7 +69,7 @@ void Convert(const std::string &query, mozc::ios::IosEngine *engine,
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::ios::IosEngine ios_engine(mozc::GetFlag(FLAGS_datafile));
+  mozc::ios::IosEngine ios_engine(absl::GetFlag(FLAGS_datafile));
 
   mozc::commands::Command command;
   mozc::config::Config config;
@@ -97,13 +97,13 @@ int main(int argc, char **argv) {
 
     Convert(query, &ios_engine, &command);
 
-    if (mozc::GetFlag(FLAGS_show_full)) {
+    if (absl::GetFlag(FLAGS_show_full)) {
       std::cout << command.Utf8DebugString() << std::endl;
     } else {
       std::cout << "----- preedit -----\n"
                 << command.output().preedit().Utf8DebugString() << std::endl;
       const auto &cands = command.output().candidates();
-      const int size = std::min(mozc::GetFlag(FLAGS_candsize),
+      const int size = std::min(absl::GetFlag(FLAGS_candsize),
                                 cands.candidate_size());
       for (int i = 0; i < size; ++i) {
         std::cout << "----- candidate " << i << " -----\n"

@@ -88,7 +88,7 @@ using ATL::CComQIPtr;
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
 
-// True if the the DLL received DLL_PROCESS_DETACH notification.
+// True if the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
 
 // Thread Local Storage (TLS) index to specify the current UI thread is
@@ -877,7 +877,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
   virtual HRESULT STDMETHODCALLTYPE OnSetThreadFocus() {
     EnsureKanaLockUnlocked();
 
-    // A temporary workaround for b/24793812.  When previous atempt to
+    // A temporary workaround for b/24793812.  When previous attempt to
     // establish conection failed, retry again as if this was the first attempt.
     // TODO(yukawa): We should give up if this fails a number of times.
     if (WinUtil::IsProcessSandboxed()) {

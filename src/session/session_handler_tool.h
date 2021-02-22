@@ -106,7 +106,8 @@ class SessionHandlerInterpreter {
   void ClearUsageStats();
   const commands::Output& LastOutput() const;
   bool GetCandidateIdByValue(const absl::string_view value, uint32 *id);
-  Status ParseLine(const std::string &line_text);
+  std::vector<std::string> Parse(const std::string &line);
+  Status Eval(const std::vector<std::string> &args);
 
  private:
   // std::unique_ptr<EngineInterface> engine_;

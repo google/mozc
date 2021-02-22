@@ -244,9 +244,13 @@ bool IsInAllCandidateWords(const absl::string_view expected_candidate,
   EXPECT_PRED_FORMAT2(IsNotInAllCandidateWordsWithFormat, expected_candidate, \
                       output)
 
-void ParseLine(SessionHandlerInterpreter &handler,
-               const std::string &line_text) {
-  const mozc::Status status = handler.ParseLine(line_text);
+void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
+  std::vector<std::string> args = handler.Parse(line);
+  if (args.empty()) {
+    return;
+  }
+
+  const mozc::Status status = handler.Eval(args);
   if (status.ok()) {
     return;
   }
@@ -254,18 +258,16 @@ void ParseLine(SessionHandlerInterpreter &handler,
     EXPECT_TRUE(false) << status.message();
   }
 
-  const std::vector<std::string> columns = absl::StrSplit(line_text, '\t');
-  const std::string &command = columns[0];
+  const std::string &command = args[0];
   const Output &output = handler.LastOutput();
 
   if (command == "EXPECT_CONSUMED") {
-    ASSERT_EQ(2, columns.size());
+    ASSERT_EQ(2, args.size());
     ASSERT_TRUE(output.has_consumed());
-    EXPECT_EQ(columns[1] == "true", output.consumed());
+    EXPECT_EQ(args[1] == "true", output.consumed());
   } else if (command == "EXPECT_PREEDIT") {
     // Concat preedit segments and assert.
-    const std::string &expected_preedit =
-        columns.size() == 1 ? "" : columns[1];
+    const std::string &expected_preedit = args.size() == 1 ? "" : args[1];
     std::string preedit_string;
     const mozc::commands::Preedit &preedit = output.preedit();
     for (int i = 0; i < preedit.segment_size(); ++i) {
@@ -275,56 +277,55 @@ void ParseLine(SessionHandlerInterpreter &handler,
         << "Expected preedit: " << expected_preedit << "\n"
         << "Actual preedit: " << preedit.Utf8DebugString();
   } else if (command == "EXPECT_PREEDIT_IN_DETAIL") {
-    ASSERT_LE(1, columns.size());
+    ASSERT_LE(1, args.size());
     const mozc::commands::Preedit &preedit = output.preedit();
-    ASSERT_EQ(columns.size() - 1, preedit.segment_size());
+    ASSERT_EQ(args.size() - 1, preedit.segment_size());
     for (int i = 0; i < preedit.segment_size(); ++i) {
-      EXPECT_EQ(columns[i + 1], preedit.segment(i).value())
+      EXPECT_EQ(args[i + 1], preedit.segment(i).value())
           << "Segment index = " << i;
     }
   } else if (command == "EXPECT_PREEDIT_CURSOR_POS") {
     // Concat preedit segments and assert.
-    ASSERT_EQ(2, columns.size());
-    const size_t expected_pos = NumberUtil::SimpleAtoi(columns[1]);
+    ASSERT_EQ(2, args.size());
+    const size_t expected_pos = NumberUtil::SimpleAtoi(args[1]);
     const mozc::commands::Preedit &preedit = output.preedit();
     EXPECT_EQ(expected_pos, preedit.cursor()) << preedit.Utf8DebugString();
   } else if (command == "EXPECT_CANDIDATE") {
-    ASSERT_EQ(3, columns.size());
+    ASSERT_EQ(3, args.size());
     uint32 candidate_id = 0;
     const bool has_result =
-        GetCandidateIdByValue(columns[2], output, &candidate_id);
-    EXPECT_TRUE(has_result) << columns[2] + " is not found\n"
+        GetCandidateIdByValue(args[2], output, &candidate_id);
+    EXPECT_TRUE(has_result) << args[2] + " is not found\n"
                             << output.candidates().Utf8DebugString();
     if (has_result) {
-      EXPECT_EQ(NumberUtil::SimpleAtoi(columns[1]), candidate_id);
+      EXPECT_EQ(NumberUtil::SimpleAtoi(args[1]), candidate_id);
     }
   } else if (command == "EXPECT_RESULT") {
-    if (columns.size() == 2 && !columns[1].empty()) {
+    if (args.size() == 2 && !args[1].empty()) {
       ASSERT_TRUE(output.has_result());
       const mozc::commands::Result &result = output.result();
-      EXPECT_EQ(columns[1], result.value()) << result.Utf8DebugString();
+      EXPECT_EQ(args[1], result.value()) << result.Utf8DebugString();
     } else {
-      EXPECT_FALSE(output.has_result())
-          << output.result().Utf8DebugString();
+      EXPECT_FALSE(output.has_result()) << output.result().Utf8DebugString();
     }
   } else if (command == "EXPECT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(2, columns.size());
-    EXPECT_IN_ALL_CANDIDATE_WORDS(columns[1], output)
-        << columns[1] << " is not found.\n"
+    ASSERT_EQ(2, args.size());
+    EXPECT_IN_ALL_CANDIDATE_WORDS(args[1], output)
+        << args[1] << " is not found.\n"
         << output.Utf8DebugString();
   } else if (command == "EXPECT_NOT_IN_ALL_CANDIDATE_WORDS") {
-    ASSERT_EQ(2, columns.size());
-    EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(columns[1], output);
+    ASSERT_EQ(2, args.size());
+    EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(args[1], output);
   } else if (command == "EXPECT_HAS_CANDIDATES") {
     ASSERT_TRUE(output.has_candidates());
   } else if (command == "EXPECT_NO_CANDIDATES") {
     ASSERT_FALSE(output.has_candidates());
   } else if (command == "EXPECT_SEGMENTS_SIZE") {
-    ASSERT_EQ(2, columns.size());
-    ASSERT_EQ(NumberUtil::SimpleAtoi(columns[1]),
+    ASSERT_EQ(2, args.size());
+    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]),
               output.preedit().segment_size());
   } else if (command == "EXPECT_HIGHLIGHTED_SEGMENT_INDEX") {
-    ASSERT_EQ(2, columns.size());
+    ASSERT_EQ(2, args.size());
     ASSERT_TRUE(output.has_preedit());
     const mozc::commands::Preedit &preedit = output.preedit();
     int index = -1;
@@ -335,31 +336,31 @@ void ParseLine(SessionHandlerInterpreter &handler,
         break;
       }
     }
-    ASSERT_EQ(NumberUtil::SimpleAtoi(columns[1]), index);
+    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]), index);
   } else if (command == "EXPECT_USAGE_STATS_COUNT") {
-    ASSERT_EQ(3, columns.size());
-    const uint32 expected_value = NumberUtil::SimpleAtoi(columns[2]);
+    ASSERT_EQ(3, args.size());
+    const uint32 expected_value = NumberUtil::SimpleAtoi(args[2]);
     if (expected_value == 0) {
-      EXPECT_STATS_NOT_EXIST(columns[1]);
+      EXPECT_STATS_NOT_EXIST(args[1]);
     } else {
-      EXPECT_COUNT_STATS(columns[1], expected_value);
+      EXPECT_COUNT_STATS(args[1], expected_value);
     }
   } else if (command == "EXPECT_USAGE_STATS_INTEGER") {
-    ASSERT_EQ(3, columns.size());
-    EXPECT_INTEGER_STATS(columns[1], NumberUtil::SimpleAtoi(columns[2]));
+    ASSERT_EQ(3, args.size());
+    EXPECT_INTEGER_STATS(args[1], NumberUtil::SimpleAtoi(args[2]));
   } else if (command == "EXPECT_USAGE_STATS_BOOLEAN") {
-    ASSERT_EQ(3, columns.size());
-    EXPECT_BOOLEAN_STATS(columns[1], columns[2] == "true");
+    ASSERT_EQ(3, args.size());
+    EXPECT_BOOLEAN_STATS(args[1], args[2] == "true");
   } else if (command == "EXPECT_USAGE_STATS_TIMING") {
-    ASSERT_EQ(6, columns.size());
-    const uint64 expected_total = NumberUtil::SimpleAtoi(columns[2]);
-    const uint32 expected_num = NumberUtil::SimpleAtoi(columns[3]);
-    const uint32 expected_min = NumberUtil::SimpleAtoi(columns[4]);
-    const uint32 expected_max = NumberUtil::SimpleAtoi(columns[5]);
+    ASSERT_EQ(6, args.size());
+    const uint64 expected_total = NumberUtil::SimpleAtoi(args[2]);
+    const uint32 expected_num = NumberUtil::SimpleAtoi(args[3]);
+    const uint32 expected_min = NumberUtil::SimpleAtoi(args[4]);
+    const uint32 expected_max = NumberUtil::SimpleAtoi(args[5]);
     if (expected_num == 0) {
-      EXPECT_STATS_NOT_EXIST(columns[1]);
+      EXPECT_STATS_NOT_EXIST(args[1]);
     } else {
-      EXPECT_TIMING_STATS(columns[1], expected_total, expected_num,
+      EXPECT_TIMING_STATS(args[1], expected_total, expected_num,
                           expected_min, expected_max);
     }
 

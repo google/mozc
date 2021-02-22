@@ -60,7 +60,7 @@ class ConfigDialog : public QDialog, private Ui::ConfigDialog {
   ConfigDialog();
   ~ConfigDialog() override;
 
-  // Methods defined in the 'slots' section (Qt's extention) will be processed
+  // Methods defined in the 'slots' section (Qt's extension) will be processed
   // by Qt's moc tool (moc.exe on Windows). Unfortunately, preprocessor macros
   // defined for C/C++ are not automatically passed into the moc tool.
   // For example, you need to call the moc tool with '-D' option as

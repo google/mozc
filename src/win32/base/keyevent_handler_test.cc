@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "win32/base/keyevent_handler.h"
+
 // clang-format off
 #include <windows.h>
 #include <ime.h>
@@ -36,7 +38,6 @@
 #include <memory>
 #include <string>
 
-#include "base/flags.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/version.h"
@@ -48,7 +49,7 @@
 #include "testing/base/public/gunit.h"
 #include "win32/base/input_state.h"
 #include "win32/base/keyboard.h"
-#include "win32/base/keyevent_handler.h"
+#include "absl/flags/flag.h"
 
 namespace mozc {
 namespace win32 {
@@ -245,7 +246,7 @@ class KeyEventHandlerTest : public testing::Test {
   KeyEventHandlerTest() {}
   virtual ~KeyEventHandlerTest() {}
   virtual void SetUp() {
-    SystemUtil::SetUserProfileDirectory(mozc::GetFlag(FLAGS_test_tmpdir));
+    SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::config::ConfigHandler::GetDefaultConfig(&default_config_);
     mozc::config::ConfigHandler::SetConfig(default_config_);
   }

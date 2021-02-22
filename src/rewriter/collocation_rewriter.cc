@@ -34,7 +34,6 @@
 #include <string>
 #include <vector>
 
-#include "base/flags.h"
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"
@@ -44,11 +43,12 @@
 #include "request/conversion_request.h"
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
+#include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(bool, use_collocation, true, "use collocation rewrite");
+ABSL_FLAG(bool, use_collocation, true, "use collocation rewrite");
 
 namespace mozc {
 
@@ -261,7 +261,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   const size_t aux_value_len = Util::CharsLen(aux_value);
   const size_t value_len = Util::CharsLen(value);
 
-  // "<XXいる|>" can be rewrited to "<YY|いる>" and vice versa
+  // "<XXいる|>" can be rewrote to "<YY|いる>" and vice versa
   {
     static const char kPat[] = "いる";  // "いる"
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
@@ -286,7 +286,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  // "<XXせる|>" can be rewrited to "<YY|せる>" and vice versa
+  // "<XXせる|>" can be rewrote to "<YY|せる>" and vice versa
   {
     const char kPat[] = "せる";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
@@ -313,7 +313,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   const Util::ScriptType content_script_type = Util::GetScriptType(content);
 
-  // "<XX|する>" can be rewrited using "<XXす|る>" and "<XX|する>"
+  // "<XX|する>" can be rewrote using "<XXす|る>" and "<XX|する>"
   // in "<XX|する>", XX must be single script type
   {
     static const char kPat[] = "する";
@@ -334,7 +334,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  // "<XXる>" can be rewrited using "<XX|る>"
+  // "<XXる>" can be rewrote using "<XX|る>"
   // "まとめる", "衰える"
   {
     static const char kPat[] = "る";
@@ -349,7 +349,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  // "<XXす>" can be rewrited using "XXする"
+  // "<XXす>" can be rewrote using "XXする"
   {
     static const char kPat[] = "す";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
@@ -366,7 +366,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     }
   }
 
-  // "<XXし|た>" can be rewrited using "<XX|した>"
+  // "<XXし|た>" can be rewrote using "<XX|した>"
   {
     static const char kPat[] = "した";
     const absl::string_view kShi(kPat, 3), kTa(kPat + 3, 3);
@@ -448,7 +448,7 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
 
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
-    bool rewrited_next = false;
+    bool rewrote_next = false;
 
     if (IsKeyUnknown(segments->segment(i))) {
       continue;
@@ -458,12 +458,12 @@ bool CollocationRewriter::RewriteCollocation(Segments *segments) const {
         RewriteUsingNextSegment(segments->mutable_segment(i + 1),
                                 segments->mutable_segment(i))) {
       changed = true;
-      rewrited_next = true;
+      rewrote_next = true;
       segs_changed[i] = true;
       segs_changed[i + 1] = true;
     }
 
-    if (!segs_changed[i] && !rewrited_next && i > 0 &&
+    if (!segs_changed[i] && !rewrote_next && i > 0 &&
         RewriteFromPrevSegment(segments->segment(i - 1).candidate(0),
                                segments->mutable_segment(i))) {
       changed = true;
@@ -566,7 +566,7 @@ CollocationRewriter::~CollocationRewriter() {}
 
 bool CollocationRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  if (!mozc::GetFlag(FLAGS_use_collocation)) {
+  if (!absl::GetFlag(FLAGS_use_collocation)) {
     return false;
   }
   return RewriteCollocation(segments);

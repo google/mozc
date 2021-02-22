@@ -142,10 +142,10 @@ class ScoreTypeCompare {
   }
 };
 
-// return the first candiadte which has "BEST_CANDIDATE" attribute
+// return the first candidate which has "BEST_CANDIDATE" attribute
 inline int GetDefaultCandidateIndex(const Segment &segment) {
   // Check up to kMaxRerankSize + 1 candidates because candidate with
-  // BEST_CANDIATE is highly possibly in that range (http://b/9992330).
+  // BEST_CANDIDATE is highly possibly in that range (http://b/9992330).
   const int size =
       static_cast<int>(std::min(segment.candidates_size(), kMaxRerankSize + 1));
   for (int i = 0; i < size; ++i) {
@@ -690,7 +690,7 @@ void UserSegmentHistoryRewriter::RememberFirstCandidate(
   const std::string &all_key = seg.key();
   const std::string &content_key = candidate.content_key;
 
-  // even if the candiate was the top (default) candidate,
+  // even if the candidate was the top (default) candidate,
   // ERANKED will be set when user changes the ranking
   const bool force_insert =
       ((candidate.attributes & Segment::Candidate::RERANKED) != 0);

@@ -100,23 +100,24 @@
 #include <vector>
 
 #include "base/file_stream.h"
-#include "base/flags.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-MOZC_FLAG(string, usage_data_file, "", "usage data file");
-MOZC_FLAG(string, cforms_file, "", "cforms file");
-MOZC_FLAG(string, output_base_conjugation_suffix, "",
+ABSL_FLAG(std::string, usage_data_file, "", "usage data file");
+ABSL_FLAG(std::string, cforms_file, "", "cforms file");
+ABSL_FLAG(std::string, output_base_conjugation_suffix, "",
           "output base conjugation suffix array");
-MOZC_FLAG(string, output_conjugation_suffix, "",
+ABSL_FLAG(std::string, output_conjugation_suffix, "",
           "output conjugation suffix array");
-MOZC_FLAG(string, output_conjugation_index, "",
+ABSL_FLAG(std::string, output_conjugation_index, "",
           "output conjugation index array");
-MOZC_FLAG(string, output_usage_item_array, "", "output array of usage items");
-MOZC_FLAG(string, output_string_array, "", "output string array");
+ABSL_FLAG(std::string, output_usage_item_array, "",
+          "output array of usage items");
+ABSL_FLAG(std::string, output_string_array, "", "output string array");
 
 namespace mozc {
 namespace {
@@ -257,13 +258,13 @@ void Convert() {
   // Load cforms_file
   std::map<std::string, std::vector<ConjugationType>> inflection_map;
   std::map<std::string, ConjugationType> baseform_map;
-  LoadConjugation(mozc::GetFlag(FLAGS_cforms_file), &inflection_map,
+  LoadConjugation(absl::GetFlag(FLAGS_cforms_file), &inflection_map,
                   &baseform_map);
 
   // Load usage_data_file
   std::vector<UsageItem> usage_entries;
   std::vector<std::string> conjugation_list;
-  LoadUsage(mozc::GetFlag(FLAGS_usage_data_file), &usage_entries,
+  LoadUsage(absl::GetFlag(FLAGS_usage_data_file), &usage_entries,
             &conjugation_list);
   RemoveBaseformConjugationSuffix(baseform_map, &usage_entries);
   std::sort(usage_entries.begin(), usage_entries.end(), UsageItemKeynameCmp);
@@ -299,7 +300,7 @@ void Convert() {
   // Output base conjugation suffix data.
   {
     OutputFileStream ostream(
-        mozc::GetFlag(FLAGS_output_base_conjugation_suffix).c_str(),
+        absl::GetFlag(FLAGS_output_base_conjugation_suffix).c_str(),
         std::ios_base::out | std::ios_base::binary);
     for (const auto &conj : conjugation_list) {
       const uint32 key_suffix_index =
@@ -315,7 +316,7 @@ void Convert() {
   std::vector<int> conjugation_index(conjugation_list.size() + 1);
   {
     OutputFileStream ostream(
-        mozc::GetFlag(FLAGS_output_conjugation_suffix).c_str(),
+        absl::GetFlag(FLAGS_output_conjugation_suffix).c_str(),
         std::ios_base::out | std::ios_base::binary);
     int out_count = 0;
     for (size_t i = 0; i < conjugation_list.size(); ++i) {
@@ -349,7 +350,7 @@ void Convert() {
   // Output conjugation suffix data index.
   {
     OutputFileStream ostream(
-        mozc::GetFlag(FLAGS_output_conjugation_index).c_str(),
+        absl::GetFlag(FLAGS_output_conjugation_index).c_str(),
         std::ios_base::out | std::ios_base::binary);
     ostream.write(reinterpret_cast<const char *>(conjugation_index.data()),
                   4 * conjugation_index.size());
@@ -358,7 +359,7 @@ void Convert() {
   // Output usage data.
   {
     OutputFileStream ostream(
-        mozc::GetFlag(FLAGS_output_usage_item_array).c_str(),
+        absl::GetFlag(FLAGS_output_usage_item_array).c_str(),
         std::ios_base::out | std::ios_base::binary);
     int32 usage_id = 0;
     for (const UsageItem &item : usage_entries) {
@@ -383,7 +384,7 @@ void Convert() {
       strs.emplace_back(kv.first);
     }
     SerializedStringArray::SerializeToFile(
-        strs, mozc::GetFlag(FLAGS_output_string_array));
+        strs, absl::GetFlag(FLAGS_output_string_array));
   }
 }
 
