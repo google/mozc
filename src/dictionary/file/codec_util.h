@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
 #define MOZC_DICTIONARY_FILE_CODEC_UTIL_H_
 
+#include <cstdint>
 #include <iosfwd>
 
 #include "base/port.h"
@@ -41,17 +42,17 @@ namespace filecodec_util {
 // Writes a raw memory representation of 32-bit integer to a stream.  Therefore,
 // the written byte sequence depends on the byte order of the architecture on
 // which the code is executed.
-void WriteInt32(int32 value, std::ostream *ofs);
+void WriteInt32(int32_t value, std::ostream *ofs);
 
 // Reads an int32 value written by the above WriteInt32() from the memory block
 // starting at |ptr|.  Therefore, 1) |ptr| must be aligned at 32-bit boundary,
 // and 2) at least 4 bytes are accessible memory region.  After the value is
 // read, |ptr| is advanced by sizeof(int32) == 4 bytes.
-int32 ReadInt32ThenAdvance(const char **ptr);
+int32_t ReadInt32ThenAdvance(const char **ptr);
 
 // Rounds up |length| to the least upper bound of multiple of 4.  E.g.,
 // RoundUp4(30) == 32.
-int32 RoundUp4(int32 length);
+int32_t RoundUp4(int32_t length);
 
 // Given a stream for which |length| bytes were already written, adds a
 // necessary padding byte(s) so that next writing starts at 4-byte boundary.

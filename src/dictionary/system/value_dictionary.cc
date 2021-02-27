@@ -29,6 +29,7 @@
 
 #include "dictionary/system/value_dictionary.h"
 
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <queue>
@@ -73,7 +74,7 @@ bool ValueDictionary::HasValue(absl::string_view value) const { return false; }
 namespace {
 
 // A version of the above function for Token.
-inline void FillToken(const uint16 suggestion_only_word_id,
+inline void FillToken(const uint16_t suggestion_only_word_id,
                       absl::string_view key, Token *token) {
   token->key.assign(key.data(), key.size());
   token->value = token->key;
@@ -84,7 +85,7 @@ inline void FillToken(const uint16 suggestion_only_word_id,
 
 inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
     const LoudsTrie &value_trie, const SystemDictionaryCodecInterface &codec,
-    const uint16 suggestion_only_word_id, const LoudsTrie::Node &node,
+    const uint16_t suggestion_only_word_id, const LoudsTrie::Node &node,
     DictionaryInterface::Callback *callback, char *encoded_value_buffer,
     std::string *value, Token *token) {
   const absl::string_view encoded_value =

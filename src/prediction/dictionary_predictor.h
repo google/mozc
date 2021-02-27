@@ -30,6 +30,7 @@
 #ifndef MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 #define MOZC_PREDICTION_DICTIONARY_PREDICTOR_H_
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
@@ -104,7 +105,7 @@ class DictionaryPredictor : public PredictorInterface {
     REALTIME_TOP = 65536,
   };
   // Bitfield to store a set of PredictionType.
-  typedef int32 PredictionTypes;
+  typedef int32_t PredictionTypes;
 
   struct Result {
     Result()
@@ -145,11 +146,11 @@ class DictionaryPredictor : public PredictorInterface {
     // If the candidate key and value are
     // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
-    std::vector<uint32> inner_segment_boundary;
-    uint32 candidate_attributes;
+    std::vector<uint32_t> inner_segment_boundary;
+    uint32_t candidate_attributes;
     // Segment::Candidate::SourceInfo.
     // Will be used for usage stats.
-    uint32 source_info;
+    uint32_t source_info;
     size_t consumed_key_size;
     // If removed is true, this result is not used for a candidate.
     bool removed;
@@ -283,8 +284,8 @@ class DictionaryPredictor : public PredictorInterface {
       const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results);
 
   static void AppendZeroQueryToResults(
-      const std::vector<ZeroQueryResult> &candidates, uint16 lid, uint16 rid,
-      std::vector<Result> *results);
+      const std::vector<ZeroQueryResult> &candidates, uint16_t lid,
+      uint16_t rid, std::vector<Result> *results);
 
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.
@@ -473,7 +474,7 @@ class DictionaryPredictor : public PredictorInterface {
   void MaybeRecordUsageStats(const Segment::Candidate &candidate) const;
 
   // Sets candidate description.
-  static void SetDescription(PredictionTypes types, uint32 attributes,
+  static void SetDescription(PredictionTypes types, uint32_t attributes,
                              std::string *description);
   // Description for DEBUG mode.
   static void SetDebugDescription(PredictionTypes types,
@@ -486,9 +487,9 @@ class DictionaryPredictor : public PredictorInterface {
   const Connector *connector_;
   const Segmenter *segmenter_;
   const SuggestionFilter *suggestion_filter_;
-  const uint16 counter_suffix_word_id_;
-  const uint16 general_symbol_id_;
-  const uint16 unknown_id_;
+  const uint16_t counter_suffix_word_id_;
+  const uint16_t general_symbol_id_;
+  const uint16_t unknown_id_;
   const std::string predictor_name_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;

@@ -29,6 +29,8 @@
 
 #include "config/config_handler.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -486,7 +488,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // 250 msec is good enough to crash the code if it is not guarded by
   // the lock, but feel free to change the duration.  It is basically an
   // arbitrary number.
-  const uint32 kTestDurationMSec = 250;  // 250 msec
+  const uint32_t kTestDurationMSec = 250;  // 250 msec
   const size_t kNumSetThread = 2;
   const size_t kNumGetThread = 4;
   {

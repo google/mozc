@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_CONVERTER_MOCK_H_
 #define MOZC_CONVERTER_CONVERTER_MOCK_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -105,7 +106,7 @@ class ConverterMock : public ConverterInterface {
   void GetResizeSegment1(Segments *segments, size_t *segment_index,
                          int *offset_length);
   void GetResizeSegment2(Segments *segments, size_t *start_segment_index,
-                         size_t *segments_size, uint8 **new_size_array,
+                         size_t *segments_size, uint8_t **new_size_array,
                          size_t *array_size);
 
   // ConverterInterface
@@ -155,7 +156,7 @@ class ConverterMock : public ConverterInterface {
                      size_t segment_index, int offset_length) const override;
   bool ResizeSegment(Segments *segments, const ConversionRequest &request,
                      size_t start_segment_index, size_t segments_size,
-                     const uint8 *new_size_array,
+                     const uint8_t *new_size_array,
                      size_t array_size) const override;
 
  private:
@@ -177,7 +178,7 @@ class ConverterMock : public ConverterInterface {
     int offset_length;
     size_t start_segment_index;
     size_t segments_size;
-    std::vector<uint8> new_size_array;
+    std::vector<uint8_t> new_size_array;
     std::string current_segment_key;
     std::string new_segment_key;
     ConverterInput() {}

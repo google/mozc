@@ -30,14 +30,16 @@
 #ifndef MOZC_BASE_DOUBLE_ARRAY_H_
 #define MOZC_BASE_DOUBLE_ARRAY_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
 namespace japanese_util_rule {
 
 struct DoubleArray {
-  int32 base;
-  uint32 check;
+  int32_t base;
+  uint32_t check;
 };
 
 }  // namespace japanese_util_rule

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <climits>  // for CHAR_BIT
+#include <cstdint>
 #include <type_traits>
 
 #include "base/logging.h"
@@ -43,7 +44,7 @@ const size_t kNumDWordsOfDigest = 5;
 
 // See 4.1.1 SHA-1 Functions
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
-uint32 f(uint32 t, uint32 x, uint32 y, uint32 z) {
+uint32_t f(uint32_t t, uint32_t x, uint32_t y, uint32_t z) {
   if (t < 20) {
     // Note: The logic here was originally defined as
     //   return (x & y) | ((~x) & z);
@@ -64,15 +65,15 @@ uint32 f(uint32 t, uint32 x, uint32 y, uint32 z) {
 // See 3.2 Operations on Words
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
 template <size_t N>
-uint32 ROTL(uint32 x) {
-  const size_t kUint32Bits = sizeof(uint32) * CHAR_BIT;
+uint32_t ROTL(uint32_t x) {
+  const size_t kUint32Bits = sizeof(uint32_t) * CHAR_BIT;
   static_assert(N < kUint32Bits, "Too large rotation sise.");
   return (x << N) | (x >> (kUint32Bits - N));
 }
 
 // See 4.2.1 SHA-1 Constants
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
-uint32 K(uint32 t) {
+uint32_t K(uint32_t t) {
   if (t < 20) {
     return 0x5a827999;
   } else if (t < 40) {
@@ -84,20 +85,20 @@ uint32 K(uint32 t) {
   }
 }
 
-std::string AsByteStream(const uint32 (&H)[kNumDWordsOfDigest]) {
+std::string AsByteStream(const uint32_t (&H)[kNumDWordsOfDigest]) {
   std::string str;
   str.resize(sizeof(H));
   for (size_t i = 0; i < kNumDWordsOfDigest; ++i) {
-    const size_t base_index = i * sizeof(uint32);
-    const uint32 value = H[i];
+    const size_t base_index = i * sizeof(uint32_t);
+    const uint32_t value = H[i];
     // Note that the following conversion is required simply because SHA1
     // algorithm is defined on big-endian. The following conversion is
     // purely arithmetic thus should be applicable regardless of the
     // endianness of the target processor.
-    str[base_index + 0] = static_cast<uint8>((value & 0xff000000) >> 24);
-    str[base_index + 1] = static_cast<uint8>((value & 0x00ff0000) >> 16);
-    str[base_index + 2] = static_cast<uint8>((value & 0x0000ff00) >> 8);
-    str[base_index + 3] = static_cast<uint8>((value & 0x000000ff) >> 0);
+    str[base_index + 0] = static_cast<uint8_t>((value & 0xff000000) >> 24);
+    str[base_index + 1] = static_cast<uint8_t>((value & 0x00ff0000) >> 16);
+    str[base_index + 2] = static_cast<uint8_t>((value & 0x0000ff00) >> 8);
+    str[base_index + 3] = static_cast<uint8_t>((value & 0x000000ff) >> 0);
   }
   return str;
 }
@@ -108,7 +109,7 @@ class PaddedMessageIterator {
   // SHA1 uses 64-byte (512-bit) message block.
   static constexpr size_t kMessageBlockBytes = 64;
   // The original data length in bit is stored as 8-byte-length data.
-  static constexpr size_t kDataBitLengthBytes = sizeof(uint64);
+  static constexpr size_t kDataBitLengthBytes = sizeof(uint64_t);
 
   explicit PaddedMessageIterator(absl::string_view source)
       : source_(source),
@@ -137,7 +138,7 @@ class PaddedMessageIterator {
 
     // Put the end-of-data marker.
     if ((base_index + cursor) == source_.size()) {
-      const uint8 kEndOfDataMarker = 0x80;
+      const uint8_t kEndOfDataMarker = 0x80;
       dest[cursor] = kEndOfDataMarker;
       ++cursor;
     }
@@ -161,13 +162,13 @@ class PaddedMessageIterator {
     memset(dest + cursor, 0x00, kMessageBlockZeroFillLimit - cursor);
 
     // Store the original data bit-length into the last 8-byte of this message.
-    const uint64 bit_length = source_.size() * 8;
+    const uint64_t bit_length = source_.size() * 8;
     for (size_t i = 0; i < 8; ++i) {
       // Big-endian is required.
       const size_t shift = (7 - i) * 8;
       const size_t pos = kMessageBlockZeroFillLimit + i;
       DCHECK_LT(pos, kMessageBlockBytes);
-      dest[pos] = static_cast<uint8>((bit_length >> shift) & 0xff);
+      dest[pos] = static_cast<uint8_t>((bit_length >> shift) & 0xff);
     }
   }
 
@@ -196,7 +197,7 @@ class PaddedMessageIterator {
 
 // Converts a character to uint32 bit pattern by prepending 0's while keeping
 // the original bit pattern in lowest 8 bits.
-uint32 CharToUint32(char c) {
+uint32_t CharToUint32(char c) {
   // In case char is signed, we need to first convert c to uint8; see the
   // following example:
   //
@@ -207,14 +208,14 @@ uint32 CharToUint32(char c) {
   // Result:
   //   a == 4294967295  (converted through -1 of 32-bit integer)
   //   b == 255
-  return static_cast<uint32>(static_cast<uint8>(c));
+  return static_cast<uint32_t>(static_cast<uint8_t>(c));
 }
 
 std::string MakeDigestImpl(absl::string_view source) {
   // 5.3 Setting the Initial Hash Value / 5.3.1 SHA-1
 
   // 6.1.1 SHA-1 Preprocessing
-  uint32 H[kNumDWordsOfDigest] = {
+  uint32_t H[kNumDWordsOfDigest] = {
       0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0,
   };
 
@@ -223,7 +224,7 @@ std::string MakeDigestImpl(absl::string_view source) {
     absl::string_view::value_type message[64];
     it.FillNextMessage(message);
 
-    uint32 W[80];  // Message schedule.
+    uint32_t W[80];  // Message schedule.
     for (size_t i = 0; i < 16; ++i) {
       const size_t base_index = i * 4;
       W[i] = (CharToUint32(message[base_index + 0]) << 24) |
@@ -235,14 +236,14 @@ std::string MakeDigestImpl(absl::string_view source) {
       W[t] = ROTL<1>(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]);
     }
 
-    uint32 a = H[0];
-    uint32 b = H[1];
-    uint32 c = H[2];
-    uint32 d = H[3];
-    uint32 e = H[4];
+    uint32_t a = H[0];
+    uint32_t b = H[1];
+    uint32_t c = H[2];
+    uint32_t d = H[3];
+    uint32_t e = H[4];
 
     for (size_t t = 0; t < 80; ++t) {
-      const uint32 T = ROTL<5>(a) + f(t, b, c, d) + e + W[t] + K(t);
+      const uint32_t T = ROTL<5>(a) + f(t, b, c, d) + e + W[t] + K(t);
       e = d;
       d = c;
       c = ROTL<30>(b);

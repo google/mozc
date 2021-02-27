@@ -29,6 +29,7 @@
 
 #include "converter/converter_mock.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -235,7 +236,7 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
   Segments output, expect;
   SetSegments(&expect, "ResizeSegment2");
   GetMock()->SetResizeSegment2(&expect, true);
-  uint8 size_array[] = {1, 2, 3};
+  uint8_t size_array[] = {1, 2, 3};
   const ConversionRequest default_request;
   EXPECT_TRUE(converter->ResizeSegment(&output, default_request, 1, 5,
                                        size_array, arraysize(size_array)));
@@ -505,7 +506,7 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
 
   Segments input;
   size_t input_idx = 1, input_size = 3;
-  uint8 input_array[] = {1, 2, 3};
+  uint8_t input_array[] = {1, 2, 3};
   SetSegments(&input, "ResizeSegment2");
   const std::string input_str = input.DebugString();
   const ConversionRequest default_request;
@@ -514,7 +515,7 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
 
   Segments last_segment;
   size_t last_idx, last_size;
-  uint8 *last_array;
+  uint8_t *last_array;
   size_t last_array_size;
 
   GetMock()->GetResizeSegment2(&last_segment, &last_idx, &last_size,

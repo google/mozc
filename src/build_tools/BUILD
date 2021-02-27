@@ -186,3 +186,17 @@ py_binary_mozc(
         ":tweak_data",
     ],
 )
+
+py_binary_mozc(
+    name = "tweak_macinstaller_script",
+    srcs = ["tweak_macinstaller_script.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [":mozc_version_lib"],
+)
+
+py_binary_mozc(
+    name = "tweak_pkgproj",
+    srcs = ["tweak_pkgproj.py"],
+    visibility = ["//:__subpackages__"],
+    deps = [":mozc_version_lib"],
+)

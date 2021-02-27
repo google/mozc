@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 #define MOZC_STORAGE_LOUDS_LOUDS_TRIE_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -58,11 +59,11 @@ class LoudsTrie {
   // terminal bit vector.  This class doesn't own the "data", so it is caller's
   // responsibility to keep the data alive until Close is invoked.  See .cc file
   // for the detailed format of the binary image.
-  bool Open(const uint8 *data, size_t louds_lb0_cache_size,
+  bool Open(const uint8_t *image, size_t louds_lb0_cache_size,
             size_t louds_lb1_cache_size, size_t louds_select0_cache_size,
             size_t louds_select1_cache_size, size_t termvec_lb1_cache_size);
 
-  bool Open(const uint8 *data) { return Open(data, 0, 0, 0, 0, 0); }
+  bool Open(const uint8_t *data) { return Open(data, 0, 0, 0, 0, 0); }
 
   // Destructs the internal data structure explicitly (the destructor will do
   // clean up too).

@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -80,7 +81,7 @@ const int kMinCost = 100;
 const int kCostOffset = 6907;
 const int kStructureCostOffset = 3453;
 const int kMinStructureCostOffset = 1151;
-const int32 kStopEnmerationCacheSize = 15;
+const int32_t kStopEnmerationCacheSize = 15;
 
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
@@ -139,7 +140,7 @@ inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
 }
 
 bool IsIsolatedWordOrGeneralSymbol(const dictionary::POSMatcher &pos_matcher,
-                                   uint16 pos_id) {
+                                   uint16_t pos_id) {
   return pos_matcher.IsIsolatedWord(pos_id) ||
          pos_matcher.IsGeneralSymbol(pos_id);
 }
@@ -412,8 +413,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     }
   }
 
-  const int64 top_cost = std::max(kMinCost, top_candidate_->cost);
-  const int64 top_structure_cost =
+  const int64_t top_cost = std::max(kMinCost, top_candidate_->cost);
+  const int64_t top_structure_cost =
       std::max(kMinCost, top_candidate_->structure_cost);
 
   // If candidate size < 3, don't filter candidate aggressively
@@ -463,7 +464,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // Filters out candidates with higher cost structure.
   if (top_structure_cost + kStructureCostOffset > INT_MAX ||
       std::max(top_structure_cost,
-               static_cast<int64>(kMinStructureCostOffset)) +
+               static_cast<int64_t>(kMinStructureCostOffset)) +
               kStructureCostOffset <
           candidate->structure_cost) {
     // We don't stop enumeration here. Just drops high cost structure

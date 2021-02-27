@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_EMOJI_REWRITER_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <utility>
 
@@ -95,33 +96,35 @@ class EmojiRewriter : public RewriterInterface {
   //
   // The following iterator class can be used to iterate over token array.
   class EmojiDataIterator
-      : public std::iterator<std::random_access_iterator_tag, uint32> {
+      : public std::iterator<std::random_access_iterator_tag, uint32_t> {
    public:
     EmojiDataIterator() : ptr_(nullptr) {}
     explicit EmojiDataIterator(const char *ptr) : ptr_(ptr) {}
 
-    uint32 key_index() const { return *reinterpret_cast<const uint32 *>(ptr_); }
-    uint32 emoji_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 4);
+    uint32_t key_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_);
     }
-    uint32 android_pua() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 8);
+    uint32_t emoji_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
     }
-    uint32 description_utf8_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 12);
+    uint32_t android_pua() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 8);
     }
-    uint32 description_docomo_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 16);
+    uint32_t description_utf8_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
     }
-    uint32 description_softbank_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 20);
+    uint32_t description_docomo_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 16);
     }
-    uint32 description_kddi_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 24);
+    uint32_t description_softbank_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 20);
+    }
+    uint32_t description_kddi_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 24);
     }
 
     // Returns key index as token array is searched by key.
-    uint32 operator*() const { return key_index(); }
+    uint32_t operator*() const { return key_index(); }
 
     void swap(EmojiDataIterator &x) {
       using std::swap;

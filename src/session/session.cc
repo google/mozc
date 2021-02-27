@@ -31,6 +31,7 @@
 
 #include "session/session.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -571,7 +572,7 @@ bool Session::SendKeyPrecompositionState(commands::Command *command) {
   // context is updated only here. In other words, we will stop updating the
   // client context once a conversion starts (mainly for performance reasons).
   if (command->has_input() && command->input().has_context()) {
-    context_->mutable_client_context()->CopyFrom(command->input().context());
+    *context_->mutable_client_context() = command->input().context();
   } else {
     context_->mutable_client_context()->Clear();
   }
@@ -952,8 +953,7 @@ void Session::UpdatePreferences(commands::Command *command) {
   }
 
   if (command->input().has_capability()) {
-    context_->mutable_client_capability()->CopyFrom(
-        command->input().capability());
+    *context_->mutable_client_capability() = command->input().capability();
   }
 
   // Update config values modified temporarily.
@@ -1321,7 +1321,7 @@ bool Session::CommitCandidate(commands::Command *command) {
         context_->mutable_composer()->DeleteRange(0, consumed_key_size);
         MoveCursorToEnd(command);
         // Copy the previous output for Undo.
-        context_->mutable_output()->CopyFrom(command->output());
+        *context_->mutable_output() = command->output();
         return true;
       }
     }
@@ -1341,7 +1341,7 @@ bool Session::CommitCandidate(commands::Command *command) {
   }
   Output(command);
   // Copy the previous output for Undo.
-  context_->mutable_output()->CopyFrom(command->output());
+  *context_->mutable_output() = command->output();
   return true;
 }
 
@@ -1374,21 +1374,23 @@ bool Session::MaybeSelectCandidate(commands::Command *command) {
 }
 
 void Session::set_client_capability(const commands::Capability &capability) {
-  context_->mutable_client_capability()->CopyFrom(capability);
+  *context_->mutable_client_capability() = capability;
 }
 
 void Session::set_application_info(
     const commands::ApplicationInfo &application_info) {
-  context_->mutable_application_info()->CopyFrom(application_info);
+  *context_->mutable_application_info() = application_info;
 }
 
 const commands::ApplicationInfo &Session::application_info() const {
   return context_->application_info();
 }
 
-uint64 Session::create_session_time() const { return context_->create_time(); }
+uint64_t Session::create_session_time() const {
+  return context_->create_time();
+}
 
-uint64 Session::last_command_time() const {
+uint64_t Session::last_command_time() const {
   return context_->last_command_time();
 }
 
@@ -1725,7 +1727,7 @@ bool Session::CommitInternal(commands::Command *command,
 
   Output(command);
   // Copy the previous output for Undo.
-  context_->mutable_output()->CopyFrom(command->output());
+  *context_->mutable_output() = command->output();
   return true;
 }
 
@@ -1784,7 +1786,7 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
 
   Output(command);
   // Copy the previous output for Undo.
-  context_->mutable_output()->CopyFrom(command->output());
+  *context_->mutable_output() = command->output();
   return true;
 }
 
@@ -1811,7 +1813,7 @@ bool Session::CommitSegment(commands::Command *command) {
   }
   Output(command);
   // Copy the previous output for Undo.
-  context_->mutable_output()->CopyFrom(command->output());
+  *context_->mutable_output() = command->output();
   return true;
 }
 
@@ -2281,7 +2283,8 @@ bool Session::Convert(commands::Command *command) {
       command->input().key().has_special_key() &&
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
-    if (!Util::EndsWith(composition, " ")) {
+    if (!Util::EndsWith(composition, " ") ||
+       context_->composer().GetLength() != context_->composer().GetCursor()) {
       if (context_->GetRequest().space_on_alphanumeric() ==
           commands::Request::COMMIT) {
         // Space is committed with the composition
@@ -2392,7 +2395,7 @@ bool Session::MoveCursorLeft(commands::Command *command) {
 
     // Move the cursor to the beginning of the values.
     command->mutable_output()->mutable_result()->set_cursor_offset(
-        -static_cast<int32>(
+        -static_cast<int32_t>(
             Util::CharsLen(command->output().result().value())));
 
     // Do not consume.
@@ -2677,7 +2680,7 @@ void Session::OutputComposition(commands::Command *command) const {
 void Session::OutputKey(commands::Command *command) const {
   OutputMode(command);
   commands::KeyEvent *key = command->mutable_output()->mutable_key();
-  key->CopyFrom(command->input().key());
+  *key = command->input().key();
 }
 
 namespace {
@@ -2700,23 +2703,23 @@ namespace {
 //   key_string == "!" || key_string == "！") &&
 //  (config.auto_conversion_key() &
 //   config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));
-bool IsValidKey(const config::Config &config, const uint32 key_code,
+bool IsValidKey(const config::Config &config, const uint32_t key_code,
                 absl::string_view key_string) {
-  return (((key_code == static_cast<uint32>('.') && key_string.empty()) ||
+  return (((key_code == static_cast<uint32_t>('.') && key_string.empty()) ||
            key_string == "." || key_string == "．" || key_string == "。" ||
            key_string == "｡") &&
           (config.auto_conversion_key() &
            config::Config::AUTO_CONVERSION_KUTEN)) ||
-         (((key_code == static_cast<uint32>(',') && key_string.empty()) ||
+         (((key_code == static_cast<uint32_t>(',') && key_string.empty()) ||
            key_string == "," || key_string == "，" || key_string == "、" ||
            key_string == "､") &&
           (config.auto_conversion_key() &
            config::Config::AUTO_CONVERSION_TOUTEN)) ||
-         (((key_code == static_cast<uint32>('?') && key_string.empty()) ||
+         (((key_code == static_cast<uint32_t>('?') && key_string.empty()) ||
            key_string == "?" || key_string == "？") &&
           (config.auto_conversion_key() &
            config::Config::AUTO_CONVERSION_QUESTION_MARK)) ||
-         (((key_code == static_cast<uint32>('!') && key_string.empty()) ||
+         (((key_code == static_cast<uint32_t>('!') && key_string.empty()) ||
            key_string == "!" || key_string == "！") &&
           (config.auto_conversion_key() &
            config::Config::AUTO_CONVERSION_EXCLAMATION_MARK));
@@ -2759,7 +2762,7 @@ bool Session::CanStartAutoConversion(
     return false;
   }
 
-  const uint32 key_code = key_event.key_code();
+  const uint32_t key_code = key_event.key_code();
 
   std::string preedit;
   context_->composer().GetStringForPreedit(&preedit);
@@ -2817,14 +2820,14 @@ bool Session::HandleIndirectImeOnOff(commands::Command *command) {
   if (state == ImeContext::DIRECT && key.activated()) {
     // Indirect IME On found.
     commands::Command on_command;
-    on_command.CopyFrom(*command);
+    on_command = *command;
     if (!IMEOn(&on_command)) {
       return false;
     }
   } else if (state != ImeContext::DIRECT && !key.activated()) {
     // Indirect IME Off found.
     commands::Command off_command;
-    off_command.CopyFrom(*command);
+    off_command = *command;
     if (!IMEOff(&off_command)) {
       return false;
     }

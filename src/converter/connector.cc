@@ -49,12 +49,12 @@ namespace {
 
 using ::mozc::storage::louds::SimpleSuccinctBitVectorIndex;
 
-constexpr uint32 kInvalidCacheKey = 0xFFFFFFFF;
-constexpr uint16 kConnectorMagicNumber = 0xCDAB;
-constexpr uint8 kInvalid1ByteCostValue = 255;
+constexpr uint32_t kInvalidCacheKey = 0xFFFFFFFF;
+constexpr uint16_t kConnectorMagicNumber = 0xCDAB;
+constexpr uint8_t kInvalid1ByteCostValue = 255;
 
-inline uint32 GetHashValue(uint16 rid, uint16 lid, uint32 hash_mask) {
-  return (3 * static_cast<uint32>(rid) + lid) & hash_mask;
+inline uint32_t GetHashValue(uint16_t rid, uint16_t lid, uint32_t hash_mask) {
+  return (3 * static_cast<uint32_t>(rid) + lid) & hash_mask;
   // Note: The above value is equivalent to
   //   return (3 * rid + lid) % cache_size_
   // because cache_size_ is the power of 2.
@@ -62,8 +62,8 @@ inline uint32 GetHashValue(uint16 rid, uint16 lid, uint32 hash_mask) {
   // The result hash value becomes reasonalbly random.
 }
 
-inline uint32 EncodeKey(uint16 rid, uint16 lid) {
-  return (static_cast<uint32>(rid) << 16) | lid;
+inline uint32_t EncodeKey(uint16_t rid, uint16_t lid) {
+  return (static_cast<uint32_t>(rid) << 16) | lid;
 }
 
 mozc::Status IsMemoryAligned32(const void *ptr) {
@@ -80,10 +80,10 @@ mozc::Status IsMemoryAligned32(const void *ptr) {
 struct Metadata {
   static constexpr size_t kByteSize = 8;
 
-  uint16 magic = std::numeric_limits<uint16>::max();
-  uint16 resolution = std::numeric_limits<uint16>::max();
-  uint16 rsize = std::numeric_limits<uint16>::max();
-  uint16 lsize = std::numeric_limits<uint16>::max();
+  uint16_t magic = std::numeric_limits<uint16_t>::max();
+  uint16_t resolution = std::numeric_limits<uint16_t>::max();
+  uint16_t rsize = std::numeric_limits<uint16_t>::max();
+  uint16_t lsize = std::numeric_limits<uint16_t>::max();
 
   // The number of valid bits in a chunk. Each bit is bitwise-or of
   // consecutive 8-bits.
@@ -114,7 +114,7 @@ mozc::StatusOr<Metadata> ParseMetadata(const char *connection_data,
         "connector.cc: At least ", Metadata::kByteSize,
         " bytes expected.  Bytes: '", data, "' (", connection_size, " bytes)"));
   }
-  const uint16 *data = reinterpret_cast<const uint16 *>(connection_data);
+  const uint16_t *data = reinterpret_cast<const uint16_t *>(connection_data);
   Metadata metadata;
   metadata.magic = data[0];
   metadata.resolution = data[1];
@@ -138,17 +138,17 @@ mozc::StatusOr<Metadata> ParseMetadata(const char *connection_data,
 class Connector::Row {
  public:
   Row()
-      : chunk_bits_index_(sizeof(uint32)),
-        compact_bits_index_(sizeof(uint32)) {}
+      : chunk_bits_index_(sizeof(uint32_t)),
+        compact_bits_index_(sizeof(uint32_t)) {}
 
   Row(const Row &) = delete;
   Row &operator=(const Row &) = delete;
 
   ~Row() = default;
 
-  void Init(const uint8 *chunk_bits, size_t chunk_bits_size,
-            const uint8 *compact_bits, size_t compact_bits_size,
-            const uint8 *values, bool use_1byte_value) {
+  void Init(const uint8_t *chunk_bits, size_t chunk_bits_size,
+            const uint8_t *compact_bits, size_t compact_bits_size,
+            const uint8_t *values, bool use_1byte_value) {
     chunk_bits_index_.Init(chunk_bits, chunk_bits_size);
     compact_bits_index_.Init(compact_bits, compact_bits_size);
     values_ = values;
@@ -157,7 +157,7 @@ class Connector::Row {
 
   // Returns true if the value is found in the row and then store the found
   // value into |value|. Otherwise returns false.
-  bool GetValue(uint16 index, uint16 *value) const {
+  bool GetValue(uint16_t index, uint16_t *value) const {
     int chunk_bit_position = index / 8;
     if (!chunk_bits_index_.Get(chunk_bit_position)) {
       return false;
@@ -174,7 +174,7 @@ class Connector::Row {
         *value = kInvalidCost;
       }
     } else {
-      *value = reinterpret_cast<const uint16 *>(values_)[value_position];
+      *value = reinterpret_cast<const uint16_t *>(values_)[value_position];
     }
 
     return true;
@@ -183,7 +183,7 @@ class Connector::Row {
  private:
   SimpleSuccinctBitVectorIndex chunk_bits_index_;
   SimpleSuccinctBitVectorIndex compact_bits_index_;
-  const uint8 *values_ = nullptr;
+  const uint8_t *values_ = nullptr;
   bool use_1byte_value_ = false;
 };
 
@@ -222,7 +222,7 @@ mozc::Status Connector::Init(const char *connection_data,
   }
   cache_size_ = cache_size;
   cache_hash_mask_ = cache_size - 1;
-  cache_key_ = absl::make_unique<uint32[]>(cache_size);
+  cache_key_ = absl::make_unique<uint32_t[]>(cache_size);
   cache_value_ = absl::make_unique<int[]>(cache_size);
 
   mozc::StatusOr<Metadata> metadata =
@@ -272,7 +272,7 @@ mozc::Status Connector::Init(const char *connection_data,
   } while (false)
 
   // Read default cost array and move the read pointer.
-  default_cost_ = reinterpret_cast<const uint16 *>(ptr);
+  default_cost_ = reinterpret_cast<const uint16_t *>(ptr);
   // Each element of default cost array is 2 bytes.
   const size_t default_cost_size = metadata->DefaultCostArraySize() * 2;
   VALIDATE_SIZE(default_cost_, default_cost_size, "Default cost");
@@ -280,7 +280,7 @@ mozc::Status Connector::Init(const char *connection_data,
   ptr += default_cost_size;
 
   const size_t chunk_bits_size = metadata->ChunkBitsSize();
-  const uint16 rsize = metadata->rsize;
+  const uint16_t rsize = metadata->rsize;
   rows_.reserve(rsize);
   for (size_t i = 0; i < rsize; ++i) {
     // Each row is formatted as follows:
@@ -292,26 +292,26 @@ mozc::Status Connector::Init(const char *connection_data,
     // |ptr| points to here now.  Every uint8[] block needs to be aligned at
     // 32-bit boundary.
     VALIDATE_SIZE(ptr, 2, "Compact bits size of row ", i, "/", rsize);
-    const uint16 compact_bits_size = *reinterpret_cast<const uint16 *>(ptr);
+    const uint16_t compact_bits_size = *reinterpret_cast<const uint16_t *>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, 2, "Values size of row ", i, "/", rsize);
-    const uint16 values_size = *reinterpret_cast<const uint16 *>(ptr);
+    const uint16_t values_size = *reinterpret_cast<const uint16_t *>(ptr);
     ptr += 2;
 
     VALIDATE_SIZE(ptr, chunk_bits_size, "Chunk bits of row ", i, "/", rsize);
-    const uint8 *chunk_bits = reinterpret_cast<const uint8 *>(ptr);
+    const uint8_t *chunk_bits = reinterpret_cast<const uint8_t *>(ptr);
     VALIDATE_ALIGNMENT(chunk_bits);
     ptr += chunk_bits_size;
 
     VALIDATE_SIZE(ptr, compact_bits_size, "Compact bits of row ", i, "/",
                   rsize);
-    const uint8 *compact_bits = reinterpret_cast<const uint8 *>(ptr);
+    const uint8_t *compact_bits = reinterpret_cast<const uint8_t *>(ptr);
     VALIDATE_ALIGNMENT(compact_bits);
     ptr += compact_bits_size;
 
     VALIDATE_SIZE(ptr, values_size, "Values of row ", i, "/", rsize);
-    const uint8 *values = reinterpret_cast<const uint8 *>(ptr);
+    const uint8_t *values = reinterpret_cast<const uint8_t *>(ptr);
     VALIDATE_ALIGNMENT(values);
     ptr += values_size;
 
@@ -329,9 +329,9 @@ mozc::Status Connector::Init(const char *connection_data,
 }
 
 
-int Connector::GetTransitionCost(uint16 rid, uint16 lid) const {
-  const uint32 index = EncodeKey(rid, lid);
-  const uint32 bucket = GetHashValue(rid, lid, cache_hash_mask_);
+int Connector::GetTransitionCost(uint16_t rid, uint16_t lid) const {
+  const uint32_t index = EncodeKey(rid, lid);
+  const uint32_t bucket = GetHashValue(rid, lid, cache_hash_mask_);
   if (cache_key_[bucket] == index) {
     return cache_value_[bucket];
   }
@@ -347,8 +347,8 @@ void Connector::ClearCache() {
   std::fill(cache_key_.get(), cache_key_.get() + cache_size_, kInvalidCacheKey);
 }
 
-int Connector::LookupCost(uint16 rid, uint16 lid) const {
-  uint16 value;
+int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
+  uint16_t value;
   if (!rows_[rid]->GetValue(lid, &value)) {
     return default_cost_[rid];
   }

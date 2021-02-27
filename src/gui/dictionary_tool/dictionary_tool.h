@@ -34,6 +34,7 @@
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QSplitterHandle>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -105,7 +106,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // Data type to provide information on a dictionary.
   struct DictionaryInfo {
     int row;                // Row in the list widget.
-    uint64 id;              // ID of the dictionary.
+    uint64_t id;            // ID of the dictionary.
     QListWidgetItem *item;  // Item object for the dictionary.
   };
 
@@ -146,7 +147,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   void ReportImportError(UserDictionaryImporter::ErrorType error,
                          const std::string &dic_name, int added_entries_size);
 
-  void ImportHelper(uint64 dic_id, const std::string &dic_name,
+  void ImportHelper(uint64_t dic_id, const std::string &dic_name,
                     const std::string &file_name,
                     UserDictionaryImporter::IMEType,
                     UserDictionaryImporter::EncodingType encoding_type);
@@ -186,7 +187,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // separate from selection on the list widget because data is saved
   // on the previous dictionary after the selection on the widget is
   // changed. It takes -1 when no dictionary is selected.
-  uint64 current_dic_id_;
+  uint64_t current_dic_id_;
 
   // Whether any change has been made on the current dictionary and
   // not been saved.

@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 #define MOZC_CONVERTER_QUALITY_REGRESSION_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -65,7 +66,7 @@ class QualityRegressionUtil {
     int expected_rank;
     double accuracy;
     // Target platform. Can set multiple platform defined in enum |Platform|.
-    uint32 platform;
+    uint32_t platform;
     std::string OutputAsTSV() const;
     bool ParseFromTSV(const std::string &tsv_line);
   };
@@ -81,7 +82,7 @@ class QualityRegressionUtil {
 
   void SetRequest(const commands::Request &request);
   void SetConfig(const config::Config &config);
-  static std::string GetPlatformString(uint32 platform_bitfiled);
+  static std::string GetPlatformString(uint32_t platform_bitfiled);
 
  private:
   ConverterInterface *converter_;

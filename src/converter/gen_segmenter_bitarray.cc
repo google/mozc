@@ -34,6 +34,7 @@
 
 #include "converter/gen_segmenter_bitarray.h"
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -56,7 +57,7 @@ class StateTable {
   }
 
   // |str| is an 1-dimensional row (or column) represented in byte array.
-  void Add(uint16 id, absl::string_view str) {
+  void Add(uint16_t id, absl::string_view str) {
     CHECK_LT(id, idarray_.size());
 #ifdef ABSL_USES_STD_STRING_VIEW
     idarray_[id] = str;
@@ -67,10 +68,11 @@ class StateTable {
 
   void Build() {
     compressed_table_.resize(idarray_.size());
-    uint16 id = 0;
-    std::map<std::string, uint16> dup;
+    uint16_t id = 0;
+    std::map<std::string, uint16_t> dup;
     for (size_t i = 0; i < idarray_.size(); ++i) {
-      std::map<std::string, uint16>::const_iterator it = dup.find(idarray_[i]);
+      std::map<std::string, uint16_t>::const_iterator it =
+          dup.find(idarray_[i]);
       if (it != dup.end()) {
         compressed_table_[i] = it->second;
       } else {
@@ -91,7 +93,7 @@ class StateTable {
     CHECK_LT(compressed_size_, idarray_.size());
   }
 
-  uint16 id(uint16 id) const {
+  uint16_t id(uint16_t id) const {
     CHECK_LT(id, idarray_.size());
     return compressed_table_[id];
   }
@@ -100,13 +102,13 @@ class StateTable {
 
   void Output(std::ostream *os) {
     const char *data = reinterpret_cast<const char *>(compressed_table_.data());
-    const size_t bytelen = compressed_table_.size() * sizeof(uint16);
+    const size_t bytelen = compressed_table_.size() * sizeof(uint16_t);
     os->write(data, bytelen);
   }
 
  private:
   std::vector<std::string> idarray_;
-  std::vector<uint16> compressed_table_;
+  std::vector<uint16_t> compressed_table_;
   size_t compressed_size_;
 
   DISALLOW_COPY_AND_ASSIGN(StateTable);
@@ -118,11 +120,11 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
     const std::string &output_size_info, const std::string &output_ltable,
     const std::string &output_rtable, const std::string &output_bitarray) {
   // Load the original matrix into an array
-  std::vector<uint8> array((lsize + 1) * (rsize + 1));
+  std::vector<uint8_t> array((lsize + 1) * (rsize + 1));
 
   for (size_t rid = 0; rid <= lsize; ++rid) {
     for (size_t lid = 0; lid <= rsize; ++lid) {
-      const uint32 index = rid + lsize * lid;
+      const uint32_t index = rid + lsize * lid;
       CHECK_LT(index, array.size());
       if (rid == lsize || lid == rsize) {
         array[index] = 1;
@@ -141,7 +143,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   for (size_t rid = 0; rid <= lsize; ++rid) {
     std::string buf;
     for (size_t lid = 0; lid <= rsize; ++lid) {
-      const uint32 index = rid + lsize * lid;
+      const uint32_t index = rid + lsize * lid;
       buf += array[index];
     }
     ltable.Add(rid, buf);
@@ -152,7 +154,7 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   for (size_t lid = 0; lid <= rsize; ++lid) {
     std::string buf;
     for (size_t rid = 0; rid <= lsize; ++rid) {
-      const uint32 index = rid + lsize * lid;
+      const uint32_t index = rid + lsize * lid;
       buf += array[index];
     }
     rtable.Add(lid, buf);
@@ -173,7 +175,8 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   for (size_t rid = 0; rid <= lsize; ++rid) {
     for (size_t lid = 0; lid <= rsize; ++lid) {
       const int index = rid + lsize * lid;
-      const uint32 cindex = ltable.id(rid) + kCompressedLSize * rtable.id(lid);
+      const uint32_t cindex =
+          ltable.id(rid) + kCompressedLSize * rtable.id(lid);
       if (array[index] > 0) {
         barray.set(cindex);
       } else {
@@ -186,7 +189,8 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
   for (size_t rid = 0; rid <= lsize; ++rid) {
     for (size_t lid = 0; lid <= rsize; ++lid) {
       const int index = rid + lsize * lid;
-      const uint32 cindex = ltable.id(rid) + kCompressedLSize * rtable.id(lid);
+      const uint32_t cindex =
+          ltable.id(rid) + kCompressedLSize * rtable.id(lid);
       CHECK_EQ(barray.get(cindex), (array[index] != 0));
     }
   }

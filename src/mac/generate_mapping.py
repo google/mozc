@@ -103,7 +103,7 @@ void Init%(mapname)s() {
 
   def Print(self):
     self.PrintHeader()
-    for line in open(self._filename):
+    for line in open(self._filename, encoding='utf-8'):
       self.PrintLine(line)
     self.PrintFooter()
 

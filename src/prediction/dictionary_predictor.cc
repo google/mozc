@@ -33,6 +33,7 @@
 #include <cctype>
 #include <climits>  // INT_MAX
 #include <cmath>
+#include <cstdint>
 #include <list>
 #include <map>
 #include <set>
@@ -250,7 +251,7 @@ class DictionaryPredictor::PredictiveLookupCallback
   }
 
  protected:
-  int32 penalty_;
+  int32_t penalty_;
   const DictionaryPredictor::PredictionTypes types_;
   const size_t limit_;
   const size_t original_key_len_;
@@ -602,7 +603,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
 
-  mozc_hash_map<std::string, int32> merged_types;
+  mozc_hash_map<std::string, int32_t> merged_types;
 
 #ifndef NDEBUG
   const bool is_debug = true;
@@ -818,7 +819,7 @@ DictionaryPredictor::AggregateUnigramCandidateForLatinInput(
 }
 
 void DictionaryPredictor::SetDescription(PredictionTypes types,
-                                         uint32 attributes,
+                                         uint32_t attributes,
                                          std::string *description) {
   if (types & TYPING_CORRECTION) {
     Util::AppendStringWithDelimiter(" ", "補正", description);
@@ -1427,7 +1428,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
     result->value.append(candidate.value);
     result->wcost += candidate.cost;
 
-    uint32 encoded_lengths;
+    uint32_t encoded_lengths;
     if (inner_segment_boundary_success &&
         Segment::Candidate::EncodeLengths(
             candidate.key.size(), candidate.value.size(),
@@ -1962,7 +1963,7 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
 bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
     const ConversionRequest &request, const std::string &key,
     const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results) {
-  const int32 available_emoji_carrier =
+  const int32_t available_emoji_carrier =
       request.request().available_emoji_carrier();
 
   DCHECK(results);
@@ -2002,7 +2003,7 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
 
 // static
 void DictionaryPredictor::AppendZeroQueryToResults(
-    const std::vector<ZeroQueryResult> &candidates, uint16 lid, uint16 rid,
+    const std::vector<ZeroQueryResult> &candidates, uint16_t lid, uint16_t rid,
     std::vector<Result> *results) {
   int cost = 0;
 
@@ -2069,7 +2070,7 @@ bool DictionaryPredictor::AggregateZeroQueryPrediction(
     return false;
   }
 
-  const uint16 kId = 0;  // EOS
+  const uint16_t kId = 0;  // EOS
   AppendZeroQueryToResults(candidates, kId, kId, results);
   return true;
 }

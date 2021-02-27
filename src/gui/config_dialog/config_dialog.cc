@@ -30,6 +30,8 @@
 // Qt component of configure dialog for Mozc
 #include "gui/config_dialog/config_dialog.h"
 
+#include <cstdint>
+
 #if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
@@ -42,7 +44,6 @@
 #endif
 
 #include <QtWidgets/QMessageBox>
-
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
@@ -621,7 +622,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
 
   GET_CHECKBOX(useModeIndicator, use_mode_indicator);
 
-  uint32 auto_conversion_key = 0;
+  uint32_t auto_conversion_key = 0;
   if (kutenCheckBox->isChecked()) {
     auto_conversion_key |= config::Config::AUTO_CONVERSION_KUTEN;
   }
@@ -645,7 +646,7 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(realtimeConversionCheckBox, use_realtime_conversion);
 
   config->set_suggestions_size(
-      static_cast<uint32>(suggestionsSizeSpinBox->value()));
+      static_cast<uint32_t>(suggestionsSizeSpinBox->value()));
 
   // tab5
   GetSendStatsCheckBox();

@@ -31,6 +31,7 @@
 
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -64,7 +65,7 @@ const int kIPCTimeout = 100;                   // 100 msec
 const int kRendererWaitTimeout = 30 * 1000;    // 30 sec
 const int kRendererWaitSleepTime = 10 * 1000;  // 10 sec
 const size_t kMaxErrorTimes = 5;
-const uint64 kRetryIntervalTime = 30;  // 30 sec
+const uint64_t kRetryIntervalTime = 30;  // 30 sec
 const char kServiceName[] = "renderer";
 
 inline void CallCommand(IPCClientInterface *client,
@@ -160,7 +161,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
 #else
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);
-    uint32 pid = static_cast<uint32>(tmp);
+    uint32_t pid = static_cast<uint32_t>(tmp);
 #endif  // OS_WIN, __APPLE__
 
     if (!result) {
@@ -305,7 +306,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   std::string name_;
   std::string path_;
   volatile RendererStatus renderer_status_;
-  volatile uint64 last_launch_time_;
+  volatile uint64_t last_launch_time_;
   volatile size_t error_times_;
   bool disable_renderer_path_check_;
   bool suppress_error_dialog_;

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
@@ -97,7 +98,7 @@ const size_t kMaxStringLength = 256;
 const size_t kMaxNextEntriesSize = 4;
 
 // Revert id for user_history_predictor
-const uint16 kRevertId = 1;
+const uint16_t kRevertId = 1;
 
 // Default object pool size for EntryPriorityQueue
 const size_t kEntryPoolSize = 16;
@@ -113,7 +114,7 @@ const char kFileName[] = "user://.history.db";
 const char kDelimiter[] = "\t";
 const char kEmojiDescription[] = "絵文字";
 
-const uint64 k62DaysInSec = 62 * 24 * 60 * 60;
+const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 
 // TODO(peria, hidehiko): Unify this checker and IsEmojiCandidate in
 //     EmojiRewriter.  If you make similar functions before the merging in
@@ -270,7 +271,7 @@ bool UserHistoryStorage::Save() {
   return true;
 }
 
-int UserHistoryStorage::DeleteEntriesBefore(uint64 timestamp) {
+int UserHistoryStorage::DeleteEntriesBefore(uint64_t timestamp) {
   // Partition entries so that [0, new_size) is kept and [new_size, size) is
   // deleted.
   int i = 0;
@@ -298,8 +299,8 @@ int UserHistoryStorage::DeleteEntriesBefore(uint64 timestamp) {
 }
 
 int UserHistoryStorage::DeleteEntriesUntouchedFor62Days() {
-  const uint64 now = Clock::GetTime();
-  const uint64 timestamp = (now > k62DaysInSec) ? now - k62DaysInSec : 0;
+  const uint64_t now = Clock::GetTime();
+  const uint64_t timestamp = (now > k62DaysInSec) ? now - k62DaysInSec : 0;
   return DeleteEntriesBefore(timestamp);
 }
 
@@ -314,7 +315,7 @@ bool UserHistoryPredictor::EntryPriorityQueue::Push(Entry *entry) {
     VLOG(2) << "found dups";
     return false;
   }
-  const uint32 score = UserHistoryPredictor::GetScore(*entry);
+  const uint32_t score = UserHistoryPredictor::GetScore(*entry);
   agenda_.push(std::make_pair(score, entry));
   return true;
 }
@@ -392,7 +393,7 @@ std::string UserHistoryPredictor::GetUserHistoryFileName() {
 
 // Returns revert id
 // static
-uint16 UserHistoryPredictor::revert_id() { return kRevertId; }
+uint16_t UserHistoryPredictor::revert_id() { return kRevertId; }
 
 void UserHistoryPredictor::WaitForSyncer() {
   if (syncer_ != nullptr) {
@@ -544,7 +545,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
     return false;
   }
 
-  std::vector<uint32> keys;
+  std::vector<uint32_t> keys;
   for (const DicElement *elm = head; elm != nullptr; elm = elm->next) {
     VLOG(3) << elm->key << " " << elm->value.suggestion_freq();
     if (elm->value.suggestion_freq() == 0) {
@@ -572,7 +573,7 @@ bool UserHistoryPredictor::ClearUnusedHistory() {
 }
 
 // Erases all the next_entries whose entry_fp field equals |fp|.
-void UserHistoryPredictor::EraseNextEntries(uint32 fp, Entry *entry) {
+void UserHistoryPredictor::EraseNextEntries(uint32_t fp, Entry *entry) {
   const size_t orig_size = entry->next_entries_size();
   size_t new_size = orig_size;
   for (size_t pos = 0; pos < new_size;) {
@@ -619,7 +620,7 @@ UserHistoryPredictor::RemoveNgramChain(
     key_ngrams->push_back(entry->key());
     value_ngrams->push_back(entry->value());
     for (size_t i = 0; i < entry->next_entries().size(); ++i) {
-      const uint32 fp = entry->next_entries(i).entry_fp();
+      const uint32_t fp = entry->next_entries(i).entry_fp();
       Entry *e = dic_->MutableLookupWithoutInsert(fp);
       if (e == nullptr) {
         continue;
@@ -710,7 +711,7 @@ bool UserHistoryPredictor::ClearHistoryEntry(const std::string &key,
 // static
 bool UserHistoryPredictor::HasBigramEntry(const Entry &entry,
                                           const Entry &prev_entry) {
-  const uint32 fp = EntryFingerprint(entry);
+  const uint32_t fp = EntryFingerprint(entry);
   for (int i = 0; i < prev_entry.next_entries_size(); ++i) {
     if (fp == prev_entry.next_entries(i).entry_fp()) {
       return true;
@@ -871,13 +872,13 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
 
 bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
     const std::string &input_key, const Entry *entry,
-    const Entry **result_last_entry, uint64 *left_last_access_time,
-    uint64 *left_most_last_access_time, std::string *result_key,
+    const Entry **result_last_entry, uint64_t *left_last_access_time,
+    uint64_t *left_most_last_access_time, std::string *result_key,
     std::string *result_value) const {
   std::string key = entry->key();
   std::string value = entry->value();
   const Entry *current_entry = entry;
-  mozc_hash_set<uint32> seen;
+  mozc_hash_set<uint32_t> seen;
   seen.insert(EntryFingerprint(*current_entry));
   // Until target entry gets longer than input_key.
   while (key.size() <= input_key.size()) {
@@ -984,10 +985,10 @@ bool UserHistoryPredictor::LookupEntry(RequestType request_type,
   const Entry *last_entry = nullptr;
 
   // last_access_time of the left-closest content word.
-  uint64 left_last_access_time = 0;
+  uint64_t left_last_access_time = 0;
 
   // last_access_time of the left-most content word.
-  uint64 left_most_last_access_time = 0;
+  uint64_t left_most_last_access_time = 0;
 
   // Example: [a|B|c|D]
   // a,c: functional word
@@ -1117,8 +1118,8 @@ bool UserHistoryPredictor::LookupEntry(RequestType request_type,
     // The new entry was input within 10 seconds.
     // TODO(taku): This is a simple heuristics.
     if (next_entry != nullptr && !next_entry->key().empty() &&
-        abs(static_cast<int32>(next_entry->last_access_time() -
-                               last_entry->last_access_time())) <= 10 &&
+        abs(static_cast<int32_t>(next_entry->last_access_time() -
+                                 last_entry->last_access_time())) <= 10 &&
         IsContentWord(next_entry->value())) {
       Entry *result2 = AddEntryWithNewKeyValue(
           result->key() + next_entry->key(),
@@ -1209,7 +1210,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
 }
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
-    const Segments &segments, uint32 available_emoji_carrier) const {
+    const Segments &segments, uint32_t available_emoji_carrier) const {
   const size_t history_segments_size = segments.history_segments_size();
   const Entry *prev_entry = nullptr;
   // When there are non-zero history segments, lookup an entry
@@ -1226,7 +1227,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
   prev_entry = dic_->LookupWithoutInsert(SegmentFingerprint(history_segment));
 
   // Check the timestamp of prev_entry.
-  const uint64 now = Clock::GetTime();
+  const uint64_t now = Clock::GetTime();
   if (prev_entry != nullptr &&
       prev_entry->last_access_time() + k62DaysInSec < now) {
     updated_ = true;  // We found an entry to be deleted at next save.
@@ -1296,7 +1297,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   unique_ptr<Trie<std::string>> expanded;
   GetInputKeyFromSegments(request, segments, &input_key, &base_key, &expanded);
 
-  const uint64 now = Clock::GetTime();
+  const uint64_t now = Clock::GetTime();
   int trial = 0;
   for (const DicElement *elm = dic_->Head(); elm != nullptr; elm = elm->next) {
     if (!IsValidEntryIgnoringRemovedField(
@@ -1366,7 +1367,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     LOG(ERROR) << "segment is nullptr";
     return false;
   }
-  const uint32 input_key_len = Util::CharsLen(segment->key());
+  const uint32_t input_key_len = Util::CharsLen(segment->key());
   while (segment->candidates_size() <
          segments->max_prediction_candidates_size()) {
     // |results| is a priority queue where the elemtnt
@@ -1458,7 +1459,7 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
     target_next_entry = entry->add_next_entries();
   } else {
     // Otherwise, find the oldest next_entry.
-    uint64 last_access_time = std::numeric_limits<uint64>::max();
+    uint64_t last_access_time = std::numeric_limits<uint64_t>::max();
     for (int i = 0; i < entry->next_entries_size(); ++i) {
       // Already has the same id
       if (next_entry.entry_fp() == entry->next_entries(i).entry_fp()) {
@@ -1489,8 +1490,8 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
   target_next_entry->CopyFrom(next_entry);
 }
 
-bool UserHistoryPredictor::IsValidEntry(const Entry &entry,
-                                        uint32 available_emoji_carrier) const {
+bool UserHistoryPredictor::IsValidEntry(
+    const Entry &entry, uint32_t available_emoji_carrier) const {
   if (entry.removed() ||
       !IsValidEntryIgnoringRemovedField(entry, available_emoji_carrier)) {
     return false;
@@ -1499,7 +1500,7 @@ bool UserHistoryPredictor::IsValidEntry(const Entry &entry,
 }
 
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
-    const Entry &entry, uint32 available_emoji_carrier) const {
+    const Entry &entry, uint32_t available_emoji_carrier) const {
   if (entry.entry_type() != Entry::DEFAULT_ENTRY ||
       suppression_dictionary_->SuppressEntry(entry.key(), entry.value())) {
     return false;
@@ -1508,7 +1509,7 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
   if (IsEmojiEntry(entry)) {
     if (Util::IsAndroidPuaEmoji(entry.value())) {
       // Android carrier dependent emoji.
-      const uint32 kAndroidCarrier =
+      const uint32_t kAndroidCarrier =
           Request::DOCOMO_EMOJI | Request::SOFTBANK_EMOJI | Request::KDDI_EMOJI;
       if (!(available_emoji_carrier & kAndroidCarrier)) {
         return false;
@@ -1537,8 +1538,8 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
     return;
   }
 
-  const uint64 last_access_time = Clock::GetTime();
-  const uint32 dic_key = Fingerprint("", "", type);
+  const uint64_t last_access_time = Clock::GetTime();
+  const uint32_t dic_key = Fingerprint("", "", type);
 
   CHECK(dic_.get());
   DicElement *e = dic_->Insert(dic_key);
@@ -1556,8 +1557,8 @@ void UserHistoryPredictor::InsertEvent(EntryType type) {
 
 void UserHistoryPredictor::TryInsert(
     RequestType request_type, const std::string &key, const std::string &value,
-    const std::string &description, bool is_suggestion_selected, uint32 next_fp,
-    uint64 last_access_time, Segments *segments) {
+    const std::string &description, bool is_suggestion_selected,
+    uint32_t next_fp, uint64_t last_access_time, Segments *segments) {
   if (key.empty() || value.empty() || key.size() > kMaxStringLength ||
       value.size() > kMaxStringLength ||
       description.size() > kMaxStringLength) {
@@ -1577,9 +1578,10 @@ void UserHistoryPredictor::TryInsert(
 void UserHistoryPredictor::Insert(const std::string &key,
                                   const std::string &value,
                                   const std::string &description,
-                                  bool is_suggestion_selected, uint32 next_fp,
-                                  uint64 last_access_time, Segments *segments) {
-  const uint32 dic_key = Fingerprint(key, value);
+                                  bool is_suggestion_selected, uint32_t next_fp,
+                                  uint64_t last_access_time,
+                                  Segments *segments) {
+  const uint32_t dic_key = Fingerprint(key, value);
 
   if (!dic_->HasKey(dic_key)) {
     // The key is a new key inserted in the last Finish method.
@@ -1696,7 +1698,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
                                        ? ZERO_QUERY_SUGGESTION
                                        : DEFAULT;
   const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
-  const uint64 last_access_time = Clock::GetTime();
+  const uint64_t last_access_time = Clock::GetTime();
 
   // If user inputs a punctuation just after some long sentence,
   // we make a new candidate by concatenating the top element in LRU and
@@ -1811,13 +1813,13 @@ void UserHistoryPredictor::MakeLearningSegments(
 
 void UserHistoryPredictor::InsertHistory(RequestType request_type,
                                          bool is_suggestion_selected,
-                                         uint64 last_access_time,
+                                         uint64_t last_access_time,
                                          Segments *segments) {
   SegmentsForLearning learning_segments;
   MakeLearningSegments(*segments, &learning_segments);
 
   std::string all_key, all_value;
-  mozc_hash_set<uint32> seen;
+  mozc_hash_set<uint32_t> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();
@@ -1827,7 +1829,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
     const SegmentForLearning &segment = learning_segments.all_segment(i);
     all_key += segment.key;
     all_value += segment.value;
-    uint32 next_fp =
+    uint32_t next_fp =
         (i == learning_segments.all_segments_size() - 1)
             ? 0
             : LearningSegmentFingerprint(learning_segments.all_segment(i + 1));
@@ -1835,7 +1837,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
     if (i == history_segments_size) {
       seen.insert(LearningSegmentFingerprint(segment));
     }
-    uint32 next_fp_to_set = next_fp;
+    uint32_t next_fp_to_set = next_fp;
     // If two duplicate segments exist, kills the link
     // TO/FROM the second one to prevent loops.
     // Only killing "TO" link caused bug #2982886:
@@ -2019,31 +2021,31 @@ UserHistoryPredictor::MatchType UserHistoryPredictor::GetMatchTypeFromInput(
 }
 
 // static
-uint32 UserHistoryPredictor::Fingerprint(const std::string &key,
-                                         const std::string &value,
-                                         EntryType type) {
+uint32_t UserHistoryPredictor::Fingerprint(const std::string &key,
+                                           const std::string &value,
+                                           EntryType type) {
   if (type == Entry::DEFAULT_ENTRY) {
     // Since we have already used the fingerprint function for next entries and
     // next entries are saved in user's local machine, we are not able
     // to change the Fingerprint function for the old key/value type.
     return Hash::Fingerprint32(key + kDelimiter + value);
   } else {
-    return Hash::Fingerprint32(static_cast<uint8>(type));
+    return Hash::Fingerprint32(static_cast<uint8_t>(type));
   }
 }
 
 // static
-uint32 UserHistoryPredictor::Fingerprint(const std::string &key,
-                                         const std::string &value) {
+uint32_t UserHistoryPredictor::Fingerprint(const std::string &key,
+                                           const std::string &value) {
   return Fingerprint(key, value, Entry::DEFAULT_ENTRY);
 }
 
-uint32 UserHistoryPredictor::EntryFingerprint(const Entry &entry) {
+uint32_t UserHistoryPredictor::EntryFingerprint(const Entry &entry) {
   return Fingerprint(entry.key(), entry.value());
 }
 
 // static
-uint32 UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
+uint32_t UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
   if (segment.candidates_size() > 0) {
     return Fingerprint(segment.candidate(0).key, segment.candidate(0).value);
   }
@@ -2051,20 +2053,20 @@ uint32 UserHistoryPredictor::SegmentFingerprint(const Segment &segment) {
 }
 
 // static
-uint32 UserHistoryPredictor::LearningSegmentFingerprint(
+uint32_t UserHistoryPredictor::LearningSegmentFingerprint(
     const SegmentForLearning &segment) {
   return Fingerprint(segment.key, segment.value);
 }
 
 // static
-std::string UserHistoryPredictor::Uint32ToString(uint32 fp) {
+std::string UserHistoryPredictor::Uint32ToString(uint32_t fp) {
   std::string buf(reinterpret_cast<const char *>(&fp), sizeof(fp));
   return buf;
 }
 
 // static
-uint32 UserHistoryPredictor::StringToUint32(const std::string &input) {
-  uint32 result = 0;
+uint32_t UserHistoryPredictor::StringToUint32(const std::string &input) {
+  uint32_t result = 0;
   if (input.size() == sizeof(result)) {
     memcpy(reinterpret_cast<char *>(&result), input.data(), input.size());
   }
@@ -2073,7 +2075,7 @@ uint32 UserHistoryPredictor::StringToUint32(const std::string &input) {
 
 // static
 bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
-                                             uint32 prefix_len,
+                                             uint32_t prefix_len,
                                              const Entry &entry) {
   // When bigram_boost is true, that means that previous user input
   // and current input have bigram relation.
@@ -2088,11 +2090,11 @@ bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
   }
   // Handles suggestion_freq and conversion_freq differently.
   // conversion_freq is less aggressively affecting to the final decision.
-  const uint32 freq =
+  const uint32_t freq =
       std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
 
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
-  const uint32 base_prefix_len = 3 - std::min(static_cast<uint32>(2), freq);
+  const uint32_t base_prefix_len = 3 - std::min(static_cast<uint32_t>(2), freq);
   return (prefix_len >= base_prefix_len);
 }
 
@@ -2101,19 +2103,19 @@ bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
 // 2) boost shorter candidate, if having the same last_access_time.
 // 3) add a bigram boost as a special bonus.
 // TODO(taku): better to take "frequency" into consideration
-uint32 UserHistoryPredictor::GetScore(const Entry &entry) {
-  const uint32 kBigramBoostAsTime = 7 * 24 * 60 * 60;  // 1 week.
+uint32_t UserHistoryPredictor::GetScore(const Entry &entry) {
+  const uint32_t kBigramBoostAsTime = 7 * 24 * 60 * 60;  // 1 week.
   return entry.last_access_time() - Util::CharsLen(entry.value()) +
          (entry.bigram_boost() ? kBigramBoostAsTime : 0);
 }
 
 // Returns the size of cache.
 // static
-uint32 UserHistoryPredictor::cache_size() { return kLRUCacheSize; }
+uint32_t UserHistoryPredictor::cache_size() { return kLRUCacheSize; }
 
 // Returns the size of next entries.
 // static
-uint32 UserHistoryPredictor::max_next_entries_size() {
+uint32_t UserHistoryPredictor::max_next_entries_size() {
   return kMaxNextEntriesSize;
 }
 

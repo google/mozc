@@ -29,6 +29,7 @@
 
 #include "composer/key_parser.h"
 
+#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -57,7 +58,7 @@ TEST(KeyParserTest, KeyCode) {
 }
 
 TEST(KeyParserTest, ModifierKeys) {
-  const std::pair<std::string, uint32> kTestData[] = {
+  const std::pair<std::string, uint32_t> kTestData[] = {
       std::make_pair("ctrl", commands::KeyEvent::CTRL),
       std::make_pair("leftctrl",
                      commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL),

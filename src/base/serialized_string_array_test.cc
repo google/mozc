@@ -30,6 +30,7 @@
 #include "base/serialized_string_array.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -48,14 +49,14 @@ class SerializedStringArrayTest : public ::testing::Test {
   }
 
   absl::string_view AlignString(const std::string &s) {
-    buf_.reset(new uint32[(s.size() + 3) / 4]);
+    buf_.reset(new uint32_t[(s.size() + 3) / 4]);
     return absl::string_view(
         static_cast<const char *>(memcpy(buf_.get(), s.data(), s.size())),
         s.size());
   }
 
  private:
-  std::unique_ptr<uint32[]> buf_;
+  std::unique_ptr<uint32_t[]> buf_;
 };
 
 TEST_F(SerializedStringArrayTest, DefaultConstructor) {
@@ -84,7 +85,7 @@ const char kTestData[] =
     "google\0";                         // offset = 39, len = 6
 
 TEST_F(SerializedStringArrayTest, SerializeToBuffer) {
-  std::unique_ptr<uint32[]> buf;
+  std::unique_ptr<uint32_t[]> buf;
   const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
       {"Hello", "Mozc", "google"}, &buf);
   const absl::string_view expected(kTestData, arraysize(kTestData) - 1);

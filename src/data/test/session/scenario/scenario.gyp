@@ -50,6 +50,7 @@
           'change_request.txt',
           'clear_user_prediction.txt',
           'commit.txt',
+          'composing_alphanumeric.txt',
           'composition_display_as.txt',
           'conversion.txt',
           'conversion_display_as.txt',

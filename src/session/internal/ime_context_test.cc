@@ -29,6 +29,7 @@
 
 #include "session/internal/ime_context.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -167,8 +168,8 @@ TEST(ImeContextTest, CopyContext) {
   }
 
   {
-    const uint64 kCreateTime = 100;
-    const uint64 kLastCommandTime = 200;
+    const uint64_t kCreateTime = 100;
+    const uint64_t kLastCommandTime = 200;
     ImeContext source;
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);

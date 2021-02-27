@@ -30,6 +30,7 @@
 #include "rewriter/number_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 #include <utility>
@@ -257,7 +258,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
       base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED;
 }
 
-void InsertCandidate(Segment *segment, int32 insert_position,
+void InsertCandidate(Segment *segment, int32_t insert_position,
                      const Segment::Candidate &base_cand,
                      const Segment::Candidate &result_cand) {
   DCHECK(segment);
@@ -266,7 +267,7 @@ void InsertCandidate(Segment *segment, int32 insert_position,
   MergeCandidateInfoInternal(base_cand, result_cand, c);
 }
 
-void UpdateCandidate(Segment *segment, int32 update_position,
+void UpdateCandidate(Segment *segment, int32_t update_position,
                      const Segment::Candidate &base_cand,
                      const Segment::Candidate &result_cand) {
   DCHECK(segment);

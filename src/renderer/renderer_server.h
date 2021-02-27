@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_RENDERER_SERVER_H_
 #define MOZC_RENDERER_RENDERER_SERVER_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -86,10 +87,10 @@ class RendererServer : public IPCServer {
   bool ExecCommandInternal(const commands::RendererCommand &command);
 
   // return timeout (msec) passed by FLAGS_timeout
-  uint32 timeout() const;
+  uint32_t timeout() const;
 
  private:
-  uint32 timeout_;
+  uint32_t timeout_;
   RendererInterface *renderer_interface_;
   std::unique_ptr<ParentApplicationWatchDog> watch_dog_;
   std::unique_ptr<RendererServerSendCommand> send_command_;

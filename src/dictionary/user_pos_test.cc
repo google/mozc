@@ -29,6 +29,7 @@
 
 #include "dictionary/user_pos.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -65,7 +66,7 @@ TEST_F(UserPOSTest, UserPOSBasicTest) {
   user_pos_->GetPOSList(&pos_list);
   EXPECT_FALSE(pos_list.empty());
 
-  uint16 id = 0;
+  uint16_t id = 0;
   for (size_t i = 0; i < pos_list.size(); ++i) {
     EXPECT_TRUE(user_pos_->IsValidPOS(pos_list[i]));
     EXPECT_TRUE(user_pos_->GetPOSIDs(pos_list[i], &id));

@@ -29,6 +29,7 @@
 
 #include "rewriter/user_segment_history_rewriter.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -71,12 +72,12 @@ void InitSegments(Segments *segments, size_t size, size_t candidate_size) {
     Segment *segment = segments->add_segment();
     CHECK(segment);
     segment->set_key(std::string("segment") +
-                     std::to_string(static_cast<uint32>(i)));
+                     std::to_string(static_cast<uint32_t>(i)));
     for (size_t j = 0; j < candidate_size; ++j) {
       Segment::Candidate *c = segment->add_candidate();
       c->content_key = segment->key();
       c->content_value =
-          std::string("candidate") + std::to_string(static_cast<uint32>(j));
+          std::string("candidate") + std::to_string(static_cast<uint32_t>(j));
       c->value = c->content_value;
       if (j == 0) {
         c->attributes |= Segment::Candidate::BEST_CANDIDATE;
@@ -92,7 +93,8 @@ void InitSegments(Segments *segments, size_t size) {
 }
 
 void AppendCandidateSuffix(Segment *segment, size_t index,
-                           const std::string &suffix, uint16 lid, uint16 rid) {
+                           const std::string &suffix, uint16_t lid,
+                           uint16_t rid) {
   segment->set_key(segment->key() + suffix);
   segment->mutable_candidate(index)->value += suffix;
   segment->mutable_candidate(index)->lid = lid;
@@ -100,7 +102,7 @@ void AppendCandidateSuffix(Segment *segment, size_t index,
 }
 
 void AppendCandidateSuffixWithLid(Segment *segment, size_t index,
-                                  const std::string &suffix, uint16 lid) {
+                                  const std::string &suffix, uint16_t lid) {
   // if lid == 0 and rid == 0, we assume that candidate is t13n.
   // we set 1 as rid to avoid this.
   AppendCandidateSuffix(segment, index, suffix, lid, 1);
@@ -408,8 +410,8 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 
   rewriter->Clear();
 
-  const uint64 kSeconds = 0;
-  const uint32 kMicroSeconds = 0;
+  const uint64_t kSeconds = 0;
+  const uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -500,8 +502,8 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 
   rewriter->Clear();
 
-  const uint64 kSeconds = 0;
-  const uint32 kMicroSeconds = 0;
+  const uint64_t kSeconds = 0;
+  const uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -1320,8 +1322,8 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 
   rewriter->Clear();
 
-  const uint64 kSeconds = 0;
-  const uint32 kMicroSeconds = 0;
+  const uint64_t kSeconds = 0;
+  const uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -1394,7 +1396,7 @@ TEST_F(UserSegmentHistoryRewriterTest, PuntuationsTest) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
 
-  const uint16 id = pos_matcher().GetJapanesePunctuationsId();
+  const uint16_t id = pos_matcher().GetJapanesePunctuationsId();
 
   rewriter->Clear();
 
@@ -1448,8 +1450,8 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
 
-  const uint64 kSeconds = 0;
-  const uint32 kMicroSeconds = 0;
+  const uint64_t kSeconds = 0;
+  const uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 

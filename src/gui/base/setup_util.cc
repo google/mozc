@@ -29,6 +29,8 @@
 
 #include "gui/base/setup_util.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <algorithm>
 #endif  // OS_WIN
@@ -63,7 +65,7 @@ bool SetupUtil::IsUserDictionaryLocked() const {
   return is_userdictionary_locked_;
 }
 
-void SetupUtil::SetDefaultProperty(uint32 flags) {
+void SetupUtil::SetDefaultProperty(uint32_t flags) {
 #ifdef OS_WIN
   if (flags & IME_DEFAULT) {
     mozc::usage_stats::UsageStats::IncrementCount("PostInstallSetDefault");

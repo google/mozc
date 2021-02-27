@@ -29,6 +29,5 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 exports_files([
-    "mozc_server_info",
     "mozc_tool_info",
 ])

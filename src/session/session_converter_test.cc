@@ -35,6 +35,7 @@
 
 #include "session/session_converter.h"
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -3425,7 +3426,7 @@ TEST_F(SessionConverterTest, ConversionFail) {
 }
 
 TEST_F(SessionConverterTest, ResetByClientRevision) {
-  const int32 kRevision = 0x1234;
+  const int32_t kRevision = 0x1234;
 
   ConverterMockForReset convertermock;
   SessionConverter converter(&convertermock, request_.get(), config_.get());
@@ -3543,7 +3544,7 @@ TEST_F(SessionConverterTest, ResetByPrecedingText) {
 TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
   ConverterMockForReconstructHistory convertermock;
 
-  const uint16 kId = 1234;
+  const uint16_t kId = 1234;
   const char kKey[] = "1";
   const char kValue[] = "1";
 

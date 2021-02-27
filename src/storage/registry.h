@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_REGISTRY_H_
 #define MOZC_STORAGE_REGISTRY_H_
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 
@@ -78,8 +79,8 @@ class Registry {
   }
 
   static bool Lookup(const std::string &key, bool *value) {
-    uint8 v = 0;
-    const bool result = Lookup<uint8>(key, &v);
+    uint8_t v = 0;
+    const bool result = Lookup<uint8_t>(key, &v);
     *value = (v != 0);
     return result;
   }
@@ -101,8 +102,8 @@ class Registry {
   // Insert key and bool value
   // It is not guaranteed that the data is synced to the disk
   static bool Insert(const std::string &key, const bool value) {
-    const uint8 tmp = static_cast<uint8>(value);
-    return Insert<uint8>(key, tmp);
+    const uint8_t tmp = static_cast<uint8_t>(value);
+    return Insert<uint8_t>(key, tmp);
   }
 
   // Syncing the data into disk

@@ -36,7 +36,7 @@ load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
 def cc_library_mozc(deps = [], **kwargs):
     """
@@ -132,7 +132,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def info_plist_mozc(name, srcs = [], outs = []):
+def infoplist_mozc(name, srcs = [], outs = []):
     native.genrule(
         name = name,
         srcs = srcs + ["//base:mozc_version_txt"],
@@ -145,7 +145,7 @@ def info_plist_mozc(name, srcs = [], outs = []):
         exec_tools = ["//build_tools:tweak_info_plist"],
     )
 
-def info_plist_strings_mozc(name, srcs = [], outs = []):
+def infoplist_strings_mozc(name, srcs = [], outs = []):
     native.genrule(
         name = name,
         srcs = srcs,
@@ -174,11 +174,69 @@ def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], proto_deps = [], sd
         **kwargs
     )
 
-def macos_application_mozc(name, bundle_name, bundle_id = None, **kwargs):
+def _tweak_infoplists(name, infoplists):
+    tweaked_infoplists = []
+    for i, plist in enumerate(infoplists):
+        plist_name = "%s_plist%d" % (name, i)
+        infoplist_mozc(
+            name = plist_name,
+            srcs = [plist],
+            outs = [plist.replace(".plist", "_tweaked.plist")],
+        )
+        tweaked_infoplists.append(plist_name)
+    return tweaked_infoplists
+
+def _tweak_strings(name, strings):
+    tweaked_strings = []
+    for i, string in enumerate(strings):
+        string_name = "%s_string%d" % (name, i)
+        infoplist_strings_mozc(
+            name = string_name,
+            srcs = [string],
+            outs = ["tweaked/" + string],
+        )
+        tweaked_strings.append(string_name)
+    return tweaked_strings
+
+def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, **kwargs):
+    """Rule to create .app for macOS.
+
+    Args:
+      name: name for macos_application.
+      bundle_name: bundle_name for macos_application.
+      infoplists: infoplists are tweaked and applied to macos_application.
+      strings: strings are tweaked and applied to macos_application.
+      bundle_id: bundle_id for macos_application.
+      **kwargs: other arguments for macos_application.
+    """
     macos_application(
         name = name,
         bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
         bundle_name = bundle_name,
+        infoplists = _tweak_infoplists(name, infoplists),
+        strings = _tweak_strings(name, strings),
+        minimum_os_version = MACOS_MIN_OS_VER,
+        version = "//data/version:version_macos",
+        **kwargs
+    )
+
+def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, **kwargs):
+    """Rule to create .bundle for macOS.
+
+    Args:
+      name: name for macos_bundle.
+      bundle_name: bundle_name for macos_bundle.
+      infoplists: infoplists are tweaked and applied to macos_bundle.
+      strings: strings are tweaked and applied to macos_bundle.
+      bundle_id: bundle_id for macos_bundle.
+      **kwargs: other arguments for macos_bundle.
+    """
+    macos_bundle(
+        name = name,
+        bundle_id = bundle_id or (MACOS_BUNDLE_ID_PREFIX + "." + bundle_name),
+        bundle_name = bundle_name,
+        infoplists = _tweak_infoplists(name, infoplists),
+        strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
         version = "//data/version:version_macos",
         **kwargs

@@ -116,7 +116,7 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 // return current Config
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
   scoped_lock lock(&mutex_);
-  config->CopyFrom(merged_config_);
+  *config = merged_config_;
   return true;
 }
 
@@ -127,13 +127,13 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
 // return stored Config
 bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
   scoped_lock lock(&mutex_);
-  config->CopyFrom(stored_config_);
+  *config = stored_config_;
   return true;
 }
 
 // set config and rewrite internal data
 bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
-  stored_config_.CopyFrom(config);
+  stored_config_ = config;
 
 #ifdef MOZC_NO_LOGGING
   // Delete the optional field from the config.
@@ -166,14 +166,14 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
 }
 
 void ConfigHandlerImpl::UpdateMergedConfig() {
-  merged_config_.CopyFrom(stored_config_);
+  merged_config_ = stored_config_;
   merged_config_.MergeFrom(imposed_config_);
 }
 
 bool ConfigHandlerImpl::SetConfig(const Config &config) {
   scoped_lock lock(&mutex_);
   Config output_config;
-  output_config.CopyFrom(config);
+  output_config = config;
 
   ConfigHandler::SetMetaData(&output_config);
 
@@ -194,7 +194,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
 void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
   scoped_lock lock(&mutex_);
   VLOG(1) << "Setting new overriding config";
-  imposed_config_.CopyFrom(config);
+  imposed_config_ = config;
 
 #ifdef DEBUG
   std::string debug_content(

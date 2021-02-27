@@ -30,6 +30,7 @@
 #include "rewriter/emoticon_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -186,7 +187,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       // TODO(taku): want to make it "generate" more funny emoticon.
       begin = dic_.begin();
       CHECK(begin != dic_.end());
-      uint32 n = 0;
+      uint32_t n = 0;
       // use secure random not to predict the next emoticon.
       Util::GetRandomSequence(reinterpret_cast<char *>(&n), sizeof(n));
       begin += n % dic_.size();

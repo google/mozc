@@ -29,6 +29,7 @@
 
 #include "storage/existence_filter.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,7 +47,7 @@ namespace {
 void CheckValues(ExistenceFilter *filter, int m, int n) {
   int false_positives = 0;
   for (int i = 0; i < 2 * n; ++i) {
-    uint64 hash = Hash::Fingerprint(i);
+    uint64_t hash = Hash::Fingerprint(i);
     bool should_exist = ((i % 2) == 0);
     bool actual = filter->Exists(hash);
     if (should_exist) {
@@ -67,7 +68,7 @@ void RunTest(int m, int n) {
 
   for (int i = 0; i < n; ++i) {
     int val = i * 2;
-    uint64 hash = Hash::Fingerprint(val);
+    uint64_t hash = Hash::Fingerprint(val);
     filter->Insert(hash);
   }
 

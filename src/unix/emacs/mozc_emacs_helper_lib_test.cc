@@ -30,6 +30,7 @@
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include "base/protobuf/message.h"
 #include "base/util.h"
@@ -40,10 +41,10 @@
 
 class MozcEmacsHelperLibTest : public testing::Test {
  protected:
-  void ParseAndTestInputLine(const std::string &input_line, uint32 event_id,
-                             uint32 session_id, const std::string &protobuf) {
-    uint32 actual_event_id = 0xDEADBEEFU;
-    uint32 actual_session_id = 0xDEADBEEFU;
+  void ParseAndTestInputLine(const std::string &input_line, uint32_t event_id,
+                             uint32_t session_id, const std::string &protobuf) {
+    uint32_t actual_event_id = 0xDEADBEEFU;
+    uint32_t actual_session_id = 0xDEADBEEFU;
     mozc::commands::Input input;
     mozc::emacs::ParseInputLine(input_line, &actual_event_id,
                                 &actual_session_id, &input);
@@ -197,9 +198,9 @@ TEST_F(MozcEmacsHelperLibTest, PrintMessage) {
   output.set_id(1234);
   output.set_mode(mozc::commands::HIRAGANA);
   output.set_consumed(true);
-  output.mutable_result()->CopyFrom(result);
-  output.mutable_preedit()->CopyFrom(preedit);
-  output.mutable_key()->CopyFrom(key_event);
+  *output.mutable_result() = result;
+  *output.mutable_preedit() = preedit;
+  *output.mutable_key() = key_event;
   PrintAndTestSexpr(output,
                     "((id . \"1234\")"
                     "(mode . hiragana)"

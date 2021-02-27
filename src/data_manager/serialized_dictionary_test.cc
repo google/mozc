@@ -29,6 +29,7 @@
 
 #include "data_manager/serialized_dictionary.h"
 
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -59,8 +60,8 @@ class SerializedDictionaryTest : public ::testing::Test {
   absl::string_view string_array_data_;  // Pointing to a block of buf2_
 
  private:
-  std::unique_ptr<uint32[]> buf1_;
-  std::unique_ptr<uint32[]> buf2_;
+  std::unique_ptr<uint32_t[]> buf1_;
+  std::unique_ptr<uint32_t[]> buf2_;
 };
 
 TEST_F(SerializedDictionaryTest, Compile) {

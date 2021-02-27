@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_UNVERIFIED_AES256_H_
 #define MOZC_BASE_UNVERIFIED_AES256_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -49,36 +51,36 @@ class UnverifiedAES256 {
 
   // Does AES256 CBC transformation.
   // CAVEATS: See the above comment.
-  static void TransformCBC(const uint8 (&key)[kKeyBytes],
-                           const uint8 (&iv)[kBlockBytes], uint8 *block,
+  static void TransformCBC(const uint8_t (&key)[kKeyBytes],
+                           const uint8_t (&iv)[kBlockBytes], uint8_t *block,
                            size_t block_count);
 
   // Does AES256 CBC inverse transformation.
   // CAVEATS: See the above comment.
-  static void InverseTransformCBC(const uint8 (&key)[kKeyBytes],
-                                  const uint8 (&iv)[kBlockBytes], uint8 *block,
-                                  size_t block_count);
+  static void InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
+                                  const uint8_t (&iv)[kBlockBytes],
+                                  uint8_t *block, size_t block_count);
 
  protected:
   // Does AES256 ECB transformation.
   // CAVEATS: See the above comment.
-  static void TransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                           uint8 block[kBlockBytes]);
+  static void TransformECB(const uint8_t (&w)[kKeyScheduleBytes],
+                           uint8_t block[kBlockBytes]);
 
   // Does AES256 ECB inverse transformation.
   // CAVEATS: See the above comment.
-  static void InverseTransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                                  uint8 block[kBlockBytes]);
+  static void InverseTransformECB(const uint8_t (&w)[kKeyScheduleBytes],
+                                  uint8_t block[kBlockBytes]);
 
   // Declared as protected for unit test.
-  static void MakeKeySchedule(const uint8 (&key)[kKeyBytes],
-                              uint8 w[kKeyScheduleBytes]);
-  static void SubBytes(uint8 block[kBlockBytes]);
-  static void InvSubBytes(uint8 block[kBlockBytes]);
-  static void MixColumns(uint8 block[kBlockBytes]);
-  static void InvMixColumns(uint8 block[kBlockBytes]);
-  static void ShiftRows(uint8 block[kBlockBytes]);
-  static void InvShiftRows(uint8 block[kBlockBytes]);
+  static void MakeKeySchedule(const uint8_t (&key)[kKeyBytes],
+                              uint8_t w[kKeyScheduleBytes]);
+  static void SubBytes(uint8_t block[kBlockBytes]);
+  static void InvSubBytes(uint8_t block[kBlockBytes]);
+  static void MixColumns(uint8_t block[kBlockBytes]);
+  static void InvMixColumns(uint8_t block[kBlockBytes]);
+  static void ShiftRows(uint8_t block[kBlockBytes]);
+  static void InvShiftRows(uint8_t block[kBlockBytes]);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(UnverifiedAES256);

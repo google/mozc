@@ -28,13 +28,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-load("//:build_defs.bzl", "info_plist_mozc")
+load("//:build_defs.bzl", "infoplist_mozc")
 
 package(
     default_visibility = ["//gui:__subpackages__"],
 )
 
-info_plist_mozc(
+infoplist_mozc(
     name = "mozc_tool_info_plist",
     srcs = ["//data/mac:mozc_tool_info"],
     outs = ["mozc_tool_info.plist"],

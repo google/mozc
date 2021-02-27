@@ -1,0 +1,22 @@
+SET_CONFIG	preedit_method	ROMAN
+
+RESET_CONTEXT
+SWITCH_INPUT_MODE	HIRAGANA
+
+SEND_KEYS	ABC
+SEND_KEY	Space
+
+# Space is treated as a whitespace. The composition should be "ABC |".
+EXPECT_PREEDIT	"ABC "
+
+SEND_KEY	Left
+SEND_KEY	Left
+SEND_KEY	Left
+
+# The cursor should be b/w A and B. "A|BC "
+EXPECT_PREEDIT	"ABC "
+
+SEND_KEY	Space
+
+# Space should be treated as a whitespace. "A |BC ".
+EXPECT_PREEDIT	"A BC "

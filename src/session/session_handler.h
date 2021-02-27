@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_H_
 #define MOZC_SESSION_SESSION_HANDLER_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -139,10 +140,10 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<SessionWatchDog> session_watch_dog_;
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
   bool is_available_ = false;
-  uint32 max_session_size_ = 0;
-  uint64 last_session_empty_time_ = 0;
-  uint64 last_cleanup_time_ = 0;
-  uint64 last_create_session_time_ = 0;
+  uint32_t max_session_size_ = 0;
+  uint64_t last_session_empty_time_ = 0;
+  uint64_t last_cleanup_time_ = 0;
+  uint64_t last_create_session_time_ = 0;
 
   std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<EngineBuilderInterface> engine_builder_;

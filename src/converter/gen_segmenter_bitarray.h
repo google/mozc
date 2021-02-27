@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_GEN_SEGMENTER_BITARRAY_H_
 #define MOZC_CONVERTER_GEN_SEGMENTER_BITARRAY_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -38,7 +39,7 @@ namespace mozc {
 
 class SegmenterBitarrayGenerator {
  public:
-  typedef bool (*IsBoundaryFunc)(uint16 rid, uint16 lid);
+  typedef bool (*IsBoundaryFunc)(uint16_t rid, uint16_t lid);
   static void GenerateBitarray(int lsize, int rsize, IsBoundaryFunc func,
                                const std::string &output_size_info,
                                const std::string &output_ltable,

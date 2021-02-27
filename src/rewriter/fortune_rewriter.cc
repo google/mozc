@@ -30,6 +30,7 @@
 #include "rewriter/fortune_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <ctime>
 #include <string>
 
@@ -94,7 +95,7 @@ class FortuneData {
       // Friday the 13th
       levels = kFriday13Levels;
     }
-    uint32 random = 0;
+    uint32_t random = 0;
     Util::GetRandomSequence(reinterpret_cast<char *>(&random), sizeof(random));
     const int level = random % kMaxLevel;
     for (int i = 0; i < std::size(kNormalLevels); ++i) {

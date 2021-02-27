@@ -30,6 +30,7 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TYPING_MODEL_H_
 #define MOZC_COMPOSER_INTERNAL_TYPING_MODEL_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -50,8 +51,8 @@ namespace composer {
 class TypingModel {
  public:
   TypingModel(const char *characters, size_t characters_size,
-              const uint8 *cost_table, size_t cost_table_size,
-              const int32 *mapping_table);
+              const uint8_t *cost_table, size_t cost_table_size,
+              const int32_t *mapping_table);
 
   virtual ~TypingModel();
 
@@ -69,7 +70,7 @@ class TypingModel {
   static const int kInfinity;
 
   // In typing model, meaning no corresponding data.
-  static const uint8 kNoData;
+  static const uint8_t kNoData;
 
  private:
   FRIEND_TEST(TypingModelTest, Constructor);
@@ -85,9 +86,9 @@ class TypingModel {
   // Radix table, needed by GetIndex.
   std::unique_ptr<unsigned char[]> character_to_radix_table_;
   const size_t characters_size_;
-  const uint8 *cost_table_;
+  const uint8_t *cost_table_;
   const size_t cost_table_size_;
-  const int32 *mapping_table_;
+  const int32_t *mapping_table_;
 };
 
 }  // namespace composer

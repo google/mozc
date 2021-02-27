@@ -29,6 +29,7 @@
 
 #include "net/json_util.h"
 
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
@@ -269,59 +270,59 @@ TEST(JsonUtilTest, ConvertItemTest) {
   TEST_CONVERT_ITEM(set_float_value, 2.0, "float_value", 2.0);
   TEST_CONVERT_ITEM(set_int32_value, 3, "int32_value", Json::Int(3));
   TEST_CONVERT_ITEM(set_int32_value, -3, "int32_value", Json::Int(-3));
-  TEST_CONVERT_ITEM(set_int32_value, std::numeric_limits<int32>::min(),
+  TEST_CONVERT_ITEM(set_int32_value, std::numeric_limits<int32_t>::min(),
                     "int32_value",
-                    Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(set_int32_value, std::numeric_limits<int32>::max(),
+                    Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(set_int32_value, std::numeric_limits<int32_t>::max(),
                     "int32_value",
-                    Json::Int(std::numeric_limits<int32>::max()));
+                    Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_int64_value, 4, "int64_value", "4");
   TEST_CONVERT_ITEM(set_int64_value, -4, "int64_value", "-4");
-  TEST_CONVERT_ITEM(set_int64_value, std::numeric_limits<int64>::min(),
+  TEST_CONVERT_ITEM(set_int64_value, std::numeric_limits<int64_t>::min(),
                     "int64_value", "-9223372036854775808");
-  TEST_CONVERT_ITEM(set_int64_value, std::numeric_limits<int64>::max(),
+  TEST_CONVERT_ITEM(set_int64_value, std::numeric_limits<int64_t>::max(),
                     "int64_value", "9223372036854775807");
   TEST_CONVERT_ITEM(set_uint32_value, 5, "uint32_value", Json::UInt(5));
-  TEST_CONVERT_ITEM(set_uint32_value, std::numeric_limits<uint32>::max(),
+  TEST_CONVERT_ITEM(set_uint32_value, std::numeric_limits<uint32_t>::max(),
                     "uint32_value",
-                    Json::UInt(std::numeric_limits<uint32>::max()));
+                    Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_ITEM(set_uint64_value, 6, "uint64_value", "6");
-  TEST_CONVERT_ITEM(set_uint64_value, std::numeric_limits<uint64>::max(),
+  TEST_CONVERT_ITEM(set_uint64_value, std::numeric_limits<uint64_t>::max(),
                     "uint64_value", "18446744073709551615");
   TEST_CONVERT_ITEM(set_sint32_value, 7, "sint32_value", Json::Int(7));
   TEST_CONVERT_ITEM(set_sint32_value, -7, "sint32_value", Json::Int(-7));
-  TEST_CONVERT_ITEM(set_sint32_value, std::numeric_limits<int32>::min(),
+  TEST_CONVERT_ITEM(set_sint32_value, std::numeric_limits<int32_t>::min(),
                     "sint32_value",
-                    Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(set_sint32_value, std::numeric_limits<int32>::max(),
+                    Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(set_sint32_value, std::numeric_limits<int32_t>::max(),
                     "sint32_value",
-                    Json::Int(std::numeric_limits<int32>::max()));
+                    Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_sint64_value, 8, "sint64_value", "8");
   TEST_CONVERT_ITEM(set_sint64_value, -8, "sint64_value", "-8");
-  TEST_CONVERT_ITEM(set_sint64_value, std::numeric_limits<int64>::min(),
+  TEST_CONVERT_ITEM(set_sint64_value, std::numeric_limits<int64_t>::min(),
                     "sint64_value", "-9223372036854775808");
-  TEST_CONVERT_ITEM(set_sint64_value, std::numeric_limits<int64>::max(),
+  TEST_CONVERT_ITEM(set_sint64_value, std::numeric_limits<int64_t>::max(),
                     "sint64_value", "9223372036854775807");
   TEST_CONVERT_ITEM(set_fixed32_value, 9, "fixed32_value", Json::UInt(9));
-  TEST_CONVERT_ITEM(set_fixed32_value, std::numeric_limits<uint32>::max(),
+  TEST_CONVERT_ITEM(set_fixed32_value, std::numeric_limits<uint32_t>::max(),
                     "fixed32_value",
-                    Json::UInt(std::numeric_limits<uint32>::max()));
+                    Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_ITEM(set_fixed64_value, 10, "fixed64_value", "10");
-  TEST_CONVERT_ITEM(set_fixed64_value, std::numeric_limits<uint64>::max(),
+  TEST_CONVERT_ITEM(set_fixed64_value, std::numeric_limits<uint64_t>::max(),
                     "fixed64_value", "18446744073709551615");
   TEST_CONVERT_ITEM(set_sfixed32_value, 11, "sfixed32_value", Json::Int(11));
   TEST_CONVERT_ITEM(set_sfixed32_value, -11, "sfixed32_value", Json::Int(-11));
-  TEST_CONVERT_ITEM(set_sfixed32_value, std::numeric_limits<int32>::min(),
+  TEST_CONVERT_ITEM(set_sfixed32_value, std::numeric_limits<int32_t>::min(),
                     "sfixed32_value",
-                    Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(set_sfixed32_value, std::numeric_limits<int32>::max(),
+                    Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(set_sfixed32_value, std::numeric_limits<int32_t>::max(),
                     "sfixed32_value",
-                    Json::Int(std::numeric_limits<int32>::max()));
+                    Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_sfixed64_value, 12, "sfixed64_value", "12");
   TEST_CONVERT_ITEM(set_sfixed64_value, -12, "sfixed64_value", "-12");
-  TEST_CONVERT_ITEM(set_sfixed64_value, std::numeric_limits<int64>::min(),
+  TEST_CONVERT_ITEM(set_sfixed64_value, std::numeric_limits<int64_t>::min(),
                     "sfixed64_value", "-9223372036854775808");
-  TEST_CONVERT_ITEM(set_sfixed64_value, std::numeric_limits<int64>::max(),
+  TEST_CONVERT_ITEM(set_sfixed64_value, std::numeric_limits<int64_t>::max(),
                     "sfixed64_value", "9223372036854775807");
   TEST_CONVERT_ITEM(set_bool_value, true, "bool_value", true);
   TEST_CONVERT_ITEM(set_bool_value, false, "bool_value", false);
@@ -338,75 +339,81 @@ TEST(JsonUtilTest, ConvertItemTest) {
                     Json::Int(3));
   TEST_CONVERT_ITEM(set_required_int32_value, -3, "required_int32_value",
                     Json::Int(-3));
-  TEST_CONVERT_ITEM(set_required_int32_value, std::numeric_limits<int32>::min(),
-                    "required_int32_value",
-                    Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(set_required_int32_value, std::numeric_limits<int32>::max(),
-                    "required_int32_value",
-                    Json::Int(std::numeric_limits<int32>::max()));
+  TEST_CONVERT_ITEM(set_required_int32_value,
+                    std::numeric_limits<int32_t>::min(), "required_int32_value",
+                    Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(set_required_int32_value,
+                    std::numeric_limits<int32_t>::max(), "required_int32_value",
+                    Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_required_int64_value, 4, "required_int64_value", "4");
   TEST_CONVERT_ITEM(set_required_int64_value, -4, "required_int64_value", "-4");
-  TEST_CONVERT_ITEM(set_required_int64_value, std::numeric_limits<int64>::min(),
-                    "required_int64_value", "-9223372036854775808");
-  TEST_CONVERT_ITEM(set_required_int64_value, std::numeric_limits<int64>::max(),
-                    "required_int64_value", "9223372036854775807");
+  TEST_CONVERT_ITEM(set_required_int64_value,
+                    std::numeric_limits<int64_t>::min(), "required_int64_value",
+                    "-9223372036854775808");
+  TEST_CONVERT_ITEM(set_required_int64_value,
+                    std::numeric_limits<int64_t>::max(), "required_int64_value",
+                    "9223372036854775807");
   TEST_CONVERT_ITEM(set_required_uint32_value, 5, "required_uint32_value",
                     Json::UInt(5));
   TEST_CONVERT_ITEM(set_required_uint32_value,
-                    std::numeric_limits<uint32>::max(), "required_uint32_value",
-                    Json::UInt(std::numeric_limits<uint32>::max()));
+                    std::numeric_limits<uint32_t>::max(),
+                    "required_uint32_value",
+                    Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_ITEM(set_required_uint64_value, 6, "required_uint64_value", "6");
   TEST_CONVERT_ITEM(set_required_uint64_value,
-                    std::numeric_limits<uint64>::max(), "required_uint64_value",
-                    "18446744073709551615");
+                    std::numeric_limits<uint64_t>::max(),
+                    "required_uint64_value", "18446744073709551615");
   TEST_CONVERT_ITEM(set_required_sint32_value, 7, "required_sint32_value",
                     Json::Int(7));
   TEST_CONVERT_ITEM(set_required_sint32_value, -7, "required_sint32_value",
                     Json::Int(-7));
-  TEST_CONVERT_ITEM(set_required_sint32_value,
-                    std::numeric_limits<int32>::min(), "required_sint32_value",
-                    Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(set_required_sint32_value,
-                    std::numeric_limits<int32>::max(), "required_sint32_value",
-                    Json::Int(std::numeric_limits<int32>::max()));
+  TEST_CONVERT_ITEM(
+      set_required_sint32_value, std::numeric_limits<int32_t>::min(),
+      "required_sint32_value", Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(
+      set_required_sint32_value, std::numeric_limits<int32_t>::max(),
+      "required_sint32_value", Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_required_sint64_value, 8, "required_sint64_value", "8");
   TEST_CONVERT_ITEM(set_required_sint64_value, -8, "required_sint64_value",
                     "-8");
   TEST_CONVERT_ITEM(set_required_sint64_value,
-                    std::numeric_limits<int64>::min(), "required_sint64_value",
-                    "-9223372036854775808");
+                    std::numeric_limits<int64_t>::min(),
+                    "required_sint64_value", "-9223372036854775808");
   TEST_CONVERT_ITEM(set_required_sint64_value,
-                    std::numeric_limits<int64>::max(), "required_sint64_value",
-                    "9223372036854775807");
+                    std::numeric_limits<int64_t>::max(),
+                    "required_sint64_value", "9223372036854775807");
   TEST_CONVERT_ITEM(set_required_fixed32_value, 9, "required_fixed32_value",
                     Json::UInt(9));
-  TEST_CONVERT_ITEM(
-      set_required_fixed32_value, std::numeric_limits<uint32>::max(),
-      "required_fixed32_value", Json::UInt(std::numeric_limits<uint32>::max()));
+  TEST_CONVERT_ITEM(set_required_fixed32_value,
+                    std::numeric_limits<uint32_t>::max(),
+                    "required_fixed32_value",
+                    Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_ITEM(set_required_fixed64_value, 10, "required_fixed64_value",
                     "10");
   TEST_CONVERT_ITEM(set_required_fixed64_value,
-                    std::numeric_limits<uint64>::max(),
+                    std::numeric_limits<uint64_t>::max(),
                     "required_fixed64_value", "18446744073709551615");
   TEST_CONVERT_ITEM(set_required_sfixed32_value, 11, "required_sfixed32_value",
                     Json::Int(11));
   TEST_CONVERT_ITEM(set_required_sfixed32_value, -11, "required_sfixed32_value",
                     Json::Int(-11));
-  TEST_CONVERT_ITEM(
-      set_required_sfixed32_value, std::numeric_limits<int32>::min(),
-      "required_sfixed32_value", Json::Int(std::numeric_limits<int32>::min()));
-  TEST_CONVERT_ITEM(
-      set_required_sfixed32_value, std::numeric_limits<int32>::max(),
-      "required_sfixed32_value", Json::Int(std::numeric_limits<int32>::max()));
+  TEST_CONVERT_ITEM(set_required_sfixed32_value,
+                    std::numeric_limits<int32_t>::min(),
+                    "required_sfixed32_value",
+                    Json::Int(std::numeric_limits<int32_t>::min()));
+  TEST_CONVERT_ITEM(set_required_sfixed32_value,
+                    std::numeric_limits<int32_t>::max(),
+                    "required_sfixed32_value",
+                    Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_ITEM(set_required_sfixed64_value, 12, "required_sfixed64_value",
                     "12");
   TEST_CONVERT_ITEM(set_required_sfixed64_value, -12, "required_sfixed64_value",
                     "-12");
   TEST_CONVERT_ITEM(set_required_sfixed64_value,
-                    std::numeric_limits<int64>::min(),
+                    std::numeric_limits<int64_t>::min(),
                     "required_sfixed64_value", "-9223372036854775808");
   TEST_CONVERT_ITEM(set_required_sfixed64_value,
-                    std::numeric_limits<int64>::max(),
+                    std::numeric_limits<int64_t>::max(),
                     "required_sfixed64_value", "9223372036854775807");
   TEST_CONVERT_ITEM(set_required_bool_value, true, "required_bool_value", true);
   TEST_CONVERT_ITEM(set_required_bool_value, false, "required_bool_value",
@@ -452,113 +459,115 @@ TEST(JsonUtilTest, ConvertRepeatedItemTest) {
                              "repeated_int32_value", Json::Int(1), Json::Int(2),
                              Json::Int(3));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_int32_value, std::numeric_limits<int32>::min(),
-      std::numeric_limits<int32>::min(), std::numeric_limits<int32>::min(),
-      "repeated_int32_value", Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()));
+      add_repeated_int32_value, std::numeric_limits<int32_t>::min(),
+      std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(),
+      "repeated_int32_value", Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_int32_value, std::numeric_limits<int32>::max(),
-      std::numeric_limits<int32>::max(), std::numeric_limits<int32>::max(),
-      "repeated_int32_value", Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()));
+      add_repeated_int32_value, std::numeric_limits<int32_t>::max(),
+      std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(),
+      "repeated_int32_value", Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_REPEATED_ITEM(add_repeated_int64_value, 1, 2, 3,
                              "repeated_int64_value", "1", "2", "3");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_int64_value, std::numeric_limits<int64>::min(),
-      std::numeric_limits<int64>::min(), std::numeric_limits<int64>::min(),
+      add_repeated_int64_value, std::numeric_limits<int64_t>::min(),
+      std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(),
       "repeated_int64_value", "-9223372036854775808", "-9223372036854775808",
       "-9223372036854775808");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_int64_value, std::numeric_limits<int64>::max(),
-      std::numeric_limits<int64>::max(), std::numeric_limits<int64>::max(),
+      add_repeated_int64_value, std::numeric_limits<int64_t>::max(),
+      std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(),
       "repeated_int64_value", "9223372036854775807", "9223372036854775807",
       "9223372036854775807");
   TEST_CONVERT_REPEATED_ITEM(add_repeated_uint32_value, 1, 2, 3,
                              "repeated_uint32_value", Json::UInt(1),
                              Json::UInt(2), Json::UInt(3));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_uint32_value, std::numeric_limits<uint32>::max(),
-      std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max(),
-      "repeated_uint32_value", Json::UInt(std::numeric_limits<uint32>::max()),
-      Json::UInt(std::numeric_limits<uint32>::max()),
-      Json::UInt(std::numeric_limits<uint32>::max()));
+      add_repeated_uint32_value, std::numeric_limits<uint32_t>::max(),
+      std::numeric_limits<uint32_t>::max(),
+      std::numeric_limits<uint32_t>::max(), "repeated_uint32_value",
+      Json::UInt(std::numeric_limits<uint32_t>::max()),
+      Json::UInt(std::numeric_limits<uint32_t>::max()),
+      Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_REPEATED_ITEM(add_repeated_uint64_value, 1, 2, 3,
                              "repeated_uint64_value", "1", "2", "3");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_uint64_value, std::numeric_limits<uint64>::max(),
-      std::numeric_limits<uint64>::max(), std::numeric_limits<uint64>::max(),
-      "repeated_uint64_value", "18446744073709551615", "18446744073709551615",
-      "18446744073709551615");
+      add_repeated_uint64_value, std::numeric_limits<uint64_t>::max(),
+      std::numeric_limits<uint64_t>::max(),
+      std::numeric_limits<uint64_t>::max(), "repeated_uint64_value",
+      "18446744073709551615", "18446744073709551615", "18446744073709551615");
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sint32_value, 1, 2, 3,
                              "repeated_sint32_value", Json::Int(1),
                              Json::Int(2), Json::Int(3));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sint32_value, std::numeric_limits<int32>::min(),
-      std::numeric_limits<int32>::min(), std::numeric_limits<int32>::min(),
-      "repeated_sint32_value", Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()));
+      add_repeated_sint32_value, std::numeric_limits<int32_t>::min(),
+      std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(),
+      "repeated_sint32_value", Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sint32_value, std::numeric_limits<int32>::max(),
-      std::numeric_limits<int32>::max(), std::numeric_limits<int32>::max(),
-      "repeated_sint32_value", Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()));
+      add_repeated_sint32_value, std::numeric_limits<int32_t>::max(),
+      std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(),
+      "repeated_sint32_value", Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sint64_value, 1, 2, 3,
                              "repeated_sint64_value", "1", "2", "3");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sint64_value, std::numeric_limits<int64>::min(),
-      std::numeric_limits<int64>::min(), std::numeric_limits<int64>::min(),
+      add_repeated_sint64_value, std::numeric_limits<int64_t>::min(),
+      std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(),
       "repeated_sint64_value", "-9223372036854775808", "-9223372036854775808",
       "-9223372036854775808");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sint64_value, std::numeric_limits<int64>::max(),
-      std::numeric_limits<int64>::max(), std::numeric_limits<int64>::max(),
+      add_repeated_sint64_value, std::numeric_limits<int64_t>::max(),
+      std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(),
       "repeated_sint64_value", "9223372036854775807", "9223372036854775807",
       "9223372036854775807");
   TEST_CONVERT_REPEATED_ITEM(add_repeated_fixed32_value, 1, 2, 3,
                              "repeated_fixed32_value", Json::UInt(1),
                              Json::UInt(2), Json::UInt(3));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_fixed32_value, std::numeric_limits<uint32>::max(),
-      std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max(),
-      "repeated_fixed32_value", Json::UInt(std::numeric_limits<uint32>::max()),
-      Json::UInt(std::numeric_limits<uint32>::max()),
-      Json::UInt(std::numeric_limits<uint32>::max()));
+      add_repeated_fixed32_value, std::numeric_limits<uint32_t>::max(),
+      std::numeric_limits<uint32_t>::max(),
+      std::numeric_limits<uint32_t>::max(), "repeated_fixed32_value",
+      Json::UInt(std::numeric_limits<uint32_t>::max()),
+      Json::UInt(std::numeric_limits<uint32_t>::max()),
+      Json::UInt(std::numeric_limits<uint32_t>::max()));
   TEST_CONVERT_REPEATED_ITEM(add_repeated_fixed64_value, 1, 2, 3,
                              "repeated_fixed64_value", "1", "2", "3");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_fixed64_value, std::numeric_limits<uint64>::max(),
-      std::numeric_limits<uint64>::max(), std::numeric_limits<uint64>::max(),
-      "repeated_fixed64_value", "18446744073709551615", "18446744073709551615",
-      "18446744073709551615");
+      add_repeated_fixed64_value, std::numeric_limits<uint64_t>::max(),
+      std::numeric_limits<uint64_t>::max(),
+      std::numeric_limits<uint64_t>::max(), "repeated_fixed64_value",
+      "18446744073709551615", "18446744073709551615", "18446744073709551615");
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sfixed32_value, 1, 2, 3,
                              "repeated_sfixed32_value", Json::Int(1),
                              Json::Int(2), Json::Int(3));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sfixed32_value, std::numeric_limits<int32>::min(),
-      std::numeric_limits<int32>::min(), std::numeric_limits<int32>::min(),
-      "repeated_sfixed32_value", Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()),
-      Json::Int(std::numeric_limits<int32>::min()));
+      add_repeated_sfixed32_value, std::numeric_limits<int32_t>::min(),
+      std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(),
+      "repeated_sfixed32_value", Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()),
+      Json::Int(std::numeric_limits<int32_t>::min()));
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sfixed32_value, std::numeric_limits<int32>::max(),
-      std::numeric_limits<int32>::max(), std::numeric_limits<int32>::max(),
-      "repeated_sfixed32_value", Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()),
-      Json::Int(std::numeric_limits<int32>::max()));
+      add_repeated_sfixed32_value, std::numeric_limits<int32_t>::max(),
+      std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(),
+      "repeated_sfixed32_value", Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()),
+      Json::Int(std::numeric_limits<int32_t>::max()));
   TEST_CONVERT_REPEATED_ITEM(add_repeated_sfixed64_value, 1, 2, 3,
                              "repeated_sfixed64_value", "1", "2", "3");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sfixed64_value, std::numeric_limits<int64>::min(),
-      std::numeric_limits<int64>::min(), std::numeric_limits<int64>::min(),
+      add_repeated_sfixed64_value, std::numeric_limits<int64_t>::min(),
+      std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(),
       "repeated_sfixed64_value", "-9223372036854775808", "-9223372036854775808",
       "-9223372036854775808");
   TEST_CONVERT_REPEATED_ITEM(
-      add_repeated_sfixed64_value, std::numeric_limits<int64>::max(),
-      std::numeric_limits<int64>::max(), std::numeric_limits<int64>::max(),
+      add_repeated_sfixed64_value, std::numeric_limits<int64_t>::max(),
+      std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(),
       "repeated_sfixed64_value", "9223372036854775807", "9223372036854775807",
       "9223372036854775807");
   TEST_CONVERT_REPEATED_ITEM(add_repeated_bool_value, true, true, false,
@@ -686,23 +695,23 @@ TEST(JsonUtilTest, JsonParseTest) {
   // signed int 32
   EXPECT_FALSE(ParseToMessage("{\"int32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"int32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::min(), msg.int32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.int32_value());
   EXPECT_TRUE(ParseToMessage("{\"int32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::max(), msg.int32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.int32_value());
   EXPECT_FALSE(ParseToMessage("{\"int32_value\": 2147483648}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"sint32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"sint32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::min(), msg.sint32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.sint32_value());
   EXPECT_TRUE(ParseToMessage("{\"sint32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::max(), msg.sint32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.sint32_value());
   EXPECT_FALSE(ParseToMessage("{\"sint32_value\": 2147483648}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": -2147483649}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": -2147483648}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::min(), msg.sfixed32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::min(), msg.sfixed32_value());
   EXPECT_TRUE(ParseToMessage("{\"sfixed32_value\": 2147483647}", &msg));
-  EXPECT_EQ(std::numeric_limits<int32>::max(), msg.sfixed32_value());
+  EXPECT_EQ(std::numeric_limits<int32_t>::max(), msg.sfixed32_value());
   EXPECT_FALSE(ParseToMessage("{\"sfixed32_value\": 2147483648}", &msg));
 
   // unsigned int 32
@@ -710,14 +719,14 @@ TEST(JsonUtilTest, JsonParseTest) {
   EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 0}", &msg));
   EXPECT_EQ(0, msg.uint32_value());
   EXPECT_TRUE(ParseToMessage("{\"uint32_value\": 4294967295}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint32>::max(), msg.uint32_value());
+  EXPECT_EQ(std::numeric_limits<uint32_t>::max(), msg.uint32_value());
   EXPECT_FALSE(ParseToMessage("{\"uint32_value\": 4294967296}", &msg));
 
   EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": -1}", &msg));
   EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 0}", &msg));
   EXPECT_EQ(0, msg.fixed32_value());
   EXPECT_TRUE(ParseToMessage("{\"fixed32_value\": 4294967295}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint32>::max(), msg.fixed32_value());
+  EXPECT_EQ(std::numeric_limits<uint32_t>::max(), msg.fixed32_value());
   EXPECT_FALSE(ParseToMessage("{\"fixed32_value\": 4294967296}", &msg));
 
   // signed int 64
@@ -725,10 +734,10 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"int64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"int64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::min(), msg.int64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.int64_value());
   EXPECT_TRUE(
       ParseToMessage("{\"int64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::max(), msg.int64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.int64_value());
   EXPECT_FALSE(
       ParseToMessage("{\"int64_value\": \"9223372036854775808\"}", &msg));
 
@@ -736,10 +745,10 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"sint64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"sint64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::min(), msg.sint64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.sint64_value());
   EXPECT_TRUE(
       ParseToMessage("{\"sint64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::max(), msg.sint64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.sint64_value());
   EXPECT_FALSE(
       ParseToMessage("{\"sint64_value\": \"9223372036854775808\"}", &msg));
 
@@ -747,10 +756,10 @@ TEST(JsonUtilTest, JsonParseTest) {
       ParseToMessage("{\"sfixed64_value\": \"-9223372036854775809\"}", &msg));
   EXPECT_TRUE(
       ParseToMessage("{\"sfixed64_value\": \"-9223372036854775808\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::min(), msg.sfixed64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), msg.sfixed64_value());
   EXPECT_TRUE(
       ParseToMessage("{\"sfixed64_value\": \"9223372036854775807\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<int64>::max(), msg.sfixed64_value());
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), msg.sfixed64_value());
   EXPECT_FALSE(
       ParseToMessage("{\"sfixed64_value\": \"9223372036854775808\"}", &msg));
 
@@ -760,7 +769,7 @@ TEST(JsonUtilTest, JsonParseTest) {
   EXPECT_EQ(0, msg.uint64_value());
   EXPECT_TRUE(
       ParseToMessage("{\"uint64_value\": \"18446744073709551615\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint64>::max(), msg.uint64_value());
+  EXPECT_EQ(std::numeric_limits<uint64_t>::max(), msg.uint64_value());
   EXPECT_FALSE(
       ParseToMessage("{\"uint64_value\": \"18446744073709551616\"}", &msg));
 
@@ -769,7 +778,7 @@ TEST(JsonUtilTest, JsonParseTest) {
   EXPECT_EQ(0, msg.fixed64_value());
   EXPECT_TRUE(
       ParseToMessage("{\"fixed64_value\": \"18446744073709551615\"}", &msg));
-  EXPECT_EQ(std::numeric_limits<uint64>::max(), msg.fixed64_value());
+  EXPECT_EQ(std::numeric_limits<uint64_t>::max(), msg.fixed64_value());
   EXPECT_FALSE(
       ParseToMessage("{\"fixed64_value\": \"18446744073709551616\"}", &msg));
 }
@@ -808,13 +817,13 @@ TEST(JsonUtilTest, FailureTest) {
   for (size_t i = 0; i < arraysize(kNumS32ValueKeys); ++i) {
     {
       Json::Value json_value;
-      json_value[kNumS32ValueKeys[i]] = -int64{2147483649};
+      json_value[kNumS32ValueKeys[i]] = -int64_t{2147483649};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
     {
       Json::Value json_value;
-      json_value[kNumS32ValueKeys[i]] = uint64{2147483648};
+      json_value[kNumS32ValueKeys[i]] = uint64_t{2147483648};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
@@ -829,7 +838,7 @@ TEST(JsonUtilTest, FailureTest) {
     }
     {
       Json::Value json_value;
-      json_value[kNumU32ValueKeys[i]] = uint64{4294967296};
+      json_value[kNumU32ValueKeys[i]] = uint64_t{4294967296};
       TestMsg msg;
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }

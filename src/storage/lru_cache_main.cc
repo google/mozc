@@ -37,11 +37,11 @@
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  mozc::storage::LRUCache<string, string> cache(5);
+  mozc::storage::LRUCache<std::string, std::string> cache(5);
 
   string line;
   while (getline(cin, line)) {
-    std::vector<string> fields;
+    std::vector<std::string> fields;
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
     if (fields[0] == "i") {
       cache.Insert(fields[1], fields[2]);

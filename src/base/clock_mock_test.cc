@@ -29,6 +29,8 @@
 
 #include "base/clock_mock.h"
 
+#include <cstdint>
+
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -38,23 +40,23 @@ namespace mozc {
 namespace {
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-const uint64 kTestSeconds = 1608729875uLL;
-const uint32 kTestMicroSeconds = 123456u;
+const uint64_t kTestSeconds = 1608729875uLL;
+const uint32_t kTestMicroSeconds = 123456u;
 
-const uint64 kDeltaSeconds = 12uLL;
-const uint32 kDeltaMicroSeconds = 654321u;
+const uint64_t kDeltaSeconds = 12uLL;
+const uint32_t kDeltaMicroSeconds = 654321u;
 }  // namespace
 
 TEST(ClockMockTest, GetTimeTest) {
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
-  uint64 current_time = mock.GetTime();
+  uint64_t current_time = mock.GetTime();
   EXPECT_EQ(kTestSeconds, current_time);
 }
 
 TEST(ClockMockTest, GetTimeOfDayTest) {
   ClockMock mock(kTestSeconds, kTestMicroSeconds);
-  uint64 current_sec;
-  uint32 current_usec;
+  uint64_t current_sec;
+  uint32_t current_usec;
   mock.GetTimeOfDay(&current_sec, &current_usec);
   EXPECT_EQ(kTestSeconds, current_sec);
   EXPECT_EQ(kTestMicroSeconds, current_usec);
@@ -102,24 +104,24 @@ TEST(ClockMockTest, GetFrequencyAndTicks) {
   EXPECT_NE(0, mock.GetFrequency());
   EXPECT_EQ(0, mock.GetTicks());
 
-  const uint64 kFrequency = 123456789uLL;
+  const uint64_t kFrequency = 123456789uLL;
   mock.SetFrequency(kFrequency);
   EXPECT_EQ(kFrequency, mock.GetFrequency());
 
-  const uint64 kTicks = 987654321uLL;
+  const uint64_t kTicks = 987654321uLL;
   mock.SetTicks(kTicks);
   EXPECT_EQ(kTicks, mock.GetTicks());
 }
 
 TEST(ClockMockTest, PutClockForwardTest) {
   // 2024/02/22 23:11:15
-  uint64 current_sec;
-  uint32 current_usec;
+  uint64_t current_sec;
+  uint32_t current_usec;
 
   // add seconds
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
-    const uint64 offset_seconds = 100uLL;
+    const uint64_t offset_seconds = 100uLL;
     mock.PutClockForward(offset_seconds, 0u);
 
     mock.GetTimeOfDay(&current_sec, &current_usec);
@@ -131,8 +133,8 @@ TEST(ClockMockTest, PutClockForwardTest) {
   // 123456 [usec] + 1 [usec] => 123457 [usec]
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
-    const uint64 offset_micro_seconds = 1uLL;
-    mock.PutClockForward(uint64{0}, offset_micro_seconds);
+    const uint64_t offset_micro_seconds = 1uLL;
+    mock.PutClockForward(uint64_t{0}, offset_micro_seconds);
 
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds, current_sec);
@@ -143,12 +145,12 @@ TEST(ClockMockTest, PutClockForwardTest) {
   // 123456 [usec] + 900000 [usec] => 1 [sec] + 023456 [usec]
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
-    const uint64 offset_micro_seconds = 900000uLL;
-    mock.PutClockForward(uint64{0}, offset_micro_seconds);
+    const uint64_t offset_micro_seconds = 900000uLL;
+    mock.PutClockForward(uint64_t{0}, offset_micro_seconds);
 
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds + 1, current_sec);
-    const uint32 expected_usec =
+    const uint32_t expected_usec =
         kTestMicroSeconds + offset_micro_seconds - 1000000;
     EXPECT_EQ(expected_usec, current_usec);
   }
@@ -158,7 +160,7 @@ TEST(ClockMockTest, PutClockForwardByTicksTest) {
   ClockMock mock(0, 0);
   ASSERT_EQ(0, mock.GetTicks());
 
-  const uint64 kPutForwardTicks = 100;
+  const uint64_t kPutForwardTicks = 100;
   mock.PutClockForwardByTicks(kPutForwardTicks);
   EXPECT_EQ(kPutForwardTicks, mock.GetTicks());
 }
@@ -177,8 +179,8 @@ TEST(ClockMockTest, AutoPutForwardTest) {
   {
     ClockMock mock(kTestSeconds, kTestMicroSeconds);
     mock.SetAutoPutClockForward(kDeltaSeconds, kDeltaMicroSeconds);
-    uint64 current_sec;
-    uint32 current_usec;
+    uint64_t current_sec;
+    uint32_t current_usec;
     mock.GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds, current_sec);
     EXPECT_EQ(kTestMicroSeconds, current_usec);

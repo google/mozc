@@ -145,7 +145,7 @@ class HookTargetInfo {
   }
 
  private:
-  std::map<string, std::map<FunctionPointer, FunctionPointer>> info_;
+  std::map<std::string, std::map<FunctionPointer, FunctionPointer>> info_;
 };
 
 class PortableExecutableImage {

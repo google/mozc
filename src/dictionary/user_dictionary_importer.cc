@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
+#include <cstdint>
+
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -60,7 +62,7 @@ using user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
 
-uint64 EntryFingerprint(const UserDictionary::Entry &entry) {
+uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
   DCHECK_LE(0, entry.pos());
   MOZC_CLANG_PUSH_WARNING();
   // clang-format off
@@ -195,7 +197,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
   ErrorType ret = IMPORT_NO_ERROR;
 
-  std::set<uint64> existent_entries;
+  std::set<uint64_t> existent_entries;
   for (size_t i = 0; i < user_dic->entries_size(); ++i) {
     existent_entries.insert(EntryFingerprint(user_dic->entries(i)));
   }
@@ -449,17 +451,17 @@ UserDictionaryImporter::IMEType UserDictionaryImporter::DetermineFinalIMEType(
 UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
     absl::string_view str) {
   // Unicode BOM.
-  if (str.size() >= 2 && ((static_cast<uint8>(str[0]) == 0xFF &&
-                           static_cast<uint8>(str[1]) == 0xFE) ||
-                          (static_cast<uint8>(str[0]) == 0xFE &&
-                           static_cast<uint8>(str[1]) == 0xFF))) {
+  if (str.size() >= 2 && ((static_cast<uint8_t>(str[0]) == 0xFF &&
+                           static_cast<uint8_t>(str[1]) == 0xFE) ||
+                          (static_cast<uint8_t>(str[0]) == 0xFE &&
+                           static_cast<uint8_t>(str[1]) == 0xFF))) {
     return UTF16;
   }
 
   // UTF-8 BOM.
-  if (str.size() >= 3 && static_cast<uint8>(str[0]) == 0xEF &&
-      static_cast<uint8>(str[1]) == 0xBB &&
-      static_cast<uint8>(str[2]) == 0xBF) {
+  if (str.size() >= 3 && static_cast<uint8_t>(str[0]) == 0xEF &&
+      static_cast<uint8_t>(str[1]) == 0xBB &&
+      static_cast<uint8_t>(str[2]) == 0xBF) {
     return UTF8;
   }
 

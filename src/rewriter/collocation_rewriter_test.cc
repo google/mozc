@@ -30,6 +30,7 @@
 #include "rewriter/collocation_rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -58,9 +59,9 @@ class CollocationRewriterTest : public ::testing::Test {
     const char *content_key;
     const char *value;
     const char *content_value;
-    const int32 cost;
-    const uint16 lid;
-    const uint16 rid;
+    const int32_t cost;
+    const uint16_t lid;
+    const uint16_t rid;
   };
 
   // Used to generate Segment.
@@ -145,7 +146,7 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
   //         | "飼いたい"
   const char *kNekowo = "ねこを";
   const char *kNeko = "ねこ";
-  const uint16 id = pos_matcher_.GetUnknownId();
+  const uint16_t id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
@@ -182,7 +183,7 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
   //          | "飼いたい"
   const char *kMagurowo = "まぐろを";
   const char *kMaguro = "まぐろ";
-  const uint16 id = pos_matcher_.GetUnknownId();
+  const uint16_t id = pos_matcher_.GetUnknownId();
   const CandidateData kMagurowoCands[] = {
       {kMagurowo, kMaguro, "マグロを", "マグロ", 0, id, id},
       {kMagurowo, kMaguro, "鮪を", "鮪", 0, id, id},
@@ -216,14 +217,14 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
   // "かいたい"  | "買いたい" "解体" "飼いたい"
   const char *kNekowo = "ねこを";
   const char *kNeko = "ねこ";
-  const uint16 id = pos_matcher_.GetUnknownId();
+  const uint16_t id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
   };
 
   const char *kSugoku = "すごく";
-  const uint16 adverb_id = pos_matcher_.GetAdverbId();
+  const uint16_t adverb_id = pos_matcher_.GetAdverbId();
   const CandidateData kSugokuCands[] = {
       {kSugoku, kSugoku, kSugoku, kSugoku, 0, adverb_id, adverb_id},
   };
@@ -259,7 +260,7 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
   // "かいたい"  | "買いたい" "解体" "飼いたい"
   const char *kNekowo = "ねこを";
   const char *kNeko = "ねこ";
-  const uint16 id = pos_matcher_.GetUnknownId();
+  const uint16_t id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},
@@ -308,7 +309,7 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
   //         | "飼いたい" (high cost)
   const char *kNekowo = "ねこを";
   const char *kNeko = "ねこ";
-  const uint16 id = pos_matcher_.GetUnknownId();
+  const uint16_t id = pos_matcher_.GetUnknownId();
   const CandidateData kNekowoCands[] = {
       {kNekowo, kNeko, "ネコを", "ネコを", 0, id, id},
       {kNekowo, kNeko, "猫を", "猫を", 0, id, id},

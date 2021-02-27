@@ -30,6 +30,7 @@
 #include "storage/lru_storage.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <utility>
@@ -50,7 +51,7 @@ namespace mozc {
 namespace storage {
 namespace {
 
-const uint32 kSeed = 0x76fef;  // Seed for fingerprint.
+const uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
 std::string GenRandomString(int size) {
   std::string result;
@@ -62,13 +63,13 @@ std::string GenRandomString(int size) {
   return result;
 }
 
-void RunTest(LRUStorage *storage, uint32 size) {
-  mozc::storage::LRUCache<std::string, uint32> cache(size);
+void RunTest(LRUStorage *storage, uint32_t size) {
+  mozc::storage::LRUCache<std::string, uint32_t> cache(size);
   std::set<std::string> used;
-  std::vector<std::pair<std::string, uint32> > values;
+  std::vector<std::pair<std::string, uint32_t> > values;
   for (int i = 0; i < size * 2; ++i) {
     const std::string key = GenRandomString(20);
-    const uint32 value = static_cast<uint32>(Util::Random(10000000));
+    const uint32_t value = static_cast<uint32_t>(Util::Random(10000000));
     if (used.find(key) != used.end()) {
       continue;
     }
@@ -83,12 +84,13 @@ void RunTest(LRUStorage *storage, uint32 size) {
   std::vector<std::string> value_list;
   storage->GetAllValues(&value_list);
 
-  uint32 last_access_time;
+  uint32_t last_access_time;
   for (int i = 0; i < size; ++i) {
-    const uint32 *v1 = cache.Lookup(values[i].first);
-    const uint32 *v2 = reinterpret_cast<const uint32 *>(
+    const uint32_t *v1 = cache.Lookup(values[i].first);
+    const uint32_t *v2 = reinterpret_cast<const uint32_t *>(
         storage->Lookup(values[i].first, &last_access_time));
-    const uint32 *v3 = reinterpret_cast<const uint32 *>(value_list[i].data());
+    const uint32_t *v3 =
+        reinterpret_cast<const uint32_t *>(value_list[i].data());
     EXPECT_TRUE(v1 != nullptr);
     EXPECT_EQ(*v1, values[i].second);
     EXPECT_TRUE(v2 != nullptr);
@@ -98,8 +100,8 @@ void RunTest(LRUStorage *storage, uint32 size) {
   }
 
   for (int i = size; i < values.size(); ++i) {
-    const uint32 *v1 = cache.Lookup(values[i].first);
-    const uint32 *v2 = reinterpret_cast<const uint32 *>(
+    const uint32_t *v1 = cache.Lookup(values[i].first);
+    const uint32_t *v2 = reinterpret_cast<const uint32_t *>(
         storage->Lookup(values[i].first, &last_access_time));
     EXPECT_TRUE(v1 == nullptr);
     EXPECT_TRUE(v2 == nullptr);
@@ -109,9 +111,9 @@ void RunTest(LRUStorage *storage, uint32 size) {
 std::vector<std::string> GetValuesInStorageOrder(const LRUStorage &storage) {
   std::vector<std::string> ret;
   for (size_t i = 0; i < storage.used_size(); ++i) {
-    uint64 fp;
+    uint64_t fp;
     std::string value;
-    uint32 last_access_time;
+    uint32_t last_access_time;
     storage.Read(i, &fp, &value, &last_access_time);
     ret.push_back(value);
   }
@@ -161,8 +163,8 @@ TEST_F(LRUStorageTest, LRUStorageTest) {
 }
 
 struct Entry {
-  uint64 key;
-  uint32 last_access_time;
+  uint64_t key;
+  uint32_t last_access_time;
   std::string value;
 };
 
@@ -192,9 +194,9 @@ TEST_F(LRUStorageTest, ReadWriteTest) {
     }
 
     for (int j = 0; j < size; ++j) {
-      uint64 key;
+      uint64_t key;
       std::string value;
-      uint32 last_access_time;
+      uint32_t last_access_time;
       storage.Read(j, &key, &value, &last_access_time);
       EXPECT_EQ(entries[j].key, key);
       EXPECT_EQ(entries[j].value, value);
@@ -264,9 +266,9 @@ TEST_F(LRUStorageTest, Merge) {
 
     EXPECT_TRUE(storage1.Merge(storage2));
 
-    uint64 fp;
+    uint64_t fp;
     std::string value;
-    uint32 last_access_time;
+    uint32_t last_access_time;
 
     storage1.Read(0, &fp, &value, &last_access_time);
     EXPECT_EQ(5, fp);
@@ -307,9 +309,9 @@ TEST_F(LRUStorageTest, Merge) {
 
     EXPECT_TRUE(storage1.Merge(storage2));
 
-    uint64 fp;
+    uint64_t fp;
     std::string value;
-    uint32 last_access_time;
+    uint32_t last_access_time;
 
     storage1.Read(0, &fp, &value, &last_access_time);
     EXPECT_EQ(3, fp);
@@ -363,10 +365,10 @@ TEST_F(LRUStorageTest, OpenOrCreateTest) {
     LRUStorage storage;
     EXPECT_TRUE(storage.OpenOrCreate(file.c_str(), 4, 10, kSeed))
         << "Corrupted file should be replaced with new one.";
-    uint32 v = 823;
+    uint32_t v = 823;
     storage.Insert("test", reinterpret_cast<const char *>(&v));
-    const uint32 *result =
-        reinterpret_cast<const uint32 *>(storage.Lookup("test"));
+    const uint32_t *result =
+        reinterpret_cast<const uint32_t *>(storage.Lookup("test"));
     CHECK_EQ(v, *result);
   }
 }

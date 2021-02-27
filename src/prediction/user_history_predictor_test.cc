@@ -29,6 +29,7 @@
 
 #include "prediction/user_history_predictor.h"
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -295,7 +296,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
   static bool IsConnected(const UserHistoryPredictor::Entry &prev,
                           const UserHistoryPredictor::Entry &next) {
-    const uint32 fp =
+    const uint32_t fp =
         UserHistoryPredictor::Fingerprint(next.key(), next.value());
     for (size_t i = 0; i < prev.next_entries_size(); ++i) {
       if (prev.next_entries(i).entry_fp() == fp) {
@@ -1580,8 +1581,8 @@ TEST_F(UserHistoryPredictorTest, SyncTest) {
 
   std::vector<Command> commands(10000);
   for (size_t i = 0; i < commands.size(); ++i) {
-    commands[i].key = std::to_string(static_cast<uint32>(i)) + "key";
-    commands[i].value = std::to_string(static_cast<uint32>(i)) + "value";
+    commands[i].key = std::to_string(static_cast<uint32_t>(i)) + "key";
+    commands[i].value = std::to_string(static_cast<uint32_t>(i)) + "value";
     const int n = Util::Random(100);
     if (n == 0) {
       commands[i].type = Command::WAIT;
@@ -1652,16 +1653,16 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   entry.set_key(kKey);
   entry.set_value(kValue);
 
-  const uint32 entry_fp1 = UserHistoryPredictor::Fingerprint(kKey, kValue);
-  const uint32 entry_fp2 = UserHistoryPredictor::EntryFingerprint(entry);
+  const uint32_t entry_fp1 = UserHistoryPredictor::Fingerprint(kKey, kValue);
+  const uint32_t entry_fp2 = UserHistoryPredictor::EntryFingerprint(entry);
 
-  const uint32 entry_fp3 = UserHistoryPredictor::Fingerprint(
+  const uint32_t entry_fp3 = UserHistoryPredictor::Fingerprint(
       kKey, kValue, UserHistoryPredictor::Entry::DEFAULT_ENTRY);
 
-  const uint32 entry_fp4 = UserHistoryPredictor::Fingerprint(
+  const uint32_t entry_fp4 = UserHistoryPredictor::Fingerprint(
       kKey, kValue, UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
 
-  const uint32 entry_fp5 = UserHistoryPredictor::Fingerprint(
+  const uint32_t entry_fp5 = UserHistoryPredictor::Fingerprint(
       kKey, kValue, UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
 
   Segment segment;
@@ -1672,7 +1673,7 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   c->value = kValue;
   c->content_value = kValue;
 
-  const uint32 segment_fp = UserHistoryPredictor::SegmentFingerprint(segment);
+  const uint32_t segment_fp = UserHistoryPredictor::SegmentFingerprint(segment);
 
   Segment segment2;
   segment2.set_key("ab");
@@ -1682,7 +1683,8 @@ TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
   c2->value = kValue;
   c2->content_value = kValue;
 
-  const uint32 segment_fp2 = UserHistoryPredictor::SegmentFingerprint(segment2);
+  const uint32_t segment_fp2 =
+      UserHistoryPredictor::SegmentFingerprint(segment2);
 
   EXPECT_EQ(entry_fp1, entry_fp2);
   EXPECT_EQ(entry_fp1, entry_fp3);
@@ -1701,7 +1703,7 @@ TEST_F(UserHistoryPredictorTest, Uint32ToStringTest) {
   EXPECT_EQ(12141, UserHistoryPredictor::StringToUint32(
                        UserHistoryPredictor::Uint32ToString(12141)));
 
-  for (uint32 i = 0; i < 10000; ++i) {
+  for (uint32_t i = 0; i < 10000; ++i) {
     EXPECT_EQ(i, UserHistoryPredictor::StringToUint32(
                      UserHistoryPredictor::Uint32ToString(i)));
   }
@@ -2677,9 +2679,9 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
 }
 
 namespace {
-uint32 GetRandomAscii() {
-  return static_cast<uint32>(' ') +
-         Util::Random(static_cast<uint32>('~' - ' '));
+uint32_t GetRandomAscii() {
+  return static_cast<uint32_t>(' ') +
+         Util::Random(static_cast<uint32_t>('~' - ' '));
 }
 }  // namespace
 

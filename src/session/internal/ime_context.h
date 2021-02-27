@@ -33,6 +33,7 @@
 #ifndef MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 #define MOZC_SESSION_INTERNAL_IME_CONTEXT_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -54,11 +55,11 @@ class ImeContext {
   ImeContext();
   virtual ~ImeContext();
 
-  uint64 create_time() const { return create_time_; }
-  void set_create_time(uint64 create_time) { create_time_ = create_time; }
+  uint64_t create_time() const { return create_time_; }
+  void set_create_time(uint64_t create_time) { create_time_ = create_time; }
 
-  uint64 last_command_time() const { return last_command_time_; }
-  void set_last_command_time(uint64 last_command_time) {
+  uint64_t last_command_time() const { return last_command_time_; }
+  void set_last_command_time(uint64_t last_command_time) {
     last_command_time_ = last_command_time;
   }
 
@@ -130,8 +131,8 @@ class ImeContext {
   // session holding this instance is created and not the time when this
   // instance is created. We may want to move out |create_time_| from ImeContext
   // to Session, or somewhere more appropriate.
-  uint64 create_time_;
-  uint64 last_command_time_;
+  uint64_t create_time_;
+  uint64_t last_command_time_;
 
   std::unique_ptr<composer::Composer> composer_;
 

@@ -32,6 +32,7 @@
 #ifndef MOZC_REWRITER_DICTIONARY_GENERATOR_H_
 #define MOZC_REWRITER_DICTIONARY_GENERATOR_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -57,7 +58,7 @@ class Token {
   void MergeFrom(const Token &token);
 
   // Return the fingerprint of the keys (key, value and pos).
-  uint64 GetID() const;
+  uint64_t GetID() const;
 
   // Accessors
   int sorting_key() const { return sorting_key_; }
@@ -109,10 +110,10 @@ class DictionaryGenerator {
 
  private:
   std::unique_ptr<ObjectPool<Token>> token_pool_;
-  std::unique_ptr<std::map<uint64, Token *>> token_map_;
+  std::unique_ptr<std::map<uint64_t, Token *>> token_map_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
-  uint16 open_bracket_id_;
-  uint16 close_bracket_id_;
+  uint16_t open_bracket_id_;
+  uint16_t close_bracket_id_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryGenerator);
 };

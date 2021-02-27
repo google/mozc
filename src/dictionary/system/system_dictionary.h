@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_H_
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -161,7 +162,7 @@ class SystemDictionary : public DictionaryInterface {
   storage::louds::LoudsTrie key_trie_;
   storage::louds::LoudsTrie value_trie_;
   storage::louds::BitVectorBasedArray token_array_;
-  const uint32 *frequent_pos_;
+  const uint32_t *frequent_pos_;
   const SystemDictionaryCodecInterface *codec_;
   KeyExpansionTable hiragana_expansion_table_;
   std::unique_ptr<DictionaryFile> dictionary_file_;

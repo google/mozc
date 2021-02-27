@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_NBEST_GENERATOR_H_
 #define MOZC_CONVERTER_NBEST_GENERATOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -136,8 +137,8 @@ class NBestGenerator {
                       Segment::Candidate *candidate,
                       Segments::RequestType request_type);
 
-  void MakeCandidate(Segment::Candidate *candidate, int32 cost,
-                     int32 structure_cost, int32 wcost,
+  void MakeCandidate(Segment::Candidate *candidate, int32_t cost,
+                     int32_t structure_cost, int32_t wcost,
                      const std::vector<const Node *> &nodes) const;
 
   // Helper functions for Next(). Checks node boundary conditions.
@@ -152,9 +153,9 @@ class NBestGenerator {
 
   // Create queue element from freelist
   const QueueElement *CreateNewElement(const Node *node,
-                                       const QueueElement *next, int32 fx,
-                                       int32 gx, int32 structure_gx,
-                                       int32 w_gx);
+                                       const QueueElement *next, int32_t fx,
+                                       int32_t gx, int32_t structure_gx,
+                                       int32_t w_gx);
 
   // References to relevant modules.
   const dictionary::SuppressionDictionary *suppression_dictionary_;

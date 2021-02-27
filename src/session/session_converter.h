@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_CONVERTER_H_
 #define MOZC_SESSION_SESSION_CONVERTER_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -342,7 +343,7 @@ class SessionConverter : public SessionConverterInterface {
   // True is returned if the selected candidate is successfully committed.
   bool CommitSuggestionInternal(const composer::Composer &composer,
                                 const commands::Context &context,
-                                size_t *committed_length);
+                                size_t *consumed_key_size);
 
   void SegmentFocusInternal(size_t segment_index);
   void ResizeSegmentWidth(const composer::Composer &composer, int delta);
@@ -356,12 +357,12 @@ class SessionConverter : public SessionConverterInterface {
   // Handles selected_indices for usage stats.
   void InitializeSelectedCandidateIndices();
   void UpdateSelectedCandidateIndex();
-  void UpdateCandidateStats(const std::string &base_name, int32 index);
+  void UpdateCandidateStats(const std::string &base_name, int32_t index);
   void CommitUsageStats(SessionConverterInterface::State commit_state,
                         const commands::Context &context);
   void CommitUsageStatsWithSegmentsSize(
       SessionConverterInterface::State commit_state,
-      const commands::Context &context, size_t submit_segment_size);
+      const commands::Context &context, size_t commit_segments_size);
 
   SessionConverterInterface::State state_;
 
@@ -397,7 +398,7 @@ class SessionConverter : public SessionConverterInterface {
   // Revision number of client context with which the converter determines when
   // the history segments should be invalidated. See the implementation of
   // OnStartComposition for details.
-  int32 client_revision_;
+  int32_t client_revision_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

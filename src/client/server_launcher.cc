@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #ifdef OS_WIN
 #include <sddl.h>
 #include <shlobj.h>
@@ -66,13 +67,13 @@ namespace {
 const char kServerName[] = "session";
 
 // Wait at most kServerWaitTimeout msec until server gets ready
-const uint32 kServerWaitTimeout = 20000;  // 20 sec
+const uint32_t kServerWaitTimeout = 20000;  // 20 sec
 
 // for every 1000m sec, check server
-const uint32 kRetryIntervalForServer = 1000;
+const uint32_t kRetryIntervalForServer = 1000;
 
 // Try 20 times to check mozc_server is running
-const uint32 kTrial = 20;
+const uint32_t kTrial = 20;
 
 #ifdef DEBUG
 // Load special flags for server.
@@ -234,7 +235,7 @@ bool ServerLauncher::ForceTerminateServer(const std::string &name) {
   return IPCClient::TerminateServer(name);
 }
 
-bool ServerLauncher::WaitServer(uint32 pid) {
+bool ServerLauncher::WaitServer(uint32_t pid) {
   const int kTimeout = 10000;
   return Process::WaitProcess(static_cast<size_t>(pid), kTimeout);
 }

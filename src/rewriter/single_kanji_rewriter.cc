@@ -30,6 +30,7 @@
 #include "rewriter/single_kanji_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <set>
@@ -60,13 +61,13 @@ namespace {
 // ...
 template <size_t N>
 class Uint32ArrayIterator
-    : public std::iterator<std::random_access_iterator_tag, uint32> {
+    : public std::iterator<std::random_access_iterator_tag, uint32_t> {
  public:
-  explicit Uint32ArrayIterator(const uint32 *ptr) : ptr_(ptr) {}
+  explicit Uint32ArrayIterator(const uint32_t *ptr) : ptr_(ptr) {}
 
-  uint32 operator*() const { return *ptr_; }
+  uint32_t operator*() const { return *ptr_; }
 
-  uint32 operator[](size_t i) const {
+  uint32_t operator[](size_t i) const {
     DCHECK_LT(i, N);
     return ptr_[i];
   }
@@ -86,7 +87,7 @@ class Uint32ArrayIterator
   }
 
   Uint32ArrayIterator operator++(int) {
-    const uint32 *tmp = ptr_;
+    const uint32_t *tmp = ptr_;
     ptr_ += N;
     return Uint32ArrayIterator(tmp);
   }
@@ -97,7 +98,7 @@ class Uint32ArrayIterator
   }
 
   Uint32ArrayIterator operator--(int) {
-    const uint32 *tmp = ptr_;
+    const uint32_t *tmp = ptr_;
     ptr_ -= N;
     return Uint32ArrayIterator(tmp);
   }
@@ -153,7 +154,7 @@ class Uint32ArrayIterator
   }
 
  private:
-  const uint32 *ptr_;
+  const uint32_t *ptr_;
 };
 
 // Looks up single kanji list from key (reading).  Returns false if not found.
@@ -178,10 +179,10 @@ bool LookupKanjiList(absl::string_view single_kanji_token_array,
                      const std::string &key,
                      std::vector<std::string> *kanji_list) {
   DCHECK(kanji_list);
-  const uint32 *token_array =
-      reinterpret_cast<const uint32 *>(single_kanji_token_array.data());
+  const uint32_t *token_array =
+      reinterpret_cast<const uint32_t *>(single_kanji_token_array.data());
   const size_t token_array_size =
-      single_kanji_token_array.size() / sizeof(uint32);
+      single_kanji_token_array.size() / sizeof(uint32_t);
 
   const Uint32ArrayIterator<2> end(token_array + token_array_size);
   const auto iter =
@@ -225,9 +226,9 @@ void GenerateDescription(absl::string_view variant_token_array,
                          const SerializedStringArray &variant_type,
                          const std::string &key, std::string *desc) {
   DCHECK(desc);
-  const uint32 *token_array =
-      reinterpret_cast<const uint32 *>(variant_token_array.data());
-  const size_t token_array_size = variant_token_array.size() / sizeof(uint32);
+  const uint32_t *token_array =
+      reinterpret_cast<const uint32_t *>(variant_token_array.data());
+  const size_t token_array_size = variant_token_array.size() / sizeof(uint32_t);
 
   const Uint32ArrayIterator<3> end(token_array + token_array_size);
   const auto iter = std::lower_bound(
@@ -239,7 +240,7 @@ void GenerateDescription(absl::string_view variant_token_array,
     return;
   }
   const absl::string_view original = variant_string_array[iter[1]];
-  const uint32 type_id = iter[2];
+  const uint32_t type_id = iter[2];
   DCHECK_LT(type_id, variant_type.size());
   // Format like "XXXのYYY"
   desc->assign(original.data(), original.size());
@@ -269,7 +270,7 @@ void FillCandidate(absl::string_view variant_token_array,
                    const SerializedStringArray &variant_string_array,
                    const SerializedStringArray &variant_type,
                    const std::string &key, const std::string &value, int cost,
-                   uint16 single_kanji_id, Segment::Candidate *cand) {
+                   uint16_t single_kanji_id, Segment::Candidate *cand) {
   cand->lid = single_kanji_id;
   cand->rid = single_kanji_id;
   cand->cost = cost;
@@ -287,7 +288,7 @@ void FillCandidate(absl::string_view variant_token_array,
 void InsertCandidate(absl::string_view variant_token_array,
                      const SerializedStringArray &variant_string_array,
                      const SerializedStringArray &variant_type,
-                     bool is_single_segment, uint16 single_kanji_id,
+                     bool is_single_segment, uint16_t single_kanji_id,
                      const std::vector<std::string> &kanji_list,
                      Segment *segment) {
   DCHECK(segment);
@@ -365,7 +366,7 @@ SingleKanjiRewriter::SingleKanjiRewriter(
       &noun_prefix_token_array_data, &noun_prefix_string_array_data);
   // Single Kanji token array is an array of uint32.  Its size must be multiple
   // of 2; see the comment above LookupKanjiList.
-  DCHECK_EQ(0, single_kanji_token_array_.size() % (2 * sizeof(uint32)));
+  DCHECK_EQ(0, single_kanji_token_array_.size() % (2 * sizeof(uint32_t)));
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   single_kanji_string_array_.Set(string_array_data);
 
@@ -374,7 +375,7 @@ SingleKanjiRewriter::SingleKanjiRewriter(
 
   // Variant token array is an array of uint32.  Its size must be multiple
   // of 3; see the comment above GenerateDescription.
-  DCHECK_EQ(0, variant_token_array_.size() % (3 * sizeof(uint32)));
+  DCHECK_EQ(0, variant_token_array_.size() % (3 * sizeof(uint32_t)));
   DCHECK(SerializedStringArray::VerifyData(variant_string_array_data));
   variant_string_array_.Set(variant_string_array_data);
 

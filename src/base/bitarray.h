@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_BITARRAY_H_
 #define MOZC_BASE_BITARRAY_H_
 
+#include <cstdint>
 #include <cstring>  // memset
 #include <memory>
 
@@ -40,26 +41,26 @@ namespace mozc {
 class BitArray {
  public:
   // Specify the size of bit vector
-  explicit BitArray(uint32 size)
-      : array_(new uint32[1 + (size >> 5)]), size_(size) {
+  explicit BitArray(uint32_t size)
+      : array_(new uint32_t[1 + (size >> 5)]), size_(size) {
     memset(reinterpret_cast<char *>(array_.get()), 0, 4 * (1 + (size >> 5)));
   }
 
   ~BitArray() {}
 
   // Gets true/false of |index|
-  bool get(uint32 index) const {
+  bool get(uint32_t index) const {
     return static_cast<bool>((array_[(index >> 5)] >> (index & 0x0000001F)) &
                              0x00000001);
   }
 
   // Sets the bit at |index| to true.
-  void set(uint32 index) {
+  void set(uint32_t index) {
     array_[(index >> 5)] |= 0x00000001 << (index & 0x0000001F);
   }
 
   // Sets the bit at |index| to false.
-  void clear(uint32 index) {
+  void clear(uint32_t index) {
     array_[(index >> 5)] &= ~(0x00000001 << (index & 0x0000001F));
   }
 
@@ -75,14 +76,14 @@ class BitArray {
   size_t size() const { return size_; }
 
   // Immutable accessor.
-  static bool GetValue(const char *array, uint32 index) {
-    const uint32 *uarray = reinterpret_cast<const uint32 *>(array);
+  static bool GetValue(const char *array, uint32_t index) {
+    const uint32_t *uarray = reinterpret_cast<const uint32_t *>(array);
     return static_cast<bool>((uarray[(index >> 5)] >> (index & 0x0000001F)) &
                              0x00000001);
   }
 
  private:
-  std::unique_ptr<uint32[]> array_;
+  std::unique_ptr<uint32_t[]> array_;
   const size_t size_;
 
   DISALLOW_COPY_AND_ASSIGN(BitArray);

@@ -29,6 +29,7 @@
 
 #include "dictionary/dictionary_mock.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -54,7 +55,7 @@ class DictionaryMockTest : public ::testing::Test {
   DictionaryMock *GetMock() { return mock_.get(); }
 
   static bool SearchMatchingToken(const std::string &key,
-                                  const std::string &value, uint8 attributes,
+                                  const std::string &value, uint8_t attributes,
                                   const std::vector<Token> &tokens);
 
   std::unique_ptr<DictionaryMock> mock_;
@@ -63,7 +64,7 @@ class DictionaryMockTest : public ::testing::Test {
 
 bool DictionaryMockTest::SearchMatchingToken(const std::string &key,
                                              const std::string &value,
-                                             uint8 attributes,
+                                             uint8_t attributes,
                                              const std::vector<Token> &tokens) {
   for (const Token &token : tokens) {
     if (token.key == key && token.value == value &&

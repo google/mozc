@@ -52,6 +52,8 @@
 //    // In this translation unit, the file content can be retrieved by:
 //    absl::string_view data = LoadEmbeddedFile(kVarName);
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "absl/strings/string_view.h"
 
@@ -61,7 +63,7 @@ namespace mozc {
 // embed_file.py.  The first address of embedded file data is aligned at 64 bit
 // boundary, so we can embed data that requires normal alignment (8, 16, etc.).
 struct EmbeddedFile {
-  const uint64 *const data;
+  const uint64_t *const data;
   const size_t size;
 };
 

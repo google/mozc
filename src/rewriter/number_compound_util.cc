@@ -30,6 +30,7 @@
 #include "rewriter/number_compound_util.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include "base/util.h"
 #include "dictionary/pos_matcher.h"
@@ -43,7 +44,7 @@ namespace number_compound_util {
 bool SplitStringIntoNumberAndCounterSuffix(
     const SerializedStringArray &suffix_array, absl::string_view input,
     absl::string_view *number, absl::string_view *counter_suffix,
-    uint32 *script_type) {
+    uint32_t *script_type) {
   *script_type = NONE;
   absl::string_view s = input, rest = input;
   while (!s.empty()) {
@@ -118,7 +119,7 @@ bool IsNumber(const SerializedStringArray &suffix_array,
   // assume the candidate is number.  This check prevents, e.g., the following
   // misrewrite: 百舌鳥(もず, noun) -> 100舌鳥, １００舌鳥, etc.
   absl::string_view number, suffix;
-  uint32 script_type = 0;
+  uint32_t script_type = 0;
   if (!number_compound_util::SplitStringIntoNumberAndCounterSuffix(
           suffix_array, cand.content_value, &number, &suffix, &script_type)) {
     return false;

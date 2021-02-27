@@ -29,6 +29,7 @@
 
 #include "dictionary/system/codec.h"
 
+#include <cstdint>
 #include <sstream>
 
 #include "base/logging.h"
@@ -45,30 +46,32 @@ namespace {
 void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst);
 size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src);
 
-uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
+uint8_t GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index);
 
-uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token);
+uint8_t GetFlagForPos(const TokenInfo &token_info, const Token *token);
 
-uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token);
+uint8_t GetFlagForValue(const TokenInfo &token_info, const Token *token);
 
-void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset);
+void EncodeCost(const TokenInfo &token_info, uint8_t *dst, int *offset);
 
-void EncodePos(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+void EncodePos(const TokenInfo &token_info, uint8_t flags, uint8_t *dst,
                int *offset);
 
-void EncodeValueInfo(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+void EncodeValueInfo(const TokenInfo &token_info, uint8_t flags, uint8_t *dst,
                      int *offset);
 
-uint8 ReadFlags(uint8 val);
+uint8_t ReadFlags(uint8_t val);
 
-void DecodeCost(const uint8 *ptr, TokenInfo *token, int *offset);
+void DecodeCost(const uint8_t *ptr, TokenInfo *token, int *offset);
 
-void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token, int *offset);
+void DecodePos(const uint8_t *ptr, uint8_t flags, TokenInfo *token,
+               int *offset);
 
-void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
+void DecodeValueInfo(const uint8_t *ptr, uint8_t flags, TokenInfo *token_info,
                      int *offset);
 
-void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset);
+void ReadValueInfo(const uint8_t *ptr, uint8_t flags, int *value_id,
+                   int *offset);
 
 //// Constants for section name ////
 const char kKeySectionName[] = "k";
@@ -90,20 +93,20 @@ const int kValueTrieIdMax = 0x3fffff;
 // Please see the comments for EncodeValue for details.
 // const uint8 kValueCharMarkReserved = 0xfb;
 // ASCII character.
-const uint8 kValueCharMarkAscii = 0xfc;
+const uint8_t kValueCharMarkAscii = 0xfc;
 // UCS4 character 0x??00.
-const uint8 kValueCharMarkXX00 = 0xfd;
+const uint8_t kValueCharMarkXX00 = 0xfd;
 // This UCS4 character is neither Hiragana nor above 2 patterns 0x????
-const uint8 kValueCharMarkOtherUCS2 = 0xfe;
+const uint8_t kValueCharMarkOtherUCS2 = 0xfe;
 
 // UCS4 character 0x00?????? (beyond UCS2 range)
 // UCS4 characters never exceed 10FFFF. (three 8bits, A-B-C).
 // For left most 8bits A, we will use upper 2bits for the flag
 // that indicating whether B and C is 0 or not.
-const uint8 kValueCharMarkUCS4 = 0xff;
-const uint8 kValueCharMarkUCS4Middle0 = 0x80;
-const uint8 kValueCharMarkUCS4Right0 = 0x40;
-const uint8 kValueCharMarkUCS4LeftMask = 0x1f;
+const uint8_t kValueCharMarkUCS4 = 0xff;
+const uint8_t kValueCharMarkUCS4Middle0 = 0x80;
+const uint8_t kValueCharMarkUCS4Right0 = 0x40;
+const uint8_t kValueCharMarkUCS4LeftMask = 0x1f;
 
 // character code related constants
 const int kValueKanjiOffset = 0x01;
@@ -111,11 +114,11 @@ const int kValueHiraganaOffset = 0x4b;
 const int kValueKatakanaOffset = 0x9f;
 
 //// Cost encoding flag ////
-const uint8 kSmallCostFlag = 0x80;
-const uint8 kSmallCostMask = 0x7f;
+const uint8_t kSmallCostFlag = 0x80;
+const uint8_t kSmallCostMask = 0x7f;
 
 //// Flags for token ////
-const uint8 kTokenTerminationFlag = 0xff;
+const uint8_t kTokenTerminationFlag = 0xff;
 // Note that the flag for the first token for a certain key cannot be 0xff.
 // First token cannot be kSameAsPrevValueFlag(0x33) nor kSameAsPrevPosFlag(0x0c)
 
@@ -136,15 +139,15 @@ const uint8 kTokenTerminationFlag = 0xff;
 //  2) Value is katakana
 //  3) Same as previous token
 //  4) Others. We have to store the value
-const uint8 kValueTypeFlagMask = 0x03;
+const uint8_t kValueTypeFlagMask = 0x03;
 // Same as index hiragana word
-const uint8 kAsIsHiraganaValueFlag = 0x01;
+const uint8_t kAsIsHiraganaValueFlag = 0x01;
 // Same as index katakana word
-const uint8 kAsIsKatakanaValueFlag = 0x2;
+const uint8_t kAsIsKatakanaValueFlag = 0x2;
 // has same word
-const uint8 kSameAsPrevValueFlag = 0x03;
+const uint8_t kSameAsPrevValueFlag = 0x03;
 // other cases
-const uint8 kNormalValueFlag = 0x00;
+const uint8_t kNormalValueFlag = 0x00;
 
 //// Pos encoding flag ////
 // There are 4 mutually exclusive cases
@@ -152,20 +155,20 @@ const uint8 kNormalValueFlag = 0x00;
 //  2) Not same, frequent 1 byte pos
 //  3) Not same, full_pos but lid==rid, 2 byte
 //  4) Not same, full_pos 4 byte (no flag for this)
-const uint8 kPosTypeFlagMask = 0x0c;
+const uint8_t kPosTypeFlagMask = 0x0c;
 // Pos(left/right ID) is coded into 3 bytes
 // Note that lid/rid is less than 12 bits
 // We need 24 bits (= 3 bytes) to store full pos.
-const uint8 kFullPosFlag = 0x04;
+const uint8_t kFullPosFlag = 0x04;
 // lid == rid 8 bits
-const uint8 kMonoPosFlag = 0x08;
+const uint8_t kMonoPosFlag = 0x08;
 // has same left/right id as previous token
-const uint8 kSameAsPrevPosFlag = 0x0c;
+const uint8_t kSameAsPrevPosFlag = 0x0c;
 // frequent
-const uint8 kFrequentPosFlag = 0x00;
+const uint8_t kFrequentPosFlag = 0x00;
 
 //// Spelling Correction flag ////
-const uint8 kSpellingCorrectionFlag = 0x10;
+const uint8_t kSpellingCorrectionFlag = 0x10;
 
 //// Reverved ////
 // You can use one more flag!
@@ -181,15 +184,15 @@ const uint8 kSpellingCorrectionFlag = 0x10;
 //     Note that we are assuming each id in the trie is less than 22 bits.
 // Lower 6 bits of flags field are used to store upper part of id
 // in value trie.
-const uint8 kCrammedIDFlag = 0x40;
+const uint8_t kCrammedIDFlag = 0x40;
 // Mask to cover upper valid 2bits when kCrammedIDFlag is used
-const uint8 kUpperFlagsMask = 0xc0;
+const uint8_t kUpperFlagsMask = 0xc0;
 // Mask to get upper 6bits from flags value
-const uint8 kUpperCrammedIDMask = 0x3f;
+const uint8_t kUpperCrammedIDMask = 0x3f;
 
 //// Last token flag ////
 // This token is last token for a index word
-const uint8 kLastTokenFlag = 0x80;
+const uint8_t kLastTokenFlag = 0x80;
 }  // namespace
 
 SystemDictionaryCodec::SystemDictionaryCodec() {}
@@ -248,9 +251,9 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
                                         std::string *dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32),
                   "char32 must be 32-bit integer size.");
-    const uint32 c = iter.Get();
+    const uint32_t c = iter.Get();
     if (c >= 0x3041 && c < 0x3095) {
       // Hiragana(85 characters) are encoded into 1 byte.
       dst->push_back(c - 0x3041 + kValueHiraganaOffset);
@@ -304,8 +307,8 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
 void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
                                         std::string *dst) const {
   DCHECK(dst);
-  const uint8 *p = reinterpret_cast<const uint8 *>(src.data());
-  const uint8 *const end = p + src.size();
+  const uint8_t *p = reinterpret_cast<const uint8_t *>(src.data());
+  const uint8_t *const end = p + src.size();
   while (p < end) {
     int cc = p[0];
     int c = 0;
@@ -353,7 +356,7 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
   }
 }
 
-uint8 SystemDictionaryCodec::GetTokensTerminationFlag() const {
+uint8_t SystemDictionaryCodec::GetTokensTerminationFlag() const {
   return kTokenTerminationFlag;
 }
 
@@ -387,10 +390,10 @@ void SystemDictionaryCodec::EncodeToken(const std::vector<TokenInfo> &tokens,
   CHECK_LT(index, tokens.size());
 
   // Determines the flags for this token.
-  const uint8 flags = GetFlagsForToken(tokens, index);
+  const uint8_t flags = GetFlagsForToken(tokens, index);
 
   // Encodes token into bytes.
-  uint8 buff[9];
+  uint8_t buff[9];
   buff[0] = flags;
   int offset = 1;
 
@@ -403,7 +406,7 @@ void SystemDictionaryCodec::EncodeToken(const std::vector<TokenInfo> &tokens,
   output->append(reinterpret_cast<char *>(buff), offset);
 }
 
-void SystemDictionaryCodec::DecodeTokens(const uint8 *ptr,
+void SystemDictionaryCodec::DecodeTokens(const uint8_t *ptr,
                                          std::vector<TokenInfo> *tokens) const {
   DCHECK(tokens);
   int offset = 0;
@@ -419,13 +422,14 @@ void SystemDictionaryCodec::DecodeTokens(const uint8 *ptr,
   }
 }
 
-bool SystemDictionaryCodec::DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+bool SystemDictionaryCodec::DecodeToken(const uint8_t *ptr,
+                                        TokenInfo *token_info,
                                         int *read_bytes) const {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(read_bytes);
 
-  const uint8 flags = ReadFlags(ptr[0]);
+  const uint8_t flags = ReadFlags(ptr[0]);
   if (flags & kSpellingCorrectionFlag) {
     token_info->token->attributes = Token::SPELLING_CORRECTION;
   }
@@ -443,17 +447,17 @@ bool SystemDictionaryCodec::DecodeToken(const uint8 *ptr, TokenInfo *token_info,
   }
 }
 
-bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8 *ptr,
+bool SystemDictionaryCodec::ReadTokenForReverseLookup(const uint8_t *ptr,
                                                       int *value_id,
                                                       int *read_bytes) const {
   DCHECK(ptr);
   DCHECK(value_id);
   DCHECK(read_bytes);
 
-  const uint8 flags = ReadFlags(ptr[0]);
+  const uint8_t flags = ReadFlags(ptr[0]);
   int offset = 1;
   // Read pos
-  const uint8 pos_flag = (flags & kPosTypeFlagMask);
+  const uint8_t pos_flag = (flags & kPosTypeFlagMask);
   if (pos_flag == kFrequentPosFlag) {
     offset += 1;
   } else if (pos_flag == kMonoPosFlag) {
@@ -484,10 +488,10 @@ namespace {
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
 void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32),
                   "char32 must be 32-bit integer size.");
-    uint32 code = iter.Get();
-    int32 offset = 0;
+    uint32_t code = iter.Get();
+    int32_t offset = 0;
     if ((code >= 0x0001 && code <= 0x001f) ||
         (code >= 0x3041 && code <= 0x305f)) {
       offset = 0x3041 - 0x0001;
@@ -511,9 +515,9 @@ void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
 size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
   size_t size = src.size();
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32),
                   "char32 must be 32-bit integer size.");
-    uint32 code = iter.Get();
+    uint32_t code = iter.Get();
     if ((code >= 0x3041 && code <= 0x3095) ||
         (code >= 0x30FB && code <= 0x30FC)) {
       // This code point takes three bytes in UTF-8 encoding,
@@ -533,9 +537,9 @@ size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
 }
 
 // Return flags for token
-uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index) {
+uint8_t GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index) {
   // Determines the flags for this token.
-  uint8 flags = 0;
+  uint8_t flags = 0;
   if (index == tokens.size() - 1) {
     flags |= kLastTokenFlag;
   }
@@ -570,10 +574,10 @@ uint8 GetFlagsForToken(const std::vector<TokenInfo> &tokens, int index) {
   return flags;
 }
 
-uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token) {
+uint8_t GetFlagForPos(const TokenInfo &token_info, const Token *token) {
   CHECK(token);
-  const uint16 lid = token->lid;
-  const uint16 rid = token->rid;
+  const uint16_t lid = token->lid;
+  const uint16_t rid = token->rid;
   if (lid > kPosMax || rid > kPosMax) {
     // We can use LOG(FATAL) here, as this code runs in dictionary_builder.
     LOG(FATAL) << "Too large pos id: lid " << lid << ", rid " << rid;
@@ -590,7 +594,7 @@ uint8 GetFlagForPos(const TokenInfo &token_info, const Token *token) {
   }
 }
 
-uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token) {
+uint8_t GetFlagForValue(const TokenInfo &token_info, const Token *token) {
   CHECK(token);
   if (token_info.value_type == TokenInfo::SAME_AS_PREV_VALUE) {
     return kSameAsPrevValueFlag;
@@ -603,7 +607,7 @@ uint8 GetFlagForValue(const TokenInfo &token_info, const Token *token) {
   }
 }
 
-void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset) {
+void EncodeCost(const TokenInfo &token_info, uint8_t *dst, int *offset) {
   const Token *token = token_info.token;
   CHECK_LE(token->cost, kCostMax) << "Assuming cost is within 15bits.";
   if (token_info.cost_type == TokenInfo::CAN_USE_SMALL_ENCODING) {
@@ -616,12 +620,12 @@ void EncodeCost(const TokenInfo &token_info, uint8 *dst, int *offset) {
   }
 }
 
-void EncodePos(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+void EncodePos(const TokenInfo &token_info, uint8_t flags, uint8_t *dst,
                int *offset) {
-  const uint8 pos_flag = flags & kPosTypeFlagMask;
+  const uint8_t pos_flag = flags & kPosTypeFlagMask;
   const Token *token = token_info.token;
-  const uint16 lid = token->lid;
-  const uint16 rid = token->rid;
+  const uint16_t lid = token->lid;
+  const uint16_t rid = token->rid;
   switch (pos_flag) {
     case kFullPosFlag: {
       // 3 bytes
@@ -657,14 +661,14 @@ void EncodePos(const TokenInfo &token_info, uint8 flags, uint8 *dst,
   }
 }
 
-void EncodeValueInfo(const TokenInfo &token_info, uint8 flags, uint8 *dst,
+void EncodeValueInfo(const TokenInfo &token_info, uint8_t flags, uint8_t *dst,
                      int *offset) {
-  const uint8 value_type_flag = flags & kValueTypeFlagMask;
+  const uint8_t value_type_flag = flags & kValueTypeFlagMask;
   if (value_type_flag != kNormalValueFlag) {
     // No need to store id for word trie
     return;
   }
-  const uint32 id = token_info.id_in_value_trie;
+  const uint32_t id = token_info.id_in_value_trie;
   if (id > kValueTrieIdMax) {  // 22 bits
     // We can use LOG(FATAL) here.
     LOG(FATAL) << "Too large word trie (should be less than 2^22)\t" << id;
@@ -684,15 +688,15 @@ void EncodeValueInfo(const TokenInfo &token_info, uint8 flags, uint8 *dst,
   }
 }
 
-uint8 ReadFlags(uint8 val) {
-  uint8 ret = val;
+uint8_t ReadFlags(uint8_t val) {
+  uint8_t ret = val;
   if (ret & kCrammedIDFlag) {
     ret &= kUpperFlagsMask;
   }
   return ret;
 }
 
-void DecodeCost(const uint8 *ptr, TokenInfo *token_info, int *offset) {
+void DecodeCost(const uint8_t *ptr, TokenInfo *token_info, int *offset) {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(offset);
@@ -706,12 +710,12 @@ void DecodeCost(const uint8 *ptr, TokenInfo *token_info, int *offset) {
   }
 }
 
-void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
+void DecodePos(const uint8_t *ptr, uint8_t flags, TokenInfo *token_info,
                int *offset) {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(offset);
-  const uint8 pos_flag = (flags & kPosTypeFlagMask);
+  const uint8_t pos_flag = (flags & kPosTypeFlagMask);
   Token *token = token_info->token;
   switch (pos_flag) {
     case kFrequentPosFlag: {
@@ -726,7 +730,7 @@ void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
       break;
     }
     case kMonoPosFlag: {
-      const uint16 id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+      const uint16_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
       token->lid = id;
       token->rid = id;
       *offset += 2;
@@ -747,12 +751,12 @@ void DecodePos(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
   }
 }
 
-void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
+void DecodeValueInfo(const uint8_t *ptr, uint8_t flags, TokenInfo *token_info,
                      int *offset) {
   DCHECK(ptr);
   DCHECK(token_info);
   DCHECK(offset);
-  const uint8 value_flag = (flags & kValueTypeFlagMask);
+  const uint8_t value_flag = (flags & kValueTypeFlagMask);
   switch (value_flag) {
     case kAsIsHiraganaValueFlag: {
       token_info->value_type = TokenInfo::AS_IS_HIRAGANA;
@@ -768,7 +772,7 @@ void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
     }
     case kNormalValueFlag: {
       token_info->value_type = TokenInfo::DEFAULT_VALUE;
-      uint32 id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+      uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
       if (flags & kCrammedIDFlag) {
         id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
         *offset += 2;
@@ -787,14 +791,15 @@ void DecodeValueInfo(const uint8 *ptr, uint8 flags, TokenInfo *token_info,
 }
 
 // Get value id only for reverse conversion
-void ReadValueInfo(const uint8 *ptr, uint8 flags, int *value_id, int *offset) {
+void ReadValueInfo(const uint8_t *ptr, uint8_t flags, int *value_id,
+                   int *offset) {
   DCHECK(ptr);
   DCHECK(value_id);
   DCHECK(offset);
   *value_id = -1;
-  const uint8 value_flag = (flags & kValueTypeFlagMask);
+  const uint8_t value_flag = (flags & kValueTypeFlagMask);
   if (value_flag == kNormalValueFlag) {
-    uint32 id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
+    uint32_t id = ((ptr[*offset + 1] << 8) | ptr[*offset]);
     if (flags & kCrammedIDFlag) {
       id |= ((ptr[0] & kUpperCrammedIDMask) << 16);
       *offset += 2;

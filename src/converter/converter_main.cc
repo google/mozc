@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <set>
@@ -57,7 +58,7 @@
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
 
-ABSL_FLAG(int32, max_conversion_candidates_size, 200,
+ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
 ABSL_FLAG(std::string, user_profile_dir, "", "path to user profile directory");
 ABSL_FLAG(std::string, engine_name, "default",
@@ -127,7 +128,7 @@ std::string SegmentTypeToString(Segment::SegmentType type) {
 #undef RETURN_STR
 }
 
-std::string CandidateAttributesToString(uint32 attrs) {
+std::string CandidateAttributesToString(uint32_t attrs) {
   std::vector<std::string> v;
 #define ADD_STR(fieldname)                                              \
   do {                                                                  \
@@ -360,10 +361,10 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
                                      NumberUtil::SimpleAtoi(fields[1]),
                                      NumberUtil::SimpleAtoi(fields[2]));
     } else if (fields.size() > 3) {
-      std::vector<uint8> new_arrays;
+      std::vector<uint8_t> new_arrays;
       for (size_t i = 3; i < fields.size(); ++i) {
         new_arrays.push_back(
-            static_cast<uint8>(NumberUtil::SimpleAtoi(fields[i])));
+            static_cast<uint8_t>(NumberUtil::SimpleAtoi(fields[i])));
       }
       return converter.ResizeSegment(
           segments, request, NumberUtil::SimpleAtoi(fields[1]),

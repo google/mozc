@@ -30,6 +30,7 @@
 #include "rewriter/unicode_rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -167,7 +168,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   };
 
   // All ascii code would be accepted.
-  for (uint32 ascii = 0x20; ascii < 0x7F; ++ascii) {
+  for (uint32_t ascii = 0x20; ascii < 0x7F; ++ascii) {
     const std::string ucs4 = Util::StringPrintf("U+00%02X", ascii);
     InitSegments(ucs4, ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));

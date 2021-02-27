@@ -30,7 +30,9 @@
 #ifndef MOZC_STORAGE_LOUDS_SIMPLE_SUCCINCT_BIT_VECTOR_INDEX_H_
 #define MOZC_STORAGE_LOUDS_SIMPLE_SUCCINCT_BIT_VECTOR_INDEX_H_
 
+#include <cstdint>
 #include <vector>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -61,10 +63,10 @@ class SimpleSuccinctBitVectorIndex {
   // Initializes the index. This class doesn't have the ownership of the memory
   // pointed by data, so it is caller's responsibility to manage its life time.
   // The 'data' needs to be aligned to 32-bits.
-  void Init(const uint8 *data, int length, size_t lb0_cache_size,
+  void Init(const uint8_t *data, int length, size_t lb0_cache_size,
             size_t lb1_cache_size);
 
-  void Init(const uint8 *data, int length) { Init(data, length, 0, 0); }
+  void Init(const uint8_t *data, int length) { Init(data, length, 0, 0); }
 
   // Resets the internal state, especially releases the allocated memory
   // for the index used internally.
@@ -93,7 +95,7 @@ class SimpleSuccinctBitVectorIndex {
   int GetNum0Bits() const { return 8 * length_ - index_.back(); }
 
  private:
-  const uint8 *data_;
+  const uint8_t *data_;
   int length_;
   int chunk_size_;
 

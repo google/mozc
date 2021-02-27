@@ -29,6 +29,7 @@
 
 #include "session/session_handler_tool.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/config_file_stream.h"
@@ -81,7 +82,7 @@ using protobuf::Message;
 using protobuf::TextFormat;
 using session::SessionHandlerTool;
 
-bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
+bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
@@ -93,21 +94,21 @@ bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandlerInterface *handler, uint64 id) {
+bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
   return handler->EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler, uint64 id) {
+bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler->EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
+bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -159,11 +160,11 @@ bool SessionHandlerTool::ClearUserPrediction() {
 }
 
 bool SessionHandlerTool::SendKeyWithOption(const commands::KeyEvent &key,
-                                          const commands::Input &option,
-                                          commands::Output *output) {
+                                           const commands::Input &option,
+                                           commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
-  input.mutable_key()->CopyFrom(key);
+  *input.mutable_key() = key;
   input.MergeFrom(option);
   return EvalCommand(&input, output);
 }
@@ -173,12 +174,13 @@ bool SessionHandlerTool::TestSendKeyWithOption(const commands::KeyEvent &key,
                                               commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
-  input.mutable_key()->CopyFrom(key);
+  *input.mutable_key() = key;
   input.MergeFrom(option);
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::SelectCandidate(uint32 id, commands::Output *output) {
+bool SessionHandlerTool::SelectCandidate(uint32_t id,
+                                         commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->set_type(commands::SessionCommand::SELECT_CANDIDATE);
@@ -186,7 +188,8 @@ bool SessionHandlerTool::SelectCandidate(uint32 id, commands::Output *output) {
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::SubmitCandidate(uint32 id, commands::Output *output) {
+bool SessionHandlerTool::SubmitCandidate(uint32_t id,
+                                         commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
   input.mutable_command()->set_type(commands::SessionCommand::SUBMIT_CANDIDATE);
@@ -236,7 +239,7 @@ bool SessionHandlerTool::SetRequest(const commands::Request &request,
                                    commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SET_REQUEST);
-  input.mutable_request()->CopyFrom(request);
+  *input.mutable_request() = request;
   return EvalCommand(&input, output);
 }
 
@@ -261,10 +264,10 @@ bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
                                             bool allow_callback) {
   input->set_id(id_);
   commands::Command command;
-  command.mutable_input()->CopyFrom(*input);
+  *command.mutable_input() = *input;
   bool result = handler_->EvalCommand(&command);
   if (result && output != nullptr) {
-    output->CopyFrom(command.output());
+    *output = command.output();
   }
 
   // If callback is allowed and the callback field exists, evaluate the callback
@@ -273,8 +276,7 @@ bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
       command.output().callback().has_session_command()) {
     commands::Input input2;
     input2.set_type(commands::Input::SEND_COMMAND);
-    input2.mutable_command()->CopyFrom(
-        command.output().callback().session_command());
+    *input2.mutable_command() = command.output().callback().session_command();
     input2.mutable_command()->set_text(callback_text_);
     // Disallow further recursion.
     result = EvalCommandInternal(&input2, output, false);
@@ -362,9 +364,8 @@ const Output& SessionHandlerInterpreter::LastOutput() const {
   return *(last_output_.get());
 }
 
-
 bool SessionHandlerInterpreter::GetCandidateIdByValue(
-    const absl::string_view value, uint32 *id) {
+    const absl::string_view value, uint32_t *id) {
   const Output &output = LastOutput();
 
   auto find_id = [&value](const CandidateList &candidate_list,
@@ -551,7 +552,7 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
         NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
   } else if (command == "SELECT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, args.size());
-    uint32 id;
+    uint32_t id;
     MOZC_ASSERT_TRUE(GetCandidateIdByValue(args[1], &id));
     MOZC_ASSERT_TRUE(client_->SelectCandidate(id, last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE") {
@@ -560,7 +561,7 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
         NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, args.size());
-    uint32 id;
+    uint32_t id;
     MOZC_ASSERT_TRUE(GetCandidateIdByValue(args[1], &id));
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(id, last_output_.get()));
   } else if (command == "EXPAND_SUGGESTION") {
@@ -574,7 +575,7 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
                          "Unknown CompositionMode");
     MOZC_ASSERT_TRUE(client_->SwitchInputMode(composition_mode));
   } else if (command == "SET_DEFAULT_REQUEST") {
-    request_->CopyFrom(Request::default_instance());
+    *request_ = Request::default_instance();
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_MOBILE_REQUEST") {
     RequestForUnitTest::FillMobileRequest(request_.get());

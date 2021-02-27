@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 
@@ -68,8 +69,8 @@ void PrintFieldValue(const protobuf::Message &message,
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(const std::string &line, uint32 *event_id,
-                    uint32 *session_id, mozc::commands::Input *input) {
+void ParseInputLine(const std::string &line, uint32_t *event_id,
+                    uint32_t *session_id, mozc::commands::Input *input) {
   CHECK(event_id);
   CHECK(session_id);
   CHECK(input);
@@ -133,7 +134,7 @@ void ParseInputLine(const std::string &line, uint32 *event_id,
       std::string key_string;
       for (int i = 4; i < tokens.size() - 1; ++i) {
         if (isdigit(tokens[i][0])) {  // Numeric key code
-          uint32 key_code;
+          uint32_t key_code;
           if (!NumberUtil::SafeStrToUInt32(tokens[i], &key_code) ||
               key_code > 255) {
             ErrorExit(kErrWrongTypeArgument, "Wrong character code");
@@ -459,10 +460,10 @@ void PrintFieldValue(const protobuf::Message &message,
     // we escape it into a string as a workaround.
     // We don't need any 64-bit values on Emacs so far, and 32-bit
     // integer values have never got over 28-bit yet.
-    PRINT_FIELD_VALUE(INT32, Int32, int32, "%d");
-    PRINT_FIELD_VALUE(INT64, Int64, int64, "\"%d\"");  // as a string
-    PRINT_FIELD_VALUE(UINT32, UInt32, uint32, "%u");
-    PRINT_FIELD_VALUE(UINT64, UInt64, uint64, "\"%u\"");  // as a string
+    PRINT_FIELD_VALUE(INT32, Int32, int32_t, "%d");
+    PRINT_FIELD_VALUE(INT64, Int64, int64_t, "\"%d\"");  // as a string
+    PRINT_FIELD_VALUE(UINT32, UInt32, uint32_t, "%u");
+    PRINT_FIELD_VALUE(UINT64, UInt64, uint64_t, "\"%u\"");  // as a string
     PRINT_FIELD_VALUE(DOUBLE, Double, double, "%f");
     PRINT_FIELD_VALUE(FLOAT, Float, float, "%f");
 #undef PRINT_FIELD_VALUE

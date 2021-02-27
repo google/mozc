@@ -29,6 +29,7 @@
 
 #include "converter/converter.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -126,7 +127,7 @@ class StubRewriter : public RewriterInterface {
 SuffixDictionary *CreateSuffixDictionaryFromDataManager(
     const DataManagerInterface &data_manager) {
   absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32 *token_array;
+  const uint32_t *token_array;
   data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
                                        &suffix_value_array_data, &token_array);
   return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
@@ -1468,7 +1469,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
   {
     std::string key;
     std::string value;
-    uint16 id = 0;
+    uint16_t id = 0;
     EXPECT_FALSE(converter->GetLastConnectivePart("", &key, &value, &id));
     EXPECT_FALSE(converter->GetLastConnectivePart(" ", &key, &value, &id));
     EXPECT_FALSE(converter->GetLastConnectivePart("  ", &key, &value, &id));
@@ -1477,7 +1478,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
   {
     std::string key;
     std::string value;
-    uint16 id = 0;
+    uint16_t id = 0;
     EXPECT_TRUE(converter->GetLastConnectivePart("a", &key, &value, &id));
     EXPECT_EQ("a", key);
     EXPECT_EQ("a", value);
@@ -1506,7 +1507,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
   {
     std::string key;
     std::string value;
-    uint16 id = 0;
+    uint16_t id = 0;
     EXPECT_TRUE(converter->GetLastConnectivePart("10", &key, &value, &id));
     EXPECT_EQ("10", key);
     EXPECT_EQ("10", value);
@@ -1524,7 +1525,7 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
   {
     std::string key;
     std::string value;
-    uint16 id = 0;
+    uint16_t id = 0;
     EXPECT_FALSE(converter->GetLastConnectivePart("あ", &key, &value, &id));
   }
 }

@@ -31,6 +31,7 @@
 
 #include "composer/table.h"
 
+#include <cstdint>
 #include <istream>  // NOLINT
 #include <map>
 #include <memory>
@@ -643,7 +644,7 @@ const Table *TableManager::GetTable(
     const mozc::commands::Request &request, const mozc::config::Config &config,
     const mozc::DataManagerInterface &data_manager) {
   // calculate the hash depending on the request and the config
-  uint32 hash = request.special_romanji_table();
+  uint32_t hash = request.special_romanji_table();
   hash = hash * (mozc::config::Config_PreeditMethod_PreeditMethod_MAX + 1) +
          config.preedit_method();
   hash = hash * (mozc::config::Config_PunctuationMethod_PunctuationMethod_MAX +
@@ -656,7 +657,7 @@ const Table *TableManager::GetTable(
   bool update_custom_roman_table = false;
   if ((config.preedit_method() == config::Config::ROMAN) &&
       config.has_custom_roman_table() && !config.custom_roman_table().empty()) {
-    const uint32 custom_roman_table_fingerprint =
+    const uint32_t custom_roman_table_fingerprint =
         Hash::Fingerprint32(config.custom_roman_table());
     if (custom_roman_table_fingerprint != custom_roman_table_fingerprint_) {
       update_custom_roman_table = true;

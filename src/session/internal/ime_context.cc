@@ -125,9 +125,9 @@ void ImeContext::CopyContext(const ImeContext &src, ImeContext *dest) {
   dest->SetRequest(src.request_);
   dest->SetConfig(src.config_);
 
-  dest->mutable_client_capability()->CopyFrom(src.client_capability());
-  dest->mutable_application_info()->CopyFrom(src.application_info());
-  dest->mutable_output()->CopyFrom(src.output());
+  *dest->mutable_client_capability() = src.client_capability();
+  *dest->mutable_application_info() = src.application_info();
+  *dest->mutable_output() = src.output();
 }
 
 }  // namespace session

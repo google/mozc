@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -62,7 +63,7 @@ const char kDictionaryData[] =
 
 // 0 means invalid dictionary id.
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
-const uint64 kInvalidDictionaryId = 0;
+const uint64_t kInvalidDictionaryId = 0;
 
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:
@@ -92,7 +93,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
   }
 
-  uint64 CreateSession() {
+  uint64_t CreateSession() {
     Clear();
     command_->set_type(UserDictionaryCommand::CREATE_SESSION);
     EXPECT_TRUE(handler_->Evaluate(*command_, status_.get()));
@@ -103,7 +104,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->session_id();
   }
 
-  void DeleteSession(uint64 session_id) {
+  void DeleteSession(uint64_t session_id) {
     Clear();
     command_->set_type(UserDictionaryCommand::DELETE_SESSION);
     command_->set_session_id(session_id);
@@ -112,7 +113,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
               status_->status());
   }
 
-  uint64 CreateUserDictionary(uint64 session_id, const std::string &name) {
+  uint64_t CreateUserDictionary(uint64_t session_id, const std::string &name) {
     Clear();
     command_->set_type(UserDictionaryCommand::CREATE_DICTIONARY);
     command_->set_session_id(session_id);
@@ -124,7 +125,7 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->dictionary_id();
   }
 
-  void AddUserDictionaryEntry(uint64 session_id, uint64 dictionary_id,
+  void AddUserDictionaryEntry(uint64_t session_id, uint64_t dictionary_id,
                               const std::string &key, const std::string &value,
                               UserDictionary::PosType pos,
                               const std::string &comment) {
@@ -143,18 +144,18 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
   }
 
   RepeatedPtrField<UserDictionary::Entry> GetAllUserDictionaryEntries(
-      uint64 session_id, uint64 dictionary_id) {
+      uint64_t session_id, uint64_t dictionary_id) {
     std::vector<int> indices;
-    const uint32 entries_size =
+    const uint32_t entries_size =
         GetUserDictionaryEntrySize(session_id, dictionary_id);
-    for (uint32 i = 0; i < entries_size; ++i) {
+    for (uint32_t i = 0; i < entries_size; ++i) {
       indices.push_back(i);
     }
     return GetUserDictionaryEntries(session_id, dictionary_id, indices);
   }
 
   RepeatedPtrField<UserDictionary::Entry> GetUserDictionaryEntries(
-      uint64 session_id, uint64 dictionary_id,
+      uint64_t session_id, uint64_t dictionary_id,
       const std::vector<int> &indices) {
     Clear();
     command_->set_type(UserDictionaryCommand::GET_ENTRIES);
@@ -173,7 +174,8 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     return status_->entries();
   }
 
-  uint32 GetUserDictionaryEntrySize(uint64 session_id, uint64 dictionary_id) {
+  uint32_t GetUserDictionaryEntrySize(uint64_t session_id,
+                                      uint64_t dictionary_id) {
     Clear();
     command_->set_type(UserDictionaryCommand::GET_ENTRY_SIZE);
     command_->set_session_id(session_id);
@@ -201,7 +203,7 @@ TEST_F(UserDictionarySessionHandlerTest, InvalidCommand) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, NoOperation) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   Clear();
   command_->set_type(UserDictionaryCommand::NO_OPERATION);
@@ -228,8 +230,9 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
   // Set up a user dictionary.
   {
     Clear();
-    const uint64 session_id = CreateSession();
-    const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+    const uint64_t session_id = CreateSession();
+    const uint64_t dictionary_id =
+        CreateUserDictionary(session_id, "dictionary");
     AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word",
                            UserDictionary::NOUN, "");
     AddUserDictionaryEntry(session_id, dictionary_id, "reading", "word2",
@@ -248,7 +251,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
   // After the command invocation, storage becomes empty.
   {
     Clear();
-    const uint64 session_id = CreateSession();
+    const uint64_t session_id = CreateSession();
     command_->set_type(UserDictionaryCommand::GET_STORAGE);
     command_->set_session_id(session_id);
     ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
@@ -261,7 +264,7 @@ TEST_F(UserDictionarySessionHandlerTest, ClearStorage) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // Without session_id, the command should fail.
   Clear();
@@ -288,8 +291,8 @@ TEST_F(UserDictionarySessionHandlerTest, CreateDeleteSession) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, CreateTwice) {
-  const uint64 session_id1 = CreateSession();
-  const uint64 session_id2 = CreateSession();
+  const uint64_t session_id1 = CreateSession();
+  const uint64_t session_id2 = CreateSession();
   ASSERT_NE(session_id1, session_id2);
 
   // Here, the first session is lost, so trying to delete it should fail
@@ -305,7 +308,7 @@ TEST_F(UserDictionarySessionHandlerTest, CreateTwice) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, LoadAndSave) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // First of all, create a dictionary named "dictionary".
   CreateUserDictionary(session_id, "dictionary");
@@ -355,7 +358,7 @@ TEST_F(UserDictionarySessionHandlerTest, LoadAndSave) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, LoadWithEnsuringNonEmptyStorage) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   Clear();
   command_->set_type(UserDictionaryCommand::SET_DEFAULT_DICTIONARY_NAME);
@@ -389,7 +392,7 @@ TEST_F(UserDictionarySessionHandlerTest, LoadWithEnsuringNonEmptyStorage) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, Undo) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // At first, the session shouldn't be undoable.
   Clear();
@@ -426,8 +429,8 @@ TEST_F(UserDictionarySessionHandlerTest, Undo) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
 
   AddUserDictionaryEntry(session_id, dictionary_id, "key1", "value1",
                          UserDictionary::NOUN, "comment1");
@@ -492,7 +495,7 @@ TEST_F(UserDictionarySessionHandlerTest, GetEntries) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // Create a dictionary named "dictionary".
   CreateUserDictionary(session_id, "dictionary");
@@ -522,8 +525,8 @@ TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
       "  dictionaries: < name: \"dictionary2\" >\n"
       ">",
       *status_);
-  const uint64 dictionary_id1 = status_->storage().dictionaries(0).id();
-  const uint64 dictionary_id2 = status_->storage().dictionaries(1).id();
+  const uint64_t dictionary_id1 = status_->storage().dictionaries(0).id();
+  const uint64_t dictionary_id2 = status_->storage().dictionaries(1).id();
 
   // Dictionary creation without name should be failed.
   Clear();
@@ -629,8 +632,8 @@ TEST_F(UserDictionarySessionHandlerTest, DictionaryEdit) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, AddEntry) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
   ASSERT_EQ(0, GetUserDictionaryEntrySize(session_id, dictionary_id));
 
   // Add an entry.
@@ -670,8 +673,8 @@ TEST_F(UserDictionarySessionHandlerTest, AddEntry) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
   ASSERT_EQ(0, GetUserDictionaryEntrySize(session_id, dictionary_id));
 
   // Add an entry.
@@ -781,8 +784,8 @@ TEST_F(UserDictionarySessionHandlerTest, EditEntry) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
   ASSERT_EQ(0, GetUserDictionaryEntrySize(session_id, dictionary_id));
 
   // Add entries.
@@ -849,10 +852,10 @@ TEST_F(UserDictionarySessionHandlerTest, DeleteEntry) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ImportData1) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // First of all, create a dictionary named "dictionary".
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
 
   // Import data to the dictionary.
   Clear();
@@ -872,7 +875,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportData1) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ImportData2) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   // Import data to a new dictionary.
   Clear();
@@ -883,7 +886,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportData2) {
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
   ASSERT_TRUE(status_->has_dictionary_id());
-  const uint64 dictionary_id = status_->dictionary_id();
+  const uint64_t dictionary_id = status_->dictionary_id();
 
   // Make sure the size of the data.
   ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
@@ -892,8 +895,8 @@ TEST_F(UserDictionarySessionHandlerTest, ImportData2) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id = CreateUserDictionary(session_id, "dictionary");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id = CreateUserDictionary(session_id, "dictionary");
 
   // Fail if the data is missing.
   Clear();
@@ -922,7 +925,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
-  const uint64 session_id = CreateSession();
+  const uint64_t session_id = CreateSession();
 
   std::string data = kDictionaryData;
   data.append("☻\tEMOTICON\t名詞\n");  // Invalid symbol reading.
@@ -938,7 +941,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   ASSERT_TRUE(handler_->Evaluate(*command_, status_.get()));
   EXPECT_PROTO_PEQ("status: USER_DICTIONARY_COMMAND_SUCCESS", *status_);
   ASSERT_TRUE(status_->has_dictionary_id());
-  const uint64 dictionary_id = status_->dictionary_id();
+  const uint64_t dictionary_id = status_->dictionary_id();
 
   // Make sure the size of the data.
   ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
@@ -947,8 +950,9 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
 }
 
 TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
-  const uint64 session_id = CreateSession();
-  const uint64 dictionary_id1 = CreateUserDictionary(session_id, "dictionary1");
+  const uint64_t session_id = CreateSession();
+  const uint64_t dictionary_id1 =
+      CreateUserDictionary(session_id, "dictionary1");
 
   AddUserDictionaryEntry(session_id, dictionary_id1, "reading1_1", "word1_1",
                          UserDictionary::NOUN, "");
@@ -956,7 +960,8 @@ TEST_F(UserDictionarySessionHandlerTest, GetStorage) {
                          UserDictionary::NOUN, "");
 
   // Create a dictionary named "dictionary2".
-  const uint64 dictionary_id2 = CreateUserDictionary(session_id, "dictionary2");
+  const uint64_t dictionary_id2 =
+      CreateUserDictionary(session_id, "dictionary2");
 
   AddUserDictionaryEntry(session_id, dictionary_id2, "reading2_1", "word2_1",
                          UserDictionary::NOUN, "");

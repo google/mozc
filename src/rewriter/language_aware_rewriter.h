@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_LANGUAGE_AWARE_REWRITER_H_
 #define MOZC_REWRITER_LANGUAGE_AWARE_REWRITER_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
@@ -55,7 +57,7 @@ class LanguageAwareRewriter : public RewriterInterface {
   // Fills the raw text if the query does not look like Japanese.
   bool FillRawText(const ConversionRequest &request, Segments *segments) const;
 
-  const uint16 unknown_id_;
+  const uint16_t unknown_id_;
   const dictionary::DictionaryInterface *dictionary_;
 
   DISALLOW_COPY_AND_ASSIGN(LanguageAwareRewriter);

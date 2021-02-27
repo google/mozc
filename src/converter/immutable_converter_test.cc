@@ -29,6 +29,7 @@
 
 #include "converter/immutable_converter.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -152,7 +153,7 @@ class MockDataAndImmutableConverter {
 
     if (!suffix_dictionary) {
       absl::string_view suffix_key_array_data, suffix_value_array_data;
-      const uint32 *token_array;
+      const uint32_t *token_array;
       data_manager_->GetSuffixDictionaryData(
           &suffix_key_array_data, &suffix_value_array_data, &token_array);
       suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
@@ -439,7 +440,7 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 

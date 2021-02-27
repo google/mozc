@@ -29,6 +29,7 @@
 
 #include "session/session.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -509,7 +510,7 @@ class SessionTest : public ::testing::Test {
 
   void InsertCharacterChars(const std::string &chars, Session *session,
                             commands::Command *command) const {
-    const uint32 kNoModifiers = 0;
+    const uint32_t kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
       command->Clear();
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
@@ -523,10 +524,10 @@ class SessionTest : public ::testing::Test {
                                        const commands::Context &context,
                                        Session *session,
                                        commands::Command *command) const {
-    const uint32 kNoModifiers = 0;
+    const uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->Clear();
-      command->mutable_input()->mutable_context()->CopyFrom(context);
+      *command->mutable_input()->mutable_context() = context;
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
@@ -537,7 +538,7 @@ class SessionTest : public ::testing::Test {
   void InsertCharacterString(const std::string &key_strings,
                              const std::string &chars, Session *session,
                              commands::Command *command) const {
-    const uint32 kNoModifiers = 0;
+    const uint32_t kNoModifiers = 0;
     std::vector<std::string> inputs;
     const char *begin = key_strings.data();
     const char *end = key_strings.data() + key_strings.size();
@@ -3632,7 +3633,7 @@ TEST_F(SessionTest, KanaSymbols) {
     SetSendKeyCommand("<", &command);
     command.mutable_input()->mutable_key()->set_key_string("、");
     EXPECT_TRUE(session->SendKey(&command));
-    EXPECT_EQ(static_cast<uint32>(','), command.input().key().key_code());
+    EXPECT_EQ(static_cast<uint32_t>(','), command.input().key().key_code());
     EXPECT_EQ("，", command.input().key().key_string());
     EXPECT_EQ("，", command.output().preedit().segment(0).value());
   }
@@ -3645,7 +3646,7 @@ TEST_F(SessionTest, KanaSymbols) {
     SetSendKeyCommand("?", &command);
     command.mutable_input()->mutable_key()->set_key_string("・");
     EXPECT_TRUE(session->SendKey(&command));
-    EXPECT_EQ(static_cast<uint32>('/'), command.input().key().key_code());
+    EXPECT_EQ(static_cast<uint32_t>('/'), command.input().key().key_code());
     EXPECT_EQ("／", command.input().key().key_string());
     EXPECT_EQ("／", command.output().preedit().segment(0).value());
   }
@@ -4095,7 +4096,7 @@ TEST_F(SessionTest, ExpandSuggestionConversionMode) {
 
 TEST_F(SessionTest, CommitCandidate_TypingCorrection) {
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
   Segments segments_jueri;
@@ -4138,7 +4139,7 @@ TEST_F(SessionTest, CommitCandidate_TypingCorrection) {
 
 TEST_F(SessionTest, MobilePartialSuggestion) {
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
@@ -4338,7 +4339,7 @@ TEST_F(SessionTest, InsertSpace) {
   space_key.set_special_key(commands::KeyEvent::SPACE);
 
   // Default should be FULL_WIDTH.
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpace(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4349,7 +4350,7 @@ TEST_F(SessionTest, InsertSpace) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   session->SetConfig(&config);
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpace(&command));
   EXPECT_FALSE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4358,7 +4359,7 @@ TEST_F(SessionTest, InsertSpace) {
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpace(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4375,7 +4376,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 
   // Default should be FULL_WIDTH.  So the toggled space should be
   // half-width.
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceToggled(&command));
   EXPECT_FALSE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4386,7 +4387,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   session->SetConfig(&config);
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceToggled(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4395,7 +4396,7 @@ TEST_F(SessionTest, InsertSpaceToggled) {
   // Change the setting to FULL_WIDTH.
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceToggled(&command));
   EXPECT_FALSE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4410,7 +4411,7 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
   commands::KeyEvent space_key;
   space_key.set_special_key(commands::KeyEvent::SPACE);
 
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceHalfWidth(&command));
   EXPECT_FALSE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4449,7 +4450,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   commands::KeyEvent space_key;
   space_key.set_special_key(commands::KeyEvent::SPACE);
 
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceFullWidth(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_preedit());
@@ -4459,7 +4460,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   EXPECT_EQ("あ", GetComposition(command));
 
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceFullWidth(&command));
   EXPECT_EQ("あ　",  // full-width space
             GetComposition(command));
@@ -4477,7 +4478,7 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
   }
 
   command.Clear();
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceFullWidth(&command));
   EXPECT_EQ("亜　　", command.output().result().value());
   EXPECT_EQ("", GetComposition(command));
@@ -5042,7 +5043,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
   command.Clear();
   commands::KeyEvent space_key;
   space_key.set_special_key(commands::KeyEvent::SPACE);
-  command.mutable_input()->mutable_key()->CopyFrom(space_key);
+  *command.mutable_input()->mutable_key() = space_key;
   EXPECT_TRUE(session->InsertSpaceFullWidth(&command));
   EXPECT_EQ("ｱ　", GetComposition(command));  // "ｱ　" (full-width space)
 }
@@ -7639,10 +7640,10 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetTable(table.get());
   // Type "2*" to produce "A".
   SetSendKeyCommand("2", &command);
-  command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+  *command.mutable_input()->mutable_config() = overriding_config;
   session.SendKey(&command);
   SetSendKeyCommand("*", &command);
-  command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+  *command.mutable_input()->mutable_config() = overriding_config;
   session.SendKey(&command);
   EXPECT_EQ("A", GetComposition(command));
 
@@ -7659,7 +7660,7 @@ TEST_F(SessionTest, Issue4437420) {
   session.SetTable(table.get());
   // Type "2" to produce "Aa".
   SetSendKeyCommand("2", &command);
-  command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+  *command.mutable_input()->mutable_config() = overriding_config;
   session.SendKey(&command);
   EXPECT_EQ("Aa", GetComposition(command));
   command.Clear();
@@ -7716,26 +7717,26 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     // Type "2" to produce "a".
     SetSendKeyCommand("2", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("a", GetComposition(command));
 
     // Type "2" again to produce "b".
     SetSendKeyCommand("2", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("b", GetComposition(command));
 
     // Push UNDO key to reproduce "a".
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("a", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
 
     // Push UNDO key again to produce "2".
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("2", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
@@ -7760,24 +7761,24 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetTable(&table);
     // Type "33{<}{<}" to produce "さ"->"し"->"さ"->"そ".
     SetSendKeyCommand("3", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("さ", GetComposition(command));
 
     SetSendKeyCommand("3", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("し", GetComposition(command));
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("さ", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
     command.Clear();
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("そ", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
@@ -7803,29 +7804,29 @@ TEST_F(SessionTest, UndoKeyAction) {
     // Type "3*{<}*{<}", and composition should change
     // "さ"->"ざ"->(No change)->"さ"->(No change).
     SetSendKeyCommand("3", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("さ", GetComposition(command));
 
     SetSendKeyCommand("*", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("ざ", GetComposition(command));
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("ざ", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
 
     SetSendKeyCommand("*", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("さ", GetComposition(command));
     command.Clear();
 
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_EQ("さ", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
@@ -7850,7 +7851,7 @@ TEST_F(SessionTest, UndoKeyAction) {
     session.SetTable(&table);
     // Type "{<}" and do nothing
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
 
     EXPECT_FALSE(command.output().has_preedit());
@@ -7892,7 +7893,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     command.Clear();
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_TRUE(command.output().has_deletion_range());
@@ -7930,7 +7931,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     // commit "あ" to push UNDO stack
     SetSendKeyCommand("1", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("あ", GetComposition(command));
     command.Clear();
@@ -7941,7 +7942,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     // Produce "か" in composition.
     SetSendKeyCommand("2", &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendKey(&command);
     EXPECT_EQ("か", GetComposition(command));
     EXPECT_TRUE(command.output().consumed());
@@ -7949,7 +7950,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
     // Send UNDO_OR_REWIND key, then get "こ" in composition
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
-    command.mutable_input()->mutable_config()->CopyFrom(overriding_config);
+    *command.mutable_input()->mutable_config() = overriding_config;
     session.SendCommand(&command);
     EXPECT_PREEDIT("こ", command);
     EXPECT_TRUE(command.output().consumed());
@@ -8064,7 +8065,7 @@ TEST_F(SessionTest, MoveCursor) {
 TEST_F(SessionTest, MoveCursorRightWithCommit) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
@@ -8092,7 +8093,7 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
 TEST_F(SessionTest, MoveCursorLeftWithCommit) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
@@ -8202,7 +8203,7 @@ TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
 
@@ -8272,7 +8273,7 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
 
   commands::Request request;
-  request.CopyFrom(*mobile_request_);
+  request = *mobile_request_;
   request.set_special_romanji_table(commands::Request::DEFAULT_TABLE);
   session->SetRequest(&request);
 

@@ -32,6 +32,7 @@
 
 #ifdef __APPLE__
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc {

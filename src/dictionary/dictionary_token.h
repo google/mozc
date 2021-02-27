@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_DICTIONARY_TOKEN_H_
 #define MOZC_DICTIONARY_DICTIONARY_TOKEN_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -38,7 +39,7 @@ namespace mozc {
 namespace dictionary {
 
 struct Token {
-  typedef uint8 AttributesBitfield;
+  typedef uint8_t AttributesBitfield;
 
   enum Attribute {
     NONE = 0,

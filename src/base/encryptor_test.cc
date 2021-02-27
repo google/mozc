@@ -29,6 +29,7 @@
 
 #include "base/encryptor.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/password_manager.h"
@@ -80,10 +81,10 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string salt(kTestData[0].salt, kTestData[0].salt_size);
     Encryptor::Key key1, key2;
     EXPECT_TRUE(key1.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[0].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[0].iv)));
     EXPECT_TRUE(key1.IsAvailable());
     EXPECT_TRUE(key2.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[0].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[0].iv)));
     EXPECT_TRUE(key2.IsAvailable());
     std::string input(kTestData[0].input, kTestData[0].input_size);
     const std::string encrypted(kTestData[0].encrypted,
@@ -101,10 +102,10 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string salt(kTestData[1].salt, kTestData[1].salt_size);
     Encryptor::Key key1, key2;
     EXPECT_TRUE(key1.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[1].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[1].iv)));
     EXPECT_TRUE(key1.IsAvailable());
     EXPECT_TRUE(key2.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[1].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[1].iv)));
     EXPECT_TRUE(key2.IsAvailable());
     std::string input(kTestData[1].input, kTestData[1].input_size);
     const std::string encrypted(kTestData[1].encrypted,
@@ -122,10 +123,10 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string salt(kTestData[2].salt, kTestData[2].salt_size);
     Encryptor::Key key1, key2;
     EXPECT_TRUE(key1.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[2].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[2].iv)));
     EXPECT_TRUE(key1.IsAvailable());
     EXPECT_TRUE(key2.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[2].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[2].iv)));
     EXPECT_TRUE(key2.IsAvailable());
     std::string input(kTestData[2].input, kTestData[2].input_size);
     const std::string encrypted(kTestData[2].encrypted,
@@ -143,10 +144,10 @@ TEST(EncryptorTest, VerificationTest) {
     const std::string salt(kTestData[3].salt, kTestData[3].salt_size);
     Encryptor::Key key1, key2;
     EXPECT_TRUE(key1.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[3].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[3].iv)));
     EXPECT_TRUE(key1.IsAvailable());
     EXPECT_TRUE(key2.DeriveFromPassword(
-        password, salt, reinterpret_cast<const uint8 *>(kTestData[3].iv)));
+        password, salt, reinterpret_cast<const uint8_t *>(kTestData[3].iv)));
     EXPECT_TRUE(key2.IsAvailable());
     std::string input(kTestData[3].input, kTestData[3].input_size);
     const std::string encrypted(kTestData[3].encrypted,

@@ -29,6 +29,7 @@
 
 #include "session/session_watch_dog.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -83,7 +84,7 @@ class SessionWatchDogTest : public testing::Test {
 };
 
 TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
-  static const int32 kInterval = 1;  // for every 1sec
+  static const int32_t kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(kInterval, watchdog.interval());
@@ -122,7 +123,7 @@ TEST_F(SessionWatchDogTest, SessionWatchDogTest) {
 }
 
 TEST_F(SessionWatchDogTest, SessionWatchDogCPUStatsTest) {
-  static const int32 kInterval = 1;  // for every 1sec
+  static const int32_t kInterval = 1;  // for every 1sec
   mozc::SessionWatchDog watchdog(kInterval);
   EXPECT_FALSE(watchdog.IsRunning());  // not running
   EXPECT_EQ(kInterval, watchdog.interval());

@@ -30,6 +30,7 @@
 #ifndef MOZC_GUI_BASE_SETUP_UTIL_H_
 #define MOZC_GUI_BASE_SETUP_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -67,7 +68,7 @@ class SetupUtil {
   // setuputil.LockUserDictionary();
   // -- do somethings to keep userdictionary locked -----
   // setuputil.SetDafaultProperty(flags);
-  void SetDefaultProperty(uint32 flags);
+  void SetDefaultProperty(uint32_t flags);
 
  private:
   // Imports MS-IME's user dictionary to Mozc' dictionary

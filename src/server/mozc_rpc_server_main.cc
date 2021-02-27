@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #ifdef OS_WIN
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -59,9 +60,9 @@ using ssize_t = SSIZE_T;
 ABSL_FLAG(std::string, host, "localhost", "server host name");
 ABSL_FLAG(bool, server, true, "server mode");
 ABSL_FLAG(bool, client, false, "client mode");
-ABSL_FLAG(int32, client_test_size, 100, "client test size");
-ABSL_FLAG(int32, port, 8000, "port of RPC server");
-ABSL_FLAG(int32, rpc_timeout, 60000, "timeout");
+ABSL_FLAG(int32_t, client_test_size, 100, "client test size");
+ABSL_FLAG(int32_t, port, 8000, "port of RPC server");
+ABSL_FLAG(int32_t, rpc_timeout, 60000, "timeout");
 ABSL_FLAG(std::string, user_profile_directory, "", "user profile directory");
 
 namespace mozc {
@@ -178,7 +179,7 @@ class RPCServer {
         continue;
       }
 
-      uint32 request_size = 0;
+      uint32_t request_size = 0;
       // Receive the size of data.
       if (!Recv(client_socket, reinterpret_cast<char *>(&request_size),
                 sizeof(request_size), absl::GetFlag(FLAGS_rpc_timeout))) {
@@ -213,7 +214,7 @@ class RPCServer {
       // Return the result.
       CHECK(command.output().SerializeToString(&output_str));
 
-      uint32 output_size = output_str.size();
+      uint32_t output_size = output_str.size();
       CHECK_GT(output_size, 0);
       CHECK_LT(output_size, kMaxOutputSize);
       output_size = htonl(output_size);
@@ -271,7 +272,7 @@ class RPCClient {
     commands::Input input;
     input.set_type(commands::Input::SEND_KEY);
     input.set_id(id_);
-    input.mutable_key()->CopyFrom(key);
+    *input.mutable_key() = key;
     return (Call(input, output) &&
             output->error_code() == commands::Output::SESSION_SUCCESS);
   }
@@ -297,7 +298,7 @@ class RPCClient {
 
     std::string request_str;
     CHECK(input.SerializeToString(&request_str));
-    uint32 request_size = request_str.size();
+    uint32_t request_size = request_str.size();
     CHECK_GT(request_size, 0);
     CHECK_LT(request_size, kMaxRequestSize);
     request_size = htonl(request_size);
@@ -307,7 +308,7 @@ class RPCClient {
     CHECK(Send(client_socket, request_str.data(), request_str.size(),
                absl::GetFlag(FLAGS_rpc_timeout)));
 
-    uint32 output_size = 0;
+    uint32_t output_size = 0;
     CHECK(Recv(client_socket, reinterpret_cast<char *>(&output_size),
                sizeof(output_size), absl::GetFlag(FLAGS_rpc_timeout)));
     output_size = ntohl(output_size);
@@ -327,7 +328,7 @@ class RPCClient {
     return true;
   }
 
-  uint64 id_;
+  uint64_t id_;
 };
 
 // Wrapper class for WSAStartup on Windows.

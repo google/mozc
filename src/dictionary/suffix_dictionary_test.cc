@@ -29,6 +29,7 @@
 
 #include "dictionary/suffix_dictionary.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/util.h"
@@ -51,7 +52,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
   {
     const testing::MockDataManager manager;
     absl::string_view key_array_data, value_arra_data;
-    const uint32 *token_array = nullptr;
+    const uint32_t *token_array = nullptr;
     manager.GetSuffixDictionaryData(&key_array_data, &value_arra_data,
                                     &token_array);
     dic = absl::make_unique<SuffixDictionary>(key_array_data, value_arra_data,

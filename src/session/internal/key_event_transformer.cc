@@ -29,6 +29,7 @@
 
 #include "session/internal/key_event_transformer.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -59,14 +60,14 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
   if (punctuation == Config::COMMA_PERIOD ||
       punctuation == Config::COMMA_TOUTEN) {
     KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>(','));
+    key_event.set_key_code(static_cast<uint32_t>(','));
     key_event.set_key_string("，");
     table_.insert(std::make_pair("、", key_event));
   }
   if (punctuation == Config::COMMA_PERIOD ||
       punctuation == Config::KUTEN_PERIOD) {
     KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>('.'));
+    key_event.set_key_code(static_cast<uint32_t>('.'));
     key_event.set_key_string("．");
     table_.insert(std::make_pair("。", key_event));
   }
@@ -76,13 +77,13 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
       symbol == Config::SQUARE_BRACKET_MIDDLE_DOT) {
     {
       KeyEvent key_event;
-      key_event.set_key_code(static_cast<uint32>('['));
+      key_event.set_key_code(static_cast<uint32_t>('['));
       key_event.set_key_string("［");
       table_.insert(std::make_pair("「", key_event));
     }
     {
       KeyEvent key_event;
-      key_event.set_key_code(static_cast<uint32>(']'));
+      key_event.set_key_code(static_cast<uint32_t>(']'));
       key_event.set_key_string("］");
       table_.insert(std::make_pair("」", key_event));
     }
@@ -90,7 +91,7 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
   if (symbol == Config::SQUARE_BRACKET_SLASH ||
       symbol == Config::CORNER_BRACKET_SLASH) {
     KeyEvent key_event;
-    key_event.set_key_code(static_cast<uint32>('/'));
+    key_event.set_key_code(static_cast<uint32_t>('/'));
     key_event.set_key_string("／");
     table_.insert(std::make_pair("・", key_event));
   }
@@ -120,7 +121,7 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
 
   {
     KeyEvent key_event_origin;
-    key_event_origin.CopyFrom(*key_event);
+    key_event_origin = *key_event;
     KeyEventUtil::NormalizeNumpadKey(key_event_origin, key_event);
   }
 
@@ -160,7 +161,7 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
   // and its value should represent a ASCII character since it is generated
   // from numpad key.
   DCHECK(key_event->has_key_code());
-  const uint32 key_code = key_event->key_code();
+  const uint32_t key_code = key_event->key_code();
   DCHECK_GT(128, key_code);
   const std::string half_width_key_string(1, static_cast<char>(key_code));
 
@@ -194,7 +195,7 @@ bool KeyEventTransformer::TransformKeyEventForKana(KeyEvent *key_event) const {
     return false;
   }
 
-  key_event->CopyFrom(it->second);
+  *key_event = it->second;
   return true;
 }
 

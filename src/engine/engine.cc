@@ -29,6 +29,7 @@
 
 #include "engine/engine.h"
 
+#include <cstdint>
 #include <utility>
 
 #include "base/logging.h"
@@ -210,7 +211,7 @@ mozc::Status Engine::Init(
   RETURN_IF_NULL(dictionary_);
 
   absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32 *token_array = nullptr;
+  const uint32_t *token_array = nullptr;
   data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
                                         &suffix_value_array_data, &token_array);
   suffix_dictionary_ = absl::make_unique<SuffixDictionary>(

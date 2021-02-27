@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_SEGMENTS_H_
 #define MOZC_CONVERTER_SEGMENTS_H_
 
+#include <cstdint>
 #include <deque>
 #include <memory>
 #include <string>
@@ -150,7 +151,7 @@ class Segment {
     std::string description;
 
     // Usage ID
-    int32 usage_id;
+    int32_t usage_id;
     // Title of the usage containing basic form of this candidate.
     std::string usage_title;
     // Content of the usage.
@@ -159,25 +160,25 @@ class Segment {
     // Context "sensitive" candidate cost.
     // Taking adjacent words/nodes into consideration.
     // Basically, candidate is sorted by this cost.
-    int32 cost;
+    int32_t cost;
     // Context "free" candidate cost
     // NOT taking adjacent words/nodes into consideration.
-    int32 wcost;
+    int32_t wcost;
     // (cost without transition cost between left/right boundaries)
     // Cost of only transitions (cost without word cost adjacent context)
-    int32 structure_cost;
+    int32_t structure_cost;
 
     // lid of left-most node
-    uint16 lid;
+    uint16_t lid;
     // rid of right-most node
-    uint16 rid;
+    uint16_t rid;
 
     // Attributes of this candidate. Can set multiple attributes
     // defined in enum |Attribute|.
-    uint32 attributes;
+    uint32_t attributes;
 
     // Candidate's source info which will be used for usage stats.
-    uint32 source_info;
+    uint32_t source_info;
 
     // Candidate style. This is not a bit-field.
     // The style is defined in enum |Style|.
@@ -190,7 +191,7 @@ class Segment {
     // Boundary information for realtime conversion.  This will be set only for
     // realtime conversion result candidates.  Each element is the encoded
     // lengths of key, value, content key and content value.
-    std::vector<uint32> inner_segment_boundary;
+    std::vector<uint32_t> inner_segment_boundary;
 
 #ifndef NDEBUG
     std::string log;
@@ -198,13 +199,13 @@ class Segment {
 
     static bool EncodeLengths(size_t key_len, size_t value_len,
                               size_t content_key_len, size_t content_value_len,
-                              uint32 *result);
+                              uint32_t *result);
 
     // This function ignores error, so be careful when using this.
-    static uint32 EncodeLengths(size_t key_len, size_t value_len,
-                                size_t content_key_len,
-                                size_t content_value_len) {
-      uint32 result;
+    static uint32_t EncodeLengths(size_t key_len, size_t value_len,
+                                  size_t content_key_len,
+                                  size_t content_value_len) {
+      uint32_t result;
       EncodeLengths(key_len, value_len, content_key_len, content_value_len,
                     &result);
       return result;
@@ -419,11 +420,11 @@ class Segments {
       CREATE_ENTRY,
       UPDATE_ENTRY,
     };
-    uint16 revert_entry_type;
+    uint16_t revert_entry_type;
     // UserHitoryPredictor uses '1' for now.
     // Do not use duplicate keys.
-    uint16 id;
-    uint32 timestamp;
+    uint16_t id;
+    uint32_t timestamp;
     std::string key;
     RevertEntry() : revert_entry_type(0), id(0), timestamp(0) {}
 

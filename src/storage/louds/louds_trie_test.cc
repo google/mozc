@@ -29,6 +29,7 @@
 
 #include "storage/louds/louds_trie.h"
 
+#include <cstdint>
 #include <vector>
 
 #include "base/port.h"
@@ -136,7 +137,7 @@ TEST_P(LoudsTrieTest, NodeBasedApis) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
             param.louds_lb0_cache_size, param.louds_lb1_cache_size,
             param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
@@ -354,7 +355,7 @@ TEST_P(LoudsTrieTest, HasKey) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
             param.louds_lb0_cache_size, param.louds_lb1_cache_size,
             param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
@@ -390,7 +391,7 @@ TEST(LoudsTrieTest, ExactSearch) {
 
   builder.Build();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()));
+  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()));
 
   EXPECT_EQ(builder.GetId("a"), trie.ExactSearch("a"));
   EXPECT_EQ(builder.GetId("abc"), trie.ExactSearch("abc"));
@@ -427,7 +428,7 @@ TEST_P(LoudsTrieTest, PrefixSearch) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
             param.louds_lb0_cache_size, param.louds_lb1_cache_size,
             param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);
@@ -507,7 +508,7 @@ TEST_P(LoudsTrieTest, RestoreKeyString) {
 
   const CacheSizeParam &param = GetParam();
   LoudsTrie trie;
-  trie.Open(reinterpret_cast<const uint8 *>(builder.image().data()),
+  trie.Open(reinterpret_cast<const uint8_t *>(builder.image().data()),
             param.louds_lb0_cache_size, param.louds_lb1_cache_size,
             param.louds_select0_cache_size, param.louds_select1_cache_size,
             param.termvec_lb1_cache_size);

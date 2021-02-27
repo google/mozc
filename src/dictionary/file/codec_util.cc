@@ -29,6 +29,7 @@
 
 #include "dictionary/file/codec_util.h"
 
+#include <cstdint>
 #include <ostream>
 
 #include "base/logging.h"
@@ -39,15 +40,15 @@ namespace mozc {
 namespace dictionary {
 namespace filecodec_util {
 
-void WriteInt32(int32 value, std::ostream *ofs) {
+void WriteInt32(int32_t value, std::ostream *ofs) {
   DCHECK(ofs);
   ofs->write(reinterpret_cast<const char *>(&value), sizeof(value));
 }
 
-int32 ReadInt32ThenAdvance(const char **ptr) {
+int32_t ReadInt32ThenAdvance(const char **ptr) {
   DCHECK(ptr);
-  const int32 value = *reinterpret_cast<const int32 *>(*ptr);
-  *ptr += sizeof(int32);
+  const int32_t value = *reinterpret_cast<const int32_t *>(*ptr);
+  *ptr += sizeof(int32_t);
   return value;
 }
 

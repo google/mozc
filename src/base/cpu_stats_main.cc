@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -39,16 +40,16 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-ABSL_FLAG(int32, iterations, 1000, "number of iterations");
-ABSL_FLAG(int32, polling_duration, 1000, "duration period in msec");
-ABSL_FLAG(int32, dummy_threads_size, 0, "number of dummy threads");
+ABSL_FLAG(int32_t, iterations, 1000, "number of iterations");
+ABSL_FLAG(int32_t, polling_duration, 1000, "duration period in msec");
+ABSL_FLAG(int32_t, dummy_threads_size, 0, "number of dummy threads");
 
 namespace {
 class DummyThread : public mozc::Thread {
  public:
   DummyThread() {}
   void Run() override {
-    volatile uint64 n = 0;
+    volatile uint64_t n = 0;
     while (true) {
       ++n;
       --n;

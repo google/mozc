@@ -32,6 +32,7 @@
 #ifndef MOZC_DICTIONARY_FILE_CODEC_H_
 #define MOZC_DICTIONARY_FILE_CODEC_H_
 
+#include <cstdint>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -66,9 +67,9 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 
   // Seed value for name string finger print
   // Made it mutable for reading sections.
-  mutable int32 seed_;
+  mutable int32_t seed_;
   // Magic value for simple file validation
-  const int32 filemagic_;
+  const int32_t filemagic_;
 };
 
 }  // namespace dictionary

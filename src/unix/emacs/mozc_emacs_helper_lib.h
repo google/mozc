@@ -30,6 +30,7 @@
 #ifndef MOZC_UNIX_EMACS_MOZC_EMACS_HELPER_LIB_H_
 #define MOZC_UNIX_EMACS_MOZC_EMACS_HELPER_LIB_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -64,8 +65,8 @@ const char kErrSessionError[] = "session-error";
 // ARGUMENTs depend on a command.
 // An input line must be surrounded by a pair of parentheses,
 // like a S-expression.
-void ParseInputLine(const std::string &line, uint32 *event_id,
-                    uint32 *session_id, mozc::commands::Input *input);
+void ParseInputLine(const std::string &line, uint32_t *event_id,
+                    uint32_t *session_id, mozc::commands::Input *input);
 
 // Prints the content of a protocol buffer in S-expression.
 // - 'message' and 'group' are mapped to alist (associative list)

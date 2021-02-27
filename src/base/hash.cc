@@ -29,14 +29,16 @@
 
 #include "base/hash.h"
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
 namespace {
 
-const uint32 kFingerPrint32Seed = 0xfd12deff;
-const uint32 kFingerPrintSeed0 = 0x6d6f;
-const uint32 kFingerPrintSeed1 = 0x7a63;
+const uint32_t kFingerPrint32Seed = 0xfd12deff;
+const uint32_t kFingerPrintSeed0 = 0x6d6f;
+const uint32_t kFingerPrintSeed1 = 0x7a63;
 
 }  // namespace
 
@@ -71,19 +73,19 @@ const uint32 kFingerPrintSeed1 = 0x7a63;
     c ^= (b >> 15);  \
   }
 
-uint32 Hash::Fingerprint32(absl::string_view str) {
+uint32_t Hash::Fingerprint32(absl::string_view str) {
   return Fingerprint32WithSeed(str, kFingerPrint32Seed);
 }
 
-uint32 Hash::Fingerprint32WithSeed(absl::string_view str, uint32 seed) {
-#define U32(x) static_cast<uint32>(x)
+uint32_t Hash::Fingerprint32WithSeed(absl::string_view str, uint32_t seed) {
+#define U32(x) static_cast<uint32_t>(x)
 #define ToUint32(a, b, c, d) \
   (U32(a) + (U32(b) << 8) + (U32(c) << 16) + (U32(d) << 24))
 
-  const uint32 str_len = U32(str.size());
-  uint32 a = 0x9e3779b9;
-  uint32 b = a;
-  uint32 c = seed;
+  const uint32_t str_len = U32(str.size());
+  uint32_t a = 0x9e3779b9;
+  uint32_t b = a;
+  uint32_t c = seed;
 
   while (str.size() >= 12) {
     a += ToUint32(str[0], str[1], str[2], str[3]);
@@ -136,14 +138,14 @@ uint32 Hash::Fingerprint32WithSeed(absl::string_view str, uint32 seed) {
 #undef U32
 }
 
-uint64 Hash::Fingerprint(absl::string_view str) {
+uint64_t Hash::Fingerprint(absl::string_view str) {
   return FingerprintWithSeed(str, kFingerPrintSeed0);
 }
 
-uint64 Hash::FingerprintWithSeed(absl::string_view str, uint32 seed) {
-  const uint32 hi = Fingerprint32WithSeed(str, seed);
-  const uint32 lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
-  uint64 result = static_cast<uint64>(hi) << 32 | static_cast<uint64>(lo);
+uint64_t Hash::FingerprintWithSeed(absl::string_view str, uint32_t seed) {
+  const uint32_t hi = Fingerprint32WithSeed(str, seed);
+  const uint32_t lo = Fingerprint32WithSeed(str, kFingerPrintSeed1);
+  uint64_t result = static_cast<uint64_t>(hi) << 32 | static_cast<uint64_t>(lo);
   if ((hi == 0) && (lo < 2)) {
     result ^= 0x130f9bef94a0a928uLL;
   }

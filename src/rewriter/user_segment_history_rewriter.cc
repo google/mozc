@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <vector>
@@ -64,10 +65,10 @@ using mozc::storage::LRUStorage;
 namespace mozc {
 namespace {
 
-const uint32 kValueSize = 4;
-const uint32 kLRUSize = 20000;
-const uint32 kSeedValue = 0xf28defe3;
-const uint32 kMaxCandidatesSize = 255;
+const uint32_t kValueSize = 4;
+const uint32_t kLRUSize = 20000;
+const uint32_t kSeedValue = 0xf28defe3;
+const uint32_t kMaxCandidatesSize = 255;
 // Size of candidates to be reranked to the top at one sorting operation.
 // Note, if sorting operation is called twice, up to 10 (= 5 * 2) candidates
 // could be reranked in total.
@@ -91,8 +92,8 @@ class FeatureValue {
   bool IsValid() const { return (feature_type_ == 1); }
 
  private:
-  uint32 feature_type_ : 1;  // always 1
-  uint32 reserved_ : 31;     // this area is reserved for future
+  uint32_t feature_type_ : 1;  // always 1
+  uint32_t reserved_ : 31;     // this area is reserved for future
 };
 MOZC_CLANG_POP_WARNING();
 
@@ -117,17 +118,17 @@ class KeyTriggerValue {
 
   bool IsValid() const { return (feature_type_ == 0); }
 
-  uint32 candidates_size() const { return candidates_size_; }
+  uint32_t candidates_size() const { return candidates_size_; }
 
-  void set_candidates_size(uint32 size) {
+  void set_candidates_size(uint32_t size) {
     candidates_size_ = std::min(size, kMaxCandidatesSize);
   }
 
  private:
-  uint32 feature_type_ : 1;  // always 0
-  uint32 reserved_ : 23;     // this area is reserved for future
+  uint32_t feature_type_ : 1;  // always 0
+  uint32_t reserved_ : 23;     // this area is reserved for future
   // want to encode POS, freq etc.
-  uint32 candidates_size_ : 8;  // candidate size
+  uint32_t candidates_size_ : 8;  // candidate size
 };
 MOZC_CLANG_POP_WARNING();
 
@@ -325,7 +326,7 @@ inline bool GetFeatureS(const Segments &segments, size_t i,
 
 // Feature "Number"
 // used for number rewrite
-inline bool GetFeatureN(uint16 type, std::string *value) {
+inline bool GetFeatureN(uint16_t type, std::string *value) {
   DCHECK(value);
   JoinStringsWithTab2("N", std::to_string(type), value);
   return true;
@@ -435,9 +436,9 @@ bool IsT13NCandidate(const Segment::Candidate &cand) {
 
 bool UserSegmentHistoryRewriter::SortCandidates(
     const std::vector<ScoreType> &sorted_scores, Segment *segment) const {
-  const uint32 top_score = sorted_scores[0].score;
+  const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
-  const uint32 kScoreGap = 20;  // TODO(taku): no justification
+  const uint32_t kScoreGap = 20;  // TODO(taku): no justification
   std::set<std::string> seen;
 
   size_t next_pos = 0;
@@ -517,8 +518,8 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
       pos_group_(pos_group) {
   Reload();
 
-  CHECK_EQ(sizeof(uint32), sizeof(FeatureValue));
-  CHECK_EQ(sizeof(uint32), sizeof(KeyTriggerValue));
+  CHECK_EQ(sizeof(uint32_t), sizeof(FeatureValue));
+  CHECK_EQ(sizeof(uint32_t), sizeof(KeyTriggerValue));
 }
 
 UserSegmentHistoryRewriter::~UserSegmentHistoryRewriter() {}
@@ -551,8 +552,8 @@ UserSegmentHistoryRewriter::~UserSegmentHistoryRewriter() {}
 
 bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
                                           size_t segment_index,
-                                          int candidate_index, uint32 *score,
-                                          uint32 *last_access_time) const {
+                                          int candidate_index, uint32_t *score,
+                                          uint32_t *last_access_time) const {
   const size_t segments_size = segments.conversion_segments_size();
   const Segment::Candidate &top_candidate =
       segments.segment(segment_index).candidate(0);
@@ -577,14 +578,14 @@ bool UserSegmentHistoryRewriter::GetScore(const Segments &segments,
   *last_access_time = 0;
 
   // They are used inside FETCH_FEATURE
-  uint32 last_access_time_result = 0;
+  uint32_t last_access_time_result = 0;
   std::string feature_key;
 
-  const uint32 trigram_score = (segments_size == 3) ? 180 : 30;
-  const uint32 bigram_score = (segments_size == 2) ? 60 : 10;
-  const uint32 bigram_number_score = (segments_size == 2) ? 50 : 8;
-  const uint32 unigram_score = (segments_size == 1) ? 36 : 6;
-  const uint32 single_score = (segments_size == 1) ? 90 : 15;
+  const uint32_t trigram_score = (segments_size == 3) ? 180 : 30;
+  const uint32_t bigram_score = (segments_size == 2) ? 60 : 10;
+  const uint32_t bigram_number_score = (segments_size == 2) ? 50 : 8;
+  const uint32_t unigram_score = (segments_size == 1) ? 36 : 6;
+  const uint32_t single_score = (segments_size == 1) ? 90 : 15;
 
   FETCH_FEATURE(GetFeatureLR, all_key, all_value, trigram_score);
   FETCH_FEATURE(GetFeatureLL, all_key, all_value, trigram_score);
@@ -875,7 +876,7 @@ void UserSegmentHistoryRewriter::InsertTriggerKey(const Segment &segment) {
   DCHECK(storage_.get());
 
   KeyTriggerValue v;
-  static_assert(sizeof(uint32) == sizeof(v),
+  static_assert(sizeof(uint32_t) == sizeof(v),
                 "KeyTriggerValue must be 32-bit int size.");
 
   // TODO(taku): saving segment.candidate_size() might be too heavy and
@@ -903,8 +904,8 @@ bool UserSegmentHistoryRewriter::RewriteNumber(Segment *segment) const {
       j -= static_cast<int>(segment->candidates_size() +
                             segment->meta_candidates_size());
     }
-    uint32 score = 0;
-    uint32 last_access_time = 0;
+    uint32_t score = 0;
+    uint32_t last_access_time = 0;
     std::string feature_key;
     GetFeatureN(segment->candidate(j).style, &feature_key);
     const FeatureValue *v = reinterpret_cast<const FeatureValue *>(
@@ -996,8 +997,8 @@ bool UserSegmentHistoryRewriter::Rewrite(const ConversionRequest &request,
                               transliteration::NUM_T13N_TYPES);
       }
 
-      uint32 score = 0;
-      uint32 last_access_time = 0;
+      uint32_t score = 0;
+      uint32_t last_access_time = 0;
       if (GetScore(*segments, i, j, &score, &last_access_time)) {
         scores.push_back(ScoreType());
         scores.back().score = score;

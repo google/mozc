@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -194,7 +195,7 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
   }
 
   // TODO(b/135127317): Remove this protobuf field.
-  int32 available_emoji_carrier = request.request().available_emoji_carrier();
+  int32_t available_emoji_carrier = request.request().available_emoji_carrier();
   if (!(available_emoji_carrier & Request::UNICODE_EMOJI)) {
     VLOG(2) << "No available emoji carrier.";
     return false;

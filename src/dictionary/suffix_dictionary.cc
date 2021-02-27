@@ -30,6 +30,7 @@
 #include "dictionary/suffix_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -58,7 +59,7 @@ class ComparePrefix {
 
 SuffixDictionary::SuffixDictionary(absl::string_view key_array_data,
                                    absl::string_view value_array_data,
-                                   const uint32 *token_array)
+                                   const uint32_t *token_array)
     : token_array_(token_array) {
   DCHECK(SerializedStringArray::VerifyData(key_array_data));
   DCHECK(SerializedStringArray::VerifyData(value_array_data));

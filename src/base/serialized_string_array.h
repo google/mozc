@@ -31,6 +31,7 @@
 #define MOZC_BASE_SERIALIZED_STRING_ARRAY_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <utility>
@@ -229,16 +230,16 @@ class SerializedStringArray {
   // Initializes the array from given memory block without verifying data.
   void Set(absl::string_view data_aligned_at_4byte_boundary);
 
-  uint32 size() const {
+  uint32_t size() const {
     // The first 4 bytes of data stores the number of elements in this array in
     // little endian order.
-    return *reinterpret_cast<const uint32 *>(data_.data());
+    return *reinterpret_cast<const uint32_t *>(data_.data());
   }
 
   absl::string_view operator[](size_t i) const {
-    const uint32 *ptr = reinterpret_cast<const uint32 *>(data_.data()) + 1;
-    const uint32 offset = ptr[2 * i];
-    const uint32 len = ptr[2 * i + 1];
+    const uint32_t *ptr = reinterpret_cast<const uint32_t *>(data_.data()) + 1;
+    const uint32_t offset = ptr[2 * i];
+    const uint32_t len = ptr[2 * i + 1];
     return data_.substr(offset, len);
   }
 
@@ -259,7 +260,7 @@ class SerializedStringArray {
   // to align data at 4 byte boundary.
   static absl::string_view SerializeToBuffer(
       const std::vector<absl::string_view> &strs,
-      std::unique_ptr<uint32[]> *buffer);
+      std::unique_ptr<uint32_t[]> *buffer);
 
   static void SerializeToFile(const std::vector<absl::string_view> &strs,
                               const std::string &filepath);

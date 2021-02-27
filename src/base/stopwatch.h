@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_STOPWATCH_H_
 #define MOZC_BASE_STOPWATCH_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -62,7 +64,7 @@ class Stopwatch {
   void Stop();
 
   // Returns the elapsed time as millisecond.
-  int64 GetElapsedMilliseconds();
+  int64_t GetElapsedMilliseconds();
 
   // Returns the elapsed time as microsecond.
   double GetElapsedMicroseconds();
@@ -71,16 +73,16 @@ class Stopwatch {
   double GetElapsedNanoseconds();
 
   // Returns the elapsed time as ticks.
-  int64 GetElapsedTicks();
+  int64_t GetElapsedTicks();
 
   // Returns true if the time counting is on-going.
   bool IsRunning() const;
 
  private:
   StopwatchState state_;
-  int64 frequency_;
-  int64 start_timestamp_;
-  int64 elapsed_timestamp_;
+  int64_t frequency_;
+  int64_t start_timestamp_;
+  int64_t elapsed_timestamp_;
 };
 
 }  // namespace mozc

@@ -30,6 +30,7 @@
 #include "dictionary/user_pos.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <set>
 
 #include "base/logging.h"
@@ -52,7 +53,7 @@ UserPOS::~UserPOS() = default;
 
 void UserPOS::GetPOSList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
-  std::set<uint16> seen;
+  std::set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
     if (!seen.insert(iter.pos_index()).second) {
       continue;
@@ -71,7 +72,7 @@ bool UserPOS::IsValidPOS(const std::string &pos) const {
   return std::binary_search(begin(), end(), iter.index());
 }
 
-bool UserPOS::GetPOSIDs(const std::string &pos, uint16 *id) const {
+bool UserPOS::GetPOSIDs(const std::string &pos, uint16_t *id) const {
   const auto str_iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (str_iter == string_array_.end() || *str_iter != pos) {
@@ -108,12 +109,12 @@ bool UserPOS::GetTokens(const std::string &key, const std::string &value,
   tokens->resize(size);
 
   // TODO(taku)  Change the cost by seeing cost_type
-  const int16 kDefaultCost =
+  const int16_t kDefaultCost =
       (!locale.empty() && !Util::StartsWith(locale, "ja")) ? 10000 : 5000;
 
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
-  const int16 kIsolatedWordCost = 200;
+  const int16_t kIsolatedWordCost = 200;
   const char kIsolatedWordPOS[] = "短縮よみ";
 
   if (size == 1) {  // no conjugation

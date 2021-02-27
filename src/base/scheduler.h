@@ -46,6 +46,7 @@
 #ifndef MOZC_BASE_SCHEDULER_H_
 #define MOZC_BASE_SCHEDULER_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -60,9 +61,9 @@ class Scheduler {
    public:
     typedef bool (*CallbackFunc)(void *);
 
-    JobSetting(const std::string &name, uint32 default_interval,
-               uint32 max_interval, uint32 delay_start, uint32 random_delay,
-               CallbackFunc callback, void *data)
+    JobSetting(const std::string &name, uint32_t default_interval,
+               uint32_t max_interval, uint32_t delay_start,
+               uint32_t random_delay, CallbackFunc callback, void *data)
         : name_(name),
           default_interval_(default_interval),
           max_interval_(max_interval),
@@ -74,19 +75,19 @@ class Scheduler {
     ~JobSetting() {}
 
     std::string name() const { return name_; }
-    uint32 default_interval() const { return default_interval_; }
-    uint32 max_interval() const { return max_interval_; }
-    uint32 delay_start() const { return delay_start_; }
-    uint32 random_delay() const { return random_delay_; }
+    uint32_t default_interval() const { return default_interval_; }
+    uint32_t max_interval() const { return max_interval_; }
+    uint32_t delay_start() const { return delay_start_; }
+    uint32_t random_delay() const { return random_delay_; }
     CallbackFunc callback() const { return callback_; }
     void *data() const { return data_; }
 
    private:
     std::string name_;
-    uint32 default_interval_;
-    uint32 max_interval_;
-    uint32 delay_start_;
-    uint32 random_delay_;
+    uint32_t default_interval_;
+    uint32_t max_interval_;
+    uint32_t delay_start_;
+    uint32_t random_delay_;
     CallbackFunc callback_;
     void *data_;
   };

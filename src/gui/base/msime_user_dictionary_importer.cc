@@ -224,7 +224,7 @@ class MSIMEImportIterator
       Util::WideToUTF8(buf_[index_].pwchDisplay, &entry->value);
 
       // set POS
-      std::map<int, string>::const_iterator it =
+      std::map<int, std::string>::const_iterator it =
           pos_map_.find(buf_[index_].nPos1);
       if (it == pos_map_.end()) {
         ++index_;
@@ -270,7 +270,7 @@ class MSIMEImportIterator
  private:
   std::vector<IMEWRD> buf_;
   ScopedIFEDictionary dic_;
-  std::map<int, string> pos_map_;
+  std::map<int, std::string> pos_map_;
   HRESULT result_;
   ULONG size_;
   ULONG index_;

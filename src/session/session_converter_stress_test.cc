@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -51,7 +52,7 @@ ABSL_FLAG(bool, test_deterministic, true,
           "if false, srand() is initialized by current time "
           "and \"test_srand_seed\" is ignored");
 
-ABSL_FLAG(int32, test_srand_seed, 0,
+ABSL_FLAG(int32_t, test_srand_seed, 0,
           "seed number for srand(). "
           "used only when \"test_deterministic\" is true");
 
@@ -66,10 +67,10 @@ class SessionConverterStressTest : public ::testing::Test {
   SessionConverterStressTest() {
     if (!absl::GetFlag(FLAGS_test_deterministic)) {
       absl::SetFlag(&FLAGS_test_srand_seed,
-                    static_cast<int32>(Clock::GetTime()));
+                    static_cast<int32_t>(Clock::GetTime()));
     }
     Util::SetRandomSeed(
-        static_cast<uint32>(absl::GetFlag(FLAGS_test_srand_seed)));
+        static_cast<uint32_t>(absl::GetFlag(FLAGS_test_srand_seed)));
   }
 
   void SetUp() override {

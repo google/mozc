@@ -41,8 +41,8 @@ static mozc::Mutex sys_prop_mutex;
 }  // namespace
 
 namespace mozc {
-std::map<string, string> AndroidUtil::property_cache;
-std::set<string> AndroidUtil::undefined_keys;
+std::map<std::string, std::string> AndroidUtil::property_cache;
+std::set<std::string> AndroidUtil::undefined_keys;
 const char AndroidUtil::kSystemPropertyOsVersion[] = "ro.build.version.release";
 const char AndroidUtil::kSystemPropertyModel[] = "ro.product.model";
 const char AndroidUtil::kSystemPropertySdkVersion[] = "ro.build.version.sdk";
@@ -51,7 +51,7 @@ const char AndroidUtil::kSystemPropertySdkVersion[] = "ro.build.version.sdk";
 string AndroidUtil::GetSystemProperty(const string &key,
                                       const string &default_value) {
   mozc::scoped_lock lock(&sys_prop_mutex);
-  std::map<string, string>::iterator it = property_cache.find(key);
+  std::map<std::string, std::string>::iterator it = property_cache.find(key);
   if (it != property_cache.end()) {
     // Cache is found.
     return it->second;

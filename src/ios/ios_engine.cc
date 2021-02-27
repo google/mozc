@@ -29,6 +29,7 @@
 
 #include "ios/ios_engine.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -112,8 +113,8 @@ bool UserDictCommandFailed(const commands::Command &command) {
          UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
-uint64 FindDictionaryId(const commands::Command &command,
-                        const std::string &dictionary_name) {
+uint64_t FindDictionaryId(const commands::Command &command,
+                          const std::string &dictionary_name) {
   const auto &status = command.output().user_dictionary_command_status();
   for (const auto &dict : status.storage().dictionaries()) {
     if (dict.name() == dictionary_name) {
@@ -272,7 +273,7 @@ bool IosEngine::SendKey(const std::string &character,
   commands::KeyEvent *key_event = input->mutable_key();
   key_event->set_key_code(Util::UTF8ToUCS4(character));
   key_event->set_mode(current_input_config_->composition_mode);
-  const uint32 kNoModifiers = 0;
+  const uint32_t kNoModifiers = 0;
   key_event->set_modifiers(kNoModifiers);
   return EvalCommandLockGuarded(command);
 }
@@ -466,7 +467,7 @@ IosEngine::ScopedUserDictionarySession::~ScopedUserDictionarySession() {
   }
 }
 
-bool IosEngine::LoadUserDictionaryIfExists(uint64 user_dict_session_id,
+bool IosEngine::LoadUserDictionaryIfExists(uint64_t user_dict_session_id,
                                            commands::Command *command) {
   command->Clear();
   commands::Input *input = command->mutable_input();
@@ -490,7 +491,7 @@ bool IosEngine::LoadUserDictionaryIfExists(uint64 user_dict_session_id,
   }
 }
 
-bool IosEngine::DeleteUserDictionaryIfExists(uint64 user_dict_session_id,
+bool IosEngine::DeleteUserDictionaryIfExists(uint64_t user_dict_session_id,
                                              const std::string &dictionary_name,
                                              commands::Command *command) {
   command->Clear();
@@ -504,7 +505,7 @@ bool IosEngine::DeleteUserDictionaryIfExists(uint64 user_dict_session_id,
     return false;
   }
 
-  const uint64 dictionary_id = FindDictionaryId(*command, dictionary_name);
+  const uint64_t dictionary_id = FindDictionaryId(*command, dictionary_name);
   if (dictionary_id == 0) {
     return true;
   }
@@ -518,7 +519,7 @@ bool IosEngine::DeleteUserDictionaryIfExists(uint64 user_dict_session_id,
 }
 
 bool IosEngine::ImportDataToNewUserDictionary(
-    uint64 user_dict_session_id, const std::string &dictionary_name,
+    uint64_t user_dict_session_id, const std::string &dictionary_name,
     const std::string &tsv_content, commands::Command *command) {
   command->Clear();
   commands::Input *input = command->mutable_input();
@@ -533,7 +534,7 @@ bool IosEngine::ImportDataToNewUserDictionary(
   return EvalCommandLockGuarded(command) && !UserDictCommandFailed(*command);
 }
 
-bool IosEngine::SaveUserDictionary(uint64 user_dict_session_id,
+bool IosEngine::SaveUserDictionary(uint64_t user_dict_session_id,
                                    commands::Command *command) {
   command->Clear();
   commands::Input *input = command->mutable_input();

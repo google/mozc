@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 #define MOZC_REWRITER_USER_SEGMENT_HISTORY_REWRITER_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -47,8 +48,8 @@ class LRUStorage;
 class UserSegmentHistoryRewriter : public RewriterInterface {
  public:
   struct ScoreType {
-    uint32 last_access_time;
-    uint32 score;
+    uint32_t last_access_time;
+    uint32_t score;
     const Segment::Candidate *candidate;
   };
 
@@ -68,8 +69,8 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool IsAvailable(const ConversionRequest &request,
                    const Segments &segments) const;
   bool GetScore(const Segments &segments, size_t segment_index,
-                int candidate_index, uint32 *score,
-                uint32 *last_access_time) const;
+                int candidate_index, uint32_t *score,
+                uint32_t *last_access_time) const;
   bool Replaceable(const Segment::Candidate &lhs,
                    const Segment::Candidate &rhs) const;
   void RememberFirstCandidate(const Segments &segments, size_t segment_index);

@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <set>
@@ -136,7 +137,7 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
 
   void Load(const user_dictionary::UserDictionaryStorage &storage) {
     Clear();
-    std::set<uint64> seen;
+    std::set<uint64_t> seen;
     std::vector<UserPOS::Token> tokens;
 
     if (!suppression_dictionary_->IsLocked()) {
@@ -176,7 +177,7 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
         // clang-format on
         DCHECK_LE(entry.pos(), 255);
         MOZC_CLANG_POP_WARNING();
-        const uint64 fp =
+        const uint64_t fp =
             Hash::Fingerprint(reading + "\t" + entry.value() + "\t" +
                               static_cast<char>(entry.pos()));
         if (!seen.insert(fp).second) {

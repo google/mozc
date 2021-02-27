@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_POS_INTERFACE_H_
 #define MOZC_DICTIONARY_USER_POS_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -60,8 +61,8 @@ class UserPOSInterface : public POSListProviderInterface {
   struct Token {
     std::string key;
     std::string value;
-    uint16 id;
-    int16 cost;
+    uint16_t id;
+    int16_t cost;
     std::string comment;  // This field comes from user dictionary.
   };
 
@@ -72,7 +73,7 @@ class UserPOSInterface : public POSListProviderInterface {
 
   // Returns iid from Mozc POS. If the pos has inflection, this method only
   // returns the ids of base form.
-  virtual bool GetPOSIDs(const std::string &pos, uint16 *id) const = 0;
+  virtual bool GetPOSIDs(const std::string &pos, uint16_t *id) const = 0;
 
   // Converts the given tuple (key, value, pos, locale) to Token.  If the pos
   // has inflection, this function expands possible inflections automatically.

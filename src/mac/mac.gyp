@@ -194,6 +194,8 @@
             '<(gen_out_dir)/ActivatePane/Japanese.lproj/Localizable.strings',
           ],
           'xcode_settings': {
+            'CURRENT_PROJECT_VERSION': '<(version)',
+            'MARKETING_VERSION': '<(short_version)',
             'PRODUCT_BUNDLE_IDENTIFIER': '<(domain_prefix).ActivatePane',
             'INFOPLIST_FILE': 'ActivatePane/Info.plist',
           },

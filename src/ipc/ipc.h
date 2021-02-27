@@ -30,6 +30,7 @@
 #ifndef MOZC_IPC_IPC_H_
 #define MOZC_IPC_IPC_H_
 
+#include <cstdint>
 #ifdef __APPLE__
 #include <mach/mach.h>  // for mach_port_t
 #endif                  // OS_OS_MACOSX
@@ -73,11 +74,11 @@ class IPCClientInterface {
 
   virtual bool Connected() const = 0;
   virtual bool Call(const char *request, size_t request_size, char *response,
-                    size_t *response_size, int32 timeout) = 0;
+                    size_t *response_size, int32_t timeout) = 0;
 
-  virtual uint32 GetServerProtocolVersion() const = 0;
+  virtual uint32_t GetServerProtocolVersion() const = 0;
   virtual const std::string &GetServerProductVersion() const = 0;
-  virtual uint32 GetServerProcessId() const = 0;
+  virtual uint32_t GetServerProcessId() const = 0;
 
   // return last error
   virtual IPCErrorType GetLastIPCError() const = 0;
@@ -129,11 +130,11 @@ class IPCClient : public IPCClientInterface {
   bool Connected() const override;
 
   // Return server protocol version
-  uint32 GetServerProtocolVersion() const override;
+  uint32_t GetServerProtocolVersion() const override;
 
   const std::string &GetServerProductVersion() const override;
 
-  uint32 GetServerProcessId() const override;
+  uint32_t GetServerProcessId() const override;
 
   // Synchronous IPC call:
   // Client request is encoded in 'request' whose size is request_size.
@@ -146,7 +147,7 @@ class IPCClient : public IPCClientInterface {
   // cannot call the Call() function more than once.
   bool Call(const char *request, size_t request_size, char *response,
             size_t *response_size,
-            int32 timeout) override;  // msec
+            int32_t timeout) override;  // msec
 
   IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
 
@@ -229,7 +230,7 @@ class IPCServer {
   //          send a request within 'timeout'. If timeout is -1,
   //          IPCServer waits forever. Default setting is -1.
   // TODO(taku): timeout is not implemented properly
-  IPCServer(const std::string &name, int32 num_connections, int32 timeout);
+  IPCServer(const std::string &name, int32_t num_connections, int32_t timeout);
   virtual ~IPCServer();
 
   // Return true if the connection is available

@@ -29,6 +29,8 @@
 
 #include "ipc/ipc_path_manager.h"
 
+#include <cstdint>
+
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
@@ -224,7 +226,7 @@ bool IPCPathManager::SavePathName() {
   ipc_path_info_->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   ipc_path_info_->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
 #else
-  ipc_path_info_->set_process_id(static_cast<uint32>(getpid()));
+  ipc_path_info_->set_process_id(static_cast<uint32_t>(getpid()));
   ipc_path_info_->set_thread_id(0);
 #endif
 
@@ -308,7 +310,7 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
   return true;
 }
 
-uint32 IPCPathManager::GetServerProtocolVersion() const {
+uint32_t IPCPathManager::GetServerProtocolVersion() const {
   return ipc_path_info_->protocol_version();
 }
 
@@ -316,7 +318,7 @@ const std::string &IPCPathManager::GetServerProductVersion() const {
   return ipc_path_info_->product_version();
 }
 
-uint32 IPCPathManager::GetServerProcessId() const {
+uint32_t IPCPathManager::GetServerProcessId() const {
   return ipc_path_info_->process_id();
 }
 
@@ -325,7 +327,8 @@ void IPCPathManager::Clear() {
   ipc_path_info_->Clear();
 }
 
-bool IPCPathManager::IsValidServer(uint32 pid, const std::string &server_path) {
+bool IPCPathManager::IsValidServer(uint32_t pid,
+                                   const std::string &server_path) {
   scoped_lock l(mutex_.get());
   if (pid == 0) {
     // For backward compatibility.
@@ -336,7 +339,7 @@ bool IPCPathManager::IsValidServer(uint32 pid, const std::string &server_path) {
     return true;
   }
 
-  if (pid == static_cast<uint32>(-1)) {
+  if (pid == static_cast<uint32_t>(-1)) {
     VLOG(1) << "pid is -1. so assume that it is an invalid program";
     return false;
   }

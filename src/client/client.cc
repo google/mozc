@@ -31,6 +31,8 @@
 
 #include "client/client.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <Windows.h>
 #else
@@ -279,10 +281,10 @@ void Client::ResetHistory() {
 #endif
 }
 
-void Client::GetHistoryInputs(std::vector<commands::Input> *output) const {
-  output->clear();
+void Client::GetHistoryInputs(std::vector<commands::Input> *result) const {
+  result->clear();
   for (size_t i = 0; i < history_inputs_.size(); ++i) {
-    output->push_back(history_inputs_[i]);
+    result->push_back(history_inputs_[i]);
   }
 }
 
@@ -291,10 +293,10 @@ bool Client::SendKeyWithContext(const commands::KeyEvent &key,
                                 commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_KEY);
-  input.mutable_key()->CopyFrom(key);
+  *input.mutable_key() = key;
   // If the pointer of |context| is not the default_instance, update the data.
   if (&context != &commands::Context::default_instance()) {
-    input.mutable_context()->CopyFrom(context);
+    *input.mutable_context() = context;
   }
   return EnsureCallCommand(&input, output);
 }
@@ -306,9 +308,9 @@ bool Client::TestSendKeyWithContext(const commands::KeyEvent &key,
   input.set_type(commands::Input::TEST_SEND_KEY);
   // If the pointer of |context| is not the default_instance, update the data.
   if (&context != &commands::Context::default_instance()) {
-    input.mutable_context()->CopyFrom(context);
+    *input.mutable_context() = context;
   }
-  input.mutable_key()->CopyFrom(key);
+  *input.mutable_key() = key;
   return EnsureCallCommand(&input, output);
 }
 
@@ -317,10 +319,10 @@ bool Client::SendCommandWithContext(const commands::SessionCommand &command,
                                     commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SEND_COMMAND);
-  input.mutable_command()->CopyFrom(command);
+  *input.mutable_command() = command;
   // If the pointer of |context| is not the default_instance, update the data.
   if (&context != &commands::Context::default_instance()) {
-    input.mutable_context()->CopyFrom(context);
+    *input.mutable_context() = context;
   }
   return EnsureCallCommand(&input, output);
 }
@@ -418,7 +420,7 @@ void Client::set_suppress_error_dialog(bool suppress) {
 }
 
 void Client::set_client_capability(const commands::Capability &capability) {
-  client_capability_.CopyFrom(capability);
+  client_capability_ = capability;
 }
 
 bool Client::CreateSession() {
@@ -426,7 +428,7 @@ bool Client::CreateSession() {
   commands::Input input;
   input.set_type(commands::Input::CREATE_SESSION);
 
-  input.mutable_capability()->CopyFrom(client_capability_);
+  *input.mutable_capability() = client_capability_;
 
   commands::ApplicationInfo *info = input.mutable_application_info();
   DCHECK(info);
@@ -435,7 +437,7 @@ bool Client::CreateSession() {
   info->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   info->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
 #else
-  info->set_process_id(static_cast<uint32>(getpid()));
+  info->set_process_id(static_cast<uint32_t>(getpid()));
   info->set_thread_id(0);
 #endif
 
@@ -489,7 +491,7 @@ bool Client::GetConfig(config::Config *config) {
   }
 
   config->Clear();
-  config->CopyFrom(output.config());
+  *config = output.config();
   return true;
 }
 
@@ -497,7 +499,7 @@ bool Client::SetConfig(const config::Config &config) {
   commands::Input input;
   InitInput(&input);
   input.set_type(commands::Input::SET_CONFIG);
-  input.mutable_config()->CopyFrom(config);
+  *input.mutable_config() = config;
 
   commands::Output output;
   if (!Call(input, &output)) {
@@ -709,7 +711,7 @@ void Client::OnFatal(ServerLauncherInterface::ServerErrorType type) {
 void Client::InitInput(commands::Input *input) const {
   input->set_id(id_);
   if (preferences_ != nullptr) {
-    input->mutable_config()->CopyFrom(*preferences_);
+    *input->mutable_config() = *preferences_;
   }
 }
 

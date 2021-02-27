@@ -110,9 +110,11 @@ bzl_library(
     parse_tests = False,
     visibility = ["//:__subpackages__"],
     deps = [
+        ":config_bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
         "//tools/build_defs:stubs.bzl",
         "//tools/build_rules/android_cc_test:def",
+        "@build_bazel_rules_apple//apple:macos",
     ],
 )
 
@@ -127,6 +129,12 @@ filegroup(
     name = "package",
     srcs = select_mozc(
         default = [],
+        macos = [
+            "//mac:activate_pane",
+            "//mac:dev_confirm_pane",
+            "//mac:mozc_macos",
+            "//mac:uninstaller_macos",
+        ],
         oss_android = ["//android/jni:mozc_lib"],
         oss_linux = [
             "//gui/tool:mozc_tool",
@@ -136,9 +144,9 @@ filegroup(
             "//server:mozc_server",
         ],
         oss_macos = [
-            "//gui/about_dialog:about_dialog_macos",
-            "//renderer:mozc_renderer_macos",
-            "//server:mozc_server_macos",
+            "//mac:activate_pane",
+            "//mac:mozc_macos",
+            "//mac:uninstaller_macos",
         ],
     ),
 )

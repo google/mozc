@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 
@@ -69,8 +70,9 @@ int main(int argc, char **argv) {
   }
 
   const std::string iv_str = absl::GetFlag(FLAGS_iv);
-  const uint8 *iv =
-      iv_str.empty() ? nullptr : reinterpret_cast<const uint8 *>(iv_str.data());
+  const uint8_t *iv = iv_str.empty()
+                          ? nullptr
+                          : reinterpret_cast<const uint8_t *>(iv_str.data());
 
   if (!absl::GetFlag(FLAGS_input_file).empty() &&
       !absl::GetFlag(FLAGS_output_file).empty()) {

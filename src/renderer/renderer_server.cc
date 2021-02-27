@@ -29,6 +29,8 @@
 
 #include "renderer/renderer_server.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -53,7 +55,7 @@
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
-ABSL_FLAG(int32, timeout, 10 * 60, "timeout of candidate server (sec)");
+ABSL_FLAG(int32_t, timeout, 10 * 60, "timeout of candidate server (sec)");
 ABSL_FLAG(bool, restricted, false,
           "launch candidates server with restricted mode");
 
@@ -158,12 +160,12 @@ class RendererServerSendCommand : public client::SendCommandInterface {
     return true;
   }
 
-  void set_receiver_handle(uint32 receiver_handle) {
+  void set_receiver_handle(uint32_t receiver_handle) {
     receiver_handle_ = receiver_handle;
   }
 
  private:
-  uint32 receiver_handle_;
+  uint32_t receiver_handle_;
   DISALLOW_COPY_AND_ASSIGN(RendererServerSendCommand);
 };
 
@@ -285,6 +287,6 @@ bool RendererServer::ExecCommandInternal(
   return false;
 }
 
-uint32 RendererServer::timeout() const { return timeout_; }
+uint32_t RendererServer::timeout() const { return timeout_; }
 }  // namespace renderer
 }  // namespace mozc

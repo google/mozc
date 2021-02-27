@@ -29,6 +29,8 @@
 
 #include "gui/dictionary_tool/dictionary_tool.h"
 
+#include <cstdint>
+
 #if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
@@ -838,7 +840,7 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
 }
 
 void DictionaryTool::ImportHelper(
-    uint64 dic_id, const std::string &dic_name, const std::string &file_name,
+    uint64_t dic_id, const std::string &dic_name, const std::string &file_name,
     UserDictionaryImporter::IMEType ime_type,
     UserDictionaryImporter::EncodingType encoding_type) {
   if (!IsReadableToImport(file_name)) {
@@ -1413,7 +1415,7 @@ void DictionaryTool::SyncToStorage() {
 }
 
 void DictionaryTool::CreateDictionaryHelper(const QString &dic_name) {
-  uint64 new_dic_id = 0;
+  uint64_t new_dic_id = 0;
   if (!session_->mutable_storage()->CreateDictionary(dic_name.toStdString(),
                                                      &new_dic_id)) {
     LOG(ERROR) << "Failed to create a new dictionary.";

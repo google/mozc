@@ -29,6 +29,7 @@
 
 #include "rewriter/transliteration_rewriter.h"
 
+#include <cstdint>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -195,12 +196,12 @@ bool IsTransliterated(const std::vector<std::string> &t13ns) {
 }
 
 struct T13nIds {
-  uint16 hiragana_lid;
-  uint16 hiragana_rid;
-  uint16 katakana_lid;
-  uint16 katakana_rid;
-  uint16 ascii_lid;
-  uint16 ascii_rid;
+  uint16_t hiragana_lid;
+  uint16_t hiragana_rid;
+  uint16_t katakana_lid;
+  uint16_t katakana_rid;
+  uint16_t ascii_lid;
+  uint16_t ascii_rid;
   T13nIds()
       : hiragana_lid(0),
         hiragana_rid(0),
@@ -425,8 +426,8 @@ bool TransliterationRewriter::Rewrite(const ConversionRequest &request,
 }
 
 void TransliterationRewriter::InitT13nCandidate(
-    const std::string &key, const std::string &value, uint16 lid, uint16 rid,
-    Segment::Candidate *cand) const {
+    const std::string &key, const std::string &value, uint16_t lid,
+    uint16_t rid, Segment::Candidate *cand) const {
   DCHECK(cand);
   cand->Init();
   cand->value = value;

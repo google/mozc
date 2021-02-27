@@ -29,6 +29,7 @@
 
 #include "converter/nbest_generator.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -96,7 +97,7 @@ class MockDataAndImmutableConverter {
     CHECK(dictionary_);
 
     absl::string_view suffix_key_array_data, suffix_value_array_data;
-    const uint32 *token_array = nullptr;
+    const uint32_t *token_array = nullptr;
     data_manager_->GetSuffixDictionaryData(
         &suffix_key_array_data, &suffix_value_array_data, &token_array);
     suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
@@ -166,7 +167,7 @@ class NBestGeneratorTest : public ::testing::Test {
 
   const Node *GetEndNode(const ImmutableConverterImpl &converter,
                          const Segments &segments, const Node &begin_node,
-                         const std::vector<uint16> &group,
+                         const std::vector<uint16_t> &group,
                          bool is_single_segment) {
     const Node *end_node = nullptr;
     for (Node *node = begin_node.next; node->next != nullptr;
@@ -202,7 +203,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
@@ -258,7 +259,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 
@@ -309,7 +310,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   const ConversionRequest request;
   converter->MakeLattice(request, &segments, &lattice);
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   converter->MakeGroup(segments, &group);
   converter->Viterbi(segments, &lattice);
 

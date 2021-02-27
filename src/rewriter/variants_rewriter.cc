@@ -29,6 +29,7 @@
 
 #include "rewriter/variants_rewriter.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -300,8 +301,8 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
   // Regular Candidate
   std::string default_value, alternative_value;
   std::string default_content_value, alternative_content_value;
-  std::vector<uint32> default_inner_segment_boundary;
-  std::vector<uint32> alternative_inner_segment_boundary;
+  std::vector<uint32_t> default_inner_segment_boundary;
+  std::vector<uint32_t> alternative_inner_segment_boundary;
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
     Segment::Candidate *original_candidate = seg->mutable_candidate(i);
     DCHECK(original_candidate);
@@ -407,8 +408,8 @@ bool VariantsRewriter::GenerateAlternatives(
     const Segment::Candidate &original, std::string *default_value,
     std::string *alternative_value, std::string *default_content_value,
     std::string *alternative_content_value,
-    std::vector<uint32> *default_inner_segment_boundary,
-    std::vector<uint32> *alternative_inner_segment_boundary) const {
+    std::vector<uint32_t> *default_inner_segment_boundary,
+    std::vector<uint32_t> *alternative_inner_segment_boundary) const {
   default_value->clear();
   alternative_value->clear();
   default_content_value->clear();

@@ -29,6 +29,7 @@
 
 #include "converter/key_corrector.h"
 
+#include <cstdint>
 #include <cstring>
 
 #include "base/logging.h"
@@ -71,8 +72,8 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
-  uint16 output_ucs4 = 0x0000;
+  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  uint16_t output_ucs4 = 0x0000;
   switch (next_ucs4) {
     case 0x3042:             // "あ"
       output_ucs4 = 0x306A;  // "な"
@@ -113,10 +114,10 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
 bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
                      size_t *mblen, std::string *output) {
   // 0x3093: "ん"
-  static const uint16 kPattern[] = {0x0000, 0x3093, 0x3093};
+  static const uint16_t kPattern[] = {0x0000, 0x3093, 0x3093};
 
   *mblen = 0;
-  uint16 first_char = 0x0000;
+  uint16_t first_char = 0x0000;
   size_t first_mblen = 0;
   for (size_t i = 0; i < arraysize(kPattern); ++i) {
     if (begin >= end) {
@@ -191,8 +192,8 @@ bool RewriteNI(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
-  uint16 output_ucs4 = 0x0000;
+  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  uint16_t output_ucs4 = 0x0000;
   switch (next_ucs4) {
     case 0x3083:             // "ゃ"
       output_ucs4 = 0x3084;  // "や"
@@ -242,7 +243,7 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
   }
 
   size_t mblen2 = 0;
-  const uint16 next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
   // "[はばぱひびぴふぶぷへべぺほぼぽ]" => [0x306F .. 0X307D]
   // Here we want to take "[は..ぽ]" except for "はひふへほ"
   if (next_ucs4 % 3 != 0 &&                          // not "はひふへほ"
@@ -267,10 +268,10 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
                      size_t *mblen, std::string *output) {
   // 0x0000 is a place holder for "[^っ]"
   // "っ": 0x3063
-  static const uint16 kPattern[] = {0x0000, 0x3063, 0x3063, 0x0000};
+  static const uint16_t kPattern[] = {0x0000, 0x3063, 0x3063, 0x0000};
 
-  uint16 first_char = 0x0000;
-  uint16 last_char = 0x0000;
+  uint16_t first_char = 0x0000;
+  uint16_t last_char = 0x0000;
   for (size_t i = 0; i < arraysize(kPattern); ++i) {
     if (begin >= end) {
       *mblen = 0;

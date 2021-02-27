@@ -33,8 +33,10 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_UTIL_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_UTIL_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
 
@@ -113,15 +115,15 @@ class UserDictionaryUtil {
   // Returns UserDictionary with the given id, or nullptr if not found.
   static const user_dictionary::UserDictionary *GetUserDictionaryById(
       const user_dictionary::UserDictionaryStorage &storage,
-      uint64 dictionary_id);
+      uint64_t dictionary_id);
   static user_dictionary::UserDictionary *GetMutableUserDictionaryById(
-      user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id);
+      user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id);
 
   // Returns the index of the dictionary with the given dictionary_id
   // in the storage, or -1 if not found.
   static int GetUserDictionaryIndexById(
       const user_dictionary::UserDictionaryStorage &storage,
-      uint64 dictionary_id);
+      uint64_t dictionary_id);
 
   // Returns the file name of UserDictionary.
   static std::string GetUserDictionaryFileName();
@@ -138,13 +140,13 @@ class UserDictionaryUtil {
       const char *string_pos_type);
 
   // Generates a new dictionary id, i.e. id which is not in the storage.
-  static uint64 CreateNewDictionaryId(
+  static uint64_t CreateNewDictionaryId(
       const user_dictionary::UserDictionaryStorage &storage);
 
   // Creates dictionary with the given name.
   static user_dictionary::UserDictionaryCommandStatus::Status CreateDictionary(
       user_dictionary::UserDictionaryStorage *storage,
-      const std::string &dictionary_name, uint64 *new_dictionary_id);
+      const std::string &dictionary_name, uint64_t *new_dictionary_id);
 
   // Deletes dictionary specified by the given dictionary_id.
   // If the deleted_dictionary is not nullptr, the pointer to the
@@ -152,7 +154,7 @@ class UserDictionaryUtil {
   // caller has responsibility to actual deletion of the instance.
   // Returns true if succeeded, otherwise false.
   static bool DeleteDictionary(
-      user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id,
+      user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
       int *original_index,
       user_dictionary::UserDictionary **deleted_dictionary);
 

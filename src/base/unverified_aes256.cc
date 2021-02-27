@@ -30,6 +30,7 @@
 #include "base/unverified_aes256.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 
 #include "base/logging.h"
@@ -89,21 +90,21 @@ const uint8_t kInvSBox[256] = {
 const size_t kNr = 14;
 
 void AddRoundKey(uint8_t block[UnverifiedAES256::kBlockBytes],
-                 const uint8 round_key[UnverifiedAES256::kBlockBytes]) {
+                 const uint8_t round_key[UnverifiedAES256::kBlockBytes]) {
   for (size_t i = 0; i < UnverifiedAES256::kBlockBytes; ++i) {
     block[i] ^= round_key[i];
   }
 }
 
-uint8 GF_p8_mul3(uint8 val) {
-  const uint8 x = val * 2;
+uint8_t GF_p8_mul3(uint8_t val) {
+  const uint8_t x = val * 2;
   return (val >= 0x80) ? (x ^ 0x1b) : x;
 }
 
-void MixColumnsImpl(uint8 column[4]) {
-  uint8 a1[4];
-  uint8 a2[4];
-  uint8 a3[4];
+void MixColumnsImpl(uint8_t column[4]) {
+  uint8_t a1[4];
+  uint8_t a2[4];
+  uint8_t a3[4];
   for (size_t i = 0; i < 4; ++i) {
     a1[i] = column[i];
     a2[i] = GF_p8_mul3(a1[i]);
@@ -115,18 +116,18 @@ void MixColumnsImpl(uint8 column[4]) {
   column[3] = a3[0] ^ a1[1] ^ a1[2] ^ a2[3];
 }
 
-void InvMixColumnsImpl(uint8 column[4]) {
-  uint8 a9[4];
-  uint8 a11[4];
-  uint8 a13[4];
-  uint8 a14[4];
+void InvMixColumnsImpl(uint8_t column[4]) {
+  uint8_t a9[4];
+  uint8_t a11[4];
+  uint8_t a13[4];
+  uint8_t a14[4];
   for (size_t i = 0; i < 4; ++i) {
-    const uint8 a1 = column[i];
-    const uint8 a2 = GF_p8_mul3(a1);
-    const uint8 a2_2 = GF_p8_mul3(a2);
+    const uint8_t a1 = column[i];
+    const uint8_t a2 = GF_p8_mul3(a1);
+    const uint8_t a2_2 = GF_p8_mul3(a2);
     a9[i] = GF_p8_mul3(a2_2) ^ a1;
     a11[i] = GF_p8_mul3(a2_2 ^ a1) ^ a1;
-    const uint8 a2a1_2 = GF_p8_mul3(a2 ^ a1);
+    const uint8_t a2a1_2 = GF_p8_mul3(a2 ^ a1);
     a13[i] = GF_p8_mul3(a2a1_2) ^ a1;
     a14[i] = GF_p8_mul3(a2a1_2 ^ a1);
   }
@@ -138,13 +139,13 @@ void InvMixColumnsImpl(uint8 column[4]) {
 
 }  // namespace
 
-void UnverifiedAES256::TransformCBC(const uint8 (&key)[kKeyBytes],
-                                    const uint8 (&iv)[kBlockBytes],
-                                    uint8 *block, size_t block_count) {
-  uint8 w[kKeyScheduleBytes];
+void UnverifiedAES256::TransformCBC(const uint8_t (&key)[kKeyBytes],
+                                    const uint8_t (&iv)[kBlockBytes],
+                                    uint8_t *block, size_t block_count) {
+  uint8_t w[kKeyScheduleBytes];
   MakeKeySchedule(key, w);
 
-  uint8 vec[kBlockBytes];
+  uint8_t vec[kBlockBytes];
   memcpy(vec, iv, kBlockBytes);
   for (size_t i = 0; i < block_count; ++i) {
     uint8_t *src = block + (i * kBlockBytes);
@@ -156,16 +157,16 @@ void UnverifiedAES256::TransformCBC(const uint8 (&key)[kKeyBytes],
   }
 }
 
-void UnverifiedAES256::InverseTransformCBC(const uint8 (&key)[kKeyBytes],
-                                           const uint8 (&iv)[kBlockBytes],
-                                           uint8 *block, size_t block_count) {
-  uint8 w[kKeyScheduleBytes];
+void UnverifiedAES256::InverseTransformCBC(const uint8_t (&key)[kKeyBytes],
+                                           const uint8_t (&iv)[kBlockBytes],
+                                           uint8_t *block, size_t block_count) {
+  uint8_t w[kKeyScheduleBytes];
   MakeKeySchedule(key, w);
 
-  uint8 prev_block[kBlockBytes];
+  uint8_t prev_block[kBlockBytes];
   memcpy(prev_block, iv, kBlockBytes);
   for (size_t i = 0; i < block_count; ++i) {
-    uint8 original_current_block[kBlockBytes];
+    uint8_t original_current_block[kBlockBytes];
     uint8_t *currnt_block = block + (i * kBlockBytes);
     memcpy(original_current_block, currnt_block, kBlockBytes);
     InverseTransformECB(w, currnt_block);
@@ -176,17 +177,17 @@ void UnverifiedAES256::InverseTransformCBC(const uint8 (&key)[kKeyBytes],
   }
 }
 
-void UnverifiedAES256::MakeKeySchedule(const uint8 (&key)[kKeyBytes],
-                                       uint8 w[kKeyScheduleBytes]) {
+void UnverifiedAES256::MakeKeySchedule(const uint8_t (&key)[kKeyBytes],
+                                       uint8_t w[kKeyScheduleBytes]) {
   memcpy(w, key, kKeyBytes);
   for (size_t base = 1;; ++base) {
-    uint8 *k = &w[base * kKeyBytes];
-    uint8 *prev = k - kKeyBytes;
+    uint8_t *k = &w[base * kKeyBytes];
+    uint8_t *prev = k - kKeyBytes;
     // Note: Although the following equation is not always satisfied,
     // it is valid at least when 1 <= |base| <= 7.
     DCHECK_LE(1, base);
     DCHECK_GE(7, base);
-    const uint8 rcon = 1 << (base - 1);
+    const uint8_t rcon = 1 << (base - 1);
     k[0] = prev[0] ^ kSBox[prev[29]] ^ rcon;
     k[1] = prev[1] ^ kSBox[prev[30]];
     k[2] = prev[2] ^ kSBox[prev[31]];
@@ -206,36 +207,36 @@ void UnverifiedAES256::MakeKeySchedule(const uint8 (&key)[kKeyBytes],
   }
 }
 
-void UnverifiedAES256::SubBytes(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::SubBytes(uint8_t block[kBlockBytes]) {
   for (size_t i = 0; i < kBlockBytes; ++i) {
     block[i] = kSBox[block[i]];
   }
 }
 
-void UnverifiedAES256::InvSubBytes(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::InvSubBytes(uint8_t block[kBlockBytes]) {
   for (size_t i = 0; i < kBlockBytes; ++i) {
     block[i] = kInvSBox[block[i]];
   }
 }
 
-void UnverifiedAES256::MixColumns(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::MixColumns(uint8_t block[kBlockBytes]) {
   for (size_t i = 0; i < kBlockBytes; i += 4) {
     MixColumnsImpl(block + i);
   }
 }
 
-void UnverifiedAES256::InvMixColumns(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::InvMixColumns(uint8_t block[kBlockBytes]) {
   for (size_t i = 0; i < kBlockBytes; i += 4) {
     InvMixColumnsImpl(block + i);
   }
 }
 
-void UnverifiedAES256::ShiftRows(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::ShiftRows(uint8_t block[kBlockBytes]) {
   // Row 0 does not change.
 
   // Row 1
   {
-    const uint8 x = block[1];
+    const uint8_t x = block[1];
     block[1] = block[5];
     block[5] = block[9];
     block[9] = block[13];
@@ -250,7 +251,7 @@ void UnverifiedAES256::ShiftRows(uint8 block[kBlockBytes]) {
 
   // Row 3
   {
-    const uint8 x = block[3];
+    const uint8_t x = block[3];
     block[3] = block[15];
     block[15] = block[11];
     block[11] = block[7];
@@ -258,12 +259,12 @@ void UnverifiedAES256::ShiftRows(uint8 block[kBlockBytes]) {
   }
 }
 
-void UnverifiedAES256::InvShiftRows(uint8 block[kBlockBytes]) {
+void UnverifiedAES256::InvShiftRows(uint8_t block[kBlockBytes]) {
   // Row 0 does not change.
 
   // Row 1
   {
-    const uint8 x = block[1];
+    const uint8_t x = block[1];
     block[1] = block[13];
     block[13] = block[9];
     block[9] = block[5];
@@ -278,7 +279,7 @@ void UnverifiedAES256::InvShiftRows(uint8 block[kBlockBytes]) {
 
   // Row 3
   {
-    const uint8 x = block[3];
+    const uint8_t x = block[3];
     block[3] = block[7];
     block[7] = block[11];
     block[11] = block[15];
@@ -286,8 +287,8 @@ void UnverifiedAES256::InvShiftRows(uint8 block[kBlockBytes]) {
   }
 }
 
-void UnverifiedAES256::TransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                                    uint8 block[kBlockBytes]) {
+void UnverifiedAES256::TransformECB(const uint8_t (&w)[kKeyScheduleBytes],
+                                    uint8_t block[kBlockBytes]) {
   AddRoundKey(block, &w[0]);
   for (size_t round = 1; round < kNr; ++round) {
     SubBytes(block);
@@ -300,8 +301,8 @@ void UnverifiedAES256::TransformECB(const uint8 (&w)[kKeyScheduleBytes],
   AddRoundKey(block, &w[kBlockBytes * kNr]);
 }
 
-void UnverifiedAES256::InverseTransformECB(const uint8 (&w)[kKeyScheduleBytes],
-                                           uint8 block[kBlockBytes]) {
+void UnverifiedAES256::InverseTransformECB(
+    const uint8_t (&w)[kKeyScheduleBytes], uint8_t block[kBlockBytes]) {
   AddRoundKey(block, &w[kBlockBytes * kNr]);
   InvShiftRows(block);
   InvSubBytes(block);

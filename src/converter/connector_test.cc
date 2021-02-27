@@ -30,6 +30,7 @@
 #include "converter/connector.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <string>
@@ -46,8 +47,8 @@ namespace mozc {
 namespace {
 
 struct ConnectionDataEntry {
-  uint16 rid;
-  uint16 lid;
+  uint16_t rid;
+  uint16_t lid;
   int cost;
 };
 
@@ -101,7 +102,7 @@ TEST(ConnectorTest, BrokenData) {
   // Invalid magic number.
   {
     data.assign(cmmap.begin(), cmmap.size());
-    *reinterpret_cast<uint16 *>(&data[0]) = 0;
+    *reinterpret_cast<uint16_t *>(&data[0]) = 0;
     const auto status =
         Connector::Create(data.data(), data.size(), 256).status();
     VLOG(1) << status;
@@ -110,7 +111,7 @@ TEST(ConnectorTest, BrokenData) {
   // Not square.
   {
     data.assign(cmmap.begin(), cmmap.size());
-    uint16 *array = reinterpret_cast<uint16 *>(&data[0]);
+    uint16_t *array = reinterpret_cast<uint16_t *>(&data[0]);
     array[2] = 100;
     array[3] = 200;
     const auto status =

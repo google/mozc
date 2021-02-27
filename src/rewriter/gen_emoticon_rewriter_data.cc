@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -104,7 +105,7 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
   }
 
   std::map<std::string, TokenList> input_data;
-  int16 cost = 10;
+  int16_t cost = 10;
   for (const auto &kv : data) {
     const std::string &value = kv.first;
     const KeyList &key_list = kv.second;

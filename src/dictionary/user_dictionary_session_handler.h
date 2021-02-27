@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_SESSION_HANDLER_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -110,18 +111,18 @@ class UserDictionarySessionHandler {
   }
 
  private:
-  static constexpr uint64 kInvalidSessionId = 0;
+  static constexpr uint64_t kInvalidSessionId = 0;
 
   // As an interface, this class can hold multiple sessions,
   // but currently only one latest session is held.
   // (From the different point of view, this is LRU with max capacity '1'.)
-  uint64 session_id_;
+  uint64_t session_id_;
   std::unique_ptr<UserDictionarySession> session_;
   std::string dictionary_path_;
 
   UserDictionarySession *GetSession(const UserDictionaryCommand &command,
                                     UserDictionaryCommandStatus *status);
-  uint64 CreateNewSessionId() const;
+  uint64_t CreateNewSessionId() const;
 
   DISALLOW_COPY_AND_ASSIGN(UserDictionarySessionHandler);
 };

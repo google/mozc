@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
+
 #include "absl/strings/string_view.h"
 #ifndef NO_USAGE_REWRITER
-
-#include "rewriter/usage_rewriter.h"
 
 #include <string>
 
@@ -44,6 +44,7 @@
 #include "dictionary/pos_matcher.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/usage_rewriter.h"
 
 using mozc::dictionary::DictionaryInterface;
 using mozc::dictionary::POSMatcher;
@@ -64,11 +65,11 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
       &base_conjugation_suffix_data, &conjugation_suffix_data,
       &conjugation_suffix_index_data, &usage_items_data, &string_array_data);
   base_conjugation_suffix_ =
-      reinterpret_cast<const uint32 *>(base_conjugation_suffix_data.data());
-  const uint32 *conjugation_suffix =
-      reinterpret_cast<const uint32 *>(conjugation_suffix_data.data());
-  const uint32 *conjugation_suffix_data_index =
-      reinterpret_cast<const uint32 *>(conjugation_suffix_index_data.data());
+      reinterpret_cast<const uint32_t *>(base_conjugation_suffix_data.data());
+  const uint32_t *conjugation_suffix =
+      reinterpret_cast<const uint32_t *>(conjugation_suffix_data.data());
+  const uint32_t *conjugation_suffix_data_index =
+      reinterpret_cast<const uint32_t *>(conjugation_suffix_index_data.data());
 
   DCHECK(SerializedStringArray::VerifyData(string_array_data));
   string_array_.Set(string_array_data);
@@ -201,7 +202,7 @@ bool UsageRewriter::Rewrite(const ConversionRequest &request,
   // dictionary.  Since just the uniqueness in one Segments is sufficient, for
   // usage from the user dictionary, we simply assign sequential numbers larger
   // than the maximum ID of the embedded usage dictionary.
-  int32 usage_id_for_user_comment = key_value_usageitem_map_.size();
+  int32_t usage_id_for_user_comment = key_value_usageitem_map_.size();
   std::string comment;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);

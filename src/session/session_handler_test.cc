@@ -30,6 +30,7 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <string>
@@ -56,10 +57,10 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-ABSL_DECLARE_FLAG(int32, max_session_size);
-ABSL_DECLARE_FLAG(int32, create_session_min_interval);
-ABSL_DECLARE_FLAG(int32, last_command_timeout);
-ABSL_DECLARE_FLAG(int32, last_create_session_timeout);
+ABSL_DECLARE_FLAG(int32_t, max_session_size);
+ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
+ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
+ABSL_DECLARE_FLAG(int32_t, last_create_session_timeout);
 
 namespace mozc {
 
@@ -140,7 +141,7 @@ EngineReloadResponse::Status SendDummyEngineCommand(SessionHandler *handler) {
   return command.output().engine_reload_response().status();
 }
 
-bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
+bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
@@ -152,21 +153,21 @@ bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandlerInterface *handler, uint64 id) {
+bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
   return handler->EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler, uint64 id) {
+bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler->EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
+bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
   commands::Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);
@@ -196,22 +197,22 @@ class SessionHandlerTest : public SessionHandlerTestBase {
 };
 
 TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
-  uint32 expected_session_created_num = 0;
-  const int32 interval_time = 10;  // 10 sec
+  uint32_t expected_session_created_num = 0;
+  const int32_t interval_time = 10;  // 10 sec
   absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   // The oldest item is removed
   const size_t session_size = 3;
-  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
+  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32_t>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size + 1 sessions
-    std::vector<uint64> ids;
+    std::vector<uint64_t> ids;
     for (size_t i = 0; i <= session_size; ++i) {
-      uint64 id = 0;
+      uint64_t id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
@@ -228,14 +229,14 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     }
   }
 
-  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32>(session_size));
+  absl::SetFlag(&FLAGS_max_session_size, static_cast<int32_t>(session_size));
   {
     SessionHandler handler(CreateMockDataEngine());
 
     // Create session_size sessions
-    std::vector<uint64> ids;
+    std::vector<uint64_t> ids;
     for (size_t i = 0; i < session_size; ++i) {
-      uint64 id = 0;
+      uint64_t id = 0;
       EXPECT_TRUE(CreateSession(&handler, &id));
       ++expected_session_created_num;
       EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
@@ -246,13 +247,13 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
     std::random_device rd;
     std::mt19937 urbg(rd());
     std::shuffle(ids.begin(), ids.end(), urbg);
-    const uint64 oldest_id = ids[0];
+    const uint64_t oldest_id = ids[0];
     for (size_t i = 0; i < session_size; ++i) {
       EXPECT_TRUE(IsGoodSession(&handler, ids[i]));
     }
 
     // Create new session
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(CreateSession(&handler, &id));
     ++expected_session_created_num;
     EXPECT_COUNT_STATS("SessionCreated", expected_session_created_num);
@@ -265,14 +266,14 @@ TEST_F(SessionHandlerTest, MaxSessionSizeTest) {
 }
 
 TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
-  const int32 interval_time = 10;  // 10 sec
+  const int32_t interval_time = 10;  // 10 sec
   absl::SetFlag(&FLAGS_create_session_min_interval, interval_time);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 id = 0;
+  uint64_t id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
   EXPECT_FALSE(CreateSession(&handler, &id));
 
@@ -286,14 +287,14 @@ TEST_F(SessionHandlerTest, CreateSessionMinInterval) {
 }
 
 TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
-  const int32 timeout = 10;  // 10 sec
+  const int32_t timeout = 10;  // 10 sec
   absl::SetFlag(&FLAGS_last_create_session_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 id = 0;
+  uint64_t id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
   clock.PutClockForward(timeout, 0);
@@ -306,14 +307,14 @@ TEST_F(SessionHandlerTest, LastCreateSessionTimeout) {
 }
 
 TEST_F(SessionHandlerTest, LastCommandTimeout) {
-  const int32 timeout = 10;  // 10 sec
+  const int32_t timeout = 10;  // 10 sec
   absl::SetFlag(&FLAGS_last_command_timeout, timeout);
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
 
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 id = 0;
+  uint64_t id = 0;
   EXPECT_TRUE(CreateSession(&handler, &id));
 
   EXPECT_TRUE(CleanUp(&handler, id));
@@ -329,7 +330,7 @@ TEST_F(SessionHandlerTest, LastCommandTimeout) {
 TEST_F(SessionHandlerTest, ShutdownTest) {
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 session_id = 0;
+  uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
   {
@@ -358,7 +359,7 @@ TEST_F(SessionHandlerTest, ShutdownTest) {
 TEST_F(SessionHandlerTest, ClearHistoryTest) {
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 session_id = 0;
+  uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
   {
@@ -398,7 +399,7 @@ TEST_F(SessionHandlerTest, ClearHistoryTest) {
 TEST_F(SessionHandlerTest, ElapsedTimeTest) {
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 id = 0;
+  uint64_t id = 0;
 
   ClockMock clock(1000, 0);
   Clock::SetClockForUnitTest(&clock);
@@ -415,7 +416,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
 
   SessionHandler handler(CreateMockDataEngine());
 
-  uint64 session_id = 0;
+  uint64_t session_id = 0;
   EXPECT_TRUE(CreateSession(&handler, &session_id));
 
   {
@@ -434,7 +435,7 @@ TEST_F(SessionHandlerTest, ConfigTest) {
     input->set_id(session_id);
     input->set_type(commands::Input::SET_CONFIG);
     config.set_incognito_mode(true);
-    input->mutable_config()->CopyFrom(config);
+    *input->mutable_config() = config;
     EXPECT_TRUE(handler.EvalCommand(&command));
     EXPECT_EQ(command.input().id(), command.output().id());
     EXPECT_TRUE(command.output().config().incognito_mode());
@@ -493,7 +494,7 @@ TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
 
   // A new engine should be built on create session event because the session
   // handler currently holds no session.
-  uint64 id = 0;
+  uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
   EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(1, engine_builder->num_clear_called());
@@ -516,7 +517,7 @@ TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
 
   // BuildFromPreparedData() shouldn't be called on create session event when
   // async data load is running.
-  uint64 id = 0;
+  uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
   EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(0, engine_builder->num_clear_called());
@@ -534,7 +535,7 @@ TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
 
   // A new engine is not built but the builder should be cleared for next reload
   // request.
-  uint64 id = 0;
+  uint64_t id = 0;
   ASSERT_TRUE(CreateSession(&handler, &id));
   EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(1, engine_builder->num_clear_called());
@@ -549,7 +550,7 @@ TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
 
   // A session is created before data is loaded.
   engine_builder->set_state(MockEngineBuilder::State::STOP);
-  uint64 id1 = 0;
+  uint64_t id1 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id1));
   EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(0, engine_builder->num_clear_called());
@@ -559,7 +560,7 @@ TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
 
   // Another session is created.  Since the handler already holds one session
   // (id1), engine reload should not happen.
-  uint64 id2 = 0;
+  uint64_t id2 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id2));
   EXPECT_EQ(0, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(0, engine_builder->num_clear_called());
@@ -570,7 +571,7 @@ TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
 
   // A new session is created.  Since the handler holds no session, engine is
   // reloaded at this timing.
-  uint64 id3 = 0;
+  uint64_t id3 = 0;
   ASSERT_TRUE(CreateSession(&handler, &id3));
   EXPECT_EQ(1, engine_builder->num_build_from_prepared_data_called());
   EXPECT_EQ(1, engine_builder->num_clear_called());

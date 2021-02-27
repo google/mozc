@@ -32,11 +32,13 @@
 #ifndef MOZC_SESSION_COMMON_H_
 #define MOZC_SESSION_COMMON_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
 
-typedef uint64 SessionID;
+typedef uint64_t SessionID;
 
 }  // namespace mozc
 

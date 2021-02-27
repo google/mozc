@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <iostream>  // NOLINT
 #include <map>
 #include <numeric>  // accumulate
@@ -50,7 +51,7 @@
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");
-ABSL_FLAG(int32, max_case_for_source, 500,
+ABSL_FLAG(int32_t, max_case_for_source, 500,
           "specify max test case number for each test sources");
 
 namespace mozc {

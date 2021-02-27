@@ -29,6 +29,8 @@
 
 #include "gui/word_register_dialog/word_register_dialog.h"
 
+#include <cstdint>
+
 #if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
@@ -164,7 +166,7 @@ WordRegisterDialog::WordRegisterDialog()
   if (!session_->mutable_storage()->Exists() ||
       session_->storage().dictionaries_size() == 0) {
     const QString name = tr("User Dictionary 1");
-    uint64 dic_id = 0;
+    uint64_t dic_id = 0;
     if (!session_->mutable_storage()->CreateDictionary(name.toStdString(),
                                                        &dic_id)) {
       LOG(ERROR) << "Failed to create a new dictionary.";

@@ -32,6 +32,7 @@
 #include "session/internal/candidate_list.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -112,7 +113,7 @@ CandidateList::CandidateList(const bool rotate)
       candidate_pool_(new ObjectPool<Candidate>(kDefaultPageSize)),
       candidates_(new std::vector<Candidate *>),
       next_available_id_(0),
-      added_candidates_(new std::map<uint64, int>),
+      added_candidates_(new std::map<uint64_t, int>),
       alternative_ids_(new std::map<int, int>) {}
 
 CandidateList::~CandidateList() { Clear(); }
@@ -153,9 +154,9 @@ void CandidateList::AddCandidateWithAttributes(const int id,
 
   // If the value has already been stored in the candidate list, reuse it and
   // update the alternative_ids_.
-  const uint64 fp = Hash::Fingerprint(value);
+  const uint64_t fp = Hash::Fingerprint(value);
 
-  const std::pair<std::map<uint64, int>::iterator, bool> result =
+  const std::pair<std::map<uint64_t, int>::iterator, bool> result =
       added_candidates_->insert(std::make_pair(fp, id));
   if (!result.second) {  // insertion was failed.
     const int alt_id = result.first->second;

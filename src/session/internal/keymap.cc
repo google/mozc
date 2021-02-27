@@ -30,7 +30,6 @@
 // Keymap utils of Mozc interface.
 
 #include "session/internal/keymap.h"
-#include "session/internal/keymap-inl.h"
 
 #include <memory>
 #include <set>
@@ -48,6 +47,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/internal/keymap-inl.h"
 
 namespace mozc {
 namespace keymap {

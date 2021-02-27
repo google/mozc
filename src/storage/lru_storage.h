@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_LRU_STORAGE_H_
 #define MOZC_STORAGE_LRU_STORAGE_H_
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>
@@ -58,10 +59,10 @@ class LRUStorage {
   // If the file is broken or cannot open, tries to recreate
   // new file
   bool OpenOrCreate(const char *filename, size_t new_value_size,
-                    size_t new_size, uint32 new_seed);
+                    size_t new_size, uint32_t new_seed);
 
   // Looks up elements by key.
-  const char *Lookup(const std::string &key, uint32 *last_access_time) const;
+  const char *Lookup(const std::string &key, uint32_t *last_access_time) const;
   const char *Lookup(const std::string &key) const;
 
   // A safer lookup for string values (the pointers returned by above Lookup()'s
@@ -100,7 +101,7 @@ class LRUStorage {
   // Deletes all the elements that have timestamp less than |timestamp|, i.e.,
   // the last access is before |timestamp|.  Returns the number of deleted
   // elements.
-  int DeleteElementsBefore(uint32 timestamp);
+  int DeleteElementsBefore(uint32_t timestamp);
 
   // Deletes all the elements that are not accessed for 62 days.
   // Returns the number of deleted elements.
@@ -121,52 +122,52 @@ class LRUStorage {
   size_t used_size() const;
 
   // Returns the seed used for fingerprinting.
-  uint32 seed() const;
+  uint32_t seed() const;
 
   const std::string &filename() const;
 
   // Writes one entry at |i| th index.
   // i must be 0 <= i < size.
   // This data will not update the index of the storage.
-  void Write(size_t i, uint64 fp, const std::string &value,
-             uint32 last_access_time);
+  void Write(size_t i, uint64_t fp, const std::string &value,
+             uint32_t last_access_time);
 
   // Reads one entry from |i| th index.
   // i must be 0 <= i < size.
-  void Read(size_t i, uint64 *fp, std::string *value,
-            uint32 *last_access_time) const;
+  void Read(size_t i, uint64_t *fp, std::string *value,
+            uint32_t *last_access_time) const;
 
   // Creates Instance from file. Call Open internally
   static LRUStorage *Create(const char *filename);
 
   // Creates Instance from file. Call OpenOrCreate internally
   static LRUStorage *Create(const char *filename, size_t value_size,
-                            size_t size, uint32 seed);
+                            size_t size, uint32_t seed);
 
   // Creates an empty LRU db file
   static bool CreateStorageFile(const char *filename, size_t value_size,
-                                size_t size, uint32 seed);
+                                size_t size, uint32_t seed);
 
  private:
   // Initializes this LRU from memory buffer.
   bool Open(char *ptr, size_t ptr_size);
 
   // Deletes the element from |fp| or |it|.
-  bool Delete(uint64 fp);
+  bool Delete(uint64_t fp);
   bool Delete(std::list<char *>::iterator it);
 
   // Actual implementation of Delete() methods.
-  bool Delete(uint64 fp, std::list<char *>::iterator it);
+  bool Delete(uint64_t fp, std::list<char *>::iterator it);
 
   size_t value_size_;
   size_t size_;
-  uint32 seed_;
+  uint32_t seed_;
   char *next_item_;
   char *begin_;
   char *end_;
   std::string filename_;
   std::list<char *> lru_list_;  // Front is the most recently used data.
-  mozc_hash_map<uint64, std::list<char *>::iterator> lru_map_;
+  mozc_hash_map<uint64_t, std::list<char *>::iterator> lru_map_;
   std::unique_ptr<Mmap> mmap_;
 };
 

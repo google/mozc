@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_SYSTEM_UTIL_H_
 #define MOZC_BASE_SYSTEM_UTIL_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -164,7 +165,7 @@ class SystemUtil {
   static void DisableIME();
 
   // retrieve total physical memory. returns 0 if any error occurs.
-  static uint64 GetTotalPhysicalMemory();
+  static uint64_t GetTotalPhysicalMemory();
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(SystemUtil);

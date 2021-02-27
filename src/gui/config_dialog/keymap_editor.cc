@@ -29,6 +29,8 @@
 
 #include "gui/config_dialog/keymap_editor.h"
 
+#include <cstdint>
+
 #if defined(OS_ANDROID) || defined(OS_WASM)
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
@@ -188,8 +190,8 @@ class KeyMapValidator {
   }
 
  private:
-  std::set<uint32> invisible_modifiers_;
-  std::set<uint32> invisible_key_events_;
+  std::set<uint32_t> invisible_modifiers_;
+  std::set<uint32_t> invisible_key_events_;
   std::set<std::string> invisible_commands_;
 };
 

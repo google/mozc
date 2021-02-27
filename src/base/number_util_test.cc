@@ -29,6 +29,7 @@
 
 #include "base/number_util.h"
 
+#include <cstdint>
 #include <limits>
 
 #include "base/port.h"
@@ -50,7 +51,7 @@ TEST(NumberUtilTest, SimpleAtoi) {
 }
 
 TEST(NumberUtilTest, SafeStrToInt16) {
-  int16 value = 0x4321;
+  int16_t value = 0x4321;
 
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("0", &value));
   EXPECT_EQ(0, value);
@@ -74,10 +75,10 @@ TEST(NumberUtilTest, SafeStrToInt16) {
   EXPECT_EQ(-12345, value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("-32768", &value));
-  EXPECT_EQ(std::numeric_limits<int16>::min(), value);
+  EXPECT_EQ(std::numeric_limits<int16_t>::min(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16("32767", &value));
-  EXPECT_EQ(std::numeric_limits<int16>::max(), value);
+  EXPECT_EQ(std::numeric_limits<int16_t>::max(), value);
   value = 0x4321;
   EXPECT_TRUE(NumberUtil::SafeStrToInt16(" 1", &value));
   EXPECT_EQ(1, value);
@@ -110,7 +111,7 @@ TEST(NumberUtilTest, SafeStrToInt16) {
 }
 
 TEST(NumberUtilTest, SafeStrToInt32) {
-  int32 value = 0xDEADBEEF;
+  int32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("0", &value));
   EXPECT_EQ(0, value);
@@ -134,10 +135,10 @@ TEST(NumberUtilTest, SafeStrToInt32) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("-2147483648", &value));
-  EXPECT_EQ(std::numeric_limits<int32>::min(), value);
+  EXPECT_EQ(std::numeric_limits<int32_t>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32("2147483647", &value));
-  EXPECT_EQ(std::numeric_limits<int32>::max(), value);
+  EXPECT_EQ(std::numeric_limits<int32_t>::max(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt32(" 1", &value));
   EXPECT_EQ(1, value);
@@ -170,7 +171,7 @@ TEST(NumberUtilTest, SafeStrToInt32) {
 }
 
 TEST(NumberUtilTest, SafeStrToInt64) {
-  int64 value = 0xDEADBEEF;
+  int64_t value = 0xDEADBEEF;
 
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("0", &value));
@@ -195,10 +196,10 @@ TEST(NumberUtilTest, SafeStrToInt64) {
   EXPECT_EQ(-12345678, value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("-9223372036854775808", &value));
-  EXPECT_EQ(std::numeric_limits<int64>::min(), value);
+  EXPECT_EQ(std::numeric_limits<int64_t>::min(), value);
   value = 0xDEADBEEF;
   EXPECT_TRUE(NumberUtil::SafeStrToInt64("9223372036854775807", &value));
-  EXPECT_EQ(std::numeric_limits<int64>::max(), value);
+  EXPECT_EQ(std::numeric_limits<int64_t>::max(), value);
 
   EXPECT_FALSE(NumberUtil::SafeStrToInt64("-9223372036854775809",  // overflow
                                           &value));
@@ -223,7 +224,7 @@ TEST(NumberUtilTest, SafeStrToInt64) {
 }
 
 TEST(NumberUtilTest, SafeStrToUInt16) {
-  uint16 value = 0xBEEF;
+  uint16_t value = 0xBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt16("0", &value));
   EXPECT_EQ(0, value);
@@ -273,7 +274,7 @@ TEST(NumberUtilTest, SafeStrToUInt16) {
 }
 
 TEST(NumberUtilTest, SafeStrToUInt32) {
-  uint32 value = 0xDEADBEEF;
+  uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt32("0", &value));
   EXPECT_EQ(0, value);
@@ -323,7 +324,7 @@ TEST(NumberUtilTest, SafeStrToUInt32) {
 }
 
 TEST(NumberUtilTest, SafeHexStrToUInt32) {
-  uint32 value = 0xDEADBEEF;
+  uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeHexStrToUInt32("0", &value));
   EXPECT_EQ(0, value);
@@ -370,7 +371,7 @@ TEST(NumberUtilTest, SafeHexStrToUInt32) {
 }
 
 TEST(NumberUtilTest, SafeOctStrToUInt32) {
-  uint32 value = 0xDEADBEEF;
+  uint32_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeOctStrToUInt32("0", &value));
   EXPECT_EQ(0, value);
@@ -409,7 +410,7 @@ TEST(NumberUtilTest, SafeOctStrToUInt32) {
 }
 
 TEST(NumberUtilTest, SafeStrToUInt64) {
-  uint64 value = 0xDEADBEEF;
+  uint64_t value = 0xDEADBEEF;
 
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("0", &value));
   EXPECT_EQ(0, value);
@@ -418,7 +419,7 @@ TEST(NumberUtilTest, SafeStrToUInt64) {
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("012345678", &value));
   EXPECT_EQ(12345678, value);
   EXPECT_TRUE(NumberUtil::SafeStrToUInt64("18446744073709551615", &value));
-  EXPECT_EQ(uint64{18446744073709551615u},
+  EXPECT_EQ(uint64_t{18446744073709551615u},
             value);  // max of 64-bit unsigned integer
 
   EXPECT_FALSE(NumberUtil::SafeStrToUInt64("-0", &value));

@@ -29,6 +29,7 @@
 
 #include "dictionary/system/value_dictionary.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "data_manager/testing/mock_data_manager.h"
@@ -69,7 +70,7 @@ class ValueDictionaryTest : public ::testing::Test {
   ValueDictionary *BuildValueDictionary() {
     louds_trie_builder_->Build();
     louds_trie_->Open(
-        reinterpret_cast<const uint8 *>(louds_trie_builder_->image().data()));
+        reinterpret_cast<const uint8_t *>(louds_trie_builder_->image().data()));
     return new ValueDictionary(pos_matcher_, louds_trie_.get());
   }
 

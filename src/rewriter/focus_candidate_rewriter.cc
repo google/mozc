@@ -30,6 +30,7 @@
 #include "rewriter/focus_candidate_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -318,7 +319,7 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
                                                     int candidate_index) const {
   // Check if the focused candidate is a number compound.
   absl::string_view number, suffix;
-  uint32 number_script_type = 0;
+  uint32_t number_script_type = 0;
   const Segment &seg = segments->segment(segment_index);
   if (!ParseNumberCandidate(seg.candidate(candidate_index), &number, &suffix,
                             &number_script_type)) {
@@ -355,13 +356,13 @@ bool FocusCandidateRewriter::RerankNumberCandidates(Segments *segments,
 }
 
 int FocusCandidateRewriter::FindMatchingCandidates(
-    const Segment &seg, uint32 ref_script_type,
+    const Segment &seg, uint32_t ref_script_type,
     absl::string_view ref_suffix) const {
   // Only segments whose top candidate is a number compound are target of
   // reranking.
   const Segment::Candidate &cand = seg.candidate(0);
   absl::string_view number, suffix;
-  uint32 script_type = 0;
+  uint32_t script_type = 0;
   if (!ParseNumberCandidate(cand, &number, &suffix, &script_type)) {
     return -1;
   }
@@ -389,7 +390,7 @@ int FocusCandidateRewriter::FindMatchingCandidates(
 
 bool FocusCandidateRewriter::ParseNumberCandidate(
     const Segment::Candidate &cand, absl::string_view *number,
-    absl::string_view *suffix, uint32 *script_type) const {
+    absl::string_view *suffix, uint32_t *script_type) const {
   // If the lengths of content value and value are different, particles may be
   // appended to value.  In such cases, we only accept parallel markers.
   // Otherwise, the following wrong rewrite will occur.

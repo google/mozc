@@ -29,6 +29,7 @@
 
 #include "session/internal/session_output.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -45,7 +46,7 @@ namespace session {
 
 struct DummySegment {
   const char *value;
-  const int32 usage_id;
+  const int32_t usage_id;
   const char *usage_title;
   const char *usage_description;
 };

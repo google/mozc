@@ -29,6 +29,7 @@
 
 #include "rewriter/language_aware_rewriter.h"
 
+#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -156,7 +157,7 @@ bool IsRawQuery(const composer::Composer &composer,
 }
 
 // Get T13n candidate ids from existing candidates.
-void GetAlphabetIds(const Segment &segment, uint16 *lid, uint16 *rid) {
+void GetAlphabetIds(const Segment &segment, uint16_t *lid, uint16_t *rid) {
   DCHECK(lid);
   DCHECK(rid);
 
@@ -196,8 +197,8 @@ bool LanguageAwareRewriter::FillRawText(const ConversionRequest &request,
   std::string raw_string;
   request.composer().GetRawString(&raw_string);
 
-  uint16 lid = unknown_id_;
-  uint16 rid = unknown_id_;
+  uint16_t lid = unknown_id_;
+  uint16_t rid = unknown_id_;
   GetAlphabetIds(*segment, &lid, &rid);
 
   // Create a candidate.

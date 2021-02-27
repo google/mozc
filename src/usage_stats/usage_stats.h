@@ -30,28 +30,30 @@
 #ifndef MOZC_USAGE_STATS_USAGE_STATS_H_
 #define MOZC_USAGE_STATS_USAGE_STATS_H_
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
+
 #include "base/port.h"
 #include "usage_stats/usage_stats.pb.h"
 
 namespace mozc {
 namespace usage_stats {
-typedef std::map<uint32, Stats::TouchEventStats> TouchEventStatsMap;
+typedef std::map<uint32_t, Stats::TouchEventStats> TouchEventStatsMap;
 
 class UsageStats {
  public:
   // Updates count value
   // Increments val to current value
-  static void IncrementCountBy(const std::string &name, uint32 val);
+  static void IncrementCountBy(const std::string &name, uint32_t val);
   static void IncrementCount(const std::string &name) {
     IncrementCountBy(name, 1);
   }
 
   // Updates timing value
   // Updates current value using given val
-  static void UpdateTiming(const std::string &name, uint32 val);
+  static void UpdateTiming(const std::string &name, uint32_t val);
 
   // Sets integer value
   // Replaces old value with val
@@ -92,12 +94,12 @@ class UsageStats {
   // Reads a value from registry, and sets it in the value.
   // Returns true if all steps go successfully.
   // NULL pointers are accetable for the target arguments of GetTimingForTest().
-  static bool GetCountForTest(const std::string &name, uint32 *value);
-  static bool GetIntegerForTest(const std::string &name, int32 *value);
+  static bool GetCountForTest(const std::string &name, uint32_t *value);
+  static bool GetIntegerForTest(const std::string &name, int32_t *value);
   static bool GetBooleanForTest(const std::string &name, bool *value);
-  static bool GetTimingForTest(const std::string &name, uint64 *total_time,
-                               uint32 *num_timings, uint32 *avg_time,
-                               uint32 *min_time, uint32 *max_time);
+  static bool GetTimingForTest(const std::string &name, uint64_t *total_time,
+                               uint32_t *num_timings, uint32_t *avg_time,
+                               uint32_t *min_time, uint32_t *max_time);
   static bool GetVirtualKeyboardForTest(const std::string &name, Stats *stats);
   // This method doesn't check type of the stats.
   static bool GetStatsForTest(const std::string &name, Stats *stats);

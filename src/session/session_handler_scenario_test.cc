@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <memory>
 
 #include "base/config_file_stream.h"
@@ -44,6 +45,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_test_util.h"
+#include "session/session_handler_tool.h"
 #include "storage/registry.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
@@ -53,8 +55,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-
-#include "session/session_handler_tool.h"
 
 namespace mozc {
 
@@ -101,6 +101,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "change_request.txt",
     DATA_DIR "clear_user_prediction.txt",
     DATA_DIR "commit.txt",
+    DATA_DIR "composing_alphanumeric.txt",
     DATA_DIR "composition_display_as.txt",
     DATA_DIR "conversion.txt",
     DATA_DIR "conversion_display_as.txt",
@@ -191,7 +192,7 @@ INSTANTIATE_TEST_SUITE_P(DISABLED_SessionHandlerScenarioParameters,
                          ::testing::ValuesIn(kFailedScenarioFileList));
 
 bool GetCandidateIdByValue(const absl::string_view value, const Output &output,
-                           uint32 *id) {
+                           uint32_t *id) {
   if (!output.has_all_candidate_words()) {
     return false;
   }
@@ -209,7 +210,7 @@ bool GetCandidateIdByValue(const absl::string_view value, const Output &output,
 
 bool IsInAllCandidateWords(const absl::string_view expected_candidate,
                            const Output &output) {
-  uint32 tmp;
+  uint32_t tmp;
   return GetCandidateIdByValue(expected_candidate, output, &tmp);
 }
 
@@ -292,7 +293,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     EXPECT_EQ(expected_pos, preedit.cursor()) << preedit.Utf8DebugString();
   } else if (command == "EXPECT_CANDIDATE") {
     ASSERT_EQ(3, args.size());
-    uint32 candidate_id = 0;
+    uint32_t candidate_id = 0;
     const bool has_result =
         GetCandidateIdByValue(args[2], output, &candidate_id);
     EXPECT_TRUE(has_result) << args[2] + " is not found\n"
@@ -339,7 +340,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]), index);
   } else if (command == "EXPECT_USAGE_STATS_COUNT") {
     ASSERT_EQ(3, args.size());
-    const uint32 expected_value = NumberUtil::SimpleAtoi(args[2]);
+    const uint32_t expected_value = NumberUtil::SimpleAtoi(args[2]);
     if (expected_value == 0) {
       EXPECT_STATS_NOT_EXIST(args[1]);
     } else {
@@ -353,10 +354,10 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     EXPECT_BOOLEAN_STATS(args[1], args[2] == "true");
   } else if (command == "EXPECT_USAGE_STATS_TIMING") {
     ASSERT_EQ(6, args.size());
-    const uint64 expected_total = NumberUtil::SimpleAtoi(args[2]);
-    const uint32 expected_num = NumberUtil::SimpleAtoi(args[3]);
-    const uint32 expected_min = NumberUtil::SimpleAtoi(args[4]);
-    const uint32 expected_max = NumberUtil::SimpleAtoi(args[5]);
+    const uint64_t expected_total = NumberUtil::SimpleAtoi(args[2]);
+    const uint32_t expected_num = NumberUtil::SimpleAtoi(args[3]);
+    const uint32_t expected_min = NumberUtil::SimpleAtoi(args[4]);
+    const uint32_t expected_max = NumberUtil::SimpleAtoi(args[5]);
     if (expected_num == 0) {
       EXPECT_STATS_NOT_EXIST(args[1]);
     } else {

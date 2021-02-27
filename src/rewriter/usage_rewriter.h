@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_USAGE_REWRITER_H_
 #define MOZC_REWRITER_USAGE_REWRITER_H_
 
+#include <cstdint>
 #ifndef NO_USAGE_REWRITER
 
 #include <map>
@@ -71,18 +72,20 @@ class UsageRewriter : public RewriterInterface {
     UsageDictItemIterator() : ptr_(nullptr) {}
     explicit UsageDictItemIterator(const char *ptr) : ptr_(ptr) {}
 
-    size_t usage_id() const { return *reinterpret_cast<const uint32 *>(ptr_); }
+    size_t usage_id() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_);
+    }
     size_t key_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 4);
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
     }
     size_t value_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 8);
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 8);
     }
     size_t conjugation_id() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 12);
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
     }
     size_t meaning_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 16);
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 16);
     }
 
     UsageDictItemIterator &operator++() {
@@ -114,7 +117,7 @@ class UsageRewriter : public RewriterInterface {
   std::map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
   const dictionary::POSMatcher pos_matcher_;
   const dictionary::DictionaryInterface *dictionary_;
-  const uint32 *base_conjugation_suffix_;
+  const uint32_t *base_conjugation_suffix_;
   SerializedStringArray string_array_;
 };
 

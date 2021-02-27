@@ -34,6 +34,8 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 #define MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "dictionary/dictionary_interface.h"
 #include "storage/louds/louds_trie.h"
@@ -75,7 +77,7 @@ class ValueDictionary : public DictionaryInterface {
  private:
   const storage::louds::LoudsTrie *value_trie_;
   const SystemDictionaryCodecInterface *codec_;
-  const uint16 suggestion_only_word_id_;
+  const uint16_t suggestion_only_word_id_;
 };
 
 }  // namespace dictionary

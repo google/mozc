@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_CODEC_H_
 #define MOZC_DICTIONARY_SYSTEM_CODEC_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -85,21 +86,21 @@ class SystemDictionaryCodec : public SystemDictionaryCodecInterface {
                     std::string *output) const override;
 
   // Decompress tokens
-  void DecodeTokens(const uint8 *ptr,
+  void DecodeTokens(const uint8_t *ptr,
                     std::vector<TokenInfo> *tokens) const override;
 
   // Decompress a token.
-  bool DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+  bool DecodeToken(const uint8_t *ptr, TokenInfo *token_info,
                    int *read_bytes) const override;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |id_in_value_trie|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  bool ReadTokenForReverseLookup(const uint8 *ptr, int *value_id,
+  bool ReadTokenForReverseLookup(const uint8_t *ptr, int *value_id,
                                  int *read_bytes) const override;
 
-  uint8 GetTokensTerminationFlag() const override;
+  uint8_t GetTokensTerminationFlag() const override;
 
  private:
   void EncodeToken(const std::vector<TokenInfo> &tokens, int index,

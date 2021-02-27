@@ -30,6 +30,8 @@
 #ifndef MOZC_GUI_BASE_WIN_UTIL_H_
 #define MOZC_GUI_BASE_WIN_UTIL_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -41,7 +43,7 @@ class WinUtil {
   // |process_id|. The caller process must satisfy the condition
   // described in the following document.
   // http://msdn.microsoft.com/en-us/library/windows/desktop/ms633539.aspx
-  static void ActivateWindow(uint32 process_id);
+  static void ActivateWindow(uint32_t process_id);
 
   // return true if IME hotkey is disabled.
   static bool GetIMEHotKeyDisabled();

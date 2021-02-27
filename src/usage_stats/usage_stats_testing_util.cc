@@ -29,6 +29,7 @@
 
 #include "usage_stats/usage_stats_testing_util.h"
 
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -59,7 +60,7 @@ namespace internal {
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
                                             const std::string &name,
-                                            uint32 expected) {
+                                            uint32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
@@ -68,7 +69,7 @@ namespace internal {
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
                                               const std::string &name,
-                                              int32 expected) {
+                                              int32_t expected) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();
@@ -87,8 +88,8 @@ namespace internal {
     const char *name_string, const char *expected_total_string,
     const char *expected_num_string, const char *expected_min_string,
     const char *expected_max_string, const std::string &name,
-    uint64 expected_total, uint32 expected_num, uint32 expected_min,
-    uint32 expected_max) {
+    uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
+    uint32_t expected_max) {
   // Always returns success for now.
   // TODO(toshiyuki): Remove all caller test code.
   return AssertionSuccess();

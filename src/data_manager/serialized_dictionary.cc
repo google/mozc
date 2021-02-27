@@ -30,6 +30,7 @@
 #include "data_manager/serialized_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <map>
 #include <memory>
@@ -101,8 +102,8 @@ SerializedDictionary::IterRange SerializedDictionary::equal_range(
 }
 
 std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
-    std::istream *input, std::unique_ptr<uint32[]> *output_token_array_buf,
-    std::unique_ptr<uint32[]> *output_string_array_buf) {
+    std::istream *input, std::unique_ptr<uint32_t[]> *output_token_array_buf,
+    std::unique_ptr<uint32_t[]> *output_string_array_buf) {
   std::map<std::string, TokenList> dic;
   LoadTokens(input, &dic);
   return Compile(dic, output_token_array_buf, output_string_array_buf);
@@ -110,14 +111,14 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
 
 std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
     const std::map<std::string, TokenList> &dic,
-    std::unique_ptr<uint32[]> *output_token_array_buf,
-    std::unique_ptr<uint32[]> *output_string_array_buf) {
+    std::unique_ptr<uint32_t[]> *output_token_array_buf,
+    std::unique_ptr<uint32_t[]> *output_string_array_buf) {
   CHECK(Util::IsLittleEndian());
 
   // Build a mapping from string to its index in a serialized string array.
   // Note that duplicate keys share the same index, so data is slightly
   // compressed.
-  std::map<std::string, uint32> string_index;
+  std::map<std::string, uint32_t> string_index;
   for (const auto &kv : dic) {
     // This phase just collects all the strings and temporarily assigns 0 as
     // index.
@@ -130,7 +131,7 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
   }
   {
     // This phase assigns index in ascending order of strings.
-    uint32 index = 0;
+    uint32_t index = 0;
     for (auto &kv : string_index) {
       kv.second = index++;
     }
@@ -141,11 +142,11 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
   {
     std::string buf;
     for (const auto &kv : dic) {
-      const uint32 key_index = string_index[kv.first];
+      const uint32_t key_index = string_index[kv.first];
       for (const auto &token_ptr : kv.second) {
-        const uint32 value_index = string_index[token_ptr->value];
-        const uint32 desc_index = string_index[token_ptr->description];
-        const uint32 adddesc_index =
+        const uint32_t value_index = string_index[token_ptr->value];
+        const uint32_t desc_index = string_index[token_ptr->description];
+        const uint32_t adddesc_index =
             string_index[token_ptr->additional_description];
         buf.append(reinterpret_cast<const char *>(&key_index), 4);
         buf.append(reinterpret_cast<const char *>(&value_index), 4);
@@ -157,7 +158,7 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
         buf.append("\x00\x00", 2);
       }
     }
-    output_token_array_buf->reset(new uint32[(buf.size() + 3) / 4]);
+    output_token_array_buf->reset(new uint32_t[(buf.size() + 3) / 4]);
     memcpy(output_token_array_buf->get(), buf.data(), buf.size());
     token_array = absl::string_view(
         reinterpret_cast<const char *>(output_token_array_buf->get()),
@@ -225,7 +226,7 @@ bool SerializedDictionary::VerifyData(absl::string_view token_array_data,
   for (const char *ptr = token_array_data.data();
        ptr != token_array_data.data() + token_array_data.size();
        ptr += kTokenByteLength) {
-    const uint32 *u32_ptr = reinterpret_cast<const uint32 *>(ptr);
+    const uint32_t *u32_ptr = reinterpret_cast<const uint32_t *>(ptr);
     if (u32_ptr[0] >= string_array.size() ||
         u32_ptr[1] >= string_array.size() ||
         u32_ptr[2] >= string_array.size() ||

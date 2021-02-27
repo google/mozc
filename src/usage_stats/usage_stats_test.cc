@@ -29,6 +29,7 @@
 
 #include "usage_stats/usage_stats.h"
 
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -75,14 +76,14 @@ TEST_F(UsageStatsTest, StoreTest) {
   const char kTimingKey[] = "ElapsedTimeUSec";
   const char kVirtualKeyboardKey[] = "VirtualKeyboardStats";
 
-  uint32 count_val = 0;
-  int32 integer_val = -1;
+  uint32_t count_val = 0;
+  int32_t integer_val = -1;
   bool boolean_val = false;
-  uint64 total_time = 0;
-  uint32 num_timings = 0;
-  uint32 avg_time = 0;
-  uint32 min_time = 0;
-  uint32 max_time = 0;
+  uint64_t total_time = 0;
+  uint32_t num_timings = 0;
+  uint32_t avg_time = 0;
+  uint32_t min_time = 0;
+  uint32_t max_time = 0;
   Stats virtual_keyboard_val;
   Stats stats_val;
   // Cannot get values when no values are registered.
@@ -135,18 +136,18 @@ TEST_F(UsageStatsTest, StoreTest) {
 }
 
 namespace {
-void SetDoubleValueStats(uint32 num, double total, double square_total,
+void SetDoubleValueStats(uint32_t num, double total, double square_total,
                          usage_stats::Stats::DoubleValueStats *double_stats) {
   double_stats->set_num(num);
   double_stats->set_total(total);
   double_stats->set_square_total(square_total);
 }
 
-void SetEventStats(uint32 source_id, uint32 sx_num, double sx_total,
-                   double sx_square_total, uint32 sy_num, double sy_total,
-                   double sy_square_total, uint32 dx_num, double dx_total,
-                   double dx_square_total, uint32 dy_num, double dy_total,
-                   double dy_square_total, uint32 tl_num, double tl_total,
+void SetEventStats(uint32_t source_id, uint32_t sx_num, double sx_total,
+                   double sx_square_total, uint32_t sy_num, double sy_total,
+                   double sy_square_total, uint32_t dx_num, double dx_total,
+                   double dx_square_total, uint32_t dy_num, double dy_total,
+                   double dy_square_total, uint32_t tl_num, double tl_total,
                    double tl_square_total,
                    usage_stats::Stats::TouchEventStats *event_stats) {
   event_stats->set_source_id(source_id);
@@ -169,7 +170,8 @@ TEST_F(UsageStatsTest, StoreTouchEventStats) {
                                          &stats_str));
   EXPECT_FALSE(storage::Registry::Lookup("usage_stats.VirtualKeyboardMissStats",
                                          &stats_str));
-  std::map<std::string, std::map<uint32, Stats::TouchEventStats> > touch_stats;
+  std::map<std::string, std::map<uint32_t, Stats::TouchEventStats> >
+      touch_stats;
 
   Stats::TouchEventStats &event_stats1 = touch_stats["KEYBOARD_01"][10];
   SetEventStats(10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,

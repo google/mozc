@@ -32,6 +32,7 @@
 #include "session/session_converter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <string>
 
@@ -1172,7 +1173,7 @@ SessionConverter *SessionConverter::Clone() const {
   session_converter->segment_index_ = segment_index_;
   session_converter->previous_suggestions_.CopyFrom(previous_suggestions_);
   session_converter->conversion_preferences_ = conversion_preferences();
-  session_converter->result_->CopyFrom(*result_);
+  *session_converter->result_ = *result_;
   session_converter->request_ = request_;
   session_converter->config_ = config_;
   session_converter->use_cascading_window_ = use_cascading_window_;
@@ -1443,7 +1444,7 @@ void SessionConverter::FillConversion(commands::Preedit *preedit) const {
 }
 
 void SessionConverter::FillResult(commands::Result *result) const {
-  result->CopyFrom(*result_);
+  *result = *result_;
 }
 
 void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
@@ -1646,7 +1647,7 @@ void SessionConverter::InitializeSelectedCandidateIndices() {
 }
 
 void SessionConverter::UpdateCandidateStats(const std::string &base_name,
-                                            int32 index) {
+                                            int32_t index) {
   std::string prefix;
   if (index < 0) {
     prefix = "TransliterationCandidates";

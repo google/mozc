@@ -51,6 +51,7 @@
 /* First off, code is included that follows the "include" declaration
 ** in the input grammar file. */
 #include <stdio.h>
+
 #include "absl/strings/str_format.h"
 #line 7 "parser.y"
 
@@ -58,8 +59,8 @@
 #ifdef OS_WIN
 #include <float.h>
 #endif
-#include <string.h>
 #include <math.h>
+#include <string.h>
 
 // Contents of parser.h is manually inserted here.
 #define PLUS                            1

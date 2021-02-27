@@ -30,6 +30,7 @@
 #include "converter/segments.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <sstream>  // For DebugString()
 #include <string>
@@ -119,24 +120,24 @@ bool Segment::Candidate::IsValid() const {
 bool Segment::Candidate::EncodeLengths(size_t key_len, size_t value_len,
                                        size_t content_key_len,
                                        size_t content_value_len,
-                                       uint32 *result) {
-  if (key_len > std::numeric_limits<uint8>::max() ||
-      value_len > std::numeric_limits<uint8>::max() ||
-      content_key_len > std::numeric_limits<uint8>::max() ||
-      content_value_len > std::numeric_limits<uint8>::max()) {
+                                       uint32_t *result) {
+  if (key_len > std::numeric_limits<uint8_t>::max() ||
+      value_len > std::numeric_limits<uint8_t>::max() ||
+      content_key_len > std::numeric_limits<uint8_t>::max() ||
+      content_value_len > std::numeric_limits<uint8_t>::max()) {
     return false;
   }
-  *result = (static_cast<uint32>(key_len) << 24) |
-            (static_cast<uint32>(value_len) << 16) |
-            (static_cast<uint32>(content_key_len) << 8) |
-            static_cast<uint32>(content_value_len);
+  *result = (static_cast<uint32_t>(key_len) << 24) |
+            (static_cast<uint32_t>(value_len) << 16) |
+            (static_cast<uint32_t>(content_key_len) << 8) |
+            static_cast<uint32_t>(content_value_len);
   return true;
 }
 
 bool Segment::Candidate::PushBackInnerSegmentBoundary(
     size_t key_len, size_t value_len, size_t content_key_len,
     size_t content_value_len) {
-  uint32 encoded;
+  uint32_t encoded;
   if (EncodeLengths(key_len, value_len, content_key_len, content_value_len,
                     &encoded)) {
     inner_segment_boundary.push_back(encoded);
@@ -164,7 +165,7 @@ std::string Segment::Candidate::DebugString() const {
   if (!inner_segment_boundary.empty()) {
     os << " segbdd=";
     for (size_t i = 0; i < inner_segment_boundary.size(); ++i) {
-      const uint32 encoded_lengths = inner_segment_boundary[i];
+      const uint32_t encoded_lengths = inner_segment_boundary[i];
       const int key_len = encoded_lengths >> 24;
       const int value_len = (encoded_lengths >> 16) & 0xff;
       const int content_key_len = (encoded_lengths >> 8) & 0xff;
@@ -179,34 +180,34 @@ std::string Segment::Candidate::DebugString() const {
 
 void Segment::Candidate::InnerSegmentIterator::Next() {
   DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
-  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_++];
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_++];
   key_offset_ += encoded_lengths >> 24;
   value_offset_ += (encoded_lengths >> 16) & 0xff;
 }
 
 absl::string_view Segment::Candidate::InnerSegmentIterator::GetKey() const {
   DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
-  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
   return absl::string_view(key_offset_, encoded_lengths >> 24);
 }
 
 absl::string_view Segment::Candidate::InnerSegmentIterator::GetValue() const {
   DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
-  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
   return absl::string_view(value_offset_, (encoded_lengths >> 16) & 0xff);
 }
 
 absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentKey()
     const {
   DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
-  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
   return absl::string_view(key_offset_, (encoded_lengths >> 8) & 0xff);
 }
 
 absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
     const {
   DCHECK_LT(index_, candidate_->inner_segment_boundary.size());
-  const uint32 encoded_lengths = candidate_->inner_segment_boundary[index_];
+  const uint32_t encoded_lengths = candidate_->inner_segment_boundary[index_];
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 

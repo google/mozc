@@ -29,6 +29,7 @@
 
 #include "session/random_keyevents_generator.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -76,13 +77,13 @@ const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
     commands::KeyEvent::EQUALS,    commands::KeyEvent::COMMA,
 };
 
-uint32 GetRandomAsciiKey() {
-  return static_cast<uint32>(' ') +
-         Util::Random(static_cast<uint32>('~' - ' '));
+uint32_t GetRandomAsciiKey() {
+  return static_cast<uint32_t>(' ') +
+         Util::Random(static_cast<uint32_t>('~' - ' '));
 }
 
 void InitSeedWithRandomValue() {
-  uint32 seed = 0;
+  uint32_t seed = 0;
   mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed), sizeof(seed));
   Util::SetRandomSeed(seed);
 }
@@ -108,7 +109,7 @@ void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
 void TypeRawKeys(absl::string_view romaji, bool create_probable_key_events,
                  std::vector<commands::KeyEvent> *keys) {
   for (ConstChar32Iterator iter(romaji); !iter.Done(); iter.Next()) {
-    const uint32 ucs4 = iter.Get();
+    const uint32_t ucs4 = iter.Get();
     if (ucs4 < 0x20 || ucs4 > 0x7F) {
       continue;
     }
@@ -139,7 +140,7 @@ std::string ToRomaji(absl::string_view hiragana) {
   return result;
 }
 
-void RandomKeyEventsGenerator::InitSeed(uint32 seed) {
+void RandomKeyEventsGenerator::InitSeed(uint32_t seed) {
   Util::SetRandomSeed(seed);
   CallOnce(&seed_init_once, &DoNothing);
 }

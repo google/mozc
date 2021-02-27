@@ -30,7 +30,9 @@
 #ifndef MOZC_IPC_IPC_MOCK_H_
 #define MOZC_IPC_IPC_MOCK_H_
 
+#include <cstdint>
 #include <string>
+
 #include "ipc/ipc.h"
 
 namespace mozc {
@@ -41,23 +43,23 @@ class IPCClientMock : public IPCClientInterface {
  public:
   explicit IPCClientMock(IPCClientFactoryMock *caller);
   bool Connected() const override;
-  uint32 GetServerProtocolVersion() const override;
+  uint32_t GetServerProtocolVersion() const override;
   const std::string &GetServerProductVersion() const override;
-  uint32 GetServerProcessId() const override;
+  uint32_t GetServerProcessId() const override;
   bool Call(const char *request, size_t request_size, char *response,
-            size_t *response_size, int32 timeout) override;
+            size_t *response_size, int32_t timeout) override;
 
   IPCErrorType GetLastIPCError() const override { return IPC_NO_ERROR; }
 
   void set_connection(const bool connection) { connected_ = connection; }
   void set_result(const bool result) { result_ = result; }
-  void set_server_protocol_version(const uint32 server_protocol_version) {
+  void set_server_protocol_version(const uint32_t server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
   }
   void set_server_product_version(const std::string &server_product_version) {
     server_product_version_ = server_product_version;
   }
-  void set_server_process_id(const uint32 server_process_id) {
+  void set_server_process_id(const uint32_t server_process_id) {
     server_process_id_ = server_process_id;
   }
   void set_response(const std::string &response) { response_ = response; }
@@ -65,9 +67,9 @@ class IPCClientMock : public IPCClientInterface {
  private:
   IPCClientFactoryMock *caller_;
   bool connected_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string server_product_version_;
-  uint32 server_process_id_;
+  uint32_t server_process_id_;
   bool result_;
   std::string response_;
 
@@ -99,22 +101,22 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
   void SetResult(const bool result);
 
   // This function is supporsed to be used by unittests.
-  void SetServerProtocolVersion(const uint32 server_protocol_version);
+  void SetServerProtocolVersion(const uint32_t server_protocol_version);
 
   // This function is supporsed to be used by unittests.
-  void SetServerProductVersion(const std::string &server_protocol_version);
+  void SetServerProductVersion(const std::string &server_product_version);
 
   // This function is supporsed to be used by unittests.
-  void SetServerProcessId(const uint32 server_process_id);
+  void SetServerProcessId(const uint32_t server_process_id);
 
  private:
   IPCClientMock *NewClientMock();
 
   bool connection_;
   bool result_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string server_product_version_;
-  uint32 server_process_id_;
+  uint32_t server_process_id_;
   std::string request_;
   std::string response_;
 

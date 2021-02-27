@@ -75,6 +75,7 @@ cc_library_mozc(
     srcs = ["base/internal/gtest_main.cc"],
     visibility = ["//visibility:private"],
     deps = [
+        ":googletest",
         ":gunit",
         "//base",
         "@com_google_absl//absl/flags:flag",
@@ -96,6 +97,7 @@ cc_library_mozc(
     deps = [
         ":gunit",
         ":googletest",
+        "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
         client = [":gunit_main_internal"],
         default = ["//testing/base/public:gunit_main"],

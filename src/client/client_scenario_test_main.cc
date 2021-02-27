@@ -32,6 +32,7 @@
 // events specified by FLAGS_input file or interactive standard input.  Input
 // file format is same as one of session/session_client_main.
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -54,7 +55,7 @@
 #include "absl/strings/match.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
-ABSL_FLAG(int32, key_duration, 10, "Key duration (msec)");
+ABSL_FLAG(int32_t, key_duration, 10, "Key duration (msec)");
 ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
 ABSL_FLAG(bool, sentence_mode, false, "Use input as sentences");
 ABSL_FLAG(std::string, server_path, "", "Specify server path");
@@ -154,7 +155,7 @@ int Loop(std::istream *input) {
       if (renderer_client != nullptr) {
         renderer_command.set_type(commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
-        renderer_command.mutable_output()->CopyFrom(output);
+        *renderer_command.mutable_output() = output;
         VLOG(2) << "Sending to Renderer: " << renderer_command.DebugString();
         renderer_client->ExecCommand(renderer_command);
       }

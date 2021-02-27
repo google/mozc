@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_COLLOCATION_REWRITER_H_
 #define MOZC_REWRITER_COLLOCATION_REWRITER_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
@@ -57,8 +59,8 @@ class CollocationRewriter : public RewriterInterface {
   bool RewriteCollocation(Segments *segments) const;
 
   const dictionary::POSMatcher pos_matcher_;
-  const uint16 first_name_id_;
-  const uint16 last_name_id_;
+  const uint16_t first_name_id_;
+  const uint16_t last_name_id_;
 
   // Used to test if pairs of strings are in collocation data. Since it's a
   // bloom filter, non-collocation words are sometimes mistakenly boosted,

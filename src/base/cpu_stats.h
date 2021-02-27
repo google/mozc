@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_CPU_STATS_H_
 #define MOZC_BASE_CPU_STATS_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -72,10 +74,10 @@ class CPUStats : public CPUStatsInterface {
   size_t GetNumberOfProcessors() const override;
 
  private:
-  uint64 prev_system_total_times_;
-  uint64 prev_system_cpu_times_;
-  uint64 prev_current_process_total_times_;
-  uint64 prev_current_process_cpu_times_;
+  uint64_t prev_system_total_times_;
+  uint64_t prev_system_cpu_times_;
+  uint64_t prev_current_process_total_times_;
+  uint64_t prev_current_process_cpu_times_;
 };
 
 }  // namespace mozc

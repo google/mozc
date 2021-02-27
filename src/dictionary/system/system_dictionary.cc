@@ -47,6 +47,7 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <map>
@@ -113,7 +114,7 @@ const char *kHiraganaExpansionTable[] = {
     "ほほぼぽ", "ややゃ", "ゆゆゅ",   "よよょ",   "わわゎ",
 };
 
-const uint32 kAsciiRange = 0x80;
+const uint32_t kAsciiRange = 0x80;
 
 // Confirm that all the characters are within ASCII range.
 bool ContainsAsciiCodeOnly(const std::string &str) {
@@ -148,10 +149,10 @@ void BuildHiraganaExpansionTable(const SystemDictionaryCodecInterface &codec,
   }
 }
 
-inline const uint8 *GetTokenArrayPtr(const BitVectorBasedArray &token_array,
-                                     int key_id) {
+inline const uint8_t *GetTokenArrayPtr(const BitVectorBasedArray &token_array,
+                                       int key_id) {
   size_t length = 0;
-  return reinterpret_cast<const uint8 *>(token_array.Get(key_id, &length));
+  return reinterpret_cast<const uint8_t *>(token_array.Get(key_id, &length));
 }
 
 // Iterator for scanning token array.
@@ -234,8 +235,8 @@ class TokenScanIterator {
   }
 
   const SystemDictionaryCodecInterface *codec_;
-  const uint8 *encoded_tokens_ptr_;
-  const uint8 termination_flag_;
+  const uint8_t *encoded_tokens_ptr_;
+  const uint8_t termination_flag_;
   State state_;
   Result result_;
   int offset_;
@@ -491,7 +492,7 @@ SystemDictionary::~SystemDictionary() {}
 bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
   int len;
 
-  const uint8 *key_image = reinterpret_cast<const uint8 *>(
+  const uint8_t *key_image = reinterpret_cast<const uint8_t *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForKey(), &len));
   if (!key_trie_.Open(key_image, kKeyTrieLb0CacheSize, kKeyTrieLb1CacheSize,
                       kKeyTrieSelect0CacheSize, kKeyTrieSelect1CacheSize,
@@ -502,7 +503,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
 
   BuildHiraganaExpansionTable(*codec_, &hiragana_expansion_table_);
 
-  const uint8 *value_image = reinterpret_cast<const uint8 *>(
+  const uint8_t *value_image = reinterpret_cast<const uint8_t *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForValue(), &len));
   if (!value_trie_.Open(value_image, kValueTrieLb0CacheSize,
                         kValueTrieLb1CacheSize, kValueTrieSelect0CacheSize,
@@ -516,7 +517,7 @@ bool SystemDictionary::OpenDictionaryFile(bool enable_reverse_lookup_index) {
       dictionary_file_->GetSection(codec_->GetSectionNameForTokens(), &len));
   token_array_.Open(token_image);
 
-  frequent_pos_ = reinterpret_cast<const uint32 *>(
+  frequent_pos_ = reinterpret_cast<const uint32_t *>(
       dictionary_file_->GetSection(codec_->GetSectionNameForPos(), &len));
   if (frequent_pos_ == nullptr) {
     LOG(ERROR) << "can not find frequent pos section";
@@ -581,7 +582,7 @@ bool SystemDictionary::HasValue(absl::string_view value) const {
   // true.
 
   // Get the block of tokens for this key.
-  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, key_id);
+  const uint8_t *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, key_id);
 
   // Check tokens.
   for (TokenDecodeIterator iter(codec_, value_trie_, frequent_pos_, key,
@@ -782,7 +783,7 @@ void RunCallbackOnEachPrefix(const LoudsTrie &key_trie,
                              const LoudsTrie &value_trie,
                              const BitVectorBasedArray &token_array,
                              const SystemDictionaryCodecInterface *codec,
-                             const uint32 *frequent_pos, const char *key,
+                             const uint32_t *frequent_pos, const char *key,
                              absl::string_view encoded_key,
                              DictionaryInterface::Callback *callback,
                              Func token_filter) {
@@ -1157,7 +1158,7 @@ void SystemDictionary::ScanTokens(const std::set<int> &id_set,
 void SystemDictionary::RegisterReverseLookupResults(
     const std::set<int> &id_set, const ReverseLookupCache &cache,
     Callback *callback) const {
-  const uint8 *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
+  const uint8_t *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
   char buffer[LoudsTrie::kMaxDepth + 1];
   for (std::set<int>::const_iterator set_itr = id_set.begin();
        set_itr != id_set.end(); ++set_itr) {

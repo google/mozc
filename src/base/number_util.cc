@@ -33,6 +33,7 @@
 #include <cctype>
 #include <cerrno>
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <limits>
@@ -365,7 +366,7 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
       if (j != 0 && (integer.size() - j) % 3 == 0) {
         result.append(variation.separator);
       }
-      const uint32 d = static_cast<uint32>(integer[j] - kAsciiZero);
+      const uint32_t d = static_cast<uint32_t>(integer[j] - kAsciiZero);
       if (d <= 9 && digits[d]) {
         result.append(digits[d]);
       }
@@ -462,7 +463,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
   }
 
   // Following conversions require uint64 number.
-  uint64 n;
+  uint64_t n;
   if (!SafeStrToUInt64(input_num, &n)) {
     return converted;
   }
@@ -488,27 +489,27 @@ bool NumberUtil::ArabicToOtherRadixes(absl::string_view input_num,
     return false;
   }
 
-  uint64 n;
+  uint64_t n;
   if (!SafeStrToUInt64(input_num, &n)) {
     return false;
   }
 
   // Hexadecimal
   if (n > 9) {
-    const std::string hex = absl::StrFormat("0x%x", static_cast<uint64>(n));
+    const std::string hex = absl::StrFormat("0x%x", static_cast<uint64_t>(n));
     output->push_back(NumberString(hex, "16進数", NumberString::NUMBER_HEX));
   }
 
   // Octal
   if (n > 7) {
-    const std::string oct = absl::StrFormat("0%o", static_cast<uint64>(n));
+    const std::string oct = absl::StrFormat("0%o", static_cast<uint64_t>(n));
     output->push_back(NumberString(oct, "8進数", NumberString::NUMBER_OCT));
   }
 
   // Binary
   if (n > 1) {
     std::string binary;
-    for (uint64 num = n; num; num >>= 1) {
+    for (uint64_t num = n; num; num >>= 1) {
       binary.push_back(kAsciiZero + static_cast<char>(num & 0x1));
     }
     // "b0" will be "0b" in head of |binary|
@@ -536,9 +537,9 @@ const absl::string_view SkipWhiteSpace(absl::string_view str) {
 
 // *output = arg1 + arg2
 // return false when an integer overflow happens.
-bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
+bool AddAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
   *output = arg1 + arg2;
-  if (arg2 > (std::numeric_limits<uint64>::max() - arg1)) {
+  if (arg2 > (std::numeric_limits<uint64_t>::max() - arg1)) {
     // overflow happens
     return false;
   }
@@ -547,9 +548,9 @@ bool AddAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
 
 // *output = arg1 * arg2
 // return false when an integer overflow happens.
-bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
+bool MultiplyAndCheckOverflow(uint64_t arg1, uint64_t arg2, uint64_t *output) {
   *output = arg1 * arg2;
-  if (arg1 != 0 && arg2 > (std::numeric_limits<uint64>::max() / arg1)) {
+  if (arg1 != 0 && arg2 > (std::numeric_limits<uint64_t>::max() / arg1)) {
     // overflow happens
     return false;
   }
@@ -557,7 +558,7 @@ bool MultiplyAndCheckOverflow(uint64 arg1, uint64 arg2, uint64 *output) {
 }
 
 // A simple wrapper of strtoull function. |c_str| must be terminated by '\0'.
-inline uint64 StrToUint64(const char *c_str, char **end_ptr, int base) {
+inline uint64_t StrToUint64(const char *c_str, char **end_ptr, int base) {
 #ifdef OS_WIN
   return _strtoui64(c_str, end_ptr, base);
 #else   // OS_WIN
@@ -568,7 +569,7 @@ inline uint64 StrToUint64(const char *c_str, char **end_ptr, int base) {
 // Converts a string which describes a number into an uint64 value in |base|
 // radix.  Does not convert octal or hexadecimal strings with "0" or "0x"
 // suffixes.
-bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64 *value) {
+bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64_t *value) {
   DCHECK(value);
 
   // Maximum possible length of number string, including terminating '\0'. Note
@@ -618,49 +619,49 @@ bool SafeCast(SrcType src, DestType *dest) {
 }
 
 template <>
-bool SafeCast(int64 src, int16 *dest) {
-  if (src < static_cast<int64>(std::numeric_limits<int16>::min()) ||
-      static_cast<int64>(std::numeric_limits<int16>::max()) < src) {
+bool SafeCast(int64_t src, int16_t *dest) {
+  if (src < static_cast<int64_t>(std::numeric_limits<int16_t>::min()) ||
+      static_cast<int64_t>(std::numeric_limits<int16_t>::max()) < src) {
     return false;
   }
-  *dest = static_cast<int16>(src);
+  *dest = static_cast<int16_t>(src);
   return true;
 }
 
 template <>
-bool SafeCast(int64 src, int32 *dest) {
-  if (src < static_cast<int64>(std::numeric_limits<int32>::min()) ||
-      static_cast<int64>(std::numeric_limits<int32>::max()) < src) {
+bool SafeCast(int64_t src, int32_t *dest) {
+  if (src < static_cast<int64_t>(std::numeric_limits<int32_t>::min()) ||
+      static_cast<int64_t>(std::numeric_limits<int32_t>::max()) < src) {
     return false;
   }
-  *dest = static_cast<int32>(src);
+  *dest = static_cast<int32_t>(src);
   return true;
 }
 
 template <>
-bool SafeCast(uint64 src, int64 *dest) {
-  if (src > static_cast<uint64>(std::numeric_limits<int64>::max())) {
+bool SafeCast(uint64_t src, int64_t *dest) {
+  if (src > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
     return false;
   }
-  *dest = static_cast<int64>(src);
+  *dest = static_cast<int64_t>(src);
   return true;
 }
 
 template <>
-bool SafeCast(uint64 src, uint16 *dest) {
-  if (src > static_cast<uint64>(std::numeric_limits<uint16>::max())) {
+bool SafeCast(uint64_t src, uint16_t *dest) {
+  if (src > static_cast<uint64_t>(std::numeric_limits<uint16_t>::max())) {
     return false;
   }
-  *dest = static_cast<uint16>(src);
+  *dest = static_cast<uint16_t>(src);
   return true;
 }
 
 template <>
-bool SafeCast(uint64 src, uint32 *dest) {
-  if (src > static_cast<uint64>(std::numeric_limits<uint32>::max())) {
+bool SafeCast(uint64_t src, uint32_t *dest) {
+  if (src > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())) {
     return false;
   }
-  *dest = static_cast<uint32>(src);
+  *dest = static_cast<uint32_t>(src);
   return true;
 }
 
@@ -672,13 +673,13 @@ bool SafeUnaryNegation(SrcType src, DestType *dest) {
 }
 
 template <>
-bool SafeUnaryNegation(uint64 src, int64 *dest) {
-  int64 tmp = 0;
+bool SafeUnaryNegation(uint64_t src, int64_t *dest) {
+  int64_t tmp = 0;
   if (!SafeCast(src, &tmp)) {
     if (src == 0x8000000000000000ul) {
       // This is an exceptional case. |src| isn't in the range of int64,
       // but |-src| is in the range.
-      *dest = std::numeric_limits<int64>::min();
+      *dest = std::numeric_limits<int64_t>::min();
       return true;
     }
     return false;
@@ -689,28 +690,28 @@ bool SafeUnaryNegation(uint64 src, int64 *dest) {
 
 }  // namespace
 
-bool NumberUtil::SafeStrToInt16(absl::string_view str, int16 *value) {
-  int64 tmp;
+bool NumberUtil::SafeStrToInt16(absl::string_view str, int16_t *value) {
+  int64_t tmp;
   if (!SafeStrToInt64(str, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToInt32(absl::string_view str, int32 *value) {
-  int64 tmp;
+bool NumberUtil::SafeStrToInt32(absl::string_view str, int32_t *value) {
+  int64_t tmp;
   if (!SafeStrToInt64(str, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToInt64(absl::string_view str, int64 *value) {
+bool NumberUtil::SafeStrToInt64(absl::string_view str, int64_t *value) {
   const absl::string_view stripped_str = SkipWhiteSpace(str);
   if (stripped_str.empty()) {
     return false;
   }
-  uint64 tmp;
+  uint64_t tmp;
   if (stripped_str[0] == '-') {
     absl::string_view opposite_str =
         stripped_str.substr(1, stripped_str.size() - 1);
@@ -725,39 +726,39 @@ bool NumberUtil::SafeStrToInt64(absl::string_view str, int64 *value) {
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16 *value) {
-  uint64 tmp;
+bool NumberUtil::SafeStrToUInt16(absl::string_view str, uint16_t *value) {
+  uint64_t tmp;
   if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToUInt32(absl::string_view str, uint32 *value) {
-  uint64 tmp;
+bool NumberUtil::SafeStrToUInt32(absl::string_view str, uint32_t *value) {
+  uint64_t tmp;
   if (!SafeStrToUInt64WithBase(str, 10, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeHexStrToUInt32(absl::string_view str, uint32 *value) {
-  uint64 tmp;
+bool NumberUtil::SafeHexStrToUInt32(absl::string_view str, uint32_t *value) {
+  uint64_t tmp;
   if (!SafeStrToUInt64WithBase(str, 16, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeOctStrToUInt32(absl::string_view str, uint32 *value) {
-  uint64 tmp;
+bool NumberUtil::SafeOctStrToUInt32(absl::string_view str, uint32_t *value) {
+  uint64_t tmp;
   if (!SafeStrToUInt64WithBase(str, 8, &tmp)) {
     return false;
   }
   return SafeCast(tmp, value);
 }
 
-bool NumberUtil::SafeStrToUInt64(absl::string_view str, uint64 *value) {
+bool NumberUtil::SafeStrToUInt64(absl::string_view str, uint64_t *value) {
   return SafeStrToUInt64WithBase(str, 10, value);
 }
 
@@ -794,8 +795,8 @@ namespace {
 //   [1, 2, 3, 10, 100] => begin points to [10, 100], output = 123
 // Returns false when overflow happened.
 bool ReduceLeadingNumbersAsBase10System(
-    std::vector<uint64>::const_iterator *begin,
-    const std::vector<uint64>::const_iterator &end, uint64 *output) {
+    std::vector<uint64_t>::const_iterator *begin,
+    const std::vector<uint64_t>::const_iterator &end, uint64_t *output) {
   *output = 0;
   for (; *begin < end; ++*begin) {
     if (**begin >= 10) {
@@ -814,8 +815,8 @@ bool ReduceLeadingNumbersAsBase10System(
 //   [1, 2, 3] => 123
 //   [1, 2, 3, 10] => false
 // Returns false if a number greater than 10 was found or overflow happened.
-bool InterpretNumbersAsBase10System(const std::vector<uint64> &numbers,
-                                    uint64 *output) {
+bool InterpretNumbersAsBase10System(const std::vector<uint64_t> &numbers,
+                                    uint64_t *output) {
   auto begin = numbers.begin();
   const bool success =
       ReduceLeadingNumbersAsBase10System(&begin, numbers.end(), output);
@@ -825,9 +826,9 @@ bool InterpretNumbersAsBase10System(const std::vector<uint64> &numbers,
 
 // Reads a leading number in a sequence and advances the iterator. Returns false
 // if the range is empty or the leading number is not less than 10.
-bool ReduceOnesDigit(std::vector<uint64>::const_iterator *begin,
-                     const std::vector<uint64>::const_iterator &end,
-                     uint64 *num) {
+bool ReduceOnesDigit(std::vector<uint64_t>::const_iterator *begin,
+                     const std::vector<uint64_t>::const_iterator &end,
+                     uint64_t *num) {
   if (*begin == end || **begin >= 10) {
     return false;
   }
@@ -854,9 +855,9 @@ bool ReduceOnesDigit(std::vector<uint64>::const_iterator *begin,
 //     [2, 1000, ...] => 2000
 //     [1, 1000, ...] => 1000
 //     [1, 2, 3, 4, ...] => 1234
-bool ReduceDigitsHelper(std::vector<uint64>::const_iterator *begin,
-                        const std::vector<uint64>::const_iterator &end,
-                        uint64 *num, const uint64 expected_base) {
+bool ReduceDigitsHelper(std::vector<uint64_t>::const_iterator *begin,
+                        const std::vector<uint64_t>::const_iterator &end,
+                        uint64_t *num, const uint64_t expected_base) {
   // Skip leading zero(s).
   while (*begin != end && **begin == 0) {
     ++*begin;
@@ -864,7 +865,7 @@ bool ReduceDigitsHelper(std::vector<uint64>::const_iterator *begin,
   if (*begin == end) {
     return false;
   }
-  const uint64 leading_number = **begin;
+  const uint64_t leading_number = **begin;
 
   // If the leading number is less than 10, e.g., patterns like [2, 10], we need
   // to check the next number.
@@ -872,7 +873,7 @@ bool ReduceDigitsHelper(std::vector<uint64>::const_iterator *begin,
     if (end - *begin < 2) {
       return false;
     }
-    const uint64 next_number = *(*begin + 1);
+    const uint64_t next_number = *(*begin + 1);
 
     // If the next number is also less than 10, this pattern is like
     // [1, 2, ...] => 12. In this case, the result must be less than
@@ -907,21 +908,21 @@ bool ReduceDigitsHelper(std::vector<uint64>::const_iterator *begin,
   return false;
 }
 
-inline bool ReduceTensDigit(std::vector<uint64>::const_iterator *begin,
-                            const std::vector<uint64>::const_iterator &end,
-                            uint64 *num) {
+inline bool ReduceTensDigit(std::vector<uint64_t>::const_iterator *begin,
+                            const std::vector<uint64_t>::const_iterator &end,
+                            uint64_t *num) {
   return ReduceDigitsHelper(begin, end, num, 10);
 }
 
-inline bool ReduceHundredsDigit(std::vector<uint64>::const_iterator *begin,
-                                const std::vector<uint64>::const_iterator &end,
-                                uint64 *num) {
+inline bool ReduceHundredsDigit(
+    std::vector<uint64_t>::const_iterator *begin,
+    const std::vector<uint64_t>::const_iterator &end, uint64_t *num) {
   return ReduceDigitsHelper(begin, end, num, 100);
 }
 
-inline bool ReduceThousandsDigit(std::vector<uint64>::const_iterator *begin,
-                                 const std::vector<uint64>::const_iterator &end,
-                                 uint64 *num) {
+inline bool ReduceThousandsDigit(
+    std::vector<uint64_t>::const_iterator *begin,
+    const std::vector<uint64_t>::const_iterator &end, uint64_t *num) {
   return ReduceDigitsHelper(begin, end, num, 1000);
 }
 
@@ -931,12 +932,12 @@ inline bool ReduceThousandsDigit(std::vector<uint64>::const_iterator *begin,
 //        => begin points to [10000, ...], num = 1234
 //   [3, 100, 4, 100]
 //        => error because same base number appears twice
-bool ReduceNumberLessThan10000(std::vector<uint64>::const_iterator *begin,
-                               const std::vector<uint64>::const_iterator &end,
-                               uint64 *num) {
+bool ReduceNumberLessThan10000(std::vector<uint64_t>::const_iterator *begin,
+                               const std::vector<uint64_t>::const_iterator &end,
+                               uint64_t *num) {
   *num = 0;
   bool success = false;
-  uint64 n = 0;
+  uint64_t n = 0;
   // Note: the following additions never overflow.
   if (ReduceThousandsDigit(begin, end, &n)) {
     *num += n;
@@ -964,13 +965,13 @@ bool ReduceNumberLessThan10000(std::vector<uint64>::const_iterator *begin,
 //   "一万二千三百四十五" = [1, 10000, 2, 1000, 3, 100, 4, 10, 5] => 12345
 // Base-10 numbers must be decreasing, i.e.,
 //   "一十二百" = [1, 10, 2, 100] => error
-bool InterpretNumbersInJapaneseWay(const std::vector<uint64> &numbers,
-                                   uint64 *output) {
-  uint64 last_base = std::numeric_limits<uint64>::max();
+bool InterpretNumbersInJapaneseWay(const std::vector<uint64_t> &numbers,
+                                   uint64_t *output) {
+  uint64_t last_base = std::numeric_limits<uint64_t>::max();
   auto begin = numbers.begin();
   *output = 0;
   do {
-    uint64 coef = 0;
+    uint64_t coef = 0;
     if (!ReduceNumberLessThan10000(&begin, numbers.end(), &coef)) {
       return false;
     }
@@ -981,7 +982,7 @@ bool InterpretNumbersInJapaneseWay(const std::vector<uint64> &numbers,
       return false;  // Increasing order of base-10 numbers.
     }
     // Safely performs *output += coef * *begin.
-    uint64 delta = 0;
+    uint64_t delta = 0;
     if (!MultiplyAndCheckOverflow(coef, *begin, &delta) ||
         !AddAndCheckOverflow(*output, delta, output)) {
       return false;
@@ -994,8 +995,8 @@ bool InterpretNumbersInJapaneseWay(const std::vector<uint64> &numbers,
 
 // Interprets a sequence of numbers directly or in a Japanese reading way
 // depending on the maximum number in the sequence.
-bool NormalizeNumbersHelper(const std::vector<uint64> &numbers,
-                            uint64 *number_output) {
+bool NormalizeNumbersHelper(const std::vector<uint64_t> &numbers,
+                            uint64_t *number_output) {
   const auto itr_max = std::max_element(numbers.begin(), numbers.end());
   if (itr_max == numbers.end()) {
     return false;  // numbers is empty
@@ -1017,7 +1018,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
   DCHECK(arabic_output);
   const char *begin = input.data();
   const char *end = input.data() + input.size();
-  std::vector<uint64> numbers;
+  std::vector<uint64_t> numbers;
   numbers.reserve(input.size());
 
   // Map Kanji number string to digits, e.g., "二百十一" -> [2, 100, 10, 1].
@@ -1034,7 +1035,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     std::string tmp;
     NumberUtil::KanjiNumberToArabicNumber(kanji_char, &tmp);
 
-    uint64 n = 0;
+    uint64_t n = 0;
     if (!NumberUtil::SafeStrToUInt64(tmp, &n)) {
       break;
     }
@@ -1061,7 +1062,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
   }
 
   // Try interpreting the sequence of digits.
-  uint64 n = 0;
+  uint64_t n = 0;
   if (!NormalizeNumbersHelper(numbers, &n)) {
     return false;
   }
@@ -1081,7 +1082,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
     arabic_output->append(num_zeros, kAsciiZero);
   }
 
-  arabic_output->append(absl::StrFormat("%u", static_cast<uint64>(n)));
+  arabic_output->append(absl::StrFormat("%u", static_cast<uint64_t>(n)));
   return true;
 }
 
