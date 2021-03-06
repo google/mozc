@@ -30,6 +30,7 @@
 #ifndef MOZC_SESSION_SESSION_USAGE_OBSERVER_H_
 #define MOZC_SESSION_SESSION_USAGE_OBSERVER_H_
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -82,7 +83,7 @@ class SessionUsageObserver : public SessionObserverInterface {
 
   void EvalCreateSession(const commands::Input &input,
                          const commands::Output &output,
-                         std::map<uint64, protocol::SessionState> *states);
+                         std::map<uint64_t, protocol::SessionState> *states);
   // Update state and update stats using input and output.
   void UpdateState(const commands::Input &input, const commands::Output &output,
                    protocol::SessionState *state);
@@ -98,7 +99,7 @@ class SessionUsageObserver : public SessionObserverInterface {
       const commands::Input_TouchEvent &touch_event,
       usage_stats::TouchEventStatsMap *touch_event_stats_map);
 
-  std::map<uint64, protocol::SessionState> states_;
+  std::map<uint64_t, protocol::SessionState> states_;
   UsageCache usage_cache_;
 
   // last_touchevents_ is used to keep the touch_events of last SEND_KEY

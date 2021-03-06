@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_INTERNAL_SESSION_OUTPUT_H_
 #define MOZC_SESSION_INTERNAL_SESSION_OUTPUT_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -83,8 +84,7 @@ class SessionOutput {
                                const CandidateList &cand_list);
 
   // Fill the usages of Candidates protobuf with the contents of candidate_list.
-  static void FillUsages(const Segment &segment,
-                         const CandidateList &candidate_list,
+  static void FillUsages(const Segment &segment, const CandidateList &cand_list,
                          commands::Candidates *candidates_proto);
 
   // Fill the access key of Candidates protobuf with the sequence of shortcuts.
@@ -116,7 +116,8 @@ class SessionOutput {
   // Add a Preedit::Segment protobuf to the Preedit protobuf with key
   // and value.  Return true iff. new segment is added to preedit.
   static bool AddSegment(const std::string &key, const std::string &value,
-                         uint32 segment_type_mask, commands::Preedit *preedit);
+                         uint32_t segment_type_mask,
+                         commands::Preedit *preedit);
 
   // Fill the Result protobuf with the key and result strings
   // for a conversion result without any text normalization.

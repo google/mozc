@@ -55,7 +55,7 @@ size_t CommandCandidatesSize(const Segment &segment) {
   return result;
 }
 
-string GetCommandCandidateValue(const Segment &segment) {
+std::string GetCommandCandidateValue(const Segment &segment) {
   for (int i = 0; i < segment.candidates_size(); ++i) {
     if (segment.candidate(i).attributes &
         Segment::Candidate::COMMAND_CANDIDATE) {

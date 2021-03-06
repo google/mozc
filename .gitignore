@@ -24,6 +24,7 @@
 /src/bazel-bin
 /src/bazel-out
 /src/bazel-src
+/src/bazel-src_*
 /src/bazel-testlogs
 
 # Mozc build artifacts by GYP

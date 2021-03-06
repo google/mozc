@@ -31,6 +31,7 @@
 #define MOZC_PREDICTION_ZERO_QUERY_DICT_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <utility>
 
@@ -89,38 +90,40 @@ class ZeroQueryDict {
   static constexpr size_t kTokenByteSize = 16;
 
   class iterator
-      : public std::iterator<std::random_access_iterator_tag, uint32> {
+      : public std::iterator<std::random_access_iterator_tag, uint32_t> {
    public:
     iterator(const char *ptr, const SerializedStringArray *array)
         : ptr_(ptr), string_array_(array) {}
     iterator(const iterator &x) = default;
     iterator &operator=(const iterator &x) = default;
 
-    uint32 operator*() const { return key_index(); }
+    uint32_t operator*() const { return key_index(); }
 
-    uint32 operator[](ptrdiff_t n) const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + n * kTokenByteSize);
+    uint32_t operator[](ptrdiff_t n) const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + n * kTokenByteSize);
     }
 
     const iterator *operator->() const { return this; }
 
-    uint32 key_index() const { return *reinterpret_cast<const uint32 *>(ptr_); }
+    uint32_t key_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_);
+    }
 
-    uint32 value_index() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 4);
+    uint32_t value_index() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
     }
 
     ZeroQueryType type() const {
-      const uint16 val = *reinterpret_cast<const uint16 *>(ptr_ + 8);
+      const uint16_t val = *reinterpret_cast<const uint16_t *>(ptr_ + 8);
       return static_cast<ZeroQueryType>(val);
     }
 
-    uint16 emoji_type() const {
-      return *reinterpret_cast<const uint16 *>(ptr_ + 10);
+    uint16_t emoji_type() const {
+      return *reinterpret_cast<const uint16_t *>(ptr_ + 10);
     }
 
-    uint32 emoji_android_pua() const {
-      return *reinterpret_cast<const uint32 *>(ptr_ + 12);
+    uint32_t emoji_android_pua() const {
+      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
     }
 
     absl::string_view key() const { return (*string_array_)[key_index()]; }

@@ -29,6 +29,7 @@
 
 #include "client/client.h"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -98,7 +99,7 @@ class TestServerLauncher : public ServerLauncherInterface {
     return force_terminate_server_result_;
   }
 
-  bool WaitServer(uint32 pid) override { return true; }
+  bool WaitServer(uint32_t pid) override { return true; }
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override {
     LOG(ERROR) << static_cast<int>(type);
@@ -142,7 +143,7 @@ class TestServerLauncher : public ServerLauncherInterface {
     force_terminate_server_result_ = result;
   }
 
-  void set_server_protocol_version(uint32 server_protocol_version) {
+  void set_server_protocol_version(uint32_t server_protocol_version) {
     server_protocol_version_ = server_protocol_version;
   }
 
@@ -160,7 +161,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   bool start_server_called_;
   bool force_terminate_server_result_;
   bool force_terminate_server_called_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string response_;
   std::string product_version_after_start_server_;
   std::map<int, int> error_map_;
@@ -690,7 +691,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
     return force_terminate_server_result_;
   }
 
-  bool WaitServer(uint32 pid) override { return true; }
+  bool WaitServer(uint32_t pid) override { return true; }
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override {}
 
@@ -715,7 +716,7 @@ class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
   bool start_server_called_;
   bool force_terminate_server_result_;
   bool force_terminate_server_called_;
-  uint32 server_protocol_version_;
+  uint32_t server_protocol_version_;
   std::string response_;
   std::string product_version_after_start_server_;
   std::map<int, int> error_map_;

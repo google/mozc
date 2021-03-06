@@ -29,6 +29,7 @@
 
 #include "storage/registry.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/system_util.h"
@@ -43,33 +44,33 @@ TEST(RegistryTest, TinyStorageTest) {
   SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
   {
-    uint64 value = 20;
+    uint64_t value = 20;
     EXPECT_TRUE(Registry::Insert("uint64", value));
-    uint64 expected = 0;
+    uint64_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint64", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
-    uint32 value = 20;
+    uint32_t value = 20;
     EXPECT_TRUE(Registry::Insert("uint32", value));
-    uint32 expected = 0;
+    uint32_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint32", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
-    uint16 value = 20;
+    uint16_t value = 20;
     EXPECT_TRUE(Registry::Insert("uint16", value));
-    uint16 expected = 0;
+    uint16_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint16", &expected));
     EXPECT_EQ(expected, value);
   }
 
   {
-    uint8 value = 20;
+    uint8_t value = 20;
     EXPECT_TRUE(Registry::Insert("uint8", value));
-    uint8 expected = 0;
+    uint8_t expected = 0;
     EXPECT_TRUE(Registry::Lookup("uint8", &expected));
     EXPECT_EQ(expected, value);
   }

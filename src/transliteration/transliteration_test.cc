@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "transliteration/transliteration.h"
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

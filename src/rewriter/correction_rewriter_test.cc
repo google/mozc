@@ -29,6 +29,7 @@
 
 #include "rewriter/correction_rewriter.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -94,9 +95,9 @@ class CorrectionRewriterTest : public testing::Test {
   config::Config config_;
 
  private:
-  std::unique_ptr<uint32[]> values_buf_;
-  std::unique_ptr<uint32[]> errors_buf_;
-  std::unique_ptr<uint32[]> corrections_buf_;
+  std::unique_ptr<uint32_t[]> values_buf_;
+  std::unique_ptr<uint32_t[]> errors_buf_;
+  std::unique_ptr<uint32_t[]> corrections_buf_;
 };
 
 TEST_F(CorrectionRewriterTest, CapabilityTest) {

@@ -52,6 +52,7 @@ SHOW_LOG_BY_VALUE       ございます
 SHOW_LOG_BY_VALUE       ございました
 */
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 
@@ -122,7 +123,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
   if (command == "SHOW_LOG") {
-    uint32 id;
+    uint32_t id;
     if (args.size() == 2 && absl::SimpleAtoi(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {
@@ -131,7 +132,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
   if (command == "SHOW_LOG_BY_VALUE") {
-    uint32 id;
+    uint32_t id;
     if (args.size() == 2 && handler.GetCandidateIdByValue(args[1], &id)) {
       ShowLog(handler.LastOutput(), id);
     } else {

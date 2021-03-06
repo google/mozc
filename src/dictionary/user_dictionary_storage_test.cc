@@ -29,6 +29,7 @@
 
 #include "dictionary/user_dictionary_storage.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -115,13 +116,13 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   EXPECT_FALSE(storage.Load());
 
   const size_t kDictionariesSize = 3;
-  uint64 id[kDictionariesSize];
+  uint64_t id[kDictionariesSize];
 
   const size_t dict_size = storage.GetProto().dictionaries_size();
 
   for (size_t i = 0; i < kDictionariesSize; ++i) {
     EXPECT_TRUE(storage.CreateDictionary(
-        "test" + std::to_string(static_cast<uint32>(i)), &id[i]));
+        "test" + std::to_string(static_cast<uint32_t>(i)), &id[i]));
     EXPECT_EQ(i + 1 + dict_size, storage.GetProto().dictionaries_size());
   }
 
@@ -140,7 +141,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   EXPECT_FALSE(storage.RenameDictionary(id[0], ""));
 
   // duplicated
-  uint64 tmp_id = 0;
+  uint64_t tmp_id = 0;
   EXPECT_FALSE(storage.CreateDictionary("test0", &tmp_id));
   EXPECT_EQ(UserDictionaryStorage::DUPLICATED_DICTIONARY_NAME,
             storage.GetLastError());
@@ -174,13 +175,13 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
     storage.GetProto().Clear();
-    std::vector<uint64> ids(100);
+    std::vector<uint64_t> ids(100);
     for (size_t i = 0; i < ids.size(); ++i) {
       EXPECT_TRUE(storage.CreateDictionary(
-          "test" + std::to_string(static_cast<uint32>(i)), &ids[i]));
+          "test" + std::to_string(static_cast<uint32_t>(i)), &ids[i]));
     }
 
-    std::vector<uint64> alive;
+    std::vector<uint64_t> alive;
     for (size_t i = 0; i < ids.size(); ++i) {
       if (Util::Random(3) == 0) {  // 33%
         EXPECT_TRUE(storage.DeleteDictionary(ids[i]));
@@ -199,7 +200,7 @@ TEST_F(UserDictionaryStorageTest, DeleteTest) {
 
 TEST_F(UserDictionaryStorageTest, ExportTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  uint64 id = 0;
+  uint64_t id = 0;
 
   EXPECT_TRUE(storage.CreateDictionary("test", &id));
 
@@ -207,7 +208,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
 
   for (size_t i = 0; i < 1000; ++i) {
     UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-    const std::string prefix = std::to_string(static_cast<uint32>(i));
+    const std::string prefix = std::to_string(static_cast<uint32_t>(i));
     // set empty fields randomly
     entry->set_key(prefix + "key");
     entry->set_value(prefix + "value");
@@ -257,9 +258,9 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
       const size_t dic_size = Util::Random(50) + 1;
 
       for (size_t i = 0; i < dic_size; ++i) {
-        uint64 id = 0;
+        uint64_t id = 0;
         EXPECT_TRUE(storage1.CreateDictionary(
-            "test" + std::to_string(static_cast<uint32>(i)), &id));
+            "test" + std::to_string(static_cast<uint32_t>(i)), &id));
         const size_t entry_size = Util::Random(100) + 1;
         for (size_t j = 0; j < entry_size; ++j) {
           UserDictionaryStorage::UserDictionary *dic =
@@ -291,11 +292,11 @@ TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   EXPECT_FALSE(storage.Load());
 
   const size_t kDictionariesSize = 3;
-  uint64 id[kDictionariesSize];
+  uint64_t id[kDictionariesSize];
   EXPECT_TRUE(storage.CreateDictionary("testA", &id[0]));
   EXPECT_TRUE(storage.CreateDictionary("testB", &id[1]));
 
-  uint64 ret_id[kDictionariesSize];
+  uint64_t ret_id[kDictionariesSize];
   EXPECT_TRUE(storage.GetUserDictionaryId("testA", &ret_id[0]));
   EXPECT_TRUE(storage.GetUserDictionaryId("testB", &ret_id[1]));
   EXPECT_FALSE(storage.GetUserDictionaryId("testC", &ret_id[2]));
@@ -343,7 +344,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
           !(data.is_removed_dictionary || data.has_removed_entry))
         << "Non-sync dictionary should NOT have removed dictionary / entry.";
 
-    uint64 dict_id = 0;
+    uint64_t dict_id = 0;
     ASSERT_TRUE(storage.CreateDictionary(data.dictionary_name, &dict_id));
     UserDictionaryStorage::UserDictionary *dict =
         storage.GetProto().mutable_dictionaries(
@@ -404,7 +405,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   // Test duplicated dictionary name.
   storage.GetProto().Clear();
   {
-    uint64 dict_id = 0;
+    uint64_t dict_id = 0;
     storage.CreateDictionary(
         UserDictionaryStorage::default_sync_dictionary_name(), &dict_id);
     storage.CreateDictionary(kDictionaryNameConvertedFromSyncableDictionary,

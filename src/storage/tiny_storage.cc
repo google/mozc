@@ -29,6 +29,8 @@
 
 #include "storage/tiny_storage.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <Windows.h>
 #endif  // OS_WIN
@@ -48,8 +50,8 @@ namespace mozc {
 namespace storage {
 namespace {
 
-const uint32 kStorageVersion = 0;
-const uint32 kStorageMagicId = 0x431fe241;  // random seed
+const uint32_t kStorageVersion = 0;
+const uint32_t kStorageMagicId = 0x431fe241;  // random seed
 const size_t kMaxElementSize = 1024;        // max map size
 const size_t kMaxKeySize = 4096;            // 4k for key/value
 const size_t kMaxValueSize = 4096;          // 4k for key/value
@@ -110,7 +112,7 @@ TinyStorageImpl::TinyStorageImpl() : should_sync_(true) {
   // sizeof(uint32) * 2 (key/value length) +
   // kMaxKeySize + kMaxValueSize
   DCHECK_GT(kMaxFileSize, kMaxElementSize * (kMaxKeySize + kMaxValueSize +
-                                             sizeof(uint32) * 2));
+                                             sizeof(uint32_t) * 2));
 }
 
 TinyStorageImpl::~TinyStorageImpl() {
@@ -139,12 +141,12 @@ bool TinyStorageImpl::Open(const std::string &filename) {
   char *begin = mmap.begin();
   const char *end = mmap.end();
 
-  uint32 version = 0;
-  uint32 magic = 0;
-  uint32 size = 0;
+  uint32_t version = 0;
+  uint32_t magic = 0;
+  uint32_t size = 0;
   // magic is used for checking whether given file is correct or not.
   // magic = (file_size ^ kStorageMagicId)
-  if (!ReadData<uint32>(&begin, end, &magic)) {
+  if (!ReadData<uint32_t>(&begin, end, &magic)) {
     LOG(ERROR) << "cannot read magic";
     return false;
   }
@@ -154,7 +156,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     return false;
   }
 
-  if (!ReadData<uint32>(&begin, end, &version)) {
+  if (!ReadData<uint32_t>(&begin, end, &version)) {
     LOG(ERROR) << "cannot read version";
     return false;
   }
@@ -164,15 +166,15 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     return false;
   }
 
-  if (!ReadData<uint32>(&begin, end, &size)) {
+  if (!ReadData<uint32_t>(&begin, end, &size)) {
     LOG(ERROR) << "cannot read size";
     return false;
   }
 
   for (size_t i = 0; i < size; ++i) {
-    uint32 key_size = 0;
-    uint32 value_size = 0;
-    if (!ReadData<uint32>(&begin, end, &key_size)) {
+    uint32_t key_size = 0;
+    uint32_t value_size = 0;
+    if (!ReadData<uint32_t>(&begin, end, &key_size)) {
       LOG(ERROR) << "key_size is invalid";
       return false;
     }
@@ -185,7 +187,7 @@ bool TinyStorageImpl::Open(const std::string &filename) {
     const std::string key(begin, key_size);
     begin += key_size;
 
-    if (!ReadData<uint32>(&begin, end, &value_size)) {
+    if (!ReadData<uint32_t>(&begin, end, &value_size)) {
       LOG(ERROR) << "value_size is invalid";
       return false;
     }
@@ -233,8 +235,8 @@ bool TinyStorageImpl::Sync() {
     return false;
   }
 
-  uint32 magic = 0;
-  uint32 size = 0;
+  uint32_t magic = 0;
+  uint32_t size = 0;
   ofs.write(reinterpret_cast<const char *>(&magic), sizeof(magic));
   ofs.write(reinterpret_cast<const char *>(&kStorageVersion),
             sizeof(kStorageVersion));
@@ -247,8 +249,8 @@ bool TinyStorageImpl::Sync() {
     }
     const std::string &key = it->first;
     const std::string &value = it->second;
-    const uint32 key_size = static_cast<uint32>(key.size());
-    const uint32 value_size = static_cast<uint32>(value.size());
+    const uint32_t key_size = static_cast<uint32_t>(key.size());
+    const uint32_t value_size = static_cast<uint32_t>(value.size());
     ofs.write(reinterpret_cast<const char *>(&key_size), sizeof(key_size));
     ofs.write(key.data(), key_size);
     ofs.write(reinterpret_cast<const char *>(&value_size), sizeof(value_size));
@@ -256,7 +258,7 @@ bool TinyStorageImpl::Sync() {
     ++size;
   }
 
-  magic = static_cast<uint32>(ofs.tellp());
+  magic = static_cast<uint32_t>(ofs.tellp());
   ofs.seekp(0);
   magic ^= kStorageMagicId;
 

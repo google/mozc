@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_CODEC_INTERFACE_H_
 #define MOZC_DICTIONARY_SYSTEM_CODEC_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -86,23 +87,23 @@ class SystemDictionaryCodecInterface {
                             std::string *output) const = 0;
 
   // Decode token(word info) for a certain key
-  virtual void DecodeTokens(const uint8 *ptr,
+  virtual void DecodeTokens(const uint8_t *ptr,
                             std::vector<TokenInfo> *tokens) const = 0;
 
   // Decode a token. If the token is the last one, returns false,
   // otherwise true.
-  virtual bool DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+  virtual bool DecodeToken(const uint8_t *ptr, TokenInfo *token_info,
                            int *read_bytes) const = 0;
 
   // Read a token for reverse lookup
   // If the token have value id, assign it to |value_id|
   // otherwise assign -1
   // Return false if a token is the last token for a certain key
-  virtual bool ReadTokenForReverseLookup(const uint8 *ptr, int *value_id,
+  virtual bool ReadTokenForReverseLookup(const uint8_t *ptr, int *value_id,
                                          int *read_bytes) const = 0;
 
   // Return termination flag for tokens
-  virtual uint8 GetTokensTerminationFlag() const = 0;
+  virtual uint8_t GetTokensTerminationFlag() const = 0;
 
  protected:
   SystemDictionaryCodecInterface() {}

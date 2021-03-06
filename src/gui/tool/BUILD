@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 load("//:build_defs.bzl", "cc_library_mozc", "select_mozc")
+load("//:config.bzl", "BRANDING")
 load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_binary_mozc",
@@ -101,5 +102,11 @@ cc_qt_binary_mozc(
 macos_qt_application_mozc(
     name = "mozc_tool_macos",
     bundle_name = "MozcTool",
+    deps = [":mozc_tool_main_lib"],
+)
+
+macos_qt_application_mozc(
+    name = "mozc_prelauncher_macos",
+    bundle_name = BRANDING + "Prelauncher",
     deps = [":mozc_tool_main_lib"],
 )

@@ -29,6 +29,8 @@
 
 #include "ipc/ipc.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <windows.h>
 #else
@@ -105,7 +107,7 @@ IPCClientFactory *IPCClientFactory::GetIPCClientFactory() {
   return Singleton<IPCClientFactory>::get();
 }
 
-uint32 IPCClient::GetServerProtocolVersion() const {
+uint32_t IPCClient::GetServerProtocolVersion() const {
   DCHECK(ipc_path_manager_);
   return ipc_path_manager_->GetServerProtocolVersion();
 }
@@ -115,7 +117,7 @@ const std::string &IPCClient::GetServerProductVersion() const {
   return ipc_path_manager_->GetServerProductVersion();
 }
 
-uint32 IPCClient::GetServerProcessId() const {
+uint32_t IPCClient::GetServerProcessId() const {
   DCHECK(ipc_path_manager_);
   return ipc_path_manager_->GetServerProcessId();
 }
@@ -129,7 +131,7 @@ bool IPCClient::TerminateServer(const std::string &name) {
     return true;
   }
 
-  const uint32 pid = client.GetServerProcessId();
+  const uint32_t pid = client.GetServerProcessId();
   if (pid == 0) {
     LOG(ERROR) << "pid is not a valid value: " << pid;
     return false;

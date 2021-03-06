@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_session_handler.h"
 
+#include <cstdint>
+
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -151,7 +153,7 @@ void UserDictionarySessionHandler::ClearStorage(
 
 void UserDictionarySessionHandler::CreateSession(
     const UserDictionaryCommand &command, UserDictionaryCommandStatus *status) {
-  uint64 new_id = CreateNewSessionId();
+  uint64_t new_id = CreateNewSessionId();
 
   session_id_ = new_id;
   session_ = absl::make_unique<UserDictionarySession>(dictionary_path_);
@@ -320,7 +322,7 @@ void UserDictionarySessionHandler::GetEntries(
   mutable_entries->Reserve(entry_index_size);
   for (int i = 0; i < entry_index_size; ++i) {
     const int entry_index = command.entry_index(i);
-    mutable_entries->Add()->CopyFrom(dictionary->entries(entry_index));
+    *mutable_entries->Add() = dictionary->entries(entry_index);
   }
   status->set_status(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
@@ -355,7 +357,7 @@ void UserDictionarySessionHandler::CreateDictionary(
     return;
   }
 
-  uint64 new_dictionary_id;
+  uint64_t new_dictionary_id;
   status->set_status(
       session->CreateDictionary(command.dictionary_name(), &new_dictionary_id));
   if (status->status() ==
@@ -491,7 +493,7 @@ void UserDictionarySessionHandler::ImportData(
     return;
   }
 
-  uint64 dictionary_id = 0;
+  uint64_t dictionary_id = 0;
   UserDictionaryCommandStatus::Status result_status;
   if (command.has_dictionary_id()) {
     result_status =
@@ -522,7 +524,7 @@ void UserDictionarySessionHandler::GetStorage(
   if (session == nullptr) {
     return;
   }
-  status->mutable_storage()->CopyFrom(session->storage());
+  *status->mutable_storage() = session->storage();
   status->set_status(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);
 }
@@ -542,8 +544,8 @@ UserDictionarySession *UserDictionarySessionHandler::GetSession(
   return session_.get();
 }
 
-uint64 UserDictionarySessionHandler::CreateNewSessionId() const {
-  uint64 id = kInvalidSessionId;
+uint64_t UserDictionarySessionHandler::CreateNewSessionId() const {
+  uint64_t id = kInvalidSessionId;
   while (true) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 

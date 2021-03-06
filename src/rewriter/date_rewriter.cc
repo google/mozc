@@ -38,6 +38,7 @@
 #include "rewriter/date_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -392,15 +393,15 @@ const YearData kNorthEraData[] = {
     {1389, "康応", "こうおう"},
     {1390, "明徳", "めいとく"}};
 
-bool PrintUint32(const char *format, uint32 num, char *buf, size_t buf_size) {
+bool PrintUint32(const char *format, uint32_t num, char *buf, size_t buf_size) {
   const int ret = std::snprintf(buf, buf_size, format, num);
   return 0 <= ret && ret < buf_size;
 }
 
 // Helper function to generate "H時M分" time formats.
 void GenerateKanjiTimeFormats(
-    const char *hour_format, const char *min_format, uint32 hour, uint32 min,
-    std::vector<std::pair<std::string, const char *>> *results) {
+    const char *hour_format, const char *min_format, uint32_t hour,
+    uint32_t min, std::vector<std::pair<std::string, const char *>> *results) {
   char hour_s[4], min_s[4];
   if (!PrintUint32(hour_format, hour, hour_s, 4) ||
       !PrintUint32(min_format, min, min_s, 4)) {
@@ -418,8 +419,8 @@ void GenerateKanjiTimeFormats(
 
 // Helper function to generate "午前..." and "午後..." time formats.
 void GenerateGozenGogoTimeFormats(
-    const char *hour_format, const char *min_format, uint32 hour, uint32 min,
-    std::vector<std::pair<std::string, const char *>> *results) {
+    const char *hour_format, const char *min_format, uint32_t hour,
+    uint32_t min, std::vector<std::pair<std::string, const char *>> *results) {
   // "午前" and "午後" prefixes are only used for [0, 11].
   if (hour >= 12) {
     return;
@@ -619,14 +620,14 @@ bool EraToAdForCourt(const YearData *data, size_t size, const std::string &key,
 // Checkes if the given date is valid or not.
 // Over 24 hour expression is allowed in this function.
 // Acceptable hour is between 0 and 29.
-bool IsValidTime(uint32 hour, uint32 minute) {
+bool IsValidTime(uint32_t hour, uint32_t minute) {
   return hour < 30 && minute < 60;
 }
 
 // Returns February last day.
 // This function deals with leap year with Gregorian calendar.
-uint32 GetFebruaryLastDay(uint32 year) {
-  uint32 february_end = (year % 4 == 0) ? 29 : 28;
+uint32_t GetFebruaryLastDay(uint32_t year) {
+  uint32_t february_end = (year % 4 == 0) ? 29 : 28;
   if (year % 100 == 0 && year % 400 != 0) {
     february_end = 28;
   }
@@ -634,7 +635,7 @@ uint32 GetFebruaryLastDay(uint32 year) {
 }
 
 // Checkes given date is valid or not.
-bool IsValidDate(uint32 year, uint32 month, uint32 day) {
+bool IsValidDate(uint32_t year, uint32_t month, uint32_t day) {
   if (day < 1) {
     return false;
   }
@@ -681,7 +682,7 @@ bool IsValidDate(uint32 year, uint32 month, uint32 day) {
 }
 
 // Checks if a pair of month and day is valid.
-bool IsValidMonthAndDay(uint32 month, uint32 day) {
+bool IsValidMonthAndDay(uint32_t month, uint32_t day) {
   if (day == 0) {
     return false;
   }
@@ -770,7 +771,7 @@ bool DateRewriter::EraToAd(const std::string &key,
   return ret;
 }
 
-bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
+bool DateRewriter::ConvertTime(uint32_t hour, uint32_t min,
                                std::vector<std::string> *results) {
   DCHECK(results);
   if (!IsValidTime(hour, min)) {
@@ -797,7 +798,8 @@ bool DateRewriter::ConvertTime(uint32 hour, uint32 min,
   return true;
 }
 
-bool DateRewriter::ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
+bool DateRewriter::ConvertDateWithYear(uint32_t year, uint32_t month,
+                                       uint32_t day,
                                        std::vector<std::string> *results) {
   DCHECK(results);
   if (!IsValidDate(year, month, day)) {
@@ -967,7 +969,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   std::string year_str;
   Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
-  uint32 year = 0;
+  uint32_t year = 0;
   if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
     return false;
   }
@@ -1128,8 +1130,8 @@ bool DateRewriter::RewriteConsecutiveTwoDigits(
     std::vector<std::pair<std::string, const char *>> *results) {
   DCHECK_EQ(2, str.size());
   const auto orig_size = results->size();
-  const uint32 high = static_cast<uint32>(str[0] - '0');
-  const uint32 low = static_cast<uint32>(str[1] - '0');
+  const uint32_t high = static_cast<uint32_t>(str[0] - '0');
+  const uint32_t low = static_cast<uint32_t>(str[1] - '0');
   if (IsValidMonthAndDay(high, low)) {
     results->emplace_back(Util::StringPrintf("%c/%c", str[0], str[1]),
                           kDateDescription);
@@ -1151,19 +1153,19 @@ bool DateRewriter::RewriteConsecutiveThreeDigits(
   DCHECK_EQ(3, str.size());
   const auto orig_size = results->size();
 
-  const uint32 n[] = {static_cast<uint32>(str[0] - '0'),
-                      static_cast<uint32>(str[1] - '0'),
-                      static_cast<uint32>(str[2] - '0')};
+  const uint32_t n[] = {static_cast<uint32_t>(str[0] - '0'),
+                        static_cast<uint32_t>(str[1] - '0'),
+                        static_cast<uint32_t>(str[2] - '0')};
 
   // Split pattern 1: N|NN
-  const uint32 high1 = n[0];
-  const uint32 low1 = 10 * n[1] + n[2];
+  const uint32_t high1 = n[0];
+  const uint32_t low1 = 10 * n[1] + n[2];
   const bool is_valid_date1 = IsValidMonthAndDay(high1, low1) && str[1] != '0';
   const bool is_valid_time1 = IsValidTime(high1, low1);
 
   // Split pattern 2: NN|N
-  const uint32 high2 = 10 * n[0] + n[1];
-  const uint32 low2 = n[2];
+  const uint32_t high2 = 10 * n[0] + n[1];
+  const uint32_t low2 = n[2];
   const bool is_valid_date2 = IsValidMonthAndDay(high2, low2) && str[0] != '0';
   const bool is_valid_time2 = IsValidTime(high2, low2) && str[0] != '0';
 
@@ -1222,10 +1224,10 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
   DCHECK_EQ(4, str.size());
   const auto orig_size = results->size();
 
-  const uint32 high = (10 * static_cast<uint32>(str[0] - '0') +
-                       static_cast<uint32>(str[1] - '0'));
-  const uint32 low = (10 * static_cast<uint32>(str[2] - '0') +
-                      static_cast<uint32>(str[3] - '0'));
+  const uint32_t high = (10 * static_cast<uint32_t>(str[0] - '0') +
+                         static_cast<uint32_t>(str[1] - '0'));
+  const uint32_t low = (10 * static_cast<uint32_t>(str[2] - '0') +
+                        static_cast<uint32_t>(str[3] - '0'));
 
   const bool is_valid_date = IsValidMonthAndDay(high, low);
   const bool is_valid_time = IsValidTime(high, low);

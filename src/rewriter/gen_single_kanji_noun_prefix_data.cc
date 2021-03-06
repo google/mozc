@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -45,7 +46,7 @@ namespace {
 struct NounPrefix {
   const char *key;
   const char *value;
-  int16 rank;
+  int16_t rank;
 } kNounPrefixList[] = {
     {"お", "お", 1},
     {"ご", "ご", 1},

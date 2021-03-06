@@ -30,6 +30,7 @@
 #ifndef MOZC_IPC_IPC_PATH_MANAGER_H_
 #define MOZC_IPC_IPC_PATH_MANAGER_H_
 
+#include <cstdint>
 #ifdef OS_WIN
 #include <time.h>  // for time_t
 #else
@@ -80,14 +81,14 @@ class IPCPathManager {
 
   // return protocol version.
   // return 0 if protocol version is not defined.
-  uint32 GetServerProtocolVersion() const;
+  uint32_t GetServerProtocolVersion() const;
 
   // return product version.
   // return "0.0.0.0" if product version is not defined
   const std::string &GetServerProductVersion() const;
 
   // return process id of the server
-  uint32 GetServerProcessId() const;
+  uint32_t GetServerProcessId() const;
 
   // Checks the server pid is the valid server specified with server_path.
   // server pid can be obtained by OS dependent method.
@@ -102,7 +103,7 @@ class IPCPathManager {
   // returns false.
   // To keep backward compatibility and other operationg system
   // having no support of getting peer's pid, you can set 0 pid.
-  bool IsValidServer(uint32 pid, const std::string &server_path);
+  bool IsValidServer(uint32_t pid, const std::string &server_path);
 
   // clear ipc_key;
   void Clear();
@@ -131,7 +132,7 @@ class IPCPathManager {
   std::unique_ptr<ipc::IPCPathInfo> ipc_path_info_;
   std::string name_;
   std::string server_path_;  // cache for server_path
-  uint32 server_pid_;   // cache for pid of server_path
+  uint32_t server_pid_;      // cache for pid of server_path
   time_t last_modified_;
 #ifdef OS_WIN
   std::map<string, std::wstring> expected_server_ntpath_cache_;

@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_WATCH_DOG_H_
 #define MOZC_SESSION_SESSION_WATCH_DOG_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -49,7 +50,7 @@ class ClientInterface;
 class SessionWatchDog : public Thread {
  public:
   // return the interval sec of watch dog timer
-  int32 interval() const { return interval_sec_; }
+  int32_t interval() const { return interval_sec_; }
 
   // Set client interface. This method doesn't take the owership.
   // mainly for unittesting.
@@ -59,7 +60,7 @@ class SessionWatchDog : public Thread {
   // mainly for unittesting.
   void SetCPUStatsInterface(CPUStatsInterface *cpu_stats);
 
-  explicit SessionWatchDog(int32 interval_sec);
+  explicit SessionWatchDog(int32_t interval_sec);
   ~SessionWatchDog() override;
 
   // inherited from Thread class
@@ -75,13 +76,13 @@ class SessionWatchDog : public Thread {
   // |last_cleanup_time|: the last UTC time cleanup is executed
   // TODO(taku): want to define it inside private with FRIEND_TEST
   bool CanSendCleanupCommand(const volatile float *cpu_loads,
-                             int cpu_load_index, uint64 current_time,
-                             uint64 last_cleanup_time) const;
+                             int cpu_loads_index, uint64_t current_cleanup_time,
+                             uint64_t last_cleanup_time) const;
 
  private:
   void Run() override;
 
-  int32 interval_sec_;
+  int32_t interval_sec_;
   client::ClientInterface *client_;
   CPUStatsInterface *cpu_stats_;
   std::unique_ptr<UnnamedEvent> event_;

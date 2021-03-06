@@ -30,8 +30,8 @@
 
 """Fix @@@...@@@ format of variables in the installer script templates for Mac.
 
-  % python tweak_macinstaller_script.py --output=out.txt --input=in.txt \
-    --version_file=version.txt [--build_type=dev] \
+  % python tweak_macinstaller_script.py --output=out.txt --input=in.txt
+    --version_file=version.txt [--build_type=dev]
 """
 
 __author__ = "mukai"
@@ -39,7 +39,7 @@ __author__ = "mukai"
 import logging
 import optparse
 
-import mozc_version
+from build_tools import mozc_version
 
 
 def _ReplaceVariables(data, environment):
@@ -99,10 +99,11 @@ def main():
        '/Applications/GoogleJapaneseInput.localized'),
       ('@@@MOZC_OMAHA_TAG@@@', omaha_tag),
       ('@@@MOZC_PACKAGE_NAME@@@', 'GoogleJapaneseInput.pkg'),
-      ]
+  ]
 
-  open(options.output, 'w').write(
-      _ReplaceVariables(open(options.input).read(), variables))
+  open(options.output,
+       'w').write(_ReplaceVariables(open(options.input).read(), variables))
+
 
 if __name__ == '__main__':
   main()

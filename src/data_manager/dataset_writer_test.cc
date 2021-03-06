@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_writer.h"
 
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -44,7 +45,7 @@
 namespace mozc {
 namespace {
 
-void SetEntry(const std::string &name, uint64 offset, uint64 size,
+void SetEntry(const std::string &name, uint64_t offset, uint64_t size,
               DataSetMetadata::Entry *entry) {
   entry->set_name(name);
   entry->set_offset(offset);

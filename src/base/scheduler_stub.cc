@@ -29,6 +29,7 @@
 
 #include "base/scheduler_stub.h"
 
+#include <cstdint>
 #include <map>
 
 #include "base/logging.h"
@@ -60,11 +61,11 @@ bool SchedulerStub::HasJob(const std::string &name) const {
   return (jobs_.find(name) != jobs_.end());
 }
 
-void SchedulerStub::PutClockForward(uint64 delta_usec) {
+void SchedulerStub::PutClockForward(uint64_t delta_usec) {
   for (std::map<std::string, JobForStub>::iterator itr = jobs_.begin();
        itr != jobs_.end(); ++itr) {
     JobForStub *job_for_stub = &itr->second;
-    uint64 time_usec = delta_usec;
+    uint64_t time_usec = delta_usec;
     while (true) {
       if (job_for_stub->remaining_usec > time_usec) {
         job_for_stub->remaining_usec -= time_usec;

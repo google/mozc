@@ -30,6 +30,7 @@
 #include "data_manager/data_manager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <ostream>
 
 #include "base/logging.h"
@@ -439,34 +440,34 @@ void DataManager::GetUserPOSData(absl::string_view *token_array_data,
   *string_array_data = user_pos_string_array_data_;
 }
 
-const uint16 *DataManager::GetPOSMatcherData() const {
-  return reinterpret_cast<const uint16 *>(pos_matcher_data_.data());
+const uint16_t *DataManager::GetPOSMatcherData() const {
+  return reinterpret_cast<const uint16_t *>(pos_matcher_data_.data());
 }
 
-const uint8 *DataManager::GetPosGroupData() const {
-  return reinterpret_cast<const uint8 *>(pos_group_data_.data());
+const uint8_t *DataManager::GetPosGroupData() const {
+  return reinterpret_cast<const uint8_t *>(pos_group_data_.data());
 }
 
 void DataManager::GetSegmenterData(
-    size_t *l_num_elements, size_t *r_num_elements, const uint16 **l_table,
-    const uint16 **r_table, size_t *bitarray_num_bytes,
-    const char **bitarray_data, const uint16 **boundary_data) const {
+    size_t *l_num_elements, size_t *r_num_elements, const uint16_t **l_table,
+    const uint16_t **r_table, size_t *bitarray_num_bytes,
+    const char **bitarray_data, const uint16_t **boundary_data) const {
   *l_num_elements = segmenter_compressed_lsize_;
   *r_num_elements = segmenter_compressed_rsize_;
-  *l_table = reinterpret_cast<const uint16 *>(segmenter_ltable_.data());
-  *r_table = reinterpret_cast<const uint16 *>(segmenter_rtable_.data());
+  *l_table = reinterpret_cast<const uint16_t *>(segmenter_ltable_.data());
+  *r_table = reinterpret_cast<const uint16_t *>(segmenter_rtable_.data());
   *bitarray_num_bytes = segmenter_bitarray_.size();
   *bitarray_data = segmenter_bitarray_.data();
-  *boundary_data = reinterpret_cast<const uint16 *>(boundary_data_.data());
+  *boundary_data = reinterpret_cast<const uint16_t *>(boundary_data_.data());
 }
 
 void DataManager::GetSuffixDictionaryData(absl::string_view *key_array_data,
                                           absl::string_view *value_array_data,
-                                          const uint32 **token_array) const {
+                                          const uint32_t **token_array) const {
   *key_array_data = suffix_key_array_data_;
   *value_array_data = suffix_value_array_data_;
   *token_array =
-      reinterpret_cast<const uint32 *>(suffix_token_array_data_.data());
+      reinterpret_cast<const uint32_t *>(suffix_token_array_data_.data());
 }
 
 void DataManager::GetReadingCorrectionData(

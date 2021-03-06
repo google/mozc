@@ -76,7 +76,7 @@ class KeyMapManager {
   bool ReloadConfig(const config::Config &config);
 
   bool LoadFile(const char *filename);
-  bool LoadStream(std::istream *is);
+  bool LoadStream(std::istream *ifs);
   bool LoadStreamWithErrors(std::istream *ifs,
                             std::vector<std::string> *errors);
 

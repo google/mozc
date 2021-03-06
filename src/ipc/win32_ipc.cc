@@ -30,8 +30,6 @@
 // skip all unless OS_WIN
 #ifdef OS_WIN
 
-#include "ipc/ipc.h"
-
 #include <Sddl.h>
 #include <Windows.h>
 
@@ -48,6 +46,7 @@
 #include "base/util.h"
 #include "base/win_sandbox.h"
 #include "base/win_util.h"
+#include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
 
 namespace mozc {

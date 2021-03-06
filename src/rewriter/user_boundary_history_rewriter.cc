@@ -30,6 +30,7 @@
 #include "rewriter/user_boundary_history_rewriter.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <deque>
 #include <string>
 #include <utility>
@@ -54,8 +55,8 @@ using storage::LRUStorage;
 
 namespace {
 const int kValueSize = 4;
-const uint32 kLRUSize = 5000;
-const uint32 kSeedValue = 0x761fea81;
+const uint32_t kLRUSize = 5000;
+const uint32_t kSeedValue = 0x761fea81;
 
 const char kFileName[] = "user://boundary.db";
 
@@ -63,7 +64,7 @@ enum { INSERT, RESIZE };
 
 class LengthArray {
  public:
-  void ToUCharArray(uint8 *array) const {
+  void ToUCharArray(uint8_t *array) const {
     array[0] = length0_;
     array[1] = length1_;
     array[2] = length2_;
@@ -74,7 +75,7 @@ class LengthArray {
     array[7] = length7_;
   }
 
-  void CopyFromUCharArray(const uint8 *array) {
+  void CopyFromUCharArray(const uint8_t *array) {
     length0_ = array[0];
     length1_ = array[1];
     length2_ = array[2];
@@ -93,14 +94,14 @@ class LengthArray {
   }
 
  private:
-  uint8 length0_ : 4;
-  uint8 length1_ : 4;
-  uint8 length2_ : 4;
-  uint8 length3_ : 4;
-  uint8 length4_ : 4;
-  uint8 length5_ : 4;
-  uint8 length6_ : 4;
-  uint8 length7_ : 4;
+  uint8_t length0_ : 4;
+  uint8_t length1_ : 4;
+  uint8_t length2_ : 4;
+  uint8_t length3_ : 4;
+  uint8_t length4_ : 4;
+  uint8_t length5_ : 4;
+  uint8_t length6_ : 4;
+  uint8_t length7_ : 4;
 };
 }  // namespace
 
@@ -223,7 +224,7 @@ bool UserBoundaryHistoryRewriter::Reload() {
 bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     Segments *segments, const ConversionRequest &request, int type) const {
   bool result = false;
-  uint8 length_array[8];
+  uint8_t length_array[8];
 
   const size_t history_segments_size = segments->history_segments_size();
 
@@ -267,7 +268,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     memset(length_array, 0, sizeof(length_array));
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
-      length_array[k] = static_cast<uint8>(keys[k].second);
+      length_array[k] = static_cast<uint8_t>(keys[k].second);
     }
     for (int j = static_cast<int>(keys_size) - 1; j >= 0; --j) {
       if (type == RESIZE) {

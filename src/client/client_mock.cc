@@ -134,7 +134,7 @@ MockImplementationWithContextAndOutput(SendCommandWithContext,
 bool ClientMock::GetConfig(config::Config *config) {
   scoped_lock l(&mutex_);
   function_counter_["GetConfig"]++;
-  config->CopyFrom(called_config_);
+  *config = called_config_;
   std::map<std::string, bool>::const_iterator it =
       return_bool_values_.find("GetConfig");
   if (it != return_bool_values_.end()) {
@@ -147,7 +147,7 @@ bool ClientMock::GetConfig(config::Config *config) {
 bool ClientMock::SetConfig(const config::Config &config) {
   scoped_lock l(&mutex_);
   function_counter_["SetConfig"]++;
-  called_config_.CopyFrom(config);
+  called_config_ = config;
   std::map<std::string, bool>::const_iterator it =
       return_bool_values_.find("SetConfig");
   if (it != return_bool_values_.end()) {

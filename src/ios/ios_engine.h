@@ -30,6 +30,7 @@
 #ifndef MOZC_IOS_IOS_ENGINE_H_
 #define MOZC_IOS_IOS_ENGINE_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -172,11 +173,11 @@ class IosEngine {
     ScopedUserDictionarySession &operator=(
         const ScopedUserDictionarySession &) = delete;
 
-    uint64 user_dict_session_id() const { return user_dict_session_id_; }
+    uint64_t user_dict_session_id() const { return user_dict_session_id_; }
 
    private:
     IosEngine *engine_;
-    uint64 user_dict_session_id_;
+    uint64_t user_dict_session_id_;
   };
 
   static InputConfigTuple GetInputConfigTupleFromLayoutName(
@@ -184,23 +185,23 @@ class IosEngine {
 
   bool EvalCommandLockGuarded(commands::Command *command);
   bool SetSpecialRomajiTable(commands::Request::SpecialRomanjiTable table);
-  bool LoadUserDictionaryIfExists(uint64 user_dict_session_id,
+  bool LoadUserDictionaryIfExists(uint64_t user_dict_session_id,
                                   commands::Command *command);
-  bool DeleteUserDictionaryIfExists(uint64 user_dict_session_id,
+  bool DeleteUserDictionaryIfExists(uint64_t user_dict_session_id,
                                     const std::string &dictionary_name,
                                     commands::Command *command);
-  bool ImportDataToNewUserDictionary(uint64 user_dict_session_id,
+  bool ImportDataToNewUserDictionary(uint64_t user_dict_session_id,
                                      const std::string &dictionary_name,
                                      const std::string &tsv_content,
                                      commands::Command *command);
-  bool SaveUserDictionary(uint64 user_dict_session_id,
+  bool SaveUserDictionary(uint64_t user_dict_session_id,
                           commands::Command *command);
   bool Reload(commands::Command *command);
 
   Mutex mutex_;
   std::unique_ptr<SessionHandlerInterface> session_handler_
       ABSL_PT_GUARDED_BY(mutex_);
-  uint64 session_id_ = 0;
+  uint64_t session_id_ = 0;
   commands::Request current_request_;
   InputConfigTuple current_config_tuple_;
   InputConfig *current_input_config_ = nullptr;

@@ -32,6 +32,8 @@
 #ifndef MOZC_COMPOSER_KEY_EVENT_UTIL_H_
 #define MOZC_COMPOSER_KEY_EVENT_UTIL_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -39,12 +41,12 @@ namespace commands {
 class KeyEvent;
 }  // namespace commands
 
-typedef uint64 KeyInformation;
+typedef uint64_t KeyInformation;
 
 // This is pure static class.
 class KeyEventUtil {
  public:
-  static uint32 GetModifiers(const commands::KeyEvent &key_event);
+  static uint32_t GetModifiers(const commands::KeyEvent &key_event);
 
   // |Modifiers(16bit)|SpecialKey(16bit)|Unicode(32bit)|
   static bool GetKeyInformation(const commands::KeyEvent &key_event,
@@ -64,7 +66,7 @@ class KeyEventUtil {
 
   // Removes modifier keys which are specified by |remove_modifiers|.
   static void RemoveModifiers(const commands::KeyEvent &key_event,
-                              uint32 remove_modifiers,
+                              uint32_t remove_modifiers,
                               commands::KeyEvent *new_key_event);
 
   // Returns a fallback keyevent generated from key_event. In the
@@ -74,19 +76,19 @@ class KeyEventUtil {
   static bool MaybeGetKeyStub(const commands::KeyEvent &key_event,
                               KeyInformation *key);
 
-  static bool HasAlt(uint32 modifiers);
-  static bool HasCtrl(uint32 modifiers);
-  static bool HasShift(uint32 modifiers);
-  static bool HasCaps(uint32 modifiers);
+  static bool HasAlt(uint32_t modifiers);
+  static bool HasCtrl(uint32_t modifiers);
+  static bool HasShift(uint32_t modifiers);
+  static bool HasCaps(uint32_t modifiers);
 
   // These functions doesn't consider CAPS.
-  static bool IsAlt(uint32 modifiers);
-  static bool IsCtrl(uint32 modifiers);
-  static bool IsShift(uint32 modifiers);
-  static bool IsAltCtrl(uint32 modifiers);
-  static bool IsAltShift(uint32 modifiers);
-  static bool IsCtrlShift(uint32 modifiers);
-  static bool IsAltCtrlShift(uint32 modifiers);
+  static bool IsAlt(uint32_t modifiers);
+  static bool IsCtrl(uint32_t modifiers);
+  static bool IsShift(uint32_t modifiers);
+  static bool IsAltCtrl(uint32_t modifiers);
+  static bool IsAltShift(uint32_t modifiers);
+  static bool IsCtrlShift(uint32_t modifiers);
+  static bool IsAltCtrlShift(uint32_t modifiers);
 
   static bool IsLowerAlphabet(const commands::KeyEvent &key_event);
   static bool IsUpperAlphabet(const commands::KeyEvent &key_event);

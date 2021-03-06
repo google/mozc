@@ -29,6 +29,8 @@
 
 #include "ipc/named_event.h"
 
+#include <cstdint>
+
 #include "absl/strings/str_format.h"
 
 #ifdef OS_WIN
@@ -96,7 +98,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   const size_t kEventPathLength = 14;
   char buf[32];
   absl::SNPrintF(buf, kEventPathLength, "/%x",
-                 static_cast<uint64>(Hash::Fingerprint(event_name)));
+                 static_cast<uint64_t>(Hash::Fingerprint(event_name)));
   return buf;
 #endif
 }

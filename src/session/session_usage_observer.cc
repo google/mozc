@@ -30,6 +30,7 @@
 #include "session/session_usage_observer.h"
 
 #include <climits>
+#include <cstdint>
 #include <limits>
 #include <map>
 #include <string>
@@ -68,17 +69,17 @@ void AddToDoubleValueStats(double value,
   double_stats->set_square_total(double_stats->square_total() + value * value);
 }
 
-uint64 GetTimeInMilliSecond() {
-  uint64 second = 0;
-  uint32 micro_second = 0;
+uint64_t GetTimeInMilliSecond() {
+  uint64_t second = 0;
+  uint32_t micro_second = 0;
   Clock::GetTimeOfDay(&second, &micro_second);
   return second * 1000 + micro_second / 1000;
 }
 
-uint32 GetDuration(uint64 base_value) {
-  const uint64 result = GetTimeInMilliSecond() - base_value;
-  if (result != static_cast<uint32>(result)) {
-    return std::numeric_limits<uint32>::max();
+uint32_t GetDuration(uint64_t base_value) {
+  const uint64_t result = GetTimeInMilliSecond() - base_value;
+  if (result != static_cast<uint32_t>(result)) {
+    return std::numeric_limits<uint32_t>::max();
   }
   return result;
 }
@@ -147,7 +148,7 @@ bool SessionUsageObserver::SaveCachedStats(void *data) {
 
 void SessionUsageObserver::EvalCreateSession(
     const commands::Input &input, const commands::Output &output,
-    std::map<uint64, SessionState> *states) {
+    std::map<uint64_t, SessionState> *states) {
   // Number of create session
   SessionState state;
   state.set_id(output.id());
@@ -196,7 +197,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
              state->candidates().category() == commands::SUGGESTION) {
     if (!output.has_candidates() ||
         output.candidates().category() != commands::SUGGESTION) {
-      const uint32 suggestion_duration =
+      const uint32_t suggestion_duration =
           GetDuration(state->start_suggestion_window_time());
       UsageStats::UpdateTiming("SuggestionWindowDurationMSec",
                                suggestion_duration);
@@ -221,7 +222,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
              state->candidates().category() == commands::PREDICTION) {
     if (!output.has_candidates() ||
         output.candidates().category() != commands::PREDICTION) {
-      const uint64 predict_duration =
+      const uint64_t predict_duration =
           GetDuration(state->start_prediction_window_time());
       UsageStats::UpdateTiming("PredictionWindowDurationMSec",
                                predict_duration);
@@ -231,7 +232,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
              state->candidates().category() == commands::CONVERSION) {
     if (!output.has_candidates() ||
         output.candidates().category() != commands::CONVERSION) {
-      const uint32 conversion_duration =
+      const uint32_t conversion_duration =
           GetDuration(state->start_conversion_window_time());
       UsageStats::UpdateTiming("ConversionWindowDurationMSec",
                                conversion_duration);
@@ -248,14 +249,14 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Update Preedit
   if (output.has_preedit()) {
-    state->mutable_preedit()->CopyFrom(output.preedit());
+    *state->mutable_preedit() = output.preedit();
   } else {
     state->clear_preedit();
   }
 
   // Update Candidates
   if (output.has_candidates()) {
-    state->mutable_candidates()->CopyFrom(output.candidates());
+    *state->mutable_candidates() = output.candidates();
   } else {
     state->clear_candidates();
   }
@@ -269,7 +270,7 @@ void SessionUsageObserver::UpdateState(const commands::Input &input,
 
   // Update Result
   if (output.has_result()) {
-    state->mutable_result()->CopyFrom(output.result());
+    *state->mutable_result() = output.result();
   } else {
     state->clear_result();
   }
@@ -288,7 +289,7 @@ void SessionUsageObserver::UpdateClientSideStats(const commands::Input &input,
       break;
     case commands::SessionCommand::INFOLIST_WINDOW_HIDE:
       if (state->has_start_infolist_window_time()) {
-        const uint64 infolist_duration =
+        const uint64_t infolist_duration =
             GetDuration(state->start_infolist_window_time());
         UsageStats::UpdateTiming("InfolistWindowDurationMSec",
                                  infolist_duration);
@@ -517,7 +518,7 @@ void SessionUsageObserver::EvalCommandHandler(
     return;
   }
 
-  std::map<uint64, SessionState>::iterator iter = states_.find(input.id());
+  std::map<uint64_t, SessionState>::iterator iter = states_.find(input.id());
   if (iter == states_.end()) {
     LOG(WARNING) << "unknown session";
     // Unknown session
@@ -527,7 +528,7 @@ void SessionUsageObserver::EvalCommandHandler(
   DCHECK(state);
 
   if (input.type() == commands::Input::DELETE_SESSION) {
-    const uint32 session_duration = GetDuration(state->created_time());
+    const uint32_t session_duration = GetDuration(state->created_time());
     UsageStats::UpdateTiming("SessionDurationMSec", session_duration);
 
     states_.erase(iter);
@@ -570,7 +571,7 @@ void SessionUsageObserver::EvalCommandHandler(
   }
   if (input.type() == commands::Input::SET_REQUEST) {
     if (input.has_request()) {
-      state->mutable_request()->CopyFrom(input.request());
+      *state->mutable_request() = input.request();
     }
   }
   // Saves input field type

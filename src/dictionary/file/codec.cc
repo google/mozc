@@ -101,7 +101,7 @@ void DictionaryFileCodec::WriteSection(const DictionaryFileSection &section,
 
 std::string DictionaryFileCodec::GetSectionName(const std::string &name) const {
   VLOG(1) << "seed\t" << seed_;
-  const uint64 name_fp = Hash::FingerprintWithSeed(name, seed_);
+  const uint64_t name_fp = Hash::FingerprintWithSeed(name, seed_);
   const std::string fp_string(reinterpret_cast<const char *>(&name_fp),
                               sizeof(name_fp));
   std::string escaped;
@@ -131,7 +131,7 @@ mozc::Status DictionaryFileCodec::ReadSections(
   const char *ptr = image;  // The current position at which data is read.
   const char *const image_end = image + length;
 
-  const int32 filemagic = filecodec_util::ReadInt32ThenAdvance(&ptr);
+  const int32_t filemagic = filecodec_util::ReadInt32ThenAdvance(&ptr);
   if (filemagic != filemagic_) {
     return mozc::FailedPreconditionError(absl::StrCat(
         "codec.cc: Invalid dictionary file magic. Expected: ", filemagic_,
@@ -152,7 +152,7 @@ mozc::Status DictionaryFileCodec::ReadSections(
           ": Insufficient image to read data_size(4 bytes), available size = ",
           std::distance(ptr, image_end)));
     }
-    const int32 data_size = filecodec_util::ReadInt32ThenAdvance(&ptr);
+    const int32_t data_size = filecodec_util::ReadInt32ThenAdvance(&ptr);
     if (data_size == 0) {  // The end marker written in WriteSections().
       break;
     }

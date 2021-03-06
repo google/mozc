@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -131,7 +132,7 @@ class UndoDeleteDictionaryWithEnsuringNonEmptyStorageCommand
 
 class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
  public:
-  UndoRenameDictionaryCommand(uint64 dictionary_id,
+  UndoRenameDictionaryCommand(uint64_t dictionary_id,
                               const std::string &original_name)
       : dictionary_id_(dictionary_id), original_name_(original_name) {}
 
@@ -148,7 +149,7 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
   }
 
  private:
-  uint64 dictionary_id_;
+  uint64_t dictionary_id_;
   std::string original_name_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoRenameDictionaryCommand);
@@ -156,7 +157,7 @@ class UndoRenameDictionaryCommand : public UserDictionarySession::UndoCommand {
 
 class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
  public:
-  explicit UndoAddEntryCommand(uint64 dictionary_id)
+  explicit UndoAddEntryCommand(uint64_t dictionary_id)
       : dictionary_id_(dictionary_id) {}
 
   bool RunUndo(mozc::UserDictionaryStorage *storage) override {
@@ -172,14 +173,14 @@ class UndoAddEntryCommand : public UserDictionarySession::UndoCommand {
   }
 
  private:
-  uint64 dictionary_id_;
+  uint64_t dictionary_id_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoAddEntryCommand);
 };
 
 class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
  public:
-  UndoEditEntryCommand(uint64 dictionary_id, int index,
+  UndoEditEntryCommand(uint64_t dictionary_id, int index,
                        const UserDictionary::Entry &original_entry)
       : dictionary_id_(dictionary_id),
         index_(index),
@@ -199,7 +200,7 @@ class UndoEditEntryCommand : public UserDictionarySession::UndoCommand {
   }
 
  private:
-  uint64 dictionary_id_;
+  uint64_t dictionary_id_;
   int index_;
   UserDictionary::Entry original_entry_;
 
@@ -217,7 +218,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
  public:
   // This instance takes the ownership of the given entries.
   UndoDeleteEntryCommand(
-      uint64 dictionary_id,
+      uint64_t dictionary_id,
       const std::vector<std::pair<int, UserDictionary::Entry *> >
           deleted_entries)
       : dictionary_id_(dictionary_id), deleted_entries_(deleted_entries) {
@@ -283,7 +284,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
   }
 
  private:
-  uint64 dictionary_id_;
+  uint64_t dictionary_id_;
   std::vector<std::pair<int, UserDictionary::Entry *> > deleted_entries_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoDeleteEntryCommand);
@@ -291,7 +292,7 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
 
 class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
  public:
-  UndoImportFromStringCommand(uint64 dictionary_id, int original_num_entries)
+  UndoImportFromStringCommand(uint64_t dictionary_id, int original_num_entries)
       : dictionary_id_(dictionary_id),
         original_num_entries_(original_num_entries) {}
 
@@ -312,7 +313,7 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
   }
 
  private:
-  uint64 dictionary_id_;
+  uint64_t dictionary_id_;
   int original_num_entries_;
 
   DISALLOW_COPY_AND_ASSIGN(UndoImportFromStringCommand);
@@ -451,7 +452,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Undo() {
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::CreateDictionary(
-    const std::string &dictionary_name, uint64 *new_dictionary_id) {
+    const std::string &dictionary_name, uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(
           &storage_->GetProto(), dictionary_name, new_dictionary_id);
@@ -462,18 +463,18 @@ UserDictionaryCommandStatus::Status UserDictionarySession::CreateDictionary(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::DeleteDictionary(
-    uint64 dictionary_id) {
+    uint64_t dictionary_id) {
   return DeleteDictionaryInternal(dictionary_id, false);
 }
 
 UserDictionaryCommandStatus::Status
 UserDictionarySession::DeleteDictionaryWithEnsuringNonEmptyStorage(
-    uint64 dictionary_id) {
+    uint64_t dictionary_id) {
   return DeleteDictionaryInternal(dictionary_id, true);
 }
 
 UserDictionaryCommandStatus::Status
-UserDictionarySession::DeleteDictionaryInternal(uint64 dictionary_id,
+UserDictionarySession::DeleteDictionaryInternal(uint64_t dictionary_id,
                                                 bool ensure_non_empty_storage) {
   int original_index;
   UserDictionary *deleted_dictionary;
@@ -497,7 +498,7 @@ UserDictionarySession::DeleteDictionaryInternal(uint64 dictionary_id,
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
-    uint64 dictionary_id, const std::string &dictionary_name) {
+    uint64_t dictionary_id, const std::string &dictionary_name) {
   std::string original_name;
   const UserDictionary *dictionary =
       UserDictionaryUtil::GetUserDictionaryById(
@@ -534,7 +535,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::RenameDictionary(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
-    uint64 dictionary_id, const UserDictionary::Entry &entry) {
+    uint64_t dictionary_id, const UserDictionary::Entry &entry) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -561,7 +562,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::AddEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
-    uint64 dictionary_id, int index, const UserDictionary::Entry &entry) {
+    uint64_t dictionary_id, int index, const UserDictionary::Entry &entry) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -588,7 +589,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
-    uint64 dictionary_id, const std::vector<int> &index_list) {
+    uint64_t dictionary_id, const std::vector<int> &index_list) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -628,7 +629,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::ImportFromString(
-    uint64 dictionary_id, const std::string &data) {
+    uint64_t dictionary_id, const std::string &data) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -681,7 +682,7 @@ UserDictionarySession::ImportFromStringInternal(UserDictionary *dictionary,
 UserDictionaryCommandStatus::Status
 UserDictionarySession::ImportToNewDictionaryFromString(
     const std::string &dictionary_name, const std::string &data,
-    uint64 *new_dictionary_id) {
+    uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(
           &storage_->GetProto(), dictionary_name, new_dictionary_id);
@@ -709,7 +710,7 @@ bool UserDictionarySession::EnsureNonEmptyStorage() {
   }
 
   // Creates a dictionary with the default name. Should never fail.
-  uint64 new_dictionary_id;
+  uint64_t new_dictionary_id;
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(
           &storage_->GetProto(), default_dictionary_name_, &new_dictionary_id);

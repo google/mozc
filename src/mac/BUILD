@@ -30,10 +30,11 @@
 
 load(
     "//:build_defs.bzl",
-    "info_plist_mozc",
     "macos_application_mozc",
+    "macos_bundle_mozc",
     "objc_library_mozc",
     "py_binary_mozc",
+    "select_mozc",
 )
 load(
     "//:config.bzl",
@@ -45,10 +46,27 @@ package(default_visibility = ["//:__subpackages__"])
 
 macos_application_mozc(
     name = "mozc_macos",
+    additional_contents = select_mozc(
+        default = {},
+        macos = {
+            "//renderer:mozc_renderer_macos": "Resources",
+            "//server:mozc_server_macos": "Resources",
+        },
+        oss_macos = {
+            "//gui/about_dialog:about_dialog_macos": "Resources",
+            "//gui/config_dialog:config_dialog_macos": "Resources",
+            "//gui/dictionary_tool:dictionary_tool_macos": "Resources",
+            "//gui/error_message_dialog:error_message_dialog_macos": "Resources",
+            "//gui/tool:mozc_prelauncher_macos": "Resources",
+            "//gui/word_register_dialog:word_register_dialog_macos": "Resources",
+            "//renderer:mozc_renderer_macos": "Resources",
+            "//server:mozc_server_macos": "Resources",
+        },
+    ),
     app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_id = MACOS_BUNDLE_ID_PREFIX,
     bundle_name = BRANDING,
-    infoplists = [":info_plist"],
+    infoplists = ["Info.plist"],
     resources = [
         "//data/images/mac:direct.tiff",
         "//data/images/mac:full_ascii.tiff",
@@ -57,6 +75,10 @@ macos_application_mozc(
         "//data/images/mac:half_katakana.tiff",
         "//data/images/mac:hiragana.tiff",
         "//data/installer:credits_en.html",
+    ],
+    strings = [
+        "English.lproj/InfoPlist.strings",
+        "Japanese.lproj/InfoPlist.strings",
     ],
     deps = ["mozc_macos_main_lib"],
 )
@@ -89,6 +111,10 @@ objc_library_mozc(
     ],
     hdrs = [
         "GoogleJapaneseInputController.h",
+    ],
+    data = [
+        "English.lproj/Config.xib",
+        "Japanese.lproj/Config.xib",
     ],
     proto_deps = [
         "//protocol:commands_proto",
@@ -176,8 +202,117 @@ genrule(
     exec_tools = [":generate_mapping"],
 )
 
-info_plist_mozc(
-    name = "info_plist",
-    srcs = ["Info.plist"],
-    outs = [BRANDING + "Info.plist"],
+objc_library_mozc(
+    name = "activate_pane_lib",
+    srcs = ["ActivatePane/ActivatePane.mm"],
+    hdrs = ["ActivatePane/ActivatePane.h"],
+    data = ["ActivatePane/ActivatePane.xib"],
+    sdk_frameworks = [
+        "Carbon",
+        "InstallerPlugins",
+    ],
+)
+
+macos_bundle_mozc(
+    name = "activate_pane",
+    bundle_name = "ActivatePane",
+    infoplists = ["ActivatePane/Info.plist"],
+    strings = [
+        "ActivatePane/English.lproj/Localizable.strings",
+        "ActivatePane/Japanese.lproj/Localizable.strings",
+    ],
+    deps = ["activate_pane_lib"],
+)
+
+objc_library_mozc(
+    name = "dev_confirm_pane_lib",
+    srcs = ["DevConfirmPane/DevConfirmPane.mm"],
+    hdrs = ["DevConfirmPane/DevConfirmPane.h"],
+    data = ["DevConfirmPane/DevConfirmPane.xib"],
+    sdk_frameworks = [
+        "Carbon",
+        "InstallerPlugins",
+    ],
+)
+
+macos_bundle_mozc(
+    name = "dev_confirm_pane",
+    bundle_name = "DevConfirmPane",
+    infoplists = ["DevConfirmPane/Info.plist"],
+    strings = [
+        "DevConfirmPane/English.lproj/Localizable.strings",
+        "DevConfirmPane/Japanese.lproj/Localizable.strings",
+    ],
+    deps = ["dev_confirm_pane_lib"],
+)
+
+objc_library_mozc(
+    name = "uninstaller_main_lib",
+    srcs = [
+        "Uninstaller/DialogsController.mm",
+        "Uninstaller/Uninstaller.mm",
+        "Uninstaller/Uninstaller_main.mm",
+    ],
+    hdrs = [
+        "Uninstaller/DialogsController.h",
+        "Uninstaller/Uninstaller.h",
+    ],
+    data = [
+        "Uninstaller/English.lproj/Dialogs.xib",
+        "Uninstaller/Japanese.lproj/Dialogs.xib",
+    ],
+    sdk_frameworks = [
+        "Carbon",
+        "Security",
+    ],
+    deps = [
+        "//base:init_mozc",
+        "//base:url",
+        "//base:version",
+    ],
+)
+
+macos_application_mozc(
+    name = "uninstaller_macos",
+    bundle_name = "Uninstaller",
+    infoplists = ["Uninstaller/Info.plist"],
+    strings = [
+        "Uninstaller/English.lproj/InfoPlist.strings",
+        "Uninstaller/Japanese.lproj/InfoPlist.strings",
+    ],
+    deps = ["uninstaller_main_lib"],
+)
+
+genrule(
+    name = "tweak_preflight",
+    srcs = [
+        "installer/preflight_template.sh",
+    ],
+    outs = ["preflight.sh"],
+    cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
+           " --output $@" +
+           " --input $<" +
+           " --version_file $(location //base:mozc_version_txt)" +
+           " --build_type dev"),  # or stable.
+    exec_tools = [
+        "//build_tools:tweak_macinstaller_script",
+        "//base:mozc_version_txt",
+    ],
+)
+
+genrule(
+    name = "tweak_postflight",
+    srcs = [
+        "installer/postflight_template.sh",
+    ],
+    outs = ["postflight.sh"],
+    cmd = ("$(location //build_tools:tweak_macinstaller_script)" +
+           " --output $@" +
+           " --input $<" +
+           " --version_file $(location //base:mozc_version_txt)" +
+           " --build_type dev"),  # or stable.
+    exec_tools = [
+        "//build_tools:tweak_macinstaller_script",
+        "//base:mozc_version_txt",
+    ],
 )

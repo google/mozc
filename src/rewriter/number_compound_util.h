@@ -34,6 +34,8 @@
 #ifndef MOZC_REWRITER_NUMBER_COMPOUND_UTIL_H_
 #define MOZC_REWRITER_NUMBER_COMPOUND_UTIL_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "converter/segments.h"
@@ -64,7 +66,7 @@ enum NumberScriptType {
 bool SplitStringIntoNumberAndCounterSuffix(
     const SerializedStringArray &suffix_array, absl::string_view input,
     absl::string_view *number, absl::string_view *counter_suffix,
-    uint32 *script_type);
+    uint32_t *script_type);
 
 // Checks if the given candidate is number, where candidate is considered as a
 // number when satisfying one of the following conditions:

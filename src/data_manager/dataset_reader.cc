@@ -29,6 +29,8 @@
 
 #include "data_manager/dataset_reader.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/unverified_sha1.h"
@@ -68,7 +70,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Check the file size.
-  uint64 filesize = 0;
+  uint64_t filesize = 0;
   if (!Util::DeserializeUint64(
           absl::ClippedSubstr(memblock, memblock.size() - 8, 8), &filesize)) {
     LOG(ERROR) << "Broken: failed to read filesize";
@@ -83,7 +85,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   // Checksum is not checked.
 
   // Read the metadata size.
-  uint64 metadata_size = 0;
+  uint64_t metadata_size = 0;
   if (!Util::DeserializeUint64(
           absl::ClippedSubstr(memblock, memblock.size() - kFooterSize, 8),
           &metadata_size)) {
@@ -92,7 +94,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Note: This subtraction doesn't cause underflow by the above check.
-  const uint64 content_and_metadta_size =
+  const uint64_t content_and_metadta_size =
       memblock.size() - magic.size() - kFooterSize;
   if (metadata_size == 0 || content_and_metadta_size < metadata_size) {
     LOG(ERROR) << "Broken: metadata size is broken or metadata is broken";
@@ -100,7 +102,8 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Note: This subtraction doesn't cause underflow by the above check.
-  const uint64 metadata_offset = memblock.size() - kFooterSize - metadata_size;
+  const uint64_t metadata_offset =
+      memblock.size() - kFooterSize - metadata_size;
 
   // Open metadata.
   DataSetMetadata metadata;
@@ -112,7 +115,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   }
 
   // Construct a mapping from name to data chunk.
-  uint64 prev_chunk_end = magic.size();
+  uint64_t prev_chunk_end = magic.size();
   for (int i = 0; i < metadata.entries_size(); ++i) {
     const auto& e = metadata.entries(i);
     if (e.offset() < prev_chunk_end || e.offset() >= metadata_offset) {

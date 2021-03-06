@@ -29,6 +29,8 @@
 
 #include "storage/louds/bit_vector_based_array.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 
 namespace mozc {
@@ -40,13 +42,13 @@ namespace {
 const size_t kLb0CacheSize = 1024;
 const size_t kLb1CacheSize = 0;
 
-inline int ReadInt32(const uint8 *data) {
-  return *reinterpret_cast<const int32 *>(data);
+inline int ReadInt32(const uint8_t *data) {
+  return *reinterpret_cast<const int32_t *>(data);
 }
 
 }  // namespace
 
-void BitVectorBasedArray::Open(const uint8 *image) {
+void BitVectorBasedArray::Open(const uint8_t *image) {
   const int index_length = ReadInt32(image);
   const int base_length = ReadInt32(image + 4);
   const int step_length = ReadInt32(image + 8);

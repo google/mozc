@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -47,7 +48,7 @@ ABSL_FLAG(std::string, name, "SuggestionFilterData",
           "name for variable name in the header file");
 
 namespace {
-void ReadWords(const std::string &name, std::vector<uint64> *words) {
+void ReadWords(const std::string &name, std::vector<uint64_t> *words) {
   std::string line;
   mozc::InputFileStream input(name.c_str());
   while (std::getline(input, line)) {
@@ -76,7 +77,7 @@ int main(int argc, char **argv) {
     absl::SetFlag(&FLAGS_output, argv[2]);
   }
 
-  std::vector<uint64> words;
+  std::vector<uint64_t> words;
 
   ReadWords(absl::GetFlag(FLAGS_input), &words);
 

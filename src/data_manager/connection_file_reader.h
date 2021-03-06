@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_CONNECTION_FILE_READER_H_
 #define MOZC_DATA_MANAGER_CONNECTION_FILE_READER_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/file_stream.h"
@@ -52,9 +53,9 @@ class ConnectionFileReader {
   // Currently the matrix is square.
   size_t left_size() const { return pos_size_; }
   size_t right_size() const { return pos_size_; }
-  int32 rid_of_left_node() const { return array_index_ / pos_size_; }
-  int32 lid_of_right_node() const { return array_index_ % pos_size_; }
-  int32 cost() const { return cost_; }
+  int32_t rid_of_left_node() const { return array_index_ / pos_size_; }
+  int32_t lid_of_right_node() const { return array_index_ % pos_size_; }
+  int32_t cost() const { return cost_; }
 
   void Next();
 
@@ -62,8 +63,8 @@ class ConnectionFileReader {
   InputFileStream stream_;
   bool done_;
   size_t pos_size_;
-  int32 array_index_;
-  int32 cost_;
+  int32_t array_index_;
+  int32_t cost_;
 
   DISALLOW_COPY_AND_ASSIGN(ConnectionFileReader);
 };

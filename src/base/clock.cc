@@ -29,6 +29,8 @@
 
 #include "base/clock.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <Windows.h>
 #include <time.h>
@@ -65,7 +67,7 @@ class ClockImpl : public ClockInterface {
   }
   ~ClockImpl() override {}
 
-  void GetTimeOfDay(uint64 *sec, uint32 *usec) override {
+  void GetTimeOfDay(uint64_t *sec, uint32_t *usec) override {
 #ifdef OS_WIN
     FILETIME file_time;
     GetSystemTimeAsFileTime(&file_time);
@@ -92,11 +94,11 @@ class ClockImpl : public ClockInterface {
 #endif  // OS_WIN
   }
 
-  uint64 GetTime() override {
+  uint64_t GetTime() override {
 #ifdef OS_WIN
     return static_cast<uint64>(_time64(nullptr));
 #else
-    return static_cast<uint64>(time(nullptr));
+    return static_cast<uint64_t>(time(nullptr));
 #endif  // OS_WIN
   }
 
@@ -104,7 +106,7 @@ class ClockImpl : public ClockInterface {
     return absl::Now();
   }
 
-  uint64 GetFrequency() override {
+  uint64_t GetFrequency() override {
 #if defined(OS_WIN)
     LARGE_INTEGER timestamp;
     // TODO(yukawa): Consider the case where QueryPerformanceCounter is not
@@ -123,7 +125,7 @@ class ClockImpl : public ClockInterface {
 #endif  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
   }
 
-  uint64 GetTicks() override {
+  uint64_t GetTicks() override {
     // TODO(team): Use functions in <chrono> once the use of it is approved.
 #if defined(OS_WIN)
     LARGE_INTEGER timestamp;
@@ -134,8 +136,8 @@ class ClockImpl : public ClockInterface {
 #elif defined(__APPLE__)
     return static_cast<uint64>(mach_absolute_time());
 #elif defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
-    uint64 sec;
-    uint32 usec;
+    uint64_t sec;
+    uint32_t usec;
     GetTimeOfDay(&sec, &usec);
     return sec * 1000000 + usec;
 #else  // platforms (OS_WIN, __APPLE__, OS_LINUX, ...)
@@ -147,36 +149,36 @@ class ClockImpl : public ClockInterface {
     return timezone_;
   }
 
-  void SetTimeZoneOffset(int32 timezone_offset_sec) override {
+  void SetTimeZoneOffset(int32_t timezone_offset_sec) override {
     timezone_offset_sec_ = timezone_offset_sec;
     timezone_ = absl::FixedTimeZone(timezone_offset_sec);
   }
 
  private:
-  int32 timezone_offset_sec_;
+  int32_t timezone_offset_sec_;
   absl::TimeZone timezone_;
 };
 }  // namespace
 
 using ClockSingleton = SingletonMockable<ClockInterface, ClockImpl>;
 
-void Clock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
+void Clock::GetTimeOfDay(uint64_t *sec, uint32_t *usec) {
   ClockSingleton::Get()->GetTimeOfDay(sec, usec);
 }
 
-uint64 Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
+uint64_t Clock::GetTime() { return ClockSingleton::Get()->GetTime(); }
 
 absl::Time Clock::GetAbslTime() { return ClockSingleton::Get()->GetAbslTime(); }
 
-uint64 Clock::GetFrequency() { return ClockSingleton::Get()->GetFrequency(); }
+uint64_t Clock::GetFrequency() { return ClockSingleton::Get()->GetFrequency(); }
 
-uint64 Clock::GetTicks() { return ClockSingleton::Get()->GetTicks(); }
+uint64_t Clock::GetTicks() { return ClockSingleton::Get()->GetTicks(); }
 
 const absl::TimeZone& Clock::GetTimeZone() {
   return ClockSingleton::Get()->GetTimeZone();
 }
 
-void Clock::SetTimeZoneOffset(int32 timezone_offset_sec) {
+void Clock::SetTimeZoneOffset(int32_t timezone_offset_sec) {
   return ClockSingleton::Get()->SetTimeZoneOffset(timezone_offset_sec);
 }
 

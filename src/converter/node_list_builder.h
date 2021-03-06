@@ -30,6 +30,8 @@
 #ifndef MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 #define MOZC_CONVERTER_NODE_LIST_BUILDER_H_
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/node.h"
@@ -41,7 +43,7 @@
 namespace mozc {
 
 // The cost is 500 * log(30): 30 times in freq.
-static const int32 kKanaModifierInsensitivePenalty = 1700;
+static const int32_t kKanaModifierInsensitivePenalty = 1700;
 
 // Provides basic functionality for building a list of nodes.
 // This class is defined inline because it contributes to the performance of

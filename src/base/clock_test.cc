@@ -29,6 +29,8 @@
 
 #include "base/clock.h"
 
+#include <cstdint>
+
 #include "base/clock_mock.h"
 #include "testing/base/public/gunit.h"
 
@@ -37,8 +39,8 @@ namespace {
 
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-const uint64 kTestSeconds = 1608729875uLL;
-const uint32 kTestMicroSeconds = 123456u;
+const uint64_t kTestSeconds = 1608729875uLL;
+const uint32_t kTestMicroSeconds = 123456u;
 
 TEST(ClockTest, TimeTestWithMock) {
   ClockMock clock_mock(kTestSeconds, kTestMicroSeconds);
@@ -49,8 +51,8 @@ TEST(ClockTest, TimeTestWithMock) {
 
   // GetTimeOfDay
   {
-    uint64 current_sec;
-    uint32 current_usec;
+    uint64_t current_sec;
+    uint32_t current_usec;
     Clock::GetTimeOfDay(&current_sec, &current_usec);
     EXPECT_EQ(kTestSeconds, current_sec);
     EXPECT_EQ(kTestMicroSeconds, current_usec);
@@ -90,8 +92,8 @@ TEST(ClockTest, TimeTestWithMock) {
 
   // GetFrequency / GetTicks
   {
-    const uint64 kFrequency = 12345;
-    const uint64 kTicks = 54321;
+    const uint64_t kFrequency = 12345;
+    const uint64_t kTicks = 54321;
     clock_mock.SetFrequency(kFrequency);
     EXPECT_EQ(kFrequency, Clock::GetFrequency());
     clock_mock.SetTicks(kTicks);
@@ -109,8 +111,8 @@ TEST(ClockTest, TimeTestWithMock) {
 }
 
 TEST(ClockTest, TimeTestWithoutMock) {
-  uint64 get_time_of_day_sec, get_time_sec;
-  uint32 get_time_of_day_usec;
+  uint64_t get_time_of_day_sec, get_time_sec;
+  uint32_t get_time_of_day_usec;
 
   Clock::GetTimeOfDay(&get_time_of_day_sec, &get_time_of_day_usec);
   get_time_sec = Clock::GetTime();

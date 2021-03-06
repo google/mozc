@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Mocked Session Server runner used just for testing.
+#include <cstdint>
 #include <cstdio>
 
 #include "base/init_mozc.h"
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     mozc::SendCommand(&server, input, &output);
   }
 
-  uint64 id = output.id();
+  uint64_t id = output.id();
   // send key
   {
     input.set_id(id);

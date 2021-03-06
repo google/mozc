@@ -31,6 +31,8 @@
 
 #include "composer/composer.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -48,9 +50,9 @@
 #include "absl/flags/flag.h"
 
 // Use flags instead of constant for performance evaluation.
-ABSL_FLAG(uint64, max_typing_correction_query_candidates, 40,
+ABSL_FLAG(uint64_t, max_typing_correction_query_candidates, 40,
           "Maximum # of typing correction query temporary candidates.");
-ABSL_FLAG(uint64, max_typing_correction_query_results, 8,
+ABSL_FLAG(uint64_t, max_typing_correction_query_results, 8,
           "Maximum # of typing correction query results.");
 
 namespace mozc {
@@ -568,7 +570,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     // Romaji input usually does not has key_string.  Note that, the
     // existence of key_string never determines if the input mode is
     // Kana or Romaji.
-    const uint32 modifiers = KeyEventUtil::GetModifiers(key);
+    const uint32_t modifiers = KeyEventUtil::GetModifiers(key);
     ApplyTemporaryInputMode(input, KeyEventUtil::HasCaps(modifiers));
     if (is_typing_correction_enabled) {
       InsertCharacterForProbableKeyEvents(input, key.probable_key_event());
@@ -674,7 +676,7 @@ void Composer::MoveCursorToEnd() {
   typing_corrector_.Invalidate();
 }
 
-void Composer::MoveCursorTo(uint32 new_position) {
+void Composer::MoveCursorTo(uint32_t new_position) {
   if (new_position <= composition_->GetLength()) {
     position_ = new_position;
     UpdateInputMode();

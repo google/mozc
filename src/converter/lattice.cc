@@ -30,6 +30,7 @@
 #include "converter/lattice.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -45,7 +46,7 @@
 namespace mozc {
 namespace {
 
-Node *InitBOSNode(Lattice *lattice, uint16 length) {
+Node *InitBOSNode(Lattice *lattice, uint16_t length) {
   Node *bos_node = lattice->NewNode();
   DCHECK(bos_node);
   bos_node->rid = 0;  // 0 is reserved for EOS/BOS
@@ -61,7 +62,7 @@ Node *InitBOSNode(Lattice *lattice, uint16 length) {
   return bos_node;
 }
 
-Node *InitEOSNode(Lattice *lattice, uint16 length) {
+Node *InitEOSNode(Lattice *lattice, uint16_t length) {
   Node *eos_node = lattice->NewNode();
   DCHECK(eos_node);
   eos_node->rid = 0;  // 0 is reserved for EOS/BOS
@@ -168,9 +169,9 @@ void Lattice::SetKey(absl::string_view key) {
   std::fill(end_nodes_.begin(), end_nodes_.end(), static_cast<Node *>(nullptr));
   std::fill(cache_info_.begin(), cache_info_.end(), 0);
 
-  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16_t>(0));
   begin_nodes_[key_.size()] =
-      InitEOSNode(this, static_cast<uint16>(key_.size()));
+      InitEOSNode(this, static_cast<uint16_t>(key_.size()));
 }
 
 Node *Lattice::bos_nodes() const { return end_nodes_[0]; }
@@ -180,8 +181,8 @@ Node *Lattice::eos_nodes() const { return begin_nodes_[key_.size()]; }
 void Lattice::Insert(size_t pos, Node *node) {
   for (Node *rnode = node; rnode != nullptr; rnode = rnode->bnext) {
     const size_t end_pos = std::min(rnode->key.size() + pos, key_.size());
-    rnode->begin_pos = static_cast<uint16>(pos);
-    rnode->end_pos = static_cast<uint16>(end_pos);
+    rnode->begin_pos = static_cast<uint16_t>(pos);
+    rnode->end_pos = static_cast<uint16_t>(end_pos);
     rnode->prev = nullptr;
     rnode->next = nullptr;
     rnode->cost = 0;
@@ -271,8 +272,8 @@ void Lattice::AddSuffix(const std::string &suffix_key) {
   std::fill(end_nodes_.begin() + old_size + 1, end_nodes_.end(),
             static_cast<Node *>(nullptr));
 
-  end_nodes_[0] = InitBOSNode(this, static_cast<uint16>(0));
-  begin_nodes_[new_size] = InitEOSNode(this, static_cast<uint16>(new_size));
+  end_nodes_[0] = InitBOSNode(this, static_cast<uint16_t>(0));
+  begin_nodes_[new_size] = InitEOSNode(this, static_cast<uint16_t>(new_size));
 
   // update cache_info
   cache_info_.resize(new_size + 4, 0);
@@ -317,7 +318,7 @@ void Lattice::ShrinkKey(const size_t new_len) {
   for (size_t i = new_len + 1; i <= old_len; ++i) {
     end_nodes_[i] = nullptr;
   }
-  begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16>(new_len));
+  begin_nodes_[new_len] = InitEOSNode(this, static_cast<uint16_t>(new_len));
 
   // update cache_info
   for (size_t i = 0; i < new_len; ++i) {

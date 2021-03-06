@@ -112,7 +112,7 @@ class Lattice {
   std::string DebugString() const;
 
   // Set the node info that should be used in DebugString() (For debug use).
-  static void SetDebugDisplayNode(size_t start_pos, size_t end_pos,
+  static void SetDebugDisplayNode(size_t begin_pos, size_t end_pos,
                                   const std::string &str);
 
   // Reset the debug info.

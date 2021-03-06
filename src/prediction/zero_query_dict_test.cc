@@ -29,6 +29,7 @@
 
 #include "prediction/zero_query_dict.h"
 
+#include <cstdint>
 #include <iterator>
 #include <vector>
 
@@ -72,14 +73,14 @@ const char *kTestStrings[] = {
 
 // Initializes a ZeroQueryDict from the above test data.  Note that the returned
 // buffer contains the internal data used by |dict|, so it must outlive |dict|.
-std::unique_ptr<uint32[]> InitTestZeroQueryDict(ZeroQueryDict *dict) {
+std::unique_ptr<uint32_t[]> InitTestZeroQueryDict(ZeroQueryDict *dict) {
   // kTestTokenArray contains a trailing '\0', so create a absl::string_view
   // that excludes it by subtracting 1.
   const absl::string_view token_array_data(kTestTokenArray,
                                            arraysize(kTestTokenArray) - 1);
   std::vector<absl::string_view> strs(std::begin(kTestStrings),
                                       std::end(kTestStrings));
-  std::unique_ptr<uint32[]> string_data_buffer;
+  std::unique_ptr<uint32_t[]> string_data_buffer;
   const absl::string_view string_array_data =
       SerializedStringArray::SerializeToBuffer(strs, &string_data_buffer);
   dict->Init(token_array_data, string_array_data);

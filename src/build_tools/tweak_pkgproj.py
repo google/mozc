@@ -30,9 +30,9 @@
 
 """Fix all version info in the input Info.plist file.
 
-  % python tweak_info_plist.py --output=out.txt --input=in.txt \
-      --build_dir=/path/to/xcodebuild --gen_out_dir=/path/to/gen_out_dir \
-      --keystone_dir=/path/to/KeyStone --version_file=version.txt \
+  % python tweak_info_plist.py --output=out.txt --input=in.txt
+      --build_dir=/path/to/xcodebuild --gen_out_dir=/path/to/gen_out_dir
+      --keystone_dir=/path/to/KeyStone --version_file=version.txt
 
 See mozc_version.py for the detailed information for version.txt.
 """
@@ -43,13 +43,12 @@ import datetime
 import logging
 import optparse
 import os
-import plistlib
 import re
-import mozc_version
 
-from os import path
+from build_tools import mozc_version
 
 _COPYRIGHT_YEAR = datetime.date.today().year
+
 
 def _ReplaceVariables(data, environment):
   """Replace all occurrence of the variable in data by the value.
@@ -61,8 +60,9 @@ def _ReplaceVariables(data, environment):
   Returns:
     the data string which replaces the variables by the value.
   """
+
   def Replacer(matchobj):
-    """The replace function to expand variables
+    """The replace function to expand variables.
 
     Args:
       matchobj: the match object
@@ -91,9 +91,9 @@ def _RemoveDevOnlyLines(data, build_type):
     else:
       the data string excluding dev-only lines.
   """
-  pat = re.compile("<!--DEV_ONLY_START-->\n(.*)<!--DEV_ONLY_END-->\n",
+  pat = re.compile('<!--DEV_ONLY_START-->\n(.*)<!--DEV_ONLY_END-->\n',
                    re.DOTALL)
-  if build_type == "dev":
+  if build_type == 'dev':
     return re.sub(pat, r'\1', data)
   else:
     return re.sub(pat, '', data)
@@ -106,13 +106,13 @@ def ParseOptions():
     An options data.
   """
   parser = optparse.OptionParser()
-  parser.add_option("--version_file", dest="version_file")
-  parser.add_option("--output", dest="output")
-  parser.add_option("--input", dest="input")
-  parser.add_option("--build_dir", dest="build_dir")
-  parser.add_option("--gen_out_dir", dest="gen_out_dir")
-  parser.add_option("--auto_updater_dir", dest="auto_updater_dir")
-  parser.add_option("--build_type", dest="build_type")
+  parser.add_option('--version_file', dest='version_file')
+  parser.add_option('--output', dest='output')
+  parser.add_option('--input', dest='input')
+  parser.add_option('--build_dir', dest='build_dir')
+  parser.add_option('--gen_out_dir', dest='gen_out_dir')
+  parser.add_option('--auto_updater_dir', dest='auto_updater_dir')
+  parser.add_option('--build_type', dest='build_type')
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -121,36 +121,46 @@ def ParseOptions():
 def main():
   """The main function."""
   options = ParseOptions()
-  required_flags = ["version_file", "output", "input", "build_dir",
-                    "gen_out_dir", "auto_updater_dir", "build_type"]
+  required_flags = [
+      'version_file', 'output', 'input', 'build_dir', 'gen_out_dir',
+      'auto_updater_dir', 'build_type'
+  ]
   for flag in required_flags:
     if getattr(options, flag) is None:
-      logging.error("--%s is not specified." % flag)
+      logging.error('--%s is not specified.', flag)
       exit(-1)
 
   version = mozc_version.MozcVersion(options.version_file)
 
-  # \xC2\xA9 is the copyright mark in UTF-8
-  copyright_message = '\xC2\xA9 %d Google Inc.' % _COPYRIGHT_YEAR
+  copyright_message = '© %d Google Inc.' % _COPYRIGHT_YEAR
   long_version = version.GetVersionString()
   short_version = version.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
   variables = {
-      'MOZC_VERSIONINFO_MAJOR': version.GetVersionInFormat('@MAJOR@'),
-      'MOZC_VERSIONINFO_MINOR': version.GetVersionInFormat('@MINOR@'),
-      'MOZC_VERSIONINFO_LONG': long_version,
-      'MOZC_VERSIONINFO_SHORT': short_version,
+      'MOZC_VERSIONINFO_MAJOR':
+          version.GetVersionInFormat('@MAJOR@'),
+      'MOZC_VERSIONINFO_MINOR':
+          version.GetVersionInFormat('@MINOR@'),
+      'MOZC_VERSIONINFO_LONG':
+          long_version,
+      'MOZC_VERSIONINFO_SHORT':
+          short_version,
       'MOZC_VERSIONINFO_FINDER':
-        'Google Japanese Input %s, %s' % (long_version, copyright_message),
-      'GEN_OUT_DIR': path.abspath(options.gen_out_dir),
-      'BUILD_DIR': path.abspath(options.build_dir),
-      'AUTO_UPDATER_DIR': path.abspath(options.auto_updater_dir),
-      'MOZC_DIR': path.abspath(path.join(os.getcwd(), ".."))
-      }
+          'Google Japanese Input %s, %s' % (long_version, copyright_message),
+      'GEN_OUT_DIR':
+          os.path.abspath(options.gen_out_dir),
+      'BUILD_DIR':
+          os.path.abspath(options.build_dir),
+      'AUTO_UPDATER_DIR':
+          os.path.abspath(options.auto_updater_dir),
+      'MOZC_DIR':
+          os.path.abspath(os.path.join(os.getcwd(), '..'))
+  }
 
   open(options.output, 'w').write(
       _RemoveDevOnlyLines(
           _ReplaceVariables(open(options.input).read(), variables),
           options.build_type))
 
+
 if __name__ == '__main__':
-    main()
+  main()

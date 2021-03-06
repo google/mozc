@@ -30,6 +30,7 @@
 #include "base/util.h"
 
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -1925,13 +1926,16 @@ TEST(UtilTest, IsValidUtf8) {
 TEST(UtilTest, SerializeAndDeserializeUint64) {
   struct {
     const char *str;
-    uint64 value;
+    uint64_t value;
   } kCorrectPairs[] = {
       {"\x00\x00\x00\x00\x00\x00\x00\x00", 0},
-      {"\x00\x00\x00\x00\x00\x00\x00\xFF", std::numeric_limits<uint8>::max()},
-      {"\x00\x00\x00\x00\x00\x00\xFF\xFF", std::numeric_limits<uint16>::max()},
-      {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF", std::numeric_limits<uint32>::max()},
-      {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF", std::numeric_limits<uint64>::max()},
+      {"\x00\x00\x00\x00\x00\x00\x00\xFF", std::numeric_limits<uint8_t>::max()},
+      {"\x00\x00\x00\x00\x00\x00\xFF\xFF",
+       std::numeric_limits<uint16_t>::max()},
+      {"\x00\x00\x00\x00\xFF\xFF\xFF\xFF",
+       std::numeric_limits<uint32_t>::max()},
+      {"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF",
+       std::numeric_limits<uint64_t>::max()},
       {"\x01\x23\x45\x67\x89\xAB\xCD\xEF", 0x0123456789ABCDEF},
       {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
   };
@@ -1940,7 +1944,7 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
     const std::string serialized(kCorrectPairs[i].str, 8);
     EXPECT_EQ(serialized, Util::SerializeUint64(kCorrectPairs[i].value));
 
-    uint64 v;
+    uint64_t v;
     EXPECT_TRUE(Util::DeserializeUint64(serialized, &v));
     EXPECT_EQ(kCorrectPairs[i].value, v);
   }
@@ -1952,7 +1956,7 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
       "helloworld",
   };
   for (size_t i = 0; i < arraysize(kFalseCases); ++i) {
-    uint64 v;
+    uint64_t v;
     EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }
 }

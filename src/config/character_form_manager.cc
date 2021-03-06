@@ -30,6 +30,7 @@
 #include "config/character_form_manager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -52,8 +53,8 @@ using mozc::storage::LRUStorage;
 
 namespace {
 
-const uint32 kLRUSize = 128;           // enough?
-const uint32 kSeedValue = 0x7fe1fed1;  // random seed value for storage
+const uint32_t kLRUSize = 128;           // enough?
+const uint32_t kSeedValue = 0x7fe1fed1;  // random seed value for storage
 const char kFileName[] = "user://cform.db";
 
 class CharacterFormManagerImpl {
@@ -92,9 +93,9 @@ class CharacterFormManagerImpl {
   }
 
  private:
-  Config::CharacterForm GetCharacterFormFromStorage(uint16 ucs2) const;
+  Config::CharacterForm GetCharacterFormFromStorage(uint16_t ucs2) const;
 
-  void SaveCharacterFormToStorage(uint16 ucs2, Config::CharacterForm);
+  void SaveCharacterFormToStorage(uint16_t ucs2, Config::CharacterForm);
 
   // Returns true if input string will be consistent character form after
   // conversion.
@@ -113,9 +114,9 @@ class CharacterFormManagerImpl {
   LRUStorage *storage_;
 
   // store the setting of a character
-  std::map<uint16, Config::CharacterForm> conversion_table_;
+  std::map<uint16_t, Config::CharacterForm> conversion_table_;
 
-  std::map<uint16, std::vector<uint16>> group_table_;
+  std::map<uint16_t, std::vector<uint16_t>> group_table_;
 
   // When this flag is true,
   // character form conversion requires that output has consistent forms.
@@ -190,9 +191,9 @@ class ConversionCharacterFormManagerImpl : public CharacterFormManagerImpl {
 // "&" -> "&"                (Symbol is used as it is)
 // "ほげほげ" -> 0x0000      (Unknown)
 // "𠮟"       -> 0x0000      (Non BMP character is also Unknown)
-uint16 GetNormalizedCharacter(const std::string &str) {
+uint16_t GetNormalizedCharacter(const std::string &str) {
   const Util::ScriptType type = Util::GetScriptType(str);
-  uint16 ucs2 = 0x0000;
+  uint16_t ucs2 = 0x0000;
   switch (type) {
     case Util::KATAKANA:
       ucs2 = 0x30A2;  // return "ア"
@@ -214,7 +215,7 @@ uint16 GetNormalizedCharacter(const std::string &str) {
         Util::HalfWidthToFullWidth(str, &tmp);
         char32 ucs4 = 0;
         if (Util::SplitFirstChar32(tmp, &ucs4, nullptr) && ucs4 <= 0xffff) {
-          ucs2 = static_cast<uint16>(ucs4);
+          ucs2 = static_cast<uint16_t>(ucs4);
         } else {
           ucs2 = 0x0000;  // no conversion as fall back
         }
@@ -248,12 +249,12 @@ CharacterFormManagerImpl::~CharacterFormManagerImpl() {}
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterForm(
     const std::string &str) const {
-  const uint16 ucs2 = GetNormalizedCharacter(str);
+  const uint16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
     return Config::NO_CONVERSION;
   }
 
-  std::map<uint16, Config::CharacterForm>::const_iterator it =
+  std::map<uint16_t, Config::CharacterForm>::const_iterator it =
       conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return Config::NO_CONVERSION;
@@ -289,12 +290,12 @@ void CharacterFormManagerImpl::GuessAndSetCharacterForm(
 
 void CharacterFormManagerImpl::SetCharacterForm(const std::string &str,
                                                 Config::CharacterForm form) {
-  const uint16 ucs2 = GetNormalizedCharacter(str);
+  const uint16_t ucs2 = GetNormalizedCharacter(str);
   if (ucs2 == 0x0000) {
     return;
   }
 
-  std::map<uint16, Config::CharacterForm>::const_iterator it =
+  std::map<uint16_t, Config::CharacterForm>::const_iterator it =
       conversion_table_.find(ucs2);
   if (it == conversion_table_.end()) {
     return;
@@ -307,7 +308,7 @@ void CharacterFormManagerImpl::SetCharacterForm(const std::string &str,
 }
 
 Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
-    uint16 ucs2) const {
+    uint16_t ucs2) const {
   if (storage_ == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
@@ -316,12 +317,12 @@ Config::CharacterForm CharacterFormManagerImpl::GetCharacterFormFromStorage(
   if (value == nullptr) {
     return Config::FULL_WIDTH;  // Return default setting
   }
-  const uint32 ivalue = *reinterpret_cast<const uint32 *>(value);
+  const uint32_t ivalue = *reinterpret_cast<const uint32_t *>(value);
   return static_cast<Config::CharacterForm>(ivalue);
 }
 
 void CharacterFormManagerImpl::SaveCharacterFormToStorage(
-    uint16 ucs2, Config::CharacterForm form) {
+    uint16_t ucs2, Config::CharacterForm form) {
   if (form != Config::FULL_WIDTH && form != Config::HALF_WIDTH) {
     return;
   }
@@ -337,17 +338,17 @@ void CharacterFormManagerImpl::SaveCharacterFormToStorage(
   }
 
   // Do cast since CharacterForm may not be 32 bit
-  const uint32 iform = static_cast<uint32>(form);
+  const uint32_t iform = static_cast<uint32_t>(form);
 
-  std::map<uint16, std::vector<uint16>>::iterator iter =
+  std::map<uint16_t, std::vector<uint16_t>>::iterator iter =
       group_table_.find(ucs2);
   if (iter == group_table_.end()) {
     storage_->Insert(key, reinterpret_cast<const char *>(&iform));
   } else {
     // Update values in the same group.
-    const std::vector<uint16> &group = iter->second;
+    const std::vector<uint16_t> &group = iter->second;
     for (size_t i = 0; i < group.size(); ++i) {
-      const uint16 group_ucs2 = group[i];
+      const uint16_t group_ucs2 = group[i];
       const std::string group_key(reinterpret_cast<const char *>(&group_ucs2),
                                   sizeof(group_ucs2));
       storage_->Insert(group_key, reinterpret_cast<const char *>(&iform));
@@ -495,11 +496,11 @@ void CharacterFormManagerImpl::AddRule(const std::string &key,
   const char *begin = key.c_str();
   const char *end = key.c_str() + key.size();
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   while (begin < end) {
     const size_t mblen = Util::OneCharLen(begin);
     const std::string tmp(begin, mblen);
-    const uint16 ucs2 = GetNormalizedCharacter(tmp);
+    const uint16_t ucs2 = GetNormalizedCharacter(tmp);
     if (ucs2 != 0x0000) {
       group.push_back(ucs2);
     }
@@ -530,11 +531,12 @@ void CharacterFormManagerImpl::AddRule(const std::string &key,
   // group table is used in SaveCharacterFormToStorage and this will be called
   // everytime user submits conversion.
   std::sort(group.begin(), group.end());
-  std::vector<uint16>::iterator last = std::unique(group.begin(), group.end());
+  std::vector<uint16_t>::iterator last =
+      std::unique(group.begin(), group.end());
   group.erase(last, group.end());
 
   for (size_t i = 0; i < group.size(); ++i) {
-    const uint16 ucs2 = group[i];
+    const uint16_t ucs2 = group[i];
     conversion_table_[ucs2] = form;  // overwrite
     if (group.size() > 1) {
       // add to group table
@@ -562,7 +564,7 @@ class CharacterFormManager::Data {
 
 CharacterFormManager::Data::Data() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
-  const uint32 key_type = 0;
+  const uint32_t key_type = 0;
   storage_.reset(LRUStorage::Create(filename.c_str(), sizeof(key_type),
                                     kLRUSize, kSeedValue));
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;

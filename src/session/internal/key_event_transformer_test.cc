@@ -29,11 +29,12 @@
 
 #include "session/internal/key_event_transformer.h"
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "base/singleton.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -73,7 +74,7 @@ namespace {
 }
 
 void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
-                              uint32 expected_key_code,
+                              uint32_t expected_key_code,
                               const std::string &expected_key_string,
                               commands::KeyEvent::InputStyle expected_style) {
   KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
@@ -91,7 +92,7 @@ void TestNumpadTransformation(commands::KeyEvent::SpecialKey input,
 }
 
 void TestKanaTransformation(const std::string &key_string,
-                            uint32 expected_key_code,
+                            uint32_t expected_key_code,
                             const std::string &expected_key_string) {
   KeyEventTransformer *table = Singleton<KeyEventTransformer>::get();
 

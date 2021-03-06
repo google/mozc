@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <random>
@@ -102,8 +103,8 @@ const char kUserDictionary0[] =
 
 const char kUserDictionary1[] = "end\tend\tverb\n";
 
-void PushBackToken(const std::string &key, const std::string &value, uint16 id,
-                   std::vector<UserPOS::Token> *tokens) {
+void PushBackToken(const std::string &key, const std::string &value,
+                   uint16_t id, std::vector<UserPOS::Token> *tokens) {
   tokens->resize(tokens->size() + 1);
   UserPOS::Token *t = &tokens->back();
   t->key = key;
@@ -166,7 +167,7 @@ class UserPOSMock : public UserPOSInterface {
 
   void GetPOSList(std::vector<std::string> *pos_list) const override {}
 
-  bool GetPOSIDs(const std::string &pos, uint16 *id) const override {
+  bool GetPOSIDs(const std::string &pos, uint16_t *id) const override {
     return false;
   }
 };
@@ -225,8 +226,8 @@ class UserDictionaryTest : public ::testing::Test {
   struct Entry {
     std::string key;
     std::string value;
-    uint16 lid;
-    uint16 rid;
+    uint16_t lid;
+    uint16_t rid;
   };
 
   class EntryCollector : public DictionaryInterface::Callback {
@@ -512,7 +513,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   FileUtil::Unlink(filename);
   UserDictionaryStorage storage(filename);
   {
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
@@ -536,7 +537,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   const testing::MockDataManager mock_data_manager;
   const dictionary::POSMatcher pos_matcher(
       mock_data_manager.GetPOSMatcherData());
-  const uint16 kNounId = pos_matcher.GetGeneralNounId();
+  const uint16_t kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
   TestLookupExactHelper(kExpected1, arraysize(kExpected1), "key", 3, *user_dic);
 }
@@ -582,7 +583,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     EXPECT_FALSE(storage.Load());
     EXPECT_TRUE(storage.Lock());
 
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
@@ -631,24 +632,24 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
   // Create dictionary
   {
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key("no_suppress_key" +
-                     std::to_string(static_cast<uint32>(j)));
+                     std::to_string(static_cast<uint32_t>(j)));
       entry->set_value("no_suppress_value" +
-                       std::to_string(static_cast<uint32>(j)));
+                       std::to_string(static_cast<uint32_t>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-      entry->set_key("suppress_key" + std::to_string(static_cast<uint32>(j)));
+      entry->set_key("suppress_key" + std::to_string(static_cast<uint32_t>(j)));
       entry->set_value("suppress_value" +
-                       std::to_string(static_cast<uint32>(j)));
+                       std::to_string(static_cast<uint32_t>(j)));
       // entry->set_pos("抑制単語");
       entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
@@ -660,24 +661,24 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + std::to_string(static_cast<uint32>(j)),
-          "suppress_value" + std::to_string(static_cast<uint32>(j))));
+          "suppress_key" + std::to_string(static_cast<uint32_t>(j)),
+          "suppress_value" + std::to_string(static_cast<uint32_t>(j))));
     }
   }
 
   // Remove suppression entry
   {
     storage.GetProto().Clear();
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
     for (size_t j = 0; j < 10000; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       entry->set_key("no_suppress_key" +
-                     std::to_string(static_cast<uint32>(j)));
+                     std::to_string(static_cast<uint32_t>(j)));
       entry->set_value("no_suppress_value" +
-                       std::to_string(static_cast<uint32>(j)));
+                       std::to_string(static_cast<uint32_t>(j)));
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
@@ -687,8 +688,8 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_FALSE(suppression_dictionary_->SuppressEntry(
-          "suppress_key" + std::to_string(static_cast<uint32>(j)),
-          "suppress_value" + std::to_string(static_cast<uint32>(j))));
+          "suppress_key" + std::to_string(static_cast<uint32_t>(j)),
+          "suppress_value" + std::to_string(static_cast<uint32_t>(j))));
     }
   }
   FileUtil::Unlink(filename);
@@ -706,14 +707,14 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 
   // Create dictionary
   {
-    uint64 id = 0;
+    uint64_t id = 0;
     EXPECT_TRUE(storage.CreateDictionary("test", &id));
     UserDictionaryStorage::UserDictionary *dic =
         storage.GetProto().mutable_dictionaries(0);
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-      entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
+      entry->set_key("key" + std::to_string(static_cast<uint32_t>(j)));
       entry->set_value("default");
       // "名詞"
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
@@ -721,7 +722,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 
     for (size_t j = 0; j < 10; ++j) {
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
-      entry->set_key("key" + std::to_string(static_cast<uint32>(j)));
+      entry->set_key("key" + std::to_string(static_cast<uint32_t>(j)));
       entry->set_value("suggest_only");
       // "サジェストのみ"
       entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);

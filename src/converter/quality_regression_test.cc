@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -62,7 +63,8 @@ using quality_regression::QualityRegressionUtil;
 
 class QualityRegressionTest : public ::testing::Test {
  protected:
-  static void RunTestForPlatform(uint32 platform, QualityRegressionUtil *util) {
+  static void RunTestForPlatform(uint32_t platform,
+                                 QualityRegressionUtil *util) {
     CHECK(util);
     std::map<std::string, std::vector<std::pair<float, std::string>>> results,
         disabled_results;
@@ -112,7 +114,7 @@ class QualityRegressionTest : public ::testing::Test {
   // and any failure is reported as test failure.  If false, actual conversion
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
-      const bool enabled, uint32 platform,
+      const bool enabled, uint32_t platform,
       std::map<std::string, std::vector<std::pair<float, std::string>>>
           *results) {
     for (auto it = results->begin(); it != results->end(); ++it) {

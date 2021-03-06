@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>Program</key>
-	<string>/Library/Input Methods/${BRANDING}.app/Contents/Resources/${BRANDING}Converter.app/Contents/MacOS/${BRANDING}Converter</string>
+	<string>/Library/Input Methods/Mozc.app/Contents/Resources/MozcConverter.app/Contents/MacOS/MozcConverter</string>
 	<key>Label</key>
-	<string>${DOMAIN_PREFIX}.inputmethod.Japanese.Converter</string>
+	<string>org.mozc.inputmethod.Japanese.Converter</string>
 	<key>MachServices</key>
 	<dict>
-		<key>${DOMAIN_PREFIX}.inputmethod.Japanese.Converter.session</key>
+		<key>org.mozc.inputmethod.Japanese.Converter.session</key>
 		<true/>
 	</dict>
 	<key>KeepAlive</key>

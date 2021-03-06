@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -49,20 +50,21 @@ class DataManagerInterface {
 
   // Returns a reference to POSMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const uint16 *GetPOSMatcherData() const = 0;
+  virtual const uint16_t *GetPOSMatcherData() const = 0;
 
   // Returns the address of an array of lid group.
-  virtual const uint8 *GetPosGroupData() const = 0;
+  virtual const uint8_t *GetPosGroupData() const = 0;
 
   // Returns the address of connection data and its size.
   virtual void GetConnectorData(const char **data, size_t *size) const = 0;
 
   // Returns the addresses and their sizes necessary to create a segmenter.
   virtual void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                                const uint16 **l_table, const uint16 **r_table,
+                                const uint16_t **l_table,
+                                const uint16_t **r_table,
                                 size_t *bitarray_num_bytes,
                                 const char **bitarray_data,
-                                const uint16 **boundary_data) const = 0;
+                                const uint16_t **boundary_data) const = 0;
 
   // Returns the address of system dictionary data and its size.
   virtual void GetSystemDictionaryData(const char **data, int *size) const = 0;
@@ -70,7 +72,7 @@ class DataManagerInterface {
   // Returns the array containing keys, values, and token (lid, rid, cost).
   virtual void GetSuffixDictionaryData(absl::string_view *key_array,
                                        absl::string_view *value_array,
-                                       const uint32 **token_array) const = 0;
+                                       const uint32_t **token_array) const = 0;
 
   // Gets a reference to reading correction data array and its size.
   virtual void GetReadingCorrectionData(

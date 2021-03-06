@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <utility>
@@ -223,7 +224,7 @@ bool TryNormalizingKeyAsMathExpression(absl::string_view s, std::string *key) {
 ConverterImpl::ConverterImpl()
     : pos_matcher_(nullptr),
       immutable_converter_(nullptr),
-      general_noun_id_(std::numeric_limits<uint16>::max()) {}
+      general_noun_id_(std::numeric_limits<uint16_t>::max()) {}
 
 ConverterImpl::~ConverterImpl() = default;
 
@@ -551,7 +552,7 @@ bool ConverterImpl::ReconstructHistory(
 
   std::string key;
   std::string value;
-  uint16 id;
+  uint16_t id;
   if (!GetLastConnectivePart(preceding_text, &key, &value, &id)) {
     return false;
   }
@@ -789,7 +790,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
                                   const ConversionRequest &request,
                                   size_t start_segment_index,
                                   size_t segments_size,
-                                  const uint8 *new_size_array,
+                                  const uint8_t *new_size_array,
                                   size_t array_size) const {
   if (segments->request_type() != Segments::CONVERSION) {
     return false;
@@ -969,10 +970,11 @@ void ConverterImpl::CommitUsageStats(const Segments *segments,
 
   // Timing stats are scaled by 1,000 to improve the accuracy of average values.
 
-  uint64 submitted_total_length = 0;
+  uint64_t submitted_total_length = 0;
   for (size_t i = 0; i < segment_length; ++i) {
     const Segment &segment = segments->segment(begin_segment_index + i);
-    const uint32 submitted_length = Util::CharsLen(segment.candidate(0).value);
+    const uint32_t submitted_length =
+        Util::CharsLen(segment.candidate(0).value);
     UsageStats::UpdateTiming("SubmittedSegmentLengthx1000",
                              submitted_length * 1000);
     submitted_total_length += submitted_length;
@@ -987,7 +989,7 @@ void ConverterImpl::CommitUsageStats(const Segments *segments,
 
 bool ConverterImpl::GetLastConnectivePart(const std::string &preceding_text,
                                           std::string *key, std::string *value,
-                                          uint16 *id) const {
+                                          uint16_t *id) const {
   key->clear();
   value->clear();
   *id = general_noun_id_;

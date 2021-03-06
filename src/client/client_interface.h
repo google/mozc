@@ -32,6 +32,7 @@
 #ifndef MOZC_CLIENT_CLIENT_INTERFACE_H_
 #define MOZC_CLIENT_CLIENT_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -62,7 +63,7 @@ class ServerLauncherInterface {
   virtual bool ForceTerminateServer(const std::string &name) = 0;
 
   // Wait server until it terminates
-  virtual bool WaitServer(uint32 pid) = 0;
+  virtual bool WaitServer(uint32_t pid) = 0;
 
   // called when fatal error occurred.
   virtual void OnFatal(ServerErrorType type) = 0;

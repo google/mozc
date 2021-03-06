@@ -30,6 +30,7 @@
 #ifndef MOZC_BASE_ENCRYPTOR_H_
 #define MOZC_BASE_ENCRYPTOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -47,7 +48,7 @@ class Encryptor {
     // size must be iv_size().
     // if iv is nullptr, default iv is used.
     bool DeriveFromPassword(const std::string &password,
-                            const std::string &salt, const uint8 *iv);
+                            const std::string &salt, const uint8_t *iv);
 
     // use default iv.
     bool DeriveFromPassword(const std::string &password,
@@ -64,7 +65,7 @@ class Encryptor {
     size_t block_size() const;
 
     // return initialization vector
-    const uint8 *iv() const;
+    const uint8_t *iv() const;
 
     // return the size of initialization vector
     // the result should be the same as block_size() with AES

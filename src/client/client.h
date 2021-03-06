@@ -32,6 +32,7 @@
 #ifndef MOZC_CLIENT_CLIENT_H_
 #define MOZC_CLIENT_CLIENT_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -61,7 +62,7 @@ class ServerLauncher : public ServerLauncherInterface {
 
   bool ForceTerminateServer(const std::string &name) override;
 
-  bool WaitServer(uint32 pid) override;
+  bool WaitServer(uint32_t pid) override;
 
   void OnFatal(ServerLauncherInterface::ServerErrorType type) override;
 
@@ -139,7 +140,7 @@ class Client : public ClientInterface {
 
   void set_timeout(int timeout) override;
   void set_restricted(bool restricted) override;
-  void set_server_program(const std::string &server_program) override;
+  void set_server_program(const std::string &program_path) override;
   void set_suppress_error_dialog(bool suppress) override;
   void set_client_capability(const commands::Capability &capability) override;
 
@@ -237,15 +238,15 @@ class Client : public ClientInterface {
   // copy the history inputs to |result|.
   void GetHistoryInputs(std::vector<commands::Input> *result) const;
 
-  uint64 id_;
+  uint64_t id_;
   IPCClientFactoryInterface *client_factory_;
   std::unique_ptr<ServerLauncherInterface> server_launcher_;
   std::unique_ptr<char[]> result_;
   std::unique_ptr<config::Config> preferences_;
   int timeout_;
   ServerStatus server_status_;
-  uint32 server_protocol_version_;
-  uint32 server_process_id_;
+  uint32_t server_protocol_version_;
+  uint32_t server_process_id_;
   std::string server_product_version_;
   std::vector<commands::Input> history_inputs_;
   // Remember the composition mode of input session for playback.

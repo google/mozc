@@ -29,6 +29,7 @@
 
 #include "rewriter/number_compound_util.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -44,7 +45,7 @@ namespace mozc {
 namespace number_compound_util {
 
 TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
-  std::unique_ptr<uint32[]> buf;
+  std::unique_ptr<uint32_t[]> buf;
   const absl::string_view data = SerializedStringArray::SerializeToBuffer(
       {
           "デシベル",
@@ -60,7 +61,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
     const char* input;
     const char* expected_number;
     const char* expected_suffix;
-    uint32 expected_script_type;
+    uint32_t expected_script_type;
   } kSplittableCases[] = {
       {
           "一階",
@@ -104,7 +105,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
   };
   for (size_t i = 0; i < arraysize(kSplittableCases); ++i) {
     absl::string_view actual_number, actual_suffix;
-    uint32 actual_script_type = 0;
+    uint32_t actual_script_type = 0;
     EXPECT_TRUE(SplitStringIntoNumberAndCounterSuffix(
         suffix_array, kSplittableCases[i].input, &actual_number, &actual_suffix,
         &actual_script_type));
@@ -122,7 +123,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
   };
   for (size_t i = 0; i < arraysize(kUnsplittableCases); ++i) {
     absl::string_view actual_number, actual_suffix;
-    uint32 actual_script_type = 0;
+    uint32_t actual_script_type = 0;
     EXPECT_FALSE(SplitStringIntoNumberAndCounterSuffix(
         suffix_array, kUnsplittableCases[i], &actual_number, &actual_suffix,
         &actual_script_type));
@@ -130,7 +131,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
 }
 
 TEST(NumberCompoundUtilTest, IsNumber) {
-  std::unique_ptr<uint32[]> buf;
+  std::unique_ptr<uint32_t[]> buf;
   const absl::string_view data = SerializedStringArray::SerializeToBuffer(
       {
           "回",

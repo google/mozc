@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_TEST_BASE_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -45,7 +46,7 @@ class DataManagerInterface;
 // Provides common unit tests for DataManager.
 class DataManagerTestBase : public ::testing::Test {
  protected:
-  typedef bool (*IsBoundaryFunc)(uint16, uint16);
+  typedef bool (*IsBoundaryFunc)(uint16_t, uint16_t);
 
   DataManagerTestBase(DataManagerInterface *data_manager,
                       // The following three are used in segmenter test.
@@ -76,8 +77,8 @@ class DataManagerTestBase : public ::testing::Test {
   void TypingModelTest();
 
   std::unique_ptr<DataManagerInterface> data_manager_;
-  const uint16 lsize_;
-  const uint16 rsize_;
+  const uint16_t lsize_;
+  const uint16_t rsize_;
   IsBoundaryFunc is_boundary_;
   const std::string connection_txt_file_;
   const int expected_resolution_;

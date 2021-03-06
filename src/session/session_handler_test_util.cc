@@ -29,6 +29,7 @@
 
 #include "session/session_handler_test_util.h"
 
+#include <cstdint>
 #include <utility>
 
 #include "base/config_file_stream.h"
@@ -49,11 +50,11 @@
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 
-ABSL_DECLARE_FLAG(int32, max_session_size);
-ABSL_DECLARE_FLAG(int32, create_session_min_interval);
-ABSL_DECLARE_FLAG(int32, watch_dog_interval);
-ABSL_DECLARE_FLAG(int32, last_command_timeout);
-ABSL_DECLARE_FLAG(int32, last_create_session_timeout);
+ABSL_DECLARE_FLAG(int32_t, max_session_size);
+ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
+ABSL_DECLARE_FLAG(int32_t, watch_dog_interval);
+ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
+ABSL_DECLARE_FLAG(int32_t, last_create_session_timeout);
 ABSL_DECLARE_FLAG(bool, restricted);
 
 namespace mozc {
@@ -64,7 +65,7 @@ using commands::Command;
 using config::CharacterFormManager;
 using config::ConfigHandler;
 
-bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
+bool CreateSession(SessionHandlerInterface *handler, uint64_t *id) {
   Command command;
   command.mutable_input()->set_type(commands::Input::CREATE_SESSION);
   command.mutable_input()->mutable_capability()->set_text_deletion(
@@ -76,28 +77,28 @@ bool CreateSession(SessionHandlerInterface *handler, uint64 *id) {
   return (command.output().error_code() == commands::Output::SESSION_SUCCESS);
 }
 
-bool DeleteSession(SessionHandlerInterface *handler, uint64 id) {
+bool DeleteSession(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::DELETE_SESSION);
   return handler->EvalCommand(&command);
 }
 
-bool CleanUp(SessionHandlerInterface *handler, uint64 id) {
+bool CleanUp(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEANUP);
   return handler->EvalCommand(&command);
 }
 
-bool ClearUserPrediction(SessionHandlerInterface *handler, uint64 id) {
+bool ClearUserPrediction(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::CLEAR_USER_PREDICTION);
   return handler->EvalCommand(&command);
 }
 
-bool IsGoodSession(SessionHandlerInterface *handler, uint64 id) {
+bool IsGoodSession(SessionHandlerInterface *handler, uint64_t id) {
   Command command;
   command.mutable_input()->set_id(id);
   command.mutable_input()->set_type(commands::Input::SEND_KEY);

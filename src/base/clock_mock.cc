@@ -29,11 +29,12 @@
 
 #include "base/clock_mock.h"
 
+#include <cstdint>
 #include <ctime>
 
 namespace mozc {
 
-ClockMock::ClockMock(uint64 sec, uint32 usec)
+ClockMock::ClockMock(uint64_t sec, uint32_t usec)
     : seconds_(sec),
       micro_seconds_(usec),
       frequency_(1000000000),
@@ -41,19 +42,18 @@ ClockMock::ClockMock(uint64 sec, uint32 usec)
       timezone_(absl::UTCTimeZone()),
       timezone_offset_sec_(0),
       delta_seconds_(0),
-      delta_micro_seconds_(0) {
-}
+      delta_micro_seconds_(0) {}
 
 ClockMock::~ClockMock() {}
 
-void ClockMock::GetTimeOfDay(uint64 *sec, uint32 *usec) {
+void ClockMock::GetTimeOfDay(uint64_t *sec, uint32_t *usec) {
   *sec = seconds_;
   *usec = micro_seconds_;
   PutClockForward(delta_seconds_, delta_micro_seconds_);
 }
 
-uint64 ClockMock::GetTime() {
-  const uint64 ret_sec = seconds_;
+uint64_t ClockMock::GetTime() {
+  const uint64_t ret_sec = seconds_;
   PutClockForward(delta_seconds_, delta_micro_seconds_);
   return ret_sec;
 }
@@ -64,21 +64,21 @@ absl::Time ClockMock::GetAbslTime() {
   return at;
 }
 
-uint64 ClockMock::GetFrequency() { return frequency_; }
+uint64_t ClockMock::GetFrequency() { return frequency_; }
 
-uint64 ClockMock::GetTicks() { return ticks_; }
+uint64_t ClockMock::GetTicks() { return ticks_; }
 
 const absl::TimeZone& ClockMock::GetTimeZone() {
   return timezone_;
 }
 
-void ClockMock::SetTimeZoneOffset(int32 timezone_offset_sec) {
+void ClockMock::SetTimeZoneOffset(int32_t timezone_offset_sec) {
   timezone_offset_sec_ = timezone_offset_sec;
   timezone_ = absl::FixedTimeZone(timezone_offset_sec);
 }
 
-void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
-  const uint32 one_second = 1000000u;
+void ClockMock::PutClockForward(uint64_t delta_sec, uint32_t delta_usec) {
+  const uint32_t one_second = 1000000u;
 
   if (micro_seconds_ + delta_usec < one_second) {
     seconds_ += delta_sec;
@@ -89,20 +89,21 @@ void ClockMock::PutClockForward(uint64 delta_sec, uint32 delta_usec) {
   }
 }
 
-void ClockMock::PutClockForwardByTicks(uint64 ticks) { ticks_ += ticks; }
+void ClockMock::PutClockForwardByTicks(uint64_t ticks) { ticks_ += ticks; }
 
-void ClockMock::SetAutoPutClockForward(uint64 delta_sec, uint32 delta_usec) {
+void ClockMock::SetAutoPutClockForward(uint64_t delta_sec,
+                                       uint32_t delta_usec) {
   delta_seconds_ = delta_sec;
   delta_micro_seconds_ = delta_usec;
 }
 
-void ClockMock::SetTime(uint64 sec, uint32 usec) {
+void ClockMock::SetTime(uint64_t sec, uint32_t usec) {
   seconds_ = sec;
   micro_seconds_ = usec;
 }
 
-void ClockMock::SetFrequency(uint64 frequency) { frequency_ = frequency; }
+void ClockMock::SetFrequency(uint64_t frequency) { frequency_ = frequency; }
 
-void ClockMock::SetTicks(uint64 ticks) { ticks_ = ticks; }
+void ClockMock::SetTicks(uint64_t ticks) { ticks_ = ticks; }
 
 }  // namespace mozc

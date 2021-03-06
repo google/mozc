@@ -30,6 +30,8 @@
 #ifndef MOZC_CONVERTER_SEGMENTER_H_
 #define MOZC_CONVERTER_SEGMENTER_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -43,25 +45,26 @@ class Segmenter {
       const DataManagerInterface &data_manager);
 
   // This class does not take the ownership of pointer parameters.
-  Segmenter(size_t l_num_elements, size_t r_num_elements, const uint16 *l_table,
-            const uint16 *r_table, size_t bitarray_num_bytes,
-            const char *bitarray_data, const uint16 *boundary_data);
+  Segmenter(size_t l_num_elements, size_t r_num_elements,
+            const uint16_t *l_table, const uint16_t *r_table,
+            size_t bitarray_num_bytes, const char *bitarray_data,
+            const uint16_t *boundary_data);
   ~Segmenter();
 
   bool IsBoundary(const Node &lnode, const Node &rnode,
                   bool is_single_segment) const;
-  bool IsBoundary(uint16 rid, uint16 lid) const;
-  int32 GetPrefixPenalty(uint16 lid) const;
-  int32 GetSuffixPenalty(uint16 rid) const;
+  bool IsBoundary(uint16_t rid, uint16_t lid) const;
+  int32_t GetPrefixPenalty(uint16_t lid) const;
+  int32_t GetSuffixPenalty(uint16_t rid) const;
 
  private:
   const size_t l_num_elements_;
   const size_t r_num_elements_;
-  const uint16 *l_table_;
-  const uint16 *r_table_;
+  const uint16_t *l_table_;
+  const uint16_t *r_table_;
   const size_t bitarray_num_bytes_;
   const char *bitarray_data_;
-  const uint16 *boundary_data_;
+  const uint16_t *boundary_data_;
 
   DISALLOW_COPY_AND_ASSIGN(Segmenter);
 };

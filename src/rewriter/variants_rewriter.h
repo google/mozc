@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_VARIANTS_REWRITER_H_
 #define MOZC_REWRITER_VARIANTS_REWRITER_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -104,8 +105,8 @@ class VariantsRewriter : public RewriterInterface {
       const Segment::Candidate &original, std::string *default_value,
       std::string *alternative_value, std::string *default_content_value,
       std::string *alternative_content_value,
-      std::vector<uint32> *default_inner_segment_boundary,
-      std::vector<uint32> *alternative_inner_segment_boundary) const;
+      std::vector<uint32_t> *default_inner_segment_boundary,
+      std::vector<uint32_t> *alternative_inner_segment_boundary) const;
 
   const dictionary::POSMatcher pos_matcher_;
 };

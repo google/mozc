@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_
 #define MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -48,7 +49,7 @@ class TextDictionaryLoader {
  public:
   // TODO(noriyukit): Better to pass the pointer of pos_matcher.
   explicit TextDictionaryLoader(const POSMatcher &pos_matcher);
-  TextDictionaryLoader(uint16 zipcode_id, uint16 isolated_word_id);
+  TextDictionaryLoader(uint16_t zipcode_id, uint16_t isolated_word_id);
   virtual ~TextDictionaryLoader();
 
   // Loads tokens from system dictionary files and reading correction
@@ -100,8 +101,8 @@ class TextDictionaryLoader {
 
   Token *ParseTSVLine(absl::string_view line) const;
 
-  const uint16 zipcode_id_;
-  const uint16 isolated_word_id_;
+  const uint16_t zipcode_id_;
+  const uint16_t isolated_word_id_;
   std::vector<Token *> tokens_;
 
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);

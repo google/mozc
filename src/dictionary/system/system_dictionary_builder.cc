@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <cstring>
 #include <sstream>
 
@@ -52,7 +53,7 @@
 
 ABSL_FLAG(bool, preserve_intermediate_dictionary, false,
           "preserve inetemediate dictionary file.");
-ABSL_FLAG(int32, min_key_length_to_use_small_cost_encoding, 6,
+ABSL_FLAG(int32_t, min_key_length_to_use_small_cost_encoding, 6,
           "minimum key length to use 1 byte cost encoding.");
 
 namespace mozc {
@@ -151,8 +152,8 @@ void SystemDictionaryBuilder::WriteToStream(
       file_codec_->GetSectionName(codec_->GetSectionNameForTokens()));
 
   sections.push_back(token_array_section);
-  uint32 frequent_pos_array[256] = {0};
-  for (std::map<uint32, int>::const_iterator i = frequent_pos_.begin();
+  uint32_t frequent_pos_array[256] = {0};
+  for (std::map<uint32_t, int>::const_iterator i = frequent_pos_.begin();
        i != frequent_pos_.end(); ++i) {
     frequent_pos_array[i->second] = i->first;
   }
@@ -179,7 +180,9 @@ void SystemDictionaryBuilder::WriteToStream(
 }
 
 namespace {
-uint32 GetCombinedPos(uint16 lid, uint16 rid) { return (lid << 16) | rid; }
+uint32_t GetCombinedPos(uint16_t lid, uint16_t rid) {
+  return (lid << 16) | rid;
+}
 
 TokenInfo::ValueType GetValueType(const Token *token) {
   if (token->value == token->key) {
@@ -199,10 +202,10 @@ bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
     return false;
   }
 
-  mozc_hash_set<uint32> seen;
+  mozc_hash_set<uint32_t> seen;
   for (size_t i = 0; i < key_info.tokens.size(); ++i) {
     const Token *token = key_info.tokens[i].token;
-    const uint32 pos = GetCombinedPos(token->lid, token->rid);
+    const uint32_t pos = GetCombinedPos(token->lid, token->rid);
     if (!seen.insert(pos).second) {
       // Insertion failed, which means we already have |pos|.
       return true;
@@ -267,7 +270,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   // Calculate frequency of each pos
   // TODO(toshiyuki): It might be better to count frequency
   // with considering same_as_prev_pos.
-  std::map<uint32, int> pos_map;
+  std::map<uint32_t, int> pos_map;
   for (KeyInfoList::const_iterator itr = key_info_list.begin();
        itr != key_info_list.end(); ++itr) {
     const KeyInfo &key_info = *itr;
@@ -279,7 +282,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
 
   // Get histgram of frequency
   std::map<int, int> freq_map;
-  for (std::map<uint32, int>::const_iterator jt = pos_map.begin();
+  for (std::map<uint32_t, int>::const_iterator jt = pos_map.begin();
        jt != pos_map.end(); ++jt) {
     freq_map[jt->second]++;
   }
@@ -300,7 +303,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   VLOG(1) << "Pos threshold=" << freq_threshold;
   int freq_pos_idx = 0;
   int num_tokens = 0;
-  std::map<uint32, int>::iterator lt;
+  std::map<uint32_t, int>::iterator lt;
   for (lt = pos_map.begin(); lt != pos_map.end(); ++lt) {
     if (lt->second >= freq_threshold) {
       frequent_pos_[lt->first] = freq_pos_idx;
@@ -378,17 +381,17 @@ void SystemDictionaryBuilder::SetPosType(KeyInfoList *key_info_list) const {
     KeyInfo *key_info = &(*itr);
     for (size_t i = 0; i < key_info->tokens.size(); ++i) {
       TokenInfo *token_info = &(key_info->tokens[i]);
-      const uint32 pos =
+      const uint32_t pos =
           GetCombinedPos(token_info->token->lid, token_info->token->rid);
-      std::map<uint32, int>::const_iterator itr = frequent_pos_.find(pos);
+      std::map<uint32_t, int>::const_iterator itr = frequent_pos_.find(pos);
       if (itr != frequent_pos_.end()) {
         token_info->pos_type = TokenInfo::FREQUENT_POS;
         token_info->id_in_frequent_pos_map = itr->second;
       }
       if (i >= 1) {
         const TokenInfo &prev_token_info = key_info->tokens[i - 1];
-        const uint32 prev_pos = GetCombinedPos(prev_token_info.token->lid,
-                                               prev_token_info.token->rid);
+        const uint32_t prev_pos = GetCombinedPos(prev_token_info.token->lid,
+                                                 prev_token_info.token->rid);
         if (prev_pos == pos) {
           // we can overwrite FREQUENT_POS
           token_info->pos_type = TokenInfo::SAME_AS_PREV_POS;

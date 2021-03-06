@@ -32,6 +32,7 @@
 #include "session/internal/session_output.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -95,7 +96,7 @@ void FillCandidateWord(
     // annotations
     commands::Annotation annotation;
     if (FillAnnotation(segment_candidate, &annotation)) {
-      candidate_word_proto->mutable_annotation()->CopyFrom(annotation);
+      *candidate_word_proto->mutable_annotation() = annotation;
     }
 
     if (segment_candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
@@ -174,7 +175,7 @@ void SessionOutput::FillCandidate(
   // Set annotations
   commands::Annotation annotation;
   if (FillAnnotation(candidate_value, &annotation)) {
-    candidate_proto->mutable_annotation()->CopyFrom(annotation);
+    *candidate_proto->mutable_annotation() = annotation;
   }
 
   if (!candidate_value.usage_title.empty()) {
@@ -278,8 +279,8 @@ void SessionOutput::FillUsages(const Segment &segment,
   size_t c_end = 0;
   cand_list.GetPageRange(cand_list.focused_index(), &c_begin, &c_end);
 
-  typedef std::pair<int32, commands::Information *> IndexInfoPair;
-  std::map<int32, IndexInfoPair> usageid_information_map;
+  typedef std::pair<int32_t, commands::Information *> IndexInfoPair;
+  std::map<int32_t, IndexInfoPair> usageid_information_map;
   // Store usages.
   for (size_t i = c_begin; i <= c_end; ++i) {
     if (cand_list.candidate(i).IsSubcandidateList()) {
@@ -293,7 +294,7 @@ void SessionOutput::FillUsages(const Segment &segment,
 
     int index;
     commands::Information *info;
-    std::map<int32, IndexInfoPair>::iterator info_itr =
+    std::map<int32_t, IndexInfoPair>::iterator info_itr =
         usageid_information_map.find(candidate.usage_id);
 
     if (info_itr == usageid_information_map.end()) {
@@ -406,7 +407,7 @@ bool SessionOutput::FillFooter(const commands::Category category,
 
 // static
 bool SessionOutput::AddSegment(const std::string &key, const std::string &value,
-                               const uint32 segment_type_mask,
+                               const uint32_t segment_type_mask,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
   std::string normalized_key;
@@ -445,9 +446,9 @@ void SessionOutput::FillPreedit(const composer::Composer &composer,
   std::string output;
   composer.GetStringForPreedit(&output);
 
-  const uint32 kBaseType = PREEDIT;
+  const uint32_t kBaseType = PREEDIT;
   AddSegment(output, output, kBaseType, preedit);
-  preedit->set_cursor(static_cast<uint32>(composer.GetCursor()));
+  preedit->set_cursor(static_cast<uint32_t>(composer.GetCursor()));
   preedit->set_is_toggleable(composer.IsToggleable());
 }
 
@@ -456,7 +457,7 @@ void SessionOutput::FillConversion(const Segments &segments,
                                    const size_t segment_index,
                                    const int candidate_id,
                                    commands::Preedit *preedit) {
-  const uint32 kBaseType = CONVERSION;
+  const uint32_t kBaseType = CONVERSION;
   // Cursor position in conversion state should be the end of the preedit.
   size_t cursor = 0;
   for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {

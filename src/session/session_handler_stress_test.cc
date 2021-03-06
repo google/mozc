@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,15 +45,15 @@
 #include "absl/flags/flag.h"
 
 namespace {
-uint32 GenerateRandomSeed() {
-  uint32 seed = 0;
+uint32_t GenerateRandomSeed() {
+  uint32_t seed = 0;
   mozc::Util::GetRandomSequence(reinterpret_cast<char *>(&seed), sizeof(seed));
   return seed;
 }
 }  // namespace
 
 // There is no DEFINE_uint32.
-ABSL_FLAG(uint64, random_seed, GenerateRandomSeed(),
+ABSL_FLAG(uint64_t, random_seed, GenerateRandomSeed(),
           "Random seed value. "
           "This value will be interpreted as uint32.");
 
@@ -70,8 +71,8 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   const size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
-  const uint32 random_seed =
-      static_cast<uint32>(absl::GetFlag(FLAGS_random_seed));
+  const uint32_t random_seed =
+      static_cast<uint32_t>(absl::GetFlag(FLAGS_random_seed));
   LOG(INFO) << "Random seed: " << random_seed;
   session::RandomKeyEventsGenerator::InitSeed(random_seed);
   while (keyevents_size < kMaxEventSize) {

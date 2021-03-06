@@ -30,6 +30,7 @@
 #ifndef MOZC_USAGE_STATS_USAGE_STATS_TESTING_UTIL_H_
 #define MOZC_USAGE_STATS_USAGE_STATS_TESTING_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -51,12 +52,12 @@ namespace internal {
 ::testing::AssertionResult ExpectCountStats(const char *name_string,
                                             const char *expected_string,
                                             const std::string &name,
-                                            uint32 expected);
+                                            uint32_t expected);
 
 ::testing::AssertionResult ExpectIntegerStats(const char *name_string,
                                               const char *expected_string,
                                               const std::string &name,
-                                              int32 expected);
+                                              int32_t expected);
 
 ::testing::AssertionResult ExpectBooleanStats(const char *name_string,
                                               const char *expected_string,
@@ -67,8 +68,8 @@ namespace internal {
     const char *name_string, const char *expected_total_string,
     const char *expected_num_string, const char *expected_min_string,
     const char *expected_max_string, const std::string &name,
-    uint64 expected_total, uint32 expected_num, uint32 expected_min,
-    uint32 expected_max);
+    uint64_t expected_total, uint32_t expected_num, uint32_t expected_min,
+    uint32_t expected_max);
 }  // namespace internal
 
 #define EXPECT_STATS_EXIST(name) \

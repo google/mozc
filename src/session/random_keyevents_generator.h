@@ -30,7 +30,9 @@
 #ifndef MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_
 #define MOZC_SESSION_RANDOM_KEYEVENTS_GENERATOR_H_
 
+#include <cstdint>
 #include <vector>
+
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 
@@ -52,7 +54,7 @@ class RandomKeyEventsGenerator {
   static void GenerateSequence(std::vector<commands::KeyEvent> *keys);
 
   // Initialize random seed for this module.
-  static void InitSeed(uint32 seed);
+  static void InitSeed(uint32_t seed);
 
   // Generate a random test keyevents sequence for mobile
   static void GenerateMobileSequence(bool create_probable_key_events,

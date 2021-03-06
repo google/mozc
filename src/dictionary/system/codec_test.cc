@@ -29,6 +29,7 @@
 
 #include "dictionary/system/codec.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -92,7 +93,7 @@ namespace {
   }
 
   // Hereafter, |c| should be represented as 0x????
-  const uint16 s = static_cast<uint16>(c);
+  const uint16_t s = static_cast<uint16_t>(c);
   if ((s & 0xff) == 0) {
     return MakeAssertResult(size == 2, c, "U+??00 are encoded into 2 bytes.");
   }
@@ -332,18 +333,18 @@ class SystemDictionaryCodecMock : public SystemDictionaryCodecInterface {
                    std::string *dst) const override {}
   void EncodeTokens(const std::vector<TokenInfo> &tokens,
                     std::string *output) const override {}
-  void DecodeTokens(const uint8 *ptr,
+  void DecodeTokens(const uint8_t *ptr,
                     std::vector<TokenInfo> *tokens) const override {}
-  bool DecodeToken(const uint8 *ptr, TokenInfo *token_info,
+  bool DecodeToken(const uint8_t *ptr, TokenInfo *token_info,
                    int *read_bytes) const override {
     *read_bytes = 0;
     return false;
   }
-  bool ReadTokenForReverseLookup(const uint8 *ptr, int *value_id,
+  bool ReadTokenForReverseLookup(const uint8_t *ptr, int *value_id,
                                  int *read_bytes) const override {
     return false;
   }
-  uint8 GetTokensTerminationFlag() const override { return 0xff; }
+  uint8_t GetTokensTerminationFlag() const override { return 0xff; }
 };
 
 TEST_F(SystemDictionaryCodecTest, FactoryTest) {
@@ -397,7 +398,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
     EXPECT_TRUE(IsExpectedEncodedSize(c, encoded));
     std::string decoded;
     codec->DecodeValue(encoded, &decoded);
-    EXPECT_EQ(original, decoded) << "failed at: " << static_cast<uint32>(c);
+    EXPECT_EQ(original, decoded) << "failed at: " << static_cast<uint32_t>(c);
   }
 }
 
@@ -792,7 +793,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 10000; ++i) {
         // U+4E00-9FFF CJK Unified Ideographs
-        const char32 c = a_ucs4 + static_cast<uint16>(Util::Random(0x9f00));
+        const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(0x9f00));
         Util::UCS4ToUTF8Append(c, &original);
       }
     }
@@ -808,7 +809,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       char32 a_ucs4 = 0x3041;  // "ぁ"
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 1000; ++i) {
-        const char32 c = a_ucs4 + static_cast<uint16>(Util::Random(1000));
+        const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(1000));
         Util::UCS4ToUTF8Append(c, &original);
       }
     }

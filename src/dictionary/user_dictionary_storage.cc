@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_storage.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -201,7 +202,7 @@ bool UserDictionaryStorage::UnLock() {
   return true;
 }
 
-bool UserDictionaryStorage::ExportDictionary(uint64 dic_id,
+bool UserDictionaryStorage::ExportDictionary(uint64_t dic_id,
                                              const std::string &file_name) {
   const int index = GetUserDictionaryIndex(dic_id);
   if (index < 0) {
@@ -229,7 +230,7 @@ bool UserDictionaryStorage::ExportDictionary(uint64 dic_id,
 }
 
 bool UserDictionaryStorage::CreateDictionary(const std::string &dic_name,
-                                             uint64 *new_dic_id) {
+                                             uint64_t *new_dic_id) {
   UserDictionaryCommandStatus::Status status =
       UserDictionaryUtil::CreateDictionary(&proto_, dic_name, new_dic_id);
   // Update last_error_type_
@@ -261,7 +262,7 @@ bool UserDictionaryStorage::CreateDictionary(const std::string &dic_name,
   return status == UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
 }
 
-bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
+bool UserDictionaryStorage::DeleteDictionary(uint64_t dic_id) {
   if (!UserDictionaryUtil::DeleteDictionary(&proto_, dic_id, nullptr,
                                             nullptr)) {
     // Failed to delete dictionary.
@@ -273,7 +274,7 @@ bool UserDictionaryStorage::DeleteDictionary(uint64 dic_id) {
   return true;
 }
 
-bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
+bool UserDictionaryStorage::RenameDictionary(uint64_t dic_id,
                                              const std::string &dic_name) {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
@@ -307,12 +308,12 @@ bool UserDictionaryStorage::RenameDictionary(uint64 dic_id,
   return true;
 }
 
-int UserDictionaryStorage::GetUserDictionaryIndex(uint64 dic_id) const {
+int UserDictionaryStorage::GetUserDictionaryIndex(uint64_t dic_id) const {
   return UserDictionaryUtil::GetUserDictionaryIndexById(proto_, dic_id);
 }
 
 bool UserDictionaryStorage::GetUserDictionaryId(const std::string &dic_name,
-                                                uint64 *dic_id) {
+                                                uint64_t *dic_id) {
   for (size_t i = 0; i < proto_.dictionaries_size(); ++i) {
     if (dic_name == proto_.dictionaries(i).name()) {
       *dic_id = proto_.dictionaries(i).id();
@@ -324,7 +325,7 @@ bool UserDictionaryStorage::GetUserDictionaryId(const std::string &dic_name,
 }
 
 user_dictionary::UserDictionary *UserDictionaryStorage::GetUserDictionary(
-    uint64 dic_id) {
+    uint64_t dic_id) {
   return UserDictionaryUtil::GetMutableUserDictionaryById(&proto_, dic_id);
 }
 

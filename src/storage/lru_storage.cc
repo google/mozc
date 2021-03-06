@@ -30,6 +30,7 @@
 #include "storage/lru_storage.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -67,7 +68,7 @@ const size_t kItemHeaderSize = 12;
 // * 4 bytes for fingerprint seed
 const size_t kFileHeaderSize = 12;
 
-const uint64 k62DaysInSec = 62 * 24 * 60 * 60;
+const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 
 template <class T>
 inline void ReadValue(char **ptr, T *value) {
@@ -75,28 +76,30 @@ inline void ReadValue(char **ptr, T *value) {
   *ptr += sizeof(*value);
 }
 
-uint64 GetFP(const char *ptr) { return *reinterpret_cast<const uint64 *>(ptr); }
+uint64_t GetFP(const char *ptr) {
+  return *reinterpret_cast<const uint64_t *>(ptr);
+}
 
-uint32 GetTimeStamp(const char *ptr) {
-  return *reinterpret_cast<const uint32 *>(ptr + 8);
+uint32_t GetTimeStamp(const char *ptr) {
+  return *reinterpret_cast<const uint32_t *>(ptr + 8);
 }
 
 const char *GetValue(const char *ptr) { return ptr + kItemHeaderSize; }
 
 void Update(char *ptr) {
-  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
+  const uint32_t last_access_time = static_cast<uint32_t>(Clock::GetTime());
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
 }
 
-void Update(char *ptr, uint64 fp, const char *value, size_t value_size) {
-  const uint32 last_access_time = static_cast<uint32>(Clock::GetTime());
+void Update(char *ptr, uint64_t fp, const char *value, size_t value_size) {
+  const uint32_t last_access_time = static_cast<uint32_t>(Clock::GetTime());
   memcpy(ptr, reinterpret_cast<const char *>(&fp), 8);
   memcpy(ptr + 8, reinterpret_cast<const char *>(&last_access_time), 4);
   memcpy(ptr + 12, value, value_size);
 }
 
-bool IsOlderThan62Days(uint64 timestamp) {
-  const uint64 now = Clock::GetTime();
+bool IsOlderThan62Days(uint64_t timestamp) {
+  const uint64_t now = Clock::GetTime();
   return (timestamp + k62DaysInSec < now);
 }
 
@@ -119,7 +122,7 @@ LRUStorage *LRUStorage::Create(const char *filename) {
 }
 
 LRUStorage *LRUStorage::Create(const char *filename, size_t value_size,
-                               size_t size, uint32 seed) {
+                               size_t size, uint32_t seed) {
   std::unique_ptr<LRUStorage> n(new LRUStorage);
   if (!n->OpenOrCreate(filename, value_size, size, seed)) {
     LOG(ERROR) << "could not open LRUStorage";
@@ -129,7 +132,7 @@ LRUStorage *LRUStorage::Create(const char *filename, size_t value_size,
 }
 
 bool LRUStorage::CreateStorageFile(const char *filename, size_t value_size,
-                                   size_t size, uint32 seed) {
+                                   size_t size, uint32_t seed) {
   if (value_size == 0 || value_size > kMaxValueSize) {
     LOG(ERROR) << "value_size is out of range";
     return false;
@@ -151,16 +154,16 @@ bool LRUStorage::CreateStorageFile(const char *filename, size_t value_size,
     return false;
   }
 
-  const uint32 value_size_uint32 = static_cast<uint32>(value_size);
-  const uint32 size_uint32 = static_cast<uint32>(size);
+  const uint32_t value_size_uint32 = static_cast<uint32_t>(value_size);
+  const uint32_t size_uint32 = static_cast<uint32_t>(size);
 
   ofs.write(reinterpret_cast<const char *>(&value_size_uint32),
             sizeof(value_size_uint32));
   ofs.write(reinterpret_cast<const char *>(&size_uint32), sizeof(size_uint32));
   ofs.write(reinterpret_cast<const char *>(&seed), sizeof(seed));
   std::vector<char> ary(value_size, '\0');
-  const uint32 last_access_time = 0;
-  const uint64 fp = 0;
+  const uint32_t last_access_time = 0;
+  const uint64_t fp = 0;
 
   for (size_t i = 0; i < size; ++i) {
     ofs.write(reinterpret_cast<const char *>(&fp), sizeof(fp));
@@ -232,7 +235,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
   std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   std::string buf;
-  mozc_hash_set<uint64> seen;  // remove duplicated entries.
+  mozc_hash_set<uint64_t> seen;  // remove duplicated entries.
   for (size_t i = 0; i < ary.size(); ++i) {
     if (!seen.insert(GetFP(ary[i])).second) {
       continue;
@@ -265,7 +268,7 @@ LRUStorage::LRUStorage()
 LRUStorage::~LRUStorage() { Close(); }
 
 bool LRUStorage::OpenOrCreate(const char *filename, size_t new_value_size,
-                              size_t new_size, uint32 new_seed) {
+                              size_t new_size, uint32_t new_seed) {
   if (!FileUtil::FileExists(filename)) {
     // This is also an expected scenario. Let's create a new data file.
     VLOG(1) << filename << " does not exist. Creating a new one.";
@@ -349,12 +352,12 @@ bool LRUStorage::Open(char *ptr, size_t ptr_size) {
   begin_ = ptr;
   end_ = ptr + ptr_size;
 
-  uint32 value_size_uint32 = 0;
-  uint32 size_uint32 = 0;
+  uint32_t value_size_uint32 = 0;
+  uint32_t size_uint32 = 0;
 
-  ReadValue<uint32>(&begin_, &value_size_uint32);
-  ReadValue<uint32>(&begin_, &size_uint32);
-  ReadValue<uint32>(&begin_, &seed_);
+  ReadValue<uint32_t>(&begin_, &value_size_uint32);
+  ReadValue<uint32_t>(&begin_, &size_uint32);
+  ReadValue<uint32_t>(&begin_, &seed_);
 
   value_size_ = static_cast<size_t>(value_size_uint32);
   size_ = static_cast<size_t>(size_uint32);
@@ -416,18 +419,18 @@ void LRUStorage::Close() {
 }
 
 const char *LRUStorage::Lookup(const std::string &key) const {
-  uint32 last_access_time = 0;
+  uint32_t last_access_time = 0;
   return Lookup(key, &last_access_time);
 }
 
 const char *LRUStorage::Lookup(const std::string &key,
-                               uint32 *last_access_time) const {
-  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
+                               uint32_t *last_access_time) const {
+  const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   const auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
     return nullptr;
   }
-  const uint32 timestamp = GetTimeStamp(*it->second);
+  const uint32_t timestamp = GetTimeStamp(*it->second);
   if (IsOlderThan62Days(timestamp)) {
     return nullptr;
   }
@@ -441,7 +444,7 @@ void LRUStorage::GetAllValues(std::vector<std::string> *values) const {
   // Iterate data from the most recently used element to the least recently used
   // element.
   for (const char *ptr : lru_list_) {
-    const uint32 timestamp = GetTimeStamp(ptr);
+    const uint32_t timestamp = GetTimeStamp(ptr);
     if (IsOlderThan62Days(timestamp)) {
       break;
     }
@@ -453,12 +456,12 @@ void LRUStorage::GetAllValues(std::vector<std::string> *values) const {
 }
 
 bool LRUStorage::Touch(const std::string &key) {
-  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
+  const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it == lru_map_.end()) {
     return false;
   }
-  const uint32 timestamp = GetTimeStamp(*it->second);
+  const uint32_t timestamp = GetTimeStamp(*it->second);
   if (IsOlderThan62Days(timestamp)) {
     return false;
   }
@@ -472,7 +475,7 @@ bool LRUStorage::Insert(const std::string &key, const char *value) {
   if (value == nullptr) {
     return false;
   }
-  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
+  const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
 
   // If the data corresponding to |key| already exists in LRU, update it.
   {
@@ -490,7 +493,7 @@ bool LRUStorage::Insert(const std::string &key, const char *value) {
   // overwritten with new data).
   if (lru_map_.size() >= size_ || next_item_ == end_) {
     auto it = std::prev(lru_list_.end());  // Least recently used data.
-    const uint64 old_fp = GetFP(*it);
+    const uint64_t old_fp = GetFP(*it);
     lru_map_.erase(old_fp);
     lru_list_.splice(lru_list_.begin(), lru_list_, it);  // Move to front.
     Update(*it, fp, value, value_size_);
@@ -514,7 +517,7 @@ bool LRUStorage::Insert(const std::string &key, const char *value) {
 }
 
 bool LRUStorage::TryInsert(const std::string &key, const char *value) {
-  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
+  const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   auto it = lru_map_.find(fp);
   if (it != lru_map_.end()) {
     Update(*it->second, fp, value, value_size_);
@@ -524,11 +527,11 @@ bool LRUStorage::TryInsert(const std::string &key, const char *value) {
 }
 
 bool LRUStorage::Delete(const std::string &key) {
-  const uint64 fp = Hash::FingerprintWithSeed(key, seed_);
+  const uint64_t fp = Hash::FingerprintWithSeed(key, seed_);
   return Delete(fp);
 }
 
-bool LRUStorage::Delete(uint64 fp) {
+bool LRUStorage::Delete(uint64_t fp) {
   auto it = lru_map_.find(fp);
   return (it == lru_map_.end() || Delete(fp, it->second));
 }
@@ -537,7 +540,7 @@ bool LRUStorage::Delete(std::list<char *>::iterator it) {
   return (it == lru_list_.end() || Delete(GetFP(*it), it));
 }
 
-bool LRUStorage::Delete(uint64 fp, std::list<char *>::iterator it) {
+bool LRUStorage::Delete(uint64_t fp, std::list<char *>::iterator it) {
   // Determine the last element in the mmap region.
   if (next_item_ < begin_ + item_size()) {
     LOG(ERROR) << "next_item_ points to invalid location (broken?)";
@@ -557,7 +560,7 @@ bool LRUStorage::Delete(uint64 fp, std::list<char *>::iterator it) {
     // update the LRU structure for the moved element (the pointer to mmap
     // region in the list node is updated.)
     std::memcpy(deleted_item_pos, next_item_, item_size());
-    const uint64 fp = GetFP(next_item_);
+    const uint64_t fp = GetFP(next_item_);
     *lru_map_[fp] = deleted_item_pos;
   }
 
@@ -567,14 +570,14 @@ bool LRUStorage::Delete(uint64 fp, std::list<char *>::iterator it) {
   return true;
 }
 
-int LRUStorage::DeleteElementsBefore(uint32 timestamp) {
+int LRUStorage::DeleteElementsBefore(uint32_t timestamp) {
   if (!mmap_ || begin_ >= end_) {
     return 0;
   }
   int num_deleted = 0;
   while (!lru_list_.empty()) {
     auto it = std::prev(lru_list_.end());
-    const uint32 last_access_time = GetTimeStamp(*it);
+    const uint32_t last_access_time = GetTimeStamp(*it);
     if (last_access_time >= timestamp) {
       break;
     }
@@ -589,9 +592,9 @@ int LRUStorage::DeleteElementsBefore(uint32 timestamp) {
 }
 
 int LRUStorage::DeleteElementsUntouchedFor62Days() {
-  const uint64 now = Clock::GetTime();
-  const uint32 timestamp =
-      static_cast<uint32>((now > k62DaysInSec) ? now - k62DaysInSec : 0);
+  const uint64_t now = Clock::GetTime();
+  const uint32_t timestamp =
+      static_cast<uint32_t>((now > k62DaysInSec) ? now - k62DaysInSec : 0);
   return DeleteElementsBefore(timestamp);
 }
 
@@ -603,12 +606,12 @@ size_t LRUStorage::size() const { return size_; }
 
 size_t LRUStorage::used_size() const { return lru_list_.size(); }
 
-uint32 LRUStorage::seed() const { return seed_; }
+uint32_t LRUStorage::seed() const { return seed_; }
 
 const std::string &LRUStorage::filename() const { return filename_; }
 
-void LRUStorage::Write(size_t i, uint64 fp, const std::string &value,
-                       uint32 last_access_time) {
+void LRUStorage::Write(size_t i, uint64_t fp, const std::string &value,
+                       uint32_t last_access_time) {
   DCHECK_LT(i, size_);
   char *ptr = begin_ + (i * item_size());
   memcpy(ptr, reinterpret_cast<const char *>(&fp), 8);
@@ -620,8 +623,8 @@ void LRUStorage::Write(size_t i, uint64 fp, const std::string &value,
   }
 }
 
-void LRUStorage::Read(size_t i, uint64 *fp, std::string *value,
-                      uint32 *last_access_time) const {
+void LRUStorage::Read(size_t i, uint64_t *fp, std::string *value,
+                      uint32_t *last_access_time) const {
   DCHECK_LT(i, size_);
   const char *ptr = begin_ + (i * item_size());
   *fp = GetFP(ptr);

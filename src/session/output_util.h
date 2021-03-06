@@ -30,6 +30,8 @@
 #ifndef MOZC_SESSION_OUTPUT_UTIL_H_
 #define MOZC_SESSION_OUTPUT_UTIL_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 
 namespace mozc {
@@ -44,19 +46,19 @@ class OutputUtil {
   // Converts a candidate id into candidate index.
   // Returns true if a valid candidate index is returned in |candidate_index|.
   static bool GetCandidateIndexById(const mozc::commands::Output &output,
-                                    int32 mozc_candidate_id,
-                                    int32 *candidate_index);
+                                    int32_t mozc_candidate_id,
+                                    int32_t *candidate_index);
 
   // Converts a candidate index into candidate id.
   // Returns true if a valid candidate id is returned in |candidate_id|.
   static bool GetCandidateIdByIndex(const mozc::commands::Output &output,
-                                    int32 candidate_index,
-                                    int32 *mozc_candidate_id);
+                                    int32_t candidate_index,
+                                    int32_t *mozc_candidate_id);
 
   // Converts a candidate id into candidate index.
   // Returns true if a valid candidate index is returned in |candidate_index|.
   static bool GetFocusedCandidateId(const mozc::commands::Output &output,
-                                    int32 *mozc_candidate_id);
+                                    int32_t *mozc_candidate_id);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(OutputUtil);

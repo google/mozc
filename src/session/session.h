@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_SESSION_H_
 #define MOZC_SESSION_SESSION_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -261,10 +262,10 @@ class Session : public SessionInterface {
   const mozc::commands::ApplicationInfo &application_info() const override;
 
   // Return the time when this instance was created.
-  uint64 create_session_time() const override;
+  uint64_t create_session_time() const override;
 
   // return 0 (default value) if no command is executed in this session.
-  uint64 last_command_time() const override;
+  uint64_t last_command_time() const override;
 
   // TODO(komatsu): delete this function.
   // For unittest only

@@ -32,6 +32,7 @@
 #ifndef MOZC_COMPOSER_COMPOSER_H_
 #define MOZC_COMPOSER_COMPOSER_H_
 
+#include <cstdint>
 #include <memory>
 #include <set>
 #include <string>
@@ -186,7 +187,7 @@ class Composer {
   void MoveCursorRight();
   void MoveCursorToBeginning();
   void MoveCursorToEnd();
-  void MoveCursorTo(uint32 new_position);
+  void MoveCursorTo(uint32_t new_position);
 
   // Returns raw input from a user.
   // The main purpose is Transliteration.

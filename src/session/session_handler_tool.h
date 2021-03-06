@@ -30,6 +30,7 @@
 #ifndef MOZC_SESSION_SESSION_HANDLER_TOOL_H_
 #define MOZC_SESSION_SESSION_HANDLER_TOOL_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/status.h"
@@ -65,8 +66,8 @@ class SessionHandlerTool {
   bool TestSendKeyWithOption(const commands::KeyEvent &key,
                              const commands::Input &option,
                              commands::Output *output);
-  bool SelectCandidate(uint32 id, commands::Output *output);
-  bool SubmitCandidate(uint32 id, commands::Output *output);
+  bool SelectCandidate(uint32_t id, commands::Output *output);
+  bool SubmitCandidate(uint32_t id, commands::Output *output);
   bool ExpandSuggestion(commands::Output *output);
 
   bool Reload();
@@ -83,7 +84,7 @@ class SessionHandlerTool {
   bool EvalCommandInternal(commands::Input *input, commands::Output *output,
                            bool allow_callback);
 
-  uint64 id_;  // Session ID
+  uint64_t id_;  // Session ID
   std::unique_ptr<SessionObserverInterface> usage_observer_;
   UserDataManagerInterface *data_manager_;
   std::unique_ptr<SessionHandlerInterface> handler_;
@@ -105,7 +106,7 @@ class SessionHandlerInterpreter {
   void ClearUserPrediction();
   void ClearUsageStats();
   const commands::Output& LastOutput() const;
-  bool GetCandidateIdByValue(const absl::string_view value, uint32 *id);
+  bool GetCandidateIdByValue(const absl::string_view value, uint32_t *id);
   std::vector<std::string> Parse(const std::string &line);
   Status Eval(const std::vector<std::string> &args);
 

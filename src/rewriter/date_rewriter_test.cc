@@ -30,6 +30,7 @@
 #include "rewriter/date_rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include "base/clock.h"
@@ -184,9 +185,9 @@ bool AllElementsAreSame(const std::string &key,
 }
 
 // "2011-04-18 15:06:31 (Mon)" UTC
-const uint64 kTestSeconds = 1303139191uLL;
+const uint64_t kTestSeconds = 1303139191uLL;
 // micro seconds. it is random value.
-const uint32 kTestMicroSeconds = 588377u;
+const uint32_t kTestMicroSeconds = 588377u;
 
 }  // namespace
 

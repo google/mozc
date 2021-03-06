@@ -29,6 +29,8 @@
 
 #include "composer/internal/typing_model.h"
 
+#include <cstdint>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -38,7 +40,7 @@ class TypingModelTest : public ::testing::Test {};
 
 TEST_F(TypingModelTest, Constructor) {
   const char* characters = "abcd";
-  const uint8 costs[] = {
+  const uint8_t costs[] = {
       0, 1, 2, 3, 4, 5, 6,
   };
   TypingModel model(characters, strlen(characters), costs, arraysize(costs),
@@ -52,7 +54,7 @@ TEST_F(TypingModelTest, Constructor) {
 
 TEST_F(TypingModelTest, GetIndex) {
   const char* characters = "abcd";
-  const uint8 costs[] = {
+  const uint8_t costs[] = {
       0, 1, 2, 3, 4, 5, 6,
   };
   TypingModel model(characters, strlen(characters), costs, arraysize(costs),

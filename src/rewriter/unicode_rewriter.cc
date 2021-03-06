@@ -30,6 +30,7 @@
 #include "rewriter/unicode_rewriter.h"
 
 #include <cctype>
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -72,14 +73,14 @@ bool IsValidUCS4Expression(const std::string &input) {
 }
 
 // Converts given string to 32bit unsigned integer.
-bool UCS4ExpressionToInteger(const std::string &input, uint32 *ucs4) {
+bool UCS4ExpressionToInteger(const std::string &input, uint32_t *ucs4) {
   DCHECK(ucs4);
   const std::string hexcode(input, 2, input.npos);
   return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
 }
 
 // Checks if given ucs4 value is acceptable or not.
-bool IsAcceptableUnicode(const uint32 ucs4) {
+bool IsAcceptableUnicode(const uint32_t ucs4) {
   // Unicode character should be less than 0x10FFFF.
   if (ucs4 > 0x10FFFF) {
     return false;
@@ -166,7 +167,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     return false;
   }
 
-  uint32 ucs4 = 0;
+  uint32_t ucs4 = 0;
   if (!UCS4ExpressionToInteger(key, &ucs4)) {
     return false;
   }
@@ -187,7 +188,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
       return false;
     }
 
-    const uint32 resize_len =
+    const uint32_t resize_len =
         Util::CharsLen(key) -
         Util::CharsLen(segments->conversion_segment(0).key());
     if (!parent_converter_->ResizeSegment(segments, request, 0, resize_len)) {

@@ -35,14 +35,14 @@ load(
     "//:build_defs.bzl",
     "cc_binary_mozc",
     "cc_library_mozc",
+    "macos_application_mozc",
+    "select_mozc",
 )
 load(
     "//:config.bzl",
     "BRANDING",
     "MACOS_BUNDLE_ID_PREFIX",
-    "MACOS_MIN_OS_VER",
 )
-load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -76,7 +76,7 @@ cc_library_mozc(
         "//session",
         "//session:session_server",
         "@com_google_absl//absl/flags:flag",
-    ],
+    ] + select_mozc(windows = ["//base:winmain"]),
 )
 
 cc_binary_mozc(
@@ -97,28 +97,12 @@ cc_binary_mozc(
     ],
 )
 
-genrule(
-    name = "gen_mozc_server_info_plist",
-    srcs = [
-        "//base:mozc_version_txt",
-        "//data/mac:mozc_server_info",
-    ],
-    outs = ["mozc_server_info.plist"],
-    cmd = ("$(location //build_tools:tweak_info_plist)" +
-           " --output $@" +
-           " --input $(location //data/mac:mozc_server_info)" +
-           " --version_file $(location //base:mozc_version_txt)" +
-           " --branding " + BRANDING),
-    exec_tools = ["//build_tools:tweak_info_plist"],
-)
-
-macos_application(
+macos_application_mozc(
     name = "mozc_server_macos",
     app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Converter",
     bundle_name = BRANDING + "Converter",
-    infoplists = [":gen_mozc_server_info_plist"],
-    minimum_os_version = MACOS_MIN_OS_VER,
+    infoplists = ["Info.plist"],
     deps = [":mozc_server_lib"],
     # When we support Breakpad, uncomment the following block.
     # additional_contents = {

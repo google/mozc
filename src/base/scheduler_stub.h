@@ -42,6 +42,7 @@
 //   Scheduler::SetSchedulerHandler(nullptr);
 // }
 
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -66,12 +67,12 @@ class SchedulerStub : public Scheduler::SchedulerInterface {
   // Note that jobs will be executed individually for making
   // implementation simple. Interactions between dirrefent jobs will
   // not be simulated.
-  void PutClockForward(uint64 delta_usec);
+  void PutClockForward(uint64_t delta_usec);
 
  private:
   struct JobForStub {
     const Scheduler::JobSetting job;
-    uint32 remaining_usec;
+    uint32_t remaining_usec;
     int backoff_count;
 
     explicit JobForStub(const Scheduler::JobSetting &job)

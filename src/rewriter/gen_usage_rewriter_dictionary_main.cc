@@ -93,6 +93,7 @@
 // suffix array.
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <set>
@@ -246,7 +247,8 @@ void RemoveBaseformConjugationSuffix(
   }
 }
 
-uint32 Lookup(const std::map<std::string, uint32> &m, const std::string &key) {
+uint32_t Lookup(const std::map<std::string, uint32_t> &m,
+                const std::string &key) {
   const auto iter = m.find(key);
   CHECK(iter != m.end()) << "Cannot find key=" << key;
   return iter->second;
@@ -271,7 +273,7 @@ void Convert() {
 
   // Assign unique index to every string data.  The same string share the same
   // index, so the data is slightly compressed.
-  std::map<std::string, uint32> string_index;
+  std::map<std::string, uint32_t> string_index;
   {
     // Collect all the strings while assigning temporary index 0.
     string_index[""] = 0;
@@ -291,7 +293,7 @@ void Convert() {
       string_index[item.meaning] = 0;
     }
     // Assign index.
-    uint32 index = 0;
+    uint32_t index = 0;
     for (auto &kv : string_index) {
       kv.second = index++;
     }
@@ -303,9 +305,9 @@ void Convert() {
         absl::GetFlag(FLAGS_output_base_conjugation_suffix).c_str(),
         std::ios_base::out | std::ios_base::binary);
     for (const auto &conj : conjugation_list) {
-      const uint32 key_suffix_index =
+      const uint32_t key_suffix_index =
           Lookup(string_index, baseform_map[conj].key_suffix);
-      const uint32 value_suffix_index =
+      const uint32_t value_suffix_index =
           Lookup(string_index, baseform_map[conj].value_suffix);
       ostream.write(reinterpret_cast<const char *>(&key_suffix_index), 4);
       ostream.write(reinterpret_cast<const char *>(&value_suffix_index), 4);
@@ -324,7 +326,7 @@ void Convert() {
           inflection_map[conjugation_list[i]];
       conjugation_index[i] = out_count;
       if (conjugations.empty()) {
-        const uint32 index = Lookup(string_index, "");
+        const uint32_t index = Lookup(string_index, "");
         ostream.write(reinterpret_cast<const char *>(&index), 4);
         ostream.write(reinterpret_cast<const char *>(&index), 4);
         ++out_count;
@@ -336,8 +338,8 @@ void Convert() {
                                            ctype.key_suffix);
         }
         for (const auto &kv : key_and_value_suffix_set) {
-          const uint32 value_suffix_index = Lookup(string_index, kv.first);
-          const uint32 key_suffix_index = Lookup(string_index, kv.second);
+          const uint32_t value_suffix_index = Lookup(string_index, kv.first);
+          const uint32_t key_suffix_index = Lookup(string_index, kv.second);
           ostream.write(reinterpret_cast<const char *>(&value_suffix_index), 4);
           ostream.write(reinterpret_cast<const char *>(&key_suffix_index), 4);
           ++out_count;
@@ -361,11 +363,11 @@ void Convert() {
     OutputFileStream ostream(
         absl::GetFlag(FLAGS_output_usage_item_array).c_str(),
         std::ios_base::out | std::ios_base::binary);
-    int32 usage_id = 0;
+    int32_t usage_id = 0;
     for (const UsageItem &item : usage_entries) {
-      const uint32 key_index = Lookup(string_index, item.key);
-      const uint32 value_index = Lookup(string_index, item.value);
-      const uint32 meaning_index = Lookup(string_index, item.meaning);
+      const uint32_t key_index = Lookup(string_index, item.key);
+      const uint32_t value_index = Lookup(string_index, item.value);
+      const uint32_t meaning_index = Lookup(string_index, item.meaning);
       ostream.write(reinterpret_cast<const char *>(&usage_id), 4);
       ostream.write(reinterpret_cast<const char *>(&key_index), 4);
       ostream.write(reinterpret_cast<const char *>(&value_index), 4);

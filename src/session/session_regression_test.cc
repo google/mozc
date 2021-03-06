@@ -30,6 +30,7 @@
 // This is a test with the actual converter.  So the result of the
 // conversion may differ from previous versions.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -134,7 +135,7 @@ class SessionRegressionTest : public ::testing::Test {
                           const commands::Context &context,
                           commands::Command *command) {
     command->Clear();
-    command->mutable_input()->mutable_context()->CopyFrom(context);
+    *command->mutable_input()->mutable_context() = context;
     command->mutable_input()->set_type(commands::Input::SEND_KEY);
     if (!KeyParser::ParseKey(key, command->mutable_input()->mutable_key())) {
       return false;
@@ -153,7 +154,7 @@ class SessionRegressionTest : public ::testing::Test {
 
   void InsertCharacterChars(const std::string &chars,
                             commands::Command *command) {
-    const uint32 kNoModifiers = 0;
+    const uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->clear_input();
       command->clear_output();

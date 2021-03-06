@@ -30,6 +30,7 @@
 #ifndef MOZC_STORAGE_EXISTENCE_FILTER_H_
 #define MOZC_STORAGE_EXISTENCE_FILTER_H_
 
+#include <cstdint>
 #include <memory>
 
 #include "base/port.h"
@@ -41,8 +42,8 @@ namespace storage {
 class ExistenceFilter {
  public:
   struct Header {
-    uint32 m;
-    uint32 n;
+    uint32_t m;
+    uint32_t n;
     int k;
   };
 
@@ -50,21 +51,21 @@ class ExistenceFilter {
   // 'n' is the number of values that will be stored
   // 'k' is the number of hash values to use per insert/lookup
   // k must be less than 8
-  ExistenceFilter(uint32 m, uint32 n, int k);
+  ExistenceFilter(uint32_t m, uint32_t n, int k);
   ~ExistenceFilter();
 
   static ExistenceFilter *CreateOptimal(size_t size_in_bytes,
-                                        uint32 estimated_insertions);
+                                        uint32_t estimated_insertions);
 
   void Clear();
 
   // Inserts a hash value into the filter
   // We generate 'k' separate internal hash values
-  void Insert(uint64 hash);
+  void Insert(uint64_t hash);
 
   // Checks if the given 'hash' was previously inserted int the filter
   // It may return some false positives
-  bool Exists(uint64 hash) const;
+  bool Exists(uint64_t hash) const;
 
   // Returns the size (in bytes) of the bloom filter
   size_t Size() const;
@@ -87,15 +88,15 @@ class ExistenceFilter {
   class BlockBitmap;
 
   // private constructor for ExistenceFilter::Read();
-  ExistenceFilter(uint32 m, uint32 n, int k, bool is_mutable);
+  ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable);
 
-  static ExistenceFilter *CreateImmutableExietenceFilter(uint32 m, uint32 n,
+  static ExistenceFilter *CreateImmutableExietenceFilter(uint32_t m, uint32_t n,
                                                          int k);
 
   std::unique_ptr<BlockBitmap> rep_;  // points to bitmap
-  const uint32 vec_size_;             // size of bitmap (in bits)
-  const uint32 expected_nelts_;       // expected number of inserts
-  const int32 num_hashes_;            // number of hashes per lookup
+  const uint32_t vec_size_;           // size of bitmap (in bits)
+  const uint32_t expected_nelts_;     // expected number of inserts
+  const int32_t num_hashes_;          // number of hashes per lookup
 
   DISALLOW_COPY_AND_ASSIGN(ExistenceFilter);
 };

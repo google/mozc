@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_session.h"
 
+#include <cstdint>
+
 #ifndef OS_WIN
 #include <sys/stat.h>
 #endif  // OS_WIN
@@ -159,7 +161,7 @@ TEST_F(UserDictionarySessionTest, UndoWithoutHistory) {
 TEST_F(UserDictionarySessionTest, CreateDictionary) {
   UserDictionarySession session(GetUserDictionaryFile());
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
   {
@@ -169,7 +171,7 @@ TEST_F(UserDictionarySessionTest, CreateDictionary) {
     EXPECT_EQ(dictionary_id, storage.dictionaries(0).id());
   }
 
-  uint64 dummy_dictionary_id;
+  uint64_t dummy_dictionary_id;
   EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY,
             session.CreateDictionary("", &dummy_dictionary_id));
   EXPECT_EQ(
@@ -198,7 +200,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionary) {
   UserDictionarySession session(GetUserDictionaryFile());
 
   // Add dummy dictionary.
-  const uint64 kDummyId = 10;
+  const uint64_t kDummyId = 10;
   {
     UserDictionary *user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();
@@ -222,7 +224,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionaryWithEnsuringNonEmptyStorage) {
   session.SetDefaultDictionaryName("abcde");
 
   // Add dummy dictionary.
-  const uint64 kDummyId = 10;
+  const uint64_t kDummyId = 10;
   {
     UserDictionary *user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();
@@ -249,7 +251,7 @@ TEST_F(UserDictionarySessionTest, RenameDictionary) {
   UserDictionarySession session(GetUserDictionaryFile());
 
   // Prepare the targeet dictionary.
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
 
@@ -269,7 +271,7 @@ TEST_F(UserDictionarySessionTest, RenameDictionary) {
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.RenameDictionary(dictionary_id, "new name"));
 
-  uint64 dummy_dictionary_id;
+  uint64_t dummy_dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("another name", &dummy_dictionary_id));
   // NG to rename to the name of another dictionary.
@@ -296,7 +298,7 @@ TEST_F(UserDictionarySessionTest, AddEntry) {
   UserDictionarySession session(GetUserDictionaryFile());
   UserDictionary::Entry entry;
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
 
@@ -358,7 +360,7 @@ TEST_F(UserDictionarySessionTest, AddEntryLimitExceeded) {
   UserDictionarySession session(GetUserDictionaryFile());
   UserDictionary::Entry entry;
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
   ResetEntry("reading", "word", UserDictionary::NOUN, &entry);
@@ -376,7 +378,7 @@ TEST_F(UserDictionarySessionTest, EditEntry) {
   UserDictionarySession session(GetUserDictionaryFile());
   UserDictionary::Entry entry;
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
 
@@ -457,7 +459,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
   UserDictionarySession session(GetUserDictionaryFile());
   UserDictionary::Entry entry;
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
 
@@ -604,7 +606,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
 TEST_F(UserDictionarySessionTest, ImportFromString) {
   UserDictionarySession session(GetUserDictionaryFile());
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("user dictionary", &dictionary_id));
 
@@ -652,7 +654,7 @@ TEST_F(UserDictionarySessionTest, ImportFromString) {
 TEST_F(UserDictionarySessionTest, ImportToNewDictionaryFromString) {
   UserDictionarySession session(GetUserDictionaryFile());
 
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.ImportToNewDictionaryFromString(
                 "user dictionary", kDictionaryData, &dictionary_id));
@@ -695,7 +697,7 @@ TEST_F(UserDictionarySessionTest, ImportToNewDictionaryFromStringFailure) {
 
   // Try to create a new dictionary with a name containing
   // an invalid character.
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
   ASSERT_EQ(
       UserDictionaryCommandStatus ::DICTIONARY_NAME_CONTAINS_INVALID_CHARACTER,
       session.ImportToNewDictionaryFromString("a\nb", kDictionaryData,
@@ -707,7 +709,7 @@ TEST_F(UserDictionarySessionTest, ImportToNewDictionaryFromStringFailure) {
 TEST_F(UserDictionarySessionTest, ClearDictionariesAndUndoHistory) {
   UserDictionarySession session(GetUserDictionaryFile());
 
-  uint64 dic_id;
+  uint64_t dic_id;
   ASSERT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             session.CreateDictionary("dic1", &dic_id));
 

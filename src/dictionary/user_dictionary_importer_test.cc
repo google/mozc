@@ -27,13 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "dictionary/user_dictionary_importer.h"
+
 #include <algorithm>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include "base/util.h"
-#include "dictionary/user_dictionary_importer.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "testing/base/public/googletest.h"
@@ -297,8 +299,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const std::string key("key" + std::to_string(static_cast<uint32>(j)));
-      const std::string value("value" + std::to_string(static_cast<uint32>(j)));
+      const std::string key("key" + std::to_string(static_cast<uint32_t>(j)));
+      const std::string value("value" +
+                              std::to_string(static_cast<uint32_t>(j)));
       entry.key = key;
       entry.value = value;
       entry.pos = "名詞";
@@ -337,8 +340,9 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
-      const std::string key("key" + std::to_string(static_cast<uint32>(j)));
-      const std::string value("value" + std::to_string(static_cast<uint32>(j)));
+      const std::string key("key" + std::to_string(static_cast<uint32_t>(j)));
+      const std::string value("value" +
+                              std::to_string(static_cast<uint32_t>(j)));
       entry.key = key;
       entry.value = value;
       if (j % 2 == 0) {

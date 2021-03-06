@@ -29,6 +29,8 @@
 
 #include "base/encryptor.h"
 
+#include <cstdint>
+
 #if defined(OS_WIN)
 // clang-format off
 #include <windows.h>
@@ -87,8 +89,8 @@ namespace {
 // 6. Use the first n bytes of the result of step 5 as the derived key.
 std::string GetMSCryptDeriveKeyWithSHA1(const std::string &password,
                                         const std::string &salt) {
-  uint8 buf1[64];
-  uint8 buf2[64];
+  uint8_t buf1[64];
+  uint8_t buf2[64];
 
   // Step1.
   memset(buf1, 0x36, sizeof(buf1));
@@ -99,8 +101,8 @@ std::string GetMSCryptDeriveKeyWithSHA1(const std::string &password,
   // Step 3 & 4
   const std::string hash = UnverifiedSHA1::MakeDigest(password + salt);
   for (size_t i = 0; i < hash.size(); ++i) {
-    buf1[i] ^= static_cast<uint8>(hash[i]);
-    buf2[i] ^= static_cast<uint8>(hash[i]);
+    buf1[i] ^= static_cast<uint8_t>(hash[i]);
+    buf2[i] ^= static_cast<uint8_t>(hash[i]);
   }
 
   // Step 5 & 6
@@ -119,8 +121,8 @@ const size_t kKeySize = 32;    // 256 bit key length
 // TODO(yukawa): Consider to maintain these data directly in Encryptor::Key or
 // completely rewrite Encryptor::Key once encryptor_legacy.cc is deprecated.
 struct Encryptor::Key::InternalData {
-  uint8 key[kKeySize];
-  uint8 iv[kBlockSize];
+  uint8_t key[kKeySize];
+  uint8_t iv[kBlockSize];
   bool is_available;
 
   InternalData() : is_available(false) {
@@ -131,7 +133,7 @@ struct Encryptor::Key::InternalData {
 
 size_t Encryptor::Key::block_size() const { return kBlockSize; }
 
-const uint8 *Encryptor::Key::iv() const { return data_->iv; }
+const uint8_t *Encryptor::Key::iv() const { return data_->iv; }
 
 size_t Encryptor::Key::iv_size() const {
   return kBlockSize;  // the same as block size
@@ -151,7 +153,7 @@ size_t Encryptor::Key::GetEncryptedSize(size_t size) const {
 
 bool Encryptor::Key::DeriveFromPassword(const std::string &password,
                                         const std::string &salt,
-                                        const uint8 *iv) {
+                                        const uint8_t *iv) {
   if (IsAvailable()) {
     LOG(WARNING) << "key is already set";
     return false;
@@ -232,14 +234,14 @@ bool Encryptor::EncryptArray(const Encryptor::Key &key, char *buf,
 
   // perform PKCS#5 padding
   const size_t padding_size = enc_size - *buf_size;
-  const uint8 padding_value = static_cast<uint8>(padding_size);
+  const uint8_t padding_value = static_cast<uint8_t>(padding_size);
   for (size_t i = *buf_size; i < enc_size; ++i) {
     buf[i] = static_cast<char>(padding_value);
   }
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
   internal::UnverifiedAES256::TransformCBC(key.data_->key, key.data_->iv,
-                                           reinterpret_cast<uint8 *>(buf),
+                                           reinterpret_cast<uint8_t *>(buf),
                                            enc_size / kBlockSize);
   *buf_size = enc_size;
   return true;
@@ -266,12 +268,12 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 
   // For historical reasons, we are using AES256/CBC for obfuscation.
   internal::UnverifiedAES256::InverseTransformCBC(
-      key.data_->key, key.data_->iv, reinterpret_cast<uint8 *>(buf),
+      key.data_->key, key.data_->iv, reinterpret_cast<uint8_t *>(buf),
       size / kBlockSize);
 
   // perform PKCS#5 un-padding
   // see. http://www.chilkatsoft.com/faq/PKCS5_Padding.html
-  const uint8 padding_value = static_cast<uint8>(buf[size - 1]);
+  const uint8_t padding_value = static_cast<uint8_t>(buf[size - 1]);
   const size_t padding_size = static_cast<size_t>(padding_value);
   if (padding_value == 0x00 || padding_value > kBlockSize) {
     LOG(ERROR) << "Cannot find PKCS#5 padding values: ";
@@ -284,7 +286,7 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
   }
 
   for (size_t i = size - padding_size; i < size; ++i) {
-    if (static_cast<uint8>(buf[i]) != padding_value) {
+    if (static_cast<uint8_t>(buf[i]) != padding_value) {
       LOG(ERROR) << "invalid padding value. message is broken";
       return false;
     }

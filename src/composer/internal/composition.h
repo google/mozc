@@ -30,13 +30,12 @@
 #ifndef MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 
-#include "composer/composition_interface.h"
-
 #include <list>
 #include <set>
 #include <string>
 
 #include "base/port.h"
+#include "composer/composition_interface.h"
 
 namespace mozc {
 namespace composer {
@@ -136,7 +135,7 @@ class Composition : public CompositionInterface {
 
  private:
   void GetStringWithModes(Transliterators::Transliterator transliterator,
-                          TrimMode trim_mode, std::string *output) const;
+                          TrimMode trim_mode, std::string *composition) const;
 
   const Table *table_;
   CharChunkList chunks_;

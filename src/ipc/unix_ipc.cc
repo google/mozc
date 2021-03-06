@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // OS_LINUX only. Note that OS_ANDROID/OS_WASM don't reach here.
+#include <cstdint>
 #if defined(OS_LINUX)
 
 #include <arpa/inet.h>
@@ -289,7 +290,7 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
       manager->Clear();
       continue;
     } else {
-      if (!manager->IsValidServer(static_cast<uint32>(pid), server_path)) {
+      if (!manager->IsValidServer(static_cast<uint32_t>(pid), server_path)) {
         LOG(ERROR) << "Connecting to invalid server";
         last_ipc_error_ = IPC_INVALID_SERVER;
         break;
@@ -314,7 +315,7 @@ IPCClient::~IPCClient() {
 
 // RPC call
 bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
-                     size_t *response_size, int32 timeout) {
+                     size_t *response_size, int32_t timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!SendMessage(socket_, request_, input_length, timeout,
                    &last_ipc_error_)) {
@@ -342,8 +343,8 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
 bool IPCClient::Connected() const { return connected_; }
 
 // Server
-IPCServer::IPCServer(const std::string &name, int32 num_connections,
-                     int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32_t num_connections,
+                     int32_t timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
   if (!manager->CreateNewPathName() && !manager->LoadPathName()) {

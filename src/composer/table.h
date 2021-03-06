@@ -32,6 +32,7 @@
 #ifndef MOZC_COMPOSER_TABLE_H_
 #define MOZC_COMPOSER_TABLE_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
@@ -76,7 +77,7 @@ enum TableAttribute {
   // used with the NEW_CHUNK flag.
   END_CHUNK = 8,
 };
-typedef uint32 TableAttributes;
+typedef uint32_t TableAttributes;
 
 class Entry {
  public:
@@ -190,9 +191,9 @@ class TableManager {
   //  config::Config::PreeditMethod
   //  config::Config::PunctuationMethod
   //  config::Config::SymbolMethod
-  std::map<uint32, std::unique_ptr<const Table>> table_map_;
+  std::map<uint32_t, std::unique_ptr<const Table>> table_map_;
   // Fingerprint for Config::custom_roman_table;
-  uint32 custom_roman_table_fingerprint_;
+  uint32_t custom_roman_table_fingerprint_;
 };
 
 }  // namespace composer

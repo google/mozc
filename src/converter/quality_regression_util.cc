@@ -29,6 +29,7 @@
 
 #include "converter/quality_regression_util.h"
 
+#include <cstdint>
 #include <sstream>  // NOLINT
 #include <string>
 #include <vector>
@@ -90,7 +91,7 @@ int GetRank(const std::string &value, const Segments *segments,
   return -1;
 }
 
-uint32 GetPlatformFromString(absl::string_view str) {
+uint32_t GetPlatformFromString(absl::string_view str) {
   std::string lower;
   lower.assign(str.data(), str.size());
   Util::LowerString(&lower);
@@ -227,7 +228,7 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
     *actual_value += segments_->segment(i).candidate(0).value;
   }
 
-  const int32 actual_rank = GetRank(expected_value, segments_.get(), 0, 0);
+  const int32_t actual_rank = GetRank(expected_value, segments_.get(), 0, 0);
 
   bool result = (actual_rank >= 0 && actual_rank <= expected_rank);
 
@@ -248,7 +249,8 @@ void QualityRegressionUtil::SetConfig(const config::Config &config) {
   *config_ = config;
 }
 
-std::string QualityRegressionUtil::GetPlatformString(uint32 platform_bitfiled) {
+std::string QualityRegressionUtil::GetPlatformString(
+    uint32_t platform_bitfiled) {
   std::vector<std::string> v;
   if (platform_bitfiled & DESKTOP) {
     v.push_back("DESKTOP");

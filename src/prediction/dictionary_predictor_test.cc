@@ -30,6 +30,7 @@
 #include "prediction/dictionary_predictor.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <random>
 #include <set>
@@ -110,7 +111,7 @@ CreateSystemDictionaryFromDataManager(
 DictionaryInterface *CreateSuffixDictionaryFromDataManager(
     const DataManagerInterface &data_manager) {
   absl::string_view suffix_key_array_data, suffix_value_array_data;
-  const uint32 *token_array;
+  const uint32_t *token_array;
   data_manager.GetSuffixDictionaryData(&suffix_key_array_data,
                                        &suffix_value_array_data, &token_array);
   return new SuffixDictionary(suffix_key_array_data, suffix_value_array_data,
@@ -509,9 +510,9 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  void InsertInputSequenceForProbableKeyEvent(const std::string &text,
-                                              const uint32 *corrected_key_codes,
-                                              composer::Composer *composer) {
+  void InsertInputSequenceForProbableKeyEvent(
+      const std::string &text, const uint32_t *corrected_key_codes,
+      composer::Composer *composer) {
     std::vector<commands::KeyEvent> keys;
     GenerateKeyEvents(text, &keys);
 
@@ -711,7 +712,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   void AggregateTypeCorrectingTestHelper(const char *key,
-                                         const uint32 *corrected_key_codes,
+                                         const uint32_t *corrected_key_codes,
                                          const char *expected_values[],
                                          size_t expected_values_size) {
     request_->set_special_romanji_table(
@@ -2137,7 +2138,7 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
   config_->set_use_typing_correction(true);
 
   const char kInputText[] = "gu-huru";
-  const uint32 kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
+  const uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
   const char *kExpectedValues[] = {
       "グーグルアドセンス",
       "グーグルアドワーズ",
@@ -3409,12 +3410,12 @@ const char *kTestStrings[] = {
 };
 
 struct TestEntry {
-  int32 available_emoji_carrier;
+  int32_t available_emoji_carrier;
   std::string key;
   bool expected_result;
   // candidate value and ZeroQueryType.
   std::vector<std::string> expected_candidates;
-  std::vector<int32> expected_types;
+  std::vector<int32_t> expected_types;
 
   std::string DebugString() const {
     std::string candidates;
@@ -3441,7 +3442,7 @@ struct TestEntry {
 
 TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
   // Create test zero query data.
-  std::unique_ptr<uint32[]> string_data_buffer;
+  std::unique_ptr<uint32_t[]> string_data_buffer;
   ZeroQueryDict zero_query_dict;
   {
     // kTestTokenArray contains a trailing '\0', so create a absl::string_view

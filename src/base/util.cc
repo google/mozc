@@ -29,6 +29,8 @@
 
 #include "base/util.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 // clang-format off
 #include <Windows.h>
@@ -67,14 +69,13 @@
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "absl/strings/string_view.h"
-
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -461,13 +462,13 @@ const unsigned char kUTF8LenTbl[256] = {
     2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-bool IsUTF8TrailingByte(uint8 c) { return (c & 0xc0) == 0x80; }
+bool IsUTF8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
 // Return length of a single UTF-8 source character
 size_t Util::OneCharLen(const char *src) {
-  return kUTF8LenTbl[*reinterpret_cast<const uint8 *>(src)];
+  return kUTF8LenTbl[*reinterpret_cast<const uint8_t *>(src)];
 }
 
 size_t Util::CharsLen(const char *src, size_t size) {
@@ -517,7 +518,7 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
     char32 min_value = 0;
     char32 max_value = 0xffffffff;
     {
-      const uint8 leading_byte = static_cast<uint8>(s[0]);
+      const uint8_t leading_byte = static_cast<uint8_t>(s[0]);
       if (leading_byte < 0x80) {
         *first_char32 = leading_byte;
         *rest = absl::ClippedSubstr(s, 1);
@@ -567,7 +568,7 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
     }
 
     for (size_t i = 1; i < len; ++i) {
-      const uint8 c = static_cast<uint8>(s[i]);
+      const uint8_t c = static_cast<uint8_t>(s[i]);
       if (!IsUTF8TrailingByte(c)) {
         // Trailing bytes not found.
         return false;
@@ -891,9 +892,9 @@ int Util::Random(int size) {
   return static_cast<int>(1.0 * size * rand() / (RAND_MAX + 1.0));
 }
 
-void Util::SetRandomSeed(uint32 seed) { ::srand(seed); }
+void Util::SetRandomSeed(uint32_t seed) { ::srand(seed); }
 
-void Util::Sleep(uint32 msec) {
+void Util::Sleep(uint32_t msec) {
 #ifdef OS_WIN
   ::Sleep(msec);
 #else   // OS_WIN
@@ -916,20 +917,20 @@ int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
   int seekto = 0;
   int n = 0;
   int b = array[0].base;
-  uint32 p = 0;
+  uint32_t p = 0;
   *result = -1;
-  uint32 num = 0;
+  uint32_t num = 0;
 
   for (int i = 0; i < len; ++i) {
     p = b;
     n = array[p].base;
-    if (static_cast<uint32>(b) == array[p].check && n < 0) {
+    if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
       seekto = i;
       *result = -n - 1;
       ++num;
     }
-    p = b + static_cast<uint8>(key[i]) + 1;
-    if (static_cast<uint32>(b) == array[p].check) {
+    p = b + static_cast<uint8_t>(key[i]) + 1;
+    if (static_cast<uint32_t>(b) == array[p].check) {
       b = array[p].base;
     } else {
       return seekto;
@@ -937,7 +938,7 @@ int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
   }
   p = b;
   n = array[p].base;
-  if (static_cast<uint32>(b) == array[p].check && n < 0) {
+  if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
     seekto = len;
     *result = -n - 1;
   }
@@ -961,7 +962,7 @@ void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
       const char *p = &ctable[result];
       const size_t len = strlen(p);
       output->append(p, len);
-      mblen -= static_cast<int32>(p[len + 1]);
+      mblen -= static_cast<int32_t>(p[len + 1]);
       begin += mblen;
     } else {
       mblen = OneCharLen(begin);
@@ -1524,7 +1525,7 @@ Util::CharacterSet Util::GetCharacterSet(absl::string_view str) {
 // CAUTION: Be careful to change the implementation of serialization.  Some
 // files use this format, so compatibility can be lost.  See, e.g.,
 // data_manager/dataset_writer.cc.
-std::string Util::SerializeUint64(uint64 x) {
+std::string Util::SerializeUint64(uint64_t x) {
   const char s[8] = {
       static_cast<char>(x >> 56),          static_cast<char>((x >> 48) & 0xFF),
       static_cast<char>((x >> 40) & 0xFF), static_cast<char>((x >> 32) & 0xFF),
@@ -1534,17 +1535,17 @@ std::string Util::SerializeUint64(uint64 x) {
   return std::string(s, 8);
 }
 
-bool Util::DeserializeUint64(absl::string_view s, uint64 *x) {
+bool Util::DeserializeUint64(absl::string_view s, uint64_t *x) {
   if (s.size() != 8) {
     return false;
   }
   // The following operations assume `char` is unsigned (i.e. -funsigned-char).
   static_assert(std::is_unsigned_v<char>,
                 "`char` is not unsigned. Use -funsigned-char.");
-  *x = static_cast<uint64>(s[0]) << 56 | static_cast<uint64>(s[1]) << 48 |
-       static_cast<uint64>(s[2]) << 40 | static_cast<uint64>(s[3]) << 32 |
-       static_cast<uint64>(s[4]) << 24 | static_cast<uint64>(s[5]) << 16 |
-       static_cast<uint64>(s[6]) << 8 | static_cast<uint64>(s[7]);
+  *x = static_cast<uint64_t>(s[0]) << 56 | static_cast<uint64_t>(s[1]) << 48 |
+       static_cast<uint64_t>(s[2]) << 40 | static_cast<uint64_t>(s[3]) << 32 |
+       static_cast<uint64_t>(s[4]) << 24 | static_cast<uint64_t>(s[5]) << 16 |
+       static_cast<uint64_t>(s[6]) << 8 | static_cast<uint64_t>(s[7]);
   return true;
 }
 

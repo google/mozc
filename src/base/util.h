@@ -31,6 +31,7 @@
 #define MOZC_BASE_UTIL_H_
 
 #include <climits>
+#include <cstdint>
 #include <ctime>
 #include <initializer_list>
 #include <string>
@@ -300,11 +301,11 @@ class Util {
   static int Random(int size);
 
   // Set the seed of Util::Random().
-  static void SetRandomSeed(uint32 seed);
+  static void SetRandomSeed(uint32_t seed);
 
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
-  static void Sleep(uint32 msec);
+  static void Sleep(uint32_t msec);
 
   // Japanese utilities for character form transliteration.
   static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
@@ -451,11 +452,11 @@ class Util {
   static CharacterSet GetCharacterSet(absl::string_view str);
 
   // Serializes uint64 into a string of eight byte.
-  static std::string SerializeUint64(uint64 x);
+  static std::string SerializeUint64(uint64_t x);
 
   // Deserializes a string serialized by SerializeUint64.  Returns false if the
   // length of s is not eight or s is in an invalid format.
-  static bool DeserializeUint64(absl::string_view s, uint64 *x);
+  static bool DeserializeUint64(absl::string_view s, uint64_t *x);
 
   // Checks endian-ness at runtime.
   static bool IsLittleEndian();

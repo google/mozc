@@ -30,6 +30,7 @@
 #include "rewriter/user_boundary_history_rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <string>
 
@@ -142,7 +143,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   // make length of segment 0 from 4 to 2|2
   Segments input_seg;
   size_t input_start, input_size;
-  uint8 *input_array;
+  uint8_t *input_array;
   size_t input_array_size;
   mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
                            &input_array_size);
@@ -150,10 +151,10 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   EXPECT_EQ(segments_str, input_seg_str);
   EXPECT_EQ(0, input_start);
   EXPECT_EQ(1, input_size);
-  uint8 resize_array[8];
+  uint8_t resize_array[8];
   memset(resize_array, 0, sizeof(resize_array));
-  resize_array[0] = static_cast<uint8>(2);
-  resize_array[1] = static_cast<uint8>(2);
+  resize_array[0] = static_cast<uint8_t>(2);
+  resize_array[1] = static_cast<uint8_t>(2);
   EXPECT_LT(2, input_array_size);
   for (int i = 0; i < input_array_size; ++i) {
     EXPECT_EQ(resize_array[i], input_array[i]);
@@ -187,7 +188,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   // make length of segment 0 from 2 to 4
   Segments input_seg;
   size_t input_start, input_size;
-  uint8 *input_array;
+  uint8_t *input_array;
   size_t input_array_size;
   mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
                            &input_array_size);
@@ -195,9 +196,9 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   EXPECT_EQ(bounded_segments_str, input_seg_str);
   EXPECT_EQ(0, input_start);
   EXPECT_EQ(2, input_size);
-  uint8 resize_array[8];
+  uint8_t resize_array[8];
   memset(resize_array, 0, sizeof(resize_array));
-  resize_array[0] = static_cast<uint8>(4);
+  resize_array[0] = static_cast<uint8_t>(4);
   EXPECT_LT(1, input_array_size);
   for (int i = 0; i < input_array_size; ++i) {
     EXPECT_EQ(resize_array[i], input_array[i]);

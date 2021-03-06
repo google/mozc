@@ -29,6 +29,8 @@
 
 #include "gui/base/win_util.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 // clang-format off
 #include <windows.h>
@@ -240,7 +242,7 @@ BOOL CALLBACK FindVisibleWindowProc(HWND hwnd, LPARAM lp) {
 }  // namespace
 #endif  // OS_WIN
 
-void WinUtil::ActivateWindow(uint32 process_id) {
+void WinUtil::ActivateWindow(uint32_t process_id) {
 #ifdef OS_WIN
   FindVisibleWindowInfo info = {};
   info.target_process_id = process_id;

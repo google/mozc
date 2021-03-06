@@ -30,6 +30,7 @@
 #include "usage_stats/usage_stats_uploader.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <utility>
@@ -48,7 +49,7 @@ namespace mozc {
 namespace usage_stats {
 namespace {
 
-void SetUpMetaDataWithMozcVersion(uint32 last_upload_time,
+void SetUpMetaDataWithMozcVersion(uint32_t last_upload_time,
                                   const std::string &mozc_version) {
   EXPECT_TRUE(
       storage::Registry::Insert("usage_stats.last_upload", last_upload_time));
@@ -56,7 +57,7 @@ void SetUpMetaDataWithMozcVersion(uint32 last_upload_time,
       storage::Registry::Insert("usage_stats.mozc_version", mozc_version));
 }
 
-void SetUpMetaData(uint32 last_upload_time) {
+void SetUpMetaData(uint32_t last_upload_time) {
   SetUpMetaDataWithMozcVersion(last_upload_time, Version::GetMozcVersion());
 }
 
@@ -76,7 +77,7 @@ TEST_F(UsageStatsUploaderTest, SendTest) {
   EXPECT_TRUE(UsageStatsUploader::Send(nullptr));
 
   // Metadata should be deleted
-  uint32 recorded_sec;
+  uint32_t recorded_sec;
   std::string recorded_version;
   EXPECT_FALSE(
       storage::Registry::Lookup("usage_stats.last_upload", &recorded_sec));

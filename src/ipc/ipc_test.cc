@@ -30,6 +30,7 @@
 #include "ipc/ipc.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <vector>
 
 #include "base/port.h"
@@ -101,7 +102,7 @@ class MultiConnections : public mozc::Thread {
 
 class EchoServer : public mozc::IPCServer {
  public:
-  EchoServer(const std::string &path, int32 num_connections, int32 timeout)
+  EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
       : IPCServer(path, num_connections, timeout) {}
   bool Process(const char *input_buffer, size_t input_length,
                char *output_buffer, size_t *output_length) override {

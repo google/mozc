@@ -33,7 +33,6 @@ load(
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
-    "info_plist_mozc",
     "macos_application_mozc",
     "objc_library_mozc",
     "select_mozc",
@@ -310,6 +309,7 @@ cc_binary_mozc(
     ),
     deps = [
         ":mozc_renderer_lib",
+        ":table_layout",
         "//base:crash_report_handler",
         "@com_google_absl//absl/flags:flag",
         "//base:init_mozc",
@@ -319,6 +319,10 @@ cc_binary_mozc(
         "//config:stats_config_util",
     ] + select_mozc(
         linux = [":renderer_client"],
+        windows = [
+            "//base:win_util",
+            "//base:winmain",
+        ],
     ),
 )
 
@@ -358,7 +362,17 @@ cc_test_mozc(
     ),
     deps = [
         ":mozc_renderer_lib",
+        ":renderer_interface",
+        ":renderer_style_handler",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//base:util",
+        "//client:client_interface",
+        "//protocol:renderer_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
         oss_linux = ["@gtk2//:gtk2"],
     ),
@@ -370,7 +384,7 @@ macos_application_mozc(
     app_icons = ["//data/images/mac:product_icon.icns"],
     bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Renderer",
     bundle_name = BRANDING + "Renderer",
-    infoplists = [":mozc_renderer_info_plist"],
+    infoplists = ["mac/Info.plist"],
     resources = ["//data/images/mac:candidate_window_logo.tiff"],
     deps = [":mozc_renderer_main_macos"],
     # When we support Breakpad, uncomment the following block.
@@ -383,7 +397,10 @@ cc_library_mozc(
     name = "mozc_renderer_main_macos",
     srcs = select_mozc(macos = ["mozc_renderer_main.cc"]),
     deps = [
+        ":mozc_renderer_lib",
         ":mozc_renderer_lib_macos",
+        ":renderer_client",
+        ":table_layout",
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:run_level",
@@ -391,7 +408,12 @@ cc_library_mozc(
         "//base:util",
         "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
-    ],
+    ] + select_mozc(
+        windows = [
+            "//base:win_util",
+            "//base:winmain",
+        ],
+    ),
 )
 
 # Because proto_library cannot be in deps of objc_library,
@@ -446,10 +468,4 @@ objc_library_mozc(
         ":table_layout",
         ":window_util",
     ]),
-)
-
-info_plist_mozc(
-    name = "mozc_renderer_info_plist",
-    srcs = ["mac/Info.plist"],
-    outs = ["Info.plist"],
 )

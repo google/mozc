@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -145,33 +146,34 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   // Costs will be modified using the existing candidates.
   void InsertFirstSegmentToCandidates(Segments *segments,
                                       const Lattice &lattice,
-                                      const std::vector<uint16> &group,
+                                      const std::vector<uint16_t> &group,
                                       size_t max_candidates_size,
                                       FilterType filter_type,
                                       bool allow_exact) const;
 
   void InsertCandidates(Segments *segments, const Lattice &lattice,
-                        const std::vector<uint16> &group,
+                        const std::vector<uint16_t> &group,
                         size_t max_candidates_size, InsertCandidatesType type,
                         FilterType filter_type) const;
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.
   bool IsSegmentEndNode(const Segments &segments, const Node *node,
-                        const std::vector<uint16> &group,
+                        const std::vector<uint16_t> &group,
                         bool is_single_segment) const;
 
   // Helper function for InsertCandidates().
   // Returns the segment for inserting candidates.
   Segment *GetInsertTargetSegment(const Lattice &lattice,
-                                  const std::vector<uint16> &group,
+                                  const std::vector<uint16_t> &group,
                                   InsertCandidatesType type, size_t begin_pos,
                                   const Node *node, Segments *segments) const;
 
   bool MakeSegments(const ConversionRequest &request, const Lattice &lattice,
-                    const std::vector<uint16> &group, Segments *segments) const;
+                    const std::vector<uint16_t> &group,
+                    Segments *segments) const;
 
-  void MakeGroup(const Segments &segments, std::vector<uint16> *group) const;
+  void MakeGroup(const Segments &segments, std::vector<uint16_t> *group) const;
 
   inline int GetCost(const Node *lnode, const Node *rnode) const {
     const int kInvalidPenaltyCost = 100000;
@@ -192,13 +194,13 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const SuggestionFilter *suggestion_filter_;
 
   // Cache for POS ids.
-  const uint16 first_name_id_;
-  const uint16 last_name_id_;
-  const uint16 number_id_;
-  const uint16 unknown_id_;
+  const uint16_t first_name_id_;
+  const uint16_t last_name_id_;
+  const uint16_t number_id_;
+  const uint16_t unknown_id_;
 
   // Cache for transition cost.
-  const int32 last_to_first_name_transition_cost_;
+  const int32_t last_to_first_name_transition_cost_;
 
   DISALLOW_COPY_AND_ASSIGN(ImmutableConverterImpl);
 };

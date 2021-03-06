@@ -29,6 +29,8 @@
 
 #include "session/output_util.h"
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
@@ -337,7 +339,7 @@ TEST(OutputUtilTest, GetCandidateIndexById) {
   SetTestDataForConversion(&output);
 
   // Existing ID
-  int32 candidate_index = 0;
+  int32_t candidate_index = 0;
   EXPECT_TRUE(OutputUtil::GetCandidateIndexById(output, -2, &candidate_index));
   EXPECT_EQ(9, candidate_index);
 
@@ -352,7 +354,7 @@ TEST(OutputUtilTest, GetCandidateIdByIndex) {
   SetTestDataForConversion(&output);
 
   // Existing index
-  int32 candidate_id = 0;
+  int32_t candidate_id = 0;
   EXPECT_TRUE(OutputUtil::GetCandidateIdByIndex(output, 9, &candidate_id));
   EXPECT_EQ(-2, candidate_id);
 
@@ -365,7 +367,7 @@ TEST(OutputUtilTest, GetFocusedCandidateId) {
   commands::Output output;
   SetTestDataForConversion(&output);
 
-  int32 candidate_id = 0;
+  int32_t candidate_id = 0;
   EXPECT_TRUE(OutputUtil::GetFocusedCandidateId(output, &candidate_id));
   EXPECT_EQ(-3, candidate_id);
 }

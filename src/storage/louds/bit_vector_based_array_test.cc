@@ -29,6 +29,7 @@
 
 #include "storage/louds/bit_vector_based_array.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -70,7 +71,7 @@ TEST_F(BitVectorBasedArrayTest, Get) {
   builder.Build();
 
   BitVectorBasedArray array;
-  array.Open(reinterpret_cast<const uint8*>(builder.image().data()));
+  array.Open(reinterpret_cast<const uint8_t*>(builder.image().data()));
   for (size_t i = 0; i < arraysize(kTestData); ++i) {
     size_t length;
     const char* result = array.Get(i, &length);

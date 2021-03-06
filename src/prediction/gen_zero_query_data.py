@@ -37,7 +37,6 @@ import optparse
 import re
 import sys
 import unicodedata
-import six
 from build_tools import code_generator_util
 from prediction import gen_zero_query_util as util
 
@@ -73,10 +72,7 @@ def ParseCodePoint(s):
 
 def NormalizeString(string):
   normalized = unicodedata.normalize('NFKC', string)
-  if six.PY2:
-    return normalized.encode('utf-8').replace('~', '〜')
-  else:
-    return normalized.replace('~', '〜')
+  return normalized.replace('~', '〜')
 
 
 def RemoveTrailingNumber(string):
@@ -292,6 +288,7 @@ def MergeZeroQueryData(rule_dict, symbol_dict, emoji_dict, emoticon_dict):
 
 
 def ParseOptions():
+  """Parse command line flags."""
   parser = optparse.OptionParser()
   parser.add_option('--input_rule', dest='input_rule', help='rule file')
   parser.add_option(
@@ -307,10 +304,7 @@ def ParseOptions():
 
 
 def OpenFile(filename):
-  if six.PY2:
-    return open(filename, 'r')
-  else:
-    return codecs.open(filename, 'r', encoding='utf-8')
+  return codecs.open(filename, 'r', encoding='utf-8')
 
 
 def main():

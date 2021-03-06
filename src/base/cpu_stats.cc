@@ -29,6 +29,8 @@
 
 #include "base/cpu_stats.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -60,15 +62,15 @@ uint64 TimeValueTToInt64(const time_value_t &time_value) {
 }
 #endif  // __APPLE__
 
-float UpdateCPULoad(uint64 current_total_times, uint64 current_cpu_times,
-                    uint64 *prev_total_times, uint64 *prev_cpu_times) {
+float UpdateCPULoad(uint64_t current_total_times, uint64_t current_cpu_times,
+                    uint64_t *prev_total_times, uint64_t *prev_cpu_times) {
   float result = 0.0;
   if (current_total_times < *prev_total_times ||
       current_cpu_times < *prev_cpu_times) {
     LOG(ERROR) << "Inconsistent time values are passed. ignored";
   } else {
-    const uint64 total_diff = current_total_times - *prev_total_times;
-    const uint64 cpu_diff = current_cpu_times - *prev_cpu_times;
+    const uint64_t total_diff = current_total_times - *prev_total_times;
+    const uint64_t cpu_diff = current_cpu_times - *prev_cpu_times;
     result =
         (total_diff == 0ULL ? 0.0
                             : static_cast<float>(1.0 * cpu_diff / total_diff));
@@ -126,8 +128,8 @@ float CPUStats::GetSystemCPULoad() {
   // NOT IMPLEMENTED
   // TODO(taku): implement Linux version
   // can take the info from /proc/stats
-  const uint64 total_times = 0;
-  const uint64 cpu_times = 0;
+  const uint64_t total_times = 0;
+  const uint64_t cpu_times = 0;
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
   return UpdateCPULoad(total_times, cpu_times, &prev_system_total_times_,
@@ -177,8 +179,8 @@ float CPUStats::GetCurrentProcessCPULoad() {
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
   // not implemented
-  const uint64 total_times = 0;
-  const uint64 cpu_times = 0;
+  const uint64_t total_times = 0;
+  const uint64_t cpu_times = 0;
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
   return UpdateCPULoad(total_times, cpu_times,

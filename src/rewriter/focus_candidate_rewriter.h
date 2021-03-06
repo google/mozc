@@ -30,6 +30,8 @@
 #ifndef MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_
 #define MOZC_REWRITER_FOCUS_CANDIDATE_REWRITER_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "base/serialized_string_array.h"
 #include "converter/segments.h"
@@ -69,7 +71,7 @@ class FocusCandidateRewriter : public RewriterInterface {
   // Finds an index of candidate in |seg| that matches the given number script
   // type and suffix.  Returns -1 if there's no candidate matching the
   // condition.
-  int FindMatchingCandidates(const Segment &seg, uint32 ref_script_type,
+  int FindMatchingCandidates(const Segment &seg, uint32_t ref_script_type,
                              absl::string_view ref_suffix) const;
 
   // Parses the value of a candidate into number and counter suffix.
@@ -80,7 +82,7 @@ class FocusCandidateRewriter : public RewriterInterface {
   bool ParseNumberCandidate(const Segment::Candidate &cand,
                             absl::string_view *number,
                             absl::string_view *suffix,
-                            uint32 *script_type) const;
+                            uint32_t *script_type) const;
 
   SerializedStringArray suffix_array_;
   const dictionary::POSMatcher pos_matcher_;

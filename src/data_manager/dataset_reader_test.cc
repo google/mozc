@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_reader.h"
 
+#include <cstdint>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -42,8 +43,8 @@
 namespace mozc {
 namespace {
 
-string GenerateRandomBytes(size_t len) {
-  string s;
+std::string GenerateRandomBytes(size_t len) {
+  std::string s;
   s.resize(len);
   for (size_t i = 0; i < len; ++i) {
     s[i] = static_cast<char>(Util::Random(256));
@@ -51,11 +52,11 @@ string GenerateRandomBytes(size_t len) {
   return s;
 }
 
-string GetTestMagicNumber() { return string("ma\0gic", 6); }
+std::string GetTestMagicNumber() { return std::string("ma\0gic", 6); }
 
 TEST(DataSetReaderTest, ValidData) {
   const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
-  string image;
+  std::string image;
   {
     DataSetWriter w(GetTestMagicNumber());
     w.Add("google", 16, kGoogle);
@@ -80,7 +81,7 @@ TEST(DataSetReaderTest, ValidData) {
 }
 
 TEST(DataSetReaderTest, InvalidMagicString) {
-  const string &magic = GetTestMagicNumber();
+  const std::string &magic = GetTestMagicNumber();
   DataSetReader r;
   EXPECT_FALSE(r.Init("", magic));
   EXPECT_FALSE(r.Init("abc", magic));
@@ -88,7 +89,7 @@ TEST(DataSetReaderTest, InvalidMagicString) {
 }
 
 TEST(DataSetReaderTest, BrokenMetadata) {
-  const string &magic = GetTestMagicNumber();
+  const std::string &magic = GetTestMagicNumber();
   DataSetReader r;
 
   // Only magic number, no metadata.
@@ -96,7 +97,7 @@ TEST(DataSetReaderTest, BrokenMetadata) {
   EXPECT_FALSE(r.Init(magic, magic));
 
   // Metadata size is too small.
-  string data = magic;
+  std::string data = magic;
   data.append("content and metadata");
   data.append(Util::SerializeUint64(0));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
@@ -112,7 +113,7 @@ TEST(DataSetReaderTest, BrokenMetadata) {
   // Metadata size is too large.
   data = magic;
   data.append("content and metadata");
-  data.append(Util::SerializeUint64(std::numeric_limits<uint64>::max()));
+  data.append(Util::SerializeUint64(std::numeric_limits<uint64_t>::max()));
   EXPECT_FALSE(DataSetReader::VerifyChecksum(data));
   EXPECT_FALSE(r.Init(data, magic));
 
@@ -125,9 +126,9 @@ TEST(DataSetReaderTest, BrokenMetadata) {
 }
 
 TEST(DataSetReaderTest, BrokenMetadataFields) {
-  const string &magic = GetTestMagicNumber();
+  const std::string &magic = GetTestMagicNumber();
   const absl::string_view kGoogle("GOOGLE"), kMozc("m\0zc\xEF", 5);
-  string content;
+  std::string content;
   {
     DataSetWriter w(magic);
     w.Add("google", 16, kGoogle);
@@ -148,8 +149,8 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     e->set_name("google");
     e->set_offset(content.size() + 3);  // Invalid offset
     e->set_size(kGoogle.size());
-    const string &md_str = md.SerializeAsString();
-    string image = content;
+    const std::string &md_str = md.SerializeAsString();
+    std::string image = content;
     image.append(md_str);
     image.append(Util::SerializeUint64(md_str.size()));
 
@@ -163,9 +164,9 @@ TEST(DataSetReaderTest, BrokenMetadataFields) {
     auto e = md.add_entries();
     e->set_name("google");
     e->set_offset(content.size());
-    e->set_size(std::numeric_limits<uint64>::max());  // Too big size
-    const string &md_str = md.SerializeAsString();
-    string image = content;
+    e->set_size(std::numeric_limits<uint64_t>::max());  // Too big size
+    const std::string &md_str = md.SerializeAsString();
+    std::string image = content;
     image.append(md_str);
     image.append(Util::SerializeUint64(md_str.size()));
 
@@ -179,7 +180,7 @@ TEST(DataSetReaderTest, OneBitError) {
   const char *kTestMagicNumber = "Dummy magic number\r\n";
 
   // Create data at random.
-  string image;
+  std::string image;
   {
     const int kAlignments[] = {8, 16, 32, 64};
     DataSetWriter w(kTestMagicNumber);

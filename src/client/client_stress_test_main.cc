@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <iostream>
 
 #include "client/client.h"
@@ -54,10 +55,10 @@
 // 1. multi-thread testing
 // 2. change/config the senario
 
-ABSL_FLAG(int32, max_keyevents, 100000,
+ABSL_FLAG(int32_t, max_keyevents, 100000,
           "test at most |max_keyevents| key sequences");
 ABSL_FLAG(std::string, server_path, "", "specify server path");
-ABSL_FLAG(int32, key_duration, 10, "key duration (msec)");
+ABSL_FLAG(int32_t, key_duration, 10, "key duration (msec)");
 ABSL_FLAG(bool, test_renderer, false, "test renderer");
 ABSL_FLAG(bool, test_testsendkey, true, "test TestSendKey");
 
@@ -99,7 +100,7 @@ int main(int argc, char **argv) {
 
   std::vector<mozc::commands::KeyEvent> keys;
   mozc::commands::Output output;
-  int32 keyevents_size = 0;
+  int32_t keyevents_size = 0;
 
   // TODO(taku):
   // Stop the test if server is crashed.
@@ -134,7 +135,7 @@ int main(int argc, char **argv) {
       if (renderer_client != nullptr) {
         renderer_command.set_type(mozc::commands::RendererCommand::UPDATE);
         renderer_command.set_visible(output.has_candidates());
-        renderer_command.mutable_output()->CopyFrom(output);
+        *renderer_command.mutable_output() = output;
         VLOG(2) << "Sending to Renderer: " << renderer_command.DebugString();
         renderer_client->ExecCommand(renderer_command);
       }

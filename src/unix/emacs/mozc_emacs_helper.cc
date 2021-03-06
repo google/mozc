@@ -27,6 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cstdint>
 #include <cstdio>
 #include <iostream>
 
@@ -80,8 +81,8 @@ void ProcessLoop() {
   while (std::getline(std::cin, line)) {
     command.clear_input();
     command.clear_output();
-    uint32 event_id = 0;
-    uint32 session_id = 0;
+    uint32_t event_id = 0;
+    uint32_t session_id = 0;
 
     // Parse an input line.
     mozc::emacs::ParseInputLine(line, &event_id, &session_id,

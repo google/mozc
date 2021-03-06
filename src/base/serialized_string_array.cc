@@ -29,6 +29,7 @@
 
 #include "base/serialized_string_array.h"
 
+#include <cstdint>
 #include <memory>
 
 #include "base/file_stream.h"
@@ -39,7 +40,7 @@
 namespace mozc {
 namespace {
 
-const uint32 kEmptyArrayData = 0x00000000;
+const uint32_t kEmptyArrayData = 0x00000000;
 
 }  // namespace
 
@@ -76,8 +77,8 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
     LOG(ERROR) << "Array size is missing";
     return false;
   }
-  const uint32 *u32_array = reinterpret_cast<const uint32 *>(data.data());
-  const uint32 size = u32_array[0];
+  const uint32_t *u32_array = reinterpret_cast<const uint32_t *>(data.data());
+  const uint32_t size = u32_array[0];
 
   const size_t min_required_data_size = 4 + (4 + 4) * size;
   if (data.size() < min_required_data_size) {
@@ -86,10 +87,10 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
     return false;
   }
 
-  uint32 prev_str_end = min_required_data_size;
-  for (uint32 i = 0; i < size; ++i) {
-    const uint32 offset = u32_array[2 * i + 1];
-    const uint32 len = u32_array[2 * i + 2];
+  uint32_t prev_str_end = min_required_data_size;
+  for (uint32_t i = 0; i < size; ++i) {
+    const uint32_t offset = u32_array[2 * i + 1];
+    const uint32_t len = u32_array[2 * i + 2];
     if (offset < prev_str_end) {
       LOG(ERROR) << "Invalid offset for string " << i << ": len = " << len
                  << ", offset = " << offset;
@@ -112,14 +113,14 @@ bool SerializedStringArray::VerifyData(absl::string_view data) {
 
 absl::string_view SerializedStringArray::SerializeToBuffer(
     const std::vector<absl::string_view> &strs,
-    std::unique_ptr<uint32[]> *buffer) {
+    std::unique_ptr<uint32_t[]> *buffer) {
   const size_t header_byte_size = 4 * (1 + 2 * strs.size());
 
   // Calculate the offsets of each string.
-  std::unique_ptr<uint32[]> offsets(new uint32[strs.size()]);
+  std::unique_ptr<uint32_t[]> offsets(new uint32_t[strs.size()]);
   size_t current_offset = header_byte_size;  // The offset for first string.
   for (size_t i = 0; i < strs.size(); ++i) {
-    offsets[i] = static_cast<uint32>(current_offset);
+    offsets[i] = static_cast<uint32_t>(current_offset);
     // The next string is written after terminating '\0', so increment one byte
     // in addition to the string byte length.
     current_offset += strs[i].size() + 1;
@@ -127,13 +128,13 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
 
   // At this point, |current_offset| is the byte length of the whole binary
   // image.  Allocate a necessary buffer as uint32 array.
-  buffer->reset(new uint32[(current_offset + 3) / 4]);
+  buffer->reset(new uint32_t[(current_offset + 3) / 4]);
 
-  (*buffer)[0] = static_cast<uint32>(strs.size());
+  (*buffer)[0] = static_cast<uint32_t>(strs.size());
   for (size_t i = 0; i < strs.size(); ++i) {
     // Fill offset and length.
     (*buffer)[2 * i + 1] = offsets[i];
-    (*buffer)[2 * i + 2] = static_cast<uint32>(strs[i].size());
+    (*buffer)[2 * i + 2] = static_cast<uint32_t>(strs[i].size());
 
     // Copy string buffer at the calculated offset.  Guarantee that the buffer
     // is null-terminated.
@@ -148,7 +149,7 @@ absl::string_view SerializedStringArray::SerializeToBuffer(
 
 void SerializedStringArray::SerializeToFile(
     const std::vector<absl::string_view> &strs, const std::string &filepath) {
-  std::unique_ptr<uint32[]> buffer;
+  std::unique_ptr<uint32_t[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
   OutputFileStream ofs(filepath.c_str(),
                        std::ios_base::out | std::ios_base::binary);

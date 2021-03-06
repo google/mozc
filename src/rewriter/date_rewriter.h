@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_DATE_REWRITER_H_
 #define MOZC_REWRITER_DATE_REWRITER_H_
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -111,7 +112,7 @@ class DateRewriter : public RewriterInterface {
   //    1   :   1 -> "1時1分、午前1時1分、午前1時1分"
   //    1   :  30 -> "1時30分、午前1時30分、午前1時半、1時半、1:30"
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
-  static bool ConvertTime(uint32 hour, uint32 min,
+  static bool ConvertTime(uint32_t hour, uint32_t min,
                           std::vector<std::string> *results);
 
   // Converts given date to string expression.
@@ -126,7 +127,7 @@ class DateRewriter : public RewriterInterface {
   //   2011:  1  :  1 -> "平成23年1月1日,2011年1月1日,2011-01-01,2011/01/01"
   //   2011:  5  : 18 -> "平成23年5月18日,2011年5月18日,2011-05-18,2011/05/18"
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
-  static bool ConvertDateWithYear(uint32 year, uint32 month, uint32 day,
+  static bool ConvertDateWithYear(uint32_t year, uint32_t month, uint32_t day,
                                   std::vector<std::string> *results);
 
  private:

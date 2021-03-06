@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <string>
 
@@ -40,7 +41,7 @@
 
 // mozc/data_manager/testing:mozc_dataset_for_testing is one of datafile.
 ABSL_FLAG(std::string, datafile, "", "Path to a data file to be used");
-ABSL_FLAG(int32, candsize, 3, "Maximum number of candidates");
+ABSL_FLAG(int32_t, candsize, 3, "Maximum number of candidates");
 ABSL_FLAG(bool, show_full, false, "Display the debug string of output command");
 
 namespace {

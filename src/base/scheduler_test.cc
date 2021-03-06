@@ -30,6 +30,7 @@
 #include "base/scheduler.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 
 #include "base/logging.h"
@@ -40,12 +41,12 @@
 namespace mozc {
 namespace {
 
-const int32 kTimeout = 30 * 1000;  // 30 sec.
-const int32 kNoRandomDelay = 0;
-const int32 kImmediately = 0;
-const int32 kShortPeriod = 10;              // 10 millisec.
-const int32 kMediumPeriod = 100;            // 100 millisec.
-const int32 kTooLongTime = 24 * 60 * 1000;  // 24 hours.
+const int32_t kTimeout = 30 * 1000;  // 30 sec.
+const int32_t kNoRandomDelay = 0;
+const int32_t kImmediately = 0;
+const int32_t kShortPeriod = 10;              // 10 millisec.
+const int32_t kMediumPeriod = 100;            // 100 millisec.
+const int32_t kTooLongTime = 24 * 60 * 1000;  // 24 hours.
 
 class SchedulerTest : public testing::Test {
  public:

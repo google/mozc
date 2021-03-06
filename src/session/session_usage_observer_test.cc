@@ -29,6 +29,7 @@
 
 #include "session/session_usage_observer.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -81,11 +82,11 @@ class SessionUsageObserverTest : public testing::Test {
 
   void EnsureSave() const {
     // Make sure to save stats.
-    const uint32 kWaitngUsecForEnsureSave = 10 * 60 * 1000;
+    const uint32_t kWaitngUsecForEnsureSave = 10 * 60 * 1000;
     scheduler_stub_->PutClockForward(kWaitngUsecForEnsureSave);
   }
 
-  void SetDoubleValueStats(uint32 num, double total, double square_total,
+  void SetDoubleValueStats(uint32_t num, double total, double square_total,
                            Stats::DoubleValueStats *double_stats) {
     DCHECK(double_stats);
     double_stats->set_num(num);
@@ -93,11 +94,11 @@ class SessionUsageObserverTest : public testing::Test {
     double_stats->set_square_total(square_total);
   }
 
-  void SetEventStats(uint32 source_id, uint32 sx_num, double sx_total,
-                     double sx_square_total, uint32 sy_num, double sy_total,
-                     double sy_square_total, uint32 dx_num, double dx_total,
-                     double dx_square_total, uint32 dy_num, double dy_total,
-                     double dy_square_total, uint32 tl_num, double tl_total,
+  void SetEventStats(uint32_t source_id, uint32_t sx_num, double sx_total,
+                     double sx_square_total, uint32_t sy_num, double sy_total,
+                     double sy_square_total, uint32_t dx_num, double dx_total,
+                     double dx_square_total, uint32_t dy_num, double dy_total,
+                     double dy_square_total, uint32_t tl_num, double tl_total,
                      double tl_square_total,
                      Stats::TouchEventStats *event_stats) {
     event_stats->set_source_id(source_id);
@@ -148,8 +149,8 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
     observer->EvalCommandHandler(command);
   }
 
-  const uint64 kSeconds = 0;
-  const uint32 kMicroSeconds = 0;
+  const uint64_t kSeconds = 0;
+  const uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -165,14 +166,14 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   EXPECT_TRUE(orig_show_command.output().has_consumed());
   EXPECT_FALSE(orig_show_command.output().consumed());
   EXPECT_TRUE(orig_show_command.input().has_id());
-  orig_hide_command.CopyFrom(orig_show_command);
+  orig_hide_command = orig_show_command;
   orig_hide_command.mutable_input()->mutable_command()->set_usage_stats_event(
       commands::SessionCommand::INFOLIST_WINDOW_HIDE);
 
   {  // show infolist, wait 1,100,000 usec and hide infolist.
     commands::Command show_command, hide_command;
-    show_command.CopyFrom(orig_show_command);
-    hide_command.CopyFrom(orig_hide_command);
+    show_command = orig_show_command;
+    hide_command = orig_hide_command;
 
     observer->EvalCommandHandler(show_command);
     EXPECT_STATS_NOT_EXIST("InfolistWindowDurationMSec");
@@ -183,8 +184,8 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
 
   {  // show infolist, wait 1,200,000 usec and hide infolist.
     commands::Command show_command, hide_command;
-    show_command.CopyFrom(orig_show_command);
-    hide_command.CopyFrom(orig_hide_command);
+    show_command = orig_show_command;
+    hide_command = orig_hide_command;
 
     observer->EvalCommandHandler(show_command);
     clock.PutClockForward(1, 200000);

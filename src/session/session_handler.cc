@@ -33,6 +33,7 @@
 #include "session/session_handler.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -66,26 +67,26 @@
 
 using mozc::usage_stats::UsageStats;
 
-ABSL_FLAG(int32, timeout, -1,
+ABSL_FLAG(int32_t, timeout, -1,
           "server timeout. "
           "if sessions get empty for \"timeout\", "
           "shutdown message is automatically emitted");
 
-ABSL_FLAG(int32, max_session_size, 64,
+ABSL_FLAG(int32_t, max_session_size, 64,
           "maximum sessions size. "
           "if size of sessions reaches to \"max_session_size\", "
           "oldest session is removed");
 
-ABSL_FLAG(int32, create_session_min_interval, 0,
+ABSL_FLAG(int32_t, create_session_min_interval, 0,
           "minimum interval (sec) for create session");
 
-ABSL_FLAG(int32, watch_dog_interval, 180, "watch dog timer intaval (sec)");
+ABSL_FLAG(int32_t, watch_dog_interval, 180, "watch dog timer intaval (sec)");
 
-ABSL_FLAG(int32, last_command_timeout, 3600,
+ABSL_FLAG(int32_t, last_command_timeout, 3600,
           "remove session if it is not accessed for "
           "\"last_command_timeout\" sec");
 
-ABSL_FLAG(int32, last_create_session_timeout, 300,
+ABSL_FLAG(int32_t, last_create_session_timeout, 300,
           "remove session if it is not accessed for "
           "\"last_create_session_timeout\" sec "
           "after create session command");
@@ -330,7 +331,7 @@ bool SessionHandler::SetRequest(commands::Command *command) {
     return false;
   }
 
-  request_->CopyFrom(command->input().request());
+  *request_ = command->input().request();
 
   Reload(command);
 
@@ -496,7 +497,7 @@ bool SessionHandler::CreateSession(commands::Command *command) {
       std::max(0, std::min(absl::GetFlag(FLAGS_create_session_min_interval),
                            10));
 
-  uint64 current_time = Clock::GetTime();
+  uint64_t current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
       (current_time - last_create_session_time_) <
           create_session_minimum_interval) {
@@ -592,10 +593,10 @@ bool SessionHandler::DeleteSession(commands::Command *command) {
 // no active session and client doesn't send any conversion
 // request to the server for FLAGS_timeout sec.
 bool SessionHandler::Cleanup(commands::Command *command) {
-  const uint64 current_time = Clock::GetTime();
+  const uint64_t current_time = Clock::GetTime();
 
   // suspend/hibernation may happen
-  uint64 suspend_time = 0;
+  uint64_t suspend_time = 0;
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
   if (last_cleanup_time_ != 0 && session_watch_dog_->IsRunning() &&
       (current_time - last_cleanup_time_) >
@@ -608,13 +609,13 @@ bool SessionHandler::Cleanup(commands::Command *command) {
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
   // allow [1..600] sec. default: 300
-  const uint64 create_session_timeout =
+  const uint64_t create_session_timeout =
       suspend_time +
-      std::max(1, std::min(absl::GetFlag(FLAGS_last_create_session_timeout),
-                           600));
+      std::max(1,
+               std::min(absl::GetFlag(FLAGS_last_create_session_timeout), 600));
 
   // allow [10..7200] sec. default 3600
-  const uint64 last_command_timeout =
+  const uint64_t last_command_timeout =
       suspend_time +
       std::max(10, std::min(absl::GetFlag(FLAGS_last_command_timeout), 7200));
 

@@ -30,6 +30,7 @@
 #include "usage_stats/usage_stats.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <numeric>
 
 #include "base/logging.h"
@@ -112,12 +113,12 @@ void UsageStats::ClearAllStats() {
   }
 }
 
-void UsageStats::IncrementCountBy(const std::string &name, uint32 val) {
+void UsageStats::IncrementCountBy(const std::string &name, uint32_t val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
 
-void UsageStats::UpdateTiming(const std::string &name, uint32 val) {
+void UsageStats::UpdateTiming(const std::string &name, uint32_t val) {
   DCHECK(IsListed(name)) << name << " is not in the list";
   // Does nothing
 }
@@ -132,7 +133,7 @@ void UsageStats::SetBoolean(const std::string &name, bool val) {
   // Does nothing
 }
 
-bool UsageStats::GetCountForTest(const std::string &name, uint32 *value) {
+bool UsageStats::GetCountForTest(const std::string &name, uint32_t *value) {
   CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::COUNT, &stats)) {
@@ -147,7 +148,7 @@ bool UsageStats::GetCountForTest(const std::string &name, uint32 *value) {
   return true;
 }
 
-bool UsageStats::GetIntegerForTest(const std::string &name, int32 *value) {
+bool UsageStats::GetIntegerForTest(const std::string &name, int32_t *value) {
   CHECK(value != nullptr);
   Stats stats;
   if (!GetterInternal(name, Stats::INTEGER, &stats)) {
@@ -177,9 +178,9 @@ bool UsageStats::GetBooleanForTest(const std::string &name, bool *value) {
   return true;
 }
 
-bool UsageStats::GetTimingForTest(const std::string &name, uint64 *total_time,
-                                  uint32 *num_timings, uint32 *avg_time,
-                                  uint32 *min_time, uint32 *max_time) {
+bool UsageStats::GetTimingForTest(const std::string &name, uint64_t *total_time,
+                                  uint32_t *num_timings, uint32_t *avg_time,
+                                  uint32_t *min_time, uint32_t *max_time) {
   Stats stats;
   if (!GetterInternal(name, Stats::TIMING, &stats)) {
     return false;

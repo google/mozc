@@ -30,6 +30,7 @@
 #include "ipc/named_event.h"
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -50,8 +51,8 @@ const char kName[] = "named_event_test";
 
 class NamedEventListenerThread : public Thread {
  public:
-  NamedEventListenerThread(const std::string &name, uint32 initial_wait_msec,
-                           uint32 wait_msec, size_t max_num_wait)
+  NamedEventListenerThread(const std::string &name, uint32_t initial_wait_msec,
+                           uint32_t wait_msec, size_t max_num_wait)
       : listener_(name.c_str()),
         initial_wait_msec_(initial_wait_msec),
         wait_msec_(wait_msec),
@@ -64,7 +65,7 @@ class NamedEventListenerThread : public Thread {
     Util::Sleep(initial_wait_msec_);
     for (size_t i = 0; i < max_num_wait_; ++i) {
       const bool result = listener_.Wait(wait_msec_);
-      const uint64 ticks = Clock::GetTicks();
+      const uint64_t ticks = Clock::GetTicks();
       if (result) {
         first_triggered_ticks_ = ticks;
         return;
@@ -72,16 +73,16 @@ class NamedEventListenerThread : public Thread {
     }
   }
 
-  uint64 first_triggered_ticks() const { return first_triggered_ticks_; }
+  uint64_t first_triggered_ticks() const { return first_triggered_ticks_; }
 
   bool IsTriggered() const { return first_triggered_ticks() > 0; }
 
  private:
   NamedEventListener listener_;
-  const uint32 initial_wait_msec_;
-  const uint32 wait_msec_;
+  const uint32_t initial_wait_msec_;
+  const uint32_t wait_msec_;
   const size_t max_num_wait_;
-  std::atomic<uint64> first_triggered_ticks_;
+  std::atomic<uint64_t> first_triggered_ticks_;
 };
 
 class NamedEventTest : public testing::Test {
@@ -104,7 +105,7 @@ TEST_F(NamedEventTest, NamedEventBasicTest) {
   Util::Sleep(200);
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
-  const uint64 notify_ticks = Clock::GetTicks();
+  const uint64_t notify_ticks = Clock::GetTicks();
   notifier.Notify();
   listener.Join();
 
@@ -157,7 +158,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
   // at once with single notifier event
   NamedEventNotifier notifier(kName);
   ASSERT_TRUE(notifier.IsAvailable());
-  const uint64 notify_ticks = Clock::GetTicks();
+  const uint64_t notify_ticks = Clock::GetTicks();
   ASSERT_TRUE(notifier.Notify());
 
   for (size_t i = 0; i < kNumRequests; ++i) {

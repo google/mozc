@@ -39,12 +39,8 @@
 #include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
 
-using mozc::commands::Command;
 using mozc::commands::Input;
 using mozc::commands::Output;
-using mozc::protobuf::EnumValueDescriptor;
-using mozc::protobuf::FieldDescriptor;
-using mozc::protobuf::Message;
 using mozc::usage_stats::UsageStats;
 
 namespace mozc {

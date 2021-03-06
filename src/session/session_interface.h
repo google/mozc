@@ -32,6 +32,8 @@
 #ifndef MOZC_SESSION_SESSION_INTERFACE_H_
 #define MOZC_SESSION_SESSION_INTERFACE_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "protocol/config.pb.h"
 
@@ -81,10 +83,10 @@ class SessionInterface {
   virtual const commands::ApplicationInfo &application_info() const = 0;
 
   // Return the time when this instance was created.
-  virtual uint64 create_session_time() const = 0;
+  virtual uint64_t create_session_time() const = 0;
 
   // return 0 (default value) if no command is executed in this session.
-  virtual uint64 last_command_time() const = 0;
+  virtual uint64_t last_command_time() const = 0;
 };
 
 }  // namespace session

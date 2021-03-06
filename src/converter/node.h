@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_NODE_H_
 #define MOZC_CONVERTER_NODE_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -156,21 +157,21 @@ struct Node {
   // other transition is set to be infinite
   Node *constrained_prev;
 
-  uint16 rid;
-  uint16 lid;
-  uint16 begin_pos;
-  uint16 end_pos;
+  uint16_t rid;
+  uint16_t lid;
+  uint16_t begin_pos;
+  uint16_t end_pos;
 
   // wcost: word cost for the node; it may be changed after lookup
   // cost: the total cost between BOS and the node
   // raw_wcost: raw word cost for the node; it is not changed after lookup.
   //            It is used for the cache of lattice.
-  int32 wcost;
-  int32 cost;
-  int32 raw_wcost;
+  int32_t wcost;
+  int32_t cost;
+  int32_t raw_wcost;
 
   NodeType node_type;
-  uint32 attributes;
+  uint32_t attributes;
 
   // key: The user input.
   // actual_key: The actual search key that corresponds to the value.

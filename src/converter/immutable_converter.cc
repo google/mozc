@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cctype>
 #include <climits>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -477,7 +478,7 @@ bool ImmutableConverterImpl::ResegmentArabicNumberAndSuffix(
 
       // do -1 so that resegmented nodes are boosted
       // over compound node.
-      const int32 wcost = std::max(compound_node->wcost / 2 - 1, 0);
+      const int32_t wcost = std::max(compound_node->wcost / 2 - 1, 0);
 
       Node *number_node = lattice->NewNode();
       CHECK(number_node);
@@ -553,7 +554,7 @@ bool ImmutableConverterImpl::ResegmentPrefixAndArabicNumber(
 
       // do -1 so that resegmented nodes are boosted
       // over compound node.
-      const int32 wcost = std::max(compound_node->wcost / 2 - 1, 0);
+      const int32_t wcost = std::max(compound_node->wcost / 2 - 1, 0);
 
       Node *prefix_node = lattice->NewNode();
       CHECK(prefix_node);
@@ -648,7 +649,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
                   compound_node->value.size() &&
               (lnode->value + rnode->value) == compound_node->value &&
               segmenter_->IsBoundary(*lnode, *rnode, false)) {  // Constraint 3.
-            const int32 cost = lnode->wcost + GetCost(lnode, rnode);
+            const int32_t cost = lnode->wcost + GetCost(lnode, rnode);
             if (cost < best_cost) {  // choose the smallest ones
               best_last_name_node = lnode;
               best_first_name_node = rnode;
@@ -686,7 +687,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
     // i.e,
     // last_name_cost = first_name_cost =
     // (compound_cost - transition_cost) / 2;
-    const int32 wcost =
+    const int32_t wcost =
         (compound_node->wcost - last_to_first_name_transition_cost_) / 2;
 
     Node *last_name_node = lattice->NewNode();
@@ -840,7 +841,7 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
   }
 
   if (num_char > 1) {
-    mblen = static_cast<uint32>(p - begin);
+    mblen = static_cast<uint32_t>(p - begin);
     Node *new_node = lattice->NewNode();
     CHECK(new_node);
     if (first_script_type == Util::NUMBER) {
@@ -1488,7 +1489,7 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
   const std::string &key = lattice->key();
 
   size_t segments_pos = 0;
-  uint16 last_rid = 0;
+  uint16_t last_rid = 0;
 
   for (size_t s = 0; s < history_segments_size; ++s) {
     const Segment &segment = segments.segment(s);
@@ -1725,7 +1726,7 @@ void ImmutableConverterImpl::Resegment(const Segments &segments,
 // Single segment conversion results should be set to |segments|.
 void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
     Segments *segments, const Lattice &lattice,
-    const std::vector<uint16> &group, size_t max_candidates_size,
+    const std::vector<uint16_t> &group, size_t max_candidates_size,
     FilterType filter_type, bool allow_exact) const {
   const size_t only_first_segment_candidate_pos =
       segments->conversion_segment(0).candidates_size();
@@ -1793,10 +1794,9 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   }
 }
 
-bool ImmutableConverterImpl::IsSegmentEndNode(const Segments &segments,
-                                              const Node *node,
-                                              const std::vector<uint16> &group,
-                                              bool is_single_segment) const {
+bool ImmutableConverterImpl::IsSegmentEndNode(
+    const Segments &segments, const Node *node,
+    const std::vector<uint16_t> &group, bool is_single_segment) const {
   DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
@@ -1844,7 +1844,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(const Segments &segments,
 }
 
 Segment *ImmutableConverterImpl::GetInsertTargetSegment(
-    const Lattice &lattice, const std::vector<uint16> &group,
+    const Lattice &lattice, const std::vector<uint16_t> &group,
     InsertCandidatesType type, size_t begin_pos, const Node *node,
     Segments *segments) const {
   if (type != MULTI_SEGMENTS) {
@@ -1863,12 +1863,10 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
   return segment;
 }
 
-void ImmutableConverterImpl::InsertCandidates(Segments *segments,
-                                              const Lattice &lattice,
-                                              const std::vector<uint16> &group,
-                                              size_t max_candidates_size,
-                                              InsertCandidatesType type,
-                                              FilterType filter_type) const {
+void ImmutableConverterImpl::InsertCandidates(
+    Segments *segments, const Lattice &lattice,
+    const std::vector<uint16_t> &group, size_t max_candidates_size,
+    InsertCandidatesType type, FilterType filter_type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1936,7 +1934,7 @@ void ImmutableConverterImpl::InsertCandidates(Segments *segments,
 
 bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                                           const Lattice &lattice,
-                                          const std::vector<uint16> &group,
+                                          const std::vector<uint16_t> &group,
                                           Segments *segments) const {
   if (segments == nullptr) {
     LOG(WARNING) << "Segments is nullptr";
@@ -2069,14 +2067,14 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
 }
 
 void ImmutableConverterImpl::MakeGroup(const Segments &segments,
-                                       std::vector<uint16> *group) const {
+                                       std::vector<uint16_t> *group) const {
   group->clear();
   for (size_t i = 0; i < segments.segments_size(); ++i) {
     for (size_t j = 0; j < segments.segment(i).key().size(); ++j) {
-      group->push_back(static_cast<uint16>(i));
+      group->push_back(static_cast<uint16_t>(i));
     }
   }
-  group->push_back(static_cast<uint16>(segments.segments_size()));
+  group->push_back(static_cast<uint16_t>(segments.segments_size()));
 }
 
 bool ImmutableConverterImpl::ConvertForRequest(const ConversionRequest &request,
@@ -2092,7 +2090,7 @@ bool ImmutableConverterImpl::ConvertForRequest(const ConversionRequest &request,
     return false;
   }
 
-  std::vector<uint16> group;
+  std::vector<uint16_t> group;
   MakeGroup(*segments, &group);
 
   if (is_prediction) {

@@ -34,6 +34,7 @@
 #include "dictionary/text_dictionary_loader.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
@@ -51,7 +52,7 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-ABSL_FLAG(int32, tokens_reserve_size, 1400000,
+ABSL_FLAG(int32_t, tokens_reserve_size, 1400000,
           "Reserve the specified size of token buffer in advance.");
 
 namespace mozc {
@@ -101,7 +102,7 @@ void ParseReadingCorrectionTSV(
 
 // Helper function to parse an integer from a string.
 inline bool SafeStrToInt(absl::string_view s, int *n) {
-  uint32 u32 = 0;
+  uint32_t u32 = 0;
   const bool ret = NumberUtil::SafeStrToUInt32(s, &u32);
   *n = u32;
   return ret;
@@ -124,8 +125,8 @@ TextDictionaryLoader::TextDictionaryLoader(const POSMatcher &pos_matcher)
     : zipcode_id_(pos_matcher.GetZipcodeId()),
       isolated_word_id_(pos_matcher.GetIsolatedWordId()) {}
 
-TextDictionaryLoader::TextDictionaryLoader(uint16 zipcode_id,
-                                           uint16 isolated_word_id)
+TextDictionaryLoader::TextDictionaryLoader(uint16_t zipcode_id,
+                                           uint16_t isolated_word_id)
     : zipcode_id_(zipcode_id), isolated_word_id_(isolated_word_id) {}
 
 TextDictionaryLoader::~TextDictionaryLoader() { Clear(); }

@@ -30,7 +30,9 @@
 #include "dictionary/user_dictionary_util.h"
 
 #include <string.h>
+
 #include <algorithm>
+#include <cstdint>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
@@ -177,21 +179,21 @@ bool UserDictionaryUtil::IsDictionaryFull(
 const user_dictionary::UserDictionary *
 UserDictionaryUtil::GetUserDictionaryById(
     const user_dictionary::UserDictionaryStorage &storage,
-    uint64 dictionary_id) {
+    uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(storage, dictionary_id);
   return index >= 0 ? &storage.dictionaries(index) : nullptr;
 }
 
 user_dictionary::UserDictionary *
 UserDictionaryUtil::GetMutableUserDictionaryById(
-    user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id) {
+    user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id) {
   int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   return index >= 0 ? storage->mutable_dictionaries(index) : nullptr;
 }
 
 int UserDictionaryUtil::GetUserDictionaryIndexById(
     const user_dictionary::UserDictionaryStorage &storage,
-    uint64 dictionary_id) {
+    uint64_t dictionary_id) {
   for (int i = 0; i < storage.dictionaries_size(); ++i) {
     const user_dictionary::UserDictionary &dictionary = storage.dictionaries(i);
     if (dictionary.id() == dictionary_id) {
@@ -331,11 +333,11 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
   return static_cast<user_dictionary::UserDictionary::PosType>(-1);
 }
 
-uint64 UserDictionaryUtil::CreateNewDictionaryId(
+uint64_t UserDictionaryUtil::CreateNewDictionaryId(
     const user_dictionary::UserDictionaryStorage &storage) {
-  static const uint64 kInvalidDictionaryId = 0;
+  static const uint64_t kInvalidDictionaryId = 0;
 
-  uint64 id = kInvalidDictionaryId;
+  uint64_t id = kInvalidDictionaryId;
   while (id == kInvalidDictionaryId) {
     Util::GetRandomSequence(reinterpret_cast<char *>(&id), sizeof(id));
 
@@ -354,7 +356,7 @@ uint64 UserDictionaryUtil::CreateNewDictionaryId(
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
     user_dictionary::UserDictionaryStorage *storage,
-    const std::string &dictionary_name, uint64 *new_dictionary_id) {
+    const std::string &dictionary_name, uint64_t *new_dictionary_id) {
   UserDictionaryCommandStatus::Status status =
       ValidateDictionaryName(*storage, dictionary_name);
   if (status != UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
@@ -385,7 +387,7 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::CreateDictionary(
 }
 
 bool UserDictionaryUtil::DeleteDictionary(
-    user_dictionary::UserDictionaryStorage *storage, uint64 dictionary_id,
+    user_dictionary::UserDictionaryStorage *storage, uint64_t dictionary_id,
     int *original_index, user_dictionary::UserDictionary **deleted_dictionary) {
   const int index = GetUserDictionaryIndexById(*storage, dictionary_id);
   if (original_index != nullptr) {

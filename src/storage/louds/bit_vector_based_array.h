@@ -30,6 +30,8 @@
 #ifndef MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_H_
 #define MOZC_STORAGE_LOUDS_BIT_VECTOR_BASED_ARRAY_H_
 
+#include <cstdint>
+
 #include "base/port.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
@@ -43,7 +45,7 @@ class BitVectorBasedArray {
  public:
   BitVectorBasedArray() {}
 
-  void Open(const uint8 *image);
+  void Open(const uint8_t *image);
   void Close();
 
   // Returns a pointer to the element and its length.

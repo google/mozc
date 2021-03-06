@@ -56,5 +56,9 @@ bzl_library(
     srcs = ["qt.bzl"],
     parse_tests = False,
     visibility = ["//visibility:private"],
-    deps = ["//:build_defs_bzl"],
+    deps = [
+        "//:build_defs_bzl",
+        "//:config_bzl",
+        "@build_bazel_rules_apple//apple:macos",
+    ],
 )

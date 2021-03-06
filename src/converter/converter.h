@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_CONVERTER_H_
 #define MOZC_CONVERTER_CONVERTER_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -112,7 +113,7 @@ class ConverterImpl : public ConverterInterface {
                      size_t segment_index, int offset_length) const override;
   bool ResizeSegment(Segments *segments, const ConversionRequest &request,
                      size_t start_segment_index, size_t segments_size,
-                     const uint8 *new_size_array,
+                     const uint8_t *new_size_array,
                      size_t array_size) const override;
 
  private:
@@ -161,14 +162,14 @@ class ConverterImpl : public ConverterInterface {
   // type and you can use it as preceding text for conversion.
   bool GetLastConnectivePart(const std::string &preceding_text,
                              std::string *key, std::string *value,
-                             uint16 *id) const;
+                             uint16_t *id) const;
 
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   std::unique_ptr<PredictorInterface> predictor_;
   std::unique_ptr<RewriterInterface> rewriter_;
   const ImmutableConverterInterface *immutable_converter_;
-  uint16 general_noun_id_;
+  uint16_t general_noun_id_;
 };
 
 }  // namespace mozc

@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_USER_POS_H_
 #define MOZC_DICTIONARY_USER_POS_H_
 
+#include <cstdint>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -83,24 +84,26 @@ class UserPOS : public UserPOSInterface {
   static constexpr size_t kTokenByteLength = 8;
 
   class iterator
-      : public std::iterator<std::random_access_iterator_tag, uint16> {
+      : public std::iterator<std::random_access_iterator_tag, uint16_t> {
    public:
     iterator() = default;
     explicit iterator(const char *ptr) : ptr_(ptr) {}
     iterator(const iterator &x) = default;
 
-    uint16 pos_index() const { return *reinterpret_cast<const uint16 *>(ptr_); }
-    uint16 value_suffix_index() const {
-      return *reinterpret_cast<const uint16 *>(ptr_ + 2);
+    uint16_t pos_index() const {
+      return *reinterpret_cast<const uint16_t *>(ptr_);
     }
-    uint16 key_suffix_index() const {
-      return *reinterpret_cast<const uint16 *>(ptr_ + 4);
+    uint16_t value_suffix_index() const {
+      return *reinterpret_cast<const uint16_t *>(ptr_ + 2);
     }
-    uint16 conjugation_id() const {
-      return *reinterpret_cast<const uint16 *>(ptr_ + 6);
+    uint16_t key_suffix_index() const {
+      return *reinterpret_cast<const uint16_t *>(ptr_ + 4);
+    }
+    uint16_t conjugation_id() const {
+      return *reinterpret_cast<const uint16_t *>(ptr_ + 6);
     }
 
-    uint16 operator*() const { return pos_index(); }
+    uint16_t operator*() const { return pos_index(); }
 
     void swap(iterator &x) {
       using std::swap;
@@ -182,7 +185,7 @@ class UserPOS : public UserPOSInterface {
   // Implementation of UserPOSInterface.
   void GetPOSList(std::vector<std::string> *pos_list) const override;
   bool IsValidPOS(const std::string &pos) const override;
-  bool GetPOSIDs(const std::string &pos, uint16 *id) const override;
+  bool GetPOSIDs(const std::string &pos, uint16_t *id) const override;
   bool GetTokens(const std::string &key, const std::string &value,
                  const std::string &pos, const std::string &locale,
                  std::vector<Token> *tokens) const override;

@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 #define MOZC_DICTIONARY_SYSTEM_SYSTEM_DICTIONARY_BUILDER_H_
 
+#include <cstdint>
 #include <deque>
 #include <map>
 #include <memory>
@@ -94,7 +95,7 @@ class SystemDictionaryBuilder {
   void SortTokenInfo(KeyInfoList *key_info_list) const;
 
   void SetCostType(KeyInfoList *key_info_list) const;
-  void SetPosType(KeyInfoList *keyinfomap) const;
+  void SetPosType(KeyInfoList *key_info_list) const;
   void SetValueType(KeyInfoList *key_info_list) const;
 
   std::unique_ptr<mozc::storage::louds::LoudsTrieBuilder> value_trie_builder_;
@@ -103,7 +104,7 @@ class SystemDictionaryBuilder {
       token_array_builder_;
 
   // mapping from {left_id, right_id} to POS index (0--255)
-  std::map<uint32, int> frequent_pos_;
+  std::map<uint32_t, int> frequent_pos_;
 
   const SystemDictionaryCodecInterface *codec_;
   const DictionaryFileCodecInterface *file_codec_;

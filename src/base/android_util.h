@@ -81,8 +81,8 @@ class AndroidUtil {
   // In this case |lhs| and |rhs| are not modified.
   static bool ParseLine(const string &line, string *lhs, string *rhs);
 
-  static std::map<string, string> property_cache;
-  static std::set<string> undefined_keys;
+  static std::map<std::string, std::string> property_cache;
+  static std::set<std::string> undefined_keys;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(AndroidUtil);
 };

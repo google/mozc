@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_CONNECTOR_H_
 #define MOZC_CONVERTER_CONNECTOR_H_
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -43,7 +44,7 @@ class DataManagerInterface;
 
 class Connector final {
  public:
-  static constexpr int16 kInvalidCost = 30000;
+  static constexpr int16_t kInvalidCost = 30000;
 
   static mozc::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
       const DataManagerInterface &data_manager);
@@ -57,7 +58,7 @@ class Connector final {
   Connector(const Connector &) = delete;
   Connector &operator=(const Connector &) = delete;
 
-  int GetTransitionCost(uint16 rid, uint16 lid) const;
+  int GetTransitionCost(uint16_t rid, uint16_t lid) const;
   int GetResolution() const;
 
   void ClearCache();
@@ -68,14 +69,14 @@ class Connector final {
   mozc::Status Init(const char *connection_data, size_t connection_size,
                     int cache_size);
 
-  int LookupCost(uint16 rid, uint16 lid) const;
+  int LookupCost(uint16_t rid, uint16_t lid) const;
 
   std::vector<std::unique_ptr<Row>> rows_;
-  const uint16 *default_cost_ = nullptr;
+  const uint16_t *default_cost_ = nullptr;
   int resolution_ = 0;
   int cache_size_ = 0;
-  uint32 cache_hash_mask_ = 0;
-  mutable std::unique_ptr<uint32[]> cache_key_;
+  uint32_t cache_hash_mask_ = 0;
+  mutable std::unique_ptr<uint32_t[]> cache_key_;
   mutable std::unique_ptr<int[]> cache_value_;
 };
 

@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_TRANSLITERATION_REWRITER_H_
 #define MOZC_REWRITER_TRANSLITERATION_REWRITER_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,7 @@ class TransliterationRewriter : public RewriterInterface {
 
  private:
   void InitT13nCandidate(const std::string &key, const std::string &value,
-                         uint16 lid, uint16 rid,
+                         uint16_t lid, uint16_t rid,
                          Segment::Candidate *cand) const;
   // Sets transliteration values into segment.  If t13ns is invalid,
   // false is returned.
@@ -66,7 +67,7 @@ class TransliterationRewriter : public RewriterInterface {
   bool AddRawNumberT13nCandidates(const ConversionRequest &request,
                                   Segments *segments) const;
 
-  const uint16 unknown_id_;
+  const uint16_t unknown_id_;
 
   DISALLOW_COPY_AND_ASSIGN(TransliterationRewriter);
 };

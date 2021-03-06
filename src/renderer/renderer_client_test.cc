@@ -29,6 +29,7 @@
 
 #include "renderer/renderer_client.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -63,7 +64,7 @@ const std::string UpdateVersion(int diff) {
 
 int g_counter = 0;
 bool g_connected = false;
-uint32 g_server_protocol_version = IPC_PROTOCOL_VERSION;
+uint32_t g_server_protocol_version = IPC_PROTOCOL_VERSION;
 std::string g_server_product_version;
 
 class TestIPCClient : public IPCClientInterface {
@@ -73,7 +74,7 @@ class TestIPCClient : public IPCClientInterface {
 
   bool Connected() const override { return g_connected; }
 
-  uint32 GetServerProtocolVersion() const override {
+  uint32_t GetServerProtocolVersion() const override {
     return g_server_protocol_version;
   }
 
@@ -81,11 +82,11 @@ class TestIPCClient : public IPCClientInterface {
     return g_server_product_version;
   }
 
-  uint32 GetServerProcessId() const override { return 0; }
+  uint32_t GetServerProcessId() const override { return 0; }
 
   // just count up how many times Call is called.
   bool Call(const char *request, size_t request_size, char *response,
-            size_t *response_size, int32 timeout) override {
+            size_t *response_size, int32_t timeout) override {
     g_counter++;
     return true;
   }
@@ -96,7 +97,7 @@ class TestIPCClient : public IPCClientInterface {
 
   static int counter() { return g_counter; }
 
-  static void set_server_protocol_version(uint32 version) {
+  static void set_server_protocol_version(uint32_t version) {
     g_server_protocol_version = version;
   }
 

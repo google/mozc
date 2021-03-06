@@ -30,6 +30,7 @@
 // Session Observer Handler managing observer instances.
 
 #include "session/session_observer_handler.h"
+
 #include "session/session_observer_interface.h"
 
 namespace mozc {

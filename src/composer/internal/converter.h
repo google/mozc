@@ -33,6 +33,7 @@
 #define MOZC_COMPOSER_INTERNAL_CONVERTER_H_
 
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc {

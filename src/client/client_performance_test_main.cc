@@ -29,6 +29,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <iostream>  // NOLINT
 #include <iterator>
 #include <string>
@@ -55,7 +56,7 @@ namespace {
 
 struct Result {
   std::string test_name;
-  std::vector<uint32> operations_times;
+  std::vector<uint32_t> operations_times;
 };
 
 class TestSentenceGenerator {
@@ -148,13 +149,13 @@ class TestScenarioInterface {
   commands::Output output_;
 };
 
-std::string GetBasicStats(const std::vector<uint32> times) {
-  uint32 total_time = 0;
-  uint32 avg_time = 0;
-  uint32 max_time = 0;
-  uint32 min_time = 0;
-  uint32 sd_time = 0;  // Standard Deviation
-  uint32 med_time = 0;
+std::string GetBasicStats(const std::vector<uint32_t> times) {
+  uint32_t total_time = 0;
+  uint32_t avg_time = 0;
+  uint32_t max_time = 0;
+  uint32_t min_time = 0;
+  uint32_t sd_time = 0;  // Standard Deviation
+  uint32_t med_time = 0;
 
   min_time = INT_MAX;
   max_time = 0;
@@ -164,7 +165,7 @@ std::string GetBasicStats(const std::vector<uint32> times) {
     max_time = std::max(times[i], max_time);
   }
 
-  avg_time = static_cast<uint32>(1.0 * total_time / times.size());
+  avg_time = static_cast<uint32_t>(1.0 * total_time / times.size());
 
   if (times.size() >= 2) {
     double dsd_time = 0;
@@ -172,11 +173,11 @@ std::string GetBasicStats(const std::vector<uint32> times) {
       dsd_time += (avg_time - times[i]) * (avg_time - times[i]);
     }
     dsd_time = sqrt(dsd_time / (times.size() - 1));
-    sd_time = static_cast<uint32>(dsd_time);
+    sd_time = static_cast<uint32_t>(dsd_time);
   }
 
   if (!times.empty()) {
-    std::vector<uint32> tmp(times);
+    std::vector<uint32_t> tmp(times);
     std::sort(tmp.begin(), tmp.end());
     med_time = tmp[tmp.size() / 2];
   }

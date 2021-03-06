@@ -31,10 +31,11 @@
 
 #include "ipc/ipc_mock.h"
 
+#include <cstdint>
+#include <cstring>  // memcpy
+
 #include "base/version.h"
 #include "ipc/ipc.h"
-
-#include <cstring>  // memcpy
 
 namespace mozc {
 
@@ -48,7 +49,7 @@ IPCClientMock::IPCClientMock(IPCClientFactoryMock *caller)
 
 bool IPCClientMock::Connected() const { return connected_; }
 
-uint32 IPCClientMock::GetServerProtocolVersion() const {
+uint32_t IPCClientMock::GetServerProtocolVersion() const {
   return server_protocol_version_;
 }
 
@@ -56,11 +57,13 @@ const std::string &IPCClientMock::GetServerProductVersion() const {
   return server_product_version_;
 }
 
-uint32 IPCClientMock::GetServerProcessId() const { return server_process_id_; }
+uint32_t IPCClientMock::GetServerProcessId() const {
+  return server_process_id_;
+}
 
 bool IPCClientMock::Call(const char *request, const size_t request_size,
                          char *response, size_t *response_size,
-                         const int32 timeout) {
+                         const int32_t timeout) {
   caller_->SetGeneratedRequest(std::string(request, request_size));
   if (!connected_ || !result_) {
     return false;
@@ -104,7 +107,7 @@ void IPCClientFactoryMock::SetConnection(const bool connection) {
 void IPCClientFactoryMock::SetResult(const bool result) { result_ = result; }
 
 void IPCClientFactoryMock::SetServerProtocolVersion(
-    const uint32 server_protocol_version) {
+    const uint32_t server_protocol_version) {
   server_protocol_version_ = server_protocol_version;
 }
 
@@ -113,7 +116,8 @@ void IPCClientFactoryMock::SetServerProductVersion(
   server_product_version_ = server_product_version;
 }
 
-void IPCClientFactoryMock::SetServerProcessId(const uint32 server_process_id) {
+void IPCClientFactoryMock::SetServerProcessId(
+    const uint32_t server_process_id) {
   server_process_id_ = server_process_id;
 }
 

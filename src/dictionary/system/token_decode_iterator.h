@@ -30,6 +30,7 @@
 #ifndef MOZC_DICTIONARY_SYSTEM_TOKEN_DECODE_ITERATOR_H_
 #define MOZC_DICTIONARY_SYSTEM_TOKEN_DECODE_ITERATOR_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -48,8 +49,8 @@ class TokenDecodeIterator {
  public:
   TokenDecodeIterator(const SystemDictionaryCodecInterface *codec,
                       const storage::louds::LoudsTrie &value_trie,
-                      const uint32 *frequent_pos, absl::string_view key,
-                      const uint8 *ptr);
+                      const uint32_t *frequent_pos, absl::string_view key,
+                      const uint8_t *ptr);
   ~TokenDecodeIterator() {}
 
   const TokenInfo &Get() const { return token_info_; }
@@ -74,14 +75,14 @@ class TokenDecodeIterator {
 
   const SystemDictionaryCodecInterface *codec_;
   const storage::louds::LoudsTrie *value_trie_;
-  const uint32 *frequent_pos_;
+  const uint32_t *frequent_pos_;
 
   const absl::string_view key_;
   // Katakana key will be lazily initialized.
   std::string key_katakana_;
 
   State state_;
-  const uint8 *ptr_;
+  const uint8_t *ptr_;
 
   TokenInfo token_info_;
   Token token_;
@@ -93,8 +94,8 @@ class TokenDecodeIterator {
 
 inline TokenDecodeIterator::TokenDecodeIterator(
     const SystemDictionaryCodecInterface *codec,
-    const storage::louds::LoudsTrie &value_trie, const uint32 *frequent_pos,
-    absl::string_view key, const uint8 *ptr)
+    const storage::louds::LoudsTrie &value_trie, const uint32_t *frequent_pos,
+    absl::string_view key, const uint8_t *ptr)
     : codec_(codec),
       value_trie_(&value_trie),
       frequent_pos_(frequent_pos),
@@ -181,7 +182,7 @@ inline void TokenDecodeIterator::NextInternal() {
   }
 
   if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {
-    const uint32 pos = frequent_pos_[token_info_.id_in_frequent_pos_map];
+    const uint32_t pos = frequent_pos_[token_info_.id_in_frequent_pos_map];
     token_.lid = pos >> 16;
     token_.rid = pos & 0xffff;
   }

@@ -32,6 +32,7 @@
 #include "rewriter/dictionary_generator.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -71,7 +72,7 @@ void Token::MergeFrom(const Token &token) {
   }
 }
 
-uint64 Token::GetID() const {
+uint64_t Token::GetID() const {
   return Hash::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
 }
 
@@ -80,7 +81,7 @@ static const size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator(
     const DataManagerInterface &data_manager)
     : token_pool_(new ObjectPool<Token>(kTokenSize)),
-      token_map_(new std::map<uint64, Token *>) {
+      token_map_(new std::map<uint64_t, Token *>) {
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
@@ -91,7 +92,7 @@ DictionaryGenerator::~DictionaryGenerator() {}
 
 void DictionaryGenerator::AddToken(const Token &token) {
   Token *new_token = nullptr;
-  std::map<uint64, Token *>::const_iterator it =
+  std::map<uint64_t, Token *>::const_iterator it =
       token_map_->find(token.GetID());
   if (it != token_map_->end()) {
     new_token = it->second;
@@ -118,10 +119,10 @@ struct CompareToken {
   }
 };
 
-void GetSortedTokens(const std::map<uint64, Token *> *token_map,
+void GetSortedTokens(const std::map<uint64_t, Token *> *token_map,
                      std::vector<const Token *> *tokens) {
   tokens->clear();
-  for (std::map<uint64, Token *>::const_iterator it = token_map->begin();
+  for (std::map<uint64_t, Token *>::const_iterator it = token_map->begin();
        it != token_map->end(); ++it) {
     tokens->push_back(it->second);
   }
@@ -139,7 +140,7 @@ bool DictionaryGenerator::Output(const std::string &filename) const {
   std::vector<const Token *> tokens;
   GetSortedTokens(token_map_.get(), &tokens);
 
-  uint32 num_same_keys = 0;
+  uint32_t num_same_keys = 0;
   std::string prev_key;
   for (size_t i = 0; i < tokens.size(); ++i) {
     const Token &token = *(tokens[i]);
@@ -152,9 +153,9 @@ bool DictionaryGenerator::Output(const std::string &filename) const {
       num_same_keys = 0;
       prev_key = token.key();
     }
-    const uint32 cost = 10 * num_same_keys;
+    const uint32_t cost = 10 * num_same_keys;
 
-    uint16 id;
+    uint16_t id;
     if (pos == "括弧開") {
       id = open_bracket_id_;
     } else if (pos == "括弧閉") {

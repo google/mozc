@@ -31,6 +31,7 @@
 #define MOZC_PREDICTION_USER_HISTORY_PREDICTOR_H_
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <queue>
 #include <set>
@@ -75,7 +76,7 @@ class UserHistoryStorage {
 
   // Deletes entries before the given timestamp.  Returns the number of deleted
   // entries.
-  int DeleteEntriesBefore(uint64 timestamp);
+  int DeleteEntriesBefore(uint64_t timestamp);
 
   // Deletes entries that are not accessed for 62 days.  Returns the number of
   // deleted entries.
@@ -153,17 +154,17 @@ class UserHistoryPredictor : public PredictorInterface {
   typedef user_history_predictor::UserHistory::Entry::EntryType EntryType;
 
   // Returns fingerprints from various object.
-  static uint32 Fingerprint(const std::string &key, const std::string &value);
-  static uint32 Fingerprint(const std::string &key, const std::string &value,
-                            EntryType type);
-  static uint32 EntryFingerprint(const Entry &entry);
-  static uint32 SegmentFingerprint(const Segment &segment);
+  static uint32_t Fingerprint(const std::string &key, const std::string &value);
+  static uint32_t Fingerprint(const std::string &key, const std::string &value,
+                              EntryType type);
+  static uint32_t EntryFingerprint(const Entry &entry);
+  static uint32_t SegmentFingerprint(const Segment &segment);
 
   // Returns the size of cache.
-  static uint32 cache_size();
+  static uint32_t cache_size();
 
   // Returns the size of next entries.
-  static uint32 max_next_entries_size();
+  static uint32_t max_next_entries_size();
 
  private:
   struct SegmentForLearning {
@@ -173,7 +174,7 @@ class UserHistoryPredictor : public PredictorInterface {
     std::string content_value;
     std::string description;
   };
-  static uint32 LearningSegmentFingerprint(const SegmentForLearning &segment);
+  static uint32_t LearningSegmentFingerprint(const SegmentForLearning &segment);
 
   class SegmentsForLearning {
    public:
@@ -302,7 +303,7 @@ class UserHistoryPredictor : public PredictorInterface {
   void WaitForSyncer();
 
   // Returns id for RevertEntry
-  static uint16 revert_id();
+  static uint16_t revert_id();
 
   // Gets match type from two strings
   static MatchType GetMatchType(const std::string &lstr,
@@ -315,30 +316,30 @@ class UserHistoryPredictor : public PredictorInterface {
                                          const std::string &target);
 
   // Uint32 <=> string conversion
-  static std::string Uint32ToString(uint32 fp);
-  static uint32 StringToUint32(const std::string &input);
+  static std::string Uint32ToString(uint32_t fp);
+  static uint32_t StringToUint32(const std::string &input);
 
   // Returns true if prev_entry has a next_fp link to entry
   static bool HasBigramEntry(const Entry &entry, const Entry &prev_entry);
 
   // Returns true |result_entry| can be handled as
   // a valid result if the length of user input is |prefix_len|.
-  static bool IsValidSuggestion(RequestType request_type, uint32 prefix_len,
+  static bool IsValidSuggestion(RequestType request_type, uint32_t prefix_len,
                                 const Entry &entry);
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.
-  bool IsValidEntry(const Entry &entry, uint32 available_emoji_carrier) const;
+  bool IsValidEntry(const Entry &entry, uint32_t available_emoji_carrier) const;
   // The same as IsValidEntry except that removed field is ignored.
   bool IsValidEntryIgnoringRemovedField(const Entry &entry,
-                                        uint32 available_emoji_carrier) const;
+                                        uint32_t available_emoji_carrier) const;
 
   // Returns "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
   // LRU policy), but we want to slightly change the score
   // with different signals, including the length of value and/or
   // bigram_boost flags.
-  static uint32 GetScore(const Entry &result_entry);
+  static uint32_t GetScore(const Entry &result_entry);
 
   // Priority Queue class for entry. New item is sorted by
   // |score| internally. By calling Pop() in sequence, you
@@ -354,14 +355,14 @@ class UserHistoryPredictor : public PredictorInterface {
 
    private:
     friend class UserHistoryPredictor;
-    typedef std::pair<uint32, Entry *> QueueElement;
+    typedef std::pair<uint32_t, Entry *> QueueElement;
     typedef std::priority_queue<QueueElement> Agenda;
     Agenda agenda_;
     FreeList<Entry> pool_;
-    std::set<uint32> seen_;
+    std::set<uint32_t> seen_;
   };
 
-  typedef mozc::storage::LRUCache<uint32, Entry> DicCache;
+  typedef mozc::storage::LRUCache<uint32_t, Entry> DicCache;
   typedef DicCache::Element DicElement;
 
   bool CheckSyncerAndDelete() const;
@@ -387,12 +388,12 @@ class UserHistoryPredictor : public PredictorInterface {
   // according to the entry lookup.
   bool GetKeyValueForExactAndRightPrefixMatch(
       const std::string &input_key, const Entry *entry,
-      const Entry **result_last_entry, uint64 *left_last_access_time,
-      uint64 *left_most_last_access_time, std::string *result_key,
+      const Entry **result_last_entry, uint64_t *left_last_access_time,
+      uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
 
   const Entry *LookupPrevEntry(const Segments &segments,
-                               uint32 available_emoji_carrier) const;
+                               uint32_t available_emoji_carrier) const;
 
   // Adds an entry to a priority queue.
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;
@@ -452,7 +453,7 @@ class UserHistoryPredictor : public PredictorInterface {
                              EntryPriorityQueue *results) const;
 
   void InsertHistory(RequestType request_type, bool is_suggestion_selected,
-                     uint64 last_access_time, Segments *segments);
+                     uint64_t last_access_time, Segments *segments);
 
   // Inserts |key,value,description| to the internal dictionary database.
   // |is_suggestion_selected|: key/value is suggestion or conversion.
@@ -460,14 +461,14 @@ class UserHistoryPredictor : public PredictorInterface {
   // |last_access_time|: the time when this entrty was created
   void Insert(const std::string &key, const std::string &value,
               const std::string &description, bool is_suggestion_selected,
-              uint32 next_fp, uint64 last_access_time, Segments *segments);
+              uint32_t next_fp, uint64_t last_access_time, Segments *segments);
 
   // Tries to insert entry.
   // Entry's contents and request_type will be checked before insersion.
   void TryInsert(RequestType request_type, const std::string &key,
                  const std::string &value, const std::string &description,
-                 bool is_suggestion_selected, uint32 next_fp,
-                 uint64 last_access_time, Segments *segments);
+                 bool is_suggestion_selected, uint32_t next_fp,
+                 uint64_t last_access_time, Segments *segments);
 
   // Inserts event entry (CLEAN_ALL_EVENT|CLEAN_UNUSED_EVENT).
   void InsertEvent(EntryType type);
@@ -476,7 +477,7 @@ class UserHistoryPredictor : public PredictorInterface {
   // it makes a bigram connection from entry to next_entry.
   void InsertNextEntry(const NextEntry &next_entry, Entry *entry) const;
 
-  static void EraseNextEntries(uint32 fp, Entry *entry);
+  static void EraseNextEntries(uint32_t fp, Entry *entry);
 
   // Recursively removes a chain of Entries in |dic_|. See the comment in
   // implemenetation for details.

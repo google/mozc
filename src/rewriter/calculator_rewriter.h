@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_CALCULATOR_REWRITER_H_
 
 #include <string>
+
 #include "converter/segments.h"
 #include "rewriter/rewriter_interface.h"
 

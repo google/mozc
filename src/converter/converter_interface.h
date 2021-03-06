@@ -30,6 +30,7 @@
 #ifndef MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 #define MOZC_CONVERTER_CONVERTER_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 
 #include "base/port.h"
@@ -170,7 +171,7 @@ class ConverterInterface {
   virtual bool ResizeSegment(Segments *segments,
                              const ConversionRequest &request,
                              size_t start_segment_index, size_t segments_size,
-                             const uint8 *new_size_array,
+                             const uint8_t *new_size_array,
                              size_t array_size) const = 0;
 
  protected:

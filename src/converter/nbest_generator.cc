@@ -30,6 +30,7 @@
 #include "converter/nbest_generator.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -59,17 +60,17 @@ using converter::CandidateFilter;
 struct NBestGenerator::QueueElement {
   const Node *node;
   const QueueElement *next;
-  int32 fx;  // f(x) = h(x) + g(x): cost function for A* search
-  int32 gx;  // g(x)
+  int32_t fx;  // f(x) = h(x) + g(x): cost function for A* search
+  int32_t gx;  // g(x)
   // transition cost part of g(x).
   // Do not take the transition costs to edge nodes.
-  int32 structure_gx;
-  int32 w_gx;
+  int32_t structure_gx;
+  int32_t w_gx;
 };
 
 const NBestGenerator::QueueElement *NBestGenerator::CreateNewElement(
-    const Node *node, const QueueElement *next, int32 fx, int32 gx,
-    int32 structure_gx, int32 w_gx) {
+    const Node *node, const QueueElement *next, int32_t fx, int32_t gx,
+    int32_t structure_gx, int32_t w_gx) {
   QueueElement *elm = freelist_.Alloc();
   DCHECK(elm);
   elm->node = node;
@@ -174,8 +175,8 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
 }
 
 void NBestGenerator::MakeCandidate(
-    Segment::Candidate *candidate, int32 cost, int32 structure_cost,
-    int32 wcost, const std::vector<const Node *> &nodes) const {
+    Segment::Candidate *candidate, int32_t cost, int32_t structure_cost,
+    int32_t wcost, const std::vector<const Node *> &nodes) const {
   CHECK(!nodes.empty());
 
   candidate->Init();
@@ -457,12 +458,12 @@ bool NBestGenerator::Next(const std::string &original_key,
           wcost_diff += kWeakConnectedPenalty / 2;
         }
 
-        const int32 gx = cost_diff + top->gx;
+        const int32_t gx = cost_diff + top->gx;
         // |lnode->cost| is heuristics function of A* search, h(x).
         // After Viterbi search, we already know an exact value of h(x).
-        const int32 fx = lnode->cost + gx;
-        const int32 structure_gx = structure_cost_diff + top->structure_gx;
-        const int32 w_gx = wcost_diff + top->w_gx;
+        const int32_t fx = lnode->cost + gx;
+        const int32_t structure_gx = structure_cost_diff + top->structure_gx;
+        const int32_t w_gx = wcost_diff + top->w_gx;
         if (is_left_edge) {
           // We only need to only 1 left node here.
           // Even if expand all left nodes, all the |value| part should

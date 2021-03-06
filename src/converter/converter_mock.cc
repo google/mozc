@@ -29,6 +29,7 @@
 
 #include "converter/converter_mock.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/logging.h"
@@ -312,7 +313,7 @@ void ConverterMock::GetResizeSegment1(Segments *segments, size_t *segment_index,
 void ConverterMock::GetResizeSegment2(Segments *segments,
                                       size_t *start_segment_index,
                                       size_t *segments_size,
-                                      uint8 **new_size_array,
+                                      uint8_t **new_size_array,
                                       size_t *array_size) {
   segments->CopyFrom(resizesegment2_input_.segments);
   *start_segment_index = resizesegment2_input_.start_segment_index;
@@ -638,13 +639,13 @@ bool ConverterMock::ResizeSegment(Segments *segments,
                                   const ConversionRequest &request,
                                   size_t start_segment_index,
                                   size_t segments_size,
-                                  const uint8 *new_size_array,
+                                  const uint8_t *new_size_array,
                                   size_t array_size) const {
   VLOG(2) << "mock function: ResizeSegmnet";
   resizesegment2_input_.segments.CopyFrom(*segments);
   resizesegment2_input_.start_segment_index = start_segment_index;
   resizesegment2_input_.segments_size = segments_size;
-  std::vector<uint8> size_array(new_size_array, new_size_array + array_size);
+  std::vector<uint8_t> size_array(new_size_array, new_size_array + array_size);
   resizesegment2_input_.new_size_array = size_array;
 
   if (!resizesegment2_output_.initialized) {

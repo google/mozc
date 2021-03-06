@@ -30,6 +30,7 @@
 #include "converter/candidate_filter.h"
 
 #include <climits>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -294,12 +295,12 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
   node->key = "abc";
   node->value = "test";
 
-  const uint16 pos_ids[] = {
+  const uint16_t pos_ids[] = {
       pos_matcher().GetIsolatedWordId(),
       pos_matcher().GetGeneralSymbolId(),
   };
   // Perform the same test for the above POS IDs.
-  for (const uint16 id : pos_ids) {
+  for (const uint16_t id : pos_ids) {
     node->lid = id;
     node->rid = id;
 

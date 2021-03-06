@@ -33,6 +33,7 @@
 #include "rewriter/gen_existence_data.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -59,7 +60,7 @@ void GenExistenceData(const std::vector<std::string> &entries,
   DCHECK(filter.get());
 
   for (size_t i = 0; i < entries.size(); ++i) {
-    const uint64 id = Hash::Fingerprint(entries[i]);
+    const uint64_t id = Hash::Fingerprint(entries[i]);
     filter->Insert(id);
   }
   filter->Write(existence_data, existence_data_size);

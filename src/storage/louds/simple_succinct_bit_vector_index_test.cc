@@ -29,6 +29,8 @@
 
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
+#include <cstdint>
+
 #include "testing/base/public/gunit.h"
 
 namespace {
@@ -54,7 +56,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Rank) {
   static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
-  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8, param.first,
+  bit_vector.Init(reinterpret_cast<const uint8_t *>(kData), 8, param.first,
                   param.second);
   EXPECT_EQ(32, bit_vector.GetNum0Bits());
   EXPECT_EQ(32, bit_vector.GetNum1Bits());
@@ -89,7 +91,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Select) {
   static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
-  bit_vector.Init(reinterpret_cast<const uint8 *>(kData), 8, param.first,
+  bit_vector.Init(reinterpret_cast<const uint8_t *>(kData), 8, param.first,
                   param.second);
   EXPECT_EQ(32, bit_vector.GetNum0Bits());
   EXPECT_EQ(32, bit_vector.GetNum1Bits());
@@ -116,7 +118,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern1) {
   const std::string data(1024, '\xAA');
 
   SimpleSuccinctBitVectorIndex bit_vector;
-  bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length(),
+  bit_vector.Init(reinterpret_cast<const uint8_t *>(data.data()), data.length(),
                   param.first, param.second);
   EXPECT_EQ(4 * 1024, bit_vector.GetNum0Bits());
   EXPECT_EQ(4 * 1024, bit_vector.GetNum1Bits());
@@ -155,7 +157,7 @@ TEST_P(SimpleSuccinctBitVectorIndexTest, Pattern2) {
   const std::string data(1024, '\xCC');
 
   SimpleSuccinctBitVectorIndex bit_vector;
-  bit_vector.Init(reinterpret_cast<const uint8 *>(data.data()), data.length(),
+  bit_vector.Init(reinterpret_cast<const uint8_t *>(data.data()), data.length(),
                   param.first, param.second);
   EXPECT_EQ(4 * 1024, bit_vector.GetNum0Bits());
   EXPECT_EQ(4 * 1024, bit_vector.GetNum1Bits());

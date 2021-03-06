@@ -29,6 +29,8 @@
 
 #include "base/system_util.h"
 
+#include <cstdint>
+
 #ifdef OS_WIN
 // clang-format off
 #include <Windows.h>
@@ -46,6 +48,7 @@
 #ifdef __APPLE__
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+
 #include <cerrno>
 #endif  // __APPLE__
 
@@ -878,7 +881,7 @@ void SystemUtil::DisableIME() {
 #endif  // OS_WIN
 }
 
-uint64 SystemUtil::GetTotalPhysicalMemory() {
+uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #if defined(OS_WIN)
   MEMORYSTATUSEX memory_status = {sizeof(MEMORYSTATUSEX)};
   if (!::GlobalMemoryStatusEx(&memory_status)) {
@@ -904,14 +907,14 @@ uint64 SystemUtil::GetTotalPhysicalMemory() {
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
 # if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-  const int32 page_size = sysconf(_SC_PAGESIZE);
-  const int32 number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
+  const int32_t page_size = sysconf(_SC_PAGESIZE);
+  const int32_t number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
   if (number_of_phyisical_pages < 0) {
     // likely to be overflowed.
     LOG(FATAL) << number_of_phyisical_pages << ", " << page_size;
     return 0;
   }
-  return static_cast<uint64>(number_of_phyisical_pages) * page_size;
+  return static_cast<uint64_t>(number_of_phyisical_pages) * page_size;
 # else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
 # endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)

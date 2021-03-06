@@ -29,6 +29,7 @@
 
 #include "composer/key_event_util.h"
 
+#include <cstdint>
 #include <string>
 
 #include "base/util.h"
@@ -143,27 +144,27 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
   };
 
   KeyEvent key_event;
-  uint64 output;
+  uint64_t output;
 
   for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
     SCOPED_TRACE(kTestKeys[i]);
     KeyParser::ParseKey(kTestKeys[i], &key_event);
     ASSERT_TRUE(KeyEventUtil::GetKeyInformation(key_event, &output));
 
-    uint64 expected = 0;
+    uint64_t expected = 0;
     if (key_event.has_key_code()) {
-      expected |= static_cast<uint64>(key_event.key_code());
+      expected |= static_cast<uint64_t>(key_event.key_code());
     }
     if (key_event.has_special_key()) {
-      expected |= static_cast<uint64>(key_event.special_key()) << 32;
+      expected |= static_cast<uint64_t>(key_event.special_key()) << 32;
     }
-    expected |= static_cast<uint64>(KeyEventUtil::GetModifiers(key_event))
+    expected |= static_cast<uint64_t>(KeyEventUtil::GetModifiers(key_event))
                 << 48;
 
     EXPECT_EQ(expected, output);
   }
 
-  const uint32 kEscapeKeyCode = 27;
+  const uint32_t kEscapeKeyCode = 27;
   key_event.Clear();
   key_event.set_key_code(kEscapeKeyCode);
   // Escape key should not set on key_code field.
@@ -254,7 +255,7 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
   KeyParser::ParseKey("Space", &key_event);
   EXPECT_FALSE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
 
-  const uint32 kEscapeKeyCode = 27;
+  const uint32_t kEscapeKeyCode = 27;
   key_event.Clear();
   key_event.set_key_code(kEscapeKeyCode);
   EXPECT_FALSE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
@@ -305,7 +306,7 @@ TEST(KeyEventUtilTest, RemoveModifiers) {
     KeyParser::ParseKey(data.input, &input);
     KeyParser::ParseKey(data.remove, &remove);
     KeyParser::ParseKey(data.output, &output);
-    const uint32 remove_modifiers = KeyEventUtil::GetModifiers(remove);
+    const uint32_t remove_modifiers = KeyEventUtil::GetModifiers(remove);
 
     KeyEvent removed_key_event;
     KeyEventUtil::RemoveModifiers(input, remove_modifiers, &removed_key_event);
@@ -343,7 +344,7 @@ TEST(KeyEventUtilTest, HasModifiers) {
 
 TEST(KeyEventUtilTest, IsModifiers) {
   const struct IsModifiersTestData {
-    uint32 modifiers;
+    uint32_t modifiers;
     bool is_alt;
     bool is_ctrl;
     bool is_shift;

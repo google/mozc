@@ -41,7 +41,7 @@ class SessionObserverMock : public SessionObserverInterface {
   ~SessionObserverMock() override {}
 
   void EvalCommandHandler(const commands::Command &command) override {
-    command_.CopyFrom(command);
+    command_ = command;
     ++eval_count_;
   }
 

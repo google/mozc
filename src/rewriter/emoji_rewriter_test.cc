@@ -30,6 +30,7 @@
 #include "rewriter/emoji_rewriter.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -117,7 +118,7 @@ void ChooseEmojiCandidate(Segments *segments) {
 struct EmojiData {
   const char *key;
   const char *unicode;
-  const uint32 android_pua;
+  const uint32_t android_pua;
   const char *description_unicode;
   const char *description_docomo;
   const char *description_softbank;
@@ -198,14 +199,14 @@ class TestDataManager : public testing::MockDataManager {
       absl::string_view *string_array_data) const override {
     *token_array_data =
         absl::string_view(reinterpret_cast<const char *>(token_array_.data()),
-                          token_array_.size() * sizeof(uint32));
+                          token_array_.size() * sizeof(uint32_t));
     *string_array_data = string_array_data_;
   }
 
  private:
-  std::vector<uint32> token_array_;
+  std::vector<uint32_t> token_array_;
   absl::string_view string_array_data_;
-  std::unique_ptr<uint32[]> string_array_buf_;
+  std::unique_ptr<uint32_t[]> string_array_buf_;
 };
 
 class EmojiRewriterTest : public ::testing::Test {

@@ -61,6 +61,7 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STORAGE_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -95,7 +96,7 @@ class UserDictionaryStorage {
     ERROR_TYPE_SIZE
   };
 
-  explicit UserDictionaryStorage(const std::string &filename);
+  explicit UserDictionaryStorage(const std::string &file_name);
   virtual ~UserDictionaryStorage();
 
   // return the filename of user dictionary
@@ -125,30 +126,30 @@ class UserDictionaryStorage {
   bool UnLock();
 
   // Export a dictionary to a file in TSV format.
-  bool ExportDictionary(uint64 dic_id, const std::string &file_name);
+  bool ExportDictionary(uint64_t dic_id, const std::string &file_name);
 
   // Create a new dictionary with a specified name. Returns the id of
   // the new instance via new_dic_id.
 
-  bool CreateDictionary(const std::string &dic_name, uint64 *new_dic_id);
+  bool CreateDictionary(const std::string &dic_name, uint64_t *new_dic_id);
 
   // Delete a dictionary.
-  bool DeleteDictionary(uint64 dic_id);
+  bool DeleteDictionary(uint64_t dic_id);
 
   // Rename a dictionary.
-  bool RenameDictionary(uint64 dic_id, const std::string &dic_name);
+  bool RenameDictionary(uint64_t dic_id, const std::string &dic_name);
 
   // return the index of "dic_id"
   // return -1 if no dictionary is found.
-  int GetUserDictionaryIndex(uint64 dic_id) const;
+  int GetUserDictionaryIndex(uint64_t dic_id) const;
 
   // return mutable UserDictionary corresponding to dic_id
-  UserDictionary *GetUserDictionary(uint64 dic_id);
+  UserDictionary *GetUserDictionary(uint64_t dic_id);
 
   // Searches a dictionary from a dictionary name, and the dictionary id is
   // stored in "dic_id".
   // Returns false if the name is not found.
-  bool GetUserDictionaryId(const std::string &dic_name, uint64 *dic_id);
+  bool GetUserDictionaryId(const std::string &dic_name, uint64_t *dic_id);
 
   // return last error type.
   // You can obtain the reason of the error of dictionary operation.

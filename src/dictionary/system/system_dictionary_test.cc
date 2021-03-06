@@ -30,6 +30,7 @@
 #include "dictionary/system/system_dictionary.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <memory>
@@ -61,11 +62,11 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
-ABSL_FLAG(int32, dictionary_test_size, 100000,
+ABSL_FLAG(int32_t, dictionary_test_size, 100000,
           "Dictionary size for this test.");
-ABSL_FLAG(int32, dictionary_reverse_lookup_test_size, 1000,
+ABSL_FLAG(int32_t, dictionary_reverse_lookup_test_size, 1000,
           "Number of tokens to run reverse lookup test.");
-ABSL_DECLARE_FLAG(int32, min_key_length_to_use_small_cost_encoding);
+ABSL_DECLARE_FLAG(int32_t, min_key_length_to_use_small_cost_encoding);
 
 namespace mozc {
 namespace dictionary {
@@ -91,7 +92,7 @@ class SystemDictionaryTest : public ::testing::Test {
     original_flags_min_key_length_to_use_small_cost_encoding_ =
         absl::GetFlag(FLAGS_min_key_length_to_use_small_cost_encoding);
     absl::SetFlag(&FLAGS_min_key_length_to_use_small_cost_encoding,
-                  std::numeric_limits<int32>::max());
+                  std::numeric_limits<int32_t>::max());
 
     request_.Clear();
     config::ConfigHandler::GetDefaultConfig(&config_);

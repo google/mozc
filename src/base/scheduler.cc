@@ -29,6 +29,7 @@
 
 #include "base/scheduler.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <map>
@@ -48,7 +49,8 @@ namespace {
 
 class TimerThread final : public Thread {
  public:
-  TimerThread(std::function<void()> callback, uint32 due_time, uint32 interval)
+  TimerThread(std::function<void()> callback, uint32_t due_time,
+              uint32_t interval)
       : callback_(callback), due_time_(due_time), interval_(interval) {
     CHECK(due_time_ != 0 || interval_ != 0)
         << "Either of due_time or interval must be non 0.";
@@ -93,12 +95,12 @@ class TimerThread final : public Thread {
 
   // The amount of time to elapse before the timer is to be set to the
   // signaled state for the first time, in milliseconds.
-  uint32 due_time_;
+  uint32_t due_time_;
 
   // The period of the timer, in milliseconds. If this is zero, the
   // timer is one-shot timer. If this is greater than zero, the timer
   // is periodic.
-  uint32 interval_;
+  uint32_t interval_;
 
   UnnamedEvent event_;
 
@@ -107,7 +109,7 @@ class TimerThread final : public Thread {
 
 class QueueTimer final {
  public:
-  QueueTimer(std::function<void()> callback, uint32 due_time, uint32 period)
+  QueueTimer(std::function<void()> callback, uint32_t due_time, uint32_t period)
       : timer_thread_(callback, due_time, period) {}
 
   void Start() { timer_thread_.Start("QueueTimer"); }
@@ -131,15 +133,15 @@ class Job {
 
   const Scheduler::JobSetting setting() const { return setting_; }
 
-  void set_skip_count(uint32 skip_count) { skip_count_ = skip_count; }
+  void set_skip_count(uint32_t skip_count) { skip_count_ = skip_count; }
 
-  uint32 skip_count() const { return skip_count_; }
+  uint32_t skip_count() const { return skip_count_; }
 
-  void set_backoff_count(uint32 backoff_count) {
+  void set_backoff_count(uint32_t backoff_count) {
     backoff_count_ = backoff_count;
   }
 
-  uint32 backoff_count() const { return backoff_count_; }
+  uint32_t backoff_count() const { return backoff_count_; }
 
   void set_timer(QueueTimer *timer) {
     if (timer_ != nullptr) {
@@ -158,8 +160,8 @@ class Job {
 
  private:
   Scheduler::JobSetting setting_;
-  uint32 skip_count_;
-  uint32 backoff_count_;
+  uint32_t skip_count_;
+  uint32_t backoff_count_;
   QueueTimer *timer_;
   bool running_;
 
@@ -169,7 +171,7 @@ class Job {
 class SchedulerImpl : public Scheduler::SchedulerInterface {
  public:
   SchedulerImpl() {
-    Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
+    Util::SetRandomSeed(static_cast<uint32_t>(Clock::GetTime()));
   }
 
   ~SchedulerImpl() override { RemoveAllJobs(); }
@@ -205,7 +207,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     Job *job = &insert_result.first->second;
     DCHECK(job);
 
-    const uint32 delay = CalcDelay(job_setting);
+    const uint32_t delay = CalcDelay(job_setting);
     // DON'T copy job instance after set_timer() not to delete timer twice.
     // TODO(hsumita): Make Job class uncopiable.
     job->set_timer(new QueueTimer(std::bind(TimerCallback, job), delay,
@@ -252,7 +254,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     if (success) {
       job->set_backoff_count(0);
     } else {
-      const uint32 new_backoff_count =
+      const uint32_t new_backoff_count =
           (job->backoff_count() == 0) ? 1 : job->backoff_count() * 2;
       if (new_backoff_count * job->setting().default_interval() <
           job->setting().max_interval()) {
@@ -262,8 +264,8 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
     }
   }
 
-  uint32 CalcDelay(const Scheduler::JobSetting &job_setting) {
-    uint32 delay = job_setting.delay_start();
+  uint32_t CalcDelay(const Scheduler::JobSetting &job_setting) {
+    uint32_t delay = job_setting.delay_start();
     if (job_setting.random_delay() != 0) {
       delay += Util::Random(job_setting.random_delay());
     }

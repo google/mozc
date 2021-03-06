@@ -58,7 +58,7 @@
         ['OS=="mac"', {
           'product_name': '<(branding)Converter',
           'sources': [
-            '../data/mac/mozc_server_info',
+            'Info.plist',
           ],
           'dependencies': [
             'gen_mozc_server_info_plist',
@@ -68,12 +68,7 @@
             '../data/images/mac/product_icon.icns'
           ],
           'xcode_settings': {
-            # Currently metadata in the Info.plist file like version
-            # info go away because the generated xcodeproj don't know
-            # version info.
-            # TODO(mukai): write a script to expand those variables
-            # and use that script instead of this INFOPLIST_FILE.
-            'INFOPLIST_FILE': '<(gen_out_dir)/mozc_server_info',
+            'INFOPLIST_FILE': '<(gen_out_dir)/Info.plist',
           },
           'variables': {
             # This product name is used in postbuilds_mac.gypi.
@@ -226,15 +221,15 @@
             {
               'action_name': 'generate',
               'inputs': [
-                '../data/mac/mozc_server_info',
+                'Info.plist',
               ],
               'outputs': [
-                '<(gen_out_dir)/mozc_server_info',
+                '<(gen_out_dir)/Info.plist',
               ],
               'action': [
                 '<(python)', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/mozc_server_info',
-                '--input', '../data/mac/mozc_server_info',
+                '--output', '<(gen_out_dir)/Info.plist',
+                '--input', 'Info.plist',
                 '--version_file', '../mozc_version.txt',
                 '--branding', '<(branding)',
               ],

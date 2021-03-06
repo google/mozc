@@ -29,6 +29,8 @@
 
 #include "storage/louds/louds_trie.h"
 
+#include <cstdint>
+
 #include "base/logging.h"
 #include "base/port.h"
 #include "storage/louds/louds.h"
@@ -40,13 +42,13 @@ namespace storage {
 namespace louds {
 
 namespace {
-inline int32 ReadInt32(const uint8 *data) {
+inline int32_t ReadInt32(const uint8_t *data) {
   // TODO(noriyukit): static assertion for the endian.
-  return *reinterpret_cast<const int32 *>(data);
+  return *reinterpret_cast<const int32_t *>(data);
 }
 }  // namespace
 
-bool LoudsTrie::Open(const uint8 *image, size_t louds_lb0_cache_size,
+bool LoudsTrie::Open(const uint8_t *image, size_t louds_lb0_cache_size,
                      size_t louds_lb1_cache_size,
                      size_t louds_select0_cache_size,
                      size_t louds_select1_cache_size,
@@ -80,9 +82,9 @@ bool LoudsTrie::Open(const uint8 *image, size_t louds_lb0_cache_size,
   CHECK_EQ(num_character_bits, 8);
   CHECK_GT(edge_character_size, 0);
 
-  const uint8 *louds_image = image + 16;
-  const uint8 *terminal_image = louds_image + louds_size;
-  const uint8 *edge_character = terminal_image + terminal_size;
+  const uint8_t *louds_image = image + 16;
+  const uint8_t *terminal_image = louds_image + louds_size;
+  const uint8_t *edge_character = terminal_image + terminal_size;
 
   louds_.Init(louds_image, louds_size, louds_lb0_cache_size,
               louds_lb1_cache_size, louds_select0_cache_size,

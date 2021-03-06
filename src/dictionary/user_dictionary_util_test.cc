@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_util.h"
 
+#include <cstdint>
+
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -310,7 +312,7 @@ TEST(UserDictionaryUtilTest, GetUserDictionaryIndexById) {
 
 TEST(UserDictionaryUtilTest, CreateDictionary) {
   user_dictionary::UserDictionaryStorage storage;
-  uint64 dictionary_id;
+  uint64_t dictionary_id;
 
   // Check dictionary validity.
   EXPECT_EQ(UserDictionaryCommandStatus::DICTIONARY_NAME_EMPTY,

@@ -32,6 +32,7 @@
 #ifndef MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
 #define MOZC_SESSION_INTERNAL_CANDIDATE_LIST_H_
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -62,7 +63,7 @@ enum Attribute {
   LOWER = 64,
   CAPITALIZED = 128,
 };
-typedef uint32 Attributes;
+typedef uint32_t Attributes;
 
 class Candidate {
  public:
@@ -124,7 +125,7 @@ class CandidateList {
   int focused_id() const;
   size_t focused_index() const;
   int next_available_id() const;
-  void GetPageRange(size_t index, size_t *cand_begin, size_t *cand_end) const;
+  void GetPageRange(size_t index, size_t *page_begin, size_t *page_end) const;
 
   bool focused() const;
   void set_focused(bool focused);
@@ -162,7 +163,7 @@ class CandidateList {
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.
-  std::unique_ptr<std::map<uint64, int>> added_candidates_;
+  std::unique_ptr<std::map<uint64_t, int>> added_candidates_;
 
   // Id-to-id map.  The key and value ids have the same candidate
   // value.  (ex. {id:0, value:"kanji"} and {id:-5, value:"kanji"}).

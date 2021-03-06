@@ -30,6 +30,7 @@
 #ifndef MOZC_DATA_MANAGER_DATA_MANAGER_H_
 #define MOZC_DATA_MANAGER_DATA_MANAGER_H_
 
+#include <cstdint>
 #include <iosfwd>
 #include <string>
 #include <utility>
@@ -87,7 +88,7 @@ class DataManager : public DataManagerInterface {
                                         absl::string_view magic);
 
   // Implementation of DataManagerInterface.
-  const uint16 *GetPOSMatcherData() const override;
+  const uint16_t *GetPOSMatcherData() const override;
   void GetUserPOSData(absl::string_view *token_array_data,
                       absl::string_view *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
@@ -96,16 +97,16 @@ class DataManager : public DataManagerInterface {
   void GetCollocationSuppressionData(const char **array,
                                      size_t *size) const override;
   void GetSuggestionFilterData(const char **data, size_t *size) const override;
-  const uint8 *GetPosGroupData() const override;
+  const uint8_t *GetPosGroupData() const override;
   void GetSegmenterData(size_t *l_num_elements, size_t *r_num_elements,
-                        const uint16 **l_table, const uint16 **r_table,
+                        const uint16_t **l_table, const uint16_t **r_table,
                         size_t *bitarray_num_bytes, const char **bitarray_data,
-                        const uint16 **boundary_data) const override;
+                        const uint16_t **boundary_data) const override;
   void GetCounterSuffixSortedArray(const char **array,
                                    size_t *size) const override;
   void GetSuffixDictionaryData(absl::string_view *key_array_data,
                                absl::string_view *value_array_data,
-                               const uint32 **token_array) const override;
+                               const uint32_t **token_array) const override;
   void GetReadingCorrectionData(
       absl::string_view *value_array_data, absl::string_view *error_array_data,
       absl::string_view *correction_array_data) const override;

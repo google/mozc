@@ -29,6 +29,8 @@
 
 #include "ipc/process_watch_dog.h"
 
+#include <cstdint>
+
 #include "base/clock.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -37,14 +39,14 @@
 
 namespace mozc {
 namespace {
-uint64 g_current_time = 0;
+uint64_t g_current_time = 0;
 }
 
 class TestProcessWatchDog : public ProcessWatchDog {
  public:
   void Signaled(ProcessWatchDog::SignalType type) {
     EXPECT_EQ(type, ProcessWatchDog::PROCESS_SIGNALED);
-    const uint64 diff = Clock::GetTime() - g_current_time;
+    const uint64_t diff = Clock::GetTime() - g_current_time;
     EXPECT_EQ(2, diff);  // allow 1-sec error
   }
 };

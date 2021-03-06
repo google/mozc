@@ -31,6 +31,7 @@
 #define MOZC_CONVERTER_CONVERTER_UTIL_H_
 
 #include <string>
+
 #include "base/port.h"
 
 namespace mozc {
