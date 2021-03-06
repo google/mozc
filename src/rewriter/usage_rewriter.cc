@@ -47,7 +47,6 @@
 #include "rewriter/usage_rewriter.h"
 
 using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::POSMatcher;
 
 namespace mozc {
 

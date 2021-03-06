@@ -76,7 +76,6 @@ namespace {
 
 using mozc::commands::Request;
 using mozc::config::Config;
-using mozc::config::ConfigHandler;
 
 const size_t kDefaultMaxHistorySize = 3;
 

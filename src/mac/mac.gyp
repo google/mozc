@@ -430,48 +430,6 @@
           ],
         },
         {
-          'target_name': 'gen_launchd_confs',
-          'type': 'none',
-          'actions': [
-            {
-              'action_name': 'tweak_converter_launchd_conf',
-              'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Converter.plist', ],
-              'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist' ],
-              'action': [
-                '<(python)', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Converter.plist',
-                '--input', '../data/mac/com.google.inputmethod.Japanese.Converter.plist',
-                '--version_file', '../mozc_version.txt',
-                '--branding', '<(branding)',
-              ],
-            },
-            {
-              'action_name': 'tweak_renderer_launchd_conf',
-              'inputs': [ '../data/mac/com.google.inputmethod.Japanese.Renderer.plist', ],
-              'outputs': [ '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist' ],
-              'action': [
-                '<(python)', '../build_tools/tweak_info_plist.py',
-                '--output', '<(gen_out_dir)/<(domain_prefix).inputmethod.Japanese.Renderer.plist',
-                '--input', '../data/mac/com.google.inputmethod.Japanese.Renderer.plist',
-                '--version_file', '../mozc_version.txt',
-                '--branding', '<(branding)',
-              ],
-            },
-          ],
-          'conditions': [
-            ['branding=="GoogleJapaneseInput"', {
-              'variables': {
-                'domain_prefix': 'com.google',
-              },
-            }, # else
-            {
-              'variables': {
-                'domain_prefix': 'org.mozc',
-              },
-            }],
-          ],
-        },
-        {
           'target_name': 'gen_packproj_files',
           'type': 'none',
           'actions': [
@@ -554,7 +512,6 @@
             'GoogleJapaneseInput',
             'UninstallGoogleJapaneseInput',
             'gen_packproj_files',
-            'gen_launchd_confs',
           ],
           'conditions': [
             ['branding=="GoogleJapaneseInput"', {

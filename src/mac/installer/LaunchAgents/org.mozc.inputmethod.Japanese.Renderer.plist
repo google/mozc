@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>Program</key>
-	<string>/Library/Input Methods/${BRANDING}.app/Contents/Resources/${BRANDING}Renderer.app/Contents/MacOS/${BRANDING}Renderer</string>
+	<string>/Library/Input Methods/Mozc.app/Contents/Resources/MozcRenderer.app/Contents/MacOS/MozcRenderer</string>
 	<key>Label</key>
-	<string>${DOMAIN_PREFIX}.inputmethod.Japanese.Renderer</string>
+	<string>org.mozc.inputmethod.Japanese.Renderer</string>
 	<key>MachServices</key>
 	<dict>
-		<key>${DOMAIN_PREFIX}.inputmethod.Japanese.Renderer.renderer</key>
+		<key>org.mozc.inputmethod.Japanese.Renderer.renderer</key>
 		<true/>
 	</dict>
 	<key>KeepAlive</key>

@@ -41,7 +41,6 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
 
-using ::testing::AssertionFailure;
 using ::testing::AssertionSuccess;
 
 namespace mozc {
