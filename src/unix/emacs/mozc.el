@@ -874,8 +874,8 @@ Symbol `overlay' and `echo-area' are currently supported.
 
 overlay   - Shows a candidate window in box style close to the point.
 echo-area - Shows a candidate list in the echo area."
-  :type '(choice (symbol :tag "overlaid box style" 'overlay)
-                 (symbol :tag "single line in echo area" 'echo-area))
+  :type '(choice (symbol :tag "overlaid box style" overlay)
+                 (symbol :tag "single line in echo area" echo-area))
   :group 'mozc)
 
 (defvar mozc-candidate-dispatch-table
@@ -1783,56 +1783,54 @@ The preedit method is taken from the server side configuration.")
                       (symbol-value keymap-name))))
     (and (hash-table-p keymap) keymap)))
 
+;; Utility functions to configure keymaps
 ;;;###autoload
-(defun mozc-keymap-make-keymap ()
-  "Create a new empty keymap and return it."
-  (make-hash-table :size 128 :test #'eq))
+(progn  ; Put the function definitions into the autoload file.
+  (defun mozc-keymap-make-keymap ()
+    "Create a new empty keymap and return it."
+    (make-hash-table :size 128 :test #'eq))
 
-;;;###autoload
-(defun mozc-keymap-make-keymap-from-flat-list (list)
-  "Create a new keymap and fill it with entries in LIST.
+  (defun mozc-keymap-make-keymap-from-flat-list (list)
+    "Create a new keymap and fill it with entries in LIST.
 LIST must be a flat list which contains keys and mapped strings alternately."
-  (mozc-keymap-fill-entries-from-flat-list (mozc-keymap-make-keymap) list))
+    (mozc-keymap-fill-entries-from-flat-list (mozc-keymap-make-keymap) list))
 
-;;;###autoload
-(defun mozc-keymap-fill-entries-from-flat-list (keymap list)
-  "Fill KEYMAP with entries in LIST and return KEYMAP.
+  (defun mozc-keymap-fill-entries-from-flat-list (keymap list)
+    "Fill KEYMAP with entries in LIST and return KEYMAP.
 KEYMAP must be a key table from keycodes to mapped strings.
 LIST must be a flat list which contains keys and mapped strings alternately."
-  (if (not (and (car list) (cadr list)))
-      keymap  ; Return the keymap.
-    (mozc-keymap-put-entry keymap (car list) (cadr list))
-    (mozc-keymap-fill-entries-from-flat-list keymap (cddr list))))
+    (if (not (and (car list) (cadr list)))
+        keymap  ; Return the keymap.
+      (mozc-keymap-put-entry keymap (car list) (cadr list))
+      (mozc-keymap-fill-entries-from-flat-list keymap (cddr list))))
 
-;;;###autoload
-(defun mozc-keymap-get-entry (keymap keycode &optional default)
-  "Return a mapped string if the entry for the keycode exists.
+  (defun mozc-keymap-get-entry (keymap keycode &optional default)
+    "Return a mapped string if the entry for the keycode exists.
 Otherwise, the default value, which must be a string.
 KEYMAP must be a key table from keycodes to mapped strings.
 KEYCODE must be an integer representing a key code to look up.
 DEFAULT is returned if it's a string and no entry for KEYCODE is found."
-  (let ((value (and (hash-table-p keymap)
-                    (gethash keycode keymap default))))
-    (and (stringp value) value)))
+    (let ((value (and (hash-table-p keymap)
+                      (gethash keycode keymap default))))
+      (and (stringp value) value)))
 
-;;;###autoload
-(defun mozc-keymap-put-entry (keymap keycode mapped-string)
-  "Add a new key mapping to a keymap.
+  (defun mozc-keymap-put-entry (keymap keycode mapped-string)
+    "Add a new key mapping to a keymap.
 KEYMAP must be a key table from keycodes to mapped strings.
 KEYCODE must be an integer representing a key code.
 MAPPED-STRING must be a string representing a preedit string to be inserted."
-  (when (and (hash-table-p keymap)
-             (integerp keycode) (stringp mapped-string))
-    (puthash keycode mapped-string keymap)
-    (cons keycode mapped-string)))
+    (when (and (hash-table-p keymap)
+               (integerp keycode) (stringp mapped-string))
+      (puthash keycode mapped-string keymap)
+      (cons keycode mapped-string)))
 
-;;;###autoload
-(defun mozc-keymap-remove-entry (keymap keycode)
-  "Remove an entry from a keymap.  If no entry for keycode exists, do nothing.
+  (defun mozc-keymap-remove-entry (keymap keycode)
+    "Remove an entry from a keymap.  If no entry for keycode exists, do nothing.
 KEYMAP must be a key table from keycodes to mapped strings.
 KEYCODE must be an integer representing a key code to remove."
-  (when (hash-table-p keymap)
-    (remhash keycode keymap)))
+    (when (hash-table-p keymap)
+      (remhash keycode keymap)))
+  )
 
 ;;;###autoload
 (defvar mozc-keymap-kana-106jp
@@ -1961,46 +1959,41 @@ CONDITIONS is a list of error conditions and shouldn't include symbol `error',
 
 (require 'mule nil t)
 
-(defun mozc-leim-activate (input-method)
-  "Activate function `mozc-mode' via LEIM.
-INPUT-METHOD is not used."
-  (let ((new 'deactivate-current-input-method-function)
-        (old 'inactivate-current-input-method-function))
-    ;; `inactivate-current-input-method-function' is deprecated
-    ;; since Emacs 24.3.
-    (set (if (boundp new) new old) #'mozc-leim-deactivate))
-  (mozc-mode t))
-
-(defun mozc-leim-deactivate ()
-  "Deactivate function `mozc-mode' via LEIM."
-  (mozc-mode nil))
-
-(defcustom mozc-leim-title "[Mozc]"
-  "Mode line string shown when function `mozc-mode' is enabled.
+;;;###autoload
+(progn  ; Put the program code into the autoload file.
+  (defcustom mozc-leim-title "[Mozc]"
+    "Mode line string shown when function `mozc-mode' is enabled.
 This indicator is not shown when you don't use LEIM."
-  :type '(choice (const :tag "No indicator" nil)
-                 (string :tag "Show an indicator"))
-  :group 'mozc)
+    :type '(choice (const :tag "No indicator" nil)
+                   (string :tag "Show an indicator"))
+    :group 'mozc)
 
-(defun mozc-leim-register-input-method ()
-  "Register function `mozc-mode' as an input method of LEIM.
+  (defun mozc-leim-register-input-method ()
+    "Register function `mozc-mode' as an input method of LEIM.
 Do nothing if LEIM is not available."
-  (if (fboundp #'register-input-method)
-      (register-input-method
-       "japanese-mozc"
-       "Japanese"
-       #'mozc-leim-activate
-       mozc-leim-title
-       "Japanese input method with Mozc.")))
+    (if (fboundp #'register-input-method)
+        (register-input-method
+         "japanese-mozc"
+         "Japanese"
+         (lambda (input-method)
+           ;; `inactivate-current-input-method-function' is deprecated
+           ;; since Emacs 24.3.
+           (let ((new 'deactivate-current-input-method-function)
+                 (old 'inactivate-current-input-method-function))
+             (set (if (boundp new) new old)
+                  (lambda () (mozc-mode nil))))
+           (mozc-mode t))
+         mozc-leim-title
+         "Japanese input method with Mozc.")))
 
-;; Register mozc-mode as an input method after the init file has been read
-;; so the user has a chance to specify `mozc-leim-title' in the init file
-;; after loading this file.
-(add-hook 'emacs-startup-hook #'mozc-leim-register-input-method)
-;; In the case that `emacs-startup-hook' has already been run, especially
-;; when the user loads this file interactively, register immediately.
-(mozc-leim-register-input-method)
-
+  ;; Register mozc-mode as an input method after the init file has been read
+  ;; so the user has a chance to specify `mozc-leim-title' in the init file
+  ;; after loading this file.
+  (add-hook 'emacs-startup-hook #'mozc-leim-register-input-method)
+  ;; In the case that `emacs-startup-hook' has already been run, especially
+  ;; when the user loads this file interactively, register immediately.
+  (mozc-leim-register-input-method)
+  )
 
 
 (provide 'mozc)
