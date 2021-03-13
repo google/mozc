@@ -49,7 +49,7 @@ def RunOrDie(command):
     output = subprocess.check_output(command, shell=True)
     print("==========", file=sys.stderr)
     print("COMMAND: " + command, file=sys.stderr)
-    print(output, file=sys.stderr)
+    print(output.decode("utf-8"), file=sys.stderr)
   except subprocess.CalledProcessError as e:
     print("==========", file=sys.stderr)
     print("ERROR: " + command, file=sys.stderr)

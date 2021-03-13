@@ -46,7 +46,7 @@ class FontSpecMock : public FontSpecInterface {
               (const));
   MOCK_METHOD(const PangoFontDescription *, GetFontDescription,
               (FONT_TYPE font_type), (const));
-  MOCK_METHOD(void, Reload, (const string &font_description));
+  MOCK_METHOD(void, Reload, (const std::string &font_description));
 };
 
 class PangoWrapperMock : public PangoWrapperInterface {
@@ -60,7 +60,7 @@ class PangoWrapperMock : public PangoWrapperInterface {
 
 class PangoLayoutWrapperMock : public PangoLayoutWrapperInterface {
  public:
-  MOCK_METHOD(void, SetText, (const string &text));
+  MOCK_METHOD(void, SetText, (const std::string &text));
   MOCK_METHOD(void, SetAlignment, (PangoAlignment align));
   MOCK_METHOD(void, SetAttributes, (PangoAttrList* attr));
   MOCK_METHOD(void, SetFontDescription,
@@ -90,7 +90,7 @@ TEST_F(TextRendererTest, GetPixelSizeTest) {
   TextRenderer text_renderer(font_spec_mock);
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
 
-  const string text = "hogehoge";
+  const std::string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
   PangoAlignment align = PANGO_ALIGN_CENTER;
   PangoAttrList *attributes = reinterpret_cast<PangoAttrList *>(0xabcdef01);
@@ -138,7 +138,7 @@ TEST_F(TextRendererTest, GetMultilinePixelSizeTest) {
   TextRenderer text_renderer(font_spec_mock);
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
 
-  const string text = "hogehoge";
+  const std::string text = "hogehoge";
   PangoLayoutWrapperMock layout_mock;
   PangoAlignment align = PANGO_ALIGN_CENTER;
   PangoAttrList *attributes = reinterpret_cast<PangoAttrList *>(0xabcdef01);
@@ -190,7 +190,7 @@ TEST_F(TextRendererTest, RenderTextTest) {
   PangoWrapperMock *pango_mock = SetUpPangoMock(&text_renderer);
   PangoLayoutWrapperMock layout_mock;
 
-  const string text = "hogehoge";
+  const std::string text = "hogehoge";
   Rect rect(10, 20, 30, 40);
   Size size(12, 34);
   PangoAlignment align = PANGO_ALIGN_CENTER;

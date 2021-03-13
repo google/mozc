@@ -56,7 +56,7 @@ class KeyTranslator {
  private:
   typedef std::map<guint, commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<guint, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<guint, std::pair<string, std::string> > KanaMap;
+  typedef std::map<guint, std::pair<std::string, std::string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(guint keyval, guint keycode, guint modifiers) const;

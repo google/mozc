@@ -55,7 +55,7 @@ class FontSpecInterface {
   FontSpecInterface() {}
   virtual ~FontSpecInterface() {}
 
-  virtual void Reload(const string &font_description) = 0;
+  virtual void Reload(const std::string &font_description) = 0;
   virtual PangoAlignment GetFontAlignment(FONT_TYPE font_type) const = 0;
   // The FontSpec takes the ownership of returned PangoAttrList* instance even
   // this function returns non-const value. This is due to API restriction which

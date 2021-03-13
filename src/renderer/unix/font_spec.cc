@@ -73,7 +73,7 @@ FontSpec::~FontSpec() {
   }
 }
 
-void FontSpec::Reload(const string &font_description) {
+void FontSpec::Reload(const std::string &font_description) {
   if (!is_initialized_) {
     ReleaseFontSpec();
   }
@@ -91,7 +91,7 @@ void FontSpec::ReleaseFontSpec() {
   }
 }
 
-void FontSpec::LoadFontSpec(const string &font_description) {
+void FontSpec::LoadFontSpec(const std::string &font_description) {
   if (is_initialized_) {
     LOG(WARNING) << "Font spec is already loaded. reloading...";
     ReleaseFontSpec();

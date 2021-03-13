@@ -47,14 +47,15 @@ class TextRendererInterface {
   virtual void Initialize(GdkDrawable *drawable) = 0;
   // Returns boundary rectangle size of actual rendered text.
   virtual Size GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
-                            const string &str) = 0;
+                            const std::string &str) = 0;
   virtual Size GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                     const string &str, const int width) = 0;
+                                     const std::string &str,
+                                     const int width) = 0;
 
-  virtual void RenderText(const string &text, const Rect &rect,
+  virtual void RenderText(const std::string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type) = 0;
 
-  virtual void ReloadFontConfig(const string &font_description) = 0;
+  virtual void ReloadFontConfig(const std::string &font_description) = 0;
 };
 
 }  // namespace gtk

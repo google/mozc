@@ -47,7 +47,7 @@ namespace renderer {
 namespace gtk {
 
 namespace {
-string GetIndexGuideString(const commands::Candidates &candidates) {
+std::string GetIndexGuideString(const commands::Candidates &candidates) {
   if (!candidates.has_footer() || !candidates.footer().index_visible()) {
     return "";
   }
@@ -141,7 +141,7 @@ void CandidateWindow::DrawSelectedRect() {
 void CandidateWindow::DrawCells() {
   for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates_.candidate(i);
-    string shortcut, value, description;
+    std::string shortcut, value, description;
 
     GetDisplayString(candidate, &shortcut, &value, &description);
 
@@ -202,7 +202,7 @@ void CandidateWindow::DrawFooterIndex(Rect *footer_content_rect) {
     return;
   }
 
-  const string index_guide_string = GetIndexGuideString(candidates_);
+  const std::string index_guide_string = GetIndexGuideString(candidates_);
   const Size index_guide_size = text_renderer_->GetPixelSize(
       FontSpec::FONTSET_FOOTER_INDEX, index_guide_string);
   // Render as right-aligned.
@@ -324,11 +324,11 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
   for (size_t i = 0; i < candidates_.candidate_size(); ++i) {
     const commands::Candidates::Candidate &candidate = candidates_.candidate(i);
 
-    string shortcut, description, candidate_string;
+    std::string shortcut, description, candidate_string;
     GetDisplayString(candidate, &shortcut, &candidate_string, &description);
 
     if (!shortcut.empty()) {
-      string text;
+      std::string text;
       text.push_back(' ');
       text.append(shortcut);
       text.push_back(' ');
@@ -344,7 +344,7 @@ void CandidateWindow::UpdateCandidatesSize(bool *has_description) {
     }
 
     if (!description.empty()) {
-      string text;
+      std::string text;
       text.append(description);
       text.push_back(' ');
       const Size rendering_size =
@@ -390,8 +390,8 @@ Size CandidateWindow::Update(const commands::Candidates &candidates) {
 }
 
 void CandidateWindow::GetDisplayString(
-    const commands::Candidates::Candidate &candidate, string *shortcut,
-    string *value, string *description) {
+    const commands::Candidates::Candidate &candidate, std::string *shortcut,
+    std::string *value, std::string *description) {
   DCHECK(shortcut);
   DCHECK(value);
   DCHECK(description);
@@ -472,7 +472,7 @@ bool CandidateWindow::SetSendCommandInterface(
   return true;
 }
 
-void CandidateWindow::ReloadFontConfig(const string &font_description) {
+void CandidateWindow::ReloadFontConfig(const std::string &font_description) {
   text_renderer_->ReloadFontConfig(font_description);
 }
 

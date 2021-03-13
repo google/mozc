@@ -55,7 +55,7 @@ class UnixServer : public RendererServer {
 
   virtual void AsyncHide();
   virtual void AsyncQuit();
-  virtual bool AsyncExecCommand(string *proto_message);
+  virtual bool AsyncExecCommand(std::string *proto_message);
   virtual int StartMessageLoop();
 
   virtual bool Render();
@@ -63,7 +63,7 @@ class UnixServer : public RendererServer {
   void OpenPipe();
 
  private:
-  string message_;
+  std::string message_;
   Mutex mutex_;
   std::unique_ptr<GtkWrapperInterface> gtk_;
 

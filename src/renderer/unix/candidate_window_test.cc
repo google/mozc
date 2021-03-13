@@ -103,7 +103,7 @@ void SetTestCandidates(uint32 count, bool has_value, bool has_shortcut,
     candidate->set_index(i);
     candidate->set_id(i * 0x10);
 
-    const string id_str = std::to_string(i);
+    const std::string id_str = std::to_string(i);
 
     if (has_value) {
       candidate->set_value(kSampleValue + id_str);
@@ -129,13 +129,13 @@ void SetTestCandidates(uint32 count, bool has_value, bool has_shortcut,
   }
 }
 
-string GetExpectedValue(int index, bool has_prefix, bool has_suffix) {
-  string result;
+std::string GetExpectedValue(int index, bool has_prefix, bool has_suffix) {
+  std::string result;
 
-  const string id_str = std::to_string(index);
-  const string expected_prefix = kSamplePrefix + id_str;
-  const string expected_value = kSampleValue + id_str;
-  const string expected_suffix = kSampleSuffix + id_str;
+  const std::string id_str = std::to_string(index);
+  const std::string expected_prefix = kSamplePrefix + id_str;
+  const std::string expected_value = kSampleValue + id_str;
+  const std::string expected_suffix = kSampleSuffix + id_str;
   if (has_prefix) {
     result.append(expected_prefix);
   }
@@ -146,13 +146,13 @@ string GetExpectedValue(int index, bool has_prefix, bool has_suffix) {
   return result;
 }
 
-string GetExpectedShortcut(int index) {
-  const string id_str = std::to_string(index);
+std::string GetExpectedShortcut(int index) {
+  const std::string id_str = std::to_string(index);
   return kSampleShortcut + id_str;
 }
 
-string GetExpectedDescription(int index) {
-  const string id_str = std::to_string(index);
+std::string GetExpectedDescription(int index) {
+  const std::string id_str = std::to_string(index);
   return kSampleDescription + id_str;
 }
 
@@ -456,11 +456,11 @@ TEST_F(CandidateWindowTest, DrawSelectedRectTest) {
 }
 
 TEST_F(CandidateWindowTest, GetDisplayStringTest) {
-  string expected_prefixed_value = kSamplePrefix;
+  std::string expected_prefixed_value = kSamplePrefix;
   expected_prefixed_value.append(kSampleValue);
-  string expected_suffixed_value = kSampleValue;
+  std::string expected_suffixed_value = kSampleValue;
   expected_suffixed_value.append(kSampleSuffix);
-  string expected_presuffixed_value = kSamplePrefix;
+  std::string expected_presuffixed_value = kSamplePrefix;
   expected_presuffixed_value.append(kSampleValue);
   expected_presuffixed_value.append(kSampleSuffix);
 
@@ -468,7 +468,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     SCOPED_TRACE("Candidate does not have value.");
     commands::Candidates::Candidate candidate;
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -482,7 +482,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     commands::Candidates::Candidate candidate;
     candidate.set_value(kSampleValue);
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -498,7 +498,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     candidate.set_value(kSampleValue);
     annotation->set_shortcut(kSampleShortcut);
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -513,7 +513,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     candidate.set_value(kSampleValue);
     annotation->set_prefix(kSamplePrefix);
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -528,7 +528,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     candidate.set_value(kSampleValue);
     annotation->set_suffix(kSampleSuffix);
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -544,7 +544,7 @@ TEST_F(CandidateWindowTest, GetDisplayStringTest) {
     annotation->set_prefix(kSamplePrefix);
     annotation->set_suffix(kSampleSuffix);
 
-    string value, shortcut, description;
+    std::string value, shortcut, description;
     CandidateWindow::GetDisplayString(candidate, &shortcut, &value,
                                       &description);
 
@@ -1013,7 +1013,7 @@ TEST_F(CandidateWindowTest, DrawFooterIndexTest) {
     const int total_items = 7;
     std::stringstream footer_string;
     footer_string << focused_index + 1 << "/" << total_items << " ";
-    const string index_guide_string = footer_string.str();
+    const std::string index_guide_string = footer_string.str();
     const Size index_guide_size(10, 20);
     const Rect index_rect(
         original_footer_content_area.Right() - index_guide_size.width,
@@ -1074,7 +1074,7 @@ TEST_F(CandidateWindowTest, DrawFooterLabelTest) {
     CandidateWindowTestKit testkit = SetUpCandidateWindow();
     const Rect footer_content_area(10, 20, 30, 40);
 
-    const string label_str = "LABEL";
+    const std::string label_str = "LABEL";
     testkit.window->candidates_.mutable_footer()->set_label(label_str);
     EXPECT_CALL(*testkit.text_renderer_mock,
                 RenderText(label_str, RectEq(footer_content_area),
@@ -1088,7 +1088,7 @@ TEST_F(CandidateWindowTest, DrawFooterLabelTest) {
     CandidateWindowTestKit testkit = SetUpCandidateWindow();
     const Rect footer_content_area(10, 20, 30, 40);
 
-    const string sub_label_str = "SUBLABEL";
+    const std::string sub_label_str = "SUBLABEL";
     testkit.window->candidates_.mutable_footer()->set_sub_label(sub_label_str);
     EXPECT_CALL(*testkit.text_renderer_mock,
                 RenderText(sub_label_str, RectEq(footer_content_area),
@@ -1102,8 +1102,8 @@ TEST_F(CandidateWindowTest, DrawFooterLabelTest) {
     CandidateWindowTestKit testkit = SetUpCandidateWindow();
     const Rect footer_content_area(10, 20, 30, 40);
 
-    const string label_str = "LABEL";
-    const string sub_label_str = "SUBLABEL";
+    const std::string label_str = "LABEL";
+    const std::string sub_label_str = "SUBLABEL";
     testkit.window->candidates_.mutable_footer()->set_label(label_str);
     testkit.window->candidates_.mutable_footer()->set_sub_label(sub_label_str);
     EXPECT_CALL(*testkit.text_renderer_mock,
@@ -1170,7 +1170,7 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
                       &testkit.window->candidates_);
 
     for (int i = 0; i < candidate_count; ++i) {
-      const string expected_value = GetExpectedValue(i, true, true);
+      const std::string expected_value = GetExpectedValue(i, true, true);
       const Size value_size(10 * i, 20 * i);
       EXPECT_CALL(
           *testkit.text_renderer_mock,
@@ -1195,13 +1195,13 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
                       &testkit.window->candidates_);
 
     for (int i = 0; i < candidate_count; ++i) {
-      const string expected_value = GetExpectedValue(i, true, true);
+      const std::string expected_value = GetExpectedValue(i, true, true);
 
       // Shortcut string is padded with one spacing character.
       std::stringstream shortcut_stream;
       shortcut_stream << " " << GetExpectedShortcut(i) << " ";
 
-      const string expected_shortcut = shortcut_stream.str();
+      const std::string expected_shortcut = shortcut_stream.str();
       const Size value_size(10 * i, 20 * i);
       const Size shortcut_size(11 * i, 21 * i);
       EXPECT_CALL(
@@ -1235,13 +1235,13 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
                       &testkit.window->candidates_);
 
     for (int i = 0; i < candidate_count; ++i) {
-      const string expected_value = GetExpectedValue(i, true, true);
+      const std::string expected_value = GetExpectedValue(i, true, true);
 
       // Description string is end-padded with one spacing character.
       std::stringstream description_stream;
       description_stream << GetExpectedDescription(i) << " ";
 
-      const string expected_description = description_stream.str();
+      const std::string expected_description = description_stream.str();
       const Size value_size(10 * i, 20 * i);
       const Size description_size(11 * i, 21 * i);
       EXPECT_CALL(
@@ -1275,17 +1275,17 @@ TEST_F(CandidateWindowTest, UpdateCandidatesSizeTest) {
                       &testkit.window->candidates_);
 
     for (int i = 0; i < candidate_count; ++i) {
-      const string expected_value = GetExpectedValue(i, true, true);
+      const std::string expected_value = GetExpectedValue(i, true, true);
 
       // Shortcut string is padded with one spacing character.
       std::stringstream shortcut_stream;
       shortcut_stream << " " << GetExpectedShortcut(i) << " ";
-      const string expected_shortcut = shortcut_stream.str();
+      const std::string expected_shortcut = shortcut_stream.str();
 
       // Description string is end-padded with one spacing character.
       std::stringstream description_stream;
       description_stream << GetExpectedDescription(i) << " ";
-      const string expected_description = description_stream.str();
+      const std::string expected_description = description_stream.str();
 
       const Size value_size(10 * i, 20 * i);
       const Size description_size(11 * i, 21 * i);

@@ -48,14 +48,14 @@ class FontSpec : public FontSpecInterface {
   explicit FontSpec(GtkWrapperInterface *gtk);
   virtual ~FontSpec();
 
-  virtual void Reload(const string &font_description);
+  virtual void Reload(const std::string &font_description);
   virtual PangoAlignment GetFontAlignment(FONT_TYPE font_type) const;
   virtual PangoAttrList *GetFontAttributes(FONT_TYPE font_type) const;
   virtual const PangoFontDescription *GetFontDescription(
       FONT_TYPE font_type) const;
 
  protected:
-  void LoadFontSpec(const string &font_description);
+  void LoadFontSpec(const std::string &font_description);
   void ReleaseFontSpec();
   std::vector<FontInfo> fonts_;
   bool is_initialized_;
