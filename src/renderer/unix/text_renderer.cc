@@ -44,7 +44,7 @@ void TextRenderer::Initialize(GdkDrawable *drawable) {
   pango_.reset(new PangoWrapper(drawable));
 }
 
-void TextRenderer::SetUpPangoLayout(const string &str,
+void TextRenderer::SetUpPangoLayout(const std::string &str,
                                     FontSpecInterface::FONT_TYPE font_type,
                                     PangoLayoutWrapperInterface *layout) {
   PangoAttrList *attributes =
@@ -57,39 +57,40 @@ void TextRenderer::SetUpPangoLayout(const string &str,
 }
 
 Size TextRenderer::GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                const string &str) {
+                                const std::string &str) {
   PangoLayoutWrapper layout(pango_->GetContext());
   return GetPixelSizeInternal(font_type, str, &layout);
 }
 
 Size TextRenderer::GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
-                                        const string &str,
+                                        const std::string &str,
                                         PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(str, font_type, layout);
   return layout->GetPixelSize();
 }
 
 Size TextRenderer::GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                         const string &str, const int width) {
+                                         const std::string &str,
+                                         const int width) {
   PangoLayoutWrapper layout(pango_->GetContext());
   return GetMultiLinePixelSizeInternal(font_type, str, width, &layout);
 }
 
 Size TextRenderer::GetMultiLinePixelSizeInternal(
-    FontSpecInterface::FONT_TYPE font_type, const string &str, const int width,
-    PangoLayoutWrapperInterface *layout) {
+    FontSpecInterface::FONT_TYPE font_type, const std::string &str,
+    const int width, PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(str, font_type, layout);
   layout->SetWidth(width * PANGO_SCALE);
   return layout->GetPixelSize();
 }
 
-void TextRenderer::RenderText(const string &text, const Rect &rect,
+void TextRenderer::RenderText(const std::string &text, const Rect &rect,
                               FontSpecInterface::FONT_TYPE font_type) {
   PangoLayoutWrapper layout(pango_->GetContext());
   RenderTextInternal(text, rect, font_type, &layout);
 }
 
-void TextRenderer::RenderTextInternal(const string &text, const Rect &rect,
+void TextRenderer::RenderTextInternal(const std::string &text, const Rect &rect,
                                       FontSpecInterface::FONT_TYPE font_type,
                                       PangoLayoutWrapperInterface *layout) {
   SetUpPangoLayout(text, font_type, layout);
@@ -104,7 +105,7 @@ void TextRenderer::RenderTextInternal(const string &text, const Rect &rect,
                              (rect.origin.y + delta_y) * PANGO_SCALE);
 }
 
-void TextRenderer::ReloadFontConfig(const string &font_description) {
+void TextRenderer::ReloadFontConfig(const std::string &font_description) {
   font_spec_->Reload(font_description);
 }
 }  // namespace gtk

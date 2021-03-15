@@ -61,11 +61,11 @@ class GtkWindowMock : public GtkWindowInterface {
   MOCK_METHOD(Rect, GetCandidateColumnInClientCord, (), (const));
   MOCK_METHOD(bool, SetSendCommandInterface,
               (client::SendCommandInterface* send_command_interface));
-  MOCK_METHOD(void, ReloadFontConfig, (const string &font_description));
+  MOCK_METHOD(void, ReloadFontConfig, (const std::string &font_description));
 };
 
 }  // namespace gtk
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_UNIX_GTK_WINDOW_INTERFACE_H_
+#endif  // MOZC_RENDERER_UNIX_GTK_WINDOW_MOCK_H_

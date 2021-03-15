@@ -88,7 +88,7 @@ class GtkWindowBase : public GtkWindowInterface {
   virtual void OnMouseLeftDown(const Point &pos);
   virtual void OnMouseRightUp(const Point &pos);
   virtual void OnMouseRightDown(const Point &pos);
-  virtual void ReloadFontConfig(const string &font_description);
+  virtual void ReloadFontConfig(const std::string &font_description);
 
   virtual bool SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);

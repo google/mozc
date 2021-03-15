@@ -219,7 +219,7 @@ void GtkCandidateWindowHandler::RegisterGSettingsObserver() {
   settings_observer_.reset(new GSettingsObserver(this));
 }
 
-string GtkCandidateWindowHandler::GetFontDescription() const {
+std::string GtkCandidateWindowHandler::GetFontDescription() const {
   if (!use_custom_font_description_) {
     // TODO(nona): Load application default font settings.
     return kDefaultFont;

@@ -41,14 +41,14 @@ class TextRendererMock : public TextRendererInterface {
  public:
   MOCK_METHOD(void, Initialize, (GdkDrawable* drawable));
   MOCK_METHOD(Size, GetPixelSize,
-              (FontSpecInterface::FONT_TYPE font_type, const string &str));
+              (FontSpecInterface::FONT_TYPE font_type, const std::string &str));
   MOCK_METHOD(Size, GetMultiLinePixelSize,
-              (FontSpecInterface::FONT_TYPE font_type, const string &str,
+              (FontSpecInterface::FONT_TYPE font_type, const std::string &str,
                const int width));
   MOCK_METHOD(void, RenderText,
-              (const string &text, const Rect &rect,
+              (const std::string &text, const Rect &rect,
                FontSpecInterface::FONT_TYPE font_type));
-  MOCK_METHOD(void, ReloadFontConfig, (const string &font_description));
+  MOCK_METHOD(void, ReloadFontConfig, (const std::string &font_description));
 };
 
 }  // namespace gtk

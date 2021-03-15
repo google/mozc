@@ -151,7 +151,7 @@ void InfolistWindow::Draw() {
 }
 
 void InfolistWindow::GetRenderingRects(
-    const renderer::RendererStyle::TextStyle &style, const string &text,
+    const renderer::RendererStyle::TextStyle &style, const std::string &text,
     FontSpec::FONT_TYPE font_type, int top, Rect *background_rect,
     Rect *textarea_rect) {
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
@@ -241,7 +241,7 @@ void InfolistWindow::Initialize() {
   text_renderer_->Initialize(GetCanvasWidget()->window);
 }
 
-void InfolistWindow::ReloadFontConfig(const string &font_description) {
+void InfolistWindow::ReloadFontConfig(const std::string &font_description) {
   text_renderer_->ReloadFontConfig(font_description);
 }
 

@@ -168,7 +168,7 @@ bool GtkWindowBase::SetSendCommandInterface(
   return true;
 }
 
-void GtkWindowBase::ReloadFontConfig(const string &font_description) {
+void GtkWindowBase::ReloadFontConfig(const std::string &font_description) {
   // do nothing.
 }
 

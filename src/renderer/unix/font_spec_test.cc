@@ -75,7 +75,7 @@ class FontSpecTest : public testing::Test {
   }
 
   void ExpectFontDescription(const TestableFontSpec &font_spec,
-                             const string &expected,
+                             const std::string &expected,
                              FontSpecInterface::FONT_TYPE font_type) {
     EXPECT_EQ(expected, pango_font_description_to_string(
                             font_spec.GetFontDescription(font_type)));

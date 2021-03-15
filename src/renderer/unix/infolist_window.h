@@ -62,7 +62,7 @@ class InfolistWindow : public GtkWindowBase {
   virtual void Initialize();
   // This function is not used in infolist window.
   virtual Rect GetCandidateColumnInClientCord() const;
-  virtual void ReloadFontConfig(const string &font_description);
+  virtual void ReloadFontConfig(const std::string &font_description);
 
  protected:
   virtual bool OnPaint(GtkWidget *widget, GdkEventExpose *event);
@@ -93,7 +93,7 @@ class InfolistWindow : public GtkWindowBase {
   // Calculate background and text displaying area based on style, text font and
   // top position.
   void GetRenderingRects(const renderer::RendererStyle::TextStyle &style,
-                         const string &text,
+                         const std::string &text,
                          FontSpecInterface::FONT_TYPE font_type, int top,
                          Rect *background_rect, Rect *textarea_rect);
 

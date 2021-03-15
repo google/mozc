@@ -41,7 +41,7 @@ class PangoLayoutWrapper : public PangoLayoutWrapperInterface {
  public:
   explicit PangoLayoutWrapper(PangoContext *context);
   virtual ~PangoLayoutWrapper();
-  virtual void SetText(const string &text);
+  virtual void SetText(const std::string &text);
   virtual void SetAlignment(PangoAlignment align);
   virtual void SetAttributes(PangoAttrList *attr);
   virtual void SetFontDescription(const PangoFontDescription *font_description);

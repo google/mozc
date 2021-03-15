@@ -80,7 +80,7 @@ class ExistenceFilter::BlockBitmap {
   //    for (uint32 iter = 0; bm.GetMutableFragment(&iter, &ptr, &bytes); ) {
   //      Process(*ptr, bytes);
   //    }
-  bool GetMutableFragment(uint32 *itr, char ***ptr, size_t *size);
+  bool GetMutableFragment(uint32_t *itr, char ***ptr, size_t *size);
 
  private:
   static constexpr int kBlockShift = 21;  // 2^21 bits == 256KB block

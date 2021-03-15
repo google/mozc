@@ -62,19 +62,19 @@ void SetInformations(int count, commands::InformationList *usages) {
   for (int i = 0; i < count; ++i) {
     commands::Information *info = usages->add_information();
 
-    const string id_str = std::to_string(i);
+    const std::string id_str = std::to_string(i);
     info->set_title(kSampleTitle + id_str);
     info->set_description(kSampleDescription + id_str);
   }
 }
 
-string GetExpectedTitle(int row) {
-  const string id_str = std::to_string(row);
+std::string GetExpectedTitle(int row) {
+  const std::string id_str = std::to_string(row);
   return kSampleTitle + id_str;
 }
 
-string GetExpectedDescription(int row) {
-  const string id_str = std::to_string(row);
+std::string GetExpectedDescription(int row) {
+  const std::string id_str = std::to_string(row);
   return kSampleDescription + id_str;
 }
 

@@ -72,7 +72,7 @@ class CandidateWindow : public GtkWindowBase {
 
   virtual bool SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
-  virtual void ReloadFontConfig(const string &font_description);
+  virtual void ReloadFontConfig(const std::string &font_description);
 
  protected:
   // Callbacks
@@ -112,8 +112,8 @@ class CandidateWindow : public GtkWindowBase {
   // Make strings to be displayed based on candidates. If there is no string to
   // be displayed, string will be empty.
   static void GetDisplayString(const commands::Candidates::Candidate &candidate,
-                               string *shortcut, string *value,
-                               string *description);
+                               std::string *shortcut, std::string *value,
+                               std::string *description);
 
   void UpdateScrollBarSize();
   void UpdateFooterSize();

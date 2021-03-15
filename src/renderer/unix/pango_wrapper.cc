@@ -40,7 +40,7 @@ PangoLayoutWrapper::PangoLayoutWrapper(PangoContext *context)
 
 PangoLayoutWrapper::~PangoLayoutWrapper() { g_object_unref(layout_); }
 
-void PangoLayoutWrapper::SetText(const string &text) {
+void PangoLayoutWrapper::SetText(const std::string &text) {
   pango_layout_set_text(layout_, text.c_str(), text.length());
 }
 

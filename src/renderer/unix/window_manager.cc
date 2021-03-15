@@ -197,7 +197,7 @@ void WindowManager::UpdateLayout(const commands::RendererCommand &command) {
 
   if (command.has_application_info() &&
       command.application_info().has_pango_font_description()) {
-    const string font_description =
+    const std::string font_description =
         command.application_info().pango_font_description();
     if (previous_font_description_ != font_description) {
       DVLOG(1) << "Font description is changed"

@@ -90,12 +90,12 @@ const char *kUILocaleEnvNames[] = {
     "LANG",
 };
 
-string GetEnv(const char *envname) {
+std::string GetEnv(const char *envname) {
   const char *result = ::getenv(envname);
   return result != nullptr ? std::string(result) : "";
 }
 
-string GetMessageLocale() {
+std::string GetMessageLocale() {
   for (size_t i = 0; i < arraysize(kUILocaleEnvNames); ++i) {
     const std::string result = GetEnv(kUILocaleEnvNames[i]);
     if (!result.empty()) {

@@ -80,7 +80,7 @@ void UnixServer::AsyncHide() {
 void UnixServer::AsyncQuit() { gtk_->GtkMainQuit(); }
 
 bool UnixServer::Render() {
-  string message;
+  std::string message;
   {
     scoped_lock l(&mutex_);
     message.assign(message_);
@@ -95,10 +95,10 @@ bool UnixServer::Render() {
   return true;
 }
 
-bool UnixServer::AsyncExecCommand(string *proto_message) {
+bool UnixServer::AsyncExecCommand(std::string *proto_message) {
   {
     // Take the ownership of |proto_message|.
-    unique_ptr<string> proto_message_owner(proto_message);
+    unique_ptr<std::string> proto_message_owner(proto_message);
     scoped_lock l(&mutex_);
     if (message_ == *proto_message_owner.get()) {
       // This is exactly the same to the previous message. Theoretically it is

@@ -53,12 +53,12 @@ class TextRenderer : public TextRendererInterface {
 
   virtual void Initialize(GdkDrawable *drawable);
   virtual Size GetPixelSize(FontSpecInterface::FONT_TYPE font_type,
-                            const string &str);
+                            const std::string &str);
   virtual Size GetMultiLinePixelSize(FontSpecInterface::FONT_TYPE font_type,
-                                     const string &str, const int width);
-  virtual void RenderText(const string &text, const Rect &rect,
+                                     const std::string &str, const int width);
+  virtual void RenderText(const std::string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type);
-  virtual void ReloadFontConfig(const string &font_description);
+  virtual void ReloadFontConfig(const std::string &font_description);
 
  private:
   friend class TextRendererTest;
@@ -66,17 +66,17 @@ class TextRenderer : public TextRendererInterface {
   FRIEND_TEST(TextRendererTest, GetMultilinePixelSizeTest);
   FRIEND_TEST(TextRendererTest, RenderTextTest);
 
-  void SetUpPangoLayout(const string &str,
+  void SetUpPangoLayout(const std::string &str,
                         FontSpecInterface::FONT_TYPE font_type,
                         PangoLayoutWrapperInterface *layout);
-  void RenderTextInternal(const string &text, const Rect &rect,
+  void RenderTextInternal(const std::string &text, const Rect &rect,
                           FontSpecInterface::FONT_TYPE font_type,
                           PangoLayoutWrapperInterface *layout);
   Size GetPixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
-                            const string &str,
+                            const std::string &str,
                             PangoLayoutWrapperInterface *layout);
   Size GetMultiLinePixelSizeInternal(FontSpecInterface::FONT_TYPE font_type,
-                                     const string &str, const int width,
+                                     const std::string &str, const int width,
                                      PangoLayoutWrapperInterface *layout);
   std::unique_ptr<FontSpecInterface> font_spec_;
   std::unique_ptr<PangoWrapperInterface> pango_;
