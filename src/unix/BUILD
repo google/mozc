@@ -28,12 +28,47 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-exports_files([
-    "product_icon_32bpp-128.png",
-    "direct.svg",
-    "full_ascii.svg",
-    "full_katakana.svg",
-    "half_ascii.svg",
-    "half_katakana.svg",
-    "hiragana.svg",
-])
+load("//:build_defs.bzl", "py_binary_mozc", "select_mozc")
+
+package(default_visibility = ["//:__subpackages__"])
+
+genrule(
+    name = "icons",
+    srcs = [
+        "//data/images:product_icon_32bpp-128.png",
+        "//data/images:direct.svg",
+        "//data/images:full_ascii.svg",
+        "//data/images:full_katakana.svg",
+        "//data/images:half_ascii.svg",
+        "//data/images:half_katakana.svg",
+        "//data/images:hiragana.svg",
+        "//data/images/unix:48x48/alpha_full.png",
+        "//data/images/unix:48x48/alpha_half.png",
+        "//data/images/unix:48x48/direct.png",
+        "//data/images/unix:48x48/hiragana.png",
+        "//data/images/unix:48x48/katakana_full.png",
+        "//data/images/unix:48x48/katakana_half.png",
+    ] + select_mozc(
+        default = [
+            "//data/images/unix:ui-dictionary.png",
+            "//data/images/unix:ui-properties.png",
+            "//data/images/unix:ui-tool.png",
+        ],
+        oss = [
+            "@material_icon_dictionary_png//file",
+            "@material_icon_dictionary_svg//file",
+            "@material_icon_properties_png//file",
+            "@material_icon_properties_svg//file",
+            "@material_icon_tool_png//file",
+            "@material_icon_tool_svg//file",
+        ],
+    ),
+    outs = ["icons.zip"],
+    cmd = "$(location :build_icons) --inputs $(SRCS) --output $@",
+    exec_tools = [":build_icons"],
+)
+
+py_binary_mozc(
+    name = "build_icons",
+    srcs = ["build_icons.py"],
+)

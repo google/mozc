@@ -29,11 +29,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 exports_files([
-    "product_icon_32bpp-128.png",
-    "direct.svg",
-    "full_ascii.svg",
-    "full_katakana.svg",
-    "half_ascii.svg",
-    "half_katakana.svg",
-    "hiragana.svg",
+    "48x48/alpha_full.png",
+    "48x48/alpha_half.png",
+    "48x48/direct.png",
+    "48x48/hiragana.png",
+    "48x48/katakana_full.png",
+    "48x48/katakana_half.png",
+    "ui-dictionary.png",
+    "ui-properties.png",
+    "ui-tool.png",
 ])

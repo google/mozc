@@ -28,12 +28,48 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-exports_files([
-    "product_icon_32bpp-128.png",
-    "direct.svg",
-    "full_ascii.svg",
-    "full_katakana.svg",
-    "half_ascii.svg",
-    "half_katakana.svg",
-    "hiragana.svg",
-])
+"""Script to rename icons files and pack them into a zip file.
+
+build_icon.py --inputs ui-tool.png hiragana.svg ... --output icons.zip
+"""
+
+import argparse
+import os
+import shutil
+import tempfile
+
+RENAME_RULES = {
+    'product_icon_32bpp-128.png': 'mozc.png',
+    'full_ascii.svg': 'alpha_full.svg',
+    'full_katakana.svg': 'katakana_full.svg',
+    'half_ascii.svg': 'alpha_half.svg',
+    'half_katakana.svg': 'katakana_half.svg',
+    'ui-dictionary.png': 'dictionary.png',
+    'ui-properties.png': 'properties.png',
+    'ui-tool.png': 'tool.png',
+}
+
+
+def ParseArguments():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--inputs', nargs='+')
+  parser.add_argument('--output')
+  return parser.parse_args()
+
+
+def GetCopyName(src) -> str:
+  basename = os.path.basename(src)
+  return RENAME_RULES.get(basename, basename)
+
+
+def main():
+  args = ParseArguments()
+  with tempfile.TemporaryDirectory() as tmp_dir:
+    for src in args.inputs:
+      shutil.copyfile(src, os.path.join(tmp_dir, GetCopyName(src)))
+    basename = os.path.splitext(args.output)[0]
+    shutil.make_archive(basename, format='zip', root_dir=tmp_dir)
+
+
+if __name__ == '__main__':
+  main()

@@ -140,6 +140,7 @@ filegroup(
             "//gui/tool:mozc_tool",
             "//unix/emacs:mozc_emacs_helper",
             "//unix/ibus:ibus_mozc",
+            "//unix:icons",
             "//renderer:mozc_renderer",
             "//server:mozc_server",
         ],

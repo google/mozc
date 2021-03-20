@@ -1,6 +1,7 @@
 # An identifier for this repository.
 workspace(name = "mozc")
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl",
+     "http_archive", "http_file")
 load("//:config.bzl", "QT_BASE_PATH")
 
 # This rule reffers $ANDROID_SDK_HOME
@@ -110,3 +111,53 @@ load(
     "apple_rules_dependencies",
 )
 apple_rules_dependencies()
+
+# Material icons
+http_file(
+    name = "material_icon_dictionary_png",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/chrome_reader_mode/materialiconsoutlined/48dp/1x/outline_chrome_reader_mode_black_48dp.png",
+    ],
+    downloaded_file_path = "dictionary.png",
+    sha256 = "6d2ac7befa038d4f32e07136293acaf5d8645a4daecb6d063f34be2ffea59b55",
+)
+http_file(
+    name = "material_icon_dictionary_svg",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/chrome_reader_mode/materialiconsoutlined/24px.svg",
+    ],
+    downloaded_file_path = "dictionary.svg",
+    sha256 = "a4c7b9bfb442a7497b72d74358c31034c4fef1ab2a50659834784580751ac04d",
+)
+http_file(
+    name = "material_icon_properties_png",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/settings/materialiconsround/48dp/1x/round_settings_black_48dp.png",
+    ],
+    downloaded_file_path = "properties.png",
+    sha256 = "c4ae8bb7992f43157be9d026f76a7039af6e0e3de0f220842208dfda8c38714a",
+)
+http_file(
+    name = "material_icon_properties_svg",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/settings/materialiconsround/24px.svg",
+    ],
+    downloaded_file_path = "properties.svg",
+    sha256 = "9b01b133be1caffc680f132d385d0e594262d6cfd29759a63c428050b83fe628",
+)
+http_file(
+    name = "material_icon_tool_png",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/build/materialicons/48dp/1x/baseline_build_black_48dp.png",
+    ],
+    downloaded_file_path = "tool.png",
+    sha256 = "269433bf6d6948a93ab6a57a73ceb5930870223046052cfffe01eeca37327d3e",
+)
+http_file(
+    name = "material_icon_tool_svg",
+    urls = [
+        "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/build/materialicons/24px.svg",
+    ],
+    downloaded_file_path = "tool.svg",
+    sha256 = "df34fba3d09778db69503a23b688761051dbf65b5bccb0d7b729c69ff61c3804",
+)
