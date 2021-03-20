@@ -110,6 +110,7 @@ def GetIbusConfigTextProto(engines):
     for key, value in engine.items():
       output.append(GetTextProtoElement(key, value))
     output.append('}')
+  output.append('active_on_launch: False')
   return '\n'.join(output)
 
 

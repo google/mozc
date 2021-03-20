@@ -58,6 +58,8 @@
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
+
 
 #ifdef ENABLE_GTK_RENDERER
 #include "renderer/renderer_client.h"
@@ -243,8 +245,6 @@ MozcEngine::MozcEngine()
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
-      property_handler_(new PropertyHandler(
-          new LocaleBasedMessageTranslator(GetMessageLocale()), client_.get())),
       preedit_handler_(new PreeditHandler()),
 #ifdef ENABLE_GTK_RENDERER
       gtk_candidate_window_handler_(
@@ -258,7 +258,11 @@ MozcEngine::MozcEngine()
   }
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
-  ibus_config_.InitEnginesXml();
+  ibus_config_.Initialize();
+  property_handler_ = absl::make_unique<PropertyHandler>(
+      absl::make_unique<LocaleBasedMessageTranslator>(GetMessageLocale()),
+      ibus_config_.IsActiveOnLaunch(),
+      client_.get());
 
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.

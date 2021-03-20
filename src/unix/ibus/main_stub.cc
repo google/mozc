@@ -38,7 +38,8 @@ ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
 namespace {
 void OutputXml() {
   mozc::IbusConfig ibus_config;
-  std::cout << ibus_config.InitEnginesXml() << std::endl;
+  ibus_config.Initialize();
+  std::cout << ibus_config.GetEnginesXml() << std::endl;
 }
 }  // namespace
 

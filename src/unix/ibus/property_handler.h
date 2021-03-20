@@ -49,7 +49,8 @@ class MessageTranslatorInterface;
 class PropertyHandler : public PropertyHandlerInterface {
  public:
   // This class takes the ownership of translator, but not client.
-  PropertyHandler(MessageTranslatorInterface *translator,
+  PropertyHandler(std::unique_ptr<MessageTranslatorInterface> translator,
+                  bool is_active_on_launch,
                   client::ClientInterface *client);
   virtual ~PropertyHandler();
 

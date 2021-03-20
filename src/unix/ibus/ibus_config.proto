@@ -33,6 +33,8 @@ package mozc.ibus;
 
 message Config {
   repeated Engine engines = 1;
+  // Whether IME is on (i.e. Hiragana mode) in the initial state.
+  optional bool active_on_launch = 2;
 }
 
 message Engine {
