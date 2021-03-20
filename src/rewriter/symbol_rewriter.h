@@ -76,9 +76,6 @@ class SymbolRewriter : public RewriterInterface {
   // Insert alternative form of space.
   static void ExpandSpace(Segment *segment);
 
-  // Returns true if the symbol is platform dependent
-  static bool IsPlatformDependent(SerializedDictionary::const_iterator iter);
-
   // Return true if two symbols are in same group.
   static bool InSameSymbolGroup(SerializedDictionary::const_iterator lhs,
                                 SerializedDictionary::const_iterator rhs);

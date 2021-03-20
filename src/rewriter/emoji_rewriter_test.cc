@@ -418,8 +418,6 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
     if (!EmojiRewriter::IsEmojiCandidate(candidate)) {
       continue;
     }
-    EXPECT_NE(std::string::npos, description.find("<機種依存文字>"))
-        << "for \"" << candidate.value << "\" : \"" << description << "\"";
     EXPECT_EQ(std::string::npos, description.find("[全]"))
         << "for \"" << candidate.value << "\" : \"" << description << "\"";
   }

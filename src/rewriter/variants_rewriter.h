@@ -51,7 +51,6 @@ class VariantsRewriter : public RewriterInterface {
   static const char *kKanji;
   static const char *kFullWidth;
   static const char *kHalfWidth;
-  static const char *kPlatformDependent;
   static const char *kDidYouMean;
   static const char *kYenKigou;
 
@@ -75,8 +74,7 @@ class VariantsRewriter : public RewriterInterface {
  private:
   // 1) Full width / half width description
   // 2) CharForm (hiragana/katakana) description
-  // 3) Platform dependent char (JISX0213..etc) description
-  // 4) Zipcode description (XXX-XXXX)
+  // 3) Zipcode description (XXX-XXXX)
   //     * note that this overrides other descriptions
   enum DescriptionType {
     FULL_HALF_WIDTH = 1,               // automatically detect full/haflwidth.
@@ -87,7 +85,7 @@ class VariantsRewriter : public RewriterInterface {
     HALF_WIDTH = 4,       // always set half width description.
     FULL_WIDTH = 8,       // always set full width description.
     CHARACTER_FORM = 16,  // Hiragana/Katakana..etc
-    PLATFORM_DEPENDENT_CHARACTER = 32,
+    DEPRECATED_PLATFORM_DEPENDENT_CHARACTER = 32,  // Deprecated. "機種依存文字"
     ZIPCODE = 64,
     SPELLING_CORRECTION = 128
   };

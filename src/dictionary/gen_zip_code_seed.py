@@ -125,7 +125,7 @@ def ParseTownName(level3):
                                    % level3.encode('utf-8'))
 
   # We ignore additional information here.
-  level3 = re.sub(u'（.*）', u'', level3, re.U)
+  level3 = re.sub(u'（.*）', u'', level3, flags=re.U)
 
   # For 地割, we have these cases.
   #  XX1地割

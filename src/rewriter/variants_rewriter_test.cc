@@ -368,15 +368,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   {
     Segment::Candidate candidate;
     candidate.Init();
-    candidate.value = "草彅剛";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "くさなぎつよし";
-    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
     candidate.value = "\\";
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
@@ -401,10 +392,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "えん";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[半] 円記号 <機種依存文字>" for Desktop,
-    // "[半] 円記号 <機種依存>" for Android
-    std::string expected = "[半] 円記号 ";
-    expected.append(VariantsRewriter::kPlatformDependent);
+    std::string expected = "[半] 円記号";
     EXPECT_EQ(expected, candidate.description);
   }
   {
@@ -426,11 +414,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_key = "ねずみ";
     candidate.description = "絵文字";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "絵文字 <機種依存文字>" for Desktop, "絵文字 <機種依存>" for Android
-    std::string expected(
-        "絵文字"
-        " ");
-    expected.append(VariantsRewriter::kPlatformDependent);
+    std::string expected = "絵文字";
     EXPECT_EQ(expected, candidate.description);
   }
 }
@@ -472,16 +456,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     EXPECT_EQ(
         AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
         candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "草彅剛";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "くさなぎつよし";
-    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
-                                                       &candidate);
-    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
 }
 
@@ -540,15 +514,6 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.content_key = "[ABC]";
     VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
-  }
-  {
-    Segment::Candidate candidate;
-    candidate.Init();
-    candidate.value = "草彅剛";
-    candidate.content_value = candidate.value;
-    candidate.content_key = "くさなぎつよし";
-    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
-    EXPECT_EQ(VariantsRewriter::kPlatformDependent, candidate.description);
   }
 }
 
