@@ -96,7 +96,7 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
       scoped_cftyperef<CFRunLoopSourceRef> runloop_source(
           CFNetworkExecuteProxyAutoConfigurationURL(
               script_url, cfurl, PACResultCallback, &context));
-      const string label = MacUtil::GetLabelForSuffix("ProxyResolverMac");
+      const std::string label = MacUtil::GetLabelForSuffix("ProxyResolverMac");
       scoped_cftyperef<CFStringRef> private_runloop_mode(
           CFStringCreateWithBytes(nullptr,
                                   reinterpret_cast<const UInt8 *>(label.data()),
@@ -138,7 +138,8 @@ CFDictionaryRef RetainOrExpandPacFile(CFURLRef cfurl, CFDictionaryRef proxy) {
 // network configuration.
 class MacProxyManager : public ProxyManagerInterface {
  public:
-  bool GetProxyData(const string &url, string *hostdata, string *authdata) {
+  bool GetProxyData(const std::string &url, std::string *hostdata,
+                    std::string *authdata) {
     DCHECK(hostdata);
     DCHECK(authdata);
 #ifdef OS_IOS

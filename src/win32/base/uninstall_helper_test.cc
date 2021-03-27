@@ -54,7 +54,7 @@ const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
 const DWORD kJapaneseKLID = 0xE0200411;
 
-std::wstring ToWideString(const string &str) {
+std::wstring ToWideString(const std::string &str) {
   std::wstring wide;
   if (mozc::Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";

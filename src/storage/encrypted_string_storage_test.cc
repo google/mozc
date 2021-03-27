@@ -51,18 +51,18 @@ namespace {
 // them, because we cannot launch JVM from native tests on Android.
 class TestEncryptedStringStorage : public EncryptedStringStorage {
  public:
-  explicit TestEncryptedStringStorage(const string &filename)
+  explicit TestEncryptedStringStorage(const std::string &filename)
       : EncryptedStringStorage(filename) {}
 
  protected:
-  virtual bool Encrypt(const string &salt, string *data) const {
+  virtual bool Encrypt(const std::string &salt, std::string *data) const {
     salt_ = salt;
     original_data_ = *data;
     *data = "123456789012345678901234567890";
     return true;
   }
 
-  virtual bool Decrypt(const string &salt, string *data) const {
+  virtual bool Decrypt(const std::string &salt, std::string *data) const {
     if (salt_ != salt) {
       return false;
     }
@@ -71,8 +71,8 @@ class TestEncryptedStringStorage : public EncryptedStringStorage {
     return true;
   }
 
-  mutable string salt_;
-  mutable string original_data_;
+  mutable std::string salt_;
+  mutable std::string original_data_;
 };
 #else
 typedef EncryptedStringStorage TestEncryptedStringStorage;

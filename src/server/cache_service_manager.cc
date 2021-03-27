@@ -424,7 +424,7 @@ const wchar_t *CacheServiceManager::GetServiceName() {
 }
 
 std::wstring CacheServiceManager::GetUnquotedServicePath() {
-  const string lock_service_path = FileUtil::JoinPath(
+  const std::string lock_service_path = FileUtil::JoinPath(
       SystemUtil::GetServerDirectory(), kMozcCacheServiceExeName);
   std::wstring wlock_service_path;
   if (Util::UTF8ToWide(lock_service_path, &wlock_service_path) <= 0) {

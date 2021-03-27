@@ -107,8 +107,8 @@ class FileUtil {
 #ifdef OS_WIN
   // Adds file attributes to the file to hide it.
   // FILE_ATTRIBUTE_NORMAL will be removed.
-  static bool HideFile(const string &filename);
-  static bool HideFileWithExtraAttributes(const string &filename,
+  static bool HideFile(const std::string &filename);
+  static bool HideFileWithExtraAttributes(const std::string &filename,
                                           DWORD extra_attributes);
 #endif  // OS_WIN
 

@@ -69,7 +69,7 @@ class WinCommandLine {
 
     argv_ = new char *[argc_];
     for (int i = 0; i < argc_; ++i) {
-      string str;
+      std::string str;
       mozc::Util::WideToUTF8(argvw[i], &str);
       argv_[i] = new char[str.size() + 1];
       ::memcpy(argv_[i], str.data(), str.size());

@@ -152,7 +152,8 @@ class WinSandbox {
   // level.
   // Return true if process is successfully launched.
   // if pid is specified, pid of child process is set.
-  static bool SpawnSandboxedProcess(const string &path, const string &arg,
+  static bool SpawnSandboxedProcess(const std::string &path,
+                                    const std::string &arg,
                                     const SecurityInfo &info, DWORD *pid);
 
   // Following three methods returns corresponding list of SID or LUID for

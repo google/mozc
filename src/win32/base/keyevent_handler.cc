@@ -406,7 +406,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
   // Support VK_PACKET.
   if (virtual_key.virtual_key() == VK_PACKET) {
     const char32 character = virtual_key.unicode_char();
-    string utf8_characters;
+    std::string utf8_characters;
     Util::UCS4ToUTF8(character, &utf8_characters);
     if (utf8_characters.empty()) {
       return false;
@@ -505,7 +505,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
     // TODO(yukawa): Move the following character conversion logic into
     //   mozc::Util as HalfWidthKatakanaToHiragana.
     const wchar_t whalf_katakana[] = {static_cast<wchar_t>(kana_code), L'\0'};
-    string half_katakana, full_katakana, full_hiragana;
+    std::string half_katakana, full_katakana, full_hiragana;
     mozc::Util::WideToUTF8(whalf_katakana, &half_katakana);
     mozc::Util::HalfWidthKatakanaToFullWidthKatakana(half_katakana.c_str(),
                                                      &full_katakana);
@@ -973,7 +973,7 @@ void KeyEventHandler::MaybeSpawnTool(mozc::client::ClientInterface *client,
   // by client with specified mode.
   // TODO(team):  move it to better place.
   if (output->has_launch_tool_mode()) {
-    string mode;
+    std::string mode;
     switch (output->launch_tool_mode()) {
       case commands::Output::CONFIG_DIALOG:
         mode = "config_dialog";

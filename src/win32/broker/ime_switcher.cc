@@ -61,7 +61,7 @@ const int kErrorLevelProcessMutexInUse = -1;
 const int kErrorLevelSuccess = 0;
 const int kErrorLevelGeneralError = 1;
 
-void NotifyFatalMessageImpl(const string &msg) {
+void NotifyFatalMessageImpl(const std::string &msg) {
 #ifdef MOZC_NO_LOGGING
   // Explicitly causes crash so that the migration failure will be notified
   // through crash dump.
@@ -72,13 +72,13 @@ void NotifyFatalMessageImpl(const string &msg) {
 #endif
 }
 
-void NotifyFatalMessage(const string &msg, int line) {
+void NotifyFatalMessage(const std::string &msg, int line) {
   std::ostringstream ostr;
   ostr << msg << " (line: " << line << ")";
   NotifyFatalMessageImpl(ostr.str());
 }
 
-string GetMutexName() {
+std::string GetMutexName() {
   return (kProcessMutexPrefixForPerUserIMESettings +
           SystemUtil::GetDesktopNameAsString());
 }
@@ -160,7 +160,7 @@ int RunSetDefault(int argc, char *argv[]) {
     return RunSetDefaultWin8();
   }
 
-  const string mutex_name = GetMutexName();
+  const std::string mutex_name = GetMutexName();
 
   mozc::ProcessMutex mutex(mutex_name.c_str());
   if (!mutex.Lock()) {

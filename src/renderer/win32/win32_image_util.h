@@ -109,9 +109,9 @@ class BalloonImage {
     // Size of the label text in points.
     int label_size;
     // Font name of the label text.
-    string label_font;
+    std::string label_font;
     // Label text in UTF-8.
-    string label;
+    std::string label;
     // Width of the bounding box of the balloon except for its tail.
     double rect_width;
     // Height of the bounding box of the balloon except for its tail.
@@ -328,7 +328,7 @@ class TextLabel {
       BinarySubdivisionalPixel;
 
   TextLabel(double left, double top, double width, double height,
-            const string &text, const string &font, size_t font_point,
+            const std::string &text, const std::string &font, size_t font_point,
             const RGBColor text_color);
   ~TextLabel();
 

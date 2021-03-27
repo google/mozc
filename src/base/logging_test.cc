@@ -176,7 +176,7 @@ TEST(LoggingTest, SideEffectTest) {
 
 namespace {
 int g_counter = 0;
-string DebugString() {
+std::string DebugString() {
   ++g_counter;
   std::ostringstream os;
   os << g_counter << " test!";

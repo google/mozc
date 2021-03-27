@@ -132,7 +132,7 @@ class BalloonImageTest : public ::testing::Test,
 
     bitmap.Save(filename.c_str(), &clsid_png_);
 
-    string utf8_filename;
+    std::string utf8_filename;
     Util::WideToUTF8(filename + L".json", &utf8_filename);
     OutputFileStream os(utf8_filename.c_str());
     Json::StyledWriter writer;
@@ -284,9 +284,9 @@ INSTANTIATE_TEST_CASE_P(BalloonImageParameters, BalloonImageTest,
                         ::testing::ValuesIn(kRenderingResultList));
 
 TEST_P(BalloonImageTest, TestImpl) {
-  const string &expected_image_path =
+  const std::string &expected_image_path =
       mozc::testing::GetSourceFileOrDie({GetParam()});
-  const string json_path = expected_image_path + ".json";
+  const std::string json_path = expected_image_path + ".json";
   ASSERT_TRUE(FileUtil::FileExists(json_path))
       << "Manifest file is not found: " << json_path;
 

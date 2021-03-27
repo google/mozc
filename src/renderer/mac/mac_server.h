@@ -53,7 +53,7 @@ class MacServer : public RendererServer {
  public:
   MacServer(int argc, const char **argv);
 
-  virtual bool AsyncExecCommand(string *proto_message);
+  virtual bool AsyncExecCommand(std::string *proto_message);
   virtual int StartMessageLoop();
 
   // This method is called when an asynchronous exec-command message
@@ -67,7 +67,7 @@ class MacServer : public RendererServer {
  private:
   Mutex mutex_;
   pthread_cond_t event_;
-  string message_;
+  std::string message_;
   std::unique_ptr<CandidateController> controller_;
   int argc_;
   const char **argv_;

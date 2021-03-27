@@ -375,7 +375,8 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
 #endif  // __APPLE__
 
 #ifdef OS_WIN
-  const string arg = "--mode=error_message_dialog --error_type=" + error_type;
+  const std::string arg =
+      "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;
   if (!Process::SpawnProcess(SystemUtil::GetToolPath(), arg, &pid)) {
     LOG(ERROR) << "cannot launch " << kMozcTool;

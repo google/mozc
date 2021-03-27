@@ -138,7 +138,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
 #ifdef OS_WIN
     DWORD pid = 0;
     const bool process_in_job = RunLevel::IsProcessInJob();
-    const string arg = process_in_job ? "--restricted" : "";
+    const std::string arg = process_in_job ? "--restricted" : "";
 
     WinSandbox::SecurityInfo info;
     info.primary_level = WinSandbox::USER_INTERACTIVE;

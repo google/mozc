@@ -781,7 +781,8 @@ WinSandbox::SecurityInfo::SecurityInfo()
       allow_ui_operation(false),
       in_system_dir(false) {}
 
-bool WinSandbox::SpawnSandboxedProcess(const string &path, const string &arg,
+bool WinSandbox::SpawnSandboxedProcess(const std::string &path,
+                                       const std::string &arg,
                                        const SecurityInfo &info, DWORD *pid) {
   std::wstring wpath;
   Util::UTF8ToWide(path, &wpath);

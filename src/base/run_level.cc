@@ -210,11 +210,11 @@ RunLevel::RunLevelType RunLevel::GetRunLevel(RunLevel::RequestType type) {
     // Get the server path before the process is sandboxed.
     // SHGetFolderPath may fail in a sandboxed process.
     // See http://b/2301066 for details.
-    const volatile string sys_dir = SystemUtil::GetServerDirectory();
+    const volatile std::string sys_dir = SystemUtil::GetServerDirectory();
 
     // Get the user profile path here because of the same reason.
     // See http://b/2301066 for details.
-    const string user_dir = SystemUtil::GetUserProfileDirectory();
+    const std::string user_dir = SystemUtil::GetUserProfileDirectory();
 
     std::wstring dir;
     Util::UTF8ToWide(user_dir, &dir);

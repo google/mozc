@@ -60,7 +60,7 @@ namespace {
 using ATL::CStringA;
 using std::unique_ptr;
 
-bool SpawnBroker(const string &arg) {
+bool SpawnBroker(const std::string &arg) {
   // To workaround a bug around WoW version of LoadKeyboardLayout, 64-bit
   // version of mozc_broker should be launched on Windows x64.
   // See b/2958563 for details.
@@ -115,7 +115,7 @@ bool MigrationUtil::LaunchBrokerForSetDefault(bool do_not_ask_me_again) {
     }
   }
 
-  string arg = "--mode=set_default";
+  std::string arg = "--mode=set_default";
   if (do_not_ask_me_again) {
     arg += " --set_default_do_not_ask_again=true";
   }

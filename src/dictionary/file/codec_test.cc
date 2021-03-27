@@ -117,8 +117,8 @@ class CodecMock : public DictionaryFileCodecInterface {
 };
 
 TEST_F(CodecTest, FactoryTest) {
-  auto codec_mock = absl::make_unique<CodecMock>();
-  DictionaryFileCodecFactory::SetCodec(codec_mock.get());
+  CodecMock codec_mock;
+  DictionaryFileCodecFactory::SetCodec(&codec_mock);
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != nullptr);
@@ -183,8 +183,8 @@ TEST_F(CodecTest, DefaultTest) {
 }
 
 TEST_F(CodecTest, RandomizedCodecTest) {
-  auto internal_codec = absl::make_unique<DictionaryFileCodec>();
-  DictionaryFileCodecFactory::SetCodec(internal_codec.get());
+  DictionaryFileCodec internal_codec;
+  DictionaryFileCodecFactory::SetCodec(&internal_codec);
   const DictionaryFileCodecInterface *codec =
       DictionaryFileCodecFactory::GetCodec();
   EXPECT_TRUE(codec != nullptr);

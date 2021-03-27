@@ -78,30 +78,38 @@ class ZipEntry(object):
     # XXX-XXXX format
     return '-'.join([zip_code[0:3], zip_code[3:]])
 
-  def Output(self):
-    """Output entry."""
+  def GetLine(self):
+    """Return the output line."""
     zip_code = self.FormatZip(self.zip_code)
     address = unicodedata.normalize('NFKC', self.address)
     line = '\t'.join([zip_code, '0', '0', str(ZIP_CODE_COST),
                       address, ZIP_CODE_LABEL])
-    print(line)
+    return line
+
+  def Output(self):
+    """Outout line."""
+    print(self.GetLine())
 
 
 def ProcessZipCodeCSV(file_name):
   """Process zip code csv."""
   csv_lines = zip_code_util.ReadCSV(file_name)
   merged_csv_lines = zip_code_util.MergeCSV(csv_lines)
+  output = []
   for tokens in merged_csv_lines:
     for entry in ReadZipCodeEntries(tokens[2], tokens[6], tokens[7], tokens[8]):
-      entry.Output()
+      output.append(entry.GetLine())
+  return output
 
 
 def ProcessJigyosyoCSV(file_name):
   """Process jigyosyo csv."""
+  output = []
   for tokens in zip_code_util.ReadCSV(file_name):
     entry = ReadJigyosyoEntry(tokens[7], tokens[3], tokens[4],
                               tokens[5], tokens[2])
-    entry.Output()
+    output.append(entry.GetLine())
+  return output
 
 
 def ReadZipCodeEntries(zip_code, level1, level2, level3):
@@ -171,6 +179,9 @@ def ParseOptions():
   parser.add_option('--jigyosyo', dest='jigyosyo',
                     action='store', default='',
                     help='specify zip code csv file path.')
+  parser.add_option('--output', dest='output',
+                    action='store', default=None,
+                    help='specify output file path.')
   (options, unused_args) = parser.parse_args()
   return options
 
@@ -178,12 +189,19 @@ def ParseOptions():
 def main():
   options = ParseOptions()
 
+  lines = []
   if options.zip_code:
-    ProcessZipCodeCSV(options.zip_code)
+    lines += ProcessZipCodeCSV(options.zip_code)
 
   if options.jigyosyo:
-    ProcessJigyosyoCSV(options.jigyosyo)
+    lines += ProcessJigyosyoCSV(options.jigyosyo)
 
+  if options.output:
+    with open(options.output, 'w', encoding='utf-8') as output:
+      if lines:
+        output.write('\n'.join(lines) + '\n')
+  else:
+    print('\n'.join(lines))
   return 0
 
 

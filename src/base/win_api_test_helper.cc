@@ -116,21 +116,21 @@ class HookTargetInfo {
         continue;
       }
 
-      string module_name = request.module_name;
+      std::string module_name = request.module_name;
       Util::LowerString(&module_name);
       info_[module_name][original_proc_address] = request.new_proc_address;
     }
   }
 
-  const bool IsTargetModule(const string &module_name) const {
-    string lower_module_name(module_name);
+  const bool IsTargetModule(const std::string &module_name) const {
+    std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     return info_.find(lower_module_name) != info_.end();
   }
 
-  const FunctionPointer GetNewProc(const string &module_name,
+  const FunctionPointer GetNewProc(const std::string &module_name,
                                    FunctionPointer original_proc) const {
-    string lower_module_name(module_name);
+    std::string lower_module_name(module_name);
     Util::LowerString(&lower_module_name);
     const auto module_iterator = info_.find(lower_module_name);
     if (module_iterator == info_.end()) {
@@ -275,8 +275,8 @@ class WinAPITestHelper::RestoreInfo {
   std::vector<ThunkRewriter> rewrites;
 };
 
-WinAPITestHelper::HookRequest::HookRequest(const string &src_module,
-                                           const string &src_proc_name,
+WinAPITestHelper::HookRequest::HookRequest(const std::string &src_module,
+                                           const std::string &src_proc_name,
                                            FunctionPointer new_proc_addr)
     : module_name(src_module),
       proc_name(src_proc_name),
@@ -298,7 +298,7 @@ WinAPITestHelper::RestoreInfoHandle WinAPITestHelper::DoHook(
   for (ImageImportDescriptorIterator descriptor_iterator(image);
        !descriptor_iterator.Done(); descriptor_iterator.Next()) {
     const auto &descriptor = descriptor_iterator.Get();
-    const string module_name(image.At<char>(descriptor.Name));
+    const std::string module_name(image.At<char>(descriptor.Name));
     if (!target_info.IsTargetModule(module_name)) {
       continue;
     }

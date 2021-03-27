@@ -274,11 +274,11 @@ class AppInfoUtil {
 
 class Win32RendererUtilTest : public testing::Test {
  public:
-  static string GetMonospacedFontFaceForTest() {
+  static std::string GetMonospacedFontFaceForTest() {
     return WinFontTestHelper::GetIPAexGothicFontName();
   }
 
-  static string GetPropotionalFontFaceForTest() {
+  static std::string GetPropotionalFontFaceForTest() {
     return WinFontTestHelper::GetIPAexMinchoFontName();
   }
 
@@ -509,7 +509,7 @@ class Win32RendererUtilTest : public testing::Test {
       {
         Segment *segment = preedit->add_segment();
         segment->set_annotation(Segment::UNDERLINE);
-        string value;
+        std::string value;
         for (size_t i = 0; i < num_characters; ++i) {
           value.append("あ");
         }

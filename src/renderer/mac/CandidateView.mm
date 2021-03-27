@@ -65,7 +65,7 @@ void InitializeDefaultStyle() {
   RendererStyle style;
   RendererStyleHandler::GetRendererStyle(&style);
 
-  string logo_file_name = style.logo_file_name();
+  std::string logo_file_name = style.logo_file_name();
   g_LogoImage =
     [NSImage imageNamed:[NSString stringWithUTF8String:logo_file_name.c_str()]];
   if (g_LogoImage) {
@@ -235,7 +235,7 @@ void InitializeDefaultStyle() {
     NSAttributedString *shortcut = MacViewUtil::ToNSAttributedString(
        candidate.annotation().shortcut(),
        style_->text_styles(COLUMN_SHORTCUT));
-    string value = candidate.value();
+    std::string value = candidate.value();
     if (candidate.annotation().has_prefix()) {
       value = candidate.annotation().prefix() + value;
     }

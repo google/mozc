@@ -161,3 +161,15 @@ http_file(
     downloaded_file_path = "tool.svg",
     sha256 = "df34fba3d09778db69503a23b688761051dbf65b5bccb0d7b729c69ff61c3804",
 )
+
+# Zip code
+http_archive(
+    name = "zip_code_ken_all",
+    url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
+    build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
+)
+http_archive(
+    name = "zip_code_jigyosyo",
+    url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
+    build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
+)

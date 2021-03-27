@@ -75,7 +75,7 @@ typedef ::mozc::commands::Preedit::Segment::Annotation Annotation;
 namespace {
 
 HRESULT SetReadingProperties(ITfContext *context, ITfRange *range,
-                             const string &reading_string_utf8,
+                             const std::string &reading_string_utf8,
                              TfEditCookie write_cookie) {
   HRESULT result = S_OK;
 
@@ -366,7 +366,7 @@ HRESULT UpdateComposition(TipTextService *text_service, ITfContext *context,
 
   // Update cursor.
   {
-    string preedit_text;
+    std::string preedit_text;
     for (int i = 0; i < preedit.segment_size(); ++i) {
       preedit_text += preedit.segment(i).value();
     }

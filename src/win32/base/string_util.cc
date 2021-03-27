@@ -41,7 +41,7 @@ namespace {
 
 const size_t kMaxReadingChars = 512;
 
-void UTF8ToSJIS(absl::string_view input, string *output) {
+void UTF8ToSJIS(absl::string_view input, std::string *output) {
   std::wstring utf16;
   Util::UTF8ToWide(input, &utf16);
   if (utf16.empty()) {
@@ -74,17 +74,17 @@ void UTF8ToSJIS(absl::string_view input, string *output) {
 }  // namespace
 
 std::wstring StringUtil::KeyToReading(absl::string_view key) {
-  string katakana;
+  std::string katakana;
   Util::HiraganaToKatakana(key, &katakana);
 
   DWORD lcid =
       MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), SORT_JAPANESE_XJIS);
-  string sjis;
+  std::string sjis;
   UTF8ToSJIS(katakana, &sjis);
 
   // Convert "\x81\x65" (backquote in SJIFT-JIS) to ` by myself since
   // LCMapStringA converts it to ' for some reason.
-  string sjis2;
+  std::string sjis2;
   mozc::Util::StringReplace(sjis, "\x81\x65", "`", true, &sjis2);
 
   const size_t halfwidth_len_without_null = ::LCMapStringA(
@@ -123,8 +123,8 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
   return std::wstring(wide_output.get(), actual_output_length_without_null);
 }
 
-string StringUtil::KeyToReadingA(absl::string_view key) {
-  string ret;
+std::string StringUtil::KeyToReadingA(absl::string_view key) {
+  std::string ret;
   mozc::Util::WideToUTF8(KeyToReading(key), &ret);
   return ret;
 }

@@ -32,6 +32,7 @@
 #include <windows.h>
 
 #include <sstream>
+#include <string>
 
 #include "base/coordinates.h"
 #include "base/logging.h"
@@ -122,7 +123,7 @@ int GetCandidateArrayIndexByCandidateIndex(
 // the selected index is "13" (in 1-origin) and the number of
 // candidates is "123"
 // Returns an empty string if index string should not be displayed.
-string GetIndexGuideString(const commands::Candidates &candidates) {
+std::string GetIndexGuideString(const commands::Candidates &candidates) {
   if (!candidates.has_footer() || !candidates.footer().index_visible()) {
     return "";
   }

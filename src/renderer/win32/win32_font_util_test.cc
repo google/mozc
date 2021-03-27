@@ -83,7 +83,7 @@ TEST(FontUtilTest, ToWinLogFontWithTooLongFaceName) {
 
   LOGFONT log_font = {};
   std::wstring too_long_face_name(L' ', arraysize(log_font.lfFaceName));
-  string face_name;
+  std::string face_name;
   mozc::Util::WideToUTF8(too_long_face_name, &face_name);
   win_log_font.set_face_name(face_name);
 
@@ -144,7 +144,7 @@ TEST(FontUtilTest, RoundtripToLOGFONT) {
   original.set_clip_precision(CLIP_DEFAULT_PRECIS);
   original.set_quality(ANTIALIASED_QUALITY);
   original.set_pitch_and_family(FF_SCRIPT);
-  string face_name;
+  std::string face_name;
   mozc::Util::WideToUTF8(L"MS Sans Serif", &face_name);
   original.set_face_name(face_name);
 

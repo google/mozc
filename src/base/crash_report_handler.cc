@@ -256,7 +256,8 @@ bool CrashReportHandler::Initialize(bool check_address) {
   DCHECK_GE(g_reference_count, 0);
   ++g_reference_count;
   if (g_reference_count == 1 && g_handler == nullptr) {
-    const string acrashdump_directory = SystemUtil::GetCrashReportDirectory();
+    const std::string acrashdump_directory =
+        SystemUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
     if (!FileUtil::FileExists(acrashdump_directory)) {
       FileUtil::CreateDirectory(acrashdump_directory);

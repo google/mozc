@@ -208,7 +208,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
   const BYTE default_attribute =
       (preedit.has_highlighted_position() ? ATTR_CONVERTED : ATTR_INPUT);
 
-  string preedit_utf8;
+  std::string preedit_utf8;
   for (size_t segment_index = 0; segment_index < preedit.segment_size();
        ++segment_index) {
     const mozc::commands::Preedit::Segment &segment =

@@ -61,7 +61,7 @@ std::string CreateProcessMutexFileName(const char *name) {
   name = (name == nullptr) ? "nullptr" : name;
 
 #ifdef OS_WIN
-  string basename;
+  std::string basename;
 #else
   std::string basename = ".";
 #endif
@@ -84,7 +84,7 @@ ProcessMutex::ProcessMutex(const char *name)
 
 ProcessMutex::~ProcessMutex() { UnLock(); }
 
-bool ProcessMutex::LockAndWrite(const string &message) {
+bool ProcessMutex::LockAndWrite(const std::string &message) {
   if (locked_) {
     VLOG(1) << filename_ << " is already locked";
     return false;

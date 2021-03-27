@@ -52,7 +52,7 @@ namespace {
 
 #ifdef OS_WIN
 
-bool Convert(absl::string_view input, string* output) {
+bool Convert(absl::string_view input, std::string* output) {
   const int CP_932 = 932;
 
   output->clear();
@@ -92,9 +92,9 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
       "\x83\x47\x83\x49\xB1\xB2\xB3\xB4\xB5",
   };
   for (const char* sjis : kTestCases) {
-    string actual;
+    std::string actual;
     EncodingUtil::SJISToUTF8(sjis, &actual);
-    string expected;
+    std::string expected;
     ASSERT_TRUE(Convert(sjis, &expected));
     EXPECT_EQ(expected, actual);
   }
@@ -103,7 +103,7 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
 #endif  // OS_WIN
 
 TEST(EncodingUtilTest, Issue2190350) {
-  string result = "";
+  std::string result = "";
   EncodingUtil::SJISToUTF8("\x82\xA0", &result);
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("あ", result);
@@ -129,7 +129,7 @@ TEST(EncodingUtilTest, ValidSJIS) {
        "あいうえおアイウエオｱｲｳｴｵ"},
   };
   for (const auto& tc : kTestCases) {
-    string actual;
+    std::string actual;
     EncodingUtil::SJISToUTF8(tc.sjis, &actual);
     EXPECT_EQ(tc.utf8, actual);
   }
@@ -151,7 +151,7 @@ TEST(EncodingUtilTest, InvalidSJIS) {
       "\x61\x62\x63\xEE\x01\x64\x65\x66",
   };
   for (const char* input : kInvalidInputs) {
-    string actual = "to be cleared";
+    std::string actual = "to be cleared";
     EncodingUtil::SJISToUTF8(input, &actual);
     EXPECT_TRUE(actual.empty());
   }

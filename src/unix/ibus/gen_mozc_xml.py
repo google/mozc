@@ -104,7 +104,9 @@ def GetIbusConfigTextProto(engines):
   Returns:
     output string in TextProto.
   """
-  output = []
+  output = [
+      '# `ibus write-cache; ibus restart` might be necessary to apply changes.'
+  ]
   for engine in engines:
     output.append('engines {')
     for key, value in engine.items():
@@ -134,6 +136,7 @@ def OutputXml(component, ibus_mozc_path):
 <!-- * $XDG_CONFIG_HOME/mozc/ibus_config.textproto -->
 <!-- * $HOME/.config/mozc/ibus_config.textproto -->
 <!-- * $HOME/.mozc/ibus_config.textproto -->
+<!-- `ibus write-cache; ibus restart` might be necessary to apply changes. -->
 ''')
 
 

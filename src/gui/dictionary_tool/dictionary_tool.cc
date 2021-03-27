@@ -942,7 +942,7 @@ void DictionaryTool::ImportFromDefaultIME() {
   DCHECK(dic);
 
   const int old_size = dic->entries_size();
-  const string dic_name = dic_info.item->text().toStdString();
+  const std::string dic_name = dic_info.item->text().toStdString();
 
   UserDictionaryImporter::ErrorType error =
       UserDictionaryImporter::IMPORT_NOT_SUPPORTED;

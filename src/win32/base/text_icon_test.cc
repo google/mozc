@@ -70,7 +70,7 @@ class TextIconTest : public testing::Test {
   }
 
  protected:
-  static string GetGothicFontName() {
+  static std::string GetGothicFontName() {
     return WinFontTestHelper::GetIPAexGothicFontName();
   }
 };

@@ -63,6 +63,7 @@ filegroup(
         ":dictionary07.txt",
         ":dictionary08.txt",
         ":dictionary09.txt",
+        "//dictionary:zip_code_data",
     ],
 )
 

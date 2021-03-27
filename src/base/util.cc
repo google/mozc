@@ -52,7 +52,6 @@
 #endif  // !OS_WIN
 
 #include <algorithm>
-#include <cctype>
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
@@ -725,7 +724,7 @@ int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
   return copied_num_chars;
 }
 
-int Util::WideToUTF8(const wchar_t *input, string *output) {
+int Util::WideToUTF8(const wchar_t *input, std::string *output) {
   const int output_length =
       WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
   if (output_length == 0) {
@@ -742,7 +741,7 @@ int Util::WideToUTF8(const wchar_t *input, string *output) {
   return result;
 }
 
-int Util::WideToUTF8(const std::wstring &input, string *output) {
+int Util::WideToUTF8(const std::wstring &input, std::string *output) {
   return WideToUTF8(input.c_str(), output);
 }
 #endif  // OS_WIN
@@ -1223,7 +1222,7 @@ void Util::EncodeURI(const std::string &input, std::string *output) {
   const char *end = input.data() + input.size();
   output->clear();
   while (begin < end) {
-    if (isascii(*begin) && (isdigit(*begin) || isalpha(*begin))) {
+    if (absl::ascii_isascii(*begin) && absl::ascii_isalnum(*begin)) {
       *output += *begin;
     } else {
       *output += '%';
@@ -1520,6 +1519,15 @@ Util::CharacterSet Util::GetCharacterSet(absl::string_view str) {
     result = std::max(result, GetCharacterSet(iter.Get()));
   }
   return result;
+}
+
+bool Util::IsAscii(absl::string_view str) {
+  for (const char c : str) {
+    if (!absl::ascii_isascii(c)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // CAUTION: Be careful to change the implementation of serialization.  Some

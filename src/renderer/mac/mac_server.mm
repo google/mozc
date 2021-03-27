@@ -65,7 +65,7 @@ MacServer::MacServer(int argc, const char **argv)
                         arraysize(spec), spec, this, nullptr);
 }
 
-bool MacServer::AsyncExecCommand(string *proto_message) {
+bool MacServer::AsyncExecCommand(std::string *proto_message) {
   {
     scoped_lock l(&mutex_);
     message_.swap(*proto_message);
@@ -83,7 +83,7 @@ bool MacServer::AsyncExecCommand(string *proto_message) {
 }
 
 void MacServer::RunExecCommand() {
-  string message;
+  std::string message;
   {
     scoped_lock l(&mutex_);
       message.swap(message_);

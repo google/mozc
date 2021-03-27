@@ -274,7 +274,10 @@ objc_library_mozc(
 
 macos_application_mozc(
     name = "uninstaller_macos",
-    bundle_name = "Uninstaller",
+    bundle_name = "Uninstall" + select_mozc(
+        default = "GoogleJapaneseInput",
+        oss = "Mozc",
+    ),
     infoplists = ["Uninstaller/Info.plist"],
     strings = [
         "Uninstaller/English.lproj/InfoPlist.strings",
@@ -314,5 +317,29 @@ genrule(
     exec_tools = [
         "//build_tools:tweak_macinstaller_script",
         "//base:mozc_version_txt",
+    ],
+)
+
+py_binary_mozc(
+    name = "zip_files",
+    srcs = ["zip_files.py"],
+)
+
+genrule(
+    name = "zip_installer_files",
+    srcs = [
+        ":activate_pane",
+        ":dev_confirm_pane",
+        ":mozc_macos",
+        ":uninstaller_macos",
+        ":tweak_preflight",
+        ":tweak_postflight",
+        "installer_public/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+        "installer_public/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
+    ],
+    outs = ["installer.zip"],
+    cmd = "$(location :zip_files) --inputs $(SRCS) --output $@",
+    exec_tools = [
+        ":zip_files",
     ],
 )

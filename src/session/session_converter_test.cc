@@ -2782,7 +2782,7 @@ TEST_F(SessionConverterTest, Issue1981020) {
 
 #ifdef OS_WIN
   // "～～～～" U+FF5E * 4
-  const string fullwidth_tilde_ff5e = "～～～～";
+  const std::string fullwidth_tilde_ff5e = "～～～～";
   EXPECT_EQ(fullwidth_tilde_ff5e,
             segments.conversion_segment(0).candidate(0).value);
   EXPECT_EQ(fullwidth_tilde_ff5e,

@@ -50,13 +50,13 @@ const int32 kIDs[kNumCandidates] = {
     0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -7, -11,
 };
 
-string GetStringImpl(const CompositionString &composition, const DWORD offset,
-                     const DWORD length) {
+std::string GetStringImpl(const CompositionString &composition,
+                          const DWORD offset, const DWORD length) {
   const BYTE *addr = reinterpret_cast<const BYTE *>(&composition);
   const wchar_t *string_start =
       reinterpret_cast<const wchar_t *>(addr + offset);
   const std::wstring wstr(string_start, string_start + length);
-  string str;
+  std::string str;
   Util::WideToUTF8(wstr.c_str(), &str);
   return str;
 }

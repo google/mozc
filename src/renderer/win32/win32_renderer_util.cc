@@ -414,7 +414,7 @@ bool CanUseExcludeRegionInCandidateFrom(
 }
 
 std::wstring ComposePreeditText(const commands::Preedit &preedit,
-                                string *preedit_utf8,
+                                std::string *preedit_utf8,
                                 std::vector<int> *segment_indices,
                                 std::vector<CharacterRange> *segment_ranges) {
   if (preedit_utf8 != nullptr) {
@@ -1836,7 +1836,7 @@ bool LayoutManager::LayoutCompositionWindow(
     logfont.lfOrientation = 0;
   }
 
-  string preedit_utf8;
+  std::string preedit_utf8;
   std::vector<int> segment_indices;
   std::vector<CharacterRange> segment_lengths;
   const std::wstring composition_text = ComposePreeditText(

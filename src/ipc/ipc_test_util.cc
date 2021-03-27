@@ -49,14 +49,15 @@ TestMachPortManager::~TestMachPortManager() {
   mach_port_destroy(mach_task_self(), port_);
 }
 
-bool TestMachPortManager::GetMachPort(const string &name, mach_port_t *port) {
+bool TestMachPortManager::GetMachPort(const std::string &name,
+                                      mach_port_t *port) {
   *port = port_;
   return true;
 }
 
 // Server is always running for test because both client and server is
 // running in a same process.
-bool TestMachPortManager::IsServerRunning(const string &name) const {
+bool TestMachPortManager::IsServerRunning(const std::string &name) const {
   return true;
 }
 #endif

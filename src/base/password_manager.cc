@@ -210,18 +210,18 @@ bool PlainPasswordManager::RemovePassword() const {
 #if (defined(OS_WIN) || defined(__APPLE__))
 class WinMacPasswordManager : public PasswordManagerInterface {
  public:
-  virtual bool SetPassword(const string &password) const;
-  virtual bool GetPassword(string *password) const;
+  virtual bool SetPassword(const std::string &password) const;
+  virtual bool GetPassword(std::string *password) const;
   virtual bool RemovePassword() const;
 };
 
-bool WinMacPasswordManager::SetPassword(const string &password) const {
+bool WinMacPasswordManager::SetPassword(const std::string &password) const {
   if (password.size() != kPasswordSize) {
     LOG(ERROR) << "password size is invalid";
     return false;
   }
 
-  string enc_password;
+  std::string enc_password;
   if (!Encryptor::ProtectData(password, &enc_password)) {
     LOG(ERROR) << "ProtectData failed";
     return false;
@@ -230,13 +230,13 @@ bool WinMacPasswordManager::SetPassword(const string &password) const {
   return SavePassword(enc_password);
 }
 
-bool WinMacPasswordManager::GetPassword(string *password) const {
+bool WinMacPasswordManager::GetPassword(std::string *password) const {
   if (password == nullptr) {
     LOG(ERROR) << "password is nullptr";
     return false;
   }
 
-  string enc_password;
+  std::string enc_password;
   if (!LoadPassword(&enc_password)) {
     LOG(ERROR) << "LoadPassword failed";
     return false;

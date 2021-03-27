@@ -72,7 +72,7 @@ const char kTextIconFont[] = "ＭＳ ゴシック";
 
 // TODO(yukawa): Refactor LangBar code so that we can configure following
 // settings as a part of initialization.
-string GetIconStringIfNecessary(UINT icon_id) {
+std::string GetIconStringIfNecessary(UINT icon_id) {
   switch (icon_id) {
     case IDI_DIRECT_NT:
       return "A";
@@ -87,7 +87,7 @@ string GetIconStringIfNecessary(UINT icon_id) {
     case IDI_HALF_KATAKANA_NT:
       return "_ｱ";
   }
-  return string();
+  return "";
 }
 
 // Loads an icon which is appropriate for the current theme.

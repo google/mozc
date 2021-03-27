@@ -130,13 +130,13 @@ HRESULT SetLayoutDisplayName(
 // folder as a system folder, so it will refuse to install our IME. The
 // solution here is to combine the 64-bit System32 folder and our filename
 // to make ImmInstallIME happy.
-std::wstring GetFullPathForSystem(const string &basename) {
-  string system_dir;
+std::wstring GetFullPathForSystem(const std::string &basename) {
+  std::string system_dir;
   if (Util::WideToUTF8(SystemUtil::GetSystemDir(), &system_dir) <= 0) {
     return L"";
   }
 
-  const string fullpath = FileUtil::JoinPath(system_dir, basename);
+  const std::string fullpath = FileUtil::JoinPath(system_dir, basename);
 
   std::wstring wfullpath;
   if (Util::UTF8ToWide(fullpath, &wfullpath) <= 0) {
@@ -199,7 +199,7 @@ unsigned int GetPreloadIndex(const KeyboardLayoutID &klid,
   return index;
 }
 
-std::wstring ToWideString(const string &str) {
+std::wstring ToWideString(const std::string &str) {
   std::wstring wide;
   if (Util::UTF8ToWide(str, &wide) <= 0) {
     return L"";

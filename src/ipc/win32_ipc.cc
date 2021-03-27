@@ -91,7 +91,7 @@ bool InitOverlapped(OVERLAPPED *overlapped, HANDLE wait_handle) {
 
 class IPCClientMutexBase {
  public:
-  explicit IPCClientMutexBase(const string &ipc_channel_name) {
+  explicit IPCClientMutexBase(const std::string &ipc_channel_name) {
     // Make a kernel mutex object so that multiple ipc connections are
     // serialized here. In Windows, there is no useful way to serialize
     // the multiple connections to the single-thread named pipe server.
@@ -101,7 +101,7 @@ class IPCClientMutexBase {
     // thread. The "available" notification is sent to all waiting ipc
     // clients at the same time and only one client gets the connection.
     // This causes redundant and wasteful CreateFile calles.
-    string mutex_name = kMutexPathPrefix;
+    std::string mutex_name = kMutexPathPrefix;
     mutex_name += SystemUtil::GetUserSidAsString();
     mutex_name += ".";
     mutex_name += ipc_channel_name;
@@ -177,7 +177,7 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // and client-renderer) so we need to have different global mutexes to
 // serialize each client. Currently |ipc_name| starts with "session" and
 // "renderer" are expected.
-HANDLE GetClientMutex(const string &ipc_name) {
+HANDLE GetClientMutex(const std::string &ipc_name) {
   if (Util::StartsWith(ipc_name, "session")) {
     return Singleton<ConverterClientMutex>::get()->get();
   }
@@ -443,13 +443,14 @@ void MaybeDisableFileCompletionNotification(HANDLE device_handle) {
 
 }  // namespace
 
-IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32 num_connections,
+                     int32 timeout)
     : connected_(false),
       pipe_event_(CreateManualResetEvent()),
       quit_event_(CreateManualResetEvent()),
       timeout_(timeout) {
   IPCPathManager *manager = IPCPathManager::GetIPCPathManager(name);
-  string server_address;
+  std::string server_address;
 
   if (!manager->CreateNewPathName() && !manager->LoadPathName()) {
     LOG(ERROR) << "Cannot prepare IPC path name";
@@ -626,7 +627,7 @@ void IPCServer::Loop() {
 }
 
 // old interface
-IPCClient::IPCClient(const string &name)
+IPCClient::IPCClient(const std::string &name)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -634,7 +635,7 @@ IPCClient::IPCClient(const string &name)
   Init(name, "");
 }
 
-IPCClient::IPCClient(const string &name, const string &server_path)
+IPCClient::IPCClient(const std::string &name, const std::string &server_path)
     : pipe_event_(CreateManualResetEvent()),
       connected_(false),
       ipc_path_manager_(nullptr),
@@ -642,7 +643,7 @@ IPCClient::IPCClient(const string &name, const string &server_path)
   Init(name, server_path);
 }
 
-void IPCClient::Init(const string &name, const string &server_path) {
+void IPCClient::Init(const std::string &name, const std::string &server_path) {
   last_ipc_error_ = IPC_NO_CONNECTION;
 
   // We should change the mutex based on which IPC server we will talk with.
@@ -686,7 +687,7 @@ void IPCClient::Init(const string &name, const string &server_path) {
 #endif
 
   for (size_t trial = 0; trial < kMaxTrial; ++trial) {
-    string server_address;
+    std::string server_address;
     if (!manager->LoadPathName() || !manager->GetPathName(&server_address)) {
       continue;
     }

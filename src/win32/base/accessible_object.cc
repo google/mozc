@@ -47,20 +47,20 @@ using ::ATL::CComPtr;
 using ::ATL::CComQIPtr;
 using ::ATL::CComVariant;
 
-string UTF16ToUTF8(const std::wstring &str) {
-  string utf8;
+std::string UTF16ToUTF8(const std::wstring &str) {
+  std::string utf8;
   Util::WideToUTF8(str, &utf8);
   return utf8;
 }
 
-string BSTRToUTF8(const BSTR &bstr) {
+std::string BSTRToUTF8(const BSTR &bstr) {
   if (bstr == nullptr) {
     return "";
   }
   return UTF16ToUTF8(std::wstring(bstr, ::SysStringLen(bstr)));
 }
 
-string RoleToString(const CComVariant &role) {
+std::string RoleToString(const CComVariant &role) {
   if (role.vt == VT_I4) {
     switch (role.lVal) {
       case ROLE_SYSTEM_TITLEBAR:
@@ -201,8 +201,9 @@ string RoleToString(const CComVariant &role) {
   }
 }
 
-AccessibleObjectInfo GetInfo(const ATL::CComVariant &role, const string &name,
-                             const string &value) {
+AccessibleObjectInfo GetInfo(const ATL::CComVariant &role,
+                             const std::string &name,
+                             const std::string &value) {
   AccessibleObjectInfo info;
   info.role = RoleToString(role);
   info.is_builtin_role = (role.vt == VT_I4);

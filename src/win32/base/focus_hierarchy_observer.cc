@@ -58,13 +58,13 @@ const size_t kMaxHierarchyLevel = 50;
 DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 HMODULE g_module_handle = nullptr;
 
-string UTF16ToUTF8(const std::wstring &str) {
-  string utf8;
+std::string UTF16ToUTF8(const std::wstring &str) {
+  std::string utf8;
   Util::WideToUTF8(str, &utf8);
   return utf8;
 }
 
-string GetWindowTestAsUTF8(HWND window_handle) {
+std::string GetWindowTestAsUTF8(HWND window_handle) {
   const int text_len = ::GetWindowTextLengthW(window_handle);
   if (text_len <= 0) {
     return "";
@@ -80,7 +80,7 @@ string GetWindowTestAsUTF8(HWND window_handle) {
   return UTF16ToUTF8(std::wstring(buffer.get(), copied_len_without_null));
 }
 
-string GetWindowClassNameAsUTF8(HWND window_handle) {
+std::string GetWindowClassNameAsUTF8(HWND window_handle) {
   const int kBufferLen = 256 + 1;
   unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferLen]);
   const int copied_len_without_null =
@@ -172,7 +172,7 @@ class ThreadLocalInfo {
   std::vector<FocusHierarchyObserver::WindowInfo> window_hierarchy() const {
     return window_hierarchy_;
   }
-  string root_window_name() const { return root_window_name_; }
+  std::string root_window_name() const { return root_window_name_; }
 
   void SyncFocusHierarchy() {
     const HWND focused_window = ::GetFocus();
@@ -317,7 +317,7 @@ class ThreadLocalInfo {
   HWINEVENTHOOK hook_handle_;
   std::vector<AccessibleObjectInfo> ui_hierarchy_;
   std::vector<FocusHierarchyObserver::WindowInfo> window_hierarchy_;
-  string root_window_name_;
+  std::string root_window_name_;
 };
 
 bool TlsAvailable() { return g_tls_index != TLS_OUT_OF_INDEXES; }
@@ -368,7 +368,7 @@ class FocusHierarchyObserverImpl : public FocusHierarchyObserver {
     }
     return self->window_hierarchy();
   }
-  virtual string GetRootWindowName() const {
+  virtual std::string GetRootWindowName() const {
     auto *self = ThreadLocalInfo::Self();
     if (self == nullptr) {
       return "";
@@ -395,7 +395,7 @@ class FocusHierarchyObserverNullImpl : public FocusHierarchyObserver {
   virtual std::vector<WindowInfo> GetWindowHierarchy() const {
     return std::vector<WindowInfo>();
   }
-  virtual string GetRootWindowName() const { return ""; }
+  virtual std::string GetRootWindowName() const { return ""; }
 
  private:
   DISALLOW_COPY_AND_ASSIGN(FocusHierarchyObserverNullImpl);

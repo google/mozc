@@ -64,11 +64,11 @@ class Win32Server : public RendererServer, public RendererInterface {
   virtual bool ExecCommand(const commands::RendererCommand &command);
   virtual void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface);
-  virtual bool AsyncExecCommand(string *proto_message);
+  virtual bool AsyncExecCommand(std::string *proto_message);
   virtual int StartMessageLoop();
 
  private:
-  string message_;
+  std::string message_;
   Mutex mutex_;
   HANDLE event_;
   std::unique_ptr<WindowManager> window_manager_;

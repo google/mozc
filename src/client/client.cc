@@ -849,7 +849,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
 
   if (mode == "administration_dialog") {
 #ifdef OS_WIN
-    const string &path = mozc::SystemUtil::GetToolPath();
+    const std::string &path = mozc::SystemUtil::GetToolPath();
     std::wstring wpath;
     Util::UTF8ToWide(path, &wpath);
     wpath = L"\"" + wpath + L"\"";

@@ -38,6 +38,7 @@ load(
     "cc_test_mozc",
     "py_binary_mozc",
     "py_library_mozc",
+    "select_mozc",
 )
 
 cc_library_mozc(
@@ -792,4 +793,27 @@ py_binary_mozc(
     ],
     visibility = ["//train/zip_code:__subpackages__"],
     deps = [],
+)
+
+genrule(
+    name = "zip_code_data",
+    srcs = select_mozc(
+        default = [
+        ],
+        oss = [
+            "@zip_code_ken_all//:KEN_ALL.CSV",
+            "@zip_code_jigyosyo//:JIGYOSYO.CSV",
+        ],
+    ),
+    outs = ["zip_code.tsv"],
+    cmd = (
+        "$(location :gen_zip_code_seed)" +
+        " --output $@ " + select_mozc(
+            default = "",
+            oss = (" --zip_code $(location @zip_code_ken_all//:KEN_ALL.CSV)" +
+                   " --jigyosyo $(location @zip_code_jigyosyo//:JIGYOSYO.CSV)"),
+        )
+    ),
+    exec_tools = [":gen_zip_code_seed"],
+    visibility = ["//:__subpackages__"],
 )

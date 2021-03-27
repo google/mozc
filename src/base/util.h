@@ -243,8 +243,8 @@ class Util {
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
   static int UTF8ToWide(absl::string_view input, std::wstring *output);
-  static int WideToUTF8(const wchar_t *input, string *output);
-  static int WideToUTF8(const std::wstring &input, string *output);
+  static int WideToUTF8(const wchar_t *input, std::string *output);
+  static int WideToUTF8(const std::wstring &input, std::string *output);
 #endif  // OS_WIN
 
   // Extracts a substring range, where both start and length are in terms of
@@ -450,6 +450,9 @@ class Util {
   // if the given string contains multiple charasets, return
   // the maximum character set.
   static CharacterSet GetCharacterSet(absl::string_view str);
+
+  // Returns true if all characters of `str` are ASCII (U+00 - U+7F).
+  static bool IsAscii(absl::string_view str);
 
   // Serializes uint64 into a string of eight byte.
   static std::string SerializeUint64(uint64_t x);

@@ -162,7 +162,7 @@ class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
   virtual bool SetEnabled(bool val);
 
  private:
-  string config_file_;
+  std::string config_file_;
   Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(MacStatsConfigUtilImpl);

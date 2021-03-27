@@ -149,7 +149,7 @@ TEST_F(FileUtilTest, Unlink) {
 
 #ifdef OS_WIN
 TEST_F(FileUtilTest, HideFile) {
-  const string filename =
+  const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
   FileUtil::Unlink(filename);
 
@@ -262,7 +262,7 @@ TEST_F(FileUtilTest, CopyFile) {
   };
 
   for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
-    const string test_label =
+    const std::string test_label =
         "overwrite test with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);
@@ -350,7 +350,7 @@ TEST_F(FileUtilTest, AtomicRename) {
   };
 
   for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
-    const string test_label =
+    const std::string test_label =
         "overwrite file with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
     CreateTestFile(from, test_label);

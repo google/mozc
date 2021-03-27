@@ -42,7 +42,8 @@ class FortuneRewriter : public RewriterInterface {
   FortuneRewriter();
   ~FortuneRewriter() override;
 
-  bool Rewrite(const ConversionRequest &request, Segments *segments) const;
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
 };
 
 }  // namespace mozc

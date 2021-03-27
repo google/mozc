@@ -71,7 +71,7 @@ const char kIncoginitoModeOff[] = "シークレットモードをオフ";
 const char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
 const char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
 
-bool FindString(const string &query, const char **values, size_t size) {
+bool FindString(const std::string &query, const char **values, size_t size) {
   DCHECK(values);
   DCHECK_GT(size, 0);
   for (size_t i = 0; i < size; ++i) {
@@ -152,7 +152,7 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
   DCHECK(segment);
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    const string &value = segment->candidate(i).value;
+    const std::string &value = segment->candidate(i).value;
     if (FindString(value, kCommandValues, arraysize(kCommandValues))) {
       // insert command candidate at an fixed position.
       InsertDisableAllSuggestionToggleCommand(config, segment, i, 6);
@@ -182,7 +182,7 @@ bool CommandRewriter::Rewrite(const ConversionRequest &request,
 
   Segment *segment = segments->mutable_conversion_segment(0);
   DCHECK(segment);
-  const string &key = segment->key();
+  const std::string &key = segment->key();
 
   // TODO(taku): we want to replace the linear search with STL map when
   // kTriggerKeys become bigger.
