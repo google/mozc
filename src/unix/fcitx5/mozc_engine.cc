@@ -30,6 +30,7 @@
 
 #include <vector>
 
+#include "base/clock.h"
 #include "base/init_mozc.h"
 #include "base/process.h"
 #include "unix/fcitx5/mozc_connection.h"
@@ -141,6 +142,7 @@ Instance *Init(Instance *instance) {
 MozcEngine::MozcEngine(Instance *instance)
     : instance_(Init(instance)),
       connection_(std::make_unique<MozcConnection>()),
+      client_(connection_->CreateClient()),
       factory_([this](InputContext &ic) {
         return new MozcState(&ic, connection_->CreateClient(), this);
       }),
@@ -217,6 +219,9 @@ void MozcEngine::setConfig(const RawConfig &config) {
 void MozcEngine::reloadConfig() { readAsIni(config_, "conf/mozc.conf"); }
 void MozcEngine::activate(const fcitx::InputMethodEntry &,
                           fcitx::InputContextEvent &event) {
+  if (client_) {
+    client_->EnsureConnection();
+  }
   auto ic = event.inputContext();
   auto mozc_state = mozcState(ic);
   mozc_state->FocusIn();
@@ -252,7 +257,12 @@ void MozcEngine::reset(const InputMethodEntry &, InputContextEvent &event) {
   mozc_state->Reset();
 }
 
-void MozcEngine::save() {}
+void MozcEngine::save() {
+  if (client_ == nullptr) {
+    return;
+  }
+  client_->SyncData();
+}
 
 std::string MozcEngine::subMode(const fcitx::InputMethodEntry &,
                                 fcitx::InputContext &ic) {

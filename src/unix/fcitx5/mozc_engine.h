@@ -116,9 +116,12 @@ class MozcEngine final : public InputMethodEngine {
 
   void compositionModeUpdated(InputContext *ic);
 
+  void SyncData(bool force);
+
  private:
   Instance *instance_;
   std::unique_ptr<MozcConnection> connection_;
+  std::unique_ptr<mozc::client::ClientInterface> client_;
   FactoryFor<MozcState> factory_;
   MozcModeAction modeAction_;
   SimpleAction toolAction_;
@@ -129,6 +132,7 @@ class MozcEngine final : public InputMethodEngine {
   Menu toolMenu_;
   Menu modeMenu_;
   MozcEngineConfig config_;
+  uint64 lastSyncTime_;
 
   FCITX_ADDON_DEPENDENCY_LOADER(clipboard, instance_->addonManager());
 };

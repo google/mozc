@@ -52,7 +52,6 @@
 
 namespace fcitx {
 
-// For unittests.
 MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
                      MozcEngine* engine)
     : ic_(ic),
@@ -283,7 +282,6 @@ void MozcState::FocusOut() {
   }
   ClearAll();  // just in case.
   DrawAll();
-  // TODO(yusukes): Call client::SyncData() like ibus-mozc.
 }
 
 bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
