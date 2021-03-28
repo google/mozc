@@ -163,7 +163,7 @@ INPUT_RETURN_VALUE FcitxMozcDoInput(void* arg, FcitxKeySym _sym, unsigned int _s
     }
 
     if (FcitxHotkeyIsHotKey(_sym, _state, MOZC_CTRL_ALT_H)) {
-        std::pair< string, string > usage = mozcState->mozc->GetUsage();
+        std::pair< std::string, std::string > usage = mozcState->mozc->GetUsage();
         if (usage.first.size() != 0 || usage.second.size() != 0) {
             mozcState->inUsageState = true;
             FcitxCandidateWordList* candList = FcitxInputStateGetCandidateList(mozcState->mozc->GetInputState());

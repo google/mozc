@@ -381,7 +381,7 @@ bool KeyTranslator::Translate(KeySym keyval, uint32 keycode,
     modifiers.unset(KeyState::Shift);
     keyval = FcitxKey_Katakana;
   }
-  string kana_key_string;
+  std::string kana_key_string;
   if ((method == mozc::config::Config::KANA) &&
       IsKanaAvailable(keyval, keycode, modifiers, layout_is_jp,
                       &kana_key_string)) {
@@ -476,7 +476,7 @@ bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(KeySym keyval,
 
 bool KeyTranslator::IsKanaAvailable(KeySym keyval, uint32 keycode,
                                     KeyStates modifiers, bool layout_is_jp,
-                                    string *out) const {
+                                    std::string *out) const {
   if ((modifiers & KeyState::Ctrl) || (modifiers & KeyState::Alt)) {
     return false;
   }

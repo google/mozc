@@ -385,7 +385,7 @@ bool KeyTranslator::Translate(FcitxKeySym keyval,
     modifiers &= ~FcitxKeyState_Shift;
     keyval = FcitxKey_Katakana;
   }
-  string kana_key_string;
+  std::string kana_key_string;
   if ((method == config::Config::KANA) && IsKanaAvailable(
           keyval, keycode, modifiers, layout_is_jp, &kana_key_string)) {
     out_event->set_key_code(keyval);
@@ -472,7 +472,7 @@ bool KeyTranslator::IsKanaAvailable(uint32 keyval,
                                     uint32 keycode,
                                     uint32 modifiers,
                                     bool layout_is_jp,
-                                    string *out) const {
+                                    std::string *out) const {
   if ((modifiers & FcitxKeyState_Ctrl) || (modifiers & FcitxKeyState_Alt)) {
     return false;
   }

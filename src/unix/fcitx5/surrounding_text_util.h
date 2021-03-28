@@ -44,9 +44,9 @@ struct SurroundingTextInfo {
   SurroundingTextInfo() : relative_selected_length(0) {}
 
   int32 relative_selected_length;
-  string preceding_text;
-  string selection_text;
-  string following_text;
+  std::string preceding_text;
+  std::string selection_text;
+  std::string following_text;
 };
 
 class SurroundingTextUtil {
@@ -69,8 +69,8 @@ class SurroundingTextUtil {
   // When both 1) and 2) are satisfied, this function calculates
   // |*anchor_pos| for case 1).
   // Otherwise returns false.
-  static bool GetAnchorPosFromSelection(const string &surrounding_text,
-                                        const string &selected_text,
+  static bool GetAnchorPosFromSelection(const std::string &surrounding_text,
+                                        const std::string &selected_text,
                                         uint cursor_pos, uint *anchor_pos);
 
  private:

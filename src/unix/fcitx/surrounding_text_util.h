@@ -69,8 +69,8 @@ class SurroundingTextUtil {
   // |*anchor_pos| for case 1).
   // Otherwise returns false.
   static bool GetAnchorPosFromSelection(
-      const string &surrounding_text,
-      const string &selected_text,
+      const std::string &surrounding_text,
+      const std::string &selected_text,
       uint cursor_pos,
       uint *anchor_pos);
 

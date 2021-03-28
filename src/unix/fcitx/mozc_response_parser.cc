@@ -55,7 +55,7 @@ uint32 GetCursorPosition(const mozc::commands::Output &response) {
     return response.preedit().cursor();
 }
 
-string CreateDescriptionString(const string &description) {
+std::string CreateDescriptionString(const std::string &description) {
     return " [" + description + "]";
 }
 
@@ -207,7 +207,7 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
     }
 
     if (response.has_url()) {
-        const string &url = response.url();
+        const std::string &url = response.url();
         fcitx_mozc->SetUrl(url);
     }
     LaunchTool(response, fcitx_mozc);
@@ -246,7 +246,7 @@ void MozcResponseParser::ParseCandidates(
     bool hasPrev = false;
     bool hasNext = false;
     if (candidates.has_footer()) {
-        string auxString;
+        std::string auxString;
         if (footer.has_label()) {
             // TODO(yusukes,mozc-team): label() is not localized. Currently, it's always
             // written in Japanese (in UTF-8).
@@ -292,7 +292,7 @@ void MozcResponseParser::ParseCandidates(
         FcitxCandidateWordSetLayoutHint(candList, CLH_Vertical);
     }
 
-    std::map<int32, std::pair<string, string> > usage_map;
+    std::map<int32, std::pair<std::string, std::string> > usage_map;
     if (candidates.has_usages()) {
         const commands::InformationList& usages = candidates.usages();
         for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -332,7 +332,7 @@ void MozcResponseParser::ParseCandidates(
         candWord.wordType = type;
         candWord.owner = fcitx_mozc;
 
-        string value;
+        std::string value;
         if (use_annotation_ &&
                 candidate.has_annotation() &&
                 candidate.annotation().has_prefix()) {
@@ -357,7 +357,7 @@ void MozcResponseParser::ParseCandidates(
             type = MSG_FIRSTCAND;
 
             if (candidate.has_information_id()) {
-                std::map<int32, std::pair<string, string> >::iterator it =
+                std::map<int32, std::pair<std::string, std::string> >::iterator it =
                     usage_map.find(candidate.information_id());
                 if (it != usage_map.end()) {
                     fcitx_mozc->SetUsage(it->second.first, it->second.second);

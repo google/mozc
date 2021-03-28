@@ -144,7 +144,7 @@ FcitxMozc::~FcitxMozc()
 // key.
 bool FcitxMozc::process_key_event (FcitxKeySym sym, uint32 keycode, uint32 state, bool layout_is_jp, bool is_key_up)
 {
-    string error;
+    std::string error;
     mozc::commands::Output raw_response;
     if ( !connection_->TrySendKeyEvent (
                 GetInstance(), sym, keycode, state, composition_mode_, layout_is_jp, is_key_up, &raw_response, &error ) )
@@ -169,7 +169,7 @@ void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
     }
     VLOG ( 1 ) << "select_candidate, id=" << *id;
 
-    string error;
+    std::string error;
     mozc::commands::Output raw_response;
     if ( !connection_->TrySendClick ( *id, &raw_response, &error ) )
     {
@@ -187,7 +187,7 @@ void FcitxMozc::select_candidate ( FcitxCandidateWord* candWord )
 void FcitxMozc::resetim()
 {
     VLOG ( 1 ) << "resetim";
-    string error;
+    std::string error;
     mozc::commands::Output raw_response;
     if ( connection_->TrySendCommand (
                 mozc::commands::SessionCommand::REVERT, &raw_response, &error ) )
@@ -216,7 +216,7 @@ void FcitxMozc::reset()
 bool FcitxMozc::paging(bool prev)
 {
     VLOG ( 1 ) << "paging";
-    string error;
+    std::string error;
     mozc::commands::SessionCommand::CommandType command =
         prev ? mozc::commands::SessionCommand::CONVERT_PREV_PAGE
              : mozc::commands::SessionCommand::CONVERT_NEXT_PAGE;
@@ -249,7 +249,7 @@ void FcitxMozc::init()
 void FcitxMozc::focus_out()
 {
     VLOG ( 1 ) << "focus_out";
-    string error;
+    std::string error;
     mozc::commands::Output raw_response;
     if ( connection_->TrySendCommand (
                 mozc::commands::SessionCommand::REVERT, &raw_response, &error ) )
@@ -305,7 +305,7 @@ void FcitxMozc::SetCompositionMode ( mozc::commands::CompositionMode mode )
 void FcitxMozc::SendCompositionMode(mozc::commands::CompositionMode mode)
 {
     // Send the SWITCH_INPUT_MODE command.
-    string error;
+    std::string error;
     mozc::commands::Output raw_response;
     if (connection_->TrySendCompositionMode(
             kPropCompositionModes[mode].mode, composition_mode_, &raw_response, &error)) {
@@ -314,7 +314,7 @@ void FcitxMozc::SendCompositionMode(mozc::commands::CompositionMode mode)
 }
 
 
-void FcitxMozc::SetUrl ( const string &url )
+void FcitxMozc::SetUrl ( const std::string &url )
 {
     url_ = url;
 }
@@ -439,7 +439,7 @@ void UpdateCompositionMenu(struct _FcitxUIMenu *menu)
 
 boolean ToolMenuAction(struct _FcitxUIMenu *menu, int index)
 {
-    string args;
+    std::string args;
     switch(index) {
         case 0:
             args = "--mode=config_dialog";
@@ -494,7 +494,7 @@ void FcitxMozc::InitializeMenu()
 
 bool FcitxMozc::SendCommand(const mozc::commands::SessionCommand& session_command, commands::Output* new_output)
 {
-    string error;
+    std::string error;
     return connection_->TrySendRawCommand(session_command, new_output, &error);
 }
 
@@ -533,13 +533,13 @@ const std::string& FcitxMozc::GetCurrentCompositionModeIcon() {
     return empty_string;
 }
 
-void FcitxMozc::SetUsage(const string& title_, const string& description_)
+void FcitxMozc::SetUsage(const std::string& title_, const std::string& description_)
 {
     title = title_;
     description = description_;
 }
 
-std::pair< string, string > FcitxMozc::GetUsage()
+std::pair< std::string, std::string > FcitxMozc::GetUsage()
 {
     return make_pair(title, description);
 }

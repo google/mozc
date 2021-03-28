@@ -70,21 +70,21 @@ class MozcConnectionInterface {
                                bool layout_is_jp,
                                bool is_key_up,
                                mozc::commands::Output *out,
-                               string *out_error) const = 0;
+                               std::string *out_error) const = 0;
   virtual bool TrySendClick(int32 unique_id,
                             mozc::commands::Output *out,
-                            string *out_error) const = 0;
+                            std::string *out_error) const = 0;
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
                                       mozc::commands::CompositionMode old_mode,
                                       mozc::commands::Output *out,
-                                      string *out_error) const = 0;
+                                      std::string *out_error) const = 0;
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                               mozc::commands::Output *out,
-                              string *out_error) const = 0;
+                              std::string *out_error) const = 0;
 
   virtual bool TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                  mozc::commands::Output *out,
-                                 string *out_error) const = 0;
+                                 std::string *out_error) const = 0;
   virtual mozc::client::ClientInterface* GetClient() = 0;
   virtual void UpdatePreeditMethod() = 0;
 };
@@ -106,27 +106,27 @@ class MozcConnection : public MozcConnectionInterface {
                                bool layout_is_jp,
                                bool is_key_up,
                                mozc::commands::Output *out,
-                               string *out_error) const;
+                               std::string *out_error) const;
 
   // Sends 'mouse click on the candidate window' event to the server.
   virtual bool TrySendClick(int32 unique_id,
                             mozc::commands::Output *out,
-                            string *out_error) const;
+                            std::string *out_error) const;
 
   // Sends composition mode to the server.
   virtual bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
                                       mozc::commands::CompositionMode old_mode,
                                       mozc::commands::Output *out,
-                                      string *out_error) const;
+                                      std::string *out_error) const;
 
   // Sends a command to the server.
   virtual bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                               mozc::commands::Output *out,
-                              string *out_error) const;
+                              std::string *out_error) const;
 
   virtual bool TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                  mozc::commands::Output *out,
-                                 string *out_error) const;
+                                 std::string *out_error) const;
 
   virtual mozc::client::ClientInterface* GetClient();
 

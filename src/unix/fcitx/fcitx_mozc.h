@@ -106,7 +106,7 @@ public:
     void SendCompositionMode ( mozc::commands::CompositionMode mode );
 
     // Sets the url to be opened by the default browser.
-    void SetUrl ( const string &url );
+    void SetUrl ( const std::string &url );
 
     const std::string& GetIconFile(const std::string key);
     
@@ -155,15 +155,15 @@ private:
     // Strings and a window currently displayed on FCITX UI.
     std::unique_ptr<const PreeditInfo> preedit_info_;
     std::string aux_;  // error tooltip, or candidate window title.
-    string url_;  // URL to be opened by a browser.
+    std::string url_;  // URL to be opened by a browser.
     mozc::commands::CompositionMode composition_mode_;
     
     std::map<std::string, std::string> iconMap;
     
     FcitxUIMenu compositionMenu;
     FcitxUIMenu toolMenu;
-    string description;
-    string title;
+    std::string description;
+    std::string title;
 
     DISALLOW_COPY_AND_ASSIGN ( FcitxMozc );
 };

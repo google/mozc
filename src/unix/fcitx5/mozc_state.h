@@ -69,7 +69,7 @@ class MozcState : public InputContextProperty {
   // Functions called by the MozcResponseParser class to update UI.
 
   // Displays a 'result' (aka 'commit string') on FCITX UI.
-  void SetResultString(const string &result_string);
+  void SetResultString(const std::string &result_string);
   // Displays a 'preedit' string on FCITX UI. This function takes ownership
   // of preedit_info. If the parameter is NULL, hides the string currently
   // displayed.
@@ -77,16 +77,16 @@ class MozcState : public InputContextProperty {
   // Displays an auxiliary message (e.g., an error message, a title of
   // candidate window). If the string is empty (""), hides the message
   // currently being displayed.
-  void SetAuxString(const string &str);
+  void SetAuxString(const std::string &str);
   // Sets a current composition mode (e.g., Hankaku Katakana).
   void SetCompositionMode(mozc::commands::CompositionMode mode);
 
   void SendCompositionMode(mozc::commands::CompositionMode mode);
 
   // Sets the url to be opened by the default browser.
-  void SetUrl(const string &url);
+  void SetUrl(const std::string &url);
 
-  const string &GetIconFile(const string key);
+  const std::string &GetIconFile(const std::string key);
 
   mozc::commands::CompositionMode GetCompositionMode() {
     return composition_mode_;
@@ -97,7 +97,7 @@ class MozcState : public InputContextProperty {
   bool SendCommand(const mozc::commands::SessionCommand &session_command,
                    mozc::commands::Output *new_output);
 
-  void SetUsage(const string &title, const string &description);
+  void SetUsage(const std::string &title, const std::string &description);
 
   void DrawAll();
 
@@ -111,23 +111,26 @@ class MozcState : public InputContextProperty {
                        KeyStates state,
                        mozc::commands::CompositionMode composition_mode,
                        bool layout_is_jp, bool is_key_up,
-                       mozc::commands::Output *out, string *out_error) const;
+                       mozc::commands::Output *out,
+                       std::string *out_error) const;
 
   // Sends 'mouse click on the candidate window' event to the server.
   bool TrySendClick(int32 unique_id, mozc::commands::Output *out,
-                    string *out_error) const;
+                    std::string *out_error) const;
 
   // Sends composition mode to the server.
   bool TrySendCompositionMode(mozc::commands::CompositionMode mode,
                               mozc::commands::Output *out,
-                              string *out_error) const;
+                              std::string *out_error) const;
 
   // Sends a command to the server.
   bool TrySendCommand(mozc::commands::SessionCommand::CommandType type,
-                      mozc::commands::Output *out, string *out_error) const;
+                      mozc::commands::Output *out,
+                      std::string *out_error) const;
 
   bool TrySendRawCommand(const mozc::commands::SessionCommand &command,
-                         mozc::commands::Output *out, string *out_error) const;
+                         mozc::commands::Output *out,
+                         std::string *out_error) const;
 
   // Parses the response from mozc_server. Returns whether the server consumes
   // the input or not (true means 'consumed').
@@ -152,10 +155,10 @@ class MozcState : public InputContextProperty {
 
   bool displayUsage_ = false;
   Text preedit_;
-  string aux_;  // error tooltip, or candidate window title.
-  string url_;  // URL to be opened by a browser.
-  string description_;
-  string title_;
+  std::string aux_;  // error tooltip, or candidate window title.
+  std::string url_;  // URL to be opened by a browser.
+  std::string description_;
+  std::string title_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcState);
 };

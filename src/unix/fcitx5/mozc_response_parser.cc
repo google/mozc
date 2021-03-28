@@ -63,13 +63,13 @@ uint32 GetCursorPosition(const mozc::commands::Output &response) {
   return response.preedit().cursor();
 }
 
-string CreateDescriptionString(const string &description) {
+std::string CreateDescriptionString(const std::string &description) {
   return " [" + description + "]";
 }
 
 class MozcCandidateWord final : public CandidateWord {
  public:
-  MozcCandidateWord(int id, string text, MozcEngine *engine)
+  MozcCandidateWord(int id, std::string text, MozcEngine *engine)
       : CandidateWord(Text(text)), id_(id), engine_(engine) {}
 
   void select(InputContext *inputContext) const override {
@@ -116,7 +116,7 @@ class MozcCandidateList final : public CandidateList,
       focused_index = candidates.focused_index();
     }
 
-    std::map<int32, std::pair<string, string>> usage_map;
+    std::map<int32, std::pair<std::string, std::string>> usage_map;
     if (candidates.has_usages()) {
       const mozc::commands::InformationList &usages = candidates.usages();
       for (size_t i = 0; i < usages.information().size(); ++i) {
@@ -134,7 +134,7 @@ class MozcCandidateList final : public CandidateList,
           candidates.candidate(i);
       const uint32 index = candidate.index();
 
-      string value;
+      std::string value;
       if (use_annotation && candidate.has_annotation() &&
           candidate.annotation().has_prefix()) {
         value = candidate.annotation().prefix();
@@ -382,7 +382,7 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
   }
 
   if (response.has_url()) {
-    const string &url = response.url();
+    const std::string &url = response.url();
     mozc_state->SetUrl(url);
   }
   LaunchTool(response, ic);
@@ -415,7 +415,7 @@ void MozcResponseParser::ParseCandidates(
   auto mozc_state = engine_->mozcState(ic);
   const mozc::commands::Footer &footer = candidates.footer();
   if (candidates.has_footer()) {
-    string auxString;
+    std::string auxString;
     if (footer.has_label()) {
       // TODO(yusukes,mozc-team): label() is not localized. Currently, it's
       // always
@@ -446,11 +446,11 @@ void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,
                                       uint32 position, InputContext *ic) const {
   auto mozc_state = engine_->mozcState(ic);
   Text preedit_text;
-  string s;
+  std::string s;
 
   for (int i = 0; i < preedit.segment_size(); ++i) {
     const mozc::commands::Preedit_Segment &segment = preedit.segment(i);
-    const string &str = segment.value();
+    const std::string &str = segment.value();
     if (!utf8::validate(str)) {
       continue;
     }

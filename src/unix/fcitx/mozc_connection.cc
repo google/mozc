@@ -98,7 +98,7 @@ bool MozcConnection::TrySendKeyEvent(
     bool layout_is_jp,
     bool is_key_up,
     mozc::commands::Output *out,
-    string *out_error) const {
+    std::string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -140,7 +140,7 @@ bool MozcConnection::TrySendKeyEvent(
 
 bool MozcConnection::TrySendClick(int32 unique_id,
                                   mozc::commands::Output *out,
-                                  string *out_error) const {
+                                  std::string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -154,7 +154,7 @@ bool MozcConnection::TrySendCompositionMode(
     mozc::commands::CompositionMode mode,
     mozc::commands::CompositionMode old_mode,
     mozc::commands::Output *out,
-    string *out_error) const {
+    std::string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -172,7 +172,7 @@ bool MozcConnection::TrySendCompositionMode(
 bool MozcConnection::TrySendCommand(
     mozc::commands::SessionCommand::CommandType type,
     mozc::commands::Output *out,
-    string *out_error) const {
+    std::string *out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -186,7 +186,7 @@ bool MozcConnection::TrySendCommand(
 bool MozcConnection::TrySendRawCommand(
     const mozc::commands::SessionCommand& command,
     mozc::commands::Output *out,
-    string *out_error) const {
+    std::string *out_error) const {
   VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";

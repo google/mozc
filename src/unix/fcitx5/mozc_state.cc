@@ -88,7 +88,7 @@ void MozcState::UpdatePreeditMethod() {
 bool MozcState::TrySendKeyEvent(
     InputContext* ic, KeySym sym, uint32 keycode, KeyStates state,
     mozc::commands::CompositionMode composition_mode, bool layout_is_jp,
-    bool is_key_up, mozc::commands::Output* out, string* out_error) const {
+    bool is_key_up, mozc::commands::Output* out, std::string* out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -130,7 +130,7 @@ bool MozcState::TrySendKeyEvent(
 }
 
 bool MozcState::TrySendClick(int32 unique_id, mozc::commands::Output* out,
-                             string* out_error) const {
+                             std::string* out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -142,7 +142,7 @@ bool MozcState::TrySendClick(int32 unique_id, mozc::commands::Output* out,
 
 bool MozcState::TrySendCompositionMode(mozc::commands::CompositionMode mode,
                                        mozc::commands::Output* out,
-                                       string* out_error) const {
+                                       std::string* out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -159,7 +159,7 @@ bool MozcState::TrySendCompositionMode(mozc::commands::CompositionMode mode,
 
 bool MozcState::TrySendCommand(mozc::commands::SessionCommand::CommandType type,
                                mozc::commands::Output* out,
-                               string* out_error) const {
+                               std::string* out_error) const {
   DCHECK(out);
   DCHECK(out_error);
 
@@ -170,7 +170,7 @@ bool MozcState::TrySendCommand(mozc::commands::SessionCommand::CommandType type,
 
 bool MozcState::TrySendRawCommand(const mozc::commands::SessionCommand& command,
                                   mozc::commands::Output* out,
-                                  string* out_error) const {
+                                  std::string* out_error) const {
   VLOG(1) << "TrySendRawCommand: " << std::endl << command.DebugString();
   if (!client_->SendCommand(command, out)) {
     *out_error = "SendCommand failed";
@@ -206,7 +206,7 @@ bool MozcState::ProcessKeyEvent(KeySym sym, uint32 keycode, KeyStates state,
     }
   }
 
-  string error;
+  std::string error;
   mozc::commands::Output raw_response;
   if (!TrySendKeyEvent(ic_, sym, keycode, state, composition_mode_,
                        layout_is_jp, is_key_up, &raw_response, &error)) {
@@ -226,7 +226,7 @@ void MozcState::SelectCandidate(int32 id) {
   }
   VLOG(1) << "select_candidate, id=" << id;
 
-  string error;
+  std::string error;
   mozc::commands::Output raw_response;
   if (!TrySendClick(id, &raw_response, &error)) {
     LOG(ERROR) << "IPC failed. error=" << error;
@@ -240,7 +240,7 @@ void MozcState::SelectCandidate(int32 id) {
 // This function is called from SCIM framework.
 void MozcState::Reset() {
   VLOG(1) << "resetim";
-  string error;
+  std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCommand(mozc::commands::SessionCommand::REVERT, &raw_response,
                      &error)) {
@@ -252,7 +252,7 @@ void MozcState::Reset() {
 
 bool MozcState::Paging(bool prev) {
   VLOG(1) << "paging";
-  string error;
+  std::string error;
   mozc::commands::SessionCommand::CommandType command =
       prev ? mozc::commands::SessionCommand::CONVERT_PREV_PAGE
            : mozc::commands::SessionCommand::CONVERT_NEXT_PAGE;
@@ -275,7 +275,7 @@ void MozcState::FocusIn() {
 // This function is called when the ic loses focus.
 void MozcState::FocusOut() {
   VLOG(1) << "MozcState::FocusOut()";
-  string error;
+  std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCommand(mozc::commands::SessionCommand::REVERT, &raw_response,
                      &error)) {
@@ -297,7 +297,7 @@ bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
   return consumed;
 }
 
-void MozcState::SetResultString(const string& result_string) {
+void MozcState::SetResultString(const std::string& result_string) {
   ic_->commitString(result_string);
 }
 
@@ -305,7 +305,7 @@ void MozcState::SetPreeditInfo(Text preedit_info) {
   preedit_ = std::move(preedit_info);
 }
 
-void MozcState::SetAuxString(const string& str) { aux_ = str; }
+void MozcState::SetAuxString(const std::string& str) { aux_ = str; }
 
 void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode) {
   composition_mode_ = mode;
@@ -315,7 +315,7 @@ void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode) {
 
 void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   // Send the SWITCH_INPUT_MODE command.
-  string error;
+  std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCompositionMode(mode, &raw_response, &error)) {
     auto oldMode = composition_mode_;
@@ -326,7 +326,7 @@ void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   }
 }
 
-void MozcState::SetUrl(const string& url) { url_ = url; }
+void MozcState::SetUrl(const std::string& url) { url_ = url; }
 
 void MozcState::ClearAll() {
   SetPreeditInfo(Text());
@@ -336,7 +336,7 @@ void MozcState::ClearAll() {
 }
 
 void MozcState::DrawAll() {
-  string aux;
+  std::string aux;
   if (!aux_.empty()) {
     aux += "[";
     aux += aux_;
@@ -372,11 +372,12 @@ void MozcState::OpenUrl() {
 bool MozcState::SendCommand(
     const mozc::commands::SessionCommand& session_command,
     mozc::commands::Output* new_output) {
-  string error;
+  std::string error;
   return TrySendRawCommand(session_command, new_output, &error);
 }
 
-void MozcState::SetUsage(const string& title, const string& description) {
+void MozcState::SetUsage(const std::string& title,
+                         const std::string& description) {
   title_ = title;
   description_ = description;
 }

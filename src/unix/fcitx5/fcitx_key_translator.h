@@ -58,7 +58,7 @@ class KeyTranslator {
   typedef std::map<uint32, mozc::commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<uint32, mozc::commands::KeyEvent::ModifierKey>
       ModifierKeyMap;
-  typedef std::map<uint32, std::pair<string, string>> KanaMap;
+  typedef std::map<uint32, std::pair<std::string, std::string>> KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(KeySym keyval, uint32 keycode, KeyStates modifiers) const;
@@ -68,7 +68,7 @@ class KeyTranslator {
 
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(KeySym keyval, uint32 keycode, KeyStates modifiers,
-                       bool layout_is_jp, string *out) const;
+                       bool layout_is_jp, std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
   static bool IsAscii(KeySym keyval, uint32 keycode, KeyStates modifiers);

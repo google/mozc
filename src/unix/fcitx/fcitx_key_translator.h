@@ -64,7 +64,7 @@ public:
 private:
   typedef std::map<uint32, commands::KeyEvent::SpecialKey> SpecialKeyMap;
   typedef std::map<uint32, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<uint32, std::pair<string, string> > KanaMap;
+  typedef std::map<uint32, std::pair<std::string, std::string> > KanaMap;
 
   // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
   bool IsModifierKey(uint32 keyval,
@@ -81,7 +81,7 @@ private:
                        uint32 keycode,
                        uint32 modifiers,
                        bool layout_is_jp,
-                       string *out) const;
+                       std::string *out) const;
 
   // Returns true iff key is ASCII such as '0', 'A', or '!'.
   static bool IsAscii(uint32 keyval,

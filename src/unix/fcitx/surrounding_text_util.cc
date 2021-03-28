@@ -110,8 +110,8 @@ bool StartsWith(ConstChar32Iterator *iter,
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
 bool SearchAnchorPosForward(
-    const string &surrounding_text,
-    const string &selected_text,
+    const std::string &surrounding_text,
+    const std::string &selected_text,
     size_t selected_chars_len,
     uint cursor_pos,
     uint *anchor_pos) {
@@ -134,8 +134,8 @@ bool SearchAnchorPosForward(
 // from |*anchor_pos| to |cursor_pos|.
 // Otherwise returns false.
 bool SearchAnchorPosBackward(
-    const string &surrounding_text,
-    const string &selected_text,
+    const std::string &surrounding_text,
+    const std::string &selected_text,
     size_t selected_chars_len,
     uint cursor_pos,
     uint *anchor_pos) {
@@ -162,8 +162,8 @@ bool SearchAnchorPosBackward(
 }  // namespace
 
 bool SurroundingTextUtil::GetAnchorPosFromSelection(
-    const string &surrounding_text,
-    const string &selected_text,
+    const std::string &surrounding_text,
+    const std::string &selected_text,
     uint cursor_pos,
     uint *anchor_pos) {
   DCHECK(anchor_pos);
@@ -204,7 +204,7 @@ bool GetSurroundingText(FcitxInstance* instance,
         return false;
     }
 
-    const string surrounding_text(str);
+    const std::string surrounding_text(str);
     free(str);
 
     if (cursor_pos == anchor_pos) {
@@ -212,7 +212,7 @@ bool GetSurroundingText(FcitxInstance* instance,
 
         if ((primary = FcitxClipboardGetPrimarySelection(instance, NULL)) != NULL) {
             uint new_anchor_pos = 0;
-            const string primary_text(primary);
+            const std::string primary_text(primary);
             if (SurroundingTextUtil::GetAnchorPosFromSelection(
                 surrounding_text, primary_text,
                 cursor_pos, &new_anchor_pos)) {
