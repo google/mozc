@@ -202,7 +202,7 @@ bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
   //     because of this rule. When a user commits his password in
   //     full-width form by mistake, like "ｘ７ＬＡＧｈａＲ", it is not
   //     treated as privacy sensitive too.
-  if (Util::GetCharacterSet(candidate_value) != Util::ASCII) {
+  if (!Util::IsAscii(candidate_value)) {
     return kNonSensitive;
   }
 
@@ -1436,7 +1436,7 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       VariantsRewriter::SetDescriptionForPrediction(*pos_matcher_, candidate);
     }
 #if DEBUG
-    if (candidate->description.find("History") == string::npos) {
+    if (!absl::StrContains(candidate->description, "History")) {
       candidate->description += " History";
     }
 #endif  // DEBUG

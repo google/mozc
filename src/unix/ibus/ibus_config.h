@@ -46,9 +46,11 @@ class IbusConfig {
   IbusConfig(const IbusConfig&) = delete;
   IbusConfig& operator=(const IbusConfig&) = delete;
 
-  const std::string &InitEnginesXml();
+  bool Initialize();
+  const std::string &GetEnginesXml() const;
   const std::string &GetLayout(const std::string &name) const;
   const ibus::Config &GetConfig() const;
+  bool IsActiveOnLaunch() const;
 
  private:
   std::string default_layout_;

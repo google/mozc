@@ -5938,7 +5938,7 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   // for now.
 #ifdef OS_WIN
   config::Config config;
-  const string custom_keymap_table =
+  const std::string custom_keymap_table =
       "status\tkey\tcommand\n"
       "DirectInput\tHiragana\tInputModeHiragana\n";
   config.set_session_keymap(config::Config::CUSTOM);
@@ -8060,6 +8060,17 @@ TEST_F(SessionTest, MoveCursor) {
   EXPECT_EQ(3, command.output().preedit().cursor());
   session->MoveCursorRight(&command);
   EXPECT_EQ(4, command.output().preedit().cursor());
+}
+
+TEST_F(SessionTest, MoveCursorPrecomposition) {
+  std::unique_ptr<Session> session(new Session(engine_.get()));
+  InitSessionToPrecomposition(session.get());
+  commands::Command command;
+
+  command.mutable_input()->mutable_command()->set_cursor_position(3);
+  session->MoveCursorTo(&command);
+  EXPECT_FALSE(command.output().has_preedit());
+  EXPECT_FALSE(command.output().consumed());
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommit) {

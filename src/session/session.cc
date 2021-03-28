@@ -2431,6 +2431,12 @@ bool Session::MoveCursorToEnd(commands::Command *command) {
 }
 
 bool Session::MoveCursorTo(commands::Command *command) {
+  // This method moves the cursor *inside* the composition text.
+  // Therefore on PRECOMPOSITION state, where there is no composition text,
+  // this method shouldn't consume the event but send back it to the client.
+  if (context_->state() == ImeContext::PRECOMPOSITION) {
+    return EchoBack(command);
+  }
   if (context_->state() != ImeContext::COMPOSITION) {
     return DoNothing(command);
   }

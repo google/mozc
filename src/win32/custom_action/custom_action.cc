@@ -85,8 +85,9 @@ const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
 HMODULE g_module = nullptr;
 
-std::wstring GetMozcComponentPath(const string &filename) {
-  const string path = mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
+std::wstring GetMozcComponentPath(const std::string &filename) {
+  const std::string path =
+      mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
   std::wstring wpath;
   mozc::Util::UTF8ToWide(path, &wpath);
   return wpath;
@@ -273,7 +274,7 @@ UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
 // [Return='ignore']
 UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  string url;
+  std::string url;
   mozc::URL::GetUninstallationSurveyURL(mozc::Version::GetMozcVersion(), &url);
   mozc::Process::OpenBrowser(url);
   return ERROR_SUCCESS;

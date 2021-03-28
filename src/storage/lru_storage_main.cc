@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
   LOG(INFO) << "usage=" << 100.0 * s.used_size() / s.size() << "%";
   LOG(INFO) << "value_size=" << s.value_size();
 
-  string line;
-  std::vector<string> fields;
+  std::string line;
+  std::vector<std::string> fields;
   while (getline(cin, line)) {
     fields.clear();
     mozc::Util::SplitStringUsing(line, "\t ", &fields);

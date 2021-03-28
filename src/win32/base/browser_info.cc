@@ -77,7 +77,7 @@ BrowserInfo::BrowserType BrowserInfo::GetBrowerType() {
     if (!WinUtil::IsDLLSynchronizationHeld(&loder_locked) || loder_locked) {
       return kBrowserTypeUnknown;
     }
-    string exe_path_utf8;
+    std::string exe_path_utf8;
     Util::WideToUTF8(GetProcessModuleName(), &exe_path_utf8);
     Util::LowerString(&exe_path_utf8);
     if (Util::EndsWith(exe_path_utf8, "chrome.exe")) {
@@ -108,7 +108,8 @@ bool BrowserInfo::IsInIncognitoMode(
     return false;
   }
 
-  const string root_window_name = focus_hierarchy_observer.GetRootWindowName();
+  const std::string root_window_name =
+      focus_hierarchy_observer.GetRootWindowName();
   if (root_window_name.empty()) {
     return false;
   }

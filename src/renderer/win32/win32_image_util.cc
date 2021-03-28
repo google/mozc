@@ -367,8 +367,8 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 // Core logic to render 1-bit text glyphs for sub-pixel rendering. Caller takes
 // the ownerships of the returned pointers.
 std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
-    double left, double top, double width, double height, const string &text,
-    const string &fontname, size_t font_point) {
+    double left, double top, double width, double height,
+    const std::string &text, const std::string &fontname, size_t font_point) {
   const size_t kDivision = SubdivisionalPixel::kDivision;
 
   const Rect &bounding_rect = GetBoundingRect(left, top, width, height);
@@ -949,8 +949,8 @@ size_t SafeFrameBuffer::GetIndex(int x, int y) const {
 }
 
 TextLabel::TextLabel(double left, double top, double width, double height,
-                     const string &text, const string &font, size_t font_point,
-                     const RGBColor text_color)
+                     const std::string &text, const std::string &font,
+                     size_t font_point, const RGBColor text_color)
     : bounding_rect_(GetBoundingRect(left, top, width, height)),
       pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
       text_color_(text_color) {}

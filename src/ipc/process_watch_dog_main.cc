@@ -56,8 +56,8 @@ int main(int argc, char **argv) {
   mozc::TestProcessWatchDog dog;
   dog.StartWatchDog();
 
-  string line;
-  std::vector<string> fields;
+  std::string line;
+  std::vector<std::string> fields;
 
   while (std::getline(std::cin, line)) {
     fields.clear();

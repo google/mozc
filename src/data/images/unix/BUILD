@@ -28,29 +28,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package(default_visibility = ["//:__subpackages__"])
-
 exports_files([
-    "collocation.txt",
-    "collocation_suppression.txt",
-    "connection.deflate",
-    "dictionary.txt",
-    "id.def",
-    "reading_correction.tsv",
-    "suffix.txt",
-    "suggestion_filter.txt",
+    "48x48/alpha_full.png",
+    "48x48/alpha_half.png",
+    "48x48/direct.png",
+    "48x48/hiragana.png",
+    "48x48/katakana_full.png",
+    "48x48/katakana_half.png",
+    "ui-dictionary.png",
+    "ui-properties.png",
+    "ui-tool.png",
 ])
-
-filegroup(
-    name = "dictionary_data",
-    srcs = [":dictionary.txt"],
-)
-
-filegroup(
-    name = "dictionary",
-    srcs = [
-        ":connection.deflate",
-        ":dictionary.txt",
-        ":suffix.txt",
-    ],
-)

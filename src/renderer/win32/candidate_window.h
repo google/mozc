@@ -43,7 +43,6 @@
 // clang-format on
 
 #include <memory>
-#include <string>
 
 #include "base/const.h"
 #include "base/coordinates.h"

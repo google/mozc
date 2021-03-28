@@ -74,16 +74,16 @@ class WinAPITestHelper {
   typedef void *FunctionPointer;
   struct HookRequest {
    public:
-    HookRequest(const string &src_module, const string &src_proc_name,
+    HookRequest(const std::string &src_module, const std::string &src_proc_name,
                 FunctionPointer new_proc_addr);
-    const string module_name;
-    const string proc_name;
+    const std::string module_name;
+    const std::string proc_name;
     const FunctionPointer new_proc_address;
   };
 
   template <typename NewProcType>
-  static HookRequest MakeHookRequest(const string &module,
-                                     const string &proc_name,
+  static HookRequest MakeHookRequest(const std::string &module,
+                                     const std::string &proc_name,
                                      const NewProcType &new_proc_ref) {
     return HookRequest(module, proc_name, &new_proc_ref);
   }

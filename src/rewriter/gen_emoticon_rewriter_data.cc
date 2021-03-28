@@ -98,10 +98,10 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
     KeyList key_list;
     Util::SplitStringUsing(field_list[1], " ", &key_list);
 
-    data.emplace_back(std::string(field_list[0]), std::move(key_list));
     for (const auto &key : key_list) {
       ++key_count[key];
     }
+    data.emplace_back(std::string(field_list[0]), std::move(key_list));
   }
 
   std::map<std::string, TokenList> input_data;

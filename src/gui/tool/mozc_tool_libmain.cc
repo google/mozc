@@ -114,7 +114,7 @@ int RunMozcTool(int argc, char *argv[]) {
 #ifdef __APPLE__
   // In Mac, we shares the same binary but changes the application
   // name.
-  string binary_name = mozc::FileUtil::Basename(argv[0]);
+  std::string binary_name = mozc::FileUtil::Basename(argv[0]);
   if (binary_name == "AboutDialog") {
     absl::SetFlag(&FLAGS_mode, "about_dialog");
   } else if (binary_name == "ConfigDialog") {

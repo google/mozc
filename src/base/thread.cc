@@ -64,7 +64,7 @@ struct ThreadInternalState {
   bool joinable;
 };
 
-void Thread::Start(const string &thread_name) {
+void Thread::Start(const std::string &thread_name) {
   // TODO(mozc-dev): Set thread name.
   if (IsRunning()) {
     return;

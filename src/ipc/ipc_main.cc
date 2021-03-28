@@ -57,11 +57,11 @@ class MultiConnections : public Thread {
       mozc::IPCClient con(FLAGS_server_address,
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
-      string input = "testtesttesttest";
+      std::string input = "testtesttesttest";
       size_t length = sizeof(buf);
       ::memset(buf, 0, length);
       CHECK(con.Call(input.data(), input.size(), buf, &length, 1000));
-      string output(buf, length);
+      std::string output(buf, length);
       CHECK_EQ(input.size(), output.size());
       CHECK_EQ(input, output);
     }
@@ -70,7 +70,7 @@ class MultiConnections : public Thread {
 
 class EchoServer : public IPCServer {
  public:
-  EchoServer(const string &path, int32 num_connections, int32 timeout)
+  EchoServer(const std::string &path, int32 num_connections, int32 timeout)
       : IPCServer(path, num_connections, timeout) {}
   virtual bool Process(const char *input_buffer, size_t input_length,
                        char *output_buffer, size_t *output_length) {
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     LOG(INFO) << "Start Server at " << absl::GetFlag(FLAGS_server_address);
     con.Loop();
   } else if (absl::GetFlag(FLAGS_client)) {
-    string line;
+    std::string line;
     char response[8192];
     while (getline(cin, line)) {
       mozc::IPCClient con(FLAGS_server_address,
@@ -134,7 +134,8 @@ int main(int argc, char **argv) {
       size_t response_size = sizeof(response);
       CHECK(con.Call(line.data(), line.size(), response, &response_size, 1000));
       std::cout << "Request: " << line << std::endl;
-      std::cout << "Response: " << string(response, response_size) << std::endl;
+      std::cout << "Response: " << std::string(response, response_size)
+                << std::endl;
     }
   } else {
     LOG(INFO) << "either --server or --client or --test must be set true";

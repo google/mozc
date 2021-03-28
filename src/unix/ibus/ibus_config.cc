@@ -107,14 +107,20 @@ std::string CreateEnginesXml(const ibus::Config &config) {
 }
 }  // namespace
 
-const std::string &IbusConfig::InitEnginesXml() {
+bool IbusConfig::Initialize() {
   const std::string config_data = UpdateConfigFile();
   const bool valid_user_config = ParseConfig(config_data, config_);
+
   engine_xml_ = CreateEnginesXml(config_);
   if (!valid_user_config) {
     engine_xml_ += ("<!-- Failed to parse the user config. -->\n"
                     "<!-- Used the default setting instead. -->\n");
   }
+
+  return valid_user_config;
+}
+
+const std::string &IbusConfig::GetEnginesXml() const {
   return engine_xml_;
 }
 
@@ -129,5 +135,15 @@ const std::string &IbusConfig::GetLayout(const std::string& name) const {
     }
   }
   return default_layout_;
+}
+
+bool IbusConfig::IsActiveOnLaunch() const {
+  if (config_.has_active_on_launch()) {
+    return config_.active_on_launch();
+  }
+
+  // The default value is off as IBus team's recommentation.
+  // https://github.com/google/mozc/issues/201
+  return false;
 }
 }  // namespace mozc

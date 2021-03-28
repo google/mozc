@@ -62,17 +62,17 @@ TEST(AndroidUtilTest, GetSystemProperty) {
 
 TEST(AndroidUtilTest, ParseLine_valid) {
   struct TestCase {
-    string line;
-    string lhs;
-    string rhs;
+    std::string line;
+    std::string lhs;
+    std::string rhs;
   };
   // Valid patterns.
   const TestCase testcases[] = {
       {"1=2 ", "1", "2 "},      {"1=2=3", "1", "2=3"},   {" 1=2\n", "1", "2"},
       {"\t 1=#2\n", "1", "#2"}, {"1 = 2\n", "1 ", " 2"},
   };
-  string lhs;
-  string rhs;
+  std::string lhs;
+  std::string rhs;
   for (size_t i = 0; i < arraysize(testcases); ++i) {
     const TestCase &testcase = testcases[i];
     SCOPED_TRACE(testcase.line);
@@ -88,8 +88,8 @@ TEST(AndroidUtilTest, ParseLine_invalid) {
   const char *testcases[] = {
       "1", "123", "=2", " \n", "", "#", " # 1=2\n",
   };
-  string lhs;
-  string rhs;
+  std::string lhs;
+  std::string rhs;
   for (size_t i = 0; i < arraysize(testcases); ++i) {
     const char *testcase = testcases[i];
     SCOPED_TRACE(testcase);

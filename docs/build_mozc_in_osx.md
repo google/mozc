@@ -25,7 +25,7 @@ cd ~/work
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
 
-# Compilation
+# Build main converter and composition UI.
 
 First, you'll need to generate Xcode project using a tool called [GYP](https://chromium.googlesource.com/external/gyp).
 
@@ -37,10 +37,10 @@ GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp
 You can customize the SDK version and target OS version here. Then, build Mozc.app and necessary files:
 
 ```
-python3 build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput mac/mac.gyp:gen_launchd_confs
+python3 build_mozc.py build -c Release mac/mac.gyp:GoogleJapaneseInput
 ```
 
-# Executables
+## Executables
 
 Executables are written in `~/work/mozc/src/out_mac/Release` for Release builds, and `~/work/mozc/src/out_mac/Debug` for Debug builds. For instance, you'll have `~/work/mozc/src/out_mac/Release/Mozc.app` once the build finishes successfully in the Release mode.
 
@@ -63,6 +63,15 @@ python3 build_mozc.py build -c Release gui/gui.gyp:config_dialog_main
 These executables are linked with the libraries in `~/myqt`.  You might want to change it with `install_name_tool`.
 
 
+# Installer
+
+You can also build an installer.
+```
+GYP_DEFINES="mac_sdk=10.15 mac_deployment_target=10.9" python3 build_mozc.py gyp --qtdir ~/myqt
+python3 build_mozc.py build -c Release :Installer
+```
+
+
 # Clean up the Tree
 
 To clean up the tree, execute the following. This will remove executables and intermediate files like object files, generated source files, project files, etc.
@@ -73,10 +82,10 @@ python3 build_mozc.py clean
 
 # Install built packages
 
-Mozc doesn't have installer mpkg files.  You can just place the created Mozc.app into `/Library/Input Methods`, and `out_mac/DerivedSources/Release/mac/org.mozc.inputmethod.Japanese.Converter.plist` and `org.mozc.inputmethod.Japanese.Renderer.plist` into `/Library/LaunchAgents`, and then log in again.  Then it works well.
+Without building an installer .pkg file, you can just place the created Mozc.app into `/Library/Input Methods`, and `mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist` and `org.mozc.inputmethod.Japanese.Renderer.plist` into `/Library/LaunchAgents`, and then log in again.  Then it works well.
 
 ```
 sudo cp -r out_mac/Release/Mozc.app /Library/Input\ Methods/
-sudo cp out_mac/DerivedSources/Release/mac/org.mozc.inputmethod.Japanese.Converter.plist /Library/LaunchAgents
-sudo cp out_mac/DerivedSources/Release/mac/org.mozc.inputmethod.Japanese.Renderer.plist /Library/LaunchAgents
+sudo cp mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist /Library/LaunchAgents
+sudo cp mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist /Library/LaunchAgents
 ```

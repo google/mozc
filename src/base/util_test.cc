@@ -1548,10 +1548,19 @@ TEST(UtilTest, CharacterSet) {
   EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
 }
 
+TEST(UtilTest, IsAscii) {
+  EXPECT_FALSE(Util::IsAscii("あいうえお"));
+  EXPECT_TRUE(Util::IsAscii("abc"));
+  EXPECT_FALSE(Util::IsAscii("abcあいう"));
+  EXPECT_TRUE(Util::IsAscii(""));
+  EXPECT_TRUE(Util::IsAscii("\x7F"));
+  EXPECT_FALSE(Util::IsAscii("\x80"));
+}
+
 #ifdef OS_WIN
 TEST(UtilTest, WideCharsLen) {
   // "að ®b"
-  const string input_utf8 = "a\360\240\256\237b";
+  const std::string input_utf8 = "a\360\240\256\237b";
   EXPECT_EQ(4, Util::WideCharsLen(input_utf8));
   EXPECT_EQ(0, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 0)));
   EXPECT_EQ(1, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 1)));
@@ -1560,11 +1569,11 @@ TEST(UtilTest, WideCharsLen) {
 }
 
 TEST(UtilTest, UTF8ToWide) {
-  const string input_utf8 = "abc";
+  const std::string input_utf8 = "abc";
   std::wstring output_wide;
   Util::UTF8ToWide(input_utf8, &output_wide);
 
-  string output_utf8;
+  std::string output_utf8;
   Util::WideToUTF8(output_wide, &output_utf8);
   EXPECT_EQ("abc", output_utf8);
 }
@@ -1574,7 +1583,7 @@ TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
   // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
   // "ð ®"
   const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
-  string output_utf8;
+  std::string output_utf8;
   Util::WideToUTF8(input_wide, &output_utf8);
 
   std::wstring output_wide;

@@ -98,7 +98,6 @@ const char *VariantsRewriter::kAlphabet = "";
 const char *VariantsRewriter::kKanji = "";
 const char *VariantsRewriter::kFullWidth = "[全]";
 const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kPlatformDependent = "<機種依存>";
 const char *VariantsRewriter::kDidYouMean = "<もしかして>";
 const char *VariantsRewriter::kYenKigou = "円記号";
 #else   // OS_ANDROID
@@ -109,7 +108,6 @@ const char *VariantsRewriter::kAlphabet = "アルファベット";
 const char *VariantsRewriter::kKanji = "漢字";
 const char *VariantsRewriter::kFullWidth = "[全]";
 const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kPlatformDependent = "<機種依存文字>";
 const char *VariantsRewriter::kDidYouMean = "<もしかして>";
 const char *VariantsRewriter::kYenKigou = "円記号";
 #endif  // OS_ANDROID
@@ -123,9 +121,8 @@ VariantsRewriter::~VariantsRewriter() = default;
 void VariantsRewriter::SetDescriptionForCandidate(
     const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 FULL_HALF_WIDTH | CHARACTER_FORM |
-                     PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
-                     SPELLING_CORRECTION,
+                 (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE |
+                  SPELLING_CORRECTION),
                  candidate);
 }
 
@@ -133,9 +130,8 @@ void VariantsRewriter::SetDescriptionForCandidate(
 void VariantsRewriter::SetDescriptionForTransliteration(
     const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 FULL_HALF_WIDTH | FULL_HALF_WIDTH_WITH_UNKNOWN |
-                     CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER |
-                     SPELLING_CORRECTION,
+                 (FULL_HALF_WIDTH | FULL_HALF_WIDTH_WITH_UNKNOWN |
+                  CHARACTER_FORM | SPELLING_CORRECTION),
                  candidate);
 }
 
@@ -143,7 +139,7 @@ void VariantsRewriter::SetDescriptionForTransliteration(
 void VariantsRewriter::SetDescriptionForPrediction(
     const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 PLATFORM_DEPENDENT_CHARACTER | ZIPCODE | SPELLING_CORRECTION,
+                 ZIPCODE | SPELLING_CORRECTION,
                  candidate);
 }
 
@@ -236,20 +232,13 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     // if "\" (half-width backslash) or "＼" ()
     AppendString("バックスラッシュ", &description);
   } else if (candidate->value == "¥") {
-    // if "¥" (half-width Yen sign), append kYenKigou and kPlatformDependent.
+    // if "¥" (half-width Yen sign), append kYenKigou.
     AppendString(kYenKigou, &description);
-    AppendString(kPlatformDependent, &description);
   } else if (candidate->value == "￥") {
     // if "￥" (full-width Yen sign), append only kYenKigou
     AppendString(kYenKigou, &description);
   } else {
     AppendString(candidate->description, &description);
-  }
-
-  // Platform dependent char description
-  if (description_type & PLATFORM_DEPENDENT_CHARACTER &&
-      Util::GetCharacterSet(candidate->value) >= Util::JISX0212) {
-    AppendString(kPlatformDependent, &description);
   }
 
   // The follwoing description tries to overwrite existing description.
@@ -334,12 +323,10 @@ bool VariantsRewriter::RewriteSegment(RewriteType type, Segment *seg) const {
         CharacterFormManager::UNKNOWN_FORM;
 
     int default_description_type =
-        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
-         SPELLING_CORRECTION);
+        (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
 
     int alternative_description_type =
-        (CHARACTER_FORM | PLATFORM_DEPENDENT_CHARACTER | ZIPCODE |
-         SPELLING_CORRECTION);
+        (CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION);
 
     if (CharacterFormManager::GetFormTypesFromStringPair(
             default_value, &default_form, alternative_value,

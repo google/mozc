@@ -69,7 +69,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
                    std::vector<std::wstring> *result) {
     {
       KeyEvent key_event;
-      string utf8_query;
+      std::string utf8_query;
       Util::WideToUTF8(query, &utf8_query);
       key_event.set_key_string(utf8_query);
       key_event.set_activated(true);
@@ -103,7 +103,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   bool ReconvertQuery(const std::wstring &query,
                       std::vector<std::wstring> *result) {
     {
-      string utf8_query;
+      std::string utf8_query;
       Util::WideToUTF8(query, &utf8_query);
       SessionCommand command;
       command.set_type(SessionCommand::CONVERT_REVERSE);

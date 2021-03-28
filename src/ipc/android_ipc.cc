@@ -44,7 +44,8 @@ const int kInvalidSocket = -1;
 }  // namespace
 
 // Server
-IPCServer::IPCServer(const string &name, int32 num_connections, int32 timeout)
+IPCServer::IPCServer(const std::string &name, int32 num_connections,
+                     int32 timeout)
     : connected_(false), socket_(kInvalidSocket), timeout_(timeout) {
   // do nothing
 }

@@ -154,7 +154,7 @@ class SystemUtil {
   // Currently this method is defined in util.h because it depends on some
   // utility functions defined in util.cc.
   // TODO(yukawa): Move this method to win32/base/*
-  static string GetMSCTFAsmCacheReadyEventName();
+  static std::string GetMSCTFAsmCacheReadyEventName();
 #endif  // OS_WIN
 
   // return string representing os version

@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
       mozc::IPCPathManager::GetIPCPathManager(absl::GetFlag(FLAGS_name));
   CHECK(manager);
 
-  string path;
+  std::string path;
 
   if (absl::GetFlag(FLAGS_client)) {
     CHECK(manager->GetPathName(&path));

@@ -438,8 +438,8 @@ void FillOutputForConversion(commands::Output *output, int focused_index,
   }
 }
 
-string ToUTF8(const std::wstring &wstr) {
-  string result;
+std::string ToUTF8(const std::wstring &wstr) {
+  std::string result;
   Util::WideToUTF8(wstr, &result);
   return result;
 }

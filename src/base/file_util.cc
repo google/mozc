@@ -104,7 +104,7 @@ namespace {
 // has some special attribute like read-only. This method tries to strip system,
 // hidden, and read-only attributes from |filename|.
 // This function does nothing if |filename| does not exist.
-void StripWritePreventingAttributesIfExists(const string &filename) {
+void StripWritePreventingAttributesIfExists(const std::string &filename) {
   if (!FileUtil::FileExists(filename)) {
     return;
   }
@@ -247,11 +247,11 @@ bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
 
 }  // namespace
 
-bool FileUtil::HideFile(const string &filename) {
+bool FileUtil::HideFile(const std::string &filename) {
   return HideFileWithExtraAttributes(filename, 0);
 }
 
-bool FileUtil::HideFileWithExtraAttributes(const string &filename,
+bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
                                            DWORD extra_attributes) {
   if (!FileUtil::FileExists(filename)) {
     LOG(WARNING) << "File not exists. " << filename;
@@ -414,9 +414,10 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 #ifdef OS_WIN
   const char kFileDelimiterForUnix = '/';
   const char kFileDelimiterForWindows = '\\';
-  string normalized;
-  Util::StringReplace(path, string(1, kFileDelimiterForUnix),
-                      string(1, kFileDelimiterForWindows), true, &normalized);
+  std::string normalized;
+  Util::StringReplace(path, std::string(1, kFileDelimiterForUnix),
+                      std::string(1, kFileDelimiterForWindows), true,
+                      &normalized);
   return normalized;
 #else
   return path;

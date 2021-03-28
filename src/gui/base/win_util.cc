@@ -260,7 +260,7 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
     window.GetWindowTextW(buf);
     window_title_wide.assign(buf.GetString(), buf.GetLength());
   }
-  string window_title_utf8;
+  std::string window_title_utf8;
   Util::WideToUTF8(window_title_wide, &window_title_utf8);
   LOG(INFO) << "A visible window found. hwnd: " << window.m_hWnd
             << ", title: " << window_title_utf8;

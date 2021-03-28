@@ -48,8 +48,8 @@ const char AndroidUtil::kSystemPropertyModel[] = "ro.product.model";
 const char AndroidUtil::kSystemPropertySdkVersion[] = "ro.build.version.sdk";
 
 // static
-string AndroidUtil::GetSystemProperty(const string &key,
-                                      const string &default_value) {
+std::string AndroidUtil::GetSystemProperty(const std::string &key,
+                                           const std::string &default_value) {
   mozc::scoped_lock lock(&sys_prop_mutex);
   std::map<std::string, std::string>::iterator it = property_cache.find(key);
   if (it != property_cache.end()) {
@@ -62,7 +62,7 @@ string AndroidUtil::GetSystemProperty(const string &key,
   }
   // Cache is not found.
   // We have not been passed |key| yet. It is the first time.
-  string value;
+  std::string value;
   if (GetPropertyFromFile(key, &value)) {
     // Successfully read from the property file.
     // Update the cache and return the result.
@@ -80,15 +80,16 @@ string AndroidUtil::GetSystemProperty(const string &key,
 }
 
 // static
-bool AndroidUtil::GetPropertyFromFile(const string &key, string *output) {
+bool AndroidUtil::GetPropertyFromFile(const std::string &key,
+                                      std::string *output) {
   std::ifstream ifs(kBuildPropPath);
   if (!ifs) {
     return false;
   }
-  string line;
+  std::string line;
   bool found = false;
-  string lhs;
-  string rhs;
+  std::string lhs;
+  std::string rhs;
   while (getline(ifs, line)) {
     if (!mozc::AndroidUtil::ParseLine(line, &lhs, &rhs)) {
       continue;
@@ -109,21 +110,22 @@ bool AndroidUtil::GetPropertyFromFile(const string &key, string *output) {
 // android_util_test.cc has some samples.
 //
 // static
-bool AndroidUtil::ParseLine(const string &line, string *lhs, string *rhs) {
+bool AndroidUtil::ParseLine(const std::string &line, std::string *lhs,
+                            std::string *rhs) {
   DCHECK(lhs);
   DCHECK(rhs);
-  string tmp_line = line;
+  std::string tmp_line = line;
   mozc::Util::ChopReturns(&tmp_line);
   // Trim white spaces at the head.
   size_t line_start = tmp_line.find_first_not_of(" \t");
-  if (line_start != string::npos) {
+  if (line_start != std::string::npos) {
     tmp_line = tmp_line.substr(line_start);
   }
   if (tmp_line.empty() || tmp_line.at(0) == '#') {
     return false;
   }
   size_t delimiter_pos = tmp_line.find('=');
-  if (delimiter_pos == string::npos) {
+  if (delimiter_pos == std::string::npos) {
     return false;
   }
   *lhs = tmp_line.substr(0, delimiter_pos);

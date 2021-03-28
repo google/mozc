@@ -50,11 +50,9 @@
 #include "absl/strings/string_view.h"
 
 // SymbolRewriter:
-// When updating the rule
-// 1. Export the spreadsheet into TEXT (TSV)
-// 2. Copy the TSV to mozc/data/symbol/symbol.tsv
-// 3. Run symbol_rewriter_dictionary_generator_main in this directory
-// 4. Make sure symbol_rewriter_data.h is correct
+// 1. Update data/symbol/symbol.tsv
+// 2. Run gen_symbol_rewriter_dictionary_main in this directory
+// 3. Make sure symbol_rewriter_data.h is correct
 
 namespace mozc {
 
@@ -136,16 +134,6 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
       return;
     }
   }
-}
-
-// TODO(toshiyuki): Should we move this under Util module?
-bool SymbolRewriter::IsPlatformDependent(
-    SerializedDictionary::const_iterator iter) {
-  if (iter.value().empty()) {
-    return false;
-  }
-  const Util::CharacterSet cset = Util::GetCharacterSet(iter.value());
-  return (cset >= Util::JISX0212);
 }
 
 // Return true if two symbols are in same group
@@ -251,9 +239,8 @@ void SymbolRewriter::InsertCandidates(
     if (next != range.second && !finish_first_part &&
         inserted_count >= kMaxInsertToMedium &&
         range_size - inserted_count >= 5 &&
-        // Do not divide symbols which seem to be in the same group
-        // providing that they are not platform dependent characters.
-        (!InSameSymbolGroup(iter, next) || IsPlatformDependent(next))) {
+        // Do not divide symbols which seem to be in the same group.
+        !InSameSymbolGroup(iter, next)) {
       offset = segment->candidates_size();
       finish_first_part = true;
     }

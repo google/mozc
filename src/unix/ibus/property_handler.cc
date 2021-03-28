@@ -75,27 +75,19 @@ bool GetDisabled(IBusEngine *engine) {
   return disabled;
 }
 
-// Some users expect that Mozc is turned off by default on IBus 1.5.0 and later.
-// https://github.com/google/mozc/issues/201
-// On IBus 1.4.x, IBus expects that an IME should always be turned on and
-// IME on/off keys are handled by IBus itself rather than each IME.
-#if IBUS_CHECK_VERSION(1, 5, 0)
-const bool kActivatedOnLaunch = false;
-#else
-const bool kActivatedOnLaunch = true;
-#endif  // IBus>=1.5.0
-
 }  // namespace
 
-PropertyHandler::PropertyHandler(MessageTranslatorInterface *translator,
-                                 client::ClientInterface *client)
+PropertyHandler::PropertyHandler(
+    std::unique_ptr<MessageTranslatorInterface> translator,
+    bool is_active_on_launch,
+    client::ClientInterface *client)
     : prop_root_(ibus_prop_list_new()),
       prop_composition_mode_(nullptr),
       prop_mozc_tool_(nullptr),
       client_(client),
-      translator_(translator),
+      translator_(std::move(translator)),
       original_composition_mode_(kMozcEngineInitialCompositionMode),
-      is_activated_(kActivatedOnLaunch),
+      is_activated_(is_active_on_launch),
       is_disabled_(false) {
   commands::SessionCommand command;
   if (is_activated_) {

@@ -74,7 +74,7 @@ cc_test_mozc(
     data = [
         ":mozc_dataset_for_testing@connection_single_column",
         ":mozc_dataset_for_testing@typing_models",
-        "//data/test/dictionary:dictionary.txt",
+        "//data/test/dictionary:dictionary_data",
         "//data/test/dictionary:suggestion_filter.txt",
     ],
     requires_full_emulation = False,
@@ -100,7 +100,7 @@ mozc_dataset(
     collocation_suppression_src = "//data/test/dictionary:collocation_suppression.txt",
     connection_deflate = "//data/test/dictionary:connection.deflate",
     dictionary_srcs = [
-        "//data/test/dictionary:dictionary.txt",
+        "//data/test/dictionary:dictionary_data",
         "//data/dictionary_manual:domain.txt",
     ],
     emoji_src = "//data/emoji:emoji_data.tsv",

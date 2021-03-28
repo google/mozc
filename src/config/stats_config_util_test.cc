@@ -671,7 +671,7 @@ TEST(StatsConfigUtilTestWin, IsEnabled) {
 
 #ifdef OS_ANDROID
 TEST(StatsConfigUtilTestAndroid, DefaultValueTest) {
-  const string config_file = FileUtil::JoinPath(
+  const std::string config_file = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_stats_config_util_test_tmp");
   FileUtil::Unlink(config_file);
   ConfigHandler::SetConfigFileName(config_file);

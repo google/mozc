@@ -30,11 +30,6 @@
 #ifndef MOZC_BASE_PORT_H_
 #define MOZC_BASE_PORT_H_
 
-// TODO(komatsu): Remove this string include and using.
-#include <string>
-
-using std::string;
-
 // Check duplicate OS_XXX definition.
 
 #ifdef OS_WIN

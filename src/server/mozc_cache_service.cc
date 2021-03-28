@@ -188,7 +188,7 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
     return true;
   }
 
-  const string temp_path = mozc::FileUtil::JoinPath(
+  const std::string temp_path = mozc::FileUtil::JoinPath(
       mozc::SystemUtil::GetServerDirectory(), "delete_me.txt");
   std::wstring wtemp_path;
   mozc::Util::UTF8ToWide(temp_path, &wtemp_path);

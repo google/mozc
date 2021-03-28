@@ -28,4 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-exports_files(["product_icon_32bpp-128.png"])
+exports_files([
+    "product_icon_32bpp-128.png",
+    "direct.svg",
+    "full_ascii.svg",
+    "full_katakana.svg",
+    "half_ascii.svg",
+    "half_katakana.svg",
+    "hiragana.svg",
+])

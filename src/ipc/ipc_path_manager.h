@@ -101,7 +101,7 @@ class IPCPathManager {
   // when pid of 0 is passed, IsValidServer() returns true.
   // when pid of static_cast<size_t>(-1) is passed, IsValidServer()
   // returns false.
-  // To keep backward compatibility and other operationg system
+  // To keep backward compatibility and other operating system
   // having no support of getting peer's pid, you can set 0 pid.
   bool IsValidServer(uint32_t pid, const std::string &server_path);
 
@@ -135,7 +135,7 @@ class IPCPathManager {
   uint32_t server_pid_;      // cache for pid of server_path
   time_t last_modified_;
 #ifdef OS_WIN
-  std::map<string, std::wstring> expected_server_ntpath_cache_;
+  std::map<std::string, std::wstring> expected_server_ntpath_cache_;
 #endif  // OS_WIN
 };
 

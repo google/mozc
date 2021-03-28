@@ -75,7 +75,7 @@ IBusComponent *GetIBusComponent() {
   const std::string icon_path = mozc::ibus::GetIconPath(kEngineIcon);
 
   mozc::IbusConfig ibus_config;
-  ibus_config.InitEnginesXml();
+  ibus_config.Initialize();
   for (const mozc::ibus::Engine &engine : ibus_config.GetConfig().engines()) {
     ibus_component_add_engine(
         component,
@@ -113,7 +113,8 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
 
 void OutputXml() {
   mozc::IbusConfig ibus_config;
-  std::cout << ibus_config.InitEnginesXml() << std::endl;
+  ibus_config.Initialize();
+  std::cout << ibus_config.GetEnginesXml() << std::endl;
 }
 
 }  // namespace

@@ -163,10 +163,10 @@ def mozc_dataset(
     )
     for model_file in typing_models:
         filename = Label(model_file).name
-        sources += [":" + name + "@" + filename]
+        sources.append(":" + name + "@" + filename)
         arguments += "%s:32:$(@D)/%s " % (filename, filename + ".data")
     if usage_dict:
-        sources += [":" + name + "@usage"]
+        sources.append(":" + name + "@usage")
         arguments += (
             "usage_base_conjugation_suffix:32:$(@D)/usage_base_conj_suffix.data " +
             "usage_conjugation_suffix:32:$(@D)/usage_conj_suffix.data " +
@@ -329,7 +329,7 @@ def mozc_dataset(
         outs = ["dictionary.data"],
         cmd = (
             "$(location //dictionary:gen_system_dictionary_data_main) " +
-            "--input=\"" + " ".join(["$(location %s)" % s for s in dictionary_srcs]) + "\" " +
+            "--input=\"" + " ".join(["$(locations %s)" % s for s in dictionary_srcs]) + "\" " +
             "--user_pos_manager_data=$(location :" + name + "@user_pos_manager_data) " +
             "--output=$@"
         ),
@@ -437,7 +437,7 @@ def mozc_dataset(
             "$(location //rewriter:gen_counter_suffix_array) " +
             "--id_file=$(location " + id_def + ") " +
             "--output=$@ " +
-            " ".join(["$(location " + s + ")" for s in dictionary_srcs])
+            " ".join(["$(locations %s)" % s for s in dictionary_srcs])
         ),
         exec_tools = ["//rewriter:gen_counter_suffix_array"],
     )

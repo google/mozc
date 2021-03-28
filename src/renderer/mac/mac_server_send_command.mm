@@ -46,7 +46,7 @@ bool MacServerSendCommand::SendCommand(
       [NSConnection
         connectionWithRegisteredName:@ kProductPrefix "_Renderer_Connection"
                                 host:nil];
-  const string command_string = command.SerializeAsString();
+  const std::string command_string = command.SerializeAsString();
   NSData *sending_data = [NSData dataWithBytes:command_string.data()
                                         length:command_string.size()];
   id peer = [connection rootProxy];

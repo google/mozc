@@ -175,7 +175,7 @@ bool UpdateCompositionStringAndPushMessages(HIMC himc,
 }
 
 bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
-                        string *total_composition_in_utf8) {
+                        std::string *total_composition_in_utf8) {
   DCHECK(total_composition_in_utf8);
   total_composition_in_utf8->clear();
 
@@ -821,7 +821,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
     return false;
   }
 
-  const string &text_utf8 = GetTextForReconversionFromIME(himc);
+  const std::string &text_utf8 = GetTextForReconversionFromIME(himc);
   if (text_utf8.empty()) {
     if (context.GetOpenStatus()) {
       return true;
@@ -846,7 +846,7 @@ bool ImeCore::TurnOnIMEAndTryToReconvertFromIME(HIMC himc) {
   return UpdateInputContext(himc, output, true);
 }
 
-string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
+std::string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
   // Implementation Note:
   // In order to implement IMM32 reconversion, IME is responsible to update
   // the following fields in RECONVERTSTRING.
@@ -905,7 +905,7 @@ string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
     reconvert_string = expanded_reconvert_string;
   }
 
-  string total_composition_utf8;
+  std::string total_composition_utf8;
   if (!GetReconvertString(reconvert_string, &total_composition_utf8)) {
     return "";
   }
@@ -923,7 +923,7 @@ bool ImeCore::QueryReconversionFromApplication(
     return false;
   }
 
-  string total_composition_utf8;
+  std::string total_composition_utf8;
   if (!GetReconvertString(composition_info, &total_composition_utf8)) {
     return false;
   }
@@ -957,7 +957,7 @@ bool ImeCore::ReconversionFromApplication(
     return false;
   }
 
-  string total_composition_utf8;
+  std::string total_composition_utf8;
   if (!GetReconvertString(composition_info, &total_composition_utf8)) {
     return false;
   }

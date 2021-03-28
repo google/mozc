@@ -95,7 +95,7 @@ const size_t kKeySize = 32;
 // to the embedded resource files
 std::string GetIPCKeyFileName(const std::string &name) {
 #ifdef OS_WIN
-  string basename;
+  std::string basename;
 #else
   std::string basename = ".";  // hidden file
 #endif
@@ -127,8 +127,8 @@ std::string CreateIPCKey() {
   char value[kKeySize + 1] = {};
 
 #ifdef OS_WIN
-  const string sid = SystemUtil::GetUserSidAsString();
-  const string sha1 = internal::UnverifiedSHA1::MakeDigest(sid);
+  const std::string sid = SystemUtil::GetUserSidAsString();
+  const std::string sha1 = internal::UnverifiedSHA1::MakeDigest(sid);
   for (int i = 0; i < sizeof(buf) && i < sha1.size(); ++i) {
     buf[i] = sha1.at(i);
   }
@@ -355,7 +355,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 #ifdef OS_WIN
   {
     std::wstring expected_server_ntpath;
-    const std::map<string, std::wstring>::const_iterator it =
+    const std::map<std::string, std::wstring>::const_iterator it =
         expected_server_ntpath_cache_.find(server_path);
     if (it != expected_server_ntpath_cache_.end()) {
       expected_server_ntpath = it->second;

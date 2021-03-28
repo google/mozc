@@ -39,14 +39,14 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   mozc::storage::LRUCache<std::string, std::string> cache(5);
 
-  string line;
+  std::string line;
   while (getline(cin, line)) {
     std::vector<std::string> fields;
     mozc::Util::SplitStringUsing(line, "\t ", &fields);
     if (fields[0] == "i") {
       cache.Insert(fields[1], fields[2]);
     } else if (fields[0] == "f") {
-      const string *v = cache.Lookup(fields[1]);
+      const std::string *v = cache.Lookup(fields[1]);
       if (v == NULL) {
         std::cout << "NULL" << std::endl;
       } else {

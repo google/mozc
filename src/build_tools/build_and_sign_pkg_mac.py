@@ -116,6 +116,10 @@ def main():
     PrintErrorAndExit('--pkgproj option is mandatory.')
   pkgproj = os.path.abspath(opt.pkgproj)
 
+  if not opt.product_dir:
+    PrintErrorAndExit('--product_dir option is mandatory.')
+  product_dir = os.path.abspath(opt.product_dir)
+
   # Make sure Packages is installed
   packagesbuild_path = ''
   if os.path.exists('/usr/local/bin/packagesbuild'):

@@ -298,7 +298,8 @@ bool Encryptor::DecryptArray(const Encryptor::Key &key, char *buf,
 // Protect|Unprotect Data
 #ifdef OS_WIN
 // See. http://msdn.microsoft.com/en-us/library/aa380261.aspx
-bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
+bool Encryptor::ProtectData(const std::string &plain_text,
+                            std::string *cipher_text) {
   DCHECK(cipher_text);
   DATA_BLOB input;
   input.pbData =
@@ -321,7 +322,8 @@ bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
 }
 
 // See. http://msdn.microsoft.com/en-us/library/aa380882(VS.85).aspx
-bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
+bool Encryptor::UnprotectData(const std::string &cipher_text,
+                              std::string *plain_text) {
   DCHECK(plain_text);
   DATA_BLOB input;
   input.pbData =
@@ -347,11 +349,12 @@ bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
 #elif defined(__APPLE__)
 
 // ProtectData for Mac uses the serial number and the current pid as the key.
-bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
+bool Encryptor::ProtectData(const std::string &plain_text,
+                            std::string *cipher_text) {
   DCHECK(cipher_text);
   Encryptor::Key key;
-  const string serial_number = MacUtil::GetSerialNumber();
-  const string salt = Util::StringPrintf("%x", ::getuid());
+  const std::string serial_number = MacUtil::GetSerialNumber();
+  const std::string salt = Util::StringPrintf("%x", ::getuid());
   if (serial_number.empty()) {
     LOG(ERROR) << "Cannot get the serial number";
     return false;
@@ -371,11 +374,12 @@ bool Encryptor::ProtectData(const string &plain_text, string *cipher_text) {
 }
 
 // Same as ProtectData.
-bool Encryptor::UnprotectData(const string &cipher_text, string *plain_text) {
+bool Encryptor::UnprotectData(const std::string &cipher_text,
+                              std::string *plain_text) {
   DCHECK(plain_text);
   Encryptor::Key key;
-  const string serial_number = MacUtil::GetSerialNumber();
-  const string salt = Util::StringPrintf("%x", ::getuid());
+  const std::string serial_number = MacUtil::GetSerialNumber();
+  const std::string salt = Util::StringPrintf("%x", ::getuid());
   if (serial_number.empty()) {
     LOG(ERROR) << "Cannot get the serial number";
     return false;

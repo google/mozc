@@ -143,9 +143,9 @@ void Win32Server::SetSendCommandInterface(
   window_manager_->SetSendCommandInterface(send_command_interface);
 }
 
-bool Win32Server::AsyncExecCommand(string *proto_message) {
+bool Win32Server::AsyncExecCommand(std::string *proto_message) {
   // Take the ownership of |proto_message|.
-  std::unique_ptr<string> proto_message_owner(proto_message);
+  std::unique_ptr<std::string> proto_message_owner(proto_message);
   scoped_lock l(&mutex_);
   if (message_ == *proto_message_owner.get()) {
     // This is exactly the same to the previous message. Theoretically it is
@@ -184,7 +184,7 @@ int Win32Server::StartMessageLoop() {
     if (wait_result == WAIT_OBJECT_0) {
       // "event_" is signaled so that we have to handle the renderer command
       // stored in "message_"
-      string message;
+      std::string message;
       {
         scoped_lock l(&mutex_);
         message.assign(message_);

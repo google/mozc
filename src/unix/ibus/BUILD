@@ -189,6 +189,7 @@ cc_library_mozc(
         "//session:ime_switch_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -236,7 +237,10 @@ cc_binary_mozc(
             ":gen_main_h",
         ],
     ),
-    data = [":gen_mozc_xml"],
+    data = [
+        ":gen_mozc_xml",
+        "//unix:icons",
+    ],
     deps = [
         ":ibus_config",
         ":ibus_mozc_lib",

@@ -308,12 +308,12 @@ void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
     return;
   }
   if (info.has_preceding_text) {
-    string utf8_preceding_text;
+    std::string utf8_preceding_text;
     Util::WideToUTF8(info.preceding_text, &utf8_preceding_text);
     mozc_context->set_preceding_text(utf8_preceding_text);
   }
   if (info.has_following_text) {
-    string utf8_following_text;
+    std::string utf8_following_text;
     Util::WideToUTF8(info.following_text, &utf8_following_text);
     mozc_context->set_following_text(utf8_following_text);
   }

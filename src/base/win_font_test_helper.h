@@ -46,9 +46,9 @@ class WinFontTestHelper {
   static void Uninitialize();
 
   // Returns the font face name of IPAex-Gothic.
-  static string GetIPAexGothicFontName();
+  static std::string GetIPAexGothicFontName();
   // Returns the font face name of IPAex-Mincho.
-  static string GetIPAexMinchoFontName();
+  static std::string GetIPAexMinchoFontName();
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(WinFontTestHelper);

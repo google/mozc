@@ -85,9 +85,9 @@ jbyteArray JNICALL evalCommand(JNIEnv *env, jclass clazz,
   return out_bytes_array;
 }
 
-string JstringToCcString(JNIEnv *env, jstring j_string) {
+std::string JstringToCcString(JNIEnv *env, jstring j_string) {
   const char *cstr = env->GetStringUTFChars(j_string, nullptr);
-  const string cc_string(cstr);
+  const std::string cc_string(cstr);
   env->ReleaseStringUTFChars(j_string, cstr);
   return cc_string;
 }
@@ -136,7 +136,8 @@ std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
     LOG(ERROR) << "j_data_file_path is null.  Fallback to minimal engine.";
     engine = absl::make_unique<MinimalEngine>();
   } else {
-    const string &data_file_path = JstringToCcString(env, j_data_file_path);
+    const std::string &data_file_path =
+        JstringToCcString(env, j_data_file_path);
     engine = CreateMobileEngine(data_file_path);
   }
   DCHECK(engine);
@@ -157,7 +158,7 @@ jboolean JNICALL onPostLoad(JNIEnv *env, jclass clazz,
   }
 
   // First of all, set the user profile directory.
-  const string &original_dir = SystemUtil::GetUserProfileDirectory();
+  const std::string &original_dir = SystemUtil::GetUserProfileDirectory();
   SystemUtil::SetUserProfileDirectory(
       JstringToCcString(env, user_profile_directory_path));
 
@@ -173,7 +174,7 @@ jboolean JNICALL onPostLoad(JNIEnv *env, jclass clazz,
 }
 
 jstring JNICALL getDataVersion(JNIEnv *env) {
-  string version = "";
+  std::string version = "";
   if (g_session_handler) {
     const absl::string_view version_sp = g_session_handler->GetDataVersion();
     version.assign(version_sp.begin(), version_sp.end());

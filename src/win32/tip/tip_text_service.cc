@@ -169,7 +169,7 @@ const GUID kTipFunctionProvider = {
 
 #endif
 
-HRESULT SpawnTool(const string &command) {
+HRESULT SpawnTool(const std::string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
     return E_FAIL;
   }
@@ -196,7 +196,7 @@ commands::CompositionMode GetMozcMode(TipLangBarCallback::ItemId menu_id) {
   }
 }
 
-string GetMozcToolCommand(TipLangBarCallback::ItemId menu_id) {
+std::string GetMozcToolCommand(TipLangBarCallback::ItemId menu_id) {
   switch (menu_id) {
     case TipLangBarCallback::kProperty:
       // Open the config dialog.

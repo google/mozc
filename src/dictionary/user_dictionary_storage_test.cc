@@ -456,7 +456,7 @@ TEST_F(UserDictionaryStorageTest, Export) {
   // Japanese.
 #ifdef OS_WIN
   EXPECT_EQ("key\tvalue\t名詞\tcomment\r\n",
-            string(mapped_data.begin(), mapped_data.size()));
+            std::string(mapped_data.begin(), mapped_data.size()));
 #else
   EXPECT_EQ("key\tvalue\t名詞\tcomment\n",
             std::string(mapped_data.begin(), mapped_data.size()));

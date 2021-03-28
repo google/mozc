@@ -128,7 +128,7 @@ TEST_F(SystemUtilTest, GetTotalPhysicalMemoryTest) {
 
 #ifdef OS_ANDROID
 TEST_F(SystemUtilTest, GetOSVersionStringTestForAndroid) {
-  string result = SystemUtil::GetOSVersionString();
+  std::string result = SystemUtil::GetOSVersionString();
   // |result| must start with "Android ".
   EXPECT_TRUE(Util::StartsWith(result, "Android "));
 }

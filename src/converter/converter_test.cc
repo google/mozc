@@ -1198,7 +1198,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   auto dictionary = absl::make_unique<DictionaryImpl>(
       std::move(sysdic), std::move(value_dic), mock_user_dictionary.get(),
       suppression_dictionary.get(), &pos_matcher);
-  auto pos_group = absl::make_unique<PosGroup>(data_manager.GetPosGroupData());
+  PosGroup pos_group(data_manager.GetPosGroupData());
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
   std::unique_ptr<const Connector> connector =
@@ -1209,30 +1209,30 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
       CreateSuggestionFilter(data_manager));
   auto immutable_converter = absl::make_unique<ImmutableConverterImpl>(
       dictionary.get(), suffix_dictionary.get(), suppression_dictionary.get(),
-      connector.get(), segmenter.get(), &pos_matcher, pos_group.get(),
+      connector.get(), segmenter.get(), &pos_matcher, &pos_group,
       suggestion_filter.get());
   std::unique_ptr<const SuggestionFilter> suggegstion_filter(
       CreateSuggestionFilter(data_manager));
-  auto converter = absl::make_unique<ConverterImpl>();
+  ConverterImpl converter;
   const DictionaryInterface *kNullDictionary = nullptr;
-  converter->Init(
+  converter.Init(
       &pos_matcher, suppression_dictionary.get(),
       DefaultPredictor::CreateDefaultPredictor(
           absl::make_unique<DictionaryPredictor>(
-              data_manager, converter.get(), immutable_converter.get(),
+              data_manager, &converter, immutable_converter.get(),
               dictionary.get(), suffix_dictionary.get(), connector.get(),
               segmenter.get(), &pos_matcher, suggegstion_filter.get()),
           absl::make_unique<UserHistoryPredictor>(
               dictionary.get(), &pos_matcher, suppression_dictionary.get(),
               false)),
-      absl::make_unique<RewriterImpl>(converter.get(), &data_manager,
-                                      pos_group.get(), kNullDictionary),
+      absl::make_unique<RewriterImpl>(&converter, &data_manager, &pos_group,
+                                      kNullDictionary),
       immutable_converter.get());
 
   Segments segments;
   {
     // Dictionary suggestion
-    EXPECT_TRUE(converter->StartSuggestion(&segments, "てすと"));
+    EXPECT_TRUE(converter.StartSuggestion(&segments, "てすと"));
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
     EXPECT_TRUE(FindCandidateByValue("<>!?", segments.conversion_segment(0)));
@@ -1242,7 +1242,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   {
     // Realtime conversion
     segments.Clear();
-    EXPECT_TRUE(converter->StartSuggestion(&segments, "てすとの"));
+    EXPECT_TRUE(converter.StartSuggestion(&segments, "てすとの"));
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_LE(1, segments.conversion_segment(0).candidates_size());
     EXPECT_TRUE(FindCandidateByValue("<>!?の", segments.conversion_segment(0)));
