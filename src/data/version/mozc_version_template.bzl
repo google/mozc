@@ -33,7 +33,7 @@ MAJOR = 2
 MINOR = 26
 
 # Number to be increased. This value may be replaced by other tools.
-BUILD = 4325
+BUILD = 4332
 
 # Represent the platform and release channel.
 REVISION = 100
@@ -53,4 +53,4 @@ ENGINE_VERSION = 24
 # data set file.  DATA_VERSION can be incremented without updating
 # ENGINE_VERSION as long as it's compatible with the engine.
 # This version should be reset to 0 when ENGINE_VERSION is incremented.
-DATA_VERSION = 9
+DATA_VERSION = 10

@@ -224,11 +224,8 @@
           'action_name': 'gen_character_set',
           'variables': {
             'input_files': [
-              '../data/unicode/CP932.TXT',
               '../data/unicode/JIS0201.TXT',
               '../data/unicode/JIS0208.TXT',
-              '../data/unicode/JIS0212.TXT',
-              '../data/unicode/jisx0213-2004-std.txt',
             ],
           },
           'inputs': [
@@ -240,11 +237,8 @@
           ],
           'action': [
             '<(python)', 'gen_character_set.py',
-            '--cp932file=../data/unicode/CP932.TXT',
             '--jisx0201file=../data/unicode/JIS0201.TXT',
             '--jisx0208file=../data/unicode/JIS0208.TXT',
-            '--jisx0212file=../data/unicode/JIS0212.TXT',
-            '--jisx0213file=../data/unicode/jisx0213-2004-std.txt',
             '--output=<(gen_out_dir)/character_set.inc'
           ],
         },

@@ -47,58 +47,6 @@
 #include "testing/base/public/mozctest.h"
 
 namespace mozc {
-namespace {
-
-void FillTestCharacterSetMap(std::map<char32, Util::CharacterSet> *test_map) {
-  CHECK(test_map);
-  const std::string &path = testing::GetSourceFileOrDie(
-      {"data", "test", "character_set", "character_set.tsv"});
-  std::map<std::string, Util::CharacterSet> character_set_type_map;
-  character_set_type_map["ASCII"] = Util::ASCII;
-  character_set_type_map["JISX0201"] = Util::JISX0201;
-  character_set_type_map["JISX0208"] = Util::JISX0208;
-  character_set_type_map["JISX0212"] = Util::JISX0212;
-  character_set_type_map["JISX0213"] = Util::JISX0213;
-  character_set_type_map["CP932"] = Util::CP932;
-  // UNICODE_ONLY should not appear in the tsv file though.
-  character_set_type_map["UNICODE_ONLY"] = Util::UNICODE_ONLY;
-
-  InputFileStream finput(path.c_str());
-
-  // Read tsv file.
-  std::string line;
-  while (!std::getline(finput, line).fail()) {
-    if (Util::StartsWith(line, "#")) {
-      // Skip comment line.
-      continue;
-    }
-
-    std::vector<std::string> col;
-    mozc::Util::SplitStringUsing(line, "\t", &col);
-    CHECK_GE(col.size(), 2) << "format error: " << line;
-    const char32 ucs4 = NumberUtil::SimpleAtoi(col[0]);
-    std::map<std::string, Util::CharacterSet>::const_iterator itr =
-        character_set_type_map.find(col[1]);
-    // We cannot use CHECK_NE here because of overload resolution.
-    CHECK(character_set_type_map.end() != itr)
-        << "Unknown character set type: " << col[1];
-    test_map->insert(std::make_pair(ucs4, itr->second));
-  }
-}
-
-Util::CharacterSet GetExpectedCharacterSet(
-    const std::map<char32, Util::CharacterSet> &test_map, char32 ucs4) {
-  std::map<char32, Util::CharacterSet>::const_iterator itr =
-      test_map.find(ucs4);
-  if (test_map.find(ucs4) == test_map.end()) {
-    // If the test data does not have an entry, it should be
-    // interpreted as |Util::UNICODE_ONLY|.
-    return Util::UNICODE_ONLY;
-  }
-  return itr->second;
-}
-
-}  // namespace
 
 TEST(UtilTest, JoinStrings) {
   std::vector<std::string> input = {"ab", "cdef", "ghr"};
@@ -1472,82 +1420,6 @@ TEST(UtilTest, FormType) {
   EXPECT_EQ(Util::HALF_WIDTH, Util::GetFormType("@!#"));
 }
 
-// We have a snapshot of the result of |Util::GetCharacterSet(ucs4)| in
-// data/test/character_set/character_set.tsv.
-// Compare the result for each character just in case.
-TEST(UtilTest, CharacterSetFullTest) {
-  std::map<char32, Util::CharacterSet> test_set;
-  FillTestCharacterSetMap(&test_set);
-  EXPECT_FALSE(test_set.empty());
-
-  // Unicode characters consist of [U+0000, U+10FFFF].
-  for (char32 ucs4 = 0; ucs4 <= 0x10ffff; ++ucs4) {
-    EXPECT_EQ(GetExpectedCharacterSet(test_set, ucs4),
-              Util::GetCharacterSet(ucs4))
-        << "Character set changed at " << ucs4;
-  }
-}
-
-TEST(UtilTest, CharacterSet_gen_character_set) {
-  // [0x00, 0x7f] are ASCII
-  for (size_t i = 0; i <= 0x7f; ++i) {
-    EXPECT_EQ(Util::ASCII, Util::GetCharacterSet(i));
-  }
-  // [0x80, 0xff] are not ASCII
-  for (size_t i = 0x80; i <= 0xff; ++i) {
-    EXPECT_NE(Util::ASCII, Util::GetCharacterSet(i));
-  }
-
-  // 0213
-  // "Ⅰ"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2160));
-  // "①"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2460));
-  // "㊤"
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x32A4));
-  // "ð ®" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x20B9F));
-  // "ðª²" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet(0x2A6B2));
-
-  // only in CP932
-  // "凬"
-  EXPECT_EQ(Util::CP932, Util::GetCharacterSet(0x51EC));
-
-  // only in Unicode
-  // "￦"
-  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0xFFE6));
-  // "ð ®·" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet(0x20BB7));
-}
-
-TEST(UtilTest, CharacterSet) {
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("あいうえお"));
-  EXPECT_EQ(Util::ASCII, Util::GetCharacterSet("abc"));
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("abcあいう"));
-
-  // half width katakana
-  EXPECT_EQ(Util::JISX0201, Util::GetCharacterSet("ｶﾀｶﾅ"));
-  EXPECT_EQ(Util::JISX0208, Util::GetCharacterSet("ｶﾀｶﾅカタカナ"));
-
-  // 0213
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("Ⅰ"));
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("①"));
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("㊤"));
-  // "ð ® " from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("𠮟"));
-  // "ðª ²" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::JISX0213, Util::GetCharacterSet("𪚲"));
-
-  // only in CP932
-  EXPECT_EQ(Util::CP932, Util::GetCharacterSet("凬"));
-
-  // only in Unicode
-  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("￦"));
-  // "ð ®·" from UCS4 range (b/4176888)
-  EXPECT_EQ(Util::UNICODE_ONLY, Util::GetCharacterSet("\xF0\xA0\xAE\xB7"));
-}
-
 TEST(UtilTest, IsAscii) {
   EXPECT_FALSE(Util::IsAscii("あいうえお"));
   EXPECT_TRUE(Util::IsAscii("abc"));
@@ -1555,6 +1427,32 @@ TEST(UtilTest, IsAscii) {
   EXPECT_TRUE(Util::IsAscii(""));
   EXPECT_TRUE(Util::IsAscii("\x7F"));
   EXPECT_FALSE(Util::IsAscii("\x80"));
+}
+
+TEST(UtilTest, IsJisX0208) {
+  EXPECT_TRUE(Util::IsJisX0208("あいうえお"));
+  EXPECT_TRUE(Util::IsJisX0208("abc"));
+  EXPECT_TRUE(Util::IsJisX0208("abcあいう"));
+
+  // half width katakana
+  EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅ"));
+  EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅカタカナ"));
+
+  // JIS X 0213
+  EXPECT_FALSE(Util::IsJisX0208("Ⅰ"));
+  EXPECT_FALSE(Util::IsJisX0208("①"));
+  EXPECT_FALSE(Util::IsJisX0208("㊤"));
+
+  // only in CP932
+  EXPECT_FALSE(Util::IsJisX0208("凬"));
+
+  // only in Unicode
+  EXPECT_FALSE(Util::IsJisX0208("￦"));
+
+  // SIP range (U+20000 - U+2FFFF)
+  EXPECT_FALSE(Util::IsJisX0208("𠮟"));  // U+20B9F
+  EXPECT_FALSE(Util::IsJisX0208("𪚲"));  // U+2A6B2
+  EXPECT_FALSE(Util::IsJisX0208("𠮷"));  // U+20BB7
 }
 
 #ifdef OS_WIN

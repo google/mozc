@@ -29,10 +29,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 exports_files([
-    "CP932.TXT",
     "JIS0201.TXT",
     "JIS0208.TXT",
-    "JIS0212.TXT",
     "jisx0213-2004-std.txt",
     "Unihan.txt",
 ])

@@ -90,9 +90,6 @@ class ExistenceFilter {
   // private constructor for ExistenceFilter::Read();
   ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable);
 
-  static ExistenceFilter *CreateImmutableExietenceFilter(uint32_t m, uint32_t n,
-                                                         int k);
-
   std::unique_ptr<BlockBitmap> rep_;  // points to bitmap
   const uint32_t vec_size_;           // size of bitmap (in bits)
   const uint32_t expected_nelts_;     // expected number of inserts

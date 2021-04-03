@@ -236,7 +236,7 @@
 											<key>GID</key>
 											<integer>0</integer>
 											<key>PATH</key>
-											<string>${MOZC_DIR}/mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist</string>
+											<string>${LAUNCH_AGENT_DIR}/org.mozc.inputmethod.Japanese.Converter.plist</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
 											<key>PERMISSIONS</key>
@@ -252,7 +252,7 @@
 											<key>GID</key>
 											<integer>0</integer>
 											<key>PATH</key>
-											<string>${MOZC_DIR}/mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist</string>
+											<string>${LAUNCH_AGENT_DIR}/org.mozc.inputmethod.Japanese.Renderer.plist</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
 											<key>PERMISSIONS</key>

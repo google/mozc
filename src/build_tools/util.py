@@ -43,8 +43,6 @@ import sys
 import tempfile
 import zipfile
 
-from six.moves import range
-
 
 def IsWindows():
   """Returns true if the platform is Windows."""
@@ -173,6 +171,30 @@ def CheckFileOrDie(file_name):
   """Check the file exists or dies if not."""
   if not os.path.isfile(file_name):
     PrintErrorAndExit('No such file: ' + file_name)
+
+
+class _ZipFileWithPermissions(zipfile.ZipFile):
+  """Subclass of zipfile.ZipFile to support permissions."""
+
+  def _extract_member(self, member, targetpath, pwd):
+    """Calls superclass's function, then keep the file permissions."""
+    if not isinstance(member, zipfile.ZipInfo):
+      member = self.getinfo(member)
+
+    # _extract_member is only available in Python3.6 and later.
+    # TODO(b/179457623): Support ZipFileWithPermission for Python3.5 and former.
+    if hasattr(super(), '_extract_member'):
+      targetpath = super()._extract_member(member, targetpath, pwd)
+
+    attr = member.external_attr >> 16
+    if attr != 0:
+      os.chmod(targetpath, attr)
+    return targetpath
+
+
+def ExtractZip(zip_path, out_dir):
+  with _ZipFileWithPermissions(zip_path) as zip_file:
+    zip_file.extractall(path=out_dir)
 
 
 # ANSI Color sequences

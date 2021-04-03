@@ -118,8 +118,7 @@ void AddSymbolToDictionary(const std::string &pos, const std::string &value,
   if (itr == sorting_map.end()) {
     DLOG(WARNING) << first_value << " is not defined in sorting map.";
     // If the character is platform-dependent, put the character at the last.
-    const Util::CharacterSet cset = Util::GetCharacterSet(value);
-    if (cset >= Util::JISX0212) {
+    if (!Util::IsJisX0208(value)) {
       sorting_key = USHRT_MAX;
     }
   } else {

@@ -469,6 +469,8 @@
                 '--gen_out_dir', '<(gen_out_dir)',
                 '--build_dir', '<(PRODUCT_DIR)',
                 '--auto_updater_dir', '<(mac_auto_updater_dir)',
+                '--launch_agent_dir',
+                '<(DEPTH)/mac/installer/LaunchAgents',
                 '--build_type', '<(build_type)',
               ],
             },

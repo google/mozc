@@ -28,27 +28,32 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Create a zip file from the input files.
+"""Build an installer for macOS (.pkg file).
 
-If an input file is a zip file, the zip file is extracted.
-
-% python3 zip_file.py --inputs a.zip b.txt --output c.zip
-
-In the above case, c.zip contains extracted files of a.zip, but not a.zip.
+This script creates a .pkgproj file with arguments and build an installer.
 """
 
 import argparse
+import logging
 import os
 import shutil
+import sys
 import tempfile
 
 from build_tools import util
 
 
 def ParseArguments():
+  """Parses command line options."""
   parser = argparse.ArgumentParser()
-  parser.add_argument('--inputs', nargs='+')
+  parser.add_argument('--input')
   parser.add_argument('--output')
+  parser.add_argument('--pkgproj_command')
+  parser.add_argument('--pkgproj_input')
+  parser.add_argument('--pkgproj_output')
+  parser.add_argument('--version_file')
+  parser.add_argument('--build_type')
+  parser.add_argument('--auto_updater_dir')
   return parser.parse_args()
 
 
@@ -60,17 +65,50 @@ def CopyFiles(input_files, out_dir):
       shutil.copyfile(src, os.path.join(out_dir, os.path.basename(src)))
 
 
+def TweakPkgproj(args, src_dir):
+  """Creates a .pkgproj file by filling the arguments."""
+  commands = [args.pkgproj_command,
+              '--output', args.pkgproj_output,
+              '--input', args.pkgproj_input,
+              '--version_file', args.version_file,
+              '--gen_out_dir', src_dir,
+              '--build_dir', src_dir,
+              '--auto_updater_dir', args.auto_updater_dir,
+              '--mozc_dir', os.getcwd(),
+              '--launch_agent_dir', src_dir,
+              '--build_type', args.build_type,
+              ]
+  util.RunOrDie(commands)
+
+
+def BuildInstaller(args, out_dir):
+  """Creates a .pkg file by running packagesbuild."""
+  # Make sure Packages is installed
+  packagesbuild_path = ''
+  if os.path.exists('/usr/local/bin/packagesbuild'):
+    packagesbuild_path = '/usr/local/bin/packagesbuild'
+  elif os.path.exists('/usr/bin/packagesbuild'):
+    packagesbuild_path = '/usr/bin/packagesbuild'
+  else:
+    logging.critical('error: Cannot find "packagesbuild"')
+    sys.exit(1)
+
+  # Build the package
+  commands = [
+      packagesbuild_path, args.pkgproj_output, '--build-folder', out_dir
+  ]
+  util.RunOrDie(commands)
+
+  shutil.copyfile(os.path.join(out_dir, 'Mozc.pkg'), args.output)
+
+
 def main():
   args = ParseArguments()
 
   with tempfile.TemporaryDirectory() as tmp_dir:
-    out_path = 'installer'
-    out_dir = os.path.join(tmp_dir, out_path)
-    os.mkdir(out_dir)
-
-    CopyFiles(args.inputs, out_dir)
-    basename = os.path.splitext(args.output)[0]
-    shutil.make_archive(basename, format='zip', root_dir=tmp_dir)
+    util.ExtractZip(args.input, tmp_dir)
+    TweakPkgproj(args, os.path.join(tmp_dir, 'installer'))
+    BuildInstaller(args, tmp_dir)
 
 
 if __name__ == '__main__':

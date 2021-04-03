@@ -112,6 +112,8 @@ def ParseOptions():
   parser.add_option('--build_dir', dest='build_dir')
   parser.add_option('--gen_out_dir', dest='gen_out_dir')
   parser.add_option('--auto_updater_dir', dest='auto_updater_dir')
+  parser.add_option('--mozc_dir', dest='mozc_dir')
+  parser.add_option('--launch_agent_dir', dest='launch_agent_dir')
   parser.add_option('--build_type', dest='build_type')
 
   (options, unused_args) = parser.parse_args()
@@ -123,7 +125,7 @@ def main():
   options = ParseOptions()
   required_flags = [
       'version_file', 'output', 'input', 'build_dir', 'gen_out_dir',
-      'auto_updater_dir', 'build_type'
+      'auto_updater_dir', 'build_type', 'launch_agent_dir',
   ]
   for flag in required_flags:
     if getattr(options, flag) is None:
@@ -135,6 +137,11 @@ def main():
   copyright_message = '© %d Google Inc.' % _COPYRIGHT_YEAR
   long_version = version.GetVersionString()
   short_version = version.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
+  if options.mozc_dir:
+    mozc_dir = options.mozc_dir
+  else:
+    mozc_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
+
   variables = {
       'MOZC_VERSIONINFO_MAJOR':
           version.GetVersionInFormat('@MAJOR@'),
@@ -153,13 +160,16 @@ def main():
       'AUTO_UPDATER_DIR':
           os.path.abspath(options.auto_updater_dir),
       'MOZC_DIR':
-          os.path.abspath(os.path.join(os.getcwd(), '..'))
+          mozc_dir,
+      'LAUNCH_AGENT_DIR':
+          os.path.abspath(options.launch_agent_dir),
   }
 
-  open(options.output, 'w').write(
-      _RemoveDevOnlyLines(
-          _ReplaceVariables(open(options.input).read(), variables),
-          options.build_type))
+  with open(options.input, encoding='utf-8') as input_file:
+    with open(options.output, 'w', encoding='utf-8') as output_file:
+      output_file.write(
+          _RemoveDevOnlyLines(_ReplaceVariables(input_file.read(), variables),
+                              options.build_type))
 
 
 if __name__ == '__main__':

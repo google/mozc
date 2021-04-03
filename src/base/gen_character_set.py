@@ -67,13 +67,9 @@ class CodePointCategorizer(object):
   # and this pattern ignores latter +xxxx part intentionally.
   _UCS4_PATTERN = re.compile(r'^U\+([0-9A-F]+)')
 
-  def __init__(self, cp932file, jisx0201file, jisx0208file,
-               jisx0212file, jisx0213file):
-    self._cp932 = CodePointCategorizer._LoadCP932(cp932file)
+  def __init__(self, jisx0201file, jisx0208file):
     self._jisx0201 = CodePointCategorizer._LoadJISX0201(jisx0201file)
     self._jisx0208 = CodePointCategorizer._LoadJISX0208(jisx0208file)
-    self._jisx0212 = CodePointCategorizer._LoadJISX0212(jisx0212file)
-    self._jisx0213 = CodePointCategorizer._LoadJISX0213(jisx0213file)
     self._exceptions = CodePointCategorizer._LoadExceptions()
 
     # Make a list of code point tables in the priority order.
@@ -81,9 +77,7 @@ class CodePointCategorizer(object):
         ('JISX0208', self._exceptions),  # Vender specific code.
         ('JISX0201', self._jisx0201),
         ('JISX0208', self._jisx0208),
-        ('JISX0212', self._jisx0212),
-        ('JISX0213', self._jisx0213),
-        ('CP932', self._cp932)]
+    ]
 
   @staticmethod
   def _LoadTable(filename, column_index, pattern, validater):
@@ -103,11 +97,6 @@ class CodePointCategorizer(object):
     return result
 
   @staticmethod
-  def _LoadCP932(filename):
-    return CodePointCategorizer._LoadTable(
-        filename, 1, CodePointCategorizer._UCS2_PATTERN, IsValidUCS2)
-
-  @staticmethod
   def _LoadJISX0201(filename):
     return CodePointCategorizer._LoadTable(
         filename, 1, CodePointCategorizer._UCS2_PATTERN, IsValidUCS2)
@@ -117,20 +106,10 @@ class CodePointCategorizer(object):
     result = CodePointCategorizer._LoadTable(
         filename, 2, CodePointCategorizer._UCS2_PATTERN, IsValidUCS2)
     result.update([
-        0xFF3C, # (FULLWIDTH REVERSE SOLIDS) should be in JISX0208
-        0xFF0D, # (FULLWIDTH HYPHEN MINUS) should be in JISX0208
+        0xFF3C,  # (FULLWIDTH REVERSE SOLIDS) should be in JISX0208
+        0xFF0D,  # (FULLWIDTH HYPHEN MINUS) should be in JISX0208
         ])
     return result
-
-  @staticmethod
-  def _LoadJISX0212(filename):
-    return CodePointCategorizer._LoadTable(
-        filename, 1, CodePointCategorizer._UCS2_PATTERN, IsValidUCS2)
-
-  @staticmethod
-  def _LoadJISX0213(filename):
-    return CodePointCategorizer._LoadTable(
-        filename, 1, CodePointCategorizer._UCS4_PATTERN, IsValidUCS4)
 
   # The following chars have different mapping in
   # Windows and Mac. Technically, they are platform dependent
@@ -206,17 +185,10 @@ def FindCodePoint(category_list, category_name):
 def ParseOptions():
   """Parses command line options."""
   parser = optparse.OptionParser()
-  parser.add_option('--cp932file', dest='cp932file',
-                    help='File path for the unicode\'s CP932.TXT file')
   parser.add_option('--jisx0201file', dest='jisx0201file',
                     help='File path for the unicode\'s JIS0201.TXT file')
   parser.add_option('--jisx0208file', dest='jisx0208file',
                     help='File path for the unicode\'s JIS0208.TXT file')
-  parser.add_option('--jisx0212file', dest='jisx0212file',
-                    help='File path for the unicode\'s JIS0212.TXT file')
-  parser.add_option('--jisx0213file', dest='jisx0213file',
-                    help='File path for the unicode\'s jisx0213-2004-std.txt '
-                    'file')
   parser.add_option('--output', dest='output',
                     help='output file path. If not specified, '
                     'output to stdout.')
@@ -349,11 +321,11 @@ def GenerateSwitchStatement(codepoint_list, var_name, num_indent, return_type):
 
 
 def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
-  """Generates function body of a Util::GetCharacterSet method."""
+  """Generates function body of a GetCharacterSet method."""
   lines = []
 
   # Function header.
-  lines.append('Util::CharacterSet Util::GetCharacterSet(char32 ucs4) {\n')
+  lines.append('CharacterSet GetCharacterSet(char32 ucs4) {\n')
 
   # First, check if the given code is valid or not. If not, returns
   # UNICODE_ONLY as a fallback.
@@ -376,12 +348,6 @@ def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
       FindCodePoint(category_list, 'JISX0201'), 'ucs4', 2, 'JISX0201'))
   lines.append('\n')
 
-  # Check if the argument is CP932.
-  # Check by a switch-case statement as CP932 code points are discrete.
-  lines.extend(GenerateSwitchStatement(
-      FindCodePoint(category_list, 'CP932'), 'ucs4', 2, 'CP932'))
-  lines.append('\n')
-
   # Bitmap lookup.
   # TODO(hidehiko): the bitmap has two huge 0-bits ranges. Reduce them.
   category_map = [
@@ -397,15 +363,6 @@ def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
                 '  }\n',
                 '\n'])
 
-  # For codepoint > bitmap_size.
-  # Remaining category should be only JISX0213 or UNICODE_ONLY.
-  # The number of JISX0213 code points are much small, so we just check it
-  # by a switch-case statement.
-  lines.extend(GenerateSwitchStatement(
-      [codepoint for codepoint in FindCodePoint(category_list, 'JISX0213')
-       if codepoint >= bitmap_size ],
-      'ucs4', 2, 'JISX0213'))
-
   # Returns UNICODE_ONLY as a last resort.
   lines.extend([
       '  return UNICODE_ONLY;\n',
@@ -416,7 +373,7 @@ def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
 
 def GenerateCharacterSetHeader(category_list):
   """Generates lines of character_set.h file."""
-  bitmap_name = "kCategoryBitmap"
+  bitmap_name = 'kCategoryBitmap'
   bitmap_size = 65536
 
   lines = []
@@ -426,13 +383,11 @@ def GenerateCharacterSetHeader(category_list):
                 '// Do not edit me!\n',
                 '\n'])
 
-  # We use 2-bits bitmap to check JISX0208, JISX0212 and JISX0213, for
-  # code point 0 to 65535 (inclusive).
-  lines.extend(
-      GenerateCategoryBitmap(category_list[:bitmap_size], bitmap_name))
+  # We use 2-bits bitmap to check JISX0208 for code point 0 to 65535.
+  lines.extend(GenerateCategoryBitmap(category_list[:bitmap_size], bitmap_name))
   lines.append('\n')
 
-  # Then add Util::GetCharacterSet method.
+  # Then add GetCharacterSet method.
   lines.extend(
       GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size))
 
@@ -443,11 +398,7 @@ def main():
   options = ParseOptions()
 
   # Generates lines of the header file.
-  categorizer = CodePointCategorizer(options.cp932file,
-                                     options.jisx0201file,
-                                     options.jisx0208file,
-                                     options.jisx0212file,
-                                     options.jisx0213file)
+  categorizer = CodePointCategorizer(options.jisx0201file, options.jisx0208file)
   category_list = [
       categorizer.GetCategory(codepoint)
       for codepoint in range(categorizer.MaxCodePoint() + 1)]

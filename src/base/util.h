@@ -431,28 +431,11 @@ class Util {
   // return UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
   static FormType GetFormType(const std::string &str);
 
-  // Basically, if charset >= JIX0212, the char is platform dependent char.
-  enum CharacterSet {
-    ASCII,         // ASCII (simply ucs4 <= 0x007F)
-    JISX0201,      // defined at least in 0201 (can be in 0208/0212/0213/CP9232)
-    JISX0208,      // defined at least in 0208 (can be in 0212/0213/CP932)
-    JISX0212,      // defined at least in 0212 (can be in 0213/CP932)
-    JISX0213,      // defined at least in 0213 (can be in CP932)
-    CP932,         // defined only in CP932, not in JISX02*
-    UNICODE_ONLY,  // defined only in UNICODE, not in JISX* nor CP932
-    CHARACTER_SET_SIZE,
-  };
-
-  // Returns CharacterSet.
-  static CharacterSet GetCharacterSet(char32 ucs4);
-
-  // Returns CharacterSet of string.
-  // if the given string contains multiple charasets, return
-  // the maximum character set.
-  static CharacterSet GetCharacterSet(absl::string_view str);
-
   // Returns true if all characters of `str` are ASCII (U+00 - U+7F).
   static bool IsAscii(absl::string_view str);
+
+  // Returns true if all characters of `str` are JIS X 0208.
+  static bool IsJisX0208(absl::string_view str);
 
   // Serializes uint64 into a string of eight byte.
   static std::string SerializeUint64(uint64_t x);
