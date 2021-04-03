@@ -66,6 +66,17 @@ apple_dynamic_framework_import(
 )
 
 apple_dynamic_framework_import(
+    name = "QtPrintSupport_mac",
+    framework_imports = glob(
+        include = [
+          "lib/QtPrintSupport.framework/Versions/5/QtPrintSupport",
+          "lib/QtPrintSupport.framework/QtPrintSupport",
+          "lib/QtPrintSupport.framework/Resoures/**",
+        ],
+    ),
+)
+
+apple_dynamic_framework_import(
     name = "QtWidgets_mac",
     framework_imports = glob(
         include = [
@@ -74,4 +85,9 @@ apple_dynamic_framework_import(
           "lib/QtWidgets.framework/Resoures/**",
         ],
     ),
+)
+
+filegroup(
+    name = "libqcocoa",
+    srcs = ["plugins/platforms/libqcocoa.dylib"],
 )

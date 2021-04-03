@@ -1510,20 +1510,36 @@ Util::FormType Util::GetFormType(const std::string &str) {
   return result;
 }
 
-// Util::CharcterSet Util::GetCharacterSet(char32 ucs4);
-#include "base/character_set.inc"
-
-Util::CharacterSet Util::GetCharacterSet(absl::string_view str) {
-  CharacterSet result = ASCII;
-  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    result = std::max(result, GetCharacterSet(iter.Get()));
-  }
-  return result;
-}
-
 bool Util::IsAscii(absl::string_view str) {
   for (const char c : str) {
     if (!absl::ascii_isascii(c)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+namespace {
+// Basically, if charset >= JIX0212, the char is platform dependent char.
+enum CharacterSet {
+  ASCII,         // ASCII (simply ucs4 <= 0x007F)
+  JISX0201,      // defined at least in 0201 (can be in 0208/0212/0213/CP9232)
+  JISX0208,      // defined at least in 0208 (can be in 0212/0213/CP932)
+  JISX0212,      // defined at least in 0212 (can be in 0213/CP932)
+  JISX0213,      // defined at least in 0213 (can be in CP932)
+  CP932,         // defined only in CP932, not in JISX02*
+  UNICODE_ONLY,  // defined only in UNICODE, not in JISX* nor CP932
+  CHARACTER_SET_SIZE,
+};
+
+// CharcterSet GetCharacterSet(char32 ucs4);
+#include "base/character_set.inc"
+}  // namespace
+
+bool Util::IsJisX0208(absl::string_view str) {
+  for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
+    if (GetCharacterSet(iter.Get()) > JISX0208) {
       return false;
     }
   }

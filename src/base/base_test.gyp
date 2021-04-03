@@ -173,18 +173,6 @@
       ],
     },
     {
-      'target_name': 'install_util_test_data',
-      'type': 'none',
-      'variables': {
-        # Copy the test data for character set test.
-        'test_data_subdir': 'data/test/character_set',
-        'test_data': [
-          '../<(test_data_subdir)/character_set.tsv',
-        ],
-      },
-      'includes': [ '../gyp/install_testdata.gypi' ],
-    },
-    {
       'target_name': 'util_test',
       'type': 'executable',
       'sources': [
@@ -194,7 +182,6 @@
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
         'base.gyp:base_core',
-        'install_util_test_data',
       ],
       'variables': {
         'test_size': 'small',

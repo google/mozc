@@ -317,6 +317,7 @@ bool IsBannedApplication(const std::set<std::string>* bundleIdSet,
 
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
+  [self setupClientBundle:sender];
   checkInputMode_ = YES;
   if (rendererCommand_->visible() && candidateController_) {
     candidateController_->ExecCommand(*rendererCommand_);

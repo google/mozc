@@ -390,14 +390,14 @@ py_binary_mozc(
 genrule(
     name = "character_set_data",
     srcs = [
-        "//data/unicode:CP932.TXT",
         "//data/unicode:JIS0201.TXT",
         "//data/unicode:JIS0208.TXT",
-        "//data/unicode:JIS0212.TXT",
-        "//data/unicode:jisx0213-2004-std.txt",
     ],
     outs = ["character_set.inc"],
-    cmd = "$(location :gen_character_set) --cp932file=$(location //data/unicode:CP932.TXT) --jisx0201file=$(location //data/unicode:JIS0201.TXT) --jisx0208file=$(location //data/unicode:JIS0208.TXT) --jisx0212file=$(location //data/unicode:JIS0212.TXT) --jisx0213file=$(location //data/unicode:jisx0213-2004-std.txt) --output=$@",
+    cmd = ("$(location :gen_character_set)" +
+           " --jisx0201file=$(location //data/unicode:JIS0201.TXT)" +
+           " --jisx0208file=$(location //data/unicode:JIS0208.TXT)" +
+           " --output=$@"),
     exec_tools = [":gen_character_set"],
     visibility = ["//visibility:private"],
 )
@@ -489,7 +489,6 @@ cc_test_mozc(
     srcs = [
         "util_test.cc",
     ],
-    data = ["//data/test/character_set:character_set.tsv"],
     requires_full_emulation = False,
     deps = [
         ":compiler_specific",

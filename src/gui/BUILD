@@ -39,3 +39,8 @@ infoplist_mozc(
     srcs = ["//data/mac:mozc_tool_info"],
     outs = ["mozc_tool_info.plist"],
 )
+
+filegroup(
+    name = "qt_conf",
+    srcs = ["qt.conf"],
+)

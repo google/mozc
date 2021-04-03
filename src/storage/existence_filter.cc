@@ -165,13 +165,6 @@ ExistenceFilter::ExistenceFilter(uint32_t m, uint32_t n, int k, bool is_mutable)
   rep_->Clear();
 }
 
-// static
-ExistenceFilter *ExistenceFilter::CreateImmutableExietenceFilter(uint32_t m,
-                                                                 uint32_t n,
-                                                                 int k) {
-  return new ExistenceFilter(m, n, k, false);
-}
-
 ExistenceFilter *ExistenceFilter::CreateOptimal(size_t size_in_bytes,
                                                 uint32_t estimated_insertions) {
   CHECK_LT(size_in_bytes, (1 << 29)) << "Requested size is too big";
@@ -340,8 +333,9 @@ ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
     return nullptr;
   }
 
-  ExistenceFilter *filter = ExistenceFilter::CreateImmutableExietenceFilter(
-      header.m, header.n, header.k);
+  // Create a mutable existence filter.
+  std::unique_ptr<ExistenceFilter> filter(
+      new ExistenceFilter(header.m, header.n, header.k, false));
   char **ptr = nullptr;
   size_t n = 0;
   size_t read = 0;
@@ -352,10 +346,9 @@ ExistenceFilter *ExistenceFilter::Read(const char *buf, size_t size) {
   }
   if (read != filter_bytes) {
     LOG(ERROR) << "Read " << read << " bytes instead of " << filter_bytes;
-    delete filter;
     return nullptr;
   }
-  return filter;
+  return filter.release();
 }
 
 }  // namespace storage

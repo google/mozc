@@ -323,6 +323,7 @@ genrule(
 py_binary_mozc(
     name = "zip_files",
     srcs = ["zip_files.py"],
+    deps = ["//build_tools:util"],
 )
 
 genrule(
@@ -334,12 +335,50 @@ genrule(
         ":uninstaller_macos",
         ":tweak_preflight",
         ":tweak_postflight",
-        "installer_public/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-        "installer_public/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
-    ],
+    ] + select_mozc(
+        oss_macos = [
+            "//gui/config_dialog:config_dialog_macos",
+            "//gui/dictionary_tool:dictionary_tool_macos",
+            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
+        ],
+    ),
     outs = ["installer.zip"],
     cmd = "$(location :zip_files) --inputs $(SRCS) --output $@",
     exec_tools = [
         ":zip_files",
+    ],
+)
+
+py_binary_mozc(
+    name = "build_installer",
+    srcs = ["build_installer.py"],
+    deps = ["//build_tools:util"],
+)
+
+# AUTO_UPDATER_DIR should be replaced with a valid directory.
+AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
+
+genrule(
+    name = "installer_oss_macos",
+    srcs = [":zip_installer_files"] + select_mozc(
+        oss_macos = [
+            "installer/Mozc_template.pkgproj",
+            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+            "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
+        ],
+    ),
+    outs = ["Mozc.pkg"],
+    cmd = ("$(location :build_installer) --input $(location :zip_installer_files) --output $@" +
+           " --pkgproj_command $(location //build_tools:tweak_pkgproj)" +
+           " --pkgproj_input $(location installer/Mozc_template.pkgproj)" +
+           " --pkgproj_output installer.pkgproj" +
+           " --version_file $(location //base:mozc_version_txt)" +
+           " --auto_updater_dir " + AUTO_UPDATER_DIR +
+           " --build_type dev"),  # or stable
+    exec_tools = [
+        ":build_installer",
+        "//base:mozc_version_txt",
+        "//build_tools:tweak_pkgproj",
     ],
 )
