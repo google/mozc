@@ -144,10 +144,6 @@ filegroup(
             "//renderer:mozc_renderer",
             "//server:mozc_server",
         ],
-        oss_macos = [
-            "//mac:activate_pane",
-            "//mac:mozc_macos",
-            "//mac:uninstaller_macos",
-        ],
+        oss_macos = ["//mac:installer_oss_macos"],
     ),
 )

@@ -155,7 +155,7 @@ class UTF16TextLineIterator
     QChar ch;
     QString output_line;
     while (!stream_->atEnd()) {
-      *(stream_.get()) >> ch;
+      *stream_ >> ch;
       if (output_line.isEmpty() && ch == QLatin1Char('\n')) {
         // no harm to skip empty line
         continue;

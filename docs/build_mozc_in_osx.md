@@ -145,5 +145,6 @@ The exact path should be specified (e.g. `QT_BASE_PATH = "/Users/mozc/myqt"`).
 
 ```
 cd ~/work/mozc/src
-bazel build mac:installer_oss_macos --config macos -c opt
+bazel build package --config macos -c opt
+open bazel-bin/mac/Mozc.pkg
 ```
