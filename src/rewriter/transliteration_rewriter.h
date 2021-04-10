@@ -49,7 +49,7 @@ class TransliterationRewriter : public RewriterInterface {
   int capability(const ConversionRequest &request) const override;
 
   bool Rewrite(const ConversionRequest &request,
-                       Segments *segments) const;
+               Segments *segments) const override;
 
   void Finish(const ConversionRequest &request, Segments *segments) override {}
 

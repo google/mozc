@@ -77,7 +77,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
   void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
-    dictionary_mock_.reset(new DictionaryMock);
+    dictionary_mock_ = absl::make_unique<DictionaryMock>();
   }
 
   void TearDown() override {

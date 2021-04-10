@@ -361,7 +361,7 @@ void SessionHandlerInterpreter::ClearUsageStats() {
 }
 
 const Output& SessionHandlerInterpreter::LastOutput() const {
-  return *(last_output_.get());
+  return *last_output_;
 }
 
 bool SessionHandlerInterpreter::GetCandidateIdByValue(

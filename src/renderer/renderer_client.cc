@@ -281,7 +281,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     if (ipc_client_factory_interface_ != nullptr && pending_command_) {
       std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
       if (!client) {
-        CallCommand(client.get(), *(pending_command_.get()));
+        CallCommand(client.get(), *pending_command_);
       }
     }
     pending_command_.reset();
