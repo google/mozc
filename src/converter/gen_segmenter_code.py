@@ -28,9 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""
-A tool to generate segmenter-code from human-readable rule file
-"""
+"""A tool to generate segmenter-code from human-readable rule file."""
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -38,7 +36,6 @@ from __future__ import print_function
 import codecs
 import re
 import sys
-import six
 
 
 HEADER = """
@@ -85,36 +82,36 @@ def GetRange(pos, pattern, name):
     return ""
 
   pat = re.compile(PatternToRegexp(pattern))
-  min = -1;
-  max = -1;
+  min_id = -1
+  max_id = -1
   keys = list(pos.keys())
   keys.sort()
 
-  range = []
+  id_range = []
 
   for p in keys:
-    id = pos[p]
+    id_val = pos[p]
     if pat.match(p):
-      if min == -1:
-        min = id
-        max = id
+      if min_id == -1:
+        min_id = id_val
+        max_id = id_val
       else:
-        max = id
+        max_id = id_val
     else:
-      if min != -1:
-        range.append([min, max])
-        min = -1
-  if min != -1:
-    range.append([min, max])
+      if min_id != -1:
+        id_range.append([min_id, max_id])
+        min_id = -1
+  if min_id != -1:
+    id_range.append([min_id, max_id])
 
   tmp = []
-  for r in range:
+  for r in id_range:
     if r[0] == r[1]:
       tmp.append("(%s == %s)" % (name, r[0]))
     else:
       tmp.append("(%s >= %s && %s <= %s)" % (name, r[0], name, r[1]))
 
-  if len(tmp) == 0:
+  if not tmp:
     print("FATAL: No rule fiind %s" % (pattern))
     sys.exit(-1)
 
@@ -124,7 +121,7 @@ def GetRange(pos, pattern, name):
 def main():
   pos = ReadPOSID(sys.argv[1], sys.argv[2])
 
-  out = codecs.getwriter("utf8")(sys.stdout if six.PY2 else sys.stdout.buffer)
+  out = codecs.getwriter("utf8")(sys.stdout.buffer)
   print(HEADER % (len(list(pos.keys())), len(list(pos.keys()))), file=out)
 
   for line in codecs.open(sys.argv[3], "r", encoding="utf8"):

@@ -171,7 +171,6 @@ objc_library_mozc(
 py_binary_mozc(
     name = "generate_mapping",
     srcs = ["generate_mapping.py"],
-    deps = [],
 )
 
 genrule(
