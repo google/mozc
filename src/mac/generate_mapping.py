@@ -32,7 +32,6 @@ from __future__ import print_function
 
 import optparse
 import sys
-import six
 
 
 class Mapping(object):
@@ -57,10 +56,7 @@ class Mapping(object):
       key = 'kVK_ANSI_' + key
 
     if self._result_type == 'const char *':
-      if six.PY3:
-        value = '"%s"' % ''.join(r'\x%02x' % b for b in value.encode('utf-8'))
-      else:
-        value = '"%s"' % ''.join(['\\x%x' % ord(c) for c in value])
+      value = '"%s"' % ''.join(r'\x%02x' % b for b in value.encode('utf-8'))
     elif self._result_type == 'KeyEvent::SpecialKey':
       value = 'KeyEvent::' + value
     print('  (*k%s)[%s] = %s;' % (mapname, key, value))

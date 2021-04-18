@@ -665,7 +665,6 @@ py_library_mozc(
     name = "gen_segmenter_code_lib",
     srcs = ["gen_segmenter_code.py"],
     visibility = ["//visibility:private"],
-    deps = [],
 )
 
 py_binary_mozc(
