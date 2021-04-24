@@ -39,7 +39,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mozc_hash_set.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
 #include "converter/connector.h"
@@ -50,6 +49,7 @@
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -204,7 +204,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   }
 
   // Load the original suggestion filter from file.
-  mozc_hash_set<std::string> suggestion_filter_set;
+  absl::flat_hash_set<std::string> suggestion_filter_set;
 
   for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
     InputFileStream input(suggestion_filter_files_[i].c_str());

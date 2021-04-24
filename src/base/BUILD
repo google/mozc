@@ -368,20 +368,6 @@ cc_test_mozc(
     ],
 )
 
-cc_library_mozc(
-    name = "mozc_hash_map",
-    hdrs = ["mozc_hash_map.h"],
-    visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/container:flat_hash_map"],
-)
-
-cc_library_mozc(
-    name = "mozc_hash_set",
-    hdrs = ["mozc_hash_set.h"],
-    visibility = ["//:__subpackages__"],
-    deps = ["@com_google_absl//absl/container:flat_hash_set"],
-)
-
 py_binary_mozc(
     name = "gen_character_set",
     srcs = ["gen_character_set.py"],

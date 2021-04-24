@@ -114,9 +114,11 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
 def macos_qt_application_mozc(name, bundle_name, deps):
     macos_application(
         name = name,
-        additional_contents = {
-            "@io_qt//:libqcocoa": "Resources",
-        },
+        tags = ["manual"],
+        additional_contents = select_mozc(
+            default = {},
+            oss = {"@io_qt//:libqcocoa": "Resources"},
+        ),
         app_icons = ["//data/images/mac:product_icon.icns"],
         bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Tool." + bundle_name,
         bundle_name = bundle_name,
@@ -127,10 +129,13 @@ def macos_qt_application_mozc(name, bundle_name, deps):
             "//gui:qt_conf",
         ],
         visibility = ["//:__subpackages__"],
-        deps = deps + [
-            "@io_qt//:QtCore_mac",
-            "@io_qt//:QtGui_mac",
-            "@io_qt//:QtPrintSupport_mac",
-            "@io_qt//:QtWidgets_mac",
-        ],
+        deps = deps + select_mozc(
+            default = [],
+            oss = [
+                "@io_qt//:QtCore_mac",
+                "@io_qt//:QtGui_mac",
+                "@io_qt//:QtPrintSupport_mac",
+                "@io_qt//:QtWidgets_mac",
+            ],
+        ),
     )

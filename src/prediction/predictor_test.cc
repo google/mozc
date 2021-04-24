@@ -188,11 +188,11 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
   testing::MockDataManager data_manager;
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  const SuppressionDictionary suppression_dictionary;
   auto predictor = absl::make_unique<MobilePredictor>(
       absl::make_unique<CheckCandSizePredictor>(200),
-      absl::make_unique<UserHistoryPredictor>(
-          &dictionary_mock, &pos_matcher,
-          Singleton<SuppressionDictionary>::get(), true));
+      absl::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
+                                              &suppression_dictionary, true));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_PREDICTION);

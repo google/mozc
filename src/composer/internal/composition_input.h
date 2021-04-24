@@ -32,17 +32,18 @@
 
 #include <string>
 
-#include "base/port.h"
-
 namespace mozc {
 namespace composer {
 
 class TransliteratorInterface;
 
-class CompositionInput {
+class CompositionInput final {
  public:
   CompositionInput();
-  virtual ~CompositionInput();
+  ~CompositionInput();
+
+  CompositionInput(const CompositionInput &) = delete;
+  CompositionInput &operator=(const CompositionInput &) = delete;
 
   void Clear();
   bool Empty() const;
@@ -61,7 +62,7 @@ class CompositionInput {
   void set_is_new_input(bool is_new_input);
 
   const TransliteratorInterface *transliterator() const;
-  void set_transliterator(const TransliteratorInterface *transliterator);
+  void set_transliterator(const TransliteratorInterface *t12r);
 
  private:
   std::string raw_;
@@ -69,8 +70,6 @@ class CompositionInput {
   bool has_conversion_;
   bool is_new_input_;
   const TransliteratorInterface *transliterator_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositionInput);
 };
 
 }  // namespace composer

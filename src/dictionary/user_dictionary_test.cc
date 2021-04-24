@@ -654,10 +654,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       entry->set_pos(user_dictionary::UserDictionary::SUPPRESSION_WORD);
     }
 
-    suppression_dictionary_->Lock();
-    EXPECT_TRUE(suppression_dictionary_->IsLocked());
     user_dic->Load(storage.GetProto());
-    EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_TRUE(suppression_dictionary_->SuppressEntry(
@@ -682,9 +679,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
       entry->set_pos(user_dictionary::UserDictionary::NOUN);
     }
 
-    suppression_dictionary_->Lock();
     user_dic->Load(storage.GetProto());
-    EXPECT_FALSE(suppression_dictionary_->IsLocked());
 
     for (size_t j = 0; j < 10; ++j) {
       EXPECT_FALSE(suppression_dictionary_->SuppressEntry(

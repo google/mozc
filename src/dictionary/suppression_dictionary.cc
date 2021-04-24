@@ -29,23 +29,37 @@
 
 #include "dictionary/suppression_dictionary.h"
 
+#include <atomic>
+#include <thread>  // NOLINT for portability
+
 #include "base/logging.h"
 #include "base/mutex.h"
 
 namespace mozc {
 namespace dictionary {
 namespace {
-const char kDelimiter = '\t';
+
+constexpr char kDelimiter = '\t';
+
+class Unlocker final {
+ public:
+  explicit Unlocker(std::atomic<bool> *locked) : locked_{locked} {}
+  ~Unlocker() { locked_->store(false, std::memory_order_release); }
+
+ private:
+  std::atomic<bool> *locked_;
+};
+
 }  // namespace
 
 SuppressionDictionary::SuppressionDictionary()
-    : locked_(false), has_key_empty_(false), has_value_empty_(false) {}
+    : has_key_empty_(false), has_value_empty_(false), locked_(false) {}
 
-SuppressionDictionary::~SuppressionDictionary() {}
+SuppressionDictionary::~SuppressionDictionary() = default;
 
 bool SuppressionDictionary::AddEntry(const std::string &key,
                                      const std::string &value) {
-  if (!locked_) {
+  if (!locked_.load(std::memory_order_relaxed)) {
     LOG(ERROR) << "Dictionary is not locked";
     return false;
   }
@@ -69,7 +83,7 @@ bool SuppressionDictionary::AddEntry(const std::string &key,
 }
 
 void SuppressionDictionary::Clear() {
-  if (!locked_) {
+  if (!locked_.load(std::memory_order_relaxed)) {
     LOG(ERROR) << "Dictionary is not locked";
     return;
   }
@@ -79,32 +93,50 @@ void SuppressionDictionary::Clear() {
 }
 
 void SuppressionDictionary::Lock() {
-  scoped_lock l(&mutex_);
-  locked_ = true;
+  scoped_lock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
+  for (;;) {
+    bool expected = false;
+    if (locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
+                                      std::memory_order_relaxed)) {
+      return;
+    }
+    std::this_thread::yield();
+  }
 }
 
 void SuppressionDictionary::UnLock() {
-  scoped_lock l(&mutex_);
-  locked_ = false;
+  scoped_lock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
+  bool expected = true;
+  if (!locked_.compare_exchange_weak(expected, false, std::memory_order_release,
+                                     std::memory_order_relaxed)) {
+    LOG(DFATAL) << "The dictionary was not locked";
+  }
 }
 
 bool SuppressionDictionary::IsEmpty() const {
-  if (locked_) {
+  bool expected = false;
+  if (!locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
+                                     std::memory_order_relaxed)) {
+    VLOG(2) << "Dictionary is locked now";
     return true;
   }
+  Unlocker u(&locked_);
   return dic_.empty();
 }
 
 bool SuppressionDictionary::SuppressEntry(const std::string &key,
                                           const std::string &value) const {
-  if (dic_.empty()) {
-    // Almost all users don't use word suppression function.
-    // We can return false as early as possible
+  bool expected = false;
+  if (!locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
+                                     std::memory_order_relaxed)) {
+    VLOG(2) << "Dictionary is locked now";
     return false;
   }
+  Unlocker u(&locked_);
 
-  if (locked_) {
-    VLOG(2) << "Dictionary is locked now";
+  if (dic_.empty()) {
+    // Almost all users don't use word suppression function.
+    // We can return false as early as possible.
     return false;
   }
 

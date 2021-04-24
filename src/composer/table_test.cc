@@ -30,7 +30,6 @@
 #include "composer/table.h"
 
 #include "base/file_util.h"
-#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "composer/internal/composition_input.h"
@@ -40,6 +39,7 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 namespace composer {
@@ -997,7 +997,7 @@ TEST_F(TableTest, SpecialKeys) {
 
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
-  mozc_hash_set<const Table *> table_set;
+  absl::flat_hash_set<const Table *> table_set;
   static const commands::Request::SpecialRomanjiTable special_romanji_table[] =
       {
           commands::Request::DEFAULT_TABLE,

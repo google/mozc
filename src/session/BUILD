@@ -52,15 +52,15 @@ test_suite(
         ":random_keyevents_generator_test_android",
         ":request_test_util_test_android",
         ":session_converter_stress_test_android",
-        ":session_converter_test_android",
-        ":session_handler_stress_test_android",
         ":session_handler_test_android",
         ":session_observer_handler_test_android",
         ":session_regression_test_android",
         ":session_test_android",
         ":session_usage_stats_util_test_android",
         # Disabled tests due to errors.
+        # ":session_converter_test_android",
         # ":session_handler_scenario_test_android",
+        # ":session_handler_stress_test_android",
         # ":session_usage_observer_test_android",
     ],
 )

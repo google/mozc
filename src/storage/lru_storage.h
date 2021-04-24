@@ -37,7 +37,7 @@
 #include <vector>
 
 #include "base/mmap.h"
-#include "base/mozc_hash_map.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -167,7 +167,7 @@ class LRUStorage {
   char *end_;
   std::string filename_;
   std::list<char *> lru_list_;  // Front is the most recently used data.
-  mozc_hash_map<uint64_t, std::list<char *>::iterator> lru_map_;
+  absl::flat_hash_map<uint64_t, std::list<char *>::iterator> lru_map_;
   std::unique_ptr<Mmap> mmap_;
 };
 

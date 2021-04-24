@@ -42,7 +42,7 @@ TEST(TrieTest, Trie) {
     ADD,
     REMOVE,
   };
-  static const struct TestCase {
+  const struct TestCase {
     const int type;
     const std::string key;
     const std::string value;

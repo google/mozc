@@ -680,7 +680,6 @@ cc_test_mozc(
         ":suppression_dictionary",
         "//base",
         "//base:logging",
-        "//base:singleton",
         "//base:thread",
         "//base:util",
         "//testing:gunit_main",
@@ -771,9 +770,9 @@ cc_library_mozc(
         ":dictionary_interface",
         ":dictionary_token",
         "//base",
-        "//base:mozc_hash_map",
         "//base:util",
         "//testing",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )

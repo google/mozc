@@ -42,7 +42,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/mozc_hash_map.h"
 #include "base/number_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -61,6 +60,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
@@ -72,7 +72,8 @@
   (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
 
 #else
-#define MOZC_WORD_LOG(result, message) {}
+#define MOZC_WORD_LOG(result, message) \
+  {}
 
 #endif  // NDEBUG
 
@@ -603,7 +604,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
 
-  mozc_hash_map<std::string, int32_t> merged_types;
+  absl::flat_hash_map<std::string, int32_t> merged_types;
 
 #ifndef NDEBUG
   const bool is_debug = true;
@@ -703,7 +704,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   add_debug_candidate(result, MOZC_WORD_LOG_MESSAGE(log))
 
 #else
-#define MOZC_ADD_DEBUG_CANDIDATE(result, log) {}
+#define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
+  {}
 
 #endif  // MOZC_DEBUG
 

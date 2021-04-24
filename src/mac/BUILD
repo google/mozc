@@ -92,6 +92,7 @@ objc_library_mozc(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
     sdk_frameworks = ["InputMethodKit"],
+    tags = ["manual"],
     deps = [
         ":imk_controller",
         ":imk_server",
@@ -121,6 +122,7 @@ objc_library_mozc(
         "//protocol:config_proto",
         "//protocol:renderer_proto",
     ],
+    tags = ["manual"],
     textual_hdrs = [
         "GoogleJapaneseInputControllerInterface.h",
     ],
@@ -145,6 +147,7 @@ objc_library_mozc(
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
     proto_deps = ["//protocol:commands_proto"],
+    tags = ["manual"],
     deps = [
         ":common",
         "//base:logging",
@@ -157,6 +160,7 @@ objc_library_mozc(
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
     proto_deps = ["//protocol:commands_proto"],
+    tags = ["manual"],
     textual_hdrs = [
         ":init_kanamap",
         ":init_specialkeymap",
@@ -210,6 +214,7 @@ objc_library_mozc(
         "Carbon",
         "InstallerPlugins",
     ],
+    tags = ["manual"],
 )
 
 macos_bundle_mozc(
@@ -232,6 +237,7 @@ objc_library_mozc(
         "Carbon",
         "InstallerPlugins",
     ],
+    tags = ["manual"],
 )
 
 macos_bundle_mozc(
@@ -264,6 +270,7 @@ objc_library_mozc(
         "Carbon",
         "Security",
     ],
+    tags = ["manual"],
     deps = [
         "//base:init_mozc",
         "//base:url",
@@ -380,4 +387,5 @@ genrule(
         "//base:mozc_version_txt",
         "//build_tools:tweak_pkgproj",
     ],
+    tags = ["manual"],
 )

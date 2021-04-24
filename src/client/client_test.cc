@@ -48,11 +48,11 @@
 
 namespace mozc {
 namespace client {
-
 namespace {
-const char kPrecedingText[] = "preceding_text";
-const char kFollowingText[] = "following_text";
-const bool kSuppressSuggestion = true;
+
+constexpr char kPrecedingText[] = "preceding_text";
+constexpr char kFollowingText[] = "following_text";
+constexpr bool kSuppressSuggestion = true;
 
 const std::string UpdateVersion(int diff) {
   std::vector<std::string> tokens;
@@ -66,6 +66,7 @@ const std::string UpdateVersion(int diff) {
   Util::JoinStrings(tokens, ".", &output);
   return output;
 }
+
 }  // namespace
 
 class TestServerLauncher : public ServerLauncherInterface {
@@ -127,8 +128,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   void set_server_program(const std::string &server_path) override {}
 
   const std::string &server_program() const override {
-    static const std::string path;
-    return path;
+    return placeholder_server_program_path_;
   }
 
   void set_restricted(bool restricted) override {}
@@ -156,6 +156,7 @@ class TestServerLauncher : public ServerLauncherInterface {
   }
 
  private:
+  const std::string placeholder_server_program_path_;
   IPCClientFactoryMock *factory_;
   bool start_server_result_;
   bool start_server_called_;

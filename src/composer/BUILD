@@ -104,7 +104,6 @@ cc_library_mozc(
         "//base:file_stream",
         "//base:hash",
         "//base:logging",
-        "//base:mozc_hash_set",
         "//base:port",
         "//base:trie",
         "//base:util",
@@ -115,6 +114,7 @@ cc_library_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 
@@ -163,7 +163,6 @@ cc_test_mozc(
         ":table",
         "//base",
         "//base:file_util",
-        "//base:mozc_hash_set",
         "//base:port",
         "//base:system_util",
         "//composer/internal:composition_input",
@@ -172,6 +171,7 @@ cc_test_mozc(
         "//protocol:commands_proto",
         "//protocol:config_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
 )
 

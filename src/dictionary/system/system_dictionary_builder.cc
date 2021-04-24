@@ -37,7 +37,6 @@
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/mozc_hash_set.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
@@ -49,6 +48,7 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(bool, preserve_intermediate_dictionary, false,
@@ -202,7 +202,7 @@ bool HasHomonymsInSamePos(const SystemDictionaryBuilder::KeyInfo &key_info) {
     return false;
   }
 
-  mozc_hash_set<uint32_t> seen;
+  absl::flat_hash_set<uint32_t> seen;
   for (size_t i = 0; i < key_info.tokens.size(); ++i) {
     const Token *token = key_info.tokens[i].token;
     const uint32_t pos = GetCombinedPos(token->lid, token->rid);

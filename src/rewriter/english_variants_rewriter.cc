@@ -33,11 +33,11 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/mozc_hash_set.h"
 #include "base/util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
 
 namespace mozc {
@@ -109,8 +109,8 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
   CHECK(seg);
 
   bool modified = false;
-  mozc_hash_set<std::string> expanded_t13n_candidates;
-  mozc_hash_set<std::string> original_candidates;
+  absl::flat_hash_set<std::string> expanded_t13n_candidates;
+  absl::flat_hash_set<std::string> original_candidates;
 
   for (size_t i = 0; i < seg->candidates_size(); ++i) {
     original_candidates.insert(seg->candidate(i).value);

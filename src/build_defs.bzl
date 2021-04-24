@@ -38,12 +38,13 @@ load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
-def cc_library_mozc(deps = [], **kwargs):
+def cc_library_mozc(deps = [], copts = [], **kwargs):
     """
     cc_library wrapper adding //:macro dependecny.
     """
     native.cc_library(
         deps = deps + ["//:macro"],
+        copts = copts + ["-funsigned-char"],
         **kwargs
     )
 
@@ -52,12 +53,13 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_binary_mozc(deps = [], **kwargs):
+def cc_binary_mozc(deps = [], copts = [], **kwargs):
     """
     cc_binary wrapper adding //:macro dependecny.
     """
     native.cc_binary(
         deps = deps + ["//:macro"],
+        copts = copts + ["-funsigned-char"],
         **kwargs
     )
 
@@ -66,7 +68,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def cc_test_mozc(name, tags = [], deps = [], **kwargs):
+def cc_test_mozc(name, tags = [], deps = [], copts = [], **kwargs):
     """
     cc_test wrapper adding //:macro dependecny.
     """
@@ -76,6 +78,7 @@ def cc_test_mozc(name, tags = [], deps = [], **kwargs):
         name = name,
         tags = tags,
         deps = deps + ["//:macro"],
+        copts = copts + ["-funsigned-char"],
         **kwargs
     )
 
@@ -83,6 +86,7 @@ def cc_test_mozc(name, tags = [], deps = [], **kwargs):
         android_cc_test(
             name = name + "_android",
             cc_test_name = name,
+            copts = copts + ["-funsigned-char"],
             requires_full_emulation = requires_full_emulation,
             # "manual" prevents this target triggered by a wild card.
             # So that "blaze test ..." does not contain this target.
@@ -157,19 +161,21 @@ def infoplist_strings_mozc(name, srcs = [], outs = []):
         exec_tools = ["//build_tools:tweak_info_plist_strings"],
     )
 
-def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], proto_deps = [], sdk_frameworks = [], **kwargs):
+def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], copts = [], proto_deps = [], sdk_frameworks = [], **kwargs):
     # Because proto_library cannot be in deps of objc_library,
     # cc_library as a wrapper is necessary as a workaround.
     proto_deps_name = name + "_proto_deps"
     native.cc_library(
         name = proto_deps_name,
         deps = proto_deps,
+        copts = copts + ["-funsigned-char"],
     )
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
         deps = deps + ["//:macro", proto_deps_name],
+        copts = copts + ["-funsigned-char"],
         sdk_frameworks = sdk_frameworks,
         **kwargs
     )

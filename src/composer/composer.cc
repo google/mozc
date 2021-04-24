@@ -32,6 +32,7 @@
 #include "composer/composer.h"
 
 #include <cstdint>
+#include <unordered_map>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -190,6 +191,21 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
   }
 }
 
+std::unordered_multimap<std::string, std::string> BuildModifierRemovalMap() {
+  return std::unordered_multimap<std::string, std::string>{
+      {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぅ", "ゔ"}, {"ゔ", "う"},
+      {"ゔ", "ぅ"}, {"ぇ", "え"}, {"ぉ", "お"}, {"が", "か"}, {"ぎ", "き"},
+      {"ぐ", "く"}, {"げ", "け"}, {"ご", "こ"}, {"ざ", "さ"}, {"じ", "し"},
+      {"ず", "す"}, {"ぜ", "せ"}, {"ぞ", "そ"}, {"だ", "た"}, {"ぢ", "ち"},
+      {"づ", "つ"}, {"づ", "っ"}, {"っ", "つ"}, {"っ", "づ"}, {"で", "て"},
+      {"ど", "と"}, {"ば", "は"}, {"ば", "ぱ"}, {"ぱ", "は"}, {"ぱ", "ば"},
+      {"び", "ひ"}, {"び", "ぴ"}, {"ぴ", "ひ"}, {"ぴ", "び"}, {"ぶ", "ふ"},
+      {"ぶ", "ぷ"}, {"ぷ", "ふ"}, {"ぷ", "ぶ"}, {"べ", "へ"}, {"べ", "ぺ"},
+      {"ぺ", "へ"}, {"ぺ", "べ"}, {"ぼ", "ほ"}, {"ぼ", "ぽ"}, {"ぽ", "ほ"},
+      {"ぽ", "ぼ"}, {"ゃ", "や"}, {"ゅ", "ゆ"}, {"ょ", "よ"}, {"ゎ", "わ"},
+  };
+}
+
 const size_t kMaxPreeditLength = 256;
 
 }  // namespace
@@ -201,7 +217,8 @@ Composer::Composer()
 
 Composer::Composer(const Table *table, const commands::Request *request,
                    const config::Config *config)
-    : position_(0),
+    : modifier_removal_map_(BuildModifierRemovalMap()),
+      position_(0),
       is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
@@ -220,7 +237,7 @@ Composer::Composer(const Table *table, const commands::Request *request,
   Reset();
 }
 
-Composer::~Composer() {}
+Composer::~Composer() = default;
 
 void Composer::Reset() {
   EditErase();
@@ -852,6 +869,19 @@ void Composer::GetQueriesForPrediction(std::string *base,
   }
   std::string base_query;
   composition_->GetExpandedStrings(&base_query, expanded);
+  // The above `GetExpandedStrings` generates expansion for modifier key as
+  // well, e.g., if the composition is "ざ", `expanded` contains "さ" too.
+  // However, "ざ" is usually composed by explicitly hitting the modifier key.
+  // So we don't want to generate prediction from "さ" in this case. The
+  // following code removes such unnecessary expansion.
+  std::string asis;
+  composition_->GetStringWithTrimMode(ASIS, &asis);
+  const std::string trailing = asis.substr(base_query.size());
+  for (auto [iter, end] = modifier_removal_map_.equal_range(trailing);
+       iter != end; ++iter) {
+    expanded->erase(iter->second);
+  }
+
   Util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 

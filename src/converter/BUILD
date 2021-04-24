@@ -454,7 +454,6 @@ cc_library_mozc(
     hdrs = ["converter.h"],
     visibility = [
         "//engine:__pkg__",
-        "//evaluation/simulator:__pkg__",
         "//rewriter:__pkg__",
         "//session:__pkg__",
     ],
