@@ -38,35 +38,47 @@
 
 namespace mozc {
 namespace keymap {
+namespace {
 
 using config::Config;
 
-// static member variable
-ObjectPool<KeyMapManager> KeyMapFactory::pool_(6);
-KeyMapFactory::KeyMapManagerMap KeyMapFactory::keymaps_;
+}  // namespace
 
 KeyMapManager *KeyMapFactory::GetKeyMapManager(
     const Config::SessionKeymap keymap) {
-  KeyMapManagerMap::iterator iter = keymaps_.find(keymap);
+  auto *keymaps = GetKeyMaps();
+  KeyMapManagerMap::iterator iter = keymaps->find(keymap);
 
-  if (iter != keymaps_.end()) {
+  if (iter != keymaps->end()) {
     return iter->second;
   }
 
   // create new instance
-  KeyMapManager *manager = pool_.Alloc();
-  keymaps_.insert(std::make_pair(keymap, manager));
+  static ObjectPool<KeyMapManager> *pool = new ObjectPool<KeyMapManager>(6);
+  KeyMapManager *manager = pool->Alloc();
+  keymaps->insert(std::make_pair(keymap, manager));
   manager->Initialize(keymap);
   return manager;
 }
 
 void KeyMapFactory::ReloadConfig(const Config &config) {
-  KeyMapManagerMap::iterator iter = keymaps_.find(Config::CUSTOM);
-  if (iter == keymaps_.end()) {
+  auto *keymaps = GetKeyMaps();
+  KeyMapManagerMap::iterator iter = keymaps->find(Config::CUSTOM);
+  if (iter == keymaps->end()) {
     return;
   }
 
   iter->second->ReloadConfig(config);
+}
+
+KeyMapFactory::KeyMapManagerMap *KeyMapFactory::GetKeyMaps() {
+  static auto *keymaps = new KeyMapFactory::KeyMapManagerMap();
+  return keymaps;
+}
+
+ObjectPool<KeyMapManager> *KeyMapFactory::GetPool() {
+  static auto *pool = new ObjectPool<KeyMapManager>(6);
+  return pool;
 }
 
 }  // namespace keymap

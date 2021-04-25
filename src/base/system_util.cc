@@ -75,6 +75,7 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__
 
+#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
@@ -83,22 +84,25 @@
 #endif  // OS_WIN
 
 namespace mozc {
-
 namespace {
-class UserProfileDirectoryImpl {
+
+class UserProfileDirectoryImpl final {
  public:
   UserProfileDirectoryImpl() = default;
-  virtual ~UserProfileDirectoryImpl() = default;
+  ~UserProfileDirectoryImpl() = default;
 
   std::string GetDir();
   void SetDir(const std::string &dir);
 
  private:
   std::string GetUserProfileDirectory() const;
+
   std::string dir_;
+  Mutex mutex_;
 };
 
 std::string UserProfileDirectoryImpl::GetDir() {
+  scoped_lock l(&mutex_);
   if (!dir_.empty()) {
     return dir_;
   }
@@ -113,6 +117,7 @@ std::string UserProfileDirectoryImpl::GetDir() {
 }
 
 void UserProfileDirectoryImpl::SetDir(const std::string &dir) {
+  scoped_lock l(&mutex_);
   dir_ = dir;
 }
 
@@ -258,25 +263,23 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   DCHECK(SUCCEEDED(Singleton<LocalAppDataDirectoryCache>::get()->result()));
   std::string dir = Singleton<LocalAppDataDirectoryCache>::get()->path();
 
-# ifdef GOOGLE_JAPANESE_INPUT_BUILD
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
   FileUtil::CreateDirectory(dir);
-# endif  // GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(dir, kProductNameInEnglish);
-
 
 #elif defined(__APPLE__)
   std::string dir = MacUtil::GetApplicationSupportDirectory();
-# ifdef GOOGLE_JAPANESE_INPUT_BUILD
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, "Google");
   // The permission of ~/Library/Application Support/Google seems to be 0755.
   // TODO(komatsu): nice to make a wrapper function.
   ::mkdir(dir.c_str(), 0755);
   return FileUtil::JoinPath(dir, "JapaneseInput");
-# else   //  GOOGLE_JAPANESE_INPUT_BUILD
+#else   //  GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(dir, "Mozc");
-# endif  //  GOOGLE_JAPANESE_INPUT_BUILD
-
+#endif  //  GOOGLE_JAPANESE_INPUT_BUILD
 
 #elif defined(OS_LINUX)
   // 1. If "$HOME/.mozc" already exists,
@@ -411,15 +414,15 @@ class ProgramFilesX86Cache {
 std::string SystemUtil::GetServerDirectory() {
 #ifdef OS_WIN
   DCHECK(SUCCEEDED(Singleton<ProgramFilesX86Cache>::get()->result()));
-# if defined(GOOGLE_JAPANESE_INPUT_BUILD)
+#if defined(GOOGLE_JAPANESE_INPUT_BUILD)
   return FileUtil::JoinPath(
       FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                          kCompanyNameInEnglish),
       kProductNameInEnglish);
-# else   // GOOGLE_JAPANESE_INPUT_BUILD
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(Singleton<ProgramFilesX86Cache>::get()->path(),
                             kProductNameInEnglish);
-# endif  // GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 #endif  // OS_WIN
 
 #if defined(__APPLE__)
@@ -427,12 +430,12 @@ std::string SystemUtil::GetServerDirectory() {
 #endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
-# if defined(MOZC_SERVER_DIRECTORY)
+#if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
-# else
+#else
   return "/usr/lib/mozc";
-# endif  // MOZC_SERVER_DIRECTORY
-#endif   // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // MOZC_SERVER_DIRECTORY
+#endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.
@@ -906,7 +909,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
 #endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
-# if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+#if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   const int32_t page_size = sysconf(_SC_PAGESIZE);
   const int32_t number_of_phyisical_pages = sysconf(_SC_PHYS_PAGES);
   if (number_of_phyisical_pages < 0) {
@@ -915,10 +918,10 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
     return 0;
   }
   return static_cast<uint64_t>(number_of_phyisical_pages) * page_size;
-# else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+#else   // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
   return 0;
-# endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
-#endif   // OS_LINUX || OS_ANDROID || OS_WASM
+#endif  // defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)
+#endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
   // If none of the above platforms is specified, the compiler raises an error
   // because of no return value.

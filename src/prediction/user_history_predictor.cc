@@ -41,7 +41,6 @@
 #include "base/config_file_stream.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/mozc_hash_set.h"
 #include "base/thread.h"
 #include "base/trie.h"
 #include "base/util.h"
@@ -59,6 +58,7 @@
 #include "storage/encrypted_string_storage.h"
 #include "storage/lru_cache.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
@@ -878,7 +878,7 @@ bool UserHistoryPredictor::GetKeyValueForExactAndRightPrefixMatch(
   std::string key = entry->key();
   std::string value = entry->value();
   const Entry *current_entry = entry;
-  mozc_hash_set<uint32_t> seen;
+  absl::flat_hash_set<uint32_t> seen;
   seen.insert(EntryFingerprint(*current_entry));
   // Until target entry gets longer than input_key.
   while (key.size() <= input_key.size()) {
@@ -1819,7 +1819,7 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
   MakeLearningSegments(*segments, &learning_segments);
 
   std::string all_key, all_value;
-  mozc_hash_set<uint32_t> seen;
+  absl::flat_hash_set<uint32_t> seen;
   bool this_was_seen = false;
   const size_t history_segments_size =
       learning_segments.history_segments_size();

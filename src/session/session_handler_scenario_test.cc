@@ -65,7 +65,6 @@ using mozc::session::SessionHandlerInterpreter;
 using mozc::session::testing::SessionHandlerTestBase;
 using ::testing::WithParamInterface;
 
-
 class SessionHandlerScenarioTest : public SessionHandlerTestBase,
                                    public WithParamInterface<const char *> {
  protected:
@@ -121,6 +120,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "input_mode.txt",
 #endif  // !__APPLE__
     DATA_DIR "insert_characters.txt",
+    DATA_DIR "kana_modifier_insensitive_conversion.txt",
     DATA_DIR "mobile_partial_variant_candidates.txt",
     DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
     DATA_DIR "mobile_t13n_candidates.txt",
@@ -323,8 +323,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     ASSERT_FALSE(output.has_candidates());
   } else if (command == "EXPECT_SEGMENTS_SIZE") {
     ASSERT_EQ(2, args.size());
-    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]),
-              output.preedit().segment_size());
+    ASSERT_EQ(NumberUtil::SimpleAtoi(args[1]), output.preedit().segment_size());
   } else if (command == "EXPECT_HIGHLIGHTED_SEGMENT_INDEX") {
     ASSERT_EQ(2, args.size());
     ASSERT_TRUE(output.has_preedit());
@@ -361,8 +360,8 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     if (expected_num == 0) {
       EXPECT_STATS_NOT_EXIST(args[1]);
     } else {
-      EXPECT_TIMING_STATS(args[1], expected_total, expected_num,
-                          expected_min, expected_max);
+      EXPECT_TIMING_STATS(args[1], expected_total, expected_num, expected_min,
+                          expected_max);
     }
 
   } else {

@@ -36,9 +36,9 @@
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/mozc_hash_map.h"
 #include "base/util.h"
 #include "data_manager/serialized_dictionary.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
@@ -53,14 +53,15 @@ using KeyList = std::vector<std::string>;
 using CompilerToken = SerializedDictionary::CompilerToken;
 using TokenList = SerializedDictionary::TokenList;
 
-int LookupCount(const mozc_hash_map<std::string, int> &key_count,
+int LookupCount(const absl::flat_hash_map<std::string, int> &key_count,
                 const std::string &key) {
   const auto iter = key_count.find(key);
   return (iter == key_count.end()) ? 0 : iter->second;
 }
 
-std::string GetDescription(const KeyList &key_list,
-                           const mozc_hash_map<std::string, int> &key_count) {
+std::string GetDescription(
+    const KeyList &key_list,
+    const absl::flat_hash_map<std::string, int> &key_count) {
   if (key_list.size() == 1) {
     return key_list[0];
   }
@@ -85,7 +86,7 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
   std::getline(ifs, line);  // Skip header
 
   std::vector<std::pair<std::string, KeyList>> data;
-  mozc_hash_map<std::string, int> key_count;
+  absl::flat_hash_map<std::string, int> key_count;
   while (std::getline(ifs, line)) {
     std::vector<absl::string_view> field_list;
     Util::SplitStringUsing(line, "\t", &field_list);

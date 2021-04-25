@@ -40,7 +40,6 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/system_util.h"
 #include "base/thread.h"
@@ -49,6 +48,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
@@ -309,9 +309,9 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
   EXPECT_EQ(output.session_keymap(), Config::KOTOERI);
 #elif defined(OS_CHROMEOS)  // __APPLE__
   EXPECT_EQ(output.session_keymap(), Config::CHROMEOS);
-#else                   // __APPLE__ || OS_CHROMEOS
+#else   // __APPLE__ || OS_CHROMEOS
   EXPECT_EQ(output.session_keymap(), Config::MSIME);
-#endif                  // __APPLE__ || OS_CHROMEOS
+#endif  // __APPLE__ || OS_CHROMEOS
   EXPECT_EQ(output.character_form_rules_size(), 13);
 
   struct TestCase {
@@ -393,7 +393,7 @@ std::string ExtractCharacterFormRules(const Config &config) {
 class GetConfigThread final : public Thread {
  public:
   explicit GetConfigThread(
-      const mozc_hash_set<std::string> &character_form_rules_set)
+      const absl::flat_hash_set<std::string> &character_form_rules_set)
       : quitting_(false), character_form_rules_set_(character_form_rules_set) {}
 
   ~GetConfigThread() override {
@@ -414,7 +414,7 @@ class GetConfigThread final : public Thread {
 
  private:
   std::atomic<bool> quitting_;
-  const mozc_hash_set<std::string> character_form_rules_set_;
+  const absl::flat_hash_set<std::string> character_form_rules_set_;
 };
 
 TEST_F(ConfigHandlerTest, ConcurrentAccess) {
@@ -465,7 +465,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // |GeneralConfig|, the returned object from |ConfigHandler::GetConfig()|
   // is not predictable.  Hence we only make sure that
   // |Config::character_form_rules()| is one of expected values.
-  mozc_hash_set<std::string> character_form_rules_set;
+  absl::flat_hash_set<std::string> character_form_rules_set;
   for (const auto &config : configs) {
     character_form_rules_set.insert(ExtractCharacterFormRules(config));
   }

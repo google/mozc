@@ -42,8 +42,11 @@ class KeyMapManager;
 
 class KeyMapFactory {
  public:
-  typedef std::map<config::Config::SessionKeymap, KeyMapManager *>
-      KeyMapManagerMap;
+  using KeyMapManagerMap =
+      std::map<config::Config::SessionKeymap, KeyMapManager *>;
+
+  KeyMapFactory() = delete;
+  ~KeyMapFactory() = delete;
 
   // Returns KeyMapManager corresponding keymap and custom rule stored in
   // config.  Note, keymap might be different from config.session_keymap.
@@ -56,11 +59,8 @@ class KeyMapFactory {
  private:
   friend class TestKeyMapFactoryProxy;
 
-  KeyMapFactory() {}
-  ~KeyMapFactory() {}
-
-  static ObjectPool<KeyMapManager> pool_;
-  static KeyMapManagerMap keymaps_;
+  static KeyMapManagerMap *GetKeyMaps();
+  static ObjectPool<KeyMapManager> *GetPool();
 };
 
 }  // namespace keymap

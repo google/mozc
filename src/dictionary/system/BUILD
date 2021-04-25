@@ -165,7 +165,6 @@ cc_library_mozc(
         ":words_info",
         "//base:file_stream",
         "//base:logging",
-        "//base:mozc_hash_set",
         "//base:port",
         "//base:util",
         "//dictionary:dictionary_token",
@@ -176,6 +175,7 @@ cc_library_mozc(
         "//dictionary/file:codec_interface",
         "//storage/louds:bit_vector_based_array_builder",
         "//storage/louds:louds_trie_builder",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
     ],
 )

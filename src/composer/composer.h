@@ -36,6 +36,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -44,6 +45,7 @@
 #include "composer/composition_interface.h"
 #include "composer/internal/transliterators.h"
 #include "composer/internal/typing_corrector.h"
+#include "composer/table.h"
 #include "composer/type_corrected_query.h"
 #include "protocol/commands.pb.h"
 // for FRIEND_TEST()
@@ -53,12 +55,10 @@
 namespace mozc {
 namespace composer {
 
-class Table;
+using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
+using ProbableKeyEvents = ::mozc::protobuf::RepeatedPtrField<ProbableKeyEvent>;
 
-typedef commands::KeyEvent::ProbableKeyEvent ProbableKeyEvent;
-typedef mozc::protobuf::RepeatedPtrField<ProbableKeyEvent> ProbableKeyEvents;
-
-class Composer {
+class Composer final {
  public:
   // Pseudo commands in composer.
   enum InternalCommand {
@@ -69,7 +69,10 @@ class Composer {
   Composer();
   Composer(const Table *table, const commands::Request *request,
            const config::Config *config);
-  virtual ~Composer();
+  ~Composer();
+
+  Composer(const Composer &) = delete;
+  Composer &operator=(const Composer &) = delete;
 
   // Reset all composing data except table.
   void Reset();
@@ -143,7 +146,7 @@ class Composer {
   // Delete multiple characters beginning at specified position.
   void DeleteRange(size_t pos, size_t length);
 
-  void InsertCharacter(const std::string &input);
+  void InsertCharacter(const std::string &key);
 
   // Set preedit text to composer.
   //
@@ -171,7 +174,7 @@ class Composer {
   bool InsertCharacterKeyAndPreedit(const std::string &key,
                                     const std::string &preedit);
   void InsertCharacterForProbableKeyEvents(
-      const std::string &input, const ProbableKeyEvents &probable_key_events);
+      const std::string &key, const ProbableKeyEvents &probable_key_events);
   void InsertCharacterPreeditForProbableKeyEvents(
       const std::string &input, const ProbableKeyEvents &probable_key_events);
   void InsertCharacterKeyAndPreeditForProbableKeyEvents(
@@ -208,8 +211,9 @@ class Composer {
                              std::string *transliteration) const;
 
   // Generate substrings of transliterations.
-  void GetSubTransliterations(size_t position, size_t size,
-                              transliteration::Transliterations *t13ns) const;
+  void GetSubTransliterations(
+      size_t position, size_t size,
+      transliteration::Transliterations *transliterations) const;
 
   // Check if the preedit is can be modified.
   bool EnableInsert() const;
@@ -260,7 +264,7 @@ class Composer {
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
-  bool InsertCharacterInternal(const std::string &input);
+  bool InsertCharacterInternal(const std::string &key);
   bool InsertCharacterKeyAndPreeditInternal(const std::string &key,
                                             const std::string &preedit);
 
@@ -269,12 +273,25 @@ class Composer {
   // This function have a bug when key has characters input with Preedit.
   // Expected behavior: InsertPreedit("A") + InsertKey("a") -> "Aあ"
   // Actual behavior:   InsertPreedit("A") + InsertKey("a") -> "Aa"
-  void ApplyTemporaryInputMode(const std::string &key, bool caps_locked);
+  void ApplyTemporaryInputMode(const std::string &input, bool caps_locked);
 
   // Generate transliterated substrings.
-  void GetTransliteratedText(Transliterators::Transliterator transliterator,
+  void GetTransliteratedText(Transliterators::Transliterator t12r,
                              const size_t position, const size_t size,
-                             std::string *output) const;
+                             std::string *result) const;
+
+  // A map used in `GetQueriesForPrediction()`. The key is a modified Hiragana
+  // and the values are its related Hiragana characters that can be cycled by
+  // hitting the modifier key. For instance, there's a modification cycle
+  // つ -> っ -> づ -> つ. For this cycle, the multimap contains:
+  //   っ: [つ, づ]
+  //   づ: [つ, っ]
+  // If the composition ends with a key in this map, its corresponding values
+  // are removed from the expansion produced by `GetQueryForPrediction()`,
+  // whereby we can suppress prediction from unmodified key when one modified a
+  // character explicitly (e.g., we don't want to suggest words starting with
+  // "さ" when one typed "ざ" with modified key).
+  const std::unordered_multimap<std::string, std::string> modifier_removal_map_;
 
   size_t position_;
   // Whether the next insertion is the beginning of typing after an
@@ -303,8 +320,6 @@ class Composer {
 
   const commands::Request *request_;
   const config::Config *config_;
-
-  DISALLOW_COPY_AND_ASSIGN(Composer);
 };
 
 }  // namespace composer

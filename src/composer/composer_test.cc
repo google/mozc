@@ -601,6 +601,10 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
   table_->AddRule("$", "", "と");
   table_->AddRule("と*", "", "ど");
   table_->AddRule("ど*", "", "と");
+  table_->AddRule("x", "", "つ");
+  table_->AddRule("つ*", "", "っ");
+  table_->AddRule("っ*", "", "づ");
+  table_->AddRule("づ*", "", "つ");
 
   {
     std::string base, preedit;
@@ -613,6 +617,28 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
     EXPECT_EQ(2, expanded.size());
     EXPECT_TRUE(expanded.end() != expanded.find("と"));
     EXPECT_TRUE(expanded.end() != expanded.find("ど"));
+  }
+  {
+    std::string base, preedit;
+    std::set<std::string> expanded;
+    composer_->EditErase();
+    composer_->InsertCharacter("_$*");
+    composer_->GetQueriesForPrediction(&base, &expanded);
+    composer_->GetStringForPreedit(&preedit);
+    EXPECT_EQ("い", base);
+    EXPECT_EQ(1, expanded.size());
+    EXPECT_TRUE(expanded.end() != expanded.find("ど"));
+  }
+  {
+    std::string base, preedit;
+    std::set<std::string> expanded;
+    composer_->EditErase();
+    composer_->InsertCharacter("_x*");
+    composer_->GetQueriesForPrediction(&base, &expanded);
+    composer_->GetStringForPreedit(&preedit);
+    EXPECT_EQ("い", base);
+    EXPECT_EQ(1, expanded.size());
+    EXPECT_TRUE(expanded.end() != expanded.find("っ"));
   }
 }
 
@@ -654,8 +680,8 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
 
 TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
   const struct TestData {
-    const commands::Context::InputFieldType field_type_;
-    const bool ascii_expected_;
+    const commands::Context::InputFieldType field_type;
+    const bool ascii_expected;
   } test_data_list[] = {
       {commands::Context::NORMAL, false},
       {commands::Context::NUMBER, true},
@@ -667,13 +693,13 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
   for (size_t test_data_index = 0; test_data_index < arraysize(test_data_list);
        ++test_data_index) {
     const TestData &test_data = test_data_list[test_data_index];
-    composer_->SetInputFieldType(test_data.field_type_);
+    composer_->SetInputFieldType(test_data.field_type);
     std::string key, converted;
     for (char c = 0x20; c <= 0x7E; ++c) {
       key.assign(1, c);
       composer_->EditErase();
       composer_->InsertCharacter(key);
-      if (test_data.ascii_expected_) {
+      if (test_data.ascii_expected) {
         composer_->GetStringForPreedit(&converted);
         EXPECT_EQ(key, converted);
         composer_->GetStringForSubmission(&converted);

@@ -66,6 +66,7 @@
           'domain_suggestion.txt',
           'input_mode.txt',
           'insert_characters.txt',
+          'kana_modifier_insensitive_conversion.txt',
           'mobile_partial_variant_candidates.txt',
           'mobile_qwerty_transliteration_scenario.txt',
           'mobile_t13n_candidates.txt',

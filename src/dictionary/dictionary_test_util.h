@@ -34,10 +34,10 @@
 #include <string>
 #include <vector>
 
-#include "base/mozc_hash_map.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -82,7 +82,7 @@ class CheckMultiTokensExistenceCallback : public DictionaryInterface::Callback {
 
  private:
   size_t found_count_;
-  mozc_hash_map<const Token *, bool> result_;
+  absl::flat_hash_map<const Token *, bool> result_;
 };
 
 // Generates a human redable string of token(s).

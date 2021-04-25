@@ -140,9 +140,7 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
     std::set<uint64_t> seen;
     std::vector<UserPOS::Token> tokens;
 
-    if (!suppression_dictionary_->IsLocked()) {
-      LOG(ERROR) << "SuppressionDictionary must be locked first";
-    }
+    const SuppressionDictionaryLock l(suppression_dictionary_);
     suppression_dictionary_->Clear();
 
     for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
@@ -203,8 +201,6 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
 
     // Sort first by key and then by POS ID.
     std::sort(this->begin(), this->end(), OrderByKeyThenById());
-
-    suppression_dictionary_->UnLock();
 
     VLOG(1) << this->size() << " user dic entries loaded";
 
@@ -477,12 +473,8 @@ bool UserDictionary::Reload() {
   if (reloader_->IsRunning()) {
     return false;
   }
-  suppression_dictionary_->Lock();
-  DCHECK(suppression_dictionary_->IsLocked());
-  // When the reloader is started, |suppression_dictionary_| is unlocked by the
-  // reloader.  When not started, need to unlock it here.
   if (!reloader_->MaybeStartReload()) {
-    suppression_dictionary_->UnLock();
+    LOG(INFO) << "MaybeStartReload() didn't start reloading";
   }
   return true;
 }
@@ -547,11 +539,9 @@ bool UserDictionary::Load(
     Swap(dummy_empty_tokens);
   }
 
-  suppression_dictionary_->Lock();
   TokensIndex *tokens =
       new TokensIndex(user_pos_.get(), suppression_dictionary_);
-  tokens->Load(storage);  // |suppression_dictionary_| is unlocked in Load().
-  DCHECK(!suppression_dictionary_->IsLocked());
+  tokens->Load(storage);
   Swap(tokens);
   return true;
 }

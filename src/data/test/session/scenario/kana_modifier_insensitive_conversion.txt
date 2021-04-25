@@ -1,0 +1,44 @@
+# Enable IME.
+SEND_KEY	ON
+RESET_CONTEXT
+
+# Set toggle-flick layout with Kana modifier insensitive conversion.
+SET_MOBILE_REQUEST
+SET_CONFIG	use_kana_modifier_insensitive_conversion	true
+UPDATE_MOBILE_KEYBOARD	TOGGLE_FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+# Scenario 1: A user typed さ, then tapped the modifier key to input ざ.
+# Words starting with さ should not be suggested.
+SEND_KEYS	3*
+EXPECT_PREEDIT	ざ
+EXPECT_IN_ALL_CANDIDATE_WORDS	ざる
+EXPECT_IN_ALL_CANDIDATE_WORDS	残業
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	さ
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	探す
+
+# Scenario 2: A user typed さか.  Words starting with さが can be suggested by
+# the Kana modifier insensitive conversion.
+RESET_CONTEXT
+SEND_KEYS	32
+EXPECT_PREEDIT	さか
+EXPECT_IN_ALL_CANDIDATE_WORDS	坂
+EXPECT_IN_ALL_CANDIDATE_WORDS	佐賀
+EXPECT_IN_ALL_CANDIDATE_WORDS	探す
+
+# Scenario 3: A user typed さか, then tapped the modifier key to make さが.
+# Words starting with さか should not be suggested.
+RESET_CONTEXT
+SEND_KEYS	32*
+EXPECT_PREEDIT	さが
+EXPECT_IN_ALL_CANDIDATE_WORDS	佐賀
+EXPECT_IN_ALL_CANDIDATE_WORDS	探す
+EXPECT_NOT_IN_ALL_CANDIDATE_WORDS	坂
+
+# Scenario 4: A user tried to type つづき, but they typed つっき by mistake
+# (note: つ key cycles like つ -> っ -> づ -> つ). It will be fixed by the Kana
+# modifier insensitive conversion.
+RESET_CONTEXT
+SEND_KEYS	hh*a
+EXPECT_PREEDIT	つっき
+EXPECT_IN_ALL_CANDIDATE_WORDS	続き

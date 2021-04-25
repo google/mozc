@@ -37,7 +37,7 @@ namespace composer {
 CompositionInput::CompositionInput()
     : has_conversion_(false), is_new_input_(false), transliterator_(nullptr) {}
 
-CompositionInput::~CompositionInput() {}
+CompositionInput::~CompositionInput() = default;
 
 void CompositionInput::Clear() {
   raw_.clear();
@@ -79,8 +79,8 @@ const std::string &CompositionInput::conversion() const {
     return conversion_;
   } else {
     LOG(WARNING) << "conversion is not set.";
-    static const std::string kEmptyString = "";
-    return kEmptyString;
+    static const std::string *kEmptyString = new std::string();
+    return *kEmptyString;
   }
 }
 

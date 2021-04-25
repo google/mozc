@@ -45,9 +45,9 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/mozc_hash_set.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 
 namespace mozc {
@@ -235,7 +235,7 @@ bool LRUStorage::Merge(const LRUStorage &storage) {
   std::stable_sort(ary.begin(), ary.end(), CompareByTimeStamp());
 
   std::string buf;
-  mozc_hash_set<uint64_t> seen;  // remove duplicated entries.
+  absl::flat_hash_set<uint64_t> seen;  // remove duplicated entries.
   for (size_t i = 0; i < ary.size(); ++i) {
     if (!seen.insert(GetFP(ary[i])).second) {
       continue;

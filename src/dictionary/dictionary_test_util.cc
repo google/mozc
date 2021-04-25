@@ -32,10 +32,10 @@
 #include <set>
 #include <string>
 
-#include "base/mozc_hash_map.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
