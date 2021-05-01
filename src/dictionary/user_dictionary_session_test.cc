@@ -513,7 +513,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
   index_list.push_back(1);
   index_list.push_back(3);
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
-            session.DeleteEntry(dictionary_id, index_list));
+            session.DeleteEntry(dictionary_id, std::move(index_list)));
 
   EXPECT_PROTO_PEQ(
       "dictionaries: <\n"
@@ -540,7 +540,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
   index_list.push_back(0);
   index_list.push_back(100);
   EXPECT_EQ(UserDictionaryCommandStatus::ENTRY_INDEX_OUT_OF_RANGE,
-            session.DeleteEntry(dictionary_id, index_list));
+            session.DeleteEntry(dictionary_id, std::move(index_list)));
 
   // The contents shouldn't be changed.
   EXPECT_PROTO_PEQ(
@@ -567,7 +567,7 @@ TEST_F(UserDictionarySessionTest, DeleteEntry) {
   index_list.clear();
   index_list.push_back(0);
   EXPECT_EQ(UserDictionaryCommandStatus::UNKNOWN_DICTIONARY_ID,
-            session.DeleteEntry(0, index_list));
+            session.DeleteEntry(0, std::move(index_list)));
 
   // Test undo for delete entries.
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,

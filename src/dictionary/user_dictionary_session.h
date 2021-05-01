@@ -107,8 +107,8 @@ class UserDictionarySession {
       uint64_t dictionary_id, int index, const UserDictionary::Entry &entry);
 
   // Deletes the entries in the dictionary specified by dictionary_id.
-  UserDictionaryCommandStatus::Status DeleteEntry(
-      uint64_t dictionary_id, const std::vector<int> &index_list);
+  UserDictionaryCommandStatus::Status DeleteEntry(uint64_t dictionary_id,
+                                                  std::vector<int> index_list);
 
   // Imports entries from the text data into the dictionary with dictionary_id.
   UserDictionaryCommandStatus::Status ImportFromString(uint64_t dictionary_id,
