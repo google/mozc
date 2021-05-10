@@ -41,6 +41,7 @@
 #include "dictionary/user_dictionary_storage.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/container/fixed_array.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -219,9 +220,9 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
   // This instance takes the ownership of the given entries.
   UndoDeleteEntryCommand(
       uint64_t dictionary_id,
-      const std::vector<std::pair<int, UserDictionary::Entry *> >
-          deleted_entries)
-      : dictionary_id_(dictionary_id), deleted_entries_(deleted_entries) {
+      std::vector<std::pair<int, UserDictionary::Entry *>> deleted_entries)
+      : dictionary_id_(dictionary_id),
+        deleted_entries_(std::move(deleted_entries)) {
     std::sort(deleted_entries_.begin(), deleted_entries_.end(),
               DeleteEntryComparator());
   }
@@ -253,11 +254,8 @@ class UndoDeleteEntryCommand : public UserDictionarySession::UndoCommand {
         dictionary->mutable_entries();
 
     // Move instances to backup vector.
-    std::vector<UserDictionary::Entry *> backup(entries->pointer_begin(),
-                                                entries->pointer_end());
-    while (!entries->empty()) {
-      entries->ReleaseLast();
-    }
+    absl::FixedArray<UserDictionary::Entry *> backup(entries->size());
+    entries->ExtractSubrange(0, entries->size(), backup.data());
 
     // Merge two vectors into entries.
     int backup_index = 0;
@@ -589,7 +587,7 @@ UserDictionaryCommandStatus::Status UserDictionarySession::EditEntry(
 }
 
 UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
-    uint64_t dictionary_id, const std::vector<int> &index_list) {
+    uint64_t dictionary_id, std::vector<int> index_list) {
   UserDictionary *dictionary = UserDictionaryUtil::GetMutableUserDictionaryById(
       &storage_->GetProto(), dictionary_id);
   if (dictionary == nullptr) {
@@ -606,22 +604,18 @@ UserDictionaryCommandStatus::Status UserDictionarySession::DeleteEntry(
   std::vector<std::pair<int, UserDictionary::Entry *> > deleted_entries;
   deleted_entries.reserve(index_list.size());
 
+  // Sort these in descending order so the indices don't change as we remove
+  // elements.
+  std::sort(index_list.begin(), index_list.end(), std::greater<int>());
+
   RepeatedPtrField<UserDictionary::Entry> *entries =
       dictionary->mutable_entries();
-  UserDictionary::Entry **data = entries->mutable_data();
   for (size_t i = 0; i < index_list.size(); ++i) {
     const int index = index_list[i];
 
-    deleted_entries.push_back(std::make_pair(index, data[index]));
-    data[index] = nullptr;
-  }
-
-  UserDictionary::Entry **tail =
-      std::remove(data, data + entries->size(),
-                  static_cast<UserDictionary::Entry *>(nullptr));
-  const int remaining_size = tail - data;
-  while (entries->size() > remaining_size) {
-    entries->ReleaseLast();
+    std::rotate(entries->pointer_begin() + index,
+                entries->pointer_begin() + index + 1, entries->pointer_end());
+    deleted_entries.push_back(std::make_pair(index, entries->ReleaseLast()));
   }
 
   AddUndoCommand(new UndoDeleteEntryCommand(dictionary_id, deleted_entries));

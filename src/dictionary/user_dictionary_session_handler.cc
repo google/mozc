@@ -475,9 +475,9 @@ void UserDictionarySessionHandler::DeleteEntry(
     return;
   }
 
-  const std::vector<int> index_list(command.entry_index().begin(),
-                                    command.entry_index().end());
-  status->set_status(session->DeleteEntry(command.dictionary_id(), index_list));
+  status->set_status(session->DeleteEntry(
+      command.dictionary_id(),
+      {command.entry_index().begin(), command.entry_index().end()}));
 }
 
 void UserDictionarySessionHandler::ImportData(

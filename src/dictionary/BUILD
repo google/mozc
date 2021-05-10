@@ -288,6 +288,7 @@ cc_library_mozc(
         "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_proto",
+        "@com_google_absl//absl/container:fixed_array",
     ],
 )
 
