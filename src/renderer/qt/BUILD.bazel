@@ -28,29 +28,77 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MAJOR = 2
+load(
+    "//:build_defs.bzl",
+    "cc_library_mozc",
+)
+load(
+    "//tools/build_defs:qt.bzl",
+    "cc_qt_library_mozc",
+)
 
-MINOR = 26
+package(default_visibility = ["//:__subpackages__"])
 
-# Number to be increased. This value may be replaced by other tools.
-BUILD = 4374
+cc_library_mozc(
+    name = "qt_renderer_lib",
+    srcs = [
+        "qt_renderer.cc",
+    ],
+    hdrs = [
+        "qt_renderer.h",
+    ],
+    deps = [
+        ":qt_window_manager_interface",
+        "//base:logging",
+        "//base:port",
+        "//client:client_interface",
+        "//protocol:renderer_proto",
+        "//renderer:renderer_interface",
+    ],
+)
 
-# Represent the platform and release channel.
-REVISION = 100
+cc_qt_library_mozc(
+    name = "qt_server",
+    srcs = [
+        "qt_server.cc",
+    ],
+    hdrs = [
+        "qt_server.h",
+    ],
+    deps = [
+        ":qt_window_manager_interface",
+        "//base:logging",
+        "//base:port",
+        "//base:thread",
+        "//client:client_interface",
+        "//protocol:renderer_proto",
+        "//renderer:renderer_interface",
+        "//renderer:renderer_server",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
 
-REVISION_MACOS = REVISION + 1
+cc_library_mozc(
+    name = "qt_window_manager_interface",
+    hdrs = [
+        "qt_window_manager_interface.h",
+    ],
+)
 
-# This version represents the version of Mozc IME engine (converter, predictor,
-# etc.).  This version info is included both in the Mozc server and in the Mozc
-# data set file so that the Mozc server can accept only the compatible version
-# of data set file.  The engine version must be incremented when:
-#  * POS matcher definition and/or conversion models were changed,
-#  * New data are added to the data set file, and/or
-#  * Any changes that loose data compatibility are made.
-ENGINE_VERSION = 24
-
-# This version is used to manage the data version and is included only in the
-# data set file.  DATA_VERSION can be incremented without updating
-# ENGINE_VERSION as long as it's compatible with the engine.
-# This version should be reset to 0 when ENGINE_VERSION is incremented.
-DATA_VERSION = 10
+cc_qt_library_mozc(
+    name = "qt_window_manager",
+    srcs = [
+        "qt_window_manager.cc",
+    ],
+    hdrs = [
+        "qt_window_manager.h",
+    ],
+    deps = [
+        ":qt_window_manager_interface",
+        "//base:coordinates",
+        "//base:logging",
+        "//base:port",
+        "//client:client_interface",
+        "//protocol:renderer_proto",
+    ],
+)

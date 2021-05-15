@@ -27,52 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
-#define MOZC_RENDERER_RENDERER_INTERFACE_H_
+#ifndef MOZC_RENDERER_QT_QT_RENDERER_H_
+#define MOZC_RENDERER_QT_QT_RENDERER_H_
+
+#include <memory>
+
+#include "base/port.h"
+#include "client/client_interface.h"
+#include "renderer/qt/qt_window_manager_interface.h"
+#include "renderer/renderer_interface.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;  // protocol buffer
-}
-
-namespace client {
-class SendCommandInterface;
-}
-
 namespace renderer {
 
-// An abstract interface class for renderer
-class RendererInterface {
+class QtRenderer : public RendererInterface {
  public:
-  RendererInterface() {}
-  virtual ~RendererInterface() {}
+  explicit QtRenderer(QtWindowManagerInterface *window_manager);
+  ~QtRenderer() override = default;
+  int StartRendererLoop(int argc, char **argv) override;
+  bool Activate() override;
+  bool IsAvailable() const override;
+  bool ExecCommand(const commands::RendererCommand &command) override;
+  void SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface) override;
+  void Initialize();
 
-  // Start the main loop of GUI took kit.
-  virtual int StartRendererLoop(int argc, char **argv) {
-    return 0;
-  }
+ private:
+  std::unique_ptr<QtWindowManagerInterface> window_manager_;
 
-  // Activate candidate window.
-  // For instance, if the renderer is out-proc renderer,
-  // Activate can launch renderer process.
-  // Activate must not have any visible change.
-  // If the renderer is already activated, this method does nothing
-  // and return false.
-  virtual bool Activate() = 0;
-
-  // return true if the renderer is available
-  virtual bool IsAvailable() const = 0;
-
-  // exec stateless rendering command
-  // TODO(taku): RendererCommand should be stateless.
-  virtual bool ExecCommand(const commands::RendererCommand &command) = 0;
-
-  // set mouse callback handler.
-  // default implementation is empty
-  virtual void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
+  DISALLOW_COPY_AND_ASSIGN(QtRenderer);
 };
+
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_RENDERER_INTERFACE_H_
+#endif  // MOZC_RENDERER_QT_QT_RENDERER_H_

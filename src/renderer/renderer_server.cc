@@ -171,8 +171,8 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 
 RendererServer::RendererServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
-      timeout_(0),
       renderer_interface_(nullptr),
+      timeout_(0),
       send_command_(new RendererServerSendCommand) {
   watch_dog_ = absl::make_unique<ParentApplicationWatchDog>(this);
   watch_dog_->StartWatchDog();

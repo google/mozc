@@ -27,52 +27,41 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
-#define MOZC_RENDERER_RENDERER_INTERFACE_H_
+#ifndef MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
+#define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
 
 namespace mozc {
 
-namespace commands {
-class RendererCommand;  // protocol buffer
-}
-
 namespace client {
 class SendCommandInterface;
-}
+}  // namespace client
+
+namespace commands {
+class RendererCommand;
+}  // namespace commands
 
 namespace renderer {
 
-// An abstract interface class for renderer
-class RendererInterface {
+class QtWindowManagerInterface {
  public:
-  RendererInterface() {}
-  virtual ~RendererInterface() {}
+  QtWindowManagerInterface() = default;
+  virtual ~QtWindowManagerInterface() = default;
 
-  // Start the main loop of GUI took kit.
-  virtual int StartRendererLoop(int argc, char **argv) {
-    return 0;
-  }
+  virtual int StartRendererLoop(int argc, char **argv) = 0;
 
-  // Activate candidate window.
-  // For instance, if the renderer is out-proc renderer,
-  // Activate can launch renderer process.
-  // Activate must not have any visible change.
-  // If the renderer is already activated, this method does nothing
-  // and return false.
+  virtual void Initialize() = 0;
+  virtual void HideAllWindows() = 0;
+  virtual void ShowAllWindows() = 0;
+  virtual void UpdateLayout(const commands::RendererCommand &command) = 0;
   virtual bool Activate() = 0;
-
-  // return true if the renderer is available
   virtual bool IsAvailable() const = 0;
-
-  // exec stateless rendering command
-  // TODO(taku): RendererCommand should be stateless.
-  virtual bool ExecCommand(const commands::RendererCommand &command) = 0;
-
-  // set mouse callback handler.
-  // default implementation is empty
-  virtual void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
+  // WindowManager does NOT takes ownership of send_command_interface.
+  virtual bool SetSendCommandInterface(
+      client::SendCommandInterface *send_command_interface) = 0;
+  virtual void SetWindowPos(int x, int y) = 0;
 };
+
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_RENDERER_INTERFACE_H_
+
+#endif  // MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
