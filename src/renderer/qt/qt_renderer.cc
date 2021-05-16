@@ -27,52 +27,59 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
-#define MOZC_RENDERER_RENDERER_INTERFACE_H_
+#include "renderer/qt/qt_renderer.h"
+
+#include "base/logging.h"
+#include "protocol/renderer_command.pb.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;  // protocol buffer
-}
-
-namespace client {
-class SendCommandInterface;
-}
-
 namespace renderer {
 
-// An abstract interface class for renderer
-class RendererInterface {
- public:
-  RendererInterface() {}
-  virtual ~RendererInterface() {}
+QtRenderer::QtRenderer(QtWindowManagerInterface *window_manager)
+    : window_manager_(window_manager) {}
 
-  // Start the main loop of GUI took kit.
-  virtual int StartRendererLoop(int argc, char **argv) {
-    return 0;
+int QtRenderer::StartRendererLoop(int argc, char **argv) {
+  return window_manager_->StartRendererLoop(argc, argv);
+}
+
+bool QtRenderer::Activate() {
+  return window_manager_->Activate();
+}
+
+bool QtRenderer::IsAvailable() const {
+  return window_manager_->IsAvailable();
+}
+
+bool QtRenderer::ExecCommand(const commands::RendererCommand &command) {
+  switch (command.type()) {
+    case commands::RendererCommand::NOOP:
+      break;
+    case commands::RendererCommand::SHUTDOWN:
+      // TODO(nona): Implement shutdown command.
+      DLOG(ERROR) << "Shutdown command is not implemented.";
+      return false;
+      break;
+    case commands::RendererCommand::UPDATE:
+      if (!command.visible()) {
+        window_manager_->HideAllWindows();
+      } else {
+        window_manager_->UpdateLayout(command);
+      }
+      return true;
+      break;
+    default:
+      LOG(WARNING) << "Unknown command: " << command.type();
+      break;
   }
+  return true;
+}
 
-  // Activate candidate window.
-  // For instance, if the renderer is out-proc renderer,
-  // Activate can launch renderer process.
-  // Activate must not have any visible change.
-  // If the renderer is already activated, this method does nothing
-  // and return false.
-  virtual bool Activate() = 0;
+void QtRenderer::Initialize() { window_manager_->Initialize(); }
 
-  // return true if the renderer is available
-  virtual bool IsAvailable() const = 0;
+void QtRenderer::SetSendCommandInterface(
+    client::SendCommandInterface *send_command_interface) {
+  window_manager_->SetSendCommandInterface(send_command_interface);
+}
 
-  // exec stateless rendering command
-  // TODO(taku): RendererCommand should be stateless.
-  virtual bool ExecCommand(const commands::RendererCommand &command) = 0;
-
-  // set mouse callback handler.
-  // default implementation is empty
-  virtual void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
-};
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_RENDERER_INTERFACE_H_

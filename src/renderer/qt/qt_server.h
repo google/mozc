@@ -27,52 +27,45 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
-#define MOZC_RENDERER_RENDERER_INTERFACE_H_
+#ifndef MOZC_RENDERER_QT_QT_SERVER_H_
+#define MOZC_RENDERER_QT_QT_SERVER_H_
+
+#include <memory>
+
+#include "base/port.h"
+#include "renderer/renderer_server.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
-
-namespace commands {
-class RendererCommand;  // protocol buffer
-}
-
-namespace client {
-class SendCommandInterface;
-}
-
 namespace renderer {
 
-// An abstract interface class for renderer
-class RendererInterface {
+class WindowManager;
+
+class QtServer : public RendererServer {
  public:
-  RendererInterface() {}
-  virtual ~RendererInterface() {}
+  QtServer(int argc, char **argv);
+  ~QtServer() override {};
 
-  // Start the main loop of GUI took kit.
-  virtual int StartRendererLoop(int argc, char **argv) {
-    return 0;
-  }
+  void AsyncHide() override {};
+  void AsyncQuit() override {};
+  bool AsyncExecCommand(std::string *proto_message) override;
 
-  // Activate candidate window.
-  // For instance, if the renderer is out-proc renderer,
-  // Activate can launch renderer process.
-  // Activate must not have any visible change.
-  // If the renderer is already activated, this method does nothing
-  // and return false.
-  virtual bool Activate() = 0;
+  void StartReceiverLoop();
 
-  // return true if the renderer is available
-  virtual bool IsAvailable() const = 0;
+ protected:
+  int StartMessageLoop() override;
 
-  // exec stateless rendering command
-  // TODO(taku): RendererCommand should be stateless.
-  virtual bool ExecCommand(const commands::RendererCommand &command) = 0;
+ private:
+  int argc_;
+  char **argv_;
 
-  // set mouse callback handler.
-  // default implementation is empty
-  virtual void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) {}
+  absl::Mutex mutex_;
+  bool updated_;
+  std::string message_;
+
+  DISALLOW_COPY_AND_ASSIGN(QtServer);
 };
+
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_RENDERER_INTERFACE_H_
+#endif  // MOZC_RENDERER_QT_QT_SERVER_H_

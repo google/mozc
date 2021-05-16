@@ -89,9 +89,10 @@ class RendererServer : public IPCServer {
   // return timeout (msec) passed by FLAGS_timeout
   uint32_t timeout() const;
 
+  RendererInterface *renderer_interface_ = nullptr;
+
  private:
   uint32_t timeout_;
-  RendererInterface *renderer_interface_;
   std::unique_ptr<ParentApplicationWatchDog> watch_dog_;
   std::unique_ptr<RendererServerSendCommand> send_command_;
 
