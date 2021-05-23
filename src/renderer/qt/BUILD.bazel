@@ -100,5 +100,6 @@ cc_qt_library_mozc(
         "//base:port",
         "//client:client_interface",
         "//protocol:renderer_proto",
+        "//renderer:window_util",
     ],
 )

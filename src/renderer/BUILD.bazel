@@ -329,9 +329,7 @@ cc_binary_mozc(
 cc_binary_mozc(
     name = "qt_mozc_renderer",
     srcs = ["mozc_renderer_main.cc"],
-    defines = select_mozc(
-        linux = ["ENABLE_QT_RENDERER"],
-    ),
+    defines = ["ENABLE_QT_RENDERER"],
     deps = [
         ":renderer_server",
         ":table_layout",

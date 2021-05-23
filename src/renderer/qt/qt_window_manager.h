@@ -83,9 +83,14 @@ class QtWindowManager : public QtWindowManagerInterface {
   // Returns monitor rectangle for the specified point.
   Rect GetMonitorRect(int x, int y);
 
+  Point GetWindowPosition(const commands::RendererCommand &command,
+                          const Size &win_size);
+
  private:
   QWidget *window_;
   QTableWidget *candidates_;
+
+  commands::RendererCommand prev_command_;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };

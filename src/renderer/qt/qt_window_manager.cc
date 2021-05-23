@@ -31,6 +31,7 @@
 
 #include "base/logging.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/window_util.h"
 
 namespace mozc {
 namespace renderer {
@@ -39,7 +40,8 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   QApplication app(argc, argv);
 
   QWidget window;
-  window.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint |
+  window.setWindowFlags(Qt::ToolTip |
+                        Qt::FramelessWindowHint |
                         Qt::WindowStaysOnTopHint);
   window.setSizePolicy(
       QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
@@ -50,10 +52,10 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   table.horizontalHeader()->hide();
   table.horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   table.verticalHeader()->hide();
+  table.verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   table.setShowGrid(false);
   table.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   table.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  table.setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
   table.move(0, 0);
   table.show();
   candidates_ = &table;
@@ -133,60 +135,136 @@ void GetDisplayString(
   }
 }
 
-Rect GetRect(QRect qrect) {
+Rect GetRect(const QRect &qrect) {
   return Rect(qrect.x(), qrect.y(), qrect.width(), qrect.height());
+}
+
+Rect GetRect(const commands::RendererCommand::Rectangle &prect) {
+  const int width = prect.right() - prect.left();
+  const int height = prect.bottom() - prect.top();
+  return Rect(prect.left(), prect.top(), width, height);
+}
+
+bool IsUpdated(const commands::RendererCommand &prev_command,
+               const commands::RendererCommand &new_command) {
+  const commands::Candidates &prev_cands = prev_command.output().candidates();
+  const commands::Candidates &new_cands = new_command.output().candidates();
+  if (prev_cands.candidate_size() != new_cands.candidate_size()) {
+    return true;
+  }
+  if (prev_cands.candidate(0).id() != new_cands.candidate(0).id()) {
+    return true;
+  }
+  if (prev_cands.candidate(0).value() != new_cands.candidate(0).value()) {
+    return true;
+  }
+  return false;
+}
+
+int GetWidth(const QTableWidgetItem *item) {
+  QFontMetrics metrics(item->font());
+  return metrics.width(item->text());
+}
+
+constexpr int kRowHeight = 20;
+constexpr int kMarginWidth = 20;
+constexpr int kColumn0Width = 20;
+
+void FillCandidates(const commands::Candidates &candidates,
+                    QTableWidget *table) {
+  const size_t cands_size = candidates.candidate_size();
+  table->clear();
+  table->setRowCount(cands_size);
+  table->setColumnCount(3);
+  table->setColumnWidth(0, kColumn0Width);
+
+  int max_width1 = 0;
+  int max_width2 = 0;
+
+  // Fill the candidates
+  std::string shortcut, value, description;
+  for (size_t i = 0; i < cands_size; ++i) {
+    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
+    GetDisplayString(candidate, shortcut, value, description);
+    auto item0 = new QTableWidgetItem(QString::fromUtf8(shortcut.c_str()));
+    table->setItem(i, 0, item0);
+    auto item1 = new QTableWidgetItem(QString::fromUtf8(value.c_str()));
+    table->setItem(i, 1, item1);
+    auto item2 = new QTableWidgetItem(QString::fromUtf8(description.c_str()));
+    table->setItem(i, 2, item2);
+
+    max_width1 = std::max(max_width1, GetWidth(item1));
+    max_width2 = std::max(max_width2, GetWidth(item2));
+    table->setRowHeight(i, kRowHeight);
+  }
+  table->setColumnWidth(1, max_width1 + kMarginWidth);
+  table->setColumnWidth(2, max_width2 + kMarginWidth);
+  const int width = kColumn0Width + max_width1 + max_width2 + kMarginWidth * 2;
+  const int height = kRowHeight * cands_size;
+  table->resize(width, height);
+}
+
+void FillCandidateHighlight(const commands::Candidates &candidates,
+                            const QColor color,
+                            QTableWidget *table) {
+  if (!candidates.has_focused_index()) {
+    return;
+  }
+  const int row = candidates.focused_index() - candidates.candidate(0).index();
+  table->item(row, 0)->setBackgroundColor(color);
+  table->item(row, 1)->setBackgroundColor(color);
+  table->item(row, 2)->setBackgroundColor(color);
 }
 }  // namespace
 
+Point QtWindowManager::GetWindowPosition(
+    const commands::RendererCommand &command,
+    const Size &win_size) {
+  const Rect preedit_rect = GetRect(command.preedit_rectangle());
+  const Point win_pos = Point(preedit_rect.Left(), preedit_rect.Bottom());
+  const Rect monitor_rect = GetMonitorRect(win_pos.x, win_pos.y);
+  const Point offset_to_column1(kColumn0Width, 0);
 
+  const Rect adjusted_win_geometry =
+      WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
+          win_pos, preedit_rect, win_size, offset_to_column1, monitor_rect,
+          /* vertical */ false);  // Only support horizontal window yet.
+  return adjusted_win_geometry.origin;
+}
 
 Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
   const commands::Candidates &candidates = command.output().candidates();
-  std::string shortcut, value, description;
-  std::string label;
 
-  const size_t cands_size = candidates.candidate_size();
   window_->hide();
-  candidates_->hide();
-  candidates_->clear();
-  candidates_->setRowCount(cands_size);
-  candidates_->setColumnCount(3);
-  candidates_->setColumnWidth(0, 20);
 
-  // Fill the candidates
-  for (size_t i = 0; i < cands_size; ++i) {
-    const commands::Candidates::Candidate &candidate = candidates.candidate(i);
-    GetDisplayString(candidate, shortcut, value, description);
-    candidates_->setItem(
-        i, 0, new QTableWidgetItem(QString::fromUtf8(shortcut.c_str())));
-    candidates_->setItem(
-        i, 1, new QTableWidgetItem(QString::fromUtf8(value.c_str())));
-    candidates_->setItem(
-        i, 2, new QTableWidgetItem(QString::fromUtf8(description.c_str())));
+  if (IsUpdated(prev_command_, command)) {
+    candidates_->hide();
+    FillCandidates(candidates, candidates_);
+    candidates_->show();
+
+    window_->resize(candidates_->size());
+
+    const Size win_size(candidates_->width(), candidates_->height());
+    const Point win_pos = GetWindowPosition(command, win_size);
+    window_->move(win_pos.x, win_pos.y);
+  } else {
+    // Reset the previous focused highlight
+    const QColor normal = QColor(0xFF, 0xFF, 0xFF, 0xFF);
+    const commands::Candidates &prev_cands =
+        prev_command_.output().candidates();
+    FillCandidateHighlight(prev_cands, normal, candidates_);
   }
 
   // Set the focused highlight
-  if (candidates.has_focused_index()) {
-    // Copied from unix/const.h
-    const QColor highlight = QColor(0xD1, 0xEA, 0xFF, 0xFF);
-    const int focused_row =
-        candidates.focused_index() - candidates.candidate(0).index();
-    candidates_->item(focused_row, 0)->setBackground(highlight);
-    candidates_->item(focused_row, 1)->setBackground(highlight);
-    candidates_->item(focused_row, 2)->setBackground(highlight);
-  }
-  candidates_->resizeColumnsToContents();
-  candidates_->show();
+  const QColor highlight = QColor(0xD1, 0xEA, 0xFF, 0xFF);
+  FillCandidateHighlight(candidates, highlight, candidates_);
 
-  const auto &preedit_rect = command.preedit_rectangle();
-  window_->move(preedit_rect.left(), preedit_rect.bottom());
-  window_->resize(candidates_->sizeHint());
   window_->show();
 
-  const QRect qrect = window_->geometry();
-  const Rect expected_window_rect_in_screen_coord = GetRect(qrect);
-  return expected_window_rect_in_screen_coord;
+  prev_command_ = command;
+
+  return GetRect(window_->geometry());
 }
 
 bool QtWindowManager::ShouldShowInfolistWindow(
