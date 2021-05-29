@@ -36,7 +36,17 @@ You can download Mozc source code as follows:
 ```
 mkdir c:\work
 cd c:\work
-git clone https://github.com/google/mozc.git -b master --single-branch --recursive
+git clone -c core.autocrlf=false https://github.com/google/mozc.git -b master --single-branch --recursive
+```
+
+# Apply a patch to GYP
+
+The upstream GYP does not work on Windows for Mozc.
+You need to apply the following patch to GYP.
+
+```
+cd src\third_party\gyp
+git apply ..\..\gyp\gyp.patch
 ```
 
 # Compilation

@@ -42,10 +42,8 @@ package(default_visibility = ["//:__subpackages__"])
 cc_library_mozc(
     name = "calculator",
     srcs = ["calculator.cc"],
-    hdrs = [
-        "calculator_interface.h",
-        "parser.c",
-    ],
+    hdrs = ["calculator_interface.h"],
+    textual_hdrs = ["parser.c.inc"],
     deps = [
         "//base",
         "//base:logging",

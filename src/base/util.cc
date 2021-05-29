@@ -489,7 +489,7 @@ char32 Util::UTF8ToUCS4(const char *begin, const char *end, size_t *mblen) {
     *mblen = 0;
     return 0;
   }
-  *mblen = rest.begin() - s.begin();
+  *mblen = rest.data() - s.data();
   return c;
 }
 
@@ -701,7 +701,7 @@ size_t Util::UCS4ToUTF8(char32 c, char *output) {
 #ifdef OS_WIN
 size_t Util::WideCharsLen(absl::string_view src) {
   const int num_chars =
-      ::MultiByteToWideChar(CP_UTF8, 0, src.begin(), src.size(), nullptr, 0);
+      ::MultiByteToWideChar(CP_UTF8, 0, src.data(), src.size(), nullptr, 0);
   if (num_chars <= 0) {
     return 0;
   }
@@ -717,7 +717,7 @@ int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
   const size_t buffer_len = output_length + 1;
   std::unique_ptr<wchar_t[]> input_wide(new wchar_t[buffer_len]);
   const int copied_num_chars = ::MultiByteToWideChar(
-      CP_UTF8, 0, input.begin(), input.size(), input_wide.get(), buffer_len);
+      CP_UTF8, 0, input.data(), input.size(), input_wide.get(), buffer_len);
   if (0 <= copied_num_chars && copied_num_chars < buffer_len) {
     output->assign(input_wide.get(), copied_num_chars);
   }
