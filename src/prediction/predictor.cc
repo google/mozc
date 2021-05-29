@@ -63,6 +63,21 @@ bool IsZeroQuery(const ConversionRequest &request) {
   return request.request().zero_query_suggestion();
 }
 
+size_t GetHistoryPredictionSizeFromRequest(const ConversionRequest &request) {
+  if (!IsZeroQuery(request)) {
+    return 2;
+  }
+  if (request.request().has_decoder_experiment_params() &&
+      request.request()
+          .decoder_experiment_params()
+          .has_mobile_history_prediction_size()) {
+    return request.request()
+        .decoder_experiment_params()
+        .mobile_history_prediction_size();
+  }
+  return 3;
+}
+
 }  // namespace
 
 BasePredictor::BasePredictor(
@@ -206,21 +221,20 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
 
   bool result = false;
   size_t size = 0;
-  size_t history_suggestion_size = IsZeroQuery(request) ? 3 : 2;
+  size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
 
   // TODO(taku,toshiyuki): Must rewrite the logic.
   switch (segments->request_type()) {
     case Segments::SUGGESTION: {
       // Suggestion is triggered at every character insertion.
       // So here we should use slow predictors.
-      size = GetCandidatesSize(*segments) + history_suggestion_size;
+      size = GetCandidatesSize(*segments) + history_prediction_size;
       segments->set_max_prediction_candidates_size(size);
       result |= user_history_predictor_->PredictForRequest(request, segments);
 
       size = GetCandidatesSize(*segments) + 20;
       segments->set_max_prediction_candidates_size(size);
       result |= dictionary_predictor_->PredictForRequest(request, segments);
-
       break;
     }
     case Segments::PARTIAL_SUGGESTION: {
@@ -229,7 +243,6 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
       size = GetCandidatesSize(*segments) + 20;
       segments->set_max_prediction_candidates_size(size);
       result |= dictionary_predictor_->PredictForRequest(request, segments);
-
       break;
     }
     case Segments::PARTIAL_PREDICTION: {
@@ -238,7 +251,7 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
       break;
     }
     case Segments::PREDICTION: {
-      size = GetCandidatesSize(*segments) + history_suggestion_size;
+      size = GetCandidatesSize(*segments) + history_prediction_size;
       segments->set_max_prediction_candidates_size(size);
       result |= user_history_predictor_->PredictForRequest(request, segments);
 

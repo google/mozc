@@ -89,6 +89,7 @@ class QtWindowManager : public QtWindowManagerInterface {
  private:
   QWidget *window_;
   QTableWidget *candidates_;
+  QTableWidget *infolist_;
 
   commands::RendererCommand prev_command_;
 

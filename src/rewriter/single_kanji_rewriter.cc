@@ -46,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/rewriter_util.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -331,8 +332,11 @@ void InsertNounPrefix(const POSMatcher &pos_matcher, Segment *segment,
   const std::string &candidate_key =
       ((!segment->key().empty()) ? segment->key() : segment->candidate(0).key);
   for (auto iter = begin; iter != end; ++iter) {
-    const int insert_pos = std::min(
-        static_cast<int>(segment->candidates_size()),
+    // Note:
+    // The entry "cost" of noun_prefix_dictionary is "0" or "1".
+    // Please refer to: mozc/rewriter/gen_single_kanji_noun_prefix_data.cc
+    const int insert_pos = RewriterUtil::CalculateInsertPosition(
+        *segment,
         static_cast<int>(iter.cost() + (segment->candidate(0).attributes &
                                         Segment::Candidate::CONTEXT_SENSITIVE)
                              ? 1

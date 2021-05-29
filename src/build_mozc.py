@@ -518,6 +518,7 @@ def GypMain(options, unused_args):
     out_dir = os.path.join(MOZC_ROOT, 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
+  if IsWindows() and qt_version:
     # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
     # and debug symbols into Mozc's build directory. This is important because:
     # - We can easily back up all the artifacts if relevant product binaries and

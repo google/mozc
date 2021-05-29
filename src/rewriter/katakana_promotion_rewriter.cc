@@ -33,6 +33,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_util.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
@@ -69,7 +70,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   const size_t insert_pos =
-      std::min(kMaxRankForKatakana, segment->candidates_size());
+      RewriterUtil::CalculateInsertPosition(*segment, kMaxRankForKatakana);
   if (index < segment->candidates_size()) {
     const Segment::Candidate insert_candidate = segment->candidate(index);
     *(segment->insert_candidate(insert_pos)) = insert_candidate;

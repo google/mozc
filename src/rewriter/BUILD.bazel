@@ -485,6 +485,7 @@ cc_library_mozc(
     hdrs = ["symbol_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        ":rewriter_util",
         "//base",
         "//base:logging",
         "//base:singleton",
@@ -538,6 +539,7 @@ cc_library_mozc(
     hdrs = ["emoticon_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        ":rewriter_util",
         "//base",
         "//base:logging",
         "//base:singleton",
@@ -947,6 +949,7 @@ cc_library_mozc(
     hdrs = ["emoji_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        ":rewriter_util",
         "//base",
         "//base:iterator_adapter",
         "//base:logging",
@@ -1001,6 +1004,7 @@ cc_library_mozc(
     hdrs = ["single_kanji_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        ":rewriter_util",
         "//base",
         "//base:logging",
         "//base:port",
@@ -1188,6 +1192,7 @@ cc_library_mozc(
     hdrs = ["katakana_promotion_rewriter.h"],
     deps = [
         ":rewriter_interface",
+        ":rewriter_util",
         "//base",
         "//base:util",
         "//converter:segments",
@@ -1654,5 +1659,24 @@ cc_test_mozc(
         "//dictionary:pos_matcher_lib",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "rewriter_util",
+    srcs = ["rewriter_util.cc"],
+    hdrs = ["rewriter_util.h"],
+    deps = ["//converter:segments"],
+)
+
+cc_test_mozc(
+    name = "rewriter_util_test",
+    srcs = ["rewriter_util_test.cc"],
+    deps = [
+        ":rewriter_util",
+        "//converter:segments",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )

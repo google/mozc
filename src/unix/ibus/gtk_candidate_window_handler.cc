@@ -149,7 +149,7 @@ GtkCandidateWindowHandler::GtkCandidateWindowHandler(
 GtkCandidateWindowHandler::~GtkCandidateWindowHandler() {}
 
 bool GtkCandidateWindowHandler::SendUpdateCommand(
-    IBusEngine *engine, const commands::Output &output, bool visibility) const {
+    IBusEngine *engine, const commands::Output &output, bool visibility) {
   using commands::RendererCommand;
   RendererCommand command;
 
@@ -165,6 +165,21 @@ bool GtkCandidateWindowHandler::SendUpdateCommand(
   preedit_rectangle->set_top(cursor_area.y);
   preedit_rectangle->set_right(cursor_area.x + cursor_area.width);
   preedit_rectangle->set_bottom(cursor_area.y + cursor_area.height);
+
+  // `cursor_area` represents the position of the cursor only, however
+  // `preedit_rectangle` should represent the whole area of the preedit.
+  // To workaround the gap, `preedit_begin_` stores the cursor position on
+  // the beginning of the preedit.
+  if (output.preedit().segment_size() == 0) {
+    preedit_begin_ = *preedit_rectangle;
+  } else if (preedit_begin_.top() == preedit_rectangle->top() &&
+             preedit_begin_.bottom() == preedit_rectangle->bottom()) {
+    // If the Y coordinates are moved, it means that the preedit is:
+    //   1. moved for some reasons, or
+    //   2. extended to multiple lines.
+    // The workaround is only applied when the Y coordinates are not moved.
+    preedit_rectangle->set_left(preedit_begin_.left());
+  }
 
   // Set pid
   static_assert(sizeof(::getpid()) <= sizeof(appinfo->process_id()),

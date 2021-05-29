@@ -46,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/rewriter_util.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -185,7 +186,7 @@ void SymbolRewriter::InsertCandidates(
     // Find the position wehere we start to insert the symbols
     // We want to skip the single-kanji we inserted by single-kanji rewriter.
     // We also skip transliterated key candidates.
-    offset = std::min(default_offset, segment->candidates_size());
+    offset = RewriterUtil::CalculateInsertPosition(*segment, default_offset);
     for (size_t i = offset; i < segment->candidates_size(); ++i) {
       const std::string &target_value = segment->candidate(i).value;
       if ((Util::CharsLen(target_value) == 1 &&

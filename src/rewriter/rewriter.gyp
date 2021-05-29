@@ -63,6 +63,7 @@
         'number_rewriter.cc',
         'remove_redundant_candidate_rewriter.cc',
         'rewriter.cc',
+        'rewriter_util.cc',
         'single_kanji_rewriter.cc',
         'symbol_rewriter.cc',
         'transliteration_rewriter.cc',

@@ -48,19 +48,6 @@
 /* Driver template for the LEMON parser generator.
 ** The author disclaims copyright to this source code.
 */
-/* First off, code is included that follows the "include" declaration
-** in the input grammar file. */
-#include <stdio.h>
-
-#include "absl/strings/str_format.h"
-#line 7 "parser.y"
-
-#include <assert.h>
-#ifdef OS_WIN
-#include <float.h>
-#endif
-#include <math.h>
-#include <string.h>
 
 // Contents of parser.h is manually inserted here.
 #define PLUS                            1

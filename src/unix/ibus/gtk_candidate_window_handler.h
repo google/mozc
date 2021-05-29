@@ -32,7 +32,9 @@
 
 #include <memory>
 
+#include "base/coordinates.h"
 #include "base/port.h"
+#include "protocol/renderer_command.pb.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
 
 namespace mozc {
@@ -67,7 +69,7 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
 
  protected:
   bool SendUpdateCommand(IBusEngine *engine, const commands::Output &output,
-                         bool visibility) const;
+                         bool visibility);
 
   std::unique_ptr<renderer::RendererInterface> renderer_;
   std::unique_ptr<commands::Output> last_update_output_;
@@ -77,6 +79,7 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   std::string custom_font_description_;
   bool use_custom_font_description_;
   std::unique_ptr<GSettingsObserver> settings_observer_;
+  commands::RendererCommand::Rectangle preedit_begin_;
 
   DISALLOW_COPY_AND_ASSIGN(GtkCandidateWindowHandler);
 };

@@ -43,6 +43,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "rewriter/rewriter_util.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
@@ -159,7 +160,7 @@ bool InsertToken(absl::string_view key, EmojiRewriter::IteratorRange range,
   bool inserted = false;
 
   size_t insert_position =
-      std::min(segment->candidates_size(), kDefaultInsertPos);
+      RewriterUtil::CalculateInsertPosition(*segment, kDefaultInsertPos);
   int cost = GetEmojiCost(*segment);
   for (; range.first != range.second; ++range.first) {
     inserted |= InsertEmojiData(key, range.first, string_array, cost, segment,

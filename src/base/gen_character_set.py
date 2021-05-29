@@ -176,12 +176,6 @@ def GroupConsecutiveCodepoints(codepoint_list):
   return result
 
 
-def FindCodePoint(category_list, category_name):
-  """Returns a list of code points which belong to the given category_name."""
-  return [codepoint for codepoint, category in enumerate(category_list)
-          if category == category_name]
-
-
 def ParseOptions():
   """Parses command line options."""
   parser = optparse.OptionParser()
@@ -196,17 +190,24 @@ def ParseOptions():
   return parser.parse_args()[0]
 
 
-def GenerateCategoryBitmap(category_list, name):
+def GenerateJisX0208Bitmap(category_list, name):
   r"""Generats bitmap data code.
 
   The generated data looks something like:
   namespace {
-  const char name[] =
-      "\xXX\xXX\xXX\xXX...\xXX"
-      "\xXX\xXX\xXX\xXX...\xXX"
-      "\xXX\xXX\xXX\xXX...\xXX"
-      "\xXX\xXX\xXX\xXX...\xXX"
-  ;
+  const uint64_t nameIndex = 0xXXXXXXXXXXXX;
+  const uint32_t name[NN][32] = {
+    {  // 0000 - 03FF
+      0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX,
+      0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX,
+      ...
+      0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX,
+    },
+    {  // 0400 - 07FF
+      0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX, 0xXXXXXXXX,
+      ...
+    },
+  };
   }  // namespace
 
   Args:
@@ -216,164 +217,57 @@ def GenerateCategoryBitmap(category_list, name):
   lines = []
 
   # Create bitmap list.
-  # Encode each code point category to 2-bits.
-  # The result should be a byte (8-bits), so group each consecutive
-  # (at most) four code points.
+  # Encode each code point category to 1-bits.
+  # The result should be uint32_t, so group each consecutive
+  # (at most) 32 code points.
   bit_list = []
   for _, group in itertools.groupby(enumerate(category_list),
-                                    lambda args: args[0] // 4):  # codepoint/4
+                                    lambda args: args[0] // 32):  # codepoint/32
     # Fill bits from LSB to MSB for each group.
     bits = 0
     for index, (_, category) in enumerate(group):
-      bits |= CATEGORY_BITMAP.get(category, 0) << (index * 2)
+      bit = 1 if CATEGORY_BITMAP.get(category, 0) else 0
+      bits |= bit << index
     bit_list.append(bits)
 
-  # Header.
+  index = 0
+  data = []
+  data_size = 0
+  # Group by 1024 characters (= 128 bit_list units).
+  for key, group1 in itertools.groupby(enumerate(bit_list),
+                                       lambda args: args[0] // (1024 // 32)):
+    block = ['  {  // U+%04X - U+%04X\n' % (key * 1024, (key + 1) * 1024 - 1)]
+    has_value = False
+
+    # Output the content. Each line would have (at most) 4 integers
+    for _, group2 in itertools.groupby(group1,
+                                       lambda args: args[0] // 4):  # index/4
+      line = []
+      for _, bits in group2:
+        line.append('0x%08X' % bits)
+        if bits > 0:
+          has_value = True
+      block.append('    %s,\n' % ', '.join(line))
+    block.append('  },\n')
+
+    if has_value:
+      index += (1 << key)
+      data_size += 1
+      data.extend(block)
+
   lines.extend(['namespace {\n',
-                'const char %s[] =\n' % name])
-
-  # Output the content. Each line would have (at most) 16 bytes.
-  for _, group in itertools.groupby(enumerate(bit_list),
-                                    lambda args: args[0] // 16):  # index/16
-    line = ['    \"']
-    for _, bits in group:
-      line.append('\\x%02X' % bits)
-    line.append('\"\n')
-    lines.append(''.join(line))
-
-  lines.extend([';\n',
+                'const uint64_t %sIndex = 0x%016X;\n' % (name, index),
+                'const uint32_t %s[%d][32] = {\n' % (name, data_size)])
+  lines.extend(data)
+  lines.extend(['};\n',
                 '}  // namespace\n'])
-
-  return lines
-
-
-def GenerateIfStatement(codepoint_list, var_name, num_indent, return_type):
-  """Generates a if-case statement for given arguments.
-
-  This method generates a if-case statement, which checks if the value of
-  the given 'var_name' variable is in 'codepoint_list'
-  and returns 'return_type' if contained. The condition expression would be
-  a simple range-based linear check.
-
-  The generated code would be something like:
-
-  if (var_name == 0xXXXX ||    // for a single element list.
-      (0xXXXX <= var_name && var_name <= 0xXXXX) ||   // for range check.
-         :
-      (0xXXXX <= var_name && var_name <= 0xXXXX)) {
-    return RETURN_TYPE;
-  }
-
-  Args:
-    codepoint_list: a sorted list of code points.
-    var_name: a variable name to be checked.
-    num_indent: the indent depth.
-    return_type: a return category type which should be returned if
-      'var_name' is in the 'codepoint_list'
-  Returns: a list of lines of the generated switch-case statement.
-  """
-  conditions = []
-  for codepoint_group in GroupConsecutiveCodepoints(codepoint_list):
-    if len(codepoint_group) == 1:
-      conditions.append('%s == %d' % (var_name, codepoint_group[0]))
-    else:
-      conditions.append(
-          '(%d <= %s && %s <= %d)' % (codepoint_group[0], var_name,
-                                      var_name, codepoint_group[-1]))
-
-  condition = (' ||\n' + ' ' * (num_indent + 4)).join(conditions)
-  lines = [''.join([' ' * num_indent, 'if (', condition, ') {\n']),
-           ' ' * (num_indent + 2) + 'return %s;\n' % return_type,
-           ' ' * num_indent + '}\n']
-  return lines
-
-
-def GenerateSwitchStatement(codepoint_list, var_name, num_indent, return_type):
-  """Generates a switch-case statement for given arguments.
-
-  This method generates a switch-case statement, which checks if the value of
-  the given 'var_name' variable is in 'codepoint_list'
-  and returns 'return_type' if contained.
-
-  The generated code would be something like:
-  switch (var_name) {
-    case 0xXXXX:
-    case 0xXXXX:
-      :
-    case 0xXXXX:
-      return RETURN_TYPE;
-  }
-
-  Args:
-    codepoint_list: a sorted list of code points.
-    var_name: a variable name to be checked.
-    num_indent: the indent depth.
-    return_type: a return category type which should be returned if
-      'var_name' is in the 'codepoint_list'
-  Returns: a list of lines of the generated switch-case statement.
-  """
-  lines = [' ' * num_indent + ('switch (%s) {\n' % var_name)]
-  for codepoint in codepoint_list:
-    lines.append(' ' * (num_indent + 2) + 'case 0x%08X:\n' % codepoint)
-  lines.extend([' ' * (num_indent + 4) + ('return %s;\n' % return_type),
-                ' ' * num_indent + '}\n'])
-  return lines
-
-
-def GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size):
-  """Generates function body of a GetCharacterSet method."""
-  lines = []
-
-  # Function header.
-  lines.append('CharacterSet GetCharacterSet(char32 ucs4) {\n')
-
-  # First, check if the given code is valid or not. If not, returns
-  # UNICODE_ONLY as a fallback.
-  # TODO(komatsu): add INVALID instead of UNICODE_ONLY.
-  lines.extend(['  if (ucs4 > 0x10FFFF) {\n',
-                '    return UNICODE_ONLY;\n',
-                '  }\n'])
-  lines.append('\n')
-
-  # Check if the argument is ASCII or not.
-  lines.extend(['  if (ucs4 <= 0x7F) {\n',
-                '    return ASCII;\n',
-                '  }\n'])
-  lines.append('\n')
-
-  # Check if the argument is JIS0201.
-  # We check this by rangebased if statement, because almost JISX0201 code
-  # points are consecutive.
-  lines.extend(GenerateIfStatement(
-      FindCodePoint(category_list, 'JISX0201'), 'ucs4', 2, 'JISX0201'))
-  lines.append('\n')
-
-  # Bitmap lookup.
-  # TODO(hidehiko): the bitmap has two huge 0-bits ranges. Reduce them.
-  category_map = [
-      (bits, category) for category, bits in CATEGORY_BITMAP.items()]
-  category_map.sort()
-
-  lines.extend([
-      '  if (ucs4 < %d) {\n' % bitmap_size,
-      '    switch ((kCategoryBitmap[ucs4 >> 2] >> ((ucs4 & 3) * 2)) & 3) {\n'])
-  lines.extend(('      case %d: return %s;\n' % item) for item in category_map)
-  lines.extend(['    }\n',
-                '    return UNICODE_ONLY;\n',
-                '  }\n',
-                '\n'])
-
-  # Returns UNICODE_ONLY as a last resort.
-  lines.extend([
-      '  return UNICODE_ONLY;\n',
-      '}\n'])
 
   return lines
 
 
 def GenerateCharacterSetHeader(category_list):
   """Generates lines of character_set.h file."""
-  bitmap_name = 'kCategoryBitmap'
+  bitmap_name = 'kJisX0208Bitmap'
   bitmap_size = 65536
 
   lines = []
@@ -383,13 +277,9 @@ def GenerateCharacterSetHeader(category_list):
                 '// Do not edit me!\n',
                 '\n'])
 
-  # We use 2-bits bitmap to check JISX0208 for code point 0 to 65535.
-  lines.extend(GenerateCategoryBitmap(category_list[:bitmap_size], bitmap_name))
+  # We use bitmap to check JISX0208 for code point 0 to 65535.
+  lines.extend(GenerateJisX0208Bitmap(category_list[:bitmap_size], bitmap_name))
   lines.append('\n')
-
-  # Then add GetCharacterSet method.
-  lines.extend(
-      GenerateGetCharacterSet(category_list, bitmap_name, bitmap_size))
 
   return lines
 
