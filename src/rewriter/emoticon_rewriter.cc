@@ -46,6 +46,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/rewriter_util.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -150,7 +151,8 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
 bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    const std::string &key = segments->conversion_segment(i).key();
+    const Segment &segment = segments->conversion_segment(i);
+    const std::string &key = segment.key();
     if (key.empty()) {
       // This case happens for zero query suggestion.
       continue;
@@ -172,7 +174,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       CHECK(begin != dic_.end());
       end = dic_.end();
       // set large value(100) so that all candidates are pushed to the bottom
-      initial_insert_pos = 100;
+      initial_insert_pos = RewriterUtil::CalculateInsertPosition(segment, 100);
       initial_insert_size = dic_.size();
     } else if (key == "かお") {
       // When key is "かお", expand all candidates in conservative way.
@@ -180,7 +182,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       CHECK(begin != dic_.end());
       // first 6 candidates are inserted at 4 th position.
       // Other candidates are pushed to the buttom.
-      initial_insert_pos = 4;
+      initial_insert_pos = RewriterUtil::CalculateInsertPosition(segment, 4);
       initial_insert_size = 6;
     } else if (key == "ふくわらい") {
       // Choose one emoticon randomly from the dictionary.
@@ -192,7 +194,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       Util::GetRandomSequence(reinterpret_cast<char *>(&n), sizeof(n));
       begin += n % dic_.size();
       end = begin + 1;
-      initial_insert_pos = 4;
+      initial_insert_pos = RewriterUtil::CalculateInsertPosition(segment, 4);
       initial_insert_size = 1;
       is_no_learning = true;  // do not learn this candidate.
     } else {
@@ -200,7 +202,7 @@ bool EmoticonRewriter::RewriteCandidate(Segments *segments) const {
       begin = range.first;
       end = range.second;
       if (begin != end) {
-        initial_insert_pos = 6;
+        initial_insert_pos = RewriterUtil::CalculateInsertPosition(segment, 6);
         initial_insert_size = std::distance(begin, end);
       }
     }

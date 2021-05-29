@@ -738,6 +738,7 @@
             'DYLIB_INSTALL_NAME_BASE': '@executable_path/../Frameworks',
             'INSTALL_PATH': '@executable_path/../Frameworks',
             'INFOPLIST_FILE': '<(gen_out_dir)/mozc_tool_lib_info',
+            'OTHER_LDFLAGS': ['-headerpad_max_install_names'],
           },
           'dependencies': [
             'gen_mozc_tool_lib_info_plist',

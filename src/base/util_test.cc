@@ -1430,6 +1430,9 @@ TEST(UtilTest, IsAscii) {
 }
 
 TEST(UtilTest, IsJisX0208) {
+  EXPECT_TRUE(Util::IsJisX0208(u8"\u007F"));
+  EXPECT_FALSE(Util::IsJisX0208(u8"\u0080"));
+
   EXPECT_TRUE(Util::IsJisX0208("あいうえお"));
   EXPECT_TRUE(Util::IsJisX0208("abc"));
   EXPECT_TRUE(Util::IsJisX0208("abcあいう"));
@@ -1437,6 +1440,13 @@ TEST(UtilTest, IsJisX0208) {
   // half width katakana
   EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅ"));
   EXPECT_TRUE(Util::IsJisX0208("ｶﾀｶﾅカタカナ"));
+
+  // boundary edges
+  EXPECT_TRUE(Util::IsJisX0208("ﾟ"));  // U+FF9F, the last char of JIS X 0208
+  EXPECT_TRUE(Util::IsJisX0208(u8"\uFF9F"));  // U+FF9F
+  EXPECT_FALSE(Util::IsJisX0208(u8"\uFFA0"));  // U+FF9F + 1
+  EXPECT_FALSE(Util::IsJisX0208(u8"\uFFFF"));
+  EXPECT_FALSE(Util::IsJisX0208(u8"\U00010000"));
 
   // JIS X 0213
   EXPECT_FALSE(Util::IsJisX0208("Ⅰ"));

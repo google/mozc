@@ -68,6 +68,7 @@
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
@@ -1521,25 +1522,41 @@ bool Util::IsAscii(absl::string_view str) {
 
 
 namespace {
-// Basically, if charset >= JIX0212, the char is platform dependent char.
-enum CharacterSet {
-  ASCII,         // ASCII (simply ucs4 <= 0x007F)
-  JISX0201,      // defined at least in 0201 (can be in 0208/0212/0213/CP9232)
-  JISX0208,      // defined at least in 0208 (can be in 0212/0213/CP932)
-  JISX0212,      // defined at least in 0212 (can be in 0213/CP932)
-  JISX0213,      // defined at least in 0213 (can be in CP932)
-  CP932,         // defined only in CP932, not in JISX02*
-  UNICODE_ONLY,  // defined only in UNICODE, not in JISX* nor CP932
-  CHARACTER_SET_SIZE,
-};
-
-// CharcterSet GetCharacterSet(char32 ucs4);
+// const uint32_t* kJisX0208Bitmap[]
+// const uint64_t kJisX0208BitmapIndex
 #include "base/character_set.inc"
+
+bool IsJisX0208Char(char32 ucs4) {
+  if (ucs4 <= 0x7F) {
+    return true;  // ASCII
+  }
+
+  if ((65377 <= ucs4 && ucs4 <= 65439)) {
+    return true;  // JISX0201
+  }
+
+  if (ucs4 < 65536) {
+    const int index = ucs4 / 1024;
+    if ((kJisX0208BitmapIndex & (static_cast<uint64_t>(1) << index)) == 0) {
+      return false;
+    }
+    // Note, the return value of 1 << 64 is not zero. It's undefined.
+    const int bitmap_index =
+        absl::popcount(kJisX0208BitmapIndex << (63 - index)) - 1;
+    const uint32_t *bitmap = kJisX0208Bitmap[bitmap_index];
+    if ((bitmap[(ucs4 % 1024) / 32] >> (ucs4 % 32)) & 0b1) {
+      return true;  // JISX0208
+    }
+    return false;
+  }
+
+  return false;
+}
 }  // namespace
 
 bool Util::IsJisX0208(absl::string_view str) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    if (GetCharacterSet(iter.Get()) > JISX0208) {
+    if (!IsJisX0208Char(iter.Get())) {
       return false;
     }
   }
