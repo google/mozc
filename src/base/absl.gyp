@@ -134,6 +134,7 @@
         '<(absl_srcdir)/container/internal/raw_hash_set.cc',
         '<(absl_srcdir)/hash/internal/city.cc',
         '<(absl_srcdir)/hash/internal/hash.cc',
+        '<(absl_srcdir)/hash/internal/wyhash.cc',
       ],
     },
     {
