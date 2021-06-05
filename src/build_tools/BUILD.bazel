@@ -122,6 +122,7 @@ py_library_mozc(
 py_library_mozc(
     name = "zlib_util_lib",
     srcs = ["zlib_util.py"],
+    visibility = ["//:__subpackages__"],
 )
 
 py_binary_mozc(

@@ -39,6 +39,7 @@
 #include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
+#include "protocol/renderer_style.pb.h"
 #include "renderer/qt/qt_window_manager_interface.h"
 
 namespace mozc {
@@ -47,7 +48,7 @@ namespace renderer {
 class QtWindowManager : public QtWindowManagerInterface {
  public:
   // WindowManager takes arguments' ownership
-  explicit QtWindowManager() = default;
+  QtWindowManager();
   ~QtWindowManager() override = default;
 
   int StartRendererLoop(int argc, char **argv) override;
@@ -86,12 +87,16 @@ class QtWindowManager : public QtWindowManagerInterface {
   Point GetWindowPosition(const commands::RendererCommand &command,
                           const Size &win_size);
 
- private:
-  QWidget *window_;
-  QTableWidget *candidates_;
-  QTableWidget *infolist_;
+  void OnClicked(int row, int column);
 
+ private:
+  QWidget *window_ = nullptr;
+  QTableWidget *candidates_ = nullptr;
+  QTableWidget *infolist_ = nullptr;
+
+  RendererStyle style_;
   commands::RendererCommand prev_command_;
+  client::SendCommandInterface *send_command_interface_ = nullptr;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };
