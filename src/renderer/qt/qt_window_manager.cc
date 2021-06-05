@@ -30,7 +30,8 @@
 #include "renderer/qt/qt_window_manager.h"
 
 #include "base/logging.h"
-#include "protocol/renderer_command.pb.h"
+#include "protocol/candidates.pb.h"
+#include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 #include "absl/strings/str_cat.h"
 
@@ -53,37 +54,68 @@ constexpr char kDescriptionColor[] = "#888888";
 constexpr char kShortcutColor[] = "#616161";
 constexpr char kShortcutBackgroundColor[] = "#F3F4FF";
 
+QString QStr(const std::string &str) {
+  return QString::fromUtf8(str.c_str());
+}
+
+QColor QColorFromRGBAColor(RendererStyle::RGBAColor rgba) {
+  return QColor(rgba.r(), rgba.g(), rgba.b(), 255 * rgba.a());
+}
+
 }  // namespace
+
+QtWindowManager::QtWindowManager() {
+  RendererStyleHandler::GetRendererStyle(&style_);
+}
+
+void QtWindowManager::OnClicked(int row, int column) {
+  DLOG(INFO) << "OnClicked: (" << row << ", " << column << ")";
+  if (send_command_interface_ == nullptr)  {
+    return;
+  }
+  if (row < 0 ||
+      row >= prev_command_.output().candidates().candidate_size()) {
+    return;
+  }
+  const int cand_id = prev_command_.output().candidates().candidate(row).id();
+  commands::SessionCommand command;
+  command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
+  command.set_id(cand_id);
+  commands::Output output;
+  send_command_interface_->SendCommand(command, &output);
+}
 
 int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   QApplication app(argc, argv);
 
-  QWidget window;
-  window.setWindowFlags(Qt::ToolTip |
-                        Qt::FramelessWindowHint |
-                        Qt::WindowStaysOnTopHint);
-  window.setSizePolicy(
+  window_ = new QWidget();
+  window_->setWindowFlags(Qt::ToolTip |
+                          Qt::FramelessWindowHint |
+                          Qt::WindowStaysOnTopHint);
+  window_->setSizePolicy(
       QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
 
-  window_ = &window;
+  candidates_ = new QTableWidget(window_);
+  candidates_->horizontalHeader()->hide();
+  candidates_->setSelectionMode(QTableWidget::NoSelection);
+  candidates_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  candidates_->verticalHeader()->hide();
+  candidates_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+  candidates_->setShowGrid(false);
+  candidates_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  candidates_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  candidates_->move(0, 0);
+  candidates_->show();
 
-  QTableWidget table(&window);
-  table.horizontalHeader()->hide();
-  table.horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  table.verticalHeader()->hide();
-  table.verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  table.setShowGrid(false);
-  table.setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  table.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  table.move(0, 0);
-  table.show();
-  candidates_ = &table;
+  QObject::connect(candidates_, &QTableWidget::cellClicked,
+                   [&](int row, int col) { OnClicked(row, col); });
 
   infolist_ = new QTableWidget();
   infolist_->setWindowFlags(Qt::ToolTip |
                             Qt::FramelessWindowHint |
                             Qt::WindowStaysOnTopHint);
   infolist_->horizontalHeader()->hide();
+  infolist_->setSelectionMode(QTableWidget::NoSelection);
   infolist_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
   infolist_->verticalHeader()->hide();
   infolist_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
@@ -91,9 +123,8 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   infolist_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   infolist_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   infolist_->setColumnCount(1);
-  infolist_->setRowCount(2);
+  infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
-  infolist_->show();
 
   return app.exec();
 }
@@ -180,10 +211,6 @@ Rect GetRect(const commands::RendererCommand::Rectangle &prect) {
   const int width = prect.right() - prect.left();
   const int height = prect.bottom() - prect.top();
   return Rect(prect.left(), prect.top(), width, height);
-}
-
-QString QStr(const std::string &str) {
-  return QString::fromUtf8(str.c_str());
 }
 
 bool IsUpdated(const commands::RendererCommand &prev_command,
@@ -430,22 +457,33 @@ void QtWindowManager::UpdateInfolistWindow(
 
   infolist_->setColumnCount(1);
   infolist_->setColumnWidth(0, kInfolistWidth);
-  infolist_->setRowCount(size * 2);
-  int total_height = 0;
+  infolist_->setRowCount(size * 2 + 1);  // +1 is for the caption title.
+  int total_height = 12;  // Heuristics margin.
+
+  // Caption title
+  const std::string &caption = style_.infolist_style().caption_string();
+  QTableWidgetItem *infolist_title = new QTableWidgetItem(QStr(caption));
+  infolist_title->setBackgroundColor(
+      QColorFromRGBAColor(style_.infolist_style().caption_background_color()));
+  infolist_->setItem(0, 0, infolist_title);
+  total_height += kRowHeight;
 
   for (int i = 0; i < size; ++i) {
+    const int title_row = i * 2 + 1;
+    const int desc_row = i * 2 + 2;
     const std::string title = info.information(i).title();
     const std::string desc = info.information(i).description();
     const auto qtitle = new QTableWidgetItem(QString::fromUtf8(title.c_str()));
     const auto qdesc = new QTableWidgetItem(QString::fromUtf8(desc.c_str()));
 
+    const int title_height = kRowHeight;
     const int desc_height = kRowHeight * (GetWidth(qdesc) / kInfolistWidth + 2);
-    infolist_->setRowHeight(i * 2, kRowHeight);
-    infolist_->setRowHeight(i * 2 + 1, desc_height);
-    total_height += (kRowHeight + desc_height);
+    infolist_->setRowHeight(title_row, title_height);
+    infolist_->setRowHeight(desc_row, desc_height);
+    total_height += (title_height + desc_height);
 
-    infolist_->setItem(0, i * 2, qtitle);
-    infolist_->setItem(0, i * 2 + 1, qdesc);
+    infolist_->setItem(0, title_row, qtitle);
+    infolist_->setItem(0, desc_row, qdesc);
 
     if (info.focused_index() == i) {
       const QColor highlight = QColor(kHighlightColor);
@@ -453,7 +491,14 @@ void QtWindowManager::UpdateInfolistWindow(
       qdesc->setBackgroundColor(highlight);
     }
   }
-  infolist_->move(candidate_window_rect.Right(), candidate_window_rect.Top());
+  const Size infolist_size(kInfolistWidth, total_height);
+  const Rect monitor_rect = GetMonitorRect(candidate_window_rect.Right(),
+                                           candidate_window_rect.Top());
+  const Rect infolist_rect =
+      WindowUtil::WindowUtil::GetWindowRectForInfolistWindow(
+          infolist_size, candidate_window_rect, monitor_rect);
+
+  infolist_->move(infolist_rect.Left(), infolist_rect.Top());
   infolist_->resize(kInfolistWidth, total_height);
   infolist_->show();
 }
@@ -480,7 +525,7 @@ bool QtWindowManager::IsAvailable() const {
 
 bool QtWindowManager::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {
-  DLOG(INFO) << "SetSendCommandInterface";
+  send_command_interface_ = send_command_interface;
   return true;
 }
 

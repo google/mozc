@@ -239,7 +239,7 @@ cc_test_mozc(
 
 # This rule is only for Linux application build.
 cc_library_mozc(
-    name = "mozc_renderer_lib",
+    name = "gtk_mozc_renderer_lib",
     srcs = select_mozc(
         linux = [
             "unix/cairo_factory.cc",
@@ -305,25 +305,52 @@ cc_binary_mozc(
     name = "mozc_renderer",
     srcs = ["mozc_renderer_main.cc"],
     defines = select_mozc(
-        linux = ["ENABLE_GTK_RENDERER"],
+        default = ["ENABLE_QT_RENDERER"],
+        linux = ["ENABLE_QT_RENDERER"],
     ),
     deps = [
-        ":mozc_renderer_lib",
         ":table_layout",
         "//base:crash_report_handler",
-        "@com_google_absl//absl/flags:flag",
         "//base:init_mozc",
         "//base:run_level",
         "//base:system_util",
         "//base:util",
         "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
-        linux = [":renderer_client"],
+        default = [
+            "//renderer/qt:qt_renderer_lib",
+            "//renderer/qt:qt_server",
+            "//renderer/qt:qt_window_manager",
+        ],
+        linux = [
+            "//renderer/qt:qt_renderer_lib",
+            "//renderer/qt:qt_server",
+            "//renderer/qt:qt_window_manager",
+        ],
         windows = [
             "//base:win_util",
             "//base:winmain",
         ],
     ),
+)
+
+cc_binary_mozc(
+    name = "gtk_mozc_renderer",
+    srcs = ["mozc_renderer_main.cc"],
+    defines = select_mozc(linux = ["ENABLE_GTK_RENDERER"]),
+    deps = [
+        ":gtk_mozc_renderer_lib",
+        ":renderer_client",
+        ":table_layout",
+        "//base:crash_report_handler",
+        "//base:init_mozc",
+        "//base:run_level",
+        "//base:system_util",
+        "//base:util",
+        "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
+    ],
 )
 
 cc_binary_mozc(
@@ -381,7 +408,7 @@ cc_test_mozc(
         ],
     ),
     deps = [
-        ":mozc_renderer_lib",
+        ":gtk_mozc_renderer_lib",
         ":renderer_interface",
         ":renderer_style_handler",
         "//base:coordinates",
@@ -417,7 +444,6 @@ cc_library_mozc(
     name = "mozc_renderer_main_macos",
     srcs = select_mozc(macos = ["mozc_renderer_main.cc"]),
     deps = [
-        ":mozc_renderer_lib",
         ":mozc_renderer_lib_macos",
         ":renderer_client",
         ":table_layout",

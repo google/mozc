@@ -220,7 +220,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
-#ifdef ENABLE_GTK_RENDERER
+#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
 CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
     ::mozc::renderer::RendererClient *renderer_client) {
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
@@ -234,7 +234,7 @@ CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
   handler->RegisterGSettingsObserver();
   return handler;
 }
-#endif  // !ENABLE_GTK_RENDERER
+#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
 
 }  // namespace
 
@@ -246,10 +246,10 @@ MozcEngine::MozcEngine()
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       preedit_handler_(new PreeditHandler()),
-#ifdef ENABLE_GTK_RENDERER
+#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
       gtk_candidate_window_handler_(
           createGtkCandidateWindowHandler(new renderer::RendererClient())),
-#endif  // ENABLE_GTK_RENDERER
+#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
