@@ -17,30 +17,21 @@ sudo docker run --interactive --tty --rm $USER/mozc_ubuntu20.04
 ### Hint
 Don't forget to rebuild Docker container when Dockerfile is updated.
 
+-----
 
-## How to build
-
-### Build Mozc for Linux Desktop:
-
-```
-python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package
-```
-
-You can also run unittests as follows.
-
-```
-python3 build_mozc.py runtests -c Debug
-```
-
-Experimental: Instead of build_mozc.py, you can try to use Bazel.
+## Build Mozc for Linux Desktop
 
 ```
 bazel build package --config oss_linux -c opt
 ```
 
-`package` is an alias to build `server:mozc_server`, `gui/tool:mozc_tool`,
-`renderer:mozc_renderer`, `ibus:ibus_mozc` and `emacs:mozc_emacs_helper`.
+`package` is an alias to build:
+* //server:mozc_server
+* //gui/tool:mozc_tool
+* //renderer:mozc_renderer
+* //unix/ibus:ibus_mozc
+* //unix/icons
+* //unix/emacs:mozc_emacs_helper
 
 Unittests can be executed as follows.
 
@@ -48,8 +39,7 @@ Unittests can be executed as follows.
 bazel test base:util_test --config oss_linux -c dbg
 ```
 
-
-### Build Mozc library for Android:
+## Build Mozc library for Android:
 
 Client code for Android apk is deprecated.
 (the last revision with Android client code is
@@ -63,7 +53,41 @@ bazel build package --config oss_android
 
 `package` is an alias to build `android/jni:mozc_lib`.
 
-## Build configurations for Linux desktop
+-----
+
+## Build Mozc for Linux Desktop with GYP (maintenance mode):
+
+```
+python3 build_mozc.py gyp
+python3 build_mozc.py build -c Release package
+```
+
+`package` is an alias to build:
+* //server:mozc_server
+* //gui/tool:mozc_tool
+* //renderer:mozc_renderer
+* //unix/ibus:ibus_mozc
+
+
+You can also run unittests as follows.
+
+```
+python3 build_mozc.py runtests -c Debug
+```
+
+### Differences between Bazel build and GYP build
+
+GYP build is under maintenance mode. While the existing targets are supported
+by both GYP and Bazel as much as possible, new targets will be supported by
+Bazel only.
+
+Targets only for Bazel:
+* Zip code conversion (//server:mozc_server)
+* Qt-based candidate window (//renderer:mozc_renderer)
+* Build rules for icons (//unix/icons)
+
+
+## GYP Build configurations
 In `python3 build_mozc.py gyp` step, there are two different styles to customize configurations.  One is `GYP_DEFINES` environment variable and the other is commandline option.
 
 ```
