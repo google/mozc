@@ -80,7 +80,7 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
   }
   Clear();
   {
-    // Test request with install.  Since the requested file is moved,
+    // Test request with install.  Since the requested file is copied,
     // |mock_data_path_| is copied to a temporary file.
     const std::string src_path =
         FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
@@ -99,8 +99,8 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     ASSERT_TRUE(builder_.HasResponse());
     builder_.GetResponse(&response_);
     EXPECT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
-    // Verify |src_path| was renamed.
-    EXPECT_FALSE(FileUtil::FileExists(src_path));
+    // Verify |src_path| was copied.
+    EXPECT_TRUE(FileUtil::FileExists(src_path));
     EXPECT_TRUE(FileUtil::FileExists(install_path));
   }
 }
@@ -159,7 +159,7 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
   for (const auto &test_case : kTestCases) {
     Clear();
 
-    // Since requested file is renamed, copy |mock_data_path_| to a temporary
+    // Since requested file is copied, copy |mock_data_path_| to a temporary
     // file.
     ASSERT_TRUE(FileUtil::CopyFile(mock_data_path_, tmp_src));
 
@@ -178,8 +178,8 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
     builder_.GetResponse(&response_);
     ASSERT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
 
-    // |tmp_src| should be renamed to |install_path|.
-    ASSERT_FALSE(FileUtil::FileExists(tmp_src));
+    // |tmp_src| should be copied to |install_path|.
+    ASSERT_TRUE(FileUtil::FileExists(tmp_src));
     ASSERT_TRUE(FileUtil::FileExists(install_path));
 
     // Build an engine and verify its predictor type (desktop or mobile).

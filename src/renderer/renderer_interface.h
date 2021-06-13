@@ -30,6 +30,8 @@
 #ifndef MOZC_RENDERER_RENDERER_INTERFACE_H_
 #define MOZC_RENDERER_RENDERER_INTERFACE_H_
 
+#include <functional>
+
 namespace mozc {
 
 namespace commands {
@@ -52,6 +54,12 @@ class RendererInterface {
   virtual int StartRendererLoop(int argc, char **argv) {
     return 0;
   }
+
+  // Set a loop function to receive RendererCommand from
+  // RendererServer::AsyncExecCommand, then call
+  // RendererServer::ExecCommandInternal. This function may be executed in
+  // a thread of the GUI system.
+  virtual void SetReceiverLoopFunction(std::function<void(void)> func) {}
 
   // Activate candidate window.
   // For instance, if the renderer is out-proc renderer,

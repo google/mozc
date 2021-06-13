@@ -27,44 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
-#define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
+#ifndef MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
+#define MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
 
+#include <QtWidgets/QtWidgets>
 #include <functional>
 
 namespace mozc {
-
-namespace client {
-class SendCommandInterface;
-}  // namespace client
-
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-
 namespace renderer {
 
-class QtWindowManagerInterface {
+typedef std::function<void(void)> RunLoopFunc;
+
+class QtReceiverLoop : public QObject {
+  Q_OBJECT
+
  public:
-  QtWindowManagerInterface() = default;
-  virtual ~QtWindowManagerInterface() = default;
+  explicit QtReceiverLoop(RunLoopFunc run_loop_func);
+  void RunLoop();
 
-  virtual int StartRendererLoop(int argc, char **argv) = 0;
-  virtual void SetReceiverLoopFunction(std::function<void(void)> func) = 0;
+ signals:
+  void EmitRunLoop();
 
-  virtual void Initialize() = 0;
-  virtual void HideAllWindows() = 0;
-  virtual void ShowAllWindows() = 0;
-  virtual void UpdateLayout(const commands::RendererCommand &command) = 0;
-  virtual bool Activate() = 0;
-  virtual bool IsAvailable() const = 0;
-  // WindowManager does NOT takes ownership of send_command_interface.
-  virtual bool SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) = 0;
-  virtual void SetWindowPos(int x, int y) = 0;
+ private:
+  RunLoopFunc run_loop_func_;
 };
 
 }  // namespace renderer
 }  // namespace mozc
 
-#endif  // MOZC_RENDERER_QT_QT_WINDOW_MANAGER_INTERFACE_H_
+#endif  // MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_

@@ -30,6 +30,7 @@
 #ifndef MOZC_RENDERER_QT_QT_RENDERER_H_
 #define MOZC_RENDERER_QT_QT_RENDERER_H_
 
+#include <functional>
 #include <memory>
 
 #include "base/port.h"
@@ -45,6 +46,7 @@ class QtRenderer : public RendererInterface {
   explicit QtRenderer(QtWindowManagerInterface *window_manager);
   ~QtRenderer() override = default;
   int StartRendererLoop(int argc, char **argv) override;
+  void SetReceiverLoopFunction(std::function<void(void)> func) override;
   bool Activate() override;
   bool IsAvailable() const override;
   bool ExecCommand(const commands::RendererCommand &command) override;

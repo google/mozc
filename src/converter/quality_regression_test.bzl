@@ -52,7 +52,6 @@ def quality_regression_test(name, src, deps, **kwargs):
             "//data_manager/android:mozc.data",
             "//data_manager/google:mozc.data",
             "//data_manager/oss:mozc.data",
-            "//dictionary:pos_matcher_lib",
         ],
         deps = deps,
         size = "large",

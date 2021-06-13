@@ -32,7 +32,6 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/thread.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/synchronization/mutex.h"
 
@@ -68,19 +67,6 @@ namespace {
 bool cond_func(bool *cond_var) {
   return *cond_var;
 }
-
-class ReceiverThread : public Thread {
- public:
-  explicit ReceiverThread(QtServer *server) : server_(server) {}
-  ~ReceiverThread() override = default;
-
-  void Run() override {
-    server_->StartReceiverLoop();
-  }
-
- private:
-  QtServer *server_;
-};
 }  // namespace
 
 void QtServer::StartReceiverLoop() {
@@ -100,12 +86,9 @@ void QtServer::StartReceiverLoop() {
 }
 
 int QtServer::StartMessageLoop() {
-  ReceiverThread receiver(this);
-  receiver.Start("Receiver thread");
-
+  std::function<void(void)> receiver_loop_func = [&](){ StartReceiverLoop(); };
+  renderer_interface_->SetReceiverLoopFunction(receiver_loop_func);
   renderer_interface_->StartRendererLoop(argc_, argv_);
-
-  receiver.Join();
   return 0;
 }
 

@@ -30,10 +30,10 @@
 #ifndef MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 #define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 
+#include <QtWidgets/QtWidgets>
+#include <functional>
 #include <memory>
 #include <string>
-
-#include <QtWidgets/QtWidgets>
 
 #include "base/coordinates.h"
 #include "base/port.h"
@@ -52,6 +52,7 @@ class QtWindowManager : public QtWindowManagerInterface {
   ~QtWindowManager() override = default;
 
   int StartRendererLoop(int argc, char **argv) override;
+  void SetReceiverLoopFunction(std::function<void(void)> func) override;
 
   void Initialize() override;
   void HideAllWindows() override;
@@ -97,6 +98,8 @@ class QtWindowManager : public QtWindowManagerInterface {
   RendererStyle style_;
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
+
+  std::function<void(void)> receiver_loop_func_;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };

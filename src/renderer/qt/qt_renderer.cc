@@ -42,6 +42,10 @@ int QtRenderer::StartRendererLoop(int argc, char **argv) {
   return window_manager_->StartRendererLoop(argc, argv);
 }
 
+void QtRenderer::SetReceiverLoopFunction(std::function<void(void)> func) {
+  window_manager_->SetReceiverLoopFunction(func);
+}
+
 bool QtRenderer::Activate() {
   return window_manager_->Activate();
 }
