@@ -35,6 +35,7 @@ load(
 load(
     "//tools/build_defs:qt.bzl",
     "cc_qt_library_mozc",
+    "qt_moc_mozc",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -57,6 +58,21 @@ cc_library_mozc(
     ],
 )
 
+qt_moc_mozc(
+    name = "moc_qt_receiver_loop",
+    srcs = ["qt_receiver_loop.h"],
+    outs = ["out_qt_receiver_loop.cc"],
+)
+
+cc_qt_library_mozc(
+    name = "qt_receiver_loop",
+    srcs = [
+        "qt_receiver_loop.cc",
+        ":moc_qt_receiver_loop",
+    ],
+    hdrs = ["qt_receiver_loop.h"],
+)
+
 cc_qt_library_mozc(
     name = "qt_server",
     srcs = [
@@ -69,7 +85,6 @@ cc_qt_library_mozc(
         ":qt_window_manager_interface",
         "//base:logging",
         "//base:port",
-        "//base:thread",
         "//client:client_interface",
         "//protocol:renderer_proto",
         "//renderer:renderer_interface",
@@ -94,6 +109,7 @@ cc_qt_library_mozc(
         "qt_window_manager.h",
     ],
     deps = [
+        ":qt_receiver_loop",
         ":qt_window_manager_interface",
         "//base:coordinates",
         "//base:logging",

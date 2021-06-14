@@ -61,6 +61,12 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   return EngineReloadResponse::UNKNOWN_ERROR;
 }
 
+bool AtomicCopyFile(const std::string &src_path, const std::string &dst_path) {
+  const std::string tmp_dst_path = dst_path + ".tmp";
+  const bool result = (FileUtil::CopyFile(src_path, tmp_dst_path) &&
+                       FileUtil::AtomicRename(tmp_dst_path, dst_path));
+  return result;
+}
 }  // namespace
 
 class EngineBuilder::Preparator : public Thread {
@@ -85,9 +91,8 @@ class EngineBuilder::Preparator : public Thread {
     }
 
     if (request.has_install_location() &&
-        !FileUtil::AtomicRename(request.file_path(),
-                                request.install_location())) {
-      LOG(ERROR) << "Atomic rename faild: " << request.Utf8DebugString();
+        !AtomicCopyFile(request.file_path(), request.install_location())) {
+      LOG(ERROR) << "Copy faild: " << request.Utf8DebugString();
       response_.set_status(EngineReloadResponse::INSTALL_FAILURE);
       return;
     }

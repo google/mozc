@@ -31,6 +31,7 @@
 #define MOZC_RENDERER_QT_QT_SERVER_H_
 
 #include <memory>
+#include <string>
 
 #include "base/port.h"
 #include "renderer/renderer_server.h"

@@ -158,13 +158,6 @@ jspb_proto_library(
     deps = [":config_proto_full"],
 )
 
-java_lite_proto_library(
-    name = "config_proto_lite",
-    visibility = [
-    ],
-    deps = [":config_proto_full"],
-)
-
 proto_library(
     name = "renderer_proto_full",
     srcs = [
@@ -217,12 +210,6 @@ proto_library(
 
 jspb_proto_library(
     name = "user_dictionary_storage_jspb_proto",
-    visibility = [],
-    deps = [":user_dictionary_storage_proto_full"],
-)
-
-java_lite_proto_library(
-    name = "user_dictionary_storage_proto_lite",
     visibility = [],
     deps = [":user_dictionary_storage_proto_full"],
 )

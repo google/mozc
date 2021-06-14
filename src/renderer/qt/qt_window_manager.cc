@@ -31,6 +31,7 @@
 
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"
+#include "renderer/qt/qt_receiver_loop.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 #include "absl/strings/str_cat.h"
@@ -126,7 +127,23 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
 
+  QThread thread;
+  window_->moveToThread(&thread);
+  infolist_->moveToThread(&thread);
+
+  QtReceiverLoop *loop = nullptr;
+  if (receiver_loop_func_) {
+    loop = new QtReceiverLoop(receiver_loop_func_);
+    loop->moveToThread(&thread);
+    emit loop->EmitRunLoop();
+  }
+
+  thread.start();
   return app.exec();
+}
+
+void QtWindowManager::SetReceiverLoopFunction(std::function<void(void)> func) {
+  receiver_loop_func_ = func;
 }
 
 void QtWindowManager::Initialize() {
