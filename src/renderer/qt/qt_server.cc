@@ -86,7 +86,7 @@ void QtServer::StartReceiverLoop() {
 }
 
 int QtServer::StartMessageLoop() {
-  std::function<void(void)> receiver_loop_func = [&](){ StartReceiverLoop(); };
+  ReceiverLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
   renderer_interface_->SetReceiverLoopFunction(receiver_loop_func);
   renderer_interface_->StartRendererLoop(argc_, argv_);
   return 0;

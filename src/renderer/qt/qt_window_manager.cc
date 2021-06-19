@@ -142,7 +142,7 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   return app.exec();
 }
 
-void QtWindowManager::SetReceiverLoopFunction(std::function<void(void)> func) {
+void QtWindowManager::SetReceiverLoopFunction(ReceiverLoopFunc func) {
   receiver_loop_func_ = func;
 }
 

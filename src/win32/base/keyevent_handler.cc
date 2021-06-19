@@ -79,7 +79,7 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
     KeyEvent::NO_SPECIALKEY,  // 0x13: VK_PAUSE
     KeyEvent::CAPS_LOCK,      // 0x14: VK_CAPITAL
     KeyEvent::NO_SPECIALKEY,  // 0x15: VK_HANGUL, VK_KANA
-    KeyEvent::NO_SPECIALKEY,  // 0x16:
+    KeyEvent::ON,             // 0x16: VK_IME_ON
     KeyEvent::NO_SPECIALKEY,  // 0x17: VK_JUNJA
     KeyEvent::NO_SPECIALKEY,  // 0x18: VK_FINAL
     // VK_KANJI is very special in IMM32 mode. It activates IME in OS-side
@@ -89,7 +89,7 @@ const KeyEvent::SpecialKey kSpecialKeyMap[] = {
     // KeyEvent::KANJI in IMM32 mode and map VK_KANJI to KeyEvent::HANKAKU
     // via VK_DBE_DBCSCHAR in TSF mode. See b/7970379 for the background.
     KeyEvent::NO_SPECIALKEY,  // 0x19: VK_HANJA, VK_KANJI
-    KeyEvent::NO_SPECIALKEY,  // 0x1A:
+    KeyEvent::OFF,            // 0x1A: VK_IME_OFF
     KeyEvent::ESCAPE,         // 0x1B: VK_ESCAPE
     KeyEvent::HENKAN,         // 0x1C: VK_CONVERT
     KeyEvent::MUHENKAN,       // 0x1D: VK_NONCONVERT

@@ -44,13 +44,15 @@ class RendererCommand;
 
 namespace renderer {
 
+using ReceiverLoopFunc = std::function<void(void)>;
+
 class QtWindowManagerInterface {
  public:
   QtWindowManagerInterface() = default;
   virtual ~QtWindowManagerInterface() = default;
 
   virtual int StartRendererLoop(int argc, char **argv) = 0;
-  virtual void SetReceiverLoopFunction(std::function<void(void)> func) = 0;
+  virtual void SetReceiverLoopFunction(ReceiverLoopFunc func) = 0;
 
   virtual void Initialize() = 0;
   virtual void HideAllWindows() = 0;

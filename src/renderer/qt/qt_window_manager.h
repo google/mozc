@@ -52,7 +52,7 @@ class QtWindowManager : public QtWindowManagerInterface {
   ~QtWindowManager() override = default;
 
   int StartRendererLoop(int argc, char **argv) override;
-  void SetReceiverLoopFunction(std::function<void(void)> func) override;
+  void SetReceiverLoopFunction(ReceiverLoopFunc func) override;
 
   void Initialize() override;
   void HideAllWindows() override;
@@ -99,7 +99,7 @@ class QtWindowManager : public QtWindowManagerInterface {
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
 
-  std::function<void(void)> receiver_loop_func_;
+  ReceiverLoopFunc receiver_loop_func_;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };

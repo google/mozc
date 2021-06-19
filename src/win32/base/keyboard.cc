@@ -910,11 +910,11 @@ const wchar_t *kCharTable[] = {
     kNoCharGenKey,  // VK_PAUSE
     kNoCharGenKey,  // VK_CAPITAL
     kNoCharGenKey,  // VK_HANGUL, VK_KANA
-    kNoCharGenKey,
+    kNoCharGenKey,  // VK_IME_ON
     kNoCharGenKey,  // VK_JUNJA
     kNoCharGenKey,  // VK_FINAL
     kNoCharGenKey,  // VK_HANJA, VK_KANJI
-    kNoCharGenKey,
+    kNoCharGenKey,  // VK_IME_OFF
     kCharForVK_1B,  // VK_ESCAPE
     kNoCharGenKey,  // VK_CONVERT
     kNoCharGenKey,  // VK_NONCONVERT
@@ -1123,11 +1123,11 @@ const wchar_t *kCharTableMenuActive[] = {
     kNoCharGenKey,  // VK_PAUSE
     kNoCharGenKey,  // VK_CAPITAL
     kNoCharGenKey,  // VK_HANGUL, VK_KANA
-    kNoCharGenKey,
+    kNoCharGenKey,  // VK_IME_ON
     kNoCharGenKey,  // VK_JUNJA
     kNoCharGenKey,  // VK_FINAL
     kNoCharGenKey,  // VK_HANJA, VK_KANJI
-    kNoCharGenKey,
+    kNoCharGenKey,  // VK_IME_OFF
     kCharForVK_1B,  // VK_ESCAPE
     kNoCharGenKey,  // VK_CONVERT
     kNoCharGenKey,  // VK_NONCONVERT
