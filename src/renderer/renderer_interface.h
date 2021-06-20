@@ -44,6 +44,8 @@ class SendCommandInterface;
 
 namespace renderer {
 
+using ReceiverLoopFunc = std::function<void(void)>;
+
 // An abstract interface class for renderer
 class RendererInterface {
  public:
@@ -59,7 +61,7 @@ class RendererInterface {
   // RendererServer::AsyncExecCommand, then call
   // RendererServer::ExecCommandInternal. This function may be executed in
   // a thread of the GUI system.
-  virtual void SetReceiverLoopFunction(std::function<void(void)> func) {}
+  virtual void SetReceiverLoopFunction(ReceiverLoopFunc func) {}
 
   // Activate candidate window.
   // For instance, if the renderer is out-proc renderer,

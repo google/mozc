@@ -138,6 +138,12 @@ const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
     {VK_DBE_SBCSCHAR, "Hankaku/Zenkaku"},  // Zenkaku/hankaku
     {VK_DBE_DBCSCHAR, "Hankaku/Zenkaku"},  // Zenkaku/hankaku
     // { VK_KANJI, "Kanji" },  // Do not support Kanji
+
+    // VK_IME_ON and VK_IME_OFF
+    // https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime
+    // Those variables may not be declared yet in sone build environments.
+    {0x16, "ON"},   // 0x16 = VK_IME_ON
+    {0x1A, "OFF"},  // 0x1A = VK_IME_OFF
 };
 #endif
 

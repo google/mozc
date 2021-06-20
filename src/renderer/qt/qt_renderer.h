@@ -46,7 +46,7 @@ class QtRenderer : public RendererInterface {
   explicit QtRenderer(QtWindowManagerInterface *window_manager);
   ~QtRenderer() override = default;
   int StartRendererLoop(int argc, char **argv) override;
-  void SetReceiverLoopFunction(std::function<void(void)> func) override;
+  void SetReceiverLoopFunction(ReceiverLoopFunc func) override;
   bool Activate() override;
   bool IsAvailable() const override;
   bool ExecCommand(const commands::RendererCommand &command) override;
