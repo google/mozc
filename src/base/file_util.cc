@@ -38,6 +38,8 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <filesystem>
+
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/mmap.h"
@@ -87,8 +89,12 @@ class FileUtilImpl : public FileUtilInterface {
   bool CopyFile(const std::string &from, const std::string &to) const override;
   bool IsEqualFile(const std::string &filename1,
                    const std::string &filename2) const override;
+  bool IsEquivalent(const std::string &filename1,
+                    const std::string &filename2) const override;
   bool AtomicRename(const std::string &from,
                     const std::string &to) const override;
+  bool CreateHardLink(const std::string &from,
+                      const std::string &to) override;
   bool GetModificationTime(const std::string &filename,
                            FileTimeStamp *modified_at) const override;
 };
@@ -338,6 +344,27 @@ bool FileUtilImpl::IsEqualFile(const std::string &filename1,
   return memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
 }
 
+bool FileUtil::IsEquivalent(const std::string &filename1,
+                            const std::string &filename2) {
+  return FileUtilSingleton::Get()->IsEquivalent(filename1, filename2);
+}
+
+bool FileUtilImpl::IsEquivalent(const std::string &filename1,
+                                const std::string &filename2) const {
+#ifdef __APPLE__
+  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
+  return false;
+#else
+
+  // u8path is deprecated in C++20. The current target is C++17.
+  const std::filesystem::path src = std::filesystem::u8path(filename1);
+  const std::filesystem::path dst = std::filesystem::u8path(filename2);
+
+  std::error_code error_code;
+  return std::filesystem::equivalent(src, dst, error_code);
+#endif  // __APPLE__
+}
+
 bool FileUtil::AtomicRename(const std::string &from, const std::string &to) {
   return FileUtilSingleton::Get()->AtomicRename(from, to);
 }
@@ -370,6 +397,27 @@ bool FileUtilImpl::AtomicRename(const std::string &from,
   // http://www.weirdnet.nl/apple/rename.html
   return rename(from.c_str(), to.c_str()) == 0;
 #endif  // OS_WIN
+}
+
+bool FileUtil::CreateHardLink(const std::string &from, const std::string &to) {
+  return FileUtilSingleton::Get()->CreateHardLink(from, to);
+}
+
+bool FileUtilImpl::CreateHardLink(const std::string &from,
+                                  const std::string &to) {
+#ifdef __APPLE__
+  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
+  return false;
+#else
+
+  // u8path is deprecated in C++20. The current target is C++17.
+  const std::filesystem::path src = std::filesystem::u8path(from);
+  const std::filesystem::path dst = std::filesystem::u8path(to);
+
+  std::error_code error_code;
+  std::filesystem::create_hard_link(src, dst, error_code);
+  return !error_code;
+#endif  // __APPLE__
 }
 
 std::string FileUtil::JoinPath(

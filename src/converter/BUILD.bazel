@@ -795,6 +795,24 @@ cc_binary_mozc(
     ],
 )
 
+cc_library_mozc(
+    name = "quality_regression_test_lib",
+    testonly = 1,
+    srcs = ["quality_regression_test_lib.cc"],
+    hdrs = ["quality_regression_test_lib.h"],
+    deps = [
+        ":quality_regression_util",
+        "//base:logging",
+        "//base:port",
+        "//base:status",
+        "//data_manager",
+        "//engine",
+        "//testing:gunit",
+        "//testing:mozctest",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
 bzl_library(
     name = "quality_regression_test_bzl",
     srcs = ["quality_regression_test.bzl"],

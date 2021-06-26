@@ -78,8 +78,12 @@ class FileUtilInterface {
                         const std::string &to) const = 0;
   virtual bool IsEqualFile(const std::string &filename1,
                           const std::string &filename2) const = 0;
+  virtual bool IsEquivalent(const std::string &filename1,
+                            const std::string &filename2) const = 0;
   virtual bool AtomicRename(const std::string &from,
                             const std::string &to) const = 0;
+  virtual bool CreateHardLink(const std::string &from,
+                              const std::string &to) = 0;
   virtual bool GetModificationTime(const std::string &filename,
                                   FileTimeStamp *modified_at) const = 0;
 
@@ -123,9 +127,20 @@ class FileUtil {
   static bool IsEqualFile(const std::string &filename1,
                           const std::string &filename2);
 
+  // Compares the two filenames point to the same file. Symbolic/hard links are
+  // considered. This is a wrapper of std::filesystem::equivalent.
+  // IsEqualFile reads the contents of the files, but IsEquivalent does not.
+  static bool IsEquivalent(const std::string &filename1,
+                           const std::string &filename2);
+
   // Moves/Renames a file atomically.
   // Returns true if the file is renamed successfully.
   static bool AtomicRename(const std::string &from, const std::string &to);
+
+  // Creates a hard link. This returns false if the filesystem does not support
+  // hard link or the target file already exists.
+  // This is a wrapper of std::filesystem::create_hard_link.
+  static bool CreateHardLink(const std::string &from, const std::string &to);
 
   // Joins the give path components using the OS-specific path delimiter.
   static std::string JoinPath(const std::vector<absl::string_view> &components);

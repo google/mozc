@@ -46,6 +46,7 @@ def _ParseOption():
   parser = optparse.OptionParser()
   parser.add_option('--tag', dest='tag')
   parser.add_option('--mozc_version_template', dest='mozc_version_template')
+  parser.add_option('--data_version_override', dest='data_version_override')
   parser.add_option('--output', dest='output')
   return parser.parse_args()[0]
 
@@ -60,6 +61,8 @@ def main():
         key = matchobj.group(1)
         value = matchobj.group(2)
         data[key] = value
+  if opts.data_version_override:
+    data['DATA_VERSION'] = opts.data_version_override
 
   with open(opts.output, 'w') as f:
     f.write('.'.join((data['ENGINE_VERSION'], data['DATA_VERSION'], opts.tag)))

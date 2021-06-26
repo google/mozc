@@ -39,6 +39,7 @@ exports_files(
     visibility = [
         "//base:__pkg__",
         "//data_manager:__subpackages__",
+        "//tools:__subpackages__",
         "//tools/release:__pkg__",
     ],
 )
