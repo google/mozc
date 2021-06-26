@@ -27,3 +27,44 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
+#define MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "base/port.h"
+#include "base/status.h"
+#include "converter/quality_regression_util.h"
+#include "engine/engine.h"
+#include "testing/base/public/gunit.h"
+#include "testing/base/public/mozctest.h"
+
+namespace mozc {
+
+class QualityRegressionTest : public ::testing::Test {
+ protected:
+  static Status RunTestForPlatform(
+      uint32_t platform, quality_regression::QualityRegressionUtil *util);
+
+  // If |enabled| parameter is true, then actual conversion results are tested
+  // and any failure is reported as test failure.  If false, actual conversion
+  // results don't affect test results but closable issues are reported.
+  static void ExamineResults(
+      const bool enabled, uint32_t platform,
+      std::map<std::string, std::vector<std::pair<float, std::string>>>
+      *results);
+
+ private:
+  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
+};
+
+std::unique_ptr<EngineInterface> CreateEngine(const std::string &data_file_path,
+                                              const std::string &magic_number,
+                                              const std::string &engine_type);
+
+}  // namespace mozc
+
+#endif  // MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_

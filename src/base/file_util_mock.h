@@ -101,6 +101,13 @@ class FileUtilMock : public FileUtilInterface {
             files_[filename1] == files_[filename2]);
   }
 
+  bool IsEquivalent(const std::string &filename1,
+                    const std::string &filename2) const override {
+    const std::string canonical1 = At(canonical_paths_, filename1, filename1);
+    const std::string canonical2 = At(canonical_paths_, filename2, filename2);
+    return canonical1 == canonical2;
+  }
+
   bool AtomicRename(const std::string &from,
                     const std::string &to) const override {
     if (FileExists(from)) {
@@ -114,6 +121,27 @@ class FileUtilMock : public FileUtilInterface {
       return true;
     }
     return false;
+  }
+
+  bool CreateHardLink(const std::string &from,
+                      const std::string &to) override {
+    if (!FileExists(from) && !DirectoryExists(from)) {
+      // `from` doesn't exist.
+      return false;
+    }
+
+    if (FileExists(to) || DirectoryExists(to)) {
+      // `to` already exists.
+      return false;
+    }
+
+    canonical_paths_[to] = from;
+    if (FileExists(from)) {
+      CreateFile(to);
+    } else {
+      CreateDirectory(to);
+    }
+    return true;
   }
 
   bool GetModificationTime(const std::string &filename,
@@ -130,6 +158,15 @@ class FileUtilMock : public FileUtilInterface {
   mutable std::map<std::string, FileTimeStamp> files_;
   FileTimeStamp base_id_ {1'000'000'000};
   mutable std::map<std::string, bool> dirs_;
+  mutable std::map<std::string, std::string> canonical_paths_;
+
+ private:
+  template <typename T>
+  T At(const std::map<std::string, T> &map, const std::string &key,
+       const T &fallback_value) const {
+    auto it = map.find(key);
+    return it == map.end() ? fallback_value : it->second;
+  }
 };
 }  // namespace mozc
 

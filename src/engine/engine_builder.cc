@@ -29,6 +29,7 @@
 
 #include "engine/engine_builder.h"
 
+#include <filesystem>
 #include <memory>
 #include <utility>
 
@@ -61,11 +62,29 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   return EngineReloadResponse::UNKNOWN_ERROR;
 }
 
-bool AtomicCopyFile(const std::string &src_path, const std::string &dst_path) {
+bool LinkOrCopyFile(const std::string &src_path, const std::string &dst_path) {
+  if (FileUtil::IsEquivalent(src_path, dst_path)) {
+    // IsEquivalent() checks if src and dst are the same path or sym/hard link.
+    // This does not check the contents of the files.
+    return true;
+  }
+
   const std::string tmp_dst_path = dst_path + ".tmp";
-  const bool result = (FileUtil::CopyFile(src_path, tmp_dst_path) &&
-                       FileUtil::AtomicRename(tmp_dst_path, dst_path));
-  return result;
+  // Even if tmp_dst does not exist, Unlink() works but returns false.
+  FileUtil::Unlink(tmp_dst_path);
+  bool result = FileUtil::CreateHardLink(src_path, tmp_dst_path);
+
+  if (!result) {
+    // If an error happens, fallback to file copy.
+    result = FileUtil::CopyFile(src_path, tmp_dst_path);
+  }
+
+  if (!result) {
+    // If both of CreateHardLink and CopyFile failed, returns false.
+    return false;
+  }
+
+  return FileUtil::AtomicRename(tmp_dst_path, dst_path);
 }
 }  // namespace
 
@@ -91,7 +110,7 @@ class EngineBuilder::Preparator : public Thread {
     }
 
     if (request.has_install_location() &&
-        !AtomicCopyFile(request.file_path(), request.install_location())) {
+        !LinkOrCopyFile(request.file_path(), request.install_location())) {
       LOG(ERROR) << "Copy faild: " << request.Utf8DebugString();
       response_.set_status(EngineReloadResponse::INSTALL_FAILURE);
       return;

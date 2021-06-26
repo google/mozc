@@ -235,7 +235,10 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_data_version",
     srcs = ["gen_data_version.py"],
-    visibility = ["//data_manager:__subpackages__"],
+    visibility = [
+        "//data_manager:__subpackages__",
+        "//tools:__subpackages__",
+    ],
     deps = [":gen_data_version_lib"],
 )
 

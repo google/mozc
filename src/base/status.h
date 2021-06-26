@@ -113,6 +113,9 @@ inline Status OutOfRangeError(std::string message) {
   return Status(StatusCode::kOutOfRange, std::move(message));
 }
 
+// Returns an OK status, equivalent to a default constructed instance.
+inline Status OkStatus() { return Status(); }
+
 }  // namespace mozc
 
 #endif  // MOZC_BASE_STATUS_H_
