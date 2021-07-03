@@ -39,6 +39,18 @@ Unittests can be executed as follows.
 bazel test base:util_test --config oss_linux -c dbg
 ```
 
+### Build Mozc on other Linux environment
+
+To build Mozc on other Linux environment rather than the supported Docker
+environment, you might need to modify the following files.
+
+* src/WORKSPACE - build dependencies.
+* src/BUILD.ibus - build rules and include headers and libraries for IBus.
+* src/BUILD.qt - build rules and include headers and libraries  for Qt.
+* src/config.bzl - configuration of install paths, etc.
+* src/.bazelrc - compiler flags, etc.
+
+
 ## Build Mozc library for Android:
 
 Client code for Android apk is deprecated.
