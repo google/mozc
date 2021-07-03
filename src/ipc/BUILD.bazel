@@ -37,7 +37,6 @@ load(
     "cc_test_mozc",
     "select_mozc",
 )
-load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -70,17 +69,14 @@ cc_library_mozc(
 )
 
 proto_library(
-    name = "ipc_proto_full",
+    name = "ipc_proto",
     srcs = ["ipc.proto"],
     visibility = ["//visibility:private"],
 )
 
-portable_proto_library(
-    name = "ipc_proto",
-    config_string = "allow_all: true",
-    header_outs = ["ipc.pb.h"],
-    proto_deps = [":ipc_proto_full"],
-    visibility = ["//visibility:private"],
+cc_proto_library(
+    name = "ipc_cc_proto",
+    deps = [":ipc_proto"],
 )
 
 cc_library_mozc(
@@ -89,7 +85,7 @@ cc_library_mozc(
     hdrs = ["ipc_path_manager.h"],
     deps = [
         ":ipc_hdr",
-        ":ipc_proto",
+        ":ipc_cc_proto",
         "//base",
         "//base:file_stream",
         "//base:file_util",
@@ -125,8 +121,8 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":ipc",
+        ":ipc_cc_proto",
         ":ipc_path_manager",
-        ":ipc_proto",
         "//base",
         "//base:file_stream",
         "//base:file_util",
@@ -295,15 +291,13 @@ cc_test_mozc(
 )
 
 proto_library(
-    name = "window_info_proto_full",
+    name = "window_info_proto",
     srcs = ["window_info.proto"],
     visibility = ["//visibility:private"],
 )
 
-portable_proto_library(
-    name = "window_info_proto",
-    config_string = "allow_all: true",
-    header_outs = ["window_info.pb.h"],
-    proto_deps = [":window_info_proto_full"],
+cc_proto_library(
+    name = "window_info_cc_proto",
     visibility = ["//:__subpackages__"],
+    deps = [":window_info_proto"],
 )

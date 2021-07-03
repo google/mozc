@@ -45,7 +45,7 @@ cc_library_mozc(
     deps = [
         ":engine_interface",
         "//base:port",
-        "//protocol:engine_builder_proto",
+        "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -63,7 +63,7 @@ cc_library_mozc(
         "//base:port",
         "//base:thread",
         "//data_manager",
-        "//protocol:engine_builder_proto",
+        "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -80,7 +80,7 @@ cc_test_mozc(
         ":engine_builder",
         "//base:file_util",
         "//prediction:predictor_interface",
-        "//protocol:engine_builder_proto",
+        "//protocol:engine_builder_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",

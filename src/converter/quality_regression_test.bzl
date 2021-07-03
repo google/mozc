@@ -38,7 +38,10 @@ def quality_regression_test(name, src, deps, **kwargs):
         name = name + "@data",
         srcs = [src],
         outs = [name + ".cc"],
-        cmd = "$(location //converter:gen_quality_regression_test_data) $< > $@",
+        # TODO(b/130248329): Remove LANG when Python 3.7 or later becomes the default.
+        cmd = ("LANG=en_US.UTF8 " +
+               "$(location //converter:gen_quality_regression_test_data) " +
+               "$< > $@"),
         tools = ["//converter:gen_quality_regression_test_data"],
     )
 

@@ -37,23 +37,20 @@ load(
     "cc_test_mozc",
     "py_binary_mozc",
 )
-load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
 
-portable_proto_library(
-    name = "usage_stats_proto",
-    config = "//protocol:portable_proto.pbtxt",
-    header_outs = ["usage_stats.pb.h"],
-    proto_deps = [":usage_stats_proto_full"],
+cc_proto_library(
+    name = "usage_stats_cc_proto",
     visibility = [
         # For //session:session_usage_observer.
         "//session:__pkg__",
     ],
+    deps = [":usage_stats_proto"],
 )
 
 proto_library(
-    name = "usage_stats_proto_full",
+    name = "usage_stats_proto",
     srcs = ["usage_stats.proto"],
     visibility = ["//visibility:private"],
 )
@@ -66,7 +63,7 @@ cc_library_mozc(
     ],
     hdrs = ["usage_stats.h"],
     deps = [
-        ":usage_stats_proto",
+        ":usage_stats_cc_proto",
         ":usage_stats_uploader",
         "//base",
         "//base:logging",
@@ -85,7 +82,7 @@ cc_test_mozc(
     ],
     deps = [
         ":usage_stats",
-        ":usage_stats_proto",
+        ":usage_stats_cc_proto",
         "//base:port",
         "//base:system_util",
         "//config:stats_config_util",
@@ -139,7 +136,7 @@ cc_library_mozc(
     hdrs = ["usage_stats_testing_util.h"],
     deps = [
         ":usage_stats",
-        ":usage_stats_proto",
+        ":usage_stats_cc_proto",
         "//base",
         "//base:port",
         "//base:util",

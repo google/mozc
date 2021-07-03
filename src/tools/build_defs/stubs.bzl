@@ -45,10 +45,6 @@ def jspb_proto_library(**kwargs):
     _ignore = kwargs
     pass
 
-def portable_proto_library(name, proto_deps, deps = [], **kwargs):
-    _ignore = [kwargs]
-    native.cc_proto_library(name = name, deps = deps + proto_deps)
-
 def py2and3_test(**kwargs):
     native.py_test(**kwargs)
     pass

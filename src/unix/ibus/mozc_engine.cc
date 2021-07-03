@@ -200,13 +200,34 @@ bool GetSurroundingText(IBusEngine *engine,
     return false;
   }
 
-  const size_t selection_start = std::min(cursor_pos, anchor_pos);
+  // あい[うえ]お
+  //     ^1   ^2
+  //
+  // [, ]: selection boundary (not actual characters).
+  // 1: pos1 (cursor_pos or anchor_pos)
+  // 2: pos2 (pos1 + selection_length)
+  //
+  // surrounding_text = "あいうえお"
+  // preceding_text = "あい"
+  // selection_text = "うえ"
+  // following_text = "お"
+
+  const size_t pos1 = std::min(cursor_pos, anchor_pos);
   const size_t selection_length = abs(info->relative_selected_length);
-  const auto &selection_start_it = surrounding_text.begin() + selection_start;
-  const auto &selection_end_it = selection_start_it + selection_length;
-  info->preceding_text.assign(surrounding_text.begin(), selection_start_it);
-  info->selection_text.assign(selection_start_it, selection_end_it);
-  info->following_text.assign(selection_end_it, surrounding_text.end());
+  const size_t pos2 = pos1 + selection_length;
+  const size_t text_length = Util::CharsLen(surrounding_text);
+
+  if (text_length < pos2) {
+    LOG(ERROR) << "selection is out of surrounding_text: ('" << surrounding_text
+               << "', " << pos2 << ").";
+    return false;
+  }
+
+  Util::Utf8SubString(surrounding_text, 0, pos1, &(info->preceding_text));
+  Util::Utf8SubString(surrounding_text, pos1, selection_length,
+                      &(info->selection_text));
+  Util::Utf8SubString(surrounding_text, pos2, text_length - pos2,
+                      &(info->following_text));
   return true;
 }
 

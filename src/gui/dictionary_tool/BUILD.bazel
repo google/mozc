@@ -168,9 +168,9 @@ cc_qt_library_mozc(
         "//gui/base:msime_user_dictionary_importer",
         "//gui/base:singleton_window_helper",
         "//gui/config_dialog:combobox_delegate",
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
-        "//protocol:user_dictionary_storage_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
         "@com_google_absl//absl/memory",
     ],
 )

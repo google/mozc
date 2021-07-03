@@ -51,7 +51,7 @@ cc_library_mozc(
         "//engine",
         "//engine:engine_builder",
         "//engine:minimal_engine",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
         "//session",
         "//session:session_handler",
         "//session:session_usage_observer",

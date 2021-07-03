@@ -64,7 +64,7 @@ cc_library_mozc(
         "//base:version",
         "//ipc",
         "//ipc:named_event",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/memory",
     ] + select_mozc(
         ios = ["//base:mac_util"],
@@ -87,8 +87,8 @@ cc_test_mozc(
         "//base:util",
         "//base:version",
         "//ipc",
-        "//protocol:commands_proto",
-        "//protocol:renderer_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -110,8 +110,8 @@ cc_library_mozc(
         "//ipc",
         "//ipc:named_event",
         "//ipc:process_watch_dog",
-        "//protocol:config_proto",
-        "//protocol:renderer_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
     ],
@@ -133,7 +133,7 @@ cc_test_mozc(
         "//base:system_util",
         "//base:util",
         "//ipc:ipc_test_util",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
     ],
@@ -221,7 +221,7 @@ cc_library_mozc(
     hdrs = ["renderer_style_handler.h"],
     deps = [
         "//base:singleton",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
     ],
 )
 
@@ -232,7 +232,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":renderer_style_handler",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
     ],
 )
@@ -289,8 +289,8 @@ cc_library_mozc(
         "//client",
         "//config:stats_config_util",
         "//ipc",
-        "//protocol:config_proto",
-        "//protocol:renderer_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
         ":renderer_server",
         ":renderer_style_handler",
         ":table_layout",
@@ -417,7 +417,7 @@ cc_test_mozc(
         "//base:system_util",
         "//base:util",
         "//client:client_interface",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
@@ -467,9 +467,9 @@ cc_library_mozc(
 cc_library_mozc(
     name = "proto_wrapper",
     deps = [
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
-        "//protocol:renderer_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
     ],
 )
 

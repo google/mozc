@@ -44,6 +44,7 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -151,11 +152,12 @@ void QualityRegressionTest::ExamineResults(
   }
 }
 
-std::unique_ptr<EngineInterface> CreateEngine(const std::string &data_file_path,
-                                              const std::string &magic_number,
-                                              const std::string &engine_type) {
+std::unique_ptr<EngineInterface> CreateEngine(absl::string_view data_file_path,
+                                              absl::string_view magic_number,
+                                              absl::string_view engine_type) {
   std::unique_ptr<DataManager> data_manager(new DataManager);
-  const auto status = data_manager->InitFromFile(data_file_path, magic_number);
+  const auto status =
+      data_manager->InitFromFile(std::string(data_file_path), magic_number);
   if (status != DataManager::Status::OK) {
     LOG(ERROR) << "Failed to load " << data_file_path << ": "
                << DataManager::StatusCodeToString(status);

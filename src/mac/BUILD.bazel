@@ -118,9 +118,9 @@ objc_library_mozc(
         "Japanese.lproj/Config.xib",
     ],
     proto_deps = [
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
-        "//protocol:renderer_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
     ],
     tags = ["manual"],
     textual_hdrs = [
@@ -146,7 +146,7 @@ objc_library_mozc(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
     hdrs = ["GoogleJapaneseInputServer.h"],
-    proto_deps = ["//protocol:commands_proto"],
+    proto_deps = ["//protocol:commands_cc_proto"],
     tags = ["manual"],
     deps = [
         ":common",
@@ -159,7 +159,7 @@ objc_library_mozc(
     name = "keycode_map",
     srcs = ["KeyCodeMap.mm"],
     hdrs = ["KeyCodeMap.h"],
-    proto_deps = ["//protocol:commands_proto"],
+    proto_deps = ["//protocol:commands_cc_proto"],
     tags = ["manual"],
     textual_hdrs = [
         ":init_kanamap",

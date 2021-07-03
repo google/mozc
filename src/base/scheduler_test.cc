@@ -30,8 +30,10 @@
 #include "base/scheduler.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "base/logging.h"
 #include "base/unnamed_event.h"
@@ -41,12 +43,12 @@
 namespace mozc {
 namespace {
 
-const int32_t kTimeout = 30 * 1000;  // 30 sec.
-const int32_t kNoRandomDelay = 0;
-const int32_t kImmediately = 0;
-const int32_t kShortPeriod = 10;              // 10 millisec.
-const int32_t kMediumPeriod = 100;            // 100 millisec.
-const int32_t kTooLongTime = 24 * 60 * 1000;  // 24 hours.
+constexpr int32_t kTimeout = 30 * 1000;  // 30 sec.
+constexpr int32_t kNoRandomDelay = 0;
+constexpr int32_t kImmediately = 0;
+constexpr int32_t kShortPeriod = 10;              // 10 millisec.
+constexpr int32_t kMediumPeriod = 100;            // 100 millisec.
+constexpr int32_t kTooLongTime = 24 * 60 * 1000;  // 24 hours.
 
 class SchedulerTest : public testing::Test {
  public:
@@ -70,16 +72,16 @@ TEST_F(SchedulerTest, SimpleJob) {
   struct SharedInfo {
     UnnamedEvent first_event;
     UnnamedEvent second_event;
+    bool first_time = true;
   };
 
   class TestCallback {
    public:
     static bool Do(void *ptr) {
       SharedInfo *info = static_cast<SharedInfo *>(ptr);
-      static bool first_time = true;
-      if (first_time) {
+      if (info->first_time) {
         EXPECT_TRUE(info->first_event.Notify());
-        first_time = false;
+        info->first_time = false;
         return true;  // continue
       }
       EXPECT_TRUE(info->second_event.Notify());
@@ -102,18 +104,18 @@ TEST_F(SchedulerTest, RemoveJob) {
   struct SharedInfo {
     SharedInfo() : running(false) {}
     UnnamedEvent first_event;
-    volatile bool running;
+    bool first_time = true;
+    std::atomic<bool> running;
   };
 
   class TestCallback {
    public:
     static bool Do(void *ptr) {
       SharedInfo *info = static_cast<SharedInfo *>(ptr);
-      info->running = true;
-      static bool first_time = true;
-      if (first_time) {
+      info->running.store(true, std::memory_order_relaxed);
+      if (info->first_time) {
         EXPECT_TRUE(info->first_event.Notify());
-        first_time = false;
+        info->first_time = false;
       }
       return true;  // continue
     }
@@ -127,18 +129,18 @@ TEST_F(SchedulerTest, RemoveJob) {
                                         &TestCallback::Do, &info));
     // Make sure that the job is running.
     ASSERT_TRUE(info.first_event.Wait(kTimeout));
-    ASSERT_TRUE(info.running);
+    ASSERT_TRUE(info.running.load(std::memory_order_relaxed));
     // Job is removed here.
   }
 
-  info.running = false;
+  info.running.store(false, std::memory_order_relaxed);
 
   // The sleep time is arbitrary, but longer sleep time makes the assertion
   // below stronger. Feel free to shorten it.
   Util::Sleep(kMediumPeriod);
 
   // Job should not be running anymore.
-  EXPECT_FALSE(info.running);
+  EXPECT_FALSE(info.running.load(std::memory_order_relaxed));
 }
 
 TEST_F(SchedulerTest, Delay) {
@@ -178,16 +180,16 @@ TEST_F(SchedulerTest, RandomDelay) {
   struct SharedInfo {
     UnnamedEvent first_event;
     UnnamedEvent second_event;
+    bool first_time = true;
   };
 
   class TestCallback {
    public:
     static bool Do(void *ptr) {
       SharedInfo *info = static_cast<SharedInfo *>(ptr);
-      static bool first_time = true;
-      if (first_time) {
+      if (info->first_time) {
         EXPECT_TRUE(info->first_event.Notify());
-        first_time = false;
+        info->first_time = false;
         return true;  // continue
       }
       EXPECT_TRUE(info->second_event.Notify());
@@ -210,18 +212,25 @@ TEST_F(SchedulerTest, DontBlockOtherJobs) {
   struct SharedInfo {
     UnnamedEvent notify_event;
     UnnamedEvent quit_event;
+    UnnamedEvent finish_event;
+    bool first_time = true;
   };
   class BlockingCallback {
    public:
     static bool Do(void *ptr) {
       SharedInfo *info = static_cast<SharedInfo *>(ptr);
+      if (!info->first_time) {
+        return false;
+      }
       const bool succeeded = info->notify_event.Notify();
       EXPECT_TRUE(succeeded);
       if (!succeeded) {
         return false;
       }
       EXPECT_TRUE(info->quit_event.Wait(kTimeout));
-      return false;  // stop
+      EXPECT_TRUE(info->finish_event.Notify());
+      info->first_time = false;
+      return false;
     }
   };
 
@@ -230,7 +239,7 @@ TEST_F(SchedulerTest, DontBlockOtherJobs) {
     static bool Do(void *ptr) {
       UnnamedEvent *event = static_cast<UnnamedEvent *>(ptr);
       EXPECT_TRUE(event->Notify());
-      return false;  // stop
+      return false;
     }
   };
 
@@ -250,6 +259,8 @@ TEST_F(SchedulerTest, DontBlockOtherJobs) {
 
   // Unblock |blocking_job|.
   EXPECT_TRUE(info.quit_event.Notify());
+
+  ASSERT_TRUE(info.finish_event.Wait(kTimeout));
 }
 
 class NameCheckScheduler : public Scheduler::SchedulerInterface {

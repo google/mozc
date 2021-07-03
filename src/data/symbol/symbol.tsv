@@ -84,8 +84,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	（）	() 「」 かっこ	丸括弧
 記号	〔〕	() 「」 かっこ	甲括弧
 記号	［］	() 「」 かっこ	大括弧
-記号	〘〙	() か「」 っこ	二重甲括弧
-記号	〚〛	() か「」 っこ	二重大括弧
+記号	〘〙	() 「」 かっこ	二重甲括弧
+記号	〚〛	() 「」 かっこ	二重大括弧
 記号	｛｝	() 「」 かっこ	中括弧
 記号	〈〉	() 「」 かっこ 	山括弧
 記号	《》	() 「」 かっこ	二重山括弧
@@ -137,8 +137,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	⦿	まるなかぐろ まる ずけい	丸中黒		SYMBOL		U+29BF
 記号	◇	しかく だいや ひしがた ひし ずけい	ひしがた		SYMBOL
 記号	◆	しかく だいや ひしがた ひし ずけい	黒ひしがた		SYMBOL
-記号	□	しかく ずけい	四角		SYMBOL
-記号	■	しかく ずけい	黒四角		SYMBOL
+記号	□	しかく ずけい	四角		SYMBOL		U+25A1
+記号	■	しかく ずけい	黒四角		SYMBOL		U+25A0
 記号	△	さんかく ずけい	三角		SYMBOL
 記号	▲	さんかく ずけい	黒三角		SYMBOL
 記号	▽	さんかく ずけい ぎゃくさんかく	逆三角		SYMBOL
@@ -150,6 +150,15 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	﹅	ごま けんてん ぼうてん わきてん	圏点	ゴマ	SYMBOL		U+FE45
 記号	﹆	しろごま けんてん ぼうてん わきてん	圏点	白ゴマ	SYMBOL		U+FE46
 記号	※	こめ * こめじるし きごう ほし	米印		SYMBOL
+記号	▓	だーくしぇーど くろぬり しかく	ダークシェード		SYMBOL		U+2593
+記号	▢	しかく かどまる	角丸正方形		SYMBOL		U+25A2
+記号	▣	しかく いれこ	入れ子正方形		SYMBOL		U+25A3
+記号	▤	しかく よこぬり	横塗り正方形		SYMBOL		U+25A4
+記号	▥	しかく たてぬり	縦塗り正方形		SYMBOL		U+25A5
+記号	▦	しかく じゅうじぬり	十字塗り正方形		SYMBOL		U+25A6
+記号	▧	しかく ななめぬり	斜め塗り正方形＼		SYMBOL		U+25A7
+記号	▨	しかく ななめぬり	斜め塗り正方形／		SYMBOL		U+25A8
+記号	▩	しかく ななめじゅうじぬり	斜め十字塗り正方形		SYMBOL		U+25A9
 記号	〒	ゆうびん ゆうびんばんごう きごう	郵便番号		SYMBOL
 記号	→	やじるし  みぎや -> ー> みぎ	矢印	右	SYMBOL
 記号	←	やじるし ひだりや <- <ー ひだり	矢印	左	SYMBOL

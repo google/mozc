@@ -46,6 +46,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//config:config_handler",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
     ],
 )

@@ -41,6 +41,7 @@
 #include "engine/engine.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -55,15 +56,15 @@ class QualityRegressionTest : public ::testing::Test {
   static void ExamineResults(
       const bool enabled, uint32_t platform,
       std::map<std::string, std::vector<std::pair<float, std::string>>>
-      *results);
+          *results);
 
  private:
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
 };
 
-std::unique_ptr<EngineInterface> CreateEngine(const std::string &data_file_path,
-                                              const std::string &magic_number,
-                                              const std::string &engine_type);
+std::unique_ptr<EngineInterface> CreateEngine(absl::string_view data_file_path,
+                                              absl::string_view magic_number,
+                                              absl::string_view engine_type);
 
 }  // namespace mozc
 
