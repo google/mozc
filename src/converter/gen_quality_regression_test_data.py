@@ -38,20 +38,6 @@ import sys
 import xml.dom.minidom
 
 
-def EscapeString(s):
-  r"""escape the string with "\xXX" format.
-
-  We don't use encode('string_escape') because it doesn't escape ascii
-  characters.
-
-  Args:
-    s: a string to be escaped
-
-  Returns:
-    an escaped string.
-  """
-  return ''.join([r'\x%02X' % c for c in s.encode('utf-8')])
-
 _DISABLED = 'false'
 _ENABLED = 'true'
 
@@ -110,7 +96,9 @@ def GenerateHeader(files):
   for file in files:
     try:
       for enabled, line in ParseFile(file):
-        print(' {%s, "%s"},' % (enabled, EscapeString(line)))
+        # Escape characters: \ and " to \\ and \"
+        line = line.replace('\\', '\\\\').replace('"', '\\"')
+        print(' {%s, "%s"},' % (enabled, line))
     except Exception as e:  # pylint: disable=broad-except
       print('cannot open %s: %s' % (file, e))
       sys.exit(1)

@@ -38,7 +38,6 @@ load(
     "py_library_mozc",
     "select_mozc",
 )
-load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -69,7 +68,7 @@ cc_library_mozc(
         "//base:util",
         "//base:version",
         "//dictionary:pos_matcher_lib",
-        "//protocol:segmenter_data_proto",
+        "//protocol:segmenter_data_cc_proto",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -135,17 +134,15 @@ cc_library_mozc(
 )
 
 proto_library(
-    name = "dataset_proto_full",
+    name = "dataset_proto",
     srcs = ["dataset.proto"],
     visibility = ["//visibility:private"],
 )
 
-portable_proto_library(
-    name = "dataset_proto",
-    config = "//protocol:portable_proto.pbtxt",
-    header_outs = ["dataset.pb.h"],
-    proto_deps = [":dataset_proto_full"],
+cc_proto_library(
+    name = "dataset_cc_proto",
     visibility = ["//visibility:private"],
+    deps = [":dataset_proto"],
 )
 
 cc_library_mozc(
@@ -153,7 +150,7 @@ cc_library_mozc(
     srcs = ["dataset_writer.cc"],
     hdrs = ["dataset_writer.h"],
     deps = [
-        ":dataset_proto",
+        ":dataset_cc_proto",
         "//base:file_stream",
         "//base:logging",
         "//base:obfuscator_support",
@@ -168,7 +165,7 @@ cc_test_mozc(
     srcs = ["dataset_writer_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":dataset_proto",
+        ":dataset_cc_proto",
         ":dataset_writer",
         "//base:file_stream",
         "//base:file_util",
@@ -203,7 +200,7 @@ cc_library_mozc(
     srcs = ["dataset_reader.cc"],
     hdrs = ["dataset_reader.h"],
     deps = [
-        ":dataset_proto",
+        ":dataset_cc_proto",
         "//base:logging",
         "//base:obfuscator_support",
         "//base:port",

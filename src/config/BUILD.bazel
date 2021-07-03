@@ -53,7 +53,7 @@ cc_library_mozc(
         "//base:singleton",
         "//base:system_util",
         "//base:version",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
     ],
 )
 
@@ -72,7 +72,7 @@ cc_test_mozc(
         "//base:system_util",
         "//base:thread",
         "//base:util",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/container:flat_hash_set",
@@ -95,7 +95,7 @@ cc_library_mozc(
         ios = ["//base:mac_util"],
     ) + [
         "//base:port",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
     ],
 )
 
@@ -111,7 +111,7 @@ cc_test_mozc(
         "//base:singleton",
         "//base:system_util",
         "//base:win_api_test_helper",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
     ],
@@ -137,7 +137,7 @@ cc_library_mozc(
         "//base:port",
         "//base:singleton",
         "//base:util",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
         "//storage:lru_storage",
         "@com_google_absl//absl/memory",
     ],
@@ -153,7 +153,7 @@ cc_test_mozc(
         ":config_handler",
         "//base",
         "//base:system_util",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
     ],

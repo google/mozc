@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <functional>
 #include <map>
+#include <string>
 #include <utility>
 
 #include "base/clock.h"

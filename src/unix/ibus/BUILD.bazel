@@ -42,7 +42,6 @@ load(
     "IBUS_MOZC_PATH",
     "LINUX_MOZC_SERVER_DIRECTORY",
 )
-load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -81,7 +80,7 @@ cc_library_mozc(
     deps = [
         "//base:base",
         "//base:port",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
     ] + select_mozc(linux = ["@ibus//:ibus"]),
 )
 
@@ -100,7 +99,7 @@ cc_library_mozc(
         ":ibus_mozc_metadata",
         "//base:port",
         "//client:client",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
     ] + select_mozc(linux = ["@ibus//:ibus"]),
 )
 
@@ -184,8 +183,8 @@ cc_library_mozc(
         "//base:system_util",
         "//base:util",
         "//client",
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
         "//renderer:renderer_client",
         "//session:ime_switch_util",
         "//testing:gunit_prod",
@@ -195,19 +194,15 @@ cc_library_mozc(
 )
 
 proto_library(
-    name = "ibus_config_proto_full",
+    name = "ibus_config_proto",
     srcs = [
         "ibus_config.proto",
     ],
 )
 
-portable_proto_library(
-    name = "ibus_config_proto",
-    config_string = "allow_all: true",
-    header_outs = [
-        "ibus_config.pb.h",
-    ],
-    proto_deps = ["ibus_config_proto_full"],
+cc_proto_library(
+    name = "ibus_config_cc_proto",
+    deps = ["ibus_config_proto"],
 )
 
 cc_library_mozc(
@@ -219,7 +214,7 @@ cc_library_mozc(
     ],
     copts = ["-Wno-unused-variable"],
     deps = [
-        ":ibus_config_proto",
+        ":ibus_config_cc_proto",
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
@@ -274,7 +269,7 @@ cc_test_mozc(
         "//client",
         "//client:client_mock",
         "//composer:key_event_util",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
         "//testing:gunit_main",
     ],
 )
@@ -291,7 +286,7 @@ cc_library_mozc(
     ),
     deps = [
         "//base:coordinates",
-        "//protocol:renderer_proto",
+        "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
         "//renderer:unix_const",

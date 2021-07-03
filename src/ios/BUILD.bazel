@@ -50,9 +50,9 @@ cc_library_mozc(
         "//engine",
         "//engine:engine_builder",
         "//engine:minimal_engine",
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
-        "//protocol:user_dictionary_storage_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:user_dictionary_storage_cc_proto",
         "//session",
         "//session:session_handler",
         "//session:session_handler_interface",
@@ -70,7 +70,7 @@ cc_binary_mozc(
         "//base:init_mozc_buildtool",
         "//base:logging",
         "//base:util",
-        "//protocol:candidates_proto",
+        "//protocol:candidates_cc_proto",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -82,8 +82,8 @@ cc_library_mozc(
     deps = [
         "//base:mutex",
         "//base:port",
-        "//protocol:commands_proto",
-        "//protocol:config_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
         "@com_google_absl//absl/base:core_headers",
     ],
 )

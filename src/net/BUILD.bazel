@@ -33,7 +33,6 @@ load(
     "cc_library_mozc",
     "cc_test_mozc",
 )
-load("//tools/build_defs:stubs.bzl", "portable_proto_library")
 
 package_group(
     name = "self_and_friends",
@@ -96,27 +95,25 @@ cc_library_mozc(
     ],
 )
 
-portable_proto_library(
-    name = "json_util_test_proto",
+cc_proto_library(
+    name = "json_util_test_cc_proto",
     testonly = 1,
-    config = "//protocol:portable_proto.pbtxt",
-    header_outs = ["json_util_test.pb.h"],
-    proto_deps = [":json_util_test_proto_full"],
     visibility = ["//visibility:private"],
+    deps = [":json_util_test_proto"],
 )
 
 proto_library(
-    name = "json_util_test_proto_full",
+    name = "json_util_test_proto",
     testonly = 1,
     srcs = ["json_util_test.proto"],
     visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
-    name = "json_util_test_proto_full_cc_proto",
+    name = "json_util_test_proto_cc_proto",
     testonly = 1,
     visibility = ["//visibility:private"],
-    deps = [":json_util_test_proto_full"],
+    deps = [":json_util_test_proto"],
 )
 
 cc_test_mozc(
@@ -125,7 +122,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":json_util",
-        ":json_util_test_proto",
+        ":json_util_test_cc_proto",
         ":jsoncpp",
         "//base:logging",
         "//base:port",

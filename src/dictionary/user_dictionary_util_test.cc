@@ -369,16 +369,15 @@ TEST(UserDictionaryUtilTest, DeleteDictionary) {
   storage.Clear();
   storage.add_dictionaries()->set_id(1);
   storage.add_dictionaries()->set_id(2);
-  UserDictionary *expected_deleted_dictionary = storage.mutable_dictionaries(0);
   UserDictionary *deleted_dictionary;
   EXPECT_TRUE(UserDictionaryUtil::DeleteDictionary(&storage, 1, nullptr,
                                                    &deleted_dictionary));
   ASSERT_EQ(1, storage.dictionaries_size());
   EXPECT_EQ(2, storage.dictionaries(0).id());
-  EXPECT_TRUE(expected_deleted_dictionary == deleted_dictionary);
+  EXPECT_EQ(1, deleted_dictionary->id());
 
   // Delete to avoid memoary leaking.
-  delete expected_deleted_dictionary;
+  delete deleted_dictionary;
 }
 
 }  // namespace mozc

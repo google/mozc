@@ -93,7 +93,7 @@ cc_qt_library_mozc(
         "//config:config_handler",
         "//gui/base:gui_base",
         "//gui/base:singleton_window_helper",
-        "//protocol:config_proto",
+        "//protocol:config_cc_proto",
     ],
 )
 
