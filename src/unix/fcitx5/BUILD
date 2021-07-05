@@ -17,7 +17,7 @@ cc_library_mozc(
         "//base:util",
         "//client:client",
         "//session:ime_switch_util",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
     ]
 )
 
@@ -46,7 +46,7 @@ cc_library_mozc(
         "//base:process",
         "//base:run_level",
         "//base:util",
-        "//protocol:commands_proto",
+        "//protocol:commands_cc_proto",
         "//client:client_interface",
         "@fcitx5//:fcitx5",
     ],
@@ -65,8 +65,8 @@ cc_library_mozc(
     deps = [
         "//base:logging",
         "//base:port",
-        "//protocol:config_proto",
-        "//protocol:commands_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:commands_cc_proto",
         "@fcitx5//:fcitx5",
     ],
 )
