@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -37,6 +36,10 @@ load(
     "py_library_mozc",
 )
 
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
 py_library_mozc(
     name = "replace_macros_lib",
     srcs = ["replace_macros.py"],
@@ -64,7 +67,6 @@ py_test(
 py_library_mozc(
     name = "code_generator_util",
     srcs = ["code_generator_util.py"],
-    visibility = ["//:__subpackages__"],
     deps = [],
 )
 
@@ -88,7 +90,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "mozc_version",
     srcs = ["mozc_version.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":mozc_version_lib"],
 )
 
@@ -108,27 +109,23 @@ py_test(
 py_binary_mozc(
     name = "replace_version",
     srcs = ["replace_version.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":mozc_version_lib"],
 )
 
 py_library_mozc(
     name = "util",
     srcs = ["util.py"],
-    visibility = ["//:__subpackages__"],
     deps = [],
 )
 
 py_library_mozc(
     name = "zlib_util_lib",
     srcs = ["zlib_util.py"],
-    visibility = ["//:__subpackages__"],
 )
 
 py_binary_mozc(
     name = "zlib_util",
     srcs = ["zlib_util.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":zlib_util_lib"],
 )
 
@@ -140,7 +137,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "embed_pathname",
     srcs = ["embed_pathname.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":embed_pathname_lib"],
 )
 
@@ -153,14 +149,12 @@ py_library_mozc(
 py_binary_mozc(
     name = "embed_file",
     srcs = ["embed_file.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":embed_file_lib"],
 )
 
 py_library_mozc(
     name = "serialized_string_array_builder",
     srcs = ["serialized_string_array_builder.py"],
-    visibility = ["//:__subpackages__"],
     deps = [],
 )
 
@@ -172,7 +166,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "tweak_info_plist",
     srcs = ["tweak_info_plist.py"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":mozc_version_lib",
         ":tweak_data",
@@ -182,7 +175,6 @@ py_binary_mozc(
 py_binary_mozc(
     name = "tweak_info_plist_strings",
     srcs = ["tweak_info_plist_strings.py"],
-    visibility = ["//:__subpackages__"],
     deps = [
         ":tweak_data",
     ],
@@ -191,13 +183,11 @@ py_binary_mozc(
 py_binary_mozc(
     name = "tweak_macinstaller_script",
     srcs = ["tweak_macinstaller_script.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":mozc_version_lib"],
 )
 
 py_binary_mozc(
     name = "tweak_pkgproj",
     srcs = ["tweak_pkgproj.py"],
-    visibility = ["//:__subpackages__"],
     deps = [":mozc_version_lib"],
 )

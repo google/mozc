@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -46,6 +45,7 @@ exports_files([
     "dictionary09.txt",
     "id.def",
     "reading_correction.tsv",
+    "regression_test_result.tsv",
     "suffix.txt",
     "suggestion_filter.txt",
 ])

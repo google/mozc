@@ -7,6 +7,8 @@ package(
 # packages="glib-2.0 gobject-2.0 gthread-2.0 gtk+-2.0 gdk-2.0"
 # copts, hdrs, indludes: pkg-config --cflags $packages
 # linkopts: pkg-config --libs-only-l $packages
+#
+# The default settings are for the supported Docker environment (Ubuntu 20.04).
 
 cc_library(
     name = "gtk2",
