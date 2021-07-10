@@ -1,4 +1,4 @@
-#	status	input	output	command	argument	version
+# status	input	output	command	argument	version
 OK:	これはうれしいごさんです	これは嬉しい誤算です	Conversion Match	誤算	2.26.4423
 OK:	これはだめだというし	これはだめだと言うし	Conversion Not Match	シ	2.26.4423
 OK:	これはだめだとおもうから	これはだめだと思うから	Conversion Match	思うから	2.26.4423
