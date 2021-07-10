@@ -17,6 +17,7 @@
 /docker/ubuntu20.04/src/
 
 # Temporary working dirs
+/oss
 /src-*
 /src_*
 

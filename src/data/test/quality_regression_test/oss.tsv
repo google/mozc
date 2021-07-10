@@ -1,0 +1,50 @@
+# label	key	value	command
+oss_issue12	これはうれしいごさんです	誤算	Conversion Match
+oss_issue12	これはだめだというし	シ	Conversion Not Match
+oss_issue12	これはだめだとおもうから	思うから	Conversion Match
+oss_issue12	きごころのしれたなかなので	田中	Conversion Not Match
+oss_issue12	かいごはほんとうにたいへんです	改悟	Conversion Not Match
+oss_issue12	かいごはほんとうにたいへんです	タイ	Conversion Not Match
+oss_issue12	でこめをおくったら	凸	Conversion Not Match
+oss_issue12	さとるくんにたのみましょう	読	Conversion Not Match
+oss_issue12	そのことからもわかるように	その子と	Conversion Not Match
+oss_issue12	にほんちーむのえんぎはこのあとすぐです	演技派	Conversion Not Match
+oss_issue12	ぼーりんぐじょうのちかくです	ボーリング場	Conversion Match
+oss_issue12	しょっぱいあじがした	下	Conversion Not Match
+oss_issue12	とんでもないやつがあらわれた	洗われた	Conversion Not Match
+oss_issue12	さるのなきごえがすごい	申	Conversion Not Match
+oss_issue12	ほしゅてきなめんもあるね	麺	Conversion Not Match
+oss_issue12	ひまわりがさいている	最低	Conversion Not Match
+oss_issue12	いがもたれる	伊賀	Conversion Not Match
+oss_issue12	どんなふうにやったのか	封	Conversion Not Match
+oss_issue12	でびあんをつかっています	デビアン	Conversion Match
+oss_issue12	たたかいにかつには	勝つ	Conversion Match
+oss_issue12	ぶいぶいいわしている	岩	Conversion Not Match
+oss_issue12	せっかくのおさそいをむげにはできない	無碍	Conversion Not Match
+oss_issue12	こんなときこそおちつかないと	婚	Conversion Not Match
+oss_issue12	そういうわけだったのか	そう言う	Conversion Not Match
+oss_issue12	じろっとにらみつけた	ジロット	Conversion Not Match
+oss_issue12	このひぼくらはきんじょにいった	被	Conversion Not Match
+oss_issue12	こっちにこい	濃い	Conversion Not Match
+oss_issue12	かみわざとしかいいようがない	歯科	Conversion Not Match
+oss_issue12	しかってほしいときもある	歯科	Conversion Not Match
+oss_issue12	しかられてないている	テイル	Conversion Not Match
+oss_issue12	あれたしょうがっこうだ	荒れた	Conversion Match
+oss_issue12	もどかしいおもいです	重い	Conversion Not Match
+oss_issue12	おれかかったえだをもとにもどす	折れかかった	Conversion Match
+oss_issue12	どんかんなのできづいてないようだ	ようだ	Conversion Match
+oss_issue12	おばあちゃんのはなしはいつもながい	話は	Conversion Match
+oss_issue12	えんこーどってそんなにむつかしいか	エンコード	Conversion Match
+oss_issue12	とうぜんそのようなこともそうていしています	そのような	Conversion Match
+oss_issue12	はやめにごはんをたいておいた	早めに	Conversion Match
+oss_issue12	はやめにごはんをたいておいた	炊いて	Conversion Match
+oss_issue12	こづくりがさかんなきせつです	子作り	Conversion Match
+oss_issue12	あけましておめでとうございます	開けまして	Conversion Not Match
+oss_issue12	よみにくいじをかくのでこまっている	字を書く	Conversion Match
+oss_issue12	ひとごみにながされてかわっていく	変わっていく	Conversion Match
+oss_issue12	ぼうせんいっぽうになっている	防戦一方	Conversion Match
+oss_issue12	ありのすのようにのびている	有野	Conversion Not Match
+oss_issue12	ふめんをよめないのがじゃくてんです	譜面	Conversion Match
+oss_issue12	せがずいぶんたかい	背が	Conversion Match
+oss_issue12	かいさつぐちでてをふった	振った	Conversion Match
+oss_issue12	ぜいたくをいえばきりがないけど	霧	Conversion Not Match

@@ -4,6 +4,8 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
+# The default settings are for the supported Docker environment (Ubuntu 20.04).
+
 cc_library(
     name = "qt",
     hdrs = glob([

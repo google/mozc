@@ -57,12 +57,9 @@ int main(int argc, char **argv) {
   for (size_t i = 0; i < items.size(); ++i) {
     std::string actual_value;
     const bool result = util.ConvertAndTest(items[i], &actual_value);
-    if (result) {
-      std::cout << "OK:\t" << items[i].OutputAsTSV() << std::endl;
-    } else {
-      std::cout << "FAILED:\t" << items[i].OutputAsTSV() << "\t" << actual_value
-                << std::endl;
-    }
+    std::cout << (result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
+              << actual_value << "\t" << items[i].command << "\t"
+              << items[i].expected_value << "\t" << std::endl;
   }
 
   return 0;

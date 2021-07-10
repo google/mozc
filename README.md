@@ -56,10 +56,10 @@ License
 
 All Mozc code written by Google is released under
 [The BSD 3-Clause License](http://opensource.org/licenses/BSD-3-Clause).
-For thrid party code under [src/third_party](src/third_party) directory,
+For third party code under [src/third_party](src/third_party) directory,
 see each sub directory to find the copyright notice.  Note also that
 outside [src/third_party](src/third_party) following directories contain
-thrid party code.
+third party code.
 
 ### [src/data/dictionary_oss/](src/data/dictionary_oss)
 Mixed.

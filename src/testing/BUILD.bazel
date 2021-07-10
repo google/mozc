@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -133,11 +132,10 @@ cc_library_mozc(
         "base/public/gmock.h",
         "base/public/gunit.h",
     ],
-    deps = select_mozc(
-        default = ["//testing/base/public:gunit_for_library_testonly"],
-        ios = ["//testing/base/public:gunit_for_library_testonly"],
-        oss = ["@gtest//:gtest"],
-    ) + [":googletest"],
+    deps = [
+        ":googletest",
+        "@gtest//:gtest",
+    ],
 )
 
 cc_library_mozc(
@@ -159,7 +157,7 @@ cc_library_mozc(
             "@com_google_absl//absl/flags:flag",
             "//base:util",
         ],
-        default = ["//testing/base/public:gunit_for_library_testonly"],
+        default = ["@gtest//:gtest"],
     ),
 )
 

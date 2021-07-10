@@ -51,15 +51,17 @@ namespace mozc {
 namespace quality_regression {
 namespace {
 
-const char kConversionExpect[] = "Conversion Expected";
-const char kConversionNotExpect[] = "Conversion Not Expected";
-const char kReverseConversionExpect[] = "ReverseConversion Expected";
-const char kReverseConversionNotExpect[] = "ReverseConversion Not Expected";
+constexpr char kConversionExpect[] = "Conversion Expected";
+constexpr char kConversionNotExpect[] = "Conversion Not Expected";
+constexpr char kConversionMatch[] = "Conversion Match";
+constexpr char kConversionNotMatch[] = "Conversion Not Match";
+constexpr char kReverseConversionExpect[] = "ReverseConversion Expected";
+constexpr char kReverseConversionNotExpect[] = "ReverseConversion Not Expected";
 // For now, suggestion and prediction are using same implementation
-const char kPredictionExpect[] = "Prediction Expected";
-const char kPredictionNotExpect[] = "Prediction Not Expected";
-const char kSuggestionExpect[] = "Suggestion Expected";
-const char kSuggestionNotExpect[] = "Suggestion Not Expected";
+constexpr char kPredictionExpect[] = "Prediction Expected";
+constexpr char kPredictionNotExpect[] = "Prediction Not Expected";
+constexpr char kSuggestionExpect[] = "Suggestion Expected";
+constexpr char kSuggestionNotExpect[] = "Suggestion Not Expected";
 
 // copied from evaluation/quality_regression/evaluator.cc
 int GetRank(const std::string &value, const Segments *segments,
@@ -123,15 +125,23 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 bool QualityRegressionUtil::TestItem::ParseFromTSV(const std::string &line) {
   std::vector<absl::string_view> tokens;
   Util::SplitStringUsing(line, "\t", &tokens);
-  if (tokens.size() < 6) {
+  if (tokens.size() < 4) {
     return false;
   }
   label.assign(tokens[0].data(), tokens[0].size());
   key.assign(tokens[1].data(), tokens[1].size());
   TextNormalizer::NormalizeText(tokens[2], &expected_value);
   command.assign(tokens[3].data(), tokens[3].size());
-  expected_rank = NumberUtil::SimpleAtoi(tokens[4]);
-  NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
+  if (tokens.size() > 4) {
+    expected_rank = NumberUtil::SimpleAtoi(tokens[4]);
+  } else {
+    expected_rank = 0;
+  }
+  if (tokens.size() > 5) {
+    NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
+  } else {
+    accuracy = 1.0;
+  }
   platform = 0;
   if (tokens.size() >= 7) {
     std::vector<absl::string_view> platforms;
@@ -194,7 +204,8 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   composer::Table table;
 
-  if (command == kConversionExpect || command == kConversionNotExpect) {
+  if (command == kConversionExpect || command == kConversionNotExpect ||
+      command == kConversionMatch || command == kConversionNotMatch) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest request(&composer, request_.get(), config_.get());
@@ -226,6 +237,13 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   for (size_t i = 0; i < segments_->segments_size(); ++i) {
     *actual_value += segments_->segment(i).candidate(0).value;
+  }
+
+  if (command == kConversionMatch) {
+    return (actual_value->find(expected_value) != std::string::npos);
+  }
+  if (command == kConversionNotMatch) {
+    return (actual_value->find(expected_value) == std::string::npos);
   }
 
   const int32_t actual_rank = GetRank(expected_value, segments_.get(), 0, 0);
