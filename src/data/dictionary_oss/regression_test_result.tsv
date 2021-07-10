@@ -1,0 +1,50 @@
+#	status	input	output	command	argument	version
+OK:	これはうれしいごさんです	これは嬉しい誤算です	Conversion Match	誤算	2.26.4423
+OK:	これはだめだというし	これはだめだと言うし	Conversion Not Match	シ	2.26.4423
+OK:	これはだめだとおもうから	これはだめだと思うから	Conversion Match	思うから	2.26.4423
+OK:	きごころのしれたなかなので	気心のしれた中なので	Conversion Not Match	田中	2.26.4423
+OK:	かいごはほんとうにたいへんです	介護は本当に大変です	Conversion Not Match	改悟	2.26.4423
+OK:	かいごはほんとうにたいへんです	介護は本当に大変です	Conversion Not Match	タイ	2.26.4423
+OK:	でこめをおくったら	デコメを送ったら	Conversion Not Match	凸	2.26.4423
+OK:	さとるくんにたのみましょう	さとるくんに頼みましょう	Conversion Not Match	読	2.26.4423
+OK:	そのことからもわかるように	そのことからもわかるように	Conversion Not Match	その子と	2.26.4423
+OK:	にほんちーむのえんぎはこのあとすぐです	日本チームの演技はこのあとすぐです	Conversion Not Match	演技派	2.26.4423
+OK:	ぼーりんぐじょうのちかくです	ボーリング場の近くです	Conversion Match	ボーリング場	2.26.4423
+OK:	しょっぱいあじがした	しょっぱい味がした	Conversion Not Match	下	2.26.4423
+OK:	とんでもないやつがあらわれた	とんでもないやつが現れた	Conversion Not Match	洗われた	2.26.4423
+OK:	さるのなきごえがすごい	猿の鳴き声がすごい	Conversion Not Match	申	2.26.4423
+FAILED:	ほしゅてきなめんもあるね	保守的な麺もあるね	Conversion Not Match	麺	2.26.4423
+OK:	ひまわりがさいている	ひまわりが咲いている	Conversion Not Match	最低	2.26.4423
+OK:	いがもたれる	いが持たれる	Conversion Not Match	伊賀	2.26.4423
+OK:	どんなふうにやったのか	どんなふうにやったのか	Conversion Not Match	封	2.26.4423
+FAILED:	でびあんをつかっています	デビ案を使っています	Conversion Match	デビアン	2.26.4423
+OK:	たたかいにかつには	戦いに勝つには	Conversion Match	勝つ	2.26.4423
+OK:	ぶいぶいいわしている	ブイブイいわしている	Conversion Not Match	岩	2.26.4423
+FAILED:	せっかくのおさそいをむげにはできない	せっかくのお誘いを無碍にはできない	Conversion Not Match	無碍	2.26.4423
+OK:	こんなときこそおちつかないと	こんな時こそ落ち着かないと	Conversion Not Match	婚	2.26.4423
+OK:	そういうわけだったのか	そういうわけだったのか	Conversion Not Match	そう言う	2.26.4423
+OK:	じろっとにらみつけた	ジロっと睨みつけた	Conversion Not Match	ジロット	2.26.4423
+OK:	このひぼくらはきんじょにいった	この日僕らは近所に行った	Conversion Not Match	被	2.26.4423
+FAILED:	こっちにこい	こっちに濃い	Conversion Not Match	濃い	2.26.4423
+OK:	かみわざとしかいいようがない	神業としか言いようがない	Conversion Not Match	歯科	2.26.4423
+OK:	しかってほしいときもある	叱ってほしいときもある	Conversion Not Match	歯科	2.26.4423
+OK:	しかられてないている	叱られて泣いている	Conversion Not Match	テイル	2.26.4423
+OK:	あれたしょうがっこうだ	荒れた小学校だ	Conversion Match	荒れた	2.26.4423
+OK:	もどかしいおもいです	もどかしい思いです	Conversion Not Match	重い	2.26.4423
+FAILED:	おれかかったえだをもとにもどす	俺か買った枝をもとに戻す	Conversion Match	折れかかった	2.26.4423
+OK:	どんかんなのできづいてないようだ	鈍感なので気づいてないようだ	Conversion Match	ようだ	2.26.4423
+OK:	おばあちゃんのはなしはいつもながい	おばあちゃんの話はいつも長い	Conversion Match	話は	2.26.4423
+OK:	えんこーどってそんなにむつかしいか	エンコードってそんなに難しいか	Conversion Match	エンコード	2.26.4423
+OK:	とうぜんそのようなこともそうていしています	当然そのようなことも想定しています	Conversion Match	そのような	2.26.4423
+OK:	はやめにごはんをたいておいた	早めにご飯を炊いておいた	Conversion Match	早めに	2.26.4423
+OK:	はやめにごはんをたいておいた	早めにご飯を炊いておいた	Conversion Match	炊いて	2.26.4423
+OK:	こづくりがさかんなきせつです	子作りが盛んな季節です	Conversion Match	子作り	2.26.4423
+OK:	あけましておめでとうございます	あけましておめでとうございます	Conversion Not Match	開けまして	2.26.4423
+OK:	よみにくいじをかくのでこまっている	読みにくい字を書くので困っている	Conversion Match	字を書く	2.26.4423
+OK:	ひとごみにながされてかわっていく	人混みに流されて変わっていく	Conversion Match	変わっていく	2.26.4423
+FAILED:	ぼうせんいっぽうになっている	防戦一報になっている	Conversion Match	防戦一方	2.26.4423
+OK:	ありのすのようにのびている	アリの巣のように伸びている	Conversion Not Match	有野	2.26.4423
+OK:	ふめんをよめないのがじゃくてんです	譜面を読めないのが弱点です	Conversion Match	譜面	2.26.4423
+OK:	せがずいぶんたかい	背が随分高い	Conversion Match	背が	2.26.4423
+FAILED:	かいさつぐちでてをふった	改札口で手を降った	Conversion Match	振った	2.26.4423
+FAILED:	ぜいたくをいえばきりがないけど	贅沢を言えば霧がないけど	Conversion Not Match	霧	2.26.4423
