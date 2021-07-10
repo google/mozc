@@ -4,11 +4,11 @@ Contributing Guide
 ## Pull Requests
 **Pull requests to the Mozc project are limited to the specific directories.**
 
-Files and directories we may accept pull requests.
-* files in the top directory
-* docker/
-* docs/
-* src/data/test/quality_regression/test/
+Files and directories we may accept pull requests:
+* files in the [top directory](https://github.com/google/mozc/tree/master/)
+* [docker/](https://github.com/google/mozc/tree/master/docker/)
+* [docs/](https://github.com/google/mozc/tree/master/docs/)
+* [src/data/test/quality_regression_test/](https://github.com/google/mozc/tree/master/src/data/test/quality_regression_test/)
 
 Although Google company policy certainly allows Mozc team to accept pull
 requests, to do so Mozc team needs to move all Mozc source files into
