@@ -94,6 +94,7 @@ by both GYP and Bazel as much as possible, new targets will be supported by
 Bazel only.
 
 Targets only for Bazel:
+* AUX dictionary (//data/dictionary_oss:aux_dictionary)
 * Zip code conversion (//server:mozc_server)
 * Qt-based candidate window (//renderer:mozc_renderer)
 * Build rules for icons (//unix/icons)
