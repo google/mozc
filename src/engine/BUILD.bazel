@@ -196,6 +196,17 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "eval_engine_factory",
+    srcs = ["eval_engine_factory.cc"],
+    hdrs = ["eval_engine_factory.h"],
+    deps = [
+        "//data_manager",
+        "//engine",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
     name = "google_engine_factory",
     hdrs = ["google_engine_factory.h"],
     visibility = [

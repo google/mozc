@@ -27,39 +27,19 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
-#define MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
+#ifndef MOZC_ENGINE_EVAL_ENGINE_FACTORY_H_
+#define MOZC_ENGINE_EVAL_ENGINE_FACTORY_H_
 
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "base/port.h"
-#include "base/status.h"
-#include "converter/quality_regression_util.h"
-#include "testing/base/public/gunit.h"
-#include "testing/base/public/mozctest.h"
+#include "engine/engine.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
-class QualityRegressionTest : public ::testing::Test {
- protected:
-  static Status RunTestForPlatform(
-      uint32_t platform, quality_regression::QualityRegressionUtil *util);
-
-  // If |enabled| parameter is true, then actual conversion results are tested
-  // and any failure is reported as test failure.  If false, actual conversion
-  // results don't affect test results but closable issues are reported.
-  static void ExamineResults(
-      const bool enabled, uint32_t platform,
-      std::map<std::string, std::vector<std::pair<float, std::string>>>
-          *results);
-
- private:
-  const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
-};
+mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
+    absl::string_view data_file_path,
+    absl::string_view data_type,
+    absl::string_view engine_type);
 
 }  // namespace mozc
 
-#endif  // MOZC_CONVERTER_QUALITY_REGRESSION_TEST_LIB_H_
+#endif  // MOZC_ENGINE_EVAL_ENGINE_FACTORY_H_

@@ -41,10 +41,7 @@
 #include "base/port.h"
 #include "base/status.h"
 #include "converter/quality_regression_util.h"
-#include "data_manager/data_manager.h"
-#include "engine/engine.h"
 #include "absl/strings/str_format.h"
-#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -150,26 +147,5 @@ void QualityRegressionTest::ExamineResults(
                 << " cases";
     }
   }
-}
-
-std::unique_ptr<EngineInterface> CreateEngine(absl::string_view data_file_path,
-                                              absl::string_view magic_number,
-                                              absl::string_view engine_type) {
-  std::unique_ptr<DataManager> data_manager(new DataManager);
-  const auto status =
-      data_manager->InitFromFile(std::string(data_file_path), magic_number);
-  if (status != DataManager::Status::OK) {
-    LOG(ERROR) << "Failed to load " << data_file_path << ": "
-               << DataManager::StatusCodeToString(status);
-    return nullptr;
-  }
-  if (engine_type == "desktop") {
-    return Engine::CreateDesktopEngine(std::move(data_manager)).value();
-  }
-  if (engine_type == "mobile") {
-    return Engine::CreateMobileEngine(std::move(data_manager)).value();
-  }
-  LOG(ERROR) << "Invalid engine type: " << engine_type;
-  return nullptr;
 }
 }  // namespace mozc

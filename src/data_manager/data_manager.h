@@ -62,6 +62,7 @@ class DataManager : public DataManagerInterface {
   };
 
   static std::string StatusCodeToString(Status code);
+  static absl::string_view GetDataSetMagicNumber(absl::string_view type);
 
   DataManager();
   ~DataManager() override;

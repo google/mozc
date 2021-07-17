@@ -27,48 +27,38 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>  // NOLINT
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "base/init_mozc.h"
-#include "base/util.h"
-#include "converter/quality_regression_util.h"
 #include "engine/eval_engine_factory.h"
-#include "absl/flags/flag.h"
 
-ABSL_FLAG(std::string, test_file, "", "regression test file");
-ABSL_FLAG(std::string, data_file, "", "engine data file");
-ABSL_FLAG(std::string, data_type, "", "engine data type");
-ABSL_FLAG(std::string, engine_type, "desktop", "engine type");
+#include <string>
 
-using mozc::Engine;
-using mozc::quality_regression::QualityRegressionUtil;
+#include "data_manager/data_manager.h"
+#include "engine/engine.h"
+#include "absl/strings/str_cat.h"
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
+namespace mozc {
 
-  mozc::StatusOr<std::unique_ptr<Engine>> result =
-      mozc::CreateEvalEngine(absl::GetFlag(FLAGS_data_file),
-                             absl::GetFlag(FLAGS_data_type),
-                             absl::GetFlag(FLAGS_engine_type));
-  if (!result.ok()) {
-    LOG(ERROR) << result.status().message();
-    return static_cast<int>(result.status().code());
+mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
+    absl::string_view data_file_path,
+    absl::string_view data_type,
+    absl::string_view engine_type) {
+  std::unique_ptr<DataManager> data_manager(new DataManager);
+  const absl::string_view magic_number =
+      DataManager::GetDataSetMagicNumber(data_type);
+  const auto status =
+      data_manager->InitFromFile(std::string(data_file_path), magic_number);
+  if (status != DataManager::Status::OK) {
+    return InvalidArgumentError(
+        absl::StrCat("Failed to load ", data_file_path, ": ",
+                     DataManager::StatusCodeToString(status)));
   }
-  QualityRegressionUtil util(result.value()->GetConverter());
-
-  std::vector<QualityRegressionUtil::TestItem> items;
-  QualityRegressionUtil::ParseFile(absl::GetFlag(FLAGS_test_file), &items);
-
-  for (size_t i = 0; i < items.size(); ++i) {
-    std::string actual_value;
-    const bool result = util.ConvertAndTest(items[i], &actual_value);
-    std::cout << (result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
-              << actual_value << "\t" << items[i].command << "\t"
-              << items[i].expected_value << "\t" << std::endl;
+  if (engine_type == "desktop") {
+    return Engine::CreateDesktopEngine(std::move(data_manager)).value();
   }
-
-  return 0;
+  if (engine_type == "mobile") {
+    return Engine::CreateMobileEngine(std::move(data_manager)).value();
+  }
+  return InvalidArgumentError(
+      absl::StrCat("Invalid engine type: ", engine_type));
 }
+
+}  // namespace mozc

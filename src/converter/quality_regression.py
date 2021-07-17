@@ -74,7 +74,7 @@ def SaveOutput(output_file, output_lines):
   fields = ['status', 'input', 'output', 'command', 'argument', 'version']
   with open(output_file, 'w', encoding='utf-8') as file:
     file.write('# ' + '\t'.join(fields) + '\n')
-    file.write('\n'.join(output_lines))
+    file.write('\n'.join(output_lines) + '\n')
 
 
 def main():

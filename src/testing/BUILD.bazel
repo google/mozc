@@ -134,7 +134,7 @@ cc_library_mozc(
     ],
     deps = [
         ":googletest",
-        "@gtest//:gtest",
+        "@gtest",
     ],
 )
 
