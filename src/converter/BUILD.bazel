@@ -788,19 +788,24 @@ cc_binary_mozc(
         "//base",
         "//base:init_mozc",
         "//base:util",
-        "//engine:engine_factory",
-        "//engine:engine_interface",
+        "//engine:eval_engine_factory",
         "@com_google_absl//absl/flags:flag",
     ],
 )
 
 genrule(
     name = "quality_regression_oss",
-    srcs = ["//data/test/quality_regression_test:oss.tsv"],
+    srcs = [
+        "//data_manager/oss:mozc_dataset_for_oss",
+        "//data/test/quality_regression_test:oss.tsv",
+    ],
     outs = ["quality_regression_oss.tsv"],
     # TODO(b/130248329): Remove LANG when Python 3.7 or later becomes the default.
     cmd = ("LANG=en_US.UTF8 " +
-           "$(location :quality_regression_main) --test_file $(SRCS) > $@"),
+           "$(location :quality_regression_main) " +
+           "--test_file=$(location //data/test/quality_regression_test:oss.tsv) " +
+           "--data_file=$(location //data_manager/oss:mozc_dataset_for_oss) " +
+           "--data_type=oss --engine_type=desktop > $@"),
     exec_tools = [":quality_regression_main"],
 )
 
@@ -835,8 +840,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:status",
-        "//data_manager",
-        "//engine",
         "//testing:gunit",
         "//testing:mozctest",
         "@com_google_absl//absl/strings",

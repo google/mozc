@@ -32,7 +32,7 @@ load(
     "cc_test_mozc",
 )
 
-def quality_regression_test(name, src, deps, **kwargs):
+def quality_regression_test(name, src, **kwargs):
     native.genrule(
         name = name + "@data",
         srcs = [src],
@@ -55,17 +55,27 @@ def quality_regression_test(name, src, deps, **kwargs):
             "//data_manager/google:mozc.data",
             "//data_manager/oss:mozc.data",
         ],
-        deps = deps,
+        deps = [
+            ":quality_regression_test_lib",
+            ":quality_regression_util",
+            "//base:port",
+            "//config:config_handler",
+            "//engine:eval_engine_factory",
+            "//protocol:commands_cc_proto",
+            "//protocol:config_cc_proto",
+            "//session:request_test_util",
+            "//testing:gunit_main",
+            "//testing:mozctest",
+        ],
         size = "large",
         **kwargs
     )
 
-def quality_regression_tests(name, srcs, deps, **kwargs):
+def quality_regression_tests(name, srcs, **kwargs):
     for src in srcs:
         quality_regression_test(
             "%s@%s" % (name, src.rsplit(":", 1)[1]),
             src,
-            deps,
             **kwargs
         )
 

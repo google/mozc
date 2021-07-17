@@ -46,7 +46,13 @@
 namespace mozc {
 namespace {
 
-const char *const kDataSetMagicNumber = "\xEFMOZC\r\n";
+#ifdef GOOGLE_JAPANESE_INPUT_BUILD
+constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n"
+#else
+constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
+
+constexpr absl::string_view kDataSetMagicNumberOss = "\xEFMOZC\r\n";
 
 DataManager::Status InitUserPosManagerDataFromReader(
     const DataSetReader &reader, absl::string_view *pos_matcher_data,
@@ -76,6 +82,7 @@ DataManager::Status InitUserPosManagerDataFromReader(
 
 }  // namespace
 
+// static
 std::string DataManager::StatusCodeToString(Status code) {
   std::string s;
   switch (code) {
@@ -100,6 +107,14 @@ std::string DataManager::StatusCodeToString(Status code) {
   }
   s.append(Util::StringPrintf("(%d)", static_cast<int>(code)));
   return s;
+}
+
+// static
+absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
+  if (type == "oss") {
+    return kDataSetMagicNumberOss;
+  }
+  return kDataSetMagicNumber;
 }
 
 DataManager::DataManager() = default;
