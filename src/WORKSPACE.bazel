@@ -50,7 +50,7 @@ new_local_repository(
     name = "gtk2",
     # This path should be updated per the environment.
     path = "/usr",  # For Debian
-    build_file = "BUILD.gtk2",
+    build_file = "BUILD.gtk2.bazel",
 )
 
 # iBus
@@ -58,14 +58,14 @@ new_local_repository(
     name = "ibus",
     # This path should be updated per the environment.
     path = "/usr",  # For Debian
-    build_file = "BUILD.ibus",
+    build_file = "BUILD.ibus.bazel",
 )
 
 # Japanese Usage Dictionary
 new_local_repository(
     name = "ja_usage_dict",
     path = "third_party/japanese_usage_dictionary",
-    build_file = "BUILD.ja_usage_dict",
+    build_file = "BUILD.ja_usage_dict.bazel",
 )
 
 # Qt
@@ -73,7 +73,7 @@ new_local_repository(
     name = "io_qt",
     # This path should be updated per the environment.
     path = QT_BASE_PATH,
-    build_file = "BUILD.qt",
+    build_file = "BUILD.qt.bazel",
 )
 
 # Python
