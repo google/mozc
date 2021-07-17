@@ -51,7 +51,7 @@ exports_files([
 ])
 
 filegroup(
-    name = "dictionary_data",
+    name = "base_dictionary_data",
     srcs = [
         ":dictionary00.txt",
         ":dictionary01.txt",
@@ -64,6 +64,14 @@ filegroup(
         ":dictionary08.txt",
         ":dictionary09.txt",
         "//dictionary:zip_code_data",
+    ],
+)
+
+filegroup(
+    name = "dictionary_data",
+    srcs = [
+        ":aux_dictionary",
+        ":base_dictionary_data",
     ],
 )
 
@@ -83,4 +91,18 @@ filegroup(
         ":dictionary09.txt",
         ":suffix.txt",
     ],
+)
+
+genrule(
+    name = "aux_dictionary",
+    srcs = [
+        ":base_dictionary_data",
+        "//data/oss:aux_dictionary.tsv",
+    ],
+    outs = ["aux_dictionary.txt"],
+    cmd = ("$(location //dictionary:gen_aux_dictionary) " +
+           "--output $@ " +
+           "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
+           "--dictionary_txts $(locations :base_dictionary_data)"),
+    exec_tools = ["//dictionary:gen_aux_dictionary"],
 )

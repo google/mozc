@@ -230,6 +230,12 @@ cc_library_mozc(
     deps = ["//base:port"],
 )
 
+py_binary_mozc(
+    name = "gen_aux_dictionary",
+    srcs = ["gen_aux_dictionary.py"],
+    visibility = ["//:__subpackages__"],
+)
+
 cc_library_mozc(
     name = "pos_group",
     hdrs = ["pos_group.h"],
