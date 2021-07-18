@@ -17,7 +17,7 @@ FAILED:	ほしゅてきなめんもあるね	保守的な麺もあるね	Convers
 OK:	ひまわりがさいている	ひまわりが咲いている	Conversion Not Match	最低	2.26.4423
 OK:	いがもたれる	いが持たれる	Conversion Not Match	伊賀	2.26.4423
 OK:	どんなふうにやったのか	どんなふうにやったのか	Conversion Not Match	封	2.26.4423
-FAILED:	でびあんをつかっています	デビ案を使っています	Conversion Match	デビアン	2.26.4423
+OK:	でびあんをつかっています	デビアンを使っています	Conversion Match	デビアン	2.26.4437
 OK:	たたかいにかつには	戦いに勝つには	Conversion Match	勝つ	2.26.4423
 OK:	ぶいぶいいわしている	ブイブイいわしている	Conversion Not Match	岩	2.26.4423
 FAILED:	せっかくのおさそいをむげにはできない	せっかくのお誘いを無碍にはできない	Conversion Not Match	無碍	2.26.4423
