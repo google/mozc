@@ -344,8 +344,8 @@ class TypingCorrectorTest : public ::testing::Test {
 };
 
 TEST_F(TypingCorrectorTest, TypingCorrection) {
-  const int kCorrectedQueryCandidates = 1000;
-  const int kCorrectedQueryResults = 1000;
+  constexpr int kCorrectedQueryCandidates = 1000;
+  constexpr int kCorrectedQueryResults = 1000;
   TypingCorrector corrector(&qwerty_table_, kCorrectedQueryCandidates,
                             kCorrectedQueryResults);
   corrector.SetConfig(&config_);

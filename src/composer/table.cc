@@ -54,10 +54,10 @@
 namespace mozc {
 namespace composer {
 namespace {
-const char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
-const char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
+constexpr char kDefaultPreeditTableFile[] = "system://romanji-hiragana.tsv";
+constexpr char kRomajiPreeditTableFile[] = "system://romanji-hiragana.tsv";
 // Table for Kana combinations like "か゛" → "が".
-const char kKanaCombinationTableFile[] = "system://kana.tsv";
+constexpr char kKanaCombinationTableFile[] = "system://kana.tsv";
 
 // Special tables for 12keys
 const char k12keysHiraganaTableFile[] = "system://12keys-hiragana.tsv";
@@ -65,38 +65,39 @@ const char k12keysHiraganaIntuitiveTableFile[] =
     "system://12keys-hiragana_intuitive.tsv";
 const char k12keysHalfwidthasciiTableFile[] =
     "system://12keys-halfwidthascii.tsv";
-const char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
-const char kFlickHalfwidthasciiIosTableFile[] =
+constexpr char kFlickHiraganaTableFile[] = "system://flick-hiragana.tsv";
+constexpr char kFlickHalfwidthasciiIosTableFile[] =
     "system://flick-halfwidthascii_ios.tsv";
-const char kFlickNumberTableFile[] = "system://flick-number.tsv";
-const char kFlickHiraganaIntuitiveTableFile[] =
+constexpr char kFlickNumberTableFile[] = "system://flick-number.tsv";
+constexpr char kFlickHiraganaIntuitiveTableFile[] =
     "system://flick-hiragana_intuitive.tsv";
-const char kFlickHalfwidthasciiTableFile[] =
+constexpr char kFlickHalfwidthasciiTableFile[] =
     "system://flick-halfwidthascii.tsv";
-const char kToggleFlickHiraganaTableFile[] =
+constexpr char kToggleFlickHiraganaTableFile[] =
     "system://toggle_flick-hiragana.tsv";
-const char kToggleFlickHiraganaIntuitiveTableFile[] =
+constexpr char kToggleFlickHiraganaIntuitiveTableFile[] =
     "system://toggle_flick-hiragana_intuitive.tsv";
-const char kToggleFlickHalfwidthasciiIosTableFile[] =
+constexpr char kToggleFlickHalfwidthasciiIosTableFile[] =
     "system://toggle_flick-halfwidthascii_ios.tsv";
-const char kToggleFlickNumberTableFile[] = "system://toggle_flick-number.tsv";
-const char kToggleFlickHalfwidthasciiTableFile[] =
+constexpr char kToggleFlickNumberTableFile[] =
+    "system://toggle_flick-number.tsv";
+constexpr char kToggleFlickHalfwidthasciiTableFile[] =
     "system://toggle_flick-halfwidthascii.tsv";
 // Special tables for QWERTY mobile
-const char kQwertyMobileHiraganaTableFile[] =
+constexpr char kQwertyMobileHiraganaTableFile[] =
     "system://qwerty_mobile-hiragana.tsv";
-const char kQwertyMobileHalfwidthasciiTableFile[] =
+constexpr char kQwertyMobileHalfwidthasciiTableFile[] =
     "system://qwerty_mobile-halfwidthascii.tsv";
 // Special tables for Godan
-const char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
-const char kNotouchHiraganaTableFile[] = "system://notouch-hiragana.tsv";
+constexpr char kGodanHiraganaTableFile[] = "system://godan-hiragana.tsv";
+constexpr char kNotouchHiraganaTableFile[] = "system://notouch-hiragana.tsv";
 // Reuse qwerty_mobile-halfwidthascii table
-const char kNotouchHalfwidthasciiTableFile[] =
+constexpr char kNotouchHalfwidthasciiTableFile[] =
     "system://qwerty_mobile-halfwidthascii.tsv";
 
-const char kNewChunkPrefix[] = "\t";
-const char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
-const char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
+constexpr char kNewChunkPrefix[] = "\t";
+constexpr char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
+constexpr char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
 }  // namespace
 
 // ========================================
@@ -116,17 +117,17 @@ Table::Table() : entries_(new EntryTrie), case_sensitive_(false) {}
 
 Table::~Table() { ResetEntrySet(); }
 
-static const char kKuten[] = "、";
-static const char kTouten[] = "。";
-static const char kComma[] = "，";
-static const char kPeriod[] = "．";
+static constexpr char kKuten[] = "、";
+static constexpr char kTouten[] = "。";
+static constexpr char kComma[] = "，";
+static constexpr char kPeriod[] = "．";
 
-static const char kCornerOpen[] = "「";
-static const char kCornerClose[] = "」";
-static const char kSlash[] = "／";
-static const char kSquareOpen[] = "[";
-static const char kSquareClose[] = "]";
-static const char kMiddleDot[] = "・";
+static constexpr char kCornerOpen[] = "「";
+static constexpr char kCornerClose[] = "」";
+static constexpr char kSlash[] = "／";
+static constexpr char kSquareOpen[] = "[";
+static constexpr char kSquareClose[] = "]";
+static constexpr char kMiddleDot[] = "・";
 
 bool Table::InitializeWithRequestAndConfig(
     const commands::Request &request, const config::Config &config,
@@ -418,7 +419,7 @@ bool Table::LoadFromFile(const char *filepath) {
 const TypingModel *Table::typing_model() const { return typing_model_.get(); }
 
 namespace {
-const char kAttributeDelimiter[] = " ";
+constexpr char kAttributeDelimiter[] = " ";
 
 TableAttributes ParseAttributes(const std::string &input) {
   TableAttributes attributes = NO_TABLE_ATTRIBUTE;

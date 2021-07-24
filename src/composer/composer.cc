@@ -403,32 +403,21 @@ void Composer::ApplyTemporaryInputMode(const std::string &input,
   }
 }
 
-bool Composer::InsertCharacterInternal(const std::string &key) {
+bool Composer::ProcessCompositionInput(const CompositionInput &input) {
   if (!EnableInsert()) {
     return false;
   }
-  CompositionInput input;
-  input.set_raw(key);
-  input.set_is_new_input(is_new_input_);
+
   position_ = composition_->InsertInput(position_, input);
   is_new_input_ = false;
+  typing_corrector_.InsertCharacter(input.raw(), input.probable_key_events());
   return true;
 }
 
 void Composer::InsertCharacter(const std::string &key) {
-  if (!InsertCharacterInternal(key)) {
-    return;
-  }
-  const ProbableKeyEvents empty_events;
-  typing_corrector_.InsertCharacter(key, empty_events);
-}
-
-void Composer::InsertCharacterForProbableKeyEvents(
-    const std::string &key, const ProbableKeyEvents &probable_key_events) {
-  if (!InsertCharacterInternal(key)) {
-    return;
-  }
-  typing_corrector_.InsertCharacter(key, probable_key_events);
+  CompositionInput input;
+  input.InitFromRaw(key, is_new_input_);
+  ProcessCompositionInput(input);
 }
 
 void Composer::InsertCommandCharacter(const InternalCommand internal_command) {
@@ -484,43 +473,11 @@ void Composer::SetPreeditTextForTestOnly(const std::string &input) {
   }
 }
 
-void Composer::InsertCharacterPreeditForProbableKeyEvents(
-    const std::string &input, const ProbableKeyEvents &probable_key_events) {
-  InsertCharacterKeyAndPreeditForProbableKeyEvents(input, input,
-                                                   probable_key_events);
-}
-
-bool Composer::InsertCharacterKeyAndPreeditInternal(
-    const std::string &key, const std::string &preedit) {
-  if (!EnableInsert()) {
-    return false;
-  }
-  CompositionInput input;
-  input.set_raw(key);
-  input.set_conversion(preedit);
-  input.set_is_new_input(is_new_input_);
-  position_ = composition_->InsertInput(position_, input);
-  is_new_input_ = false;
-  return true;
-}
-
 bool Composer::InsertCharacterKeyAndPreedit(const std::string &key,
                                             const std::string &preedit) {
-  if (!InsertCharacterKeyAndPreeditInternal(key, preedit)) {
-    return false;
-  }
-  const ProbableKeyEvents empty_events;
-  typing_corrector_.InsertCharacter(key, empty_events);
-  return true;
-}
-
-void Composer::InsertCharacterKeyAndPreeditForProbableKeyEvents(
-    const std::string &key, const std::string &preedit,
-    const ProbableKeyEvents &probable_key_events) {
-  if (!InsertCharacterKeyAndPreeditInternal(key, preedit)) {
-    return;
-  }
-  typing_corrector_.InsertCharacter(key, probable_key_events);
+  CompositionInput input;
+  input.InitFromRawAndConv(key, preedit, is_new_input_);
+  return ProcessCompositionInput(input);
 }
 
 bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
@@ -550,50 +507,29 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     }
   }
 
-  // Fill input representing user's raw input.
-  std::string input;
-  if (key.has_key_code()) {
-    Util::UCS4ToUTF8(key.key_code(), &input);
-  } else if (key.has_key_string()) {
-    input = key.key_string();
-  } else {
-    LOG(WARNING) << "input is empty";
+  CompositionInput input;
+  if (!input.Init(key, config_->use_typing_correction(), is_new_input_)) {
     return false;
   }
 
-  bool is_typing_correction_enabled = config_->use_typing_correction();
   if (key.has_key_string()) {
     if (key.input_style() == commands::KeyEvent::AS_IS ||
         key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
       composition_->SetInputMode(Transliterators::CONVERSION_STRING);
-      if (is_typing_correction_enabled) {
-        InsertCharacterKeyAndPreeditForProbableKeyEvents(
-            input, key.key_string(), key.probable_key_event());
-      } else {
-        InsertCharacterKeyAndPreedit(input, key.key_string());
-      }
+      ProcessCompositionInput(input);
       SetInputMode(comeback_input_mode_);
     } else {
       // Kana input usually has key_string.  Note that, the existence of
       // key_string never determine if the input mode is Kana or Romaji.
-      if (is_typing_correction_enabled) {
-        InsertCharacterKeyAndPreeditForProbableKeyEvents(
-            input, key.key_string(), key.probable_key_event());
-      } else {
-        InsertCharacterKeyAndPreedit(input, key.key_string());
-      }
+      ProcessCompositionInput(input);
     }
   } else {
     // Romaji input usually does not has key_string.  Note that, the
     // existence of key_string never determines if the input mode is
     // Kana or Romaji.
     const uint32_t modifiers = KeyEventUtil::GetModifiers(key);
-    ApplyTemporaryInputMode(input, KeyEventUtil::HasCaps(modifiers));
-    if (is_typing_correction_enabled) {
-      InsertCharacterForProbableKeyEvents(input, key.probable_key_event());
-    } else {
-      InsertCharacter(input);
-    }
+    ApplyTemporaryInputMode(input.raw(), KeyEventUtil::HasCaps(modifiers));
+    ProcessCompositionInput(input);
   }
 
   if (comeback_input_mode_ == input_mode_) {
