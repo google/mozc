@@ -30,9 +30,10 @@
 """Stub functions."""
 
 def android_cc_test(name, cc_test_name, **kwargs):
+    # 'foo_test' and 'foo_test_android' are identical for OSS yet.
     # TODO(b/110808149): Support Android test.
     _ignore = kwargs
-    native.alias(
+    native.test_suite(
         name = name,
-        actual = cc_test_name,
+        tests = [cc_test_name],
     )
