@@ -47,14 +47,14 @@ namespace {
 // NOTE(komatsu): The name should not end with "_test", otherwise our
 // testing tool rut.py misunderstood that the file named
 // kServerAddress is a binary to be tested.
-static const char kServerAddress[] = "test_echo_server";
+static constexpr char kServerAddress[] = "test_echo_server";
 #ifdef OS_WIN
 // On windows, multiple-connections failed.
-static const int kNumThreads = 1;
+static constexpr int kNumThreads = 1;
 #else
-static const int kNumThreads = 5;
+static constexpr int kNumThreads = 5;
 #endif
-static const int kNumRequests = 2000;
+static constexpr int kNumRequests = 2000;
 
 std::string GenRandomString(size_t size) {
   std::string result;

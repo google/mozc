@@ -61,7 +61,7 @@ TEST(KeyInfoUtilTest, ExtractSortedDirectModeKeys) {
   Config config;
   ConfigHandler::GetDefaultConfig(&config);
 
-  const char kCustomKeymapTable[] =
+  constexpr char kCustomKeymapTable[] =
       "status\tkey\tcommand\n"
       "DirectInput\tHenkan\tIMEOn\n"
       "DirectInput\tCtrl j\tIMEOn\n"

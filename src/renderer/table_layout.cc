@@ -38,7 +38,7 @@ namespace mozc {
 namespace renderer {
 namespace {
 // The minimum height of the indicator in the VScrollBar.
-const int kMinimumIndicatorHeight = 1;
+constexpr int kMinimumIndicatorHeight = 1;
 }  // namespace
 
 // ------------------------------------------------------------------------

@@ -100,8 +100,8 @@ const UINT kUpdateUIMessage = WM_USER;
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 
-const char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
-const char kLogFileName[] = "GoogleJapaneseInput_tsf_ui.log";
+constexpr char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
+constexpr char kLogFileName[] = "GoogleJapaneseInput_tsf_ui.log";
 const wchar_t kTaskWindowClassName[] =
     L"Google Japanese Input Task Message Window";
 
@@ -135,8 +135,8 @@ const GUID kTipFunctionProvider = {
 
 #else
 
-const char kHelpUrl[] = "https://github.com/google/mozc";
-const char kLogFileName[] = "Mozc_tsf_ui.log";
+constexpr char kHelpUrl[] = "https://github.com/google/mozc";
+constexpr char kLogFileName[] = "Mozc_tsf_ui.log";
 const wchar_t kTaskWindowClassName[] = L"Mozc Immersive Task Message Window";
 
 // {F16B7D92-84B0-4AC6-A35B-06EA77180A18}

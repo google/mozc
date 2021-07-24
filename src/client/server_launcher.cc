@@ -64,7 +64,7 @@
 namespace mozc {
 namespace client {
 namespace {
-const char kServerName[] = "session";
+constexpr char kServerName[] = "session";
 
 // Wait at most kServerWaitTimeout msec until server gets ready
 const uint32_t kServerWaitTimeout = 20000;  // 20 sec
@@ -79,7 +79,7 @@ const uint32_t kTrial = 20;
 // Load special flags for server.
 // This should be enabled on debug build
 const std::string LoadServerFlags() {
-  const char kServerFlagsFile[] = "mozc_server_flags.txt";
+  constexpr char kServerFlagsFile[] = "mozc_server_flags.txt";
   const std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), kServerFlagsFile);
   std::string flags;
@@ -236,7 +236,7 @@ bool ServerLauncher::ForceTerminateServer(const std::string &name) {
 }
 
 bool ServerLauncher::WaitServer(uint32_t pid) {
-  const int kTimeout = 10000;
+  constexpr int kTimeout = 10000;
   return Process::WaitProcess(static_cast<size_t>(pid), kTimeout);
 }
 

@@ -61,7 +61,7 @@ namespace mozc {
 
 namespace {
 
-const int kInvalidSocket = -1;
+constexpr int kInvalidSocket = -1;
 
 void mkdir_p(const std::string &dirname) {
   const std::string parent_dir = FileUtil::Dirname(dirname);

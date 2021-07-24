@@ -56,7 +56,7 @@ const size_t kDefaultTotalBytesLimit = 512 << 20;
 // saved correctly. Please make the dictionary size smaller"
 const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
-const char kDefaultSyncDictionaryName[] = "Sync Dictionary";
+constexpr char kDefaultSyncDictionaryName[] = "Sync Dictionary";
 const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";
 
 }  // namespace

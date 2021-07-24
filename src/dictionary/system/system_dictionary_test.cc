@@ -539,7 +539,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
   ASSERT_TRUE(system_dic) << "Failed to open dictionary source: " << dic_fn_;
 
   // All the tokens in |tokens| should be looked up by "まみむめも".
-  const char kMamimumemo[] = "まみむめも";
+  constexpr char kMamimumemo[] = "まみむめも";
   CheckMultiTokensExistenceCallback callback(tokens);
   system_dic->LookupPredictive(kMamimumemo, convreq_, &callback);
   EXPECT_TRUE(callback.AreAllFound());

@@ -52,12 +52,12 @@
 namespace mozc {
 namespace keymap {
 namespace {
-static const char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
-static const char kATOKKeyMapFile[] = "system://atok.tsv";
-static const char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
-static const char kCustomKeyMapFile[] = "user://keymap.tsv";
-static const char kMobileKeyMapFile[] = "system://mobile.tsv";
-static const char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
+static constexpr char kMSIMEKeyMapFile[] = "system://ms-ime.tsv";
+static constexpr char kATOKKeyMapFile[] = "system://atok.tsv";
+static constexpr char kKotoeriKeyMapFile[] = "system://kotoeri.tsv";
+static constexpr char kCustomKeyMapFile[] = "user://keymap.tsv";
+static constexpr char kMobileKeyMapFile[] = "system://mobile.tsv";
+static constexpr char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
 }  // namespace
 
 #if defined(__APPLE__)

@@ -115,7 +115,7 @@ bool UserPOS::GetTokens(const std::string &key, const std::string &value,
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
   const int16_t kIsolatedWordCost = 200;
-  const char kIsolatedWordPOS[] = "短縮よみ";
+  constexpr char kIsolatedWordPOS[] = "短縮よみ";
 
   if (size == 1) {  // no conjugation
     const auto &token_iter = range.first;

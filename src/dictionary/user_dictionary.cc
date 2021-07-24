@@ -546,6 +546,12 @@ bool UserDictionary::Load(
   return true;
 }
 
+std::vector<std::string> UserDictionary::GetPOSList() const {
+  std::vector<std::string> pos_list;
+  user_pos_->GetPOSList(&pos_list);
+  return pos_list;
+}
+
 void UserDictionary::SetUserDictionaryName(const std::string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
 }

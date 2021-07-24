@@ -127,8 +127,8 @@ const struct DateRewriter::DateData kDateData[] = {
 // Absl::Weekday starts from Monday, while std::tm.tm_wday starts from Sunday.
 const char *kWeekDayString[] = {"月", "火", "水", "木", "金", "土", "日"};
 
-const char kDateDescription[] = "日付";
-const char kTimeDescription[] = "時刻";
+constexpr char kDateDescription[] = "日付";
+constexpr char kTimeDescription[] = "時刻";
 
 struct YearData {
   int ad;           // AD year
@@ -530,13 +530,13 @@ bool AdToEraForCourt(const YearData *data, int size, int year,
   return false;
 }
 
-const char kNenKey[] = "ねん";
-const char kNenValue[] = "年";
+constexpr char kNenKey[] = "ねん";
+constexpr char kNenValue[] = "年";
 
 bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
                         int *year, std::string *description) {
-  const char kGanKey[] = "がん";
-  const char kGanValue[] = "元";
+  constexpr char kGanKey[] = "がん";
+  constexpr char kGanValue[] = "元";
 
   // Util::EndsWith(key, kNenKey) is expected to always return true
   DCHECK(Util::EndsWith(key, kNenKey));
@@ -979,11 +979,11 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  const int kInsertPosition = 2;
+  constexpr int kInsertPosition = 2;
   const int position = std::min(
       kInsertPosition, static_cast<int>(current_segment->candidates_size()));
 
-  const char kDescription[] = "和暦";
+  constexpr char kDescription[] = "和暦";
   for (auto rit = results.crbegin(); rit != results.crend(); ++rit) {
     Insert(current_segment->candidate(0), position, *rit, kDescription,
            current_segment);

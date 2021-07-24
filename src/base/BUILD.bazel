@@ -195,16 +195,30 @@ cc_library_mozc(
         android = ["-llog"],
     ),
     deps = select_mozc(
-        client = [
+        default = [
+            "//base",
+            "//base:logging_extensions",
+        ],
+        linux = [
             ":clock",
             ":const",
             ":mutex",
             ":singleton",
             "@com_google_absl//absl/strings",
         ],
-        default = [
-            "//base",
-            "//base:logging_extensions",
+        oss = [
+            ":clock",
+            ":const",
+            ":mutex",
+            ":singleton",
+            "@com_google_absl//absl/strings",
+        ],
+        wasm = [
+            ":clock",
+            ":const",
+            ":mutex",
+            ":singleton",
+            "@com_google_absl//absl/strings",
         ],
     ) + [
         ":port",

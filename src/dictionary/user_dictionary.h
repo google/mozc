@@ -90,6 +90,9 @@ class UserDictionary : public DictionaryInterface {
   // Waits until reloader finishes
   void WaitForReloader();
 
+  // Gets the user POS list.
+  std::vector<std::string> GetPOSList() const;
+
   // Sets user dicitonary filename for unittesting
   static void SetUserDictionaryName(const std::string &filename);
 

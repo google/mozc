@@ -64,7 +64,7 @@ namespace {
 // flags for dictionary and reading correction, but due to the limitation
 // of internal build system, it turned out that the description of the rules
 // will become much complicated, if we use two flags.
-const char kReadingCorrectionFile[] = "reading_correction.tsv";
+constexpr char kReadingCorrectionFile[] = "reading_correction.tsv";
 
 // convert space delimtered text to CSV
 void GetInputFileName(const std::string &input_file,

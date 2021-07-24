@@ -39,15 +39,15 @@
 
 namespace mozc {
 namespace {
-const char kSurveyBaseURL[] =
+constexpr char kSurveyBaseURL[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
-const char kSurveyVersionEntry[] = "version";
-const char kSurveyContactTypeEntry[] = "contact_type";
-const char kSurveyContactType[] = "surveyime";
-const char kSurveyHtmlLanguageEntry[] = "hl";
-const char kSurveyHtmlLanguage[] = "jp";
-const char kSurveyFormatEntry[] = "format";
-const char kSurveyFormat[] = "inproduct";
+constexpr char kSurveyVersionEntry[] = "version";
+constexpr char kSurveyContactTypeEntry[] = "contact_type";
+constexpr char kSurveyContactType[] = "surveyime";
+constexpr char kSurveyHtmlLanguageEntry[] = "hl";
+constexpr char kSurveyHtmlLanguage[] = "jp";
+constexpr char kSurveyFormatEntry[] = "format";
+constexpr char kSurveyFormat[] = "inproduct";
 
 class URLImpl {
  public:

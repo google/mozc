@@ -54,11 +54,11 @@ namespace mozc {
 using storage::LRUStorage;
 
 namespace {
-const int kValueSize = 4;
+constexpr int kValueSize = 4;
 const uint32_t kLRUSize = 5000;
 const uint32_t kSeedValue = 0x761fea81;
 
-const char kFileName[] = "user://boundary.db";
+constexpr char kFileName[] = "user://boundary.db";
 
 enum { INSERT, RESIZE };
 
@@ -208,7 +208,7 @@ bool UserBoundaryHistoryRewriter::Reload() {
     return false;
   }
 
-  const char kFileSuffix[] = ".merge_pending";
+  constexpr char kFileSuffix[] = ".merge_pending";
   const std::string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.

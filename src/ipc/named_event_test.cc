@@ -47,7 +47,7 @@
 namespace mozc {
 namespace {
 
-const char kName[] = "named_event_test";
+constexpr char kName[] = "named_event_test";
 
 class NamedEventListenerThread : public Thread {
  public:

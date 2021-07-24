@@ -70,12 +70,12 @@ namespace renderer {
 
 namespace {
 #ifdef OS_WIN
-const int kNumConnections = 1;
+constexpr int kNumConnections = 1;
 #else
-const int kNumConnections = 10;
+constexpr int kNumConnections = 10;
 #endif  // OS_WIN or not
-const int kIPCServerTimeOut = 1000;
-const char kServiceName[] = "renderer";
+constexpr int kIPCServerTimeOut = 1000;
+constexpr char kServiceName[] = "renderer";
 
 std::string GetServiceName() {
   std::string name = kServiceName;

@@ -304,7 +304,7 @@ void InsertCandidate(absl::string_view variant_token_array,
   // Adding 8000 to the single kanji cost
   // Note that this cost does not make no effect.
   // Here we set the cost just in case.
-  const int kOffsetCost = 8000;
+  constexpr int kOffsetCost = 8000;
 
   // Append single-kanji
   for (size_t i = 0; i < kanji_list.size(); ++i) {

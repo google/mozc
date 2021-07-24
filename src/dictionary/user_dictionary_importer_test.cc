@@ -83,7 +83,7 @@ class TestInputIterator
 }  // namespace
 
 TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "きょうと\t京都\t名詞\n"
       "おおさか\t大阪\t地名\n"
       "とうきょう\t東京\t地名\tコメント\n"
@@ -135,7 +135,7 @@ TEST(UserDictionaryImporter, ImportFromNormalTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "\"きょうと\","
       "\"京都\",\"名詞\"\n"
       "\"おおさか\","
@@ -173,7 +173,7 @@ TEST(UserDictionaryImporter, ImportFromKotoeriTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "きょうと\t京都\t名詞\n"
       "!おおさか\t大阪\t地名\n"
       "\n"
@@ -231,7 +231,7 @@ TEST(UserDictionaryImporter, ImportFromCommentTextTest) {
 }
 
 TEST(UserDictionaryImporter, ImportFromInvalidTextTest) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "a"
       "\n"
       "東京\t\t地名\tコメント\n"
@@ -593,7 +593,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with CR.
   {
-    const char kInput[] = "\r\rabcde";
+    constexpr char kInput[] = "\r\rabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -609,7 +609,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with LF.
   {
-    const char kInput[] = "\n\nabcde";
+    constexpr char kInput[] = "\n\nabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -625,7 +625,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
 
   // Test empty line with CRLF.
   {
-    const char kInput[] = "\r\n\r\nabcde";
+    constexpr char kInput[] = "\r\n\r\nabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));
@@ -642,7 +642,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
   // Invalid empty line.
   // At the moment, \n\r is processed as two empty lines.
   {
-    const char kInput[] = "\n\rabcde";
+    constexpr char kInput[] = "\n\rabcde";
     UserDictionaryImporter::StringTextLineIterator iter(kInput);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));

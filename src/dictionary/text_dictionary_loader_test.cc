@@ -49,12 +49,12 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-const char kTextLines[] =
+constexpr char kTextLines[] =
     "key_test1\t0\t0\t1\tvalue_test1\n"
     "foo\t1\t2\t3\tbar\n"
     "buz\t10\t20\t30\tfoobar\n";
 
-const char kReadingCorrectionLines[] =
+constexpr char kReadingCorrectionLines[] =
     "bar\tfoo\tfoo_correct\n"
     "foobar\tfoobar_error\tfoobar_correct\n";
 

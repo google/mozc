@@ -250,7 +250,7 @@ int GetCandidateArrayIndexByCandidateIndex(const Candidates &candidates,
 // This function returns the size of the given candidate list when there
 // aren't any candidates satisfying the above condition.
 int GetFocusedArrayIndex(const Candidates &candidates) {
-  const int kInvalidIndex = candidates.candidate_size();
+  constexpr int kInvalidIndex = candidates.candidate_size();
 
   if (!candidates.has_focused_index()) {
     return kInvalidIndex;

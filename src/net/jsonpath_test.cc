@@ -67,7 +67,7 @@ class JsonPathTest : public testing::Test {
 };
 
 TEST_F(JsonPathTest, BasicTest) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "{"
       "\"books\": ["
       "    {\"title\":\"foo1\",\"author\":\"bar1\"},"
@@ -154,7 +154,7 @@ TEST_F(JsonPathTest, BasicTest) {
 }
 
 TEST_F(JsonPathTest, SliceTest) {
-  const char kInput[] = "{ \"a\": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] }";
+  constexpr char kInput[] = "{ \"a\": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] }";
   EXPECT_EQ("ERROR", Parse(kInput, "$.a[]"));
   EXPECT_EQ("0", Parse(kInput, "$.a[0]"));
   EXPECT_EQ("3", Parse(kInput, "$.a[3]"));

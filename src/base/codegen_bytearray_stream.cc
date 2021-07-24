@@ -196,7 +196,7 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char *begin,
     }
   }
 #else
-  static const char kHex[] = "0123456789ABCDEF";
+  static constexpr char kHex[] = "0123456789ABCDEF";
   while (begin < end) {
     size_t bucket_size =
         std::min(static_cast<size_t>(end - begin),

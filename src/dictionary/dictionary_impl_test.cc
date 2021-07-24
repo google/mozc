@@ -206,8 +206,8 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   DictionaryInterface *d = data->dictionary.get();
   SuppressionDictionary *s = data->suppression_dictionary.get();
 
-  const char kKey[] = "ぐーぐる";
-  const char kValue[] = "グーグル";
+  constexpr char kKey[] = "ぐーぐる";
+  constexpr char kValue[] = "グーグル";
 
   const LookupMethodAndQuery kTestPair[] = {
       {&DictionaryInterface::LookupPrefix, "ぐーぐるは"},
@@ -242,8 +242,8 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   DictionaryInterface *d = data->dictionary.get();
 
   // "あぼがど" -> "アボカド", which is in the test dictionary.
-  const char kKey[] = "あぼがど";
-  const char kValue[] = "アボカド";
+  constexpr char kKey[] = "あぼがど";
+  constexpr char kValue[] = "アボカド";
 
   const LookupMethodAndQuery kTestPair[] = {
       {&DictionaryInterface::LookupPrefix, kKey},
@@ -273,8 +273,8 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   DictionaryInterface *d = data->dictionary.get();
 
   // "100-0000" -> "東京都千代田区", which is in the test dictionary.
-  const char kKey[] = "100-0000";
-  const char kValue[] = "東京都千代田区";
+  constexpr char kKey[] = "100-0000";
+  constexpr char kValue[] = "東京都千代田区";
 
   const LookupMethodAndQuery kTestPair[] = {
       {&DictionaryInterface::LookupPrefix, kKey},
@@ -304,8 +304,8 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   DictionaryInterface *d = data->dictionary.get();
   NodeAllocator allocator;
 
-  const char kKey[] = "ぐーぐる";
-  const char kValue[] = "Google";
+  constexpr char kKey[] = "ぐーぐる";
+  constexpr char kValue[] = "Google";
 
   const LookupMethodAndQuery kTestPair[] = {
       {&DictionaryInterface::LookupPrefix, kKey},

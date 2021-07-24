@@ -93,7 +93,7 @@ DWORD g_context_revision_tls_index = kInvalidTlsIndex;
 CRITICAL_SECTION g_critical_section_for_breakpad;
 // 4,000 is a typical value of per-heap critical sections.
 // See http://msdn.microsoft.com/en-us/library/ms683476.aspx
-const int kSpinCountForCriticalSection = 4000;
+constexpr int kSpinCountForCriticalSection = 4000;
 #endif  // USE_BREAKPAD
 
 // True if the DLL received DLL_PROCESS_DETACH notification as a result of

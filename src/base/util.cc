@@ -791,8 +791,8 @@ void Util::StripUTF8BOM(std::string *line) {
 }
 
 bool Util::IsUTF16BOM(const std::string &line) {
-  static const char kUTF16LEBOM[] = "\xff\xfe";
-  static const char kUTF16BEBOM[] = "\xfe\xff";
+  static constexpr char kUTF16LEBOM[] = "\xff\xfe";
+  static constexpr char kUTF16BEBOM[] = "\xfe\xff";
   if (line.size() >= 2 &&
       (line.substr(0, 2) == kUTF16LEBOM || line.substr(0, 2) == kUTF16BEBOM)) {
     return true;
@@ -802,8 +802,8 @@ bool Util::IsUTF16BOM(const std::string &line) {
 
 namespace {
 // http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
-static const char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
-static const char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
+static constexpr char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
+static constexpr char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
 static const char32 kUcs4MinGooglePuaEmoji = 0xFE000;
 static const char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
 }  // namespace
@@ -874,7 +874,7 @@ void Util::GetRandomAsciiSequence(char *buf, size_t buf_size) {
   // Its size happens to be 64, which is just one fourth of the number of
   // values that can be represented by a single byte value. This accidental
   // coincidence makes implementation of the method quite simple.
-  const char kCharMap[] =
+  constexpr char kCharMap[] =
       "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
   GetRandomSequence(buf, buf_size);
   for (size_t i = 0; i < buf_size; ++i) {
@@ -1218,7 +1218,7 @@ bool Util::IsEnglishTransliteration(const std::string &value) {
 
 // URL
 void Util::EncodeURI(const std::string &input, std::string *output) {
-  const char kDigits[] = "0123456789ABCDEF";
+  constexpr char kDigits[] = "0123456789ABCDEF";
   const char *begin = input.data();
   const char *end = input.data() + input.size();
   output->clear();

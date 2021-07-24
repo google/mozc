@@ -457,10 +457,10 @@ TEST(GaussianBlurTest, NormalBlurTest) {
 
 TEST(SafeFrameBufferTest, BasicTest) {
   const ARGBColor kTransparent(0, 0, 0, 0);
-  const int kLeft = -10;
-  const int kTop = -20;
-  const int kWidth = 50;
-  const int kHeight = 100;
+  constexpr int kLeft = -10;
+  constexpr int kTop = -20;
+  constexpr int kWidth = 50;
+  constexpr int kHeight = 100;
   SafeFrameBuffer buffer(Rect(kLeft, kTop, kWidth, kHeight));
 
   EXPECT_EQ(kTransparent, buffer.GetPixel(kLeft, kTop))

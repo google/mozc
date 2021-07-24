@@ -479,7 +479,7 @@ std::string SystemUtil::GetDocumentDirectory() {
 }
 
 std::string SystemUtil::GetCrashReportDirectory() {
-  const char kCrashReportDirectory[] = "CrashReports";
+  constexpr char kCrashReportDirectory[] = "CrashReports";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                             kCrashReportDirectory);
 }

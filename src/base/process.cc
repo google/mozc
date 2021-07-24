@@ -99,7 +99,7 @@ bool Process::OpenBrowser(const std::string &url) {
 #endif
 
 #if defined(OS_LINUX) || defined(OS_ANDROID)
-  static const char kBrowserCommand[] = "/usr/bin/xdg-open";
+  static constexpr char kBrowserCommand[] = "/usr/bin/xdg-open";
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
   // and GNOME environments.
   return SpawnProcess(kBrowserCommand, url);
@@ -206,7 +206,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   // not affect current process behavior since Glibc never check the variable
   // after main().
   // (www.gnu.org/software/libc/manual/html_node/Heap-Consistency-Checking.html)
-  const int kOverwrite = 0;  // Do not overwrite.
+  constexpr int kOverwrite = 0;  // Do not overwrite.
   ::setenv("MALLOC_CHECK_", "2", kOverwrite);
 #endif  // OS_LINUX || OS_ANDROID
   pid_t tmp_pid = 0;
@@ -273,7 +273,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
   return false;
 #else
   pid_t processe_id = static_cast<pid_t>(pid);
-  const int kPollingDuration = 250;
+  constexpr int kPollingDuration = 250;
   int left_time = timeout < 0 ? 1 : timeout;
   while (left_time > 0) {
     Util::Sleep(kPollingDuration);
@@ -321,7 +321,7 @@ bool Process::IsProcessAlive(size_t pid, bool default_result) {
   // Process handling is not supported in WASM.
   return false;
 #else   // OS_WIN
-  const int kSig = 0;
+  constexpr int kSig = 0;
   if (::kill(static_cast<pid_t>(pid), kSig) == -1) {
     if (errno == EPERM || errno == EINVAL) {
       // permission denied or invalid signal.
@@ -385,7 +385,7 @@ bool Process::LaunchErrorMessageDialog(const std::string &error_type) {
 #endif  // OS_WIN
 
 #if defined(OS_LINUX) || defined(OS_ANDROID)
-  const char kMozcTool[] = "mozc_tool";
+  constexpr char kMozcTool[] = "mozc_tool";
   const std::string arg =
       "--mode=error_message_dialog --error_type=" + error_type;
   size_t pid = 0;

@@ -182,7 +182,7 @@ TEST(DataSetReaderTest, OneBitError) {
   // Create data at random.
   std::string image;
   {
-    const int kAlignments[] = {8, 16, 32, 64};
+    constexpr int kAlignments[] = {8, 16, 32, 64};
     DataSetWriter w(kTestMagicNumber);
     for (int i = 0; i < 10; ++i) {
       w.Add(Util::StringPrintf("key%d", i), kAlignments[Util::Random(4)],

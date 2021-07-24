@@ -43,11 +43,11 @@ namespace mozc {
 namespace {
 
 // DiceRewriter inserts a candidate with this description.
-const char kDescription[] = "出た目の数";
-const char kKey[] = "さいころ";
+constexpr char kDescription[] = "出た目の数";
+constexpr char kKey[] = "さいころ";
 
 // Candidate window size.
-const int kPageSize = 9;
+constexpr int kPageSize = 9;
 
 void AddCandidate(const std::string &key, const std::string &value,
                   Segment *segment) {

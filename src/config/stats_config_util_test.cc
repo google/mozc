@@ -67,9 +67,9 @@ const HKEY kHKLM_ClientState = INT2HKEY(2);
 const HKEY kHKLM_ClientStateMedium = INT2HKEY(3);
 #undef INT2HKEY
 
-const int kRunLevelLow = 0;
-const int kRunLevelMedium = 1;
-const int kRunLevelHigh = 2;
+constexpr int kRunLevelLow = 0;
+constexpr int kRunLevelMedium = 1;
+constexpr int kRunLevelHigh = 2;
 
 bool TryGetKnownKey(HKEY key, LPCWSTR sub_key, HKEY *result_key) {
   HKEY dummy = nullptr;

@@ -70,7 +70,7 @@ bool IsProcessAlive(pid_t pid) {
   if (pid == kInvalidPid) {
     return true;  // return dummy value.
   }
-  const int kSig = 0;
+  constexpr int kSig = 0;
   // As the signal number is 0, no signal is sent, but error checking is
   // still performed.
   return ::kill(pid, kSig) == 0;
@@ -296,7 +296,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
   }
 
   const bool inifinite = msec < 0 ? true : false;
-  const int kWaitMsec = 200;
+  constexpr int kWaitMsec = 200;
 
   while (inifinite || msec > 0) {
     Util::Sleep(kWaitMsec);

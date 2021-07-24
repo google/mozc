@@ -370,7 +370,8 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 
   ASSERT_TRUE(storage.ConvertSyncDictionariesToNormalDictionaries());
 
-  const char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
+  constexpr char kDictionaryNameConvertedFromSyncableDictionary[] =
+      "同期用辞書";
   const struct ExpectedData {
     bool has_normal_entry;
     std::string dictionary_name;
@@ -431,7 +432,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 }
 
 TEST_F(UserDictionaryStorageTest, Export) {
-  const int kDummyDictionaryId = 10;
+  constexpr int kDummyDictionaryId = 10;
   const std::string kPath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "exported_file");
 

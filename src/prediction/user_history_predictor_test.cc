@@ -617,9 +617,9 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
 
 TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 #ifdef DEBUG
-  const char kDescription[] = "テスト History";
+  constexpr char kDescription[] = "テスト History";
 #else
-  const char kDescription[] = "テスト";
+  constexpr char kDescription[] = "テスト";
 #endif  // DEBUG
 
   {
@@ -1646,8 +1646,8 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeTest) {
 }
 
 TEST_F(UserHistoryPredictorTest, FingerPrintTest) {
-  const char kKey[] = "abc";
-  const char kValue[] = "ABC";
+  constexpr char kKey[] = "abc";
+  constexpr char kValue[] = "ABC";
 
   UserHistoryPredictor::Entry entry;
   entry.set_key(kKey);
@@ -1921,7 +1921,7 @@ TEST_F(UserHistoryPredictorTest, IsValidSuggestion) {
 
 TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
   // removed automatically
-  const int kSize = 10000;
+  constexpr int kSize = 10000;
   {
     UserHistoryPredictor::EntryPriorityQueue queue;
     for (int i = 0; i < 10000; ++i) {
@@ -2884,8 +2884,8 @@ TEST_F(UserHistoryPredictorTest, RealtimeConversionInnerSegment) {
 
   Segments segments;
   {
-    const char kKey[] = "わたしのなまえはなかのです";
-    const char kValue[] = "私の名前は中野です";
+    constexpr char kKey[] = "わたしのなまえはなかのです";
+    constexpr char kValue[] = "私の名前は中野です";
     SetUpInputForPrediction(kKey, composer_.get(), &segments);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
@@ -2921,8 +2921,8 @@ TEST_F(UserHistoryPredictorTest, ZeroQueryFromRealtimeConversion) {
 
   Segments segments;
   {
-    const char kKey[] = "わたしのなまえはなかのです";
-    const char kValue[] = "私の名前は中野です";
+    constexpr char kKey[] = "わたしのなまえはなかのです";
+    constexpr char kValue[] = "私の名前は中野です";
     SetUpInputForPrediction(kKey, composer_.get(), &segments);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
@@ -2962,8 +2962,8 @@ TEST_F(UserHistoryPredictorTest, LongCandidateForMobile) {
 
   Segments segments;
   for (size_t i = 0; i < 3; ++i) {
-    const char kKey[] = "よろしくおねがいします";
-    const char kValue[] = "よろしくお願いします";
+    constexpr char kKey[] = "よろしくおねがいします";
+    constexpr char kValue[] = "よろしくお願いします";
     SetUpInputForPrediction(kKey, composer_.get(), &segments);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();
@@ -3658,8 +3658,8 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
 
   Segments segments;
   {
-    const char kKey[] = "とうきょうかなごやにいきたい";
-    const char kValue[] = "東京か名古屋に行きたい";
+    constexpr char kKey[] = "とうきょうかなごやにいきたい";
+    constexpr char kValue[] = "東京か名古屋に行きたい";
     SetUpInputForPrediction(kKey, composer_.get(), &segments);
     Segment::Candidate *candidate =
         segments.mutable_segment(0)->add_candidate();

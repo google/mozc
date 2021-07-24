@@ -54,8 +54,8 @@ namespace {
 GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget *>(0x12345678);
 GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget *>(0x87654321);
 
-const char kSampleTitle[] = "TITLE";
-const char kSampleDescription[] = "DESCRIPTION";
+constexpr char kSampleTitle[] = "TITLE";
+constexpr char kSampleDescription[] = "DESCRIPTION";
 
 void SetInformations(int count, commands::InformationList *usages) {
   usages->Clear();
@@ -468,7 +468,7 @@ TEST_F(InfolistWindowTest, GetRenderingRectsTest) {
 
 TEST_F(InfolistWindowTest, ReloadFontConfigTest) {
   InfolistWindowTestKit testkit = SetUpInfolistWindow();
-  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+  constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
   EXPECT_CALL(*testkit.text_renderer_mock,
               ReloadFontConfig(StrEq(kDummyFontDescription)));
   testkit.window->ReloadFontConfig(kDummyFontDescription);

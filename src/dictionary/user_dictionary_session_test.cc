@@ -46,7 +46,7 @@
 
 namespace {
 
-const char kDictionaryData[] =
+constexpr char kDictionaryData[] =
     "きょうと\t京都\t名詞\n"
     "おおさか\t大阪\t地名\n"
     "とうきょう\t東京\t地名\tコメント\n"

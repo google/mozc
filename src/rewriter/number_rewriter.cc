@@ -147,7 +147,7 @@ void GetRewriteCandidateInfos(
 // If top candidate is Kanji numeric, we want to expand at least
 // 5 candidates apart from base candidate.
 // http://b/issue?id=2872048
-const int kArabicNumericOffset = 5;
+constexpr int kArabicNumericOffset = 5;
 
 void PushBackCandidate(const std::string &value, const std::string &desc,
                        NumberUtil::NumberString::Style style,

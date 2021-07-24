@@ -59,7 +59,7 @@ namespace mozc {
 namespace {
 
 void Convert() {
-  const char kSeparator[] = "\t";
+  constexpr char kSeparator[] = "\t";
   std::vector<std::string> entries;
 
   if (absl::GetFlag(FLAGS_suppression_data).empty()) {

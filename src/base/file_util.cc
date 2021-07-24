@@ -52,9 +52,9 @@
 namespace {
 
 #ifdef OS_WIN
-const char kFileDelimiter = '\\';
+constexpr char kFileDelimiter = '\\';
 #else
-const char kFileDelimiter = '/';
+constexpr char kFileDelimiter = '/';
 #endif  // OS_WIN
 
 }  // namespace
@@ -460,8 +460,8 @@ std::string FileUtil::Basename(const std::string &filename) {
 
 std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 #ifdef OS_WIN
-  const char kFileDelimiterForUnix = '/';
-  const char kFileDelimiterForWindows = '\\';
+  constexpr char kFileDelimiterForUnix = '/';
+  constexpr char kFileDelimiterForWindows = '\\';
   std::string normalized;
   Util::StringReplace(path, std::string(1, kFileDelimiterForUnix),
                       std::string(1, kFileDelimiterForWindows), true,

@@ -361,7 +361,7 @@ bool SessionOutput::FillFooter(const commands::Category category,
   commands::Footer *footer = candidates->mutable_footer();
   if (category == commands::SUGGESTION) {
     // TODO(komatsu): Enable to localized the message.
-    const char kLabel[] = "Tabキーで選択";
+    constexpr char kLabel[] = "Tabキーで選択";
     // TODO(komatsu): Need to check if Tab is not changed to other key binding.
     footer->set_label(kLabel);
   } else {
@@ -380,11 +380,13 @@ bool SessionOutput::FillFooter(const commands::Category category,
         if (cand.has_annotation() && cand.annotation().deletable()) {
           // TODO(noriyukit): Change the message depending on user's keymap.
 #if defined(__APPLE__)
-          const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
+          constexpr char kDeleteInstruction[] =
+              "control+fn+deleteで履歴から削除";
 #elif defined(OS_CHROMEOS)
-          const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
+          constexpr char kDeleteInstruction[] =
+              "ctrl+alt+backspaceで履歴から削除";
 #else   // !__APPLE__ && !OS_CHROMEOS
-          const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
+          constexpr char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
 #endif  // __APPLE__ || OS_CHROMEOS
           footer->set_label(kDeleteInstruction);
           show_build_number = false;

@@ -98,7 +98,7 @@ void GenerateRandomInput(size_t length, char min_code, char max_code,
 TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   // ConvertToHalfWidth has to return the same string as the input.
 
-  const int kTestCaseSize = 2;
+  constexpr int kTestCaseSize = 2;
   struct TestCase {
     int min, max;
   } kTestCases[] = {
@@ -120,7 +120,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   std::string input;
 
   for (int test = 0; test < kTestCaseSize; ++test) {
-    const int kLoopLimit = 100;
+    constexpr int kLoopLimit = 100;
     for (int i = 0; i < kLoopLimit; ++i) {
       composer.Reset();
       sconverter.Reset();
@@ -128,7 +128,7 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
       input.clear();
 
       // Limited by kMaxCharLength in immutable_converter.cc
-      const int kInputStringLength = 32;
+      constexpr int kInputStringLength = 32;
       GenerateRandomInput(kInputStringLength, kTestCases[test].min,
                           kTestCases[test].max, &input);
 

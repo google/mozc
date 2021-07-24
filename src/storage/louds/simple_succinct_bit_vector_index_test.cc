@@ -53,7 +53,7 @@ class SimpleSuccinctBitVectorIndexTest
 TEST_P(SimpleSuccinctBitVectorIndexTest, Rank) {
   const CacheSizeParam &param = GetParam();
 
-  static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
+  static constexpr char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
   bit_vector.Init(reinterpret_cast<const uint8_t *>(kData), 8, param.first,
@@ -88,7 +88,7 @@ INSTANTIATE_TEST_CASE(GenRankTest);
 TEST_P(SimpleSuccinctBitVectorIndexTest, Select) {
   const CacheSizeParam &param = GetParam();
 
-  static const char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
+  static constexpr char kData[] = "\x00\x00\xFF\xFF\x00\x00\xFF\xFF";
   SimpleSuccinctBitVectorIndex bit_vector;
 
   bit_vector.Init(reinterpret_cast<const uint8_t *>(kData), 8, param.first,

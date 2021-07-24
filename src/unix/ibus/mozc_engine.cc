@@ -81,7 +81,7 @@ namespace {
 const int32 kBadCandidateId = -1;
 
 // Default UI locale
-const char kMozcDefaultUILocale[] = "en_US.UTF-8";
+constexpr char kMozcDefaultUILocale[] = "en_US.UTF-8";
 
 // for every 5 minutes, call SyncData
 const uint64 kSyncDataInterval = 5 * 60;

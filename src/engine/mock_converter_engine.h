@@ -62,6 +62,8 @@ class MockConverterEngine : public EngineInterface {
     return nullptr;
   }
 
+  std::vector<std::string> GetPOSList() const override { return {}; }
+
   void SetUserDataManager(UserDataManagerMock *manager);
   ConverterMock *mutable_converter_mock();
 

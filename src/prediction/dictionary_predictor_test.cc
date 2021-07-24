@@ -96,7 +96,7 @@ using dictionary::Token;
 using ::testing::_;
 using ::testing::WithParamInterface;
 
-const int kInfinity = (2 << 20);
+constexpr int kInfinity = (2 << 20);
 
 mozc::StatusOr<std::unique_ptr<SystemDictionary>>
 CreateSystemDictionaryFromDataManager(
@@ -381,46 +381,46 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   static void AddWordsToMockDic(DictionaryMock *mock) {
-    const char kGoogleA[] = "ぐーぐるあ";
+    constexpr char kGoogleA[] = "ぐーぐるあ";
 
-    const char kGoogleAdsenseHiragana[] = "ぐーぐるあどせんす";
-    const char kGoogleAdsenseKatakana[] = "グーグルアドセンス";
+    constexpr char kGoogleAdsenseHiragana[] = "ぐーぐるあどせんす";
+    constexpr char kGoogleAdsenseKatakana[] = "グーグルアドセンス";
     mock->AddLookupPredictive(kGoogleA, kGoogleAdsenseHiragana,
                               kGoogleAdsenseKatakana, Token::NONE);
 
-    const char kGoogleAdwordsHiragana[] = "ぐーぐるあどわーず";
-    const char kGoogleAdwordsKatakana[] = "グーグルアドワーズ";
+    constexpr char kGoogleAdwordsHiragana[] = "ぐーぐるあどわーず";
+    constexpr char kGoogleAdwordsKatakana[] = "グーグルアドワーズ";
     mock->AddLookupPredictive(kGoogleA, kGoogleAdwordsHiragana,
                               kGoogleAdwordsKatakana, Token::NONE);
 
-    const char kGoogle[] = "ぐーぐる";
+    constexpr char kGoogle[] = "ぐーぐる";
     mock->AddLookupPredictive(kGoogle, kGoogleAdsenseHiragana,
                               kGoogleAdsenseKatakana, Token::NONE);
     mock->AddLookupPredictive(kGoogle, kGoogleAdwordsHiragana,
                               kGoogleAdwordsKatakana, Token::NONE);
 
-    const char kGoogleKatakana[] = "グーグル";
+    constexpr char kGoogleKatakana[] = "グーグル";
     mock->AddLookupPrefix(kGoogle, kGoogleKatakana, kGoogleKatakana,
                           Token::NONE);
 
-    const char kAdsense[] = "あどせんす";
-    const char kAdsenseKatakana[] = "アドセンス";
+    constexpr char kAdsense[] = "あどせんす";
+    constexpr char kAdsenseKatakana[] = "アドセンス";
     mock->AddLookupPrefix(kAdsense, kAdsenseKatakana, kAdsenseKatakana,
                           Token::NONE);
 
-    const char kTestHiragana[] = "てすと";
-    const char kTestKatakana[] = "テスト";
+    constexpr char kTestHiragana[] = "てすと";
+    constexpr char kTestKatakana[] = "テスト";
     mock->AddLookupPrefix(kTestHiragana, kTestHiragana, kTestKatakana,
                           Token::NONE);
 
-    const char kFilterHiragana[] = "ふぃるたーたいしょう";
-    const char kFilterPrefixHiragana[] = "ふぃるたーたいし";
+    constexpr char kFilterHiragana[] = "ふぃるたーたいしょう";
+    constexpr char kFilterPrefixHiragana[] = "ふぃるたーたいし";
 
     // Note: This is in the filter
-    const char kFilterWord[] = "フィルター対象";
+    constexpr char kFilterWord[] = "フィルター対象";
 
     // Note: This is NOT in the filter
-    const char kNonFilterWord[] = "フィルター大将";
+    constexpr char kNonFilterWord[] = "フィルター大将";
 
     mock->AddLookupPrefix(kFilterHiragana, kFilterHiragana, kFilterWord,
                           Token::NONE);
@@ -434,9 +434,9 @@ class DictionaryPredictorTest : public ::testing::Test {
     mock->AddLookupPredictive(kFilterHiragana, kFilterPrefixHiragana,
                               kFilterWord, Token::NONE);
 
-    const char kWrongCapriHiragana[] = "かぷりちょうざ";
-    const char kRightCapriHiragana[] = "かぷりちょーざ";
-    const char kCapriKatakana[] = "カプリチョーザ";
+    constexpr char kWrongCapriHiragana[] = "かぷりちょうざ";
+    constexpr char kRightCapriHiragana[] = "かぷりちょーざ";
+    constexpr char kCapriKatakana[] = "カプリチョーザ";
 
     mock->AddLookupPrefix(kWrongCapriHiragana, kRightCapriHiragana,
                           kCapriKatakana, Token::SPELLING_CORRECTION);
@@ -444,18 +444,18 @@ class DictionaryPredictorTest : public ::testing::Test {
     mock->AddLookupPredictive(kWrongCapriHiragana, kRightCapriHiragana,
                               kCapriKatakana, Token::SPELLING_CORRECTION);
 
-    const char kDe[] = "で";
+    constexpr char kDe[] = "で";
 
     mock->AddLookupPrefix(kDe, kDe, kDe, Token::NONE);
 
-    const char kHirosueHiragana[] = "ひろすえ";
-    const char kHirosue[] = "広末";
+    constexpr char kHirosueHiragana[] = "ひろすえ";
+    constexpr char kHirosue[] = "広末";
 
     mock->AddLookupPrefix(kHirosueHiragana, kHirosueHiragana, kHirosue,
                           Token::NONE);
 
-    const char kYuzaHiragana[] = "ゆーざー";
-    const char kYuza[] = "ユーザー";
+    constexpr char kYuzaHiragana[] = "ゆーざー";
+    constexpr char kYuza[] = "ユーザー";
     // For dictionary suggestion
     mock->AddLookupPredictive(kYuzaHiragana, kYuzaHiragana, kYuza,
                               Token::USER_DICTIONARY);
@@ -1353,7 +1353,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  const char kKey[] = "ぐーぐるあ";
+  constexpr char kKey[] = "ぐーぐるあ";
 
   SetUpInputForSuggestion(kKey, composer_.get(), &segments);
 
@@ -1371,8 +1371,8 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
-  const char kHiraganaA[] = "あ";
-  const char kHiraganaAA[] = "ああ";
+  constexpr char kHiraganaA[] = "あ";
+  constexpr char kHiraganaAA[] = "ああ";
 
   DictionaryMock mock_dict;
   // A system dictionary entry "a".
@@ -1475,8 +1475,8 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
     MakeSegmentsForSuggestion("あ", &segments);
 
     // history is "グーグル"
-    const char kHistoryKey[] = "ぐーぐる";
-    const char kHistoryValue[] = "グーグル";
+    constexpr char kHistoryKey[] = "ぐーぐる";
+    constexpr char kHistoryValue[] = "グーグル";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1510,8 +1510,8 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 
     MakeSegmentsForSuggestion("あ", &segments);
 
-    const char kHistoryKey[] = "てす";
-    const char kHistoryValue[] = "テス";
+    constexpr char kHistoryKey[] = "てす";
+    constexpr char kHistoryValue[] = "テス";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1537,8 +1537,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
     MakeSegmentsForSuggestion("", &segments);
 
     // history is "グーグル"
-    const char kHistoryKey[] = "ぐーぐる";
-    const char kHistoryValue[] = "グーグル";
+    constexpr char kHistoryKey[] = "ぐーぐる";
+    constexpr char kHistoryValue[] = "グーグル";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1635,8 +1635,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
     composer_->SetInputMode(transliteration::HALF_ASCII);
 
     // No history
-    const char kHistoryKey[] = "";
-    const char kHistoryValue[] = "";
+    constexpr char kHistoryKey[] = "";
+    constexpr char kHistoryValue[] = "";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1654,8 +1654,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
     SetUpInputForSuggestion("", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HALF_ASCII);
 
-    const char kHistoryKey[] = "when";
-    const char kHistoryValue[] = "when";
+    constexpr char kHistoryKey[] = "when";
+    constexpr char kHistoryValue[] = "when";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1674,8 +1674,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
     composer_->SetInputMode(transliteration::HALF_ASCII);
 
     // We can input numbers from Latin input mode.
-    const char kHistoryKey[] = "12";
-    const char kHistoryValue[] = "12";
+    constexpr char kHistoryKey[] = "12";
+    constexpr char kHistoryValue[] = "12";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1694,8 +1694,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
     composer_->SetInputMode(transliteration::HALF_ASCII);
 
     // We can input some symbols from Latin input mode.
-    const char kHistoryKey[] = "@";
-    const char kHistoryValue[] = "@";
+    constexpr char kHistoryKey[] = "@";
+    constexpr char kHistoryValue[] = "@";
 
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -1840,7 +1840,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
           dictionary.get(), suffix_dictionary.get(), connector.get(),
           segmenter.get(), &pos_matcher, suggestion_filter.get()));
 
-  const char kKey[] = "わたしのなまえはなかのです";
+  constexpr char kKey[] = "わたしのなまえはなかのです";
 
   // Set up mock converter
   {
@@ -2000,8 +2000,8 @@ TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
   Segments segments;
 
   // history is "グーグル"
-  const char kHistoryKey[] = "ぐーぐる";
-  const char kHistoryValue[] = "グーグル";
+  constexpr char kHistoryKey[] = "ぐーぐる";
+  constexpr char kHistoryValue[] = "グーグル";
 
   // Since SuffixDictionary only returns for key "い", the result
   // should be empty for "あ".
@@ -2040,8 +2040,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
   MakeSegmentsForSuggestion("", &segments);
 
   // history is "グーグル"
-  const char kHistoryKey[] = "ぐーぐる";
-  const char kHistoryValue[] = "グーグル";
+  constexpr char kHistoryKey[] = "ぐーぐる";
+  constexpr char kHistoryValue[] = "グーグル";
 
   PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
 
@@ -2137,7 +2137,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
 TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
   config_->set_use_typing_correction(true);
 
-  const char kInputText[] = "gu-huru";
+  constexpr char kInputText[] = "gu-huru";
   const uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
   const char *kExpectedValues[] = {
       "グーグルアドセンス",
@@ -2159,9 +2159,9 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
   {
     MakeSegmentsForSuggestion("", &segments);
 
-    const char kHistoryKey[] = "12";
-    const char kHistoryValue[] = "12";
-    const char kExpectedValue[] = "月";
+    constexpr char kHistoryKey[] = "12";
+    constexpr char kHistoryValue[] = "12";
+    constexpr char kExpectedValue[] = "月";
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
     std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateZeroQuerySuffixPrediction(*convreq_, segments,
@@ -2190,9 +2190,9 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
   {
     MakeSegmentsForSuggestion("", &segments);
 
-    const char kHistoryKey[] = "66050713";  // A random number
-    const char kHistoryValue[] = "66050713";
-    const char kExpectedValue[] = "個";
+    constexpr char kHistoryKey[] = "66050713";  // A random number
+    constexpr char kHistoryValue[] = "66050713";
+    constexpr char kExpectedValue[] = "個";
     PrependHistorySegments(kHistoryKey, kHistoryValue, &segments);
     std::vector<DictionaryPredictor::Result> results;
     predictor->AggregateZeroQuerySuffixPrediction(*convreq_, segments,
@@ -2382,7 +2382,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  const char kKey[] = "PCてすと";
+  constexpr char kKey[] = "PCてすと";
   const char *kExpectedSuggestionValues[] = {
       "Realtime top result",
       "PCテスト",
@@ -2423,7 +2423,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  const char kCapriHiragana[] = "かぷりちょうざ";
+  constexpr char kCapriHiragana[] = "かぷりちょうざ";
 
   // Set up mock converter for realtime top result.
   {
@@ -2445,8 +2445,8 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
                 Segment::Candidate::SPELLING_CORRECTION));
 
   results.clear();
-  const char kKeyWithDe[] = "かぷりちょうざで";
-  const char kExpectedSuggestionValueWithDe[] = "カプリチョーザで";
+  constexpr char kKeyWithDe[] = "かぷりちょうざで";
+  constexpr char kExpectedSuggestionValueWithDe[] = "カプリチョーザで";
   SetUpInputForSuggestion(kKeyWithDe, composer_.get(), &segments);
   predictor->AggregateRealtimeConversion(*convreq_, 1, &segments, &results);
   EXPECT_EQ(1, results.size());
@@ -2838,7 +2838,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
   {
     // Cost of words in user dictionary should be decreased.
-    const int kOriginalWordCost = 10000;
+    constexpr int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
@@ -2854,7 +2854,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
   {
     // Cost of words in user dictionary should not be decreased to below 1.
-    const int kOriginalWordCost = 10;
+    constexpr int kOriginalWordCost = 10;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
@@ -2870,7 +2870,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
   {
     // Cost of general symbols should not be decreased.
-    const int kOriginalWordCost = 10000;
+    constexpr int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
@@ -2887,7 +2887,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 
   {
     // Cost of words not in user dictionary should not be decreased.
-    const int kOriginalWordCost = 10000;
+    constexpr int kOriginalWordCost = 10000;
     std::vector<TestableDictionaryPredictor::Result> results;
     AddTestableDictionaryPredictorResult(
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
@@ -2955,7 +2955,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  const char kKey[] = "とうきょう";
+  constexpr char kKey[] = "とうきょう";
   SetUpInputForSuggestion(kKey, composer_.get(), &segments);
 
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
@@ -3226,7 +3226,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
           dictionary.get(), suffix_dictionary.get(), connector.get(),
           segmenter.get(), &pos_matcher, suggestion_filter.get()));
   Segments segments;
-  const char kKey[] = "わたしのなまえはなかのです";
+  constexpr char kKey[] = "わたしのなまえはなかのです";
   MakeSegmentsForSuggestion(kKey, &segments);
 
   std::vector<TestableDictionaryPredictor::Result> results;
@@ -3253,7 +3253,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
       data_and_predictor->dictionary_predictor();
 
   std::vector<TestableDictionaryPredictor::Result> results;
-  const int kTestSize = 20;
+  constexpr int kTestSize = 20;
   for (size_t i = 0; i < kTestSize; ++i) {
     results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
     TestableDictionaryPredictor::Result *result = &results.back();
@@ -3292,8 +3292,8 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
       data_and_predictor->dictionary_predictor();
 
   std::vector<TestableDictionaryPredictor::Result> results;
-  const int kTotalCandidateSize = 100;
-  const int kLowCostCandidateSize = 5;
+  constexpr int kTotalCandidateSize = 100;
+  constexpr int kLowCostCandidateSize = 5;
   for (size_t i = 0; i < kTotalCandidateSize; ++i) {
     results.push_back(TestableDictionaryPredictor::MakeEmptyResult());
     TestableDictionaryPredictor::Result *result = &results.back();
@@ -3379,7 +3379,7 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
 }
 
 namespace {
-const char kTestTokenArray[] =
+constexpr char kTestTokenArray[] =
     // {"あ", "", ZERO_QUERY_EMOJI, EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04}
     "\x04\x00\x00\x00"
     "\x00\x00\x00\x00"

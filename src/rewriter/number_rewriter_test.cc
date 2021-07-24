@@ -58,12 +58,12 @@ namespace {
 
 using dictionary::POSMatcher;
 
-const char kKanjiDescription[] = "漢数字";
-const char kArabicDescription[] = "数字";
-const char kOldKanjiDescription[] = "大字";
-const char kMaruNumberDescription[] = "丸数字";
-const char kRomanCapitalDescription[] = "ローマ数字(大文字)";
-const char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
+constexpr char kKanjiDescription[] = "漢数字";
+constexpr char kArabicDescription[] = "数字";
+constexpr char kOldKanjiDescription[] = "大字";
+constexpr char kMaruNumberDescription[] = "丸数字";
+constexpr char kRomanCapitalDescription[] = "ローマ数字(大文字)";
+constexpr char kRomanNoCapitalDescription[] = "ローマ数字(小文字)";
 
 bool FindValue(const Segment &segment, const std::string &value) {
   for (size_t i = 0; i < segment.candidates_size(); ++i) {
@@ -911,7 +911,7 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  const char kBubun[] = "部分";
+  constexpr char kBubun[] = "部分";
   Segments segments;
   {
     Segment *seg = segments.push_back_segment();
@@ -952,7 +952,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  const char kBubun[] = "部分";
+  constexpr char kBubun[] = "部分";
   Segments segments;
   {
     Segment *seg = segments.push_back_segment();

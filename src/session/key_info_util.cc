@@ -54,8 +54,8 @@ using config::Config;
 
 std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
     std::istream *ifs) {
-  const char kModeDirect[] = "Direct";
-  const char kModeDirectInput[] = "DirectInput";
+  constexpr char kModeDirect[] = "Direct";
+  constexpr char kModeDirectInput[] = "DirectInput";
 
   std::vector<KeyInformation> result;
 

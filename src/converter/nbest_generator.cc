@@ -50,8 +50,8 @@ using mozc::dictionary::SuppressionDictionary;
 namespace mozc {
 namespace {
 
-const int kFreeListSize = 512;
-const int kCostDiff = 3453;  // log prob of 1/1000
+constexpr int kFreeListSize = 512;
+constexpr int kCostDiff = 3453;  // log prob of 1/1000
 
 }  // namespace
 
@@ -452,7 +452,7 @@ bool NBestGenerator::Next(const std::string &original_key,
         }
 
         if (boundary_result == VALID_WEAK_CONNECTED) {
-          const int kWeakConnectedPenalty = 3453;  // log prob of 1/1000
+          constexpr int kWeakConnectedPenalty = 3453;  // log prob of 1/1000
           cost_diff += kWeakConnectedPenalty;
           structure_cost_diff += kWeakConnectedPenalty / 2;
           wcost_diff += kWeakConnectedPenalty / 2;
@@ -592,7 +592,7 @@ int NBestGenerator::InsertTopResult(const std::string &original_key,
 
 int NBestGenerator::GetTransitionCost(const Node *lnode,
                                       const Node *rnode) const {
-  const int kInvalidPenaltyCost = 100000;
+  constexpr int kInvalidPenaltyCost = 100000;
   if (rnode->constrained_prev != nullptr && lnode != rnode->constrained_prev) {
     return kInvalidPenaltyCost;
   }

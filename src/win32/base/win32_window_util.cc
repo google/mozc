@@ -96,7 +96,7 @@ bool WindowUtil::ChangeMessageFilter(HWND window_handle, UINT message) {
 
   // The following constant is not available unless we change the WINVER
   // higher enough.
-  const int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
+  constexpr int kMessageFilterAllow = 1;  // MSGFLT_ALLOW  (WINVER >=0x0601)
 
   const HMODULE lib = WinUtil::GetSystemModuleHandle(L"user32.dll");
   if (lib == nullptr) {

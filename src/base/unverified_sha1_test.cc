@@ -67,7 +67,7 @@ AssertionResult AssertEqualHashWithFormat(
 TEST(UnverifiedSHA1Test, OneBlockMessage) {
   // http://csrc.nist.gov/groups/ST/toolkit/documents/Examples/SHA1.pdf
   // Example: one-block message.
-  const char kInput[] = "abc";
+  constexpr char kInput[] = "abc";
   const uint8_t kExpected[kDigestLength] = {
       0xa9, 0x99, 0x3e, 0x36, 0x47, 0x06, 0x81, 0x6a, 0xba, 0x3e,
       0x25, 0x71, 0x78, 0x50, 0xc2, 0x6c, 0x9c, 0xd0, 0xd8, 0x9d,
@@ -78,7 +78,7 @@ TEST(UnverifiedSHA1Test, OneBlockMessage) {
 TEST(UnverifiedSHA1Test, TwoBlockMessage) {
   // http://csrc.nist.gov/groups/ST/toolkit/documents/Examples/SHA1.pdf
   // Example: two-block message.
-  const char kInput[] =
+  constexpr char kInput[] =
       "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
   const uint8_t kExpected[kDigestLength] = {
       0x84, 0x98, 0x3e, 0x44, 0x1c, 0x3b, 0xd2, 0x6e, 0xba, 0xae,
@@ -88,7 +88,7 @@ TEST(UnverifiedSHA1Test, TwoBlockMessage) {
 }
 
 TEST(UnverifiedSHA1Test, AnotherTwoBlockMessage) {
-  const char kInput[] =
+  constexpr char kInput[] =
       "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnop";
   const uint8_t kExpected[kDigestLength] = {
       0x47, 0xb1, 0x72, 0x81, 0x07, 0x95, 0x69, 0x9f, 0xe7, 0x39,

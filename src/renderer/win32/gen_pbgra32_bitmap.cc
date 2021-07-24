@@ -53,8 +53,8 @@ using ::std::min;
 
 namespace {
 
-const int kErrorLevelSuccess = 0;
-const int kErrorLevelFail = 1;
+constexpr int kErrorLevelSuccess = 0;
+constexpr int kErrorLevelFail = 1;
 
 const uint32 kMaxBitmapWidth = 16384;
 const uint32 kMaxBitmapHeight = 16384;

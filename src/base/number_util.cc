@@ -110,9 +110,9 @@ bool IsDecimalNumber(absl::string_view str) {
   return true;
 }
 
-const char kAsciiZero = '0';
-const char kAsciiOne = '1';
-const char kAsciiNine = '9';
+constexpr char kAsciiZero = '0';
+constexpr char kAsciiOne = '1';
+constexpr char kAsciiNine = '9';
 
 }  // namespace
 
@@ -185,9 +185,9 @@ const NumberStringVariation kKanjiVariations[] = {
      NumberUtil::NumberString::NUMBER_OLD_KANJI},
 };
 
-const char kOldTwoTen[] = "弐拾";
+constexpr char kOldTwoTen[] = "弐拾";
 const size_t kOldTwoTenLength = arraysize(kOldTwoTen) - 1;
-const char kOldTwenty[] = "廿";
+constexpr char kOldTwenty[] = "廿";
 
 }  // namespace
 
@@ -195,7 +195,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
                                std::vector<NumberString> *output) {
   DCHECK(output);
   const char *const kNumZero = "零";
-  const int kDigitsInBigRank = 4;
+  constexpr int kDigitsInBigRank = 4;
 
   if (!IsDecimalInteger(input_num)) {
     return false;

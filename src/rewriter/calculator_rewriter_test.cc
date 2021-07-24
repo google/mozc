@@ -75,7 +75,7 @@ void SetSegment(const std::string &key, const std::string &value,
   AddSegment(key, value, segments);
 }
 
-const char kCalculationDescription[] = "計算結果";
+constexpr char kCalculationDescription[] = "計算結果";
 
 bool ContainsCalculatedResult(const Segment::Candidate &candidate) {
   return absl::StrContains(candidate.description, kCalculationDescription);
@@ -247,7 +247,7 @@ TEST_F(CalculatorRewriterTest, ExpressionStartingWithEqualTest) {
 
 // Verify the description of calculator candidate.
 TEST_F(CalculatorRewriterTest, DescriptionCheckTest) {
-  const char kExpression[] = "５・（８／４）ー７％３＋６＾−１＊９＝";
+  constexpr char kExpression[] = "５・（８／４）ー７％３＋６＾−１＊９＝";
   // Expected description
   const std::string description = kCalculationDescription;
 

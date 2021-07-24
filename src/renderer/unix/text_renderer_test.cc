@@ -250,7 +250,7 @@ TEST_F(TextRendererTest, RenderTextTest) {
 TEST_F(TextRendererTest, ReloadFontConfigTest) {
   FontSpecMock *font_spec_mock = new FontSpecMock();
   TextRenderer text_renderer(font_spec_mock);
-  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+  constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
 
   EXPECT_CALL(*font_spec_mock, Reload(kDummyFontDescription));
   text_renderer.ReloadFontConfig(kDummyFontDescription);

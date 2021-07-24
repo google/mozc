@@ -30,6 +30,7 @@
 #include "engine/engine.h"
 
 #include <cstdint>
+#include <string>
 #include <utility>
 
 #include "base/logging.h"
@@ -189,9 +190,12 @@ mozc::Status Engine::Init(
       data_manager->GetPOSMatcherData());
   RETURN_IF_NULL(pos_matcher_);
 
+  std::unique_ptr<UserPOS> user_pos =
+      UserPOS::CreateFromDataManager(*data_manager);
+  RETURN_IF_NULL(user_pos);
+
   user_dictionary_ = absl::make_unique<UserDictionary>(
-      UserPOS::CreateFromDataManager(*data_manager), *pos_matcher_,
-      suppression_dictionary_.get());
+      std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
   RETURN_IF_NULL(user_dictionary_);
 
   const char *dictionary_data = nullptr;

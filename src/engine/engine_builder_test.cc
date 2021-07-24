@@ -41,7 +41,7 @@
 namespace mozc {
 namespace {
 
-const char kMockMagicNumber[] = "MOCK";
+constexpr char kMockMagicNumber[] = "MOCK";
 
 class EngineBuilderTest : public ::testing::Test {
  protected:

@@ -160,11 +160,11 @@ bool BrowserInfo::IsOnChromeOmnibox(
       current_ui_element.role != "ROLE_SYSTEM_TEXT") {
     return false;
   }
-  const char kOmniboxDescJa[] = "アドレス検索バー";
+  constexpr char kOmniboxDescJa[] = "アドレス検索バー";
   if (current_ui_element.name == kOmniboxDescJa) {
     return true;
   }
-  const char kOmniboxDescEn[] = "Address and search bar";
+  constexpr char kOmniboxDescEn[] = "Address and search bar";
   if (current_ui_element.name == kOmniboxDescEn) {
     return true;
   }

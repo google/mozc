@@ -58,7 +58,7 @@ namespace {
 
 using mozc::commands::Request;
 
-const char kEmoji[] = "えもじ";
+constexpr char kEmoji[] = "えもじ";
 
 // Makes |segments| to have only a segment with a key-value paired candidate.
 void SetSegment(const std::string &key, const std::string &value,
@@ -429,7 +429,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
 
   // |kExpectPosition| has the same number with |kDefaultInsertPos| defined in
   // emoji_rewriter.cc.
-  const int kExpectPosition = 6;
+  constexpr int kExpectPosition = 6;
 
   Segments segments;
   {
@@ -460,7 +460,7 @@ TEST_F(EmojiRewriterTest, CheckInsertPosition) {
 TEST_F(EmojiRewriterTest, CheckUsageStats) {
   // This test checks the data stored in usage stats for EmojiRewriter.
 
-  const char kStatsKey[] = "CommitEmoji";
+  constexpr char kStatsKey[] = "CommitEmoji";
   Segments segments;
 
   // No use, no registered keys

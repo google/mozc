@@ -49,7 +49,7 @@ void UTF8ToSJIS(absl::string_view input, std::string *output) {
     return;
   }
 
-  const int kCodePageShiftJIS = 932;
+  constexpr int kCodePageShiftJIS = 932;
 
   const int output_length_without_null =
       ::WideCharToMultiByte(kCodePageShiftJIS, 0, utf16.data(), utf16.size(),

@@ -133,6 +133,7 @@ cc_library_mozc(
         "//dictionary:suppression_dictionary",
         "//dictionary:user_dictionary",
         "//dictionary:user_pos",
+        "//dictionary:user_pos_interface",
         "//dictionary/system:system_dictionary",
         "//dictionary/system:value_dictionary",
         "//prediction:dictionary_predictor",

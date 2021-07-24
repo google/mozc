@@ -66,9 +66,9 @@ typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 typedef ::mozc::commands::Candidates_Candidate Candidate;
 
 // DPI-invariant layout size constants in pixel unit.
-const int kWindowBorder = 2;
-const int kRowRectPadding = 4;
-const int kIndicatorWidth = 4;
+constexpr int kWindowBorder = 2;
+constexpr int kRowRectPadding = 4;
+constexpr int kIndicatorWidth = 4;
 
 // Color scheme
 const COLORREF kFrameColor = RGB(0x00, 0x00, 0x00);
@@ -111,7 +111,7 @@ int GetCandidateArrayIndexByCandidateIndex(const Candidates &candidates,
 // This function returns the size of the given candidate list when there
 // aren't any candidates satisfying the above condition.
 int GetFocusedArrayIndex(const Candidates &candidates) {
-  const int kInvalidIndex = candidates.candidate_size();
+  constexpr int kInvalidIndex = candidates.candidate_size();
 
   if (!candidates.has_focused_index()) {
     return kInvalidIndex;

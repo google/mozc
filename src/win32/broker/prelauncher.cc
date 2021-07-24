@@ -43,8 +43,8 @@ namespace {
 
 using std::unique_ptr;
 
-const int kErrorLevelSuccess = 0;
-const int kErrorLevelGeneralError = 1;
+constexpr int kErrorLevelSuccess = 0;
+constexpr int kErrorLevelGeneralError = 1;
 
 }  // namespace
 

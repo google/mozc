@@ -36,8 +36,8 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const int kErrorLevelSuccess = 0;
-const int kErrorLevelGeneralError = 1;
+constexpr int kErrorLevelSuccess = 0;
+constexpr int kErrorLevelGeneralError = 1;
 
 }  // namespace
 

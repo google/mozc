@@ -39,7 +39,7 @@
 namespace mozc {
 namespace gui {
 namespace {
-const char kYellowSelectionStyleSheet[] =
+constexpr char kYellowSelectionStyleSheet[] =
     "selection-background-color : yellow;";
 }
 

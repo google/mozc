@@ -42,7 +42,7 @@ namespace mozc {
 namespace {
 
 // We use dice with 6 faces.
-const int kDiceFaces = 6;
+constexpr int kDiceFaces = 6;
 
 // Last candidate index of one page.
 const size_t kLastCandidateIndex = 8;

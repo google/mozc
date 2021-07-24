@@ -364,7 +364,7 @@ TEST_F(SessionRegressionTest, PredictionAfterUndo) {
 // Currently the restriction is removed. This test checks that the logic
 // works well or not.
 TEST_F(SessionRegressionTest, ConsistencyBetweenPredictionAndSuggesion) {
-  const char kKey[] = "aio";
+  constexpr char kKey[] = "aio";
 
   commands::Request request;
   commands::RequestForUnitTest::FillMobileRequest(&request);
@@ -410,7 +410,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
 
     InitSessionToPrecomposition(session_.get());
 
-    const char kInputKeys[] = "123456.7";
+    constexpr char kInputKeys[] = "123456.7";
     for (size_t i = 0; kInputKeys[i]; ++i) {
       command.Clear();
       commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
@@ -433,7 +433,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config.set_use_auto_conversion(true);
     session_->SetConfig(&config);
 
-    const char kInputKeys[] = "aiueo.";
+    constexpr char kInputKeys[] = "aiueo.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
       command.Clear();
       commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
@@ -456,7 +456,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
     config.set_use_auto_conversion(true);
     session_->SetConfig(&config);
 
-    const char kInputKeys[] = "1234.";
+    constexpr char kInputKeys[] = "1234.";
     for (size_t i = 0; i < kInputKeys[i]; ++i) {
       command.Clear();
       commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
@@ -549,7 +549,7 @@ TEST_F(SessionRegressionTest, CommitT13nSuggestion) {
   InsertCharacterChars("ssh", &command);
   EXPECT_EQ("っｓｈ", GetComposition(command));
 
-  const int kHiraganaId = -1;
+  constexpr int kHiraganaId = -1;
   SendCommandWithId(commands::SessionCommand::SUBMIT_CANDIDATE, kHiraganaId,
                     &command);
 

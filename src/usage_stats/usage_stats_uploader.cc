@@ -38,10 +38,10 @@ namespace mozc {
 namespace usage_stats {
 
 namespace {
-const char kRegistryPrefix[] = "usage_stats.";
-const char kLastUploadKey[] = "last_upload";
-const char kMozcVersionKey[] = "mozc_version";
-const char kClientIdKey[] = "client_id";
+constexpr char kRegistryPrefix[] = "usage_stats.";
+constexpr char kLastUploadKey[] = "last_upload";
+constexpr char kMozcVersionKey[] = "mozc_version";
+constexpr char kClientIdKey[] = "client_id";
 }  // namespace
 
 bool UsageStatsUploader::Send(void *data) {

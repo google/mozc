@@ -217,7 +217,7 @@ class CompositionWindowListImpl : public CompositionWindowList {
     }
   }
   virtual void Initialize() {
-    const int kInitialNumberOfWindows = 3;
+    constexpr int kInitialNumberOfWindows = 3;
     for (size_t i = 0; i < kInitialNumberOfWindows; ++i) {
       CompositionLineWindow *window = new CompositionLineWindow();
       window->Create(nullptr);

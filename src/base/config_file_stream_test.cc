@@ -138,11 +138,11 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
 TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
-  const char kTestFileName[] = "my_binary_file.dat";
+  constexpr char kTestFileName[] = "my_binary_file.dat";
   const std::string &test_file_path =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
-  const char kBinaryData[] = {
+  constexpr char kBinaryData[] = {
       ' ', ' ', '\r', ' ', '\n', ' ', '\r', '\n', ' ', '\0', ' ',
   };
   const size_t kBinaryDataSize = sizeof(kBinaryData);
@@ -175,11 +175,11 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
 TEST_F(ConfigFileStreamTest, OpenReadText) {
   // At first, generate a binary data file in (temporary) user directory
   // so that we can load it as "user://my_binary_file.dat"
-  const char kTestFileName[] = "my_text_file.dat";
+  constexpr char kTestFileName[] = "my_text_file.dat";
   const std::string &test_file_path =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), kTestFileName);
 
-  const char kSourceTextData[] = {
+  constexpr char kSourceTextData[] = {
       'a', 'b', '\r', 'c', '\n', 'd', '\r', '\n', 'e',
   };
   {

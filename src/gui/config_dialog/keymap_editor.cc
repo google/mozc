@@ -76,15 +76,15 @@ const char *kKeyMapStatus[] = {
     "Conversion",  "Suggestion",     "Prediction",
 };
 
-const char kInsertCharacterCommand[] = "InsertCharacter";
-const char kDirectMode[] = "DirectInput";
-const char kReportBugCommand[] = "ReportBug";
+constexpr char kInsertCharacterCommand[] = "InsertCharacter";
+constexpr char kDirectMode[] = "DirectInput";
+constexpr char kReportBugCommand[] = "ReportBug";
 // Old command name
-const char kEditInsertCommand[] = "EditInsert";
+constexpr char kEditInsertCommand[] = "EditInsert";
 
 #if defined(__APPLE__)
-const char kIMEOnCommand[] = "IMEOn";
-const char kIMEOffCommand[] = "IMEOff";
+constexpr char kIMEOnCommand[] = "IMEOn";
+constexpr char kIMEOffCommand[] = "IMEOff";
 #endif  // __APPLE__
 
 enum {

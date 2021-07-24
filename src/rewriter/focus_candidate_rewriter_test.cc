@@ -573,8 +573,8 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
       seg[i] = segments.add_segment();
     }
 
-    const int kNounId = 1939;
-    const int kParallelMarkerYa = 290;
+    constexpr int kNounId = 1939;
+    constexpr int kParallelMarkerYa = 290;
 
     seg[0]->set_key("いっかいや");
 
@@ -619,8 +619,8 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
       seg[i] = segments.add_segment();
     }
 
-    const int kNounId = 1939;
-    const int kParallelMarkerYa = 290;
+    constexpr int kNounId = 1939;
+    constexpr int kParallelMarkerYa = 290;
 
     seg[0]->set_key("いっかいや");
 
@@ -674,8 +674,8 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
       seg[i] = segments.add_segment();
     }
 
-    const int kNounId = 1939;
-    const int kParallelMarkerYa = 290;
+    constexpr int kNounId = 1939;
+    constexpr int kParallelMarkerYa = 290;
 
     seg[0]->set_key("いっかいや");
 
@@ -724,10 +724,10 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
       seg[i] = segments.add_segment();
     }
 
-    const int kNounId = 1939;
-    const int kKakariJoshiHa = 299;
-    const int kIkuTaSetsuzoku = 1501;
-    const int kJodoushiTa = 161;
+    constexpr int kNounId = 1939;
+    constexpr int kKakariJoshiHa = 299;
+    constexpr int kIkuTaSetsuzoku = 1501;
+    constexpr int kJodoushiTa = 161;
 
     seg[0]->set_key("いっかいへは");
 

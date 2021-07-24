@@ -561,7 +561,7 @@ TEST_F(KeyMapTest, Initialize) {
 TEST_F(KeyMapTest, AddCommand) {
   KeyMapManager manager;
   commands::KeyEvent key_event;
-  const char kKeyEvent[] = "Ctrl Shift Insert";
+  constexpr char kKeyEvent[] = "Ctrl Shift Insert";
 
   KeyParser::ParseKey(kKeyEvent, &key_event);
 

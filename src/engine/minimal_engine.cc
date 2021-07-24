@@ -256,4 +256,6 @@ const DataManagerInterface *MinimalEngine::GetDataManager() const {
   return data_manager_.get();
 }
 
+std::vector<std::string> MinimalEngine::GetPOSList() const { return {}; }
+
 }  // namespace mozc

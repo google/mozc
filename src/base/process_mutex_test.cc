@@ -45,7 +45,7 @@
 
 namespace mozc {
 namespace {
-static const char kName[] = "process_mutex_test";
+static constexpr char kName[] = "process_mutex_test";
 
 class ProcessMutexTest : public testing::Test {
  protected:

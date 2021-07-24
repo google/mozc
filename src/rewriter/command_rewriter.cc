@@ -42,9 +42,9 @@
 namespace mozc {
 namespace {
 
-const char kPrefix[] = "【";
-const char kSuffix[] = "】";
-const char kDescription[] = "設定を変更します";
+constexpr char kPrefix[] = "【";
+constexpr char kSuffix[] = "】";
+constexpr char kDescription[] = "設定を変更します";
 
 // Trigger CommandRewriter if and only if the Segment::key is one of
 // kTriggerKeys[]
@@ -66,10 +66,10 @@ const char *kDisableAllSuggestionValues[] = {"サジェスト",         "予測"
                                              "予測入力",           "予測変換",
                                              "プレゼンテーション", "プレゼン"};
 
-const char kIncoginitoModeOn[] = "シークレットモードをオン";
-const char kIncoginitoModeOff[] = "シークレットモードをオフ";
-const char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
-const char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
+constexpr char kIncoginitoModeOn[] = "シークレットモードをオン";
+constexpr char kIncoginitoModeOff[] = "シークレットモードをオフ";
+constexpr char kDisableAllSuggestionOn[] = "サジェスト機能の一時停止";
+constexpr char kDisableAllSuggestionOff[] = "サジェスト機能を元に戻す";
 
 bool FindString(const std::string &query, const char **values, size_t size) {
   DCHECK(values);

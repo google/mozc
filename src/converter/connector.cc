@@ -190,9 +190,9 @@ class Connector::Row {
 mozc::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
 #ifdef OS_ANDROID
-  const int kCacheSize = 256;
+  constexpr int kCacheSize = 256;
 #else
-  const int kCacheSize = 1024;
+  constexpr int kCacheSize = 1024;
 #endif  // OS_ANDROID
   const char *connection_data = nullptr;
   size_t connection_data_size = 0;
