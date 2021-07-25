@@ -446,7 +446,8 @@ class LangBarCallbackImpl : public LangBarCallback {
       }
       case LangBarCallback::kHelp: {
         // Open the about dialog.
-        const char kHelpUrl[] = "http://www.google.com/support/ime/japanese";
+        constexpr char kHelpUrl[] =
+            "http://www.google.com/support/ime/japanese";
         if (!mozc::Process::OpenBrowser(kHelpUrl)) {
           result = E_FAIL;
         }
@@ -691,7 +692,7 @@ class DefaultUIWindow {
         }
       }  // release |context|.
 
-      const int kCandidateWindowIndex = 0;
+      constexpr int kCandidateWindowIndex = 0;
       if (::ImmNotifyIME(himc, NI_SELECTCANDIDATESTR, kCandidateWindowIndex,
                          candidate_index) == FALSE) {
         return 0;

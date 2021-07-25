@@ -59,7 +59,7 @@ TEST(SegmentsTest, BasicTest) {
 
   EXPECT_EQ(0, segments.segments_size());
 
-  const int kSegmentsSize = 5;
+  constexpr int kSegmentsSize = 5;
   Segment *seg[kSegmentsSize];
   for (int i = 0; i < kSegmentsSize; ++i) {
     EXPECT_EQ(i, segments.segments_size());
@@ -161,7 +161,7 @@ TEST(CandidateTest, BasicTest) {
   segment.set_segment_type(Segment::FIXED_BOUNDARY);
   EXPECT_EQ(Segment::FIXED_BOUNDARY, segment.segment_type());
 
-  const int kCandidatesSize = 5;
+  constexpr int kCandidatesSize = 5;
   Segment::Candidate *cand[kCandidatesSize];
   for (int i = 0; i < kCandidatesSize; ++i) {
     EXPECT_EQ(i, segment.candidates_size());
@@ -321,7 +321,7 @@ TEST(SegmentsTest, RevertEntryTest) {
   Segments segments;
   EXPECT_EQ(0, segments.revert_entries_size());
 
-  const int kSize = 10;
+  constexpr int kSize = 10;
   for (int i = 0; i < kSize; ++i) {
     Segments::RevertEntry *e = segments.push_back_revert_entry();
     e->key = "test" + std::to_string(i);
@@ -379,8 +379,8 @@ TEST(SegmentsTest, CopyFromTest) {
   src.set_user_history_enabled(true);
   src.set_request_type(Segments::PREDICTION);
 
-  const int kSegmentsSize = 3;
-  const int kCandidatesSize = 2;
+  constexpr int kSegmentsSize = 3;
+  constexpr int kCandidatesSize = 2;
 
   for (int i = 0; i < kSegmentsSize; ++i) {
     Segment *segment = src.add_segment();
@@ -552,7 +552,7 @@ TEST(SegmentTest, MetaCandidateTest) {
 
   EXPECT_EQ(0, segment.meta_candidates_size());
 
-  const int kCandidatesSize = 5;
+  constexpr int kCandidatesSize = 5;
   std::vector<std::string> values;
   for (size_t i = 0; i < kCandidatesSize; ++i) {
     values.push_back(std::string(1, 'a' + i));

@@ -53,13 +53,13 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const char kProcessMutexPrefixForPerUserIMESettings[] =
+constexpr char kProcessMutexPrefixForPerUserIMESettings[] =
     "mozc_hkcu_manipulation_for_ime.";
 
 // It seems that mozc_tool basically uses the following error levels.
-const int kErrorLevelProcessMutexInUse = -1;
-const int kErrorLevelSuccess = 0;
-const int kErrorLevelGeneralError = 1;
+constexpr int kErrorLevelProcessMutexInUse = -1;
+constexpr int kErrorLevelSuccess = 0;
+constexpr int kErrorLevelGeneralError = 1;
 
 void NotifyFatalMessageImpl(const std::string &msg) {
 #ifdef MOZC_NO_LOGGING

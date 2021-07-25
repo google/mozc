@@ -318,11 +318,11 @@ class UndoImportFromStringCommand : public UserDictionarySession::UndoCommand {
 };
 
 // The limit of the number of commands remembered by the session for undo.
-const int kMaxUndoHistory = 30;
+constexpr int kMaxUndoHistory = 30;
 
 // The default name of a dictionary, which is created to ensure "non-empty"
 // storage.
-const char kDefaultDictionaryName[] = "user dictionary";
+constexpr char kDefaultDictionaryName[] = "user dictionary";
 
 }  // namespace
 

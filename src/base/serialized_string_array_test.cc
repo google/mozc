@@ -75,7 +75,7 @@ TEST_F(SerializedStringArrayTest, EmptyArray) {
   EXPECT_EQ(0, a.size());
 }
 
-const char kTestData[] =
+constexpr char kTestData[] =
     "\x03\x00\x00\x00"                  // Array size = 3
     "\x1c\x00\x00\x00\x05\x00\x00\x00"  // (28, 5)
     "\x22\x00\x00\x00\x04\x00\x00\x00"  // (34, 4)

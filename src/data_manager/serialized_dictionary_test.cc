@@ -82,7 +82,7 @@ TEST_F(SerializedDictionaryTest, Compile) {
   EXPECT_EQ("value3", string_array[9]);
 
   // Recall that entries are sorted first by key then by cost.
-  const char kExpectedTokenArray[] =
+  constexpr char kExpectedTokenArray[] =
       // Entry 2
       "\x05\x00\x00\x00"  // key = "key1", index = 5
       "\x08\x00\x00\x00"  // value = "value2", index = 8

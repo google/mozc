@@ -32,10 +32,11 @@
 
 #include <string>
 
+#include "base/protobuf/repeated_field.h"
+#include "protocol/commands.pb.h"
+
 namespace mozc {
 namespace composer {
-
-class TransliteratorInterface;
 
 class CompositionInput final {
  public:
@@ -44,6 +45,12 @@ class CompositionInput final {
 
   CompositionInput(const CompositionInput &) = delete;
   CompositionInput &operator=(const CompositionInput &) = delete;
+
+  bool Init(const commands::KeyEvent &key_event, bool use_typing_correction,
+            bool is_new_input);
+  void InitFromRaw(const std::string &raw, bool is_new_input);
+  void InitFromRawAndConv(const std::string &raw, const std::string &conversion,
+                          bool is_new_input);
 
   void Clear();
   bool Empty() const;
@@ -58,18 +65,23 @@ class CompositionInput final {
   void set_conversion(const std::string &conversion);
   bool has_conversion() const;
 
+  const protobuf::RepeatedPtrField<commands::KeyEvent::ProbableKeyEvent>
+      &probable_key_events() const;
+  void set_probable_key_events(
+      const protobuf::RepeatedPtrField<commands::KeyEvent::ProbableKeyEvent>
+          &probable_key_events);
+
   bool is_new_input() const;
   void set_is_new_input(bool is_new_input);
-
-  const TransliteratorInterface *transliterator() const;
-  void set_transliterator(const TransliteratorInterface *t12r);
 
  private:
   std::string raw_;
   std::string conversion_;
   bool has_conversion_;
+  protobuf::RepeatedPtrField<commands::KeyEvent::ProbableKeyEvent>
+      probable_key_events_;
+
   bool is_new_input_;
-  const TransliteratorInterface *transliterator_;
 };
 
 }  // namespace composer

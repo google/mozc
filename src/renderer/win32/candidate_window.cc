@@ -61,15 +61,15 @@ using WTL::CSize;
 namespace {
 
 // 96 DPI is the default DPI in Windows.
-const int kDefaultDPI = 96;
+constexpr int kDefaultDPI = 96;
 
 // layout size constants in pixel unit in the default DPI.
-const int kIndicatorWidthInDefaultDPI = 4;
+constexpr int kIndicatorWidthInDefaultDPI = 4;
 
 // DPI-invariant layout size constants in pixel unit.
-const int kWindowBorder = 1;
-const int kFooterSeparatorHeight = 1;
-const int kRowRectPadding = 1;
+constexpr int kWindowBorder = 1;
+constexpr int kFooterSeparatorHeight = 1;
+constexpr int kRowRectPadding = 1;
 
 // usage type for each column.
 enum COLUMN_TYPE {
@@ -81,7 +81,8 @@ enum COLUMN_TYPE {
   NUMBER_OF_COLUMNS,    // number of columns. (this item should be last)
 };
 
-const char kMinimumCandidateAndDescriptionWidthAsString[] = "そのほかの文字種";
+constexpr char kMinimumCandidateAndDescriptionWidthAsString[] =
+    "そのほかの文字種";
 
 // Color scheme
 const COLORREF kFrameColor = RGB(0x96, 0x96, 0x96);
@@ -143,7 +144,7 @@ std::string GetIndexGuideString(const commands::Candidates &candidates) {
 // This function returns the size of the given candidate list when there
 // aren't any candidates satisfying the above condition.
 int GetFocusedArrayIndex(const commands::Candidates &candidates) {
-  const int kInvalidIndex = candidates.candidate_size();
+  constexpr int kInvalidIndex = candidates.candidate_size();
 
   if (!candidates.has_focused_index()) {
     return kInvalidIndex;

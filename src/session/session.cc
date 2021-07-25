@@ -1770,7 +1770,7 @@ bool Session::CommitFirstSuggestion(commands::Command *command) {
 
   PushUndoContext();
 
-  const int kFirstIndex = 0;
+  constexpr int kFirstIndex = 0;
   size_t committed_key_size = 0;
   context_->mutable_converter()->CommitSuggestionByIndex(
       kFirstIndex, context_->composer(), command->input().context(),

@@ -74,7 +74,7 @@ const uint32_t kMaxCandidatesSize = 255;
 // could be reranked in total.
 const size_t kMaxRerankSize = 5;
 
-const char kFileName[] = "user://segment.db";
+constexpr char kFileName[] = "user://segment.db";
 
 // Temporarily disable unused private field warning against
 // FeatureValue::reserved_ from Clang.
@@ -828,7 +828,7 @@ bool UserSegmentHistoryRewriter::Reload() {
     return false;
   }
 
-  const char kFileSuffix[] = ".merge_pending";
+  constexpr char kFileSuffix[] = ".merge_pending";
   const std::string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.

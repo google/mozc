@@ -71,7 +71,7 @@ namespace {
 
 const size_t kMaxRequestSize = 32 * 32 * 8192;
 const size_t kMaxOutputSize = 32 * 32 * 8192;
-const int kInvalidSocket = -1;
+constexpr int kInvalidSocket = -1;
 
 // TODO(taku): timeout should be handled.
 bool Recv(int socket, char *buf, size_t buf_size, int timeout) {
@@ -93,11 +93,11 @@ bool Send(int socket, const char *buf, size_t buf_size, int timeout) {
   ssize_t buf_left = buf_size;
   while (buf_left > 0) {
 #if defined(OS_WIN)
-    const int kFlag = 0;
+    constexpr int kFlag = 0;
 #elif defined(__APPLE__)
-    const int kFlag = SO_NOSIGPIPE;
+    constexpr int kFlag = SO_NOSIGPIPE;
 #else
-    const int kFlag = MSG_NOSIGNAL;
+    constexpr int kFlag = MSG_NOSIGNAL;
 #endif
     const ssize_t read_size = ::send(socket, buf, buf_left, kFlag);
     if (read_size < 0) {

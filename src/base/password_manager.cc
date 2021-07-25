@@ -54,9 +54,9 @@ namespace mozc {
 namespace {
 
 #ifdef OS_WIN
-const char kPasswordFile[] = "encrypt_key.db";
+constexpr char kPasswordFile[] = "encrypt_key.db";
 #else
-const char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
+constexpr char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
 #endif
 
 const size_t kPasswordSize = 32;

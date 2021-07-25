@@ -59,7 +59,7 @@ uint64_t ClockMock::GetTime() {
 }
 
 absl::Time ClockMock::GetAbslTime() {
-  absl::Time at = absl::FromUnixSeconds(seconds_);
+  absl::Time at = absl::FromUnixMicros(seconds_ * 1'000'000 + micro_seconds_);
   PutClockForward(delta_seconds_, delta_micro_seconds_);
   return at;
 }

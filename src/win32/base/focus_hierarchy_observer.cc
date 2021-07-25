@@ -81,7 +81,7 @@ std::string GetWindowTestAsUTF8(HWND window_handle) {
 }
 
 std::string GetWindowClassNameAsUTF8(HWND window_handle) {
-  const int kBufferLen = 256 + 1;
+  constexpr int kBufferLen = 256 + 1;
   unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferLen]);
   const int copied_len_without_null =
       ::GetClassNameW(window_handle, buffer.get(), kBufferLen);

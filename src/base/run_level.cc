@@ -91,8 +91,8 @@ bool IsDifferentUser(const HANDLE hToken) {
   // Sacrifice the last character. That is practically ok for our purpose.
   src.SourceName[TOKEN_SOURCE_LENGTH - 1] = '\0';
 
-  const char kSeclogo[] = "seclogo";
-  const char kCredPro[] = "CredPro";
+  constexpr char kSeclogo[] = "seclogo";
+  constexpr char kCredPro[] = "CredPro";
 
   return (AreEqualArray(kSeclogo, src.SourceName) ||
           AreEqualArray(kCredPro, src.SourceName));

@@ -57,8 +57,8 @@ using commands::Request;
 
 namespace {
 
-const char kEmoji[] = "絵文字";
-const char kEmojiKey[] = "えもじ";
+constexpr char kEmoji[] = "絵文字";
+constexpr char kEmojiKey[] = "えもじ";
 // Where to insert emoji candidate by default.
 const size_t kDefaultInsertPos = 6;
 

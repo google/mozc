@@ -30,6 +30,9 @@
 #ifndef MOZC_ENGINE_ENGINE_INTERFACE_H_
 #define MOZC_ENGINE_ENGINE_INTERFACE_H_
 
+#include <string>
+#include <vector>
+
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/suppression_dictionary.h"
 #include "absl/strings/string_view.h"
@@ -74,6 +77,9 @@ class EngineInterface {
 
   // Gets the data manager.
   virtual const DataManagerInterface *GetDataManager() const = 0;
+
+  // Gets the user POS list.
+  virtual std::vector<std::string> GetPOSList() const = 0;
 
  protected:
   EngineInterface() = default;

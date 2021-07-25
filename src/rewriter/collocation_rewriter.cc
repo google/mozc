@@ -57,7 +57,7 @@ using mozc::storage::ExistenceFilter;
 
 namespace {
 const size_t kCandidateSize = 12;
-const int kMaxCostDiff = 3453;  // -500*log(1/1000)
+constexpr int kMaxCostDiff = 3453;  // -500*log(1/1000)
 
 // For collocation, we use two segments.
 enum SegmentLookupType {
@@ -131,16 +131,16 @@ void ResolveCompoundSegment(const std::string &top_value,
                             const std::string &value, SegmentLookupType type,
                             std::vector<std::string> *output) {
   // see "http://ja.wikipedia.org/wiki/助詞"
-  static const char kPat1[] = "が";
+  static constexpr char kPat1[] = "が";
   // "の" was not good...
-  // static const char kPat2[] = "の";
-  static const char kPat3[] = "を";
-  static const char kPat4[] = "に";
-  static const char kPat5[] = "へ";
-  static const char kPat6[] = "と";
-  static const char kPat7[] = "から";
-  static const char kPat8[] = "より";
-  static const char kPat9[] = "で";
+  // static constexpr char kPat2[] = "の";
+  static constexpr char kPat3[] = "を";
+  static constexpr char kPat4[] = "に";
+  static constexpr char kPat5[] = "へ";
+  static constexpr char kPat6[] = "と";
+  static constexpr char kPat7[] = "から";
+  static constexpr char kPat8[] = "より";
+  static constexpr char kPat9[] = "で";
 
   static const struct {
     const char *pat;
@@ -197,7 +197,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     output->push_back(content);
     // "舞って" workaround
     // V+"て" is often treated as one compound.
-    static const char kPat[] = "て";
+    static constexpr char kPat[] = "て";
     if (Util::EndsWith(content, absl::string_view(kPat, arraysize(kPat) - 1))) {
       PushBackStringView(Util::Utf8SubString(content, 0, content_len - 1),
                          output);
@@ -264,7 +264,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXいる|>" can be rewrote to "<YY|いる>" and vice versa
   {
-    static const char kPat[] = "いる";  // "いる"
+    static constexpr char kPat[] = "いる";  // "いる"
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         Util::EndsWith(top_value, kSuffix) &&
@@ -289,7 +289,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXせる|>" can be rewrote to "<YY|せる>" and vice versa
   {
-    const char kPat[] = "せる";
+    constexpr char kPat[] = "せる";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         Util::EndsWith(top_value, kSuffix) &&
@@ -317,7 +317,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XX|する>" can be rewrote using "<XXす|る>" and "<XX|する>"
   // in "<XX|する>", XX must be single script type
   {
-    static const char kPat[] = "する";
+    static constexpr char kPat[] = "する";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
     if (aux_value_len == 2 && Util::EndsWith(aux_value, kSuffix)) {
       if (content_script_type != Util::KATAKANA &&
@@ -338,7 +338,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXる>" can be rewrote using "<XX|る>"
   // "まとめる", "衰える"
   {
-    static const char kPat[] = "る";
+    static constexpr char kPat[] = "る";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
     if (aux_value_len == 0 && Util::EndsWith(value, kSuffix)) {
       if (type == RIGHT) {
@@ -352,13 +352,13 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXす>" can be rewrote using "XXする"
   {
-    static const char kPat[] = "す";
+    static constexpr char kPat[] = "す";
     const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
     if (Util::EndsWith(value, kSuffix) &&
         Util::IsScriptType(Util::Utf8SubString(value, 0, value_len - 1),
                            Util::KANJI)) {
       if (type == RIGHT) {
-        const char kRu[] = "る";
+        constexpr char kRu[] = "る";
         // "YYする" in addition to "YY"
         output->push_back(
             absl::StrCat(value, absl::string_view(kRu, arraysize(kRu) - 1)));
@@ -369,7 +369,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
 
   // "<XXし|た>" can be rewrote using "<XX|した>"
   {
-    static const char kPat[] = "した";
+    static constexpr char kPat[] = "した";
     const absl::string_view kShi(kPat, 3), kTa(kPat + 3, 3);
     if (Util::EndsWith(content, kShi) && aux_value == kTa &&
         Util::EndsWith(top_content, kShi) && top_aux_value == kTa) {

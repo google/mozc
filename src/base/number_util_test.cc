@@ -825,7 +825,7 @@ TEST(NumberUtilTest, ArabicToWideArabicTest) {
 }
 
 namespace {
-const int kMaxCandsInArabicToKanjiTest = 4;
+constexpr int kMaxCandsInArabicToKanjiTest = 4;
 struct ArabicToKanjiTestData {
   const char *input;
   const int expect_num;

@@ -420,14 +420,14 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
   const size_t kKeySetSize = arraysize(kKeySet);
   Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
 
-  const int kTrialNum = 1000;
+  constexpr int kTrialNum = 1000;
   for (int trial = 0; trial < kTrialNum; ++trial) {
     handler_->Clear();
 
     std::set<guint> pressed_keys;
     std::string key_sequence;
 
-    const int kSequenceLength = 100;
+    constexpr int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {
       const int key_index = Util::Random(kKeySetSize);
       const guint key_value = kKeySet[key_index];

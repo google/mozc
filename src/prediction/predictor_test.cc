@@ -297,7 +297,7 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 }
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
-  const int kPredictionSize = 100;
+  constexpr int kPredictionSize = 100;
   auto predictor = absl::make_unique<DefaultPredictor>(
       absl::make_unique<CheckCandSizePredictor>(kPredictionSize),
       absl::make_unique<CheckCandSizePredictor>(kPredictionSize));

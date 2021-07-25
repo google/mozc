@@ -37,7 +37,7 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 
-static const int kMaxBufSize = 1024;
+static constexpr int kMaxBufSize = 1024;
 
 namespace mozc {
 void SendCommand(SessionServer *server, const commands::Input &input,

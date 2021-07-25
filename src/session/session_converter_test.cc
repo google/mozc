@@ -73,11 +73,11 @@ using ::mozc::commands::Request;
 using ::mozc::commands::RequestForUnitTest;
 using ::mozc::config::Config;
 
-static const char kChars_Aiueo[] = "あいうえお";
-static const char kChars_Mo[] = "も";
-static const char kChars_Mozuku[] = "もずく";
-static const char kChars_Mozukusu[] = "もずくす";
-static const char kChars_Momonga[] = "ももんが";
+static constexpr char kChars_Aiueo[] = "あいうえお";
+static constexpr char kChars_Mo[] = "も";
+static constexpr char kChars_Mozuku[] = "もずく";
+static constexpr char kChars_Mozukusu[] = "もずくす";
+static constexpr char kChars_Momonga[] = "ももんが";
 
 class SessionConverterTest : public ::testing::Test {
  protected:
@@ -1603,7 +1603,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   convertermock_->SetFinishConversion(absl::make_unique<Segments>().get(),
                                       true);
 
-  const int kCandidateIndex = 1;
+  constexpr int kCandidateIndex = 1;
   size_t committed_key_size = 0;
   convertermock_->SetCommitSegmentValue(&segments, true);
   converter.CommitSuggestionById(kCandidateIndex, *composer_,
@@ -2033,9 +2033,9 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
       "S1",
       "P3",
   };
-  const char kPredictionKey[] = "left";
-  const char kSuffixKey[] = "right";
-  const int kDupulicationIndex = 3;
+  constexpr char kPredictionKey[] = "left";
+  constexpr char kSuffixKey[] = "right";
+  constexpr int kDupulicationIndex = 3;
 
   Segments segments;
   {  // Initialize mock segments for suggestion
@@ -2133,8 +2133,8 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
       "S1",
       "P3",
   };
-  const char kKey[] = "key";
-  const int kDupulicationIndex = 3;
+  constexpr char kKey[] = "key";
+  constexpr int kDupulicationIndex = 3;
 
   Segments segments;
   {  // Initialize mock segments for suggestion
@@ -3545,8 +3545,8 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
   ConverterMockForReconstructHistory convertermock;
 
   const uint16_t kId = 1234;
-  const char kKey[] = "1";
-  const char kValue[] = "1";
+  constexpr char kKey[] = "1";
+  constexpr char kValue[] = "1";
 
   // Set up mock
   Segments mock_result;

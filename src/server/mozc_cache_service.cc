@@ -355,8 +355,8 @@ WAIT_HIGH : {
 }
 
 TRY_LOCK : {
-  const int kMaxTimeout = 10 * 60 * 1000;  // 10 min.
-  const int kMinTimeout = 1 * 60 * 1000;   // 1min.
+  constexpr int kMaxTimeout = 10 * 60 * 1000;  // 10 min.
+  constexpr int kMinTimeout = 1 * 60 * 1000;   // 1min.
 
   // if the low event is signaled just after calling VirtualLock(),
   // the VirtualLock() itself may indirectly raise the low event.

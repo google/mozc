@@ -58,8 +58,8 @@ class SessionUsageStatsUtilTest : public ::testing::Test {
 };
 
 TEST_F(SessionUsageStatsUtilTest, HasExperimentalFeature) {
-  const char kFeatureName1[] = "TestFeature1";
-  const char kFeatureName2[] = "TestFeature2";
+  constexpr char kFeatureName1[] = "TestFeature1";
+  constexpr char kFeatureName2[] = "TestFeature2";
   Context context;
 
   EXPECT_FALSE(

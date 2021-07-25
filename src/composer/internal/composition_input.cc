@@ -30,21 +30,62 @@
 #include "composer/internal/composition_input.h"
 
 #include "base/logging.h"
+#include "base/util.h"
 
 namespace mozc {
+
+using ProbableKeyEvent = commands::KeyEvent::ProbableKeyEvent;
+using ProbableKeyEvents = protobuf::RepeatedPtrField<ProbableKeyEvent>;
+
 namespace composer {
 
 CompositionInput::CompositionInput()
-    : has_conversion_(false), is_new_input_(false), transliterator_(nullptr) {}
+    : has_conversion_(false), is_new_input_(false) {}
 
 CompositionInput::~CompositionInput() = default;
+
+bool CompositionInput::Init(const commands::KeyEvent &key_event,
+                            bool use_typing_correction, bool is_new_input) {
+  std::string raw;
+  if (key_event.has_key_code()) {
+    Util::UCS4ToUTF8(key_event.key_code(), &raw);
+  } else if (key_event.has_key_string()) {
+    raw = key_event.key_string();
+  } else {
+    LOG(WARNING) << "input is empty";
+    return false;
+  }
+  set_raw(raw);
+
+  if (key_event.has_key_string()) {
+    set_conversion(key_event.key_string());
+  }
+  if (use_typing_correction) {
+    set_probable_key_events(key_event.probable_key_event());
+  }
+  set_is_new_input(is_new_input);
+  return true;
+}
+
+void CompositionInput::InitFromRaw(const std::string &raw, bool is_new_input) {
+  set_raw(raw);
+  set_is_new_input(is_new_input);
+}
+
+void CompositionInput::InitFromRawAndConv(const std::string &raw,
+                                          const std::string &conversion,
+                                          bool is_new_input) {
+  set_raw(raw);
+  set_conversion(conversion);
+  set_is_new_input(is_new_input);
+}
 
 void CompositionInput::Clear() {
   raw_.clear();
   conversion_.clear();
   has_conversion_ = false;
+  probable_key_events_.Clear();
   is_new_input_ = false;
-  transliterator_ = nullptr;
 }
 
 bool CompositionInput::Empty() const {
@@ -64,8 +105,8 @@ void CompositionInput::CopyFrom(const CompositionInput &input) {
     conversion_.clear();
     has_conversion_ = false;
   }
+  probable_key_events_ = input.probable_key_events();
   is_new_input_ = input.is_new_input();
-  transliterator_ = input.transliterator();
 }
 
 const std::string &CompositionInput::raw() const { return raw_; }
@@ -99,16 +140,18 @@ bool CompositionInput::has_conversion() const { return has_conversion_; }
 
 bool CompositionInput::is_new_input() const { return is_new_input_; }
 
+const ProbableKeyEvents &CompositionInput::probable_key_events() const {
+  return probable_key_events_;
+}
+
+void CompositionInput::set_probable_key_events(
+    const ProbableKeyEvents &probable_key_events) {
+  probable_key_events_ = probable_key_events;
+}
+
+
 void CompositionInput::set_is_new_input(bool is_new_input) {
   is_new_input_ = is_new_input;
-}
-
-const TransliteratorInterface *CompositionInput::transliterator() const {
-  return transliterator_;
-}
-
-void CompositionInput::set_transliterator(const TransliteratorInterface *t12r) {
-  transliterator_ = t12r;
 }
 
 }  // namespace composer

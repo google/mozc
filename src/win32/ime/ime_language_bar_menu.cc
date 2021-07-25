@@ -62,13 +62,13 @@ using ::WTL::CSize;
 using ::mozc::WinUtil;
 using ::mozc::win32::TextIcon;
 
-const int kDefaultDPI = 96;
+constexpr int kDefaultDPI = 96;
 
 // Represents the cookie for the sink to an ImeLangBarItem object.
-const int kImeLangBarMenuCookie =
+constexpr int kImeLangBarMenuCookie =
     (('M' << 24) | ('o' << 16) | ('z' << 8) | ('c' << 0));
 
-const char kTextIconFont[] = "ＭＳ ゴシック";
+constexpr char kTextIconFont[] = "ＭＳ ゴシック";
 
 // TODO(yukawa): Refactor LangBar code so that we can configure following
 // settings as a part of initialization.

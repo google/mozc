@@ -49,7 +49,7 @@ IBusBus *g_bus = nullptr;
 
 #ifndef MOZC_NO_LOGGING
 void EnableVerboseLog() {
-  const int kDefaultVerboseLevel = 1;
+  constexpr int kDefaultVerboseLevel = 1;
   if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
     mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
   }

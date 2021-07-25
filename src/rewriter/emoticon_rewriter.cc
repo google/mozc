@@ -132,7 +132,7 @@ void InsertCandidates(SerializedDictionary::const_iterator begin,
       c->attributes |= Segment::Candidate::NO_LEARNING;
     }
 
-    const char kBaseEmoticonDescription[] = "顔文字";
+    constexpr char kBaseEmoticonDescription[] = "顔文字";
 
     if (sorted_value[i].description().empty()) {
       c->description = kBaseEmoticonDescription;

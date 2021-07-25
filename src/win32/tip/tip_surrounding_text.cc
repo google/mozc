@@ -57,8 +57,8 @@ using std::unique_ptr;
 
 namespace {
 
-const int kMaxSurroundingLength = 20;
-const int kMaxCharacterLength = 1024 * 1024;
+constexpr int kMaxSurroundingLength = 20;
+constexpr int kMaxCharacterLength = 1024 * 1024;
 
 class SurroudingTextUpdater : public ITfEditSession {
  public:

@@ -46,9 +46,9 @@ namespace storage {
 namespace {
 Mutex g_mutex;
 #ifdef OS_WIN
-const char kRegistryFileName[] = "registry.db";
+constexpr char kRegistryFileName[] = "registry.db";
 #else
-const char kRegistryFileName[] = ".registry.db";  // hidden file
+constexpr char kRegistryFileName[] = ".registry.db";  // hidden file
 #endif
 
 class StorageInitializer {

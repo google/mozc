@@ -163,7 +163,7 @@ TEST_F(TextIconTest, CreateMonochromeIcon) {
   }
 
   {
-    const char kText[] = "あ";
+    constexpr char kText[] = "あ";
     const size_t kIconSize = 20;
     CIcon icon = TextIcon::CreateMonochromeIcon(kIconSize, kIconSize, kText,
                                                 GetGothicFontName(),

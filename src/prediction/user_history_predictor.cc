@@ -105,14 +105,14 @@ const size_t kEntryPoolSize = 16;
 
 // File name for the history
 #ifdef OS_WIN
-const char kFileName[] = "user://history.db";
+constexpr char kFileName[] = "user://history.db";
 #else
-const char kFileName[] = "user://.history.db";
+constexpr char kFileName[] = "user://.history.db";
 #endif
 
 // Uses '\t' as a key/value delimiter
-const char kDelimiter[] = "\t";
-const char kEmojiDescription[] = "絵文字";
+constexpr char kDelimiter[] = "\t";
+constexpr char kEmojiDescription[] = "絵文字";
 
 const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 

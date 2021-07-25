@@ -36,7 +36,7 @@
 #include "base/util.h"
 
 namespace {
-const char kBuildPropPath[] = "/system/build.prop";
+constexpr char kBuildPropPath[] = "/system/build.prop";
 static mozc::Mutex sys_prop_mutex;
 }  // namespace
 

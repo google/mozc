@@ -86,7 +86,7 @@ TEST(SessionOutputTest, FillCandidate) {
   segment.mutable_candidate(42)->suffix = kSuffix42;
   segment.mutable_candidate(42)->description = kDescription42;
   candidate_list.set_name(kSubcandidateList);
-  static const int kFirstIdInSubList = -123;
+  static constexpr int kFirstIdInSubList = -123;
   candidate_list.AddCandidate(kFirstIdInSubList, "minus 123");
   candidate_list.AddCandidate(-456, "minus 456");
   candidate_list.AddCandidate(-789, "minus 789");
@@ -654,7 +654,7 @@ TEST(SessionOutputTest, FillFooter) {
 #else   // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_TRUE(candidates.footer().has_label());
   EXPECT_FALSE(candidates.footer().has_sub_label());
-  const char kLabel[] = "Tabキーで選択";
+  constexpr char kLabel[] = "Tabキーで選択";
   EXPECT_EQ(kLabel, candidates.footer().label());
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -701,11 +701,11 @@ TEST(SessionOutputTest, FillFooter) {
       ASSERT_TRUE(candidates.has_footer());
       ASSERT_TRUE(candidates.footer().has_label());
 #if defined(__APPLE__)
-      const char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
+      constexpr char kDeleteInstruction[] = "control+fn+deleteで履歴から削除";
 #elif defined(OS_CHROMEOS)
-      const char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
+      constexpr char kDeleteInstruction[] = "ctrl+alt+backspaceで履歴から削除";
 #else   // !__APPLE__ && !OS_CHROMEOS
-      const char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
+      constexpr char kDeleteInstruction[] = "Ctrl+Delで履歴から削除";
 #endif  // __APPLE__ || OS_CHROMEOS
       EXPECT_EQ(kDeleteInstruction, candidates.footer().label());
 #if defined(CHANNEL_DEV) && defined(GOOGLE_JAPANESE_INPUT_BUILD)
@@ -819,7 +819,7 @@ TEST(SessionOutputTest, AddSegment) {
 }
 
 TEST(SessionOutputTest, FillConversionResultWithoutNormalization) {
-  const char kInput[] = "ゔ";
+  constexpr char kInput[] = "ゔ";
 
   commands::Result result;
   SessionOutput::FillConversionResultWithoutNormalization(kInput, kInput,

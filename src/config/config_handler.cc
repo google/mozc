@@ -49,7 +49,7 @@ namespace mozc {
 namespace config {
 namespace {
 
-const char kFileNamePrefix[] = "user://config";
+constexpr char kFileNamePrefix[] = "user://config";
 
 void AddCharacterFormRule(const char *group,
                           const Config::CharacterForm preedit_form,

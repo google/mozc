@@ -55,7 +55,7 @@ namespace {
 
 const uint32_t kLRUSize = 128;           // enough?
 const uint32_t kSeedValue = 0x7fe1fed1;  // random seed value for storage
-const char kFileName[] = "user://cform.db";
+constexpr char kFileName[] = "user://cform.db";
 
 class CharacterFormManagerImpl {
  public:

@@ -440,13 +440,13 @@ void CandidateWindow::OnMouseLeftUp(const Point &pos) {
     return;
   }
 
-  const int kSelectedIdx = GetSelectedRowIndex(pos);
-  if (kSelectedIdx == -1) {  // out of range
+  const int selected_index = GetSelectedRowIndex(pos);
+  if (selected_index == -1) {  // out of range
     return;
   }
 
   const commands::Candidates::Candidate &candidate =
-      candidates_.candidate(kSelectedIdx);
+      candidates_.candidate(selected_index);
   commands::SessionCommand command;
   command.set_type(commands::SessionCommand::SELECT_CANDIDATE);
   command.set_id(candidate.id());

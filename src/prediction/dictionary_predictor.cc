@@ -92,7 +92,7 @@ using ::mozc::usage_stats::UsageStats;
 // want to use INT_MAX because someone might further add penalty after cost is
 // set to INT_MAX, which leads to overflow and consequently aggressive
 // candidates would appear in the top results.
-const int kInfinity = (2 << 20);
+constexpr int kInfinity = (2 << 20);
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
 // Number of prediction calls should be minimized.
@@ -1089,7 +1089,7 @@ void DictionaryPredictor::SetPredictionCost(
     // This behavior is baisically the same as the converter.
     //
     // TODO(team): want find the best parameter instead of kCostFactor.
-    const int kCostFactor = 500;
+    constexpr int kCostFactor = 500;
     results->at(i).cost =
         cost -
         kCostFactor *
@@ -1142,7 +1142,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
     if (suggestion_filter_->IsBadSuggestion(result.value)) {
       // Cost penalty means for bad suggestion.
       // 3453 = 500 * log(1000)
-      const int kBadSuggestionPenalty = 3453;
+      constexpr int kBadSuggestionPenalty = 3453;
       cost += kBadSuggestionPenalty;
       MOZC_WORD_LOG(result, absl::StrCat("BadSuggestionPenalty: ", cost));
     }
@@ -1157,7 +1157,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
         // 50 times bigger in frequency.
         // Note that the cost is calculated by cost = -500 * log(prob)
         // 1956 = 500 * log(50)
-        const int kNotExactPenalty = 1956;
+        constexpr int kNotExactPenalty = 1956;
         cost += kNotExactPenalty;
         MOZC_WORD_LOG(result,
                       absl::StrCat("Unigram | Typing correction: ", cost));
@@ -1174,9 +1174,9 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // transition cost between "六本木" and "ヒルズ". Currently,
       // the cost is basically the same as the cost between
       // "名詞,一般" and "名詞,一般".
-      const int kDefaultTransitionCost = 1347;
+      constexpr int kDefaultTransitionCost = 1347;
       // Promoting bigram candidates.
-      const int kBigramBonus = 800;  // ~= 500*ln(5)
+      constexpr int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
       MOZC_WORD_LOG(result, absl::StrCat("Bigram: ", cost));
     }
@@ -1187,8 +1187,8 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // general symbol).  Currently user dictionary words are evaluated 5 times
       // bigger in frequency, being capped by 1000 (this number is adhoc, so
       // feel free to adjust).
-      const int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
-      const int kUserDictionaryCostUpperLimit = 1000;
+      constexpr int kUserDictionaryPromotionFactor = 804;  // 804 = 500 * log(5)
+      constexpr int kUserDictionaryCostUpperLimit = 1000;
       cost = std::min(cost - kUserDictionaryPromotionFactor,
                       kUserDictionaryCostUpperLimit);
       MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
@@ -1209,7 +1209,7 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
   // 10 times smaller in frequency.
   // Note that the cost is calcurated by cost = -500 * log(prob)
   // 1151 = 500 * log(10)
-  const int kKeyExpansionPenalty = 1151;
+  constexpr int kKeyExpansionPenalty = 1151;
   const std::string &conversion_key = segments.conversion_segment(0).key();
   for (size_t i = 0; i < results->size(); ++i) {
     Result &result = results->at(i);
@@ -1346,7 +1346,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
   if (segments.conversion_segments_size() == 0) {
     return 0;
   }
-  const int kFewResultThreshold = 8;
+  constexpr int kFewResultThreshold = 8;
   const auto &segment0 = segments.conversion_segment(0);
   size_t max_size =
       segments.max_prediction_candidates_size() - segment0.candidates_size();
@@ -2011,7 +2011,7 @@ void DictionaryPredictor::AppendZeroQueryToResults(
 
   for (size_t i = 0; i < candidates.size(); ++i) {
     // Increment cost to show the candidates in order.
-    const int kSuffixPenalty = 10;
+    constexpr int kSuffixPenalty = 10;
 
     results->push_back(Result());
     Result *result = &results->back();

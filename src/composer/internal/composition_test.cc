@@ -1726,7 +1726,7 @@ TEST_F(CompositionTest, Clone) {
 }
 
 TEST_F(CompositionTest, IsToggleable) {
-  const int kAttrs =
+  constexpr int kAttrs =
       TableAttribute::NEW_CHUNK | TableAttribute::NO_TRANSLITERATION;
   table_->AddRuleWithAttributes("1", "", "{?}あ", kAttrs);
   table_->AddRule("{?}あ1", "", "{*}あ");

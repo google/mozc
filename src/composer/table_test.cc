@@ -635,11 +635,11 @@ TEST_F(TableTest, CaseSensitiveByConfiguration) {
 // The following test checks if a case-sensitive and a case-inensitive roman
 // table enables and disables this "case-sensitive mode", respectively.
 TEST_F(TableTest, AutomaticCaseSensitiveDetection) {
-  static const char kCaseInsensitiveRomanTable[] = {
+  static constexpr char kCaseInsensitiveRomanTable[] = {
       "m\tmozc\n"    // m -> mozc
       "n\tnamazu\n"  // n -> namazu
   };
-  static const char kCaseSensitiveRomanTable[] = {
+  static constexpr char kCaseSensitiveRomanTable[] = {
       "m\tmozc\n"  // m -> mozc
       "M\tMozc\n"  // M -> Mozc
   };

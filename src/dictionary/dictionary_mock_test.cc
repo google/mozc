@@ -183,7 +183,7 @@ TEST_F(DictionaryMockTest, LookupPredictive) {
 TEST_F(DictionaryMockTest, LookupExact) {
   DictionaryInterface *dic = GetMock();
 
-  const char kKey[] = "ほげ";
+  constexpr char kKey[] = "ほげ";
 
   std::unique_ptr<Token> t0 = CreateToken(kKey, "value1", Token::NONE);
   std::unique_ptr<Token> t1 = CreateToken(kKey, "value2", Token::NONE);

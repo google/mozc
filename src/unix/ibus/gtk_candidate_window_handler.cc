@@ -42,7 +42,7 @@ namespace ibus {
 
 namespace {
 
-const char kDefaultFont[] = "SansSerif 11";
+constexpr char kDefaultFont[] = "SansSerif 11";
 const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
 const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
 const gchar kIBusPanelCustomFont[] = "custom-font";

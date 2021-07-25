@@ -44,6 +44,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_dictionary.h"
+#include "dictionary/user_pos_interface.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "prediction/predictor_interface.h"
@@ -109,6 +110,10 @@ class Engine : public EngineInterface {
 
   const DataManagerInterface *GetDataManager() const override {
     return data_manager_.get();
+  }
+
+  std::vector<std::string> GetPOSList() const override {
+    return user_dictionary_->GetPOSList();
   }
 
  private:

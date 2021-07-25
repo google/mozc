@@ -63,13 +63,13 @@ using WTL::CMenu;
 using WTL::CMenuItemInfo;
 using WTL::CSize;
 
-const int kDefaultDPI = 96;
+constexpr int kDefaultDPI = 96;
 
 // Represents the cookie for the sink to an TipLangBarButton object.
-const int kTipLangBarMenuCookie =
+constexpr int kTipLangBarMenuCookie =
     (('M' << 24) | ('o' << 16) | ('z' << 8) | ('c' << 0));
 
-const char kTextIconFont[] = "ＭＳ ゴシック";
+constexpr char kTextIconFont[] = "ＭＳ ゴシック";
 
 // TODO(yukawa): Refactor LangBar code so that we can configure following
 // settings as a part of initialization.

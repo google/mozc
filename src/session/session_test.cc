@@ -420,6 +420,8 @@ class MockConverterEngineForReset : public EngineInterface {
     return absl::string_view();
   }
 
+  std::vector<std::string> GetPOSList() const override { return {}; }
+
   const ConverterMockForReset &converter_mock() const {
     return *converter_mock_;
   }
@@ -476,6 +478,8 @@ class MockConverterEngineForRevert : public EngineInterface {
   absl::string_view GetDataVersion() const override {
     return absl::string_view();
   }
+
+  std::vector<std::string> GetPOSList() const override { return {}; }
 
   const ConverterMockForRevert &converter_mock() const {
     return *converter_mock_;
@@ -4103,7 +4107,7 @@ TEST_F(SessionTest, CommitCandidate_TypingCorrection) {
   segments_jueri.set_request_type(Segments::PARTIAL_SUGGESTION);
   Segment *segment;
   segment = segments_jueri.add_segment();
-  const char kJueri[] = "じゅえり";
+  constexpr char kJueri[] = "じゅえり";
   segment->set_key(kJueri);
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->key = "くえり";
@@ -4148,7 +4152,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     segments_wata.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment;
     segment = segments_wata.add_segment();
-    const char kWata[] = "わた";
+    constexpr char kWata[] = "わた";
     segment->set_key(kWata);
     Segment::Candidate *cand1 = AddCandidate(kWata, "綿", segment);
     cand1->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
@@ -4163,7 +4167,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     segments_watashino.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_watashino.add_segment();
-    const char kWatashino[] = "わたしの";
+    constexpr char kWatashino[] = "わたしの";
     segment->set_key(kWatashino);
     Segment::Candidate *cand1 = segment->add_candidate();
     cand1->value = "私の";
@@ -4180,7 +4184,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     segments_shino.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_shino.add_segment();
-    const char kShino[] = "しの";
+    constexpr char kShino[] = "しの";
     segment->set_key(kShino);
     Segment::Candidate *candidate;
     candidate = AddCandidate("しのみや", "四ノ宮", segment);
@@ -7026,8 +7030,8 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
-  GetConverterMock()->SetFinishConversion(
-      absl::make_unique<Segments>().get(), true);
+  GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+                                          true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
   session->SendCommand(&command);
@@ -7113,8 +7117,8 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
-  GetConverterMock()->SetFinishConversion(
-      absl::make_unique<Segments>().get(), true);
+  GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+                                          true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
   session->SendCommand(&command);
@@ -7142,7 +7146,7 @@ TEST_F(SessionTest, RequestConvertReverse) {
 TEST_F(SessionTest, ConvertReverse) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr char kKanjiAiueo[] = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
   SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
@@ -7159,7 +7163,7 @@ TEST_F(SessionTest, ConvertReverse) {
 TEST_F(SessionTest, EscapeFromConvertReverse) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr char kKanjiAiueo[] = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
@@ -7184,7 +7188,7 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr char kKanjiAiueo[] = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
   SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
@@ -7213,8 +7217,8 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse_Issue5687022) {
   // This is a unittest against http://b/5687022
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kInput[] = "abcde";
-  const char kReading[] = "abcde";
+  constexpr char kInput[] = "abcde";
+  constexpr char kReading[] = "abcde";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
@@ -7240,7 +7244,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kInput[] = "ゔ";
+  constexpr char kInput[] = "ゔ";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
@@ -7263,7 +7267,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
   std::unique_ptr<Session> session(new Session(engine_.get()));
   InitSessionToPrecomposition(session.get());
-  const char kKanjiAiueo[] = "阿伊宇江於";
+  constexpr char kKanjiAiueo[] = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
@@ -7531,8 +7535,8 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    GetConverterMock()->SetFinishConversion(
-        absl::make_unique<Segments>().get(), true);
+    GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+                                            true);
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
@@ -8950,7 +8954,7 @@ TEST_F(SessionTest, SendKeyWithKeyString_Direct) {
   InitSessionToDirect(&session);
 
   commands::Command command;
-  const char kZa[] = "ざ";
+  constexpr char kZa[] = "ざ";
   SetSendKeyCommandWithKeyString(kZa, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_FALSE(command.output().consumed());
@@ -8967,7 +8971,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 
   // Test for precomposition state.
   EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
-  const char kZa[] = "ざ";
+  constexpr char kZa[] = "ざ";
   SetSendKeyCommandWithKeyString(kZa, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -8980,7 +8984,7 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 
   // Test for composition state.
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
-  const char kOnsenManju[] = "♨饅頭";
+  constexpr char kOnsenManju[] = "♨饅頭";
   SetSendKeyCommandWithKeyString(kOnsenManju, &command);
   EXPECT_TRUE(session.TestSendKey(&command));
   EXPECT_TRUE(command.output().consumed());

@@ -70,7 +70,7 @@ using ::mozc::commands::Status;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
 // 96 DPI is the default DPI in Windows.
-const int kDefaultDPI = 96;
+constexpr int kDefaultDPI = 96;
 
 // As Discussed in b/2317702, UI windows are disabled by default because it is
 // hard for a user to find out what caused the problem than finding that the
@@ -93,7 +93,7 @@ const UINT_PTR kTimerEventFading = 1;
 
 const DWORD kStartFadingOutDelay = 2500;  // msec
 const DWORD kFadingOutInterval = 16;      // msec
-const int kFadingOutAlphaDelta = 32;
+constexpr int kFadingOutAlphaDelta = 32;
 
 double GetDPIScaling() {
   CDC desktop_dc(::GetDC(nullptr));
@@ -204,7 +204,7 @@ class IndicatorWindow::WindowImpl
 
   LRESULT OnCreate(LPCREATESTRUCT create_struct) {
     EnableOrDisableWindowForWorkaround();
-    const int kModes[] = {
+    constexpr int kModes[] = {
         commands::DIRECT,     commands::HIRAGANA,   commands::FULL_KATAKANA,
         commands::HALF_ASCII, commands::FULL_ASCII, commands::HALF_KATAKANA,
     };

@@ -69,7 +69,7 @@ namespace {
 
 using std::unique_ptr;
 
-const char kUserDictionary0[] =
+constexpr char kUserDictionary0[] =
     "start\tstart\tverb\n"
     "star\tstar\tnoun\n"
     "starting\tstarting\tnoun\n"
@@ -101,7 +101,7 @@ const char kUserDictionary0[] =
     // White spaces comment
     "comment_key4\tcomment_value4\tverb\t     \n";
 
-const char kUserDictionary1[] = "end\tend\tverb\n";
+constexpr char kUserDictionary1[] = "end\tend\tverb\n";
 
 void PushBackToken(const std::string &key, const std::string &value,
                    uint16_t id, std::vector<UserPOS::Token> *tokens) {
@@ -727,7 +727,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
   }
 
   {
-    const char kKey[] = "key0123";
+    constexpr char kKey[] = "key0123";
     CollectTokenCallback callback;
     user_dic->LookupPrefix(kKey, convreq_, &callback);
     const std::vector<Token> &tokens = callback.tokens();
@@ -736,7 +736,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     }
   }
   {
-    const char kKey[] = "key";
+    constexpr char kKey[] = "key";
     CollectTokenCallback callback;
     user_dic->LookupPredictive(kKey, convreq_, &callback);
     const std::vector<Token> &tokens = callback.tokens();

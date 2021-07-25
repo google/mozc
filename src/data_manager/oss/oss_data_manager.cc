@@ -44,7 +44,7 @@ namespace {
 #error "MOZC_DATASET_MAGIC_NUMBER is not defined by build system"
 #endif  // MOZC_DATASET_MAGIC_NUMBER
 
-const char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
+constexpr char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 
 }  // namespace
 

@@ -43,7 +43,7 @@ namespace mozc {
 namespace usage_stats {
 
 namespace {
-const char kRegistryPrefix[] = "usage_stats.";
+constexpr char kRegistryPrefix[] = "usage_stats.";
 
 #include "usage_stats/usage_stats_list.h"
 

@@ -41,7 +41,7 @@
 namespace mozc {
 namespace {
 
-const char kTestTokenArray[] =
+constexpr char kTestTokenArray[] =
     // {"あ", "", ZERO_QUERY_EMOJI, EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04}
     "\x04\x00\x00\x00"
     "\x00\x00\x00\x00"

@@ -71,9 +71,9 @@ using mozc::user_dictionary::UserDictionarySession;
 using mozc::user_dictionary::UserDictionaryStorage;
 
 namespace {
-const int kSessionTimeout = 100000;
-const int kMaxEditLength = 100;
-const int kMaxReverseConversionLength = 30;
+constexpr int kSessionTimeout = 100000;
+constexpr int kMaxEditLength = 100;
+constexpr int kMaxReverseConversionLength = 30;
 
 QString GetEnv(const char *envname) {
 #if defined(OS_WIN)

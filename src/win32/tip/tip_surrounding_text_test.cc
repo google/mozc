@@ -39,7 +39,7 @@ namespace {
 
 TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   {
-    const char kSource[] = "abcde";
+    constexpr char kSource[] = "abcde";
     std::wstring source;
     Util::UTF8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
@@ -59,7 +59,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
         source, 6, &characters_in_utf16));
   }
   {
-    const char kSource[] = "𠮟咤";
+    constexpr char kSource[] = "𠮟咤";
     std::wstring source;
     Util::UTF8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;

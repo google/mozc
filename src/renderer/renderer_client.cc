@@ -61,12 +61,12 @@ namespace mozc {
 namespace renderer {
 namespace {
 
-const int kIPCTimeout = 100;                   // 100 msec
-const int kRendererWaitTimeout = 30 * 1000;    // 30 sec
-const int kRendererWaitSleepTime = 10 * 1000;  // 10 sec
+constexpr int kIPCTimeout = 100;                   // 100 msec
+constexpr int kRendererWaitTimeout = 30 * 1000;    // 30 sec
+constexpr int kRendererWaitSleepTime = 10 * 1000;  // 10 sec
 const size_t kMaxErrorTimes = 5;
 const uint64_t kRetryIntervalTime = 30;  // 30 sec
-const char kServiceName[] = "renderer";
+constexpr char kServiceName[] = "renderer";
 
 inline void CallCommand(IPCClientInterface *client,
                         const commands::RendererCommand &command) {
@@ -432,7 +432,7 @@ bool RendererClient::ExecCommand(const commands::RendererCommand &command) {
   }
 
   // Drop the current request if version mismatch happens.
-  const int kMaxVersionMismatchNums = 3;
+  constexpr int kMaxVersionMismatchNums = 3;
   if (version_mismatch_nums_ >= kMaxVersionMismatchNums) {
     return true;
   }

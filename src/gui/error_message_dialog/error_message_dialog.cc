@@ -63,7 +63,7 @@ DeleyedMessageDialogHandler::DeleyedMessageDialogHandler(
 DeleyedMessageDialogHandler::~DeleyedMessageDialogHandler() {}
 
 void DeleyedMessageDialogHandler::Exec() {
-  const int kDisableInterval = 3000;
+  constexpr int kDisableInterval = 3000;
   QTimer::singleShot(kDisableInterval, this, SLOT(EnableOkButton()));
   QAbstractButton *button = message_box_->button(QMessageBox::Ok);
   if (button != nullptr) {

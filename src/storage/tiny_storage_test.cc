@@ -91,7 +91,7 @@ class TinyStorageTest : public testing::Test {
 TEST_F(TinyStorageTest, TinyStorageTest) {
   const std::string filename = GetTemporaryFilePath();
 
-  static const int kSize[] = {10, 100, 1000};
+  static constexpr int kSize[] = {10, 100, 1000};
 
   for (int i = 0; i < arraysize(kSize); ++i) {
     FileUtil::Unlink(filename);

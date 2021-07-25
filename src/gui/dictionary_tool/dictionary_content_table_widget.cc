@@ -44,7 +44,7 @@ void DictionaryContentTableWidget::paintEvent(QPaintEvent *event) {
 
   // TODO(taku): we don't want to use the fixed size, because
   // the row height would change according to the users' environment
-  const int kDefaultHeight = 19;
+  constexpr int kDefaultHeight = 19;
 
   QRect rect;
   int alternate_index = 0;

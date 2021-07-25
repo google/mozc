@@ -96,7 +96,7 @@ inline QString QUtf8(const std::string &str) {
 
 // set longer timeout because it takes longer time
 // to reload all user dictionary.
-const int kSessionTimeout = 100000;
+constexpr int kSessionTimeout = 100000;
 
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:
@@ -583,7 +583,7 @@ bool DictionaryTool::eventFilter(QObject *obj, QEvent *event) {
   // This is an workaround for http://b/2190275.
   // TODO(taku): Find out a better way.
   if (event->type() == QEvent::ApplicationDeactivate) {
-    const int kDelayOnDeactivateTime = 200;
+    constexpr int kDelayOnDeactivateTime = 200;
     QTimer::singleShot(kDelayOnDeactivateTime, this, SLOT(OnDeactivate()));
   }
   return QWidget::eventFilter(obj, event);

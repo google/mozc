@@ -38,7 +38,7 @@
 namespace mozc {
 namespace {
 
-const char kSurveyBaseURL[] =
+constexpr char kSurveyBaseURL[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 
 bool FindEncodedParam(const std::vector<std::string> &params,

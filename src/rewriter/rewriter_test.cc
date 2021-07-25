@@ -119,9 +119,9 @@ TEST_F(RewriterTest, CommandRewriterAvailability) {
 }
 
 TEST_F(RewriterTest, EmoticonsAboveSymbols) {
-  const char kKey[] = "かおもじ";
-  const char kEmoticon[] = "^^;";
-  const char kSymbol[] = "☹";  // A platform-dependent symbol
+  constexpr char kKey[] = "かおもじ";
+  constexpr char kEmoticon[] = "^^;";
+  constexpr char kSymbol[] = "☹";  // A platform-dependent symbol
 
   const ConversionRequest request;
   Segments segments;

@@ -38,7 +38,7 @@
 namespace mozc {
 namespace {
 
-const char kMessage[] = "test message";
+constexpr char kMessage[] = "test message";
 
 TEST(StatusOrTest, DefaultConstructor) {
   StatusOr<int> s;

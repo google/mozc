@@ -71,14 +71,14 @@ namespace mozc {
 namespace client {
 
 namespace {
-const char kServerAddress[] = "session";  // name for the IPC connection.
-const int kResultBufferSize = 8192 * 32;  // size of IPC buffer
+constexpr char kServerAddress[] = "session";  // name for the IPC connection.
+constexpr int kResultBufferSize = 8192 * 32;  // size of IPC buffer
 const size_t kMaxPlayBackSize = 512;      // size of maximum history
 
 #ifdef DEBUG
-const int kDefaultTimeout = 100000;  // 100 sec for dbg
+constexpr int kDefaultTimeout = 100000;  // 100 sec for dbg
 #else
-const int kDefaultTimeout = 30000;  // 30 sec for opt
+constexpr int kDefaultTimeout = 30000;  // 30 sec for opt
 #endif  // DEBUG
 
 // Delete Session is called inside the Destructor of Client class.
@@ -87,7 +87,7 @@ const int kDefaultTimeout = 30000;  // 30 sec for opt
 // This timeout is only applied in the DeleteSessions command
 // called from Destructor. When an application calls DeleteSession
 // explicitly, the default timeout is used.
-const int kDeleteSessionOnDestructorTimeout = 1000;  // 1 sec
+constexpr int kDeleteSessionOnDestructorTimeout = 1000;  // 1 sec
 }  // namespace
 
 Client::Client()
@@ -192,8 +192,8 @@ bool Client::EnsureSession() {
 
 void Client::DumpQueryOfDeath() {
   LOG(ERROR) << "The playback history looks like a query of death";
-  const char kFilename[] = "query_of_death.log";
-  const char kLabel[] = "Query of Death";
+  constexpr char kFilename[] = "query_of_death.log";
+  constexpr char kLabel[] = "Query of Death";
   DumpHistorySnapshot(kFilename, kLabel);
   ResetHistory();
 }

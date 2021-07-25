@@ -562,7 +562,7 @@ int KeyCorrector::GetCorrectedCostPenalty(const std::string &key) {
     return 0;
   }
   // add 3000 to the original word cost
-  const int kCorrectedCostPenalty = 3000;
+  constexpr int kCorrectedCostPenalty = 3000;
   return kCorrectedCostPenalty;
 }
 

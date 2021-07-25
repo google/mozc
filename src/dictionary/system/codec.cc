@@ -74,18 +74,18 @@ void ReadValueInfo(const uint8_t *ptr, uint8_t flags, int *value_id,
                    int *offset);
 
 //// Constants for section name ////
-const char kKeySectionName[] = "k";
-const char kValueSectionName[] = "v";
-const char kTokensSectionName[] = "t";
-const char kPosSectionName[] = "p";
+constexpr char kKeySectionName[] = "k";
+constexpr char kValueSectionName[] = "v";
+constexpr char kTokensSectionName[] = "t";
+constexpr char kPosSectionName[] = "p";
 
 //// Constants for validation ////
 // 12 bits
-const int kPosMax = 0x0fff;
+constexpr int kPosMax = 0x0fff;
 // 15 bits
-const int kCostMax = 0x7fff;
+constexpr int kCostMax = 0x7fff;
 // 22 bits
-const int kValueTrieIdMax = 0x3fffff;
+constexpr int kValueTrieIdMax = 0x3fffff;
 
 //// Constants for value ////
 // Unused for now.
@@ -109,9 +109,9 @@ const uint8_t kValueCharMarkUCS4Right0 = 0x40;
 const uint8_t kValueCharMarkUCS4LeftMask = 0x1f;
 
 // character code related constants
-const int kValueKanjiOffset = 0x01;
-const int kValueHiraganaOffset = 0x4b;
-const int kValueKatakanaOffset = 0x9f;
+constexpr int kValueKanjiOffset = 0x01;
+constexpr int kValueHiraganaOffset = 0x4b;
+constexpr int kValueKatakanaOffset = 0x9f;
 
 //// Cost encoding flag ////
 const uint8_t kSmallCostFlag = 0x80;
@@ -172,7 +172,7 @@ const uint8_t kSpellingCorrectionFlag = 0x10;
 
 //// Reverved ////
 // You can use one more flag!
-// const int kReservedFlag = 0x20;
+// constexpr int kReservedFlag = 0x20;
 
 //// Id encoding flag ////
 // According to lower 6 bits of flags there are 2 patterns.

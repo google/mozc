@@ -44,7 +44,7 @@ namespace composer {
 
 namespace {
 // Max recursion count for looking up pending loop.
-const int kMaxRecursion = 4;
+constexpr int kMaxRecursion = 4;
 
 // Delete "end" from "target", if "target" ends with the "end".
 bool DeleteEnd(const std::string &end, std::string *target) {

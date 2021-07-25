@@ -56,7 +56,7 @@ void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
 }  // namespace
 
 TEST(MemoryStorageTest, SimpleTest) {
-  static const int kSize[] = {10, 100, 1000};
+  static constexpr int kSize[] = {10, 100, 1000};
 
   for (int i = 0; i < arraysize(kSize); ++i) {
     std::unique_ptr<StorageInterface> storage(MemoryStorage::New());

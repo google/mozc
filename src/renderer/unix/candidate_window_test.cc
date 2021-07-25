@@ -65,11 +65,11 @@ namespace {
 GtkWidget *kDummyWindow = reinterpret_cast<GtkWidget *>(0x12345678);
 GtkWidget *kDummyCanvas = reinterpret_cast<GtkWidget *>(0x87654321);
 
-const char kSampleValue[] = "VALUE";
-const char kSampleShortcut[] = "SHORTCUT";
-const char kSampleDescription[] = "DESCRIPTION";
-const char kSamplePrefix[] = "PREFIX";
-const char kSampleSuffix[] = "SUFFIX";
+constexpr char kSampleValue[] = "VALUE";
+constexpr char kSampleShortcut[] = "SHORTCUT";
+constexpr char kSampleDescription[] = "DESCRIPTION";
+constexpr char kSamplePrefix[] = "PREFIX";
+constexpr char kSampleSuffix[] = "SUFFIX";
 
 MATCHER_P(PointEq, expected_point, "The expected point does not match") {
   return (arg.x == expected_point.x) && (arg.y == expected_point.y);

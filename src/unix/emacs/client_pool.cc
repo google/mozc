@@ -34,7 +34,7 @@
 namespace mozc {
 namespace emacs {
 
-static const int kMaxClients = 64;  // max number of parallel clients
+static constexpr int kMaxClients = 64;  // max number of parallel clients
 
 ClientPool::ClientPool() : lru_cache_(kMaxClients), next_id_(1) {}
 

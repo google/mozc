@@ -89,7 +89,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 
   // Create a test file
   std::vector<std::string> expected_lines;
-  const int kNumLines = 10;
+  constexpr int kNumLines = 10;
   {
     OutputFileStream ofs(path.c_str());
     for (int i = 0; i < kNumLines; ++i) {
@@ -115,8 +115,8 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
 
-  const int kNumFile = 3;
-  const int kNumLinesPerFile = 10;
+  constexpr int kNumFile = 3;
+  constexpr int kNumLinesPerFile = 10;
 
   // Create test files
   std::vector<std::string> paths;

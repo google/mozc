@@ -53,10 +53,10 @@ namespace ibus {
 namespace {
 
 // A key which associates an IBusProperty object with MozcEngineProperty.
-const char kGObjectDataKey[] = "ibus-mozc-aux-data";
+constexpr char kGObjectDataKey[] = "ibus-mozc-aux-data";
 
 // Icon path for MozcTool
-const char kMozcToolIconPath[] = "tool.png";
+constexpr char kMozcToolIconPath[] = "tool.png";
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {

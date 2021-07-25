@@ -104,7 +104,7 @@ using WTL::CRect;
 using WTL::CSize;
 using WTL::PrintTo;
 
-const int kDefaultFontHeightInPixel = 18;
+constexpr int kDefaultFontHeightInPixel = 18;
 const wchar_t kWindowClassName[] = L"Mozc: Default Window Class Name";
 
 #define EXPECT_COMPOSITION_WINDOW_LAYOUT(                                      \
@@ -331,7 +331,7 @@ class Win32RendererUtilTest : public testing::Test {
 
   static std::wstring GetTestMessageForMonospaced() {
     std::wstring w_path;
-    const char kMessage[] =
+    constexpr char kMessage[] =
         "熊本県阿蘇郡南阿蘇村大字中松南阿蘇水の生まれる里白水高原駅";
     std::wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
@@ -340,7 +340,7 @@ class Win32RendererUtilTest : public testing::Test {
 
   static std::wstring GetTestMessageForProportional() {
     std::wstring w_path;
-    const char kMessage[] =
+    constexpr char kMessage[] =
         "This open-source project originates from Google 日本語入力.";
     std::wstring w_message;
     Util::UTF8ToWide(kMessage, &w_message);
@@ -1371,7 +1371,7 @@ TEST_F(Win32RendererUtilTest, VerticalMonospacedCompositeGlyph) {
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalNoAdditionalSegmentationWithMonospacedFont) {
-  const int kCursorOffsetX = 0;
+  constexpr int kCursorOffsetX = 0;
 
   RendererCommand command;
 
@@ -1404,7 +1404,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49, 0, 0,
                                      0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは";
+      constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1422,7 +1422,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49, 0, 0,
                                      646, 0, 647, 49, logfont, layout);
     {
-      const char kMsg[] = "、Google日本語入力のTestです";
+      constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1492,7 +1492,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalAdditionalSegmentationWithMonospacedFont) {
-  const int kCursorOffsetX = -90;
+  constexpr int kCursorOffsetX = -90;
 
   RendererCommand command;
 
@@ -1524,7 +1524,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1778, 599, 2019, 648, 0, 0, 241, 49, 0, 0,
                                      0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Go";
+      constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1548,7 +1548,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1734, 697, 0, 0, 540, 49, 0, 0,
                                      540, 0, 541, 49, logfont, layout);
     {
-      const char kMsg[] = "ogle日本語入力のTestです";
+      constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1616,7 +1616,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalNoAdditionalSegmentationWithMonospacedFont) {
-  const int kCursorOffsetY = 0;
+  constexpr int kCursorOffsetY = 0;
 
   RendererCommand command;
 
@@ -1649,7 +1649,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1983, 927, 2034, 1062, 0, 0, 51, 135, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは";
+      constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1667,7 +1667,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1088, 0, 0, 51, 376, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "、Google日本語入";
+      constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1691,7 +1691,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 983, 0, 0, 51, 270, 51, 0,
                                      0, 270, 51, 271, logfont, layout);
     {
-      const char kMsg[] = "力のTestです";
+      constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1756,7 +1756,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalAdditionalSegmentationWithMonospacedFont) {
-  const int kCursorOffsetY = -90;
+  constexpr int kCursorOffsetY = -90;
 
   RendererCommand command;
 
@@ -1789,7 +1789,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1983, 837, 2034, 1105, 0, 0, 51, 268, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Goo";
+      constexpr char kMsg[] = "これは、Goo";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1813,7 +1813,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1098, 0, 0, 51, 386, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "gle日本語入力のTe";
+      constexpr char kMsg[] = "gle日本語入力のTe";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1837,7 +1837,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 840, 0, 0, 51, 127, 51, 0,
                                      0, 127, 51, 128, logfont, layout);
     {
-      const char kMsg[] = "stです";
+      constexpr char kMsg[] = "stです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1899,7 +1899,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalNoAdditionalSegmentationWithProportionalFont) {
-  const int kCursorOffsetX = 0;
+  constexpr int kCursorOffsetX = 0;
 
   RendererCommand command;
 
@@ -1930,7 +1930,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 653, 0, 0, 135, 54, 0, 0,
                                      0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは";
+      constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -1948,7 +1948,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1840, 707, 0, 0, 646, 54, 0, 0,
                                      646, 0, 647, 54, logfont, layout);
     {
-      const char kMsg[] = "、Google日本語入力のTestです";
+      constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2019,7 +2019,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalAdditionalSegmentationWithProportionalFont) {
-  const int kCursorOffsetX = -90;
+  constexpr int kCursorOffsetX = -90;
 
   RendererCommand command;
 
@@ -2050,7 +2050,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1778, 599, 2020, 653, 0, 0, 242, 54, 0, 0,
                                      0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Go";
+      constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2074,7 +2074,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1733, 707, 0, 0, 539, 54, 0, 0,
                                      539, 0, 540, 54, logfont, layout);
     {
-      const char kMsg[] = "ogle日本語入力のTestです";
+      constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2142,7 +2142,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalNoAdditionalSegmentationWithProportionalFont) {
-  const int kCursorOffsetY = 0;
+  constexpr int kCursorOffsetY = 0;
 
   RendererCommand command;
 
@@ -2175,7 +2175,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1978, 927, 2034, 1062, 0, 0, 56, 135, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは";
+      constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2193,7 +2193,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1089, 0, 0, 56, 377, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "、Google日本語入";
+      constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2217,7 +2217,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 982, 0, 0, 56, 269, 56, 0,
                                      0, 269, 56, 270, logfont, layout);
     {
-      const char kMsg[] = "力のTestです";
+      constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2282,7 +2282,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalAdditionalSegmentationWithProportionalFont) {
-  const int kCursorOffsetY = -90;
+  constexpr int kCursorOffsetY = -90;
 
   RendererCommand command;
 
@@ -2315,7 +2315,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1978, 837, 2034, 1079, 0, 0, 56, 242, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Go";
+      constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2339,7 +2339,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1100, 0, 0, 56, 388, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "ogle日本語入力のT";
+      constexpr char kMsg[] = "ogle日本語入力のT";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2363,7 +2363,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 864, 0, 0, 56, 151, 56, 0,
                                      0, 151, 56, 152, logfont, layout);
     {
-      const char kMsg[] = "estです";
+      constexpr char kMsg[] = "estです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2425,7 +2425,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalFirstLineIsEmptyWithMonospacedFont) {
-  const int kCursorOffsetX = 120;
+  constexpr int kCursorOffsetX = 120;
 
   RendererCommand command;
 
@@ -2457,7 +2457,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1975, 697, 0, 0, 781, 49, 0, 0,
                                      781, 0, 782, 49, logfont, layout);
     {
-      const char kMsg[] = "これは、Google日本語入力のTestです";
+      constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2484,7 +2484,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionHorizontalFirstLineIsEmptyWithProportionalFont) {
-  const int kCursorOffsetX = 120;
+  constexpr int kCursorOffsetX = 120;
 
   RendererCommand command;
 
@@ -2515,7 +2515,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 653, 1975, 707, 0, 0, 781, 54, 0, 0,
                                      781, 0, 782, 54, logfont, layout);
     {
-      const char kMsg[] = "これは、Google日本語入力のTestです";
+      constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2542,7 +2542,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalFirstLineIsEmptyWithMonospacedFont) {
-  const int kCursorOffsetY = 170;
+  constexpr int kCursorOffsetY = 170;
 
   RendererCommand command;
 
@@ -2575,7 +2575,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1088, 0, 0, 51, 376, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Google日";
+      constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2602,7 +2602,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1881, 712, 1932, 1072, 0, 0, 51, 360, 51,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "本語入力のTestで";
+      constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2623,7 +2623,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1830, 712, 1881, 758, 0, 0, 51, 45, 51, 0,
                                      0, 45, 51, 46, logfont, layout);
     {
-      const char kMsg[] = "す";
+      constexpr char kMsg[] = "す";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2638,7 +2638,7 @@ TEST_F(Win32RendererUtilTest,
 
 TEST_F(Win32RendererUtilTest,
        CompositionVerticalFirstLineIsEmptyWithProportionalFont) {
-  const int kCursorOffsetY = 170;
+  constexpr int kCursorOffsetY = 170;
 
   RendererCommand command;
 
@@ -2671,7 +2671,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1922, 712, 1978, 1089, 0, 0, 56, 377, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは、Google日";
+      constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2698,7 +2698,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1866, 712, 1922, 1071, 0, 0, 56, 359, 56,
                                      0, 0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "本語入力のTestで";
+      constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2719,7 +2719,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1810, 712, 1866, 758, 0, 0, 56, 45, 56, 0,
                                      0, 45, 56, 46, logfont, layout);
     {
-      const char kMsg[] = "す";
+      constexpr char kMsg[] = "す";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -2735,7 +2735,7 @@ TEST_F(Win32RendererUtilTest,
 TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // Check the caret points the first character.
   {
-    const int kCursorOffsetX = -300;
+    constexpr int kCursorOffsetX = -300;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2766,7 +2766,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
 
   // Check the caret points the middle character.
   {
-    const int kCursorOffsetX = -300;
+    constexpr int kCursorOffsetX = -300;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2799,7 +2799,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // In this case, composition window should have an extra space to draw the
   // caret except that there is no room to extend.
   {
-    const int kCursorOffsetX = -300;
+    constexpr int kCursorOffsetX = -300;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2831,7 +2831,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // To emulate built-in edit control, we will adjust caret position to be
   // inside of the line if it exceeds the end of line.
   {
-    const int kCursorOffsetX = -287;
+    constexpr int kCursorOffsetX = -287;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2863,7 +2863,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
   // If there exists other characters in the next line, caret position should
   // not be adjusted.
   {
-    const int kCursorOffsetX = -287;
+    constexpr int kCursorOffsetX = -287;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2902,7 +2902,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInHorizontalComposition) {
 TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // Check the caret points the first character.
   {
-    const int kCursorOffsetY = -10;
+    constexpr int kCursorOffsetY = -10;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2935,7 +2935,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
 
   // Check the caret points the middle character.
   {
-    const int kCursorOffsetY = -10;
+    constexpr int kCursorOffsetY = -10;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -2970,7 +2970,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // In this case, composition window should have an extra space to draw the
   // caret except that there is no room to extend.
   {
-    const int kCursorOffsetY = -10;
+    constexpr int kCursorOffsetY = -10;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -3004,7 +3004,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // To emulate built-in edit control, we will adjust caret position to be
   // inside of the line if it exceeds the end of line.
   {
-    const int kCursorOffsetY = -2;
+    constexpr int kCursorOffsetY = -2;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -3038,7 +3038,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
   // If there exists other characters in the next line, caret position should
   // not be adjusted.
   {
-    const int kCursorOffsetY = -2;
+    constexpr int kCursorOffsetY = -2;
     HWND hwnd = nullptr;
     LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                              CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -3079,7 +3079,7 @@ TEST_F(Win32RendererUtilTest, CheckCaretPosInVerticalComposition) {
 // Check if suggest window does not hide preedit.
 // See b/4317753 for details.
 TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesHorizontalPreedit) {
-  const int kCursorOffsetX = 0;
+  constexpr int kCursorOffsetX = 0;
 
   RendererCommand command;
 
@@ -3114,7 +3114,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesHorizontalPreedit) {
 // Check if suggest window does not hide preedit.
 // See b/4317753 for details.
 TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
-  const int kCursorOffsetY = 0;
+  constexpr int kCursorOffsetY = 0;
 
   RendererCommand command;
 
@@ -3148,7 +3148,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
 }
 
 TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
-  const int kCursorOffsetY = 0;
+  constexpr int kCursorOffsetY = 0;
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
                            CreateWindowEmulatorWithDPIScaling(1.0, &hwnd));
@@ -3184,7 +3184,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
 TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
   const uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
 
-  const int kCursorOffsetX = 0;
+  constexpr int kCursorOffsetX = 0;
 
   RendererCommand command;
 
@@ -3221,7 +3221,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1868, 599, 2003, 648, 0, 0, 135, 49, 0, 0,
                                      0, 0, 0, 0, logfont, layout);
     {
-      const char kMsg[] = "これは";
+      constexpr char kMsg[] = "これは";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3239,7 +3239,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1840, 697, 0, 0, 646, 49, 0, 0,
                                      646, 0, 647, 49, logfont, layout);
     {
-      const char kMsg[] = "、Google日本語入力のTestです";
+      constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3366,7 +3366,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1548, 1416, 1777, 1434, 0, 0, 229, 18, 0,
                                      0, 0, 0, 0, 0, default_font, layout);
     {
-      const char kMsg[] = "これは、Google日本語入力のTest";
+      constexpr char kMsg[] = "これは、Google日本語入力のTest";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3396,7 +3396,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1548, 1434, 1579, 1452, 0, 0, 30, 18, 0, 0,
                                      30, 0, 31, 18, default_font, layout);
     {
-      const char kMsg[] = "です";
+      constexpr char kMsg[] = "です";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3478,7 +3478,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(221, 194, 481, 212, 0, 0, 259, 18, 0, 0,
                                      259, 0, 260, 18, default_font, layout);
     {
-      const char kMsg[] = "これは、Google日本語入力のTestです";
+      constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3588,7 +3588,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(955, 1074, 1065, 1092, 0, 0, 110, 18, 0, 0,
                                      0, 0, 0, 0, default_font, layout);
     {
-      const char kMsg[] = "これは、Google";
+      constexpr char kMsg[] = "これは、Google";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3612,7 +3612,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(953, 1092, 1067, 1110, 0, 0, 114, 18, 0, 0,
                                      0, 0, 0, 0, default_font, layout);
     {
-      const char kMsg[] = "日本語入力のTes";
+      constexpr char kMsg[] = "日本語入力のTes";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3633,7 +3633,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     EXPECT_COMPOSITION_WINDOW_LAYOUT(953, 1110, 989, 1128, 0, 0, 35, 18, 0, 0,
                                      35, 0, 36, 18, default_font, layout);
     {
-      const char kMsg[] = "tです";
+      constexpr char kMsg[] = "tです";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3653,7 +3653,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
 // See b/4159275 for details.
 TEST_F(Win32RendererUtilTest,
        CheckSurrogatePairInHorizontalComposition_Issue4159275) {
-  const int kCursorOffsetX = 150;
+  constexpr int kCursorOffsetX = 150;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
@@ -3680,7 +3680,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1193, 648, 1554, 697, 0, 0, 360, 49, 0, 0,
                                      360, 0, 361, 49, logfont, layout);
     {
-      const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
+      constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
@@ -3709,7 +3709,7 @@ TEST_F(Win32RendererUtilTest,
 // See b/4159275 for details.
 TEST_F(Win32RendererUtilTest,
        CheckSurrogatePairInVerticalComposition_Issue4159275) {
-  const int kCursorOffsetY = 175;
+  constexpr int kCursorOffsetY = 175;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
@@ -3737,7 +3737,7 @@ TEST_F(Win32RendererUtilTest,
     EXPECT_COMPOSITION_WINDOW_LAYOUT(1932, 712, 1983, 1073, 0, 0, 51, 360, 51,
                                      0, 0, 360, 51, 361, logfont, layout);
     {
-      const char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
+      constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
       mozc::Util::UTF8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);

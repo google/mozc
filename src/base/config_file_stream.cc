@@ -49,10 +49,10 @@ namespace mozc {
 
 namespace {
 
-static const char kSystemPrefix[] = "system://";
-static const char kUserPrefix[] = "user://";
-static const char kFilePrefix[] = "file://";
-static const char kMemoryPrefix[] = "memory://";
+static constexpr char kSystemPrefix[] = "system://";
+static constexpr char kUserPrefix[] = "user://";
+static constexpr char kFilePrefix[] = "file://";
+static constexpr char kMemoryPrefix[] = "memory://";
 
 struct FileData {
   const char *name;

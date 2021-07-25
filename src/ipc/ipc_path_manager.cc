@@ -294,7 +294,7 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
   ipc_name->assign(MacUtil::GetLabelForSuffix(""));
 #else   // not OS_WIN nor __APPLE__
   // GetUserIPCName("<name>") => "/tmp/.mozc.<key>.<name>"
-  const char kIPCPrefix[] = "/tmp/.mozc.";
+  constexpr char kIPCPrefix[] = "/tmp/.mozc.";
   *ipc_name = kIPCPrefix;
 #endif  // OS_WIN
 

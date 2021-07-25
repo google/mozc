@@ -70,11 +70,11 @@ TEST_F(UsageStatsTest, IsListedTest) {
 
 TEST_F(UsageStatsTest, StoreTest) {
   // Use actual items, but they do not matter with practical usages.
-  const char kCountKey[] = "ShutDown";
-  const char kIntegerKey[] = "UserRegisteredWord";
-  const char kBooleanKey[] = "ConfigUseDictionarySuggest";
-  const char kTimingKey[] = "ElapsedTimeUSec";
-  const char kVirtualKeyboardKey[] = "VirtualKeyboardStats";
+  constexpr char kCountKey[] = "ShutDown";
+  constexpr char kIntegerKey[] = "UserRegisteredWord";
+  constexpr char kBooleanKey[] = "ConfigUseDictionarySuggest";
+  constexpr char kTimingKey[] = "ElapsedTimeUSec";
+  constexpr char kVirtualKeyboardKey[] = "VirtualKeyboardStats";
 
   uint32_t count_val = 0;
   int32_t integer_val = -1;

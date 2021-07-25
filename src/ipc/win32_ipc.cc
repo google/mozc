@@ -55,7 +55,7 @@ namespace {
 const bool kReadTypeACK = true;
 const bool kReadTypeData = false;
 const bool kSendTypeData = false;
-const int kMaxSuccessiveConnectionFailureCount = 5;
+constexpr int kMaxSuccessiveConnectionFailureCount = 5;
 
 size_t GetNumberOfProcessors() {
   // thread-safety is not required.
@@ -610,7 +610,7 @@ void IPCServer::Loop() {
     // is an ACK signal (the IPC client of Mozc 1.5.x or earlier does this).
     char ack_request[1] = {0};
     size_t ack_request_size = 1;
-    static const int kAckTimeout = 100;
+    static constexpr int kAckTimeout = 100;
     if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), ack_request,
                         &ack_request_size, kAckTimeout, kReadTypeACK,
                         &last_ipc_error)) {
@@ -652,7 +652,7 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
   if (ipc_mutex.get() == nullptr) {
     LOG(ERROR) << "IPC mutex is not available";
   } else {
-    const int kMutexTimeout = 10 * 1000;  // wait at most 10sec.
+    constexpr int kMutexTimeout = 10 * 1000;  // wait at most 10sec.
     switch (::WaitForSingleObject(ipc_mutex.get(), kMutexTimeout)) {
       case WAIT_TIMEOUT:
         // TODO(taku): with suspend/resume, WaitForSingleObject may
@@ -737,9 +737,9 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
     // wait for 10 second until server is ready
     // TODO(taku): control the timeout via flag.
 #ifdef DEBUG
-    const int kNamedPipeTimeout = 100000;  // 100 sec
+    constexpr int kNamedPipeTimeout = 100000;  // 100 sec
 #else
-    const int kNamedPipeTimeout = 10000;  // 10 sec
+    constexpr int kNamedPipeTimeout = 10000;  // 10 sec
 #endif
     DLOG(ERROR) << "Server is busy. waiting for " << kNamedPipeTimeout
                 << " msec";

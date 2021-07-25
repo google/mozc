@@ -163,7 +163,7 @@ TEST_F(FontSpecTest, FontDescriptionTest) {
   ExpectFontDescription(font_spec, kDefaultFontDescription,
                         FontSpecInterface::FONTSET_INFOLIST_DESCRIPTION);
 
-  const char kDummyFontDescription[] = "Foo,Bar,Baz";
+  constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
   font_spec.Reload(kDummyFontDescription);
   ExpectFontDescription(font_spec, kDummyFontDescription,
                         FontSpecInterface::FONTSET_CANDIDATE);

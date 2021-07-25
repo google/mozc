@@ -38,7 +38,7 @@
 namespace mozc {
 namespace {
 
-static const char kMessage[] = "test message";
+static constexpr char kMessage[] = "test message";
 
 TEST(StatusTest, DefaultConstructor) {
   const Status s;

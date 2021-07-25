@@ -111,11 +111,11 @@ TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
 
 TEST_F(VersionRewriterTest, RewriteTest_Version) {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  static const char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
-  static const char kVersionPrefixUnexpected[] = "Mozc-";
+  static constexpr char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
+  static constexpr char kVersionPrefixUnexpected[] = "Mozc-";
 #else
-  static const char kVersionPrefixExpected[] = "Mozc-";
-  static const char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
+  static constexpr char kVersionPrefixExpected[] = "Mozc-";
+  static constexpr char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
   VersionRewriter version_rewriter(kDummyDataVersion);

@@ -47,7 +47,7 @@ namespace mozc {
 namespace renderer {
 namespace {
 #if defined(OS_WIN)
-const int kDefaultDPI = 96;
+constexpr int kDefaultDPI = 96;
 #endif  // OS_WIN
 
 class RendererStyleHandlerImpl {

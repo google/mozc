@@ -80,7 +80,7 @@ namespace {
 using mozc::win32::OmahaUtil;
 using std::unique_ptr;
 
-const char kIEFrameDll[] = "ieframe.dll";
+constexpr char kIEFrameDll[] = "ieframe.dll";
 const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
 
 HMODULE g_module = nullptr;

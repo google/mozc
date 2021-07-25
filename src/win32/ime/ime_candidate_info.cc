@@ -91,7 +91,7 @@ const DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
 // We conform to those applications by always setting a safe number.
 // Note that Office-IME 2010 always returns 9 CANDIDATELIST::dwPageSize
 // regardless of the actual number of candidates.  So we use the same strategy.
-const int kSafePageSize = 9;
+constexpr int kSafePageSize = 9;
 
 bool GetCandidateCountInternal(const CANDIDATEINFO *info, DWORD buffer_size,
                                DWORD *count) {

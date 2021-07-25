@@ -43,6 +43,7 @@
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
 #include "composer/composition_interface.h"
+#include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/internal/typing_corrector.h"
 #include "composer/table.h"
@@ -54,9 +55,6 @@
 
 namespace mozc {
 namespace composer {
-
-using ProbableKeyEvent = ::mozc::commands::KeyEvent::ProbableKeyEvent;
-using ProbableKeyEvents = ::mozc::protobuf::RepeatedPtrField<ProbableKeyEvent>;
 
 class Composer final {
  public:
@@ -173,13 +171,6 @@ class Composer final {
 
   bool InsertCharacterKeyAndPreedit(const std::string &key,
                                     const std::string &preedit);
-  void InsertCharacterForProbableKeyEvents(
-      const std::string &key, const ProbableKeyEvents &probable_key_events);
-  void InsertCharacterPreeditForProbableKeyEvents(
-      const std::string &input, const ProbableKeyEvents &probable_key_events);
-  void InsertCharacterKeyAndPreeditForProbableKeyEvents(
-      const std::string &key, const std::string &preedit,
-      const ProbableKeyEvents &probable_key_events);
   bool InsertCharacterKeyEvent(const commands::KeyEvent &key);
   void InsertCommandCharacter(const InternalCommand internal_command);
   void Delete();
@@ -264,9 +255,7 @@ class Composer final {
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
-  bool InsertCharacterInternal(const std::string &key);
-  bool InsertCharacterKeyAndPreeditInternal(const std::string &key,
-                                            const std::string &preedit);
+  bool ProcessCompositionInput(const CompositionInput &input);
 
   // Change input mode temporarily accoding to the current context and
   // the given input character.

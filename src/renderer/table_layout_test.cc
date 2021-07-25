@@ -58,12 +58,12 @@ enum COLUMN_TYPE {
 };
 
 TEST(TableLayoutTest, AllElement) {
-  const int kWindowBorder = 1;
-  const int kNumberOfRow = 10;
-  const int kHeaderHeight = 9;
-  const int kFooterHeight = 13;
-  const int kVSCrollBarWidth = 11;
-  const int kRowRectPadding = 2;
+  constexpr int kWindowBorder = 1;
+  constexpr int kNumberOfRow = 10;
+  constexpr int kHeaderHeight = 9;
+  constexpr int kFooterHeight = 13;
+  constexpr int kVSCrollBarWidth = 11;
+  constexpr int kRowRectPadding = 2;
 
   TableLayout layout;
   layout.Initialize(kNumberOfRow, NUMBER_OF_COLUMNS);
@@ -100,13 +100,13 @@ TEST(TableLayoutTest, AllElement) {
 }
 
 TEST(TableLayoutTest, AllElementWithMinimumFooterWidth) {
-  const int kWindowBorder = 1;
-  const int kNumberOfRow = 10;
-  const int kHeaderHeight = 9;
-  const int kFooterHeight = 13;
-  const int kFooterWidth = 100;
-  const int kVSCrollBarWidth = 11;
-  const int kRowRectPadding = 2;
+  constexpr int kWindowBorder = 1;
+  constexpr int kNumberOfRow = 10;
+  constexpr int kHeaderHeight = 9;
+  constexpr int kFooterHeight = 13;
+  constexpr int kFooterWidth = 100;
+  constexpr int kVSCrollBarWidth = 11;
+  constexpr int kRowRectPadding = 2;
 
   TableLayout layout;
   layout.Initialize(kNumberOfRow, NUMBER_OF_COLUMNS);
@@ -185,7 +185,7 @@ TEST(TableLayoutTest, VScrollIndicatorPositions) {
   layout.SetVScrollBar(10);
   layout.FreezeLayout();
 
-  const int kCandidatesTotal = 15;
+  constexpr int kCandidatesTotal = 15;
   const Rect vscrollBarRect = layout.GetVScrollBarRect();
   EXPECT_RECT_EQ(1, 0, 10, 100, layout.GetVScrollBarRect());
 
@@ -215,7 +215,7 @@ TEST(TableLayoutTest, VScrollVerySmallIndicator) {
   layout.SetVScrollBar(10);
   layout.FreezeLayout();
 
-  const int kCandidatesTotal = 200;
+  constexpr int kCandidatesTotal = 200;
   EXPECT_RECT_EQ(1, 0, 10, 100, layout.GetVScrollBarRect());
   EXPECT_RECT_EQ(1, 0, 10, 1,
                  layout.GetVScrollIndicatorRect(0, 1, kCandidatesTotal));

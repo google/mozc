@@ -89,7 +89,7 @@ TEST(UtilTest, ConcatStrings) {
 TEST(UtilTest, AppendStringWithDelimiter) {
   std::string result;
   std::string input;
-  const char kDelemiter[] = ":";
+  constexpr char kDelemiter[] = ":";
 
   {
     result.clear();

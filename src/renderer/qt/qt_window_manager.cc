@@ -89,6 +89,10 @@ void QtWindowManager::OnClicked(int row, int column) {
 int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   QApplication app(argc, argv);
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+
   window_ = new QWidget();
   window_->setWindowFlags(Qt::ToolTip |
                           Qt::FramelessWindowHint |

@@ -80,7 +80,7 @@ using ::mozc::storage::louds::LoudsTrie;
 
 namespace {
 
-const int kMinTokenArrayBlobSize = 4;
+constexpr int kMinTokenArrayBlobSize = 4;
 
 // TODO(noriyukit): The following parameters may not be well optimized.  In our
 // experiments, Select1 is computational burden, so increasing cache size for

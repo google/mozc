@@ -117,7 +117,7 @@ ConfigDialog::ConfigDialog()
 
 #if defined(OS_LINUX)
   // The last "misc" tab has no valid configs on Linux
-  const int kMiscTabIndex = 6;
+  constexpr int kMiscTabIndex = 6;
   configDialogTabWidget->removeTab(kMiscTabIndex);
 #endif  // OS_LINUX
 #endif  // MOZC_NO_LOGGING
@@ -457,7 +457,7 @@ void ConfigDialog::GetSendStatsCheckBox() const {
   } while (0)
 
 namespace {
-static const int kPreeditMethodSize = 2;
+static constexpr int kPreeditMethodSize = 2;
 
 void SetComboboxForPreeditMethod(const config::Config &config,
                                  QComboBox *combobox) {

@@ -77,10 +77,10 @@ const size_t kMaxCandidatesSize = 200;  // how many candidates we expand
 // 10000   4605.17
 // 100000  5756.46
 // 1000000 6907.75
-const int kMinCost = 100;
-const int kCostOffset = 6907;
-const int kStructureCostOffset = 3453;
-const int kMinStructureCostOffset = 1151;
+constexpr int kMinCost = 100;
+constexpr int kCostOffset = 6907;
+constexpr int kStructureCostOffset = 3453;
+constexpr int kMinStructureCostOffset = 1151;
 const int32_t kStopEnmerationCacheSize = 15;
 
 // Returns true if the given node sequence is noisy weak compound.

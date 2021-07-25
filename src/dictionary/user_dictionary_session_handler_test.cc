@@ -55,7 +55,7 @@ using ::mozc::user_dictionary::UserDictionaryCommand;
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySessionHandler;
 
-const char kDictionaryData[] =
+constexpr char kDictionaryData[] =
     "きょうと\t京都\t名詞\n"
     "おおさか\t大阪\t地名\n"
     "とうきょう\t東京\t地名\tコメント\n"

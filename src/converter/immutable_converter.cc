@@ -75,9 +75,9 @@ namespace {
 const size_t kMaxSegmentsSize = 256;
 const size_t kMaxCharLength = 1024;
 const size_t kMaxCharLengthForReverseConversion = 600;  // 200 chars in UTF8
-const int kMaxCost = 32767;
-const int kMinCost = -32767;
-const int kDefaultNumberCost = 3000;
+constexpr int kMaxCost = 32767;
+constexpr int kMinCost = -32767;
+constexpr int kDefaultNumberCost = 3000;
 
 bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
   return request.request()
@@ -866,7 +866,7 @@ namespace {
 
 // Reasonably big cost. Cannot use INT_MAX because a new cost will be
 // calculated based on kVeryBigCost.
-const int kVeryBigCost = (INT_MAX >> 2);
+constexpr int kVeryBigCost = (INT_MAX >> 2);
 
 // Runs viterbi algorithm at position |pos|. The left_boundary/right_boundary
 // are the next boundary looked from pos. (If pos is on the boundary,
@@ -1177,27 +1177,27 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,
                      const Token &token) override {
     Node *node = NewNodeFromToken(token);
-    const int kPredictiveNodeDefaultPenalty = 900;  // ~= -500 * log(1/6)
+    constexpr int kPredictiveNodeDefaultPenalty = 900;  // ~= -500 * log(1/6)
     int additional_cost = kPredictiveNodeDefaultPenalty;
 
     // Bonus for suffix word.
     if (pos_matcher_->IsSuffixWord(node->rid) &&
         pos_matcher_->IsSuffixWord(node->lid)) {
-      const int kSuffixWordBonus = 700;
+      constexpr int kSuffixWordBonus = 700;
       additional_cost -= kSuffixWordBonus;
     }
 
     // Penalty for unique noun word.
     if (pos_matcher_->IsUniqueNoun(node->rid) ||
         pos_matcher_->IsUniqueNoun(node->lid)) {
-      const int kUniqueNounPenalty = 500;
+      constexpr int kUniqueNounPenalty = 500;
       additional_cost += kUniqueNounPenalty;
     }
 
     // Penalty for number.
     if (pos_matcher_->IsNumber(node->rid) ||
         pos_matcher_->IsNumber(node->lid)) {
-      const int kNumberPenalty = 4000;
+      constexpr int kNumberPenalty = 4000;
       additional_cost += kNumberPenalty;
     }
 
@@ -1753,7 +1753,7 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
   const int base_wcost_diff = std::max(
       0, (first_segment.candidate(0).wcost -
           first_segment.candidate(only_first_segment_candidate_pos).wcost));
-  const int kOnlyFirstSegmentOffset = 300;
+  constexpr int kOnlyFirstSegmentOffset = 300;
 
   if (allow_exact) {
     for (size_t i = only_first_segment_candidate_pos;

@@ -30,7 +30,7 @@
 #include "unix/ibus/path_util.h"
 
 namespace {
-const char kInstalledDirectory[] = "/usr/share/ibus-mozc";
+constexpr char kInstalledDirectory[] = "/usr/share/ibus-mozc";
 }
 
 namespace mozc {

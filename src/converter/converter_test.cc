@@ -940,12 +940,12 @@ TEST_F(ConverterTest, Regression3046266) {
   Segments segments;
 
   // Can be any string that has "ん" at the end
-  const char kKey1[] = "かん";
+  constexpr char kKey1[] = "かん";
 
   // Can be any string that has a vowel at the beginning
-  const char kKey2[] = "あか";
+  constexpr char kKey2[] = "あか";
 
-  const char kValueNotExpected[] = "中";
+  constexpr char kValueNotExpected[] = "中";
 
   EXPECT_TRUE(converter->StartConversion(&segments, kKey1));
   EXPECT_EQ(1, segments.conversion_segments_size());
@@ -969,8 +969,8 @@ TEST_F(ConverterTest, Regression5502496) {
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
-  const char kKey[] = "みんあ";
-  const char kValueExpected[] = "みんな";
+  constexpr char kKey[] = "みんあ";
+  constexpr char kValueExpected[] = "みんな";
 
   EXPECT_TRUE(converter->StartConversion(&segments, kKey));
   EXPECT_EQ(1, segments.conversion_segments_size());
@@ -1111,8 +1111,8 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
 }
 
 TEST_F(ConverterTest, Predict_SetKey) {
-  const char kPredictionKey[] = "prediction key";
-  const char kPredictionKey2[] = "prediction key2";
+  constexpr char kPredictionKey[] = "prediction key";
+  constexpr char kPredictionKey2[] = "prediction key2";
   // Tests whether SetKey method is called or not.
   struct TestData {
     const Segments::RequestType request_type;
@@ -1534,7 +1534,7 @@ TEST_F(ConverterTest, ReconstructHistory) {
   std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
   ConverterInterface *converter = engine->GetConverter();
 
-  const char kTen[] = "１０";
+  constexpr char kTen[] = "１０";
 
   Segments segments;
   EXPECT_TRUE(converter->ReconstructHistory(&segments, kTen));

@@ -51,8 +51,8 @@ namespace {
 const size_t kMaxKeySize = 300;
 const size_t kMaxValueSize = 300;
 const size_t kMaxCommentSize = 300;
-const char kInvalidChars[] = "\n\r\t";
-const char kUserDictionaryFile[] = "user://user_dictionary.db";
+constexpr char kInvalidChars[] = "\n\r\t";
+constexpr char kUserDictionaryFile[] = "user://user_dictionary.db";
 
 // Maximum string length for dictionary name.
 const size_t kMaxDictionaryNameSize = 300;

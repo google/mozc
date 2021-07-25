@@ -44,10 +44,10 @@
 namespace mozc {
 namespace {
 
-const int kPredictionSize = 100;
+constexpr int kPredictionSize = 100;
 // On Mobile mode PREDICTION (including PARTIAL_PREDICTION) behaves like as
 // conversion so the limit is same as conversion's one.
-const int kMobilePredictionSize = 200;
+constexpr int kMobilePredictionSize = 200;
 
 size_t GetCandidatesSize(const Segments &segments) {
   if (segments.conversion_segments_size() <= 0) {

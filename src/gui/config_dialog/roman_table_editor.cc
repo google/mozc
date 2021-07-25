@@ -57,7 +57,7 @@ enum {
   RESET_INDEX = 4,
   MENU_SIZE = 5
 };
-const char kRomanTableFile[] = "system://romanji-hiragana.tsv";
+constexpr char kRomanTableFile[] = "system://romanji-hiragana.tsv";
 }  // namespace
 
 RomanTableEditorDialog::RomanTableEditorDialog(QWidget *parent)

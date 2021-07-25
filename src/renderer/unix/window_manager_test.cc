@@ -617,7 +617,7 @@ TEST(WindowManagerTest, FontReloadTest) {
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
     const Rect kDummyRect(0, 0, 0, 0);
-    const char kDummyFontDescription[] = "Foo,Bar,Baz";
+    constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
 
     FontUpdateTestableWindowManager window_manager(
         candidate_window_mock, infolist_window_mock, gtk_mock);
@@ -675,7 +675,7 @@ TEST(WindowManagerTest, FontReloadTest) {
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
     const Rect kDummyRect(0, 0, 0, 0);
-    const char kDummyFontDescription[] = "Foo,Bar,Baz";
+    constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
 
     FontUpdateTestableWindowManager window_manager(
         candidate_window_mock, infolist_window_mock, gtk_mock);
@@ -712,8 +712,8 @@ TEST(WindowManagerTest, FontReloadTest) {
     GtkWrapperMock *gtk_mock = new GtkWrapperMock();
 
     const Rect kDummyRect(0, 0, 0, 0);
-    const char kDummyFontDescription[] = "Foo,Bar,Baz";
-    const char kDummyFontDescription2[] = "Foo,Bar";
+    constexpr char kDummyFontDescription[] = "Foo,Bar,Baz";
+    constexpr char kDummyFontDescription2[] = "Foo,Bar";
 
     FontUpdateTestableWindowManager window_manager(
         candidate_window_mock, infolist_window_mock, gtk_mock);

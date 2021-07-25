@@ -786,7 +786,10 @@ cc_library_mozc(
 cc_library_mozc(
     name = "user_pos_interface",
     hdrs = ["user_pos_interface.h"],
-    visibility = ["//data_manager:__subpackages__"],
+    visibility = [
+        "//data_manager:__subpackages__",
+        "//engine:__subpackages__",
+    ],
     deps = ["//base:port"],
 )
 

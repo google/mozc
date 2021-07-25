@@ -51,14 +51,14 @@ namespace {
 // On Windows, multiple processes can create named pipe objects whose names are
 // the same. To reduce the potential risk of DOS, we limit the maximum number
 // of pipe instances to 1 here.
-const int kNumConnections = 1;
+constexpr int kNumConnections = 1;
 #else
-const int kNumConnections = 10;
+constexpr int kNumConnections = 10;
 #endif  // OS_WIN
 
-const int kTimeOut = 5000;  // 5000msec
-const char kSessionName[] = "session";
-const char kEventName[] = "session";
+constexpr int kTimeOut = 5000;  // 5000msec
+constexpr char kSessionName[] = "session";
+constexpr char kEventName[] = "session";
 
 }  // namespace
 

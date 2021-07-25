@@ -489,7 +489,7 @@ bool CacheServiceManager::RestartService() {
     LOG(ERROR) << "ControlService failed: " << ::GetLastError();
   }
 
-  const int kNumTrial = 10;
+  constexpr int kNumTrial = 10;
   for (int i = 0; i < kNumTrial; ++i) {
     SERVICE_STATUS service_status = {};
     if (!::QueryServiceStatus(service_handle.get(), &service_status)) {

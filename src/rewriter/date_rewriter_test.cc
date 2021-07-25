@@ -476,7 +476,7 @@ TEST_F(DateRewriterTest, ERAToAD) {
   std::vector<std::string> results, descriptions;
   const ConversionRequest request;
   // "1234", "１２３４", "一二三四"
-  const int kNumYearRepresentation = 3;
+  constexpr int kNumYearRepresentation = 3;
 
   results.clear();
   descriptions.clear();

@@ -94,7 +94,7 @@ TEST(MutexTest, LockTest) {
 // Marked as NO_THREAD_SAFETY_ANALYSIS to avoid the compiler warning "acquiring
 // mutex 'mutex' that is already held".
 TEST(MutexTest, RecursiveLockTest) ABSL_NO_THREAD_SAFETY_ANALYSIS {
-  const int kNumLocks = 5;
+  constexpr int kNumLocks = 5;
   Mutex mutex;
   for (int i = 0; i < kNumLocks; ++i) {
     mutex.Lock();
@@ -163,8 +163,8 @@ TEST(MutexTest, TryLockTest) {
 }
 
 TEST(MutexTest, ExclusiveAccessByManyThreads) {
-  const int kThreadsSize = 5;
-  const int kLoopSize = 10;
+  constexpr int kThreadsSize = 5;
+  constexpr int kLoopSize = 10;
 
   Mutex mutex;
   int counter = 0;
@@ -232,7 +232,7 @@ TEST(MutexTest, ReaderWriterMutexTest) {
     return;
   }
 
-  const int kThreadsSize = 3;
+  constexpr int kThreadsSize = 3;
 
   ReaderWriterMutex mutex;
   int counter = 12345;

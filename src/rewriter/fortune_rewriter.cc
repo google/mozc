@@ -55,11 +55,11 @@ enum FortuneType {
   NUM_FORTUNE_TYPES = 6,
 };
 
-const int kMaxLevel = 100;
-const int kNormalLevels[] = {20, 40, 60, 80, 90};
-const int kNewYearLevels[] = {30, 60, 80, 90, 95};
-const int kMyBirthdayLevels[] = {30, 60, 80, 90, 95};
-const int kFriday13Levels[] = {10, 25, 40, 55, 70};
+constexpr int kMaxLevel = 100;
+constexpr int kNormalLevels[] = {20, 40, 60, 80, 90};
+constexpr int kNewYearLevels[] = {30, 60, 80, 90, 95};
+constexpr int kMyBirthdayLevels[] = {30, 60, 80, 90, 95};
+constexpr int kFriday13Levels[] = {10, 25, 40, 55, 70};
 
 bool IsValidFortuneType(FortuneType fortune_type) {
   return (fortune_type < NUM_FORTUNE_TYPES);

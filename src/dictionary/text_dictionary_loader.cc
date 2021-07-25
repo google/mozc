@@ -280,7 +280,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // The cost is calculated as -log(prob) * 500.
     // We here assume that the wrong reading appear with 1/100 probability
     // of the original (correct) reading.
-    const int kCostPenalty = 2302;  // -log(1/100) * 500;
+    constexpr int kCostPenalty = 2302;  // -log(1/100) * 500;
     std::unique_ptr<Token> token(new Token);
     token->key.assign(value_key.second.data(), value_key.second.size());
     token->value = max_cost_token->value;
