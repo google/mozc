@@ -61,7 +61,7 @@ void ReadWords(const std::string &name, std::vector<uint64_t> *words) {
   }
 }
 
-const size_t kMinimumFilterBytes = 100 * 1000;
+constexpr size_t kMinimumFilterBytes = 100 * 1000;
 }  // namespace
 
 using mozc::storage::ExistenceFilter;
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 
   LOG(INFO) << words.size() << " words found";
 
-  static const float kErrorRate = 0.00001;
+  static constexpr float kErrorRate = 0.00001;
   const size_t num_bytes =
       std::max(ExistenceFilter::MinFilterSizeInBytesForErrorRate(kErrorRate,
                                                                  words.size()),

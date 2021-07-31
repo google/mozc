@@ -46,7 +46,7 @@ TEST(MmapTest, MmapTest) {
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.db");
 
-  const size_t kFileNameSize[] = {1, 100, 1024, 8192};
+  constexpr size_t kFileNameSize[] = {1, 100, 1024, 8192};
   for (int i = 0; i < arraysize(kFileNameSize); ++i) {
     FileUtil::Unlink(filename);
     std::unique_ptr<char[]> buf(new char[kFileNameSize[i]]);

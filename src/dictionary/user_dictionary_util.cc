@@ -48,18 +48,18 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
 // Maximum string length in UserDictionaryEntry's field
-const size_t kMaxKeySize = 300;
-const size_t kMaxValueSize = 300;
-const size_t kMaxCommentSize = 300;
+constexpr size_t kMaxKeySize = 300;
+constexpr size_t kMaxValueSize = 300;
+constexpr size_t kMaxCommentSize = 300;
 constexpr char kInvalidChars[] = "\n\r\t";
 constexpr char kUserDictionaryFile[] = "user://user_dictionary.db";
 
 // Maximum string length for dictionary name.
-const size_t kMaxDictionaryNameSize = 300;
+constexpr size_t kMaxDictionaryNameSize = 300;
 
 // The limits of dictionary/entry size.
-const size_t kMaxDictionarySize = 100;
-const size_t kMaxEntrySize = 1000000;
+constexpr size_t kMaxDictionarySize = 100;
+constexpr size_t kMaxEntrySize = 1000000;
 }  // namespace
 
 size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }

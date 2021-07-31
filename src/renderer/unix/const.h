@@ -67,12 +67,13 @@ const int kFooterSeparatorHeight = 1;
 const int kRowRectPadding = 1;
 const int kIndicatorWidthInDefaultDPI = 4;
 
-const char kMinimumCandidateAndDescriptionWidthAsString[] = "そのほかの文字種";
+constexpr char kMinimumCandidateAndDescriptionWidthAsString[] =
+    "そのほかの文字種";
 
 // The pango font description allows us to set multiple font names.
 // See the detail in
 // http://developer.gnome.org/pango/stable/pango-Fonts.html#pango-font-description-from-string
-const char kDefaultFontDescription[] = "IPAゴシック,SansSerif 11";
+constexpr char kDefaultFontDescription[] = "IPAゴシック,SansSerif 11";
 
 }  // namespace gtk
 }  // namespace renderer

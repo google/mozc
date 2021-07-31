@@ -61,7 +61,7 @@ using ::mozc::dictionary::POSMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::usage_stats::UsageStats;
 
-const size_t kErrorIndex = static_cast<size_t>(-1);
+constexpr size_t kErrorIndex = static_cast<size_t>(-1);
 
 size_t GetSegmentIndex(const Segments *segments, size_t segment_index) {
   const size_t history_segments_size = segments->history_segments_size();
@@ -796,7 +796,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
     return false;
   }
 
-  const size_t kMaxArraySize = 256;
+  constexpr size_t kMaxArraySize = 256;
   start_segment_index = GetSegmentIndex(segments, start_segment_index);
   const size_t end_segment_index = start_segment_index + segments_size;
   if (start_segment_index == kErrorIndex ||
@@ -862,9 +862,9 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
   // "する" "して", which are not always acceptable for non-sahen words.
   candidate->lid = general_noun_id_;
   candidate->rid = general_noun_id_;
-  const size_t kExpandSizeStart = 5;
-  const size_t kExpandSizeDiff = 50;
-  const size_t kExpandSizeMax = 80;
+  constexpr size_t kExpandSizeStart = 5;
+  constexpr size_t kExpandSizeDiff = 50;
+  constexpr size_t kExpandSizeMax = 80;
   // In almost all cases, user chooses the top candidate.
   // In order to reduce the latency, first, expand 5 candidates.
   // If no valid candidates are found within 5 candidates, expand

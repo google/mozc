@@ -38,7 +38,7 @@ namespace mozc {
 namespace internal {
 namespace {
 
-const size_t kDigestLength = 20;
+constexpr size_t kDigestLength = 20;
 
 using ::testing::AssertionFailure;
 using ::testing::AssertionResult;

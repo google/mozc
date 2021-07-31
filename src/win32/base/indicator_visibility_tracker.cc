@@ -35,7 +35,7 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const double kIgnoreMoveWindowDuration = 500.0;  // msec
+constexpr double kIgnoreMoveWindowDuration = 500.0;  // msec
 
 IndicatorVisibilityTracker::Action GetDefaultAction(bool previously_visible,
                                                     bool now_visible) {

@@ -64,7 +64,7 @@ using config::ConfigHandler;
 using dictionary::PosGroup;
 using dictionary::POSMatcher;
 
-const size_t kCandidatesSize = 20;
+constexpr size_t kCandidatesSize = 20;
 
 void InitSegments(Segments *segments, size_t size, size_t candidate_size) {
   segments->Clear();

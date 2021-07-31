@@ -77,7 +77,7 @@ namespace {
 using mozc::commands::Request;
 using mozc::config::Config;
 
-const size_t kDefaultMaxHistorySize = 3;
+constexpr size_t kDefaultMaxHistorySize = 3;
 
 const char *GetCandidateShortcuts(
     config::Config::SelectionShortcut selection_shortcut) {

@@ -160,7 +160,16 @@ def infoplist_strings_mozc(name, srcs = [], outs = []):
         exec_tools = ["//build_tools:tweak_info_plist_strings"],
     )
 
-def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], copts = [], proto_deps = [], sdk_frameworks = [], **kwargs):
+def objc_library_mozc(
+        name,
+        srcs = [],
+        hdrs = [],
+        deps = [],
+        copts = [],
+        proto_deps = [],
+        sdk_frameworks = [],
+        tags = [],
+        **kwargs):
     # Because proto_library cannot be in deps of objc_library,
     # cc_library as a wrapper is necessary as a workaround.
     proto_deps_name = name + "_proto_deps"
@@ -176,6 +185,11 @@ def objc_library_mozc(name, srcs = [], hdrs = [], deps = [], copts = [], proto_d
         deps = deps + ["//:macro", proto_deps_name],
         copts = copts + ["-funsigned-char"],
         sdk_frameworks = sdk_frameworks,
+        # The 'manual' tag excludes this from the targets of 'all' and '...'.
+        # This is a workaround to exclude objc_library rules from Linux build
+        # because target_compatible_with doesn't work as expected.
+        # https://github.com/bazelbuild/bazel/issues/12897
+        tags = tags + ["manual"],
         **kwargs
     )
 

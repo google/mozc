@@ -87,7 +87,7 @@ const uint8_t kInvSBox[256] = {
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63,
     0x55, 0x21, 0x0c, 0x7d};
 
-const size_t kNr = 14;
+constexpr size_t kNr = 14;
 
 void AddRoundKey(uint8_t block[UnverifiedAES256::kBlockBytes],
                  const uint8_t round_key[UnverifiedAES256::kBlockBytes]) {

@@ -40,7 +40,7 @@
 namespace mozc {
 namespace {
 
-const size_t kMaxFinalizersSize = 256;
+constexpr size_t kMaxFinalizersSize = 256;
 size_t g_finalizers_size = 0;
 
 SingletonFinalizer::FinalizerFunc g_finalizers[kMaxFinalizersSize];

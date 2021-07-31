@@ -369,7 +369,7 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
     double left, double top, double width, double height,
     const std::string &text, const std::string &fontname, size_t font_point) {
-  const size_t kDivision = SubdivisionalPixel::kDivision;
+  constexpr size_t kDivision = SubdivisionalPixel::kDivision;
 
   const Rect &bounding_rect = GetBoundingRect(left, top, width, height);
   const int pix_width = bounding_rect.Width();
@@ -477,7 +477,7 @@ std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
 
 double Gauss(double sigma, double x, double y) {
   const double sigma_coef = 0.5 / (sigma * sigma);
-  const double kInvPi = 0.31830988618379067153776752674503;
+  constexpr double kInvPi = 0.31830988618379067153776752674503;
   return kInvPi * sigma_coef * exp(-(x * x + y * y) * sigma_coef);
 }
 
@@ -546,8 +546,8 @@ HBITMAP BalloonImage::CreateInternal(const BalloonImageInfo &info,
                                      POINT *tail_offset, SIZE *size,
                                      std::vector<ARGBColor> *arbg_buffer) {
   // Base point. You can set arbitrary position.
-  const double kLeft = 10.0;
-  const double kTop = 10.0;
+  constexpr double kLeft = 10.0;
+  constexpr double kTop = 10.0;
 
   const Balloon balloon(
       kLeft, kTop, std::max(info.rect_width, 0.0),

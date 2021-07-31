@@ -76,7 +76,7 @@ uint64_t Token::GetID() const {
   return Hash::Fingerprint(key_ + "\t" + value_ + "\t" + pos_);
 }
 
-static const size_t kTokenSize = 1000;
+static constexpr size_t kTokenSize = 1000;
 
 DictionaryGenerator::DictionaryGenerator(
     const DataManagerInterface &data_manager)

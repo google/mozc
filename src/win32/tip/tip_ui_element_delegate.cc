@@ -67,7 +67,7 @@ using ::mozc::commands::Output;
 using ::mozc::commands::Status;
 typedef mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 
-const size_t kPageSize = 9;
+constexpr size_t kPageSize = 9;
 
 // This GUID is used in Windows Vista/7/8 by MS-IME to represents if the
 // candidate window is visible or not.

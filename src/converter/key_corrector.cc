@@ -42,10 +42,10 @@ namespace {
 
 // maximum key length KeyCorrector can handle
 // if key is too long, we don't do key correction
-const size_t kMaxSize = 128;
+constexpr size_t kMaxSize = 128;
 
 // invalid alignment marker
-const size_t kInvalidPos = static_cast<size_t>(-1);
+constexpr size_t kInvalidPos = static_cast<size_t>(-1);
 
 // "ん" (few "n" pettern)
 // "んあ" -> "んな"

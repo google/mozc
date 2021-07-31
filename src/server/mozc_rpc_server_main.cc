@@ -69,8 +69,8 @@ namespace mozc {
 
 namespace {
 
-const size_t kMaxRequestSize = 32 * 32 * 8192;
-const size_t kMaxOutputSize = 32 * 32 * 8192;
+constexpr size_t kMaxRequestSize = 32 * 32 * 8192;
+constexpr size_t kMaxOutputSize = 32 * 32 * 8192;
 constexpr int kInvalidSocket = -1;
 
 // TODO(taku): timeout should be handled.

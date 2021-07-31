@@ -3656,7 +3656,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
 // CandidateList.page_size in SessionConverter.  The tests for the behavior
 // of CandidateList.page_size is in session/internal/candidate_list_test.cc
 TEST_F(SessionConverterTest, CandidatePageSize) {
-  const size_t kPageSize = 3;
+  constexpr size_t kPageSize = 3;
   request_->set_candidate_page_size(kPageSize);
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());

@@ -323,7 +323,7 @@ void Util::StringReplace(absl::string_view s, absl::string_view oldsub,
 // case.  The value comes from both of (0x0061 "a" - 0x0041 "A") and
 // (0xFF41 "ａ" - 0xFF21 "Ａ").
 namespace {
-const size_t kOffsetFromUpperToLower = 0x0020;
+constexpr size_t kOffsetFromUpperToLower = 0x0020;
 }
 
 void Util::LowerString(std::string *str) {

@@ -39,7 +39,7 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-const size_t kMaxReadingChars = 512;
+constexpr size_t kMaxReadingChars = 512;
 
 void UTF8ToSJIS(absl::string_view input, std::string *output) {
   std::wstring utf16;

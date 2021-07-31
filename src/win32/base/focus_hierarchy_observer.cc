@@ -53,7 +53,7 @@ using ::ATL::CComVariant;
 
 using ::std::unique_ptr;
 
-const size_t kMaxHierarchyLevel = 50;
+constexpr size_t kMaxHierarchyLevel = 50;
 
 DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 HMODULE g_module_handle = nullptr;

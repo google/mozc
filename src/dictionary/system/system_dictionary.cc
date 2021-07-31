@@ -85,17 +85,17 @@ constexpr int kMinTokenArrayBlobSize = 4;
 // TODO(noriyukit): The following parameters may not be well optimized.  In our
 // experiments, Select1 is computational burden, so increasing cache size for
 // lb1/select1 may improve performance.
-const size_t kKeyTrieLb0CacheSize = 1 * 1024;
-const size_t kKeyTrieLb1CacheSize = 1 * 1024;
-const size_t kKeyTrieSelect0CacheSize = 4 * 1024;
-const size_t kKeyTrieSelect1CacheSize = 4 * 1024;
-const size_t kKeyTrieTermvecCacheSize = 1 * 1024;
+constexpr size_t kKeyTrieLb0CacheSize = 1 * 1024;
+constexpr size_t kKeyTrieLb1CacheSize = 1 * 1024;
+constexpr size_t kKeyTrieSelect0CacheSize = 4 * 1024;
+constexpr size_t kKeyTrieSelect1CacheSize = 4 * 1024;
+constexpr size_t kKeyTrieTermvecCacheSize = 1 * 1024;
 
-const size_t kValueTrieLb0CacheSize = 1 * 1024;
-const size_t kValueTrieLb1CacheSize = 1 * 1024;
-const size_t kValueTrieSelect0CacheSize = 1 * 1024;
-const size_t kValueTrieSelect1CacheSize = 16 * 1024;
-const size_t kValueTrieTermvecCacheSize = 4 * 1024;
+constexpr size_t kValueTrieLb0CacheSize = 1 * 1024;
+constexpr size_t kValueTrieLb1CacheSize = 1 * 1024;
+constexpr size_t kValueTrieSelect0CacheSize = 1 * 1024;
+constexpr size_t kValueTrieSelect1CacheSize = 16 * 1024;
+constexpr size_t kValueTrieTermvecCacheSize = 4 * 1024;
 
 // Expansion table format:
 // "<Character to expand>[<Expanded character 1><Expanded character 2>...]"
@@ -684,7 +684,7 @@ void SystemDictionary::LookupPredictive(
   // callback mechanism.  This hard-coding limits the capability and generality
   // of dictionary module.  CollectPredictiveNodesInBfsOrder() and the following
   // loop for callback should be integrated for this purpose.
-  const size_t kLookupLimit = 64;
+  constexpr size_t kLookupLimit = 64;
   std::vector<PredictiveLookupSearchState> result;
   result.reserve(kLookupLimit);
   CollectPredictiveNodesInBfsOrder(encoded_key, table, kLookupLimit, &result);

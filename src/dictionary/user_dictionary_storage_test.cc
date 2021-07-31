@@ -115,7 +115,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
-  const size_t kDictionariesSize = 3;
+  constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
 
   const size_t dict_size = storage.GetProto().dictionaries_size();
@@ -291,7 +291,7 @@ TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_FALSE(storage.Load());
 
-  const size_t kDictionariesSize = 3;
+  constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
   EXPECT_TRUE(storage.CreateDictionary("testA", &id[0]));
   EXPECT_TRUE(storage.CreateDictionary("testB", &id[1]));

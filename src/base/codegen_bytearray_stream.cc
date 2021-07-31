@@ -181,7 +181,7 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char *begin,
                                                 const char *end) {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   char *const buf = reinterpret_cast<char *>(&word_buffer_);
-  const size_t kWordSize = sizeof word_buffer_;
+  constexpr size_t kWordSize = sizeof word_buffer_;
   while (begin < end) {
     size_t output_length = std::min(static_cast<size_t>(end - begin),
                                     kWordSize - output_count_ % kWordSize);

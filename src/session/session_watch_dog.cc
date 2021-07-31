@@ -58,11 +58,11 @@ const int32_t kPingInterval = 1000;
 
 // Average CPU load for last 1min.
 // If the load > kMinimumAllCPULoad, don't send Cleanup
-const float kMinimumAllCPULoad = 0.33f;
+constexpr float kMinimumAllCPULoad = 0.33f;
 
 // Average CPU load for last 10secs.
 // If the load > kMinimumLatestCPULoad, don't send Cleanup
-const float kMinimumLatestCPULoad = 0.66f;
+constexpr float kMinimumLatestCPULoad = 0.66f;
 }  // namespace
 
 SessionWatchDog::SessionWatchDog(int32_t interval_sec)

@@ -116,7 +116,8 @@ const MozcEngineProperty *kMozcEngineProperties =
 
 const MozcEngineProperty *kMozcEnginePropertyIMEOffState =
     &kMozcEngineProperties[0];
-const size_t kMozcEnginePropertiesSize = arraysize(kMozcEnginePropertiesArray);
+constexpr size_t kMozcEnginePropertiesSize =
+    arraysize(kMozcEnginePropertiesArray);
 static_assert(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
               "commands::NUM_OF_COMPOSITIONS must be the property size.");
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
@@ -124,7 +125,7 @@ const commands::CompositionMode kMozcEngineInitialCompositionMode =
 
 const MozcEngineToolProperty *kMozcEngineToolProperties =
     &kMozcEngineToolPropertiesArray[0];
-const size_t kMozcEngineToolPropertiesSize =
+constexpr size_t kMozcEngineToolPropertiesSize =
     arraysize(kMozcEngineToolPropertiesArray);
 
 const unsigned int kPageSize = 9;

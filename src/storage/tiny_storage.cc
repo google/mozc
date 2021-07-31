@@ -52,12 +52,12 @@ namespace {
 
 const uint32_t kStorageVersion = 0;
 const uint32_t kStorageMagicId = 0x431fe241;  // random seed
-const size_t kMaxElementSize = 1024;        // max map size
-const size_t kMaxKeySize = 4096;            // 4k for key/value
-const size_t kMaxValueSize = 4096;          // 4k for key/value
+constexpr size_t kMaxElementSize = 1024;      // max map size
+constexpr size_t kMaxKeySize = 4096;          // 4k for key/value
+constexpr size_t kMaxValueSize = 4096;        // 4k for key/value
 // 1024 * (4096 + 4096) =~ 8MByte
 // so 10Mbyte data is reasonable upper bound for file size
-const size_t kMaxFileSize = 1024 * 1024 * 10;  // 10Mbyte
+constexpr size_t kMaxFileSize = 1024 * 1024 * 10;  // 10Mbyte
 
 template <typename T>
 bool ReadData(char **begin, const char *end, T *value) {

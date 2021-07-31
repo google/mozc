@@ -60,8 +60,6 @@ SHOW_LOG_BY_VALUE       ございました
 #include "base/init_mozc.h"
 #include "base/status.h"
 #include "base/system_util.h"
-#include "data_manager/android/android_data_manager.h"
-#include "data_manager/google/google_data_manager.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
 #include "protocol/candidates.pb.h"
@@ -149,19 +147,14 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
 
 std::unique_ptr<const DataManagerInterface> CreateDataManager(
     const std::string &dictionary) {
-  if (dictionary == "android") {
-    return absl::make_unique<const android::AndroidDataManager>();
-  }
-  if (dictionary == "google") {
-    return absl::make_unique<const google::GoogleDataManager>();
-  }
   if (dictionary == "oss") {
     return absl::make_unique<const oss::OssDataManager>();
   }
   if (!dictionary.empty()) {
     std::cout << "ERROR: Unknown dictionary name: " << dictionary << std::endl;
   }
-  return absl::make_unique<const google::GoogleDataManager>();
+
+  return absl::make_unique<const oss::OssDataManager>();
 }
 
 mozc::StatusOr<std::unique_ptr<Engine>> CreateEngine(

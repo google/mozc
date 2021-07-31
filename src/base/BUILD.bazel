@@ -546,6 +546,7 @@ cc_library_mozc(
 cc_binary_mozc(
     name = "text_converter_compiler",
     srcs = ["text_converter_compiler.cc"],
+    tags = ["manual"],
     deps = [
         ":double_array_def",
         ":file_stream",

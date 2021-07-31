@@ -145,7 +145,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   constexpr char kBinaryData[] = {
       ' ', ' ', '\r', ' ', '\n', ' ', '\r', '\n', ' ', '\0', ' ',
   };
-  const size_t kBinaryDataSize = sizeof(kBinaryData);
+  constexpr size_t kBinaryDataSize = sizeof(kBinaryData);
   {
     OutputFileStream ofs(test_file_path.c_str(),
                          std::ios::out | std::ios::binary);

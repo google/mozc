@@ -369,20 +369,6 @@ cc_library_mozc(
     ],
 )
 
-cc_library_mozc(
-    name = "immutable_converter_factory",
-    srcs = ["immutable_converter_factory.cc"],
-    hdrs = ["immutable_converter_factory.h"],
-    visibility = [
-    ],
-    deps = [
-        ":immutable_converter_interface",
-        ":immutable_converter_no_factory",
-        "//base:singleton",
-        "//engine:large_immutable_converter",
-    ],
-)
-
 cc_test_mozc(
     name = "immutable_converter_test",
     size = "small",
@@ -606,14 +592,10 @@ cc_binary_mozc(
     testonly = 1,
     srcs = ["converter_main.cc"],
     data = [
-        "//data/dictionary:id.def",
-        "//data/dictionary_android:id.def",
         "//data/dictionary_oss:id.def",
         "//data/test/dictionary:id.def",
-        "//data_manager/android:mozc.data",
-        "//data_manager/google:mozc.data",
-        "//data_manager/oss:mozc.data",
         "//data_manager/testing:mock_mozc.data",
+        "//engine:eval_engine_data",
     ],
     deps = [
         ":converter_interface",

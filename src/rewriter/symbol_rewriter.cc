@@ -59,10 +59,10 @@ namespace mozc {
 
 namespace {
 // Try to start inserting symbols from this position
-const size_t kDefaultOffset = 3;
-const size_t kOffsetForSymbolKey = 1;
+constexpr size_t kDefaultOffset = 3;
+constexpr size_t kOffsetForSymbolKey = 1;
 // Number of symbols which are inserted to first part
-const size_t kMaxInsertToMedium = 15;
+constexpr size_t kMaxInsertToMedium = 15;
 }  // namespace
 
 size_t SymbolRewriter::GetOffset(const ConversionRequest &request,

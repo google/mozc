@@ -168,7 +168,7 @@ WindowPositionEmulator *CreateWindowEmulatorWithClassName(
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
   const CRect kWindowRect(500, 500, 2516, 1550);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   return CreateWindowEmulator(class_name, kWindowRect, kClientOffset,
                               kClientSize, kScaleFactor, hwnd);
@@ -925,7 +925,7 @@ TEST_F(Win32RendererUtilTest, GetRectInPhysicalCoordsTest) {
 }
 
 TEST_F(Win32RendererUtilTest, GetScalingFactorTest) {
-  const double kScalingFactor = 1.5;
+  constexpr double kScalingFactor = 1.5;
 
   {
     const CPoint kClientOffset(0, 0);
@@ -3321,7 +3321,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
   const CRect kWindowRect(1548, 879, 1786, 1416);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(238, 537);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3429,7 +3429,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
   const CRect kWindowRect(184, 192, 1312, 1426);
   const CPoint kClientOffset(2, 2);
   const CSize kClientSize(1107, 1230);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3511,7 +3511,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
 // client sets Composition/CandidateForm outside of the top-level window.
 // Note that LogicalToPhysicalPoint API may return FALSE in this situation.
 TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   WindowPositionEmulator *window_emulator = nullptr;
   HWND root_window = nullptr;
@@ -3794,7 +3794,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3830,7 +3830,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3867,7 +3867,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3904,7 +3904,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3942,7 +3942,7 @@ TEST_F(Win32RendererUtilTest, OOo_Suggest) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -3975,7 +3975,7 @@ TEST_F(Win32RendererUtilTest, OOo_Convert) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4012,7 +4012,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Indicator) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4050,7 +4050,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4086,7 +4086,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4123,7 +4123,7 @@ TEST_F(Win32RendererUtilTest, V2C_Indicator) {
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
   const CSize kClientSize(1049, 569);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4153,7 +4153,7 @@ TEST_F(Win32RendererUtilTest, V2C_Suggest) {
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
   const CSize kClientSize(1049, 569);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4184,7 +4184,7 @@ TEST_F(Win32RendererUtilTest, V2C_Convert) {
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
   const CSize kClientSize(1049, 569);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4220,7 +4220,7 @@ TEST_F(Win32RendererUtilTest, Qt_Suggest) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4257,7 +4257,7 @@ TEST_F(Win32RendererUtilTest, Qt_Convert) {
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
   const CSize kClientSize(2000, 1000);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4295,7 +4295,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Indicator) {
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
   const CSize kClientSize(698, 304);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4333,7 +4333,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
   const CSize kClientSize(698, 304);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4366,7 +4366,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
   const CSize kClientSize(698, 304);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4403,7 +4403,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
   const CRect kWindowRect(434, 288, 1275, 841);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(841, 553);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4440,7 +4440,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
   const CRect kWindowRect(434, 288, 1275, 841);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(841, 553);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4478,7 +4478,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
   const CRect kWindowRect(434, 288, 1275, 824);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(841, 536);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4516,7 +4516,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
   const CRect kWindowRect(434, 288, 1275, 824);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(841, 536);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4555,7 +4555,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
   const CRect kWindowRect(198, 329, 1043, 1133);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(845, 804);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4587,7 +4587,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
   const CRect kWindowRect(198, 329, 1043, 1133);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(845, 804);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4620,7 +4620,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
   const CRect kWindowRect(153, 190, 891, 906);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(738, 716);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4653,7 +4653,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
   const CRect kWindowRect(153, 190, 891, 906);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(738, 716);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4687,7 +4687,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Suggest) {
   const CRect kWindowRect(304, 349, 1360, 1067);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(1056, 718);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4716,7 +4716,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
   const CRect kWindowRect(304, 349, 1360, 1067);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(1056, 718);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4747,7 +4747,7 @@ TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(517, 110);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4773,7 +4773,7 @@ TEST_F(Win32RendererUtilTest, Fudemame19_Convert) {
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(0, 0);
   const CSize kClientSize(517, 110);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4813,7 +4813,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
   const CRect kWindowRect(538, 229, 2114, 1271);
   const CPoint kClientOffset(8, 0);
   const CSize kClientSize(1560, 1034);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4852,7 +4852,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Convert) {
   const CRect kWindowRect(538, 229, 2114, 1271);
   const CPoint kClientOffset(8, 0);
   const CSize kClientSize(1560, 1034);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4893,7 +4893,7 @@ TEST_F(Win32RendererUtilTest, Emacs22) {
   const CRect kWindowRect(175, 175, 797, 924);
   const CPoint kClientOffset(10, 53);
   const CSize kClientSize(602, 686);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4946,7 +4946,7 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
   const CRect kWindowRect(175, 175, 797, 928);
   const CPoint kClientOffset(10, 53);
   const CSize kClientSize(602, 690);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -4992,7 +4992,7 @@ TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Suggest) {
   const CRect kWindowRect(58, 22, 1210, 622);
   const CPoint kClientOffset(6, 0);
   const CSize kClientSize(1140, 594);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(
@@ -5032,7 +5032,7 @@ TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Convert) {
   const CRect kWindowRect(58, 22, 1210, 622);
   const CPoint kClientOffset(6, 0);
   const CSize kClientSize(1140, 594);
-  const double kScaleFactor = 1.0;
+  constexpr double kScaleFactor = 1.0;
 
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(

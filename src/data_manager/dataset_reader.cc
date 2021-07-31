@@ -42,7 +42,7 @@ namespace mozc {
 namespace {
 
 // The size of the file footer, which contains some metadata; see dataset.proto.
-const size_t kFooterSize = 36;
+constexpr size_t kFooterSize = 36;
 
 }  // namespace
 

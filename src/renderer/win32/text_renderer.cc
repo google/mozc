@@ -365,7 +365,7 @@ class DirectWriteTextRenderer : public TextRenderer {
   virtual void RenderTextList(
       CDCHandle dc, const std::vector<TextRenderingInfo> &display_list,
       FONT_TYPE font_type) const {
-    const size_t kMaxTrial = 3;
+    constexpr size_t kMaxTrial = 3;
     size_t trial = 0;
     while (true) {
       CreateRenderTargetIfNecessary();

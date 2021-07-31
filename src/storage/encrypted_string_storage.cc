@@ -49,10 +49,10 @@ namespace storage {
 
 namespace {
 // Salt size for encryption
-const size_t kSaltSize = 32;
+constexpr size_t kSaltSize = 32;
 
 // Maximum file size (64Mbyte)
-const size_t kMaxFileSize = 64 * 1024 * 1024;
+constexpr size_t kMaxFileSize = 64 * 1024 * 1024;
 }  // namespace
 
 EncryptedStringStorage::EncryptedStringStorage(const std::string &filename)

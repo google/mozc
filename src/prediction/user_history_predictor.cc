@@ -76,32 +76,32 @@ using usage_stats::UsageStats;
 
 // Finds suggestion candidates from the most recent 3000 history in LRU.
 // We don't check all history, since suggestion is called every key event
-const size_t kMaxSuggestionTrial = 3000;
+constexpr size_t kMaxSuggestionTrial = 3000;
 
 // Finds suffix matches of history_segments from the most recent 500 histories
 // in LRU.
-const size_t kMaxPrevValueTrial = 500;
+constexpr size_t kMaxPrevValueTrial = 500;
 
 // Cache size
 // Typically memory/storage footprint becomes kLRUCacheSize * 70 bytes.
 #ifdef OS_ANDROID
-const size_t kLRUCacheSize = 4000;
+constexpr size_t kLRUCacheSize = 4000;
 #else   // OS_ANDROID
-const size_t kLRUCacheSize = 10000;
+constexpr size_t kLRUCacheSize = 10000;
 #endif  // OS_ANDROID
 
 // Don't save key/value that are
 // longer than kMaxCandidateSize to avoid memory explosion
-const size_t kMaxStringLength = 256;
+constexpr size_t kMaxStringLength = 256;
 
 // Maximum size of next_entries
-const size_t kMaxNextEntriesSize = 4;
+constexpr size_t kMaxNextEntriesSize = 4;
 
 // Revert id for user_history_predictor
 const uint16_t kRevertId = 1;
 
 // Default object pool size for EntryPriorityQueue
-const size_t kEntryPoolSize = 16;
+constexpr size_t kEntryPoolSize = 16;
 
 // File name for the history
 #ifdef OS_WIN

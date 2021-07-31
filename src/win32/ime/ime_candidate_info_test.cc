@@ -92,7 +92,7 @@ namespace {
     EXPECT_EQ((page_start), (info)->dwPageStart);                       \
   } while (false)
 
-const size_t kNumCandidates = 13;
+constexpr size_t kNumCandidates = 13;
 const char *kValueList[kNumCandidates] = {
     "Beta", "ベータ", "BETA",   "beta",  "β",          "Β",    "㌼",
     "Beta", "べーた", "ベータ", "be-ta", "ｂｅ－ｔａ", "ﾍﾞｰﾀ",

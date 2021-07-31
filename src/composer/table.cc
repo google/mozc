@@ -348,7 +348,7 @@ const Entry *Table::AddRuleWithAttributes(const std::string &escaped_input,
                           NO_TABLE_ATTRIBUTE);
   }
 
-  const size_t kMaxSize = 300;
+  constexpr size_t kMaxSize = 300;
   if (escaped_input.size() >= kMaxSize || output.size() >= kMaxSize ||
       escaped_pending.size() >= kMaxSize) {
     LOG(ERROR) << "Invalid input/output/pending";

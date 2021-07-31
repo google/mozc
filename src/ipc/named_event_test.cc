@@ -140,7 +140,7 @@ TEST_F(NamedEventTest, IsOwnerTest) {
 }
 
 TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
-  const size_t kNumRequests = 4;
+  constexpr size_t kNumRequests = 4;
 
   // mozc::Thread is not designed as value-semantics.
   // So here we use pointers to maintain these instances.

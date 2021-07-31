@@ -56,7 +56,7 @@ namespace mozc {
 using mozc::storage::ExistenceFilter;
 
 namespace {
-const size_t kCandidateSize = 12;
+constexpr size_t kCandidateSize = 12;
 constexpr int kMaxCostDiff = 3453;  // -500*log(1/1000)
 
 // For collocation, we use two segments.

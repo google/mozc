@@ -294,7 +294,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static const size_t kSize[] = {10, 100, 1000, 5000, 12000};
+  static constexpr size_t kSize[] = {10, 100, 1000, 5000, 12000};
   for (size_t i = 0; i < arraysize(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
@@ -335,7 +335,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   TestInputIterator iter;
   UserDictionaryStorage::UserDictionary user_dic;
 
-  static const size_t kSize[] = {10, 100, 1000};
+  static constexpr size_t kSize[] = {10, 100, 1000};
   for (size_t i = 0; i < arraysize(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {

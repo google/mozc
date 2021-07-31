@@ -377,8 +377,8 @@ TEST_F(LRUStorageTest, Delete) {
   ScopedClockMock clock(1, 0);
   clock->SetAutoPutClockForward(1, 0);
 
-  const size_t kValueSize = 4;
-  const size_t kNumElements = 4;
+  constexpr size_t kValueSize = 4;
+  constexpr size_t kNumElements = 4;
   LRUStorage storage;
   ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
                                    kNumElements, kSeed));
@@ -465,8 +465,8 @@ TEST_F(LRUStorageTest, Delete) {
 TEST_F(LRUStorageTest, DeleteElementsBefore) {
   ScopedClockMock clock(1, 0);
 
-  const size_t kValueSize = 4;
-  const size_t kNumElements = 4;
+  constexpr size_t kValueSize = 4;
+  constexpr size_t kNumElements = 4;
   LRUStorage storage;
   ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
                                    kNumElements, kSeed));
@@ -515,8 +515,8 @@ TEST_F(LRUStorageTest, DeleteElementsBefore) {
 TEST_F(LRUStorageTest, DeleteElementsUntouchedFor62Days) {
   ScopedClockMock clock(1, 0);
 
-  const size_t kValueSize = 4;
-  const size_t kNumElements = 4;
+  constexpr size_t kValueSize = 4;
+  constexpr size_t kNumElements = 4;
   LRUStorage storage;
   ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
                                    kNumElements, kSeed));
@@ -549,8 +549,8 @@ TEST_F(LRUStorageTest, DeleteElementsUntouchedFor62Days) {
 TEST_F(LRUStorageTest, OldDataAreNotLookedUp) {
   ScopedClockMock clock(1, 0);
 
-  const size_t kValueSize = 4;
-  const size_t kNumElements = 4;
+  constexpr size_t kValueSize = 4;
+  constexpr size_t kNumElements = 4;
   LRUStorage storage;
   ASSERT_TRUE(storage.OpenOrCreate(GetTemporaryFilePath().c_str(), kValueSize,
                                    kNumElements, kSeed));

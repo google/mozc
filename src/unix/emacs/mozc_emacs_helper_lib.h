@@ -49,12 +49,12 @@ namespace emacs {
 // Error symbols used to call ErrorExit()
 // These symbols are taken from error symbols of GNU Emacs
 // except for ipc-error.
-const char kErrFileError[] = "file-error";
-const char kErrScanError[] = "scan-error";
-const char kErrWrongNumberOfArguments[] = "wrong-number-of-arguments";
-const char kErrWrongTypeArgument[] = "wrong-type-argument";
-const char kErrVoidFunction[] = "void-function";
-const char kErrSessionError[] = "session-error";
+constexpr char kErrFileError[] = "file-error";
+constexpr char kErrScanError[] = "scan-error";
+constexpr char kErrWrongNumberOfArguments[] = "wrong-number-of-arguments";
+constexpr char kErrWrongTypeArgument[] = "wrong-type-argument";
+constexpr char kErrVoidFunction[] = "void-function";
+constexpr char kErrSessionError[] = "session-error";
 
 // Parses a line, which must be a single complete command in form of:
 //     '(' EVENT_ID COMMAND [ARGUMENT]... ')'

@@ -207,9 +207,24 @@ cc_library_mozc(
     ],
 )
 
+filegroup(
+    name = "eval_engine_data",
+    srcs = select_mozc(
+        default = [
+            "//data_manager/android:mozc.data",
+            "//data_manager/google:mozc.data",
+            "//data_manager/oss:mozc.data",
+        ],
+        oss = [
+            "//data_manager/oss:mozc.data",
+        ],
+    ),
+)
+
 cc_library_mozc(
     name = "google_engine_factory",
     hdrs = ["google_engine_factory.h"],
+    tags = ["manual"],
     visibility = [
         "//converter:__pkg__",
         "//evaluation:__subpackages__",
@@ -226,6 +241,7 @@ cc_library_mozc(
 cc_library_mozc(
     name = "android_engine_factory",
     hdrs = ["android_engine_factory.h"],
+    tags = ["manual"],
     visibility = [
         "//converter:__pkg__",
         "//evaluation:__subpackages__",
@@ -263,70 +279,6 @@ cc_library_mozc(
         ":engine",
         "//base:logging",
         "//data_manager/testing:mock_data_manager",
-    ],
-)
-
-cc_library_mozc(
-    name = "small_immutable_converter",
-    srcs = ["small_immutable_converter.cc"],
-    hdrs = ["small_immutable_converter.h"],
-    visibility = ["//visibility:private"],
-    deps = [
-        "//base",
-        "//base:logging",
-        "//base:port",
-        "//converter:connector",
-        "//converter:immutable_converter_interface",
-        "//converter:immutable_converter_no_factory",
-        "//converter:segmenter",
-        "//converter:segments",
-        "//data_manager/android:android_data_manager",
-        "//dictionary:dictionary_impl",
-        "//dictionary:dictionary_interface",
-        "//dictionary:pos_group",
-        "//dictionary:pos_matcher_lib",
-        "//dictionary:suffix_dictionary",
-        "//dictionary:suppression_dictionary",
-        "//dictionary:user_dictionary_stub",
-        "//dictionary/system:system_dictionary",
-        "//dictionary/system:value_dictionary",
-        "//prediction:suggestion_filter",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_library_mozc(
-    name = "large_immutable_converter",
-    srcs = ["large_immutable_converter.cc"],
-    hdrs = ["large_immutable_converter.h"],
-    visibility = [
-        "//converter:__pkg__",
-        "//rewriter:__pkg__",
-    ],
-    deps = [
-        "//base",
-        "//base:logging",
-        "//base:port",
-        "//converter:connector",
-        "//converter:immutable_converter_interface",
-        "//converter:immutable_converter_no_factory",
-        "//converter:segmenter",
-        "//converter:segments",
-        "//data_manager:data_manager_interface",
-        "//data_manager/google:google_data_manager",
-        "//dictionary:dictionary_impl",
-        "//dictionary:dictionary_interface",
-        "//dictionary:pos_group",
-        "//dictionary:pos_matcher_lib",
-        "//dictionary:suffix_dictionary",
-        "//dictionary:suppression_dictionary",
-        "//dictionary:user_dictionary_stub",
-        "//dictionary/system:system_dictionary",
-        "//dictionary/system:value_dictionary",
-        "//prediction:suggestion_filter",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
     ],
 )
 

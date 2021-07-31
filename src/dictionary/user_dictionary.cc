@@ -528,9 +528,9 @@ bool UserDictionary::Load(
   // If UserDictionary is pretty big, we first remove the
   // current dictionary to save memory usage.
 #ifdef OS_ANDROID
-  const size_t kVeryBigUserDictionarySize = 5000;
+  constexpr size_t kVeryBigUserDictionarySize = 5000;
 #else
-  const size_t kVeryBigUserDictionarySize = 100000;
+  constexpr size_t kVeryBigUserDictionarySize = 100000;
 #endif
 
   if (size >= kVeryBigUserDictionarySize) {

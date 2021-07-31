@@ -204,7 +204,7 @@ TEST(TipCandidateListTest, NonEmptyCandidates) {
 
   size_t offset = 0;
   while (offset < source.size()) {
-    const size_t kBufferSize = 10;
+    constexpr size_t kBufferSize = 10;
     ITfCandidateString *buffer[kBufferSize] = {};
     CComPtr<ITfCandidateString> strings[kBufferSize];
     ULONG num_fetched = 0;

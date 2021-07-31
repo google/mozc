@@ -1723,7 +1723,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
   //        equal or less than PARTIAL_PREDICTION.
   // - Partial version has equal or greater than non-partial version.
 
-  const size_t kMaxSize = 100;
+  constexpr size_t kMaxSize = 100;
   segments.push_back_segment();
   segments.set_max_prediction_candidates_size(kMaxSize);
 
@@ -1788,7 +1788,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
   Segments segments;
   Segment *segment = segments.add_segment();
 
-  const size_t kMaxSize = 100;
+  constexpr size_t kMaxSize = 100;
   segments.set_max_prediction_candidates_size(kMaxSize);
 
   // for short key, try to provide many results as possible

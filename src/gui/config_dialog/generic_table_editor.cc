@@ -50,7 +50,7 @@
 namespace mozc {
 namespace gui {
 namespace {
-const size_t kMaxEntrySize = 10000;
+constexpr size_t kMaxEntrySize = 10000;
 
 int GetTableHeight(QTableWidget *widget) {
   // Dragon Hack:

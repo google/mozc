@@ -45,7 +45,7 @@ namespace {
 constexpr int kDiceFaces = 6;
 
 // Last candidate index of one page.
-const size_t kLastCandidateIndex = 8;
+constexpr size_t kLastCandidateIndex = 8;
 
 // Insert a dice number into the |segment|
 // The number indicated by |top_face_number| is inserted at

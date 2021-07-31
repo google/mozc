@@ -57,7 +57,7 @@ namespace session {
 namespace {
 Mutex g_stats_cache_mutex;  // NOLINT
 
-const size_t kMaxSession = 64;
+constexpr size_t kMaxSession = 64;
 
 // Adds double value to DoubleValueStats.
 // DoubleValueStats contains (num, total, square_total).

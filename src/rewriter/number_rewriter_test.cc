@@ -167,7 +167,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
       {"0b1100", "0b1100", "2進数"},
   };
 
-  const size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -241,7 +241,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
       {"0b1100が", "0b1100", "2進数"},
   };
 
-  const size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -539,7 +539,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
        "2進数"},
   };
 
-  const size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -589,7 +589,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
        kOldKanjiDescription},
   };
 
-  const size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {

@@ -40,7 +40,7 @@ namespace mozc {
 namespace internal {
 namespace {
 
-const size_t kNumDWordsOfDigest = 5;
+constexpr size_t kNumDWordsOfDigest = 5;
 
 // See 4.1.1 SHA-1 Functions
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
@@ -66,7 +66,7 @@ uint32_t f(uint32_t t, uint32_t x, uint32_t y, uint32_t z) {
 // http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
 template <size_t N>
 uint32_t ROTL(uint32_t x) {
-  const size_t kUint32Bits = sizeof(uint32_t) * CHAR_BIT;
+  constexpr size_t kUint32Bits = sizeof(uint32_t) * CHAR_BIT;
   static_assert(N < kUint32Bits, "Too large rotation sise.");
   return (x << N) | (x >> (kUint32Bits - N));
 }
@@ -147,7 +147,7 @@ class PaddedMessageIterator {
     // data) in bit as 8-byte block at the end of the last message block.
     // Until then, all the byte will be filled with 0x00.
 
-    const size_t kMessageBlockZeroFillLimit =
+    constexpr size_t kMessageBlockZeroFillLimit =
         kMessageBlockBytes - kDataBitLengthBytes;
 
     if (cursor > kMessageBlockZeroFillLimit) {
@@ -183,7 +183,7 @@ class PaddedMessageIterator {
     // - (if any) 0x00 byte sequence to pad each message as 64-byte.
     // - 8 byte integer to store the original data size in bit.
     // At minimum, we need additional 9 bytes.
-    const size_t kEndOfDataMarkerBytes = 1;
+    constexpr size_t kEndOfDataMarkerBytes = 1;
     const size_t minimum_size =
         original_message_size + kEndOfDataMarkerBytes + kDataBitLengthBytes;
     // TODO(yukawa): Fix subtle overflow case.

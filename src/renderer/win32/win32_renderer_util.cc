@@ -2246,7 +2246,7 @@ bool LayoutManager::GetClientRect(HWND window_handle, RECT *client_rect) const {
 }
 
 double LayoutManager::GetScalingFactor(HWND window_handle) const {
-  const double kDefaultValue = 1.0;
+  constexpr double kDefaultValue = 1.0;
   CRect window_rect_in_logical_coord;
   if (!window_position_->GetWindowRect(window_handle,
                                        &window_rect_in_logical_coord)) {

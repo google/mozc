@@ -192,7 +192,7 @@ void DataManagerTestBase::ConnectorTest_RandomValueCheck() {
 }
 
 void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
-  const double kErrorRatio = 0.0001;
+  constexpr double kErrorRatio = 0.0001;
 
   // Load embedded suggestion filter (bloom filter)
   std::unique_ptr<SuggestionFilter> suggestion_filter;
