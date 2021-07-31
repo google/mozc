@@ -68,7 +68,7 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
   std::unique_ptr<Engine> engine(EngineFactory::Create());
   SessionHandlerTool client(std::move(engine));
   size_t keyevents_size = 0;
-  const size_t kMaxEventSize = 2500;
+  constexpr size_t kMaxEventSize = 2500;
   ASSERT_TRUE(client.CreateSession());
 
   const uint32_t random_seed =

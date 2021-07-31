@@ -59,7 +59,7 @@ constexpr char kPasswordFile[] = "encrypt_key.db";
 constexpr char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
 #endif
 
-const size_t kPasswordSize = 32;
+constexpr size_t kPasswordSize = 32;
 
 std::string CreateRandomPassword() {
   char buf[kPasswordSize];

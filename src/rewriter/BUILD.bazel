@@ -1502,32 +1502,6 @@ cc_library_mozc(
     alwayslink = 1,
 )
 
-cc_library_mozc(
-    name = "rewriter_factory",
-    srcs = ["rewriter_factory.cc"],
-    hdrs = ["rewriter_factory.h"],
-    visibility = [],
-    deps = [
-        ":rewriter",
-        ":rewriter_interface",
-        "//base",
-        "//base:logging",
-        "//base:singleton",
-        "//converter",
-        "//converter:converter_interface",
-        "//converter:segments",
-        "//dictionary:pos_group",
-        "//dictionary:pos_matcher_lib",
-        "//dictionary:suffix_dictionary",
-        "//engine:large_immutable_converter",
-        "//prediction:dictionary_predictor",
-        "//prediction:predictor",
-        "//prediction:user_history_predictor",
-        "//request:conversion_request",
-        "@com_google_absl//absl/memory",
-    ],
-)
-
 cc_test_mozc(
     name = "rewriter_test",
     size = "small",

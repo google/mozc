@@ -263,7 +263,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
   // DateRewrite candidate order check.
   {
     // This parameter is copied from date_rewriter.cc.
-    const size_t kMinimumDateCandidateIdx = 3;
+    constexpr size_t kMinimumDateCandidateIdx = 3;
     const char *kTodayCandidate[] = {"2011/04/18", "2011-04-18",
                                      "2011年4月18日",
                                      "平成23年"

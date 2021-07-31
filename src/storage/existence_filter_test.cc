@@ -107,7 +107,7 @@ TEST(ExistenceFilterTest, ReadWriteTest) {
   words.push_back("b");
   words.push_back("c");
 
-  static const float kErrorRate = 0.0001;
+  static constexpr float kErrorRate = 0.0001;
   int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
       kErrorRate, words.size());
 
@@ -143,7 +143,7 @@ TEST(ExistenceFilterTest, InsertAndExistsTest) {
   words.push_back("h");
   words.push_back("i");
 
-  static const float kErrorRate = 0.0001;
+  static constexpr float kErrorRate = 0.0001;
   int num_bytes = ExistenceFilter::MinFilterSizeInBytesForErrorRate(
       kErrorRate, words.size());
 

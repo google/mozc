@@ -916,7 +916,7 @@ bool DateRewriter::RewriteDate(Segment *segment) {
 
   // Calculate insert_idx
   // Candidates will be inserted less than 10th candidate.
-  const size_t kMaxIdx = 10;
+  constexpr size_t kMaxIdx = 10;
   const size_t end_idx = std::min(kMaxIdx, segment->candidates_size());
   size_t cand_idx = 0;
   for (cand_idx = 0; cand_idx < end_idx; ++cand_idx) {
@@ -930,7 +930,7 @@ bool DateRewriter::RewriteDate(Segment *segment) {
 
   // Date candidates are too many, therefore highest candidate show at most 3rd.
   // TODO(nona): learn date candidate even if the date is changed.
-  const size_t kMinIdx = 3;
+  constexpr size_t kMinIdx = 3;
   size_t insert_idx = std::min(std::max(kMinIdx, cand_idx + 1), end_idx);
 
   // Insert words.

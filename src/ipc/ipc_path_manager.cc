@@ -89,7 +89,7 @@ namespace mozc {
 namespace {
 
 // size of key
-const size_t kKeySize = 32;
+constexpr size_t kKeySize = 32;
 
 // Do not use ConfigFileStream, since client won't link
 // to the embedded resource files

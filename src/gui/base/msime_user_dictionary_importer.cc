@@ -91,7 +91,7 @@ using user_dictionary::UserDictionaryCommandStatus;
 
 namespace {
 
-const size_t kBufferSize = 256;
+constexpr size_t kBufferSize = 256;
 
 // ProgID of MS-IME Japanese.
 const wchar_t kVersionIndependentProgIdForMSIME[] = L"MSIME.Japan";

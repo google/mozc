@@ -489,8 +489,8 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // the lock, but feel free to change the duration.  It is basically an
   // arbitrary number.
   const uint32_t kTestDurationMSec = 250;  // 250 msec
-  const size_t kNumSetThread = 2;
-  const size_t kNumGetThread = 4;
+  constexpr size_t kNumSetThread = 2;
+  constexpr size_t kNumGetThread = 4;
   {
     // Set up background threads for concurrent access.
     std::vector<std::unique_ptr<SetConfigThread>> set_threads;

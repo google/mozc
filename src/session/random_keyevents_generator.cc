@@ -47,8 +47,8 @@ namespace {
 #include "session/session_stress_test_data.h"
 
 // Constants for ProbableKeyEvent.
-const double kMostPossibleKeyProbability = 0.98;
-const size_t kProbableKeyEventSize = 8;
+constexpr double kMostPossibleKeyProbability = 0.98;
+constexpr size_t kProbableKeyEventSize = 8;
 
 const commands::KeyEvent::SpecialKey kSpecialKeys[] = {
     commands::KeyEvent::SPACE,     commands::KeyEvent::BACKSPACE,

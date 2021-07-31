@@ -60,7 +60,7 @@ namespace {
 constexpr char kEmoji[] = "絵文字";
 constexpr char kEmojiKey[] = "えもじ";
 // Where to insert emoji candidate by default.
-const size_t kDefaultInsertPos = 6;
+constexpr size_t kDefaultInsertPos = 6;
 
 // List of <emoji value, emoji description>.
 using EmojiEntryList =

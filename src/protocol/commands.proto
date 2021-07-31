@@ -294,6 +294,9 @@ message KeyEvent {
   // indirect IME off, where |mode| should contain the next mode. If this field
   // is not set, the server will act as if indirect on/off was not supported.
   optional bool activated = 9;
+
+  // Timestamp of this key event in millisecond.
+  optional int64 timestamp_msec = 10;
 }
 
 message GenericStorageEntry {

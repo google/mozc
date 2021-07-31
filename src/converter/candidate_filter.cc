@@ -54,9 +54,9 @@ namespace mozc {
 namespace converter {
 namespace {
 
-const size_t kSizeThresholdForWeakCompound = 10;
+constexpr size_t kSizeThresholdForWeakCompound = 10;
 
-const size_t kMaxCandidatesSize = 200;  // how many candidates we expand
+constexpr size_t kMaxCandidatesSize = 200;  // how many candidates we expand
 
 // Currently, the cost (logprob) is calcurated as cost = -500 * log(prob).
 // Suppose having two candidates A and B and prob(A) = C * prob(B), where

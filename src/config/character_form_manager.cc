@@ -511,13 +511,13 @@ void CharacterFormManagerImpl::AddRule(const std::string &key,
     return;
   }
 
-  const size_t kMaxGroupSize = 128;
+  constexpr size_t kMaxGroupSize = 128;
   if (group.size() > kMaxGroupSize) {
     LOG(WARNING) << "Too long rule. skipped";
     return;
   }
 
-  const size_t kMaxTableSize = 256;
+  constexpr size_t kMaxTableSize = 256;
   if (conversion_table_.size() + group.size() > kMaxTableSize ||
       group_table_.size() + group.size() > kMaxTableSize) {
     LOG(WARNING) << "conversion_table becomes too big. skipped";

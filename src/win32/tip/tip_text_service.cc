@@ -251,9 +251,9 @@ struct CComPtrHash {
     // Caveats: On x86 environment, both _M_X64 and _M_IX86 are defined. So we
     //     need to check _M_X64 first.
 #if defined(_M_X64)
-    const size_t kUnusedBits = 3;  // assuming 8-byte aligned
+    constexpr size_t kUnusedBits = 3;  // assuming 8-byte aligned
 #elif defined(_M_IX86)
-    const size_t kUnusedBits = 2;  // assuming 4-byte aligned
+    constexpr size_t kUnusedBits = 2;  // assuming 4-byte aligned
 #else
 #error "unsupported platform"
 #endif

@@ -43,7 +43,7 @@ namespace {
 using ::mozc::client::ClientInterface;
 using ::mozc::config::Config;
 
-const size_t kMaxDirectModeKeys = 128;
+constexpr size_t kMaxDirectModeKeys = 128;
 
 struct StaticConfigSnapshot {
   bool use_kana_input;

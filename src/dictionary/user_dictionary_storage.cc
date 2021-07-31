@@ -49,12 +49,12 @@ namespace {
 
 // 512MByte
 // We expand the limit of serialized message from 64MB(default) to 512MB
-const size_t kDefaultTotalBytesLimit = 512 << 20;
+constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
 
 // If the last file size exceeds kDefaultWarningTotalBytesLimit,
 // we show a warning dialog saying that "All words will not be
 // saved correctly. Please make the dictionary size smaller"
-const size_t kDefaultWarningTotalBytesLimit = 256 << 20;
+constexpr size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
 constexpr char kDefaultSyncDictionaryName[] = "Sync Dictionary";
 const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";

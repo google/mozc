@@ -186,7 +186,7 @@ const NumberStringVariation kKanjiVariations[] = {
 };
 
 constexpr char kOldTwoTen[] = "弐拾";
-const size_t kOldTwoTenLength = arraysize(kOldTwoTen) - 1;
+constexpr size_t kOldTwoTenLength = arraysize(kOldTwoTen) - 1;
 constexpr char kOldTwenty[] = "廿";
 
 }  // namespace
@@ -575,7 +575,7 @@ bool SafeStrToUInt64WithBase(absl::string_view str, int base, uint64_t *value) {
   // Maximum possible length of number string, including terminating '\0'. Note
   // that the maximum possible length is achieved when str="111...11" (64
   // unities) and base=2.
-  const size_t kMaxPossibleLength = 65;
+  constexpr size_t kMaxPossibleLength = 65;
 
   // Leading white spaces are allowed.
   const absl::string_view stripped_str = SkipWhiteSpace(str);

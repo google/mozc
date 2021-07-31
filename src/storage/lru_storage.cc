@@ -54,19 +54,19 @@ namespace mozc {
 namespace storage {
 namespace {
 
-const size_t kMaxLRUSize = 1000000;  // 1M
-const size_t kMaxValueSize = 1024;   // 1024 byte
+constexpr size_t kMaxLRUSize = 1000000;  // 1M
+constexpr size_t kMaxValueSize = 1024;   // 1024 byte
 
 // The byte length used to store fingerprint and timestamp for each item.
 // * 8 bytes for fingerprint
 // * 4 bytes for timestamp.
-const size_t kItemHeaderSize = 12;
+constexpr size_t kItemHeaderSize = 12;
 
 // The byte length used to store LRU properties.
 // * 4 bytes for user specified value size
 // * 4 bytes for LRU capacity
 // * 4 bytes for fingerprint seed
-const size_t kFileHeaderSize = 12;
+constexpr size_t kFileHeaderSize = 12;
 
 const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 

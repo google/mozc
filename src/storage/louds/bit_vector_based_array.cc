@@ -39,8 +39,8 @@ namespace louds {
 namespace {
 
 // Select1 is not used, so cache is unnecessary.
-const size_t kLb0CacheSize = 1024;
-const size_t kLb1CacheSize = 0;
+constexpr size_t kLb0CacheSize = 1024;
+constexpr size_t kLb1CacheSize = 0;
 
 inline int ReadInt32(const uint8_t *data) {
   return *reinterpret_cast<const int32_t *>(data);

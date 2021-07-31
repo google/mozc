@@ -173,8 +173,8 @@ TEST(EncryptorTest, BasicTest) {
 }
 
 TEST(EncryptorTest, EncryptBatch) {
-  const size_t kSizeTable[] = {1,    10,   16,    32,    100,
-                               1000, 1600, 10000, 16000, 100000};
+  constexpr size_t kSizeTable[] = {1,    10,   16,    32,    100,
+                                   1000, 1600, 10000, 16000, 100000};
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
     std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
@@ -228,7 +228,7 @@ TEST(EncryptorTest, EncryptBatch) {
 
 TEST(EncryptorTest, ProtectData) {
   SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-  const size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
+  constexpr size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
 
   for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
     std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);

@@ -113,8 +113,8 @@ std::string GetMSCryptDeriveKeyWithSHA1(const std::string &password,
           UnverifiedSHA1::MakeDigest(result2));
 }
 
-const size_t kBlockSize = 16;  // 128 bit
-const size_t kKeySize = 32;    // 256 bit key length
+constexpr size_t kBlockSize = 16;  // 128 bit
+constexpr size_t kKeySize = 32;    // 256 bit key length
 
 }  // namespace
 
@@ -402,7 +402,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
 
 namespace {
 
-const size_t kSaltSize = 32;
+constexpr size_t kSaltSize = 32;
 
 }  // namespace
 

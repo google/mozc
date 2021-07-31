@@ -30,61 +30,40 @@
 
 """A tool to generate test sentences for stress test."""
 
-from __future__ import print_function
-
-import codecs
-import sys
-import six
+import argparse
 
 
-def escape_string(s):
-  r"""escape the string with "\\xXX" format.
-
-  We don't use encode('string_escape') because it doesn't escape ascii
-  characters.
-
-  Args:
-    s: a string to be escaped
-
-  Returns:
-    an escaped string.
-  """
-  if six.PY3:
-    return ''.join(r'\x%02x' % b for b in s.encode('utf-8'))
-
-  result = ''
-  for c in s:
-    hexstr = hex(ord(c))
-    # because hexstr contains '0x', remove the prefix and add our prefix
-    result += '\\x' + hexstr[2:]
-  return result
-
-
-def OpenFile(filename):
-  if six.PY2:
-    return open(filename, 'r')
-  else:
-    return codecs.open(filename, 'r', encoding='utf-8')
-
-
-def GenerateHeader(file):
-  try:
-    print('const char *kTestSentences[] = {')
-    for line in OpenFile(file):
+def GenerateHeader(input_file, output_file):
+  """Convert the file to C++ code."""
+  output = []
+  with open(input_file, encoding='utf-8') as f:
+    for line in f:
       if line.startswith('#'):
         continue
-      line = line.rstrip('\r\n')
+      items = line.rstrip('\r\n').split('\t')
+      if len(items) > 1:
+        line = items[1]
+      else:
+        line = items[0]
       if not line:
         continue
-      print(' "%s",' % escape_string(line))
-    print('};')
-  except Exception as e:
-    print('cannot open %s' % file)
-    raise e
+      output.append(line)
+
+  with open(output_file, 'w', encoding='utf-8') as f:
+    f.write('const char *kTestSentences[] = {\n')
+    for line in output:
+      escaped = line.replace('\\', '\\\\').replace('"', '\\"')
+      f.write(f' "{escaped}",\n')
+    f.write('};\n')
 
 
 def main():
-  GenerateHeader(sys.argv[1])
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--input')
+  parser.add_argument('--output')
+  args = parser.parse_args()
+  GenerateHeader(args.input, args.output)
+
 
 if __name__ == '__main__':
   main()

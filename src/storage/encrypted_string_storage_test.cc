@@ -111,7 +111,7 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   ASSERT_TRUE(storage_->Save(original_data));
 
   InputFileStream ifs(filename_.c_str(), (std::ios::in | std::ios::binary));
-  const size_t kBufSize = 128;
+  constexpr size_t kBufSize = 128;
   char buf[kBufSize];
   // |ifs.readsome(buf, kBufSize)| returns 0 on Visual C++ because
   // |ifs.rdbuf()->in_avail()| is still 0 just after the file is opened.

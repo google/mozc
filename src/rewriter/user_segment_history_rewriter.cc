@@ -72,7 +72,7 @@ const uint32_t kMaxCandidatesSize = 255;
 // Size of candidates to be reranked to the top at one sorting operation.
 // Note, if sorting operation is called twice, up to 10 (= 5 * 2) candidates
 // could be reranked in total.
-const size_t kMaxRerankSize = 5;
+constexpr size_t kMaxRerankSize = 5;
 
 constexpr char kFileName[] = "user://segment.db";
 

@@ -51,7 +51,9 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_time',
         '../base/base.gyp:base',
+        '../base/base.gyp:clock',
         '../base/base.gyp:config_file_stream',
         '../composer/composer.gyp:key_event_util',
         '../composer/composer.gyp:key_parser',

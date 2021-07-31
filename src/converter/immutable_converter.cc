@@ -72,9 +72,9 @@ using mozc::dictionary::Token;
 namespace mozc {
 namespace {
 
-const size_t kMaxSegmentsSize = 256;
-const size_t kMaxCharLength = 1024;
-const size_t kMaxCharLengthForReverseConversion = 600;  // 200 chars in UTF8
+constexpr size_t kMaxSegmentsSize = 256;
+constexpr size_t kMaxCharLength = 1024;
+constexpr size_t kMaxCharLengthForReverseConversion = 600;  // 200 chars in UTF8
 constexpr int kMaxCost = 32767;
 constexpr int kMinCost = -32767;
 constexpr int kDefaultNumberCost = 3000;
@@ -1239,7 +1239,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     // - Starts suggestion from 6 characters, which is conservative.
     // - Predictive nodes with zero-length prefix string are not generated.
     // do nothing if the conversion key is short
-    const size_t kKeyMinLength = 7;
+    constexpr size_t kKeyMinLength = 7;
     if (conversion_key_chars.size() < kKeyMinLength) {
       return;
     }
@@ -1247,7 +1247,7 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     // Predictive search from suffix dictionary.
     // (search words with between 1 and 6 characters)
     {
-      const size_t kMaxSuffixLookupKey = 6;
+      constexpr size_t kMaxSuffixLookupKey = 6;
       const size_t max_sufffix_len =
           std::min(kMaxSuffixLookupKey, conversion_key_chars.size());
       size_t pos = key.size();
@@ -1271,8 +1271,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     // Predictive search from system dictionary.
     // (search words with between 5 and 8 characters)
     {
-      const size_t kMinSystemLookupKey = 5;
-      const size_t kMaxSystemLookupKey = 8;
+      constexpr size_t kMinSystemLookupKey = 5;
+      constexpr size_t kMaxSystemLookupKey = 8;
       const size_t max_suffix_len =
           std::min(kMaxSystemLookupKey, conversion_key_chars.size());
       size_t pos = key.size();
@@ -1302,14 +1302,14 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     // - Starts suggestion from 2 characters, which is more aggressive.
     // - Predictive nodes with zero-length prefix string are generated.
     // do nothing if the conversion key is short
-    const size_t kKeyMinLength = 3;
+    constexpr size_t kKeyMinLength = 3;
     if (conversion_key_chars.size() < kKeyMinLength) {
       return;
     }
 
     // Predictive search from suffix dictionary.
     {
-      const size_t kMaxSuffixLookupKey = 8;
+      constexpr size_t kMaxSuffixLookupKey = 8;
       const size_t max_sufffix_len =
           std::min(kMaxSuffixLookupKey, conversion_key_chars.size() - 1);
       size_t pos = key.size();
@@ -1332,8 +1332,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
 
     // Predictive search from system dictionary.
     {
-      const size_t kMinSystemLookupKey = 3;
-      const size_t kMaxSystemLookupKey = 8;
+      constexpr size_t kMinSystemLookupKey = 3;
+      constexpr size_t kMaxSystemLookupKey = 8;
       const size_t max_suffix_len =
           std::min(kMaxSystemLookupKey, conversion_key_chars.size() - 1);
       size_t pos = key.size();
@@ -1962,7 +1962,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     if (request.create_partial_candidates()) {
       // TODO(toshiyuki): It may be better to change this value
       // according to the key length.
-      static const size_t kOnlyFirstSegmentCandidateSize = 3;
+      static constexpr size_t kOnlyFirstSegmentCandidateSize = 3;
       const size_t single_segment_candidates_size =
           ((max_candidates_size > kOnlyFirstSegmentCandidateSize)
                ? max_candidates_size - kOnlyFirstSegmentCandidateSize

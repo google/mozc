@@ -35,6 +35,7 @@ load(
     "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
+    "py_binary_mozc",
     "select_mozc",
 )
 
@@ -743,6 +744,75 @@ cc_test_mozc(
     ],
 )
 
+py_binary_mozc(
+    name = "gen_session_stress_test_data",
+    srcs = ["gen_session_stress_test_data.py"],
+)
+
+genrule(
+    name = "session_stress_test_data",
+    srcs = select_mozc(
+        oss = ["//data/test/quality_regression_test:oss.tsv"],
+    ),
+    outs = ["session_stress_test_data.h"],
+    cmd = "$(location :gen_session_stress_test_data) --input $(SRCS) --output $@",
+    exec_tools = [":gen_session_stress_test_data"],
+)
+
+cc_library_mozc(
+    name = "random_keyevents_generator",
+    srcs = [
+        "random_keyevents_generator.cc",
+        ":session_stress_test_data",
+    ],
+    hdrs = ["random_keyevents_generator.h"],
+    deps = [
+        "//base",
+        "//base:logging",
+        "//base:mutex",
+        "//base:port",
+        "//base:util",
+        "//composer:key_parser",
+        "//protocol:commands_cc_proto",
+        "//session/internal:keymap",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "random_keyevents_generator_test",
+    size = "small",
+    srcs = ["random_keyevents_generator_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":random_keyevents_generator",
+        "//base",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_test_mozc(
+    name = "session_handler_stress_test",
+    size = "large",
+    srcs = [
+        "common.h",
+        "session_handler_stress_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":random_keyevents_generator",
+        ":session_handler",
+        ":session_handler_tool",
+        "//base:file_util",
+        "//base:port",
+        "//engine:engine_factory",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/flags:flag",
+    ],
+)
+
 cc_library_mozc(
     name = "session_handler_tool",
     srcs = ["session_handler_tool.cc"],
@@ -788,15 +858,19 @@ cc_binary_mozc(
         "//base:init_mozc",
         "//base:status",
         "//base:system_util",
-        "//data_manager/android:android_data_manager",
-        "//data_manager/google:google_data_manager",
         "//data_manager/oss:oss_data_manager",
         "//engine",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
-    ],
+    ] + select_mozc(
+        default = [
+            "//data_manager/android:android_data_manager",
+            "//data_manager/google:google_data_manager",
+        ],
+        oss = [],
+    ),
 )
 
 cc_test_mozc(

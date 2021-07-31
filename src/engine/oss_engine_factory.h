@@ -43,7 +43,11 @@ class OssEngineFactory {
   // Creates an instance of Engine class. The caller is responsible for deleting
   // the returned object.
   static Engine *Create() {
+#ifdef OS_ANDROID
     auto engine = Engine::CreateMobileEngineHelper<oss::OssDataManager>();
+#else
+    auto engine = Engine::CreateDesktopEngineHelper<oss::OssDataManager>();
+#endif  // OS_ANDROID
     if (!engine.ok()) {
       LOG(ERROR) << engine.status();
       return nullptr;

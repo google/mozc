@@ -422,7 +422,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
       {"は", "歯"},       {"はひ", "ハヒ"},     {"ば", "場"},
       {"はび", "波美"},   {"ばび", "馬尾"},     {"ばびぶ", "バビブ"},
   };
-  const size_t kKeyValuesSize = arraysize(kKeyValues);
+  constexpr size_t kKeyValuesSize = arraysize(kKeyValues);
   std::unique_ptr<Token> tokens[kKeyValuesSize];
   std::vector<Token *> source_tokens(kKeyValuesSize);
   for (size_t i = 0; i < kKeyValuesSize; ++i) {

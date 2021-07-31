@@ -156,7 +156,7 @@ class TextIconTest : public testing::Test {
 
 TEST_F(TextIconTest, CreateMonochromeIcon) {
   {
-    const size_t kIconSize = 20;
+    constexpr size_t kIconSize = 20;
     CIcon icon = TextIcon::CreateMonochromeIcon(
         kIconSize, kIconSize, "A", GetGothicFontName(), RGB(0xff, 0x00, 0xff));
     EXPECT_MONOCHROME_ICON(icon, kIconSize);
@@ -164,7 +164,7 @@ TEST_F(TextIconTest, CreateMonochromeIcon) {
 
   {
     constexpr char kText[] = "あ";
-    const size_t kIconSize = 20;
+    constexpr size_t kIconSize = 20;
     CIcon icon = TextIcon::CreateMonochromeIcon(kIconSize, kIconSize, kText,
                                                 GetGothicFontName(),
                                                 RGB(0xff, 0x00, 0xff));

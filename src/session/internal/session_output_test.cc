@@ -231,7 +231,7 @@ TEST(SessionOutputTest, FillAllCandidateWords) {
 
   const char *kValues[7] = {"2",      "sub1_1",    "sub1_3",   "sub2_1",
                             "sub2_2", "subsub1_1", "subsub1_2"};
-  const size_t kValueSize = arraysize(kValues);
+  constexpr size_t kValueSize = arraysize(kValues);
   for (size_t i = 0; i < kValueSize; ++i) {
     Segment::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kNormalKey;
@@ -345,7 +345,7 @@ TEST(SessionOutputTest, FillAllCandidateWords_Attributes) {
 
   const char *kValues[5] = {"value_0", "value_1", "value_2", "value_3",
                             "value_4"};
-  const size_t kValueSize = arraysize(kValues);
+  constexpr size_t kValueSize = arraysize(kValues);
   for (size_t i = 0; i < kValueSize; ++i) {
     Segment::Candidate *candidate = segment.push_back_candidate();
     candidate->content_key = kKey;

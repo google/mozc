@@ -48,6 +48,7 @@ cc_library_mozc(
         ":table",
         ":type_corrected_query",
         "//base",
+        "//base:clock",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -65,6 +66,7 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "//transliteration",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -78,6 +80,7 @@ cc_test_mozc(
         ":key_parser",
         ":table",
         "//base",
+        "//base:clock_mock",
         "//base:logging",
         "//base:system_util",
         "//base:util",

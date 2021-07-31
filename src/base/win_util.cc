@@ -456,7 +456,7 @@ bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
     return false;
   }
 
-  const size_t kMaxPath = 4096;
+  constexpr size_t kMaxPath = 4096;
   unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
   const DWORD copied_len_without_null = ::GetFinalPathNameByHandleW(
       file_handle.get(), ntpath_buffer.get(), kMaxPath,
@@ -485,7 +485,7 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
     return false;
   }
 
-  const size_t kMaxPath = 4096;
+  constexpr size_t kMaxPath = 4096;
   unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
   const DWORD copied_len_without_null = ::GetProcessImageFileNameW(
       process_handle.get(), ntpath_buffer.get(), kMaxPath);

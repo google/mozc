@@ -40,7 +40,7 @@
 
 namespace {
 // A valid KLID consists of 8 character of hexadecimal digit in text form.
-const size_t kTextLength = (KL_NAMELENGTH - 1);
+constexpr size_t kTextLength = (KL_NAMELENGTH - 1);
 const DWORD kDefaultKLID = 0;
 
 bool IsHexadecimalDigit(wchar_t c) {

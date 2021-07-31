@@ -64,7 +64,7 @@ using std::unique_ptr;
 
 namespace {
 
-const size_t kReconvertStringSizeLimit = 1024 * 64;
+constexpr size_t kReconvertStringSizeLimit = 1024 * 64;
 // An embedded object in the RichEdit will be replaced with this character.
 // See b/3406434 for details.
 const wchar_t kObjectReplacementCharacter = L'\uFFFC';

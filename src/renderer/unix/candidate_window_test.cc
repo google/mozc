@@ -1396,7 +1396,7 @@ TEST_F(CandidateWindowTest, OnMouseLeftUpTest) {
   }
   {
     SCOPED_TRACE("Expected ID will be set by candidate index.");
-    const size_t kTestRound = 10;
+    constexpr size_t kTestRound = 10;
     for (size_t i = 0; i < kTestRound; ++i) {
       SendCommandInterfaceMock interface_mock;
       MouseHandlingTestableCandidateWindowTestKit testkit =
@@ -1418,7 +1418,7 @@ TEST_F(CandidateWindowTest, GetSelectedRowIndexTest) {
   const Rect kInRect(5, 5, 100, 100);
   const Rect kOutRect(20, 30, 100, 100);
   {
-    const size_t kTestRound = 10;
+    constexpr size_t kTestRound = 10;
     for (size_t i = 0; i < kTestRound; ++i) {
       CandidateWindowTestKit testkit = SetUpCandidateWindow();
       SetTestCandidates(kTestRound, true, true, true, true, true,

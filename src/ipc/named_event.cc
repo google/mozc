@@ -95,7 +95,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
   //  must begin with a slash (`/'), contain no other slash characters, and be
   //  less than 14 characters in length not including the terminating null
   //  character."
-  const size_t kEventPathLength = 14;
+  constexpr size_t kEventPathLength = 14;
   char buf[32];
   absl::SNPrintF(buf, kEventPathLength, "/%x",
                  static_cast<uint64_t>(Hash::Fingerprint(event_name)));

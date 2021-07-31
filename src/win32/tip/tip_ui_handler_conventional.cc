@@ -74,7 +74,8 @@ typedef ::mozc::commands::RendererCommand_IndicatorInfo IndicatorInfo;
 typedef ::mozc::commands::RendererCommand RendererCommand;
 typedef ::mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
-const size_t kSizeOfGUIThreadInfoV1 = CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
+constexpr size_t kSizeOfGUIThreadInfoV1 =
+    CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
 
 size_t GetTargetPos(const commands::Output &output) {
   if (!output.has_candidates() || !output.candidates().has_category()) {

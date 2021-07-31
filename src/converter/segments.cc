@@ -41,8 +41,8 @@
 
 namespace mozc {
 namespace {
-const size_t kMaxHistorySize = 32;
-const size_t kMaxConversionCandidatesSize = 200;
+constexpr size_t kMaxHistorySize = 32;
+constexpr size_t kMaxConversionCandidatesSize = 200;
 }  // namespace
 
 absl::string_view Segment::Candidate::functional_key() const {

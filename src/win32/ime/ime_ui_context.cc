@@ -60,9 +60,10 @@ typedef mozc::commands::RendererCommand RendererCommand;
 typedef mozc::commands::RendererCommand::ApplicationInfo ApplicationInfo;
 
 namespace {
-const size_t kSizeOfImeCharPositionV1 =
+constexpr size_t kSizeOfImeCharPositionV1 =
     CCSIZEOF_STRUCT(IMECHARPOSITION, rcDocument);
-const size_t kSizeOfGUIThreadInfoV1 = CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
+constexpr size_t kSizeOfGUIThreadInfoV1 =
+    CCSIZEOF_STRUCT(GUITHREADINFO, rcCaret);
 
 HIMCC GetPrivateContextHandle(const INPUTCONTEXT *input_context) {
   if (input_context == nullptr) {

@@ -103,7 +103,7 @@ void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
   subcandidate_list_ = subcandidate_list;
 }
 
-static const size_t kDefaultPageSize = 9;
+static constexpr size_t kDefaultPageSize = 9;
 
 CandidateList::CandidateList(const bool rotate)
     : rotate_(rotate),

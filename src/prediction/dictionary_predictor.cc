@@ -96,8 +96,8 @@ constexpr int kInfinity = (2 << 20);
 
 // Note that PREDICTION mode is much slower than SUGGESTION.
 // Number of prediction calls should be minimized.
-const size_t kSuggestionMaxResultsSize = 256;
-const size_t kPredictionMaxResultsSize = 100000;
+constexpr size_t kSuggestionMaxResultsSize = 256;
+constexpr size_t kPredictionMaxResultsSize = 100000;
 
 bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
   return request.request()
@@ -1595,7 +1595,7 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
   // 3) Repeat 1) and 2) five times.
   // Note: to reduce the number of memory allocation, we swap out the
   //   "redundant" results to the end of the |results| vector.
-  const size_t kDeleteTrialNum = 5;
+  constexpr size_t kDeleteTrialNum = 5;
 
   // min_iter is the beginning of the remaining results (inclusive), and
   // max_iter is the end of the remaining results (exclusive).
@@ -1636,7 +1636,7 @@ void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
   // [max_iter, end): (maybe) redundant results.
   // [min_iter, max_iter): remaining results.
   // Here, we revive the redundant results up to five in the result cost order.
-  const size_t kDoNotDeleteNum = 5;
+  constexpr size_t kDoNotDeleteNum = 5;
   if (std::distance(max_iter, raw_result.end()) >= kDoNotDeleteNum) {
     std::partial_sort(max_iter, max_iter + kDoNotDeleteNum, raw_result.end(),
                       ResultWCostLess());
@@ -2185,7 +2185,7 @@ void DictionaryPredictor::AggregateTypeCorrectingPrediction(
 
 bool DictionaryPredictor::ShouldAggregateRealTimeConversionResults(
     const ConversionRequest &request, const Segments &segments) {
-  const size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
+  constexpr size_t kMaxRealtimeKeySize = 300;  // 300 bytes in UTF8
   const std::string &key = segments.conversion_segment(0).key();
   if (key.empty() || key.size() >= kMaxRealtimeKeySize) {
     // 1) If key is empty, realtime conversion doesn't work.

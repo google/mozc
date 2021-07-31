@@ -681,9 +681,9 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
 
   // TODO(taku): enable them on Mac/Linux
 #ifdef DEBUG
-  const size_t kMaxTrial = 256;
+  constexpr size_t kMaxTrial = 256;
 #else
-  const size_t kMaxTrial = 2;
+  constexpr size_t kMaxTrial = 2;
 #endif
 
   for (size_t trial = 0; trial < kMaxTrial; ++trial) {

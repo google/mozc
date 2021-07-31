@@ -417,7 +417,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
       IBUS_Alt_L,   IBUS_Alt_R,   IBUS_Control_L, IBUS_Control_R,
       IBUS_Shift_L, IBUS_Shift_R, IBUS_Caps_Lock, IBUS_a,
   };
-  const size_t kKeySetSize = arraysize(kKeySet);
+  constexpr size_t kKeySetSize = arraysize(kKeySet);
   Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
 
   constexpr int kTrialNum = 1000;

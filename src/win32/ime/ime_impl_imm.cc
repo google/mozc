@@ -122,7 +122,7 @@ static_assert(arraysize(mozc::kIMEUIWndClassName) <=
 
 // Maximum number of characters for |REGISTERWORD::lpWord| and
 // |REGISTERWORD::lpReading|.
-const size_t kMaxCharsForRegisterWord = 64;
+constexpr size_t kMaxCharsForRegisterWord = 64;
 
 // If given string is too long, returns an empty string instead.
 std::wstring GetStringIfWithinLimit(const wchar_t *src, size_t size_limit) {

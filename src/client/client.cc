@@ -73,7 +73,7 @@ namespace client {
 namespace {
 constexpr char kServerAddress[] = "session";  // name for the IPC connection.
 constexpr int kResultBufferSize = 8192 * 32;  // size of IPC buffer
-const size_t kMaxPlayBackSize = 512;      // size of maximum history
+constexpr size_t kMaxPlayBackSize = 512;  // size of maximum history
 
 #ifdef DEBUG
 constexpr int kDefaultTimeout = 100000;  // 100 sec for dbg
@@ -841,7 +841,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
 
   // Validate |mode|.
   // TODO(taku): better to validate the parameter more carefully.
-  const size_t kModeMaxSize = 32;
+  constexpr size_t kModeMaxSize = 32;
   if (mode.empty() || mode.size() >= kModeMaxSize) {
     LOG(ERROR) << "Invalid mode: " << mode;
     return false;
