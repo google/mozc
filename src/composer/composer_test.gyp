@@ -45,6 +45,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/base_test.gyp:clock_mock',
         '../config/config.gyp:config_handler',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../protocol/protocol.gyp:commands_proto',

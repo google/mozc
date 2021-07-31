@@ -252,6 +252,9 @@ class Composer final {
     composition_ = std::move(composition);
   }
 
+  int timeout_threshold_msec() const;
+  void set_timeout_threshold_msec(int threshold_msec);
+
  private:
   FRIEND_TEST(ComposerTest, ApplyTemporaryInputMode);
 
@@ -309,6 +312,14 @@ class Composer final {
 
   const commands::Request *request_;
   const config::Config *config_;
+
+  // Timestamp of last modified.
+  int64_t timestamp_msec_ = 0;
+
+  // If the duration between key inputs is more than timeout_threadhols_msec_,
+  // the STOP_KEY_TOGGLING event is sent before the next key input.
+  // If the value is 0, STOP_KEY_TOGGLING is not sent.
+  int timeout_threshold_msec_ = 0;
 };
 
 }  // namespace composer

@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/clock_mock.h"
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "base/util.h"
@@ -3137,5 +3138,111 @@ TEST_F(ComposerTest, IsToggleable) {
   EXPECT_FALSE(composer_->IsToggleable());
 }
 
+TEST_F(ComposerTest, CheckTimeout) {
+  table_->AddRule("1", "", "あ");
+  table_->AddRule("あ{!}", "あ", "");
+  table_->AddRule("あ1", "", "い");
+  table_->AddRule("い{!}", "い", "");
+  table_->AddRule("い1", "", "う");
+
+  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
+  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+
+  EXPECT_EQ(0, composer_->timeout_threshold_msec());
+
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(3, 0);  // +3.0 sec
+
+  // Because the threshold is not set, STOP_KEY_TOGGLING is not sent.
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("い", GetPreedit(composer_.get()));
+
+  // Set the threshold time.
+  composer_->Reset();
+  composer_->set_timeout_threshold_msec(1000);
+
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(3, 0);  // +3.0 sec
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("ああ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 700'000);  // +0.7 sec
+  ASSERT_TRUE(InsertKeyWithMode("1", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("あい", GetPreedit(composer_.get()));
+}
+
+
+TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
+  table_->AddRule("1", "", "あ");
+  table_->AddRule("あ{!}", "あ", "");
+  table_->AddRule("あ1", "", "い");
+  table_->AddRule("い{!}", "い", "");
+  table_->AddRule("い1", "", "う");
+
+  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
+  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+
+  config_->set_composing_timeout_threshold_msec(500);
+  composer_->Reset();  // The threshold should be updated to 500msec.
+
+  uint64_t timestamp_msec = kBaseSeconds * 1000;
+
+  KeyEvent key_event;
+  key_event.set_key_code('1');
+  key_event.set_timestamp_msec(timestamp_msec);
+  composer_->InsertCharacterKeyEvent(key_event);
+  EXPECT_EQ("あ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
+  timestamp_msec += 3000;  // +3.0 sec in proto.
+  key_event.set_timestamp_msec(timestamp_msec);
+  composer_->InsertCharacterKeyEvent(key_event);
+  EXPECT_EQ("ああ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
+  timestamp_msec += 700;  // +0.7 sec in proto.
+  key_event.set_timestamp_msec(timestamp_msec);
+  composer_->InsertCharacterKeyEvent(key_event);
+  EXPECT_EQ("あああ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(3, 0);  // +3.0 sec in the global clock
+  timestamp_msec += 100;  // +0.7 sec in proto.
+  key_event.set_timestamp_msec(timestamp_msec);
+  composer_->InsertCharacterKeyEvent(key_event);
+  EXPECT_EQ("ああい", GetPreedit(composer_.get()));
+}
+
+
+TEST_F(ComposerTest, SimultaneousInput) {
+  table_->AddRule("k", "", "い");      // k → い
+  table_->AddRule("い{!}", "い", "");  // k → い (timeout)
+  table_->AddRule("d", "", "か");      // d → か
+  table_->AddRule("か{!}", "か", "");  // d → か (timeout)
+  table_->AddRule("かk", "れ", "");    // dk → れ
+  table_->AddRule("いd", "れ", "");    // kd → れ
+
+  constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
+  mozc::ScopedClockMock clock(kBaseSeconds, 0);
+  composer_->set_timeout_threshold_msec(50);
+
+  ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("い", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("れ", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 30'000);  // +30 msec (< 50)
+  ASSERT_TRUE(InsertKeyWithMode("k", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("れい", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("れいか", GetPreedit(composer_.get()));
+}
 }  // namespace composer
 }  // namespace mozc

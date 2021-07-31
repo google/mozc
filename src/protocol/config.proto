@@ -277,6 +277,12 @@ message Config {
   // e.g. sunkai -> 深海
   optional bool use_typing_correction = 66 [default = false];
 
+  // The duration in millisecond to determine the timeout.
+  // If the duration between key inputs is more than this value,
+  // a SessionCommand::STOP_KEY_TOGGLING is prepended to the next key input.
+  // If the value is 0, STOP_KEY_TOGGLING is not sent.
+  optional int32 composing_timeout_threshold_msec = 67 [default = 0];
+
   //////////////////////////////////////////////////////////////
   //
   // Dictionary (80-99)

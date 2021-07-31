@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <unordered_map>
 
+#include "base/clock.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -49,6 +50,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
+#include "absl/time/time.h"
 
 // Use flags instead of constant for performance evaluation.
 ABSL_FLAG(uint64_t, max_typing_correction_query_candidates, 40,
@@ -206,7 +208,7 @@ std::unordered_multimap<std::string, std::string> BuildModifierRemovalMap() {
   };
 }
 
-const size_t kMaxPreeditLength = 256;
+constexpr size_t kMaxPreeditLength = 256;
 
 }  // namespace
 
@@ -233,7 +235,10 @@ Composer::Composer(const Table *table, const commands::Request *request,
       request_(request),
       config_(config) {
   SetInputMode(transliteration::HIRAGANA);
-  typing_corrector_.SetConfig(config);
+  if (config_ == nullptr) {
+    config_ = &config::ConfigHandler::DefaultConfig();
+  }
+  typing_corrector_.SetConfig(config_);
   Reset();
 }
 
@@ -245,6 +250,7 @@ void Composer::Reset() {
   SetOutputMode(transliteration::HIRAGANA);
   source_text_.assign("");
   typing_corrector_.Reset();
+  timeout_threshold_msec_ = config_->composing_timeout_threshold_msec();
 }
 
 void Composer::ResetInputMode() { SetInputMode(comeback_input_mode_); }
@@ -484,6 +490,21 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
   if (!EnableInsert()) {
     return false;
   }
+
+  // Check timeout.
+  // If the duration from the previous input is over than the threshold,
+  // A STOP_KEY_TOGGLING command is sent before the key input.
+  if (timeout_threshold_msec_ > 0) {
+    int64_t current_msec = key.has_timestamp_msec()
+                               ? key.timestamp_msec()
+                               : absl::ToUnixMillis(Clock::GetAbslTime());
+    if (timestamp_msec_ > 0 &&
+        current_msec - timestamp_msec_ >= timeout_threshold_msec_) {
+      InsertCommandCharacter(STOP_KEY_TOGGLING);
+    }
+    timestamp_msec_ = current_msec;
+  }
+
   if (key.has_mode()) {
     const transliteration::TransliterationType new_input_mode =
         GetTransliterationTypeFromCompositionMode(key.mode());
@@ -1200,6 +1221,9 @@ void Composer::CopyFrom(const Composer &src) {
   config_ = src.config_;
 
   typing_corrector_.CopyFrom(src.typing_corrector_);
+
+  timestamp_msec_ = src.timestamp_msec_;
+  timeout_threshold_msec_ = src.timeout_threshold_msec_;
 }
 
 bool Composer::IsToggleable() const {
@@ -1223,6 +1247,14 @@ void Composer::set_source_text(const std::string &source_text) {
 
 size_t Composer::max_length() const { return max_length_; }
 void Composer::set_max_length(size_t length) { max_length_ = length; }
+
+int Composer::timeout_threshold_msec() const {
+  return timeout_threshold_msec_;
+}
+
+void Composer::set_timeout_threshold_msec(int threshold_msec) {
+  timeout_threshold_msec_ = threshold_msec;
+}
 
 void Composer::SetInputFieldType(commands::Context::InputFieldType type) {
   input_field_type_ = type;
