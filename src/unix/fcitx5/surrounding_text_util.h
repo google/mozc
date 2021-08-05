@@ -56,7 +56,7 @@ class SurroundingTextUtil {
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
   // integer overflow, that is, |delta| is in a safe range.
   // Returns false otherwise.
-  static bool GetSafeDelta(uint from, uint to, int32 *delta);
+  static bool GetSafeDelta(unsigned int from, unsigned int to, int32 *delta);
 
   // Returns true if
   // 1. |surrounding_text| contains |selected_text|
@@ -71,7 +71,8 @@ class SurroundingTextUtil {
   // Otherwise returns false.
   static bool GetAnchorPosFromSelection(const std::string &surrounding_text,
                                         const std::string &selected_text,
-                                        uint cursor_pos, uint *anchor_pos);
+                                        unsigned int cursor_pos,
+                                        unsigned int *anchor_pos);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(SurroundingTextUtil);
