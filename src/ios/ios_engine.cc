@@ -273,7 +273,7 @@ bool IosEngine::SendKey(const std::string &character,
   commands::KeyEvent *key_event = input->mutable_key();
   key_event->set_key_code(Util::UTF8ToUCS4(character));
   key_event->set_mode(current_input_config_->composition_mode);
-  const uint32_t kNoModifiers = 0;
+  constexpr uint32_t kNoModifiers = 0;
   key_event->set_modifiers(kNoModifiers);
   return EvalCommandLockGuarded(command);
 }

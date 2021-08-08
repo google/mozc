@@ -135,7 +135,7 @@ mozc::StatusOr<Metadata> ParseMetadata(const char *connection_data,
 
 }  // namespace
 
-class Connector::Row {
+class Connector::Row final {
  public:
   Row()
       : chunk_bits_index_(sizeof(uint32_t)),
@@ -281,7 +281,7 @@ mozc::Status Connector::Init(const char *connection_data,
 
   const size_t chunk_bits_size = metadata->ChunkBitsSize();
   const uint16_t rsize = metadata->rsize;
-  rows_.reserve(rsize);
+  rows_ = absl::make_unique<Row[]>(rsize);
   for (size_t i = 0; i < rsize; ++i) {
     // Each row is formatted as follows:
     // +-------------------+-------------+------------+------------+---------+
@@ -315,10 +315,8 @@ mozc::Status Connector::Init(const char *connection_data,
     VALIDATE_ALIGNMENT(values);
     ptr += values_size;
 
-    auto row = absl::make_unique<Row>();
-    row->Init(chunk_bits, chunk_bits_size, compact_bits, compact_bits_size,
-              values, metadata->Use1ByteValue());
-    rows_.push_back(std::move(row));
+    rows_[i].Init(chunk_bits, chunk_bits_size, compact_bits, compact_bits_size,
+                  values, metadata->Use1ByteValue());
   }
   VALIDATE_SIZE(ptr, 0, "Data end");
   ClearCache();
@@ -349,7 +347,7 @@ void Connector::ClearCache() {
 
 int Connector::LookupCost(uint16_t rid, uint16_t lid) const {
   uint16_t value;
-  if (!rows_[rid]->GetValue(lid, &value)) {
+  if (!rows_[rid].GetValue(lid, &value)) {
     return default_cost_[rid];
   }
   return value * resolution_;

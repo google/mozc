@@ -41,10 +41,10 @@ namespace {
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
 const uint64_t kTestSeconds = 1608729875uLL;
-const uint32_t kTestMicroSeconds = 123456u;
+constexpr uint32_t kTestMicroSeconds = 123456u;
 
 const uint64_t kDeltaSeconds = 12uLL;
-const uint32_t kDeltaMicroSeconds = 654321u;
+constexpr uint32_t kDeltaMicroSeconds = 654321u;
 }  // namespace
 
 TEST(ClockMockTest, GetTimeTest) {

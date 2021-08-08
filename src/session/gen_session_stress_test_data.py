@@ -53,7 +53,7 @@ def GenerateHeader(input_file, output_file):
     f.write('const char *kTestSentences[] = {\n')
     for line in output:
       escaped = line.replace('\\', '\\\\').replace('"', '\\"')
-      f.write(f' "{escaped}",\n')
+      f.write(' "%s",\n' % escaped)
     f.write('};\n')
 
 

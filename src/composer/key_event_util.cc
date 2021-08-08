@@ -40,13 +40,13 @@ namespace mozc {
 using commands::KeyEvent;
 
 namespace {
-const uint32_t kAltMask =
+constexpr uint32_t kAltMask =
     KeyEvent::ALT | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT;
-const uint32_t kCtrlMask =
+constexpr uint32_t kCtrlMask =
     KeyEvent::CTRL | KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL;
-const uint32_t kShiftMask =
+constexpr uint32_t kShiftMask =
     KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT | KeyEvent::RIGHT_SHIFT;
-const uint32_t kCapsMask = KeyEvent::CAPS;
+constexpr uint32_t kCapsMask = KeyEvent::CAPS;
 
 uint32_t Ignore(uint32_t modifiers, uint32_t modifiers_to_be_ignored) {
   return modifiers & ~modifiers_to_be_ignored;
@@ -104,7 +104,7 @@ void KeyEventUtil::NormalizeModifiers(const KeyEvent &key_event,
   // CTRL (or ALT, SHIFT) should be set on modifier_keys when
   // LEFT (or RIGHT) ctrl is set.
   // LEFT_CTRL (or others) is not handled on Japanese, so we remove these.
-  const uint32_t kIgnorableModifierMask =
+  constexpr uint32_t kIgnorableModifierMask =
       (KeyEvent::CAPS | KeyEvent::LEFT_ALT | KeyEvent::RIGHT_ALT |
        KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL | KeyEvent::LEFT_SHIFT |
        KeyEvent::RIGHT_SHIFT);

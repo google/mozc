@@ -488,7 +488,7 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
   // 250 msec is good enough to crash the code if it is not guarded by
   // the lock, but feel free to change the duration.  It is basically an
   // arbitrary number.
-  const uint32_t kTestDurationMSec = 250;  // 250 msec
+  constexpr uint32_t kTestDurationMSec = 250;  // 250 msec
   constexpr size_t kNumSetThread = 2;
   constexpr size_t kNumGetThread = 4;
   {

@@ -40,12 +40,13 @@ cc_library_mozc(
     name = "prelauncher_lib",
     srcs = ["prelauncher_libmain.cc"],
     deps = [
-        "//base:mac_util",
         "//client",
         "//client:client_interface",
         "//renderer:renderer_client",
         "@com_google_absl//absl/flags:flag",
-    ],
+    ] + select_mozc(
+        macos = ["//base:mac_util"],
+    ),
 )
 
 cc_qt_library_mozc(

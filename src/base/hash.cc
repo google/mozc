@@ -36,9 +36,9 @@
 namespace mozc {
 namespace {
 
-const uint32_t kFingerPrint32Seed = 0xfd12deff;
-const uint32_t kFingerPrintSeed0 = 0x6d6f;
-const uint32_t kFingerPrintSeed1 = 0x7a63;
+constexpr uint32_t kFingerPrint32Seed = 0xfd12deff;
+constexpr uint32_t kFingerPrintSeed0 = 0x6d6f;
+constexpr uint32_t kFingerPrintSeed1 = 0x7a63;
 
 }  // namespace
 

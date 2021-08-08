@@ -67,13 +67,13 @@ namespace {
 constexpr char kServerName[] = "session";
 
 // Wait at most kServerWaitTimeout msec until server gets ready
-const uint32_t kServerWaitTimeout = 20000;  // 20 sec
+constexpr uint32_t kServerWaitTimeout = 20000;  // 20 sec
 
 // for every 1000m sec, check server
-const uint32_t kRetryIntervalForServer = 1000;
+constexpr uint32_t kRetryIntervalForServer = 1000;
 
 // Try 20 times to check mozc_server is running
-const uint32_t kTrial = 20;
+constexpr uint32_t kTrial = 20;
 
 #ifdef DEBUG
 // Load special flags for server.

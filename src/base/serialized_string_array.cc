@@ -40,7 +40,7 @@
 namespace mozc {
 namespace {
 
-const uint32_t kEmptyArrayData = 0x00000000;
+constexpr uint32_t kEmptyArrayData = 0x00000000;
 
 }  // namespace
 

@@ -334,13 +334,18 @@ py_binary_mozc(
 genrule(
     name = "zip_installer_files",
     srcs = [
-        ":activate_pane",
-        ":dev_confirm_pane",
-        ":mozc_macos",
-        ":uninstaller_macos",
         ":tweak_preflight",
         ":tweak_postflight",
     ] + select_mozc(
+        # For both macos and oss_macos
+        macos = [
+            ":activate_pane",
+            ":dev_confirm_pane",
+            ":mozc_macos",
+            ":uninstaller_macos",
+        ],
+    ) + select_mozc(
+        # For oss_macos only
         oss_macos = [
             "//gui/config_dialog:config_dialog_macos",
             "//gui/dictionary_tool:dictionary_tool_macos",

@@ -154,7 +154,7 @@ class SessionRegressionTest : public ::testing::Test {
 
   void InsertCharacterChars(const std::string &chars,
                             commands::Command *command) {
-    const uint32_t kNoModifiers = 0;
+    constexpr uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->clear_input();
       command->clear_output();

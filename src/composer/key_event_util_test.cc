@@ -164,7 +164,7 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
     EXPECT_EQ(expected, output);
   }
 
-  const uint32_t kEscapeKeyCode = 27;
+  constexpr uint32_t kEscapeKeyCode = 27;
   key_event.Clear();
   key_event.set_key_code(kEscapeKeyCode);
   // Escape key should not set on key_code field.
@@ -255,7 +255,7 @@ TEST(KeyEventUtilTest, MaybeGetKeyStub) {
   KeyParser::ParseKey("Space", &key_event);
   EXPECT_FALSE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));
 
-  const uint32_t kEscapeKeyCode = 27;
+  constexpr uint32_t kEscapeKeyCode = 27;
   key_event.Clear();
   key_event.set_key_code(kEscapeKeyCode);
   EXPECT_FALSE(KeyEventUtil::MaybeGetKeyStub(key_event, &key));

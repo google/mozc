@@ -50,8 +50,8 @@ namespace mozc {
 namespace storage {
 namespace {
 
-const uint32_t kStorageVersion = 0;
-const uint32_t kStorageMagicId = 0x431fe241;  // random seed
+constexpr uint32_t kStorageVersion = 0;
+constexpr uint32_t kStorageMagicId = 0x431fe241;  // random seed
 constexpr size_t kMaxElementSize = 1024;      // max map size
 constexpr size_t kMaxKeySize = 4096;          // 4k for key/value
 constexpr size_t kMaxValueSize = 4096;        // 4k for key/value

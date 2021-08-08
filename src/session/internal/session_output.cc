@@ -448,7 +448,7 @@ void SessionOutput::FillPreedit(const composer::Composer &composer,
   std::string output;
   composer.GetStringForPreedit(&output);
 
-  const uint32_t kBaseType = PREEDIT;
+  constexpr uint32_t kBaseType = PREEDIT;
   AddSegment(output, output, kBaseType, preedit);
   preedit->set_cursor(static_cast<uint32_t>(composer.GetCursor()));
   preedit->set_is_toggleable(composer.IsToggleable());
@@ -459,7 +459,7 @@ void SessionOutput::FillConversion(const Segments &segments,
                                    const size_t segment_index,
                                    const int candidate_id,
                                    commands::Preedit *preedit) {
-  const uint32_t kBaseType = CONVERSION;
+  constexpr uint32_t kBaseType = CONVERSION;
   // Cursor position in conversion state should be the end of the preedit.
   size_t cursor = 0;
   for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {

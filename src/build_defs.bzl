@@ -217,7 +217,7 @@ def _tweak_strings(name, strings):
         tweaked_strings.append(string_name)
     return tweaked_strings
 
-def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, **kwargs):
+def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .app for macOS.
 
     Args:
@@ -236,10 +236,15 @@ def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_i
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
         version = "//data/version:version_macos",
+        # The 'manual' tag excludes this from the targets of 'all' and '...'.
+        # This is a workaround to exclude objc_library rules from Linux build
+        # because target_compatible_with doesn't work as expected.
+        # https://github.com/bazelbuild/bazel/issues/12897
+        tags = tags + ["manual"],
         **kwargs
     )
 
-def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, **kwargs):
+def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = None, tags = [], **kwargs):
     """Rule to create .bundle for macOS.
 
     Args:
@@ -258,6 +263,11 @@ def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = N
         strings = _tweak_strings(name, strings),
         minimum_os_version = MACOS_MIN_OS_VER,
         version = "//data/version:version_macos",
+        # The 'manual' tag excludes this from the targets of 'all' and '...'.
+        # This is a workaround to exclude objc_library rules from Linux build
+        # because target_compatible_with doesn't work as expected.
+        # https://github.com/bazelbuild/bazel/issues/12897
+        tags = tags + ["manual"],
         **kwargs
     )
 

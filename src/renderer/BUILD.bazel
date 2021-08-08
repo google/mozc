@@ -443,7 +443,6 @@ cc_library_mozc(
     name = "mozc_renderer_main_macos",
     srcs = select_mozc(macos = ["mozc_renderer_main.cc"]),
     deps = [
-        ":mozc_renderer_lib_macos",
         ":renderer_client",
         ":table_layout",
         "//base:crash_report_handler",
@@ -454,6 +453,7 @@ cc_library_mozc(
         "//config:stats_config_util",
         "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
+        macos = [":mozc_renderer_lib_macos"],
         windows = [
             "//base:win_util",
             "//base:winmain",

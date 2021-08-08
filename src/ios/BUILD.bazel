@@ -31,6 +31,7 @@ load(
     "//:build_defs.bzl",
     "cc_binary_mozc",
     "cc_library_mozc",
+    "select_mozc",
 )
 
 cc_library_mozc(
@@ -63,7 +64,10 @@ cc_library_mozc(
 cc_binary_mozc(
     name = "ios_engine_main",
     srcs = ["ios_engine_main.cc"],
-    data = ["//data_manager/google:mozc.data"],
+    data = select_mozc(
+        default = ["//data_manager/google:mozc.data"],
+        oss = ["//data_manager/oss:mozc.data"],
+    ),
     deps = [
         ":ios_engine",
         "//base:init_mozc_buildtool",

@@ -239,28 +239,6 @@ cc_test_mozc(
     ],
 )
 
-cc_test_mozc(
-    name = "system_dictionary_benchmark",
-    srcs = [
-        "system_dictionary_benchmark.cc",
-    ],
-    data = ["//data_manager/google:mozc_dataset_for_google@dictionary"],
-    requires_full_emulation = False,
-    deps = [
-        ":system_dictionary",
-        "//base",
-        "//base:file_stream",
-        "//base:logging",
-        "//base:util",
-        "//dictionary:dictionary_test_util",
-        "//request:conversion_request",
-        "//testing:gunit_main",
-        "//testing/base/public:gunit_main",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
 cc_library_mozc(
     name = "key_expansion_table",
     hdrs = ["key_expansion_table.h"],
