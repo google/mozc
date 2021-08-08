@@ -2138,7 +2138,7 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
   config_->set_use_typing_correction(true);
 
   constexpr char kInputText[] = "gu-huru";
-  const uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
+  constexpr uint32_t kCorrectedKeyCodes[] = {'g', 'u', '-', 'g', 'u', 'r', 'u'};
   const char *kExpectedValues[] = {
       "グーグルアドセンス",
       "グーグルアドワーズ",

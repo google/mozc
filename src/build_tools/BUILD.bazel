@@ -58,6 +58,7 @@ py_test(
     srcs = ["replace_macros_test.py"],
     python_version = "PY3",
     srcs_version = "PY3",
+    tags = ["manual"],
     deps = [
         ":replace_macros_lib",
         "//testing/pybase",
@@ -76,6 +77,7 @@ py_test(
     size = "small",
     srcs = ["code_generator_util_test.py"],
     python_version = "PY3",
+    tags = ["manual"],
     deps = [
         ":code_generator_util",
         "//testing/pybase",
@@ -100,6 +102,7 @@ py_test(
     srcs = ["mozc_version_test.py"],
     python_version = "PY3",
     srcs_version = "PY3",
+    tags = ["manual"],
     deps = [
         ":mozc_version_lib",
         "//testing/pybase",

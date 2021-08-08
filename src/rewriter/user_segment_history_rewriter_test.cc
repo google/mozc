@@ -411,7 +411,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
   rewriter->Clear();
 
   const uint64_t kSeconds = 0;
-  const uint32_t kMicroSeconds = 0;
+  constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -503,7 +503,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
   rewriter->Clear();
 
   const uint64_t kSeconds = 0;
-  const uint32_t kMicroSeconds = 0;
+  constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -1323,7 +1323,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
   rewriter->Clear();
 
   const uint64_t kSeconds = 0;
-  const uint32_t kMicroSeconds = 0;
+  constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 
@@ -1451,7 +1451,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
       CreateUserSegmentHistoryRewriter());
 
   const uint64_t kSeconds = 0;
-  const uint32_t kMicroSeconds = 0;
+  constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 

@@ -65,10 +65,10 @@ using mozc::storage::LRUStorage;
 namespace mozc {
 namespace {
 
-const uint32_t kValueSize = 4;
-const uint32_t kLRUSize = 20000;
-const uint32_t kSeedValue = 0xf28defe3;
-const uint32_t kMaxCandidatesSize = 255;
+constexpr uint32_t kValueSize = 4;
+constexpr uint32_t kLRUSize = 20000;
+constexpr uint32_t kSeedValue = 0xf28defe3;
+constexpr uint32_t kMaxCandidatesSize = 255;
 // Size of candidates to be reranked to the top at one sorting operation.
 // Note, if sorting operation is called twice, up to 10 (= 5 * 2) candidates
 // could be reranked in total.
@@ -438,7 +438,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
     const std::vector<ScoreType> &sorted_scores, Segment *segment) const {
   const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
-  const uint32_t kScoreGap = 20;  // TODO(taku): no justification
+  constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
   std::set<std::string> seen;
 
   size_t next_pos = 0;

@@ -38,8 +38,7 @@
 namespace mozc {
 
 mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
-    absl::string_view data_file_path,
-    absl::string_view data_type,
+    absl::string_view data_file_path, absl::string_view data_type,
     absl::string_view engine_type) {
   std::unique_ptr<DataManager> data_manager(new DataManager);
   const absl::string_view magic_number =
@@ -52,10 +51,10 @@ mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
                      DataManager::StatusCodeToString(status)));
   }
   if (engine_type == "desktop") {
-    return Engine::CreateDesktopEngine(std::move(data_manager)).value();
+    return Engine::CreateDesktopEngine(std::move(data_manager));
   }
   if (engine_type == "mobile") {
-    return Engine::CreateMobileEngine(std::move(data_manager)).value();
+    return Engine::CreateMobileEngine(std::move(data_manager));
   }
   return InvalidArgumentError(
       absl::StrCat("Invalid engine type: ", engine_type));

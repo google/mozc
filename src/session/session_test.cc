@@ -514,7 +514,7 @@ class SessionTest : public ::testing::Test {
 
   void InsertCharacterChars(const std::string &chars, Session *session,
                             commands::Command *command) const {
-    const uint32_t kNoModifiers = 0;
+    constexpr uint32_t kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
       command->Clear();
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
@@ -528,7 +528,7 @@ class SessionTest : public ::testing::Test {
                                        const commands::Context &context,
                                        Session *session,
                                        commands::Command *command) const {
-    const uint32_t kNoModifiers = 0;
+    constexpr uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->Clear();
       *command->mutable_input()->mutable_context() = context;
@@ -542,7 +542,7 @@ class SessionTest : public ::testing::Test {
   void InsertCharacterString(const std::string &key_strings,
                              const std::string &chars, Session *session,
                              commands::Command *command) const {
-    const uint32_t kNoModifiers = 0;
+    constexpr uint32_t kNoModifiers = 0;
     std::vector<std::string> inputs;
     const char *begin = key_strings.data();
     const char *end = key_strings.data() + key_strings.size();

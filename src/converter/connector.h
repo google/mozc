@@ -71,7 +71,7 @@ class Connector final {
 
   int LookupCost(uint16_t rid, uint16_t lid) const;
 
-  std::vector<std::unique_ptr<Row>> rows_;
+  std::unique_ptr<Row[]> rows_;
   const uint16_t *default_cost_ = nullptr;
   int resolution_ = 0;
   int cache_size_ = 0;

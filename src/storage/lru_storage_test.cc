@@ -51,7 +51,7 @@ namespace mozc {
 namespace storage {
 namespace {
 
-const uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
+constexpr uint32_t kSeed = 0x76fef;  // Seed for fingerprint.
 
 std::string GenRandomString(int size) {
   std::string result;

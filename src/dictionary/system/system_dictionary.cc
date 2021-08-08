@@ -114,7 +114,7 @@ const char *kHiraganaExpansionTable[] = {
     "へへべぺ", "ほほぼぽ", "ややゃ",   "ゆゆゅ",   "よよょ",   "わわゎ",
 };
 
-const uint32_t kAsciiRange = 0x80;
+constexpr uint32_t kAsciiRange = 0x80;
 
 // Confirm that all the characters are within ASCII range.
 bool ContainsAsciiCodeOnly(const std::string &str) {

@@ -82,7 +82,7 @@ class SessionUsageObserverTest : public testing::Test {
 
   void EnsureSave() const {
     // Make sure to save stats.
-    const uint32_t kWaitngUsecForEnsureSave = 10 * 60 * 1000;
+    constexpr uint32_t kWaitngUsecForEnsureSave = 10 * 60 * 1000;
     scheduler_stub_->PutClockForward(kWaitngUsecForEnsureSave);
   }
 
@@ -150,7 +150,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
   }
 
   const uint64_t kSeconds = 0;
-  const uint32_t kMicroSeconds = 0;
+  constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
 

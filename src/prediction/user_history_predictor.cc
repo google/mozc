@@ -1509,7 +1509,7 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
   if (IsEmojiEntry(entry)) {
     if (Util::IsAndroidPuaEmoji(entry.value())) {
       // Android carrier dependent emoji.
-      const uint32_t kAndroidCarrier =
+      constexpr uint32_t kAndroidCarrier =
           Request::DOCOMO_EMOJI | Request::SOFTBANK_EMOJI | Request::KDDI_EMOJI;
       if (!(available_emoji_carrier & kAndroidCarrier)) {
         return false;
@@ -2104,7 +2104,7 @@ bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
 // 3) add a bigram boost as a special bonus.
 // TODO(taku): better to take "frequency" into consideration
 uint32_t UserHistoryPredictor::GetScore(const Entry &entry) {
-  const uint32_t kBigramBoostAsTime = 7 * 24 * 60 * 60;  // 1 week.
+  constexpr uint32_t kBigramBoostAsTime = 7 * 24 * 60 * 60;  // 1 week.
   return entry.last_access_time() - Util::CharsLen(entry.value()) +
          (entry.bigram_boost() ? kBigramBoostAsTime : 0);
 }

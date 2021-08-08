@@ -55,8 +55,8 @@ using storage::LRUStorage;
 
 namespace {
 constexpr int kValueSize = 4;
-const uint32_t kLRUSize = 5000;
-const uint32_t kSeedValue = 0x761fea81;
+constexpr uint32_t kLRUSize = 5000;
+constexpr uint32_t kSeedValue = 0x761fea81;
 
 constexpr char kFileName[] = "user://boundary.db";
 

@@ -45,6 +45,7 @@ package_group(
 cc_library_mozc(
     name = "jsoncpp",
     hdrs = ["jsoncpp.h"],
+    tags = ["manual"],
     visibility = ["//:__subpackages__"],
     deps = [
         "//third_party/jsoncpp:json",
@@ -55,6 +56,7 @@ cc_library_mozc(
     name = "jsonpath",
     srcs = ["jsonpath.cc"],
     hdrs = ["jsonpath.h"],
+    tags = ["manual"],
     visibility = [":self_and_friends"],
     deps = [
         ":jsoncpp",
@@ -71,6 +73,7 @@ cc_test_mozc(
     name = "jsonpath_test",
     srcs = ["jsonpath_test.cc"],
     requires_full_emulation = False,
+    tags = ["manual"],
     deps = [
         ":jsonpath",
         "//testing:gunit_main",
@@ -81,6 +84,7 @@ cc_library_mozc(
     name = "json_util",
     srcs = ["json_util.cc"],
     hdrs = ["json_util.h"],
+    tags = ["manual"],
     visibility = ["//:__subpackages__"],
     deps = [
         ":jsoncpp",
@@ -119,6 +123,7 @@ cc_test_mozc(
     name = "json_util_test",
     srcs = ["json_util_test.cc"],
     requires_full_emulation = False,
+    tags = ["manual"],
     deps = [
         ":json_util",
         ":json_util_test_cc_proto",
