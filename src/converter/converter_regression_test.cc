@@ -58,7 +58,7 @@ class ConverterRegressionTest : public ::testing::Test {
 };
 
 TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   CHECK(converter);
@@ -89,7 +89,7 @@ TEST_F(ConverterRegressionTest, QueryOfDeathTest) {
 }
 
 TEST_F(ConverterRegressionTest, Regression3323108) {
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 

@@ -38,21 +38,22 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
 class VariantsRewriter : public RewriterInterface {
  public:
   // Annotation constants.
-  static const char *kHiragana;
-  static const char *kKatakana;
-  static const char *kNumber;
-  static const char *kAlphabet;
-  static const char *kKanji;
-  static const char *kFullWidth;
-  static const char *kHalfWidth;
-  static const char *kDidYouMean;
-  static const char *kYenKigou;
+  static const absl::string_view kHiragana;
+  static const absl::string_view kKatakana;
+  static const absl::string_view kNumber;
+  static const absl::string_view kAlphabet;
+  static const absl::string_view kKanji;
+  static const absl::string_view kFullWidth;
+  static const absl::string_view kHalfWidth;
+  static const absl::string_view kDidYouMean;
+  static const absl::string_view kYenKigou;
 
   explicit VariantsRewriter(dictionary::POSMatcher pos_matcher);
   ~VariantsRewriter() override;

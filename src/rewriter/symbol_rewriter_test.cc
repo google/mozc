@@ -108,7 +108,7 @@ class SymbolRewriterTest : public ::testing::Test {
     // ResizeSegment of converter implementation. However, SymbolRewriter is
     // independent of underlying dictionary and, hence, we can use a converter
     // with mock data.
-    engine_.reset(MockDataEngineFactory::Create());
+    engine_ = MockDataEngineFactory::Create().value();
     converter_ = engine_->GetConverter();
 
     data_manager_ = absl::make_unique<testing::MockDataManager>();

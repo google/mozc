@@ -27,6 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+load("//converter:quality_regression_test.bzl", "evaluation")
+
 package(default_visibility = ["//:__subpackages__"])
 
 exports_files([
@@ -105,4 +107,14 @@ genrule(
            "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     exec_tools = ["//dictionary:gen_aux_dictionary"],
+)
+
+evaluation(
+    name = "evaluation",
+    outs = ["evaluation_updated.tsv"],
+    base_file = "evaluation.tsv",
+    data_file = "//data_manager/oss:mozc_dataset_for_oss",
+    data_type = "oss",
+    engine_type = "desktop",
+    test_file = "//data/test/quality_regression_test:oss.tsv",
 )

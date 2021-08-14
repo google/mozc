@@ -89,7 +89,7 @@ class UnicodeRewriterTest : public ::testing::Test {
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    engine_.reset(MockDataEngineFactory::Create());
+    engine_ = MockDataEngineFactory::Create().value();
   }
 
   std::unique_ptr<EngineInterface> engine_;

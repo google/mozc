@@ -49,10 +49,9 @@ using mozc::quality_regression::QualityRegressionUtil;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::StatusOr<std::unique_ptr<Engine>> result =
-      mozc::CreateEvalEngine(absl::GetFlag(FLAGS_data_file),
-                             absl::GetFlag(FLAGS_data_type),
-                             absl::GetFlag(FLAGS_engine_type));
+  mozc::StatusOr<std::unique_ptr<Engine>> result = mozc::CreateEvalEngine(
+      absl::GetFlag(FLAGS_data_file), absl::GetFlag(FLAGS_data_type),
+      absl::GetFlag(FLAGS_engine_type));
   if (!result.ok()) {
     LOG(ERROR) << result.status().message();
     return static_cast<int>(result.status().code());
@@ -66,8 +65,11 @@ int main(int argc, char **argv) {
     std::string actual_value;
     const bool result = util.ConvertAndTest(items[i], &actual_value);
     std::cout << (result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
-              << actual_value << "\t" << items[i].command << "\t"
-              << items[i].expected_value << "\t" << std::endl;
+              << actual_value << "\t" << items[i].command;
+    if (items[i].expected_rank != 0) {
+      std::cout << " " << items[i].expected_rank;
+    }
+    std::cout << "\t" << items[i].expected_value << "\t" << std::endl;
   }
 
   return 0;

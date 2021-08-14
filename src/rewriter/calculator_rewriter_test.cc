@@ -199,9 +199,10 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
-  std::unique_ptr<CalculatorRewriter> calculator_rewriter(
-      new CalculatorRewriter(engine_->GetConverter()));
+  std::unique_ptr<EngineInterface> engine_ =
+      MockDataEngineFactory::Create().value();
+  auto calculator_rewriter =
+      absl::make_unique<CalculatorRewriter>(engine_->GetConverter());
 
   // Push back separated segments.
   Segments segments;
@@ -274,7 +275,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
   // Since this test depends on the actual implementation of
   // Converter::ResizeSegments(), we cannot use converter mock here. However,
   // the test itself is independent of data.
-  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine_ =
+      MockDataEngineFactory::Create().value();
   std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {
@@ -299,7 +301,8 @@ TEST_F(CalculatorRewriterTest, ConfigTest) {
 }
 
 TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
-  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine_ =
+      MockDataEngineFactory::Create().value();
   std::unique_ptr<CalculatorRewriter> rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
 
@@ -315,7 +318,8 @@ TEST_F(CalculatorRewriterTest, MobileEnvironmentTest) {
 }
 
 TEST_F(CalculatorRewriterTest, EmptyKeyTest) {
-  std::unique_ptr<EngineInterface> engine_(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine_ =
+      MockDataEngineFactory::Create().value();
   std::unique_ptr<CalculatorRewriter> calculator_rewriter(
       new CalculatorRewriter(engine_->GetConverter()));
   {

@@ -232,7 +232,7 @@ cc_library_mozc(
     deps = [
         ":engine",
         "//base",
-        "//base:logging",
+        "//base:status",
         "//data_manager/google:google_data_manager",
         "//prediction:predictor",
     ],
@@ -248,7 +248,7 @@ cc_library_mozc(
     ],
     deps = [
         ":engine",
-        "//base:logging",
+        "//base:status",
         "//data_manager/android:android_data_manager",
     ],
 )
@@ -259,7 +259,7 @@ cc_library_mozc(
     visibility = ["//evaluation:__subpackages__"],
     deps = [
         ":engine",
-        "//base:logging",
+        "//base:status",
         "//data_manager/oss:oss_data_manager",
     ],
 )
@@ -277,7 +277,7 @@ cc_library_mozc(
     ],
     deps = [
         ":engine",
-        "//base:logging",
+        "//base:status",
         "//data_manager/testing:mock_data_manager",
     ],
 )

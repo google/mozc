@@ -59,7 +59,7 @@ class StopwatchTest : public testing::Test {
 };
 
 TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {
-  const uint64_t kWaitNanoseconds = 1000000000uLL;  // 1 sec
+  constexpr uint64_t kWaitNanoseconds = 1000000000uLL;  // 1 sec
 
   Stopwatch stopwatch = Stopwatch::StartNew();
   PutForwardNanoseconds(kWaitNanoseconds);
@@ -77,7 +77,7 @@ TEST_F(StopwatchTest, MultipleGetElapsedMillisecondsTest) {
 }
 
 TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
-  const uint64_t kWaitNanoseconds = 1000000000uLL;  // 1 sec
+  constexpr uint64_t kWaitNanoseconds = 1000000000uLL;  // 1 sec
 
   Stopwatch stopwatch = Stopwatch::StartNew();
   PutForwardNanoseconds(kWaitNanoseconds);
@@ -89,9 +89,9 @@ TEST_F(StopwatchTest, GetElapsedXSecondsTest) {
 }
 
 TEST_F(StopwatchTest, RestartTest) {
-  const uint64_t kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
-  const uint64_t kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
-  const uint64_t kWaitNanoseconds3 = 4000000000uLL;  // 4 sec
+  constexpr uint64_t kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
+  constexpr uint64_t kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
+  constexpr uint64_t kWaitNanoseconds3 = 4000000000uLL;  // 4 sec
 
   Stopwatch stopwatch = Stopwatch::StartNew();
   PutForwardNanoseconds(kWaitNanoseconds1);
@@ -101,15 +101,15 @@ TEST_F(StopwatchTest, RestartTest) {
   PutForwardNanoseconds(kWaitNanoseconds3);
   stopwatch.Stop();
 
-  const uint64_t kExpected = kWaitNanoseconds1 + kWaitNanoseconds3;
+  constexpr uint64_t kExpected = kWaitNanoseconds1 + kWaitNanoseconds3;
   EXPECT_EQ(kExpected, stopwatch.GetElapsedNanoseconds());
   EXPECT_EQ(kExpected / 1000, stopwatch.GetElapsedMicroseconds());
   EXPECT_EQ(kExpected / 1000000, stopwatch.GetElapsedMilliseconds());
 }
 
 TEST_F(StopwatchTest, ResetTest) {
-  const uint64_t kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
-  const uint64_t kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
+  constexpr uint64_t kWaitNanoseconds1 = 1000000000uLL;  // 1 sec
+  constexpr uint64_t kWaitNanoseconds2 = 2000000000uLL;  // 2 sec
   Stopwatch stopwatch = Stopwatch::StartNew();
   PutForwardNanoseconds(kWaitNanoseconds1);
   stopwatch.Stop();

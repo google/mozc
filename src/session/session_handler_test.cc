@@ -192,7 +192,7 @@ class SessionHandlerTest : public SessionHandlerTestBase {
   }
 
   static std::unique_ptr<Engine> CreateMockDataEngine() {
-    return std::unique_ptr<Engine>(MockDataEngineFactory::Create());
+    return MockDataEngineFactory::Create().value();
   }
 };
 

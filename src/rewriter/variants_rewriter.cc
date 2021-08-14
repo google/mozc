@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -91,25 +92,25 @@ bool HasCharacterFormDescription(const std::string &value) {
 }  // namespace
 
 #ifdef OS_ANDROID
-const char *VariantsRewriter::kHiragana = "";
-const char *VariantsRewriter::kKatakana = "";
-const char *VariantsRewriter::kNumber = "";
-const char *VariantsRewriter::kAlphabet = "";
-const char *VariantsRewriter::kKanji = "";
-const char *VariantsRewriter::kFullWidth = "[全]";
-const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kDidYouMean = "<もしかして>";
-const char *VariantsRewriter::kYenKigou = "円記号";
+const absl::string_view VariantsRewriter::kHiragana = "";
+const absl::string_view VariantsRewriter::kKatakana = "";
+const absl::string_view VariantsRewriter::kNumber = "";
+const absl::string_view VariantsRewriter::kAlphabet = "";
+const absl::string_view VariantsRewriter::kKanji = "";
+const absl::string_view VariantsRewriter::kFullWidth = "[全]";
+const absl::string_view VariantsRewriter::kHalfWidth = "[半]";
+const absl::string_view VariantsRewriter::kDidYouMean = "<もしかして>";
+const absl::string_view VariantsRewriter::kYenKigou = "円記号";
 #else   // OS_ANDROID
-const char *VariantsRewriter::kHiragana = "ひらがな";
-const char *VariantsRewriter::kKatakana = "カタカナ";
-const char *VariantsRewriter::kNumber = "数字";
-const char *VariantsRewriter::kAlphabet = "アルファベット";
-const char *VariantsRewriter::kKanji = "漢字";
-const char *VariantsRewriter::kFullWidth = "[全]";
-const char *VariantsRewriter::kHalfWidth = "[半]";
-const char *VariantsRewriter::kDidYouMean = "<もしかして>";
-const char *VariantsRewriter::kYenKigou = "円記号";
+const absl::string_view VariantsRewriter::kHiragana = "ひらがな";
+const absl::string_view VariantsRewriter::kKatakana = "カタカナ";
+const absl::string_view VariantsRewriter::kNumber = "数字";
+const absl::string_view VariantsRewriter::kAlphabet = "アルファベット";
+const absl::string_view VariantsRewriter::kKanji = "漢字";
+const absl::string_view VariantsRewriter::kFullWidth = "[全]";
+const absl::string_view VariantsRewriter::kHalfWidth = "[半]";
+const absl::string_view VariantsRewriter::kDidYouMean = "<もしかして>";
+const absl::string_view VariantsRewriter::kYenKigou = "円記号";
 #endif  // OS_ANDROID
 
 VariantsRewriter::VariantsRewriter(const POSMatcher pos_matcher)
@@ -120,10 +121,10 @@ VariantsRewriter::~VariantsRewriter() = default;
 // static
 void VariantsRewriter::SetDescriptionForCandidate(
     const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
-  SetDescription(pos_matcher,
-                 (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE |
-                  SPELLING_CORRECTION),
-                 candidate);
+  SetDescription(
+      pos_matcher,
+      (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION),
+      candidate);
 }
 
 // static
@@ -138,9 +139,7 @@ void VariantsRewriter::SetDescriptionForTransliteration(
 // static
 void VariantsRewriter::SetDescriptionForPrediction(
     const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
-  SetDescription(pos_matcher,
-                 ZIPCODE | SPELLING_CORRECTION,
-                 candidate);
+  SetDescription(pos_matcher, ZIPCODE | SPELLING_CORRECTION, candidate);
 }
 
 // static
@@ -155,22 +154,22 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
         Util::GetScriptTypeWithoutSymbols(candidate->value);
     switch (type) {
       case Util::HIRAGANA:
-        character_form_message = absl::string_view(kHiragana);
+        character_form_message = kHiragana;
         // don't need to set full/half, because hiragana only has
         // full form
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
-        character_form_message = absl::string_view(kKatakana);
+        character_form_message = kKatakana;
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
-        character_form_message = absl::string_view(kNumber);
+        character_form_message = kNumber;
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
-        character_form_message = absl::string_view(kAlphabet);
+        character_form_message = kAlphabet;
         break;
       case Util::KANJI:
       case Util::EMOJI:
@@ -206,21 +205,21 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
     switch (form) {
       case Util::FULL_WIDTH:
         // description = "[全]";
-        description = kFullWidth;
+        description = std::string(kFullWidth);
         break;
       case Util::HALF_WIDTH:
         // description = "[半]";
-        description = kHalfWidth;
+        description = std::string(kHalfWidth);
         break;
       default:
         break;
     }
   } else if (description_type & FULL_WIDTH) {
     // description = "[全]";
-    description = kFullWidth;
+    description = std::string(kFullWidth);
   } else if (description_type & HALF_WIDTH) {
     // description = "[半]";
-    description = kHalfWidth;
+    description = std::string(kHalfWidth);
   }
 
   // add character_form_message
@@ -256,7 +255,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
       (candidate->attributes & Segment::Candidate::SPELLING_CORRECTION)) {
-    description = kDidYouMean;
+    description = std::string(kDidYouMean);
     // Add prefix to distinguish this candidate.
     candidate->prefix = "→ ";
     // Append default description because it may contain extra description.
@@ -264,7 +263,7 @@ void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
   }
 
   // set new description
-  candidate->description.swap(description);
+  candidate->description = std::move(description);
   candidate->attributes |= Segment::Candidate::NO_EXTRA_DESCRIPTION;
 }
 

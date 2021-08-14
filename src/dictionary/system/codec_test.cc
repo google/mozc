@@ -389,7 +389,7 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
   std::unique_ptr<SystemDictionaryCodec> codec(new SystemDictionaryCodec);
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
-  const char32 kMaxUniChar = 0x10ffff;
+  constexpr char32 kMaxUniChar = 0x10ffff;
   for (char32 c = 0x01; c <= kMaxUniChar; ++c) {
     std::string original;
     Util::UCS4ToUTF8(c, &original);

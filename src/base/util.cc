@@ -804,8 +804,8 @@ namespace {
 // http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
 static constexpr char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
 static constexpr char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
-static const char32 kUcs4MinGooglePuaEmoji = 0xFE000;
-static const char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
+static constexpr char32 kUcs4MinGooglePuaEmoji = 0xFE000;
+static constexpr char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
 }  // namespace
 
 bool Util::IsAndroidPuaEmoji(absl::string_view s) {
@@ -1523,7 +1523,7 @@ bool Util::IsAscii(absl::string_view str) {
 
 namespace {
 // const uint32_t* kJisX0208Bitmap[]
-// const uint64_t kJisX0208BitmapIndex
+// constexpr uint64_t kJisX0208BitmapIndex
 #include "base/character_set.inc"
 
 bool IsJisX0208Char(char32 ucs4) {

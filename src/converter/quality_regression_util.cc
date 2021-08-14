@@ -45,6 +45,7 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -132,11 +133,20 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const std::string &line) {
   key.assign(tokens[1].data(), tokens[1].size());
   TextNormalizer::NormalizeText(tokens[2], &expected_value);
   command.assign(tokens[3].data(), tokens[3].size());
-  if (tokens.size() > 4) {
-    expected_rank = NumberUtil::SimpleAtoi(tokens[4]);
+
+  if (tokens.size() == 4) {
+    if (absl::StartsWith(command, kConversionExpect) &&
+        command != kConversionExpect) {
+      constexpr int kSize = std::size(kConversionExpect);  // Size with '\0'.
+      expected_rank = NumberUtil::SimpleAtoi(command.substr(kSize));
+      command = kConversionExpect;
+    } else {
+      expected_rank = 0;
+    }
   } else {
-    expected_rank = 0;
+    expected_rank = NumberUtil::SimpleAtoi(tokens[4]);
   }
+
   if (tokens.size() > 5) {
     NumberUtil::SafeStrToDouble(tokens[5], &accuracy);
   } else {

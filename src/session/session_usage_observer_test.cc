@@ -149,7 +149,7 @@ TEST_F(SessionUsageObserverTest, ClientSideStatsInfolist) {
     observer->EvalCommandHandler(command);
   }
 
-  const uint64_t kSeconds = 0;
+  constexpr uint64_t kSeconds = 0;
   constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);

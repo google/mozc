@@ -170,8 +170,8 @@ bool SessionHandlerTool::SendKeyWithOption(const commands::KeyEvent &key,
 }
 
 bool SessionHandlerTool::TestSendKeyWithOption(const commands::KeyEvent &key,
-                                              const commands::Input &option,
-                                              commands::Output *output) {
+                                               const commands::Input &option,
+                                               commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::TEST_SEND_KEY);
   *input.mutable_key() = key;
@@ -236,7 +236,7 @@ bool SessionHandlerTool::SwitchInputMode(
 }
 
 bool SessionHandlerTool::SetRequest(const commands::Request &request,
-                                   commands::Output *output) {
+                                    commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SET_REQUEST);
   *input.mutable_request() = request;
@@ -244,24 +244,22 @@ bool SessionHandlerTool::SetRequest(const commands::Request &request,
 }
 
 bool SessionHandlerTool::SetConfig(const config::Config &config,
-                                  commands::Output *output) {
+                                   commands::Output *output) {
   commands::Input input;
   input.set_type(commands::Input::SET_CONFIG);
   *input.mutable_config() = config;
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::SyncData() {
-  return data_manager_->Wait();
-}
+bool SessionHandlerTool::SyncData() { return data_manager_->Wait(); }
 
 void SessionHandlerTool::SetCallbackText(const std::string &text) {
   callback_text_ = text;
 }
 
 bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
-                                            commands::Output *output,
-                                            bool allow_callback) {
+                                             commands::Output *output,
+                                             bool allow_callback) {
   input->set_id(id_);
   commands::Command command;
   *command.mutable_input() = *input;
@@ -286,17 +284,15 @@ bool SessionHandlerTool::EvalCommandInternal(commands::Input *input,
 }
 
 bool SessionHandlerTool::EvalCommand(commands::Input *input,
-                                    commands::Output *output) {
+                                     commands::Output *output) {
   return EvalCommandInternal(input, output, true);
 }
 
 SessionHandlerInterpreter::SessionHandlerInterpreter()
-    : SessionHandlerInterpreter(
-          std::unique_ptr<EngineInterface>(EngineFactory::Create())) {}
+    : SessionHandlerInterpreter(EngineFactory::Create().value()) {}
 
 SessionHandlerInterpreter::SessionHandlerInterpreter(
     std::unique_ptr<EngineInterface> engine) {
-
   client_ = absl::make_unique<SessionHandlerTool>(std::move(engine));
   config_ = absl::make_unique<Config>();
   last_output_ = absl::make_unique<Output>();
@@ -360,7 +356,7 @@ void SessionHandlerInterpreter::ClearUsageStats() {
   mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 }
 
-const Output& SessionHandlerInterpreter::LastOutput() const {
+const Output &SessionHandlerInterpreter::LastOutput() const {
   return *last_output_;
 }
 
@@ -456,21 +452,21 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
   return args;
 }
 
-#define MOZC_ASSERT_EQ_MSG(expected, actual, message)  \
-  if (expected != actual) {                            \
-    return mozc::InvalidArgumentError(message);        \
+#define MOZC_ASSERT_EQ_MSG(expected, actual, message) \
+  if (expected != actual) {                           \
+    return mozc::InvalidArgumentError(message);       \
   }
-#define MOZC_ASSERT_EQ(expected, actual)    \
-  if (expected != actual) {                 \
-    return mozc::InvalidArgumentError("");  \
+#define MOZC_ASSERT_EQ(expected, actual)   \
+  if (expected != actual) {                \
+    return mozc::InvalidArgumentError(""); \
   }
-#define MOZC_ASSERT_TRUE_MSG(result, message)    \
-  if (!(result)) {                               \
-    return mozc::InvalidArgumentError(message);  \
+#define MOZC_ASSERT_TRUE_MSG(result, message)   \
+  if (!(result)) {                              \
+    return mozc::InvalidArgumentError(message); \
   }
-#define MOZC_ASSERT_TRUE(result)            \
-  if (!(result)) {                          \
-    return mozc::InvalidArgumentError("");  \
+#define MOZC_ASSERT_TRUE(result)           \
+  if (!(result)) {                         \
+    return mozc::InvalidArgumentError(""); \
   }
 
 Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
@@ -544,12 +540,12 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
     for (size_t i = 2; i < args.size(); ++i) {
       MOZC_ASSERT_TRUE(ParseProtobufFromString(args[i], &option));
     }
-    MOZC_ASSERT_TRUE(client_->TestSendKeyWithOption(key_event, option,
-                                                    last_output_.get()));
+    MOZC_ASSERT_TRUE(
+        client_->TestSendKeyWithOption(key_event, option, last_output_.get()));
   } else if (command == "SELECT_CANDIDATE") {
     MOZC_ASSERT_EQ(2, args.size());
-    MOZC_ASSERT_TRUE(client_->SelectCandidate(
-        NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
+    MOZC_ASSERT_TRUE(client_->SelectCandidate(NumberUtil::SimpleAtoi(args[1]),
+                                              last_output_.get()));
   } else if (command == "SELECT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, args.size());
     uint32_t id;
@@ -557,8 +553,8 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
     MOZC_ASSERT_TRUE(client_->SelectCandidate(id, last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE") {
     MOZC_ASSERT_EQ(2, args.size());
-    MOZC_ASSERT_TRUE(client_->SubmitCandidate(
-        NumberUtil::SimpleAtoi(args[1]), last_output_.get()));
+    MOZC_ASSERT_TRUE(client_->SubmitCandidate(NumberUtil::SimpleAtoi(args[1]),
+                                              last_output_.get()));
   } else if (command == "SUBMIT_CANDIDATE_BY_VALUE") {
     MOZC_ASSERT_EQ(2, args.size());
     uint32_t id;

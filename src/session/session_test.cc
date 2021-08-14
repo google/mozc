@@ -503,7 +503,7 @@ class SessionTest : public ::testing::Test {
     mobile_request_ = absl::make_unique<Request>();
     commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
 
-    mock_data_engine_.reset(MockDataEngineFactory::Create());
+    mock_data_engine_ = MockDataEngineFactory::Create().value();
     engine_ = absl::make_unique<MockConverterEngine>();
 
     t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(

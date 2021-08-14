@@ -53,8 +53,8 @@ ABSL_FLAG(std::string, profile_dir, "", "Profile dir");
 namespace mozc {
 
 void Loop(std::istream *input, std::ostream *output) {
-  std::unique_ptr<EngineInterface> engine(EngineFactory::Create());
-  std::unique_ptr<session::Session> session(new session::Session(engine.get()));
+  std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
+  auto session = absl::make_unique<session::Session>(engine.get());
 
   commands::Command command;
   std::string line;

@@ -100,7 +100,7 @@ class SessionRegressionTest : public ::testing::Test {
 
     // Note: engine must be created after setting all the flags, as it
     // internally depends on global flags, e.g., for creation of rewriters.
-    std::unique_ptr<Engine> engine(MockDataEngineFactory::Create());
+    std::unique_ptr<Engine> engine = MockDataEngineFactory::Create().value();
 
     // Clear previous data just in case. It should work without this clear,
     // however the reality is Windows environment has a flacky test issue.

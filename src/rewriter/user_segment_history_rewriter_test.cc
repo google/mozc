@@ -54,6 +54,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -410,7 +411,7 @@ TEST_F(UserSegmentHistoryRewriterTest, SequenceTest) {
 
   rewriter->Clear();
 
-  const uint64_t kSeconds = 0;
+  constexpr uint64_t kSeconds = 0;
   constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
@@ -502,7 +503,7 @@ TEST_F(UserSegmentHistoryRewriterTest, DupTest) {
 
   rewriter->Clear();
 
-  const uint64_t kSeconds = 0;
+  constexpr uint64_t kSeconds = 0;
   constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
@@ -1322,7 +1323,7 @@ TEST_F(UserSegmentHistoryRewriterTest, Regression2459519) {
 
   rewriter->Clear();
 
-  const uint64_t kSeconds = 0;
+  constexpr uint64_t kSeconds = 0;
   constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
@@ -1450,7 +1451,7 @@ TEST_F(UserSegmentHistoryRewriterTest, RandomTest) {
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
 
-  const uint64_t kSeconds = 0;
+  constexpr uint64_t kSeconds = 0;
   constexpr uint32_t kMicroSeconds = 0;
   ClockMock clock(kSeconds, kMicroSeconds);
   Clock::SetClockForUnitTest(&clock);
@@ -1511,10 +1512,10 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     rewriter->Rewrite(request_, &segments);
     EXPECT_EQ("abc", segments.segment(0).candidate(0).content_value);
     // "[半] アルファベット"
-    std::string expectation = VariantsRewriter::kHalfWidth;
-    const std::string alphabet = VariantsRewriter::kAlphabet;
+    auto expectation = std::string(VariantsRewriter::kHalfWidth);
+    const absl::string_view alphabet = VariantsRewriter::kAlphabet;
     if (!alphabet.empty()) {
-      expectation += ' ' + alphabet;
+      expectation.append(1, ' ').append(alphabet.data(), alphabet.size());
     }
     EXPECT_EQ(expectation, segments.segment(0).candidate(0).description);
     rewriter->Finish(request_, &segments);

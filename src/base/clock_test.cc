@@ -39,7 +39,7 @@ namespace {
 
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-const uint64_t kTestSeconds = 1608729875uLL;
+constexpr uint64_t kTestSeconds = 1608729875uLL;
 constexpr uint32_t kTestMicroSeconds = 123456u;
 
 TEST(ClockTest, TimeTestWithMock) {
@@ -92,8 +92,8 @@ TEST(ClockTest, TimeTestWithMock) {
 
   // GetFrequency / GetTicks
   {
-    const uint64_t kFrequency = 12345;
-    const uint64_t kTicks = 54321;
+    constexpr uint64_t kFrequency = 12345;
+    constexpr uint64_t kTicks = 54321;
     clock_mock.SetFrequency(kFrequency);
     EXPECT_EQ(kFrequency, Clock::GetFrequency());
     clock_mock.SetTicks(kTicks);

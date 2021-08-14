@@ -775,41 +775,10 @@ cc_binary_mozc(
     ],
 )
 
-genrule(
-    name = "quality_regression_oss",
-    srcs = [
-        "//data_manager/oss:mozc_dataset_for_oss",
-        "//data/test/quality_regression_test:oss.tsv",
-    ],
-    outs = ["quality_regression_oss.tsv"],
-    # TODO(b/130248329): Remove LANG when Python 3.7 or later becomes the default.
-    cmd = ("LANG=en_US.UTF8 " +
-           "$(location :quality_regression_main) " +
-           "--test_file=$(location //data/test/quality_regression_test:oss.tsv) " +
-           "--data_file=$(location //data_manager/oss:mozc_dataset_for_oss) " +
-           "--data_type=oss --engine_type=desktop > $@"),
-    exec_tools = [":quality_regression_main"],
-)
-
 py_binary_mozc(
     name = "quality_regression",
     srcs = ["quality_regression.py"],
     deps = ["//build_tools:mozc_version_lib"],
-)
-
-genrule(
-    name = "regression_test_result_oss",
-    srcs = [
-        ":quality_regression_oss",
-        "//base:mozc_version_txt",
-        "//data/dictionary_oss:regression_test_result.tsv",
-    ],
-    outs = ["regression_test_result_oss.tsv"],
-    cmd = ("$(location :quality_regression) " +
-           "--version_file $(location //base:mozc_version_txt) " +
-           "--input $(location :quality_regression_oss) --output $@ " +
-           "--base $(location //data/dictionary_oss:regression_test_result.tsv)"),
-    exec_tools = [":quality_regression"],
 )
 
 cc_library_mozc(

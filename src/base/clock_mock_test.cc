@@ -40,10 +40,10 @@ namespace mozc {
 namespace {
 // 2020-12-23 13:24:35 (Wed) UTC
 // 123456 [usec]
-const uint64_t kTestSeconds = 1608729875uLL;
+constexpr uint64_t kTestSeconds = 1608729875uLL;
 constexpr uint32_t kTestMicroSeconds = 123456u;
 
-const uint64_t kDeltaSeconds = 12uLL;
+constexpr uint64_t kDeltaSeconds = 12uLL;
 constexpr uint32_t kDeltaMicroSeconds = 654321u;
 }  // namespace
 
@@ -104,11 +104,11 @@ TEST(ClockMockTest, GetFrequencyAndTicks) {
   EXPECT_NE(0, mock.GetFrequency());
   EXPECT_EQ(0, mock.GetTicks());
 
-  const uint64_t kFrequency = 123456789uLL;
+  constexpr uint64_t kFrequency = 123456789uLL;
   mock.SetFrequency(kFrequency);
   EXPECT_EQ(kFrequency, mock.GetFrequency());
 
-  const uint64_t kTicks = 987654321uLL;
+  constexpr uint64_t kTicks = 987654321uLL;
   mock.SetTicks(kTicks);
   EXPECT_EQ(kTicks, mock.GetTicks());
 }
@@ -160,7 +160,7 @@ TEST(ClockMockTest, PutClockForwardByTicksTest) {
   ClockMock mock(0, 0);
   ASSERT_EQ(0, mock.GetTicks());
 
-  const uint64_t kPutForwardTicks = 100;
+  constexpr uint64_t kPutForwardTicks = 100;
   mock.PutClockForwardByTicks(kPutForwardTicks);
   EXPECT_EQ(kPutForwardTicks, mock.GetTicks());
 }
