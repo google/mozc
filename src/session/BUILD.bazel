@@ -444,6 +444,7 @@ cc_library_mozc(
         "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//usage_stats:usage_stats_uploader",
+        "@com_google_absl//absl/memory",
     ],
 )
 

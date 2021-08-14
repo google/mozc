@@ -138,7 +138,7 @@ class PaddedMessageIterator {
 
     // Put the end-of-data marker.
     if ((base_index + cursor) == source_.size()) {
-      const uint8_t kEndOfDataMarker = 0x80;
+      constexpr uint8_t kEndOfDataMarker = 0x80;
       dest[cursor] = kEndOfDataMarker;
       ++cursor;
     }

@@ -73,7 +73,8 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
     // by SessionHandlerTestBase's SetUp and TearDown methods.
     SessionHandlerTestBase::SetUp();
 
-    std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+    std::unique_ptr<EngineInterface> engine =
+        MockDataEngineFactory::Create().value();
     handler_ = absl::make_unique<SessionHandlerInterpreter>(std::move(engine));
   }
 

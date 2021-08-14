@@ -127,8 +127,7 @@ class RPCServer {
  public:
   RPCServer()
       : server_socket_(kInvalidSocket),
-        handler_(new SessionHandler(
-            std::unique_ptr<Engine>(EngineFactory::Create()))) {
+        handler_(new SessionHandler(EngineFactory::Create().value())) {
     struct sockaddr_in sin;
 
     server_socket_ = ::socket(AF_INET, SOCK_STREAM, 0);

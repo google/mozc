@@ -44,6 +44,7 @@
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
+#include "absl/memory/memory.h"
 
 namespace {
 
@@ -66,9 +67,9 @@ namespace mozc {
 
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
-      usage_observer_(new session::SessionUsageObserver()),
-      session_handler_(new SessionHandler(
-          std::unique_ptr<Engine>(EngineFactory::Create()))) {
+      usage_observer_(absl::make_unique<session::SessionUsageObserver>()),
+      session_handler_(
+          absl::make_unique<SessionHandler>(EngineFactory::Create().value())) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();

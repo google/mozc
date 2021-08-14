@@ -370,10 +370,8 @@ class ConverterTest : public ::testing::Test {
     return ret;
   }
 
-  EngineInterface *CreateEngineWithMobilePredictor() {
-    return Engine::CreateMobileEngineHelper<testing::MockDataManager>()
-        .value()
-        .release();
+  std::unique_ptr<EngineInterface> CreateEngineWithMobilePredictor() {
+    return Engine::CreateMobileEngineHelper<testing::MockDataManager>().value();
   }
 
   bool FindCandidateByValue(absl::string_view value,
@@ -407,7 +405,8 @@ class ConverterTest : public ::testing::Test {
 // just checking whether this causes segmentation fault or not.
 // TODO(toshiyuki): make dictionary mock and test strictly.
 TEST_F(ConverterTest, CanConvertTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   {
@@ -424,7 +423,8 @@ namespace {
 std::string ContextAwareConvert(const std::string &first_key,
                                 const std::string &first_value,
                                 const std::string &second_key) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
@@ -523,7 +523,8 @@ TEST_F(ConverterTest, ContextAwareConversionTest) {
 }
 
 TEST_F(ConverterTest, CommitSegmentValue) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -575,7 +576,8 @@ TEST_F(ConverterTest, CommitSegmentValue) {
 }
 
 TEST_F(ConverterTest, CommitSegments) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -649,7 +651,8 @@ TEST_F(ConverterTest, CommitSegments) {
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -695,7 +698,8 @@ TEST_F(ConverterTest, CommitPartialSuggestionSegmentValue) {
 }
 
 TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -763,7 +767,8 @@ TEST_F(ConverterTest, CommitPartialSuggestionUsageStats) {
 }
 
 TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -815,7 +820,8 @@ TEST_F(ConverterTest, CommitAutoPartialSuggestionUsageStats) {
 }
 
 TEST_F(ConverterTest, CandidateKeyTest) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -826,7 +832,8 @@ TEST_F(ConverterTest, CandidateKeyTest) {
 }
 
 TEST_F(ConverterTest, Regression3437022) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -896,8 +903,8 @@ TEST_F(ConverterTest, CompletePOSIds) {
       "おおきな", "いっちゃわないね", "わたしのなまえはなかのです",
   };
 
-  std::unique_ptr<ConverterAndData> converter_and_data(
-      CreateStubbedConverterAndData());
+  std::unique_ptr<ConverterAndData> converter_and_data =
+      CreateStubbedConverterAndData();
   ConverterImpl *converter = converter_and_data->converter.get();
   for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
     Segments segments;
@@ -935,7 +942,8 @@ TEST_F(ConverterTest, CompletePOSIds) {
 
 TEST_F(ConverterTest, Regression3046266) {
   // Shouldn't correct nodes at the beginning of a sentence.
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -965,7 +973,8 @@ TEST_F(ConverterTest, Regression3046266) {
 
 TEST_F(ConverterTest, Regression5502496) {
   // Make sure key correction works for the first word of a sentence.
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   Segments segments;
 
@@ -988,7 +997,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
   commands::Request client_request;
   client_request.set_mixed_conversion(true);
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
 
@@ -1033,7 +1043,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
 }
 
 TEST_F(ConverterTest, StartPartialPrediction) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1044,7 +1055,8 @@ TEST_F(ConverterTest, StartPartialPrediction) {
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1055,7 +1067,7 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
 }
 
 TEST_F(ConverterTest, StartPartialPrediction_mobile) {
-  std::unique_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
+  std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1066,7 +1078,7 @@ TEST_F(ConverterTest, StartPartialPrediction_mobile) {
 }
 
 TEST_F(ConverterTest, StartPartialSuggestion_mobile) {
-  std::unique_ptr<EngineInterface> engine(CreateEngineWithMobilePredictor());
+  std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
   Segments segments;
@@ -1252,7 +1264,8 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
 }
 
 TEST_F(ConverterTest, ComposerKeySelection) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
   composer::Table table;
   config::Config config;
@@ -1309,7 +1322,8 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
 
 TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
   // This is a test case against b/8661091.
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   Segments segments;
@@ -1317,7 +1331,8 @@ TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
 }
 
 TEST_F(ConverterTest, StartReverseConversion) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   const ConverterInterface *converter = engine->GetConverter();
 
   const std::string kHonKanji = "本";
@@ -1531,7 +1546,8 @@ TEST_F(ConverterTest, GetLastConnectivePart) {
 }
 
 TEST_F(ConverterTest, ReconstructHistory) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   constexpr char kTen[] = "１０";
@@ -1554,7 +1570,8 @@ TEST_F(ConverterTest, ReconstructHistory) {
 }
 
 TEST_F(ConverterTest, LimitCandidatesSize) {
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface *converter = engine->GetConverter();
 
   composer::Table table;

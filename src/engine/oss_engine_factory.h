@@ -30,7 +30,9 @@
 #ifndef MOZC_ENGINE_OSS_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_OSS_ENGINE_FACTORY_H_
 
-#include "base/logging.h"
+#include <memory>
+
+#include "base/statusor.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
 
@@ -40,19 +42,12 @@ namespace mozc {
 // equipped with the data set for OSS (i.e., mozc/data/dictionary_oss).
 class OssEngineFactory {
  public:
-  // Creates an instance of Engine class. The caller is responsible for deleting
-  // the returned object.
-  static Engine *Create() {
+  static StatusOr<std::unique_ptr<Engine>> Create() {
 #ifdef OS_ANDROID
-    auto engine = Engine::CreateMobileEngineHelper<oss::OssDataManager>();
+    return Engine::CreateMobileEngineHelper<oss::OssDataManager>();
 #else
-    auto engine = Engine::CreateDesktopEngineHelper<oss::OssDataManager>();
+    return Engine::CreateDesktopEngineHelper<oss::OssDataManager>();
 #endif  // OS_ANDROID
-    if (!engine.ok()) {
-      LOG(ERROR) << engine.status();
-      return nullptr;
-    }
-    return engine->release();
   }
 };
 

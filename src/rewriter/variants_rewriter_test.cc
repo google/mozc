@@ -43,6 +43,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -52,11 +53,12 @@ using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
 using ::mozc::dictionary::POSMatcher;
 
-std::string AppendString(const std::string &lhs, const std::string &rhs) {
+std::string AppendString(absl::string_view lhs, absl::string_view rhs) {
+  auto result = std::string(lhs);
   if (!rhs.empty()) {
-    return lhs + ' ' + rhs;
+    result.append(1, ' ').append(rhs.data(), rhs.size());
   }
-  return lhs;
+  return result;
 }
 
 }  // namespace

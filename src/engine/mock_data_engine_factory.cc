@@ -34,13 +34,8 @@
 
 namespace mozc {
 
-Engine *MockDataEngineFactory::Create() {
-  auto engine =
-      Engine::CreateDesktopEngineHelper<mozc::testing::MockDataManager>();
-  if (!engine.ok()) {
-    LOG(ERROR) << engine.status();
-  }
-  return engine->release();
+StatusOr<std::unique_ptr<Engine>> MockDataEngineFactory::Create() {
+  return Engine::CreateDesktopEngineHelper<mozc::testing::MockDataManager>();
 }
 
 }  // namespace mozc

@@ -63,7 +63,7 @@ constexpr char kDictionaryData[] =
 
 // 0 means invalid dictionary id.
 // c.f., UserDictionaryUtil::CreateNewDictionaryId()
-const uint64_t kInvalidDictionaryId = 0;
+constexpr uint64_t kInvalidDictionaryId = 0;
 
 class UserDictionarySessionHandlerTest : public ::testing::Test {
  protected:

@@ -93,20 +93,20 @@ constexpr int kValueTrieIdMax = 0x3fffff;
 // Please see the comments for EncodeValue for details.
 // const uint8 kValueCharMarkReserved = 0xfb;
 // ASCII character.
-const uint8_t kValueCharMarkAscii = 0xfc;
+constexpr uint8_t kValueCharMarkAscii = 0xfc;
 // UCS4 character 0x??00.
-const uint8_t kValueCharMarkXX00 = 0xfd;
+constexpr uint8_t kValueCharMarkXX00 = 0xfd;
 // This UCS4 character is neither Hiragana nor above 2 patterns 0x????
-const uint8_t kValueCharMarkOtherUCS2 = 0xfe;
+constexpr uint8_t kValueCharMarkOtherUCS2 = 0xfe;
 
 // UCS4 character 0x00?????? (beyond UCS2 range)
 // UCS4 characters never exceed 10FFFF. (three 8bits, A-B-C).
 // For left most 8bits A, we will use upper 2bits for the flag
 // that indicating whether B and C is 0 or not.
-const uint8_t kValueCharMarkUCS4 = 0xff;
-const uint8_t kValueCharMarkUCS4Middle0 = 0x80;
-const uint8_t kValueCharMarkUCS4Right0 = 0x40;
-const uint8_t kValueCharMarkUCS4LeftMask = 0x1f;
+constexpr uint8_t kValueCharMarkUCS4 = 0xff;
+constexpr uint8_t kValueCharMarkUCS4Middle0 = 0x80;
+constexpr uint8_t kValueCharMarkUCS4Right0 = 0x40;
+constexpr uint8_t kValueCharMarkUCS4LeftMask = 0x1f;
 
 // character code related constants
 constexpr int kValueKanjiOffset = 0x01;
@@ -114,11 +114,11 @@ constexpr int kValueHiraganaOffset = 0x4b;
 constexpr int kValueKatakanaOffset = 0x9f;
 
 //// Cost encoding flag ////
-const uint8_t kSmallCostFlag = 0x80;
-const uint8_t kSmallCostMask = 0x7f;
+constexpr uint8_t kSmallCostFlag = 0x80;
+constexpr uint8_t kSmallCostMask = 0x7f;
 
 //// Flags for token ////
-const uint8_t kTokenTerminationFlag = 0xff;
+constexpr uint8_t kTokenTerminationFlag = 0xff;
 // Note that the flag for the first token for a certain key cannot be 0xff.
 // First token cannot be kSameAsPrevValueFlag(0x33) nor kSameAsPrevPosFlag(0x0c)
 
@@ -139,15 +139,15 @@ const uint8_t kTokenTerminationFlag = 0xff;
 //  2) Value is katakana
 //  3) Same as previous token
 //  4) Others. We have to store the value
-const uint8_t kValueTypeFlagMask = 0x03;
+constexpr uint8_t kValueTypeFlagMask = 0x03;
 // Same as index hiragana word
-const uint8_t kAsIsHiraganaValueFlag = 0x01;
+constexpr uint8_t kAsIsHiraganaValueFlag = 0x01;
 // Same as index katakana word
-const uint8_t kAsIsKatakanaValueFlag = 0x2;
+constexpr uint8_t kAsIsKatakanaValueFlag = 0x2;
 // has same word
-const uint8_t kSameAsPrevValueFlag = 0x03;
+constexpr uint8_t kSameAsPrevValueFlag = 0x03;
 // other cases
-const uint8_t kNormalValueFlag = 0x00;
+constexpr uint8_t kNormalValueFlag = 0x00;
 
 //// Pos encoding flag ////
 // There are 4 mutually exclusive cases
@@ -155,20 +155,20 @@ const uint8_t kNormalValueFlag = 0x00;
 //  2) Not same, frequent 1 byte pos
 //  3) Not same, full_pos but lid==rid, 2 byte
 //  4) Not same, full_pos 4 byte (no flag for this)
-const uint8_t kPosTypeFlagMask = 0x0c;
+constexpr uint8_t kPosTypeFlagMask = 0x0c;
 // Pos(left/right ID) is coded into 3 bytes
 // Note that lid/rid is less than 12 bits
 // We need 24 bits (= 3 bytes) to store full pos.
-const uint8_t kFullPosFlag = 0x04;
+constexpr uint8_t kFullPosFlag = 0x04;
 // lid == rid 8 bits
-const uint8_t kMonoPosFlag = 0x08;
+constexpr uint8_t kMonoPosFlag = 0x08;
 // has same left/right id as previous token
-const uint8_t kSameAsPrevPosFlag = 0x0c;
+constexpr uint8_t kSameAsPrevPosFlag = 0x0c;
 // frequent
-const uint8_t kFrequentPosFlag = 0x00;
+constexpr uint8_t kFrequentPosFlag = 0x00;
 
 //// Spelling Correction flag ////
-const uint8_t kSpellingCorrectionFlag = 0x10;
+constexpr uint8_t kSpellingCorrectionFlag = 0x10;
 
 //// Reverved ////
 // You can use one more flag!
@@ -184,15 +184,15 @@ const uint8_t kSpellingCorrectionFlag = 0x10;
 //     Note that we are assuming each id in the trie is less than 22 bits.
 // Lower 6 bits of flags field are used to store upper part of id
 // in value trie.
-const uint8_t kCrammedIDFlag = 0x40;
+constexpr uint8_t kCrammedIDFlag = 0x40;
 // Mask to cover upper valid 2bits when kCrammedIDFlag is used
-const uint8_t kUpperFlagsMask = 0xc0;
+constexpr uint8_t kUpperFlagsMask = 0xc0;
 // Mask to get upper 6bits from flags value
-const uint8_t kUpperCrammedIDMask = 0x3f;
+constexpr uint8_t kUpperCrammedIDMask = 0x3f;
 
 //// Last token flag ////
 // This token is last token for a index word
-const uint8_t kLastTokenFlag = 0x80;
+constexpr uint8_t kLastTokenFlag = 0x80;
 }  // namespace
 
 SystemDictionaryCodec::SystemDictionaryCodec() {}

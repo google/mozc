@@ -200,7 +200,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionary) {
   UserDictionarySession session(GetUserDictionaryFile());
 
   // Add dummy dictionary.
-  const uint64_t kDummyId = 10;
+  constexpr uint64_t kDummyId = 10;
   {
     UserDictionary *user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();
@@ -224,7 +224,7 @@ TEST_F(UserDictionarySessionTest, DeleteDictionaryWithEnsuringNonEmptyStorage) {
   session.SetDefaultDictionaryName("abcde");
 
   // Add dummy dictionary.
-  const uint64_t kDummyId = 10;
+  constexpr uint64_t kDummyId = 10;
   {
     UserDictionary *user_dictionary =
         session.mutable_storage()->GetProto().add_dictionaries();

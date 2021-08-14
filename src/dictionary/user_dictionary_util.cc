@@ -335,7 +335,7 @@ user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
 
 uint64_t UserDictionaryUtil::CreateNewDictionaryId(
     const user_dictionary::UserDictionaryStorage &storage) {
-  static const uint64_t kInvalidDictionaryId = 0;
+  static constexpr uint64_t kInvalidDictionaryId = 0;
 
   uint64_t id = kInvalidDictionaryId;
   while (id == kInvalidDictionaryId) {

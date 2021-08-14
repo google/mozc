@@ -65,7 +65,7 @@ using session::SessionHandlerTool;
 TEST(SessionHandlerStressTest, BasicStressTest) {
   std::vector<commands::KeyEvent> keys;
   commands::Output output;
-  std::unique_ptr<Engine> engine(EngineFactory::Create());
+  std::unique_ptr<Engine> engine = EngineFactory::Create().value();
   SessionHandlerTool client(std::move(engine));
   size_t keyevents_size = 0;
   constexpr size_t kMaxEventSize = 2500;

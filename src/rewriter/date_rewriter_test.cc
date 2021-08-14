@@ -185,7 +185,7 @@ bool AllElementsAreSame(const std::string &key,
 }
 
 // "2011-04-18 15:06:31 (Mon)" UTC
-const uint64_t kTestSeconds = 1303139191uLL;
+constexpr uint64_t kTestSeconds = 1303139191uLL;
 // micro seconds. it is random value.
 constexpr uint32_t kTestMicroSeconds = 588377u;
 

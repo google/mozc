@@ -110,7 +110,8 @@ TEST_F(SessionConverterStressTest, ConvertToHalfWidthForRandomAsciiInput) {
   const commands::Request request;
   config::Config config;
 
-  std::unique_ptr<EngineInterface> engine(MockDataEngineFactory::Create());
+  std::unique_ptr<EngineInterface> engine =
+      MockDataEngineFactory::Create().value();
   ConverterInterface* converter = engine->GetConverter();
   SessionConverter sconverter(converter, &request, &config);
   composer::Table table;

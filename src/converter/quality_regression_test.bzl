@@ -83,3 +83,34 @@ def quality_regression_tests(name, srcs, **kwargs):
         name = name,
         tests = ["%s@%s" % (name, src.rsplit(":", 1)[1]) for src in srcs],
     )
+
+def evaluation(name, outs, data_file, data_type, engine_type, test_file, base_file):
+    evaluation_name = name + "_result"
+    evaluation_out = evaluation_name + ".tsv"
+    native.genrule(
+        name = evaluation_name,
+        srcs = [data_file, test_file],
+        outs = [evaluation_out],
+        # TODO(b/130248329): Remove LANG when Python 3.7 or later becomes the default.
+        cmd = ("LANG=en_US.UTF8 " +
+               "$(location //converter:quality_regression_main) " +
+               "--test_file=$(location %s) " % test_file +
+               "--data_file=$(location %s) " % data_file +
+               "--data_type=%s --engine_type=%s > $@" % (data_type, engine_type)),
+        exec_tools = ["//converter:quality_regression_main"],
+    )
+
+    native.genrule(
+        name = name,
+        srcs = [
+            base_file,
+            evaluation_name,
+            "//base:mozc_version_txt",
+        ],
+        outs = outs,
+        cmd = ("$(location //converter:quality_regression) " +
+               "--version_file $(location //base:mozc_version_txt) " +
+               "--input $(location %s) --output $@ " % evaluation_name +
+               "--base $(location %s)" % base_file),
+        exec_tools = ["//converter:quality_regression"],
+    )
