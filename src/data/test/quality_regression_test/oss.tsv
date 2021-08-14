@@ -48,3 +48,18 @@ oss_issue12	ふめんをよめないのがじゃくてんです	譜面	Conversio
 oss_issue12	せがずいぶんたかい	背が	Conversion Match
 oss_issue12	かいさつぐちでてをふった	振った	Conversion Match
 oss_issue12	ぜいたくをいえばきりがないけど	霧	Conversion Not Match
+oss_issue25	じかんにおわれている	負われて	Conversion Not Match
+oss_issue25	きんじて	禁じ手	Conversion Expected 2
+oss_issue25	じょしこうせい	女子高生	Conversion Expected 2
+oss_issue25	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Match
+oss_issue25	おわりをむかえた	終わりを迎えた	Conversion Match
+oss_issue25	かねのなるき	金のなる木	Conversion Match
+oss_issue25	しょうてん	笑点	Conversion Expected 9
+oss_issue25	べっどしーつをこうかんした	ベッドシーツ	Conversion Match
+oss_issue25	いわせるな	言わせるな	Conversion Match
+oss_issue25	ならには	奈良には	Conversion Match
+oss_issue25	かいごかんせい	下位互換性	Conversion Match
+oss_issue25	けんざかいには	県境には	Conversion Match
+oss_issue25	あいてをたたきのめす	相手を叩きのめす	Conversion Match
+oss_issue25	けいししている	軽視している	Conversion Match
+oss_issue25	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Match
