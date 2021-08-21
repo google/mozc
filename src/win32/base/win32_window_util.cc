@@ -50,7 +50,6 @@ namespace {
 
 using ATL::CStringW;
 using ATL::CWindow;
-using std::unique_ptr;
 
 std::wstring SafeGetWindowText(HWND window_handle) {
   if (!::IsWindow(window_handle)) {
@@ -63,7 +62,7 @@ std::wstring SafeGetWindowText(HWND window_handle) {
   }
 
   const size_t buffer_len = text_len_without_null + 1;
-  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
+  std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
 
   const int copied_len_without_null =
       GetWindowText(window_handle, buffer.get(), buffer_len);

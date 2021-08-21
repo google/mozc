@@ -43,7 +43,6 @@
 #include "win32/tip/tip_ref_count.h"
 
 using ::ATL::CComPtr;
-using ::std::unique_ptr;
 
 namespace mozc {
 namespace win32 {
@@ -293,7 +292,7 @@ class CandidateListImpl : public ITfCandidateList {
 
   TipRefCount ref_count_;
   std::vector<std::wstring> candidates_;
-  unique_ptr<TipCandidateListCallback> callback_;
+  std::unique_ptr<TipCandidateListCallback> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(CandidateListImpl);
 };

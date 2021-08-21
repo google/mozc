@@ -42,7 +42,6 @@
 
 namespace mozc {
 namespace {
-using std::unique_ptr;
 typedef WinAPITestHelper::FunctionPointer FunctionPointer;
 
 void WINAPI dummy_func() {}
@@ -294,7 +293,7 @@ WinAPITestHelper::RestoreInfoHandle WinAPITestHelper::DoHook(
   PortableExecutableImage image(target_module);
   CHECK(image.IsValid());
 
-  unique_ptr<RestoreInfo> restore_info(new RestoreInfo());
+  std::unique_ptr<RestoreInfo> restore_info(new RestoreInfo());
   for (ImageImportDescriptorIterator descriptor_iterator(image);
        !descriptor_iterator.Done(); descriptor_iterator.Next()) {
     const auto &descriptor = descriptor_iterator.Get();
@@ -324,7 +323,7 @@ WinAPITestHelper::RestoreInfoHandle WinAPITestHelper::DoHook(
 
 void WinAPITestHelper::RestoreHook(
     WinAPITestHelper::RestoreInfoHandle restore_info) {
-  unique_ptr<RestoreInfo> info(restore_info);  // takes ownership
+  std::unique_ptr<RestoreInfo> info(restore_info);  // takes ownership
 
   for (size_t i = 0; i < info->rewrites.size(); ++i) {
     const auto &rewrite = info->rewrites[i];

@@ -38,8 +38,6 @@ namespace win32 {
 
 namespace {
 
-using std::unique_ptr;
-
 BYTE ParseVirtualKey(UINT combined_virtual_key) {
   const uint16 loword = LOWORD(combined_virtual_key);
   if (loword <= 0xff) {
@@ -187,7 +185,7 @@ class DefaultKeyboardInterface : public Win32KeyboardInterface {
 
     // Unfortunately, SendInput API requires LPINPUT (NOT const INPUT *).
     // This is why we make a temporary array with the same data here.
-    unique_ptr<INPUT[]> input_array(new INPUT[inputs.size()]);
+    std::unique_ptr<INPUT[]> input_array(new INPUT[inputs.size()]);
     for (size_t i = 0; i < inputs.size(); ++i) {
       input_array[i] = inputs[i];
     }

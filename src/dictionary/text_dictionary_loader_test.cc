@@ -43,8 +43,6 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace dictionary {
 namespace {
@@ -82,7 +80,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
 
 TEST_F(TextDictionaryLoaderTest, BasicTest) {
   {
-    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     std::vector<Token *> tokens;
     loader->CollectTokens(&tokens);
     EXPECT_TRUE(tokens.empty());
@@ -96,7 +94,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->Load(filename, "");
     const std::vector<Token *> &tokens = loader->tokens();
 
@@ -125,7 +123,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->LoadWithLineLimit(filename, "", 2);
     const std::vector<Token *> &tokens = loader->tokens();
 
@@ -148,7 +146,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
   }
 
   {
-    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     // open twice -- tokens are cleared everytime
     loader->Load(filename, "");
     loader->Load(filename, "");
@@ -160,7 +158,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
-  unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+  std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
   {
     Token token;
     token.lid = 100;
@@ -229,7 +227,7 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
   }
 
   {
-    unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+    std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
     loader->Load(filename, "");
     EXPECT_EQ(6, loader->tokens().size());
   }
@@ -239,7 +237,7 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
 }
 
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
-  unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
+  std::unique_ptr<TextDictionaryLoader> loader(CreateTextDictionaryLoader());
 
   const std::string dic_filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.tsv");

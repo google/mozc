@@ -53,7 +53,6 @@ namespace tsf {
 using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
-using std::unique_ptr;
 
 namespace {
 
@@ -322,7 +321,7 @@ bool PrepareForReconversionIMM32(ITfContext *context,
   }
 
   const size_t buffer_size = static_cast<size_t>(result);
-  unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
+  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
 
   RECONVERTSTRING *reconvert_string =
       reinterpret_cast<RECONVERTSTRING *>(buffer.get());

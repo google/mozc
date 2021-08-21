@@ -83,8 +83,6 @@
 namespace mozc {
 namespace {
 
-using std::unique_ptr;
-
 using dictionary::DictionaryInterface;
 using dictionary::DictionaryMock;
 using dictionary::PosGroup;
@@ -256,17 +254,17 @@ class MockDataAndPredictor {
  private:
   const testing::MockDataManager data_manager_;
   POSMatcher pos_matcher_;
-  unique_ptr<SuppressionDictionary> suppression_dictionary_;
-  unique_ptr<const Connector> connector_;
-  unique_ptr<const Segmenter> segmenter_;
-  unique_ptr<const DictionaryInterface> suffix_dictionary_;
-  unique_ptr<const DictionaryInterface> dictionary_;
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<const Connector> connector_;
+  std::unique_ptr<const Segmenter> segmenter_;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
+  std::unique_ptr<const DictionaryInterface> dictionary_;
   DictionaryMock *dictionary_mock_;
-  unique_ptr<const PosGroup> pos_group_;
-  unique_ptr<ImmutableConverterInterface> immutable_converter_;
-  unique_ptr<ConverterMock> converter_;
-  unique_ptr<const SuggestionFilter> suggestion_filter_;
-  unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
+  std::unique_ptr<const PosGroup> pos_group_;
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  std::unique_ptr<ConverterMock> converter_;
+  std::unique_ptr<const SuggestionFilter> suggestion_filter_;
+  std::unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
 };
 
 class CallCheckDictionary : public DictionaryInterface {
@@ -539,7 +537,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    unique_ptr<MockDataAndPredictor> data_and_predictor(
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -575,7 +573,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    unique_ptr<MockDataAndPredictor> data_and_predictor(
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor;
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -626,7 +624,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    unique_ptr<MockDataAndPredictor> data_and_predictor(
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
         new MockDataAndPredictor);
     // CallCheckDictionary is managed by data_and_predictor.
     CallCheckDictionary *check_dictionary = new CallCheckDictionary;
@@ -681,7 +679,7 @@ class DictionaryPredictorTest : public ::testing::Test {
       transliteration::TransliterationType input_mode, const char *key,
       const char *expected_prefix, const char *expected_values[],
       size_t expected_values_size) {
-    unique_ptr<MockDataAndPredictor> data_and_predictor(
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -718,7 +716,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     request_->set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    unique_ptr<MockDataAndPredictor> data_and_predictor(
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
         CreateDictionaryPredictorWithMockData());
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -758,19 +756,19 @@ class DictionaryPredictorTest : public ::testing::Test {
     return request_->mutable_decoder_experiment_params();
   }
 
-  unique_ptr<composer::Composer> composer_;
-  unique_ptr<composer::Table> table_;
-  unique_ptr<ConversionRequest> convreq_;
-  unique_ptr<config::Config> config_;
-  unique_ptr<commands::Request> request_;
+  std::unique_ptr<composer::Composer> composer_;
+  std::unique_ptr<composer::Table> table_;
+  std::unique_ptr<ConversionRequest> convreq_;
+  std::unique_ptr<config::Config> config_;
+  std::unique_ptr<commands::Request> request_;
 
  private:
-  unique_ptr<ImmutableConverterInterface> immutable_converter_;
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
 TEST_F(DictionaryPredictorTest, OnOffTest) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -794,7 +792,7 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
 }
 
 TEST_F(DictionaryPredictorTest, PartialSuggestion) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   {
     // Set up mock converter.
@@ -832,7 +830,7 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -851,7 +849,7 @@ TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -868,7 +866,7 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
   // history is "きょうと/京都"
   PrependHistorySegments("きょうと", "京都", &segments);
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1348,7 +1346,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
 
 TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
   Segments segments;
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1464,7 +1462,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1524,7 +1522,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1621,7 +1619,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1708,7 +1706,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1781,7 +1779,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1821,20 +1819,20 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
 
 TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   testing::MockDataManager data_manager;
-  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  unique_ptr<ConverterMock> converter(new ConverterMock);
-  unique_ptr<ImmutableConverterInterface> immutable_converter(
+  std::unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  std::unique_ptr<ConverterMock> converter(new ConverterMock);
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  unique_ptr<const DictionaryInterface> suffix_dictionary(
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  unique_ptr<const Connector> connector =
+  std::unique_ptr<const Connector> connector =
       Connector::CreateFromDataManager(data_manager).value();
-  unique_ptr<const Segmenter> segmenter(
+  std::unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  unique_ptr<const SuggestionFilter> suggestion_filter(
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
-  unique_ptr<TestableDictionaryPredictor> predictor(
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(
           data_manager, converter.get(), immutable_converter.get(),
           dictionary.get(), suffix_dictionary.get(), connector.get(),
@@ -1976,7 +1974,7 @@ class TestSuffixDictionary : public DictionaryInterface {
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -1991,7 +1989,8 @@ TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(new MockDataAndPredictor);
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor);
   data_and_predictor->Init(nullptr, new TestSuffixDictionary());
 
   const DictionaryPredictor *predictor =
@@ -2027,7 +2026,8 @@ TEST_F(DictionaryPredictorTest, AggregateSuffixPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(new MockDataAndPredictor);
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor);
   data_and_predictor->Init(nullptr, new TestSuffixDictionary());
 
   const DictionaryPredictor *predictor =
@@ -2149,7 +2149,7 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2215,7 +2215,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2265,7 +2265,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2308,7 +2308,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   Segments segments;
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2338,7 +2338,7 @@ TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
 }
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2377,7 +2377,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   config_->set_use_dictionary_suggest(false);
   config_->set_use_realtime_conversion(true);
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2418,7 +2418,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   config_->set_use_dictionary_suggest(false);
   config_->set_use_realtime_conversion(true);
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2458,7 +2458,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 }
 
 TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2474,7 +2474,7 @@ TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2623,7 +2623,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_->SetTable(table_.get());
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2689,7 +2689,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   config_->set_use_realtime_conversion(false);
 
   table_->LoadFromFile("system://kana.tsv");
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2760,7 +2760,7 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 }
 
 TEST_F(DictionaryPredictorTest, SetLMCost) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2822,7 +2822,7 @@ void AddTestableDictionaryPredictorResult(
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -2904,7 +2904,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
 TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
   testing::MockDataManager data_manager;
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(
       CreateSystemDictionaryFromDataManager(data_manager).value().release(),
@@ -2924,7 +2924,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
 TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
   testing::MockDataManager data_manager;
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(
       CreateSystemDictionaryFromDataManager(data_manager).value().release(),
@@ -2945,7 +2945,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
 TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
   testing::MockDataManager data_manager;
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(
       CreateSystemDictionaryFromDataManager(data_manager).value().release(),
@@ -2979,7 +2979,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
   testing::MockDataManager data_manager;
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(
       CreateSystemDictionaryFromDataManager(data_manager).value().release(),
@@ -3009,7 +3009,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
 TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
   testing::MockDataManager data_manager;
 
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       new MockDataAndPredictor());
   data_and_predictor->Init(
       CreateSystemDictionaryFromDataManager(data_manager).value().release(),
@@ -3060,7 +3060,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3159,7 +3159,7 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
 }
 
 TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3207,20 +3207,20 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
 
 TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   testing::MockDataManager data_manager;
-  unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
-  unique_ptr<ConverterInterface> converter(new ConverterMock);
-  unique_ptr<ImmutableConverterInterface> immutable_converter(
+  std::unique_ptr<const DictionaryInterface> dictionary(new DictionaryMock);
+  std::unique_ptr<ConverterInterface> converter(new ConverterMock);
+  std::unique_ptr<ImmutableConverterInterface> immutable_converter(
       new ImmutableConverterMock);
-  unique_ptr<const DictionaryInterface> suffix_dictionary(
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
       CreateSuffixDictionaryFromDataManager(data_manager));
-  unique_ptr<const Connector> connector =
+  std::unique_ptr<const Connector> connector =
       Connector::CreateFromDataManager(data_manager).value();
-  unique_ptr<const Segmenter> segmenter(
+  std::unique_ptr<const Segmenter> segmenter(
       Segmenter::CreateFromDataManager(data_manager));
-  unique_ptr<const SuggestionFilter> suggestion_filter(
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
       CreateSuggestionFilter(data_manager));
   const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
-  unique_ptr<TestableDictionaryPredictor> predictor(
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
       new TestableDictionaryPredictor(
           data_manager, converter.get(), immutable_converter.get(),
           dictionary.get(), suffix_dictionary.get(), connector.get(),
@@ -3247,7 +3247,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3286,7 +3286,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 }
 
 TEST_F(DictionaryPredictorTest, PredictNCandidates) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3330,7 +3330,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 }
 
 TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3362,7 +3362,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
 }
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
@@ -3595,7 +3595,7 @@ void SetSegmentForCommit(const std::string &candidate_value,
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, UsageStats) {
-  unique_ptr<MockDataAndPredictor> data_and_predictor(
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   DictionaryPredictor *predictor =
       data_and_predictor->mutable_dictionary_predictor();

@@ -134,6 +134,7 @@
         '<(absl_srcdir)/container/internal/raw_hash_set.cc',
         '<(absl_srcdir)/hash/internal/city.cc',
         '<(absl_srcdir)/hash/internal/hash.cc',
+        # The OSS version uses Abseil lts_2021_03_24.
         '<(absl_srcdir)/hash/internal/wyhash.cc',
       ],
     },

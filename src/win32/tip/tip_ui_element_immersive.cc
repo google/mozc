@@ -82,7 +82,6 @@ using ::mozc::commands::Output;
 using ::mozc::commands::Preedit;
 using ::mozc::renderer::TableLayout;
 using ::mozc::renderer::WindowUtil;
-using ::std::unique_ptr;
 
 typedef ::mozc::commands::Candidates::Candidate Candidate;
 typedef ::mozc::commands::Preedit_Segment Segment;
@@ -559,9 +558,9 @@ class TipImmersiveUiElementImpl : public ITfCandidateListUIElementBehavior {
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
   CComPtr<ITfContext> context_;
-  unique_ptr<TipUiElementDelegate> delegate_;
-  unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
-  unique_ptr<renderer::win32::TextRenderer> text_renderer_;
+  std::unique_ptr<TipUiElementDelegate> delegate_;
+  std::unique_ptr<renderer::win32::WorkingAreaInterface> working_area_;
+  std::unique_ptr<renderer::win32::TextRenderer> text_renderer_;
   CWindow window_;
   bool window_visible_;
   TableLayout table_layout_;

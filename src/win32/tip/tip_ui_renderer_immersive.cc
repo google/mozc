@@ -50,7 +50,6 @@ namespace tsf {
 
 namespace {
 
-using std::unique_ptr;
 using WTL::CBitmap;
 using WTL::CBitmapHandle;
 using WTL::CDC;

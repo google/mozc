@@ -50,9 +50,9 @@ namespace {
 class ClockImpl : public ClockInterface {
  public:
   ClockImpl() : timezone_offset_sec_(0), timezone_(absl::LocalTimeZone()) {
-#if OS_WIN
-    // Because absl::LocalTimeZone() always returns UTC timezone on Windows,
-    // a work-around for Windows is required.
+#if defined(OS_CHROMEOS) || defined(OS_WIN)
+    // Because absl::LocalTimeZone() always returns UTC timezone on Chrome OS
+    // and Windows, a work-around for Chrome OS and Windows is required.
     int offset_sec = 9 * 60 * 60;  // JST as fallback
     const time_t epoch(24 * 60 * 60);  // 1970-01-02 00:00:00 UTC
     const std::tm *offset = std::localtime(&epoch);
@@ -63,7 +63,7 @@ class ClockImpl : public ClockInterface {
           + offset->tm_min * 60;  // minute offset.
     }
     timezone_ = absl::FixedTimeZone(offset_sec);
-#endif  // OS_WIN
+#endif  // defined(OS_CHROMEOS) || defined(OS_WIN)
   }
   ~ClockImpl() override {}
 

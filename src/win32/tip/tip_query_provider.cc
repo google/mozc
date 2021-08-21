@@ -43,7 +43,6 @@ using ::mozc::commands::Input;
 using ::mozc::commands::KeyEvent;
 using ::mozc::commands::Output;
 using ::mozc::commands::SessionCommand;
-using ::std::unique_ptr;
 
 namespace mozc {
 namespace win32 {
@@ -131,7 +130,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
   }
 
   TipRefCount ref_count_;
-  unique_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
 
   DISALLOW_COPY_AND_ASSIGN(TipQueryProviderImpl);
 };
@@ -142,7 +141,7 @@ TipQueryProvider::~TipQueryProvider() {}
 
 // static
 TipQueryProvider *TipQueryProvider::Create() {
-  unique_ptr<ClientInterface> client(ClientFactory::NewClient());
+  std::unique_ptr<ClientInterface> client(ClientFactory::NewClient());
   if (!client->EnsureSession()) {
     return nullptr;
   }

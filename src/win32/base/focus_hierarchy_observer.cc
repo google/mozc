@@ -51,8 +51,6 @@ using ::ATL::CComPtr;
 using ::ATL::CComQIPtr;
 using ::ATL::CComVariant;
 
-using ::std::unique_ptr;
-
 constexpr size_t kMaxHierarchyLevel = 50;
 
 DWORD g_tls_index = TLS_OUT_OF_INDEXES;
@@ -70,7 +68,7 @@ std::string GetWindowTestAsUTF8(HWND window_handle) {
     return "";
   }
   const int buffer_len = text_len + 1;
-  unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
+  std::unique_ptr<wchar_t[]> buffer(new wchar_t[buffer_len]);
   const int copied_len_without_null =
       ::GetWindowText(window_handle, buffer.get(), buffer_len);
   if (copied_len_without_null <= 0 ||
@@ -82,7 +80,7 @@ std::string GetWindowTestAsUTF8(HWND window_handle) {
 
 std::string GetWindowClassNameAsUTF8(HWND window_handle) {
   constexpr int kBufferLen = 256 + 1;
-  unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferLen]);
+  std::unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferLen]);
   const int copied_len_without_null =
       ::GetClassNameW(window_handle, buffer.get(), kBufferLen);
   if (copied_len_without_null <= 0 ||

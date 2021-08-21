@@ -55,8 +55,6 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using std::unique_ptr;
-
 // Timeout value used by a work around against b/5765783. As b/6165722
 // this value is determined to be:
 // - smaller than the default time-out used in IsHungAppWindow API.
@@ -67,7 +65,8 @@ bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   const UINT num_element =
       ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
 
-  unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
+  std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
+      new LAYOUTORTIPPROFILE[num_element]);
 
   const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
                                                    buffer.get(), num_element);

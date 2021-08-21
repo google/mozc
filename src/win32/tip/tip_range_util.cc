@@ -45,7 +45,6 @@ namespace {
 using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
-using std::unique_ptr;
 
 // GUID_PROP_INPUTSCOPE
 GUID kGuidPropInputscope = {0x1713dd5a,
@@ -135,7 +134,7 @@ HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
   // Use a buffer on heap for longer size case.
   {
     constexpr size_t kBufferSize = 1024;
-    unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferSize]);
+    std::unique_ptr<wchar_t[]> buffer(new wchar_t[kBufferSize]);
     while (true) {
       ULONG fetched = 0;
       const HRESULT result = range_view->GetText(

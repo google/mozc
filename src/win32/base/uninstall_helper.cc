@@ -55,7 +55,6 @@ namespace mozc {
 namespace win32 {
 using ATL::CComPtr;
 using ATL::CRegKey;
-using std::unique_ptr;
 
 namespace {
 
@@ -180,7 +179,7 @@ bool GenerateKeyboardLayoutMap(
 std::wstring GetIMEFileName(HKL hkl) {
   const UINT num_chars_without_null = ::ImmGetIMEFileName(hkl, nullptr, 0);
   const size_t num_chars_with_null = num_chars_without_null + 1;
-  unique_ptr<wchar_t[]> buffer(new wchar_t[num_chars_with_null]);
+  std::unique_ptr<wchar_t[]> buffer(new wchar_t[num_chars_with_null]);
   const UINT num_copied =
       ::ImmGetIMEFileName(hkl, buffer.get(), num_chars_with_null);
 
@@ -454,7 +453,7 @@ bool GetActiveKeyboardLayouts(std::vector<HKL> *keyboard_layouts) {
   keyboard_layouts->clear();
 
   const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
-  unique_ptr<HKL[]> buffer(new HKL[num_keyboard_layout]);
+  std::unique_ptr<HKL[]> buffer(new HKL[num_keyboard_layout]);
   const int num_copied =
       ::GetKeyboardLayoutList(num_keyboard_layout, buffer.get());
   keyboard_layouts->assign(buffer.get(), buffer.get() + num_copied);
@@ -816,7 +815,7 @@ bool UninstallHelper::GetCurrentProfilesForVista(
   {
     const UINT num_element =
         ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-    unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
+    std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
         new LAYOUTORTIPPROFILE[num_element]);
     const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
                                                      buffer.get(), num_element);
@@ -992,7 +991,7 @@ bool UninstallHelper::RestoreUserIMEEnvironmentMain() {
   // update entries under HKCU.  Assuming the desktop is available,
   // broadcast messages into existing processes so that these processes
   // start to use the new default IME.
-  const bool kBroadcastNewIME = true;
+  constexpr bool kBroadcastNewIME = true;
 
   return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
 }
@@ -1015,7 +1014,7 @@ bool UninstallHelper::EnsureIMEIsRemovedForCurrentUser(
   // Since this function is targeting for the service account, IME change
   // notification will not be sent in case it causes unwilling side-effects
   // against other important processes running in the service session.
-  const bool kBroadcastNewIME = false;
+  constexpr bool kBroadcastNewIME = false;
   return RestoreUserIMEEnvironmentForVista(kBroadcastNewIME);
 }
 

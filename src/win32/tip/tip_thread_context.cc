@@ -36,8 +36,6 @@
 #include "win32/base/focus_hierarchy_observer.h"
 #include "win32/tip/tip_input_mode_manager.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace win32 {
 namespace tsf {
@@ -56,7 +54,7 @@ class TipThreadContext::InternalState {
  public:
   InternalState() : input_mode_manager(GetConfig()), focus_revision(0) {}
   TipInputModeManager input_mode_manager;
-  unique_ptr<FocusHierarchyObserver> focus_hierarchy_observer;
+  std::unique_ptr<FocusHierarchyObserver> focus_hierarchy_observer;
   int32 focus_revision;
 };
 

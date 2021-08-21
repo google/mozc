@@ -59,9 +59,9 @@
 using mozc::usage_stats::UsageStats;
 
 #ifdef OS_ANDROID
-const bool kDefaultUseActualConverterForRealtimeConversion = false;
+constexpr bool kDefaultUseActualConverterForRealtimeConversion = false;
 #else
-const bool kDefaultUseActualConverterForRealtimeConversion = true;
+constexpr bool kDefaultUseActualConverterForRealtimeConversion = true;
 #endif  // OS_ANDROID
 
 ABSL_FLAG(bool, use_actual_converter_for_realtime_conversion,
@@ -1379,7 +1379,7 @@ void SessionConverter::AppendCandidateList() {
   // Set transliteration candidates
   CandidateList *transliterations;
   if (use_cascading_window_) {
-    const bool kNoRotate = false;
+    constexpr bool kNoRotate = false;
     transliterations = candidate_list_->AllocateSubCandidateList(kNoRotate);
     transliterations->set_focused(true);
 

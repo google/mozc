@@ -56,8 +56,6 @@ namespace win32 {
 
 namespace {
 
-using std::unique_ptr;
-
 const wchar_t kRegKeyboardLayouts[] =
     L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts";
 const wchar_t kLayoutDisplayNameKey[] = L"Layout Display Name";
@@ -321,7 +319,7 @@ HRESULT ImmRegistrar::Unregister(const std::wstring &ime_filename) {
   // Ensure the target IME is unloaded.
   {
     const int num_keyboard_layout = ::GetKeyboardLayoutList(0, nullptr);
-    unique_ptr<HKL[]> keyboard_layouts(new HKL[num_keyboard_layout]);
+    std::unique_ptr<HKL[]> keyboard_layouts(new HKL[num_keyboard_layout]);
     const size_t num_copied =
         ::GetKeyboardLayoutList(num_keyboard_layout, keyboard_layouts.get());
     for (size_t i = 0; i < num_copied; ++i) {

@@ -296,7 +296,7 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
 }
 
 bool CharChunk::AddInputInternal(std::string *input) {
-  const bool kNoLoop = false;
+  constexpr bool kNoLoop = false;
 
   size_t key_length = 0;
   bool fixed = false;
@@ -385,7 +385,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
     return kNoLoop;
   }
 
-  const bool kLoop = true;
+  constexpr bool kLoop = true;
   return kLoop;
 }
 

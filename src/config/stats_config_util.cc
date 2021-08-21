@@ -129,9 +129,9 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
   // On Dev channel, usage stats and crash report should be always sent.
   val = true;
   // We always returns true in DevChannel.
-  const bool kReturnCodeInError = true;
+  constexpr bool kReturnCodeInError = true;
 #else
-  const bool kReturnCodeInError = false;
+  constexpr bool kReturnCodeInError = false;
 #endif  // CHANNEL_DEV
 
   CRegKey key;
@@ -178,7 +178,7 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
   return true;
 #else
   scoped_lock l(&mutex_);
-  const bool kDefaultValue = false;
+  constexpr bool kDefaultValue = false;
 
   std::ifstream ifs(config_file_.c_str(), std::ios::binary | std::ios::in);
 

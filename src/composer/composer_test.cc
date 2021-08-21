@@ -967,8 +967,8 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
 }
 
 TEST_F(ComposerTest, ApplyTemporaryInputMode) {
-  const bool kCapsLocked = true;
-  const bool kCapsUnlocked = false;
+  constexpr bool kCapsLocked = true;
+  constexpr bool kCapsUnlocked = false;
 
   table_->AddRule("a", "あ", "");
   composer_->SetInputMode(transliteration::HIRAGANA);

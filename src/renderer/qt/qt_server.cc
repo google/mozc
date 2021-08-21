@@ -35,8 +35,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "absl/synchronization/mutex.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace renderer {
 
@@ -45,7 +43,7 @@ QtServer::QtServer(int argc, char **argv)
 
 bool QtServer::AsyncExecCommand(std::string *proto_message) {
   // Take the ownership of |proto_message|.
-  unique_ptr<std::string> proto_message_owner(proto_message);
+  std::unique_ptr<std::string> proto_message_owner(proto_message);
   {
     absl::MutexLock l(&mutex_);
     if (message_ == *proto_message_owner.get()) {

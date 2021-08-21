@@ -98,7 +98,7 @@ const GUID kImeLangBarItem_HelpMenu = {
 
 #endif
 
-const bool kShowInTaskbar = true;
+constexpr bool kShowInTaskbar = true;
 
 CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable

@@ -57,7 +57,6 @@ namespace {
 
 using commands::Context;
 using commands::Output;
-using std::unique_ptr;
 
 class TestableKeyEventHandler : public KeyEventHandler {
  public:
@@ -234,7 +233,7 @@ class MockState {
 
  private:
   IPCClientFactoryMock client_factory_;
-  unique_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
   TestServerLauncher *launcher_;
   DISALLOW_COPY_AND_ASSIGN(MockState);
 };
@@ -295,7 +294,7 @@ class KeyEventHandlerTest : public testing::Test {
 };
 
 TEST_F(KeyEventHandlerTest, HankakuZenkakuTest) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -370,7 +369,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockInAlphanumericMode) {
   // because there might be no chance to unlock an unexpected Kana-Lock except
   // for the key event handler in some tricky cases.
 
-  const bool kKanaLocked = true;
+  constexpr bool kKanaLocked = true;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -434,7 +433,7 @@ TEST_F(KeyEventHandlerTest, ClearKanaLockEvenWhenIMEIsDisabled) {
   // kana-lock in some cases.  This helps users to input their password as
   // expected except that they used half-width katakana for their password.
 
-  const bool kKanaLocked = true;
+  constexpr bool kKanaLocked = true;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -496,7 +495,7 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -574,7 +573,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_102) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -651,7 +650,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_5) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -730,7 +729,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlH) {
   // and one internally-used by the session server, we should decompose a
   // control code into a tuple of an ASCII alphabet and a modifier key.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -809,7 +808,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
   // VK_A, ..., or, VK_Z, or other special keys defined in Mozc protocol such as
   // backspace or space.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -885,7 +884,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsH) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -958,7 +957,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1033,7 +1032,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsShiftH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1109,7 +1108,7 @@ TEST_F(KeyEventHandlerTest, HandleCapsCtrlH) {
 }
 
 TEST_F(KeyEventHandlerTest, HandleCapsShiftCtrlH) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1199,7 +1198,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlHat) {
   // defined in Mozc protocol such as backspace or space.
   // TODO(komatsu): Clarify the expected algorithm for the client.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1282,7 +1281,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShift7) {
   // Ctrl+'\'' is available on 101/104 English keyboard.
   // TODO(komatsu): Clarify the expected algorithm for the client.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1343,7 +1342,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftSpace) {
   // VK_SHIFT and VK_CONTROL are pressed.  The Windows client expects the
   // server may eat a special key when Control and Shift is pressed.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1423,7 +1422,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
   // VK_SHIFT and VK_CONTROL are pressed.  The Windows client expects the
   // server may eat a special key when Control and Shift is pressed.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -1502,7 +1501,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
   // In general, key up event should not be eaten by the IME.
   // See b/2903247 for details.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1565,7 +1564,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1678,7 +1677,7 @@ TEST_F(KeyEventHandlerTest,
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1753,7 +1752,7 @@ TEST_F(KeyEventHandlerTest,
   // Currently, the Mozc server expects the client remove all modifiers as for
   // some special keys such as VK_DBE_KATAKANA.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1842,7 +1841,7 @@ TEST_F(KeyEventHandlerTest,
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
   // the Mozc protocol later.
 
-  const bool kKanaLocked = true;
+  constexpr bool kKanaLocked = true;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1918,7 +1917,7 @@ TEST_F(KeyEventHandlerTest, CheckKeyCodeWhenAlphabeticalKeyIsPressedWithCtrl) {
   // and one internally-used by the session server, we should decompose a
   // control code into a tuple of an ASCII alphabet and a modifier key.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -1995,7 +1994,7 @@ TEST_F(KeyEventHandlerTest,
   // server assigns its own code.  This should not be passed to the server
   // as a Kana-input character. See b/9684668.
 
-  const bool kKanaLocked = true;
+  constexpr bool kKanaLocked = true;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2067,7 +2066,7 @@ TEST_F(KeyEventHandlerTest,
 
 TEST_F(KeyEventHandlerTest,
        Issue2801503_ModeChangeWhenIMEIsGoingToBeTurnedOff) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2125,7 +2124,7 @@ TEST_F(KeyEventHandlerTest,
 }
 
 TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
-  const bool kKanaLocked = true;
+  constexpr bool kKanaLocked = true;
 
   Output mock_output;
   mock_output.set_mode(commands::HIRAGANA);
@@ -2197,7 +2196,7 @@ TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
 }
 
 TEST_F(KeyEventHandlerTest, Issue3109571_ShiftHenkanShouldBeValid) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2260,7 +2259,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571_ShiftHenkanShouldBeValid) {
 }
 
 TEST_F(KeyEventHandlerTest, Issue3109571_ShiftMuhenkanShouldBeValid) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2323,7 +2322,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571_ShiftMuhenkanShouldBeValid) {
 }
 
 TEST_F(KeyEventHandlerTest, Issue7098463_HideSuggestWindow) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2377,8 +2376,8 @@ TEST_F(KeyEventHandlerTest, Issue7098463_HideSuggestWindow) {
 }
 
 TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
-  const bool kKeyDown = true;
-  const bool kKeyUp = false;
+  constexpr bool kKeyDown = true;
+  constexpr bool kKeyUp = false;
 
   const VirtualKey key_VK_DBE_ROMAN = VirtualKey::FromVirtualKey(VK_DBE_ROMAN);
   const VirtualKey key_VK_DBE_NOROMAN =
@@ -2659,7 +2658,7 @@ TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
 TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
   // To fix b/3504241, VK_PACKET must be supported.
 
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2728,7 +2727,7 @@ TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
 }
 
 TEST_F(KeyEventHandlerTest, CapsLock) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2796,7 +2795,7 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
 // it to the server. Otherwise, IME On/Off flipping happens twice and a user
 // cannot activate IME by VK_KANJI.
 TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);
@@ -2845,7 +2844,7 @@ TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
 
 // Temporal alphanumeric mode will be stored into |visible_conversion_mode|.
 TEST_F(KeyEventHandlerTest, Issue8524269_ComebackMode) {
-  const bool kKanaLocked = false;
+  constexpr bool kKanaLocked = false;
 
   Output mock_output;
   mock_output.set_consumed(true);

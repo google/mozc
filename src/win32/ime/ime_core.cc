@@ -60,7 +60,6 @@ namespace win32 {
 using commands::KeyEvent;
 using commands::Output;
 using commands::SessionCommand;
-using std::unique_ptr;
 
 namespace {
 
@@ -228,7 +227,7 @@ bool QueryDocumentFeed(HIMC himc, std::wstring *preceding_text,
     return false;
   }
 
-  unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
+  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
 
   RECONVERTSTRING *reconvert_string =
       reinterpret_cast<RECONVERTSTRING *>(buffer.get());
@@ -270,7 +269,7 @@ KeyEventHandlerResult ImeCore::ImeProcessKey(
     const InputBehavior &behavior, const InputState &initial_state,
     const mozc::commands::Context &context, InputState *next_state,
     commands::Output *output) {
-  unique_ptr<Win32KeyboardInterface> keyboard(
+  std::unique_ptr<Win32KeyboardInterface> keyboard(
       Win32KeyboardInterface::CreateDefault());
   return KeyEventHandler::ImeProcessKey(
       virtual_key, lparam.GetScanCode(), lparam.IsKeyDownInImeProcessKey(),
@@ -284,7 +283,7 @@ KeyEventHandlerResult ImeCore::ImeToAsciiEx(
     const InputBehavior &behavior, const InputState &initial_state,
     const commands::Context &context, InputState *next_state,
     commands::Output *output) {
-  unique_ptr<Win32KeyboardInterface> keyboard(
+  std::unique_ptr<Win32KeyboardInterface> keyboard(
       Win32KeyboardInterface::CreateDefault());
   return KeyEventHandler::ImeToAsciiEx(
       virtual_key, scan_code, is_key_down, keyboard_status, behavior,
@@ -871,7 +870,7 @@ std::string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
     return "";
   }
 
-  unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
+  std::unique_ptr<BYTE[]> buffer(new BYTE[buffer_size]);
 
   RECONVERTSTRING *reconvert_string =
       reinterpret_cast<RECONVERTSTRING *>(buffer.get());
@@ -885,7 +884,7 @@ std::string ImeCore::GetTextForReconversionFromIME(HIMC himc) {
     return "";
   }
 
-  unique_ptr<BYTE[]> copied_buffer(new BYTE[buffer_size]);
+  std::unique_ptr<BYTE[]> copied_buffer(new BYTE[buffer_size]);
   for (size_t i = 0; i < buffer_size; ++i) {
     copied_buffer[i] = buffer[i];
   }

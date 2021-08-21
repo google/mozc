@@ -66,8 +66,6 @@
 namespace mozc {
 namespace {
 
-using std::unique_ptr;
-
 using commands::Request;
 using dictionary::DictionaryInterface;
 using dictionary::POSMatcher;
@@ -176,8 +174,8 @@ std::string GetDescription(const Segment::Candidate &candidate) {
 // Returns true if the input first candidate seems to be a privacy sensitive
 // such like password.
 bool UserHistoryPredictor::IsPrivacySensitive(const Segments *segments) const {
-  const bool kNonSensitive = false;
-  const bool kSensitive = true;
+  constexpr bool kNonSensitive = false;
+  constexpr bool kSensitive = true;
 
   // Skips privacy sensitive check if |segments| consists of multiple conversion
   // segment. That is, segments like "パスワードは|x7LAGhaR" where '|'
@@ -1294,7 +1292,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   // |input_key| is "あｋ" and |base_key| is "あ"
   std::string input_key;
   std::string base_key;
-  unique_ptr<Trie<std::string>> expanded;
+  std::unique_ptr<Trie<std::string>> expanded;
   GetInputKeyFromSegments(request, segments, &input_key, &base_key, &expanded);
 
   const uint64_t now = Clock::GetTime();
@@ -1334,7 +1332,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
 void UserHistoryPredictor::GetInputKeyFromSegments(
     const ConversionRequest &request, const Segments &segments,
     std::string *input_key, std::string *base,
-    unique_ptr<Trie<std::string>> *expanded) {
+    std::unique_ptr<Trie<std::string>> *expanded) {
   DCHECK(input_key);
   DCHECK(base);
 

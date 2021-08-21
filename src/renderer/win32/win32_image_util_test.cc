@@ -65,7 +65,6 @@ using ::mozc::renderer::win32::internal::GaussianBlur;
 using ::mozc::renderer::win32::internal::SafeFrameBuffer;
 using ::mozc::renderer::win32::internal::SubdivisionalPixel;
 using ::mozc::renderer::win32::internal::TextLabel;
-using ::std::unique_ptr;
 
 using ::WTL::CBitmap;
 using ::WTL::CDC;

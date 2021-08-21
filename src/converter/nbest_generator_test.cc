@@ -210,7 +210,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   std::unique_ptr<NBestGenerator> nbest_generator =
       data_and_converter->CreateNBestGenerator(&lattice);
 
-  const bool kSingleSegment = false;  // For 'normal' conversion
+  constexpr bool kSingleSegment = false;  // For 'normal' conversion
   const Node *begin_node = lattice.bos_nodes();
   const Node *end_node =
       GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
@@ -266,7 +266,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   std::unique_ptr<NBestGenerator> nbest_generator =
       data_and_converter->CreateNBestGenerator(&lattice);
 
-  const bool kSingleSegment = true;  // For realtime conversion
+  constexpr bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
   const Node *end_node =
       GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
@@ -317,7 +317,7 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   std::unique_ptr<NBestGenerator> nbest_generator =
       data_and_converter->CreateNBestGenerator(&lattice);
 
-  const bool kSingleSegment = true;  // For realtime conversion
+  constexpr bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
   const Node *end_node =
       GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);

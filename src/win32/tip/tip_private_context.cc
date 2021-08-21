@@ -53,7 +53,6 @@ using ::mozc::client::ClientFactory;
 using ::mozc::client::ClientInterface;
 using ::mozc::commands::Capability;
 using ::mozc::commands::Output;
-using ::std::unique_ptr;
 
 class TipPrivateContext::InternalState {
  public:
@@ -61,7 +60,7 @@ class TipPrivateContext::InternalState {
       : client_(ClientFactory::NewClient()),
         text_edit_sink_cookie_(text_edit_sink_cookie),
         text_layout_sink_cookie_(text_layout_sink_cookie) {}
-  unique_ptr<client::ClientInterface> client_;
+  std::unique_ptr<client::ClientInterface> client_;
   SurrogatePairObserver surrogate_pair_observer_;
   commands::Output last_output_;
   VirtualKey last_down_key_;
