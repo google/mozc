@@ -64,8 +64,6 @@
 namespace mozc {
 namespace {
 
-using std::unique_ptr;
-
 using commands::Request;
 using config::Config;
 using dictionary::DictionaryMock;
@@ -362,17 +360,17 @@ class UserHistoryPredictorTest : public ::testing::Test {
     EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
   }
 
-  unique_ptr<composer::Composer> composer_;
-  unique_ptr<composer::Table> table_;
-  unique_ptr<ConversionRequest> convreq_;
-  unique_ptr<Config> config_;
-  unique_ptr<Request> request_;
+  std::unique_ptr<composer::Composer> composer_;
+  std::unique_ptr<composer::Table> table_;
+  std::unique_ptr<ConversionRequest> convreq_;
+  std::unique_ptr<Config> config_;
+  std::unique_ptr<Request> request_;
 
  private:
   struct DataAndPredictor {
-    unique_ptr<DictionaryMock> dictionary;
-    unique_ptr<SuppressionDictionary> suppression_dictionary;
-    unique_ptr<UserHistoryPredictor> predictor;
+    std::unique_ptr<DictionaryMock> dictionary;
+    std::unique_ptr<SuppressionDictionary> suppression_dictionary;
+    std::unique_ptr<UserHistoryPredictor> predictor;
     dictionary::POSMatcher pos_matcher;
   };
 
@@ -389,7 +387,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
     return ret;
   }
 
-  unique_ptr<DataAndPredictor> data_and_predictor_;
+  std::unique_ptr<DataAndPredictor> data_and_predictor_;
   mozc::usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 };
 
@@ -1999,8 +1997,8 @@ struct PrivacySensitiveTestData {
   const char *output;
 };
 
-const bool kSensitive = true;
-const bool kNonSensitive = false;
+constexpr bool kSensitive = true;
+constexpr bool kNonSensitive = false;
 
 const PrivacySensitiveTestData kNonSensitiveCases[] = {
     {kNonSensitive,  // We might want to revisit this behavior
@@ -2412,7 +2410,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   // input_key: "あｋ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
   expanded->AddEntry("か", "");
   expanded->AddEntry("き", "");
   expanded->AddEntry("く", "");
@@ -2465,7 +2463,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
   expanded->AddEntry("し", "");
   expanded->AddEntry("じ", "");
 
@@ -2519,7 +2517,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
   // input_key: "あ"
   // key_base: "あ"
   // key_expanded: "か","き","く","け", "こ"
-  unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
   expanded->AddEntry("か", "か");
   expanded->AddEntry("き", "き");
   expanded->AddEntry("く", "く");
@@ -2576,7 +2574,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
   // input_key: "あし"
   // key_base: "あ"
   // key_expanded: "し","じ"
-  unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
+  std::unique_ptr<Trie<std::string>> expanded(new Trie<std::string>);
   expanded->AddEntry("し", "し");
   expanded->AddEntry("じ", "じ");
 
@@ -2665,7 +2663,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRoman) {
                                 &segments);
   std::string input_key;
   std::string base;
-  unique_ptr<Trie<std::string>> expanded;
+  std::unique_ptr<Trie<std::string>> expanded;
   UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments, &input_key,
                                                 &base, &expanded);
   EXPECT_EQ("ぐーｇ", input_key);
@@ -2703,7 +2701,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanRandom) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
   }
@@ -2721,7 +2719,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsShouldNotCrash) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
   }
@@ -2737,7 +2735,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("ｎ", input_key);
@@ -2758,7 +2756,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("ん", input_key);
@@ -2773,7 +2771,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("ん", input_key);
@@ -2788,7 +2786,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsRomanN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("んｎ", input_key);
@@ -2813,7 +2811,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsFlickN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("ん", input_key);
@@ -2838,7 +2836,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegments12KeyN) {
                                   &segments);
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("ん", input_key);
@@ -2864,7 +2862,7 @@ TEST_F(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana) {
   {
     std::string input_key;
     std::string base;
-    unique_ptr<Trie<std::string>> expanded;
+    std::unique_ptr<Trie<std::string>> expanded;
     UserHistoryPredictor::GetInputKeyFromSegments(*convreq_, segments,
                                                   &input_key, &base, &expanded);
     EXPECT_EQ("あか", input_key);

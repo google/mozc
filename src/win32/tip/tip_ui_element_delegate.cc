@@ -141,8 +141,8 @@ CComBSTR GetResourceString(UINT resource_id) {
   return CComBSTR(str.GetLength(), str.GetBuffer());
 }
 
-const bool kIsIndicator = true;
-const bool kIsNotIndicator = false;
+constexpr bool kIsIndicator = true;
+constexpr bool kIsNotIndicator = false;
 
 class TipUiElementDelegateImpl : public TipUiElementDelegate {
  public:

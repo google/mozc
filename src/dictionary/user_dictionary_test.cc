@@ -67,8 +67,6 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-using std::unique_ptr;
-
 constexpr char kUserDictionary0[] =
     "start\tstart\tverb\n"
     "star\tstar\tnoun\n"
@@ -358,7 +356,7 @@ class UserDictionaryTest : public ::testing::Test {
     return comment;
   }
 
-  unique_ptr<SuppressionDictionary> suppression_dictionary_;
+  std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   ConversionRequest convreq_;
   config::Config config_;
 
@@ -369,7 +367,7 @@ class UserDictionaryTest : public ::testing::Test {
 };
 
 TEST_F(UserDictionaryTest, TestLookupPredictive) {
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -423,7 +421,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -475,7 +473,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupExact) {
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -504,7 +502,7 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
-  unique_ptr<UserDictionary> user_dic(CreateDictionary());
+  std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
   // Create dictionary
@@ -544,7 +542,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
   config_.set_incognito_mode(true);
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 
@@ -600,7 +598,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   }
 
   {
-    unique_ptr<UserDictionary> dic(CreateDictionary());
+    std::unique_ptr<UserDictionary> dic(CreateDictionary());
     // Wait for async reload called from the constructor.
     dic->WaitForReloader();
     dic->SetUserDictionaryName(filename);
@@ -621,7 +619,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
-  unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> user_dic(CreateDictionaryWithMockPos());
   user_dic->WaitForReloader();
 
   const std::string filename = FileUtil::JoinPath(
@@ -691,7 +689,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 }
 
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
-  unique_ptr<UserDictionary> user_dic(CreateDictionary());
+  std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
   user_dic->WaitForReloader();
 
   const std::string filename = FileUtil::JoinPath(
@@ -750,7 +748,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
   UserDictionaryStorage storage("");
@@ -798,7 +796,7 @@ TEST_F(UserDictionaryTest, TestUsageStats) {
 }
 
 TEST_F(UserDictionaryTest, LookupComment) {
-  unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
   // Wait for async reload called from the constructor.
   dic->WaitForReloader();
 

@@ -45,7 +45,6 @@
 #include "win32/tip/tip_ref_count.h"
 
 using ::ATL::CComPtr;
-using ::std::unique_ptr;
 
 namespace mozc {
 namespace win32 {
@@ -129,7 +128,7 @@ class SearchCandidateProviderImpl : public ITfFnSearchCandidateProvider {
   }
 
   TipRefCount ref_count_;
-  unique_ptr<TipQueryProvider> provider_;
+  std::unique_ptr<TipQueryProvider> provider_;
 
   DISALLOW_COPY_AND_ASSIGN(SearchCandidateProviderImpl);
 };

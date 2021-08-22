@@ -80,7 +80,6 @@ using WTL::CPoint;
 using WTL::CRect;
 
 using ::mozc::renderer::win32::Win32RendererClient;
-using ::std::unique_ptr;
 
 // True if the DLL received DLL_PROCESS_DETACH notification.
 volatile bool g_module_unloaded = false;
@@ -951,7 +950,7 @@ class DefaultUIWindow {
   HWND hwnd_;
   // TODO(yukawa): Make a wrapper class to encapsulate LangBar implementation
   // including cache mechanism to reduce API calls.
-  unique_ptr<LanguageBar> language_bar_;
+  std::unique_ptr<LanguageBar> language_bar_;
   LangBarCallbackImpl *langbar_callback_;
   // Represents the LangBarInfo that should be set to the LangBar when deferred
   // timer is fired.
@@ -960,7 +959,7 @@ class DefaultUIWindow {
   bool has_pending_langbar_update_;
   // Represents the last LangBarInfo that is set to the LangBar. nullpter if
   // no cached data is available.
-  unique_ptr<LangBarInfo> langbar_info_cache_;
+  std::unique_ptr<LangBarInfo> langbar_info_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultUIWindow);
 };

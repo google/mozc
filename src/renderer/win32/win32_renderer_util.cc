@@ -56,7 +56,6 @@ namespace mozc {
 namespace renderer {
 namespace win32 {
 using ATL::CWindow;
-using std::unique_ptr;
 using WTL::CDC;
 using WTL::CDCHandle;
 using WTL::CFont;

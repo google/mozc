@@ -107,7 +107,7 @@ const GUID kTipLangBarItem_HelpMenu = {
 
 #endif
 
-const bool kShowInTaskbar = true;
+constexpr bool kShowInTaskbar = true;
 
 CComPtr<ITfLangBarItemMgr> GetLangBarItemMgr() {
   // "msctf.dll" is not always available.  For example, Windows XP can disable
@@ -217,7 +217,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
          0},
     };
 
-    const bool kMenuButton = true;
+    constexpr bool kMenuButton = true;
     CComPtr<TipLangBarToggleButton> input_button_menu(
         new TipLangBarToggleButton(text_service, kTipLangBarItem_Button,
                                    kMenuButton, kShowInTaskbar));
@@ -265,7 +265,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
         {kTipLangBarItemTypeDefault, TipLangBarCallback::kHelp, IDS_HELP, 0, 0},
     };
 
-    const bool kNonMenuButton = false;
+    constexpr bool kNonMenuButton = false;
     CComPtr<TipLangBarToggleButton> input_mode_menu(new TipLangBarToggleButton(
         text_service, kSystemInputMode, kNonMenuButton, kShowInTaskbar));
     if (input_mode_menu == nullptr) {

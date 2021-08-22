@@ -241,7 +241,7 @@ void NBestGenerator::MakeCandidate(
     for (size_t i = 1; i < nodes.size(); ++i) {
       const Node *lnode = nodes[i - 1];
       const Node *rnode = nodes[i];
-      const bool kMultipleSegments = false;
+      constexpr bool kMultipleSegments = false;
       if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
         candidate->PushBackInnerSegmentBoundary(
             key_len, value_len, content_key_len, content_value_len);

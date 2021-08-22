@@ -52,9 +52,9 @@
 namespace mozc {
 namespace {
 
-const bool kReadTypeACK = true;
-const bool kReadTypeData = false;
-const bool kSendTypeData = false;
+constexpr bool kReadTypeACK = true;
+constexpr bool kReadTypeData = false;
+constexpr bool kSendTypeData = false;
 constexpr int kMaxSuccessiveConnectionFailureCount = 5;
 
 size_t GetNumberOfProcessors() {

@@ -47,8 +47,6 @@ namespace ibus {
 
 namespace {
 
-using std::unique_ptr;
-
 class ScopedXcbGenericError {
  public:
   ScopedXcbGenericError() : error_(nullptr) {}
@@ -69,17 +67,17 @@ struct FreeDeleter {
 };
 
 // TODO(yukawa): Use template aliases when GCC 4.6 is retired.
-typedef unique_ptr<xcb_get_property_reply_t,
-                   FreeDeleter<xcb_get_property_reply_t>>
+typedef std::unique_ptr<xcb_get_property_reply_t,
+                        FreeDeleter<xcb_get_property_reply_t>>
     ScopedXcbGetPropertyReply;
-typedef unique_ptr<xcb_get_atom_name_reply_t,
-                   FreeDeleter<xcb_get_atom_name_reply_t>>
+typedef std::unique_ptr<xcb_get_atom_name_reply_t,
+                        FreeDeleter<xcb_get_atom_name_reply_t>>
     ScopedXcbGetAtomNameReply;
-typedef unique_ptr<xcb_intern_atom_reply_t,
-                   FreeDeleter<xcb_intern_atom_reply_t>>
+typedef std::unique_ptr<xcb_intern_atom_reply_t,
+                        FreeDeleter<xcb_intern_atom_reply_t>>
     ScopedXcbInternAtomReply;
-typedef unique_ptr<xcb_xfixes_query_version_reply_t,
-                   FreeDeleter<xcb_xfixes_query_version_reply_t>>
+typedef std::unique_ptr<xcb_xfixes_query_version_reply_t,
+                        FreeDeleter<xcb_xfixes_query_version_reply_t>>
     ScopedXcbXFixesQueqyVersionReply;
 
 struct XcbAtoms {
@@ -163,7 +161,7 @@ class SelectionMonitorServer {
     }
 
     ::xcb_flush(connection_);
-    unique_ptr<xcb_generic_event_t, void (*)(void *)> event(
+    std::unique_ptr<xcb_generic_event_t, void (*)(void *)> event(
         ::xcb_wait_for_event(connection_), &std::free);
 
     if (event.get() == nullptr) {
@@ -545,7 +543,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   }
 
  private:
-  unique_ptr<SelectionMonitorServer> server_;
+  std::unique_ptr<SelectionMonitorServer> server_;
   const size_t max_text_bytes_;
   volatile bool quit_;
   Mutex mutex_;
@@ -562,7 +560,7 @@ SelectionInfo::SelectionInfo() : timestamp(0), process_id(0) {}
 
 SelectionMonitorInterface *SelectionMonitorFactory::Create(
     size_t max_text_bytes) {
-  unique_ptr<SelectionMonitorServer> server(new SelectionMonitorServer());
+  std::unique_ptr<SelectionMonitorServer> server(new SelectionMonitorServer());
   if (!server->Init()) {
     return nullptr;
   }

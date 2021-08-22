@@ -38,8 +38,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace renderer {
 namespace {

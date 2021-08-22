@@ -45,15 +45,23 @@ namespace mozc {
 class VariantsRewriter : public RewriterInterface {
  public:
   // Annotation constants.
-  static const absl::string_view kHiragana;
-  static const absl::string_view kKatakana;
-  static const absl::string_view kNumber;
-  static const absl::string_view kAlphabet;
-  static const absl::string_view kKanji;
-  static const absl::string_view kFullWidth;
-  static const absl::string_view kHalfWidth;
-  static const absl::string_view kDidYouMean;
-  static const absl::string_view kYenKigou;
+#ifdef OS_ANDROID
+  static constexpr absl::string_view kHiragana = "";
+  static constexpr absl::string_view kKatakana = "";
+  static constexpr absl::string_view kNumber = "";
+  static constexpr absl::string_view kAlphabet = "";
+  static constexpr absl::string_view kKanji = "";
+#else   // OS_ANDROID
+  static constexpr absl::string_view kHiragana = "ひらがな";
+  static constexpr absl::string_view kKatakana = "カタカナ";
+  static constexpr absl::string_view kNumber = "数字";
+  static constexpr absl::string_view kAlphabet = "アルファベット";
+  static constexpr absl::string_view kKanji = "漢字";
+#endif  // OS_ANDROID
+  static constexpr absl::string_view kFullWidth = "[全]";
+  static constexpr absl::string_view kHalfWidth = "[半]";
+  static constexpr absl::string_view kDidYouMean = "<もしかして>";
+  static constexpr absl::string_view kYenKigou = "円記号";
 
   explicit VariantsRewriter(dictionary::POSMatcher pos_matcher);
   ~VariantsRewriter() override;

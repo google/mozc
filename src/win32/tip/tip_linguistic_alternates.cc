@@ -47,7 +47,6 @@
 #include "win32/tip/tip_text_service.h"
 
 using ::ATL::CComPtr;
-using ::std::unique_ptr;
 
 namespace mozc {
 namespace win32 {
@@ -136,7 +135,7 @@ class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
 
   TipRefCount ref_count_;
   CComPtr<TipTextService> text_service_;
-  unique_ptr<TipQueryProvider> provider_;
+  std::unique_ptr<TipQueryProvider> provider_;
 
   DISALLOW_COPY_AND_ASSIGN(GetLinguisticAlternatesImpl);
 };

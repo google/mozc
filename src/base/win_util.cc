@@ -51,8 +51,6 @@
 #include "base/system_util.h"
 #include "base/util.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace {
 
@@ -457,7 +455,7 @@ bool WinUtil::GetNtPath(const std::wstring &dos_path, std::wstring *nt_path) {
   }
 
   constexpr size_t kMaxPath = 4096;
-  unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
+  std::unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
   const DWORD copied_len_without_null = ::GetFinalPathNameByHandleW(
       file_handle.get(), ntpath_buffer.get(), kMaxPath,
       FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
@@ -486,7 +484,7 @@ bool WinUtil::GetProcessInitialNtPath(DWORD pid, std::wstring *nt_path) {
   }
 
   constexpr size_t kMaxPath = 4096;
-  unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
+  std::unique_ptr<wchar_t[]> ntpath_buffer(new wchar_t[kMaxPath]);
   const DWORD copied_len_without_null = ::GetProcessImageFileNameW(
       process_handle.get(), ntpath_buffer.get(), kMaxPath);
   if (copied_len_without_null == 0 || copied_len_without_null > kMaxPath) {

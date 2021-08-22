@@ -69,7 +69,6 @@ namespace tsf {
 using ATL::CComPtr;
 using mozc::commands::Context;
 using mozc::commands::Output;
-using std::unique_ptr;
 typedef mozc::commands::CompositionMode CompositionMode;
 typedef mozc::commands::SessionCommand SessionCommand;
 
@@ -268,7 +267,7 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
 
   InputState next_state;
   commands::Output temporal_output;
-  unique_ptr<Win32KeyboardInterface> keyboard(
+  std::unique_ptr<Win32KeyboardInterface> keyboard(
       Win32KeyboardInterface::CreateDefault());
 
   const KeyEventHandlerResult result = KeyEventHandler::ImeProcessKey(
@@ -449,7 +448,7 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
     KeyEventHandler::UpdateBehaviorInImeProcessKey(
         vk, is_key_down, ime_state, private_context->mutable_input_behavior());
 
-    unique_ptr<Win32KeyboardInterface> keyboard(
+    std::unique_ptr<Win32KeyboardInterface> keyboard(
         Win32KeyboardInterface::CreateDefault());
 
     Context mozc_context;
@@ -491,8 +490,8 @@ HRESULT OnKey(TipTextService *text_service, ITfContext *context,
   return S_OK;
 }
 
-const bool kKeyDown = true;
-const bool kKeyUp = false;
+constexpr bool kKeyDown = true;
+constexpr bool kKeyUp = false;
 
 }  // namespace
 

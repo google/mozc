@@ -59,7 +59,6 @@ using ATL::CComPtr;
 using ATL::CComQIPtr;
 using ATL::CComVariant;
 using ATL::CStringW;
-using std::unique_ptr;
 
 class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
  public:
@@ -179,7 +178,7 @@ class TipCandidateListImpl : public ITfCandidateListUIElementBehavior {
   }
 
   TipRefCount ref_count_;
-  unique_ptr<TipUiElementDelegate> delegate_;
+  std::unique_ptr<TipUiElementDelegate> delegate_;
   DISALLOW_COPY_AND_ASSIGN(TipCandidateListImpl);
 };
 
@@ -248,7 +247,7 @@ class TipIndicatorImpl : public ITfToolTipUIElement {
   }
 
   TipRefCount ref_count_;
-  unique_ptr<TipUiElementDelegate> delegate_;
+  std::unique_ptr<TipUiElementDelegate> delegate_;
   DISALLOW_COPY_AND_ASSIGN(TipIndicatorImpl);
 };
 

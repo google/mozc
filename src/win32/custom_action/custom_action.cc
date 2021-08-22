@@ -78,7 +78,6 @@
 namespace {
 
 using mozc::win32::OmahaUtil;
-using std::unique_ptr;
 
 constexpr char kIEFrameDll[] = "ieframe.dll";
 const wchar_t kSystemSharedKey[] = L"Software\\Microsoft\\CTF\\SystemShared";
@@ -108,7 +107,7 @@ std::wstring GetProperty(MSIHANDLE msi, const std::wstring &name) {
 
   // add 1 for null termination
   ++num_buf;
-  unique_ptr<wchar_t[]> buf(new wchar_t[num_buf]);
+  std::unique_ptr<wchar_t[]> buf(new wchar_t[num_buf]);
   result = MsiGetProperty(msi, name.c_str(), buf.get(), &num_buf);
   if (ERROR_SUCCESS != result) {
     return L"";
@@ -282,7 +281,7 @@ UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle) {
 
 UINT __stdcall ShutdownServer(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
-  unique_ptr<mozc::client::ClientInterface> server_client(
+  std::unique_ptr<mozc::client::ClientInterface> server_client(
       mozc::client::ClientFactory::NewClient());
   bool server_result = true;
   if (server_client->PingServer()) {

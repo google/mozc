@@ -58,7 +58,6 @@ namespace win32 {
 namespace {
 
 using ATL::CStringA;
-using std::unique_ptr;
 
 bool SpawnBroker(const std::string &arg) {
   // To workaround a bug around WoW version of LoadKeyboardLayout, 64-bit
@@ -137,7 +136,8 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
   const UINT num_element =
       ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
 
-  unique_ptr<LAYOUTORTIPPROFILE[]> buffer(new LAYOUTORTIPPROFILE[num_element]);
+  std::unique_ptr<LAYOUTORTIPPROFILE[]> buffer(
+      new LAYOUTORTIPPROFILE[num_element]);
 
   const UINT num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
                                                    buffer.get(), num_element);

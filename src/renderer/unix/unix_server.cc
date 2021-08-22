@@ -38,8 +38,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/unix/window_manager.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace renderer {
 namespace gtk {
@@ -98,7 +96,7 @@ bool UnixServer::Render() {
 bool UnixServer::AsyncExecCommand(std::string *proto_message) {
   {
     // Take the ownership of |proto_message|.
-    unique_ptr<std::string> proto_message_owner(proto_message);
+    std::unique_ptr<std::string> proto_message_owner(proto_message);
     scoped_lock l(&mutex_);
     if (message_ == *proto_message_owner.get()) {
       // This is exactly the same to the previous message. Theoretically it is

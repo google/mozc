@@ -100,7 +100,7 @@ class AuxDictionary():
   def WriteFile(self, output):
     with open(output, 'w', encoding='utf-8') as file:
       for aux_entry in self.aux_list:
-        file.write('\t'.join(aux_entry))
+        file.write('\t'.join(aux_entry) + '\n')
 
 
 def main():

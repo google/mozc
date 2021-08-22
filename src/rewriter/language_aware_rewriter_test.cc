@@ -53,8 +53,6 @@
 namespace mozc {
 namespace {
 
-using std::unique_ptr;
-
 using dictionary::DictionaryMock;
 using dictionary::Token;
 
@@ -120,7 +118,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
     return rewriter->Rewrite(request, segments);
   }
 
-  unique_ptr<DictionaryMock> dictionary_mock_;
+  std::unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
 
   const testing::MockDataManager data_manager_;
@@ -148,7 +146,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
   dictionary_mock_->AddLookupExact("naru", "naru", "naru", Token::NONE);
   dictionary_mock_->AddLookupExact("なる", "なる", "naru", Token::NONE);
 
-  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  std::unique_ptr<LanguageAwareRewriter> rewriter(
+      CreateLanguageAwareRewriter());
 
   const std::string &kPrefix = "→ ";
   const std::string &kDidYouMean = "もしかして";
@@ -257,7 +256,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
 }
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
-  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  std::unique_ptr<LanguageAwareRewriter> rewriter(
+      CreateLanguageAwareRewriter());
 
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
@@ -322,7 +322,8 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
 }
 
 TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
-  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  std::unique_ptr<LanguageAwareRewriter> rewriter(
+      CreateLanguageAwareRewriter());
 
   {
     // "1d*=" is composed to "１ｄ＊＝", which are the full width ascii
@@ -369,7 +370,8 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
        RewriterInterface::NOT_AVAILABLE},
   };
 
-  unique_ptr<LanguageAwareRewriter> rewriter(CreateLanguageAwareRewriter());
+  std::unique_ptr<LanguageAwareRewriter> rewriter(
+      CreateLanguageAwareRewriter());
   for (const auto &param : kParams) {
     commands::Request request;
     request.set_language_aware_input(

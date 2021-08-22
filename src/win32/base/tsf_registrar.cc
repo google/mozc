@@ -50,8 +50,6 @@ namespace win32 {
 
 namespace {
 
-using std::unique_ptr;
-
 // Defines the constant strings used in the TsfRegistrar::RegisterCOMServer()
 // function and the TsfRegistrar::UnregisterCOMServer() function.
 // We define these strings as WCHAR arrays to retrieve the size of this
@@ -298,7 +296,7 @@ HRESULT TsfRegistrar::GetProfileEnabled(BOOL *enabled) {
 
   const int num_profiles =
       ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr, nullptr, 0);
-  unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
+  std::unique_ptr<LAYOUTORTIPPROFILE[]> profiles(
       new LAYOUTORTIPPROFILE[num_profiles]);
   const int num_copied = ::EnumEnabledLayoutOrTip(nullptr, nullptr, nullptr,
                                                   profiles.get(), num_profiles);

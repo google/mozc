@@ -849,7 +849,7 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->value = "3時";
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
-  cand->description = VariantsRewriter::kHalfWidth;
+  cand->description = std::string(VariantsRewriter::kHalfWidth);
   rewriter->Finish(request, &segments);
   EXPECT_EQ(Config::HALF_WIDTH, manager->GetConversionCharacterForm("0"));
 
@@ -857,7 +857,7 @@ TEST_F(VariantsRewriterTest, Finish) {
   cand->value = "３時";
   cand->content_value = cand->value;
   cand->style = NumberUtil::NumberString::DEFAULT_STYLE;
-  cand->description = VariantsRewriter::kFullWidth;
+  cand->description = std::string(VariantsRewriter::kFullWidth);
   rewriter->Finish(request, &segments);
   EXPECT_EQ(Config::FULL_WIDTH, manager->GetConversionCharacterForm("0"));
 }

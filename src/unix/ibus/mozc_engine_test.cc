@@ -36,8 +36,6 @@
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace ibus {
 
@@ -57,7 +55,7 @@ class LaunchToolTest : public testing::Test {
   virtual void TearDown() { mozc_engine_.reset(); }
 
   client::ClientMock* mock_;
-  unique_ptr<MozcEngine> mozc_engine_;
+  std::unique_ptr<MozcEngine> mozc_engine_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);

@@ -54,7 +54,6 @@ namespace tsf {
 
 using ATL::CComBSTR;
 using ATL::CComPtr;
-using std::unique_ptr;
 
 namespace {
 
@@ -188,7 +187,7 @@ class ReconvertFunctionImpl : public ITfFnReconversion {
     if (candidate_list == nullptr) {
       return E_INVALIDARG;
     }
-    unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
+    std::unique_ptr<TipQueryProvider> provider(TipQueryProvider::Create());
     if (!provider) {
       return E_FAIL;
     }

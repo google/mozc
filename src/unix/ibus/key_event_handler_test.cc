@@ -40,8 +40,6 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
 
-using std::unique_ptr;
-
 namespace mozc {
 namespace ibus {
 
@@ -135,7 +133,7 @@ class KeyEventHandlerTest : public testing::Test {
     }
   }
 
-  unique_ptr<KeyEventHandler> handler_;
+  std::unique_ptr<KeyEventHandler> handler_;
   std::map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
 };
 

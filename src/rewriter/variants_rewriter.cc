@@ -91,28 +91,6 @@ bool HasCharacterFormDescription(const std::string &value) {
 
 }  // namespace
 
-#ifdef OS_ANDROID
-const absl::string_view VariantsRewriter::kHiragana = "";
-const absl::string_view VariantsRewriter::kKatakana = "";
-const absl::string_view VariantsRewriter::kNumber = "";
-const absl::string_view VariantsRewriter::kAlphabet = "";
-const absl::string_view VariantsRewriter::kKanji = "";
-const absl::string_view VariantsRewriter::kFullWidth = "[全]";
-const absl::string_view VariantsRewriter::kHalfWidth = "[半]";
-const absl::string_view VariantsRewriter::kDidYouMean = "<もしかして>";
-const absl::string_view VariantsRewriter::kYenKigou = "円記号";
-#else   // OS_ANDROID
-const absl::string_view VariantsRewriter::kHiragana = "ひらがな";
-const absl::string_view VariantsRewriter::kKatakana = "カタカナ";
-const absl::string_view VariantsRewriter::kNumber = "数字";
-const absl::string_view VariantsRewriter::kAlphabet = "アルファベット";
-const absl::string_view VariantsRewriter::kKanji = "漢字";
-const absl::string_view VariantsRewriter::kFullWidth = "[全]";
-const absl::string_view VariantsRewriter::kHalfWidth = "[半]";
-const absl::string_view VariantsRewriter::kDidYouMean = "<もしかして>";
-const absl::string_view VariantsRewriter::kYenKigou = "円記号";
-#endif  // OS_ANDROID
-
 VariantsRewriter::VariantsRewriter(const POSMatcher pos_matcher)
     : pos_matcher_(pos_matcher) {}
 

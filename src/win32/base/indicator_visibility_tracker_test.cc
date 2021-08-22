@@ -40,8 +40,6 @@ namespace mozc {
 namespace win32 {
 namespace {
 
-using std::unique_ptr;
-
 const uint64 kWaitDuration = 500;  // msec
 const VirtualKey AKey = VirtualKey::FromVirtualKey('A');
 
@@ -61,7 +59,7 @@ class IndicatorVisibilityTrackerTest : public testing::Test {
   }
 
  private:
-  unique_ptr<ClockMock> clock_mock_;
+  std::unique_ptr<ClockMock> clock_mock_;
 };
 
 TEST_F(IndicatorVisibilityTrackerTest, BasicTest) {
