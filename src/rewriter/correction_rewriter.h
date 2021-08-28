@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_CORRECTION_REWRITER_H_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -49,7 +50,7 @@ class CorrectionRewriter : public RewriterInterface {
   // Returnes an instance of ReadingCorrectionRewriter initialized with the
   // default provided by data_manager.  The caller takes the ownership of the
   // instance.
-  static CorrectionRewriter *CreateCorrectionRewriter(
+  static std::unique_ptr<CorrectionRewriter> CreateCorrectionRewriter(
       const DataManagerInterface *data_manager);
 
   CorrectionRewriter(absl::string_view value_array_data,

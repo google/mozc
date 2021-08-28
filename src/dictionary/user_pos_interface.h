@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/port.h"
@@ -64,6 +65,15 @@ class UserPOSInterface : public POSListProviderInterface {
     uint16_t id;
     int16_t cost;
     std::string comment;  // This field comes from user dictionary.
+
+    friend void swap(Token &l, Token &r) {
+      using std::swap;
+      swap(l.key, r.key);
+      swap(l.value, r.value);
+      swap(l.id, r.id);
+      swap(l.cost, r.cost);
+      swap(l.comment, r.comment);
+    }
   };
 
   ~UserPOSInterface() override = default;

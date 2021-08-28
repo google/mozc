@@ -59,7 +59,6 @@ cc_test_mozc(
     deps = [
         ":merger_rewriter",
         "//base",
-        "//base:stl_util",
         "//base:system_util",
         "//config:config_handler",
         "//converter:segments",
@@ -68,6 +67,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -952,7 +952,6 @@ cc_library_mozc(
         ":rewriter_interface",
         ":rewriter_util",
         "//base",
-        "//base:iterator_adapter",
         "//base:logging",
         "//base:serialized_string_array",
         "//base:util",
@@ -1430,6 +1429,7 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1500,6 +1500,7 @@ cc_library_mozc(
         "//dictionary:pos_group",
         "//dictionary:pos_matcher_lib",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )

@@ -149,7 +149,6 @@ cc_library_mozc(
     visibility = ["//:__subpackages__"],
     deps = [
         "//base",
-        "//base:iterator_adapter",
         "//base:logging",
         "//base:port",
     ],

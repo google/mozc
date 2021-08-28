@@ -190,7 +190,7 @@ void ConverterMock::SetResizeSegment2(Segments *segments, bool result) {
 void ConverterMock::GetStartConversionForRequest(Segments *segments,
                                                  ConversionRequest *request) {
   segments->CopyFrom(startconversionwithrequest_input_.segments);
-  request->CopyFrom(startconversionwithrequest_input_.request);
+  *request = startconversionwithrequest_input_.request;
 }
 
 void ConverterMock::GetStartConversion(Segments *segments, std::string *key) {
@@ -207,7 +207,7 @@ void ConverterMock::GetStartReverseConversion(Segments *segments,
 void ConverterMock::GetStartPredictionForRequest(Segments *segments,
                                                  ConversionRequest *request) {
   segments->CopyFrom(startpredictionwithrequest_input_.segments);
-  request->CopyFrom(startpredictionwithrequest_input_.request);
+  *request = startpredictionwithrequest_input_.request;
 }
 
 void ConverterMock::GetStartPrediction(Segments *segments, std::string *key) {
@@ -218,7 +218,7 @@ void ConverterMock::GetStartPrediction(Segments *segments, std::string *key) {
 void ConverterMock::GetStartSuggestionForRequest(Segments *segments,
                                                  ConversionRequest *request) {
   segments->CopyFrom(startsuggestionforrequest_input_.segments);
-  request->CopyFrom(startsuggestionforrequest_input_.request);
+  *request = startsuggestionforrequest_input_.request;
 }
 
 void ConverterMock::GetStartSuggestion(Segments *segments, std::string *key) {
@@ -229,7 +229,7 @@ void ConverterMock::GetStartSuggestion(Segments *segments, std::string *key) {
 void ConverterMock::GetStartPartialPredictionForRequest(
     Segments *segments, ConversionRequest *request) {
   segments->CopyFrom(startpartialpredictionforrequest_input_.segments);
-  request->CopyFrom(startpartialpredictionforrequest_input_.request);
+  *request = startpartialpredictionforrequest_input_.request;
 }
 
 void ConverterMock::GetStartPartialPrediction(Segments *segments,
@@ -326,7 +326,7 @@ bool ConverterMock::StartConversionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartConversion with ConversionRequest";
   startconversionwithrequest_input_.segments.CopyFrom(*segments);
-  startconversionwithrequest_input_.request.CopyFrom(request);
+  startconversionwithrequest_input_.request = request;
 
   if (!startconversionwithrequest_output_.initialized) {
     return false;
@@ -369,7 +369,7 @@ bool ConverterMock::StartPredictionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartPredictionForRequest";
   startpredictionwithrequest_input_.segments.CopyFrom(*segments);
-  startpredictionwithrequest_input_.request.CopyFrom(request);
+  startpredictionwithrequest_input_.request = request;
 
   if (!startpredictionwithrequest_output_.initialized) {
     return false;
@@ -397,7 +397,7 @@ bool ConverterMock::StartSuggestionForRequest(const ConversionRequest &request,
                                               Segments *segments) const {
   VLOG(2) << "mock function: StartSuggestionForRequest";
   startsuggestionforrequest_input_.segments.CopyFrom(*segments);
-  startsuggestionforrequest_input_.request.CopyFrom(request);
+  startsuggestionforrequest_input_.request = request;
 
   if (!startsuggestionforrequest_output_.initialized) {
     return false;
@@ -425,7 +425,7 @@ bool ConverterMock::StartPartialPredictionForRequest(
     const ConversionRequest &request, Segments *segments) const {
   VLOG(2) << "mock function: StartPartialPredictionForRequest";
   startpartialpredictionforrequest_input_.segments.CopyFrom(*segments);
-  startpartialpredictionforrequest_input_.request.CopyFrom(request);
+  startpartialpredictionforrequest_input_.request = request;
 
   if (!startpartialpredictionforrequest_output_.initialized) {
     return false;
@@ -453,7 +453,7 @@ bool ConverterMock::StartPartialSuggestionForRequest(
     const ConversionRequest &request, Segments *segments) const {
   VLOG(2) << "mock function: StartPartialSuggestionForRequest";
   startpartialsuggestionforrequest_input_.segments.CopyFrom(*segments);
-  startpartialsuggestionforrequest_input_.request.CopyFrom(request);
+  startpartialsuggestionforrequest_input_.request = request;
 
   if (!startpartialsuggestionforrequest_output_.initialized) {
     return false;

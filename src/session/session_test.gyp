@@ -310,6 +310,7 @@
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '../engine/engine.gyp:mock_data_engine_factory',
+        '../protocol/protocol.gyp:candidates_proto',
         '../protocol/protocol.gyp:commands_proto',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',

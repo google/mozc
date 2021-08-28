@@ -40,7 +40,7 @@ namespace mozc {
 namespace renderer {
 
 namespace {
-constexpr int kRowHeight = 20;
+constexpr int kMarginHeight = 5;
 constexpr int kMarginWidth = 20;
 constexpr int kColumn0Width = 20;
 constexpr int kColumn3Width = 4;
@@ -55,9 +55,7 @@ constexpr char kDescriptionColor[] = "#888888";
 constexpr char kShortcutColor[] = "#616161";
 constexpr char kShortcutBackgroundColor[] = "#F3F4FF";
 
-QString QStr(const std::string &str) {
-  return QString::fromUtf8(str.c_str());
-}
+QString QStr(const std::string &str) { return QString::fromUtf8(str.c_str()); }
 
 QColor QColorFromRGBAColor(RendererStyle::RGBAColor rgba) {
   return QColor(rgba.r(), rgba.g(), rgba.b(), 255 * rgba.a());
@@ -71,11 +69,10 @@ QtWindowManager::QtWindowManager() {
 
 void QtWindowManager::OnClicked(int row, int column) {
   DLOG(INFO) << "OnClicked: (" << row << ", " << column << ")";
-  if (send_command_interface_ == nullptr)  {
+  if (send_command_interface_ == nullptr) {
     return;
   }
-  if (row < 0 ||
-      row >= prev_command_.output().candidates().candidate_size()) {
+  if (row < 0 || row >= prev_command_.output().candidates().candidate_size()) {
     return;
   }
   const int cand_id = prev_command_.output().candidates().candidate(row).id();
@@ -87,20 +84,15 @@ void QtWindowManager::OnClicked(int row, int column) {
 }
 
 int QtWindowManager::StartRendererLoop(int argc, char **argv) {
-  QApplication app(argc, argv);
-
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
-  window_ = new QWidget();
-  window_->setWindowFlags(Qt::ToolTip |
-                          Qt::FramelessWindowHint |
-                          Qt::WindowStaysOnTopHint);
-  window_->setSizePolicy(
-      QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
+  QApplication app(argc, argv);
 
-  candidates_ = new QTableWidget(window_);
+  candidates_ = new QTableWidget();
+  candidates_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
+                              Qt::WindowStaysOnTopHint);
   candidates_->horizontalHeader()->hide();
   candidates_->setSelectionMode(QTableWidget::NoSelection);
   candidates_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
@@ -116,8 +108,7 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
                    [&](int row, int col) { OnClicked(row, col); });
 
   infolist_ = new QTableWidget();
-  infolist_->setWindowFlags(Qt::ToolTip |
-                            Qt::FramelessWindowHint |
+  infolist_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
                             Qt::WindowStaysOnTopHint);
   infolist_->horizontalHeader()->hide();
   infolist_->setSelectionMode(QTableWidget::NoSelection);
@@ -132,7 +123,7 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   infolist_->setColumnWidth(0, kInfolistWidth);
 
   QThread thread;
-  window_->moveToThread(&thread);
+  candidates_->moveToThread(&thread);
   infolist_->moveToThread(&thread);
 
   QtReceiverLoop *loop = nullptr;
@@ -150,17 +141,15 @@ void QtWindowManager::SetReceiverLoopFunction(ReceiverLoopFunc func) {
   receiver_loop_func_ = func;
 }
 
-void QtWindowManager::Initialize() {
-  DLOG(INFO) << "Initialize";
-}
+void QtWindowManager::Initialize() { DLOG(INFO) << "Initialize"; }
 
 void QtWindowManager::HideAllWindows() {
-  window_->hide();
+  candidates_->hide();
   infolist_->hide();
 }
 
 void QtWindowManager::ShowAllWindows() {
-  window_->show();
+  candidates_->show();
   infolist_->show();
 }
 
@@ -188,9 +177,9 @@ bool QtWindowManager::ShouldShowCandidateWindow(
 
 namespace {
 // Copied from unix/candidate_window.cc
-void GetDisplayString(
-    const commands::Candidates::Candidate &candidate, std::string &shortcut,
-    std::string &value, std::string &description) {
+void GetDisplayString(const commands::Candidates::Candidate &candidate,
+                      std::string &shortcut, std::string &value,
+                      std::string &description) {
   shortcut.clear();
   value.clear();
   description.clear();
@@ -250,9 +239,14 @@ bool IsUpdated(const commands::RendererCommand &prev_command,
   return false;
 }
 
-int GetWidth(const QTableWidgetItem *item) {
-  QFontMetrics metrics(item->font());
-  return metrics.width(item->text());
+int GetItemWidth(const QTableWidgetItem &item) {
+  QFontMetrics metrics(item.font());
+  return metrics.width(item.text()) + kMarginWidth;
+}
+
+int GetItemHeight(const QTableWidgetItem &item) {
+  QFontMetrics metrics(item.font());
+  return metrics.height() + kMarginHeight;
 }
 
 std::string GetIndexGuideString(const commands::Candidates &candidates) {
@@ -274,8 +268,7 @@ int GetFocusedRow(const commands::Candidates &candidates) {
 }
 
 void FillCandidateHighlight(const commands::Candidates &candidates,
-                            const int row,
-                            QTableWidget *table) {
+                            const int row, QTableWidget *table) {
   if (row < 0) {
     return;
   }
@@ -314,6 +307,7 @@ void FillCandidates(const commands::Candidates &candidates,
 
   int max_width1 = 0;
   int max_width2 = 0;
+  int total_height = 0;
 
   const QColor shortcut_color = QColor(kShortcutColor);
   const QColor description_color = QColor(kDescriptionColor);
@@ -345,13 +339,14 @@ void FillCandidates(const commands::Candidates &candidates,
     table->setItem(i, 3, item3);
     FillCandidateHighlight(candidates, i, table);
 
-    max_width1 = std::max(max_width1, GetWidth(item1));
-    max_width2 = std::max(max_width2, GetWidth(item2));
-    table->setRowHeight(i, kRowHeight);
+    max_width1 = std::max(max_width1, GetItemWidth(*item1));
+    max_width2 = std::max(max_width2, GetItemWidth(*item2));
+    const int height = GetItemHeight(*item1);
+    table->setRowHeight(i, height);
+    total_height += height;
   }
 
   // Footer
-  table->setRowHeight(cands_size, kRowHeight);
   for (int i = 0; i < table->columnCount(); ++i) {
     auto footer_item = new QTableWidgetItem();
     footer_item->setBackgroundColor(footer_bg_color);
@@ -360,22 +355,23 @@ void FillCandidates(const commands::Candidates &candidates,
   QTableWidgetItem *footer2 = table->item(cands_size, 2);
   footer2->setText(QStr(GetIndexGuideString(candidates)));
   footer2->setTextAlignment(Qt::AlignRight);
-  max_width2 = std::max(max_width2, GetWidth(footer2));
+  max_width2 = std::max(max_width2, GetItemWidth(*footer2));
+  const int footer_height = GetItemHeight(*footer2);
+  table->setRowHeight(cands_size, footer_height);
+  total_height += footer_height;
 
   // Resize
-  table->setColumnWidth(1, max_width1 + kMarginWidth);
-  table->setColumnWidth(2, max_width2 + kMarginWidth);
+  table->setColumnWidth(1, max_width1);
+  table->setColumnWidth(2, max_width2);
   const int magic_number_for_margin = 8;  // Heuristic number for margin
   const int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width +
-                    kMarginWidth * 2 + magic_number_for_margin;
-  const int height = kRowHeight * (cands_size + 1);  // +1 is for footer.
-  table->resize(width, height);
+                    magic_number_for_margin;
+  table->resize(width, total_height);
 }
 }  // namespace
 
 Point QtWindowManager::GetWindowPosition(
-    const commands::RendererCommand &command,
-    const Size &win_size) {
+    const commands::RendererCommand &command, const Size &win_size) {
   const Rect preedit_rect = GetRect(command.preedit_rectangle());
   const Point win_pos = Point(preedit_rect.Left(), preedit_rect.Bottom());
   const Rect monitor_rect = GetMonitorRect(win_pos.x, win_pos.y);
@@ -392,18 +388,13 @@ Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
   const commands::Candidates &candidates = command.output().candidates();
 
-  window_->hide();
+  candidates_->hide();
 
   if (IsUpdated(prev_command_, command)) {
-    candidates_->hide();
     FillCandidates(candidates, candidates_);
-    candidates_->show();
-
-    window_->resize(candidates_->size());
-
     const Size win_size(candidates_->width(), candidates_->height());
     const Point win_pos = GetWindowPosition(command, win_size);
-    window_->move(win_pos.x, win_pos.y);
+    candidates_->move(win_pos.x, win_pos.y);
   } else {
     // Reset the previous focused highlight
     const int prev_focused = GetFocusedRow(prev_command_.output().candidates());
@@ -414,14 +405,12 @@ Rect QtWindowManager::UpdateCandidateWindow(
   FillCandidateHighlight(candidates, GetFocusedRow(candidates), candidates_);
 
   // Footer index
-  candidates_->item(candidates_->rowCount() - 1, 2)->setText(
-      QStr(GetIndexGuideString(candidates)));
+  candidates_->item(candidates_->rowCount() - 1, 2)
+      ->setText(QStr(GetIndexGuideString(candidates)));
 
-  window_->show();
-
+  candidates_->show();
   prev_command_ = command;
-
-  return GetRect(window_->geometry());
+  return GetRect(candidates_->geometry());
 }
 
 bool QtWindowManager::ShouldShowInfolistWindow(
@@ -479,7 +468,7 @@ void QtWindowManager::UpdateInfolistWindow(
   infolist_->setColumnCount(1);
   infolist_->setColumnWidth(0, kInfolistWidth);
   infolist_->setRowCount(size * 2 + 1);  // +1 is for the caption title.
-  int total_height = 12;  // Heuristics margin.
+  int total_height = 12;                 // Heuristics margin.
 
   // Caption title
   const std::string &caption = style_.infolist_style().caption_string();
@@ -487,7 +476,7 @@ void QtWindowManager::UpdateInfolistWindow(
   infolist_title->setBackgroundColor(
       QColorFromRGBAColor(style_.infolist_style().caption_background_color()));
   infolist_->setItem(0, 0, infolist_title);
-  total_height += kRowHeight;
+  total_height += GetItemHeight(*infolist_title);
 
   for (int i = 0; i < size; ++i) {
     const int title_row = i * 2 + 1;
@@ -497,8 +486,9 @@ void QtWindowManager::UpdateInfolistWindow(
     const auto qtitle = new QTableWidgetItem(QString::fromUtf8(title.c_str()));
     const auto qdesc = new QTableWidgetItem(QString::fromUtf8(desc.c_str()));
 
-    const int title_height = kRowHeight;
-    const int desc_height = kRowHeight * (GetWidth(qdesc) / kInfolistWidth + 2);
+    const int title_height = GetItemHeight(*qtitle);
+    const int desc_height =
+        GetItemHeight(*qdesc) * (GetItemWidth(*qdesc) / kInfolistWidth + 2);
     infolist_->setRowHeight(title_row, title_height);
     infolist_->setRowHeight(desc_row, desc_height);
     total_height += (title_height + desc_height);
@@ -550,9 +540,7 @@ bool QtWindowManager::SetSendCommandInterface(
   return true;
 }
 
-void QtWindowManager::SetWindowPos(int x, int y) {
-  window_->move(x, y);
-}
+void QtWindowManager::SetWindowPos(int x, int y) { candidates_->move(x, y); }
 
 }  // namespace renderer
 }  // namespace mozc

@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -131,6 +132,26 @@ TEST_F(UserPOSTest, ConjugationTest) {
     EXPECT_EQ(tokens1[i].id, tokens2[i].id);
     EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
   }
+}
+
+TEST_F(UserPOSTest, SwapToken) {
+  UserPOS::Token token1 = {"key1", "value1", 1, 1, "comment1"};
+  UserPOS::Token token2 = {"key2", "value2", 2, 2, "comment2"};
+
+  using std::swap;
+  swap(token1, token2);
+
+  EXPECT_EQ("key2", token1.key);
+  EXPECT_EQ("value2", token1.value);
+  EXPECT_EQ(2, token1.id);
+  EXPECT_EQ(2, token1.cost);
+  EXPECT_EQ("comment2", token1.comment);
+
+  EXPECT_EQ("key1", token2.key);
+  EXPECT_EQ("value1", token2.value);
+  EXPECT_EQ(1, token2.id);
+  EXPECT_EQ(1, token2.cost);
+  EXPECT_EQ("comment1", token2.comment);
 }
 
 }  // namespace

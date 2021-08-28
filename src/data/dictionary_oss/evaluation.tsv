@@ -53,13 +53,47 @@ OK:	きんじて	禁じて	Conversion Expected 2	禁じ手	2.26.4465
 OK:	じょしこうせい	女子高生	Conversion Expected 2	女子高生	2.26.4465
 OK:	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Match	ダックスフントは短足です。	2.26.4465
 OK:	おわりをむかえた	終わりを迎えた	Conversion Match	終わりを迎えた	2.26.4465
-OK:	かねのなるき	金のなる木	Conversion Match	金のなる木	2.26.4472
+OK:	かねのなるき	金のなる木	Conversion Match	金のなる木	2.26.4479
 OK:	しょうてん	商店	Conversion Expected 9	笑点	2.26.4465
 OK:	べっどしーつをこうかんした	ベッドシーツを交換した	Conversion Match	ベッドシーツ	2.26.4465
 OK:	いわせるな	言わせるな	Conversion Match	言わせるな	2.26.4465
 OK:	ならには	奈良には	Conversion Match	奈良には	2.26.4465
-OK:	かいごかんせい	下位互換性	Conversion Match	下位互換性	2.26.4472
+OK:	かいごかんせい	下位互換性	Conversion Match	下位互換性	2.26.4479
 OK:	けんざかいには	県境には	Conversion Match	県境には	2.26.4465
 OK:	あいてをたたきのめす	相手を叩きのめす	Conversion Match	相手を叩きのめす	2.26.4465
 OK:	けいししている	軽視している	Conversion Match	軽視している	2.26.4465
 OK:	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Match	沖縄航空ビルディング	2.26.4465
+OK:	とっぷちーむ	トップチーム	Conversion Expected	トップチーム	2.26.4479
+OK:	かんせいどがたかいのでおどろいた	完成度が高いので驚いた	Conversion Match	完成度が高い	2.26.4479
+OK:	あけましておめでとうございます	あけましておめでとうございます	Conversion Not Match	開け	2.26.4479
+OK:	そうしないのには	そうしないのには	Conversion Match	そう	2.26.4479
+OK:	こうしないのには	こうしないのには	Conversion Match	こう	2.26.4479
+OK:	のーべるしょうをとりました	ノーベル賞を取りました	Conversion Match	ノーベル賞	2.26.4479
+OK:	いちごんいっくききもらさない	一言一句聞き漏らさない	Conversion Match	一言一句	2.26.4479
+OK:	うわぎをしちゃくする	上着を試着する	Conversion Expected	上着を試着する	2.26.4479
+OK:	こうろうしょう	厚労省	Conversion Expected 2	厚労省	2.26.4479
+OK:	こうせいろうどうしょう	厚生労働省	Conversion Expected	厚生労働省	2.26.4479
+OK:	こくどこうつうしょう	国土交通省	Conversion Expected	国土交通省	2.26.4479
+OK:	しょうひしゃちょう	消費者庁	Conversion Expected	消費者庁	2.26.4479
+OK:	きょうたい	筐体	Conversion Expected	筐体	2.26.4479
+OK:	きどく	既読	Conversion Expected	既読	2.26.4479
+OK:	そうるい	走塁	Conversion Expected 2	走塁	2.26.4479
+OK:	きざな	きざな	Conversion Expected 2	キザな	2.26.4479
+OK:	きざな	きざな	Conversion Expected 2	気障な	2.26.4479
+OK:	ぜんくつ	前屈	Conversion Expected	前屈	2.26.4479
+OK:	じゅうりょうせい	従量制	Conversion Expected 2	従量制	2.26.4479
+OK:	いやがおうでも	否が応でも	Conversion Expected 2	否が応でも	2.26.4479
+FAILED:	れっきとした	れっきとした	Conversion Expected 2	歴とした	2.26.4479
+OK:	はばかります	はばかります	Conversion Expected 2	憚ります	2.26.4479
+OK:	こうれい	高齢	Conversion Expected 9	降霊	2.26.4479
+OK:	とわ	永久	Conversion Expected 9	永遠	2.26.4479
+OK:	りょうあんじ	龍安寺	Conversion Expected 2	龍安寺	2.26.4479
+OK:	はやまるな	早まるな	Conversion Not Match	葉山	2.26.4479
+FAILED:	うきついちばん	うきつ一番	Conversion Expected	浮津一番	2.26.4479
+OK:	うつだ	鬱だ	Conversion Expected	鬱だ	2.26.4479
+OK:	うつだ	鬱だ	Conversion Expected 9	欝だ	2.26.4479
+OK:	このいやほんはていおんすくなめときいている	このイヤホンは低音少なめと聞いている	Conversion Expected	このイヤホンは低音少なめと聞いている	2.26.4479
+OK:	てんさいとしかいいようがない	天才としか言いようがない	Conversion Match	としか言いようがない	2.26.4479
+OK:	そのあとどうなるかは	その後どうなるかは	Conversion Match	どうなるかは	2.26.4479
+OK:	ばくそうする	爆走する	Conversion Expected	爆走する	2.26.4479
+OK:	ゆうきがひつようだ	勇気が必要だ	Conversion Expected	勇気が必要だ	2.26.4479

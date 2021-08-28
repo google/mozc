@@ -63,3 +63,37 @@ oss_issue25	けんざかいには	県境には	Conversion Match
 oss_issue25	あいてをたたきのめす	相手を叩きのめす	Conversion Match
 oss_issue25	けいししている	軽視している	Conversion Match
 oss_issue25	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Match
+oss_issue52	とっぷちーむ	トップチーム	Conversion Expected
+oss_issue52	かんせいどがたかいのでおどろいた	完成度が高い	Conversion Match
+oss_issue52	あけましておめでとうございます	開け	Conversion Not Match
+oss_issue52	そうしないのには	そう	Conversion Match
+oss_issue52	こうしないのには	こう	Conversion Match
+oss_issue52	のーべるしょうをとりました	ノーベル賞	Conversion Match
+oss_issue52	いちごんいっくききもらさない	一言一句	Conversion Match
+oss_issue52	うわぎをしちゃくする	上着を試着する	Conversion Expected
+oss_issue52	こうろうしょう	厚労省	Conversion Expected 2
+oss_issue52	こうせいろうどうしょう	厚生労働省	Conversion Expected
+oss_issue52	こくどこうつうしょう	国土交通省	Conversion Expected
+oss_issue52	しょうひしゃちょう	消費者庁	Conversion Expected
+oss_issue52	きょうたい	筐体	Conversion Expected
+oss_issue52	きどく	既読	Conversion Expected
+oss_issue52	そうるい	走塁	Conversion Expected 2
+oss_issue52	きざな	キザな	Conversion Expected 2
+oss_issue52	きざな	気障な	Conversion Expected 2
+oss_issue52	ぜんくつ	前屈	Conversion Expected
+oss_issue52	じゅうりょうせい	従量制	Conversion Expected 2
+oss_issue52	いやがおうでも	否が応でも	Conversion Expected 2
+oss_issue52	れっきとした	歴とした	Conversion Expected 2
+oss_issue52	はばかります	憚ります	Conversion Expected 2
+oss_issue52	こうれい	降霊	Conversion Expected 9
+oss_issue52	とわ	永遠	Conversion Expected 9
+oss_issue52	りょうあんじ	龍安寺	Conversion Expected 2
+oss_issue52	はやまるな	葉山	Conversion Not Match
+oss_issue52	うきついちばん	浮津一番	Conversion Expected
+oss_issue52	うつだ	鬱だ	Conversion Expected
+oss_issue52	うつだ	欝だ	Conversion Expected 9
+oss_issue52	このいやほんはていおんすくなめときいている	このイヤホンは低音少なめと聞いている	Conversion Expected
+oss_issue52	てんさいとしかいいようがない	としか言いようがない	Conversion Match
+oss_issue52	そのあとどうなるかは	どうなるかは	Conversion Match
+oss_issue52	ばくそうする	爆走する	Conversion Expected
+oss_issue52	ゆうきがひつようだ	勇気が必要だ	Conversion Expected

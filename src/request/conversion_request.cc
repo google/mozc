@@ -36,13 +36,8 @@
 namespace mozc {
 
 ConversionRequest::ConversionRequest()
-    : composer_(nullptr),
-      request_(&commands::Request::default_instance()),
-      config_(&config::ConfigHandler::DefaultConfig()),
-      use_actual_converter_for_realtime_conversion_(false),
-      composer_key_selection_(CONVERSION_KEY),
-      skip_slow_rewriters_(false),
-      create_partial_candidates_(false) {}
+    : ConversionRequest(nullptr, &commands::Request::default_instance(),
+                        &config::ConfigHandler::DefaultConfig()) {}
 
 ConversionRequest::ConversionRequest(const composer::Composer *c,
                                      const commands::Request *request,
@@ -55,7 +50,11 @@ ConversionRequest::ConversionRequest(const composer::Composer *c,
       skip_slow_rewriters_(false),
       create_partial_candidates_(false) {}
 
-ConversionRequest::~ConversionRequest() {}
+ConversionRequest::ConversionRequest(const ConversionRequest &x) = default;
+ConversionRequest &ConversionRequest::operator=(const ConversionRequest &x) =
+    default;
+
+ConversionRequest::~ConversionRequest() = default;
 
 bool ConversionRequest::has_composer() const { return composer_ != nullptr; }
 
@@ -124,17 +123,6 @@ void ConversionRequest::set_create_partial_candidates(bool value) {
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
          config_->use_kana_modifier_insensitive_conversion();
-}
-
-void ConversionRequest::CopyFrom(const ConversionRequest &request) {
-  composer_ = request.composer_;
-  request_ = request.request_;
-  config_ = request.config_;
-  use_actual_converter_for_realtime_conversion_ =
-      request.use_actual_converter_for_realtime_conversion_;
-  composer_key_selection_ = request.composer_key_selection_;
-  skip_slow_rewriters_ = request.skip_slow_rewriters_;
-  create_partial_candidates_ = request.create_partial_candidates_;
 }
 
 }  // namespace mozc

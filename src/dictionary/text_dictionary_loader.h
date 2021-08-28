@@ -31,6 +31,7 @@
 #define MOZC_DICTIONARY_TEXT_DICTIONARY_LOADER_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,10 @@ class TextDictionaryLoader {
   // TODO(noriyukit): Better to pass the pointer of pos_matcher.
   explicit TextDictionaryLoader(const POSMatcher &pos_matcher);
   TextDictionaryLoader(uint16_t zipcode_id, uint16_t isolated_word_id);
+
+  TextDictionaryLoader(const TextDictionaryLoader &) = delete;
+  TextDictionaryLoader &operator=(const TextDictionaryLoader &) = delete;
+
   virtual ~TextDictionaryLoader();
 
   // Loads tokens from system dictionary files and reading correction
@@ -80,10 +85,6 @@ class TextDictionaryLoader {
   // instance or when Clear() is called.
   void CollectTokens(std::vector<Token *> *res) const;
 
- protected:
-  // Allows derived classes to implement custom filtering rules.
-  virtual Token *ParseTSV(const std::vector<absl::string_view> &columns) const;
-
  private:
   static void LoadReadingCorrectionTokens(
       const std::string &reading_correction_filename,
@@ -99,7 +100,9 @@ class TextDictionaryLoader {
   // Otherwise, the method returns false.
   bool RewriteSpecialToken(Token *token, absl::string_view label) const;
 
-  Token *ParseTSVLine(absl::string_view line) const;
+  std::unique_ptr<Token> ParseTSVLine(absl::string_view line) const;
+  std::unique_ptr<Token> ParseTSV(
+      const std::vector<absl::string_view> &columns) const;
 
   const uint16_t zipcode_id_;
   const uint16_t isolated_word_id_;

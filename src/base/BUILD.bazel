@@ -60,7 +60,6 @@ test_suite(
         ":cpu_stats_test_android",
         ":encryptor_test_android",
         ":hash_test_android",
-        ":iterator_adapter_test_android",
         ":logging_test_android",
         ":mmap_test_android",
         ":mutex_test_android",
@@ -338,24 +337,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":stl_util",
-        "//testing:gunit_main",
-    ],
-)
-
-cc_library_mozc(
-    name = "iterator_adapter",
-    hdrs = ["iterator_adapter.h"],
-    visibility = ["//:__subpackages__"],
-)
-
-cc_test_mozc(
-    name = "iterator_adapter_test",
-    size = "small",
-    srcs = ["iterator_adapter_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":iterator_adapter",
-        ":port",
         "//testing:gunit_main",
     ],
 )
