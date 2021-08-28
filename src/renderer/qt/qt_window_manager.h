@@ -66,12 +66,10 @@ class QtWindowManager : public QtWindowManagerInterface {
 
  protected:
   // If this function returns true, we should show/reload candidate window.
-  bool ShouldShowCandidateWindow(
-      const commands::RendererCommand &command);
+  bool ShouldShowCandidateWindow(const commands::RendererCommand &command);
 
   // Judges whether infolist should be shown or not.
-  bool ShouldShowInfolistWindow(
-      const commands::RendererCommand &command);
+  bool ShouldShowInfolistWindow(const commands::RendererCommand &command);
 
   // Updates candidate window size and location based on given command, and
   // returns actual rectangle.
@@ -91,7 +89,6 @@ class QtWindowManager : public QtWindowManagerInterface {
   void OnClicked(int row, int column);
 
  private:
-  QWidget *window_ = nullptr;
   QTableWidget *candidates_ = nullptr;
   QTableWidget *infolist_ = nullptr;
 
