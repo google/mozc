@@ -101,7 +101,6 @@
       'type': 'executable',
       'sources': [
         'bitarray_test.cc',
-        'iterator_adapter_test.cc',
         'logging_test.cc',
         'mmap_test.cc',
         'singleton_test.cc',

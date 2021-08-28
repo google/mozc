@@ -39,8 +39,10 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
+namespace {
 
 // Tests in which order methods of each instance should be called
 // and what value should be returned.
@@ -114,16 +116,16 @@ TEST_F(MergerRewriterTest, Rewrite) {
   const ConversionRequest request;
 
   segments.set_request_type(Segments::CONVERSION);
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "a.Rewrite();"
       "b.Rewrite();"
       "c.Rewrite();",
       call_result);
-  merger.AddRewriter(new TestRewriter(&call_result, "d", true));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
@@ -141,8 +143,8 @@ TEST_F(MergerRewriterTest, RewriteSuggestion) {
   const ConversionRequest request;
 
   segments.set_request_type(Segments::SUGGESTION);
-  merger.AddRewriter(
-      new TestRewriter(&call_result, "a", true, RewriterInterface::SUGGESTION));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
+      &call_result, "a", true, RewriterInterface::SUGGESTION));
 
   EXPECT_EQ(0, segments.conversion_segments_size());
   Segment *segment = segments.push_back_segment();
@@ -176,8 +178,8 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   EXPECT_TRUE(request.request().mixed_conversion());
 
   segments.set_request_type(Segments::SUGGESTION);
-  merger.AddRewriter(
-      new TestRewriter(&call_result, "a", true, RewriterInterface::SUGGESTION));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
+      &call_result, "a", true, RewriterInterface::SUGGESTION));
 
   EXPECT_EQ(0, segments.conversion_segments_size());
   Segment *segment = segments.push_back_segment();
@@ -203,17 +205,17 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   MergerRewriter merger;
   Segments segments;
   const ConversionRequest request;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false,
-                                      RewriterInterface::CONVERSION));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false,
-                                      RewriterInterface::SUGGESTION));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false,
-                                      RewriterInterface::PREDICTION));
-  merger.AddRewriter(new TestRewriter(
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
+      &call_result, "a", false, RewriterInterface::CONVERSION));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
+      &call_result, "b", false, RewriterInterface::SUGGESTION));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
+      &call_result, "c", false, RewriterInterface::PREDICTION));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(
       &call_result, "d", false,
       RewriterInterface::PREDICTION | RewriterInterface::CONVERSION));
-  merger.AddRewriter(
-      new TestRewriter(&call_result, "e", false, RewriterInterface::ALL));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "e", false,
+                                                     RewriterInterface::ALL));
 
   segments.set_request_type(Segments::CONVERSION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
@@ -262,16 +264,16 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
 TEST_F(MergerRewriterTest, Focus) {
   std::string call_result;
   MergerRewriter merger;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Focus(nullptr, 0, 0));
   EXPECT_EQ(
       "a.Focus();"
       "b.Focus();"
       "c.Focus();",
       call_result);
-  merger.AddRewriter(new TestRewriter(&call_result, "d", true));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Focus(nullptr, 0, 0));
   EXPECT_EQ(
@@ -286,9 +288,9 @@ TEST_F(MergerRewriterTest, Finish) {
   std::string call_result;
   const ConversionRequest request;
   MergerRewriter merger;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   merger.Finish(request, nullptr);
   EXPECT_EQ(
       "a.Finish();"
@@ -300,16 +302,16 @@ TEST_F(MergerRewriterTest, Finish) {
 TEST_F(MergerRewriterTest, Sync) {
   std::string call_result;
   MergerRewriter merger;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Sync());
   EXPECT_EQ(
       "a.Sync();"
       "b.Sync();"
       "c.Sync();",
       call_result);
-  merger.AddRewriter(new TestRewriter(&call_result, "d", true));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Sync());
   EXPECT_EQ(
@@ -323,16 +325,16 @@ TEST_F(MergerRewriterTest, Sync) {
 TEST_F(MergerRewriterTest, Reload) {
   std::string call_result;
   MergerRewriter merger;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   EXPECT_FALSE(merger.Reload());
   EXPECT_EQ(
       "a.Reload();"
       "b.Reload();"
       "c.Reload();",
       call_result);
-  merger.AddRewriter(new TestRewriter(&call_result, "d", true));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   EXPECT_TRUE(merger.Reload());
   EXPECT_EQ(
@@ -346,16 +348,16 @@ TEST_F(MergerRewriterTest, Reload) {
 TEST_F(MergerRewriterTest, Clear) {
   std::string call_result;
   MergerRewriter merger;
-  merger.AddRewriter(new TestRewriter(&call_result, "a", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "b", false));
-  merger.AddRewriter(new TestRewriter(&call_result, "c", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "a", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "b", false));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "c", false));
   merger.Clear();
   EXPECT_EQ(
       "a.Clear();"
       "b.Clear();"
       "c.Clear();",
       call_result);
-  merger.AddRewriter(new TestRewriter(&call_result, "d", true));
+  merger.AddRewriter(absl::make_unique<TestRewriter>(&call_result, "d", true));
   call_result.clear();
   merger.Clear();
   EXPECT_EQ(
@@ -366,4 +368,5 @@ TEST_F(MergerRewriterTest, Clear) {
       call_result);
 }
 
+}  // namespace
 }  // namespace mozc

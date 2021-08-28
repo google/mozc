@@ -42,6 +42,7 @@
 #include "converter/converter_interface.h"
 #include "engine/mock_data_engine_factory.h"
 #include "prediction/user_history_predictor.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_test_util.h"
@@ -58,11 +59,11 @@
 
 namespace mozc {
 
-using mozc::commands::CandidateList;
-using mozc::commands::CandidateWord;
-using mozc::commands::Output;
-using mozc::session::SessionHandlerInterpreter;
-using mozc::session::testing::SessionHandlerTestBase;
+using ::mozc::commands::CandidateList;
+using ::mozc::commands::CandidateWord;
+using ::mozc::commands::Output;
+using ::mozc::session::SessionHandlerInterpreter;
+using ::mozc::session::testing::SessionHandlerTestBase;
 using ::testing::WithParamInterface;
 
 class SessionHandlerScenarioTest : public SessionHandlerTestBase,

@@ -40,6 +40,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -89,13 +90,14 @@ CorrectionRewriter::CorrectionRewriter(
 }
 
 // static
-CorrectionRewriter *CorrectionRewriter::CreateCorrectionRewriter(
+std::unique_ptr<CorrectionRewriter>
+CorrectionRewriter::CreateCorrectionRewriter(
     const DataManagerInterface *data_manager) {
   absl::string_view value_array_data, error_array_data, correction_array_data;
   data_manager->GetReadingCorrectionData(&value_array_data, &error_array_data,
                                          &correction_array_data);
-  return new CorrectionRewriter(value_array_data, error_array_data,
-                                correction_array_data);
+  return absl::make_unique<CorrectionRewriter>(
+      value_array_data, error_array_data, correction_array_data);
 }
 
 CorrectionRewriter::~CorrectionRewriter() = default;

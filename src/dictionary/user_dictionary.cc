@@ -42,7 +42,6 @@
 #include "base/logging.h"
 #include "base/mutex.h"
 #include "base/singleton.h"
-#include "base/stl_util.h"
 #include "base/thread.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -60,35 +59,39 @@ namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPOS::Token *token, absl::string_view key) const {
-    return token->key < key;
+  bool operator()(const UserPOS::Token &token, absl::string_view key) const {
+    return token.key < key;
   }
 
-  bool operator()(absl::string_view key, const UserPOS::Token *token) const {
-    return key < token->key;
+  bool operator()(absl::string_view key, const UserPOS::Token &token) const {
+    return key < token.key;
   }
 };
 
 struct OrderByKeyPrefix {
-  bool operator()(const UserPOS::Token *token, absl::string_view prefix) const {
-    return absl::string_view(token->key).substr(0, prefix.size()) < prefix;
+  bool operator()(const UserPOS::Token &token, absl::string_view prefix) const {
+    return absl::string_view(token.key).substr(0, prefix.size()) < prefix;
   }
 
-  bool operator()(absl::string_view prefix, const UserPOS::Token *token) const {
-    return prefix < absl::string_view(token->key).substr(0, prefix.size());
+  bool operator()(absl::string_view prefix, const UserPOS::Token &token) const {
+    return prefix < absl::string_view(token.key).substr(0, prefix.size());
   }
 };
 
 struct OrderByKeyThenById {
-  bool operator()(const UserPOS::Token *lhs, const UserPOS::Token *rhs) const {
-    const int comp = lhs->key.compare(rhs->key);
-    return comp == 0 ? (lhs->id < rhs->id) : (comp < 0);
+  bool operator()(const UserPOS::Token &lhs, const UserPOS::Token &rhs) const {
+    const int comp = lhs.key.compare(rhs.key);
+    return comp == 0 ? (lhs.id < rhs.id) : (comp < 0);
   }
 };
 
 class UserDictionaryFileManager {
  public:
-  UserDictionaryFileManager() {}
+  UserDictionaryFileManager() = default;
+
+  UserDictionaryFileManager(const UserDictionaryFileManager &) = delete;
+  UserDictionaryFileManager &operator=(const UserDictionaryFileManager &) =
+      delete;
 
   const std::string GetFileName() {
     scoped_lock l(&mutex_);
@@ -107,7 +110,6 @@ class UserDictionaryFileManager {
  private:
   std::string filename_;
   Mutex mutex_;
-  DISALLOW_COPY_AND_ASSIGN(UserDictionaryFileManager);
 };
 
 void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
@@ -122,38 +124,40 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 }  // namespace
 
-class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
+class UserDictionary::TokensIndex {
  public:
   TokensIndex(const UserPOSInterface *user_pos,
               SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos), suppression_dictionary_(suppression_dictionary) {}
 
-  ~TokensIndex() { Clear(); }
+  ~TokensIndex() = default;
 
-  void Clear() {
-    STLDeleteElements(this);
-    clear();
+  bool empty() const { return user_pos_tokens_.empty(); }
+  size_t size() const { return user_pos_tokens_.size(); }
+
+  std::vector<UserPOS::Token>::const_iterator begin() const {
+    return user_pos_tokens_.begin();
+  }
+  std::vector<UserPOS::Token>::const_iterator end() const {
+    return user_pos_tokens_.end();
   }
 
   void Load(const user_dictionary::UserDictionaryStorage &storage) {
-    Clear();
+    user_pos_tokens_.clear();
     std::set<uint64_t> seen;
     std::vector<UserPOS::Token> tokens;
 
     const SuppressionDictionaryLock l(suppression_dictionary_);
     suppression_dictionary_->Clear();
 
-    for (size_t i = 0; i < storage.dictionaries_size(); ++i) {
-      const UserDictionaryStorage::UserDictionary &dic =
-          storage.dictionaries(i);
+    for (const UserDictionaryStorage::UserDictionary &dic :
+         storage.dictionaries()) {
       if (!dic.enabled() || dic.entries_size() == 0) {
         continue;
       }
 
-      for (size_t j = 0; j < dic.entries_size(); ++j) {
-        const UserDictionaryStorage::UserDictionaryEntry &entry =
-            dic.entries(j);
-
+      for (const UserDictionaryStorage::UserDictionaryEntry &entry :
+           dic.entries()) {
         if (!UserDictionaryUtil::IsValidEntry(*user_pos_, entry)) {
           continue;
         }
@@ -191,26 +195,29 @@ class UserDictionary::TokensIndex : public std::vector<UserPOS::Token *> {
           user_pos_->GetTokens(
               reading, entry.value(),
               UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
-          for (size_t k = 0; k < tokens.size(); ++k) {
-            this->push_back(new UserPOS::Token(tokens[k]));
-            Util::StripWhiteSpaces(entry.comment(), &this->back()->comment);
+          for (auto &token : tokens) {
+            Util::StripWhiteSpaces(entry.comment(), &token.comment);
+            user_pos_tokens_.push_back(std::move(token));
           }
         }
       }
     }
+    user_pos_tokens_.shrink_to_fit();
 
     // Sort first by key and then by POS ID.
-    std::sort(this->begin(), this->end(), OrderByKeyThenById());
+    std::sort(user_pos_tokens_.begin(), user_pos_tokens_.end(),
+              OrderByKeyThenById());
 
-    VLOG(1) << this->size() << " user dic entries loaded";
+    VLOG(1) << user_pos_tokens_.size() << " user dic entries loaded";
 
-    usage_stats::UsageStats::SetInteger("UserRegisteredWord",
-                                        static_cast<int>(this->size()));
+    usage_stats::UsageStats::SetInteger(
+        "UserRegisteredWord", static_cast<int>(user_pos_tokens_.size()));
   }
 
  private:
   const UserPOSInterface *user_pos_;
   SuppressionDictionary *suppression_dictionary_;
+  std::vector<UserPOS::Token> user_pos_tokens_;
 };
 
 class UserDictionary::UserDictionaryReloader : public Thread {
@@ -326,10 +333,10 @@ void UserDictionary::LookupPredictive(
 
   // Find the starting point of iteration over dictionary contents.
   Token token;
-  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
-                                     OrderByKeyPrefix());
-       range.first != range.second; ++range.first) {
-    const UserPOS::Token &user_pos_token = **range.first;
+  for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
+                                            key, OrderByKeyPrefix());
+       begin != end; ++begin) {
+    const UserPOS::Token &user_pos_token = *begin;
     switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -375,7 +382,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
   for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
                                   OrderByKey());
        it != tokens_->end(); ++it) {
-    const UserPOS::Token &user_pos_token = **it;
+    const UserPOS::Token &user_pos_token = *it;
     if (user_pos_token.key > key) {
       break;
     }
@@ -417,9 +424,9 @@ void UserDictionary::LookupExact(absl::string_view key,
       conversion_request.config().incognito_mode()) {
     return;
   }
-  auto range =
+  auto [begin, end] =
       std::equal_range(tokens_->begin(), tokens_->end(), key, OrderByKey());
-  if (range.first == range.second) {
+  if (begin == end) {
     return;
   }
   if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE) {
@@ -427,8 +434,8 @@ void UserDictionary::LookupExact(absl::string_view key,
   }
 
   Token token;
-  for (; range.first != range.second; ++range.first) {
-    const UserPOS::Token &user_pos_token = **range.first;
+  for (; begin != end; ++begin) {
+    const UserPOS::Token &user_pos_token = *begin;
     if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
@@ -457,10 +464,10 @@ bool UserDictionary::LookupComment(absl::string_view key,
   }
 
   // Set the comment that was found first.
-  for (auto range = std::equal_range(tokens_->begin(), tokens_->end(), key,
-                                     OrderByKey());
-       range.first != range.second; ++range.first) {
-    const UserPOS::Token &token = **range.first;
+  for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
+                                            key, OrderByKey());
+       begin != end; ++begin) {
+    const UserPOS::Token &token = *begin;
     if (token.value == value && !token.comment.empty()) {
       comment->assign(token.comment);
       return true;

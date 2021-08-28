@@ -77,6 +77,11 @@ class ConversionRequest {
   ConversionRequest(const composer::Composer *c,
                     const commands::Request *request,
                     const config::Config *config);
+
+  // This class is copyable.
+  ConversionRequest(const ConversionRequest &x);
+  ConversionRequest &operator=(const ConversionRequest &x);
+
   ~ConversionRequest();
 
   bool has_composer() const;
@@ -97,8 +102,6 @@ class ConversionRequest {
 
   const config::Config &config() const;
   void set_config(const config::Config *config);
-
-  void CopyFrom(const ConversionRequest &request);
 
   // TODO(noriyukit): Remove these methods after removing skip_slow_rewriters_
   // flag.
@@ -141,8 +144,6 @@ class ConversionRequest {
   // this structure, e.g., Segments::user_history_enabled_ and
   // Segments::request_type_. Also, a key for conversion is eligible to live in
   // this class.
-
-  DISALLOW_COPY_AND_ASSIGN(ConversionRequest);
 };
 
 }  // namespace mozc

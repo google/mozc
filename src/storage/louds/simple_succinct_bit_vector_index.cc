@@ -34,7 +34,6 @@
 #include <iterator>
 #include <vector>
 
-#include "base/iterator_adapter.h"
 #include "base/logging.h"
 #include "base/port.h"
 
@@ -43,25 +42,42 @@ namespace storage {
 namespace louds {
 namespace {
 
-// Simple adapter to convert from 1-bit index to 0-bit index.
-class ZeroBitAdapter : public AdapterBase<int> {
+// An iterator adaptor that gives the view of 1-bit index as 0-bit index.
+class ZeroBitIndexIterator {
  public:
-  // Needs to be default constructive to create invalid iterator.
-  ZeroBitAdapter() : index_(nullptr), chunk_size_(0) {}
+  using difference_type = ptrdiff_t;
+  using value_type = int;
+  using pointer = const int *;
+  using reference = const int &;
+  using iterator_category = std::forward_iterator_tag;
 
-  ZeroBitAdapter(const std::vector<int> *index, int chunk_size)
-      : index_(index), chunk_size_(chunk_size) {}
+  ZeroBitIndexIterator(const std::vector<int> &index, int chunk_size,
+                       const int *ptr)
+      : data_{index.data()}, chunk_size_{chunk_size}, ptr_{ptr} {}
 
-  value_type operator()(const int *ptr) const {
+  const int *ptr() const { return ptr_; }
+
+  ZeroBitIndexIterator &operator++() {
+    ++ptr_;
+    return *this;
+  }
+
+  friend bool operator!=(const ZeroBitIndexIterator &x,
+                         const ZeroBitIndexIterator &y) {
+    return x.ptr_ != y.ptr_;
+  }
+
+  int operator*() const {
     // The number of 0-bits
     //   = (total num bits) - (1-bits)
     //   = (chunk_size [bytes] * 8 [bits/byte] * (ptr's offset) - (1-bits)
-    return chunk_size_ * 8 * (ptr - index_->data()) - *ptr;
+    return chunk_size_ * 8 * (ptr_ - data_) - *ptr_;
   }
 
  private:
-  const std::vector<int> *index_;
+  const int *data_;
   int chunk_size_;
+  const int *ptr_;
 };
 
 #ifdef __GNUC__
@@ -133,15 +149,14 @@ void InitLowerBound0Cache(const std::vector<int> &index, int chunk_size,
   cache->clear();
   cache->reserve(size + 2);
   cache->push_back(index.data());
-  ZeroBitAdapter adapter(&index, chunk_size);
   for (size_t i = 1; i <= size; ++i) {
     const int target_index = increment * i;
     const int *ptr =
-        std::lower_bound(
-            MakeIteratorAdapter(index.data(), adapter),
-            MakeIteratorAdapter(index.data() + index.size(), adapter),
-            target_index)
-            .base();
+        std::lower_bound(ZeroBitIndexIterator(index, chunk_size, index.data()),
+                         ZeroBitIndexIterator(index, chunk_size,
+                                              index.data() + index.size()),
+                         target_index)
+            .ptr();
     cache->push_back(ptr);
   }
   cache->push_back(index.data() + index.size());
@@ -233,12 +248,13 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   DCHECK_GE(lb0_cache_index, 0);
 
   // Binary search on chunks.
-  ZeroBitAdapter adapter(&index_, chunk_size_);
   const int *chunk_ptr =
-      std::lower_bound(
-          MakeIteratorAdapter(lb0_cache_[lb0_cache_index], adapter),
-          MakeIteratorAdapter(lb0_cache_[lb0_cache_index + 1], adapter), n)
-          .base();
+      std::lower_bound(ZeroBitIndexIterator(index_, chunk_size_,
+                                            lb0_cache_[lb0_cache_index]),
+                       ZeroBitIndexIterator(index_, chunk_size_,
+                                            lb0_cache_[lb0_cache_index + 1]),
+                       n)
+          .ptr();
   const int chunk_index = (chunk_ptr - index_.data()) - 1;
   DCHECK_GE(chunk_index, 0);
   n -= chunk_size_ * 8 * chunk_index - index_[chunk_index];

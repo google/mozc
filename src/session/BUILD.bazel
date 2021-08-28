@@ -899,6 +899,7 @@ cc_test_mozc(
         "//converter:converter_interface",
         "//engine:mock_data_engine_factory",
         "//prediction:user_history_predictor",
+        "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//storage:registry",

@@ -161,7 +161,6 @@ cc_library_mozc(
         "//base:mutex",
         "//base:port",
         "//base:singleton",
-        "//base:stl_util",
         "//base:thread",
         "//base:util",
         "//config:config_handler",
@@ -489,7 +488,6 @@ cc_library_mozc(
         ":pos_matcher_lib",
         "//base",
         "//base:file_stream",
-        "//base:iterator_adapter",
         "//base:logging",
         "//base:multifile",
         "//base:number_util",
@@ -498,6 +496,7 @@ cc_library_mozc(
         "//base:util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

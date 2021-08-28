@@ -1393,8 +1393,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
   Segments tmp_segments;
   tmp_segments.CopyFrom(segments);
   tmp_segments.set_max_conversion_candidates_size(20);
-  ConversionRequest tmp_request;
-  tmp_request.CopyFrom(request);
+  ConversionRequest tmp_request = request;
   tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
   // Some rewriters cause significant performance loss. So we skip them.
   tmp_request.set_skip_slow_rewriters(true);
