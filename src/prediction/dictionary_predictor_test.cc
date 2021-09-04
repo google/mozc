@@ -486,7 +486,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     while (begin < end) {
       commands::KeyEvent key;
-      const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+      const char32 w = Util::Utf8ToUcs4(begin, end, &mblen);
       if (0 <= w && w <= 0x7F) {  // IsAscii
         key.set_key_code(*begin);
       } else {
@@ -667,7 +667,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   bool FindResultByValue(
       const std::vector<TestableDictionaryPredictor::Result> &results,
       const std::string &value) {
-    for (const auto& result : results) {
+    for (const auto &result : results) {
       if (result.value == value && !result.removed) {
         return true;
       }
@@ -2759,7 +2759,31 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   EXPECT_LT(0, results[3].cost);
 }
 
-TEST_F(DictionaryPredictorTest, SetLMCost) {
+TEST_F(DictionaryPredictorTest, GetLMCost) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const TestableDictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  TestableDictionaryPredictor::Result result;
+  result.wcost = 64;
+
+  for (int rid = 0; rid < 100; ++rid) {
+    for (int lid = 0; lid < 100; ++lid) {
+      result.lid = lid;
+      const int c1 = predictor->connector_->GetTransitionCost(rid, result.lid);
+      const int c2 = predictor->connector_->GetTransitionCost(0, result.lid);
+      result.types = TestableDictionaryPredictor::SUFFIX;
+      EXPECT_EQ(c1 + result.wcost, predictor->GetLMCost(result, rid));
+
+      result.types = TestableDictionaryPredictor::REALTIME;
+      EXPECT_EQ(std::min(c1, c2) + result.wcost,
+                predictor->GetLMCost(result, rid));
+    }
+  }
+}
+
+TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const TestableDictionaryPredictor *predictor =
@@ -2795,7 +2819,7 @@ TEST_F(DictionaryPredictorTest, SetLMCost) {
   result->SetTypesAndTokenAttributes(TestableDictionaryPredictor::UNIGRAM,
                                      Token::NONE);
 
-  predictor->SetLMCost(segments, &results);
+  predictor->SetPredictionCostForMixedConversion(segments, &results);
 
   EXPECT_EQ(3, results.size());
   EXPECT_EQ("てすと", results[0].value);
@@ -2844,7 +2868,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
-    predictor->SetLMCost(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2860,7 +2884,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
-    predictor->SetLMCost(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2878,7 +2902,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     ASSERT_EQ(1, results.size());
     results[0].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
     results[0].rid = results[0].lid;
-    predictor->SetLMCost(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2893,7 +2917,7 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::NONE, &results);
 
-    predictor->SetLMCost(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -3513,7 +3537,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     entry.key = "あ";
     entry.expected_result = true;
     std::string candidate;
-    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    Util::Ucs4ToUtf8(0xfeb04, &candidate);  // exclamation
     entry.expected_candidates.push_back(candidate);
     entry.expected_types.push_back(ZERO_QUERY_EMOJI);
 
@@ -3538,7 +3562,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     entry.key = "あ";
     entry.expected_result = true;
     std::string candidate;
-    Util::UCS4ToUTF8(0xfeb04, &candidate);  // exclamation
+    Util::Ucs4ToUtf8(0xfeb04, &candidate);  // exclamation
     entry.expected_candidates.push_back(candidate);
     entry.expected_types.push_back(ZERO_QUERY_EMOJI);
 

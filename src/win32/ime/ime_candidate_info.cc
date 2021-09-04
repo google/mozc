@@ -59,30 +59,32 @@ using ::msl::utilities::SafeSubtract;
 static_assert(sizeof(DWORD) <= std::numeric_limits<int32>::max(),
               "Check DWORD size.");
 
-const DWORD kSizeOfDWORD = static_cast<DWORD>(sizeof(DWORD));
+constexpr DWORD kSizeOfDWORD = static_cast<DWORD>(sizeof(DWORD));
 
 static_assert(sizeof(wchar_t) <= std::numeric_limits<int32>::max(),
               "Check wchar_t size.");
-const DWORD kSizeOfWCHAR = static_cast<DWORD>(sizeof(wchar_t));
+constexpr DWORD kSizeOfWCHAR = static_cast<DWORD>(sizeof(wchar_t));
 
 static_assert(sizeof(CANDIDATEINFO) <= std::numeric_limits<int32>::max(),
               "Check CANDIDATEINFO size.");
-const DWORD kSizeOfCANDIDATEINFO = static_cast<DWORD>(sizeof(CANDIDATEINFO));
+constexpr DWORD kSizeOfCANDIDATEINFO =
+    static_cast<DWORD>(sizeof(CANDIDATEINFO));
 
 static_assert(sizeof(CANDIDATELIST) <= std::numeric_limits<int32>::max(),
               "Check CANDIDATELIST size.");
-const DWORD kSizeOfCANDIDATELIST = static_cast<DWORD>(sizeof(CANDIDATELIST));
+constexpr DWORD kSizeOfCANDIDATELIST =
+    static_cast<DWORD>(sizeof(CANDIDATELIST));
 
 static_assert(sizeof(CANDIDATELIST) > sizeof(DWORD),
               "Check CANDIDATELIST size.");
-const DWORD kSizeOfCANDIDATELISTHeader =
+constexpr DWORD kSizeOfCANDIDATELISTHeader =
     static_cast<DWORD>(sizeof(CANDIDATELIST) - sizeof(DWORD));
 
 static_assert((static_cast<int64>(sizeof(CANDIDATEINFO)) +
                static_cast<int64>(sizeof(CANDIDATELIST))) <
               std::numeric_limits<int32>::max(),
               "Check CANDIDATEINFO + CANDIDATELIST size.");
-const DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
+constexpr DWORD kSizeOfCANDIDATEINFOAndCANDIDATELIST =
     static_cast<DWORD>(sizeof(CANDIDATEINFO) + sizeof(CANDIDATELIST));
 
 // Some games such as EMIL CHRONICLE ONLINE assumes that

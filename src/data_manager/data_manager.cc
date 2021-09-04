@@ -35,7 +35,6 @@
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
-#include "base/stl_util.h"
 #include "base/util.h"
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
@@ -361,7 +360,10 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     typing_model_data_.push_back(kv);
   }
   std::sort(typing_model_data_.begin(), typing_model_data_.end(),
-            OrderBy<FirstKey, Less>());
+            [](const std::pair<std::string, absl::string_view> &l,
+               const std::pair<std::string, absl::string_view> &r) {
+              return l.first < r.first;
+            });
 
   if (!reader.Get("version", &data_version_)) {
     LOG(ERROR) << "Cannot find data version";

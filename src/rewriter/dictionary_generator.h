@@ -38,21 +38,21 @@
 #include <string>
 #include <vector>
 
+#include "base/freelist.h"
 #include "base/port.h"
 #include "data_manager/data_manager_interface.h"
+#include "dictionary/user_pos.h"
 
 namespace mozc {
-
-template <class T>
-class ObjectPool;
-class UserPOSInterface;
-
 namespace rewriter {
 
-class Token {
+class Token final {
  public:
-  Token();
-  virtual ~Token();
+  Token() = default;
+  ~Token() = default;
+
+  Token(const Token &) = delete;
+  Token &operator=(const Token &) = delete;
 
   // Merge the values of the token.
   void MergeFrom(const Token &token);
@@ -85,7 +85,7 @@ class Token {
   }
 
  private:
-  int sorting_key_;
+  int sorting_key_ = 0;
   std::string key_;
   std::string value_;
   std::string pos_;
@@ -93,14 +93,15 @@ class Token {
   std::string additional_description_;
   // NOTE(komatsu): When new arguments are added, MergeFrom function
   // should be updated too.
-
-  DISALLOW_COPY_AND_ASSIGN(Token);
 };
 
 class DictionaryGenerator {
  public:
   explicit DictionaryGenerator(const DataManagerInterface &data_manager);
   virtual ~DictionaryGenerator();
+
+  DictionaryGenerator(const DictionaryGenerator &) = delete;
+  DictionaryGenerator &operator=(const DictionaryGenerator &) = delete;
 
   // Add the token into the pool.
   void AddToken(const Token &token);
@@ -109,13 +110,11 @@ class DictionaryGenerator {
   bool Output(const std::string &filename) const;
 
  private:
-  std::unique_ptr<ObjectPool<Token>> token_pool_;
-  std::unique_ptr<std::map<uint64_t, Token *>> token_map_;
+  ObjectPool<Token> token_pool_;
+  std::map<uint64_t, Token *> token_map_;
   std::unique_ptr<const UserPOSInterface> user_pos_;
   uint16_t open_bracket_id_;
   uint16_t close_bracket_id_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryGenerator);
 };
 
 }  // namespace rewriter

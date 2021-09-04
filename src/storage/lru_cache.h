@@ -31,11 +31,12 @@
 #define MOZC_STORAGE_LRU_CACHE_H_
 
 #include <cstring>
-#include <map>
-#include <string>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -48,9 +49,10 @@ class LRUCache {
  public:
   // Constructs a new LRUCache that can hold at most max_elements
   explicit LRUCache(size_t max_elements);
+  ~LRUCache() = default;
 
-  // Cleans up all allocated resources.
-  ~LRUCache();
+  LRUCache(const LRUCache&) = delete;
+  LRUCache& operator=(const LRUCache&) = delete;
 
   // Every Element is either on the free list or the lru list.  The
   // free list is singly-linked and only uses the next pointer, while
@@ -75,13 +77,15 @@ class LRUCache {
   // ownership of the returned value.  The reference returned by Lookup() could
   // be invalidated by a call to Insert(), so the caller must take care to not
   // access the value if Insert() could have been called after Lookup().
-  const Value* Lookup(const Key& key);
+  const Value* Lookup(const Key& key) { return MutableLookup(key); }
 
   // return non-const Value
   Value* MutableLookup(const Key& key);
 
   // Lookup/MutableLookup don't change the LRU order.
-  const Value* LookupWithoutInsert(const Key& key) const;
+  const Value* LookupWithoutInsert(const Key& key) const {
+    return MutableLookupWithoutInsert(key);
+  }
   Value* MutableLookupWithoutInsert(const Key& key) const;
 
   // Removes the cache entry specified by key.  Returns true if the entry was
@@ -94,9 +98,9 @@ class LRUCache {
   void Clear();
 
   // Returns the number of entries currently in the cache.
-  size_t Size() const;
+  size_t Size() const { return table_.size(); }
 
-  bool HasKey(const Key& key) const;
+  bool HasKey(const Key& key) const { return table_.find(key) != table_.end(); }
 
   // Returns the head of LRU list
   const Element* Head() const { return lru_head_; }
@@ -137,33 +141,27 @@ class LRUCache {
   // lookup is not necessary.
   bool Evict(Element* element);
 
-  typedef std::map<Key, Element*> Table;
-
-  Table* table_;
-  Element* free_list_;   // singly linked list of Element
-  Element* lru_head_;    // head of doubly linked list of Element
-  Element* lru_tail_;    // tail of doubly linked list of Element
-  Element* blocks_[10];  // blocks of Element, with each block being twice
-  //   as big as the previous block.  This allows the
-  //   cache to use a small amount of memory when it
-  //   contains few items, but still have low malloc
-  //   overhead per insert.  The number of blocks is
-  //   arbitrary, but 10 blocks allows the largest
-  //   block to be 2^10 times as large as the smallest
-  //   block, which seems like more than enough.
-  size_t block_count_;      // how many entries in blocks_ have been used
-  size_t block_capacity_;   // how many Elements can be stored in current blocks
-  size_t next_block_size_;  // size of the next block to allocate
-  size_t max_elements_;     // maximum elements to hold
-
-  DISALLOW_COPY_AND_ASSIGN(LRUCache);
+  absl::flat_hash_map<Key, Element*> table_;
+  Element* free_list_ = nullptr;  // singly linked list of Element
+  Element* lru_head_ = nullptr;   // head of doubly linked list of Element
+  Element* lru_tail_ = nullptr;   // tail of doubly linked list of Element
+  std::unique_ptr<Element[]> blocks_[10];  // blocks of Element, with each
+  //   block being twice as big as the previous block.  This allows the cache to
+  //   use a small amount of memory when it contains few items, but still have
+  //   low malloc overhead per insert.  The number of blocks is arbitrary, but
+  //   10 blocks allows the largest block to be 2^10 times as large as the
+  //   smallest block, which seems like more than enough.
+  size_t block_count_ = 0;      // how many entries in blocks_ have been used
+  size_t block_capacity_ = 0;   // num elements the current blocks can hold
+  size_t next_block_size_ = 0;  // size of the next block to allocate
+  const size_t max_elements_;   // maximum elements to hold
 };
 
 template <typename Key, typename Value>
 void LRUCache<Key, Value>::AddBlock() {
   const size_t max_blocks = sizeof(blocks_) / sizeof(blocks_[0]);
   if (block_count_ < max_blocks && block_capacity_ < max_elements_) {
-    blocks_[block_count_] = new Element[next_block_size_];
+    blocks_[block_count_] = absl::make_unique<Element[]>(next_block_size_);
     block_capacity_ += next_block_size_;
     // Add new elements to free list
     for (size_t i = 0; i < next_block_size_; ++i) {
@@ -222,8 +220,7 @@ LRUCache<Key, Value>::NextFreeElement() {
 template <typename Key, typename Value>
 typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::LookupInternal(
     const Key& key) const {
-  typename Table::iterator iter = table_->find(key);
-  if (iter != table_->end()) {
+  if (auto iter = table_.find(key); iter != table_.end()) {
     return iter->second;
   }
   return nullptr;
@@ -267,7 +264,7 @@ void LRUCache<Key, Value>::PushLRUHead(Element* element) {
 template <typename Key, typename Value>
 bool LRUCache<Key, Value>::Evict(Element* e) {
   if (e != nullptr) {
-    int erased = table_->erase(e->key);
+    const int erased = table_.erase(e->key);
     CHECK_EQ(erased, 1);
     RemoveFromLRU(e);
     PushFreeList(e);
@@ -278,15 +275,8 @@ bool LRUCache<Key, Value>::Evict(Element* e) {
 
 template <typename Key, typename Value>
 LRUCache<Key, Value>::LRUCache(size_t max_elements)
-    : free_list_(nullptr),
-      lru_head_(nullptr),
-      lru_tail_(nullptr),
-      block_count_(0),
-      block_capacity_(0),
-      max_elements_(max_elements) {
+    : max_elements_(max_elements) {
   ::memset(blocks_, 0, sizeof(blocks_));
-  table_ = new Table;
-  CHECK(table_);
   if (max_elements_ <= 128) {
     next_block_size_ = max_elements_;
   } else {
@@ -300,16 +290,6 @@ LRUCache<Key, Value>::LRUCache(size_t max_elements)
     while ((next_block_size_ << num_blocks) < max_elements) {
       next_block_size_ = (next_block_size_ << 1);
     }
-  }
-}
-
-template <typename Key, typename Value>
-LRUCache<Key, Value>::~LRUCache() {
-  // To free all the memory that I have allocated I need to delete table_ and
-  // any used entries in blocks_.
-  delete table_;
-  for (size_t i = 0; i < block_count_; ++i) {
-    delete[] blocks_[i];
   }
 }
 
@@ -341,7 +321,7 @@ typename LRUCache<Key, Value>::Element* LRUCache<Key, Value>::Insert(
     CHECK(e != nullptr);
   }
   e->key = key;
-  (*table_)[key] = e;
+  table_[key] = e;
   PushLRUHead(e);
 
   return e;
@@ -358,22 +338,12 @@ Value* LRUCache<Key, Value>::MutableLookup(const Key& key) {
 }
 
 template <typename Key, typename Value>
-const Value* LRUCache<Key, Value>::Lookup(const Key& key) {
-  return MutableLookup(key);
-}
-
-template <typename Key, typename Value>
 Value* LRUCache<Key, Value>::MutableLookupWithoutInsert(const Key& key) const {
   Element* e = LookupInternal(key);
   if (e != nullptr) {
     return &(e->value);
   }
   return nullptr;
-}
-
-template <typename Key, typename Value>
-const Value* LRUCache<Key, Value>::LookupWithoutInsert(const Key& key) const {
-  return MutableLookupWithoutInsert(key);
 }
 
 template <typename Key, typename Value>
@@ -384,7 +354,7 @@ bool LRUCache<Key, Value>::Erase(const Key& key) {
 
 template <typename Key, typename Value>
 void LRUCache<Key, Value>::Clear() {
-  table_->clear();
+  table_.clear();
   Element* e = lru_head_;
   while (e != nullptr) {
     Element* next = e->next;
@@ -394,16 +364,7 @@ void LRUCache<Key, Value>::Clear() {
   lru_head_ = lru_tail_ = nullptr;
 }
 
-template <typename Key, typename Value>
-bool LRUCache<Key, Value>::HasKey(const Key& key) const {
-  return (table_->find(key) != table_->end());
-}
-
-template <typename Key, typename Value>
-size_t LRUCache<Key, Value>::Size() const {
-  return table_->size();
-}
-
 }  // namespace storage
 }  // namespace mozc
+
 #endif  // MOZC_STORAGE_LRU_CACHE_H_

@@ -35,7 +35,6 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/stl_util.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "absl/strings/string_view.h"

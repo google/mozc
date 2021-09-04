@@ -63,7 +63,6 @@ cc_library_mozc(
         "//base:mmap",
         "//base:port",
         "//base:serialized_string_array",
-        "//base:stl_util",
         "//base:util",
         "//base:version",
         "//dictionary:pos_matcher_lib",

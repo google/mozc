@@ -376,7 +376,7 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
   while (begin < end) {
     // TODO(team): Replace by iterator.
     size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
     const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetCharacterForm()
     Config::CharacterForm form = prev_form;
@@ -429,7 +429,7 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
   std::string buf;
   while (begin < end) {
     size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
     const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetFormType()
     Util::FormType form = prev_form;
@@ -693,7 +693,7 @@ void CharacterFormManager::SetDefaultRule() {
 }
 
 namespace {
-// Almost the same as UTF8ToUCS4, but skip halfwidth
+// Almost the same as Utf8ToUcs4, but skip halfwidth
 // voice/semi-voice sound mark as they are treated as one character.
 char32 SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
                                    size_t *mblen) {
@@ -701,7 +701,7 @@ char32 SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
   *mblen = 0;
   while (begin < end) {
     size_t tmp_mblen = 0;
-    c = Util::UTF8ToUCS4(begin, end, &tmp_mblen);
+    c = Util::Utf8ToUcs4(begin, end, &tmp_mblen);
     CHECK_GT(tmp_mblen, 0);
     *mblen += tmp_mblen;
     begin += tmp_mblen;

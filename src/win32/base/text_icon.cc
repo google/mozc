@@ -87,8 +87,8 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
   //  - pixel bit is 1 if the pixel should be transparent.
   //  - |src_dib_buffer| is a 4-byte aligned bitmap image.
   {
-    const DWORD kBackgroundColor = RGB(0x00, 0x00, 0x00);
-    const DWORD kForegroundColor = RGB(0xff, 0xff, 0xff);
+    constexpr DWORD kBackgroundColor = RGB(0x00, 0x00, 0x00);
+    constexpr DWORD kForegroundColor = RGB(0xff, 0xff, 0xff);
 
     MonochromeBitmapInfo info = {};
     info.header.biSize = sizeof(info.header);

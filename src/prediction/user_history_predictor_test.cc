@@ -1836,7 +1836,7 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0));
 
   // An android pua emoji example. (Note: 0xFE000 is in the region).
-  Util::UCS4ToUTF8(0xFE000, entry.mutable_value());
+  Util::Ucs4ToUtf8(0xFE000, entry.mutable_value());
   EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
   EXPECT_FALSE(predictor->IsValidEntry(entry, 0));
   EXPECT_TRUE(predictor->IsValidEntry(entry, Request::DOCOMO_EMOJI));
@@ -1985,7 +1985,7 @@ std::string RemoveLastUCS4Character(const std::string &input) {
   for (ConstChar32Iterator iter(input);
        !iter.Done() && (ucs4_processed < ucs4_count - 1);
        iter.Next(), ++ucs4_processed) {
-    Util::UCS4ToUTF8Append(iter.Get(), &output);
+    Util::Ucs4ToUtf8Append(iter.Get(), &output);
   }
   return output;
 }
@@ -2632,7 +2632,7 @@ void InitSegmentsFromInputSequence(const std::string &text,
 
   while (begin < end) {
     commands::KeyEvent key;
-    const char32 w = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 w = Util::Utf8ToUcs4(begin, end, &mblen);
     if (0 <= w && w <= 0x7F) {  // IsAscii
       key.set_key_code(*begin);
     } else {

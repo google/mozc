@@ -376,12 +376,12 @@ DWORD ImeCore::GetSupportableConversionMode(DWORD raw_conversion_mode) {
   // If the initial |fdwConversion| is not a supported combination of flags,
   // we have to update it and then send the IMN_SETCONVERSIONMODE message.
   // See b/2914115 for details.
-  const DWORD kHiragana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
-  const DWORD kFullKatakana =
+  constexpr DWORD kHiragana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
+  constexpr DWORD kFullKatakana =
       IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_KATAKANA;
-  const DWORD kHalfKatakana = IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
-  const DWORD kFullAlpha = IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE;
-  const DWORD kHalfAlpha = IME_CMODE_ALPHANUMERIC;
+  constexpr DWORD kHalfKatakana = IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
+  constexpr DWORD kFullAlpha = IME_CMODE_ALPHANUMERIC | IME_CMODE_FULLSHAPE;
+  constexpr DWORD kHalfAlpha = IME_CMODE_ALPHANUMERIC;
 
   // Separate Roman flag
   DWORD roman_flag = (raw_conversion_mode & IME_CMODE_ROMAN);

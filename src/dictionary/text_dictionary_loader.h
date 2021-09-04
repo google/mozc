@@ -33,9 +33,11 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/port.h"
+#include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit_prod.h"
 #include "absl/strings/string_view.h"
 // for FRIEND_TEST
@@ -43,7 +45,6 @@
 namespace mozc {
 namespace dictionary {
 
-struct Token;
 class POSMatcher;
 
 class TextDictionaryLoader {
@@ -73,12 +74,13 @@ class TextDictionaryLoader {
                          int limit);
 
   // Clears the loaded tokens.
-  void Clear();
+  void Clear() { tokens_.clear(); }
 
-  // Adds a token.  The ownership is taken by the loader.
-  void AddToken(Token *token) { tokens_.push_back(token); }
+  void AddToken(std::unique_ptr<Token> token) {
+    tokens_.push_back(std::move(token));
+  }
 
-  const std::vector<Token *> &tokens() const { return tokens_; }
+  const std::vector<std::unique_ptr<Token>> &tokens() const { return tokens_; }
 
   // Appends the tokens owned by this instance to |res|.  Note that the appended
   // tokens are still owned by this instance and deleted on destruction of this
@@ -86,10 +88,9 @@ class TextDictionaryLoader {
   void CollectTokens(std::vector<Token *> *res) const;
 
  private:
-  static void LoadReadingCorrectionTokens(
+  static std::vector<std::unique_ptr<Token>> LoadReadingCorrectionTokens(
       const std::string &reading_correction_filename,
-      const std::vector<Token *> &ref_sorted_tokens, int *limit,
-      std::vector<Token *> *tokens);
+      const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit);
 
   // Encodes special information into |token| with the |label|.
   // Currently, label must be:
@@ -106,7 +107,7 @@ class TextDictionaryLoader {
 
   const uint16_t zipcode_id_;
   const uint16_t isolated_word_id_;
-  std::vector<Token *> tokens_;
+  std::vector<std::unique_ptr<Token>> tokens_;
 
   FRIEND_TEST(TextDictionaryLoaderTest, RewriteSpecialTokenTest);
 };

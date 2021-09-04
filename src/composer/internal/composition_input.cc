@@ -48,7 +48,7 @@ bool CompositionInput::Init(const commands::KeyEvent &key_event,
                             bool use_typing_correction, bool is_new_input) {
   std::string raw;
   if (key_event.has_key_code()) {
-    Util::UCS4ToUTF8(key_event.key_code(), &raw);
+    Util::Ucs4ToUtf8(key_event.key_code(), &raw);
   } else if (key_event.has_key_string()) {
     raw = key_event.key_string();
   } else {

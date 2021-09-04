@@ -333,7 +333,7 @@ void Util::LowerString(std::string *str) {
   std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    char32 ucs4 = UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
+    char32 ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
     if (mblen == 0) {
       break;
     }
@@ -341,7 +341,7 @@ void Util::LowerString(std::string *str) {
     if ((0x0041 <= ucs4 && ucs4 <= 0x005A) ||
         (0xFF21 <= ucs4 && ucs4 <= 0xFF3A)) {
       ucs4 += kOffsetFromUpperToLower;
-      UCS4ToUTF8(ucs4, &utf8);
+      Ucs4ToUtf8(ucs4, &utf8);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -361,12 +361,12 @@ void Util::UpperString(std::string *str) {
   std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    char32 ucs4 = UTF8ToUCS4(begin + pos, begin + str->size(), &mblen);
+    char32 ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
     // ('a' <= ucs4 && ucs4 <= 'z') || ('ａ' <= ucs4 && ucs4 <= 'ｚ')
     if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
         (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
       ucs4 -= kOffsetFromUpperToLower;
-      UCS4ToUTF8(ucs4, &utf8);
+      Ucs4ToUtf8(ucs4, &utf8);
       // The size of upper case character must be equal to the source
       // lower case character.  The following check asserts it.
       if (utf8.size() != mblen) {
@@ -482,7 +482,7 @@ size_t Util::CharsLen(const char *src, size_t size) {
   return length;
 }
 
-char32 Util::UTF8ToUCS4(const char *begin, const char *end, size_t *mblen) {
+char32 Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
   absl::string_view s(begin, end - begin);
   absl::string_view rest;
   char32 c = 0;
@@ -636,19 +636,19 @@ bool Util::IsValidUtf8(absl::string_view s) {
   return true;
 }
 
-void Util::UCS4ToUTF8(char32 c, std::string *output) {
+void Util::Ucs4ToUtf8(char32 c, std::string *output) {
   output->clear();
-  UCS4ToUTF8Append(c, output);
+  Ucs4ToUtf8Append(c, output);
 }
 
-void Util::UCS4ToUTF8Append(char32 c, std::string *output) {
+void Util::Ucs4ToUtf8Append(char32 c, std::string *output) {
   char buf[7];
-  output->append(buf, UCS4ToUTF8(c, buf));
+  output->append(buf, Ucs4ToUtf8(c, buf));
 }
 
-size_t Util::UCS4ToUTF8(char32 c, char *output) {
+size_t Util::Ucs4ToUtf8(char32 c, char *output) {
   if (c == 0) {
-    // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8Append
+    // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8Append
     // worked like this.
     output[0] = '\0';
     return 0;
@@ -1408,7 +1408,7 @@ Util::FormType Util::GetFormType(char32 w) {
 // return script type of first character in str
 Util::ScriptType Util::GetScriptType(const char *begin, const char *end,
                                      size_t *mblen) {
-  const char32 w = UTF8ToUCS4(begin, end, mblen);
+  const char32 w = Utf8ToUcs4(begin, end, mblen);
   return GetScriptType(w);
 }
 

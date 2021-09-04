@@ -715,6 +715,7 @@
             'input_files%': [
               '<(platform_data_dir)/suggestion_filter.txt',
             ],
+            'suggestion_filter_safe_def_file%': '""',
           },
           'inputs': [
             '<(generator)',
@@ -726,6 +727,7 @@
           'action': [
             '<(generator)',
             '--input=<@(input_files)',
+            '--safe_list_files=<(suggestion_filter_safe_def_file)',
             '--header=false',
             '--output=<(gen_out_dir)/suggestion_filter_data.data',
           ],

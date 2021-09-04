@@ -55,9 +55,9 @@ TipInputModeManager::Config GetThreadLocalMode() {
   return config;
 }
 
-const DWORD kNativeHiragana =
+constexpr DWORD kNativeHiragana =
     IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN;
-const DWORD kNativeHalfAlpha = IME_CMODE_ROMAN;
+constexpr DWORD kNativeHalfAlpha = IME_CMODE_ROMAN;
 
 TEST(TipInputModeManagerImplTest, GetOverriddenState) {
   // Check if input scopes for turning off IME temporarily.

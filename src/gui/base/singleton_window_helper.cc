@@ -75,7 +75,7 @@ bool ReadWindowInfo(const std::string &lock_name,
       return false;
     }
 
-    const DWORD kMaxFileSize = 2096;
+    constexpr DWORD kMaxFileSize = 2096;
     if (size == 0 || size >= kMaxFileSize) {
       LOG(ERROR) << "Invalid file size: " << kMaxFileSize;
       return false;

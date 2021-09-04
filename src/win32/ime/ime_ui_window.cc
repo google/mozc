@@ -790,7 +790,7 @@ class DefaultUIWindow {
  private:
   // Timer for the langbar update.
   static const UINT_PTR kDeferredLangBarUpdateTimerId = 2;
-  static const DWORD kLangBarUpdateDelayMilliSec = 50;
+  static constexpr DWORD kLangBarUpdateDelayMilliSec = 50;
 
   enum LangBarUpdateMode {
     kDeferred = 0,

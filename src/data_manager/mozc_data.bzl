@@ -94,6 +94,7 @@ def mozc_dataset(
         zero_query_def,
         zero_query_number_def,
         typing_models = [],
+        suggestion_filter_safe_def_srcs = [],
         usage_dict = None):
     sources = [
         ":" + name + "@user_pos",
@@ -337,11 +338,14 @@ def mozc_dataset(
 
     native.genrule(
         name = name + "@suggestion_filter",
-        srcs = [suggestion_filter_src],
+        srcs = [suggestion_filter_src] + suggestion_filter_safe_def_srcs,
         outs = ["suggestion_filter.data"],
         cmd = (
             "$(location //prediction:gen_suggestion_filter_main) " +
-            "--input=$< --output=$@ --header=false"
+            "--input=$(location " + suggestion_filter_src + ") " +
+            "--safe_list_files=\"" + ",".join(["$(location %s)" % s for s in suggestion_filter_safe_def_srcs]) + "\" " +
+            "--output=$@ " +
+            "--header=false "
         ),
         tools = ["//prediction:gen_suggestion_filter_main"],
     )

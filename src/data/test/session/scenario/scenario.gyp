@@ -82,6 +82,7 @@
           'twelvekeys_toggle_flick_alphabet_scenario.txt',
           'twelvekeys_toggle_hiragana_preedit_scenario.txt',
           'undo.txt',
+          'zero_query_suggestion.txt',
         ],
         'test_data_subdir': 'data/test/session/scenario',
       },

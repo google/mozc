@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <string>
@@ -45,7 +46,6 @@
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/number_util.h"
-#include "base/stl_util.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
@@ -62,32 +62,37 @@ namespace {
 
 using ValueAndKey = std::pair<absl::string_view, absl::string_view>;
 
-ValueAndKey ToValueAndKey(const Token *token) {
+ValueAndKey ToValueAndKey(const std::unique_ptr<Token> &token) {
   return ValueAndKey(token->value, token->key);
 }
 
 // Functor to sort a sequence of Tokens first by value and then by key.
 struct OrderByValueThenByKey {
-  bool operator()(const Token *l, const Token *r) const {
+  bool operator()(const std::unique_ptr<Token> &l,
+                  const std::unique_ptr<Token> &r) const {
     return ToValueAndKey(l) < ToValueAndKey(r);
   }
 
-  bool operator()(const Token *token, const ValueAndKey &value_key) const {
+  bool operator()(const std::unique_ptr<Token> &token,
+                  const ValueAndKey &value_key) const {
     return ToValueAndKey(token) < value_key;
   }
 
-  bool operator()(const ValueAndKey &value_key, const Token *token) const {
+  bool operator()(const ValueAndKey &value_key,
+                  const std::unique_ptr<Token> &token) const {
     return value_key < ToValueAndKey(token);
   }
 };
 
 // Functor to sort a sequence of Tokens by value.
 struct OrderByValue {
-  bool operator()(const Token *token, absl::string_view value) const {
+  bool operator()(const std::unique_ptr<Token> &token,
+                  absl::string_view value) const {
     return token->value < value;
   }
 
-  bool operator()(absl::string_view value, const Token *token) const {
+  bool operator()(absl::string_view value,
+                  const std::unique_ptr<Token> &token) const {
     return value < token->value;
   }
 };
@@ -124,7 +129,7 @@ TextDictionaryLoader::TextDictionaryLoader(uint16_t zipcode_id,
                                            uint16_t isolated_word_id)
     : zipcode_id_(zipcode_id), isolated_word_id_(isolated_word_id) {}
 
-TextDictionaryLoader::~TextDictionaryLoader() { Clear(); }
+TextDictionaryLoader::~TextDictionaryLoader() = default;
 
 bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
                                                absl::string_view label) const {
@@ -160,7 +165,7 @@ void TextDictionaryLoader::Load(
 void TextDictionaryLoader::LoadWithLineLimit(
     const std::string &dictionary_filename,
     const std::string &reading_correction_filename, int limit) {
-  Clear();
+  tokens_.clear();
 
   // Roughly allocate buffers for Token pointers.
   if (limit < 0) {
@@ -178,7 +183,7 @@ void TextDictionaryLoader::LoadWithLineLimit(
       Util::ChopReturns(&line);
       std::unique_ptr<Token> token = ParseTSVLine(line);
       if (token) {
-        tokens_.push_back(token.release());  // Ownership is transferred.
+        tokens_.push_back(std::move(token));
         --limit;
       }
     }
@@ -199,24 +204,24 @@ void TextDictionaryLoader::LoadWithLineLimit(
   //      tokens that have the same value.
   std::sort(tokens_.begin(), tokens_.end(), OrderByValueThenByKey());
 
-  std::vector<Token *> reading_correction_tokens;
-  LoadReadingCorrectionTokens(reading_correction_filename, tokens_, &limit,
-                              &reading_correction_tokens);
-  tokens_.insert(tokens_.end(), reading_correction_tokens.begin(),
-                 reading_correction_tokens.end());  // Ownership is transferred.
+  std::vector<std::unique_ptr<Token>> reading_correction_tokens =
+      LoadReadingCorrectionTokens(reading_correction_filename, tokens_, &limit);
+  tokens_.insert(tokens_.end(),
+                 std::make_move_iterator(reading_correction_tokens.begin()),
+                 std::make_move_iterator(reading_correction_tokens.end()));
 }
 
 // Loads reading correction data into |tokens|.  The second argument is used to
 // determine costs of reading correction tokens and must be sorted by
 // OrderByValueThenByKey().  The output tokens are newly allocated and the
 // caller is responsible to delete them.
-void TextDictionaryLoader::LoadReadingCorrectionTokens(
+std::vector<std::unique_ptr<Token>>
+TextDictionaryLoader::LoadReadingCorrectionTokens(
     const std::string &reading_correction_filename,
-    const std::vector<Token *> &ref_sorted_tokens, int *limit,
-    std::vector<Token *> *tokens) {
+    const std::vector<std::unique_ptr<Token>> &ref_sorted_tokens, int *limit) {
   // Load reading correction entries.
+  std::vector<std::unique_ptr<Token>> tokens;
   int reading_correction_size = 0;
-
   InputMultiFile file(reading_correction_filename);
   std::string line;
   while (file.ReadLine(&line)) {
@@ -253,10 +258,10 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // this reading correction entry.  Next, find the token that has the
     // maximum cost in [begin, end).  Note that linear search is sufficiently
     // fast here because the size of the range is small.
-    const Token *max_cost_token = *begin;
+    const Token *max_cost_token = begin->get();
     for (++begin; begin != end; ++begin) {
       if ((*begin)->cost > max_cost_token->cost) {
-        max_cost_token = *begin;
+        max_cost_token = begin->get();
       }
     }
 
@@ -275,7 +280,7 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
     // reading_correction_rewriter annotates the spelling correction
     // notations.
     token->attributes = Token::NONE;
-    tokens->push_back(token.release());
+    tokens.push_back(std::move(token));
     ++reading_correction_size;
     if (--*limit <= 0) {
       break;
@@ -283,14 +288,15 @@ void TextDictionaryLoader::LoadReadingCorrectionTokens(
   }
   LOG(INFO) << reading_correction_size << " tokens from "
             << reading_correction_filename;
+  return tokens;
 }
-
-void TextDictionaryLoader::Clear() { STLDeleteElements(&tokens_); }
 
 void TextDictionaryLoader::CollectTokens(std::vector<Token *> *res) const {
   DCHECK(res);
   res->reserve(res->size() + tokens_.size());
-  res->insert(res->end(), tokens_.begin(), tokens_.end());
+  for (const std::unique_ptr<Token> &token : tokens_) {
+    res->push_back(token.get());
+  }
 }
 
 std::unique_ptr<Token> TextDictionaryLoader::ParseTSVLine(

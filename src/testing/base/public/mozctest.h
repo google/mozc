@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
+#include "base/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -49,6 +50,11 @@ namespace testing {
 // This call gives the absolute path to data/test/dictionary/id.def. (Note that
 // the actual result is separated by OS-specific path separator.)
 std::string GetSourcePath(const std::vector<absl::string_view> &components);
+
+// Gets the absolute path of a test resource file. Returns an error status if
+// the path doesn't exist.
+mozc::StatusOr<std::string> GetSourceFile(
+    const std::vector<absl::string_view> &components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,
 // terminates the program.

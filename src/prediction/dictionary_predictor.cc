@@ -432,8 +432,9 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   if (results.empty()) {
     return false;
   }
+
   if (is_mixed_conversion) {
-    SetLMCost(*segments, &results);
+    SetPredictionCostForMixedConversion(*segments, &results);
     ApplyPenaltyForKeyExpansion(*segments, &results);
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
@@ -861,15 +862,26 @@ void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
 // Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
 // is also added for non-realtime results.
 int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
-  // Sometimes transition cost is too high and causes a bug like b/18112966.
-  // For example, "接続詞 が" -> "始まる 動詞,五段活用,基本形" has very large
-  // cost and "始まる" is demoted.  To prevent such cases, ImmutableConverter
-  // computes transition from BOS/EOS too; see
-  // ImmutableConverterImpl::MakeLatticeNodesForHistorySegments().
-  // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
-  const int cost1 = connector_->GetTransitionCost(rid, result.lid);
-  const int cost2 = connector_->GetTransitionCost(0, result.lid);
-  int lm_cost = std::min(cost1, cost2) + result.wcost;
+  const int cost_with_context = connector_->GetTransitionCost(rid, result.lid);
+
+  int lm_cost = 0;
+
+  if (result.types & SUFFIX) {
+    // We always respect the previous context to calculate the cost of SUFFIX.
+    // Otherwise, the suffix that doesn't match the context will be promoted.
+    lm_cost = cost_with_context + result.wcost;
+  } else {
+    // Sometimes transition cost is too high and causes a bug like b/18112966.
+    // For example, "接続詞 が" -> "始まる 動詞,五段活用,基本形" has very large
+    // cost and "始まる" is demoted.  To prevent such cases, ImmutableConverter
+    // computes transition from BOS/EOS too; see
+    // ImmutableConverterImpl::MakeLatticeNodesForHistorySegments().
+    // Here, taking the minimum of |cost1| and |cost2| has a similar effect.
+    const int cost_without_context =
+        connector_->GetTransitionCost(0, result.lid);
+    lm_cost = std::min(cost_with_context, cost_without_context) + result.wcost;
+  }
+
   if (!(result.types & REALTIME)) {
     // Relatime conversion already adds perfix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
@@ -1110,13 +1122,14 @@ void DictionaryPredictor::SetPredictionCost(
   }
 }
 
-void DictionaryPredictor::SetLMCost(const Segments &segments,
-                                    std::vector<Result> *results) const {
+void DictionaryPredictor::SetPredictionCostForMixedConversion(
+    const Segments &segments, std::vector<Result> *results) const {
   DCHECK(results);
 
   // ranking for mobile
-  int rid = 0;  // 0 (BOS) is default
-  int prev_cost = 0;
+  int rid = 0;        // 0 (BOS) is default
+  int prev_cost = 0;  // cost of the last history candidate.
+
   if (segments.history_segments_size() > 0) {
     const Segment &history_segment =
         segments.history_segment(segments.history_segments_size() - 1);
@@ -1132,6 +1145,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
 
   const size_t input_key_len =
       Util::CharsLen(segments.conversion_segment(0).key());
+
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
@@ -1163,6 +1177,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
                       absl::StrCat("Unigram | Typing correction: ", cost));
       }
     }
+
     if (result.types & BIGRAM) {
       // When user inputs "六本木" and there is an entry
       // "六本木ヒルズ" in the dictionary, we can suggest
@@ -1170,16 +1185,19 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
       // We can't calcurate the transition cost between "六本木"
       // and "ヒルズ". If we ignore the transition cost,
       // bigram-based suggestion will be overestimated.
-      // Here we use |default_transition_cost| as an
+      // Here we use kDefaultTransitionCost as an
       // transition cost between "六本木" and "ヒルズ". Currently,
       // the cost is basically the same as the cost between
       // "名詞,一般" and "名詞,一般".
+      // TODO(taku): Adjust these parameters.
+      // Seems the bigram is overestimated.
       constexpr int kDefaultTransitionCost = 1347;
       // Promoting bigram candidates.
       constexpr int kBigramBonus = 800;  // ~= 500*ln(5)
       cost += (kDefaultTransitionCost - kBigramBonus - prev_cost);
       MOZC_WORD_LOG(result, absl::StrCat("Bigram: ", cost));
     }
+
     if (result.candidate_attributes & Segment::Candidate::USER_DICTIONARY &&
         result.lid != general_symbol_id_) {
       // Decrease cost for words from user dictionary in order to promote them,
@@ -1193,6 +1211,7 @@ void DictionaryPredictor::SetLMCost(const Segments &segments,
                       kUserDictionaryCostUpperLimit);
       MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
     }
+
     // Note that the cost is defined as -500 * log(prob).
     // Even after the ad hoc manipulations, cost must remain larger than 0.
     result.cost = std::max(1, cost);
@@ -1995,7 +2014,7 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
         (available_emoji_carrier & Request::KDDI_EMOJI &&
          entry.emoji_type() & EMOJI_KDDI)) {
       std::string android_pua;
-      Util::UCS4ToUTF8(entry.emoji_android_pua(), &android_pua);
+      Util::Ucs4ToUtf8(entry.emoji_android_pua(), &android_pua);
       results->push_back(std::make_pair(android_pua, entry.type()));
     }
   }

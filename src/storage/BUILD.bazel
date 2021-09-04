@@ -71,6 +71,17 @@ cc_library_mozc(
     deps = [
         "//base:logging",
         "//base:port",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/memory",
+    ],
+)
+
+cc_test_mozc(
+    name = "lru_cache_test",
+    srcs = ["lru_cache_test.cc"],
+    deps = [
+        ":lru_cache",
+        "//testing:gunit_main",
     ],
 )
 

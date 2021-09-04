@@ -226,7 +226,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     const char *begin = top_content.data();
     const char *end = top_content.data() + top_content.size();
     size_t mblen = 0;
-    const char32 wchar = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 wchar = Util::Utf8ToUcs4(begin, end, &mblen);
 
     switch (wchar) {
       case 0x304a:  // "お"

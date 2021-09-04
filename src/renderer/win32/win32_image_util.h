@@ -340,7 +340,7 @@ class TextLabel {
   const Rect &bounding_rect() const;
 
  private:
-  const std::vector<BinarySubdivisionalPixel *> pixels_;
+  const std::vector<std::unique_ptr<BinarySubdivisionalPixel>> pixels_;
   const Rect bounding_rect_;
   const RGBColor text_color_;
 

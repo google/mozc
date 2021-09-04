@@ -492,7 +492,6 @@ cc_library_mozc(
         "//base:multifile",
         "//base:number_util",
         "//base:port",
-        "//base:stl_util",
         "//base:util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
@@ -518,6 +517,7 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -703,7 +703,6 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
-        "//base:stl_util",
         "//base:util",
         "//request:conversion_request",
         "@com_google_absl//absl/strings",

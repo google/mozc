@@ -104,8 +104,8 @@ class SenderThread {
       if (g_module_unloaded) {
         break;
       }
-      const DWORD kQuitEventSignaled = WAIT_OBJECT_0;
-      const DWORD kRendererEventSignaled = WAIT_OBJECT_0 + 1;
+      constexpr DWORD kQuitEventSignaled = WAIT_OBJECT_0;
+      constexpr DWORD kRendererEventSignaled = WAIT_OBJECT_0 + 1;
       if (wait_result == kQuitEventSignaled) {
         // handles[0], that is, quit event is signaled.
         break;

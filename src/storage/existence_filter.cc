@@ -276,8 +276,9 @@ void ExistenceFilter::Write(char **buf, size_t *size) {
   buf_ptr += sizeof(expected_nelts_);
   memcpy(buf_ptr, &num_hashes_, sizeof(num_hashes_));
   buf_ptr += sizeof(num_hashes_);
-  LOG(INFO) << "Write header : vec_size" << vec_size_ << " expected_nelts "
-            << expected_nelts_ << " num_hashes " << num_hashes_;
+  // This method is called on data generation and we can call LOG(INFO) here.
+  LOG(INFO) << "Write header : vec_size " << vec_size_ << ", expected_nelts "
+            << expected_nelts_ << ", num_hashes " << num_hashes_;
 
   // write bitmap
   char **fragment_ptr = nullptr;

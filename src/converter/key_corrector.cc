@@ -60,7 +60,7 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
     return false;
   }
 
-  const char32 ucs4 = Util::UTF8ToUCS4(begin, end, mblen);
+  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
   if (ucs4 != 0x3093) {  // "ん"
     *mblen = 0;
     return false;
@@ -72,7 +72,7 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
   uint16_t output_ucs4 = 0x0000;
   switch (next_ucs4) {
     case 0x3042:             // "あ"
@@ -95,8 +95,8 @@ bool RewriteNN(size_t key_pos, const char *begin, const char *end,
   }
 
   if (output_ucs4 != 0x0000) {  // "ん[あいうえお]"
-    Util::UCS4ToUTF8Append(ucs4, output);
-    Util::UCS4ToUTF8Append(output_ucs4, output);
+    Util::Ucs4ToUtf8Append(ucs4, output);
+    Util::Ucs4ToUtf8Append(output_ucs4, output);
     *mblen += mblen2;
     return true;
   } else {  // others
@@ -125,7 +125,7 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
       return false;
     }
     size_t mblen2 = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen2);
+    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
     if ((kPattern[i] == 0x0000 && ucs4 != 0x3093 &&
          Util::GetScriptType(ucs4) == Util::HIRAGANA) ||
         (kPattern[i] == 0x3093 && ucs4 == 0x3093)) {
@@ -152,7 +152,7 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen2);
+  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
   if (ucs4 == 0x3093) {  // "ん" ignore
     *mblen = 0;
     return false;
@@ -161,13 +161,13 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
              ucs4 == 0x304A) {
     // drop first "ん" and leave "ん[あいうえお]"
     // remained part will be handled by RewriteNN(), e.g, "んあ" -> "んな"
-    Util::UCS4ToUTF8Append(first_char, output);
+    Util::Ucs4ToUtf8Append(first_char, output);
     // Skip one Hiragana character in UTF-8, which is 3 bytes.
     *mblen = first_mblen + 3;
     return true;
   } else {  // "[^あいうえお]"
-    Util::UCS4ToUTF8Append(first_char, output);
-    Util::UCS4ToUTF8Append(0x3093, output);  // "ん"
+    Util::Ucs4ToUtf8Append(first_char, output);
+    Util::Ucs4ToUtf8Append(0x3093, output);  // "ん"
     return true;
   }
 
@@ -180,7 +180,7 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
 // "にょ" -> "んよ"
 bool RewriteNI(size_t key_pos, const char *begin, const char *end,
                size_t *mblen, std::string *output) {
-  const char32 ucs4 = Util::UTF8ToUCS4(begin, end, mblen);
+  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
   if (ucs4 != 0x306B) {  // "に"
     *mblen = 0;
     return false;
@@ -192,7 +192,7 @@ bool RewriteNI(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
   uint16_t output_ucs4 = 0x0000;
   switch (next_ucs4) {
     case 0x3083:             // "ゃ"
@@ -210,8 +210,8 @@ bool RewriteNI(size_t key_pos, const char *begin, const char *end,
   }
 
   if (output_ucs4 != 0x0000) {
-    Util::UCS4ToUTF8Append(0x3093, output);  // "ん"
-    Util::UCS4ToUTF8Append(output_ucs4, output);
+    Util::Ucs4ToUtf8Append(0x3093, output);  // "ん"
+    Util::Ucs4ToUtf8Append(output_ucs4, output);
     *mblen += mblen2;
     return true;
   } else {
@@ -230,7 +230,7 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
     *mblen = 0;
     return false;
   }
-  const char32 ucs4 = Util::UTF8ToUCS4(begin, end, mblen);
+  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, mblen);
   // "m" or "ｍ" (don't take capitial letter, as "M" might not be a misspelling)
   if (ucs4 != 0x006D && ucs4 != 0xFF4D) {
     *mblen = 0;
@@ -243,13 +243,13 @@ bool RewriteM(size_t key_pos, const char *begin, const char *end, size_t *mblen,
   }
 
   size_t mblen2 = 0;
-  const uint16_t next_ucs4 = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  const uint16_t next_ucs4 = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
   // "[はばぱひびぴふぶぷへべぺほぼぽ]" => [0x306F .. 0X307D]
   // Here we want to take "[は..ぽ]" except for "はひふへほ"
   if (next_ucs4 % 3 != 0 &&                          // not "はひふへほ"
       next_ucs4 >= 0x306F && next_ucs4 <= 0x307D) {  // "は..ぽ"
-    Util::UCS4ToUTF8Append(0x3093, output);          // "ん"
-    Util::UCS4ToUTF8Append(next_ucs4, output);
+    Util::Ucs4ToUtf8Append(0x3093, output);          // "ん"
+    Util::Ucs4ToUtf8Append(next_ucs4, output);
     *mblen += mblen2;
     return true;
   } else {
@@ -278,7 +278,7 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
       return false;
     }
     size_t mblen2 = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen2);
+    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen2);
     if ((kPattern[i] == 0x0000 && ucs4 != 0x3063 &&
          Util::GetScriptType(ucs4) == Util::HIRAGANA) ||
         (kPattern[i] == 0x3063 && ucs4 == 0x3063)) {
@@ -300,9 +300,9 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
     return false;
   }
 
-  Util::UCS4ToUTF8Append(first_char, output);
-  Util::UCS4ToUTF8Append(0x3063, output);  // "っ"
-  Util::UCS4ToUTF8Append(last_char, output);
+  Util::Ucs4ToUtf8Append(first_char, output);
+  Util::Ucs4ToUtf8Append(0x3063, output);  // "っ"
+  Util::Ucs4ToUtf8Append(last_char, output);
 
   return true;
 }
@@ -317,7 +317,7 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
 // "りゅ[^う] -> りゅう"
 bool RewriteYu(size_t key_pos, const char *begin, const char *end,
                size_t *mblen, std::string *output) {
-  const char32 first_char = Util::UTF8ToUCS4(begin, end, mblen);
+  const char32 first_char = Util::Utf8ToUcs4(begin, end, mblen);
   if (first_char != 0x304D && first_char != 0x3057 && first_char != 0x3061 &&
       first_char != 0x306B && first_char != 0x3072 &&
       first_char != 0x308A) {  // !"きしちにひり"
@@ -331,7 +331,7 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
   }
 
   size_t mblen2 = 0;
-  const char32 next_char = Util::UTF8ToUCS4(begin + *mblen, end, &mblen2);
+  const char32 next_char = Util::Utf8ToUcs4(begin + *mblen, end, &mblen2);
   if (next_char != 0x3085) {  // "ゅ"
     *mblen = 0;
     return false;
@@ -344,7 +344,7 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
 
   size_t mblen3 = 0;
   const char32 last_char =
-      Util::UTF8ToUCS4(begin + *mblen + mblen2, end, &mblen3);
+      Util::Utf8ToUcs4(begin + *mblen + mblen2, end, &mblen3);
   if (last_char == 0x3046) {  // "う"
     *mblen = 0;
     return false;
@@ -352,9 +352,9 @@ bool RewriteYu(size_t key_pos, const char *begin, const char *end,
 
   // OK, rewrite
   *mblen += mblen2;
-  Util::UCS4ToUTF8Append(first_char, output);
-  Util::UCS4ToUTF8Append(next_char, output);  // "ゅ"
-  Util::UCS4ToUTF8Append(0x3046, output);     // "う"
+  Util::Ucs4ToUtf8Append(first_char, output);
+  Util::Ucs4ToUtf8Append(next_char, output);  // "ゅ"
+  Util::Ucs4ToUtf8Append(0x3046, output);     // "う"
 
   return true;
 }
@@ -434,8 +434,8 @@ bool KeyCorrector::CorrectKey(const std::string &key, InputMode mode,
          !RewriteNI(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteSmallTSU(key_pos, begin, end, &mblen, &corrected_key_) &&
          !RewriteM(key_pos, begin, end, &mblen, &corrected_key_))) {
-      const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
-      Util::UCS4ToUTF8Append(ucs4, &corrected_key_);
+      const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+      Util::Ucs4ToUtf8Append(ucs4, &corrected_key_);
     }
 
     const size_t corrected_mblen = corrected_key_.size() - org_len;

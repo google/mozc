@@ -45,14 +45,6 @@
 namespace mozc {
 namespace session {
 
-Candidate::Candidate()
-    : id_(0),
-      attributes_(NO_ATTRIBUTES),
-      subcandidate_list_(nullptr),
-      subcandidate_list_owner_(false) {}
-
-Candidate::~Candidate() {}
-
 void Candidate::Clear() {
   id_ = 0;
   attributes_ = NO_ATTRIBUTES;
@@ -63,43 +55,20 @@ void Candidate::Clear() {
   subcandidate_list_owner_ = false;
 }
 
-int Candidate::id() const { return id_; }
-
-void Candidate::set_id(const int id) { id_ = id; }
-
-Attributes Candidate::attributes() const { return attributes_; }
-
-void Candidate::add_attributes(const Attributes attributes) {
-  attributes_ |= attributes;
-}
-
-void Candidate::set_attributes(const Attributes attributes) {
-  attributes_ = attributes;
-}
-
-bool Candidate::has_attributes(const Attributes attributes) const {
-  return (attributes_ & attributes) == attributes;
-}
-
-bool Candidate::IsSubcandidateList() const {
-  return (subcandidate_list_ != nullptr);
-}
-
 const CandidateList &Candidate::subcandidate_list() const {
+  DCHECK(subcandidate_list_);
   return *subcandidate_list_;
 }
 
-CandidateList *Candidate::mutable_subcandidate_list() {
-  return subcandidate_list_;
-}
-
-CandidateList *Candidate::allocate_subcandidate_list(const bool rotate) {
+CandidateList *Candidate::allocate_subcandidate_list(bool rotate) {
+  DCHECK(!subcandidate_list_owner_);
   subcandidate_list_ = new CandidateList(rotate);
   subcandidate_list_owner_ = true;
   return subcandidate_list_;
 }
 
 void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
+  DCHECK(!subcandidate_list_owner_);
   subcandidate_list_ = subcandidate_list;
 }
 
@@ -110,26 +79,22 @@ CandidateList::CandidateList(const bool rotate)
       page_size_(kDefaultPageSize),
       focused_index_(0),
       focused_(false),
-      candidate_pool_(new ObjectPool<Candidate>(kDefaultPageSize)),
-      candidates_(new std::vector<Candidate *>),
-      next_available_id_(0),
-      added_candidates_(new std::map<uint64_t, int>),
-      alternative_ids_(new std::map<int, int>) {}
+      candidate_pool_(kDefaultPageSize),
+      next_available_id_(0) {}
 
 CandidateList::~CandidateList() { Clear(); }
 
 void CandidateList::Clear() {
-  std::vector<Candidate *>::iterator it;
-  for (it = candidates_->begin(); it != candidates_->end(); ++it) {
-    (*it)->Clear();
-    candidate_pool_->Release(*it);
+  for (Candidate *candidate : candidates_) {
+    candidate->Clear();
+    candidate_pool_.Release(candidate);
   }
+  candidates_.clear();
   focused_index_ = 0;
   focused_ = false;
-  candidates_->clear();
   next_available_id_ = 0;
-  added_candidates_->clear();
-  alternative_ids_->clear();
+  added_candidates_.clear();
+  alternative_ids_.clear();
 }
 
 const Candidate &CandidateList::GetDeepestFocusedCandidate() const {
@@ -156,67 +121,40 @@ void CandidateList::AddCandidateWithAttributes(const int id,
   // update the alternative_ids_.
   const uint64_t fp = Hash::Fingerprint(value);
 
-  const std::pair<std::map<uint64_t, int>::iterator, bool> result =
-      added_candidates_->insert(std::make_pair(fp, id));
-  if (!result.second) {  // insertion was failed.
-    const int alt_id = result.first->second;
-    (*alternative_ids_)[id] = alt_id;
+  if (const auto [iter, inserted] = added_candidates_.emplace(fp, id);
+      !inserted) {  // insertion was failed.
+    const int alt_id = iter->second;
+    alternative_ids_[id] = alt_id;
 
     // Add attributes to the existing candidate.
     for (size_t i = 0; i < size(); ++i) {
       if (candidate(i).id() == alt_id) {
-        (*candidates_)[i]->add_attributes(attributes);
+        candidates_[i]->add_attributes(attributes);
       }
     }
     return;
   }
 
-  Candidate *new_candidate = candidate_pool_->Alloc();
-  candidates_->push_back(new_candidate);
+  Candidate *new_candidate = candidate_pool_.Alloc();
+  candidates_.push_back(new_candidate);
 
   new_candidate->set_id(id);
   new_candidate->set_attributes(attributes);
 }
 
 void CandidateList::AddSubCandidateList(CandidateList *subcandidate_list) {
-  Candidate *new_candidate = candidate_pool_->Alloc();
-  candidates_->push_back(new_candidate);
+  Candidate *new_candidate = candidate_pool_.Alloc();
+  candidates_.push_back(new_candidate);
 
   new_candidate->set_subcandidate_list(subcandidate_list);
 }
 
 CandidateList *CandidateList::AllocateSubCandidateList(const bool rotate) {
-  Candidate *new_candidate = candidate_pool_->Alloc();
-  candidates_->push_back(new_candidate);
+  Candidate *new_candidate = candidate_pool_.Alloc();
+  candidates_.push_back(new_candidate);
 
   return new_candidate->allocate_subcandidate_list(rotate);
 }
-
-void CandidateList::set_name(const std::string &name) { name_ = name; }
-
-const std::string &CandidateList::name() const { return name_; }
-
-void CandidateList::set_page_size(const size_t page_size) {
-  page_size_ = page_size;
-}
-
-size_t CandidateList::page_size() const { return page_size_; }
-
-size_t CandidateList::size() const { return candidates_->size(); }
-
-size_t CandidateList::last_index() const { return size() - 1; }
-
-const Candidate &CandidateList::focused_candidate() const {
-  return candidate(focused_index_);
-}
-
-const Candidate &CandidateList::candidate(const size_t index) const {
-  return *(*candidates_)[index];
-}
-
-bool CandidateList::focused() const { return focused_; }
-
-void CandidateList::set_focused(const bool focused) { focused_ = focused; }
 
 int CandidateList::focused_id() const {
   // If the list does not have any candidate, 0 will be returned.
@@ -229,11 +167,9 @@ int CandidateList::focused_id() const {
   return focused_candidate().id();
 }
 
-size_t CandidateList::focused_index() const { return focused_index_; }
-
 int CandidateList::next_available_id() const {
   int result = next_available_id_;
-  for (size_t i = 0; i < candidates_->size(); ++i) {
+  for (size_t i = 0; i < candidates_.size(); ++i) {
     if (candidate(i).IsSubcandidateList()) {
       const int sub_available_id =
           candidate(i).subcandidate_list().next_available_id();
@@ -250,10 +186,6 @@ void CandidateList::GetPageRange(const size_t index, size_t *page_begin,
   *page_begin = index - (index % page_size_);
   *page_end = std::min(last_index(), *page_begin + page_size_ - 1);
 }
-
-void CandidateList::MoveFirst() { focused_index_ = 0; }
-
-void CandidateList::MoveLast() { focused_index_ = last_index(); }
 
 bool CandidateList::MoveNext() {
   // If the current candidate points to subcandidate list, the focused
@@ -384,7 +316,7 @@ bool CandidateList::MoveToAttributes(const Attributes attributes) {
     // Shift the index to make the first index focused_index_.
     const size_t index = (focused_index_ + i) % cand_size;
 
-    Candidate *cand = (*candidates_)[index];
+    Candidate *cand = candidates_[index];
 
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
@@ -406,15 +338,16 @@ bool CandidateList::MoveToId(const int base_id) {
 
   // If an alternative id for the base_id found, use it to avoid
   // duplicated candidates.
-  if (alternative_ids_->find(id) != alternative_ids_->end()) {
-    id = (*alternative_ids_)[id];
+  if (const auto iter = alternative_ids_.find(id);
+      iter != alternative_ids_.end()) {
+    id = iter->second;
   }
 
   // NOTE(komatsu): Although this function's order is O(N), The size
   // of N is less than kMaxCandidateSize (= 200).  So it would not be
   // a problem.
   for (size_t i = 0; i < size(); ++i) {
-    Candidate *cand = (*candidates_)[i];
+    Candidate *cand = candidates_[i];
     // If the candidate is a subcandidate list, the subcandidate list is
     // traversed recursively.
     if (cand->IsSubcandidateList() &&
@@ -445,17 +378,7 @@ bool CandidateList::MoveToPageIndex(const size_t page_index) {
 
 CandidateList *CandidateList::mutable_focused_subcandidate_list() {
   CHECK(focused_candidate().IsSubcandidateList());
-  return (*candidates_)[focused_index_]->mutable_subcandidate_list();
-}
-
-bool CandidateList::IsFirst(const size_t index) const { return (index == 0); }
-
-bool CandidateList::IsLast(const size_t index) const {
-  return (index == size() - 1);
-}
-
-bool CandidateList::IsFirstPage(const size_t index) const {
-  return (index < page_size_);
+  return candidates_[focused_index_]->mutable_subcandidate_list();
 }
 
 bool CandidateList::IsLastPage(const size_t index) const {

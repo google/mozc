@@ -53,12 +53,12 @@ OK:	きんじて	禁じて	Conversion Expected 2	禁じ手	2.26.4465
 OK:	じょしこうせい	女子高生	Conversion Expected 2	女子高生	2.26.4465
 OK:	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Match	ダックスフントは短足です。	2.26.4465
 OK:	おわりをむかえた	終わりを迎えた	Conversion Match	終わりを迎えた	2.26.4465
-OK:	かねのなるき	金のなる木	Conversion Match	金のなる木	2.26.4479
+OK:	かねのなるき	金のなる木	Conversion Match	金のなる木	2.26.4472
 OK:	しょうてん	商店	Conversion Expected 9	笑点	2.26.4465
 OK:	べっどしーつをこうかんした	ベッドシーツを交換した	Conversion Match	ベッドシーツ	2.26.4465
 OK:	いわせるな	言わせるな	Conversion Match	言わせるな	2.26.4465
 OK:	ならには	奈良には	Conversion Match	奈良には	2.26.4465
-OK:	かいごかんせい	下位互換性	Conversion Match	下位互換性	2.26.4479
+OK:	かいごかんせい	下位互換性	Conversion Match	下位互換性	2.26.4472
 OK:	けんざかいには	県境には	Conversion Match	県境には	2.26.4465
 OK:	あいてをたたきのめす	相手を叩きのめす	Conversion Match	相手を叩きのめす	2.26.4465
 OK:	けいししている	軽視している	Conversion Match	軽視している	2.26.4465

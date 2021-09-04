@@ -35,7 +35,7 @@
 namespace mozc {
 namespace {
 
-const DWORD kFakeWindowsVersion = 0x12345678;
+constexpr DWORD kFakeWindowsVersion = 0x12345678;
 DWORD WINAPI GetVersionHook() { return kFakeWindowsVersion; }
 
 TEST(WinAPITestHelperTest, BasicTest) {

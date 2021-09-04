@@ -101,6 +101,10 @@ inline Status InvalidArgumentError(std::string message) {
   return Status(StatusCode::kInvalidArgument, std::move(message));
 }
 
+inline Status NotFoundError(std::string message) {
+  return Status(StatusCode::kNotFound, std::move(message));
+}
+
 inline Status ResourceExhaustedError(std::string message) {
   return Status(StatusCode::kResourceExhausted, std::move(message));
 }

@@ -56,17 +56,18 @@ struct Token {
     USER_DICTIONARY = 1 << 7,
   };
 
-  Token() : cost(0), lid(0), rid(0), attributes(NONE) {}
+  Token() = default;
+  Token(const std::string &k, const std::string &v) : key(k), value(v) {}
   Token(const std::string &k, const std::string &v, int c, int l, int r,
         AttributesBitfield a)
       : key(k), value(v), cost(c), lid(l), rid(r), attributes(a) {}
 
   std::string key;
   std::string value;
-  int cost;
-  int lid;
-  int rid;
-  AttributesBitfield attributes;
+  int cost = 0;
+  int lid = 0;
+  int rid = 0;
+  AttributesBitfield attributes = NONE;
 };
 
 }  // namespace dictionary

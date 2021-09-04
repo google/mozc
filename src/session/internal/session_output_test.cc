@@ -120,7 +120,6 @@ TEST(SessionOutputTest, FillCandidate) {
 
 TEST(SessionOutputTest, FillCandidates) {
   Segment segment;
-  Candidate candidate;
   CandidateList candidate_list(true);
   CandidateList subcandidate_list(true);
   commands::Candidates candidates_proto;

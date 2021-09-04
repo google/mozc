@@ -78,7 +78,7 @@ const wchar_t kPreloadKeyName[] = L"Keyboard Layout\\Preload";
 
 // Registry element size limits are described in the link below.
 // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
-const DWORD kMaxValueNameLength = 16383;
+constexpr DWORD kMaxValueNameLength = 16383;
 
 // Timeout value used by a work around against b/5765783.
 // Note that the following timeout threshold is not well tested.
@@ -279,7 +279,7 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
   }
 
   wchar_t value_name[kMaxValueNameLength];
-  const DWORD kMaxValueLength = 256;
+  constexpr DWORD kMaxValueLength = 256;
   BYTE value[kMaxValueLength];
   for (DWORD i = 0;; ++i) {
     DWORD value_name_length = kMaxValueNameLength;

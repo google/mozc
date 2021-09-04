@@ -200,7 +200,6 @@ cc_test_mozc(
         "//base:file_util",
         "//base:logging",
         "//base:port",
-        "//base:stl_util",
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
