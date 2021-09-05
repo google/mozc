@@ -92,7 +92,7 @@ bool ProcessMutex::LockAndWrite(const std::string &message) {
 
   std::wstring wfilename;
   Util::UTF8ToWide(filename_, &wfilename);
-  const DWORD kAttribute =
+  constexpr DWORD kAttribute =
       FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_TEMPORARY |
       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | FILE_FLAG_DELETE_ON_CLOSE;
 

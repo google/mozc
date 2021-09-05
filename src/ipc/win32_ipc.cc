@@ -701,7 +701,7 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
       // server has a chance to complete clean-up tasks if necessary.
       // NOTE: We cannot set 0 for the wait time because 0 has a special meaning
       // as |NMPWAIT_USE_DEFAULT_WAIT|.
-      const DWORD kMinWaitTimeForWaitNamedPipe = 1;
+      constexpr DWORD kMinWaitTimeForWaitNamedPipe = 1;
       ::WaitNamedPipe(wserver_address.c_str(), kMinWaitTimeForWaitNamedPipe);
     }
 

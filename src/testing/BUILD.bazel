@@ -177,6 +177,7 @@ cc_library_mozc(
         "//base:file_util",
         "//base:logging",
         "//base:port",
+        "//base:status",
         "//base:system_util",
         "//base:util",
         "@com_google_absl//absl/flags:flag",

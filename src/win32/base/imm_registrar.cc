@@ -153,9 +153,9 @@ LONG RetrievePreloadValues(HKEY preload_key, PreloadValueMap *keys) {
 
   // Registry element size limits are described in the link below.
   // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
-  const DWORD kMaxValueNameLength = 16383;
+  constexpr DWORD kMaxValueNameLength = 16383;
   wchar_t value_name[kMaxValueNameLength];
-  const DWORD kMaxValueLength = 256;
+  constexpr DWORD kMaxValueLength = 256;
   BYTE value[kMaxValueLength];
   for (DWORD i = 0;; ++i) {
     DWORD value_name_length = kMaxValueNameLength;
@@ -387,7 +387,7 @@ KeyboardLayoutID ImmRegistrar::GetKLIDFromFileName(
 
   // Registry element size limits are described in the link below.
   // http://msdn.microsoft.com/en-us/library/ms724872(VS.85).aspx
-  const DWORD kMaxValueNameLength = 16383;
+  constexpr DWORD kMaxValueNameLength = 16383;
   wchar_t value_name[kMaxValueNameLength];
   for (DWORD enum_reg_index = 0;; ++enum_reg_index) {
     DWORD value_name_length = kMaxValueNameLength;

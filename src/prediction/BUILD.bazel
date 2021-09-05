@@ -324,6 +324,7 @@ cc_binary_mozc(
         "//base:hash",
         "//base:init_mozc_buildtool",
         "//base:logging",
+        "//base:multifile",
         "//base:util",
         "//storage:existence_filter",
         "@com_google_absl//absl/flags:flag",

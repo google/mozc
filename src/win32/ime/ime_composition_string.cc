@@ -44,12 +44,12 @@
 namespace mozc {
 namespace win32 {
 namespace {
-const DWORD kPreeditUpdateFlags =
+constexpr DWORD kPreeditUpdateFlags =
     (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
      GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART);
-const DWORD kResultUpdateFlags = (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
-                                  GCS_RESULTSTR | GCS_RESULTCLAUSE);
-const DWORD kPreeditAndResultUpdateFlags =
+constexpr DWORD kResultUpdateFlags = (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE |
+                                      GCS_RESULTSTR | GCS_RESULTCLAUSE);
+constexpr DWORD kPreeditAndResultUpdateFlags =
     (kPreeditUpdateFlags | kResultUpdateFlags);
 }  // namespace
 

@@ -38,14 +38,12 @@
 #include <string>
 #include <vector>
 
+#include "base/freelist.h"
 #include "base/port.h"
 
 namespace mozc {
-
-template <class T>
-class ObjectPool;
-
 namespace session {
+
 class CandidateList;  // This is fully declared at the bottom.
 
 // Attribute is added to candidates for annotationg additional
@@ -63,44 +61,52 @@ enum Attribute {
   LOWER = 64,
   CAPITALIZED = 128,
 };
-typedef uint32_t Attributes;
 
-class Candidate {
+using Attributes = uint32_t;
+
+class Candidate final {
  public:
-  Candidate();
-  virtual ~Candidate();
+  Candidate() = default;
+  ~Candidate() = default;
+
+  Candidate(const Candidate &) = delete;
+  Candidate &operator=(const Candidate &) = delete;
 
   void Clear();
 
-  bool IsSubcandidateList() const;
-  int id() const;
-  void set_id(int id);
+  bool IsSubcandidateList() const { return subcandidate_list_ != nullptr; }
 
-  Attributes attributes() const;
-  void add_attributes(Attributes attributes);
-  void set_attributes(Attributes attributes);
-  bool has_attributes(Attributes attributes) const;
+  int id() const { return id_; }
+  void set_id(int id) { id_ = id; }
+
+  Attributes attributes() const { return attributes_; }
+  void add_attributes(Attributes attributes) { attributes_ |= attributes; }
+  void set_attributes(Attributes attributes) { attributes_ = attributes; }
+  bool has_attributes(Attributes attributes) const {
+    return (attributes_ & attributes) == attributes;
+  }
 
   const CandidateList &subcandidate_list() const;
-  CandidateList *mutable_subcandidate_list();
+  CandidateList *mutable_subcandidate_list() { return subcandidate_list_; }
   void set_subcandidate_list(CandidateList *subcandidate_list);
   // Allocate a subcandidate list and return it.
   CandidateList *allocate_subcandidate_list(bool rotate);
 
  private:
-  int id_;
-  Attributes attributes_;
+  int id_ = 0;
+  Attributes attributes_ = NO_ATTRIBUTES;
   // Whether subcandidate_list_ should be released when destructed.
-  CandidateList *subcandidate_list_;
-  bool subcandidate_list_owner_;
-
-  DISALLOW_COPY_AND_ASSIGN(Candidate);
+  CandidateList *subcandidate_list_ = nullptr;
+  bool subcandidate_list_owner_ = false;
 };
 
-class CandidateList {
+class CandidateList final {
  public:
   explicit CandidateList(bool rotate);
-  virtual ~CandidateList();
+  ~CandidateList();
+
+  CandidateList(const CandidateList &) = delete;
+  CandidateList &operator=(const CandidateList &) = delete;
 
   void Clear();
 
@@ -111,28 +117,30 @@ class CandidateList {
   void AddSubCandidateList(CandidateList *subcandidate_list);
   CandidateList *AllocateSubCandidateList(bool rotate);
 
-  void set_name(const std::string &name);
-  const std::string &name() const;
+  void set_name(const std::string &name) { name_ = name; }
+  const std::string &name() const { return name_; }
 
-  void set_page_size(size_t page_size);
-  size_t page_size() const;
+  void set_page_size(size_t page_size) { page_size_ = page_size; }
+  size_t page_size() const { return page_size_; }
 
   // Accessors
-  size_t size() const;
-  size_t last_index() const;
-  const Candidate &focused_candidate() const;
-  const Candidate &candidate(size_t index) const;
+  size_t size() const { return candidates_.size(); }
+  size_t last_index() const { return size() - 1; }
+  const Candidate &candidate(size_t index) const { return *candidates_[index]; }
+  const Candidate &focused_candidate() const {
+    return candidate(focused_index_);
+  }
   int focused_id() const;
-  size_t focused_index() const;
+  size_t focused_index() const { return focused_index_; }
   int next_available_id() const;
   void GetPageRange(size_t index, size_t *page_begin, size_t *page_end) const;
 
-  bool focused() const;
-  void set_focused(bool focused);
+  bool focused() const { return focused_; }
+  void set_focused(bool focused) { focused_ = focused; }
 
   // Operations
-  void MoveFirst();
-  void MoveLast();
+  void MoveFirst() { focused_index_ = 0; }
+  void MoveLast() { focused_index_ = last_index(); }
   bool MoveNext();
   bool MovePrev();
   bool MoveNextPage();
@@ -147,9 +155,9 @@ class CandidateList {
  private:
   CandidateList *mutable_focused_subcandidate_list();
 
-  bool IsFirst(size_t index) const;
-  bool IsLast(size_t index) const;
-  bool IsFirstPage(size_t index) const;
+  static bool IsFirst(size_t index) { return index == 0; }
+  bool IsLast(size_t index) const { return index == size() - 1; }
+  bool IsFirstPage(size_t index) const { return index < page_size_; }
   bool IsLastPage(size_t index) const;
 
   bool rotate_;
@@ -157,21 +165,19 @@ class CandidateList {
   size_t focused_index_;
   bool focused_;
   std::string name_;
-  std::unique_ptr<ObjectPool<Candidate>> candidate_pool_;
-  std::unique_ptr<std::vector<Candidate *>> candidates_;
+  ObjectPool<Candidate> candidate_pool_;
+  std::vector<Candidate *> candidates_;
   int next_available_id_;
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.
-  std::unique_ptr<std::map<uint64_t, int>> added_candidates_;
+  std::map<uint64_t, int> added_candidates_;
 
   // Id-to-id map.  The key and value ids have the same candidate
   // value.  (ex. {id:0, value:"kanji"} and {id:-5, value:"kanji"}).
   // The key ids are not directly stored in candidates, so accessing
   // these ids, they should be converted with this map.
-  std::unique_ptr<std::map<int, int>> alternative_ids_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateList);
+  std::map<int, int> alternative_ids_;
 };
 
 }  // namespace session

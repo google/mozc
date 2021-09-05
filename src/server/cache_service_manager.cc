@@ -292,8 +292,8 @@ void SetAdvancedConfig(const ScopedSCHandle &service_handle) {
 // function to install nor uninstall the cache service.
 bool RestoreStateInternal(const cache_service::Win32ServiceState &state) {
   ScopedSCHandle service_handle;
-  const DWORD kSCRights = SC_MANAGER_CONNECT;
-  const DWORD kServiceRights =
+  constexpr DWORD kSCRights = SC_MANAGER_CONNECT;
+  constexpr DWORD kServiceRights =
       GENERIC_READ | GENERIC_WRITE | SERVICE_START | SERVICE_STOP;
   if (!GetCacheService(kSCRights, kServiceRights, &service_handle) ||
       (NULL == service_handle.get())) {
@@ -574,8 +574,8 @@ bool CacheServiceManager::RestoreStateFromString(
 
 bool CacheServiceManager::EnsureServiceStopped() {
   ScopedSCHandle service_handle;
-  const DWORD kSCRights = SC_MANAGER_CONNECT;
-  const DWORD kServiceRights = GENERIC_READ | SERVICE_STOP;
+  constexpr DWORD kSCRights = SC_MANAGER_CONNECT;
+  constexpr DWORD kServiceRights = GENERIC_READ | SERVICE_STOP;
   if (!GetCacheService(kSCRights, kServiceRights, &service_handle)) {
     return false;
   }

@@ -52,7 +52,7 @@ const GUID GUID_IMJPTIP = {0xa76c93d9,
                            {0xaa, 0xfa, 0x4d, 0xb1, 0x12, 0xf9, 0xac, 0x76}};
 const LANGID kLANGJaJP = MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
 
-const DWORD kJapaneseKLID = 0xE0200411;
+constexpr DWORD kJapaneseKLID = 0xE0200411;
 
 std::wstring ToWideString(const std::string &str) {
   std::wstring wide;

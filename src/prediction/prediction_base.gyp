@@ -54,6 +54,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:codegen_bytearray_stream',
+        '../base/base.gyp:multifile',
         '../storage/storage.gyp:storage',
       ],
     },

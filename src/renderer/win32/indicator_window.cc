@@ -91,8 +91,8 @@ struct Sprite {
 const UINT_PTR kTimerEventFadeStart = 0;
 const UINT_PTR kTimerEventFading = 1;
 
-const DWORD kStartFadingOutDelay = 2500;  // msec
-const DWORD kFadingOutInterval = 16;      // msec
+constexpr DWORD kStartFadingOutDelay = 2500;  // msec
+constexpr DWORD kFadingOutInterval = 16;      // msec
 constexpr int kFadingOutAlphaDelta = 32;
 
 double GetDPIScaling() {

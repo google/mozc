@@ -658,77 +658,77 @@ TEST(UtilTest, IsUpperOrCapitalizedAscii) {
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
 }
 
-void VerifyUTF8ToUCS4(const std::string &text, char32 expected_ucs4,
+void VerifyUtf8ToUcs4(const std::string &text, char32 expected_ucs4,
                       size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
   size_t mblen = 0;
-  char32 result = Util::UTF8ToUCS4(begin, end, &mblen);
+  char32 result = Util::Utf8ToUcs4(begin, end, &mblen);
   EXPECT_EQ(expected_ucs4, result) << text << " " << expected_ucs4;
   EXPECT_EQ(expected_len, mblen) << text << " " << expected_len;
 }
 
-TEST(UtilTest, UTF8ToUCS4) {
-  VerifyUTF8ToUCS4("", 0, 0);
-  VerifyUTF8ToUCS4("\x01", 1, 1);
-  VerifyUTF8ToUCS4("\x7F", 0x7F, 1);
-  VerifyUTF8ToUCS4("\xC2\x80", 0x80, 2);
-  VerifyUTF8ToUCS4("\xDF\xBF", 0x7FF, 2);
-  VerifyUTF8ToUCS4("\xE0\xA0\x80", 0x800, 3);
-  VerifyUTF8ToUCS4("\xEF\xBF\xBF", 0xFFFF, 3);
-  VerifyUTF8ToUCS4("\xF0\x90\x80\x80", 0x10000, 4);
-  VerifyUTF8ToUCS4("\xF7\xBF\xBF\xBF", 0x1FFFFF, 4);
+TEST(UtilTest, Utf8ToUcs4) {
+  VerifyUtf8ToUcs4("", 0, 0);
+  VerifyUtf8ToUcs4("\x01", 1, 1);
+  VerifyUtf8ToUcs4("\x7F", 0x7F, 1);
+  VerifyUtf8ToUcs4("\xC2\x80", 0x80, 2);
+  VerifyUtf8ToUcs4("\xDF\xBF", 0x7FF, 2);
+  VerifyUtf8ToUcs4("\xE0\xA0\x80", 0x800, 3);
+  VerifyUtf8ToUcs4("\xEF\xBF\xBF", 0xFFFF, 3);
+  VerifyUtf8ToUcs4("\xF0\x90\x80\x80", 0x10000, 4);
+  VerifyUtf8ToUcs4("\xF7\xBF\xBF\xBF", 0x1FFFFF, 4);
   // do not test 5-6 bytes because it's out of spec of UTF8.
 }
 
-TEST(UtilTest, UCS4ToUTF8) {
+TEST(UtilTest, Ucs4ToUtf8) {
   std::string output;
 
-  // Do nothing if |c| is NUL. Previous implementation of UCS4ToUTF8 worked like
+  // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8 worked like
   // this even though the reason is unclear.
-  Util::UCS4ToUTF8(0, &output);
+  Util::Ucs4ToUtf8(0, &output);
   EXPECT_TRUE(output.empty());
 
-  Util::UCS4ToUTF8(0x7F, &output);
+  Util::Ucs4ToUtf8(0x7F, &output);
   EXPECT_EQ("\x7F", output);
-  Util::UCS4ToUTF8(0x80, &output);
+  Util::Ucs4ToUtf8(0x80, &output);
   EXPECT_EQ("\xC2\x80", output);
-  Util::UCS4ToUTF8(0x7FF, &output);
+  Util::Ucs4ToUtf8(0x7FF, &output);
   EXPECT_EQ("\xDF\xBF", output);
-  Util::UCS4ToUTF8(0x800, &output);
+  Util::Ucs4ToUtf8(0x800, &output);
   EXPECT_EQ("\xE0\xA0\x80", output);
-  Util::UCS4ToUTF8(0xFFFF, &output);
+  Util::Ucs4ToUtf8(0xFFFF, &output);
   EXPECT_EQ("\xEF\xBF\xBF", output);
-  Util::UCS4ToUTF8(0x10000, &output);
+  Util::Ucs4ToUtf8(0x10000, &output);
   EXPECT_EQ("\xF0\x90\x80\x80", output);
-  Util::UCS4ToUTF8(0x1FFFFF, &output);
+  Util::Ucs4ToUtf8(0x1FFFFF, &output);
   EXPECT_EQ("\xF7\xBF\xBF\xBF", output);
 
   // Buffer version.
   char buf[7];
 
-  EXPECT_EQ(0, Util::UCS4ToUTF8(0, buf));
+  EXPECT_EQ(0, Util::Ucs4ToUtf8(0, buf));
   EXPECT_EQ(0, strcmp(buf, ""));
 
-  EXPECT_EQ(1, Util::UCS4ToUTF8(0x7F, buf));
+  EXPECT_EQ(1, Util::Ucs4ToUtf8(0x7F, buf));
   EXPECT_EQ(0, strcmp("\x7F", buf));
 
-  EXPECT_EQ(2, Util::UCS4ToUTF8(0x80, buf));
+  EXPECT_EQ(2, Util::Ucs4ToUtf8(0x80, buf));
   EXPECT_EQ(0, strcmp("\xC2\x80", buf));
 
-  EXPECT_EQ(2, Util::UCS4ToUTF8(0x7FF, buf));
+  EXPECT_EQ(2, Util::Ucs4ToUtf8(0x7FF, buf));
   EXPECT_EQ(0, strcmp("\xDF\xBF", buf));
 
-  EXPECT_EQ(3, Util::UCS4ToUTF8(0x800, buf));
+  EXPECT_EQ(3, Util::Ucs4ToUtf8(0x800, buf));
   EXPECT_EQ(0, strcmp("\xE0\xA0\x80", buf));
 
-  EXPECT_EQ(3, Util::UCS4ToUTF8(0xFFFF, buf));
+  EXPECT_EQ(3, Util::Ucs4ToUtf8(0xFFFF, buf));
   EXPECT_EQ(0, strcmp("\xEF\xBF\xBF", buf));
 
-  EXPECT_EQ(4, Util::UCS4ToUTF8(0x10000, buf));
+  EXPECT_EQ(4, Util::Ucs4ToUtf8(0x10000, buf));
   EXPECT_EQ(0, strcmp("\xF0\x90\x80\x80", buf));
 
-  EXPECT_EQ(4, Util::UCS4ToUTF8(0x1FFFFF, buf));
+  EXPECT_EQ(4, Util::Ucs4ToUtf8(0x1FFFFF, buf));
   EXPECT_EQ(0, strcmp("\xF7\xBF\xBF\xBF", buf));
 }
 
@@ -913,20 +913,20 @@ TEST(UtilTest, IsAndroidPuaEmoji) {
   EXPECT_FALSE(Util::IsAndroidPuaEmoji("a"));
 
   std::string str;
-  Util::UCS4ToUTF8(0xFDFFF, &str);
+  Util::Ucs4ToUtf8(0xFDFFF, &str);
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
-  Util::UCS4ToUTF8(0xFE000, &str);
+  Util::Ucs4ToUtf8(0xFE000, &str);
   EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::UCS4ToUTF8(0xFE800, &str);
+  Util::Ucs4ToUtf8(0xFE800, &str);
   EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::UCS4ToUTF8(0xFEEA0, &str);
+  Util::Ucs4ToUtf8(0xFEEA0, &str);
   EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::UCS4ToUTF8(0xFEEA1, &str);
+  Util::Ucs4ToUtf8(0xFEEA1, &str);
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
 
   // If it has two ucs4 chars (or more), just expect false.
-  Util::UCS4ToUTF8(0xFE000, &str);
-  Util::UCS4ToUTF8Append(0xFE000, &str);
+  Util::Ucs4ToUtf8(0xFE000, &str);
+  Util::Ucs4ToUtf8Append(0xFE000, &str);
   EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
 }
 

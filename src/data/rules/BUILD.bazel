@@ -37,7 +37,6 @@ exports_files([
     "boundary.def",
     "cforms.def",
     "pos_matcher_rule.def",
-    "rewrite.def",
     "segmenter.def",
     "sorting_map.tsv",
     "special_pos.def",

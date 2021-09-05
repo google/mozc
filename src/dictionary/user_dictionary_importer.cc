@@ -473,7 +473,7 @@ UserDictionaryImporter::EncodingType UserDictionaryImporter::GuessEncodingType(
   size_t valid_script = 0;
   while (begin < end) {
     size_t mblen = 0;
-    const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
     if (mblen == 0) {
       break;
     }

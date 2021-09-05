@@ -124,7 +124,7 @@ TEST_F(FileUtilTest, Unlink) {
   EXPECT_FALSE(FileUtil::FileExists(filepath));
 
 #ifdef OS_WIN
-  const DWORD kTestAttributeList[] = {
+  constexpr DWORD kTestAttributeList[] = {
       FILE_ATTRIBUTE_ARCHIVE, FILE_ATTRIBUTE_HIDDEN,
       FILE_ATTRIBUTE_NORMAL,  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
       FILE_ATTRIBUTE_OFFLINE, FILE_ATTRIBUTE_READONLY,

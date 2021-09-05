@@ -392,7 +392,7 @@ TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
   constexpr char32 kMaxUniChar = 0x10ffff;
   for (char32 c = 0x01; c <= kMaxUniChar; ++c) {
     std::string original;
-    Util::UCS4ToUTF8(c, &original);
+    Util::Ucs4ToUtf8(c, &original);
     std::string encoded;
     codec->EncodeValue(original, &encoded);
     EXPECT_TRUE(IsExpectedEncodedSize(c, encoded));
@@ -794,7 +794,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       for (size_t i = 0; i < 10000; ++i) {
         // U+4E00-9FFF CJK Unified Ideographs
         const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(0x9f00));
-        Util::UCS4ToUTF8Append(c, &original);
+        Util::Ucs4ToUtf8Append(c, &original);
       }
     }
     std::string encoded;
@@ -810,7 +810,7 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 1000; ++i) {
         const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(1000));
-        Util::UCS4ToUTF8Append(c, &original);
+        Util::Ucs4ToUtf8Append(c, &original);
       }
     }
     std::string encoded;

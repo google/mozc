@@ -2830,7 +2830,7 @@ ProbableKeyEvents GetStubProbableKeyEvent(int key_code, double probability) {
 KeyEvent GetKeyEvent(const std::string &raw,
                      ProbableKeyEvents probable_key_events) {
   KeyEvent key_event;
-  key_event.set_key_code(Util::UTF8ToUCS4(raw));
+  key_event.set_key_code(Util::Utf8ToUcs4(raw));
   *(key_event.mutable_probable_key_event()) = probable_key_events;
   return key_event;
 }

@@ -71,7 +71,7 @@ void TextNormalizer::NormalizeText(absl::string_view input,
 #ifdef OS_WIN
   output->clear();
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    Util::UCS4ToUTF8Append(NormalizeCharForWindows(iter.Get()), output);
+    Util::Ucs4ToUtf8Append(NormalizeCharForWindows(iter.Get()), output);
   }
 #else
   output->assign(input.data(), input.size());

@@ -1613,7 +1613,6 @@ cc_library_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":rewriter_interface",
-        "//base:stl_util",
         "//config:config_handler",
         "//converter",
         "//converter:segments",

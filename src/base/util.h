@@ -197,23 +197,23 @@ class Util {
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
-  static char32 UTF8ToUCS4(const char *begin, const char *end, size_t *mblen);
-  static char32 UTF8ToUCS4(absl::string_view s) {
+  static char32 Utf8ToUcs4(const char *begin, const char *end, size_t *mblen);
+  static char32 Utf8ToUcs4(absl::string_view s) {
     size_t mblen = 0;
-    return UTF8ToUCS4(s.data(), s.data() + s.size(), &mblen);
+    return Utf8ToUcs4(s.data(), s.data() + s.size(), &mblen);
   }
 
   // Converts a UCS4 code point to UTF8 string.
-  static void UCS4ToUTF8(char32 c, std::string *output);
+  static void Ucs4ToUtf8(char32 c, std::string *output);
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.
-  static void UCS4ToUTF8Append(char32 c, std::string *output);
+  static void Ucs4ToUtf8Append(char32 c, std::string *output);
 
   // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
   // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
   // REQUIRES: The output buffer must be longer than 7 bytes.
-  static size_t UCS4ToUTF8(char32 c, char *output);
+  static size_t Ucs4ToUtf8(char32 c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass nullptr to |first_char32| and/or |rest| to ignore the matched

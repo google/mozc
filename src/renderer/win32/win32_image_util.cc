@@ -43,8 +43,8 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/stl_util.h"
 #include "base/util.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace renderer {
@@ -366,7 +366,7 @@ Rect GetBoundingRect(double left, double top, double width, double height) {
 
 // Core logic to render 1-bit text glyphs for sub-pixel rendering. Caller takes
 // the ownerships of the returned pointers.
-std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
+std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
     double left, double top, double width, double height,
     const std::string &text, const std::string &fontname, size_t font_point) {
   constexpr size_t kDivision = SubdivisionalPixel::kDivision;
@@ -375,8 +375,8 @@ std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
   const int pix_width = bounding_rect.Width();
   const int pix_height = bounding_rect.Height();
 
-  std::vector<TextLabel::BinarySubdivisionalPixel *> pixels;
-  pixels.resize(pix_width * pix_height, nullptr);
+  std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> pixels(
+      pix_width * pix_height);
   if (text.empty()) {
     return pixels;
   }
@@ -464,8 +464,9 @@ std::vector<TextLabel::BinarySubdivisionalPixel *> Get1bitGlyph(
             continue;
           }
           if (sub_pixels == nullptr) {
-            sub_pixels = new TextLabel::BinarySubdivisionalPixel();
-            pixels[pix_index] = sub_pixels;
+            auto ptr = absl::make_unique<TextLabel::BinarySubdivisionalPixel>();
+            sub_pixels = ptr.get();
+            pixels[pix_index] = std::move(ptr);
           }
           sub_pixels->set(subpix_y * kDivision + subpix_x);
         }
@@ -955,9 +956,7 @@ TextLabel::TextLabel(double left, double top, double width, double height,
       pixels_(Get1bitGlyph(left, top, width, height, text, font, font_point)),
       text_color_(text_color) {}
 
-TextLabel::~TextLabel() {
-  STLDeleteContainerPointers(pixels_.begin(), pixels_.end());
-}
+TextLabel::~TextLabel() = default;
 
 void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel *dest) const {
   if (x < bounding_rect_.Left() || bounding_rect_.Right() <= x ||
@@ -967,7 +966,7 @@ void TextLabel::RenderPixel(int x, int y, SubdivisionalPixel *dest) const {
   const int pix_width = bounding_rect_.Width();
   const size_t index =
       (y - bounding_rect_.Top()) * pix_width + (x - bounding_rect_.Left());
-  const BinarySubdivisionalPixel *sub_pixels = pixels_[index];
+  const BinarySubdivisionalPixel *sub_pixels = pixels_[index].get();
   if (sub_pixels == nullptr) {
     return;
   }

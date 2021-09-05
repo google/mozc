@@ -166,8 +166,8 @@ TEST(ImeCoreTest, OpenIME) {
   mock_output.mutable_status()->set_mode(commands::FULL_KATAKANA);
 
   MockClient mock_client(mock_output);
-  const DWORD kFullKatakana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
-                              IME_CMODE_ROMAN | IME_CMODE_KATAKANA;
+  constexpr DWORD kFullKatakana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
+                                  IME_CMODE_ROMAN | IME_CMODE_KATAKANA;
   EXPECT_TRUE(ImeCore::OpenIME(&mock_client, kFullKatakana));
   {
     commands::Input actual_input;
@@ -192,8 +192,8 @@ TEST(ImeCoreTest, CloseIME) {
 
   MockClient mock_client(mock_output);
 
-  const DWORD kFullKatakana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
-                              IME_CMODE_ROMAN | IME_CMODE_KATAKANA;
+  constexpr DWORD kFullKatakana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE |
+                                  IME_CMODE_ROMAN | IME_CMODE_KATAKANA;
 
   commands::Output output;
   EXPECT_TRUE(ImeCore::CloseIME(&mock_client, kFullKatakana, &output));
@@ -288,28 +288,28 @@ TEST(ImeCoreTest, GetSupportableSentenceMode_Issue2955175) {
 
 namespace {
 // constants for unit tests
-const DWORD kHiragana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
-const DWORD kHalfAlpha = IME_CMODE_ALPHANUMERIC;
+constexpr DWORD kHiragana = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
+constexpr DWORD kHalfAlpha = IME_CMODE_ALPHANUMERIC;
 
 // Mozc uses only one candidate form.  This is why |kCandidateFormIndex| is
 // always to be 1.
-const DWORD kCandidateFormIndex = 1;
+constexpr DWORD kCandidateFormIndex = 1;
 
 // Currently, Mozc always set 0 (L'\0') to the wparam of the
 // WM_IME_COMPOSITION.
 // TODO(yukawa): Support wparam of the WM_IME_COMPOSITION.
 const wchar_t kLastUpdatedCharacter = L'\0';
 
-const DWORD kCompositionUpdateFlag =
+constexpr DWORD kCompositionUpdateFlag =
     GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
     GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART;
 static_assert(kCompositionUpdateFlag == 0x1bf, "Must be 0x1bf");
 
-const DWORD kCompositionResultFlag =
+constexpr DWORD kCompositionResultFlag =
     GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE | GCS_RESULTSTR | GCS_RESULTCLAUSE;
 static_assert(kCompositionResultFlag == 0x1e00, "Must be 0x1e00");
 
-const DWORD kCompositionResultAndUpdateFlag =
+constexpr DWORD kCompositionResultAndUpdateFlag =
     kCompositionResultFlag | kCompositionUpdateFlag;
 static_assert(kCompositionResultAndUpdateFlag == 0x1fbf, "Must be 0x1fbf");
 

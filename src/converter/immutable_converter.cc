@@ -40,7 +40,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/stl_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/connector.h"
@@ -63,14 +62,14 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::DictionaryInterface;
-using mozc::dictionary::PosGroup;
-using mozc::dictionary::POSMatcher;
-using mozc::dictionary::SuppressionDictionary;
-using mozc::dictionary::Token;
-
 namespace mozc {
 namespace {
+
+using ::mozc::dictionary::DictionaryInterface;
+using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::Token;
 
 constexpr size_t kMaxSegmentsSize = 256;
 constexpr size_t kMaxCharLength = 1024;
@@ -792,7 +791,7 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
                                                          Lattice *lattice,
                                                          Node *nodes) const {
   size_t mblen = 0;
-  const char32 ucs4 = Util::UTF8ToUCS4(begin, end, &mblen);
+  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
 
   const Util::ScriptType first_script_type = Util::GetScriptType(ucs4);
   const Util::FormType first_form_type = Util::GetFormType(ucs4);
@@ -831,7 +830,7 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
   int num_char = 1;
   const char *p = begin + mblen;
   while (p < end) {
-    const char32 next_ucs4 = Util::UTF8ToUCS4(p, end, &mblen);
+    const char32 next_ucs4 = Util::Utf8ToUcs4(p, end, &mblen);
     if (first_script_type != Util::GetScriptType(next_ucs4) ||
         first_form_type != Util::GetFormType(next_ucs4)) {
       break;
@@ -1075,32 +1074,43 @@ bool ImmutableConverterImpl::PredictionViterbi(const Segments &segments,
   return true;
 }
 
+namespace {
+
+// Mapping from lnode's rid to (cost, Node) of best way/cost, and vice versa.
+// Note that, the average number of lid/rid variation is less than 30 in
+// most cases. So, in order to avoid too many allocations for internal
+// nodes of std::map, we use vector of key-value pairs.
+using CostAndNode = std::pair<int, Node *>;
+using BestMap = std::vector<std::pair<int, CostAndNode>>;
+
+BestMap::iterator LowerBound(BestMap &best_map,
+                             const std::pair<int, CostAndNode> &key) {
+  return std::lower_bound(
+      best_map.begin(), best_map.end(), key,
+      [](const std::pair<int, CostAndNode> &l,
+         const std::pair<int, CostAndNode> &r) { return l.first < r.first; });
+}
+
+}  // namespace
+
 void ImmutableConverterImpl::PredictionViterbiInternal(int calc_begin_pos,
                                                        int calc_end_pos,
                                                        Lattice *lattice) const {
   CHECK_LE(calc_begin_pos, calc_end_pos);
 
-  // Mapping from lnode's rid to (cost, Node) of best way/cost, and vice versa.
-  // Note that, the average number of lid/rid variation is less than 30 in
-  // most cases. So, in order to avoid too many allocations for internal
-  // nodes of std::map, we use vector of key-value pairs.
-  typedef std::vector<std::pair<int, std::pair<int, Node *>>> BestMap;
-  typedef OrderBy<FirstKey, Less> OrderByFirst;
   BestMap lbest, rbest;
   lbest.reserve(128);
   rbest.reserve(128);
 
-  const std::pair<int, Node *> kInvalidValue(INT_MAX,
-                                             static_cast<Node *>(nullptr));
+  const CostAndNode kInvalidValue(INT_MAX, nullptr);
 
   for (size_t pos = calc_begin_pos; pos <= calc_end_pos; ++pos) {
     lbest.clear();
     for (Node *lnode = lattice->end_nodes(pos); lnode != nullptr;
          lnode = lnode->enext) {
       const int rid = lnode->rid;
-      BestMap::value_type key(rid, kInvalidValue);
-      BestMap::iterator iter =
-          std::lower_bound(lbest.begin(), lbest.end(), key, OrderByFirst());
+      const BestMap::value_type key(rid, kInvalidValue);
+      const BestMap::iterator iter = LowerBound(lbest, key);
       if (iter == lbest.end() || iter->first != rid) {
         lbest.insert(
             iter, BestMap::value_type(rid, std::make_pair(lnode->cost, lnode)));
@@ -1120,9 +1130,8 @@ void ImmutableConverterImpl::PredictionViterbiInternal(int calc_begin_pos,
       if (rnode->end_pos > calc_end_pos) {
         continue;
       }
-      BestMap::value_type key(rnode->lid, kInvalidValue);
-      BestMap::iterator iter =
-          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+      const BestMap::value_type key(rnode->lid, kInvalidValue);
+      const BestMap::const_iterator iter = LowerBound(rbest, key);
       if (iter == rbest.end() || iter->first != rnode->lid) {
         rbest.insert(iter, key);
       }
@@ -1149,9 +1158,8 @@ void ImmutableConverterImpl::PredictionViterbiInternal(int calc_begin_pos,
       if (rnode->end_pos > calc_end_pos) {
         continue;
       }
-      BestMap::value_type key(rnode->lid, kInvalidValue);
-      BestMap::iterator iter =
-          std::lower_bound(rbest.begin(), rbest.end(), key, OrderByFirst());
+      const BestMap::value_type key(rnode->lid, kInvalidValue);
+      const BestMap::const_iterator iter = LowerBound(rbest, key);
       if (iter == rbest.end() || iter->first != rnode->lid ||
           iter->second.second == nullptr) {
         continue;

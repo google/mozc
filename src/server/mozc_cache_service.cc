@@ -279,7 +279,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   const size_t size = ::GetFileSize(file_handle.get(), 0);
 
   // Do not load image if the file size is too big
-  const DWORD kMaxImageSize = 100 * 1024 * 1024;  // 100MB
+  constexpr DWORD kMaxImageSize = 100 * 1024 * 1024;  // 100MB
   if (size > kMaxImageSize) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
@@ -327,8 +327,8 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
     STOP_SERVICE_AND_EXIT_FUNCTION();
   }
 
-  const DWORD kMinAdditionalSize = 512 * 1024;       // 512KB
-  const DWORD kMaxAdditionalSize = 2 * 1024 * 1024;  // 2MB
+  constexpr DWORD kMinAdditionalSize = 512 * 1024;       // 512KB
+  constexpr DWORD kMaxAdditionalSize = 2 * 1024 * 1024;  // 2MB
 
   if (!::SetProcessWorkingSetSize(::GetCurrentProcess(),
                                   mem_info.RegionSize + kMinAdditionalSize,

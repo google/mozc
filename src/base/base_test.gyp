@@ -104,7 +104,6 @@
         'logging_test.cc',
         'mmap_test.cc',
         'singleton_test.cc',
-        'stl_util_test.cc',
         'text_normalizer_test.cc',
         'thread_test.cc',
         'version_test.cc',

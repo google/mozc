@@ -50,7 +50,7 @@ class ImeKeyboardTest : public testing::Test {
     // In 32-bit Windows, |hkl| is like 04110411.
     // In 64-bit Windows, |hkl| is like 0000000004110411.
     const DWORD dword_hkl = reinterpret_cast<DWORD>(hkl);
-    const DWORD kExpectedHKL = 0x04110411;
+    constexpr DWORD kExpectedHKL = 0x04110411;
     if (dword_hkl != kExpectedHKL) {
       // seems to fall back to non-Japanese keyboard layout.
       return;

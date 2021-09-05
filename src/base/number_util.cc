@@ -1029,7 +1029,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
 
   while (begin < end) {
     size_t mblen = 0;
-    const char32 wchar = Util::UTF8ToUCS4(begin, end, &mblen);
+    const char32 wchar = Util::Utf8ToUcs4(begin, end, &mblen);
     kanji_char.assign(begin, mblen);
 
     std::string tmp;

@@ -79,7 +79,7 @@ bool g_in_safe_mode = true;
 bool g_fundamental_data_is_not_available = false;
 
 // TLS index for context update count. See b/3282221 for details.
-const DWORD kInvalidTlsIndex = 0xffffffff;
+constexpr DWORD kInvalidTlsIndex = 0xffffffff;
 DWORD g_context_revision_tls_index = kInvalidTlsIndex;
 
 // Breakpad never be enabled except for official builds.

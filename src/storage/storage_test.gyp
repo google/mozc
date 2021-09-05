@@ -35,6 +35,7 @@
       'sources': [
         'encrypted_string_storage_test.cc',
         'existence_filter_test.cc',
+        'lru_cache_test.cc',
         'lru_storage_test.cc',
         'memory_storage_test.cc',
         'registry_test.cc',

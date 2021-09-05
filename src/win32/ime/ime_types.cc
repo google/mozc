@@ -87,11 +87,11 @@ CompositionChangeAttributes::CompositionChangeAttributes(LPARAM lParam)
 LPARAM CompositionChangeAttributes::AsLParam() const { return original_flags; }
 
 LPARAM CompositionChangeAttributes::GetRemainingBits(WPARAM lParam) {
-  const DWORD kKnownBits = GCS_COMPATTR | GCS_COMPCLAUSE | GCS_COMPREADSTR |
-                           GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
-                           GCS_CURSORPOS | GCS_DELTASTART | GCS_RESULTCLAUSE |
-                           GCS_RESULTREADCLAUSE | GCS_RESULTREADSTR |
-                           GCS_RESULTSTR | CS_INSERTCHAR | CS_NOMOVECARET;
+  constexpr DWORD kKnownBits =
+      GCS_COMPATTR | GCS_COMPCLAUSE | GCS_COMPREADSTR | GCS_COMPREADATTR |
+      GCS_COMPREADCLAUSE | GCS_COMPSTR | GCS_CURSORPOS | GCS_DELTASTART |
+      GCS_RESULTCLAUSE | GCS_RESULTREADCLAUSE | GCS_RESULTREADSTR |
+      GCS_RESULTSTR | CS_INSERTCHAR | CS_NOMOVECARET;
   return lParam & ~kKnownBits;
 }
 
@@ -126,7 +126,7 @@ bool ShowUIAttributes::AreAllUIAllowed() const {
 LPARAM ShowUIAttributes::AsLParam() const { return original_flags; }
 
 LPARAM ShowUIAttributes::GetRemainingBits(WPARAM lParam) {
-  const DWORD kKnownBits =
+  constexpr DWORD kKnownBits =
       ISC_SHOWUICOMPOSITIONWINDOW | ISC_SHOWUIGUIDELINE |
       ISC_SHOWUICANDIDATEWINDOW | (ISC_SHOWUICANDIDATEWINDOW << 1) |
       (ISC_SHOWUICANDIDATEWINDOW << 2) | (ISC_SHOWUICANDIDATEWINDOW << 3);

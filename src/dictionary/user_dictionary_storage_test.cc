@@ -56,7 +56,7 @@ std::string GenRandomString(int size) {
   for (int i = 0; i < len; ++i) {
     const char32 l =
         static_cast<char32>(Util::Random(static_cast<int>('~' - ' ')) + ' ');
-    Util::UCS4ToUTF8Append(l, &result);
+    Util::Ucs4ToUtf8Append(l, &result);
   }
   return result;
 }

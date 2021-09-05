@@ -352,7 +352,7 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
     } else {
       VLOG(1) << "should never come here";
     }
-    Util::UCS4ToUTF8Append(c, dst);
+    Util::Ucs4ToUtf8Append(c, dst);
   }
 }
 
@@ -508,7 +508,7 @@ void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
       code -= offset;
     }
     DCHECK_GT(code, 0);
-    Util::UCS4ToUTF8Append(code, dst);
+    Util::Ucs4ToUtf8Append(code, dst);
   }
 }
 

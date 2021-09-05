@@ -70,7 +70,6 @@ test_suite(
         ":scheduler_test_android",
         ":serialized_string_array_test_android",
         ":singleton_test_android",
-        ":stl_util_test_android",
         ":stopwatch_test_android",
         ":system_util_test_android",
         ":text_normalizer_test_android",
@@ -320,24 +319,6 @@ cc_library_mozc(
     deps = [
         ":port",
         "//testing:gunit_prod",
-    ],
-)
-
-cc_library_mozc(
-    name = "stl_util",
-    hdrs = ["stl_util.h"],
-    visibility = ["//:__subpackages__"],
-    deps = [":port"],
-)
-
-cc_test_mozc(
-    name = "stl_util_test",
-    size = "small",
-    srcs = ["stl_util_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":stl_util",
-        "//testing:gunit_main",
     ],
 )
 

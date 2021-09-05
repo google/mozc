@@ -156,7 +156,7 @@ bool ExtractLastTokenWithScriptType(const std::string &text,
   //     build failure on Android is fixed.
   for (std::vector<char32>::reverse_iterator it = reverse_last_token.rbegin();
        it != reverse_last_token.rend(); ++it) {
-    Util::UCS4ToUTF8Append(*it, last_token);
+    Util::Ucs4ToUtf8Append(*it, last_token);
   }
   return true;
 }

@@ -178,6 +178,8 @@ class DictionaryPredictor : public PredictorInterface {
   class ResultWCostLess;
   class ResultCostLess;
 
+  // Aggregate* methods aggregate the candidates with different resources
+  // and algorithms.
   void AggregateRealtimeConversion(const ConversionRequest &request,
                                    size_t realtime_candidates_size,
                                    Segments *segments,
@@ -264,7 +266,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, GetMissSpelledPosition);
   FRIEND_TEST(DictionaryPredictorTest, RemoveMissSpelledCandidates);
   FRIEND_TEST(DictionaryPredictorTest, ConformCharacterWidthToPreference);
-  FRIEND_TEST(DictionaryPredictorTest, SetLMCost);
+  FRIEND_TEST(DictionaryPredictorTest, SetPredictionCostForMixedConversion);
   FRIEND_TEST(DictionaryPredictorTest, SetLMCostForUserDictionaryWord);
   FRIEND_TEST(DictionaryPredictorTest, SetDescription);
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
@@ -272,6 +274,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditions);
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditions_Mobile);
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditions_LatinInputMode);
+  FRIEND_TEST(DictionaryPredictorTest, GetLMCost);
   FRIEND_TEST(TriggerConditionsTest, TriggerConditions);
 
   typedef std::pair<std::string, ZeroQueryType> ZeroQueryResult;
@@ -425,9 +428,11 @@ class DictionaryPredictor : public PredictorInterface {
   void SetPredictionCost(const Segments &segments,
                          std::vector<Result> *results) const;
 
-  // Language model-based scoring function.
-  // This algorithm is mainly used for mobile.
-  void SetLMCost(const Segments &segments, std::vector<Result> *results) const;
+  // Scoring function for mixed conversion.
+  // In the mixed conversion we basically use the pure language model-based
+  // scoring function. This algorithm is mainly used for mobile.
+  void SetPredictionCostForMixedConversion(const Segments &segments,
+                                           std::vector<Result> *results) const;
 
   // Returns true if the suggestion is classified
   // as "aggressive".

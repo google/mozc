@@ -229,7 +229,7 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByIME) {
   EXPECT_TRUE(tracker.IsCompositionWindowVisible());
 
   // UIVisibilityTracker ignores these bits though.
-  const DWORD kCompositionUpdateBits =
+  constexpr DWORD kCompositionUpdateBits =
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
        GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART);
 
@@ -302,7 +302,7 @@ TEST(ImeUIVisibilityTrackerTest, CompositionIsDrawnByApplication) {
   EXPECT_FALSE(tracker.IsCompositionWindowVisible());
 
   // UIVisibilityTracker ignores these bits though.
-  const DWORD kCompositionUpdateBits =
+  constexpr DWORD kCompositionUpdateBits =
       (GCS_COMPREADSTR | GCS_COMPREADATTR | GCS_COMPREADCLAUSE | GCS_COMPSTR |
        GCS_COMPATTR | GCS_COMPCLAUSE | GCS_CURSORPOS | GCS_DELTASTART);
 

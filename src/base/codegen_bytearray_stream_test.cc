@@ -49,38 +49,35 @@ namespace {
 class CodeGenByteArrayStreamTest : public testing::Test {
  protected:
   void SetUp() override {
-    result_stream_ = absl::make_unique<std::ostringstream>();
     codegen_stream_ = absl::make_unique<mozc::CodeGenByteArrayOutputStream>(
-        result_stream_.get(), mozc::codegenstream::NOT_OWN_STREAM);
+        &result_stream_, mozc::codegenstream::NOT_OWN_STREAM);
   }
 
-  void TearDown() override {
-    codegen_stream_.reset();
-    result_stream_.reset();
-  }
+  void TearDown() override { codegen_stream_.reset(); }
 
   std::string ExpectedOutput(const std::string &var_name_base,
                              const std::string &count,
                              const std::string &body) {
+    // clang-format off
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
     return "const uint64 k" + var_name_base + "_data_wordtype[] = {\n" +
-        body + "};\n"
-        "const char * const k" + var_name_base + "_data = "
-        "reinterpret_cast<const char *>("
-        "k" + var_name_base + "_data_wordtype);\n"
-        "const size_t k" + var_name_base + "_size = " + count + ";\n";
+             body +
+           "};\n"
+           "const char * const k" + var_name_base + "_data = "
+               "reinterpret_cast<const char *>("
+                   "k" + var_name_base + "_data_wordtype);\n"
+           "const size_t k" + var_name_base + "_size = " + count + ";\n";
 #else
-    return "const char k" + var_name_base + "_data[] =\n" +
-        body + "\n"
-        ";\n"
-        "const size_t k" + var_name_base + "_size = " + count + ";\n";
+    return "const char k" + var_name_base + "_data[] =\n" + body + "\n;\n"
+           "const size_t k" + var_name_base + "_size = " + count + ";\n";
 #endif
+    // clang-format on
   }
 
-  std::string ResultOutput() { return result_stream_->str(); }
+  std::string ResultOutput() { return result_stream_.str(); }
 
   std::unique_ptr<mozc::CodeGenByteArrayOutputStream> codegen_stream_;
-  std::unique_ptr<std::ostringstream> result_stream_;
+  std::ostringstream result_stream_;
 };
 
 TEST_F(CodeGenByteArrayStreamTest, NoInput) {

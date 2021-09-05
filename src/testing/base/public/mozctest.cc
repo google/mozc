@@ -31,6 +31,8 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/status.h"
+#include "base/statusor.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
@@ -42,7 +44,7 @@ namespace testing {
 
 std::string GetSourcePath(const std::vector<absl::string_view> &components) {
   const std::string test_srcdir = absl::GetFlag(FLAGS_test_srcdir);
-  std::vector<absl::string_view> abs_components = { test_srcdir };
+  std::vector<absl::string_view> abs_components = {test_srcdir};
 
   const char *workspace = std::getenv("TEST_WORKSPACE");
   if (workspace && workspace[0]) {
@@ -54,11 +56,20 @@ std::string GetSourcePath(const std::vector<absl::string_view> &components) {
   return FileUtil::JoinPath(abs_components);
 }
 
+mozc::StatusOr<std::string> GetSourceFile(
+    const std::vector<absl::string_view> &components) {
+  std::string path = GetSourcePath(components);
+  if (!FileUtil::FileExists(path)) {
+    return mozc::NotFoundError("File doesn't exist: " + path);
+  }
+  return path;
+}
+
 std::string GetSourceFileOrDie(
     const std::vector<absl::string_view> &components) {
-  const std::string path = GetSourcePath(components);
-  CHECK(FileUtil::FileExists(path)) << "File doesn't exist: " << path;
-  return path;
+  mozc::StatusOr<std::string> abs_path = GetSourceFile(components);
+  CHECK(abs_path.ok()) << abs_path.status();
+  return *std::move(abs_path);
 }
 
 std::string GetSourceDirOrDie(

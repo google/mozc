@@ -271,7 +271,7 @@ bool IosEngine::SendKey(const std::string &character,
   input->set_id(session_id_);
   input->set_type(commands::Input::SEND_KEY);
   commands::KeyEvent *key_event = input->mutable_key();
-  key_event->set_key_code(Util::UTF8ToUCS4(character));
+  key_event->set_key_code(Util::Utf8ToUcs4(character));
   key_event->set_mode(current_input_config_->composition_mode);
   constexpr uint32_t kNoModifiers = 0;
   key_event->set_modifiers(kNoModifiers);

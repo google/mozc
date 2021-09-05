@@ -352,7 +352,6 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
-        "//base:stl_util",
         "//base:util",
         "//config:config_handler",
         "//dictionary:dictionary_interface",

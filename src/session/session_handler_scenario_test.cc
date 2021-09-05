@@ -138,6 +138,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario.txt",
     DATA_DIR "undo.txt",
+    DATA_DIR "zero_query_suggestion.txt",
 #undef DATA_DIR
 };
 
@@ -373,17 +374,18 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
 
 TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   // Open the scenario file.
-  const std::string &scenario_path =
-      mozc::testing::GetSourceFileOrDie({GetParam()});
-  LOG(INFO) << "Testing " << FileUtil::Basename(scenario_path);
-  InputFileStream input_stream(scenario_path.c_str());
+  const mozc::StatusOr<std::string> scenario_path =
+      mozc::testing::GetSourceFile({GetParam()});
+  ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
+  LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
+  InputFileStream input_stream(scenario_path->c_str());
 
   std::string line_text;
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {
     ++line_number;
     SCOPED_TRACE(Util::StringPrintf("Scenario: %s [%s:%d]", line_text.c_str(),
-                                    scenario_path.c_str(), line_number));
+                                    scenario_path->c_str(), line_number));
     ParseLine(*handler_, line_text);
   }
 }

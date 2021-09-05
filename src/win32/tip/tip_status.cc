@@ -93,7 +93,7 @@ bool TipStatus::GetInputModeConversion(ITfThreadMgr *thread_mgr,
     return false;
   }
 
-  const DWORD kDefaultMode =
+  constexpr DWORD kDefaultMode =
       TF_CONVERSIONMODE_NATIVE | TF_CONVERSIONMODE_FULLSHAPE;  // Hiragana
   CComVariant default_var;
   default_var.vt = VT_I4;

@@ -359,8 +359,8 @@ STDMETHODIMP TipLangBarButton::OnClick(TfLBIClick click, POINT point,
   // Caveats: TPM_NONOTIFY is important because the attached window may
   // change the menu state unless this flag is specified. We actually suffered
   // from this issue with Internet Explorer 10 on Windows 8. b/10217103.
-  const DWORD kMenuFlags = TPM_NONOTIFY | TPM_RETURNCMD | TPM_LEFTALIGN |
-                           TPM_TOPALIGN | TPM_LEFTBUTTON;
+  constexpr DWORD kMenuFlags = TPM_NONOTIFY | TPM_RETURNCMD | TPM_LEFTALIGN |
+                               TPM_TOPALIGN | TPM_LEFTBUTTON;
   const BOOL result =
       menu.TrackPopupMenu(kMenuFlags, point.x, point.y, ::GetFocus());
   if (!result) {

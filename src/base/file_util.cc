@@ -116,7 +116,7 @@ void StripWritePreventingAttributesIfExists(const std::string &filename) {
   }
   std::wstring wide_filename;
   Util::UTF8ToWide(filename, &wide_filename);
-  const DWORD kDropAttributes =
+  constexpr DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
   const DWORD attributes = ::GetFileAttributesW(wide_filename.c_str());
   if (attributes & kDropAttributes) {
@@ -208,7 +208,7 @@ bool FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 namespace {
 
 bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
-  const DWORD kTimeout = 5000;  // 5 sec.
+  constexpr DWORD kTimeout = 5000;  // 5 sec.
   ScopedHandle handle(
       ::CreateTransaction(nullptr, 0, 0, 0, 0, kTimeout, nullptr));
   const DWORD create_transaction_error = ::GetLastError();
