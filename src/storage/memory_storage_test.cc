@@ -58,7 +58,7 @@ void CreateKeyValue(std::map<std::string, std::string> *output, int size) {
 TEST(MemoryStorageTest, SimpleTest) {
   static constexpr int kSize[] = {10, 100, 1000};
 
-  for (int i = 0; i < arraysize(kSize); ++i) {
+  for (int i = 0; i < std::size(kSize); ++i) {
     std::unique_ptr<StorageInterface> storage(MemoryStorage::New());
 
     // Insert

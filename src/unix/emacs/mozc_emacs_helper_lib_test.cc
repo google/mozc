@@ -260,8 +260,8 @@ TEST_F(MozcEmacsHelperLibTest, TokenizeSExpr) {
                           "-x0", "\"い\"", "p",   ")"};
 
   EXPECT_TRUE(result);
-  EXPECT_EQ(arraysize(golden), output.size());
-  int len = std::min(arraysize(golden), output.size());
+  EXPECT_EQ(std::size(golden), output.size());
+  int len = std::min(std::size(golden), output.size());
   for (int i = 0; i < len; ++i) {
     EXPECT_EQ(golden[i], output[i]);
   }

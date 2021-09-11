@@ -42,6 +42,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace dictionary {
@@ -104,11 +105,11 @@ class CodecMock : public DictionaryFileCodecInterface {
     ofs->write(value.data(), value.size());
   }
 
-  mozc::Status ReadSections(
+  absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const override {
     sections->emplace_back(nullptr, 0, "dummy name");
-    return mozc::Status();
+    return absl::Status();
   }
 
   std::string GetSectionName(const std::string &name) const override {

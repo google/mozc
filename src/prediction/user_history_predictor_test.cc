@@ -1019,7 +1019,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
       {"。", false}, {"、", false}, {"？", false}, {"！", false}, {"ぬ", true},
   };
 
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     WaitForSyncer(predictor);
     predictor->ClearAllHistory();
     WaitForSyncer(predictor);
@@ -2087,13 +2087,13 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
       "variable",
       "UPPER",
   };
-  for (size_t i = 0; i < arraysize(kEnglishWords); ++i) {
+  for (size_t i = 0; i < std::size(kEnglishWords); ++i) {
     // LookupPredictive is used in UserHistoryPredictor::IsPrivacySensitive().
     GetDictionaryMock()->AddLookupExact(kEnglishWords[i], kEnglishWords[i],
                                         kEnglishWords[i], Token::NONE);
   }
 
-  for (size_t i = 0; i < arraysize(kNonSensitiveCases); ++i) {
+  for (size_t i = 0; i < std::size(kNonSensitiveCases); ++i) {
     predictor->ClearAllHistory();
     WaitForSyncer(predictor);
 
@@ -2424,7 +2424,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
   };
 
   // with expanded
-  for (size_t i = 0; i < arraysize(kTests1); ++i) {
+  for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(
         kTests1[i].expect_result,
@@ -2444,7 +2444,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupRoman) {
       {"かい", true}, {"まい", false}, {"も", false},
   };
 
-  for (size_t i = 0; i < arraysize(kTests2); ++i) {
+  for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(kTests2[i].expect_result,
               predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "", "",
@@ -2476,7 +2476,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
   };
 
   // with expanded
-  for (size_t i = 0; i < arraysize(kTests1); ++i) {
+  for (size_t i = 0; i < std::size(kTests1); ++i) {
     entry.set_key(kTests1[i].entry_key);
     EXPECT_EQ(
         kTests1[i].expect_result,
@@ -2495,7 +2495,7 @@ TEST_F(UserHistoryPredictorTest, ExpandedLookupKana) {
       {"まめ", false},
   };
 
-  for (size_t i = 0; i < arraysize(kTests2); ++i) {
+  for (size_t i = 0; i < std::size(kTests2); ++i) {
     entry.set_key(kTests2[i].entry_key);
     EXPECT_EQ(kTests2[i].expect_result,
               predictor->LookupEntry(UserHistoryPredictor::DEFAULT, "し", "",
@@ -2533,7 +2533,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
       {"あかい", UserHistoryPredictor::LEFT_PREFIX_MATCH},
   };
 
-  for (size_t i = 0; i < arraysize(kTests1); ++i) {
+  for (size_t i = 0; i < std::size(kTests1); ++i) {
     EXPECT_EQ(kTests1[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   "あ", "あ", expanded.get(), kTests1[i].target))
@@ -2553,7 +2553,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputRoman) {
       {"かいがい", UserHistoryPredictor::LEFT_PREFIX_MATCH},
   };
 
-  for (size_t i = 0; i < arraysize(kTests2); ++i) {
+  for (size_t i = 0; i < std::size(kTests2); ++i) {
     EXPECT_EQ(kTests2[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   "", "", expanded.get(), kTests2[i].target))
@@ -2589,7 +2589,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
       {"あじしお", UserHistoryPredictor::LEFT_PREFIX_MATCH},
   };
 
-  for (size_t i = 0; i < arraysize(kTests1); ++i) {
+  for (size_t i = 0; i < std::size(kTests1); ++i) {
     EXPECT_EQ(kTests1[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   "あし", "あ", expanded.get(), kTests1[i].target))
@@ -2610,7 +2610,7 @@ TEST_F(UserHistoryPredictorTest, GetMatchTypeFromInputKana) {
       {"じかん", UserHistoryPredictor::LEFT_PREFIX_MATCH},
   };
 
-  for (size_t i = 0; i < arraysize(kTests2); ++i) {
+  for (size_t i = 0; i < std::size(kTests2); ++i) {
     EXPECT_EQ(kTests2[i].expect_type,
               UserHistoryPredictor::GetMatchTypeFromInput(
                   "し", "", expanded.get(), kTests2[i].target))

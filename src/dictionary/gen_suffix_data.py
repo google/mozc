@@ -60,7 +60,7 @@ def main():
   opts = _ParseOptions()
 
   # Remove noisy and unuseful words.
-  invalid_re = re.compile(r'^[→↓↑→─〜あいうえおぁぃぅぇぉつっょ]$')
+  invalid_re = re.compile(r'^[→↓↑→─あいうえおぁぃぅぇぉつっょ]$')
 
   result = []
   with codecs.open(opts.input, 'r', encoding='utf-8') as stream:

@@ -115,7 +115,7 @@ void StripWritePreventingAttributesIfExists(const std::string &filename) {
     return;
   }
   std::wstring wide_filename;
-  Util::UTF8ToWide(filename, &wide_filename);
+  Util::Utf8ToWide(filename, &wide_filename);
   constexpr DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
   const DWORD attributes = ::GetFileAttributesW(wide_filename.c_str());
@@ -134,7 +134,7 @@ bool FileUtil::CreateDirectory(const std::string &path) {
 bool FileUtilImpl::CreateDirectory(const std::string &path) const {
 #if defined(OS_WIN)
   std::wstring wide;
-  return (Util::UTF8ToWide(path, &wide) > 0 &&
+  return (Util::Utf8ToWide(path, &wide) > 0 &&
           ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
 #else   // !OS_WIN
   return ::mkdir(path.c_str(), 0700) == 0;
@@ -148,7 +148,7 @@ bool FileUtil::RemoveDirectory(const std::string &dirname) {
 bool FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
-  return (Util::UTF8ToWide(dirname, &wide) > 0 &&
+  return (Util::Utf8ToWide(dirname, &wide) > 0 &&
           ::RemoveDirectoryW(wide.c_str()) != 0);
 #else   // !OS_WIN
   return ::rmdir(dirname.c_str()) == 0;
@@ -163,7 +163,7 @@ bool FileUtilImpl::Unlink(const std::string &filename) const {
 #ifdef OS_WIN
   StripWritePreventingAttributesIfExists(filename);
   std::wstring wide;
-  return (Util::UTF8ToWide(filename, &wide) > 0 &&
+  return (Util::Utf8ToWide(filename, &wide) > 0 &&
           ::DeleteFileW(wide.c_str()) != 0);
 #else   // !OS_WIN
   return ::unlink(filename.c_str()) == 0;
@@ -177,7 +177,7 @@ bool FileUtil::FileExists(const std::string &filename) {
 bool FileUtilImpl::FileExists(const std::string &filename) const {
 #ifdef OS_WIN
   std::wstring wide;
-  return (Util::UTF8ToWide(filename, &wide) > 0 &&
+  return (Util::Utf8ToWide(filename, &wide) > 0 &&
           ::GetFileAttributesW(wide.c_str()) != -1);
 #else   // !OS_WIN
   struct stat s;
@@ -192,7 +192,7 @@ bool FileUtil::DirectoryExists(const std::string &dirname) {
 bool FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
-  if (Util::UTF8ToWide(dirname, &wide) <= 0) {
+  if (Util::Utf8ToWide(dirname, &wide) <= 0) {
     return false;
   }
 
@@ -265,7 +265,7 @@ bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
   }
 
   std::wstring wfilename;
-  Util::UTF8ToWide(filename, &wfilename);
+  Util::Utf8ToWide(filename, &wfilename);
 
   const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
   const auto result = ::SetFileAttributesW(
@@ -291,7 +291,7 @@ bool FileUtilImpl::CopyFile(const std::string &from,
 
 #ifdef OS_WIN
   std::wstring wto;
-  Util::UTF8ToWide(to, &wto);
+  Util::Utf8ToWide(to, &wto);
   StripWritePreventingAttributesIfExists(to);
 #endif  // OS_WIN
 
@@ -311,7 +311,7 @@ bool FileUtilImpl::CopyFile(const std::string &from,
 
 #ifdef OS_WIN
   std::wstring wfrom;
-  Util::UTF8ToWide(from, &wfrom);
+  Util::Utf8ToWide(from, &wfrom);
   ::SetFileAttributesW(wto.c_str(), ::GetFileAttributesW(wfrom.c_str()));
 #endif  // OS_WIN
 
@@ -373,8 +373,8 @@ bool FileUtilImpl::AtomicRename(const std::string &from,
                                 const std::string &to) const {
 #ifdef OS_WIN
   std::wstring fromw, tow;
-  Util::UTF8ToWide(from, &fromw);
-  Util::UTF8ToWide(to, &tow);
+  Util::Utf8ToWide(from, &fromw);
+  Util::Utf8ToWide(to, &tow);
 
   if (TransactionalMoveFile(fromw, tow)) {
     return true;
@@ -481,7 +481,7 @@ bool FileUtilImpl::GetModificationTime(const std::string &filename,
                                        FileTimeStamp *modified_at) const {
 #if defined(OS_WIN)
   std::wstring wide;
-  if (!Util::UTF8ToWide(filename, &wide)) {
+  if (!Util::Utf8ToWide(filename, &wide)) {
     return false;
   }
   WIN32_FILE_ATTRIBUTE_DATA info = {};

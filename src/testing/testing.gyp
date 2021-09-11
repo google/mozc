@@ -211,9 +211,9 @@
         'base/public/mozctest.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base_core',
-        '../base/base.gyp:status',
         'googletest_lib',
       ],
     },

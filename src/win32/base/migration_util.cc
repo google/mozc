@@ -186,12 +186,12 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
     if ((profile.dwFlags & LOT_DEFAULT) == LOT_DEFAULT) {
       wchar_t clsid[64] = {};
       if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
-                             arraysize(clsid))) {
+                             std::size(clsid))) {
         return false;
       }
       wchar_t profile_id[64] = {};
       if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
-                             arraysize(profile_id))) {
+                             std::size(profile_id))) {
         return false;
       }
 
@@ -206,7 +206,7 @@ bool MigrationUtil::DisableLegacyMozcForCurrentUserOnWin8() {
     // Disable IMM32 Mozc.
     {
       wchar_t profile_str[32] = {};
-      if (FAILED(::StringCchPrintf(profile_str, arraysize(profile_str),
+      if (FAILED(::StringCchPrintf(profile_str, std::size(profile_str),
                                    L"%04x:%s", profile.langid,
                                    klid.ToString().c_str()))) {
         return false;

@@ -96,7 +96,7 @@ LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
     return;
   }
 
-  for (size_t i = 0; i < arraysize(kUTF8JapaneseMap); ++i) {
+  for (size_t i = 0; i < std::size(kUTF8JapaneseMap); ++i) {
     const TranslationMap &mapping = kUTF8JapaneseMap[i];
     DCHECK(mapping.message);
     DCHECK(mapping.translated);

@@ -37,8 +37,6 @@
 
 #include "base/logging.h"
 #include "base/singleton.h"
-#include "base/status.h"
-#include "base/statusor.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
@@ -48,6 +46,7 @@
 #include "protocol/commands.pb.h"
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -92,12 +91,12 @@ std::string JstringToCcString(JNIEnv *env, jstring j_string) {
   return cc_string;
 }
 
-mozc::StatusOr<std::unique_ptr<DataManager>> CreateDataManager(
+absl::StatusOr<std::unique_ptr<DataManager>> CreateDataManager(
     const std::string &data_file_path) {
   auto data_manager = absl::make_unique<DataManager>();
   const auto status = data_manager->InitFromFile(data_file_path);
   if (status != DataManager::Status::OK) {
-    return mozc::FailedPreconditionError(
+    return absl::FailedPreconditionError(
         DataManager::StatusCodeToString(status));
   }
   return data_manager;
@@ -203,7 +202,7 @@ Java_com_google_android_inputmethod_japanese_session_MozcJNI_initialize(
       {"getDataVersion", "()Ljava/lang/String;",
        reinterpret_cast<void *>(&mozc::jni::getDataVersion)},
   };
-  if (env->RegisterNatives(clazz, methods, arraysize(methods))) {
+  if (env->RegisterNatives(clazz, methods, std::size(methods))) {
     // Fatal error. No way to recover.
     return false;
   }

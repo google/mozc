@@ -179,7 +179,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
       {false, Testcase::DO_NOT_IMPOSE, false},
   };
 
-  for (size_t i = 0; i < arraysize(kTestcases); ++i) {
+  for (size_t i = 0; i < std::size(kTestcases); ++i) {
     const bool stored_config_value = kTestcases[i].stored_config_value;
     const bool expected = kTestcases[i].expected_value;
 
@@ -268,7 +268,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
       "win_config1.db",
   };
 
-  for (size_t i = 0; i < arraysize(kDataFiles); ++i) {
+  for (size_t i = 0; i < std::size(kDataFiles); ++i) {
     const char *file_name = kDataFiles[i];
     const std::string &src_path = mozc::testing::GetSourceFileOrDie(
         {"data", "test", "config", file_name});
@@ -289,7 +289,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 #ifdef OS_WIN
     // Reset the file attributes since it may contain FILE_ATTRIBUTE_READONLY.
     std::wstring wdest_path;
-    Util::UTF8ToWide(dest_path, &wdest_path);
+    Util::Utf8ToWide(dest_path, &wdest_path);
     ::SetFileAttributesW(wdest_path.c_str(), FILE_ATTRIBUTE_NORMAL);
 #endif  // OS_WIN
 
@@ -337,8 +337,8 @@ TEST_F(ConfigHandlerTest, GetDefaultConfig) {
       {"<>=+-/*", Config::FULL_WIDTH, Config::LAST_FORM},
       {"?!", Config::FULL_WIDTH, Config::LAST_FORM},
   };
-  EXPECT_EQ(output.character_form_rules_size(), arraysize(testcases));
-  for (size_t i = 0; i < arraysize(testcases); ++i) {
+  EXPECT_EQ(output.character_form_rules_size(), std::size(testcases));
+  for (size_t i = 0; i < std::size(testcases); ++i) {
     EXPECT_EQ(output.character_form_rules(i).group(), testcases[i].group);
     EXPECT_EQ(output.character_form_rules(i).preedit_character_form(),
               testcases[i].preedit_character_form);

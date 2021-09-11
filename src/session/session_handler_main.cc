@@ -58,7 +58,6 @@ SHOW_LOG_BY_VALUE       ございました
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
-#include "base/status.h"
 #include "base/system_util.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
@@ -66,6 +65,7 @@ SHOW_LOG_BY_VALUE       ございました
 #include "protocol/commands.pb.h"
 #include "session/session_handler_tool.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
@@ -139,7 +139,7 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
     return;
   }
 
-  const mozc::Status status = handler.Eval(args);
+  const absl::Status status = handler.Eval(args);
   if (!status.ok()) {
     std::cout << "ERROR: " << status.message() << std::endl;
   }
@@ -157,7 +157,7 @@ std::unique_ptr<const DataManagerInterface> CreateDataManager(
   return absl::make_unique<const oss::OssDataManager>();
 }
 
-mozc::StatusOr<std::unique_ptr<Engine>> CreateEngine(
+absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(
     const std::string &engine, const std::string &dictionary) {
   if (engine == "desktop") {
     return Engine::CreateDesktopEngine(CreateDataManager(dictionary));

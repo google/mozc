@@ -222,7 +222,7 @@ STDAPI DllRegisterServer() {
   // 3. Register this text service as a TSF text-input processor.
   wchar_t path[MAX_PATH] = {};
   const DWORD path_length = ::GetModuleFileName(ModuleImpl::module_handle(),
-                                                &path[0], arraysize(path));
+                                                &path[0], std::size(path));
   HRESULT result = TsfRegistrar::RegisterCOMServer(path, path_length);
   if (FAILED(result)) {
     DllUnregisterServer();

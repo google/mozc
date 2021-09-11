@@ -425,7 +425,7 @@ bool IsConsistentEngineNameAndType(const std::string &engine_name,
                                    const std::string &engine_type) {
   using NameAndTypeSet = std::set<std::pair<std::string, std::string>>;
   static const NameAndTypeSet *kConsistentPairs =
-      new NameAndTypeSet({// 
+      new NameAndTypeSet({
                           {"oss", "desktop"},
                           {"mock", "desktop"},
                           {"mock", "mobile"},

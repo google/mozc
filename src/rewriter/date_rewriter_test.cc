@@ -276,7 +276,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
     size_t offset = 1;
-    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < std::size(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments, rel_cand_idx + offset));
@@ -297,7 +297,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
 
     offset = 5;
-    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < std::size(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments, rel_cand_idx + offset));
@@ -317,7 +317,7 @@ TEST_F(DateRewriterTest, DateRewriteTest) {
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(5, CountDescription(segments, "今日の日付"));
 
-    for (int rel_cand_idx = 0; rel_cand_idx < arraysize(kTodayCandidate);
+    for (int rel_cand_idx = 0; rel_cand_idx < std::size(kTodayCandidate);
          ++rel_cand_idx) {
       EXPECT_EQ(kTodayCandidate[rel_cand_idx],
                 GetNthCandidateValue(segments,
@@ -683,7 +683,7 @@ TEST_F(DateRewriterTest, ConvertDateTest) {
                               {6, 30},  {7, 31},  {8, 31}, {9, 30},
                               {10, 31}, {11, 30}, {12, 31}};
 
-  for (size_t i = 0; i < arraysize(month_days_test_data); ++i) {
+  for (size_t i = 0; i < std::size(month_days_test_data); ++i) {
     EXPECT_TRUE(
         rewriter.ConvertDateWithYear(2001, month_days_test_data[i].month,
                                      month_days_test_data[i].days, &results));

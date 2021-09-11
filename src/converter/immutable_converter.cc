@@ -346,7 +346,7 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     Segment::Candidate *new_candidate = segment->add_candidate();
     DCHECK(new_candidate);
 
-    new_candidate->CopyFrom(*top_candidate);
+    *new_candidate = *top_candidate;
     Util::HiraganaToKatakana(segment->candidate(0).content_key,
                              &new_candidate->content_value);
     Util::ConcatStrings(new_candidate->content_value,
@@ -370,7 +370,7 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     DCHECK(new_candidate);
 
     if (last_candidate != nullptr) {
-      new_candidate->CopyFrom(*last_candidate);
+      *new_candidate = *last_candidate;
       // We cannot copy inner_segment_boundary; see b/8109381.
       new_candidate->inner_segment_boundary.clear();
     } else {

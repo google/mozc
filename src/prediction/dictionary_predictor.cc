@@ -71,7 +71,7 @@
 #define MOZC_WORD_LOG(result, message) \
   (result).log.append(MOZC_WORD_LOG_MESSAGE(message))
 
-#else
+#else  // NDEBUG
 #define MOZC_WORD_LOG(result, message) \
   {}
 
@@ -175,6 +175,23 @@ bool HasHistoryKeyLongerThanOrEqualTo(const Segments &segments,
   return Util::CharsLen(history_segment.candidate(0).key) >= utf8_len;
 }
 
+bool IsLongKeyForRealtimeCandidates(const Segments &segments) {
+  constexpr int kFewResultThreshold = 8;
+  return (segments.segments_size() > 0 &&
+          Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold);
+}
+
+size_t GetMaxSizeForRealtimeCandidates(const Segments &segments,
+                                       bool is_long_key) {
+  const auto &segment = segments.conversion_segment(0);
+  const size_t size =
+      (segments.max_prediction_candidates_size() - segment.candidates_size());
+  return is_long_key ? std::min(size, static_cast<size_t>(8)) : size;
+}
+
+size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
+  return is_long_key ? 5 : 10;
+}
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback
@@ -609,7 +626,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 #ifndef NDEBUG
   const bool is_debug = true;
-#else
+#else   // NDEBUG
   // TODO(taku): Sets more advanced debug info depending on the verbose_level.
   const bool is_debug = request.config().verbose_level() >= 1;
 #endif  // NDEBUG
@@ -704,7 +721,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 #define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
   add_debug_candidate(result, MOZC_WORD_LOG_MESSAGE(log))
 
-#else
+#else  // MOZC_DEBUG
 #define MOZC_ADD_DEBUG_CANDIDATE(result, log) \
   {}
 
@@ -1365,18 +1382,10 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
   if (segments.conversion_segments_size() == 0) {
     return 0;
   }
-  constexpr int kFewResultThreshold = 8;
-  const auto &segment0 = segments.conversion_segment(0);
-  size_t max_size =
-      segments.max_prediction_candidates_size() - segment0.candidates_size();
-  size_t default_size = 10;
-  if (segments.segments_size() > 0 &&
-      Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold) {
-    // We don't make so many realtime conversion prediction
-    // even if we have enough margin, as it's expected less useful.
-    max_size = std::min(max_size, static_cast<size_t>(8));
-    default_size = 5;
-  }
+  const bool is_long_key = IsLongKeyForRealtimeCandidates(segments);
+  const size_t max_size =
+      GetMaxSizeForRealtimeCandidates(segments, is_long_key);
+  const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
   size_t size = 0;
   switch (request_type) {
     case Segments::PREDICTION:
@@ -2100,7 +2109,9 @@ void DictionaryPredictor::AggregateSuffixPrediction(
     std::vector<Result> *results) const {
   DCHECK_GT(segments.conversion_segments_size(), 0);
   DCHECK(!segments.conversion_segment(0).key().empty());  // Not zero query
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
+  // all suffix entries.
+  const size_t cutoff_threshold = kPredictionMaxResultsSize;
   const std::string kEmptyHistoryKey = "";
   GetPredictiveResults(*suffix_dictionary_, kEmptyHistoryKey, request, segments,
                        SUFFIX, cutoff_threshold,
@@ -2124,7 +2135,9 @@ void DictionaryPredictor::AggregateZeroQuerySuffixPrediction(
     // input mode. For example, we do not need "です", "。" just after "when".
     return;
   }
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  // Uses larger cutoff (kPredictionMaxResultsSize) in order to consider
+  // all suffix entries.
+  const size_t cutoff_threshold = kPredictionMaxResultsSize;
   const std::string kEmptyHistoryKey = "";
   GetPredictiveResults(
       *suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,

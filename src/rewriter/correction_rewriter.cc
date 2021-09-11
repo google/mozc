@@ -150,7 +150,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
       Segment::Candidate *mutable_candidate =
           segment->insert_candidate(kInsertPosition);
       DCHECK(mutable_candidate);
-      mutable_candidate->CopyFrom(top_candidate);
+      *mutable_candidate = top_candidate;
       Util::ConcatStrings(results[k].error, top_candidate.functional_key(),
                           &mutable_candidate->key);
       Util::ConcatStrings(results[k].value, top_candidate.functional_value(),

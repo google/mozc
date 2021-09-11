@@ -146,7 +146,7 @@ TEST(KeyEventUtilTest, GetKeyInformation) {
   KeyEvent key_event;
   uint64_t output;
 
-  for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
+  for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     SCOPED_TRACE(kTestKeys[i]);
     KeyParser::ParseKey(kTestKeys[i], &key_event);
     ASSERT_TRUE(KeyEventUtil::GetKeyInformation(key_event, &output));
@@ -233,7 +233,7 @@ TEST(KeyEventUtilTest, NormalizeNumpadKey) {
       {"NUMPAD0 a", "0"},
   };
 
-  for (size_t i = 0; i < arraysize(kNormalizeNumpadKeyTestData); ++i) {
+  for (size_t i = 0; i < std::size(kNormalizeNumpadKeyTestData); ++i) {
     const NormalizeNumpadKeyTestData &data = kNormalizeNumpadKeyTestData[i];
     SCOPED_TRACE(data.from);
 
@@ -298,7 +298,7 @@ TEST(KeyEventUtilTest, RemoveModifiers) {
       },
   };
 
-  for (size_t i = 0; i < arraysize(kRemoveModifiersTestData); ++i) {
+  for (size_t i = 0; i < std::size(kRemoveModifiersTestData); ++i) {
     SCOPED_TRACE(Util::StringPrintf("index = %d", static_cast<int>(i)));
     const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
 
@@ -466,7 +466,7 @@ TEST(KeyEventUtilTest, IsModifiers) {
       },
   };
 
-  for (size_t i = 0; i < arraysize(kIsModifiersTestData); ++i) {
+  for (size_t i = 0; i < std::size(kIsModifiersTestData); ++i) {
     const IsModifiersTestData &data = kIsModifiersTestData[i];
     SCOPED_TRACE(Util::StringPrintf("index: %d", static_cast<int>(i)));
 
@@ -499,7 +499,7 @@ TEST(KeyEventUtilTest, IsLowerUpperAlphabet) {
       {"Space", false, false},
   };
 
-  for (size_t i = 0; i < arraysize(kIsLowerUpperAlphabetTestData); ++i) {
+  for (size_t i = 0; i < std::size(kIsLowerUpperAlphabetTestData); ++i) {
     const IsLowerUpperAlphabetTestData &data = kIsLowerUpperAlphabetTestData[i];
     SCOPED_TRACE(data.key);
     KeyEvent key_event;
@@ -520,7 +520,7 @@ TEST(KeyEventUtilTest, IsNumpadKey) {
       {"EQUALS", true},   {"COMMA", true},   {"TEXTINPUT", false},
   };
 
-  for (size_t i = 0; i < arraysize(kIsNumpadKeyTestData); ++i) {
+  for (size_t i = 0; i < std::size(kIsNumpadKeyTestData); ++i) {
     const IsNumpadKeyTestData &data = kIsNumpadKeyTestData[i];
     SCOPED_TRACE(data.key);
     KeyEvent key_event;

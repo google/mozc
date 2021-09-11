@@ -66,7 +66,7 @@ HANDLE LoadPrivateFont(const wchar_t *font_name) {
     return nullptr;
   }
   std::string path;
-  Util::WideToUTF8(w_path, &path);
+  Util::WideToUtf8(w_path, &path);
 
   Mmap mmap;
   if (!mmap.Open(path.c_str())) {

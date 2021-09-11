@@ -360,7 +360,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
       {"は", "歯"},       {"はひ", "ハヒ"},     {"ば", "場"},
       {"はび", "波美"},   {"ばび", "馬尾"},     {"ばびぶ", "バビブ"},
   };
-  constexpr size_t kKeyValuesSize = arraysize(kKeyValues);
+  constexpr size_t kKeyValuesSize = std::size(kKeyValues);
   std::vector<Token> tokens;
   tokens.reserve(kKeyValuesSize);
   for (const auto &kv : kKeyValues) {
@@ -384,7 +384,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
       EXPECT_TRUE(result.end() != result.find(entry));
     }
     // The others should not be found.
-    for (size_t i = 5; i < arraysize(kKeyValues); ++i) {
+    for (size_t i = 5; i < std::size(kKeyValues); ++i) {
       const std::pair<std::string, std::string> entry(kKeyValues[i].key,
                                                       kKeyValues[i].value);
       EXPECT_TRUE(result.end() == result.find(entry));
@@ -446,7 +446,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
         "は", "ば", "はひ", "ばひ", "はび", "ばび",
     };
     const std::set<std::string> expected(
-        kExpectedKeys, kExpectedKeys + arraysize(kExpectedKeys));
+        kExpectedKeys, kExpectedKeys + std::size(kExpectedKeys));
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
       const bool to_be_found =
           expected.find(kKeyValues[i].key) != expected.end();
@@ -734,7 +734,7 @@ TEST_F(SystemDictionaryTest, EnableNoModifierTargetWithLoudsTrie) {
   config_.set_use_kana_modifier_insensitive_conversion(true);
 
   // Prefix search
-  for (size_t i = 0; i < arraysize(tokens); ++i) {
+  for (size_t i = 0; i < std::size(tokens); ++i) {
     CheckTokenExistenceCallback callback(&tokens[i]);
     // "かつこう" -> "かつ", "かっこ", "かつこう", "かっこう" and "がっこう"
     system_dic->LookupPrefix(k2, convreq_, &callback);

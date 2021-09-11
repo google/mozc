@@ -496,7 +496,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
     const int kana_locked_length = keyboard->ToUnicode(
         virtual_key.virtual_key(), to_unicode_scancode,
         keyboard_status_w_kana_lock.status(), &kana_codes[0],
-        arraysize(kana_codes), to_unicode_flag);
+        std::size(kana_codes), to_unicode_flag);
     if (kana_locked_length != 1) {
       return false;
     }
@@ -506,7 +506,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
     //   mozc::Util as HalfWidthKatakanaToHiragana.
     const wchar_t whalf_katakana[] = {static_cast<wchar_t>(kana_code), L'\0'};
     std::string half_katakana, full_katakana, full_hiragana;
-    mozc::Util::WideToUTF8(whalf_katakana, &half_katakana);
+    mozc::Util::WideToUtf8(whalf_katakana, &half_katakana);
     mozc::Util::HalfWidthKatakanaToFullWidthKatakana(half_katakana.c_str(),
                                                      &full_katakana);
     mozc::Util::KatakanaToHiragana(full_katakana.c_str(), &full_hiragana);
@@ -591,7 +591,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
   int kana_unlocked_length =
       keyboard->ToUnicode(virtual_key.virtual_key(), to_unicode_scancode,
                           keyboard_status_wo_kana_lock.status(), &codes[0],
-                          arraysize(codes), to_unicode_flag);
+                          std::size(codes), to_unicode_flag);
 
   // A workaround for b/3029665.
   // Keyboard drivers of the JIS keyboard do not produce a key code for
@@ -610,7 +610,7 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
     kana_unlocked_length =
         keyboard->ToUnicode(virtual_key.virtual_key(), to_unicode_scancode,
                             keyboard_status_wo_kana_lock.status(), &codes[0],
-                            arraysize(codes), to_unicode_flag);
+                            std::size(codes), to_unicode_flag);
   }
 
   if (kana_unlocked_length != 1) {

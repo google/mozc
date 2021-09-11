@@ -43,7 +43,7 @@ namespace {
 std::wstring ToPlatformString(const char* filename) {
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
-  // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
+  // NOTE: To avoid circular dependency, |Util::Utf8ToWide| shouldn't be used
   // here.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
   return utf8_to_wide.from_bytes(filename);

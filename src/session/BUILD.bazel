@@ -827,7 +827,6 @@ cc_library_mozc(
         "//base:file_stream",
         "//base:file_util",
         "//base:number_util",
-        "//base:status",
         "//base:util",
         "//base/protobuf:descriptor",
         "//base/protobuf:message",
@@ -846,6 +845,7 @@ cc_library_mozc(
         "//storage:registry",
         "//usage_stats",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -857,13 +857,13 @@ cc_binary_mozc(
         ":session_handler_tool",
         "//base:file_stream",
         "//base:init_mozc",
-        "//base:status",
         "//base:system_util",
         "//data_manager/oss:oss_data_manager",
         "//engine",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + select_mozc(
         default = [
@@ -891,7 +891,6 @@ cc_test_mozc(
         "//base:file_stream",
         "//base:file_util",
         "//base:number_util",
-        "//base:status",
         "//base:util",
         "//base/protobuf:descriptor",
         "//base/protobuf:message",
@@ -908,6 +907,7 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -415,19 +415,6 @@
         'base.gyp:serialized_string_array',
       ],
     },
-    {
-      'target_name': 'status_test',
-      'type': 'executable',
-      'sources': [
-        'status_test.cc',
-        'statusor_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:base',
-        'base.gyp:status',
-      ],
-    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'base_all_test',
@@ -449,7 +436,6 @@
         'scheduler_stub_test',
         'scheduler_test',
         'serialized_string_array_test',
-        'status_test',
         'system_util_test',
         'trie_test',
         'update_util_test',

@@ -47,10 +47,10 @@ namespace win32 {
 namespace {
 
 #if defined(GOOGLE_JAPANESE_INPUT_BUILD)
-const uint32 kMagicNumber = 0x4d6f7a63;  // 'Mozc'
-#else
-const uint32 kMagicNumber = 0x637a6f4d;  // 'cozM'
-#endif
+constexpr uint32 kMagicNumber = 0x4d6f7a63;  // 'Mozc'
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
+constexpr uint32 kMagicNumber = 0x637a6f4d;  // 'cozM'
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 static HIMCC InitializeHIMCC(HIMCC himcc, DWORD size) {
   if (himcc == nullptr) {

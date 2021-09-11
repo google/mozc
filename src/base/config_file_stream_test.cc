@@ -211,7 +211,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
     int line_number = 0;  // note that this is 1-origin.
     while (!std::getline(*ifs, line).fail()) {
       ++line_number;
-      ASSERT_LE(line_number, arraysize(kExpectedLines));
+      ASSERT_LE(line_number, std::size(kExpectedLines));
       EXPECT_EQ(line, kExpectedLines[line_number - 1])
           << "failed at line: " << line_number;
     }

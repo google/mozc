@@ -59,38 +59,30 @@ absl::string_view Segment::Candidate::functional_value() const {
                                  value.size() - content_value.size());
 }
 
-void Segment::Candidate::CopyFrom(const Candidate &src) {
-  Init();
-
-  key = src.key;
-  value = src.value;
-  content_key = src.content_key;
-  content_value = src.content_value;
-  consumed_key_size = src.consumed_key_size;
-
-  prefix = src.prefix;
-  suffix = src.suffix;
-  usage_id = src.usage_id;
-  description = src.description;
-  usage_title = src.usage_title;
-  usage_description = src.usage_description;
-
-  cost = src.cost;
-  wcost = src.wcost;
-  structure_cost = src.structure_cost;
-
-  lid = src.lid;
-  rid = src.rid;
-
-  attributes = src.attributes;
-
-  style = src.style;
-  command = src.command;
-
-  inner_segment_boundary = src.inner_segment_boundary;
-
+void Segment::Candidate::Init() {
+  key.clear();
+  value.clear();
+  content_value.clear();
+  content_key.clear();
+  consumed_key_size = 0;
+  prefix.clear();
+  suffix.clear();
+  description.clear();
+  usage_title.clear();
+  usage_description.clear();
+  cost = 0;
+  structure_cost = 0;
+  wcost = 0;
+  lid = 0;
+  rid = 0;
+  usage_id = 0;
+  attributes = 0;
+  source_info = SOURCE_INFO_NONE;
+  style = NumberUtil::NumberString::DEFAULT_STYLE;
+  command = DEFAULT_COMMAND;
+  inner_segment_boundary.clear();
 #ifndef NDEBUG
-  log = src.log;
+  log.clear();
 #endif  // NDEBUG
 }
 
@@ -433,12 +425,12 @@ void Segment::CopyFrom(const Segment &src) {
 
   for (size_t i = 0; i < src.candidates_size(); ++i) {
     Candidate *candidate = add_candidate();
-    candidate->CopyFrom(src.candidate(i));
+    *candidate = src.candidate(i);
   }
 
   for (size_t i = 0; i < src.meta_candidates_size(); ++i) {
     Candidate *meta_candidate = add_meta_candidate();
-    meta_candidate->CopyFrom(src.meta_candidate(i));
+    *meta_candidate = src.meta_candidate(i);
   }
 }
 

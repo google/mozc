@@ -244,12 +244,12 @@ void CreatePredictionKeys(PredictionRequestType type,
   const char *kVoels[] = {"a", "i", "u", "e", "o"};
   const char *kConsonant[] = {"k", "s", "t", "n", "h", "m", "y", "r", "w"};
   std::vector<std::string> one_chars;
-  for (size_t i = 0; i < arraysize(kVoels); ++i) {
+  for (size_t i = 0; i < std::size(kVoels); ++i) {
     one_chars.push_back(kVoels[i]);
   }
 
-  for (size_t i = 0; i < arraysize(kConsonant); ++i) {
-    for (size_t j = 0; j < arraysize(kVoels); ++j) {
+  for (size_t i = 0; i < std::size(kConsonant); ++i) {
+    for (size_t j = 0; j < std::size(kVoels); ++j) {
       one_chars.push_back(std::string(kConsonant[i]) + std::string(kVoels[j]));
     }
   }

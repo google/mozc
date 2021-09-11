@@ -60,7 +60,7 @@ using mozc::usage_stats::UsageStats;
 
 #ifdef OS_ANDROID
 constexpr bool kDefaultUseActualConverterForRealtimeConversion = false;
-#else
+#else   // OS_ANDROID
 constexpr bool kDefaultUseActualConverterForRealtimeConversion = true;
 #endif  // OS_ANDROID
 
@@ -394,7 +394,7 @@ void PrependCandidates(const Segment &previous_segment,
   const size_t cands_size = previous_segment.candidates_size();
   for (size_t i = 0; i < cands_size; ++i) {
     Segment::Candidate *candidate = segment->push_front_candidate();
-    candidate->CopyFrom(previous_segment.candidate(cands_size - i - 1));
+    *candidate = previous_segment.candidate(cands_size - i - 1);
   }
   *(segment->mutable_meta_candidates()) = previous_segment.meta_candidates();
 }

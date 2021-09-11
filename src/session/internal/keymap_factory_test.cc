@@ -91,7 +91,7 @@ TEST_F(KeyMapFactoryTest, KeyMapFactoryTest) {
     KeyMapManager *keymap_array[] = {
         atok, msime, kotoeri, custom, mobile,
     };
-    const int array_size = arraysize(keymap_array);
+    const int array_size = std::size(keymap_array);
     for (int i = 0; i < array_size; ++i) {
       for (int j = 0; j < array_size; ++j) {
         if (i != j) {

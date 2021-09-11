@@ -69,7 +69,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
     {
       KeyEvent key_event;
       std::string utf8_query;
-      Util::WideToUTF8(query, &utf8_query);
+      Util::WideToUtf8(query, &utf8_query);
       key_event.set_key_string(utf8_query);
       key_event.set_activated(true);
       Output output;
@@ -86,7 +86,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
         const auto &utf8 = candidates.candidates(i).value();
         std::wstring wide;
-        Util::UTF8ToWide(utf8, &wide);
+        Util::Utf8ToWide(utf8, &wide);
         result->push_back(wide);
       }
     }
@@ -103,7 +103,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
                       std::vector<std::wstring> *result) {
     {
       std::string utf8_query;
-      Util::WideToUTF8(query, &utf8_query);
+      Util::WideToUtf8(query, &utf8_query);
       SessionCommand command;
       command.set_type(SessionCommand::CONVERT_REVERSE);
 
@@ -116,7 +116,7 @@ class TipQueryProviderImpl : public TipQueryProvider {
       for (size_t i = 0; i < candidates.candidates_size(); ++i) {
         const auto &utf8 = candidates.candidates(i).value();
         std::wstring wide;
-        Util::UTF8ToWide(utf8, &wide);
+        Util::Utf8ToWide(utf8, &wide);
         result->push_back(wide);
       }
     }

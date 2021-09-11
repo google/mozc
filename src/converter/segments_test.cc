@@ -230,51 +230,6 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[1], segment.mutable_candidate(2));
 }
 
-TEST(CandidateTest, CopyFrom) {
-  Segment::Candidate src, dest;
-  src.Init();
-
-  src.key = "key";
-  src.value = "value";
-  src.content_key = "content_key";
-  src.content_value = "content_value";
-  src.prefix = "prefix";
-  src.suffix = "suffix";
-  src.description = "description";
-  src.usage_title = "usage_title";
-  src.usage_description = "usage_description";
-  src.cost = 1;
-  src.wcost = 2;
-  src.structure_cost = 3;
-  src.lid = 4;
-  src.rid = 5;
-  src.attributes = 6;
-  src.style = NumberUtil::NumberString::NUMBER_CIRCLED;
-  src.command = Segment::Candidate::DISABLE_PRESENTATION_MODE;
-  src.PushBackInnerSegmentBoundary(1, 3, 5, 7);
-
-  dest.CopyFrom(src);
-
-  EXPECT_EQ(src.key, dest.key);
-  EXPECT_EQ(src.value, dest.value);
-  EXPECT_EQ(src.content_key, dest.content_key);
-  EXPECT_EQ(src.content_value, dest.content_value);
-  EXPECT_EQ(src.prefix, dest.prefix);
-  EXPECT_EQ(src.suffix, dest.suffix);
-  EXPECT_EQ(src.description, dest.description);
-  EXPECT_EQ(src.usage_title, dest.usage_title);
-  EXPECT_EQ(src.usage_description, dest.usage_description);
-  EXPECT_EQ(src.cost, dest.cost);
-  EXPECT_EQ(src.wcost, dest.wcost);
-  EXPECT_EQ(src.structure_cost, dest.structure_cost);
-  EXPECT_EQ(src.lid, dest.lid);
-  EXPECT_EQ(src.rid, dest.rid);
-  EXPECT_EQ(src.attributes, dest.attributes);
-  EXPECT_EQ(src.style, dest.style);
-  EXPECT_EQ(src.command, dest.command);
-  EXPECT_EQ(src.inner_segment_boundary, dest.inner_segment_boundary);
-}
-
 TEST(CandidateTest, IsValid) {
   Segment::Candidate c;
   c.Init();

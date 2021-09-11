@@ -58,7 +58,7 @@ HMODULE g_module_handle = nullptr;
 
 std::string UTF16ToUTF8(const std::wstring &str) {
   std::string utf8;
-  Util::WideToUTF8(str, &utf8);
+  Util::WideToUtf8(str, &utf8);
   return utf8;
 }
 

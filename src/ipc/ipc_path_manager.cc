@@ -361,7 +361,7 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
       expected_server_ntpath = it->second;
     } else {
       std::wstring wide_server_path;
-      Util::UTF8ToWide(server_path, &wide_server_path);
+      Util::Utf8ToWide(server_path, &wide_server_path);
       if (WinUtil::GetNtPath(wide_server_path, &expected_server_ntpath)) {
         // Caches the relationship from |server_path| to
         // |expected_server_ntpath| in case |server_path| is renamed later.
@@ -393,13 +393,13 @@ bool IPCPathManager::IsValidServer(uint32_t pid,
 #ifdef __APPLE__
   int name[] = {CTL_KERN, KERN_PROCARGS, static_cast<int>(pid)};
   size_t data_len = 0;
-  if (sysctl(name, arraysize(name), nullptr, &data_len, nullptr, 0) < 0) {
+  if (sysctl(name, std::size(name), nullptr, &data_len, nullptr, 0) < 0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
   }
 
   server_path_.resize(data_len);
-  if (sysctl(name, arraysize(name), &server_path_[0], &data_len, nullptr, 0) <
+  if (sysctl(name, std::size(name), &server_path_[0], &data_len, nullptr, 0) <
       0) {
     LOG(ERROR) << "sysctl KERN_PROCARGS failed";
     return false;
@@ -485,7 +485,7 @@ bool IPCPathManager::LoadPathNameInternal() {
   // we want to pass FILE_SHRED_DELETE flag for CreateFile.
 #ifdef OS_WIN
   std::wstring wfilename;
-  Util::UTF8ToWide(filename, &wfilename);
+  Util::Utf8ToWide(filename, &wfilename);
 
   {
     ScopedHandle handle(

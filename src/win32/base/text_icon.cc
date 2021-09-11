@@ -125,7 +125,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
       logfont.lfHeight = bitmap_height;
       logfont.lfQuality = NONANTIALIASED_QUALITY;
       std::wstring wide_fontname;
-      Util::UTF8ToWide(fontname, &wide_fontname);
+      Util::Utf8ToWide(fontname, &wide_fontname);
       const errno_t error = wcscpy_s(logfont.lfFaceName, wide_fontname.c_str());
       if (error != 0) {
         return nullptr;
@@ -143,7 +143,7 @@ CIconHandle CreateMonochromeIconInternal(int bitmap_width, int bitmap_height,
     dc.SetBkColor(kBackgroundColor);
     dc.SetTextColor(kForegroundColor);
     std::wstring wide_text;
-    Util::UTF8ToWide(text, &wide_text);
+    Util::Utf8ToWide(text, &wide_text);
     CRect rect(0, 0, bitmap_width, bitmap_height);
     dc.FillSolidRect(rect, kBackgroundColor);
     dc.DrawTextW(wide_text.c_str(), wide_text.size(), &rect,

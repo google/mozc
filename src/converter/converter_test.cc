@@ -906,7 +906,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
   std::unique_ptr<ConverterAndData> converter_and_data =
       CreateStubbedConverterAndData();
   ConverterImpl *converter = converter_and_data->converter.get();
-  for (size_t i = 0; i < arraysize(kTestKeys); ++i) {
+  for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
     segments.set_request_type(Segments::PREDICTION);
     Segment *seg = segments.add_segment();
@@ -1161,7 +1161,7 @@ TEST_F(ConverterTest, Predict_SetKey) {
 
   // Note that TearDown method will reset above stubs.
 
-  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
+  for (size_t i = 0; i < std::size(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type);
@@ -1703,7 +1703,7 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized_Prediction) {
       UserDefinedEntry("あい", "哀", UserDictionary::SUPPRESSION_WORD));
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
-  for (int i = 0; i < arraysize(types); ++i) {
+  for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
         CreateConverterAndDataWithUserDefinedEntries(
             user_defined_entries, absl::make_unique<StubRewriter>(), types[i]);
@@ -1748,7 +1748,7 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent_Prediction) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::ABBREVIATION));
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
-  for (int i = 0; i < arraysize(types); ++i) {
+  for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
         CreateConverterAndDataWithUserDefinedEntries(
             user_defined_entries, absl::make_unique<StubRewriter>(), types[i]);
@@ -1795,7 +1795,7 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent_Prediction) {
       UserDefinedEntry("じゅ", "Google+", UserDictionary::SUGGESTION_ONLY));
 
   PredictorType types[] = {DEFAULT_PREDICTOR, MOBILE_PREDICTOR};
-  for (int i = 0; i < arraysize(types); ++i) {
+  for (int i = 0; i < std::size(types); ++i) {
     std::unique_ptr<ConverterAndData> ret =
         CreateConverterAndDataWithUserDefinedEntries(
             user_defined_entries, absl::make_unique<StubRewriter>(), types[i]);

@@ -43,7 +43,7 @@ constexpr size_t kMaxReadingChars = 512;
 
 void UTF8ToSJIS(absl::string_view input, std::string *output) {
   std::wstring utf16;
-  Util::UTF8ToWide(input, &utf16);
+  Util::Utf8ToWide(input, &utf16);
   if (utf16.empty()) {
     output->clear();
     return;
@@ -125,7 +125,7 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
 
 std::string StringUtil::KeyToReadingA(absl::string_view key) {
   std::string ret;
-  mozc::Util::WideToUTF8(KeyToReading(key), &ret);
+  mozc::Util::WideToUtf8(KeyToReading(key), &ret);
   return ret;
 }
 
@@ -133,7 +133,7 @@ std::wstring StringUtil::ComposePreeditText(const commands::Preedit &preedit) {
   std::wstring value;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     std::wstring segment_value;
-    mozc::Util::UTF8ToWide(preedit.segment(i).value(), &segment_value);
+    mozc::Util::Utf8ToWide(preedit.segment(i).value(), &segment_value);
     value.append(segment_value);
   }
   return value;

@@ -166,24 +166,24 @@ std::wstring GetDisplayStringByColumn(
       if (candidate.has_annotation()) {
         const commands::Annotation &annotation = candidate.annotation();
         if (annotation.has_shortcut()) {
-          mozc::Util::UTF8ToWide(annotation.shortcut(), &display_string);
+          mozc::Util::Utf8ToWide(annotation.shortcut(), &display_string);
         }
       }
       break;
     case COLUMN_CANDIDATE:
       if (candidate.has_value()) {
-        mozc::Util::UTF8ToWide(candidate.value(), &display_string);
+        mozc::Util::Utf8ToWide(candidate.value(), &display_string);
       }
       if (candidate.has_annotation()) {
         const commands::Annotation &annotation = candidate.annotation();
         if (annotation.has_prefix()) {
           std::wstring annotation_prefix;
-          mozc::Util::UTF8ToWide(annotation.prefix(), &annotation_prefix);
+          mozc::Util::Utf8ToWide(annotation.prefix(), &annotation_prefix);
           display_string = annotation_prefix + display_string;
         }
         if (annotation.has_suffix()) {
           std::wstring annotation_suffix;
-          mozc::Util::UTF8ToWide(annotation.suffix(), &annotation_suffix);
+          mozc::Util::Utf8ToWide(annotation.suffix(), &annotation_suffix);
           display_string += annotation_suffix;
         }
       }
@@ -192,7 +192,7 @@ std::wstring GetDisplayStringByColumn(
       if (candidate.has_annotation()) {
         const commands::Annotation &annotation = candidate.annotation();
         if (annotation.has_description()) {
-          mozc::Util::UTF8ToWide(annotation.description(), &display_string);
+          mozc::Util::Utf8ToWide(annotation.description(), &display_string);
         }
       }
       break;
@@ -471,7 +471,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     // Calculate the size to display a label string.
     if (candidates_->footer().has_label()) {
       std::wstring footer_label;
-      mozc::Util::UTF8ToWide(candidates_->footer().label(), &footer_label);
+      mozc::Util::Utf8ToWide(candidates_->footer().label(), &footer_label);
       const Size label_string_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_FOOTER_LABEL, L" " + footer_label + L" ");
       footer_size.width += label_string_size.width;
@@ -482,7 +482,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
       // absent.
       // TODO(yukawa): Refactor the layout system for the footer.
       std::wstring footer_sub_label;
-      mozc::Util::UTF8ToWide(candidates_->footer().sub_label(),
+      mozc::Util::Utf8ToWide(candidates_->footer().sub_label(),
                              &footer_sub_label);
       const Size label_string_size =
           text_renderer_->MeasureString(TextRenderer::FONTSET_FOOTER_SUBLABEL,
@@ -495,7 +495,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     // Calculate the size to display a index string.
     if (candidates_->footer().index_visible()) {
       std::wstring index_guide_string;
-      mozc::Util::UTF8ToWide(GetIndexGuideString(*candidates_),
+      mozc::Util::Utf8ToWide(GetIndexGuideString(*candidates_),
                              &index_guide_string);
       const Size index_guide_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_FOOTER_INDEX, index_guide_string);
@@ -524,7 +524,7 @@ void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
     if (candidates_->candidate_size() < candidates_->size()) {
       // We use FONTSET_CANDIDATE for calculating the minimum width.
       std::wstring minimum_width_as_wstring;
-      mozc::Util::UTF8ToWide(kMinimumCandidateAndDescriptionWidthAsString,
+      mozc::Util::Utf8ToWide(kMinimumCandidateAndDescriptionWidthAsString,
                              &minimum_width_as_wstring);
       const Size minimum_size = text_renderer_->MeasureString(
           TextRenderer::FONTSET_CANDIDATE, minimum_width_as_wstring.c_str());
@@ -647,8 +647,8 @@ void CandidateWindow::DrawCells(CDCHandle dc) {
                                           TextRenderer::FONTSET_CANDIDATE,
                                           TextRenderer::FONTSET_DESCRIPTION};
 
-  DCHECK_EQ(arraysize(kColumnTypes), arraysize(kFontTypes));
-  for (size_t type_index = 0; type_index < arraysize(kColumnTypes);
+  DCHECK_EQ(std::size(kColumnTypes), std::size(kFontTypes));
+  for (size_t type_index = 0; type_index < std::size(kColumnTypes);
        ++type_index) {
     const COLUMN_TYPE column_type = kColumnTypes[type_index];
     const TextRenderer::FONT_TYPE font_type = kFontTypes[type_index];
@@ -770,7 +770,7 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
   int right_used = 0;
   if (candidates_->footer().index_visible()) {
     std::wstring index_guide_string;
-    mozc::Util::UTF8ToWide(GetIndexGuideString(*candidates_),
+    mozc::Util::Utf8ToWide(GetIndexGuideString(*candidates_),
                            &index_guide_string);
     const Size index_guide_size = text_renderer_->MeasureString(
         TextRenderer::FONTSET_FOOTER_INDEX, index_guide_string);
@@ -787,12 +787,12 @@ void CandidateWindow::DrawFooter(CDCHandle dc) {
                           footer_content_rect.Width() - left_used - right_used,
                           footer_content_rect.Height());
     std::wstring footer_label;
-    mozc::Util::UTF8ToWide(candidates_->footer().label(), &footer_label);
+    mozc::Util::Utf8ToWide(candidates_->footer().label(), &footer_label);
     text_renderer_->RenderText(dc, L" " + footer_label + L" ", label_rect,
                                TextRenderer::FONTSET_FOOTER_LABEL);
   } else if (candidates_->footer().has_sub_label()) {
     std::wstring footer_sub_label;
-    mozc::Util::UTF8ToWide(candidates_->footer().sub_label(),
+    mozc::Util::Utf8ToWide(candidates_->footer().sub_label(),
                            &footer_sub_label);
     const Rect label_rect(left_used, footer_content_rect.Top(),
                           footer_content_rect.Width() - left_used - right_used,

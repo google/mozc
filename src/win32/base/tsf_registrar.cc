@@ -103,7 +103,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
   // These operations are allowed only for administrators.
   wchar_t ime_key[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), &ime_key[0],
-                         arraysize(ime_key))) {
+                         std::size(ime_key))) {
     return E_OUTOFMEMORY;
   }
 
@@ -115,7 +115,7 @@ HRESULT TsfRegistrar::RegisterCOMServer(const wchar_t *path, DWORD length) {
   }
 
   std::wstring description;
-  mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &description);
+  mozc::Util::Utf8ToWide(mozc::kProductNameInEnglish, &description);
 
   result = key.SetStringValue(nullptr, description.c_str(), REG_SZ);
   if (result != ERROR_SUCCESS) {
@@ -146,7 +146,7 @@ void TsfRegistrar::UnregisterCOMServer() {
   // Only Administrators can create keys under HKEY_CLASSES_ROOT.
   wchar_t ime_key[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), &ime_key[0],
-                         arraysize(ime_key))) {
+                         std::size(ime_key))) {
     return;
   }
 
@@ -191,7 +191,7 @@ HRESULT TsfRegistrar::RegisterProfiles(const wchar_t *path, DWORD path_length) {
     // We use English name here as culture-invariant description.
     // Localized name is specified later by SetLanguageProfileDisplayName.
     std::wstring description;
-    mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &description);
+    mozc::Util::Utf8ToWide(mozc::kProductNameInEnglish, &description);
 
     result = profiles->AddLanguageProfile(
         TsfProfile::GetTextServiceGuid(), TsfProfile::GetLangId(),
@@ -259,7 +259,7 @@ HRESULT TsfRegistrar::RegisterCategories() {
   ATL::CComPtr<ITfCategoryMgr> category;
   HRESULT result = category.CoCreateInstance(CLSID_TF_CategoryMgr);
   if (result == S_OK) {
-    for (int i = 0; i < arraysize(kCategories); ++i) {
+    for (int i = 0; i < std::size(kCategories); ++i) {
       result = category->RegisterCategory(TsfProfile::GetTextServiceGuid(),
                                           kCategories[i],
                                           TsfProfile::GetTextServiceGuid());
@@ -279,7 +279,7 @@ void TsfRegistrar::UnregisterCategories() {
   ATL::CComPtr<ITfCategoryMgr> category;
   HRESULT result = category.CoCreateInstance(CLSID_TF_CategoryMgr);
   if (result == S_OK) {
-    for (int i = 0; i < arraysize(kCategories); ++i) {
+    for (int i = 0; i < std::size(kCategories); ++i) {
       result = category->UnregisterCategory(TsfProfile::GetTextServiceGuid(),
                                             kCategories[i],
                                             TsfProfile::GetTextServiceGuid());

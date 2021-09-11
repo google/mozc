@@ -51,8 +51,8 @@ cc_library_mozc(
         "//base:logging",
         "//base:mmap",
         "//base:port",
-        "//base:status",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -95,7 +95,7 @@ cc_library_mozc(
     deps = [
         ":section",
         "//base:port",
-        "//base:status",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -107,7 +107,7 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
-        "//base:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -124,8 +124,8 @@ cc_library_mozc(
         "//base:hash",
         "//base:logging",
         "//base:port",
-        "//base:status",
         "//base:util",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -170,5 +170,6 @@ cc_test_mozc(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
 )

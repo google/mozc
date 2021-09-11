@@ -368,7 +368,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   }
 
   // non-printable command, which doesn't require modifier keys
-  for (size_t i = 0; i < arraysize(kQtKeyModifierNonRequiredTable); ++i) {
+  for (size_t i = 0; i < std::size(kQtKeyModifierNonRequiredTable); ++i) {
     if (kQtKeyModifierNonRequiredTable[i].qt_key == qt_key) {
       modifier_non_required_key_ =
           QLatin1String(kQtKeyModifierNonRequiredTable[i].mozc_key_name);
@@ -379,7 +379,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
 #ifdef OS_WIN
   // Handle JP109's Muhenkan/Henkan/katakana-hiragana and Zenkaku/Hankaku
   const DWORD virtual_key = key_event.nativeVirtualKey();
-  for (size_t i = 0; i < arraysize(kWinVirtualKeyModifierNonRequiredTable);
+  for (size_t i = 0; i < std::size(kWinVirtualKeyModifierNonRequiredTable);
        ++i) {
     if (kWinVirtualKeyModifierNonRequiredTable[i].virtual_key == virtual_key) {
       modifier_non_required_key_ = QLatin1String(

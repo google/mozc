@@ -244,7 +244,7 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   // On Windows, just create a stream.
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |log_file_path| from UTF-8 to UTF-16.
-  // NOTE: To avoid circular dependency, |Util::UTF8ToWide| shouldn't be used
+  // NOTE: To avoid circular dependency, |Util::Utf8ToWide| shouldn't be used
   // here.
   DCHECK_NE(log_file_path.size(), 0);
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;

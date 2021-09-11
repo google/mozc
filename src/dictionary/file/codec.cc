@@ -36,11 +36,11 @@
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/status.h"
 #include "base/util.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/codec_util.h"
 #include "dictionary/file/section.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace dictionary {
@@ -110,21 +110,21 @@ std::string DictionaryFileCodec::GetSectionName(const std::string &name) const {
   return fp_string;
 }
 
-mozc::Status DictionaryFileCodec::ReadSections(
+absl::Status DictionaryFileCodec::ReadSections(
     const char *image, int length,
     std::vector<DictionaryFileSection> *sections) const {
   DCHECK(sections);
   if (image == nullptr) {
-    return mozc::InvalidArgumentError("codec.cc: Image is nullptr");
+    return absl::InvalidArgumentError("codec.cc: Image is nullptr");
   }
   // At least 12 bytes (3 * int32) are required.
   if (length < 12) {
-    return mozc::FailedPreconditionError(
+    return absl::FailedPreconditionError(
         absl::StrCat("codec.cc: Insufficient data size: ", length, " bytes"));
   }
   // The image must be aligned at 32-bit boundary.
   if (reinterpret_cast<std::uintptr_t>(image) % 4 != 0) {
-    return mozc::FailedPreconditionError(
+    return absl::FailedPreconditionError(
         absl::StrCat("codec.cc: memory block of size ", length,
                      " is not aligned at 32-bit boundary"));
   }
@@ -133,7 +133,7 @@ mozc::Status DictionaryFileCodec::ReadSections(
 
   const int32_t filemagic = filecodec_util::ReadInt32ThenAdvance(&ptr);
   if (filemagic != filemagic_) {
-    return mozc::FailedPreconditionError(absl::StrCat(
+    return absl::FailedPreconditionError(absl::StrCat(
         "codec.cc: Invalid dictionary file magic. Expected: ", filemagic_,
         " Actual: ", filemagic));
   }
@@ -147,7 +147,7 @@ mozc::Status DictionaryFileCodec::ReadSections(
     // ^                         <- - - - padded_data_size - - - - >
     // ptr points to here now.
     if (std::distance(ptr, image_end) < 4) {
-      return mozc::OutOfRangeError(absl::StrCat(
+      return absl::OutOfRangeError(absl::StrCat(
           "codec.cc: Section ", section_index,
           ": Insufficient image to read data_size(4 bytes), available size = ",
           std::distance(ptr, image_end)));
@@ -162,7 +162,7 @@ mozc::Status DictionaryFileCodec::ReadSections(
     const auto padded_data_size = filecodec_util::RoundUp4(data_size);
     const auto *section_end = ptr + kFingerprintByteLength + padded_data_size;
     if (section_end > image_end) {
-      return mozc::OutOfRangeError(absl::StrCat(
+      return absl::OutOfRangeError(absl::StrCat(
           "codec.cc: Section ", section_index,
           ": Read pointer will pass the end: offset=", section_end - image,
           ", image_size=", length));
@@ -181,10 +181,10 @@ mozc::Status DictionaryFileCodec::ReadSections(
     ptr += padded_data_size;
   }
   if (ptr != image_end) {
-    return mozc::FailedPreconditionError(absl::StrCat(
+    return absl::FailedPreconditionError(absl::StrCat(
         "codec.cc: ", image_end - ptr, " bytes remaining out of ", length));
   }
-  return mozc::Status();
+  return absl::Status();
 }
 
 }  // namespace dictionary

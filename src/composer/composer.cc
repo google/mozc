@@ -1220,7 +1220,7 @@ void Composer::CopyFrom(const Composer &src) {
   request_ = src.request_;
   config_ = src.config_;
 
-  typing_corrector_.CopyFrom(src.typing_corrector_);
+  typing_corrector_ = src.typing_corrector_;
 
   timestamp_msec_ = src.timestamp_msec_;
   timeout_threshold_msec_ = src.timeout_threshold_msec_;
@@ -1248,9 +1248,7 @@ void Composer::set_source_text(const std::string &source_text) {
 size_t Composer::max_length() const { return max_length_; }
 void Composer::set_max_length(size_t length) { max_length_ = length; }
 
-int Composer::timeout_threshold_msec() const {
-  return timeout_threshold_msec_;
-}
+int Composer::timeout_threshold_msec() const { return timeout_threshold_msec_; }
 
 void Composer::set_timeout_threshold_msec(int threshold_msec) {
   timeout_threshold_msec_ = threshold_msec;

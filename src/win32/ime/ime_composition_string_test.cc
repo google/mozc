@@ -57,7 +57,7 @@ std::string GetStringImpl(const CompositionString &composition,
       reinterpret_cast<const wchar_t *>(addr + offset);
   const std::wstring wstr(string_start, string_start + length);
   std::string str;
-  Util::WideToUTF8(wstr.c_str(), &str);
+  Util::WideToUtf8(wstr.c_str(), &str);
   return str;
 }
 

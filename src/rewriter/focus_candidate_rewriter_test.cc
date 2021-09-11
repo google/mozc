@@ -184,7 +184,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeft) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
   Segments segments;
   Segment *seg[7];
-  for (int i = 0; i < arraysize(seg); ++i) {
+  for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
 
@@ -228,7 +228,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterLeftToRightNest) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
   Segments segments;
   Segment *seg[7];
-  for (int i = 0; i < arraysize(seg); ++i) {
+  for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
 
@@ -272,7 +272,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterRightToLeftNest) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
   Segments segments;
   Segment *seg[3];
-  for (int i = 0; i < arraysize(seg); ++i) {
+  for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
 
@@ -342,7 +342,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterMetaCandidate) {
 TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
   Segments segments;
   Segment *seg[7];
-  for (int i = 0; i < arraysize(seg); ++i) {
+  for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
 
@@ -412,7 +412,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterNumber) {
 TEST_F(FocusCandidateRewriterTest, DontChangeNonNumberSegment) {
   Segments segments;
   Segment *seg[2];
-  for (int i = 0; i < arraysize(seg); ++i) {
+  for (int i = 0; i < std::size(seg); ++i) {
     seg[i] = segments.add_segment();
   }
 
@@ -433,7 +433,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   {
     Segments segments;
     Segment *seg[6];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -467,7 +467,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   {
     Segments segments;
     Segment *seg[3];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -488,7 +488,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   {
     Segments segments;
     Segment *seg[3];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -509,7 +509,7 @@ TEST_F(FocusCandidateRewriterTest, FocusCandidateRewriterSuffix) {
   {
     Segments segments;
     Segment *seg[3];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -540,7 +540,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
     Segments segments;
     Segment *seg[2];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
     seg[0]->set_key("いっかい");
@@ -569,7 +569,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // Then, focusing on (Seg 0, cand 1) should move "二回" in Seg 1 to the top.
     Segments segments;
     Segment *seg[2];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -615,7 +615,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // " in Seg 2 to the top of each segment.
     Segments segments;
     Segment *seg[3];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -670,7 +670,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // Then, focusing on (Seg 0, cand 1) cannot move "二回" in Seg 3 to the top.
     Segments segments;
     Segment *seg[5];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 
@@ -720,7 +720,7 @@ TEST_F(FocusCandidateRewriterTest, NumberAndSuffixCompound) {
     // 1 to the top.
     Segments segments;
     Segment *seg[3];
-    for (int i = 0; i < arraysize(seg); ++i) {
+    for (int i = 0; i < std::size(seg); ++i) {
       seg[i] = segments.add_segment();
     }
 

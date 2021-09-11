@@ -36,16 +36,16 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/status.h"
 #include "converter/quality_regression_util.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 
 class QualityRegressionTest : public ::testing::Test {
  protected:
-  static Status RunTestForPlatform(
+  static absl::Status RunTestForPlatform(
       uint32_t platform, quality_regression::QualityRegressionUtil *util);
 
   // If |enabled| parameter is true, then actual conversion results are tested

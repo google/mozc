@@ -337,7 +337,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   EXPECT_FALSE(storage.ConvertSyncDictionariesToNormalDictionaries())
       << "No sync dictionary available.";
 
-  for (size_t i = 0; i < arraysize(test_data); ++i) {
+  for (size_t i = 0; i < std::size(test_data); ++i) {
     SCOPED_TRACE(Util::StringPrintf("add %d", static_cast<int>(i)));
     const TestData &data = test_data[i];
     CHECK(data.is_sync_dictionary ||
@@ -385,8 +385,8 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
 
   EXPECT_EQ(0, UserDictionaryStorage::CountSyncableDictionaries(
       storage.GetProto()));
-  ASSERT_EQ(arraysize(expected_data), storage.GetProto().dictionaries_size());
-  for (size_t i = 0; i < arraysize(expected_data); ++i) {
+  ASSERT_EQ(std::size(expected_data), storage.GetProto().dictionaries_size());
+  for (size_t i = 0; i < std::size(expected_data); ++i) {
     SCOPED_TRACE(Util::StringPrintf("verify %d", static_cast<int>(i)));
     const ExpectedData &expected = expected_data[i];
     const UserDictionaryStorage::UserDictionary &dict =

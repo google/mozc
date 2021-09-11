@@ -174,57 +174,56 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
   base_entry.set_pos(UserDictionary::NOUN);
   base_entry.set_comment("コメント");
 
-  UserDictionary::Entry entry;
-  entry.CopyFrom(base_entry);
+  UserDictionary::Entry entry = base_entry;
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.clear_key();
   EXPECT_EQ(UserDictionaryCommandStatus::READING_EMPTY,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_key(std::string(500, 'a'));
   EXPECT_EQ(UserDictionaryCommandStatus::READING_TOO_LONG,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_key("a\nb");
   EXPECT_EQ(UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.clear_value();
   EXPECT_EQ(UserDictionaryCommandStatus::WORD_EMPTY,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_value(std::string(500, 'a'));
   EXPECT_EQ(UserDictionaryCommandStatus::WORD_TOO_LONG,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_value("a\nb");
   EXPECT_EQ(UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.clear_comment();
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_comment(std::string(500, 'a'));
   EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_TOO_LONG,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.set_comment("a\nb");
   EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER,
             UserDictionaryUtil::ValidateEntry(entry));
 
-  entry.CopyFrom(base_entry);
+  entry = base_entry;
   entry.clear_pos();
   EXPECT_EQ(UserDictionaryCommandStatus::INVALID_POS_TYPE,
             UserDictionaryUtil::ValidateEntry(entry));

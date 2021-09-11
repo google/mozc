@@ -106,11 +106,11 @@ MockBoolImplementation(OpenBrowser, const std::string &url);
                                commands::Output *output) {           \
     scoped_lock l(&mutex_);                                          \
     function_counter_[#method_name]++;                               \
-    called_##method_name##_.CopyFrom(argument);                      \
+    called_##method_name##_ = argument;                              \
     std::map<std::string, commands::Output>::const_iterator it =     \
         outputs_.find(#method_name);                                 \
     if (it != outputs_.end()) {                                      \
-      output->CopyFrom(it->second);                                  \
+      *output = it->second;                                          \
     }                                                                \
     std::map<std::string, bool>::const_iterator retval =             \
         return_bool_values_.find(#method_name);                      \

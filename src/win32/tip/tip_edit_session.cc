@@ -435,7 +435,7 @@ bool TurnOnImeAndTryToReconvertFromIme(TipTextService *text_service,
   }
 
   std::string text_utf8;
-  Util::WideToUTF8(info.selected_text, &text_utf8);
+  Util::WideToUtf8(info.selected_text, &text_utf8);
   if (text_utf8.empty()) {
     const bool open = text_service->GetThreadContext()
                           ->GetInputModeManager()
@@ -980,7 +980,7 @@ bool TipEditSession::ReconvertFromApplicationSync(TipTextService *text_service,
   command.set_type(SessionCommand::CONVERT_REVERSE);
 
   std::string text_utf8;
-  Util::WideToUTF8(info.selected_text, &text_utf8);
+  Util::WideToUtf8(info.selected_text, &text_utf8);
   command.set_text(text_utf8);
   Output output;
   if (!private_context->GetClient()->SendCommand(command, &output)) {

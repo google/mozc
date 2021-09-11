@@ -93,7 +93,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
 
   static constexpr int kSize[] = {10, 100, 1000};
 
-  for (int i = 0; i < arraysize(kSize); ++i) {
+  for (int i = 0; i < std::size(kSize); ++i) {
     FileUtil::Unlink(filename);
     std::unique_ptr<StorageInterface> storage(CreateStorage());
 

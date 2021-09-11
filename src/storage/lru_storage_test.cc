@@ -150,7 +150,7 @@ class LRUStorageTest : public ::testing::Test {
 TEST_F(LRUStorageTest, LRUStorageTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
   const std::string file = GetTemporaryFilePath();
-  for (int i = 0; i < arraysize(kSize); ++i) {
+  for (int i = 0; i < std::size(kSize); ++i) {
     LRUStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
     LRUStorage storage;
     EXPECT_TRUE(storage.Open(file.c_str()));
@@ -171,7 +171,7 @@ struct Entry {
 TEST_F(LRUStorageTest, ReadWriteTest) {
   constexpr int kSize[] = {10, 100, 1000, 10000};
   const std::string file = GetTemporaryFilePath();
-  for (int i = 0; i < arraysize(kSize); ++i) {
+  for (int i = 0; i < std::size(kSize); ++i) {
     LRUStorage::CreateStorageFile(file.c_str(), 4, kSize[i], kSeed);
     LRUStorage storage;
     EXPECT_TRUE(storage.Open(file.c_str()));

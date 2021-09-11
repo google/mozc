@@ -205,7 +205,7 @@ bool GetReconvertString(const RECONVERTSTRING *reconvert_string,
     return false;
   }
 
-  if ((Util::WideToUTF8(total_composition, total_composition_in_utf8) == 0) ||
+  if ((Util::WideToUtf8(total_composition, total_composition_in_utf8) == 0) ||
       total_composition_in_utf8->empty()) {
     DLOG(INFO) << "Composition string is empty.";
     return false;
@@ -259,8 +259,8 @@ void ImeCore::UpdateContextWithSurroundingText(HIMC himc,
   if (!QueryDocumentFeed(himc, &preceding_text, &following_text)) {
     return;
   }
-  Util::WideToUTF8(preceding_text, context->mutable_preceding_text());
-  Util::WideToUTF8(following_text, context->mutable_following_text());
+  Util::WideToUtf8(preceding_text, context->mutable_preceding_text());
+  Util::WideToUtf8(following_text, context->mutable_following_text());
 }
 
 KeyEventHandlerResult ImeCore::ImeProcessKey(
@@ -590,8 +590,7 @@ bool ImeCore::UpdateContextMain(HIMC himc, const InputState &next_state,
 
     // Make sure the pending output does not have |deletion_range|.
     // Otherwise, an infinite loop will be created.
-    commands::Output output;
-    output.CopyFrom(new_output);
+    commands::Output output = new_output;
     output.clear_deletion_range();
     private_context->deleter->BeginDeletion(
         new_output.deletion_range().length(), output, next_state);
@@ -599,7 +598,7 @@ bool ImeCore::UpdateContextMain(HIMC himc, const InputState &next_state,
   }
 
   if (new_output.has_consumed()) {
-    private_context->last_output->CopyFrom(new_output);
+    *private_context->last_output = new_output;
   }
 
   *private_context->ime_state = next_state;

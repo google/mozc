@@ -84,7 +84,7 @@ TEST(KeyParserTest, ModifierKeys) {
       std::make_pair("SHIFT", commands::KeyEvent::SHIFT),
   };
 
-  for (size_t i = 0; i < arraysize(kTestData); ++i) {
+  for (size_t i = 0; i < std::size(kTestData); ++i) {
     SCOPED_TRACE(kTestData[i].first);
     commands::KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));
@@ -185,7 +185,7 @@ TEST(KeyParserTest, SpecialKeys) {
       std::make_pair("on", commands::KeyEvent::ON),
   };
 
-  for (size_t i = 0; i < arraysize(kTestData); ++i) {
+  for (size_t i = 0; i < std::size(kTestData); ++i) {
     SCOPED_TRACE(kTestData[i].first);
     commands::KeyEvent key_event;
     EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));

@@ -39,8 +39,8 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/status.h"
 #include "converter/quality_regression_util.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -54,10 +54,10 @@ extern TestCase kTestData[];
 
 using quality_regression::QualityRegressionUtil;
 
-Status QualityRegressionTest::RunTestForPlatform(uint32_t platform,
-                                                 QualityRegressionUtil *util) {
+absl::Status QualityRegressionTest::RunTestForPlatform(
+    uint32_t platform, QualityRegressionUtil *util) {
   if (!util) {
-    return InvalidArgumentError("util is null");
+    return absl::InvalidArgumentError("util is null");
   }
   std::map<std::string, std::vector<std::pair<float, std::string>>> results,
       disabled_results;
@@ -67,7 +67,7 @@ Status QualityRegressionTest::RunTestForPlatform(uint32_t platform,
     const std::string &tsv_line = kTestData[i].line;
     QualityRegressionUtil::TestItem item;
     if (!item.ParseFromTSV(tsv_line)) {
-      return FailedPreconditionError(
+      return absl::FailedPreconditionError(
           absl::StrFormat("Failed to parse test item: %s", tsv_line));
     }
     if (!(item.platform & platform)) {
@@ -104,7 +104,7 @@ Status QualityRegressionTest::RunTestForPlatform(uint32_t platform,
   const int total_cases = num_executed_cases + num_disabled_cases;
   LOG(INFO) << "Tested " << num_executed_cases << " / " << total_cases
             << " entries.";
-  return OkStatus();
+  return absl::OkStatus();
 }
 
 void QualityRegressionTest::ExamineResults(

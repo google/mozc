@@ -167,7 +167,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
       {"0b1100", "0b1100", "2進数"},
   };
 
-  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = std::size(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -197,7 +197,7 @@ TEST_F(NumberRewriterTest, RequestType) {
 
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
+  for (size_t i = 0; i < std::size(test_data_list); ++i) {
     TestData &test_data = test_data_list[i];
     Segments segments;
     segments.set_request_type(test_data.request_type_);
@@ -241,7 +241,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
       {"0b1100が", "0b1100", "2進数"},
   };
 
-  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = std::size(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -539,7 +539,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
        "2進数"},
   };
 
-  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = std::size(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -589,7 +589,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
        kOldKanjiDescription},
   };
 
-  constexpr size_t kExpectResultSize = arraysize(kExpectResults);
+  constexpr size_t kExpectResultSize = std::size(kExpectResults);
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
@@ -789,7 +789,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
       {"1234.5", "1,234.5", "１，２３４．５"},
   };
 
-  for (size_t i = 0; i < arraysize(kSuccess); ++i) {
+  for (size_t i = 0; i < std::size(kSuccess); ++i) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
@@ -812,7 +812,7 @@ TEST_F(NumberRewriterTest, SeparatedArabicsTest) {
       {"0000", "0,000", "０，０００"},
   };
 
-  for (size_t i = 0; i < arraysize(kFail); ++i) {
+  for (size_t i = 0; i < std::size(kFail); ++i) {
     Segments segments;
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();

@@ -121,9 +121,8 @@ size_t Composition::DeleteAt(const size_t position) {
       continue;
     }
 
-    CharChunk *left_deleted_chunk_ptr = nullptr;
-    (*chunk_it)->SplitChunk(Transliterators::LOCAL, 1, &left_deleted_chunk_ptr);
-    std::unique_ptr<CharChunk> left_deleted_chunk(left_deleted_chunk_ptr);
+    std::unique_ptr<CharChunk> left_deleted_chunk =
+        (*chunk_it)->SplitChunk(Transliterators::LOCAL, 1);
   }
   return new_position;
 }
@@ -382,8 +381,8 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
     return chunk;
   }
 
-  CharChunk *left_chunk = nullptr;
-  chunk->SplitChunk(Transliterators::LOCAL, inner_position, &left_chunk);
+  CharChunk *left_chunk =
+      chunk->SplitChunk(Transliterators::LOCAL, inner_position).release();
   chunks_.insert(*it, left_chunk);
   return left_chunk;
 }
@@ -434,9 +433,8 @@ Composition *Composition::Clone() const {
   object->input_t12r_ = input_t12r_;
   object->table_ = table_;
 
-  for (CharChunkList::const_iterator it = chunks_.begin(); it != chunks_.end();
-       ++it) {
-    object->chunks_.push_back((*it)->Clone());
+  for (const CharChunk *chunk : chunks_) {
+    object->chunks_.push_back(new CharChunk(*chunk));
   }
 
   return object;

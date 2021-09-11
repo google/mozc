@@ -3447,7 +3447,7 @@ TEST_F(SessionTest, Shortcut) {
       {"1", "2"},
       {"a", "s"},
   };
-  for (size_t i = 0; i < arraysize(kDataShortcut); ++i) {
+  for (size_t i = 0; i < std::size(kDataShortcut); ++i) {
     config::Config::SelectionShortcut shortcut = kDataShortcut[i];
     const std::string *expected = kDataExpected[i];
 

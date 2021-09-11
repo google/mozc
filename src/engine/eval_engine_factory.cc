@@ -33,11 +33,12 @@
 
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 
 namespace mozc {
 
-mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
+absl::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
     absl::string_view data_file_path, absl::string_view data_type,
     absl::string_view engine_type) {
   std::unique_ptr<DataManager> data_manager(new DataManager);
@@ -46,7 +47,7 @@ mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
   const auto status =
       data_manager->InitFromFile(std::string(data_file_path), magic_number);
   if (status != DataManager::Status::OK) {
-    return InvalidArgumentError(
+    return absl::InvalidArgumentError(
         absl::StrCat("Failed to load ", data_file_path, ": ",
                      DataManager::StatusCodeToString(status)));
   }
@@ -56,7 +57,7 @@ mozc::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
   if (engine_type == "mobile") {
     return Engine::CreateMobileEngine(std::move(data_manager));
   }
-  return InvalidArgumentError(
+  return absl::InvalidArgumentError(
       absl::StrCat("Invalid engine type: ", engine_type));
 }
 

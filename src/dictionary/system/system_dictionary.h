@@ -36,7 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "base/statusor.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/system/codec_interface.h"
@@ -44,6 +43,7 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -91,7 +91,7 @@ class SystemDictionary : public DictionaryInterface {
     Builder &SetCodec(const SystemDictionaryCodecInterface *codec);
 
     // Builds and returns system dictionary.
-    mozc::StatusOr<std::unique_ptr<SystemDictionary>> Build();
+    absl::StatusOr<std::unique_ptr<SystemDictionary>> Build();
 
    private:
     struct Specification;

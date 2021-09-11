@@ -178,7 +178,7 @@ std::unique_ptr<EngineInterface> EngineBuilder::BuildFromPreparedData() {
     LOG(ERROR) << "Build() is called in invalid state";
     return nullptr;
   }
-  mozc::StatusOr<std::unique_ptr<Engine>> engine;
+  absl::StatusOr<std::unique_ptr<Engine>> engine;
   switch (preparator_->response_.request().engine_type()) {
     case EngineReloadRequest::DESKTOP:
       engine =

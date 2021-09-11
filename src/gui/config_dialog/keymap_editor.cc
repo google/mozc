@@ -221,7 +221,7 @@ class KeyMapTableLoader {
       }
     }
 
-    for (size_t i = 0; i < arraysize(kKeyMapStatus); ++i) {
+    for (size_t i = 0; i < std::size(kKeyMapStatus); ++i) {
       status_ << QString::fromUtf8(kKeyMapStatus[i]);
     }
 
@@ -246,7 +246,7 @@ KeyMapEditorDialog::KeyMapEditorDialog(QWidget *parent)
       commands_delegate_(new ComboBoxDelegate),
       keybinding_delegate_(new KeyBindingEditorDelegate) {
   actions_.reset(new QAction *[MENU_SIZE]);
-  import_actions_.reset(new QAction *[arraysize(kKeyMaps)]);
+  import_actions_.reset(new QAction *[std::size(kKeyMaps)]);
 
   actions_[NEW_INDEX] = mutable_edit_menu()->addAction(tr("New entry"));
   actions_[REMOVE_INDEX] =
@@ -473,7 +473,7 @@ void KeyMapEditorDialog::UpdateMenuStatus() {
 
 void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
   int import_index = -1;
-  for (size_t i = 0; i < arraysize(kKeyMaps); ++i) {
+  for (size_t i = 0; i < std::size(kKeyMaps); ++i) {
     if (import_actions_[i] == action) {
       import_index = i;
       break;
@@ -498,7 +498,7 @@ void KeyMapEditorDialog::OnEditMenuAction(QAction *action) {
     if (action == actions_[IMPORT_FROM_FILE_INDEX]) {
       Import();
       // otherwise, load from predefined tables
-    } else if (import_index >= 0 && import_index < arraysize(kKeyMaps)) {
+    } else if (import_index >= 0 && import_index < std::size(kKeyMaps)) {
       const char *keymap_file =
           keymap::KeyMapManager::GetKeyMapFileName(kKeyMaps[import_index]);
       std::unique_ptr<std::istream> ifs(

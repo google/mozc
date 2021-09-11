@@ -177,7 +177,7 @@ CComPtr<ITfComposition> CommitText(TipTextService *text_service,
   }
 
   std::wstring result_text;
-  Util::UTF8ToWide(output.result().value(), &result_text);
+  Util::Utf8ToWide(output.result().value(), &result_text);
 
   std::wstring composition_text;
   TipRangeUtil::GetText(composition_range, write_cookie, &composition_text);

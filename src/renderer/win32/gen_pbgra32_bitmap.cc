@@ -56,12 +56,12 @@ namespace {
 constexpr int kErrorLevelSuccess = 0;
 constexpr int kErrorLevelFail = 1;
 
-const uint32 kMaxBitmapWidth = 16384;
-const uint32 kMaxBitmapHeight = 16384;
+constexpr uint32 kMaxBitmapWidth = 16384;
+constexpr uint32 kMaxBitmapHeight = 16384;
 
 bool ConvertMain() {
   std::wstring wide_src;
-  mozc::Util::UTF8ToWide(absl::GetFlag(FLAGS_src), &wide_src);
+  mozc::Util::Utf8ToWide(absl::GetFlag(FLAGS_src), &wide_src);
   std::unique_ptr<Gdiplus::Bitmap> image(
       Gdiplus::Bitmap::FromFile(wide_src.c_str()));
 

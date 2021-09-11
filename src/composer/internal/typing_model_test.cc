@@ -43,7 +43,7 @@ TEST_F(TypingModelTest, Constructor) {
   const uint8_t costs[] = {
       0, 1, 2, 3, 4, 5, 6,
   };
-  TypingModel model(characters, strlen(characters), costs, arraysize(costs),
+  TypingModel model(characters, strlen(characters), costs, std::size(costs),
                     nullptr);
   model.character_to_radix_table_['a'] = 1;
   model.character_to_radix_table_['b'] = 2;
@@ -57,7 +57,7 @@ TEST_F(TypingModelTest, GetIndex) {
   const uint8_t costs[] = {
       0, 1, 2, 3, 4, 5, 6,
   };
-  TypingModel model(characters, strlen(characters), costs, arraysize(costs),
+  TypingModel model(characters, strlen(characters), costs, std::size(costs),
                     nullptr);
   ASSERT_EQ(0, model.GetIndex(""));
   ASSERT_EQ(1, model.GetIndex("a"));

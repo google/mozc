@@ -32,8 +32,8 @@
 
 #include <memory>
 
-#include "base/statusor.h"
 #include "engine/engine.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 
@@ -43,7 +43,7 @@ class MockDataEngineFactory {
  public:
   // Creates an instance of Engine class. The caller is responsible for deleting
   // the returned object.
-  static StatusOr<std::unique_ptr<Engine>> Create();
+  static absl::StatusOr<std::unique_ptr<Engine>> Create();
 };
 
 }  // namespace mozc

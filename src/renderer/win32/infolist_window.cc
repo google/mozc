@@ -175,7 +175,7 @@ Size InfolistWindow::DoPaint(CDCHandle dc) {
         ypos + infostyle.caption_padding(),
         infostyle.window_width() - infostyle.window_border() * 2,
         caption_height);
-    mozc::Util::UTF8ToWide(infostyle.caption_string(), &caption_str);
+    mozc::Util::Utf8ToWide(infostyle.caption_string(), &caption_str);
 
     text_renderer_->RenderText(dc, caption_str, caption_rect,
                                TextRenderer::FONTSET_INFOLIST_CAPTION);
@@ -215,12 +215,12 @@ Size InfolistWindow::DoPaintRow(CDCHandle dc, int row, int ypos) {
   const Information &info = usages.information(row);
 
   std::wstring title_str;
-  mozc::Util::UTF8ToWide(info.title(), &title_str);
+  mozc::Util::Utf8ToWide(info.title(), &title_str);
   const Size title_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_TITLE, title_str, title_width);
 
   std::wstring desc_str;
-  mozc::Util::UTF8ToWide(info.description(), &desc_str);
+  mozc::Util::Utf8ToWide(info.description(), &desc_str);
   const Size desc_size = text_renderer_->MeasureStringMultiLine(
       TextRenderer::FONTSET_INFOLIST_DESCRIPTION, desc_str, desc_width);
 
@@ -354,7 +354,7 @@ void InfolistWindow::DelayHide(UINT mseconds) {
 }
 
 void InfolistWindow::UpdateLayout(const commands::Candidates &candidates) {
-  candidates_->CopyFrom(candidates);
+  *candidates_ = candidates;
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {

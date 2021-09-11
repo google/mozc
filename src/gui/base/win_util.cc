@@ -73,7 +73,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   {
     std::wstring mozc_tool_path_wide;
-    Util::UTF8ToWide(SystemUtil::GetToolPath(), &mozc_tool_path_wide);
+    Util::Utf8ToWide(SystemUtil::GetToolPath(), &mozc_tool_path_wide);
     hr = link->SetPath(mozc_tool_path_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetPath failed. hr = " << hr;
@@ -83,7 +83,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   {
     std::wstring argument_wide;
-    Util::UTF8ToWide(argument, &argument_wide);
+    Util::Utf8ToWide(argument, &argument_wide);
     hr = link->SetArguments(argument_wide.c_str());
     if (FAILED(hr)) {
       DLOG(ERROR) << "SetArguments failed. hr = " << hr;
@@ -99,7 +99,7 @@ CComPtr<IShellLink> InitializeShellLinkItem(const char *argument,
 
   {
     std::wstring item_title_wide;
-    Util::UTF8ToWide(item_title, &item_title_wide);
+    Util::Utf8ToWide(item_title, &item_title_wide);
     PROPVARIANT prop_variant;
     hr = ::InitPropVariantFromString(item_title_wide.c_str(), &prop_variant);
     if (FAILED(hr)) {
@@ -154,7 +154,7 @@ bool AddTasksToList(CComPtr<ICustomDestinationList> destination_list) {
   const bool use_japanese_ui =
       (kJapaneseLangId == ::GetUserDefaultUILanguage());
 
-  for (size_t i = 0; i < arraysize(kLinks); ++i) {
+  for (size_t i = 0; i < std::size(kLinks); ++i) {
     CComPtr<IShellLink> link;
     if (use_japanese_ui) {
       link =
@@ -261,7 +261,7 @@ void WinUtil::ActivateWindow(uint32_t process_id) {
     window_title_wide.assign(buf.GetString(), buf.GetLength());
   }
   std::string window_title_utf8;
-  Util::WideToUTF8(window_title_wide, &window_title_utf8);
+  Util::WideToUtf8(window_title_wide, &window_title_utf8);
   LOG(INFO) << "A visible window found. hwnd: " << window.m_hWnd
             << ", title: " << window_title_utf8;
 
@@ -304,13 +304,13 @@ bool WinUtil::GetIMEHotKeyDisabled() {
   }
 
   wchar_t data[4] = {};
-  ULONG num_chars = arraysize(data);
+  ULONG num_chars = std::size(data);
   result = key.QueryStringValue(kIMEHotKeyEntryValue, data, &num_chars);
   // Returned |num_char| includes nullptr character.
 
   // This is only the condition when this function
   // can return |true|
-  if (ERROR_SUCCESS == result && num_chars < arraysize(data) &&
+  if (ERROR_SUCCESS == result && num_chars < std::size(data) &&
       std::wstring(data) == kIMEHotKeyEntryData) {
     return true;
   }

@@ -265,7 +265,7 @@ bool CandidateInfoUtil::Convert(const mozc::commands::Output &output,
     info->offsets.push_back(offset);
 
     std::wstring value;
-    if (mozc::Util::UTF8ToWide(candidate_list.candidates(i).value(), &value) ==
+    if (mozc::Util::Utf8ToWide(candidate_list.candidates(i).value(), &value) ==
         0) {
       value.clear();
     }
@@ -322,7 +322,7 @@ void CandidateInfoUtil::Write(const CandidateInfo &info,
     target->dwCount = 0;
     target->dwPrivateOffset = 0;
     target->dwPrivateSize = 0;
-    for (size_t i = 0; i < arraysize(target->dwOffset); ++i) {
+    for (size_t i = 0; i < std::size(target->dwOffset); ++i) {
       target->dwOffset[i] = 0;
     }
     return;
@@ -333,7 +333,7 @@ void CandidateInfoUtil::Write(const CandidateInfo &info,
   target->dwPrivateSize = 0;
   target->dwOffset[0] = kSizeOfCANDIDATEINFO;
 
-  for (size_t i = 1; i < arraysize(target->dwOffset); ++i) {
+  for (size_t i = 1; i < std::size(target->dwOffset); ++i) {
     // CANDIDATELIST is to be placed just after CANDIDATEINFO.
     target->dwOffset[i] = 0;
   }

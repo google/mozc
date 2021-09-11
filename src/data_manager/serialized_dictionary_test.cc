@@ -111,7 +111,7 @@ TEST_F(SerializedDictionaryTest, Compile) {
       "\xd0\x07"          // cost = 2000
       "\x00\x00";         // padding
   ASSERT_EQ(
-      std::string(kExpectedTokenArray, arraysize(kExpectedTokenArray) - 1),
+      std::string(kExpectedTokenArray, std::size(kExpectedTokenArray) - 1),
       token_array_data_);
 }
 

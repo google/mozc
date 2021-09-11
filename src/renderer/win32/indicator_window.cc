@@ -208,7 +208,7 @@ class IndicatorWindow::WindowImpl
         commands::DIRECT,     commands::HIRAGANA,   commands::FULL_KATAKANA,
         commands::HALF_ASCII, commands::FULL_ASCII, commands::HALF_KATAKANA,
     };
-    for (size_t i = 0; i < arraysize(kModes); ++i) {
+    for (size_t i = 0; i < std::size(kModes); ++i) {
       LoadSprite(kModes[i]);
     }
     return 1;
@@ -256,7 +256,7 @@ class IndicatorWindow::WindowImpl
     BalloonImage::BalloonImageInfo info;
     CLogFont logfont;
     logfont.SetMessageBoxFont();
-    Util::WideToUTF8(logfont.lfFaceName, &info.label_font);
+    Util::WideToUtf8(logfont.lfFaceName, &info.label_font);
 
     info.frame_color = RGBColor(1, 122, 204);
     info.blur_color = RGBColor(1, 122, 204);

@@ -323,7 +323,7 @@ const char *UserDictionaryUtil::GetStringPosType(
 user_dictionary::UserDictionary::PosType UserDictionaryUtil::ToPosType(
     const char *string_pos_type) {
   // Skip the element at 0.
-  for (int i = 1; i < arraysize(kPosTypeStringTable); ++i) {
+  for (int i = 1; i < std::size(kPosTypeStringTable); ++i) {
     if (strcmp(kPosTypeStringTable[i], string_pos_type) == 0) {
       return static_cast<user_dictionary::UserDictionary::PosType>(i);
     }

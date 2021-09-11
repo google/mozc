@@ -220,7 +220,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->Clear();
   s->AddEntry(kKey, kValue);
   s->UnLock();
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
@@ -230,7 +230,7 @@ TEST_F(DictionaryImplTest, WordSuppressionTest) {
   s->Lock();
   s->Clear();
   s->UnLock();
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckKeyValueExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
@@ -253,7 +253,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
   // The spelling correction entry (kKey, kValue) should be found if spelling
   // correction flag is set in the config.
   config_.set_use_spelling_correction(true);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
@@ -261,7 +261,7 @@ TEST_F(DictionaryImplTest, DisableSpellingCorrectionTest) {
 
   // Without the flag, it should be suppressed.
   config_.set_use_spelling_correction(false);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckSpellingExistenceCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
@@ -284,7 +284,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
   // The zip code entry (kKey, kValue) should be found if the flag is set in the
   // config.
   config_.set_use_zip_code_conversion(true);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
@@ -292,7 +292,7 @@ TEST_F(DictionaryImplTest, DisableZipCodeConversionTest) {
 
   // Without the flag, it should be suppressed.
   config_.set_use_zip_code_conversion(false);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckZipCodeExistenceCallback callback(kKey, kValue, &data->pos_matcher);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());
@@ -315,7 +315,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
   // The T13N entry (kKey, kValue) should be found if the flag is set in the
   // config.
   config_.set_use_t13n_conversion(true);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_TRUE(callback.found());
@@ -323,7 +323,7 @@ TEST_F(DictionaryImplTest, DisableT13nConversionTest) {
 
   // Without the flag, it should be suppressed.
   config_.set_use_t13n_conversion(false);
-  for (size_t i = 0; i < arraysize(kTestPair); ++i) {
+  for (size_t i = 0; i < std::size(kTestPair); ++i) {
     CheckEnglishT13nCallback callback(kKey, kValue);
     (d->*kTestPair[i].lookup_method)(kTestPair[i].query, convreq_, &callback);
     EXPECT_FALSE(callback.found());

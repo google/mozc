@@ -133,7 +133,7 @@ void SetKeyExpansion(char key, const std::string &expansion,
 
 void BuildHiraganaExpansionTable(const SystemDictionaryCodecInterface &codec,
                                  KeyExpansionTable *encoded_table) {
-  for (size_t index = 0; index < arraysize(kHiraganaExpansionTable); ++index) {
+  for (size_t index = 0; index < std::size(kHiraganaExpansionTable); ++index) {
     std::string encoded;
     codec.EncodeKey(kHiraganaExpansionTable[index], &encoded);
     DCHECK(ContainsAsciiCodeOnly(encoded))
@@ -433,7 +433,7 @@ SystemDictionary::Builder &SystemDictionary::Builder::SetCodec(
   return *this;
 }
 
-mozc::StatusOr<std::unique_ptr<SystemDictionary>>
+absl::StatusOr<std::unique_ptr<SystemDictionary>>
 SystemDictionary::Builder::Build() {
   if (spec_->codec == nullptr) {
     spec_->codec = SystemDictionaryCodecFactory::GetCodec();
@@ -469,12 +469,12 @@ SystemDictionary::Builder::Build() {
       break;
     }
     default:
-      return mozc::InvalidArgumentError("Invalid spec type");
+      return absl::InvalidArgumentError("Invalid spec type");
   }
 
   if (!instance->OpenDictionaryFile(
           (spec_->options & ENABLE_REVERSE_LOOKUP_INDEX) != 0)) {
-    return mozc::UnknownError("Failed to create system dictionary");
+    return absl::UnknownError("Failed to create system dictionary");
   }
 
   return instance;

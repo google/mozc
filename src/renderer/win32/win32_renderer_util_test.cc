@@ -284,7 +284,7 @@ class Win32RendererUtilTest : public testing::Test {
 
   static CLogFont GetFont(bool is_proportional, bool is_vertical) {
     std::wstring font_face;
-    Util::UTF8ToWide((is_proportional ? GetPropotionalFontFaceForTest()
+    Util::Utf8ToWide((is_proportional ? GetPropotionalFontFaceForTest()
                                       : GetMonospacedFontFaceForTest()),
                      &font_face);
     if (is_vertical) {
@@ -334,7 +334,7 @@ class Win32RendererUtilTest : public testing::Test {
     constexpr char kMessage[] =
         "熊本県阿蘇郡南阿蘇村大字中松南阿蘇水の生まれる里白水高原駅";
     std::wstring w_message;
-    Util::UTF8ToWide(kMessage, &w_message);
+    Util::Utf8ToWide(kMessage, &w_message);
     return w_message;
   }
 
@@ -343,7 +343,7 @@ class Win32RendererUtilTest : public testing::Test {
     constexpr char kMessage[] =
         "This open-source project originates from Google 日本語入力.";
     std::wstring w_message;
-    Util::UTF8ToWide(kMessage, &w_message);
+    Util::Utf8ToWide(kMessage, &w_message);
     return w_message;
   }
 
@@ -1406,7 +1406,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -1424,7 +1424,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -1526,7 +1526,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -1550,7 +1550,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -1651,7 +1651,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -1669,7 +1669,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -1693,7 +1693,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(2, layout.marker_layouts.size());
@@ -1791,7 +1791,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Goo";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -1815,7 +1815,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "gle日本語入力のTe";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -1839,7 +1839,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "stです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -1932,7 +1932,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -1950,7 +1950,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -2052,7 +2052,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -2076,7 +2076,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "ogle日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -2177,7 +2177,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -2195,7 +2195,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "、Google日本語入";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -2219,7 +2219,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(2, layout.marker_layouts.size());
@@ -2317,7 +2317,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Go";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -2341,7 +2341,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "ogle日本語入力のT";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -2365,7 +2365,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "estです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -2459,7 +2459,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(5, layout.marker_layouts.size());
@@ -2517,7 +2517,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(5, layout.marker_layouts.size());
@@ -2577,7 +2577,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -2604,7 +2604,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(2, layout.marker_layouts.size());
@@ -2625,7 +2625,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "す";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -2673,7 +2673,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "これは、Google日";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -2700,7 +2700,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "本語入力のTestで";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(2, layout.marker_layouts.size());
@@ -2721,7 +2721,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "す";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -3182,7 +3182,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
 // We should consider the case where two or more style bits are specified
 // at the same time.
 TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
-  const uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
+  constexpr uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
 
   constexpr int kCursorOffsetX = 0;
 
@@ -3223,7 +3223,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     {
       constexpr char kMsg[] = "これは";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -3241,7 +3241,7 @@ TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
     {
       constexpr char kMsg[] = "、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -3368,7 +3368,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     {
       constexpr char kMsg[] = "これは、Google日本語入力のTest";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(5, layout.marker_layouts.size());
@@ -3398,7 +3398,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
     {
       constexpr char kMsg[] = "です";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -3480,7 +3480,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
     {
       constexpr char kMsg[] = "これは、Google日本語入力のTestです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(5, layout.marker_layouts.size());
@@ -3590,7 +3590,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     {
       constexpr char kMsg[] = "これは、Google";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(3, layout.marker_layouts.size());
@@ -3614,7 +3614,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     {
       constexpr char kMsg[] = "日本語入力のTes";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(2, layout.marker_layouts.size());
@@ -3635,7 +3635,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
     {
       constexpr char kMsg[] = "tです";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(1, layout.marker_layouts.size());
@@ -3682,7 +3682,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());
@@ -3739,7 +3739,7 @@ TEST_F(Win32RendererUtilTest,
     {
       constexpr char kMsg[] = "𠮟咤𠮟咤𠮟咤𠮟咤";
       std::wstring msg;
-      mozc::Util::UTF8ToWide(kMsg, &msg);
+      mozc::Util::Utf8ToWide(kMsg, &msg);
       EXPECT_EQ(msg, layout.text);
     }
     ASSERT_EQ(4, layout.marker_layouts.size());

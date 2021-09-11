@@ -295,7 +295,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorNormalTest) {
   UserDictionaryStorage::UserDictionary user_dic;
 
   static constexpr size_t kSize[] = {10, 100, 1000, 5000, 12000};
-  for (size_t i = 0; i < arraysize(kSize); ++i) {
+  for (size_t i = 0; i < std::size(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
@@ -336,7 +336,7 @@ TEST(UserDictionaryImporter, ImportFromIteratorInvalidEntriesTest) {
   UserDictionaryStorage::UserDictionary user_dic;
 
   static constexpr size_t kSize[] = {10, 100, 1000};
-  for (size_t i = 0; i < arraysize(kSize); ++i) {
+  for (size_t i = 0; i < std::size(kSize); ++i) {
     std::vector<UserDictionaryImporter::RawEntry> entries;
     for (size_t j = 0; j < kSize[i]; ++j) {
       UserDictionaryImporter::RawEntry entry;
@@ -577,7 +577,7 @@ TEST(UserDictionaryImporter, StringTextLineIterator) {
       "klmno",
   };
 
-  for (size_t i = 0; i < arraysize(kTestData); ++i) {
+  for (size_t i = 0; i < std::size(kTestData); ++i) {
     UserDictionaryImporter::StringTextLineIterator iter(kTestData[i]);
     ASSERT_TRUE(iter.IsAvailable());
     ASSERT_TRUE(iter.Next(&line));

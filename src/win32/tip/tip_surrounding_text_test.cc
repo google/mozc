@@ -41,7 +41,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   {
     constexpr char kSource[] = "abcde";
     std::wstring source;
-    Util::UTF8ToWide(kSource, &source);
+    Util::Utf8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 0, &characters_in_utf16));
@@ -61,7 +61,7 @@ TEST(TipSurroundingTextUtilTest, MeasureCharactersBackward) {
   {
     constexpr char kSource[] = "𠮟咤";
     std::wstring source;
-    Util::UTF8ToWide(kSource, &source);
+    Util::Utf8ToWide(kSource, &source);
     size_t characters_in_utf16 = 0;
     EXPECT_TRUE(TipSurroundingTextUtil::MeasureCharactersBackward(
         source, 1, &characters_in_utf16));

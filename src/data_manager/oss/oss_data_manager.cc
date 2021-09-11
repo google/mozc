@@ -49,7 +49,7 @@ constexpr char kMagicNumber[] = MOZC_DATASET_MAGIC_NUMBER;
 }  // namespace
 
 OssDataManager::OssDataManager() {
-  const absl::string_view magic(kMagicNumber, arraysize(kMagicNumber) - 1);
+  const absl::string_view magic(kMagicNumber, std::size(kMagicNumber) - 1);
   CHECK_EQ(Status::OK, InitFromArray(LoadEmbeddedFile(kOssMozcDataSet), magic))
       << "Embedded mozc_imy.h for OSS is broken";
 }

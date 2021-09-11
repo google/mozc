@@ -55,8 +55,8 @@
         'connector.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/base.gyp:base',
-        '../base/base.gyp:status',
         '../storage/louds/louds.gyp:simple_succinct_bit_vector_index',
       ],
     },

@@ -60,7 +60,6 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//composer:table",
-        "//testing:gunit_prod",
     ],
 )
 
@@ -156,6 +155,7 @@ cc_library_mozc(
         "//composer:composition_interface",
         "//composer:table",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -308,6 +308,7 @@ cc_library_mozc(
         "//composer:table",
         "//composer:type_corrected_query",
         "//config:config_handler",
+        "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",

@@ -60,7 +60,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:singleton",
-        "//base:status",
         "//base:util",
         "//dictionary:dictionary_token",
         "@com_google_absl//absl/strings",
@@ -113,7 +112,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:mmap",
         "//base:port",
-        "//base:status",
         "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
@@ -125,6 +123,7 @@ cc_library_mozc(
         "//storage/louds:louds_trie",
         "//testing:gunit_prod",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

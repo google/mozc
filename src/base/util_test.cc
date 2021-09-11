@@ -500,13 +500,13 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
         "a", "あ", "亜", "\n", "a",
     };
     std::string joined_string;
-    for (int i = 0; i < arraysize(kInputs); ++i) {
+    for (int i = 0; i < std::size(kInputs); ++i) {
       joined_string += kInputs[i];
     }
 
     std::vector<std::string> output;
     Util::SplitStringToUtf8Chars(joined_string, &output);
-    EXPECT_EQ(arraysize(kInputs), output.size());
+    EXPECT_EQ(std::size(kInputs), output.size());
 
     for (size_t i = 0; i < output.size(); ++i) {
       EXPECT_EQ(kInputs[i], output[i]);
@@ -997,7 +997,7 @@ TEST(UtilTest, RomanjiToHiragana) {
       {"kk", "っk"},
       {"xyz", "xyz"},
   };
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     std::string actual;
     Util::RomanjiToHiragana(kTestCases[i].input, &actual);
     EXPECT_EQ(kTestCases[i].expected, actual);
@@ -1144,48 +1144,48 @@ TEST(UtilTest, ChopReturns) {
   EXPECT_EQ("line", line);
 }
 
-TEST(UtilTest, EncodeURI) {
+TEST(UtilTest, EncodeUri) {
   std::string encoded;
-  Util::EncodeURI("もずく", &encoded);
+  Util::EncodeUri("もずく", &encoded);
   EXPECT_EQ("%E3%82%82%E3%81%9A%E3%81%8F", encoded);
 
   encoded.clear();
-  Util::EncodeURI("mozc", &encoded);
+  Util::EncodeUri("mozc", &encoded);
   EXPECT_EQ("mozc", encoded);
 
   encoded.clear();
-  Util::EncodeURI("http://mozc/?q=Hello World", &encoded);
+  Util::EncodeUri("http://mozc/?q=Hello World", &encoded);
   EXPECT_EQ("http%3A%2F%2Fmozc%2F%3Fq%3DHello%20World", encoded);
 }
 
-TEST(UtilTest, DecodeURI) {
+TEST(UtilTest, DecodeUri) {
   std::string decoded;
-  Util::DecodeURI("%E3%82%82%E3%81%9A%E3%81%8F", &decoded);
+  Util::DecodeUri("%E3%82%82%E3%81%9A%E3%81%8F", &decoded);
   EXPECT_EQ("もずく", decoded);
 
   decoded.clear();
-  Util::DecodeURI("mozc", &decoded);
+  Util::DecodeUri("mozc", &decoded);
   EXPECT_EQ("mozc", decoded);
 
   decoded.clear();
-  Util::DecodeURI("http%3A%2F%2Fmozc%2F%3Fq%3DHello+World", &decoded);
+  Util::DecodeUri("http%3A%2F%2Fmozc%2F%3Fq%3DHello+World", &decoded);
   EXPECT_EQ("http://mozc/?q=Hello World", decoded);
 }
 
-TEST(UtilTest, AppendCGIParams) {
+TEST(UtilTest, AppendCgiParams) {
   std::vector<std::pair<std::string, std::string> > params;
   std::string url;
-  Util::AppendCGIParams(params, &url);
+  Util::AppendCgiParams(params, &url);
   EXPECT_TRUE(url.empty());
 
   params.push_back(std::make_pair("foo", "b a+r"));
   url = "http://mozc.com?";
-  Util::AppendCGIParams(params, &url);
+  Util::AppendCgiParams(params, &url);
   EXPECT_EQ("http://mozc.com?foo=b%20a%2Br", url);
 
   params.push_back(std::make_pair("buzz", "mozc"));
   url.clear();
-  Util::AppendCGIParams(params, &url);
+  Util::AppendCgiParams(params, &url);
   EXPECT_EQ("foo=b%20a%2Br&buzz=mozc", url);
 }
 
@@ -1476,26 +1476,26 @@ TEST(UtilTest, WideCharsLen) {
   EXPECT_EQ(4, Util::WideCharsLen(Util::Utf8SubString(input_utf8, 0, 3)));
 }
 
-TEST(UtilTest, UTF8ToWide) {
+TEST(UtilTest, Utf8ToWide) {
   const std::string input_utf8 = "abc";
   std::wstring output_wide;
-  Util::UTF8ToWide(input_utf8, &output_wide);
+  Util::Utf8ToWide(input_utf8, &output_wide);
 
   std::string output_utf8;
-  Util::WideToUTF8(output_wide, &output_utf8);
+  Util::WideToUtf8(output_wide, &output_utf8);
   EXPECT_EQ("abc", output_utf8);
 }
 
-TEST(UtilTest, WideToUTF8_SurrogatePairSupport) {
+TEST(UtilTest, WideToUtf8_SurrogatePairSupport) {
   // Visual C++ 2008 does not support embedding surrogate pair in string
   // literals like L"\uD842\uDF9F". This is why we use wchar_t array instead.
   // "ð ®"
   const wchar_t input_wide[] = {0xD842, 0xDF9F, 0};
   std::string output_utf8;
-  Util::WideToUTF8(input_wide, &output_utf8);
+  Util::WideToUtf8(input_wide, &output_utf8);
 
   std::wstring output_wide;
-  Util::UTF8ToWide(output_utf8, &output_wide);
+  Util::Utf8ToWide(output_utf8, &output_wide);
 
   EXPECT_EQ("\360\240\256\237", output_utf8);
   EXPECT_EQ(input_wide, output_wide);
@@ -1857,7 +1857,7 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
       {"\xFE\xDC\xBA\x98\x76\x54\x32\x10", 0xFEDCBA9876543210},
   };
 
-  for (size_t i = 0; i < arraysize(kCorrectPairs); ++i) {
+  for (size_t i = 0; i < std::size(kCorrectPairs); ++i) {
     const std::string serialized(kCorrectPairs[i].str, 8);
     EXPECT_EQ(serialized, Util::SerializeUint64(kCorrectPairs[i].value));
 
@@ -1872,7 +1872,7 @@ TEST(UtilTest, SerializeAndDeserializeUint64) {
       "abc",
       "helloworld",
   };
-  for (size_t i = 0; i < arraysize(kFalseCases); ++i) {
+  for (size_t i = 0; i < std::size(kFalseCases); ++i) {
     uint64_t v;
     EXPECT_FALSE(Util::DeserializeUint64(kFalseCases[i], &v));
   }

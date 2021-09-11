@@ -176,14 +176,14 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   }
 
   // Mozc accepts Japanese characters
-  for (size_t i = 0; i < arraysize(kUcs4Utf8Data); ++i) {
+  for (size_t i = 0; i < std::size(kUcs4Utf8Data); ++i) {
     InitSegments(kUcs4Utf8Data[i].ucs4, kUcs4Utf8Data[i].ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kUcs4Utf8Data[i].utf8));
   }
 
   // Mozc does not accept other characters
-  for (size_t i = 0; i < arraysize(kMozcUnsupportedUtf8); ++i) {
+  for (size_t i = 0; i < std::size(kMozcUnsupportedUtf8); ++i) {
     InitSegments(kMozcUnsupportedUtf8[i], kMozcUnsupportedUtf8[i], &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }

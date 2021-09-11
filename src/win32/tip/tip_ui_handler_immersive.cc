@@ -145,7 +145,7 @@ void UpdateUI(TipTextService *text_service, ITfContext *context) {
       TipUiElementManager::kSuggestWindow,
       TipUiElementManager::kCandidateWindow,
   };
-  for (size_t i = 0; i < arraysize(kUiFlags); ++i) {
+  for (size_t i = 0; i < std::size(kUiFlags); ++i) {
     const CComPtr<ITfUIElement> ui_element =
         private_context->GetUiElementManager()->GetElement(kUiFlags[i]);
     if (ui_element) {

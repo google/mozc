@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/statusor.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -53,7 +53,7 @@ std::string GetSourcePath(const std::vector<absl::string_view> &components);
 
 // Gets the absolute path of a test resource file. Returns an error status if
 // the path doesn't exist.
-mozc::StatusOr<std::string> GetSourceFile(
+absl::StatusOr<std::string> GetSourceFile(
     const std::vector<absl::string_view> &components);
 
 // Gets an absolute path of test resource file.  If the file doesn't exist,

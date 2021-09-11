@@ -37,7 +37,6 @@
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "base/status.h"
 #include "base/util.h"
 #include "converter/converter_interface.h"
 #include "engine/mock_data_engine_factory.h"
@@ -53,6 +52,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -254,11 +254,11 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     return;
   }
 
-  const mozc::Status status = handler.Eval(args);
+  const absl::Status status = handler.Eval(args);
   if (status.ok()) {
     return;
   }
-  if (status.code() != mozc::StatusCode::kUnimplemented) {
+  if (status.code() != absl::StatusCode::kUnimplemented) {
     EXPECT_TRUE(false) << status.message();
   }
 
@@ -374,7 +374,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
 
 TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   // Open the scenario file.
-  const mozc::StatusOr<std::string> scenario_path =
+  const absl::StatusOr<std::string> scenario_path =
       mozc::testing::GetSourceFile({GetParam()});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);

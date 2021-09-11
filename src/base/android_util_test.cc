@@ -73,7 +73,7 @@ TEST(AndroidUtilTest, ParseLine_valid) {
   };
   std::string lhs;
   std::string rhs;
-  for (size_t i = 0; i < arraysize(testcases); ++i) {
+  for (size_t i = 0; i < std::size(testcases); ++i) {
     const TestCase &testcase = testcases[i];
     SCOPED_TRACE(testcase.line);
     SCOPED_TRACE(testcase.lhs);
@@ -90,7 +90,7 @@ TEST(AndroidUtilTest, ParseLine_invalid) {
   };
   std::string lhs;
   std::string rhs;
-  for (size_t i = 0; i < arraysize(testcases); ++i) {
+  for (size_t i = 0; i < std::size(testcases); ++i) {
     const char *testcase = testcases[i];
     SCOPED_TRACE(testcase);
     EXPECT_FALSE(AndroidUtil::ParseLine(testcase, &lhs, &rhs));

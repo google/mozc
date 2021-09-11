@@ -56,7 +56,7 @@ constexpr DWORD kJapaneseKLID = 0xE0200411;
 
 std::wstring ToWideString(const std::string &str) {
   std::wstring wide;
-  if (mozc::Util::UTF8ToWide(str, &wide) <= 0) {
+  if (mozc::Util::Utf8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;

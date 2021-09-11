@@ -85,7 +85,7 @@ std::wstring OmahaUtil::ReadChannel() {
     return L"";
   }
   wchar_t buf[512];
-  ULONG buf_size = arraysize(buf);
+  ULONG buf_size = std::size(buf);
   result = key.QueryStringValue(kChannelKeyName, buf, &buf_size);
   if (ERROR_SUCCESS != result) {
     return L"";

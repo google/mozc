@@ -77,7 +77,7 @@ bool GetterInternal(const std::string &name, Stats::Type type, Stats *stats) {
 }  // namespace
 
 bool UsageStats::IsListed(const std::string &name) {
-  for (size_t i = 0; i < arraysize(kStatsList); ++i) {
+  for (size_t i = 0; i < std::size(kStatsList); ++i) {
     if (name == kStatsList[i]) {
       return true;
     }
@@ -88,7 +88,7 @@ bool UsageStats::IsListed(const std::string &name) {
 void UsageStats::ClearStats() {
   std::string stats_str;
   Stats stats;
-  for (size_t i = 0; i < arraysize(kStatsList); ++i) {
+  for (size_t i = 0; i < std::size(kStatsList); ++i) {
     const std::string key = std::string(kRegistryPrefix) + kStatsList[i];
     if (storage::Registry::Lookup(key, &stats_str)) {
       if (!stats.ParseFromString(stats_str)) {
@@ -107,7 +107,7 @@ void UsageStats::ClearStats() {
 }
 
 void UsageStats::ClearAllStats() {
-  for (size_t i = 0; i < arraysize(kStatsList); ++i) {
+  for (size_t i = 0; i < std::size(kStatsList); ++i) {
     const std::string key = std::string(kRegistryPrefix) + kStatsList[i];
     storage::Registry::Erase(key);
   }

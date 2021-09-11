@@ -76,7 +76,7 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
 
   ULONG fetched = 0;
   const HRESULT result =
-      enum_display_attribute.Next(arraysize(infolist), infolist, &fetched);
+      enum_display_attribute.Next(std::size(infolist), infolist, &fetched);
   EXPECT_EQ(S_FALSE, result);
   EXPECT_EQ(2, fetched);
 
@@ -86,7 +86,7 @@ TEST(TipEnumDisplayAttributesTest, NextTest) {
   EXPECT_EQ(nullptr, infolist[3]);
 
   // Clean up.
-  for (size_t i = 0; i < arraysize(infolist); ++i) {
+  for (size_t i = 0; i < std::size(infolist); ++i) {
     if (infolist[i] != nullptr) {
       infolist[i]->Release();
       infolist[i] = nullptr;

@@ -64,7 +64,7 @@ HRESULT TipRangeUtil::SetSelection(ITfContext *context,
   selections[0].range = range;
   selections[0].style.ase = active_sel_end;
   selections[0].style.fInterimChar = FALSE;
-  return context->SetSelection(edit_cookie, arraysize(selections), selections);
+  return context->SetSelection(edit_cookie, std::size(selections), selections);
 }
 
 HRESULT TipRangeUtil::GetDefaultSelection(ITfContext *context,
@@ -78,7 +78,7 @@ HRESULT TipRangeUtil::GetDefaultSelection(ITfContext *context,
   ULONG fetched = 0;
   const HRESULT result =
       context->GetSelection(edit_cookie, TF_DEFAULT_SELECTION,
-                            arraysize(selections), selections, &fetched);
+                            std::size(selections), selections, &fetched);
   if (FAILED(result)) {
     return result;
   }
@@ -118,15 +118,15 @@ HRESULT TipRangeUtil::GetText(ITfRange *range, TfEditCookie edit_cookie,
     wchar_t buffer[64];
     ULONG fetched = 0;
     const HRESULT result = range_view->GetText(
-        edit_cookie, TF_TF_MOVESTART, buffer, arraysize(buffer), &fetched);
+        edit_cookie, TF_TF_MOVESTART, buffer, std::size(buffer), &fetched);
     if (FAILED(result)) {
       return result;
     }
-    if (fetched > arraysize(buffer)) {
+    if (fetched > std::size(buffer)) {
       return E_UNEXPECTED;
     }
     text->append(buffer, fetched);
-    if (fetched < arraysize(buffer)) {
+    if (fetched < std::size(buffer)) {
       return S_OK;
     }
   }

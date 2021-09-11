@@ -388,7 +388,7 @@ TEST_F(TypingCorrectorTest, TypingCorrection) {
       {"kaish", nullptr, "かいしゃ"},
   };
 
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     SCOPED_TRACE(std::string("key: ") + kTestCases[i].keys);
     InsertOneByOne(kTestCases[i].keys, &corrector);
     std::vector<TypeCorrectedQuery> queries;
@@ -433,15 +433,17 @@ TEST_F(TypingCorrectorTest, Invalidate) {
   EXPECT_TRUE(queries.empty());
 }
 
-TEST_F(TypingCorrectorTest, CopyFrom) {
+TEST_F(TypingCorrectorTest, Copy) {
   TypingCorrector corrector(&qwerty_table_, 30, 30);
   corrector.SetConfig(&config_);
   InsertOneByOne("phayou", &corrector);
 
-  TypingCorrector corrector2(nullptr, 1000, 1000);
-  corrector2.CopyFrom(corrector);
-
+  const TypingCorrector corrector2(corrector);
   ExpectTypingCorrectorEqual(corrector, corrector2);
+
+  TypingCorrector corrector3(nullptr, 1000, 1000);
+  corrector3 = corrector;
+  ExpectTypingCorrectorEqual(corrector, corrector3);
 }
 
 }  // namespace composer

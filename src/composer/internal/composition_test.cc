@@ -100,7 +100,7 @@ static int InitComposition(Composition* comp) {
       {"あ", "", "a"},     {"", "ky", "ky"},    {"き", "", "ki"},
       {"った", "", "tta"}, {"っ", "ty", "tty"},
   };
-  static const int test_chunks_size = arraysize(test_chunks);
+  static const int test_chunks_size = std::size(test_chunks);
   CharChunkList::iterator it;
   comp->MaybeSplitChunkAt(0, &it);
   for (int i = 0; i < test_chunks_size; ++i) {
@@ -139,7 +139,7 @@ TEST_F(CompositionTest, GetChunkLength) {
   };
   CharChunk* chunk = AppendChunk("", "", "", composition_.get());
 
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     chunk->set_conversion(test.conversion);
     chunk->set_pending(test.pending);
@@ -282,16 +282,14 @@ TEST_F(CompositionTest, SplitRawChunk) {
       {"っ", "ty", "tty", 2, "っ", "t", "tt", "", "y", "y"},
       {"っ", "ty", "tty", 3, "", "", "", "っ", "ty", "tty"},
   };
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
-    CharChunk* left_new_chunk_ptr = nullptr;
-    right_orig_chunk.SplitChunk(Transliterators::RAW_STRING, test.position,
-                                &left_new_chunk_ptr);
-    std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+    std::unique_ptr<CharChunk> left_new_chunk =
+        right_orig_chunk.SplitChunk(Transliterators::RAW_STRING, test.position);
 
     if (left_new_chunk != nullptr) {
       EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
@@ -327,16 +325,14 @@ TEST_F(CompositionTest, SplitConversionChunk) {
       {"っ", "ty", "tty", 2, "っ", "t", "tt", "", "y", "y"},
       {"っ", "ty", "tty", 3, "", "", "", "っ", "ty", "tty"},
   };
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
     CharChunk right_orig_chunk(Transliterators::CONVERSION_STRING, nullptr);
     right_orig_chunk.set_conversion(test.conversion);
     right_orig_chunk.set_pending(test.pending);
     right_orig_chunk.set_raw(test.raw);
-    CharChunk* left_new_chunk_ptr = nullptr;
-    right_orig_chunk.SplitChunk(Transliterators::CONVERSION_STRING,
-                                test.position, &left_new_chunk_ptr);
-    std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+    std::unique_ptr<CharChunk> left_new_chunk = right_orig_chunk.SplitChunk(
+        Transliterators::CONVERSION_STRING, test.position);
 
     if (left_new_chunk != nullptr) {
       EXPECT_EQ(test.expected_left_conversion, left_new_chunk->conversion());
@@ -373,7 +369,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
       {10, 6, 5}, {11, 5, 5}, {12, 5, 5},
   };
   const size_t dummy_position = 0;
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     const TestCase& test = test_cases[i];
 
     {  // Test RAW mode
