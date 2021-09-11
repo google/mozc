@@ -176,7 +176,7 @@ TEST(EncryptorTest, EncryptBatch) {
   constexpr size_t kSizeTable[] = {1,    10,   16,    32,    100,
                                    1000, 1600, 10000, 16000, 100000};
 
-  for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
+  for (size_t i = 0; i < std::size(kSizeTable); ++i) {
     std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
     Util::GetRandomSequence(buf.get(), kSizeTable[i]);
 
@@ -230,7 +230,7 @@ TEST(EncryptorTest, ProtectData) {
   SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   constexpr size_t kSizeTable[] = {1, 10, 100, 1000, 10000, 100000};
 
-  for (size_t i = 0; i < arraysize(kSizeTable); ++i) {
+  for (size_t i = 0; i < std::size(kSizeTable); ++i) {
     std::unique_ptr<char[]> buf(new char[kSizeTable[i]]);
     Util::GetRandomSequence(buf.get(), kSizeTable[i]);
     std::string input(buf.get(), kSizeTable[i]);

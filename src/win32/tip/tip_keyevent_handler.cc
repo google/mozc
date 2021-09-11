@@ -92,7 +92,7 @@ VirtualKey GetVK(WPARAM wparam, const KeyboardStatus &keyboad_status) {
   const UINT scan_code = ::MapVirtualKey(wparam, MAPVK_VK_TO_VSC);
   wchar_t buffer[4] = {};
   if (::ToUnicode(wparam, scan_code, keyboad_status.status(), buffer,
-                  arraysize(buffer), 0) != 1) {
+                  std::size(buffer), 0) != 1) {
     return VirtualKey::FromVirtualKey(wparam);
   }
   const uint32 ucs2 = buffer[0];
@@ -308,12 +308,12 @@ void FillMozcContextForOnKey(TipTextService *text_service, ITfContext *context,
   }
   if (info.has_preceding_text) {
     std::string utf8_preceding_text;
-    Util::WideToUTF8(info.preceding_text, &utf8_preceding_text);
+    Util::WideToUtf8(info.preceding_text, &utf8_preceding_text);
     mozc_context->set_preceding_text(utf8_preceding_text);
   }
   if (info.has_following_text) {
     std::string utf8_following_text;
-    Util::WideToUTF8(info.following_text, &utf8_following_text);
+    Util::WideToUtf8(info.following_text, &utf8_following_text);
     mozc_context->set_following_text(utf8_following_text);
   }
 }

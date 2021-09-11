@@ -61,7 +61,7 @@ class URLImpl {
       *url += "&";
       std::vector<std::pair<std::string, std::string> > params;
       params.push_back(std::make_pair(kSurveyVersionEntry, version));
-      Util::AppendCGIParams(params, url);
+      Util::AppendCgiParams(params, url);
     }
     return true;
   }
@@ -77,7 +77,7 @@ class URLImpl {
     params.push_back(
         std::make_pair(kSurveyHtmlLanguageEntry, kSurveyHtmlLanguage));
     params.push_back(std::make_pair(kSurveyFormatEntry, kSurveyFormat));
-    Util::AppendCGIParams(params, &uninstallation_survey_url_);
+    Util::AppendCgiParams(params, &uninstallation_survey_url_);
   }
 
   std::string uninstallation_survey_url_;

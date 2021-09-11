@@ -135,9 +135,9 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
   HRESULT result = S_OK;
 
   std::wstring result_string;
-  mozc::Util::UTF8ToWide(output.result().value(), &result_string);
-  result = ::StringCchCopyN(result_, arraysize(result_), result_string.c_str(),
-                            arraysize(result_));
+  mozc::Util::Utf8ToWide(output.result().value(), &result_string);
+  result = ::StringCchCopyN(result_, std::size(result_), result_string.c_str(),
+                            std::size(result_));
   if (FAILED(result)) {
     return false;
   }
@@ -159,8 +159,8 @@ bool CompositionString::HandleResult(const mozc::commands::Output &output) {
     const std::wstring &reading_string =
         StringUtil::KeyToReading(output.result().key());
     result =
-        ::StringCchCopyN(result_reading_, arraysize(result_reading_),
-                         reading_string.c_str(), arraysize(result_reading_));
+        ::StringCchCopyN(result_reading_, std::size(result_reading_),
+                         reading_string.c_str(), std::size(result_reading_));
     if (FAILED(result)) {
       return false;
     }
@@ -236,7 +236,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     DCHECK(segment.has_value());
     {
       std::wstring segment_composition;
-      mozc::Util::UTF8ToWide(segment.value(), &segment_composition);
+      mozc::Util::Utf8ToWide(segment.value(), &segment_composition);
       composition_string.append(segment_composition);
       preedit_utf8.append(segment.value());
 
@@ -311,22 +311,22 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
 
   HRESULT result = S_OK;
   result =
-      ::StringCchCopyN(composition_, arraysize(composition_),
-                       composition_string.c_str(), arraysize(composition_));
+      ::StringCchCopyN(composition_, std::size(composition_),
+                       composition_string.c_str(), std::size(composition_));
   if (FAILED(result)) {
     return false;
   }
   info.dwCompStrLen = composition_string.size();
 
   result =
-      ::StringCchCopyN(composition_reading_, arraysize(composition_reading_),
-                       reading_string.c_str(), arraysize(composition_reading_));
+      ::StringCchCopyN(composition_reading_, std::size(composition_reading_),
+                       reading_string.c_str(), std::size(composition_reading_));
   if (FAILED(result)) {
     return false;
   }
   info.dwCompReadStrLen = reading_string.size();
 
-  if (arraysize(composition_clause_) <= composition_clauses.size()) {
+  if (std::size(composition_clause_) <= composition_clauses.size()) {
     return false;
   }
   info.dwCompClauseLen = composition_clauses.size() * sizeof(DWORD);
@@ -334,7 +334,7 @@ bool CompositionString::HandlePreedit(const mozc::commands::Output &output) {
     composition_clause_[i] = composition_clauses[i];
   }
 
-  if (arraysize(composition_reading_clause_) <= reading_clauses.size()) {
+  if (std::size(composition_reading_clause_) <= reading_clauses.size()) {
     return false;
   }
   info.dwCompReadClauseLen = reading_clauses.size() * sizeof(DWORD);

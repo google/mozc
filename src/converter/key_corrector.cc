@@ -119,7 +119,7 @@ bool RewriteDoubleNN(size_t key_pos, const char *begin, const char *end,
   *mblen = 0;
   uint16_t first_char = 0x0000;
   size_t first_mblen = 0;
-  for (size_t i = 0; i < arraysize(kPattern); ++i) {
+  for (size_t i = 0; i < std::size(kPattern); ++i) {
     if (begin >= end) {
       *mblen = 0;
       return false;
@@ -272,7 +272,7 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
 
   uint16_t first_char = 0x0000;
   uint16_t last_char = 0x0000;
-  for (size_t i = 0; i < arraysize(kPattern); ++i) {
+  for (size_t i = 0; i < std::size(kPattern); ++i) {
     if (begin >= end) {
       *mblen = 0;
       return false;
@@ -284,7 +284,7 @@ bool RewriteSmallTSU(size_t key_pos, const char *begin, const char *end,
         (kPattern[i] == 0x3063 && ucs4 == 0x3063)) {
       if (i == 0) {
         first_char = ucs4;
-      } else if (i == arraysize(kPattern) - 1) {
+      } else if (i == std::size(kPattern) - 1) {
         last_char = ucs4;
       }
     } else {

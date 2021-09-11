@@ -77,7 +77,7 @@ std::unique_ptr<uint32_t[]> InitTestZeroQueryDict(ZeroQueryDict *dict) {
   // kTestTokenArray contains a trailing '\0', so create a absl::string_view
   // that excludes it by subtracting 1.
   const absl::string_view token_array_data(kTestTokenArray,
-                                           arraysize(kTestTokenArray) - 1);
+                                           std::size(kTestTokenArray) - 1);
   std::vector<absl::string_view> strs(std::begin(kTestStrings),
                                       std::end(kTestStrings));
   std::unique_ptr<uint32_t[]> string_data_buffer;

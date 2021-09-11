@@ -96,7 +96,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
   // system://foo.bar.txt
   if (Util::StartsWith(filename, kSystemPrefix)) {
     const std::string new_filename = RemovePrefix(kSystemPrefix, filename);
-    for (size_t i = 0; i < arraysize(kFileData); ++i) {
+    for (size_t i = 0; i < std::size(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
         std::istringstream *ifs = new std::istringstream(
             std::string(kFileData[i].data, kFileData[i].size), mode);

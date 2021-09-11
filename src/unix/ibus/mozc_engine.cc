@@ -98,7 +98,7 @@ std::string GetEnv(const char *envname) {
 }
 
 std::string GetMessageLocale() {
-  for (size_t i = 0; i < arraysize(kUILocaleEnvNames); ++i) {
+  for (size_t i = 0; i < std::size(kUILocaleEnvNames); ++i) {
     const std::string result = GetEnv(kUILocaleEnvNames[i]);
     if (!result.empty()) {
       return result;

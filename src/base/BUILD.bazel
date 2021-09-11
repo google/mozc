@@ -1467,37 +1467,3 @@ cc_test_mozc(
         "@com_google_absl//absl/strings",
     ],
 )
-
-cc_library_mozc(
-    name = "status",
-    srcs = [
-        "status.cc",
-    ],
-    hdrs = [
-        "status.h",
-        "statusor.h",
-    ],
-    deps = select_mozc(
-        default = [
-            "@com_google_absl//absl/status",
-            "@com_google_absl//absl/status:statusor",
-        ],
-        oss = [
-            ":logging",
-        ],
-    ),
-)
-
-cc_test_mozc(
-    name = "status_test",
-    srcs = [
-        "status_test.cc",
-        "statusor_test.cc",
-    ],
-    requires_full_emulation = False,
-    deps = [
-        ":status",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
-    ],
-)

@@ -107,7 +107,7 @@ const std::string NamedEventUtil::GetEventPath(const char *name) {
 NamedEventListener::NamedEventListener(const char *name)
     : is_owner_(false), handle_(nullptr) {
   std::wstring event_path;
-  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
+  Util::Utf8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
 
   handle_ = ::OpenEventW(EVENT_ALL_ACCESS, false, event_path.c_str());
 
@@ -217,7 +217,7 @@ int NamedEventListener::WaitEventOrProcess(int msec, size_t pid) {
 
 NamedEventNotifier::NamedEventNotifier(const char *name) : handle_(nullptr) {
   std::wstring event_path;
-  Util::UTF8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
+  Util::Utf8ToWide(NamedEventUtil::GetEventPath(name), &event_path);
   handle_ = ::OpenEventW(EVENT_MODIFY_STATE, false, event_path.c_str());
   if (handle_ == nullptr) {
     LOG(ERROR) << "Cannot open Event name: " << name;

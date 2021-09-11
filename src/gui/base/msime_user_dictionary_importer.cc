@@ -220,8 +220,8 @@ class MSIMEImportIterator
       }
 
       // set key/value
-      Util::WideToUTF8(buf_[index_].pwchReading, &entry->key);
-      Util::WideToUTF8(buf_[index_].pwchDisplay, &entry->value);
+      Util::WideToUtf8(buf_[index_].pwchReading, &entry->key);
+      Util::WideToUtf8(buf_[index_].pwchDisplay, &entry->value);
 
       // set POS
       std::map<int, std::string>::const_iterator it =
@@ -241,7 +241,7 @@ class MSIMEImportIterator
               reinterpret_cast<const char *>(buf_[index_].pvComment),
               &entry->comment);
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {
-          Util::WideToUTF8(
+          Util::WideToUtf8(
               reinterpret_cast<const wchar_t *>(buf_[index_].pvComment),
               &entry->comment);
         }

@@ -96,7 +96,7 @@ using ::testing::WithParamInterface;
 
 constexpr int kInfinity = (2 << 20);
 
-mozc::StatusOr<std::unique_ptr<SystemDictionary>>
+absl::StatusOr<std::unique_ptr<SystemDictionary>>
 CreateSystemDictionaryFromDataManager(
     const DataManagerInterface &data_manager) {
   const char *data = nullptr;
@@ -1295,7 +1295,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
       {MOBILE, transliteration::FULL_ASCII},
   };
 
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     config::ConfigHandler::GetDefaultConfig(config_.get());
     // Resets to default value.
     // Implementation note: Since the value of |request_| is used to initialize
@@ -1931,7 +1931,7 @@ class TestSuffixDictionary : public DictionaryInterface {
                         const ConversionRequest &conversion_request,
                         Callback *callback) const override {
     Token token;
-    for (size_t i = 0; i < arraysize(kSuffixTokens); ++i) {
+    for (size_t i = 0; i < std::size(kSuffixTokens); ++i) {
       const SimpleSuffixToken &suffix_token = kSuffixTokens[i];
       if (!key.empty() && !Util::StartsWith(suffix_token.key, key)) {
         continue;
@@ -2070,7 +2070,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::HALF_ASCII, "conv",
                                          "conv", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
   // Input mode: HALF_ASCII, Key: upper case
   //   => Prediction should be in half-width upper case.
@@ -2082,7 +2082,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::HALF_ASCII, "CONV",
                                          "CONV", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
   // Input mode: HALF_ASCII, Key: capitalized
   //   => Prediction should be half-width and capitalized
@@ -2094,7 +2094,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::HALF_ASCII, "Conv",
                                          "Conv", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
   // Input mode: FULL_ASCII, Key: lower case
   //   => Prediction should be in full-width lower case.
@@ -2106,7 +2106,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::FULL_ASCII, "conv",
                                          "ｃｏｎｖ", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
   // Input mode: FULL_ASCII, Key: upper case
   //   => Prediction should be in full-width upper case.
@@ -2118,7 +2118,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::FULL_ASCII, "CONV",
                                          "ＣＯＮＶ", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
   // Input mode: FULL_ASCII, Key: capitalized
   //   => Prediction should be full-width and capitalized
@@ -2130,7 +2130,7 @@ TEST_F(DictionaryPredictorTest, AggregateEnglishPrediction) {
     };
     AggregateEnglishPredictionTestHelper(transliteration::FULL_ASCII, "Conv",
                                          "Ｃｏｎｖ", kExpectedValues,
-                                         arraysize(kExpectedValues));
+                                         std::size(kExpectedValues));
   }
 }
 
@@ -2145,7 +2145,7 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
   };
   AggregateTypeCorrectingTestHelper(kInputText, kCorrectedKeyCodes,
                                     kExpectedValues,
-                                    arraysize(kExpectedValues));
+                                    std::size(kExpectedValues));
 }
 
 TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
@@ -2236,7 +2236,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
       {"じゅう", "十", "時", false}, {"じゅう", "拾", "時", false},
   };
 
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     Segments segments;
     MakeSegmentsForSuggestion("", &segments);
 
@@ -2281,7 +2281,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
       {"@", "@", "softbank.ne.jp", 4}, {"!", "!", "?", -1},
   };
 
-  for (size_t i = 0; i < arraysize(kTestCases); ++i) {
+  for (size_t i = 0; i < std::size(kTestCases); ++i) {
     Segments segments;
     MakeSegmentsForSuggestion("", &segments);
 
@@ -3060,7 +3060,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
       {"むすめ。", "娘。", pos_matcher.GetUniqueNounId(), true},
   };
 
-  for (size_t i = 0; i < arraysize(kTestcases); ++i) {
+  for (size_t i = 0; i < std::size(kTestcases); ++i) {
     const TestCase &test_case = kTestcases[i];
 
     Segments segments;
@@ -3472,7 +3472,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
     // kTestTokenArray contains a trailing '\0', so create a absl::string_view
     // that excludes it by subtracting 1.
     const absl::string_view token_array_data(kTestTokenArray,
-                                             arraysize(kTestTokenArray) - 1);
+                                             std::size(kTestTokenArray) - 1);
     std::vector<absl::string_view> strs;
     for (const char *str : kTestStrings) {
       strs.push_back(str);

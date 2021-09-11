@@ -426,17 +426,6 @@
         'base_core',
       ],
     },
-    {
-      'target_name': 'status',
-      'type': 'static_library',
-      'toolsets': ['host', 'target'],
-      'sources': [
-        'status.cc',
-      ],
-      'dependencies': [
-        'base_core',
-      ],
-    },
   ],
   'conditions': [
     ['OS=="win" and branding=="GoogleJapaneseInput"', {

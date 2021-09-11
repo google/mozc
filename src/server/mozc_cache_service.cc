@@ -64,8 +64,8 @@ void LogMessageImpl(const wchar_t (&file)[num_elements], int line,
 std::wstring GetMappedFileNameByAddress(LPVOID address) {
   wchar_t path[MAX_PATH];
   const int length = ::GetMappedFileName(::GetCurrentProcess(), address, path,
-                                         arraysize(path));
-  if (length == 0 || arraysize(path) <= length) {
+                                         std::size(path));
+  if (length == 0 || std::size(path) <= length) {
     LOG_WIN32_ERROR(L"GetMappedFileName failed.");
     return L"";
   }
@@ -191,7 +191,7 @@ bool VerifyPrivilegeRestrictionIfNeeded(DWORD dwArgc, LPTSTR *lpszArgv) {
   const std::string temp_path = mozc::FileUtil::JoinPath(
       mozc::SystemUtil::GetServerDirectory(), "delete_me.txt");
   std::wstring wtemp_path;
-  mozc::Util::UTF8ToWide(temp_path, &wtemp_path);
+  mozc::Util::Utf8ToWide(temp_path, &wtemp_path);
   const HANDLE temp_file =
       ::CreateFileW(wtemp_path.c_str(), GENERIC_READ | GENERIC_WRITE,
                     FILE_SHARE_READ, NULL, CREATE_ALWAYS,
@@ -266,7 +266,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
   }
 
   std::wstring server_path;
-  mozc::Util::UTF8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
+  mozc::Util::Utf8ToWide(mozc::SystemUtil::GetServerPath(), &server_path);
 
   mozc::ScopedHandle file_handle(::CreateFile(server_path.c_str(), GENERIC_READ,
                                               FILE_SHARE_READ, 0, OPEN_EXISTING,
@@ -343,7 +343,7 @@ VOID WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv) {
 WAIT_HIGH : {
   const HANDLE handles[] = {g_stop_event, high_memory_event.get()};
   const DWORD result =
-      ::WaitForMultipleObjects(arraysize(handles), handles, FALSE, INFINITE);
+      ::WaitForMultipleObjects(std::size(handles), handles, FALSE, INFINITE);
   switch (result) {
     case WAIT_OBJECT_0 + 1:  // high is signaled
       goto TRY_LOCK;
@@ -397,7 +397,7 @@ TRY_LOCK : {
 WAIT_LOW : {
   const HANDLE handles[] = {g_stop_event, low_memory_event.get()};
   const DWORD result =
-      ::WaitForMultipleObjects(arraysize(handles), handles, FALSE, INFINITE);
+      ::WaitForMultipleObjects(std::size(handles), handles, FALSE, INFINITE);
   switch (result) {
     case WAIT_OBJECT_0 + 1:  // low is signaled
       if (!::VirtualUnlock(mem_info.BaseAddress, mem_info.RegionSize)) {

@@ -116,7 +116,7 @@ bool g_process_is_shutting_down = false;
     }                                        \
   } while (false)
 
-static_assert(arraysize(mozc::kIMEUIWndClassName) <=
+static_assert(std::size(mozc::kIMEUIWndClassName) <=
                   mozc::kIMEUIwndClassNameLimitInTchars,
               "Window Class Name has length limit.");
 
@@ -141,9 +141,9 @@ void SetEnveronmentVariablesForWordRegisterDialog(
     const std::wstring &word_value, const std::wstring &word_reading) {
   std::wstring word_value_env_name;
   std::wstring word_reading_env_name;
-  mozc::Util::UTF8ToWide(mozc::kWordRegisterEnvironmentName,
+  mozc::Util::Utf8ToWide(mozc::kWordRegisterEnvironmentName,
                          &word_value_env_name);
-  mozc::Util::UTF8ToWide(mozc::kWordRegisterEnvironmentReadingName,
+  mozc::Util::Utf8ToWide(mozc::kWordRegisterEnvironmentReadingName,
                          &word_reading_env_name);
 
   if (word_value.empty()) {
@@ -398,7 +398,7 @@ LRESULT WINAPI ImeEscape(HIMC himc, UINT sub_func, LPVOID data) {
       // than or equal to 64 characters in Windows NT.
       // http://msdn.microsoft.com/en-us/library/dd318166.aspx
       std::wstring name;
-      mozc::Util::UTF8ToWide(mozc::kProductNameInEnglish, &name);
+      mozc::Util::Utf8ToWide(mozc::kProductNameInEnglish, &name);
       wchar_t *dest = static_cast<wchar_t *>(data);
       const HRESULT result =
           ::StringCchCopyN(dest, mozc::kSafeIMENameLengthForNTInTchars,

@@ -193,7 +193,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     }
 
     result = input_button_menu->Init(ImeGetResource(), IDS_INPUTMODE,
-                                     &kInputMenu[0], arraysize(kInputMenu));
+                                     &kInputMenu[0], std::size(kInputMenu));
     if (result != S_OK) {
       return result;
     }
@@ -230,7 +230,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
 
     result =
         tool_button_menu->Init(ImeGetResource(), IDS_TOOL, &kToolMenu[0],
-                               arraysize(kToolMenu), IDI_TOOL_NT, IDI_TOOL);
+                               std::size(kToolMenu), IDI_TOOL_NT, IDI_TOOL);
     if (result != S_OK) {
       return result;
     }
@@ -252,7 +252,7 @@ HRESULT LanguageBar::InitLanguageBar(LangBarCallback *text_service) {
     }
 
     result =
-        help_menu->Init(ImeGetResource(), &kHelpMenu[0], arraysize(kHelpMenu));
+        help_menu->Init(ImeGetResource(), &kHelpMenu[0], std::size(kHelpMenu));
     if (result != S_OK) {
       return result;
     }

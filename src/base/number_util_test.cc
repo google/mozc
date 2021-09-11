@@ -576,7 +576,7 @@ TEST(NumberUtilTest, KanjiNumberToArabicNumber) {
                            "1000000000000",
                            "10000000000000000"};
 
-  for (size_t i = 0; i < arraysize(inputs); ++i) {
+  for (size_t i = 0; i < std::size(inputs); ++i) {
     std::string arabic;
     NumberUtil::KanjiNumberToArabicNumber(inputs[i], &arabic);
     EXPECT_EQ(expects[i], arabic);
@@ -633,7 +633,7 @@ TEST(NumberUtilTest, NormalizeNumbers) {
       {"九０", "九〇", "90"},
   };
 
-  for (size_t i = 0; i < arraysize(success_data); ++i) {
+  for (size_t i = 0; i < std::size(success_data); ++i) {
     std::string arabic_output = "dummy_text_arabic";
     std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_data[i][0], true,
@@ -652,7 +652,7 @@ TEST(NumberUtilTest, NormalizeNumbers) {
       {"00", "〇〇", "00"},
   };
 
-  for (size_t i = 0; i < arraysize(success_notrim_data); ++i) {
+  for (size_t i = 0; i < std::size(success_notrim_data); ++i) {
     std::string arabic_output = "dummy_text_arabic";
     std::string kanji_output = "dummy_text_kanji";
     EXPECT_TRUE(NumberUtil::NormalizeNumbers(success_notrim_data[i][0], false,
@@ -679,7 +679,7 @@ TEST(NumberUtilTest, NormalizeNumbers) {
       "九九八十一",
   };
 
-  for (size_t i = 0; i < arraysize(fail_data); ++i) {
+  for (size_t i = 0; i < std::size(fail_data); ++i) {
     std::string arabic_output, kanji_output;
     EXPECT_FALSE(NumberUtil::NormalizeNumbers(fail_data[i], true, &kanji_output,
                                               &arabic_output));
@@ -878,7 +878,7 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
        {kHalfArabicKanji, kFullArabicKanji, kKanji, kOldKanji}},
   };
 
-  for (size_t i = 0; i < arraysize(kData); ++i) {
+  for (size_t i = 0; i < std::size(kData); ++i) {
     std::vector<NumberUtil::NumberString> output;
     ASSERT_LE(kData[i].expect_num, kMaxCandsInArabicToKanjiTest);
     EXPECT_TRUE(NumberUtil::ArabicToKanji(kData[i].input, &output));
@@ -894,7 +894,7 @@ TEST(NumberUtilTest, ArabicToKanjiTest) {
 
   const char *kFailInputs[] = {"asf56789", "0.001", "-100",
                                "123456789012345678901"};
-  for (size_t i = 0; i < arraysize(kFailInputs); ++i) {
+  for (size_t i = 0; i < std::size(kFailInputs); ++i) {
     std::vector<NumberUtil::NumberString> output;
     EXPECT_FALSE(NumberUtil::ArabicToKanji(kFailInputs[i], &output));
     ASSERT_EQ(output.size(), 0) << "input : " << kFailInputs[i];
@@ -915,7 +915,7 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
       {"18446744073709551616", "18,446,744,073,709,551,616", nullptr},
   };
 
-  for (size_t i = 0; i < arraysize(kSuccess); ++i) {
+  for (size_t i = 0; i < std::size(kSuccess); ++i) {
     arabic = kSuccess[i][0];
     output.clear();
     EXPECT_TRUE(NumberUtil::ArabicToSeparatedArabic(arabic, &output));
@@ -938,7 +938,7 @@ TEST(NumberUtilTest, ArabicToSeparatedArabicTest) {
       "-100",
   };
 
-  for (size_t i = 0; i < arraysize(kFail); ++i) {
+  for (size_t i = 0; i < std::size(kFail); ++i) {
     arabic = kFail[i];
     output.clear();
     EXPECT_FALSE(NumberUtil::ArabicToSeparatedArabic(arabic, &output));

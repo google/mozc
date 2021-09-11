@@ -30,7 +30,6 @@
 #ifndef MOZC_STORAGE_LRU_CACHE_H_
 #define MOZC_STORAGE_LRU_CACHE_H_
 
-#include <cstring>
 #include <memory>
 
 #include "base/logging.h"
@@ -276,7 +275,6 @@ bool LRUCache<Key, Value>::Evict(Element* e) {
 template <typename Key, typename Value>
 LRUCache<Key, Value>::LRUCache(size_t max_elements)
     : max_elements_(max_elements) {
-  ::memset(blocks_, 0, sizeof(blocks_));
   if (max_elements_ <= 128) {
     next_block_size_ = max_elements_;
   } else {

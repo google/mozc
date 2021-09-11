@@ -192,7 +192,7 @@ HRESULT ImeLangBarMenuDataArray::Init(HINSTANCE instance,
     if ((menu[i].flags_ & TF_LBMENUF_SEPARATOR) == 0) {
       // Retrieve the menu text and button icon.
       length = ::LoadString(instance, menu[i].text_id_, &data.text_[0],
-                            arraysize(data.text_));
+                            std::size(data.text_));
     }
     data.flags_ = menu[i].flags_;
     data.menu_id_ = menu[i].menu_id_;
@@ -350,7 +350,7 @@ HRESULT ImeLangBarMenu::Init(HINSTANCE instance, int string_id,
   // Retrieve the text label from the resource.
   // This string is also used as a tool-tip text.
   ::LoadString(instance, string_id, &item_info_.szDescription[0],
-               arraysize(item_info_.szDescription));
+               std::size(item_info_.szDescription));
 
   // Create a new ImeLangBarMenuItem object.
   menu_data_.Init(instance, menu, count);

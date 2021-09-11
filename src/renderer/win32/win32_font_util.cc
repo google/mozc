@@ -59,7 +59,7 @@ bool FontUtil::ToWinLogFont(
 
   // make sure |log_font.lfFaceName| is properly null-terminated.
   bool null_terminated = false;
-  for (size_t i = 0; i < arraysize(log_font.lfFaceName); ++i) {
+  for (size_t i = 0; i < std::size(log_font.lfFaceName); ++i) {
     if (log_font.lfFaceName[i] == L'\0') {
       null_terminated = true;
       break;
@@ -71,7 +71,7 @@ bool FontUtil::ToWinLogFont(
   }
 
   std::string name;
-  mozc::Util::WideToUTF8(log_font.lfFaceName, &name);
+  mozc::Util::WideToUtf8(log_font.lfFaceName, &name);
   win_log_font->set_face_name(name);
 
   return true;
@@ -104,19 +104,19 @@ bool FontUtil::ToLOGFONT(
   log_font->lfPitchAndFamily = win_log_font.pitch_and_family();
 
   std::wstring face_name;
-  mozc::Util::UTF8ToWide(win_log_font.face_name(), &face_name);
+  mozc::Util::Utf8ToWide(win_log_font.face_name(), &face_name);
 
-  // Although the result of mozc::Util::UTF8ToWide never contains any null
+  // Although the result of mozc::Util::Utf8ToWide never contains any null
   // character, make sure it again just for the safety.
   face_name += L'\0';
   face_name = face_name.substr(0, face_name.find(L'\0') + 1);
 
   // +1 is for nullptr.
-  if (face_name.size() + 1 > arraysize(log_font->lfFaceName)) {
+  if (face_name.size() + 1 > std::size(log_font->lfFaceName)) {
     return false;
   }
 
-  for (size_t i = 0; i < arraysize(log_font->lfFaceName); ++i) {
+  for (size_t i = 0; i < std::size(log_font->lfFaceName); ++i) {
     if (i < face_name.size()) {
       log_font->lfFaceName[i] = face_name[i];
     } else {

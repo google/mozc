@@ -191,7 +191,7 @@ HRESULT TipLangBarMenuDataArray::Init(HINSTANCE instance,
     if ((menu[i].flags_ & TF_LBMENUF_SEPARATOR) == 0) {
       // Retrieve the menu text and button icon.
       length = ::LoadString(instance, menu[i].text_id_, &data.text_[0],
-                            arraysize(data.text_));
+                            std::size(data.text_));
     }
     data.flags_ = menu[i].flags_;
     data.item_id_ = menu[i].item_id_;
@@ -426,7 +426,7 @@ HRESULT TipLangBarButton::Init(HINSTANCE instance, int string_id,
   // Retrieve the text label from the resource.
   // This string is also used as a tool-tip text.
   ::LoadString(instance, string_id, &item_info_.szDescription[0],
-               arraysize(item_info_.szDescription));
+               std::size(item_info_.szDescription));
 
   // Create a new TipLangBarMenuItem object.
   menu_data_.Init(instance, menu, count);
@@ -534,7 +534,7 @@ STDMETHODIMP TipLangBarButton::QueryInterfaceBase(REFIID interface_id,
 }
 
 void TipLangBarButton::SetDescription(const std::wstring &description) {
-  ::StringCchCopy(item_info_.szDescription, arraysize(item_info_.szDescription),
+  ::StringCchCopy(item_info_.szDescription, std::size(item_info_.szDescription),
                   description.c_str());
 }
 
@@ -817,8 +817,8 @@ HRESULT TipLangBarToggleButton::Init(
   if (SUCCEEDED(array.Init(instance, &menu_for_disabled, 1))) {
     menu_data_for_disabled_ = *array.data(0);
   }
-  wchar_t buffer[arraysize(menu_data_for_disabled_.text_)];
-  ::LoadString(instance, string_id, buffer, arraysize(buffer));
+  wchar_t buffer[std::size(menu_data_for_disabled_.text_)];
+  ::LoadString(instance, string_id, buffer, std::size(buffer));
   description_for_enabled_ = buffer;
   return TipLangBarButton::Init(instance, string_id, menu, count);
 }

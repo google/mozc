@@ -81,8 +81,8 @@ std::wstring WindowUtil::GetWindowClassName(HWND window_handle) {
   // http://msdn.microsoft.com/en-us/library/ms633576.aspx
   wchar_t buffer[256 + 1] = {};
   const size_t num_copied_without_null =
-      ::GetClassNameW(window_handle, buffer, arraysize(buffer));
-  if (num_copied_without_null + 1 >= arraysize(buffer)) {
+      ::GetClassNameW(window_handle, buffer, std::size(buffer));
+  if (num_copied_without_null + 1 >= std::size(buffer)) {
     return L"";
   }
   return std::wstring(buffer, num_copied_without_null);

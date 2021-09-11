@@ -44,7 +44,7 @@ constexpr char kSurveyBaseURL[] =
 bool FindEncodedParam(const std::vector<std::string> &params,
                       const std::string &key, const std::string &value) {
   std::string encoded;
-  Util::EncodeURI(value, &encoded);
+  Util::EncodeUri(value, &encoded);
   const std::string param = key + "=" + encoded;
   for (size_t i = 0; i < params.size(); ++i) {
     if (params[i] == param) {

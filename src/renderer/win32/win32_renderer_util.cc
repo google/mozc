@@ -431,7 +431,7 @@ std::wstring ComposePreeditText(const commands::Preedit &preedit,
        ++segment_index) {
     const commands::Preedit::Segment &segment = preedit.segment(segment_index);
     std::wstring segment_value;
-    mozc::Util::UTF8ToWide(segment.value(), &segment_value);
+    mozc::Util::Utf8ToWide(segment.value(), &segment_value);
     value.append(segment_value);
     if (preedit_utf8 != nullptr) {
       preedit_utf8->append(segment.value());

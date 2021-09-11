@@ -63,6 +63,9 @@ constexpr char kPredictionExpect[] = "Prediction Expected";
 constexpr char kPredictionNotExpect[] = "Prediction Not Expected";
 constexpr char kSuggestionExpect[] = "Suggestion Expected";
 constexpr char kSuggestionNotExpect[] = "Suggestion Not Expected";
+// Zero query
+constexpr char kZeroQueryExpect[] = "ZeroQuery Expected";
+constexpr char kZeroQueryNotExpect[] = "ZeroQuery Not Expected";
 
 // copied from evaluation/quality_regression/evaluator.cc
 int GetRank(const std::string &value, const Segments *segments,
@@ -233,6 +236,25 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest request(&composer, request_.get(), config_.get());
     converter_->StartSuggestionForRequest(request, segments_.get());
+  } else if (command == kZeroQueryExpect || command == kZeroQueryNotExpect) {
+    request_->set_zero_query_suggestion(true);
+    request_->set_mixed_conversion(true);
+    segments_->set_max_conversion_candidates_size(10);
+    {
+      composer::Composer composer(&table, request_.get(), config_.get());
+      composer.SetPreeditTextForTestOnly(key);
+      ConversionRequest request(&composer, request_.get(), config_.get());
+      converter_->StartSuggestionForRequest(request, segments_.get());
+      converter_->CommitSegmentValue(segments_.get(), 0, 0);
+      converter_->FinishConversion(request, segments_.get());
+    }
+    {
+      // Issues zero-query request.
+      composer::Composer composer(&table, request_.get(), config_.get());
+      ConversionRequest request(&composer, request_.get(), config_.get());
+      converter_->StartPredictionForRequest(request, segments_.get());
+      segments_->clear_history_segments();
+    }
   } else {
     LOG(FATAL) << "Unknown command: " << command;
   }
@@ -262,7 +284,8 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
 
   if (command == kConversionNotExpect ||
       command == kReverseConversionNotExpect ||
-      command == kPredictionNotExpect || command == kSuggestionNotExpect) {
+      command == kPredictionNotExpect || command == kSuggestionNotExpect ||
+      command == kZeroQueryNotExpect) {
     result = !result;
   }
 

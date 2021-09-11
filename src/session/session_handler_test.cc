@@ -454,7 +454,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
       commands::Input::DELETE_SESSION,
       commands::Input::CLEANUP,
   };
-  for (size_t i = 0; i < arraysize(command_types); ++i) {
+  for (size_t i = 0; i < std::size(command_types); ++i) {
     std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine());
 
     // Set the mock user data manager to the converter mock created above. This

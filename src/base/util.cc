@@ -709,7 +709,7 @@ size_t Util::WideCharsLen(absl::string_view src) {
   return num_chars;
 }
 
-int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
+int Util::Utf8ToWide(absl::string_view input, std::wstring *output) {
   const size_t output_length = WideCharsLen(input);
   if (output_length == 0) {
     return 0;
@@ -725,7 +725,7 @@ int Util::UTF8ToWide(absl::string_view input, std::wstring *output) {
   return copied_num_chars;
 }
 
-int Util::WideToUTF8(const wchar_t *input, std::string *output) {
+int Util::WideToUtf8(const wchar_t *input, std::string *output) {
   const int output_length =
       WideCharToMultiByte(CP_UTF8, 0, input, -1, nullptr, 0, nullptr, nullptr);
   if (output_length == 0) {
@@ -742,8 +742,8 @@ int Util::WideToUTF8(const wchar_t *input, std::string *output) {
   return result;
 }
 
-int Util::WideToUTF8(const std::wstring &input, std::string *output) {
-  return WideToUTF8(input.c_str(), output);
+int Util::WideToUtf8(const std::wstring &input, std::string *output) {
+  return WideToUtf8(input.c_str(), output);
 }
 #endif  // OS_WIN
 
@@ -1217,7 +1217,7 @@ bool Util::IsEnglishTransliteration(const std::string &value) {
 }
 
 // URL
-void Util::EncodeURI(const std::string &input, std::string *output) {
+void Util::EncodeUri(const std::string &input, std::string *output) {
   constexpr char kDigits[] = "0123456789ABCDEF";
   const char *begin = input.data();
   const char *end = input.data() + input.size();
@@ -1234,7 +1234,7 @@ void Util::EncodeURI(const std::string &input, std::string *output) {
   }
 }
 
-void Util::DecodeURI(const std::string &input, std::string *output) {
+void Util::DecodeUri(const std::string &input, std::string *output) {
   output->clear();
   const char *p = input.data();
   const char *end = input.data() + input.size();
@@ -1255,7 +1255,7 @@ void Util::DecodeURI(const std::string &input, std::string *output) {
   }
 }
 
-void Util::AppendCGIParams(
+void Util::AppendCgiParams(
     const std::vector<std::pair<std::string, std::string> > &params,
     std::string *base) {
   if (params.empty() || base == nullptr) {
@@ -1269,7 +1269,7 @@ void Util::AppendCGIParams(
     // Append "<first>=<encoded second>&"
     base->append(it->first);
     base->append("=");
-    EncodeURI(it->second, &encoded);
+    EncodeUri(it->second, &encoded);
     base->append(encoded);
     base->append("&");
   }

@@ -35,7 +35,6 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/status.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/converter_interface.h"
@@ -63,6 +62,7 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace {
@@ -138,7 +138,7 @@ bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
 
 }  // namespace
 
-mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
+absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
   auto engine = absl::make_unique<Engine>();
   auto status = engine->Init(std::move(data_manager),
@@ -149,7 +149,7 @@ mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
   return engine;
 }
 
-mozc::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
+absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
   auto engine = absl::make_unique<Engine>();
   auto status = engine->Init(std::move(data_manager),
@@ -165,14 +165,14 @@ Engine::~Engine() = default;
 
 // Since the composite predictor class differs on desktop and mobile, Init()
 // takes a function pointer to create an instance of predictor class.
-mozc::Status Engine::Init(
+absl::Status Engine::Init(
     std::unique_ptr<const DataManagerInterface> data_manager,
     std::unique_ptr<PredictorInterface> (*predictor_factory)(
         std::unique_ptr<PredictorInterface>,
         std::unique_ptr<PredictorInterface>),
     bool enable_content_word_learning) {
   if (!data_manager || !predictor_factory) {
-    return mozc::InvalidArgumentError(absl::StrCat(
+    return absl::InvalidArgumentError(absl::StrCat(
         "engine.cc: data_manager=", data_manager ? "non-null" : "null",
         ", predictor_factory=", predictor_factory ? "non-null" : ":null"));
   }
@@ -180,7 +180,7 @@ mozc::Status Engine::Init(
 #define RETURN_IF_NULL(ptr)                                                 \
   do {                                                                      \
     if (!(ptr))                                                             \
-      return mozc::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
+      return absl::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
   } while (false)
 
   suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
@@ -202,7 +202,7 @@ mozc::Status Engine::Init(
   int dictionary_size = 0;
   data_manager->GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-  mozc::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
+  absl::StatusOr<std::unique_ptr<SystemDictionary>> sysdic =
       SystemDictionary::Builder(dictionary_data, dictionary_size).Build();
   if (!sysdic.ok()) {
     return std::move(sysdic).status();
@@ -294,7 +294,7 @@ mozc::Status Engine::Init(
 
   data_manager_ = std::move(data_manager);
 
-  return mozc::Status();
+  return absl::Status();
 
 #undef RETURN_IF_NULL
 }

@@ -189,7 +189,7 @@ class LocalAppDataDirectoryCache {
     }
     path.erase(local_pos);
     path += L"Low";
-    if (Util::WideToUTF8(path, dir) == 0) {
+    if (Util::WideToUtf8(path, dir) == 0) {
       return E_FAIL;
     }
     return S_OK;
@@ -219,7 +219,7 @@ class LocalAppDataDirectoryCache {
     ::CoTaskMemFree(task_mem_buffer);
 
     std::string path;
-    if (Util::WideToUTF8(wpath, &path) == 0) {
+    if (Util::WideToUtf8(wpath, &path) == 0) {
       return E_UNEXPECTED;
     }
 
@@ -399,7 +399,7 @@ class ProgramFilesX86Cache {
     }
 
     std::string program_files;
-    if (Util::WideToUTF8(program_files_path_buffer, &program_files) == 0) {
+    if (Util::WideToUtf8(program_files_path_buffer, &program_files) == 0) {
       return E_FAIL;
     }
     *path = program_files;
@@ -495,7 +495,7 @@ std::string SystemUtil::GetUserNameAsString() {
   const BOOL result = ::GetUserName(wusername, &name_size);
   DCHECK_NE(FALSE, result);
   std::string username;
-  Util::WideToUTF8(&wusername[0], &username);
+  Util::WideToUtf8(&wusername[0], &username);
   return username;
 #endif  // OS_WIN
 
@@ -558,7 +558,7 @@ UserSidImpl::UserSidImpl() {
     return;
   }
 
-  Util::WideToUTF8(p_sid_user_name, &sid_);
+  Util::WideToUtf8(p_sid_user_name, &sid_);
 
   ::LocalFree(p_sid_user_name);
   ::CloseHandle(htoken);
@@ -712,8 +712,8 @@ class SystemDirectoryCache {
  public:
   SystemDirectoryCache() : system_dir_(nullptr) {
     const UINT copied_len_wo_null_if_success =
-        ::GetSystemDirectory(path_buffer_, arraysize(path_buffer_));
-    if (copied_len_wo_null_if_success >= arraysize(path_buffer_)) {
+        ::GetSystemDirectory(path_buffer_, std::size(path_buffer_));
+    if (copied_len_wo_null_if_success >= std::size(path_buffer_)) {
       // Function failed.
       return;
     }
@@ -898,7 +898,7 @@ uint64_t SystemUtil::GetTotalPhysicalMemory() {
   uint64 total_memory = 0;
   size_t size = sizeof(total_memory);
   const int error =
-      sysctl(mib, arraysize(mib), &total_memory, &size, nullptr, 0);
+      sysctl(mib, std::size(mib), &total_memory, &size, nullptr, 0);
   if (error == -1) {
     const int error = errno;
     LOG(ERROR) << "sysctl with hw.memsize failed. "

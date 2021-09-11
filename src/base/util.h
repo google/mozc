@@ -242,9 +242,9 @@ class Util {
   static size_t WideCharsLen(absl::string_view src);
   // Converts the encoding of the specified string from UTF-8 to UTF-16, and
   // vice versa.
-  static int UTF8ToWide(absl::string_view input, std::wstring *output);
-  static int WideToUTF8(const wchar_t *input, std::string *output);
-  static int WideToUTF8(const std::wstring &input, std::string *output);
+  static int Utf8ToWide(absl::string_view input, std::wstring *output);
+  static int WideToUtf8(const wchar_t *input, std::string *output);
+  static int WideToUtf8(const std::wstring &input, std::string *output);
 #endif  // OS_WIN
 
   // Extracts a substring range, where both start and length are in terms of
@@ -357,14 +357,14 @@ class Util {
   // corresponding open bracket is assigned.
   static bool IsCloseBracket(absl::string_view key, std::string *open_bracket);
 
-  static void EncodeURI(const std::string &input, std::string *output);
-  static void DecodeURI(const std::string &input, std::string *output);
+  static void EncodeUri(const std::string &input, std::string *output);
+  static void DecodeUri(const std::string &input, std::string *output);
 
   // Make a string for CGI parameters from params and append it to
   // base.  The result looks like:
   //   <base><key1>=<encoded val1>&<key2>=<encoded val2>
   // The base is supposed to end "?" or "&".
-  static void AppendCGIParams(
+  static void AppendCgiParams(
       const std::vector<std::pair<std::string, std::string> > &params,
       std::string *base);
 

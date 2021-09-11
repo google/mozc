@@ -84,7 +84,7 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
   }
 
   if (Util::GetScriptType(c.content_value) == Util::NUMBER) {
-    arabic_candidate->CopyFrom(c);
+    *arabic_candidate = c;
     arabic_candidate->inner_segment_boundary.clear();
     DCHECK(arabic_candidate->IsValid());
     return ARABIC_FIRST;

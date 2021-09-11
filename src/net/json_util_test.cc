@@ -788,7 +788,7 @@ TEST(JsonUtilTest, FailureTest) {
       "double_value",  "float_value",   "int32_value",    "int64_value",
       "uint32_value",  "uint64_value",  "sint32_value",   "sint64_value",
       "fixed32_value", "fixed64_value", "sfixed32_value", "sfixed64_value"};
-  for (size_t i = 0; i < arraysize(kNumValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kNumValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kNumValueKeys[i]] = "str";
@@ -814,7 +814,7 @@ TEST(JsonUtilTest, FailureTest) {
   const char *kNumS64ValueKeys[] = {"int64_value", "sint64_value",
                                     "sfixed64_value"};
   const char *kNumU64ValueKeys[] = {"uint64_value", "fixed64_value"};
-  for (size_t i = 0; i < arraysize(kNumS32ValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kNumS32ValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kNumS32ValueKeys[i]] = -Json::Int64(2147483649);
@@ -829,7 +829,7 @@ TEST(JsonUtilTest, FailureTest) {
     }
   }
 
-  for (size_t i = 0; i < arraysize(kNumU32ValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kNumU32ValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kNumU32ValueKeys[i]] = -1;
@@ -843,7 +843,7 @@ TEST(JsonUtilTest, FailureTest) {
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
   }
-  for (size_t i = 0; i < arraysize(kNumS64ValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kNumS64ValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kNumS64ValueKeys[i]] = "-9223372036854775809";
@@ -857,7 +857,7 @@ TEST(JsonUtilTest, FailureTest) {
       EXPECT_FALSE(JsonUtil::JsonValueToProtobufMessage(json_value, &msg));
     }
   }
-  for (size_t i = 0; i < arraysize(kNumU64ValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kNumU64ValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kNumU64ValueKeys[i]] = "-1";
@@ -946,7 +946,7 @@ TEST(JsonUtilTest, FailureTest) {
       "repeated_sint32_value",   "repeated_sint64_value",
       "repeated_fixed32_value",  "repeated_fixed64_value",
       "repeated_sfixed32_value", "repeated_sfixed64_value"};
-  for (size_t i = 0; i < arraysize(kRepeatedNumValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kRepeatedNumValueKeys); ++i) {
     {
       Json::Value json_value;
       json_value[kRepeatedNumValueKeys[i]] = "str";
@@ -968,7 +968,7 @@ TEST(JsonUtilTest, FailureTest) {
   }
   const char *kRepeatedUnsignedNumValueKeys[] = {"repeated_uint32_value",
                                                  "repeated_uint64_value"};
-  for (size_t i = 0; i < arraysize(kRepeatedUnsignedNumValueKeys); ++i) {
+  for (size_t i = 0; i < std::size(kRepeatedUnsignedNumValueKeys); ++i) {
     Json::Value json_value;
     json_value[kRepeatedUnsignedNumValueKeys[i]].append(0);
     json_value[kRepeatedUnsignedNumValueKeys[i]].append(-1);

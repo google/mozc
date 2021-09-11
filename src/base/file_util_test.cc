@@ -132,8 +132,8 @@ TEST_F(FileUtilTest, Unlink) {
   };
 
   std::wstring wfilepath;
-  Util::UTF8ToWide(filepath, &wfilepath);
-  for (size_t i = 0; i < arraysize(kTestAttributeList); ++i) {
+  Util::Utf8ToWide(filepath, &wfilepath);
+  for (size_t i = 0; i < std::size(kTestAttributeList); ++i) {
     SCOPED_TRACE(Util::StringPrintf("AttributeTest %zd", i));
     CreateTestFile(filepath, "attribute_test");
     EXPECT_NE(FALSE,
@@ -156,7 +156,7 @@ TEST_F(FileUtilTest, HideFile) {
   EXPECT_FALSE(FileUtil::HideFile(filename));
 
   std::wstring wfilename;
-  Util::UTF8ToWide(filename.c_str(), &wfilename);
+  Util::Utf8ToWide(filename.c_str(), &wfilename);
 
   CreateTestFile(filename, "test data");
   EXPECT_TRUE(FileUtil::FileExists(filename));
@@ -261,7 +261,7 @@ TEST_F(FileUtilTest, CopyFile) {
                FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM),
   };
 
-  for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
+  for (size_t i = 0; i < std::size(kTestDataList); ++i) {
     const std::string test_label =
         "overwrite test with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
@@ -269,8 +269,8 @@ TEST_F(FileUtilTest, CopyFile) {
 
     const TestData &kData = kTestDataList[i];
     std::wstring wfrom, wto;
-    Util::UTF8ToWide(from.c_str(), &wfrom);
-    Util::UTF8ToWide(to.c_str(), &wto);
+    Util::Utf8ToWide(from.c_str(), &wfrom);
+    Util::Utf8ToWide(to.c_str(), &wto);
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
@@ -349,7 +349,7 @@ TEST_F(FileUtilTest, AtomicRename) {
                FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM),
   };
 
-  for (size_t i = 0; i < arraysize(kTestDataList); ++i) {
+  for (size_t i = 0; i < std::size(kTestDataList); ++i) {
     const std::string test_label =
         "overwrite file with attributes " + std::to_string(i);
     SCOPED_TRACE(test_label);
@@ -357,8 +357,8 @@ TEST_F(FileUtilTest, AtomicRename) {
 
     const TestData &kData = kTestDataList[i];
     std::wstring wfrom, wto;
-    Util::UTF8ToWide(from.c_str(), &wfrom);
-    Util::UTF8ToWide(to.c_str(), &wto);
+    Util::Utf8ToWide(from.c_str(), &wfrom);
+    Util::Utf8ToWide(to.c_str(), &wto);
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));

@@ -33,7 +33,7 @@
 #include <ostream>
 
 #include "base/logging.h"
-#include "base/status.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 
 namespace mozc {

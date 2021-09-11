@@ -68,7 +68,7 @@ TEST(ConverterTest, Converter) {
       {"nannkanain?", "なんかないん?"},
       {"nannkanain", "なんかないん"},
   };
-  static const int size = arraysize(test_cases);
+  static const int size = std::size(test_cases);
 
   mozc::composer::Table table;
   InitTable(&table);

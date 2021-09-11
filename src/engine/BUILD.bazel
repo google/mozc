@@ -117,7 +117,6 @@ cc_library_mozc(
         "//base",
         "//base:logging",
         "//base:port",
-        "//base:status",
         "//converter",
         "//converter:connector",
         "//converter:converter_interface",
@@ -144,6 +143,8 @@ cc_library_mozc(
         "//rewriter",
         "//rewriter:rewriter_interface",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -201,8 +202,9 @@ cc_library_mozc(
     srcs = ["eval_engine_factory.cc"],
     hdrs = ["eval_engine_factory.h"],
     deps = [
+        ":engine",
         "//data_manager",
-        "//engine",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -232,9 +234,9 @@ cc_library_mozc(
     deps = [
         ":engine",
         "//base",
-        "//base:status",
         "//data_manager/google:google_data_manager",
         "//prediction:predictor",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -248,8 +250,8 @@ cc_library_mozc(
     ],
     deps = [
         ":engine",
-        "//base:status",
         "//data_manager/android:android_data_manager",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -259,8 +261,8 @@ cc_library_mozc(
     visibility = ["//evaluation:__subpackages__"],
     deps = [
         ":engine",
-        "//base:status",
         "//data_manager/oss:oss_data_manager",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 
@@ -277,8 +279,8 @@ cc_library_mozc(
     ],
     deps = [
         ":engine",
-        "//base:status",
         "//data_manager/testing:mock_data_manager",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

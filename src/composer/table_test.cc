@@ -104,7 +104,7 @@ TEST_F(TableTest, LookUp) {
       {"aka", false, "", ""}, {"na", true, "な", ""}, {"n", true, "ん", ""},
       {"nn", true, "ん", ""},
   };
-  static const int size = arraysize(test_cases);
+  static const int size = std::size(test_cases);
 
   Table table;
   InitTable(&table);
@@ -153,7 +153,7 @@ TEST_F(TableTest, Punctuations) {
 
   commands::Request request;
 
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     config::Config config;
     config.set_punctuation_method(test_cases[i].method);
     Table table;
@@ -189,7 +189,7 @@ TEST_F(TableTest, Symbols) {
 
   commands::Request request;
 
-  for (int i = 0; i < arraysize(test_cases); ++i) {
+  for (int i = 0; i < std::size(test_cases); ++i) {
     config::Config config;
     config.set_symbol_method(test_cases[i].method);
     Table table;
@@ -1024,11 +1024,11 @@ TEST_F(TableTest, TableManager) {
       config::Config::CORNER_BRACKET_SLASH,
       config::Config::SQUARE_BRACKET_MIDDLE_DOT};
 
-  for (int romanji = 0; romanji < arraysize(special_romanji_table); ++romanji) {
-    for (int preedit = 0; preedit < arraysize(preedit_method); ++preedit) {
-      for (int punctuation = 0; punctuation < arraysize(punctuation_method);
+  for (int romanji = 0; romanji < std::size(special_romanji_table); ++romanji) {
+    for (int preedit = 0; preedit < std::size(preedit_method); ++preedit) {
+      for (int punctuation = 0; punctuation < std::size(punctuation_method);
            ++punctuation) {
-        for (int symbol = 0; symbol < arraysize(symbol_method); ++symbol) {
+        for (int symbol = 0; symbol < std::size(symbol_method); ++symbol) {
           commands::Request request;
           request.set_special_romanji_table(special_romanji_table[romanji]);
           config::Config config;

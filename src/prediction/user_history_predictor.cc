@@ -104,9 +104,9 @@ constexpr size_t kEntryPoolSize = 16;
 // File name for the history
 #ifdef OS_WIN
 constexpr char kFileName[] = "user://history.db";
-#else
+#else   // OS_WIN
 constexpr char kFileName[] = "user://.history.db";
-#endif
+#endif  // OS_WIN
 
 // Uses '\t' as a key/value delimiter
 constexpr char kDelimiter[] = "\t";
@@ -830,8 +830,7 @@ bool UserHistoryPredictor::RomanFuzzyLookupEntry(
 
   Entry *result = results->NewEntry();
   DCHECK(result);
-  result->Clear();
-  result->CopyFrom(*entry);
+  *result = *entry;
   result->set_spelling_correction(true);
   results->Push(result);
 
@@ -844,8 +843,7 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntry(
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
   Entry *new_entry = results->NewEntry();
-  new_entry->Clear();
-  new_entry->CopyFrom(entry);
+  *new_entry = entry;
   return new_entry;
 }
 
@@ -856,8 +854,7 @@ UserHistoryPredictor::Entry *UserHistoryPredictor::AddEntryWithNewKeyValue(
   // generate prediction by entry chaining. The deleted entry itself is never
   // shown in the final prediction result as it is filtered finally.
   Entry *new_entry = results->NewEntry();
-  new_entry->Clear();
-  new_entry->CopyFrom(entry);
+  *new_entry = entry;
   new_entry->set_key(key);
   new_entry->set_value(value);
 
@@ -1485,7 +1482,7 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
     return;
   }
 
-  target_next_entry->CopyFrom(next_entry);
+  *target_next_entry = next_entry;
 }
 
 bool UserHistoryPredictor::IsValidEntry(

@@ -135,7 +135,7 @@ google_breakpad::CustomClientInfo *GetCustomInfo() {
   static google_breakpad::CustomInfoEntry entries[] = {
       ver_entry, prod_entry, buildmode_entry, switch1, switch2};
   static google_breakpad::CustomClientInfo custom_info = {entries,
-                                                          arraysize(entries)};
+                                                          std::size(entries)};
 
   return &custom_info;
 }
@@ -264,7 +264,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
     }
 
     std::wstring crashdump_directory;
-    Util::UTF8ToWide(acrashdump_directory, &crashdump_directory);
+    Util::Utf8ToWide(acrashdump_directory, &crashdump_directory);
 
     google_breakpad::ExceptionHandler::FilterCallback filter_callback =
         check_address ? FilterHandler : nullptr;

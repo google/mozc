@@ -30,44 +30,45 @@
 #ifndef MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 #define MOZC_COMPOSER_INTERNAL_CHAR_CHUNK_H_
 
+#include <memory>
 #include <set>
 #include <string>
 
 #include "base/port.h"
 #include "composer/internal/transliterators.h"
-// For TableAttributes
 #include "composer/table.h"
-// for FRIEND_TEST()
-#include "testing/base/public/gunit_prod.h"
 
 namespace mozc {
 namespace composer {
 
 class CompositionInput;
-class Table;
 
 // This class contains a unit of composition string.  The unit consists of
 // conversion, pending and raw strings.  Every unit should be the shortest
 // size separated by the conversion table.  A sample units with normal
 // romaji-hiragana conversion table are {conversion: "か", pending: "", raw:
 // "ka"} and {conversion: "っ", pending: "t", raw: "tt"}.
-class CharChunk {
+class CharChunk final {
  public:
   // LOCAL transliterator is not accepted.
   CharChunk(Transliterators::Transliterator transliterator, const Table *table);
 
+  // Copyable.
+  CharChunk(const CharChunk &x);
+  CharChunk &operator=(const CharChunk &x);
+
   void Clear();
 
-  size_t GetLength(Transliterators::Transliterator transliterator) const;
+  size_t GetLength(Transliterators::Transliterator t12r) const;
 
   // Append the characters representing this CharChunk accoring to the
   // transliterator.  If the transliterator is LOCAL, the local
   // transliterator specified via SetTransliterator is used.
-  void AppendResult(Transliterators::Transliterator transliterator,
+  void AppendResult(Transliterators::Transliterator t12r,
                     std::string *result) const;
-  void AppendTrimedResult(Transliterators::Transliterator transliterator,
+  void AppendTrimedResult(Transliterators::Transliterator t12r,
                           std::string *result) const;
-  void AppendFixedResult(Transliterators::Transliterator transliterator,
+  void AppendFixedResult(Transliterators::Transliterator t12r,
                          std::string *result) const;
 
   // Get possible results from current chunk
@@ -76,8 +77,8 @@ class CharChunk {
 
   // True if IsAppendable() is true and this object is fixed (|pending_|=="")
   // when |input| is appended.
-  bool IsConvertible(Transliterators::Transliterator transliterator,
-                     const Table *table, const std::string &input) const;
+  bool IsConvertible(Transliterators::Transliterator t12r, const Table *table,
+                     const std::string &input) const;
 
   // Combines all fields with |left_chunk|.
   // [this chunk] := [left_chunk]+[this chunk]
@@ -88,13 +89,13 @@ class CharChunk {
 
   // Return true if this char chunk accepts additional characters with
   // the specified transliterator and the table.
-  bool IsAppendable(Transliterators::Transliterator transliterator,
+  bool IsAppendable(Transliterators::Transliterator t12r,
                     const Table *table) const;
 
-  // Split CharChunk at |position| and set split new chunk to |left_new_chunk|.
-  // CharChunk doesn't have ownership of the new chunk.
-  bool SplitChunk(Transliterators::Transliterator transliterator,
-                  size_t position, CharChunk **left_new_chunk);
+  // Splits this CharChunk at |position| and returns the left chunk. Returns
+  // nullptr on failure.
+  std::unique_ptr<CharChunk> SplitChunk(Transliterators::Transliterator t12r,
+                                        size_t position);
 
   // Return true if this chunk should be committed immediately.  This
   // function refers DIRECT_INPUT attribute.
@@ -130,42 +131,36 @@ class CharChunk {
                             const std::string &raw,
                             const std::string &converted) const;
 
-  // Test only
-  const std::string &raw() const;
-  // Test only
+  // The following accessors and mutators are for test only.
+  Transliterators::Transliterator transliterator() const {
+    return transliterator_;
+  }
+  const Table *table() const { return table_; }
+
+  const std::string &raw() const { return raw_; }
   void set_raw(const std::string &raw);
 
-  // Test only
-  const std::string &conversion() const;
-  // Test only
+  const std::string &conversion() const { return conversion_; }
   void set_conversion(const std::string &conversion);
 
-  // Test only
-  const std::string &pending() const;
-  // Test only
+  const std::string &pending() const { return pending_; }
   void set_pending(const std::string &pending);
 
-  // Test only
-  const std::string &ambiguous() const;
-  // Test only
+  const std::string &ambiguous() const { return ambiguous_; }
   void set_ambiguous(const std::string &ambiguous);
 
-  CharChunk *Clone() const;
+  TableAttributes attributes() const { return attributes_; }
+  void set_attributes(TableAttributes attributes);
 
-  // Test only
   bool AddInputInternal(std::string *input);
 
  private:
-  FRIEND_TEST(CharChunkTest, Clone);
-  FRIEND_TEST(CharChunkTest, GetTransliterator);
-
-  Transliterators::Transliterator transliterator_;
   const Table *table_;
-
   std::string raw_;
   std::string conversion_;
   std::string pending_;
   std::string ambiguous_;
+  Transliterators::Transliterator transliterator_;
   TableAttributes attributes_;
   mutable size_t local_length_cache_;
 };

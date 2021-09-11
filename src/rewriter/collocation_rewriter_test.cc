@@ -161,10 +161,10 @@ TEST_F(CollocationRewriterTest, NekowoKaitai) {
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
+      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
   };
-  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -198,10 +198,10 @@ TEST_F(CollocationRewriterTest, MagurowoKaitai) {
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
-      {kMagurowo, kMagurowoCands, arraysize(kMagurowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+      {kMagurowo, kMagurowoCands, std::size(kMagurowoCands)},
+      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
   };
-  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -239,11 +239,11 @@ TEST_F(CollocationRewriterTest, CrossOverAdverbSegment) {
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
-      {kSugoku, kSugokuCands, arraysize(kSugokuCands)},
-      {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
+      {kSugoku, kSugokuCands, std::size(kSugokuCands)},
+      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
   };
-  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -281,11 +281,11 @@ TEST_F(CollocationRewriterTest, DoNotCrossOverNonAdverbSegment) {
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 0, id, id},
   };
   const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
-      {kSugoku, kSugokuCands, arraysize(kSugokuCands)},
-      {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
+      {kSugoku, kSugokuCands, std::size(kSugokuCands)},
+      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
   };
-  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
 
   Segments segments;
   MakeSegments(kSegments, &segments);
@@ -324,10 +324,10 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
       {kKaitaiHiragana, kKaitaiHiragana, kFeed, kFeed, 10000, id, id},
   };
   const SegmentData kSegmentData[] = {
-      {kNekowo, kNekowoCands, arraysize(kNekowoCands)},
-      {kKaitaiHiragana, kKaitaiCands, arraysize(kKaitaiCands)},
+      {kNekowo, kNekowoCands, std::size(kNekowoCands)},
+      {kKaitaiHiragana, kKaitaiCands, std::size(kKaitaiCands)},
   };
-  const SegmentsData kSegments = {kSegmentData, arraysize(kSegmentData)};
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
 
   Segments segments;
   MakeSegments(kSegments, &segments);

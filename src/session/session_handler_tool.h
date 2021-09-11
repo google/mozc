@@ -33,12 +33,12 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/status.h"
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_interface.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace session {
@@ -108,7 +108,7 @@ class SessionHandlerInterpreter {
   const commands::Output& LastOutput() const;
   bool GetCandidateIdByValue(const absl::string_view value, uint32_t *id);
   std::vector<std::string> Parse(const std::string &line);
-  Status Eval(const std::vector<std::string> &args);
+  absl::Status Eval(const std::vector<std::string> &args);
 
  private:
   // std::unique_ptr<EngineInterface> engine_;

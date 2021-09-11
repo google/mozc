@@ -33,8 +33,6 @@
 #include <memory>
 
 #include "base/port.h"
-#include "base/status.h"
-#include "base/statusor.h"
 #include "converter/connector.h"
 #include "converter/converter.h"
 #include "converter/immutable_converter_interface.h"
@@ -51,6 +49,8 @@
 #include "prediction/suggestion_filter.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 
@@ -64,25 +64,25 @@ class Engine : public EngineInterface {
 
   // Creates an instance with desktop configuration from a data manager.  The
   // ownership of data manager is passed to the engine instance.
-  static mozc::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngine(
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngine(
       std::unique_ptr<const DataManagerInterface> data_manager);
 
   // Helper function for the above factory, where data manager is instantiated
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
-  static mozc::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngineHelper() {
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngineHelper() {
     return CreateDesktopEngine(absl::make_unique<const DataManagerType>());
   }
 
   // Creates an instance with mobile configuration from a data manager.  The
   // ownership of data manager is passed to the engine instance.
-  static mozc::StatusOr<std::unique_ptr<Engine>> CreateMobileEngine(
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateMobileEngine(
       std::unique_ptr<const DataManagerInterface> data_manager);
 
   // Helper function for the above factory, where data manager is instantiated
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
-  static mozc::StatusOr<std::unique_ptr<Engine>> CreateMobileEngineHelper() {
+  static absl::StatusOr<std::unique_ptr<Engine>> CreateMobileEngineHelper() {
     return CreateMobileEngine(absl::make_unique<const DataManagerType>());
   }
 
@@ -120,7 +120,7 @@ class Engine : public EngineInterface {
   // Initializes the object by the given data manager and predictor factory
   // function.  Predictor factory is used to select DefaultPredictor and
   // MobilePredictor.
-  mozc::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
+  absl::Status Init(std::unique_ptr<const DataManagerInterface> data_manager,
                     std::unique_ptr<PredictorInterface> (*predictor_factory)(
                         std::unique_ptr<PredictorInterface>,
                         std::unique_ptr<PredictorInterface>),

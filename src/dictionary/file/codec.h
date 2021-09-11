@@ -40,6 +40,7 @@
 #include "base/port.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace dictionary {
@@ -55,7 +56,7 @@ class DictionaryFileCodec : public DictionaryFileCodecInterface {
 
   void WriteSections(const std::vector<DictionaryFileSection> &sections,
                      std::ostream *ofs) const override;
-  mozc::Status ReadSections(
+  absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const override;
   std::string GetSectionName(const std::string &name) const override;

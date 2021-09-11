@@ -563,7 +563,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
       "なのは",
       "まほうしょうじょ",
   };
-  for (size_t testcase = 0; testcase < arraysize(kRequestKeys); ++testcase) {
+  for (size_t testcase = 0; testcase < std::size(kRequestKeys); ++testcase) {
     Segments segments;
     segments.set_request_type(Segments::PREDICTION);
     segments.set_max_prediction_candidates_size(10);

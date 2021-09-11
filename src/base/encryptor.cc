@@ -126,8 +126,8 @@ struct Encryptor::Key::InternalData {
   bool is_available;
 
   InternalData() : is_available(false) {
-    memset(key, '\0', arraysize(key));
-    memset(iv, '\0', arraysize(iv));
+    memset(key, '\0', std::size(key));
+    memset(iv, '\0', std::size(iv));
   }
 };
 

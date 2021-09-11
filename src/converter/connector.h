@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/status.h"
-#include "base/statusor.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 
@@ -46,10 +46,10 @@ class Connector final {
  public:
   static constexpr int16_t kInvalidCost = 30000;
 
-  static mozc::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
+  static absl::StatusOr<std::unique_ptr<Connector>> CreateFromDataManager(
       const DataManagerInterface &data_manager);
 
-  static mozc::StatusOr<std::unique_ptr<Connector>> Create(
+  static absl::StatusOr<std::unique_ptr<Connector>> Create(
       const char *connection_data, size_t connection_size, int cache_size);
 
   Connector();
@@ -66,7 +66,7 @@ class Connector final {
  private:
   class Row;
 
-  mozc::Status Init(const char *connection_data, size_t connection_size,
+  absl::Status Init(const char *connection_data, size_t connection_size,
                     int cache_size);
 
   int LookupCost(uint16_t rid, uint16_t lid) const;

@@ -142,7 +142,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
   c1->rid = 1;
   c1->key = "abc";
   c1->value = "abc";
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("abc", c1, n, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -157,7 +157,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
   // Once filter "abc" so that the filter memorizes it.
   EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
             filter->FilterCandidate("abc", c1, n, Segments::CONVERSION));
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate("abc", c2, n, kRequestTypes[i]));
   }
@@ -168,7 +168,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
   c3->structure_cost = INT_MAX;
   c3->key = "def";
   c3->value = "def";
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate("def", c3, n, kRequestTypes[i]));
     filter->Reset();
@@ -176,7 +176,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
 
   // Check if a candidate is active before appending many candidates.
   Segment::Candidate *c4 = NewCandidate();
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("", c4, n, kRequestTypes[i]));
     filter->Reset();
@@ -188,7 +188,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
   c5->value = "foo";
   c5->lid = 1;
   c5->rid = 1;
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("foo", c5, n, kRequestTypes[i]));
     filter->Reset();
@@ -203,7 +203,7 @@ TEST_F(CandidateFilterTest, FilterTest) {
     filter->FilterCandidate(cand->key, cand, n, Segments::CONVERSION);
   }
   // There will be no more candidates.
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
               filter->FilterCandidate("", c4, n, kRequestTypes[i]));
   }
@@ -224,7 +224,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     n->key = "abc";
     n->value = "abc";
     nodes[0] = n;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -246,7 +246,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     n->key = "abc";
     n->value = "abc";
     nodes[1] = n;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -272,7 +272,7 @@ TEST_F(CandidateFilterTest, KatakanaT13N) {
     n2->key = "てすと";
     n2->value = "てすと";
     nodes[1] = n2;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(
           CandidateFilter::BAD_CANDIDATE,
           filter->FilterCandidate("abcてすと", c, nodes, kRequestTypes[i]));
@@ -306,7 +306,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
 
     node->prev->node_type = Node::NOR_NODE;
     node->next->node_type = Node::EOS_NODE;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -316,7 +316,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
 
     node->prev->node_type = Node::BOS_NODE;
     node->next->node_type = Node::NOR_NODE;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -324,7 +324,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
 
     node->prev->node_type = Node::NOR_NODE;
     node->next->node_type = Node::NOR_NODE;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -332,7 +332,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
 
     node->prev->node_type = Node::BOS_NODE;
     node->next->node_type = Node::EOS_NODE;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -341,7 +341,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
     Node *backup_node = node->prev;
     node->prev = nullptr;
     node->next->node_type = Node::EOS_NODE;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -351,7 +351,7 @@ TEST_F(CandidateFilterTest, IsolatedWordOrGeneralSymbol) {
     backup_node = node->next;
     node->prev->node_type = Node::BOS_NODE;
     node->next = nullptr;
-    for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+    for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
       EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
                 filter->FilterCandidate("abc", c, nodes, kRequestTypes[i]));
       filter->Reset();
@@ -404,7 +404,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   Segment::Candidate *c1 = NewCandidate();
   c1->key = "abc";
   c1->value = "abc";
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("abc", c1, n, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -420,7 +420,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
             filter->FilterCandidate("abc", c1, n, Segments::CONVERSION));
   // Candidates having the same value as c1 should be rejected but enumeration
   // should continue (i.e., STOP_ENUMERATION is not returned).
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate("abc", c2, n, kRequestTypes[i]));
   }
@@ -431,7 +431,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   c3->key = "def";
   c3->value = "def";
   // High structure cost should not Stop enumeration.
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate("def", c3, n, kRequestTypes[i]));
     filter->Reset();
@@ -443,7 +443,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   c4->key = "ghi";
   c4->value = "ghi";
   // High cost candidate should be rejected.
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate("ghi", c4, n, kRequestTypes[i]));
     filter->Reset();
@@ -467,7 +467,7 @@ TEST_F(CandidateFilterTest, MayHaveMoreCandidates) {
   // filter has seen more than 50 good candidates.
   c5->value = "ghi2";
   c5->value = "ghi2";
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::STOP_ENUMERATION,
               filter->FilterCandidate("ghi2", c5, n, kRequestTypes[i]));
   }
@@ -485,7 +485,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   c1->key = "test_key";
   c1->value = "test_value";
 
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("test_key", c1, n, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -497,7 +497,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   dic->AddEntry("test_key", "test_value");
   dic->UnLock();
 
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
               filter->FilterCandidate(c1->key, c1, n, kRequestTypes[i]));
     filter->Reset();
@@ -508,7 +508,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   c1->content_key = "test_key";
   c1->content_value = "test_value";
 
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(
         CandidateFilter::BAD_CANDIDATE,
         filter->FilterCandidate("test_key_suffix", c1, n, kRequestTypes[i]));
@@ -519,7 +519,7 @@ TEST_F(CandidateFilterTest, Regression3437022) {
   dic->Clear();
   dic->UnLock();
 
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(
         CandidateFilter::GOOD_CANDIDATE,
         filter->FilterCandidate("test_key_suffix", c1, n, kRequestTypes[i]));
@@ -552,7 +552,7 @@ TEST_F(CandidateFilterTest, FilterRealtimeConversionTest) {
   c1->value = "PCテスト";
   // Don't filter a candidate because it starts with alphabets and
   // is followed by a non-functional word.
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate("PCてすと", c1, n, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -590,7 +590,7 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
   c1->structure_cost = 1000;
 
   // Good top candidate
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     ASSERT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate(c1->key, c1, nodes, kRequestTypes[i]));
     // Clear the internal set |seen_| to prevent "abc" from being filtered by
@@ -623,7 +623,7 @@ TEST_F(CandidateFilterTest, DoNotFilterExchangeableCandidates) {
   c2->cost = 12000;
   c2->structure_cost = 7500;  // has big structure cost
 
-  for (size_t i = 0; i < arraysize(kRequestTypes); ++i) {
+  for (size_t i = 0; i < std::size(kRequestTypes); ++i) {
     EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
               filter->FilterCandidate(c2->key, c2, nodes, kRequestTypes[i]));
     filter->Reset();

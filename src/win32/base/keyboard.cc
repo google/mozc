@@ -198,18 +198,18 @@ Win32KeyboardInterface *Win32KeyboardInterface::CreateDefault() {
   return new DefaultKeyboardInterface();
 }
 
-KeyboardStatus::KeyboardStatus() { memset(&status_[0], 0, arraysize(status_)); }
+KeyboardStatus::KeyboardStatus() { memset(&status_[0], 0, std::size(status_)); }
 
 KeyboardStatus::KeyboardStatus(const BYTE key_status[256]) {
   const errno_t error =
-      memcpy_s(&status_[0], arraysize(status_), key_status, arraysize(status_));
+      memcpy_s(&status_[0], std::size(status_), key_status, std::size(status_));
   if (error != NO_ERROR) {
-    memset(&status_[0], 0, arraysize(status_));
+    memset(&status_[0], 0, std::size(status_));
   }
 }
 
 BYTE KeyboardStatus::GetState(int virtual_key) const {
-  if (virtual_key < 0 || arraysize(status_) <= virtual_key) {
+  if (virtual_key < 0 || std::size(status_) <= virtual_key) {
     DLOG(ERROR) << "index out of range. index = " << virtual_key;
     return 0;
   }
@@ -217,7 +217,7 @@ BYTE KeyboardStatus::GetState(int virtual_key) const {
 }
 
 void KeyboardStatus::SetState(int virtual_key, BYTE value) {
-  if (virtual_key < 0 || arraysize(status_) <= virtual_key) {
+  if (virtual_key < 0 || std::size(status_) <= virtual_key) {
     DLOG(ERROR) << "index out of range. index = " << virtual_key;
     return;
   }
@@ -236,7 +236,7 @@ const BYTE *KeyboardStatus::status() const { return status_; }
 
 BYTE *KeyboardStatus::mutable_status() { return status_; }
 
-size_t KeyboardStatus::status_size() const { return arraysize(status_); }
+size_t KeyboardStatus::status_size() const { return std::size(status_); }
 
 namespace {
 enum KeyModifierFlags {
@@ -1394,14 +1394,14 @@ wchar_t JapaneseKeyboardLayoutEmulator::GetCharacterForKeyDown(
   // - VK_LCONTROL/VK_RCONTROL
   // - VK_LMENU/VK_RMENU
 
-  DCHECK(virtual_key < arraysize(kCharTable));
+  DCHECK(virtual_key < std::size(kCharTable));
   if (is_menu_active) {
     DCHECK_LE(0, index);
-    DCHECK(index < arraysize(kNoCharGenKey));
+    DCHECK(index < std::size(kNoCharGenKey));
     return kCharTableMenuActive[virtual_key][index];
   } else {
     DCHECK_LE(0, index);
-    DCHECK(index < arraysize(kNoCharGenKey));
+    DCHECK(index < std::size(kNoCharGenKey));
     return kCharTable[virtual_key][index];
   }
 }

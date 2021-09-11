@@ -110,12 +110,15 @@ bool GetFromPending(const Table *table, const std::string &key,
 
 CharChunk::CharChunk(Transliterators::Transliterator transliterator,
                      const Table *table)
-    : transliterator_(transliterator),
-      table_(table),
+    : table_(table),
+      transliterator_(transliterator),
       attributes_(NO_TABLE_ATTRIBUTE),
       local_length_cache_(std::string::npos) {
   DCHECK_NE(Transliterators::LOCAL, transliterator);
 }
+
+CharChunk::CharChunk(const CharChunk &x) = default;
+CharChunk &CharChunk::operator=(const CharChunk &x) = default;
 
 void CharChunk::Clear() {
   raw_.clear();
@@ -518,39 +521,36 @@ void CharChunk::SetTransliterator(
   transliterator_ = transliterator;
 }
 
-const std::string &CharChunk::raw() const { return raw_; }
-
 void CharChunk::set_raw(const std::string &raw) {
   raw_ = raw;
   local_length_cache_ = std::string::npos;
 }
-
-const std::string &CharChunk::conversion() const { return conversion_; }
 
 void CharChunk::set_conversion(const std::string &conversion) {
   conversion_ = conversion;
   local_length_cache_ = std::string::npos;
 }
 
-const std::string &CharChunk::pending() const { return pending_; }
-
 void CharChunk::set_pending(const std::string &pending) {
   pending_ = pending;
   local_length_cache_ = std::string::npos;
 }
-
-const std::string &CharChunk::ambiguous() const { return ambiguous_; }
 
 void CharChunk::set_ambiguous(const std::string &ambiguous) {
   ambiguous_ = ambiguous;
   local_length_cache_ = std::string::npos;
 }
 
-bool CharChunk::SplitChunk(Transliterators::Transliterator t12r,
-                           const size_t position, CharChunk **left_new_chunk) {
+void CharChunk::set_attributes(TableAttributes attributes) {
+  attributes_ = attributes;
+  local_length_cache_ = std::string::npos;
+}
+
+std::unique_ptr<CharChunk> CharChunk::SplitChunk(
+    Transliterators::Transliterator t12r, const size_t position) {
   if (position <= 0 || position >= GetLength(t12r)) {
     LOG(WARNING) << "Invalid position: " << position;
-    return false;
+    return nullptr;
   }
 
   local_length_cache_ = std::string::npos;
@@ -560,28 +560,28 @@ bool CharChunk::SplitChunk(Transliterators::Transliterator t12r,
               Table::DeleteSpecialKey(conversion_ + pending_), &raw_lhs,
               &raw_rhs, &converted_lhs, &converted_rhs);
 
-  *left_new_chunk = new CharChunk(transliterator_, table_);
-  (*left_new_chunk)->set_raw(raw_lhs);
+  auto left_new_chunk = absl::make_unique<CharChunk>(transliterator_, table_);
+  left_new_chunk->set_raw(raw_lhs);
   set_raw(raw_rhs);
 
   if (converted_lhs.size() > conversion_.size()) {
     // [ conversion | pending ] => [ conv | pend#1 ] [ pend#2 ]
     const std::string pending_lhs(converted_lhs, conversion_.size());
-    (*left_new_chunk)->set_conversion(conversion_);
-    (*left_new_chunk)->set_pending(pending_lhs);
+    left_new_chunk->set_conversion(conversion_);
+    left_new_chunk->set_pending(pending_lhs);
 
     conversion_.clear();
     pending_ = converted_rhs;
     ambiguous_.clear();
   } else {
     // [ conversion | pending ] => [ conv#1 ] [ conv#2 | pending ]
-    (*left_new_chunk)->set_conversion(converted_lhs);
+    left_new_chunk->set_conversion(converted_lhs);
     // left_new_chunk->set_pending("");
     const size_t pending_pos = converted_rhs.size() - pending_.size();
     conversion_.assign(converted_rhs, 0, pending_pos);
     // pending_ = pending_;
   }
-  return true;
+  return left_new_chunk;
 }
 
 Transliterators::Transliterator CharChunk::GetTransliterator(
@@ -605,18 +605,6 @@ std::string CharChunk::Transliterate(
     const std::string &converted) const {
   return Transliterators::GetTransliterator(GetTransliterator(transliterator))
       ->Transliterate(raw, converted);
-}
-
-CharChunk *CharChunk::Clone() const {
-  // TODO(hsumita): Implements TransliteratorFactory and uses it instead of
-  // copying a pointer.
-  CharChunk *new_char_chunk = new CharChunk(transliterator_, table_);
-  new_char_chunk->raw_.assign(raw_);
-  new_char_chunk->conversion_.assign(conversion_);
-  new_char_chunk->pending_.assign(pending_);
-  new_char_chunk->ambiguous_.assign(ambiguous_);
-  new_char_chunk->attributes_ = attributes_;
-  return new_char_chunk;
 }
 
 }  // namespace composer

@@ -54,9 +54,9 @@
         'engine.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
-        '../base/base.gyp:status',
         '../converter/converter.gyp:converter',
         '../converter/converter_base.gyp:connector',
         '../converter/converter_base.gyp:segmenter',

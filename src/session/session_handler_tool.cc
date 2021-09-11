@@ -39,7 +39,6 @@
 #include "base/protobuf/descriptor.h"
 #include "base/protobuf/message.h"
 #include "base/protobuf/text_format.h"
-#include "base/status.h"
 #include "base/util.h"
 #include "composer/key_parser.h"
 #include "config/character_form_manager.h"
@@ -58,6 +57,7 @@
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -454,25 +454,26 @@ std::vector<std::string> SessionHandlerInterpreter::Parse(
 
 #define MOZC_ASSERT_EQ_MSG(expected, actual, message) \
   if (expected != actual) {                           \
-    return mozc::InvalidArgumentError(message);       \
+    return absl::InvalidArgumentError(message);       \
   }
 #define MOZC_ASSERT_EQ(expected, actual)   \
   if (expected != actual) {                \
-    return mozc::InvalidArgumentError(""); \
+    return absl::InvalidArgumentError(""); \
   }
 #define MOZC_ASSERT_TRUE_MSG(result, message)   \
   if (!(result)) {                              \
-    return mozc::InvalidArgumentError(message); \
+    return absl::InvalidArgumentError(message); \
   }
 #define MOZC_ASSERT_TRUE(result)           \
   if (!(result)) {                         \
-    return mozc::InvalidArgumentError(""); \
+    return absl::InvalidArgumentError(""); \
   }
 
-Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
+absl::Status SessionHandlerInterpreter::Eval(
+    const std::vector<std::string> &args) {
   if (args.empty()) {
     // Skip empty args
-    return Status();
+    return absl::Status();
   }
 
   SyncDataToStorage();
@@ -612,10 +613,10 @@ Status SessionHandlerInterpreter::Eval(const std::vector<std::string> &args) {
     MOZC_ASSERT_EQ(1, args.size());
     ClearUsageStats();
   } else {
-    return Status(mozc::StatusCode::kUnimplemented, "");
+    return absl::Status(absl::StatusCode::kUnimplemented, "");
   }
 
-  return Status();
+  return absl::Status();
 }
 
 }  // namespace session

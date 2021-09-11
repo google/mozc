@@ -88,13 +88,13 @@ TEST_F(SerializedStringArrayTest, SerializeToBuffer) {
   std::unique_ptr<uint32_t[]> buf;
   const absl::string_view actual = SerializedStringArray::SerializeToBuffer(
       {"Hello", "Mozc", "google"}, &buf);
-  const absl::string_view expected(kTestData, arraysize(kTestData) - 1);
+  const absl::string_view expected(kTestData, std::size(kTestData) - 1);
   EXPECT_EQ(expected, actual);
 }
 
 TEST_F(SerializedStringArrayTest, Basic) {
   const absl::string_view data =
-      AlignString(std::string(kTestData, arraysize(kTestData) - 1));
+      AlignString(std::string(kTestData, std::size(kTestData) - 1));
 
   ASSERT_TRUE(SerializedStringArray::VerifyData(data));
 
@@ -119,7 +119,7 @@ TEST_F(SerializedStringArrayTest, Basic) {
 
 TEST_F(SerializedStringArrayTest, Iterator) {
   const absl::string_view data =
-      AlignString(std::string(kTestData, arraysize(kTestData) - 1));
+      AlignString(std::string(kTestData, std::size(kTestData) - 1));
 
   ASSERT_TRUE(SerializedStringArray::VerifyData(data));
 

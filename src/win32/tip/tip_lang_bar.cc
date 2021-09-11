@@ -227,7 +227,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
 
     result = input_button_menu->Init(TipDllModule::module_handle(),
                                      IDS_INPUTMODE, &kInputMenu[0],
-                                     arraysize(kInputMenu), kInputMenuDisabled);
+                                     std::size(kInputMenu), kInputMenuDisabled);
     if (result != S_OK) {
       return result;
     }
@@ -274,7 +274,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
 
     result = input_mode_menu->Init(TipDllModule::module_handle(),
                                    IDS_WIN8_TRAY_ITEM, kInputMenu,
-                                   arraysize(kInputMenu), kInputMenuDisabled);
+                                   std::size(kInputMenu), kInputMenuDisabled);
     if (FAILED(result)) {
       return result;
     }
@@ -308,7 +308,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     }
 
     result = tool_button->Init(TipDllModule::module_handle(), IDS_TOOL,
-                               &kToolMenu[0], arraysize(kToolMenu), IDI_TOOL_NT,
+                               &kToolMenu[0], std::size(kToolMenu), IDI_TOOL_NT,
                                IDI_TOOL);
     if (result != S_OK) {
       return result;
@@ -331,7 +331,7 @@ HRESULT TipLangBar::InitLangBar(TipLangBarCallback *text_service) {
     }
 
     result = help_menu->Init(TipDllModule::module_handle(), &kHelpMenu[0],
-                             arraysize(kHelpMenu));
+                             std::size(kHelpMenu));
     if (result != S_OK) {
       return result;
     }

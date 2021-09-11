@@ -99,7 +99,7 @@ class SenderThread {
     while (true) {
       const HANDLE handles[] = {quit_event_.get(), command_event_.get()};
       const DWORD wait_result = ::WaitForMultipleObjects(
-          arraysize(handles), handles, FALSE, INFINITE);
+          std::size(handles), handles, FALSE, INFINITE);
       const DWORD wait_error = ::GetLastError();
       if (g_module_unloaded) {
         break;

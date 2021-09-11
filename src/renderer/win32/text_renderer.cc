@@ -497,7 +497,7 @@ class DirectWriteTextRenderer : public TextRenderer {
     }
 
     wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {};
-    if (::GetUserDefaultLocaleName(locale_name, arraysize(locale_name)) == 0) {
+    if (::GetUserDefaultLocaleName(locale_name, std::size(locale_name)) == 0) {
       return nullptr;
     }
 

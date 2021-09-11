@@ -35,8 +35,8 @@
 #include <vector>
 
 #include "base/port.h"
-#include "base/status.h"
 #include "dictionary/file/section.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace dictionary {
@@ -48,7 +48,7 @@ class DictionaryFileCodecInterface {
                              std::ostream *ofs) const = 0;
 
   // Reads sections from memory image.
-  virtual mozc::Status ReadSections(
+  virtual absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const = 0;
 

@@ -39,6 +39,7 @@
       'toolsets': ['host', 'target'],
       'sources': [
         '<(absl_srcdir)/base/internal/cycleclock.cc',
+        '<(absl_srcdir)/base/internal/exponential_biased.cc',
         '<(absl_srcdir)/base/internal/low_level_alloc.cc',
         '<(absl_srcdir)/base/internal/raw_logging.cc',
         '<(absl_srcdir)/base/internal/spinlock.cc',
@@ -156,6 +157,8 @@
       'sources': [
         '<(absl_srcdir)/strings/internal/charconv_bigint.cc',
         '<(absl_srcdir)/strings/internal/charconv_parse.cc',
+        '<(absl_srcdir)/strings/internal/cord_internal.cc',
+        '<(absl_srcdir)/strings/internal/cord_rep_ring.cc',
         '<(absl_srcdir)/strings/internal/escaping.cc',
         '<(absl_srcdir)/strings/internal/memutil.cc',
         '<(absl_srcdir)/strings/internal/str_format/arg.cc',
@@ -178,6 +181,7 @@
       'sources': [
         '<(absl_srcdir)/strings/ascii.cc',
         '<(absl_srcdir)/strings/charconv.cc',
+        '<(absl_srcdir)/strings/cord.cc',
         '<(absl_srcdir)/strings/escaping.cc',
         '<(absl_srcdir)/strings/match.cc',
         '<(absl_srcdir)/strings/numbers.cc',
@@ -244,6 +248,20 @@
         'absl_base',
         'absl_numeric',
         'absl_strings_internal',
+      ],
+    },
+    {
+      'target_name': 'absl_status',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        '<(absl_srcdir)/status/status.cc',
+        '<(absl_srcdir)/status/status_payload_printer.cc',
+        '<(absl_srcdir)/status/statusor.cc',
+      ],
+      'dependencies': [
+        'absl_base',
+        'absl_strings',
       ],
     },
   ],

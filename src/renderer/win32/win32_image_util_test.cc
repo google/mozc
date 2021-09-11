@@ -132,7 +132,7 @@ class BalloonImageTest : public ::testing::Test,
     bitmap.Save(filename.c_str(), &clsid_png_);
 
     std::string utf8_filename;
-    Util::WideToUTF8(filename + L".json", &utf8_filename);
+    Util::WideToUtf8(filename + L".json", &utf8_filename);
     OutputFileStream os(utf8_filename.c_str());
     Json::StyledWriter writer;
     os << writer.write(tail);
@@ -308,7 +308,7 @@ TEST_P(BalloonImageTest, TestImpl) {
   EXPECT_EQ(tail["output"]["tail_offset_y"].asInt(), actual_tail_offset.y);
 
   std::wstring wide_path;
-  Util::UTF8ToWide(expected_image_path, &wide_path);
+  Util::Utf8ToWide(expected_image_path, &wide_path);
 
   Gdiplus::Bitmap bitmap(wide_path.c_str());
 

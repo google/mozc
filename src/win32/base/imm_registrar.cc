@@ -103,7 +103,7 @@ HRESULT SetLayoutDisplayName(
   }
 
   wchar_t layout_name[MAX_PATH];
-  HRESULT hr = StringCchPrintf(layout_name, arraysize(layout_name),
+  HRESULT hr = StringCchPrintf(layout_name, std::size(layout_name),
                                kLayoutDisplayNamePattern,
                                layout_display_name_resource_path.c_str(),
                                layout_display_name_resource_id);
@@ -130,14 +130,14 @@ HRESULT SetLayoutDisplayName(
 // to make ImmInstallIME happy.
 std::wstring GetFullPathForSystem(const std::string &basename) {
   std::string system_dir;
-  if (Util::WideToUTF8(SystemUtil::GetSystemDir(), &system_dir) <= 0) {
+  if (Util::WideToUtf8(SystemUtil::GetSystemDir(), &system_dir) <= 0) {
     return L"";
   }
 
   const std::string fullpath = FileUtil::JoinPath(system_dir, basename);
 
   std::wstring wfullpath;
-  if (Util::UTF8ToWide(fullpath, &wfullpath) <= 0) {
+  if (Util::Utf8ToWide(fullpath, &wfullpath) <= 0) {
     return L"";
   }
 
@@ -199,7 +199,7 @@ unsigned int GetPreloadIndex(const KeyboardLayoutID &klid,
 
 std::wstring ToWideString(const std::string &str) {
   std::wstring wide;
-  if (Util::UTF8ToWide(str, &wide) <= 0) {
+  if (Util::Utf8ToWide(str, &wide) <= 0) {
     return L"";
   }
   return wide;
@@ -262,13 +262,13 @@ HRESULT ImmRegistrar::Register(
                                L"\\" + ime_filename);
 
   // The path name of IME has hard limit. (http://b/2072809)
-  if (fullpath.size() + 1 > arraysize(dummy_ime_property.szName)) {
+  if (fullpath.size() + 1 > std::size(dummy_ime_property.szName)) {
     // Path name is too long. It will be truncated.
     return E_FAIL;
   }
 
   // The description of IME has hard limit. (http://b/2072809)
-  if (layout_name.size() + 1 > arraysize(dummy_ime_property.szDescription)) {
+  if (layout_name.size() + 1 > std::size(dummy_ime_property.szDescription)) {
     // Description is too long. It will be truncated.
     return E_FAIL;
   }
@@ -443,7 +443,7 @@ std::wstring ImmRegistrar::GetFullPathForIME() {
 std::wstring ImmRegistrar::GetLayoutName() {
   std::wstring layout_name;
   // We use English name here as culture-invariant layout name.
-  if (Util::UTF8ToWide(kProductNameInEnglish, &layout_name) <= 0) {
+  if (Util::Utf8ToWide(kProductNameInEnglish, &layout_name) <= 0) {
     return L"";
   }
   return layout_name;

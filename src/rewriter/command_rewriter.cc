@@ -89,7 +89,7 @@ Segment::Candidate *InsertCommandCandidate(Segment *segment,
   Segment::Candidate *candidate = segment->insert_candidate(
       std::min(segment->candidates_size(), insert_pos));
   DCHECK(candidate);
-  candidate->CopyFrom(segment->candidate(reference_pos));
+  *candidate = segment->candidate(reference_pos);
   candidate->attributes |= Segment::Candidate::COMMAND_CANDIDATE;
   candidate->attributes |= Segment::Candidate::NO_LEARNING;
   candidate->description = kDescription;
@@ -153,19 +153,19 @@ bool CommandRewriter::RewriteSegment(const config::Config &config,
 
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     const std::string &value = segment->candidate(i).value;
-    if (FindString(value, kCommandValues, arraysize(kCommandValues))) {
+    if (FindString(value, kCommandValues, std::size(kCommandValues))) {
       // insert command candidate at an fixed position.
       InsertDisableAllSuggestionToggleCommand(config, segment, i, 6);
       InsertIncognitoModeToggleCommand(config, segment, i, 6);
       return true;
     }
     if (FindString(value, kIncognitoModeValues,
-                   arraysize(kIncognitoModeValues))) {
+                   std::size(kIncognitoModeValues))) {
       InsertIncognitoModeToggleCommand(config, segment, i, i + 3);
       return true;
     }
     if (FindString(value, kDisableAllSuggestionValues,
-                   arraysize(kDisableAllSuggestionValues))) {
+                   std::size(kDisableAllSuggestionValues))) {
       InsertDisableAllSuggestionToggleCommand(config, segment, i, i + 3);
       return true;
     }
@@ -186,7 +186,7 @@ bool CommandRewriter::Rewrite(const ConversionRequest &request,
 
   // TODO(taku): we want to replace the linear search with STL map when
   // kTriggerKeys become bigger.
-  if (!FindString(key, kTriggerKeys, arraysize(kTriggerKeys))) {
+  if (!FindString(key, kTriggerKeys, std::size(kTriggerKeys))) {
     return false;
   }
 

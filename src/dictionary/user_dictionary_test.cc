@@ -384,7 +384,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected0, arraysize(kExpected0), "start", *dic);
+  TestLookupPredictiveHelper(kExpected0, std::size(kExpected0), "start", *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -394,7 +394,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"started", "started", 210, 210},   {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected1, arraysize(kExpected1), "st", *dic);
+  TestLookupPredictiveHelper(kExpected1, std::size(kExpected1), "st", *dic);
 
   // Invalid input values should be just ignored.
   TestLookupPredictiveHelper(nullptr, 0, "", *dic);
@@ -413,7 +413,7 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"ended", "ended", 210, 210},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected2, arraysize(kExpected2), "end", *dic);
+  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "end", *dic);
 
   // Entries in the dictionary before reloading cannot be looked up.
   TestLookupPredictiveHelper(nullptr, 0, "start", *dic);
@@ -437,7 +437,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"start", "start", 200, 200},
       {"started", "started", 210, 210},
   };
-  TestLookupPrefixHelper(kExpected0, arraysize(kExpected0), "started", 7, *dic);
+  TestLookupPrefixHelper(kExpected0, std::size(kExpected0), "started", 7, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -446,7 +446,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected1, arraysize(kExpected1), "starting", 8,
+  TestLookupPrefixHelper(kExpected1, std::size(kExpected1), "starting", 8,
                          *dic);
 
   // Invalid input values should be just ignored.
@@ -465,7 +465,7 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
       {"end", "end", 200, 200},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected2, arraysize(kExpected2), "ending", 6, *dic);
+  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "ending", 6, *dic);
 
   // Lookup for entries which are gone should returns empty result.
   TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic);
@@ -487,14 +487,14 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
   const Entry kExpected0[] = {
       {"start", "start", 200, 200},
   };
-  TestLookupExactHelper(kExpected0, arraysize(kExpected0), "start", 5, *dic);
+  TestLookupExactHelper(kExpected0, std::size(kExpected0), "start", 5, *dic);
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "starting", 8, *dic);
+  TestLookupExactHelper(kExpected1, std::size(kExpected1), "starting", 8, *dic);
 
   // Invalid input values should be just ignored.
   TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
@@ -537,7 +537,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
       mock_data_manager.GetPOSMatcherData());
   const uint16_t kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
-  TestLookupExactHelper(kExpected1, arraysize(kExpected1), "key", 3, *user_dic);
+  TestLookupExactHelper(kExpected1, std::size(kExpected1), "key", 3, *user_dic);
 }
 
 TEST_F(UserDictionaryTest, IncognitoModeTest) {

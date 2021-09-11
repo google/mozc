@@ -67,7 +67,7 @@ TEST(BitArray, BitArraySizeTest) {
 TEST(BitArray, BitArrayTest) {
   constexpr size_t kBitArraySize[] = {1, 2, 10, 32, 64, 100, 1000, 1024, 10000};
 
-  for (size_t i = 0; i < arraysize(kBitArraySize); ++i) {
+  for (size_t i = 0; i < std::size(kBitArraySize); ++i) {
     const size_t size = kBitArraySize[i];
 
     // set array

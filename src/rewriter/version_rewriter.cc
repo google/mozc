@@ -98,7 +98,7 @@ class VersionRewriter::VersionDataImpl {
     version_string.append(Version::GetMozcVersion());
     version_string.append(1, '+');
     version_string.append(data_version.data(), data_version.size());
-    for (int i = 0; i < arraysize(kKeyCandList); ++i) {
+    for (int i = 0; i < std::size(kKeyCandList); ++i) {
       entries_[kKeyCandList[i].key] = absl::make_unique<VersionEntry>(
           kKeyCandList[i].base_candidate, version_string, 9);
     }

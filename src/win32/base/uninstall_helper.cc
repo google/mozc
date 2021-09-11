@@ -83,7 +83,7 @@ constexpr DWORD kMaxValueNameLength = 16383;
 // Timeout value used by a work around against b/5765783.
 // Note that the following timeout threshold is not well tested.
 // TODO(yukawa): Investigate the best timeout threshold. b/6165722
-const uint32 kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
+constexpr uint32 kWaitForAsmCacheReadyEventTimeout = 10000;  // 10 sec.
 
 // Converts an unsigned integer to a wide string.
 std::wstring utow(unsigned int i) {
@@ -310,7 +310,7 @@ bool GetPreloadLayoutsMain(PreloadOrderToKLIDMap *preload_map) {
 std::wstring GUIDToString(const GUID &guid) {
   wchar_t buffer[256];
   const int character_length_with_null =
-      ::StringFromGUID2(guid, buffer, arraysize(buffer));
+      ::StringFromGUID2(guid, buffer, std::size(buffer));
   if (character_length_with_null <= 0) {
     return L"";
   }
@@ -321,7 +321,7 @@ std::wstring GUIDToString(const GUID &guid) {
 
 std::wstring LANGIDToString(LANGID langid) {
   wchar_t buffer[5];
-  HRESULT hr = ::StringCchPrintf(buffer, arraysize(buffer), L"%04x", langid);
+  HRESULT hr = ::StringCchPrintf(buffer, std::size(buffer), L"%04x", langid);
   if (FAILED(hr)) {
     return L"";
   }

@@ -56,7 +56,7 @@ using WTL::CRect;
 
 namespace {
 
-const uint32 kHideWindowDelay = 500;  // msec
+constexpr uint32 kHideWindowDelay = 500;  // msec
 const POINT kInvalidMousePosition = {-65535, -65535};
 
 }  // namespace

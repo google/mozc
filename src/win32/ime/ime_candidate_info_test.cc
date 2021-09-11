@@ -440,7 +440,7 @@ void FillOutputForConversion(commands::Output *output, int focused_index,
 
 std::string ToUTF8(const std::wstring &wstr) {
   std::string result;
-  Util::WideToUTF8(wstr, &result);
+  Util::WideToUtf8(wstr, &result);
   return result;
 }
 }  // namespace

@@ -851,7 +851,7 @@ bool Client::LaunchTool(const std::string &mode, const std::string &extra_arg) {
 #ifdef OS_WIN
     const std::string &path = mozc::SystemUtil::GetToolPath();
     std::wstring wpath;
-    Util::UTF8ToWide(path, &wpath);
+    Util::Utf8ToWide(path, &wpath);
     wpath = L"\"" + wpath + L"\"";
     // Run administration dialog with UAC.
     // AFAIK, ShellExecute is only the way to launch process with

@@ -49,7 +49,7 @@ using mozc::quality_regression::QualityRegressionUtil;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  mozc::StatusOr<std::unique_ptr<Engine>> result = mozc::CreateEvalEngine(
+  absl::StatusOr<std::unique_ptr<Engine>> result = mozc::CreateEvalEngine(
       absl::GetFlag(FLAGS_data_file), absl::GetFlag(FLAGS_data_type),
       absl::GetFlag(FLAGS_engine_type));
   if (!result.ok()) {

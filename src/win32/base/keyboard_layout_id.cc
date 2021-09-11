@@ -92,7 +92,7 @@ std::wstring KeyboardLayoutID::ToString() const {
   CHECK(has_id()) << "ID is not set.";
   wchar_t buffer[KL_NAMELENGTH];
   const HRESULT result =
-      ::StringCchPrintf(buffer, arraysize(buffer), L"%08X", id_);
+      ::StringCchPrintf(buffer, std::size(buffer), L"%08X", id_);
   if (FAILED(result)) {
     return L"";
   }

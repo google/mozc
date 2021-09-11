@@ -59,7 +59,7 @@ namespace {
 // this value is determined to be:
 // - smaller than the default time-out used in IsHungAppWindow API.
 // - similar to the same timeout used by TSF.
-const uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
+constexpr uint32 kWaitForAsmCacheReadyEventTimeout = 4500;  // 4.5 sec.
 
 bool GetDefaultLayout(LAYOUTORTIPPROFILE *profile) {
   const UINT num_element =
@@ -107,12 +107,12 @@ bool IsDefaultWin8() {
 bool SetDefaultWin8() {
   wchar_t clsid[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetTextServiceGuid(), clsid,
-                         arraysize(clsid))) {
+                         std::size(clsid))) {
     return E_OUTOFMEMORY;
   }
   wchar_t profile_id[64] = {};
   if (!::StringFromGUID2(TsfProfile::GetProfileGuid(), profile_id,
-                         arraysize(profile_id))) {
+                         std::size(profile_id))) {
     return E_OUTOFMEMORY;
   }
 
@@ -249,7 +249,7 @@ bool ImeUtil::ActivateForCurrentSession() {
 // work around b/5765783.
 bool ImeUtil::WaitForAsmCacheReady(uint32 timeout_msec) {
   std::wstring event_name;
-  if (Util::UTF8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
+  if (Util::Utf8ToWide(SystemUtil::GetMSCTFAsmCacheReadyEventName(),
                        &event_name) == 0) {
     LOG(ERROR) << "Failed to compose event name.";
     return false;

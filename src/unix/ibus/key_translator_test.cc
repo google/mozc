@@ -164,7 +164,7 @@ TEST_F(KeyTranslatorTest, TranslateAscii) {
 
 TEST_F(KeyTranslatorTest, TranslateSpecial) {
   commands::KeyEvent out;
-  for (int i = 0; i < arraysize(kSpecialKeys); ++i) {
+  for (int i = 0; i < std::size(kSpecialKeys); ++i) {
     EXPECT_TRUE(translator_->Translate(kSpecialKeys[i].ibus_key, 0, 0,
                                        config::Config::ROMAN, true, &out));
     EXPECT_FALSE(out.has_key_code());

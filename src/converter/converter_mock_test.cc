@@ -239,7 +239,7 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
   uint8_t size_array[] = {1, 2, 3};
   const ConversionRequest default_request;
   EXPECT_TRUE(converter->ResizeSegment(&output, default_request, 1, 5,
-                                       size_array, arraysize(size_array)));
+                                       size_array, std::size(size_array)));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 TEST_F(ConverterMockTest, GetStartConversion) {
@@ -511,7 +511,7 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
   const std::string input_str = input.DebugString();
   const ConversionRequest default_request;
   converter->ResizeSegment(&input, default_request, input_idx, input_size,
-                           input_array, arraysize(input_array));
+                           input_array, std::size(input_array));
 
   Segments last_segment;
   size_t last_idx, last_size;
@@ -525,8 +525,8 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
   EXPECT_EQ(input_str, last_segment_str);
   EXPECT_EQ(input_idx, last_idx);
   EXPECT_EQ(input_size, last_size);
-  EXPECT_EQ(arraysize(input_array), last_array_size);
-  for (int i = 0; i < arraysize(input_array); ++i) {
+  EXPECT_EQ(std::size(input_array), last_array_size);
+  for (int i = 0; i < std::size(input_array); ++i) {
     EXPECT_EQ(input_array[i], *(last_array + i));
   }
 }

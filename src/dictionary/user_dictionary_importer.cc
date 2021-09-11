@@ -230,7 +230,7 @@ UserDictionaryImporter::ErrorType UserDictionaryImporter::ImportFromIterator(
 
     UserDictionary::Entry *new_entry = user_dic->add_entries();
     DCHECK(new_entry);
-    new_entry->CopyFrom(entry);
+    *new_entry = entry;
   }
 
   return ret;
@@ -382,7 +382,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
 bool UserDictionaryImporter::ConvertEntry(const RawEntry &from,
                                           UserDictionary::Entry *to) {
-  return ConvertEntryInternal(kPOSMap, arraysize(kPOSMap), from, to);
+  return ConvertEntryInternal(kPOSMap, std::size(kPOSMap), from, to);
 }
 
 UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(

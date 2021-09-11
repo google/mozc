@@ -38,8 +38,8 @@
 #include <vector>
 
 #include "base/mmap.h"
-#include "base/status.h"
 #include "dictionary/file/codec_interface.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace dictionary {
@@ -55,10 +55,10 @@ class DictionaryFile {
   DictionaryFile &operator=(const DictionaryFile &) = delete;
 
   // Opens from a file.
-  mozc::Status OpenFromFile(const std::string &file);
+  absl::Status OpenFromFile(const std::string &file);
 
   // Opens from a memory block.
-  mozc::Status OpenFromImage(const char *image, int len);
+  absl::Status OpenFromImage(const char *image, int len);
 
   // Gets a pointer to the section having |section_name|. Image size is set to
   // |len|. Returns nullptr when not found.

@@ -91,11 +91,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithKanaLock) {
   wchar_t expected_buffer[16] = {};
   const int expected_length =
       ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
-                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
+                    std::size(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
-      'Q', 0, keyboard_state, actual_buffer, arraysize(actual_buffer), 0);
+      'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
   EXPECT_EQ(expected_length, actual_length);
   EXPECT_EQ(1, actual_length);
@@ -116,11 +116,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithoutCapsLock) {
   wchar_t expected_buffer[16] = {};
   const int expected_length =
       ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
-                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
+                    std::size(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
-      'Q', 0, keyboard_state, actual_buffer, arraysize(actual_buffer), 0);
+      'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
   EXPECT_EQ(expected_length, actual_length);
   EXPECT_EQ(1, actual_length);
@@ -142,11 +142,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithCapsLock) {
   wchar_t expected_buffer[16] = {};
   const int expected_length =
       ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
-                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
+                    std::size(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
-      'Q', 0, keyboard_state, actual_buffer, arraysize(actual_buffer), 0);
+      'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
   EXPECT_EQ(expected_length, actual_length);
   EXPECT_EQ(1, actual_length);
@@ -169,11 +169,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCapsLock) {
   wchar_t expected_buffer[16] = {};
   const int expected_length =
       ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
-                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
+                    std::size(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
-      'Q', 0, keyboard_state, actual_buffer, arraysize(actual_buffer), 0);
+      'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
   EXPECT_EQ(expected_length, actual_length);
   EXPECT_EQ(1, actual_length);
@@ -197,11 +197,11 @@ TEST_F(ImeKeyboardTest, CheckQKeyWithShiftCtrlCapsLock) {
   wchar_t expected_buffer[16] = {};
   const int expected_length =
       ::ToUnicodeEx('Q', 0, keyboard_state, expected_buffer,
-                    arraysize(expected_buffer), 0, japanese_keyboard_layout());
+                    std::size(expected_buffer), 0, japanese_keyboard_layout());
 
   wchar_t actual_buffer[16] = {};
   const int actual_length = JapaneseKeyboardLayoutEmulator::ToUnicode(
-      'Q', 0, keyboard_state, actual_buffer, arraysize(actual_buffer), 0);
+      'Q', 0, keyboard_state, actual_buffer, std::size(actual_buffer), 0);
 
   EXPECT_EQ(expected_length, actual_length);
   EXPECT_EQ(1, actual_length);

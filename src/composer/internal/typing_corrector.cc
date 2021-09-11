@@ -48,7 +48,6 @@
 
 namespace mozc {
 namespace composer {
-
 namespace {
 
 // Looks up model cost for current key given previous keys.
@@ -69,7 +68,7 @@ int LookupModelCost(const std::string &prev, const std::string &current,
   return cost == TypingModel::kNoData ? TypingModel::kInfinity : cost;
 }
 
-inline int Cost(double prob) { return static_cast<int>(-500.0 * log(prob)); }
+int Cost(double prob) { return static_cast<int>(-500.0 * log(prob)); }
 
 }  // namespace
 
@@ -88,8 +87,6 @@ TypingCorrector::TypingCorrector(const Table *table,
       config_(&config::ConfigHandler::DefaultConfig()) {
   Reset();
 }
-
-TypingCorrector::~TypingCorrector() {}
 
 void TypingCorrector::InsertCharacter(
     const absl::string_view key, const ProbableKeyEvents &probable_key_events) {
@@ -116,8 +113,7 @@ void TypingCorrector::InsertCharacter(
                            LookupModelCost(top_n_[i].first, key_as_string,
                                            *table_->typing_model());
       if (new_cost < TypingModel::kInfinity) {
-        tmp.push_back(
-            std::make_pair(top_n_[i].first + key_as_string, new_cost));
+        tmp.emplace_back(top_n_[i].first + key_as_string, new_cost);
       }
     }
   }
@@ -132,7 +128,7 @@ void TypingCorrector::InsertCharacter(
 void TypingCorrector::Reset() {
   raw_key_.clear();
   top_n_.clear();
-  top_n_.push_back(KeyAndPenalty("", 0));
+  top_n_.emplace_back("", 0);
   available_ = true;
 }
 
@@ -141,15 +137,6 @@ void TypingCorrector::Invalidate() { available_ = false; }
 bool TypingCorrector::IsAvailable() const {
   return config_->use_typing_correction() && available_ && table_ &&
          table_->typing_model();
-}
-
-void TypingCorrector::CopyFrom(const TypingCorrector &src) {
-  available_ = src.available_;
-  table_ = src.table_;
-  config_ = src.config_;
-  max_correction_query_candidates_ = src.max_correction_query_candidates_;
-  max_correction_query_results_ = src.max_correction_query_results_;
-  top_n_ = src.top_n_;
 }
 
 void TypingCorrector::SetTable(const Table *table) {

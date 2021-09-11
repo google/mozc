@@ -145,15 +145,15 @@ void ResolveCompoundSegment(const std::string &top_value,
   static const struct {
     const char *pat;
     size_t len;
-  } kParticles[] = {{kPat1, arraysize(kPat1) - 1},
-                    //    {kPat2, arraysize(kPat2) - 1},
-                    {kPat3, arraysize(kPat3) - 1},
-                    {kPat4, arraysize(kPat4) - 1},
-                    {kPat5, arraysize(kPat5) - 1},
-                    {kPat6, arraysize(kPat6) - 1},
-                    {kPat7, arraysize(kPat7) - 1},
-                    {kPat8, arraysize(kPat8) - 1},
-                    {kPat9, arraysize(kPat9) - 1},
+  } kParticles[] = {{kPat1, std::size(kPat1) - 1},
+                    //    {kPat2, std::size(kPat2) - 1},
+                    {kPat3, std::size(kPat3) - 1},
+                    {kPat4, std::size(kPat4) - 1},
+                    {kPat5, std::size(kPat5) - 1},
+                    {kPat6, std::size(kPat6) - 1},
+                    {kPat7, std::size(kPat7) - 1},
+                    {kPat8, std::size(kPat8) - 1},
+                    {kPat9, std::size(kPat9) - 1},
                     {nullptr, 0}};
 
   for (size_t i = 0; kParticles[i].pat != nullptr; ++i) {
@@ -198,7 +198,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     // "舞って" workaround
     // V+"て" is often treated as one compound.
     static constexpr char kPat[] = "て";
-    if (Util::EndsWith(content, absl::string_view(kPat, arraysize(kPat) - 1))) {
+    if (Util::EndsWith(content, absl::string_view(kPat, std::size(kPat) - 1))) {
       PushBackStringView(Util::Utf8SubString(content, 0, content_len - 1),
                          output);
     }
@@ -265,7 +265,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXいる|>" can be rewrote to "<YY|いる>" and vice versa
   {
     static constexpr char kPat[] = "いる";  // "いる"
-    const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
+    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         Util::EndsWith(top_value, kSuffix) &&
         Util::EndsWith(aux_value, kSuffix)) {
@@ -290,7 +290,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXせる|>" can be rewrote to "<YY|せる>" and vice versa
   {
     constexpr char kPat[] = "せる";
-    const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
+    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
         Util::EndsWith(top_value, kSuffix) &&
         Util::EndsWith(aux_value, kSuffix)) {
@@ -318,7 +318,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // in "<XX|する>", XX must be single script type
   {
     static constexpr char kPat[] = "する";
-    const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
+    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (aux_value_len == 2 && Util::EndsWith(aux_value, kSuffix)) {
       if (content_script_type != Util::KATAKANA &&
           content_script_type != Util::HIRAGANA &&
@@ -339,7 +339,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "まとめる", "衰える"
   {
     static constexpr char kPat[] = "る";
-    const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
+    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (aux_value_len == 0 && Util::EndsWith(value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYる"
@@ -353,7 +353,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   // "<XXす>" can be rewrote using "XXする"
   {
     static constexpr char kPat[] = "す";
-    const absl::string_view kSuffix(kPat, arraysize(kPat) - 1);
+    const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (Util::EndsWith(value, kSuffix) &&
         Util::IsScriptType(Util::Utf8SubString(value, 0, value_len - 1),
                            Util::KANJI)) {
@@ -361,7 +361,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
         constexpr char kRu[] = "る";
         // "YYする" in addition to "YY"
         output->push_back(
-            absl::StrCat(value, absl::string_view(kRu, arraysize(kRu) - 1)));
+            absl::StrCat(value, absl::string_view(kRu, std::size(kRu) - 1)));
       }
       return true;
     }

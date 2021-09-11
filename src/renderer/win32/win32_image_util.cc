@@ -414,7 +414,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   CBitmapHandle old_bitmap = dc.SelectBitmap(dib);
 
   std::wstring wide_fontname;
-  Util::UTF8ToWide(fontname, &wide_fontname);
+  Util::Utf8ToWide(fontname, &wide_fontname);
   CLogFont logfont;
   logfont.lfWeight = FW_NORMAL;
   logfont.lfCharSet = DEFAULT_CHARSET;
@@ -439,7 +439,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
   dc.SetBkMode(TRANSPARENT);
   dc.SetTextColor(RGB(255, 255, 255));
   std::wstring wide_text;
-  Util::UTF8ToWide(text, &wide_text);
+  Util::Utf8ToWide(text, &wide_text);
   dc.DrawTextW(wide_text.c_str(), wide_text.size(), &rect,
                DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CENTER);
   dc.SelectFont(old_font);

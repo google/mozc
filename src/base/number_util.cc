@@ -186,7 +186,7 @@ const NumberStringVariation kKanjiVariations[] = {
 };
 
 constexpr char kOldTwoTen[] = "弐拾";
-constexpr size_t kOldTwoTenLength = arraysize(kOldTwoTen) - 1;
+constexpr size_t kOldTwoTenLength = std::size(kOldTwoTen) - 1;
 constexpr char kOldTwenty[] = "廿";
 
 }  // namespace
@@ -215,7 +215,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
 
   // If given number needs higher ranks than our expectations,
   // we don't convert it.
-  if (arraysize(kNumKanjiBiggerRanks) * kDigitsInBigRank < input_num.size()) {
+  if (std::size(kNumKanjiBiggerRanks) * kDigitsInBigRank < input_num.size()) {
     return false;
   }
 
@@ -236,7 +236,7 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
   const size_t rank_size = ranked_numbers.size();
 
   for (size_t variation_index = 0;
-       variation_index < arraysize(kKanjiVariations); ++variation_index) {
+       variation_index < std::size(kKanjiVariations); ++variation_index) {
     const NumberStringVariation &variation = kKanjiVariations[variation_index];
     const char *const *const digits = variation.digits;
     const NumberString::Style style = variation.style;
@@ -354,7 +354,7 @@ bool NumberUtil::ArabicToSeparatedArabic(absl::string_view input_num,
     return false;
   }
 
-  for (size_t i = 0; i < arraysize(kNumDigitsVariations); ++i) {
+  for (size_t i = 0; i < std::size(kNumDigitsVariations); ++i) {
     const NumberStringVariation &variation = kNumDigitsVariations[i];
     const char *const *const digits = variation.digits;
     // TODO(peria): Bring |result| out if it improves the performance.
@@ -408,7 +408,7 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
     return false;
   }
 
-  for (size_t i = 0; i < arraysize(kSingleDigitsVariations); ++i) {
+  for (size_t i = 0; i < std::size(kSingleDigitsVariations); ++i) {
     const NumberStringVariation &variation = kSingleDigitsVariations[i];
     // TODO(peria): Bring |result| out if it improves the performance.
     std::string result;
@@ -427,12 +427,12 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
 namespace {
 
 const NumberStringVariation kSpecialNumericVariations[] = {
-    {kRomanNumbersCapital, arraysize(kRomanNumbersCapital),
+    {kRomanNumbersCapital, std::size(kRomanNumbersCapital),
      "ローマ数字(大文字)", nullptr, nullptr,
      NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},
-    {kRomanNumbersSmall, arraysize(kRomanNumbersSmall), "ローマ数字(小文字)",
+    {kRomanNumbersSmall, std::size(kRomanNumbersSmall), "ローマ数字(小文字)",
      nullptr, nullptr, NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
-    {kCircledNumbers, arraysize(kCircledNumbers), "丸数字", nullptr, nullptr,
+    {kCircledNumbers, std::size(kCircledNumbers), "丸数字", nullptr, nullptr,
      NumberUtil::NumberString::NUMBER_CIRCLED},
 };
 
@@ -469,7 +469,7 @@ bool NumberUtil::ArabicToOtherForms(absl::string_view input_num,
   }
 
   // Special forms
-  for (size_t i = 0; i < arraysize(kSpecialNumericVariations); ++i) {
+  for (size_t i = 0; i < std::size(kSpecialNumericVariations); ++i) {
     const NumberStringVariation &variation = kSpecialNumericVariations[i];
     if (n < variation.numbers_size && variation.digits[n]) {
       output->push_back(NumberString(variation.digits[n], variation.description,

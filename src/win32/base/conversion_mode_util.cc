@@ -38,19 +38,19 @@
 #include "base/logging.h"
 
 namespace {
-const uint32 kAlphaNumeric = 0x0;
-const uint32 kNative = 0x1;
-const uint32 kKatakana = 0x2;
-const uint32 kLanguage = 0x3;
-const uint32 kFullShape = 0x8;
-const uint32 kRoman = 0x10;
-const uint32 kCharCode = 0x20;
-const uint32 kHanjiConvert = 0x40;
-const uint32 kSoftKeyboard = 0x80;
-const uint32 kNoConversion = 0x100;
-const uint32 kEUDC = 0x200;
-const uint32 kSymbol = 0x400;
-const uint32 kFixed = 0x800;
+constexpr uint32 kAlphaNumeric = 0x0;
+constexpr uint32 kNative = 0x1;
+constexpr uint32 kKatakana = 0x2;
+constexpr uint32 kLanguage = 0x3;
+constexpr uint32 kFullShape = 0x8;
+constexpr uint32 kRoman = 0x10;
+constexpr uint32 kCharCode = 0x20;
+constexpr uint32 kHanjiConvert = 0x40;
+constexpr uint32 kSoftKeyboard = 0x80;
+constexpr uint32 kNoConversion = 0x100;
+constexpr uint32 kEUDC = 0x200;
+constexpr uint32 kSymbol = 0x400;
+constexpr uint32 kFixed = 0x800;
 
 #if defined(OS_WIN)
 // Check the equality of constans if header files are available.

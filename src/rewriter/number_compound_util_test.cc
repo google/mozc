@@ -103,7 +103,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
           "階",
       },
   };
-  for (size_t i = 0; i < arraysize(kSplittableCases); ++i) {
+  for (size_t i = 0; i < std::size(kSplittableCases); ++i) {
     absl::string_view actual_number, actual_suffix;
     uint32_t actual_script_type = 0;
     EXPECT_TRUE(SplitStringIntoNumberAndCounterSuffix(
@@ -121,7 +121,7 @@ TEST(NumberCompoundUtilTest, SplitStringIntoNumberAndCounterSuffix) {
       "ア一階",
       "八億九千万600七十４デシベル",
   };
-  for (size_t i = 0; i < arraysize(kUnsplittableCases); ++i) {
+  for (size_t i = 0; i < std::size(kUnsplittableCases); ++i) {
     absl::string_view actual_number, actual_suffix;
     uint32_t actual_script_type = 0;
     EXPECT_FALSE(SplitStringIntoNumberAndCounterSuffix(

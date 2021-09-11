@@ -360,7 +360,7 @@ const PreserveKeyItem kPreservedKeyItems[] = {
      {VK_OEM_3, TF_MOD_ALT},
      VK_OEM_3,
      &kTipKeyTilde[0],
-     arraysize(kTipKeyTilde) - 1},
+     std::size(kTipKeyTilde) - 1},
     {kTipPreservedKey_Kanji,
      {VK_KANJI, TF_MOD_IGNORE_ALL_MODIFIER},
      // KeyEventHandler maps VK_KANJI to KeyEvent::NO_SPECIALKEY instead of
@@ -369,22 +369,22 @@ const PreserveKeyItem kPreservedKeyItems[] = {
      // b/7970379 about what happened.
      VK_DBE_DBCSCHAR,
      &kTipKeyKanji[0],
-     arraysize(kTipKeyKanji) - 1},
+     std::size(kTipKeyKanji) - 1},
     {kTipPreservedKey_Romaji,
      {VK_DBE_ROMAN, TF_MOD_IGNORE_ALL_MODIFIER},
      VK_DBE_ROMAN,
      &kTipKeyRoman[0],
-     arraysize(kTipKeyRoman) - 1},
+     std::size(kTipKeyRoman) - 1},
     {kTipPreservedKey_Romaji,
      {VK_DBE_NOROMAN, TF_MOD_IGNORE_ALL_MODIFIER},
      VK_DBE_NOROMAN,
      &kTipKeyNoRoman[0],
-     arraysize(kTipKeyNoRoman) - 1},
+     std::size(kTipKeyNoRoman) - 1},
     {kTipPreservedKey_F10,
      {VK_F10, 0},
      VK_F10,
      &kTipKeyF10[0],
-     arraysize(kTipKeyF10) - 1},
+     std::size(kTipKeyF10) - 1},
 };
 
 class UpdateUiEditSessionImpl : public ITfEditSession {
@@ -1451,7 +1451,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
     if (FAILED(result)) {
       return result;
     }
-    for (size_t i = 0; i < arraysize(kPreservedKeyItems); ++i) {
+    for (size_t i = 0; i < std::size(kPreservedKeyItems); ++i) {
       const PreserveKeyItem &item = kPreservedKeyItems[i];
       // Register a hot key to the keystroke manager.
       result = keystroke->PreserveKey(client_id_, item.guid, &item.key,
@@ -1475,7 +1475,7 @@ class TipTextServiceImpl : public ITfTextInputProcessorEx,
       return result;
     }
 
-    for (size_t i = 0; i < arraysize(kPreservedKeyItems); ++i) {
+    for (size_t i = 0; i < std::size(kPreservedKeyItems); ++i) {
       result = keystroke->UnpreserveKey(kPreservedKeyItems[i].guid,
                                         &kPreservedKeyItems[i].key);
     }

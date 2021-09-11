@@ -88,7 +88,7 @@ std::wstring GetMozcComponentPath(const std::string &filename) {
   const std::string path =
       mozc::SystemUtil::GetServerDirectory() + "\\" + filename;
   std::wstring wpath;
-  mozc::Util::UTF8ToWide(path, &wpath);
+  mozc::Util::Utf8ToWide(path, &wpath);
   return wpath;
 }
 
@@ -147,8 +147,8 @@ std::wstring FormatMessageByResourceId(int resourceID, ...) {
   wchar_t format_message[4096];
   {
     const int length = ::LoadString(g_module, resourceID, format_message,
-                                    arraysize(format_message));
-    if (length <= 0 || arraysize(format_message) <= length) {
+                                    std::size(format_message));
+    if (length <= 0 || std::size(format_message) <= length) {
       return L"";
     }
   }
@@ -160,10 +160,10 @@ std::wstring FormatMessageByResourceId(int resourceID, ...) {
   {
     const DWORD num_chars =
         ::FormatMessage(FORMAT_MESSAGE_FROM_STRING, format_message, 0, 0,
-                        &buffer[0], arraysize(buffer), &va_args);
+                        &buffer[0], std::size(buffer), &va_args);
     va_end(va_args);
 
-    if (num_chars == 0 || num_chars >= arraysize(buffer)) {
+    if (num_chars == 0 || num_chars >= std::size(buffer)) {
       return L"";
     }
   }
@@ -179,8 +179,8 @@ std::wstring GetVersionHeader() {
 bool WriteOmahaErrorById(int resource_id) {
   wchar_t buffer[4096];
   const int length =
-      ::LoadString(g_module, resource_id, buffer, arraysize(buffer));
-  if (length <= 0 || arraysize(buffer) <= length) {
+      ::LoadString(g_module, resource_id, buffer, std::size(buffer));
+  if (length <= 0 || std::size(buffer) <= length) {
     return false;
   }
 

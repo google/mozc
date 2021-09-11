@@ -167,7 +167,7 @@ TEST(TipCandidateListTest, EmptyCandidate) {
   ITfCandidateString *buffer[3] = {};
   ULONG num_fetched = 0;
   EXPECT_EQ(S_FALSE,
-            enum_candidates->Next(arraysize(buffer), buffer, &num_fetched));
+            enum_candidates->Next(std::size(buffer), buffer, &num_fetched));
   EXPECT_EQ(0, num_fetched);
 
   EXPECT_FALSE(result.on_finalize_called());

@@ -78,7 +78,7 @@ BrowserInfo::BrowserType BrowserInfo::GetBrowerType() {
       return kBrowserTypeUnknown;
     }
     std::string exe_path_utf8;
-    Util::WideToUTF8(GetProcessModuleName(), &exe_path_utf8);
+    Util::WideToUtf8(GetProcessModuleName(), &exe_path_utf8);
     Util::LowerString(&exe_path_utf8);
     if (Util::EndsWith(exe_path_utf8, "chrome.exe")) {
       g_browser_type_ = kBrowserTypeChrome;
@@ -175,8 +175,8 @@ bool BrowserInfo::IsOnChromeOmnibox(
 void BrowserInfo::OnDllProcessAttach(HINSTANCE module_handle,
                                      bool static_loading) {
   const DWORD copied_len_without_null = ::GetModuleFileName(
-      nullptr, g_exe_module_name_, arraysize(g_exe_module_name_));
-  if ((copied_len_without_null + 1) < arraysize(g_exe_module_name_)) {
+      nullptr, g_exe_module_name_, std::size(g_exe_module_name_));
+  if ((copied_len_without_null + 1) < std::size(g_exe_module_name_)) {
     g_exe_module_name_len_ = copied_len_without_null;
   }
 }

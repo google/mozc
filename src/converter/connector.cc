@@ -36,12 +36,12 @@
 
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/status.h"
-#include "base/statusor.h"
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 
 namespace mozc {
@@ -66,14 +66,14 @@ inline uint32_t EncodeKey(uint16_t rid, uint16_t lid) {
   return (static_cast<uint32_t>(rid) << 16) | lid;
 }
 
-mozc::Status IsMemoryAligned32(const void *ptr) {
+absl::Status IsMemoryAligned32(const void *ptr) {
   const auto addr = reinterpret_cast<std::uintptr_t>(ptr);
   const auto alignment = addr % 4;
   if (alignment != 0) {
-    return mozc::FailedPreconditionError(
+    return absl::FailedPreconditionError(
         absl::StrCat("Aligned at ", alignment, " byte"));
   }
-  return mozc::Status();
+  return absl::Status();
 }
 
 // Data stored in the first 8 bytes of the connection data.
@@ -105,12 +105,12 @@ struct Metadata {
   }
 };
 
-mozc::StatusOr<Metadata> ParseMetadata(const char *connection_data,
+absl::StatusOr<Metadata> ParseMetadata(const char *connection_data,
                                        size_t connection_size) {
   if (connection_size < Metadata::kByteSize) {
     const auto &data =
         Util::Escape(absl::string_view(connection_data, connection_size));
-    return mozc::FailedPreconditionError(absl::StrCat(
+    return absl::FailedPreconditionError(absl::StrCat(
         "connector.cc: At least ", Metadata::kByteSize,
         " bytes expected.  Bytes: '", data, "' (", connection_size, " bytes)"));
   }
@@ -122,12 +122,12 @@ mozc::StatusOr<Metadata> ParseMetadata(const char *connection_data,
   metadata.lsize = data[3];
 
   if (metadata.magic != kConnectorMagicNumber) {
-    return mozc::FailedPreconditionError(absl::StrCat(
+    return absl::FailedPreconditionError(absl::StrCat(
         "connector.cc: Unexpected magic number. Expected: ",
         kConnectorMagicNumber, " Actual: ", metadata.DebugString()));
   }
   if (metadata.lsize != metadata.rsize) {
-    return mozc::FailedPreconditionError(absl::StrCat(
+    return absl::FailedPreconditionError(absl::StrCat(
         "connector.cc: Matrix is not square: ", metadata.DebugString()));
   }
   return metadata;
@@ -187,7 +187,7 @@ class Connector::Row final {
   bool use_1byte_value_ = false;
 };
 
-mozc::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
+absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
 #ifdef OS_ANDROID
   constexpr int kCacheSize = 256;
@@ -200,7 +200,7 @@ mozc::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
   return Create(connection_data, connection_data_size, kCacheSize);
 }
 
-mozc::StatusOr<std::unique_ptr<Connector>> Connector::Create(
+absl::StatusOr<std::unique_ptr<Connector>> Connector::Create(
     const char *connection_data, size_t connection_size, int cache_size) {
   auto connector = absl::make_unique<Connector>();
   auto status = connector->Init(connection_data, connection_size, cache_size);
@@ -213,11 +213,11 @@ mozc::StatusOr<std::unique_ptr<Connector>> Connector::Create(
 Connector::Connector() = default;
 Connector::~Connector() = default;
 
-mozc::Status Connector::Init(const char *connection_data,
+absl::Status Connector::Init(const char *connection_data,
                              size_t connection_size, int cache_size) {
   // Check if the cache_size is the power of 2.
   if ((cache_size & (cache_size - 1)) != 0) {
-    return mozc::InvalidArgumentError(absl::StrCat(
+    return absl::InvalidArgumentError(absl::StrCat(
         "connector.cc: Cache size must be 2^n: size=", cache_size));
   }
   cache_size_ = cache_size;
@@ -225,7 +225,7 @@ mozc::Status Connector::Init(const char *connection_data,
   cache_key_ = absl::make_unique<uint32_t[]>(cache_size);
   cache_value_ = absl::make_unique<int[]>(cache_size);
 
-  mozc::StatusOr<Metadata> metadata =
+  absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data, connection_size);
   if (!metadata.ok()) {
     return std::move(metadata).status();
@@ -251,7 +251,7 @@ mozc::Status Connector::Init(const char *connection_data,
     if (status.ok()) {                                              \
       break;                                                        \
     }                                                               \
-    return mozc::FailedPreconditionError(absl::StrCat(              \
+    return absl::FailedPreconditionError(absl::StrCat(              \
         "connector.cc:", __LINE__, ": ", gen_debug_info(ptr),       \
         ": " #array " is not 32-bit aligned: ", status.message())); \
   } while (false)
@@ -265,7 +265,7 @@ mozc::Status Connector::Init(const char *connection_data,
     if (remaining >= num_bytes) {                                        \
       break;                                                             \
     }                                                                    \
-    return mozc::OutOfRangeError(absl::StrCat(                           \
+    return absl::OutOfRangeError(absl::StrCat(                           \
         "connector.cc", __LINE__, ": ", gen_debug_info(p),               \
         ": Tried to read past-the-end from " #ptr ".  Required bytes: ", \
         num_bytes, ", remaining: ", remaining, ": ", __VA_ARGS__));      \
@@ -320,7 +320,7 @@ mozc::Status Connector::Init(const char *connection_data,
   }
   VALIDATE_SIZE(ptr, 0, "Data end");
   ClearCache();
-  return mozc::Status();
+  return absl::Status();
 
 #undef VALIDATE_ALIGNMENT
 #undef VALIDATE_SIZE

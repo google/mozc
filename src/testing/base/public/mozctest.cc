@@ -31,12 +31,12 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/status.h"
-#include "base/statusor.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -56,18 +56,18 @@ std::string GetSourcePath(const std::vector<absl::string_view> &components) {
   return FileUtil::JoinPath(abs_components);
 }
 
-mozc::StatusOr<std::string> GetSourceFile(
+absl::StatusOr<std::string> GetSourceFile(
     const std::vector<absl::string_view> &components) {
   std::string path = GetSourcePath(components);
   if (!FileUtil::FileExists(path)) {
-    return mozc::NotFoundError("File doesn't exist: " + path);
+    return absl::NotFoundError("File doesn't exist: " + path);
   }
   return path;
 }
 
 std::string GetSourceFileOrDie(
     const std::vector<absl::string_view> &components) {
-  mozc::StatusOr<std::string> abs_path = GetSourceFile(components);
+  absl::StatusOr<std::string> abs_path = GetSourceFile(components);
   CHECK(abs_path.ok()) << abs_path.status();
   return *std::move(abs_path);
 }

@@ -783,11 +783,11 @@ bool WinSandbox::SpawnSandboxedProcess(const std::string &path,
                                        const std::string &arg,
                                        const SecurityInfo &info, DWORD *pid) {
   std::wstring wpath;
-  Util::UTF8ToWide(path, &wpath);
+  Util::Utf8ToWide(path, &wpath);
   wpath = L"\"" + wpath + L"\"";
   if (!arg.empty()) {
     std::wstring warg;
-    Util::UTF8ToWide(arg, &warg);
+    Util::Utf8ToWide(arg, &warg);
     wpath += L" ";
     wpath += warg;
   }

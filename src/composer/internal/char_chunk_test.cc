@@ -363,9 +363,9 @@ TEST(CharChunkTest, SplitChunk) {
   EXPECT_EQ("mo", output);
 
   // Split "mo" to "m" and "o".
-  CharChunk *left_chunk_ptr = nullptr;
-  chunk.SplitChunk(Transliterators::LOCAL, 1, &left_chunk_ptr);
-  std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
+  std::unique_ptr<CharChunk> left_chunk =
+      chunk.SplitChunk(Transliterators::LOCAL, 1);
+  ASSERT_TRUE(left_chunk != nullptr);
 
   // The output should be half width "m" rather than full width "ｍ".
   output.clear();
@@ -995,9 +995,8 @@ TEST(CharChunkTest, Issue2990253) {
     chunk.AddInput(&input);
   }
 
-  CharChunk *left_new_chunk_ptr = nullptr;
-  chunk.SplitChunk(Transliterators::HIRAGANA, size_t(1), &left_new_chunk_ptr);
-  std::unique_ptr<CharChunk> left_new_chunk(left_new_chunk_ptr);
+  std::unique_ptr<CharChunk> left_new_chunk =
+      chunk.SplitChunk(Transliterators::HIRAGANA, 1);
   {
     std::string result;
     chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
@@ -1208,14 +1207,13 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = nullptr;
-    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0,
-                                  &left_chunk_ptr));
-    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk =
+        chunk.SplitChunk(Transliterators::CONVERSION_STRING, 0);
+    EXPECT_FALSE(left_chunk);
     EXPECT_EQ(4, chunk.GetLength(Transliterators::CONVERSION_STRING));
-    EXPECT_FALSE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 4,
-                                  &left_chunk_ptr));
-    left_chunk.reset(left_chunk_ptr);
+
+    left_chunk = chunk.SplitChunk(Transliterators::CONVERSION_STRING, 4);
+    EXPECT_FALSE(left_chunk);
   }
 
   {
@@ -1223,10 +1221,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = nullptr;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1,
-                                 &left_chunk_ptr));
-    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk =
+        chunk.SplitChunk(Transliterators::CONVERSION_STRING, 1);
+    ASSERT_TRUE(left_chunk);
     EXPECT_EQ("a", left_chunk->conversion());
     EXPECT_EQ("bcd", chunk.conversion());
   }
@@ -1236,10 +1233,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = nullptr;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2,
-                                 &left_chunk_ptr));
-    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk =
+        chunk.SplitChunk(Transliterators::CONVERSION_STRING, 2);
+    ASSERT_TRUE(left_chunk);
     EXPECT_EQ("ab", left_chunk->conversion());
     EXPECT_EQ("cd", chunk.conversion());
   }
@@ -1249,10 +1245,9 @@ TEST(CharChunkTest, SplitChunkWithSpecialKeys) {
     chunk.set_raw("a");
     chunk.set_conversion(Table::ParseSpecialKey("ab{1}cd"));
 
-    CharChunk *left_chunk_ptr = nullptr;
-    EXPECT_TRUE(chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3,
-                                 &left_chunk_ptr));
-    std::unique_ptr<CharChunk> left_chunk(left_chunk_ptr);
+    std::unique_ptr<CharChunk> left_chunk =
+        chunk.SplitChunk(Transliterators::CONVERSION_STRING, 3);
+    ASSERT_TRUE(left_chunk);
     EXPECT_EQ("abc", left_chunk->conversion());
     EXPECT_EQ("d", chunk.conversion());
   }
@@ -1713,33 +1708,33 @@ TEST(CharChunkTest, NoTransliteration_Issue3497962) {
             chunk.GetTransliterator(Transliterators::LOCAL));
 }
 
-TEST(CharChunkTest, Clone) {
-  Table table;
+TEST(CharChunkTest, Copy) {
+  const Table table;
   CharChunk src(Transliterators::HIRAGANA, &table);
-  src.raw_ = "raw";
-  src.conversion_ = "conversion";
-  src.pending_ = "pending";
-  src.ambiguous_ = "ambiguous";
-  src.attributes_ = NEW_CHUNK;
+  src.set_raw("raw");
+  src.set_conversion("conversion");
+  src.set_pending("pending");
+  src.set_ambiguous("ambiguous");
+  src.set_attributes(NEW_CHUNK);
 
-  std::unique_ptr<CharChunk> dest(
-      new CharChunk(Transliterators::CONVERSION_STRING, nullptr));
-  EXPECT_FALSE(src.transliterator_ == dest->transliterator_);
-  EXPECT_FALSE(src.table_ == dest->table_);
-  EXPECT_NE(src.raw_, dest->raw_);
-  EXPECT_NE(src.conversion_, dest->conversion_);
-  EXPECT_NE(src.pending_, dest->pending_);
-  EXPECT_NE(src.ambiguous_, dest->ambiguous_);
-  EXPECT_NE(src.attributes_, dest->attributes_);
+  const CharChunk copy(src);
+  EXPECT_EQ(src.transliterator(), copy.transliterator());
+  EXPECT_TRUE(src.table() == copy.table());
+  EXPECT_EQ(src.raw(), copy.raw());
+  EXPECT_EQ(src.conversion(), copy.conversion());
+  EXPECT_EQ(src.pending(), copy.pending());
+  EXPECT_EQ(src.ambiguous(), copy.ambiguous());
+  EXPECT_EQ(src.attributes(), copy.attributes());
 
-  dest.reset(src.Clone());
-  EXPECT_TRUE(src.transliterator_ == dest->transliterator_);
-  EXPECT_TRUE(src.table_ == dest->table_);
-  EXPECT_EQ(src.raw_, dest->raw_);
-  EXPECT_EQ(src.conversion_, dest->conversion_);
-  EXPECT_EQ(src.pending_, dest->pending_);
-  EXPECT_EQ(src.ambiguous_, dest->ambiguous_);
-  EXPECT_EQ(src.attributes_, dest->attributes_);
+  CharChunk assigned(Transliterators::HALF_ASCII, nullptr);
+  assigned = src;
+  EXPECT_EQ(src.transliterator(), assigned.transliterator());
+  EXPECT_TRUE(src.table() == assigned.table());
+  EXPECT_EQ(src.raw(), assigned.raw());
+  EXPECT_EQ(src.conversion(), assigned.conversion());
+  EXPECT_EQ(src.pending(), assigned.pending());
+  EXPECT_EQ(src.ambiguous(), assigned.ambiguous());
+  EXPECT_EQ(src.attributes(), assigned.attributes());
 }
 
 TEST(CharChunkTest, GetTransliterator) {
@@ -1785,7 +1780,7 @@ TEST(CharChunkTest, GetTransliterator) {
       continue;
     }
     CharChunk chunk(t12r, &table);
-    chunk.attributes_ = NO_TRANSLITERATION;
+    chunk.set_attributes(NO_TRANSLITERATION);
     EXPECT_EQ(Transliterators::CONVERSION_STRING,
               chunk.GetTransliterator(Transliterators::LOCAL));
   }

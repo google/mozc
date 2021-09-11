@@ -43,7 +43,6 @@ cc_library_mozc(
     deps = [
         "//base:logging",
         "//base:singleton",
-        "//base:status",
         "//base:system_util",
         "//base:util",
         "//data_manager",
@@ -55,6 +54,8 @@ cc_library_mozc(
         "//session:session_handler",
         "//session:session_usage_observer",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,

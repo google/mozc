@@ -117,7 +117,7 @@ const MozcEngineProperty *kMozcEngineProperties =
 const MozcEngineProperty *kMozcEnginePropertyIMEOffState =
     &kMozcEngineProperties[0];
 constexpr size_t kMozcEnginePropertiesSize =
-    arraysize(kMozcEnginePropertiesArray);
+    std::size(kMozcEnginePropertiesArray);
 static_assert(commands::NUM_OF_COMPOSITIONS == kMozcEnginePropertiesSize,
               "commands::NUM_OF_COMPOSITIONS must be the property size.");
 const commands::CompositionMode kMozcEngineInitialCompositionMode =
@@ -126,7 +126,7 @@ const commands::CompositionMode kMozcEngineInitialCompositionMode =
 const MozcEngineToolProperty *kMozcEngineToolProperties =
     &kMozcEngineToolPropertiesArray[0];
 constexpr size_t kMozcEngineToolPropertiesSize =
-    arraysize(kMozcEngineToolPropertiesArray);
+    std::size(kMozcEngineToolPropertiesArray);
 
 const unsigned int kPageSize = 9;
 }  // namespace ibus

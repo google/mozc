@@ -62,16 +62,16 @@ namespace {
 std::string GetProgramPath() {
   wchar_t w_path[MAX_PATH];
   const DWORD char_size =
-      GetModuleFileNameW(nullptr, w_path, arraysize(w_path));
+      GetModuleFileNameW(nullptr, w_path, std::size(w_path));
   if (char_size == 0) {
     LOG(ERROR) << "GetModuleFileNameW failed.  error = " << ::GetLastError();
     return "";
-  } else if (char_size >= arraysize(w_path)) {
+  } else if (char_size >= std::size(w_path)) {
     LOG(ERROR) << "The result of GetModuleFileNameW was truncated.";
     return "";
   }
   std::string path;
-  Util::WideToUTF8(w_path, &path);
+  Util::WideToUtf8(w_path, &path);
   return path;
 }
 

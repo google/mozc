@@ -142,7 +142,7 @@ class Segment {
     std::string content_key;
     std::string content_value;
 
-    size_t consumed_key_size;
+    size_t consumed_key_size = 0;
 
     // Meta information
     std::string prefix;
@@ -151,7 +151,7 @@ class Segment {
     std::string description;
 
     // Usage ID
-    int32_t usage_id;
+    int32_t usage_id = 0;
     // Title of the usage containing basic form of this candidate.
     std::string usage_title;
     // Content of the usage.
@@ -160,33 +160,34 @@ class Segment {
     // Context "sensitive" candidate cost.
     // Taking adjacent words/nodes into consideration.
     // Basically, candidate is sorted by this cost.
-    int32_t cost;
+    int32_t cost = 0;
     // Context "free" candidate cost
     // NOT taking adjacent words/nodes into consideration.
-    int32_t wcost;
+    int32_t wcost = 0;
     // (cost without transition cost between left/right boundaries)
     // Cost of only transitions (cost without word cost adjacent context)
-    int32_t structure_cost;
+    int32_t structure_cost = 0;
 
     // lid of left-most node
-    uint16_t lid;
+    uint16_t lid = 0;
     // rid of right-most node
-    uint16_t rid;
+    uint16_t rid = 0;
 
     // Attributes of this candidate. Can set multiple attributes
     // defined in enum |Attribute|.
-    uint32_t attributes;
+    uint32_t attributes = 0;
 
     // Candidate's source info which will be used for usage stats.
-    uint32_t source_info;
+    uint32_t source_info = SOURCE_INFO_NONE;
 
     // Candidate style. This is not a bit-field.
     // The style is defined in enum |Style|.
-    NumberUtil::NumberString::Style style;
+    NumberUtil::NumberString::Style style =
+        NumberUtil::NumberString::DEFAULT_STYLE;
 
     // Command of this candidate. This is not a bit-field.
     // The style is defined in enum |Command|.
-    Command command;
+    Command command = DEFAULT_COMMAND;
 
     // Boundary information for realtime conversion.  This will be set only for
     // realtime conversion result candidates.  Each element is the encoded
@@ -247,43 +248,7 @@ class Segment {
       size_t index_;
     };
 
-    void Init() {
-      key.clear();
-      value.clear();
-      content_value.clear();
-      content_key.clear();
-      consumed_key_size = 0;
-      prefix.clear();
-      suffix.clear();
-      description.clear();
-      usage_title.clear();
-      usage_description.clear();
-      cost = 0;
-      structure_cost = 0;
-      wcost = 0;
-      lid = 0;
-      rid = 0;
-      usage_id = 0;
-      attributes = 0;
-      source_info = SOURCE_INFO_NONE;
-      style = NumberUtil::NumberString::DEFAULT_STYLE;
-      command = DEFAULT_COMMAND;
-      inner_segment_boundary.clear();
-#ifndef NDEBUG
-      log.clear();
-#endif  // NDEBUG
-    }
-
-    Candidate()
-        : cost(0),
-          wcost(0),
-          structure_cost(0),
-          lid(0),
-          rid(0),
-          attributes(0),
-          source_info(SOURCE_INFO_NONE),
-          style(NumberUtil::NumberString::DEFAULT_STYLE),
-          command(DEFAULT_COMMAND) {}
+    void Init();
 
     // Returns functional key.
     // functional_key =
@@ -295,7 +260,6 @@ class Segment {
     // value.substr(content_value.size(), value.size() - content_value.size());
     absl::string_view functional_value() const;
 
-    void CopyFrom(const Candidate &src);
     bool IsValid() const;
     std::string DebugString() const;
   };

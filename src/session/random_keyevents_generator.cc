@@ -98,7 +98,7 @@ once_t seed_init_once = MOZC_ONCE_INIT;
 
 void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
   // Read all kTestSentences and load these to memory.
-  const int size = arraysize(kTestSentences);
+  const int size = std::size(kTestSentences);
   for (int i = 0; i < size; ++i) {
     const char *sentence = kTestSentences[i];
     CHECK_GT(strlen(sentence), 0);
@@ -171,7 +171,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequence(
   CallOnce(&seed_init_once, &InitSeedWithRandomValue);
 
   const absl::string_view sentence(
-      kTestSentences[Util::Random(arraysize(kTestSentences))]);
+      kTestSentences[Util::Random(std::size(kTestSentences))]);
   CHECK(!sentence.empty());
   for (size_t i = 0; i < sentence.size();) {
     // To simulate mobile key events, split given sentence into smaller parts.
@@ -192,7 +192,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
   CallOnce(&seed_init_once, &InitSeedWithRandomValue);
 
   const std::string sentence =
-      kTestSentences[Util::Random(arraysize(kTestSentences))];
+      kTestSentences[Util::Random(std::size(kTestSentences))];
   CHECK(!sentence.empty());
 
   const std::string input = ToRomaji(sentence);
@@ -328,7 +328,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
       commands::KeyEvent key;
       switch (Util::Random(8)) {
         case 0:
-          key.set_key_code(kSpecialKeys[Util::Random(arraysize(kSpecialKeys))]);
+          key.set_key_code(kSpecialKeys[Util::Random(std::size(kSpecialKeys))]);
           break;
         case 1:
           key.set_key_code(GetRandomAsciiKey());
@@ -369,7 +369,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
 
 // static
 const char **RandomKeyEventsGenerator::GetTestSentences(size_t *size) {
-  *size = arraysize(kTestSentences);
+  *size = std::size(kTestSentences);
   return kTestSentences;
 }
 }  // namespace session

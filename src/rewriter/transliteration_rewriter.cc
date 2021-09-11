@@ -142,7 +142,7 @@ void ModifyT13nsForGodan(const std::string &key,
   for (std::string::const_iterator c = src.begin(); c != src.end(); ++c) {
     using IsNonnegativeAndLessThanType = IsNonnegativeAndLessThan<
         std::is_unsigned<std::string::value_type>::type>;
-    if (IsNonnegativeAndLessThanType()(*c, arraysize(kKeycodeToT13nMap)) &&
+    if (IsNonnegativeAndLessThanType()(*c, std::size(kKeycodeToT13nMap)) &&
         kKeycodeToT13nMap[*c] != nullptr) {
       dst.append(kKeycodeToT13nMap[*c]);
     } else {

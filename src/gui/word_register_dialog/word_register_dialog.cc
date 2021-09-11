@@ -78,7 +78,7 @@ constexpr int kMaxReverseConversionLength = 30;
 QString GetEnv(const char *envname) {
 #if defined(OS_WIN)
   std::wstring wenvname;
-  mozc::Util::UTF8ToWide(envname, &wenvname);
+  mozc::Util::Utf8ToWide(envname, &wenvname);
   const DWORD buffer_size =
       ::GetEnvironmentVariable(wenvname.c_str(), nullptr, 0);
   if (buffer_size == 0) {

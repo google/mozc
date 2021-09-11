@@ -2043,7 +2043,7 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kPredictionKey);
-    for (size_t i = 0; i < arraysize(kSuggestionValues); ++i) {
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
       candidate = segment->add_candidate();
       candidate->value = kSuggestionValues[i];
       candidate->content_key = kPredictionKey;
@@ -2066,7 +2066,7 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kPredictionKey);
-    for (size_t i = 0; i < arraysize(kPredictionValues); ++i) {
+    for (size_t i = 0; i < std::size(kPredictionValues); ++i) {
       candidate = segment->add_candidate();
       candidate->value = kPredictionValues[i];
       candidate->content_key = kPredictionKey;
@@ -2095,16 +2095,16 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
     EXPECT_EQ(commands::SUGGESTION, candidates.category());
     EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
     // -1 is for duplicate entry.
-    EXPECT_EQ(arraysize(kSuggestionValues) + arraysize(kPredictionValues) - 1,
+    EXPECT_EQ(std::size(kSuggestionValues) + std::size(kPredictionValues) - 1,
               candidates.size());
     size_t i;
-    for (i = 0; i < arraysize(kSuggestionValues); ++i) {
+    for (i = 0; i < std::size(kSuggestionValues); ++i) {
       EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
     }
 
     // -1 is for duplicate entry.
     for (; i < candidates.size(); ++i) {
-      size_t index_in_prediction = i - arraysize(kSuggestionValues);
+      size_t index_in_prediction = i - std::size(kSuggestionValues);
       if (index_in_prediction >= kDupulicationIndex) {
         ++index_in_prediction;
       }
@@ -2142,7 +2142,7 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kKey);
-    for (size_t i = 0; i < arraysize(kSuggestionValues); ++i) {
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
       candidate = segment->add_candidate();
       candidate->value = kSuggestionValues[i];
       candidate->content_key = kKey;
@@ -2161,8 +2161,8 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(commands::SUGGESTION, candidates.category());
     EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(arraysize(kSuggestionValues), candidates.size());
-    for (size_t i = 0; i < arraysize(kSuggestionValues); ++i) {
+    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
       EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
     }
   }
@@ -2173,7 +2173,7 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kKey);
-    for (size_t i = 0; i < arraysize(kPredictionValues); ++i) {
+    for (size_t i = 0; i < std::size(kPredictionValues); ++i) {
       candidate = segment->add_candidate();
       candidate->value = kPredictionValues[i];
       candidate->content_key = kKey;
@@ -2191,16 +2191,16 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
     EXPECT_EQ(commands::SUGGESTION, candidates.category());
     EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
     // -1 is for duplicate entry.
-    EXPECT_EQ(arraysize(kSuggestionValues) + arraysize(kPredictionValues) - 1,
+    EXPECT_EQ(std::size(kSuggestionValues) + std::size(kPredictionValues) - 1,
               candidates.size());
     size_t i;
-    for (i = 0; i < arraysize(kSuggestionValues); ++i) {
+    for (i = 0; i < std::size(kSuggestionValues); ++i) {
       EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
     }
 
     // -1 is for duplicate entry.
     for (; i < candidates.size(); ++i) {
-      size_t index_in_prediction = i - arraysize(kSuggestionValues);
+      size_t index_in_prediction = i - std::size(kSuggestionValues);
       if (index_in_prediction >= kDupulicationIndex) {
         ++index_in_prediction;
       }
@@ -2519,7 +2519,7 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
 
   // Set history segments.
   const std::string kHistoryInput[] = {"車で", "行く"};
-  for (size_t i = 0; i < arraysize(kHistoryInput); ++i) {
+  for (size_t i = 0; i < std::size(kHistoryInput); ++i) {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->add_candidate();

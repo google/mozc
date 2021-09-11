@@ -154,7 +154,7 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
     const wchar_t kTestBuffer[] = L"abc";
     const std::wstring test_string1(kTestBuffer);
     const std::wstring test_string2(kTestBuffer,
-                                    kTestBuffer + arraysize(kTestBuffer));
+                                    kTestBuffer + std::size(kTestBuffer));
 
     EXPECT_EQ(3, test_string1.size());
     EXPECT_EQ(4, test_string2.size());
@@ -164,7 +164,7 @@ TEST(WinUtilTest, SystemEqualStringTestForNUL) {
     const wchar_t kTestBuffer[] = L"abc\0def";
     const std::wstring test_string1(kTestBuffer);
     const std::wstring test_string2(kTestBuffer,
-                                    kTestBuffer + arraysize(kTestBuffer));
+                                    kTestBuffer + std::size(kTestBuffer));
 
     EXPECT_EQ(3, test_string1.size());
     EXPECT_EQ(8, test_string2.size());

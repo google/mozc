@@ -143,7 +143,7 @@ class KeyEventHandlerTest : public testing::Test {
 #define EXPECT_NO_MODIFIERS_PRESSED() EXPECT_TRUE(CheckModifiersPressed(false))
 
 namespace {
-const uint32 kNoModifiers = 0;
+constexpr uint32 kNoModifiers = 0;
 const guint kDummyKeycode = 0;
 }  // namespace
 
@@ -415,7 +415,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
       IBUS_Alt_L,   IBUS_Alt_R,   IBUS_Control_L, IBUS_Control_R,
       IBUS_Shift_L, IBUS_Shift_R, IBUS_Caps_Lock, IBUS_a,
   };
-  constexpr size_t kKeySetSize = arraysize(kKeySet);
+  constexpr size_t kKeySetSize = std::size(kKeySet);
   Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
 
   constexpr int kTrialNum = 1000;

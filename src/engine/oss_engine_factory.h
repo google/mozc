@@ -32,9 +32,9 @@
 
 #include <memory>
 
-#include "base/statusor.h"
 #include "data_manager/oss/oss_data_manager.h"
 #include "engine/engine.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 
@@ -42,7 +42,7 @@ namespace mozc {
 // equipped with the data set for OSS (i.e., mozc/data/dictionary_oss).
 class OssEngineFactory {
  public:
-  static StatusOr<std::unique_ptr<Engine>> Create() {
+  static absl::StatusOr<std::unique_ptr<Engine>> Create() {
 #ifdef OS_ANDROID
     return Engine::CreateMobileEngineHelper<oss::OssDataManager>();
 #else

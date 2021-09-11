@@ -37,8 +37,8 @@
         'codec.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_status',
         '../../base/base.gyp:base_core',
-        '../../base/base.gyp:status',
       ],
     },
     {
@@ -56,8 +56,8 @@
         'system_dictionary.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_status',
         '../../base/base.gyp:base_core',
-        '../../base/base.gyp:status',
         '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:bit_vector_based_array',
         '../../storage/louds/louds.gyp:louds_trie',

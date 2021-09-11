@@ -180,7 +180,7 @@ bool UIContext::GetCandidateForm(DWORD form_index,
   }
 
   // Currently the array size is 4.
-  if (form_index >= arraysize(input_context_->cfCandForm)) {
+  if (form_index >= std::size(input_context_->cfCandForm)) {
     return false;
   }
 
@@ -212,7 +212,7 @@ bool UIContext::GetCompositionFont(LOGFONTW *font) const {
   // See b/4506404 for details.
   bool null_terminated = false;
   bool empty_facename = true;
-  for (size_t i = 0; i < arraysize(font->lfFaceName); ++i) {
+  for (size_t i = 0; i < std::size(font->lfFaceName); ++i) {
     if (font->lfFaceName[i] == L'\0') {
       null_terminated = true;
       break;

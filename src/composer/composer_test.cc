@@ -694,7 +694,7 @@ TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
   };
 
   composer_->SetInputMode(transliteration::HIRAGANA);
-  for (size_t test_data_index = 0; test_data_index < arraysize(test_data_list);
+  for (size_t test_data_index = 0; test_data_index < std::size(test_data_list);
        ++test_data_index) {
     const TestData &test_data = test_data_list[test_data_index];
     composer_->SetInputFieldType(test_data.field_type);
@@ -993,7 +993,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair("あ", false), std::make_pair("a", false),
     };
 
-    for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
+    for (int i = 0; i < std::size(kTestDataAscii); ++i) {
       composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first,
                                          kCapsUnlocked);
 
@@ -1024,7 +1024,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair("あ", false), std::make_pair("A", false),
     };
 
-    for (int i = 0; i < arraysize(kTestDataAscii); ++i) {
+    for (int i = 0; i < std::size(kTestDataAscii); ++i) {
       composer_->ApplyTemporaryInputMode(kTestDataAscii[i].first, kCapsLocked);
 
       const transliteration::TransliterationType expected =
@@ -1054,7 +1054,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair("あ", false), std::make_pair("a", false),
     };
 
-    for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
+    for (int i = 0; i < std::size(kTestDataKatakana); ++i) {
       composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
                                          kCapsUnlocked);
 
@@ -1085,7 +1085,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
         std::make_pair("あ", false), std::make_pair("A", false),
     };
 
-    for (int i = 0; i < arraysize(kTestDataKatakana); ++i) {
+    for (int i = 0; i < std::size(kTestDataKatakana); ++i) {
       composer_->ApplyTemporaryInputMode(kTestDataKatakana[i].first,
                                          kCapsLocked);
 
@@ -2606,7 +2606,7 @@ TEST_F(ComposerTest, ShouldCommitHead) {
       TestData("ABCDEFGHI", commands::Context::TEL, true, 9),
   };
 
-  for (size_t i = 0; i < arraysize(test_data_list); ++i) {
+  for (size_t i = 0; i < std::size(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     SCOPED_TRACE(test_data.input_text);
     SCOPED_TRACE(test_data.field_type);
@@ -2978,13 +2978,13 @@ TEST_F(TypingCorrectionTest, GetTypeCorrectedQueriesForPrediction) {
   // each key insertion. The quality of typing correction depends on data model
   // and is tested in composer/internal/typing_corrector_test.cc.
   const char *kKeys[] = {"m", "o", "z", "u", "k", "u"};
-  for (size_t i = 0; i < arraysize(kKeys); ++i) {
+  for (size_t i = 0; i < std::size(kKeys); ++i) {
     composer_->InsertCharacterKeyEvent(
         GetKeyEvent(kKeys[i], GetStubProbableKeyEvent(kKeys[i][0], 0.9f)));
     EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
   }
   composer_->Backspace();
-  for (size_t i = 0; i < arraysize(kKeys); ++i) {
+  for (size_t i = 0; i < std::size(kKeys); ++i) {
     composer_->InsertCharacterKeyEvent(
         GetKeyEvent(kKeys[i], ProbableKeyEvents()));
     EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));

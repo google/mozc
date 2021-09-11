@@ -50,7 +50,7 @@ std::string Version::GetMozcVersion() { return version::kMozcVersion; }
 #ifdef OS_WIN
 std::wstring Version::GetMozcVersionW() {
   std::wstring version;
-  Util::UTF8ToWide(version::kMozcVersion, &version);
+  Util::Utf8ToWide(version::kMozcVersion, &version);
   return version;
 }
 #endif
