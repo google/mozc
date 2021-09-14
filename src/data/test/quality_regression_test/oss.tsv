@@ -97,3 +97,11 @@ oss_issue52	てんさいとしかいいようがない	としか言いようが�
 oss_issue52	そのあとどうなるかは	どうなるかは	Conversion Match
 oss_issue52	ばくそうする	爆走する	Conversion Expected
 oss_issue52	ゆうきがひつようだ	勇気が必要だ	Conversion Expected
+oss	しゅうだんせっしゅ	集団接種	Conversion Match
+oss	こべつせっしゅ	個別接種	Conversion Match
+oss	ひゃっきん	100均	Conversion Match
+oss	ちゅうはくしょく	昼白色	Conversion Match
+oss	もでるな	モデルナ	Conversion Match
+oss	りょうなのか	量なのか	Conversion Match
+oss	しつなのか	質なのか	Conversion Match
+oss	あとにしよう	後にしよう	Conversion Match
