@@ -74,7 +74,7 @@ class ImeContext {
   void set_converter(SessionConverterInterface *converter);
 
   const KeyEventTransformer &key_event_transformer() const {
-    return *key_event_transformer_;
+    return key_event_transformer_;
   }
 
   enum State {
@@ -138,7 +138,7 @@ class ImeContext {
 
   std::unique_ptr<SessionConverterInterface> converter_;
 
-  std::unique_ptr<KeyEventTransformer> key_event_transformer_;
+  KeyEventTransformer key_event_transformer_;
 
   State state_;
 

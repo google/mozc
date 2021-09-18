@@ -270,7 +270,7 @@ class Util {
   static void StripUTF8BOM(std::string *line);
 
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
-  static bool IsUTF16BOM(const std::string &line);
+  static bool IsUtf16Bom(const std::string &line);
 
   // Returns true if the given |s| has only one ucs4 character, and it is
   // in the range of Android Emoji PUA.

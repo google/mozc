@@ -60,8 +60,8 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
 
   // Determines a penalty for tokens of this (key, actual_key) pair.
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
-                         bool is_expanded) override {
-    penalty_ = is_expanded ? kKanaModifierInsensitivePenalty : 0;
+                         int num_expanded) override {
+    penalty_ = num_expanded > 0 ? kKanaModifierInsensitivePenalty : 0;
     return TRAVERSE_CONTINUE;
   }
 

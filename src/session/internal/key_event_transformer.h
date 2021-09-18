@@ -33,23 +33,27 @@
 #ifndef MOZC_SESSION_INTERNAL_KEY_EVENT_TRANSFORMER_H_
 #define MOZC_SESSION_INTERNAL_KEY_EVENT_TRANSFORMER_H_
 
-#include <map>
 #include <string>
 
 #include "base/port.h"
 #include "base/singleton.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/container/flat_hash_map.h"
 
 namespace mozc {
 namespace session {
 
-class KeyEventTransformer {
+class KeyEventTransformer final {
  public:
-  typedef std::map<std::string, commands::KeyEvent> Table;
+  using Table = absl::flat_hash_map<std::string, commands::KeyEvent>;
 
   KeyEventTransformer();
-  virtual ~KeyEventTransformer();
+
+  KeyEventTransformer(const KeyEventTransformer &) = default;
+  KeyEventTransformer &operator=(const KeyEventTransformer &) = default;
+
+  ~KeyEventTransformer() = default;
 
   // Updates the transform table accoding to config.
   void ReloadConfig(const config::Config &config);
@@ -57,9 +61,6 @@ class KeyEventTransformer {
   // Transforms key event accoding to transform table.
   // We should update table using ReloadConfig() before calling a this function.
   bool TransformKeyEvent(commands::KeyEvent *key_event) const;
-
-  // Resets this instance to the copy of |src|.
-  void CopyFrom(const KeyEventTransformer &src);
 
   const Table &table() const { return table_; }
   config::Config::NumpadCharacterForm numpad_character_form() const {
@@ -77,8 +78,6 @@ class KeyEventTransformer {
 
   Table table_;
   config::Config::NumpadCharacterForm numpad_character_form_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyEventTransformer);
 };
 
 }  // namespace session

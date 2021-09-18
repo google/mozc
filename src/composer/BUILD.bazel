@@ -43,7 +43,6 @@ cc_library_mozc(
     srcs = ["composer.cc"],
     hdrs = ["composer.h"],
     deps = [
-        ":composition_interface",
         ":key_event_util",
         ":table",
         ":type_corrected_query",
@@ -121,16 +120,6 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "composition_interface",
-    hdrs = ["composition_interface.h"],
-    visibility = [
-        # For //composer/internal:composition.
-        "//composer/internal:__pkg__",
-    ],
-    deps = ["//composer/internal:transliterators"],
-)
-
-cc_library_mozc(
     name = "type_corrected_query",
     hdrs = ["type_corrected_query.h"],
     visibility = [
@@ -144,7 +133,6 @@ cc_binary_mozc(
     srcs = ["composer_main.cc"],
     deps = [
         ":composer",
-        ":composition_interface",
         ":table",
         "//base",
         "//base:init_mozc",

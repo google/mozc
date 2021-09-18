@@ -790,7 +790,7 @@ void Util::StripUTF8BOM(std::string *line) {
   *line = std::string(absl::StripPrefix(*line, kUTF8BOM));
 }
 
-bool Util::IsUTF16BOM(const std::string &line) {
+bool Util::IsUtf16Bom(const std::string &line) {
   static constexpr char kUTF16LEBOM[] = "\xff\xfe";
   static constexpr char kUTF16BEBOM[] = "\xfe\xff";
   if (line.size() >= 2 &&

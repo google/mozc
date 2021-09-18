@@ -33,16 +33,7 @@
 #include "base/util.h"
 
 namespace mozc {
-
-using ProbableKeyEvent = commands::KeyEvent::ProbableKeyEvent;
-using ProbableKeyEvents = protobuf::RepeatedPtrField<ProbableKeyEvent>;
-
 namespace composer {
-
-CompositionInput::CompositionInput()
-    : has_conversion_(false), is_new_input_(false) {}
-
-CompositionInput::~CompositionInput() = default;
 
 bool CompositionInput::Init(const commands::KeyEvent &key_event,
                             bool use_typing_correction, bool is_new_input) {
@@ -96,25 +87,6 @@ bool CompositionInput::Empty() const {
   }
 }
 
-void CompositionInput::CopyFrom(const CompositionInput &input) {
-  raw_ = input.raw();
-  if (input.has_conversion()) {
-    conversion_ = input.conversion();
-    has_conversion_ = true;
-  } else {
-    conversion_.clear();
-    has_conversion_ = false;
-  }
-  probable_key_events_ = input.probable_key_events();
-  is_new_input_ = input.is_new_input();
-}
-
-const std::string &CompositionInput::raw() const { return raw_; }
-
-std::string *CompositionInput::mutable_raw() { return &raw_; }
-
-void CompositionInput::set_raw(const std::string &raw) { raw_ = raw; }
-
 const std::string &CompositionInput::conversion() const {
   if (has_conversion_) {
     return conversion_;
@@ -134,24 +106,6 @@ std::string *CompositionInput::mutable_conversion() {
 void CompositionInput::set_conversion(const std::string &conversion) {
   conversion_ = conversion;
   has_conversion_ = true;
-}
-
-bool CompositionInput::has_conversion() const { return has_conversion_; }
-
-bool CompositionInput::is_new_input() const { return is_new_input_; }
-
-const ProbableKeyEvents &CompositionInput::probable_key_events() const {
-  return probable_key_events_;
-}
-
-void CompositionInput::set_probable_key_events(
-    const ProbableKeyEvents &probable_key_events) {
-  probable_key_events_ = probable_key_events;
-}
-
-
-void CompositionInput::set_is_new_input(bool is_new_input) {
-  is_new_input_ = is_new_input;
 }
 
 }  // namespace composer

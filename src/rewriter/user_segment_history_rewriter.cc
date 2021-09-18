@@ -60,13 +60,13 @@ using mozc::config::CharacterFormManager;
 using mozc::config::Config;
 using mozc::dictionary::PosGroup;
 using mozc::dictionary::POSMatcher;
-using mozc::storage::LRUStorage;
+using mozc::storage::LruStorage;
 
 namespace mozc {
 namespace {
 
 constexpr uint32_t kValueSize = 4;
-constexpr uint32_t kLRUSize = 20000;
+constexpr uint32_t kLruSize = 20000;
 constexpr uint32_t kSeedValue = 0xf28defe3;
 constexpr uint32_t kMaxCandidatesSize = 255;
 // Size of candidates to be reranked to the top at one sorting operation.
@@ -84,7 +84,7 @@ MOZC_CLANG_PUSH_WARNING();
 // clang-format off
 #if MOZC_CLANG_HAS_WARNING(unused-private-field)
 MOZC_CLANG_DISABLE_WARNING(unused-private-field);
-#endif
+#endif  // MOZC_CLANG_HAS_WARNING(unused-private-field)
 // clang-format on
 class FeatureValue {
  public:
@@ -110,7 +110,7 @@ MOZC_CLANG_PUSH_WARNING();
 // clang-format off
 #if MOZC_CLANG_HAS_WARNING(unused-private-field)
 MOZC_CLANG_DISABLE_WARNING(unused-private-field);
-#endif
+#endif  // MOZC_CLANG_HAS_WARNING(unused-private-field)
 // clang-format on
 class KeyTriggerValue {
  public:
@@ -513,7 +513,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
     const POSMatcher *pos_matcher, const PosGroup *pos_group)
-    : storage_(new LRUStorage),
+    : storage_(new LruStorage),
       pos_matcher_(pos_matcher),
       pos_group_(pos_group) {
   Reload();
@@ -821,7 +821,7 @@ bool UserSegmentHistoryRewriter::Sync() {
 
 bool UserSegmentHistoryRewriter::Reload() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLRUSize,
+  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLruSize,
                               kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserSegmentHistoryRewriter";
     storage_.reset();

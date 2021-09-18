@@ -41,7 +41,7 @@ namespace {
 using ::testing::ElementsAre;
 
 template <typename Key, typename Value>
-std::vector<Key> GetOrderedKeys(const LRUCache<Key, Value> &cache) {
+std::vector<Key> GetOrderedKeys(const LruCache<Key, Value> &cache) {
   std::vector<Key> keys;
   keys.reserve(cache.Size());
   for (auto *elem = cache.Head(); elem != nullptr; elem = elem->next) {
@@ -50,8 +50,8 @@ std::vector<Key> GetOrderedKeys(const LRUCache<Key, Value> &cache) {
   return keys;
 }
 
-TEST(LRUCacheTest, Insert) {
-  LRUCache<int, int> cache(3);
+TEST(LruCacheTest, Insert) {
+  LruCache<int, int> cache(3);
   EXPECT_EQ(0, cache.Size());
 
   cache.Insert(0, 0);
@@ -68,8 +68,8 @@ TEST(LRUCacheTest, Insert) {
   EXPECT_THAT(GetOrderedKeys(cache), ElementsAre(5, 4, 3));
 }
 
-TEST(LRUCacheTest, Lookup) {
-  LRUCache<int, int> cache(5);
+TEST(LruCacheTest, Lookup) {
+  LruCache<int, int> cache(5);
   for (int i = 0; i < 3; ++i) {
     cache.Insert(i, i);
   }
@@ -85,8 +85,8 @@ TEST(LRUCacheTest, Lookup) {
   EXPECT_TRUE(cache.Lookup(3) == nullptr);
 }
 
-TEST(LRUCacheTest, LookupWithoutInsert) {
-  LRUCache<int, int> cache(5);
+TEST(LruCacheTest, LookupWithoutInsert) {
+  LruCache<int, int> cache(5);
   for (int i = 0; i < 3; ++i) {
     cache.Insert(i, i);
   }
@@ -101,8 +101,8 @@ TEST(LRUCacheTest, LookupWithoutInsert) {
   EXPECT_TRUE(cache.LookupWithoutInsert(3) == nullptr);
 }
 
-TEST(LRUCacheTest, Erase) {
-  LRUCache<int, int> cache(5);
+TEST(LruCacheTest, Erase) {
+  LruCache<int, int> cache(5);
   for (int i = 0; i < 3; ++i) {
     cache.Insert(i, i);
   }
@@ -120,8 +120,8 @@ TEST(LRUCacheTest, Erase) {
   EXPECT_EQ(0, cache.Size());
 }
 
-TEST(LRUCacheTest, Clear) {
-  LRUCache<int, int> cache(5);
+TEST(LruCacheTest, Clear) {
+  LruCache<int, int> cache(5);
   for (int i = 0; i < 3; ++i) {
     cache.Insert(i, i);
   }
@@ -130,9 +130,9 @@ TEST(LRUCacheTest, Clear) {
   EXPECT_EQ(0, cache.Size());
 }
 
-TEST(LRUCacheTest, LargeCapacity) {
+TEST(LruCacheTest, LargeCapacity) {
   constexpr int kCapacity = 1000000;
-  LRUCache<int, int> cache(kCapacity);
+  LruCache<int, int> cache(kCapacity);
   for (int i = 0; i < 3 * kCapacity; ++i) {
     cache.Insert(i, i);
     EXPECT_TRUE(cache.HasKey(i));

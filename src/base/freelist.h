@@ -87,6 +87,7 @@ class FreeList {
     return r;
   }
 
+  size_t size() const { return size_; }
   void set_size(size_t size) { size_ = size; }
 
  private:
@@ -121,7 +122,8 @@ class ObjectPool {
 
   void Release(T* ptr) { released_.push_back(ptr); }
 
-  void set_size(int size) { freelist_.set_size(size); }
+  size_t size() const { return freelist_.size(); }
+  void set_size(size_t size) { freelist_.set_size(size); }
 
  private:
   std::vector<T*> released_;

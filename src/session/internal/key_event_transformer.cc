@@ -40,17 +40,18 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 
-using mozc::commands::KeyEvent;
-using mozc::config::Config;
-
 namespace mozc {
 namespace session {
+namespace {
+
+using ::mozc::commands::KeyEvent;
+using ::mozc::config::Config;
+
+}  // namespace
 
 KeyEventTransformer::KeyEventTransformer() {
   ReloadConfig(config::ConfigHandler::DefaultConfig());
 }
-
-KeyEventTransformer::~KeyEventTransformer() {}
 
 void KeyEventTransformer::ReloadConfig(const Config &config) {
   numpad_character_form_ = config.numpad_character_form();
@@ -62,14 +63,14 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32_t>(','));
     key_event.set_key_string("，");
-    table_.insert(std::make_pair("、", key_event));
+    table_.emplace("、", key_event);
   }
   if (punctuation == Config::COMMA_PERIOD ||
       punctuation == Config::KUTEN_PERIOD) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32_t>('.'));
     key_event.set_key_string("．");
-    table_.insert(std::make_pair("。", key_event));
+    table_.emplace("。", key_event);
   }
 
   const Config::SymbolMethod symbol = config.symbol_method();
@@ -79,13 +80,13 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
       KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32_t>('['));
       key_event.set_key_string("［");
-      table_.insert(std::make_pair("「", key_event));
+      table_.emplace("「", key_event);
     }
     {
       KeyEvent key_event;
       key_event.set_key_code(static_cast<uint32_t>(']'));
       key_event.set_key_string("］");
-      table_.insert(std::make_pair("」", key_event));
+      table_.emplace("」", key_event);
     }
   }
   if (symbol == Config::SQUARE_BRACKET_SLASH ||
@@ -93,7 +94,7 @@ void KeyEventTransformer::ReloadConfig(const Config &config) {
     KeyEvent key_event;
     key_event.set_key_code(static_cast<uint32_t>('/'));
     key_event.set_key_string("／");
-    table_.insert(std::make_pair("・", key_event));
+    table_.emplace("・", key_event);
   }
 }
 
@@ -197,11 +198,6 @@ bool KeyEventTransformer::TransformKeyEventForKana(KeyEvent *key_event) const {
 
   *key_event = it->second;
   return true;
-}
-
-void KeyEventTransformer::CopyFrom(const KeyEventTransformer &src) {
-  table_ = src.table_;
-  numpad_character_form_ = src.numpad_character_form_;
 }
 
 }  // namespace session

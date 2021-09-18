@@ -1129,7 +1129,7 @@ TEST_F(ComposerTest, FullWidthCharRules_b31444698) {
   EXPECT_EQ("き", GetPreedit(composer_.get()));
 }
 
-TEST_F(ComposerTest, CopyFrom) {
+TEST_F(ComposerTest, Copy) {
   table_->AddRule("a", "あ", "");
   table_->AddRule("n", "ん", "");
   table_->AddRule("na", "な", "");
@@ -1141,9 +1141,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("", src_composition);
 
-    Composer dest(nullptr, request_.get(), config_.get());
-    dest.CopyFrom(*composer_);
-
+    Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
   }
 
@@ -1156,9 +1154,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("あｎ", src_composition);
 
-    Composer dest(nullptr, request_.get(), config_.get());
-    dest.CopyFrom(*composer_);
-
+    Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
   }
 
@@ -1169,9 +1165,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetQueryForConversion(&src_composition);
     EXPECT_EQ("あん", src_composition);
 
-    Composer dest(nullptr, request_.get(), config_.get());
-    dest.CopyFrom(*composer_);
-
+    Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
   }
 
@@ -1188,9 +1182,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("AaAAあ", src_composition);
 
-    Composer dest(nullptr, request_.get(), config_.get());
-    dest.CopyFrom(*composer_);
-
+    Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
   }
 
@@ -1206,9 +1198,7 @@ TEST_F(ComposerTest, CopyFrom) {
     composer_->GetStringForSubmission(&src_composition);
     EXPECT_EQ("M", src_composition);
 
-    Composer dest(nullptr, request_.get(), config_.get());
-    dest.CopyFrom(*composer_);
-
+    Composer dest = *composer_;
     ExpectSameComposer(*composer_, dest);
   }
 }
@@ -3175,7 +3165,6 @@ TEST_F(ComposerTest, CheckTimeout) {
   EXPECT_EQ("あい", GetPreedit(composer_.get()));
 }
 
-
 TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
   table_->AddRule("1", "", "あ");
   table_->AddRule("あ{!}", "あ", "");
@@ -3198,24 +3187,23 @@ TEST_F(ComposerTest, CheckTimeoutWithProtobuf) {
   EXPECT_EQ("あ", GetPreedit(composer_.get()));
 
   clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
-  timestamp_msec += 3000;  // +3.0 sec in proto.
+  timestamp_msec += 3000;              // +3.0 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ("ああ", GetPreedit(composer_.get()));
 
   clock->PutClockForward(0, 100'000);  // +0.1 sec in the global clock
-  timestamp_msec += 700;  // +0.7 sec in proto.
+  timestamp_msec += 700;               // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ("あああ", GetPreedit(composer_.get()));
 
   clock->PutClockForward(3, 0);  // +3.0 sec in the global clock
-  timestamp_msec += 100;  // +0.7 sec in proto.
+  timestamp_msec += 100;         // +0.7 sec in proto.
   key_event.set_timestamp_msec(timestamp_msec);
   composer_->InsertCharacterKeyEvent(key_event);
   EXPECT_EQ("ああい", GetPreedit(composer_.get()));
 }
-
 
 TEST_F(ComposerTest, SimultaneousInput) {
   table_->AddRule("k", "", "い");      // k → い

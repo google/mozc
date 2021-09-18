@@ -78,8 +78,8 @@ TEST(CompositionInputTest, BasicTest) {
   }
 
   CompositionInput input2;
-  {  // CopyFrom and Clear
-    input2.CopyFrom(input);
+  {  // Copy and Clear
+    input2 = input;
     input.Clear();
     EXPECT_TRUE(input.Empty());
     EXPECT_TRUE(input.raw().empty());

@@ -370,14 +370,14 @@ class SystemDictionary::ReverseLookupIndex {
 };
 
 struct SystemDictionary::PredictiveLookupSearchState {
-  PredictiveLookupSearchState() : key_pos(0), is_expanded(false) {}
+  PredictiveLookupSearchState() : key_pos(0), num_expanded(0) {}
   PredictiveLookupSearchState(const storage::louds::LoudsTrie::Node &n,
-                              size_t pos, bool expanded)
-      : node(n), key_pos(pos), is_expanded(expanded) {}
+                              size_t pos, int expanded)
+      : node(n), key_pos(pos), num_expanded(expanded) {}
 
   storage::louds::LoudsTrie::Node node;
   size_t key_pos;
-  bool is_expanded;
+  int num_expanded;
 };
 
 struct SystemDictionary::Builder::Specification {
@@ -617,9 +617,10 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
         if (!chars.IsHit(c)) {
           continue;
         }
-        const bool is_expanded = state.is_expanded || c != target_char;
+        const int num_expanded =
+            state.num_expanded + static_cast<int>(c != target_char);
         queue.push(PredictiveLookupSearchState(state.node, state.key_pos + 1,
-                                               is_expanded));
+                                               num_expanded));
       }
       continue;
     }
@@ -655,7 +656,7 @@ void SystemDictionary::CollectPredictiveNodesInBfsOrder(
          key_trie_.IsValidNode(state.node);
          key_trie_.MoveToNextSibling(&state.node)) {
       queue.push(PredictiveLookupSearchState(state.node, state.key_pos + 1,
-                                             state.is_expanded));
+                                             state.num_expanded));
     }
   } while (!queue.empty());
 }
@@ -724,14 +725,15 @@ void SystemDictionary::LookupPredictive(
     }
 
     absl::string_view actual_key;
-    if (state.is_expanded) {
+    if (state.num_expanded > 0) {
       actual_key_str.clear();
       codec_->DecodeKey(encoded_actual_key, &actual_key_str);
       actual_key = actual_key_str;
     } else {
       actual_key = decoded_key;
     }
-    switch (callback->OnActualKey(decoded_key, actual_key, state.is_expanded)) {
+    switch (
+        callback->OnActualKey(decoded_key, actual_key, state.num_expanded)) {
       case Callback::TRAVERSE_DONE:
         return;
       case Callback::TRAVERSE_NEXT_KEY:
@@ -879,8 +881,8 @@ class ReverseLookupCallbackWrapper : public DictionaryInterface::Callback {
 //   key_pos:
 //     Depth of node, i.e., encoded_key.substr(0, key_pos) is the current prefix
 //     for search.
-//   is_expanded:
-//     true is stored if the current node is reached by key expansion.
+//   num_expanded:
+//     the number of chharacters expanded. if non zero, characters are expanded.
 //   actual_key_buffer:
 //     Buffer for storing actually used characters to reach this node, i.e.,
 //     absl::string_view(actual_key_buffer, key_pos) is the matched prefix using
@@ -892,7 +894,7 @@ DictionaryInterface::Callback::ResultType
 SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     const char *key, absl::string_view encoded_key,
     const KeyExpansionTable &table, Callback *callback, LoudsTrie::Node node,
-    absl::string_view::size_type key_pos, bool is_expanded,
+    absl::string_view::size_type key_pos, int num_expanded,
     char *actual_key_buffer, std::string *actual_prefix) const {
   // This do-block handles a terminal node and callback.  do-block is used to
   // break the block and continue to the subsequent traversal phase.
@@ -916,7 +918,7 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     const absl::string_view encoded_actual_prefix(actual_key_buffer, key_pos);
     actual_prefix->clear();
     codec_->DecodeKey(encoded_actual_prefix, actual_prefix);
-    result = callback->OnActualKey(prefix, *actual_prefix, is_expanded);
+    result = callback->OnActualKey(prefix, *actual_prefix, num_expanded);
     if (result == Callback::TRAVERSE_DONE ||
         result == Callback::TRAVERSE_CULL) {
       return result;
@@ -957,7 +959,8 @@ SystemDictionary::LookupPrefixWithKeyExpansionImpl(
     actual_key_buffer[key_pos] = c;
     const Callback::ResultType result = LookupPrefixWithKeyExpansionImpl(
         key, encoded_key, table, callback, node, key_pos + 1,
-        is_expanded || c != current_char, actual_key_buffer, actual_prefix);
+        num_expanded + static_cast<int>(c != current_char), actual_key_buffer,
+        actual_prefix);
     if (result == Callback::TRAVERSE_DONE) {
       return Callback::TRAVERSE_DONE;
     }

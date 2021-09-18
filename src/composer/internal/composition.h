@@ -31,79 +31,84 @@
 #define MOZC_COMPOSER_INTERNAL_COMPOSITION_H_
 
 #include <list>
+#include <memory>
 #include <set>
 #include <string>
 
 #include "base/port.h"
-#include "composer/composition_interface.h"
+#include "composer/internal/transliterators.h"
 
 namespace mozc {
 namespace composer {
 
 class CharChunk;
-using CharChunkList = std::list<CharChunk *>;
+using CharChunkList = std::list<std::unique_ptr<CharChunk>>;
 
 class CompositionInput;
 class Table;
 
-class Composition : public CompositionInterface {
+enum TrimMode {
+  TRIM,  // "かn" => "か"
+  ASIS,  // "かn" => "かn"
+  FIX,   // "かn" => "かん"
+};
+
+class Composition final {
  public:
   explicit Composition(const Table *table);
-  ~Composition() override;
 
-  size_t DeleteAt(size_t position) override;
-  size_t InsertAt(size_t position, const std::string &input) override;
+  Composition(const Composition &);
+  Composition &operator=(const Composition &);
+
+  ~Composition();
+
+  size_t DeleteAt(size_t position);
+  size_t InsertAt(size_t position, const std::string &input);
   size_t InsertKeyAndPreeditAt(size_t position, const std::string &key,
-                               const std::string &preedit) override;
+                               const std::string &preedit);
   // Insert the given |input| to the composition at the given |position|
   // and return the new position.
-  size_t InsertInput(size_t position, const CompositionInput &input) override;
+  size_t InsertInput(size_t position, const CompositionInput &input);
 
-  void Erase() override;
+  void Erase();
 
   // Get the position on mode_to from position_from on mode_from.
   size_t ConvertPosition(
       size_t position_from, Transliterators::Transliterator transliterator_from,
-      Transliterators::Transliterator transliterator_to) override;
+      Transliterators::Transliterator transliterator_to) const;
 
   // TODO(komatsu): To be deleted.
-  size_t SetDisplayMode(
-      size_t position, Transliterators::Transliterator transliterator) override;
+  size_t SetDisplayMode(size_t position,
+                        Transliterators::Transliterator transliterator);
 
   // NOTE(komatsu) Kind of SetDisplayMode.
-  void SetTransliterator(
-      size_t position_from, size_t position_to,
-      Transliterators::Transliterator transliterator) override;
-  Transliterators::Transliterator GetTransliterator(
-      size_t position) const override;
+  void SetTransliterator(size_t position_from, size_t position_to,
+                         Transliterators::Transliterator transliterator);
+  Transliterators::Transliterator GetTransliterator(size_t position) const;
 
-  size_t GetLength() const override;
-  void GetString(std::string *composition) const override;
+  size_t GetLength() const;
+  void GetString(std::string *composition) const;
   void GetStringWithTransliterator(
       Transliterators::Transliterator transliterator,
-      std::string *output) const override;
-  void GetStringWithTrimMode(TrimMode trim_mode,
-                             std::string *output) const override;
+      std::string *output) const;
+  void GetStringWithTrimMode(TrimMode trim_mode, std::string *output) const;
   // Get string with consideration for ambiguity from pending input
   void GetExpandedStrings(std::string *base,
-                          std::set<std::string> *expanded) const override;
+                          std::set<std::string> *expanded) const;
   void GetExpandedStringsWithTransliterator(
       Transliterators::Transliterator transliterator, std::string *base,
-      std::set<std::string> *expanded) const override;
+      std::set<std::string> *expanded) const;
   void GetPreedit(size_t position, std::string *left, std::string *focused,
-                  std::string *right) const override;
+                  std::string *right) const;
 
-  void SetInputMode(Transliterators::Transliterator transliterator) override;
+  void SetInputMode(Transliterators::Transliterator transliterator);
 
   // Return true if the composition is adviced to be committed immediately.
-  bool ShouldCommit() const override;
+  bool ShouldCommit() const;
 
-  // Get a clone.
-  Composition *Clone() const override;
+  void SetTable(const Table *table);
 
-  void SetTable(const Table *table) override;
-
-  bool IsToggleable(size_t position) const override;
+  bool IsToggleable(size_t position) const;
 
   // Following methods are declared as public for unit test.
   CharChunkList::iterator GetChunkAt(
@@ -113,10 +118,10 @@ class Composition : public CompositionInterface {
       size_t position, Transliterators::Transliterator transliterator,
       size_t *inner_position) const;
   size_t GetPosition(Transliterators::Transliterator transliterator,
-                     const CharChunkList::const_iterator &it) const;
+                     CharChunkList::const_iterator it) const;
 
-  CharChunkList::iterator GetInsertionChunk(CharChunkList::iterator *it);
-  CharChunkList::iterator InsertChunk(CharChunkList::iterator *left_it);
+  CharChunkList::iterator GetInsertionChunk(CharChunkList::iterator it);
+  CharChunkList::iterator InsertChunk(CharChunkList::const_iterator it);
 
   CharChunk *MaybeSplitChunkAt(size_t position, CharChunkList::iterator *it);
 
@@ -140,8 +145,6 @@ class Composition : public CompositionInterface {
   const Table *table_;
   CharChunkList chunks_;
   Transliterators::Transliterator input_t12r_;
-
-  DISALLOW_COPY_AND_ASSIGN(Composition);
 };
 
 }  // namespace composer

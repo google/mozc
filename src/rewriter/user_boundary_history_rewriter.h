@@ -45,7 +45,7 @@ class Segment;
 class Segments;
 
 namespace storage {
-class LRUStorage;
+class LruStorage;
 }  // namespace storage
 
 class UserBoundaryHistoryRewriter : public RewriterInterface {
@@ -67,7 +67,7 @@ class UserBoundaryHistoryRewriter : public RewriterInterface {
                       int type) const;
 
   const ConverterInterface *parent_converter_;
-  std::unique_ptr<mozc::storage::LRUStorage> storage_;
+  std::unique_ptr<mozc::storage::LruStorage> storage_;
 };
 
 }  // namespace mozc

@@ -33,16 +33,14 @@
 #define MOZC_COMPOSER_COMPOSER_H_
 
 #include <cstdint>
-#include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "base/port.h"
 #include "base/protobuf/repeated_field.h"
-#include "composer/composition_interface.h"
+#include "composer/internal/composition.h"
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/internal/typing_corrector.h"
@@ -67,10 +65,11 @@ class Composer final {
   Composer();
   Composer(const Table *table, const commands::Request *request,
            const config::Config *config);
-  ~Composer();
 
-  Composer(const Composer &) = delete;
-  Composer &operator=(const Composer &) = delete;
+  Composer(const Composer &);
+  Composer &operator=(const Composer &);
+
+  ~Composer();
 
   // Reset all composing data except table.
   void Reset();
@@ -235,8 +234,6 @@ class Composer final {
   // new chunk if the character has NewChunk attribute.
   void SetNewInput();
 
-  void CopyFrom(const Composer &src);
-
   // Returns true when the current character at cursor position is toggleable.
   bool IsToggleable() const;
 
@@ -247,10 +244,6 @@ class Composer final {
   void set_source_text(const std::string &source_text);
   size_t max_length() const;
   void set_max_length(size_t length);
-
-  void set_composition(std::unique_ptr<CompositionInterface> composition) {
-    composition_ = std::move(composition);
-  }
 
   int timeout_threshold_msec() const;
   void set_timeout_threshold_msec(int threshold_msec);
@@ -272,19 +265,6 @@ class Composer final {
                              const size_t position, const size_t size,
                              std::string *result) const;
 
-  // A map used in `GetQueriesForPrediction()`. The key is a modified Hiragana
-  // and the values are its related Hiragana characters that can be cycled by
-  // hitting the modifier key. For instance, there's a modification cycle
-  // つ -> っ -> づ -> つ. For this cycle, the multimap contains:
-  //   っ: [つ, づ]
-  //   づ: [つ, っ]
-  // If the composition ends with a key in this map, its corresponding values
-  // are removed from the expansion produced by `GetQueryForPrediction()`,
-  // whereby we can suppress prediction from unmodified key when one modified a
-  // character explicitly (e.g., we don't want to suggest words starting with
-  // "さ" when one typed "ざ" with modified key).
-  const std::unordered_multimap<std::string, std::string> modifier_removal_map_;
-
   size_t position_;
   // Whether the next insertion is the beginning of typing after an
   // editing command like SetInputMode or not.  Some conversion rules
@@ -300,7 +280,7 @@ class Composer final {
   commands::Context::InputFieldType input_field_type_;
 
   size_t shifted_sequence_count_;
-  std::unique_ptr<CompositionInterface> composition_;
+  Composition composition_;
 
   TypingCorrector typing_corrector_;
 

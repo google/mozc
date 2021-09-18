@@ -40,6 +40,7 @@
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace composer {
@@ -75,6 +76,95 @@ size_t InsertCharacters(const std::string& input, size_t pos,
   return pos;
 }
 
+std::string ToString(const CharChunk& chunk) {
+  return absl::StrFormat(
+      "{table: %p, raw: %s, conversion: %s, pending: %s, ambiguous: %s, "
+      "transliterator: %d, attributes: %d}",
+      chunk.table(), chunk.raw(), chunk.conversion(), chunk.pending(),
+      chunk.ambiguous(), chunk.transliterator(), chunk.attributes());
+}
+
+std::string ToString(const CharChunkList& chunks) {
+  std::string s = "[\n";
+  for (const std::unique_ptr<CharChunk>& chunk : chunks) {
+    s.append("  ").append(ToString(*chunk)).append(1, '\n');
+  }
+  s.append(1, ']');
+  return s;
+}
+
+::testing::AssertionResult IsCharChunkEqual(const CharChunk& x,
+                                            const CharChunk& y) {
+  if (x.table() != y.table()) {
+    return ::testing::AssertionFailure() << "Table is different";
+  }
+  if (x.raw() != y.raw()) {
+    return ::testing::AssertionFailure()
+           << "raw is different: " << x.raw() << " vs " << y.raw();
+  }
+  if (x.conversion() != y.conversion()) {
+    return ::testing::AssertionFailure()
+           << "conversion is different: " << x.conversion() << " vs "
+           << y.conversion();
+  }
+  if (x.pending() != y.pending()) {
+    return ::testing::AssertionFailure()
+           << "pending is different: " << x.pending() << " vs " << y.pending();
+  }
+  if (x.ambiguous() != y.ambiguous()) {
+    return ::testing::AssertionFailure()
+           << "ambiguous is different: " << x.ambiguous() << " vs "
+           << y.ambiguous();
+  }
+  if (x.transliterator() != y.transliterator()) {
+    return ::testing::AssertionFailure()
+           << "transliterator is different: " << x.transliterator() << " vs "
+           << y.transliterator();
+  }
+  if (x.attributes() != y.attributes()) {
+    return ::testing::AssertionFailure()
+           << "attributes is different: " << x.attributes() << " vs "
+           << y.attributes();
+  }
+  return ::testing::AssertionSuccess();
+}
+
+::testing::AssertionResult IsCharChunkListEqual(const CharChunkList& x,
+                                                const CharChunkList& y) {
+  if (x.size() != y.size()) {
+    return ::testing::AssertionFailure()
+           << "Size is different: " << x.size() << " vs " << y.size()
+           << "\n left: " << ToString(x) << "\nright: " << ToString(y);
+  }
+  for (auto x_it = x.begin(), y_it = y.begin(); x_it != x.end();
+       ++x_it, ++y_it) {
+    if (auto ret = IsCharChunkEqual(**x_it, **y_it); !ret) {
+      const size_t index = std::distance(x.begin(), x_it);
+      return ::testing::AssertionFailure()
+             << "Chunk[" << index << "] is different\n"
+             << ret.message() << "\n left: " << ToString(**x_it)
+             << "\nright: " << ToString(**y_it);
+    }
+  }
+  return ::testing::AssertionSuccess();
+}
+
+::testing::AssertionResult IsCompositionEqual(const Composition& x,
+                                              const Composition& y) {
+  if (x.table() != y.table()) {
+    return ::testing::AssertionFailure() << "Table is different";
+  }
+  if (::testing::AssertionResult ret =
+          IsCharChunkListEqual(x.chunks(), y.chunks());
+      !ret) {
+    return ret;
+  }
+  if (x.input_t12r() != y.input_t12r()) {
+    return ::testing::AssertionFailure() << "Input transliterator is different";
+  }
+  return ::testing::AssertionSuccess();
+}
+
 }  // namespace
 
 class CompositionTest : public testing::Test {
@@ -105,7 +195,7 @@ static int InitComposition(Composition* comp) {
   comp->MaybeSplitChunkAt(0, &it);
   for (int i = 0; i < test_chunks_size; ++i) {
     const TestCharChunk& data = test_chunks[i];
-    CharChunk* chunk = *comp->InsertChunk(&it);
+    CharChunk* chunk = comp->InsertChunk(it)->get();
     chunk->set_conversion(data.conversion);
     chunk->set_pending(data.pending);
     chunk->set_raw(data.raw);
@@ -118,7 +208,7 @@ static CharChunk* AppendChunk(const char* conversion, const char* pending,
   CharChunkList::iterator it;
   comp->MaybeSplitChunkAt(comp->GetLength(), &it);
 
-  CharChunk* chunk = *comp->InsertChunk(&it);
+  CharChunk* chunk = comp->InsertChunk(it)->get();
   chunk->set_conversion(conversion);
   chunk->set_pending(pending);
   chunk->set_raw(raw);
@@ -464,15 +554,15 @@ TEST_F(CompositionTest, DeleteAt_InvisibleCharacter) {
 
   composition_->MaybeSplitChunkAt(0, &it);
 
-  chunk = *composition_->InsertChunk(&it);
+  chunk = composition_->InsertChunk(it)->get();
   chunk->set_raw("1");
   chunk->set_pending(Table::ParseSpecialKey("{1}"));
 
-  chunk = *composition_->InsertChunk(&it);
+  chunk = composition_->InsertChunk(it)->get();
   chunk->set_raw("2");
   chunk->set_pending(Table::ParseSpecialKey("{2}2"));
 
-  chunk = *composition_->InsertChunk(&it);
+  chunk = composition_->InsertChunk(it)->get();
   chunk->set_raw("3");
   chunk->set_pending("3");
 
@@ -1204,7 +1294,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     CharChunkList::iterator it;
     comp.MaybeSplitChunkAt(pos, &it);
-    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
 
     CompositionInput input;
     SetInput("n", "", false, &input);
@@ -1225,7 +1315,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     CharChunkList::iterator it;
     comp.MaybeSplitChunkAt(pos, &it);
-    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("n", "", false, &input);
 
@@ -1247,7 +1337,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     CharChunkList::iterator it;
     comp.MaybeSplitChunkAt(2, &it);
-    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("a", "", false, &input);
 
@@ -1271,7 +1361,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     CharChunkList::iterator it;
     comp.MaybeSplitChunkAt(3, &it);
-    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("a", "", false, &input);
 
@@ -1296,7 +1386,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     CharChunkList::iterator it;
     comp.MaybeSplitChunkAt(3, &it);
-    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(&it);
+    CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("x", "a", false, &input);
 
@@ -1696,7 +1786,7 @@ TEST_F(CompositionTest, SetTransliteratorOnEmpty) {
   EXPECT_EQ(1, composition_->GetLength());
 }
 
-TEST_F(CompositionTest, Clone) {
+TEST_F(CompositionTest, Copy) {
   Composition src(table_.get());
   src.SetInputMode(Transliterators::FULL_KATAKANA);
 
@@ -1708,17 +1798,12 @@ TEST_F(CompositionTest, Clone) {
   EXPECT_EQ(Transliterators::FULL_KATAKANA, src.input_t12r());
   EXPECT_EQ(3, src.chunks().size());
 
-  std::unique_ptr<Composition> dest(src.Clone());
-  ASSERT_NE(nullptr, dest.get());
-  EXPECT_EQ(src.table(), dest->table());
-  EXPECT_EQ(src.input_t12r(), dest->input_t12r());
-  ASSERT_EQ(src.chunks().size(), dest->chunks().size());
+  const Composition copy(src);
+  EXPECT_TRUE(IsCompositionEqual(src, copy));
 
-  CharChunkList::const_iterator src_it = src.chunks().begin();
-  CharChunkList::const_iterator dest_it = dest->chunks().begin();
-  for (; src_it != src.chunks().end(); ++src_it, ++dest_it) {
-    EXPECT_EQ((*src_it)->raw(), (*dest_it)->raw());
-  }
+  Composition copy2(nullptr);
+  copy2 = src;
+  EXPECT_TRUE(IsCompositionEqual(src, copy2));
 }
 
 TEST_F(CompositionTest, IsToggleable) {

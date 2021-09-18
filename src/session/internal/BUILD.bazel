@@ -112,6 +112,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
     ],
 )
 

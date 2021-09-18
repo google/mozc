@@ -460,7 +460,7 @@ bool SessionConverter::SuggestWithPreferences(
 
   // Copy current suggestions so that we can merge
   // prediction/suggestions later
-  previous_suggestions_.CopyFrom(segments_->conversion_segment(0));
+  previous_suggestions_ = segments_->conversion_segment(0);
 
   // TODO(komatsu): the next line can be deleted.
   segment_index_ = 0;
@@ -1168,9 +1168,9 @@ SessionConverter *SessionConverter::Clone() const {
   // moment it's ok because the current design guarantees that the converter is
   // singleton. However, we should refactor such bad design; see also the
   // comment right above.
-  session_converter->segments_->CopyFrom(*segments_);
+  *session_converter->segments_ = *segments_;
   session_converter->segment_index_ = segment_index_;
-  session_converter->previous_suggestions_.CopyFrom(previous_suggestions_);
+  session_converter->previous_suggestions_ = previous_suggestions_;
   session_converter->conversion_preferences_ = conversion_preferences();
   *session_converter->result_ = *result_;
   session_converter->request_ = request_;

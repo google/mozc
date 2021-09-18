@@ -223,9 +223,9 @@ void Session::InitContext(ImeContext *context) const {
   // On Windows session is started with direct mode.
   // FIXME(toshiyuki): Ditto for Mac after verifying on Mac.
   context->set_state(ImeContext::DIRECT);
-#else
+#else   // OS_WIN
   context->set_state(ImeContext::PRECOMPOSITION);
-#endif
+#endif  // OS_WIN
   context->mutable_client_context()->Clear();
 
   context->SetConfig(&context->GetConfig());
@@ -1511,9 +1511,8 @@ bool Session::IsFullWidthInsertSpace(const commands::Input &input) const {
       return context_->composer().GetInputMode();
     }
 
-    composer::Composer temporary_composer;
     // Copy the current composer state just in case.
-    temporary_composer.CopyFrom(context_->composer());
+    composer::Composer temporary_composer = context_->composer();
     ApplyInputMode(input.key().mode(), &temporary_composer);
     // Refer to this temporary composer in this method.
     return temporary_composer.GetInputMode();
@@ -2284,7 +2283,7 @@ bool Session::Convert(commands::Command *command) {
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
     if (!Util::EndsWith(composition, " ") ||
-       context_->composer().GetLength() != context_->composer().GetCursor()) {
+        context_->composer().GetLength() != context_->composer().GetCursor()) {
       if (context_->GetRequest().space_on_alphanumeric() ==
           commands::Request::COMMIT) {
         // Space is committed with the composition

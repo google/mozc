@@ -43,14 +43,14 @@
 namespace mozc {
 namespace storage {
 
-class LRUStorage {
+class LruStorage {
  public:
-  LRUStorage();
+  LruStorage();
 
-  LRUStorage(const LRUStorage &) = delete;
-  LRUStorage &operator=(const LRUStorage &) = delete;
+  LruStorage(const LruStorage &) = delete;
+  LruStorage &operator=(const LruStorage &) = delete;
 
-  ~LRUStorage();
+  ~LruStorage();
 
   bool Open(const char *filename);
   void Close();
@@ -82,7 +82,7 @@ class LRUStorage {
 
   // Merges other data into this LRU.
   bool Merge(const char *filename);
-  bool Merge(const LRUStorage &storage);
+  bool Merge(const LruStorage &storage);
 
   // Updates timestamp.
   bool Touch(const std::string &key);
@@ -138,10 +138,10 @@ class LRUStorage {
             uint32_t *last_access_time) const;
 
   // Creates Instance from file. Call Open internally
-  static LRUStorage *Create(const char *filename);
+  static LruStorage *Create(const char *filename);
 
   // Creates Instance from file. Call OpenOrCreate internally
-  static LRUStorage *Create(const char *filename, size_t value_size,
+  static LruStorage *Create(const char *filename, size_t value_size,
                             size_t size, uint32_t seed);
 
   // Creates an empty LRU db file

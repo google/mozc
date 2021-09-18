@@ -29,6 +29,7 @@
 
 #include "composer/internal/composition.h"
 
+#include <iterator>
 #include <memory>
 
 #include "base/logging.h"
@@ -37,22 +38,41 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace composer {
+namespace {
+
+CharChunkList DeepCopyCharChunkList(const CharChunkList &chunks) {
+  CharChunkList copy;
+  for (const std::unique_ptr<CharChunk> &chunk : chunks) {
+    copy.push_back(absl::make_unique<CharChunk>(*chunk));
+  }
+  return copy;
+}
+
+}  // namespace
 
 Composition::Composition(const Table *table)
     : table_(table), input_t12r_(Transliterators::CONVERSION_STRING) {}
 
-Composition::~Composition() { Erase(); }
+Composition::Composition(const Composition &x)
+    : table_(x.table_),
+      chunks_(DeepCopyCharChunkList(x.chunks_)),
+      input_t12r_(x.input_t12r_) {}
 
-void Composition::Erase() {
-  CharChunkList::iterator it;
-  for (it = chunks_.begin(); it != chunks_.end(); ++it) {
-    delete *it;
-  }
-  chunks_.clear();
+Composition &Composition::operator=(const Composition &x) {
+  Erase();
+  table_ = x.table_;
+  chunks_ = DeepCopyCharChunkList(x.chunks_);
+  input_t12r_ = x.input_t12r_;
+  return *this;
 }
+
+Composition::~Composition() = default;
+
+void Composition::Erase() { chunks_.clear(); }
 
 size_t Composition::InsertAt(size_t pos, const std::string &input) {
   CompositionInput composition_input;
@@ -77,17 +97,16 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
   CharChunkList::iterator right_chunk;
   MaybeSplitChunkAt(pos, &right_chunk);
 
-  CharChunkList::iterator left_chunk = GetInsertionChunk(&right_chunk);
+  CharChunkList::iterator left_chunk = GetInsertionChunk(right_chunk);
   CombinePendingChunks(left_chunk, input);
 
-  CompositionInput mutable_input;
-  mutable_input.CopyFrom(input);
+  CompositionInput mutable_input = input;
   while (true) {
     (*left_chunk)->AddCompositionInput(&mutable_input);
     if (mutable_input.Empty()) {
       break;
     }
-    left_chunk = InsertChunk(&right_chunk);
+    left_chunk = InsertChunk(right_chunk);
     mutable_input.set_is_new_input(false);
   }
 
@@ -116,7 +135,6 @@ size_t Composition::DeleteAt(const size_t position) {
     // If a chunk contains only invisible characters,
     // the result of GetLength is 0.
     if ((*chunk_it)->GetLength(Transliterators::LOCAL) <= 1) {
-      delete *chunk_it;
       chunks_.erase(chunk_it);
       continue;
     }
@@ -130,7 +148,7 @@ size_t Composition::DeleteAt(const size_t position) {
 size_t Composition::ConvertPosition(
     const size_t position_from,
     Transliterators::Transliterator transliterator_from,
-    Transliterators::Transliterator transliterator_to) {
+    Transliterators::Transliterator transliterator_to) const {
   // TODO(komatsu) This is a hacky way.
   if (transliterator_from == transliterator_to) {
     return position_from;
@@ -352,9 +370,8 @@ CharChunkList::const_iterator Composition::GetChunkAt(
                                                      inner_position);
 }
 
-size_t Composition::GetPosition(
-    Transliterators::Transliterator transliterator,
-    const CharChunkList::const_iterator &cur_it) const {
+size_t Composition::GetPosition(Transliterators::Transliterator transliterator,
+                                CharChunkList::const_iterator cur_it) const {
   size_t position = 0;
   CharChunkList::const_iterator it;
   for (it = chunks_.begin(); it != cur_it; ++it) {
@@ -375,16 +392,17 @@ CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
   size_t inner_position;
   *it = GetChunkAt(pos, Transliterators::LOCAL, &inner_position);
 
-  CharChunk *chunk = **it;
+  CharChunk *chunk = (*it)->get();
   if (inner_position == chunk->GetLength(Transliterators::LOCAL)) {
     ++(*it);
     return chunk;
   }
 
-  CharChunk *left_chunk =
-      chunk->SplitChunk(Transliterators::LOCAL, inner_position).release();
-  chunks_.insert(*it, left_chunk);
-  return left_chunk;
+  std::unique_ptr<CharChunk> left_chunk =
+      chunk->SplitChunk(Transliterators::LOCAL, inner_position);
+  CharChunk *ret = left_chunk.get();
+  chunks_.insert(*it, std::move(left_chunk));
+  return ret;
 }
 
 void Composition::CombinePendingChunks(CharChunkList::iterator it,
@@ -402,15 +420,14 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
     }
 
     (*it)->Combine(**left_it);
-    delete *left_it;
     chunks_.erase(left_it);
   }
 }
 
 // Insert a chunk to the prev of it.
-CharChunkList::iterator Composition::InsertChunk(CharChunkList::iterator *it) {
-  CharChunk *new_chunk = new CharChunk(input_t12r_, table_);
-  return chunks_.insert(*it, new_chunk);
+CharChunkList::iterator Composition::InsertChunk(
+    CharChunkList::const_iterator it) {
+  return chunks_.insert(it, absl::make_unique<CharChunk>(input_t12r_, table_));
 }
 
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }
@@ -425,30 +442,14 @@ bool Composition::ShouldCommit() const {
   return true;
 }
 
-Composition *Composition::Clone() const {
-  Composition *object = new Composition(table_);
-
-  // TODO(hsumita): Implements TableFactory and TransliteratorFactory and uses
-  // it instead of copying pointers.
-  object->input_t12r_ = input_t12r_;
-  object->table_ = table_;
-
-  for (const CharChunk *chunk : chunks_) {
-    object->chunks_.push_back(new CharChunk(*chunk));
-  }
-
-  return object;
-}
-
 // Return charchunk to be inserted and iterator of the *next* char chunk.
 CharChunkList::iterator Composition::GetInsertionChunk(
-    CharChunkList::iterator *it) {
-  if (*it == chunks_.begin()) {
+    CharChunkList::iterator it) {
+  if (it == chunks_.begin()) {
     return InsertChunk(it);
   }
 
-  CharChunkList::iterator left_it = *it;
-  --left_it;
+  const CharChunkList::iterator left_it = std::prev(it);
   if ((*left_it)->IsAppendable(input_t12r_, table_)) {
     return left_it;
   }

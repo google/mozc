@@ -60,10 +60,9 @@ ABSL_FLAG(uint64_t, max_typing_correction_query_results, 8,
 
 namespace mozc {
 namespace composer {
+namespace {
 
 using ::mozc::config::CharacterFormManager;
-
-namespace {
 
 const Transliterators::Transliterator GetTransliterator(
     transliteration::TransliterationType comp_mode) {
@@ -193,8 +192,21 @@ transliteration::TransliterationType GetTransliterationTypeFromCompositionMode(
   }
 }
 
-std::unordered_multimap<std::string, std::string> BuildModifierRemovalMap() {
-  return std::unordered_multimap<std::string, std::string>{
+// A map used in `GetQueriesForPrediction()`. The key is a modified Hiragana
+// and the values are its related Hiragana characters that can be cycled by
+// hitting the modifier key. For instance, there's a modification cycle
+// つ -> っ -> づ -> つ. For this cycle, the multimap contains:
+//   っ: [つ, づ]
+//   づ: [つ, っ]
+// If the composition ends with a key in this map, its corresponding values
+// are removed from the expansion produced by `GetQueryForPrediction()`,
+// whereby we can suppress prediction from unmodified key when one modified a
+// character explicitly (e.g., we don't want to suggest words starting with
+// "さ" when one typed "ざ" with modified key).
+using ModifierRemovalMap = std::unordered_multimap<std::string, std::string>;
+
+const ModifierRemovalMap *GetModifierRemovalMap() {
+  static const ModifierRemovalMap *const removal_map = new ModifierRemovalMap{
       {"ぁ", "あ"}, {"ぃ", "い"}, {"ぅ", "う"}, {"ぅ", "ゔ"}, {"ゔ", "う"},
       {"ゔ", "ぅ"}, {"ぇ", "え"}, {"ぉ", "お"}, {"が", "か"}, {"ぎ", "き"},
       {"ぐ", "く"}, {"げ", "け"}, {"ご", "こ"}, {"ざ", "さ"}, {"じ", "し"},
@@ -206,6 +218,7 @@ std::unordered_multimap<std::string, std::string> BuildModifierRemovalMap() {
       {"ぺ", "へ"}, {"ぺ", "べ"}, {"ぼ", "ほ"}, {"ぼ", "ぽ"}, {"ぽ", "ほ"},
       {"ぽ", "ぼ"}, {"ゃ", "や"}, {"ゅ", "ゆ"}, {"ょ", "よ"}, {"ゎ", "わ"},
   };
+  return removal_map;
 }
 
 constexpr size_t kMaxPreeditLength = 256;
@@ -219,15 +232,14 @@ Composer::Composer()
 
 Composer::Composer(const Table *table, const commands::Request *request,
                    const config::Config *config)
-    : modifier_removal_map_(BuildModifierRemovalMap()),
-      position_(0),
+    : position_(0),
       is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
       comeback_input_mode_(transliteration::HIRAGANA),
       input_field_type_(commands::Context::NORMAL),
       shifted_sequence_count_(0),
-      composition_(new Composition(table)),
+      composition_(table),
       typing_corrector_(
           table, absl::GetFlag(FLAGS_max_typing_correction_query_candidates),
           absl::GetFlag(FLAGS_max_typing_correction_query_results)),
@@ -241,6 +253,9 @@ Composer::Composer(const Table *table, const commands::Request *request,
   typing_corrector_.SetConfig(config_);
   Reset();
 }
+
+Composer::Composer(const Composer &) = default;
+Composer &Composer::operator=(const Composer &) = default;
 
 Composer::~Composer() = default;
 
@@ -262,7 +277,7 @@ void Composer::ReloadConfig() {
 bool Composer::Empty() const { return (GetLength() == 0); }
 
 void Composer::SetTable(const Table *table) {
-  composition_->SetTable(table);
+  composition_.SetTable(table);
 
   typing_corrector_.SetTable(table);
 }
@@ -281,7 +296,7 @@ void Composer::SetInputMode(transliteration::TransliterationType mode) {
   input_mode_ = mode;
   shifted_sequence_count_ = 0;
   is_new_input_ = true;
-  composition_->SetInputMode(GetTransliterator(mode));
+  composition_.SetInputMode(GetTransliterator(mode));
 }
 
 void Composer::SetTemporaryInputMode(
@@ -291,15 +306,15 @@ void Composer::SetTemporaryInputMode(
   input_mode_ = mode;
   shifted_sequence_count_ = 0;
   is_new_input_ = true;
-  composition_->SetInputMode(GetTransliterator(mode));
+  composition_.SetInputMode(GetTransliterator(mode));
 }
 
 void Composer::UpdateInputMode() {
   if (position_ != 0 && request_->update_input_mode_from_surrounding_text()) {
     const Transliterators::Transliterator current_t12r =
-        composition_->GetTransliterator(position_);
-    if (position_ == composition_->GetLength() ||
-        current_t12r == composition_->GetTransliterator(position_ + 1)) {
+        composition_.GetTransliterator(position_);
+    if (position_ == composition_.GetLength() ||
+        current_t12r == composition_.GetTransliterator(position_ + 1)) {
       // - The cursor is at the tail of composition.
       //   Use last character's transliterator as the input mode.
       // - If the current cursor is between the same character type like
@@ -307,7 +322,7 @@ void Composer::UpdateInputMode() {
       input_mode_ = GetTransliterationType(current_t12r, comeback_input_mode_);
       shifted_sequence_count_ = 0;
       is_new_input_ = true;
-      composition_->SetInputMode(GetTransliterator(input_mode_));
+      composition_.SetInputMode(GetTransliterator(input_mode_));
       return;
     }
   }
@@ -339,9 +354,9 @@ transliteration::TransliterationType Composer::GetOutputMode() const {
 
 void Composer::SetOutputMode(transliteration::TransliterationType mode) {
   output_mode_ = mode;
-  composition_->SetTransliterator(0, composition_->GetLength(),
-                                  GetTransliterator(mode));
-  position_ = composition_->GetLength();
+  composition_.SetTransliterator(0, composition_.GetLength(),
+                                 GetTransliterator(mode));
+  position_ = composition_.GetLength();
 }
 
 void Composer::ApplyTemporaryInputMode(const std::string &input,
@@ -414,7 +429,7 @@ bool Composer::ProcessCompositionInput(const CompositionInput &input) {
     return false;
   }
 
-  position_ = composition_->InsertInput(position_, input);
+  position_ = composition_.InsertInput(position_, input);
   is_new_input_ = false;
   typing_corrector_.InsertCharacter(input.raw(), input.probable_key_events());
   return true;
@@ -455,7 +470,7 @@ void Composer::InsertCharacterPreedit(const std::string &input) {
 
 // Note: This method is only for test.
 void Composer::SetPreeditTextForTestOnly(const std::string &input) {
-  composition_->SetInputMode(Transliterators::RAW_STRING);
+  composition_.SetInputMode(Transliterators::RAW_STRING);
   size_t begin = 0;
   const size_t end = input.size();
   while (begin < end) {
@@ -464,7 +479,7 @@ void Composer::SetPreeditTextForTestOnly(const std::string &input) {
     CompositionInput input;
     input.set_raw(character);
     input.set_is_new_input(is_new_input_);
-    position_ = composition_->InsertInput(position_, input);
+    position_ = composition_.InsertInput(position_, input);
     is_new_input_ = false;
     begin += mblen;
   }
@@ -536,7 +551,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
   if (key.has_key_string()) {
     if (key.input_style() == commands::KeyEvent::AS_IS ||
         key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
-      composition_->SetInputMode(Transliterators::CONVERSION_STRING);
+      composition_.SetInputMode(Transliterators::CONVERSION_STRING);
       ProcessCompositionInput(input);
       SetInputMode(comeback_input_mode_);
     } else {
@@ -560,7 +575,7 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
 }
 
 void Composer::DeleteAt(size_t pos) {
-  composition_->DeleteAt(pos);
+  composition_.DeleteAt(pos);
   // Adjust cursor position for composition mode.
   if (position_ > pos) {
     position_--;
@@ -572,21 +587,21 @@ void Composer::DeleteAt(size_t pos) {
 }
 
 void Composer::Delete() {
-  position_ = composition_->DeleteAt(position_);
+  position_ = composition_.DeleteAt(position_);
   UpdateInputMode();
 
   typing_corrector_.Invalidate();
 }
 
 void Composer::DeleteRange(size_t pos, size_t length) {
-  for (int i = 0; i < length && pos < composition_->GetLength(); ++i) {
+  for (int i = 0; i < length && pos < composition_.GetLength(); ++i) {
     DeleteAt(pos);
   }
   typing_corrector_.Invalidate();
 }
 
 void Composer::EditErase() {
-  composition_->Erase();
+  composition_.Erase();
   position_ = 0;
   SetInputMode(comeback_input_mode_);
   typing_corrector_.Reset();
@@ -611,7 +626,7 @@ void Composer::Backspace() {
   UpdateInputMode();
 
   // Delete 'character to be deleted'
-  position_ = composition_->DeleteAt(position_);
+  position_ = composition_.DeleteAt(position_);
 
   typing_corrector_.Invalidate();
 }
@@ -626,7 +641,7 @@ void Composer::MoveCursorLeft() {
 }
 
 void Composer::MoveCursorRight() {
-  if (position_ < composition_->GetLength()) {
+  if (position_ < composition_.GetLength()) {
     ++position_;
   }
   UpdateInputMode();
@@ -642,7 +657,7 @@ void Composer::MoveCursorToBeginning() {
 }
 
 void Composer::MoveCursorToEnd() {
-  position_ = composition_->GetLength();
+  position_ = composition_.GetLength();
   // Behavior between MoveCursorToEnd and MoveCursorToRight is different.
   // MoveCursorToEnd always makes current input mode default.
   SetInputMode(comeback_input_mode_);
@@ -651,7 +666,7 @@ void Composer::MoveCursorToEnd() {
 }
 
 void Composer::MoveCursorTo(uint32_t new_position) {
-  if (new_position <= composition_->GetLength()) {
+  if (new_position <= composition_.GetLength()) {
     position_ = new_position;
     UpdateInputMode();
   }
@@ -663,7 +678,7 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
   DCHECK(left);
   DCHECK(focused);
   DCHECK(right);
-  composition_->GetPreedit(position_, left, focused, right);
+  composition_.GetPreedit(position_, left, focused, right);
 
   // TODO(komatsu): This function can be obsolete.
   std::string preedit = *left + *focused + *right;
@@ -678,7 +693,7 @@ void Composer::GetPreedit(std::string *left, std::string *focused,
 }
 
 void Composer::GetStringForPreedit(std::string *output) const {
-  composition_->GetString(output);
+  composition_.GetString(output);
   TransformCharactersForNumbers(output);
   // If the input field type needs half ascii characters,
   // perform conversion here.
@@ -712,7 +727,7 @@ void Composer::GetStringForSubmission(std::string *output) const {
 
 void Composer::GetQueryForConversion(std::string *output) const {
   std::string base_output;
-  composition_->GetStringWithTrimMode(FIX, &base_output);
+  composition_.GetStringWithTrimMode(FIX, &base_output);
   TransformCharactersForNumbers(&base_output);
   Util::FullWidthAsciiToHalfWidthAscii(base_output, output);
 }
@@ -777,7 +792,7 @@ std::string *GetBaseQueryForPrediction(std::string *asis_query,
 
 void Composer::GetQueryForPrediction(std::string *output) const {
   std::string asis_query;
-  composition_->GetStringWithTrimMode(ASIS, &asis_query);
+  composition_.GetStringWithTrimMode(ASIS, &asis_query);
 
   switch (input_mode_) {
     case transliteration::HALF_ASCII: {
@@ -793,7 +808,7 @@ void Composer::GetQueryForPrediction(std::string *output) const {
   }
 
   std::string trimed_query;
-  composition_->GetStringWithTrimMode(TRIM, &trimed_query);
+  composition_.GetStringWithTrimMode(TRIM, &trimed_query);
 
   // NOTE(komatsu): This is a hack to go around the difference
   // expectation between Romanji-Input and Kana-Input.  "かn" in
@@ -812,7 +827,6 @@ void Composer::GetQueriesForPrediction(std::string *base,
                                        std::set<std::string> *expanded) const {
   DCHECK(base);
   DCHECK(expanded);
-  DCHECK(composition_.get());
   // In case of the Latin input modes, we don't perform expansion.
   switch (input_mode_) {
     case transliteration::HALF_ASCII:
@@ -825,16 +839,16 @@ void Composer::GetQueriesForPrediction(std::string *base,
     }
   }
   std::string base_query;
-  composition_->GetExpandedStrings(&base_query, expanded);
+  composition_.GetExpandedStrings(&base_query, expanded);
   // The above `GetExpandedStrings` generates expansion for modifier key as
   // well, e.g., if the composition is "ざ", `expanded` contains "さ" too.
   // However, "ざ" is usually composed by explicitly hitting the modifier key.
   // So we don't want to generate prediction from "さ" in this case. The
   // following code removes such unnecessary expansion.
   std::string asis;
-  composition_->GetStringWithTrimMode(ASIS, &asis);
+  composition_.GetStringWithTrimMode(ASIS, &asis);
   const std::string trailing = asis.substr(base_query.size());
-  for (auto [iter, end] = modifier_removal_map_.equal_range(trailing);
+  for (auto [iter, end] = GetModifierRemovalMap()->equal_range(trailing);
        iter != end; ++iter) {
     expanded->erase(iter->second);
   }
@@ -847,7 +861,7 @@ void Composer::GetTypeCorrectedQueriesForPrediction(
   typing_corrector_.GetQueriesForPrediction(queries);
 }
 
-size_t Composer::GetLength() const { return composition_->GetLength(); }
+size_t Composer::GetLength() const { return composition_.GetLength(); }
 
 size_t Composer::GetCursor() const { return position_; }
 
@@ -856,11 +870,11 @@ void Composer::GetTransliteratedText(Transliterators::Transliterator t12r,
                                      std::string *result) const {
   DCHECK(result);
   std::string full_base;
-  composition_->GetStringWithTransliterator(t12r, &full_base);
+  composition_.GetStringWithTransliterator(t12r, &full_base);
 
   const size_t t13n_start =
-      composition_->ConvertPosition(position, Transliterators::LOCAL, t12r);
-  const size_t t13n_end = composition_->ConvertPosition(
+      composition_.ConvertPosition(position, Transliterators::LOCAL, t12r);
+  const size_t t13n_end = composition_.ConvertPosition(
       position + size, Transliterators::LOCAL, t12r);
   const size_t t13n_size = t13n_end - t13n_start;
 
@@ -926,7 +940,7 @@ void Composer::AutoSwitchMode() {
 
   std::string key;
   // Key should be in half-width alphanumeric.
-  composition_->GetStringWithTransliterator(
+  composition_.GetStringWithTransliterator(
       GetTransliterator(transliteration::HALF_ASCII), &key);
 
   ModeSwitchingHandler::ModeSwitching display_mode =
@@ -999,7 +1013,7 @@ void Composer::AutoSwitchMode() {
   }
 }
 
-bool Composer::ShouldCommit() const { return composition_->ShouldCommit(); }
+bool Composer::ShouldCommit() const { return composition_.ShouldCommit(); }
 
 bool Composer::ShouldCommitHead(size_t *length_to_commit) const {
   size_t max_remaining_composition_length;
@@ -1202,35 +1216,10 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
 
 void Composer::SetNewInput() { is_new_input_ = true; }
 
-void Composer::CopyFrom(const Composer &src) {
-  Reset();
-
-  input_mode_ = src.input_mode_;
-  comeback_input_mode_ = src.comeback_input_mode_;
-  output_mode_ = src.output_mode_;
-  input_field_type_ = src.input_field_type_;
-
-  position_ = src.position_;
-  is_new_input_ = src.is_new_input_;
-  shifted_sequence_count_ = src.shifted_sequence_count_;
-  source_text_.assign(src.source_text_);
-  max_length_ = src.max_length_;
-
-  composition_.reset(src.composition_->Clone());
-  request_ = src.request_;
-  config_ = src.config_;
-
-  typing_corrector_ = src.typing_corrector_;
-
-  timestamp_msec_ = src.timestamp_msec_;
-  timeout_threshold_msec_ = src.timeout_threshold_msec_;
-}
-
 bool Composer::IsToggleable() const {
   // When |is_new_input_| is true, a new chunk is always created and, hence, key
   // toggling never happens regardless of the composition state.
-  return !is_new_input_ && composition_ &&
-         composition_->IsToggleable(position_);
+  return !is_new_input_ && composition_.IsToggleable(position_);
 }
 
 bool Composer::is_new_input() const { return is_new_input_; }
