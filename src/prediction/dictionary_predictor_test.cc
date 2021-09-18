@@ -145,7 +145,7 @@ class ImmutableConverterMock : public ImmutableConverterInterface {
 
   bool ConvertForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
-    segments->CopyFrom(segments_);
+    *segments = segments_;
     return true;
   }
 

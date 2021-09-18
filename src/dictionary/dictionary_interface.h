@@ -90,11 +90,11 @@ class DictionaryInterface {
       return TRAVERSE_CONTINUE;
     }
 
-    // Called back when actual key is decoded. The third argument is guaranteed
-    // to be (key != actual_key) but computed in an efficient way.
+    // Called back when actual key is decoded. `num_expanded` is the number
+    // of different characters between key and actual_key.
     virtual ResultType OnActualKey(absl::string_view key,
                                    absl::string_view actual_key,
-                                   bool is_expanded) {
+                                   int num_expanded) {
       return TRAVERSE_CONTINUE;
     }
 

@@ -110,12 +110,12 @@ class SessionConverterTest : public ::testing::Test {
 
   static void GetSegments(const SessionConverter &converter, Segments *dest) {
     CHECK(dest);
-    dest->CopyFrom(*converter.segments_);
+    *dest = *converter.segments_;
   }
 
   static void SetSegments(const Segments &src, SessionConverter *converter) {
     CHECK(converter);
-    converter->segments_->CopyFrom(src);
+    *converter->segments_ = src;
   }
 
   static const commands::Result &GetResult(const SessionConverter &converter) {
@@ -292,8 +292,8 @@ class SessionConverterTest : public ::testing::Test {
     EXPECT_EQ(segments_lhs.segments_size(), segments_rhs.segments_size());
     for (size_t i = 0; i < segments_lhs.segments_size(); ++i) {
       Segment segment_lhs, segment_rhs;
-      segment_lhs.CopyFrom(segments_lhs.segment(i));
-      segment_rhs.CopyFrom(segments_rhs.segment(i));
+      segment_lhs = segments_lhs.segment(i);
+      segment_rhs = segments_rhs.segment(i);
       EXPECT_EQ(segment_lhs.key(), segment_rhs.key()) << " i=" << i;
       EXPECT_EQ(segment_lhs.segment_type(), segment_rhs.segment_type())
           << " i=" << i;

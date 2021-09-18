@@ -221,38 +221,45 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
       command == kConversionMatch || command == kConversionNotMatch) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
-    ConversionRequest request(&composer, request_.get(), config_.get());
-    converter_->StartConversionForRequest(request, segments_.get());
+    ConversionRequest conversion_request(&composer, request_.get(),
+                                         config_.get());
+    converter_->StartConversionForRequest(conversion_request, segments_.get());
   } else if (command == kReverseConversionExpect ||
              command == kReverseConversionNotExpect) {
     converter_->StartReverseConversion(segments_.get(), key);
   } else if (command == kPredictionExpect || command == kPredictionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
-    ConversionRequest request(&composer, request_.get(), config_.get());
-    converter_->StartPredictionForRequest(request, segments_.get());
+    ConversionRequest conversion_request(&composer, request_.get(),
+                                         config_.get());
+    converter_->StartPredictionForRequest(conversion_request, segments_.get());
+
   } else if (command == kSuggestionExpect || command == kSuggestionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
-    ConversionRequest request(&composer, request_.get(), config_.get());
-    converter_->StartSuggestionForRequest(request, segments_.get());
+    ConversionRequest conversion_request(&composer, request_.get(),
+                                         config_.get());
+    converter_->StartSuggestionForRequest(conversion_request, segments_.get());
   } else if (command == kZeroQueryExpect || command == kZeroQueryNotExpect) {
-    request_->set_zero_query_suggestion(true);
-    request_->set_mixed_conversion(true);
+    commands::Request request = *request_;
+    request.set_zero_query_suggestion(true);
+    request.set_mixed_conversion(true);
     segments_->set_max_conversion_candidates_size(10);
     {
-      composer::Composer composer(&table, request_.get(), config_.get());
+      composer::Composer composer(&table, &request, config_.get());
       composer.SetPreeditTextForTestOnly(key);
-      ConversionRequest request(&composer, request_.get(), config_.get());
-      converter_->StartSuggestionForRequest(request, segments_.get());
+      ConversionRequest conversion_request(&composer, &request, config_.get());
+      converter_->StartSuggestionForRequest(conversion_request,
+                                            segments_.get());
       converter_->CommitSegmentValue(segments_.get(), 0, 0);
-      converter_->FinishConversion(request, segments_.get());
+      converter_->FinishConversion(conversion_request, segments_.get());
     }
     {
       // Issues zero-query request.
-      composer::Composer composer(&table, request_.get(), config_.get());
-      ConversionRequest request(&composer, request_.get(), config_.get());
-      converter_->StartPredictionForRequest(request, segments_.get());
+      composer::Composer composer(&table, &request, config_.get());
+      ConversionRequest conversion_request(&composer, &request, config_.get());
+      converter_->StartPredictionForRequest(conversion_request,
+                                            segments_.get());
       segments_->clear_history_segments();
     }
   } else {

@@ -33,7 +33,6 @@
 
 #include "base/init_mozc.h"
 #include "composer/composer.h"
-#include "composer/composition_interface.h"
 #include "composer/table.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"

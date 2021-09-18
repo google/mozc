@@ -44,7 +44,7 @@
 
 namespace mozc {
 
-class Segment {
+class Segment final {
  public:
   enum SegmentType {
     FREE,            // FULL automatic conversion.
@@ -223,7 +223,7 @@ class Segment {
     //   absl::string_view s = iter.GetContentKey();
     //   ...
     // }
-    class InnerSegmentIterator {
+    class InnerSegmentIterator final {
      public:
       explicit InnerSegmentIterator(const Candidate *candidate)
           : candidate_(candidate),
@@ -265,6 +265,10 @@ class Segment {
   };
 
   Segment();
+
+  Segment(const Segment &x);
+  Segment &operator=(const Segment &x);
+
   ~Segment();
 
   SegmentType segment_type() const;
@@ -320,7 +324,6 @@ class Segment {
   void move_candidate(int old_idx, int new_idx);
 
   void Clear();
-  void CopyFrom(const Segment &src);
 
   // Keep clear() method as other modules are still using the old method
   void clear() { Clear(); }
@@ -342,8 +345,7 @@ class Segment {
   std::string key_;
   std::deque<Candidate *> candidates_;
   std::vector<Candidate> meta_candidates_;
-  std::unique_ptr<ObjectPool<Candidate>> pool_;
-  DISALLOW_COPY_AND_ASSIGN(Segment);
+  ObjectPool<Candidate> pool_;
 };
 
 // Segments is basically an array of Segment.
@@ -365,7 +367,7 @@ class Segment {
 // conversion_segment(i) and mutable_conversion_segment(i)
 //  access only Conversion Segment
 //  segment(i + history_segments_size()) == conversion_segment(i)
-class Segments {
+class Segments final {
  public:
   enum RequestType {
     CONVERSION,          // normal conversion
@@ -384,16 +386,20 @@ class Segments {
       CREATE_ENTRY,
       UPDATE_ENTRY,
     };
-    uint16_t revert_entry_type;
+    uint16_t revert_entry_type = 0;
     // UserHitoryPredictor uses '1' for now.
     // Do not use duplicate keys.
-    uint16_t id;
-    uint32_t timestamp;
+    uint16_t id = 0;
+    uint32_t timestamp = 0;
     std::string key;
-    RevertEntry() : revert_entry_type(0), id(0), timestamp(0) {}
-
-    void CopyFrom(const RevertEntry &src);
   };
+
+  Segments();
+
+  Segments(const Segments &x);
+  Segments &operator=(const Segments &x);
+
+  ~Segments();
 
   RequestType request_type() const;
   void set_request_type(RequestType request_type);
@@ -456,9 +462,6 @@ class Segments {
   // clear segments
   void Clear();
 
-  // Copy segments from src
-  void CopyFrom(const Segments &src);
-
   // Dump Segments structure
   std::string DebugString() const;
 
@@ -472,9 +475,6 @@ class Segments {
   // setter
   Lattice *mutable_cached_lattice();
 
-  Segments();
-  virtual ~Segments();
-
  private:
   size_t max_history_segments_size_;
   size_t max_prediction_candidates_size_;
@@ -483,12 +483,10 @@ class Segments {
   bool user_history_enabled_;
 
   RequestType request_type_;
-  std::unique_ptr<ObjectPool<Segment>> pool_;
+  ObjectPool<Segment> pool_;
   std::deque<Segment *> segments_;
   std::vector<RevertEntry> revert_entries_;
   std::unique_ptr<Lattice> cached_lattice_;
-
-  DISALLOW_COPY_AND_ASSIGN(Segments);
 };
 
 }  // namespace mozc

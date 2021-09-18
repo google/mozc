@@ -37,7 +37,7 @@
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
-  mozc::storage::LRUCache<std::string, std::string> cache(5);
+  mozc::storage::LruCache<std::string, std::string> cache(5);
 
   std::string line;
   while (getline(cin, line)) {

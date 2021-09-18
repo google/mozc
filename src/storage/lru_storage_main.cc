@@ -39,18 +39,18 @@ ABSL_FLAG(bool, create_db, false, "initialize database");
 ABSL_FLAG(std::string, file, "test.db", "");
 ABSL_FLAG(int32, size, 10, "size");
 
-using mozc::storage::LRUStorage;
+using mozc::storage::LruStorage;
 
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (absl::GetFlag(FLAGS_create_db)) {
-    CHECK(LRUStorage::CreateStorageFile(FLAGS_file.c_str(),
+    CHECK(LruStorage::CreateStorageFile(FLAGS_file.c_str(),
                                         static_cast<uint32>(4),
                                         absl::GetFlag(FLAGS_size), 0xff02));
   }
 
-  LRUStorage s;
+  LruStorage s;
   CHECK(s.Open(absl::GetFlag(FLAGS_file).c_str()));
 
   LOG(INFO) << "size=" << s.size();

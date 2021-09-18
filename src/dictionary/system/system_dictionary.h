@@ -152,7 +152,7 @@ class SystemDictionary : public DictionaryInterface {
       const char *key, absl::string_view encoded_key,
       const KeyExpansionTable &table, Callback *callback,
       storage::louds::LoudsTrie::Node node,
-      absl::string_view::size_type key_pos, bool is_expanded,
+      absl::string_view::size_type key_pos, int num_expanded,
       char *actual_key_buffer, std::string *actual_prefix) const;
 
   void CollectPredictiveNodesInBfsOrder(

@@ -362,7 +362,7 @@ class UserHistoryPredictor : public PredictorInterface {
     std::set<uint32_t> seen_;
   };
 
-  typedef mozc::storage::LRUCache<uint32_t, Entry> DicCache;
+  typedef mozc::storage::LruCache<uint32_t, Entry> DicCache;
   typedef DicCache::Element DicElement;
 
   bool CheckSyncerAndDelete() const;

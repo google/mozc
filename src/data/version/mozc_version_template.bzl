@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -33,7 +32,7 @@ MAJOR = 2
 MINOR = 26
 
 # Number to be increased. This value may be replaced by other tools.
-BUILD = 4493
+BUILD = 4500
 
 # Represent the platform and release channel.
 REVISION = 100

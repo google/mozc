@@ -49,11 +49,11 @@
 namespace mozc {
 namespace config {
 
-using mozc::storage::LRUStorage;
+using mozc::storage::LruStorage;
 
 namespace {
 
-constexpr uint32_t kLRUSize = 128;           // enough?
+constexpr uint32_t kLruSize = 128;           // enough?
 constexpr uint32_t kSeedValue = 0x7fe1fed1;  // random seed value for storage
 constexpr char kFileName[] = "user://cform.db";
 
@@ -86,7 +86,7 @@ class CharacterFormManagerImpl {
   // Call Clear() first if you want to set rule from scratch
   void AddRule(const std::string &key, Config::CharacterForm form);
 
-  void set_storage(LRUStorage *storage) { storage_ = storage; }
+  void set_storage(LruStorage *storage) { storage_ = storage; }
 
   void set_require_consistent_conversion(bool val) {
     require_consistent_conversion_ = val;
@@ -111,7 +111,7 @@ class CharacterFormManagerImpl {
   void ConvertStringAlternative(const std::string &str,
                                 std::string *output) const;
 
-  LRUStorage *storage_;
+  LruStorage *storage_;
 
   // store the setting of a character
   std::map<uint16_t, Config::CharacterForm> conversion_table_;
@@ -559,14 +559,14 @@ class CharacterFormManager::Data {
  private:
   std::unique_ptr<PreeditCharacterFormManagerImpl> preedit_;
   std::unique_ptr<ConversionCharacterFormManagerImpl> conversion_;
-  std::unique_ptr<LRUStorage> storage_;
+  std::unique_ptr<LruStorage> storage_;
 };
 
 CharacterFormManager::Data::Data() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
   const uint32_t key_type = 0;
-  storage_.reset(LRUStorage::Create(filename.c_str(), sizeof(key_type),
-                                    kLRUSize, kSeedValue));
+  storage_.reset(LruStorage::Create(filename.c_str(), sizeof(key_type),
+                                    kLruSize, kSeedValue));
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
   preedit_ = absl::make_unique<PreeditCharacterFormManagerImpl>();
   conversion_ = absl::make_unique<ConversionCharacterFormManagerImpl>();

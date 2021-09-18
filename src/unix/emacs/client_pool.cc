@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Pool of Client instances, implemented with LRUCache.
+// Pool of Client instances, implemented with LruCache.
 
 #include "unix/emacs/client_pool.h"
 

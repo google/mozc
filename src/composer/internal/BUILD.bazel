@@ -152,7 +152,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:util",
-        "//composer:composition_interface",
         "//composer:table",
         "//testing:gunit_prod",
         "@com_google_absl//absl/memory",
@@ -172,10 +171,10 @@ cc_test_mozc(
         ":composition_input",
         ":transliterator_interface",
         ":transliterators",
-        "//composer:composition_interface",
         "//composer:table",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -185,7 +184,6 @@ cc_binary_mozc(
     deps = [
         ":composition",
         "//base:init_mozc",
-        "//composer:composition_interface",
         "//composer:table",
         "@com_google_absl//absl/flags:flag",
     ],
@@ -304,7 +302,6 @@ cc_library_mozc(
         "//base:port",
         "//base/protobuf",
         "//base/protobuf:repeated_field",
-        "//composer:composition_interface",
         "//composer:table",
         "//composer:type_corrected_query",
         "//config:config_handler",

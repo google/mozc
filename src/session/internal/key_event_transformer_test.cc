@@ -43,24 +43,19 @@ namespace {
 
 ::testing::AssertionResult IsKeyEventTransformerEq(
     const KeyEventTransformer &x, const KeyEventTransformer &y) {
-  {
-    if (x.table().size() != y.table().size()) {
-      return ::testing::AssertionFailure() << "Table size differs";
-    }
+  if (x.table().size() != y.table().size()) {
+    return ::testing::AssertionFailure() << "Table size differs";
+  }
 
-    KeyEventTransformer::Table::const_iterator x_iter = x.table().begin();
-    KeyEventTransformer::Table::const_iterator y_iter = y.table().begin();
-    while (x_iter != x.table().end() && y_iter != y.table().end()) {
-      if (x_iter->first != y_iter->first) {
-        return ::testing::AssertionFailure()
-               << "Key mismatch: " << x_iter->first << " vs " << y_iter->first;
-      }
-      if (x_iter->second.DebugString() != y_iter->second.DebugString()) {
-        return ::testing::AssertionFailure()
-               << "Value mismatch for key = " << x_iter->first;
-      }
-      ++x_iter;
-      ++y_iter;
+  for (const auto &[key, event] : x.table()) {
+    const auto iter = y.table().find(key);
+    if (iter == y.table().end()) {
+      return ::testing::AssertionFailure()
+             << "Key doesn't exist in RHS: key = " << key;
+    }
+    if (event.DebugString() != iter->second.DebugString()) {
+      return ::testing::AssertionFailure()
+             << "Value mismatch for key = " << key;
     }
   }
 
@@ -299,15 +294,19 @@ TEST(KeyEventTransformerTest, Kana) {
   }
 }
 
-TEST(KeyEventTransformerTest, CopyFrom) {
-  KeyEventTransformer x, y;
+TEST(KeyEventTransformerTest, Copy) {
+  KeyEventTransformer x;
 
   config::Config config;
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   x.ReloadConfig(config);
-  EXPECT_FALSE(IsKeyEventTransformerEq(x, y));
 
-  y.CopyFrom(x);
+  const KeyEventTransformer y(x);
+  EXPECT_TRUE(IsKeyEventTransformerEq(x, y));
+
+  KeyEventTransformer z;
+  EXPECT_FALSE(IsKeyEventTransformerEq(x, z));
+  z = x;
   EXPECT_TRUE(IsKeyEventTransformerEq(x, y));
 }
 

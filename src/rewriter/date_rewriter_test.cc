@@ -1197,8 +1197,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
         commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
 
     DateRewriter rewriter;
-    Segments segments;
-    segments.CopyFrom(test_segments);
+    Segments segments = test_segments;
     EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
 
     // Verify that the top candidate wans't modified and the next two were moved
@@ -1217,8 +1216,7 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionTest) {
         commands::Request::TWELVE_KEYS_TO_HIRAGANA);
 
     DateRewriter rewriter;
-    Segments segments;
-    segments.CopyFrom(test_segments);
+    Segments segments = test_segments;
     EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
 
     // Verify that the first three candidate weren't moved.

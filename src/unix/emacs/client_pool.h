@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Pool of Client instances, implemented with LRUCache.
+// Pool of Client instances, implemented with LruCache.
 
 #ifndef MOZC_UNIX_EMACS_CLIENT_POOL_H_
 #define MOZC_UNIX_EMACS_CLIENT_POOL_H_
@@ -59,7 +59,7 @@ class ClientPool {
   std::shared_ptr<Client> GetClient(int id);
 
  private:
-  mozc::storage::LRUCache<int, std::shared_ptr<Client>> lru_cache_;
+  mozc::storage::LruCache<int, std::shared_ptr<Client>> lru_cache_;
   int next_id_;
 
   DISALLOW_COPY_AND_ASSIGN(ClientPool);

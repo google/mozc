@@ -42,7 +42,7 @@
 
 namespace mozc {
 namespace storage {
-class LRUStorage;
+class LruStorage;
 }  // namespace storage
 
 class UserSegmentHistoryRewriter : public RewriterInterface {
@@ -89,7 +89,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
   bool SortCandidates(const std::vector<ScoreType> &sorted_scores,
                       Segment *segment) const;
 
-  std::unique_ptr<storage::LRUStorage> storage_;
+  std::unique_ptr<storage::LruStorage> storage_;
   const dictionary::POSMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
 };

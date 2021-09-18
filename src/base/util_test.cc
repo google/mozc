@@ -895,16 +895,16 @@ TEST(UtilTest, StripUTF8BOM) {
   EXPECT_EQ("", line);
 }
 
-TEST(UtilTest, IsUTF16BOM) {
-  EXPECT_FALSE(Util::IsUTF16BOM(""));
-  EXPECT_FALSE(Util::IsUTF16BOM("abc"));
-  EXPECT_TRUE(Util::IsUTF16BOM("\xfe\xff"));
-  EXPECT_TRUE(Util::IsUTF16BOM("\xff\xfe"));
-  EXPECT_TRUE(Util::IsUTF16BOM("\xfe\xff "));
-  EXPECT_TRUE(Util::IsUTF16BOM("\xff\xfe "));
-  EXPECT_FALSE(Util::IsUTF16BOM(" \xfe\xff"));
-  EXPECT_FALSE(Util::IsUTF16BOM(" \xff\xfe"));
-  EXPECT_FALSE(Util::IsUTF16BOM("\xff\xff"));
+TEST(UtilTest, IsUtf16Bom) {
+  EXPECT_FALSE(Util::IsUtf16Bom(""));
+  EXPECT_FALSE(Util::IsUtf16Bom("abc"));
+  EXPECT_TRUE(Util::IsUtf16Bom("\xfe\xff"));
+  EXPECT_TRUE(Util::IsUtf16Bom("\xff\xfe"));
+  EXPECT_TRUE(Util::IsUtf16Bom("\xfe\xff "));
+  EXPECT_TRUE(Util::IsUtf16Bom("\xff\xfe "));
+  EXPECT_FALSE(Util::IsUtf16Bom(" \xfe\xff"));
+  EXPECT_FALSE(Util::IsUtf16Bom(" \xff\xfe"));
+  EXPECT_FALSE(Util::IsUtf16Bom("\xff\xff"));
 }
 
 TEST(UtilTest, IsAndroidPuaEmoji) {

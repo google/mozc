@@ -242,8 +242,9 @@ class DictionaryPredictor::PredictiveLookupCallback
   }
 
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
-                         bool is_expanded) override {
-    penalty_ = is_expanded ? kKanaModifierInsensitivePenalty : 0;
+                         int num_expanded) override {
+    // TODO(taku): Considers to change the penalty depending on `num_expanded`.
+    penalty_ = num_expanded > 0 ? kKanaModifierInsensitivePenalty : 0;
     return TRAVERSE_CONTINUE;
   }
 
@@ -1418,8 +1419,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
     std::vector<Result> *results) const {
   DCHECK_EQ(1, segments.conversion_segments_size());
 
-  Segments tmp_segments;
-  tmp_segments.CopyFrom(segments);
+  Segments tmp_segments = segments;
   tmp_segments.set_max_conversion_candidates_size(20);
   ConversionRequest tmp_request = request;
   tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);

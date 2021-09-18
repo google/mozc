@@ -203,10 +203,34 @@ absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 
-Segment::Segment()
-    : segment_type_(FREE), pool_(new ObjectPool<Candidate>(16)) {}
+Segment::Segment() : segment_type_(FREE), pool_(16) {}
 
-Segment::~Segment() {}
+Segment::Segment(const Segment &x)
+    : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
+      segment_type_(x.segment_type_),
+      key_(x.key_),
+      meta_candidates_(x.meta_candidates_),
+      pool_(x.pool_.size()) {
+  // Deep-copy candidates.
+  for (const Candidate *cand : x.candidates_) {
+    *add_candidate() = *cand;
+  }
+}
+
+Segment &Segment::operator=(const Segment &x) {
+  removed_candidates_for_debug_ = x.removed_candidates_for_debug_;
+  segment_type_ = x.segment_type_;
+  key_ = x.key_;
+  meta_candidates_ = x.meta_candidates_;
+  // Deep-copy candidates.
+  clear_candidates();
+  for (const Candidate *cand : x.candidates_) {
+    *add_candidate() = *cand;
+  }
+  return *this;
+}
+
+Segment::~Segment() = default;
 
 Segment::SegmentType Segment::segment_type() const { return segment_type_; }
 
@@ -269,19 +293,19 @@ int Segment::indexOf(const Segment::Candidate *candidate) {
 size_t Segment::candidates_size() const { return candidates_.size(); }
 
 void Segment::clear_candidates() {
-  pool_->Free();
+  pool_.Free();
   candidates_.clear();
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
-  Candidate *candidate = pool_->Alloc();
+  Candidate *candidate = pool_.Alloc();
   candidate->Init();
   candidates_.push_back(candidate);
   return candidate;
 }
 
 Segment::Candidate *Segment::push_front_candidate() {
-  Candidate *candidate = pool_->Alloc();
+  Candidate *candidate = pool_.Alloc();
   candidate->Init();
   candidates_.push_front(candidate);
   return candidate;
@@ -300,7 +324,7 @@ Segment::Candidate *Segment::insert_candidate(int i) {
                 << candidates_.size();
     i = static_cast<int>(candidates_.size());
   }
-  Candidate *candidate = pool_->Alloc();
+  Candidate *candidate = pool_.Alloc();
   candidate->Init();
   candidates_.insert(candidates_.begin() + i, candidate);
   return candidate;
@@ -309,7 +333,7 @@ Segment::Candidate *Segment::insert_candidate(int i) {
 void Segment::pop_front_candidate() {
   if (!candidates_.empty()) {
     Candidate *c = candidates_.front();
-    pool_->Release(c);
+    pool_.Release(c);
     candidates_.pop_front();
   }
 }
@@ -317,7 +341,7 @@ void Segment::pop_front_candidate() {
 void Segment::pop_back_candidate() {
   if (!candidates_.empty()) {
     Candidate *c = candidates_.back();
-    pool_->Release(c);
+    pool_.Release(c);
     candidates_.pop_back();
   }
 }
@@ -327,7 +351,7 @@ void Segment::erase_candidate(int i) {
     LOG(WARNING) << "invalid index";
     return;
   }
-  pool_->Release(mutable_candidate(i));
+  pool_.Release(mutable_candidate(i));
   candidates_.erase(candidates_.begin() + i);
 }
 
@@ -339,7 +363,7 @@ void Segment::erase_candidates(int i, size_t size) {
     return;
   }
   for (int j = i; j < static_cast<int>(end); ++j) {
-    pool_->Release(mutable_candidate(j));
+    pool_.Release(mutable_candidate(j));
   }
   candidates_.erase(candidates_.begin() + i, candidates_.begin() + end);
 }
@@ -417,23 +441,6 @@ void Segment::Clear() {
   segment_type_ = FREE;
 }
 
-void Segment::CopyFrom(const Segment &src) {
-  Clear();
-
-  key_ = src.key();
-  segment_type_ = src.segment_type();
-
-  for (size_t i = 0; i < src.candidates_size(); ++i) {
-    Candidate *candidate = add_candidate();
-    *candidate = src.candidate(i);
-  }
-
-  for (size_t i = 0; i < src.meta_candidates_size(); ++i) {
-    Candidate *meta_candidate = add_meta_candidate();
-    *meta_candidate = src.meta_candidate(i);
-  }
-}
-
 std::string Segment::DebugString() const {
   std::stringstream os;
   os << "[segtype=" << segment_type() << " key=" << key() << std::endl;
@@ -451,13 +458,6 @@ std::string Segment::DebugString() const {
   return os.str();
 }
 
-void Segments::RevertEntry::CopyFrom(const RevertEntry &src) {
-  revert_entry_type = src.revert_entry_type;
-  id = src.id;
-  timestamp = src.timestamp;
-  key = src.key;
-}
-
 Segments::Segments()
     : max_history_segments_size_(0),
       max_prediction_candidates_size_(0),
@@ -465,10 +465,48 @@ Segments::Segments()
       resized_(false),
       user_history_enabled_(true),
       request_type_(Segments::CONVERSION),
-      pool_(new ObjectPool<Segment>(32)),
+      pool_(32),
       cached_lattice_(new Lattice()) {}
 
-Segments::~Segments() {}
+Segments::Segments(const Segments &x)
+    : max_history_segments_size_(x.max_history_segments_size_),
+      max_prediction_candidates_size_(x.max_prediction_candidates_size_),
+      max_conversion_candidates_size_(x.max_conversion_candidates_size_),
+      resized_(x.resized_),
+      user_history_enabled_(x.user_history_enabled_),
+      request_type_(x.request_type_),
+      pool_(32),
+      revert_entries_(x.revert_entries_),
+      cached_lattice_(new Lattice()) {
+  // Deep-copy segments.
+  for (const Segment *segment : x.segments_) {
+    *add_segment() = *segment;
+  }
+  // Note: cached_lattice_ is not copied to follow the old copy policy.
+  // TODO(noriyukit): This design is not intuitive. It'd be better to manage
+  // cached_lattice_ in a better way.
+}
+
+Segments &Segments::operator=(const Segments &x) {
+  Clear();
+
+  max_history_segments_size_ = x.max_history_segments_size_;
+  max_prediction_candidates_size_ = x.max_prediction_candidates_size_;
+  max_conversion_candidates_size_ = x.max_conversion_candidates_size_;
+  resized_ = x.resized_;
+  user_history_enabled_ = x.user_history_enabled_;
+  request_type_ = x.request_type_;
+  // Deep-copy segments.
+  for (const Segment *segment : x.segments_) {
+    *add_segment() = *segment;
+  }
+  revert_entries_ = x.revert_entries_;
+  // Note: cached_lattice_ is not copied; see the comment for the copy
+  // constructor.
+  return *this;
+}
+
+Segments::~Segments() = default;
 
 Segments::RequestType Segments::request_type() const { return request_type_; }
 
@@ -503,21 +541,21 @@ Segment *Segments::mutable_conversion_segment(size_t i) {
 Segment *Segments::add_segment() { return push_back_segment(); }
 
 Segment *Segments::insert_segment(size_t i) {
-  Segment *segment = pool_->Alloc();
+  Segment *segment = pool_.Alloc();
   segment->Clear();
   segments_.insert(segments_.begin() + i, segment);
   return segment;
 }
 
 Segment *Segments::push_back_segment() {
-  Segment *segment = pool_->Alloc();
+  Segment *segment = pool_.Alloc();
   segment->Clear();
   segments_.push_back(segment);
   return segment;
 }
 
 Segment *Segments::push_front_segment() {
-  Segment *segment = pool_->Alloc();
+  Segment *segment = pool_.Alloc();
   segment->Clear();
   segments_.push_front(segment);
   return segment;
@@ -545,7 +583,7 @@ void Segments::erase_segment(size_t i) {
   if (i >= segments_size()) {
     return;
   }
-  pool_->Release(mutable_segment(i));
+  pool_.Release(mutable_segment(i));
   segments_.erase(segments_.begin() + i);
 }
 
@@ -555,7 +593,7 @@ void Segments::erase_segments(size_t i, size_t size) {
     return;
   }
   for (size_t j = i; j < end; ++j) {
-    pool_->Release(mutable_segment(j));
+    pool_.Release(mutable_segment(j));
   }
   segments_.erase(segments_.begin() + i, segments_.begin() + end);
 }
@@ -563,7 +601,7 @@ void Segments::erase_segments(size_t i, size_t size) {
 void Segments::pop_front_segment() {
   if (!segments_.empty()) {
     Segment *seg = segments_.front();
-    pool_->Release(seg);
+    pool_.Release(seg);
     segments_.pop_front();
   }
 }
@@ -571,7 +609,7 @@ void Segments::pop_front_segment() {
 void Segments::pop_back_segment() {
   if (!segments_.empty()) {
     Segment *seg = segments_.back();
-    pool_->Release(seg);
+    pool_.Release(seg);
     segments_.pop_back();
   }
 }
@@ -581,29 +619,8 @@ void Segments::Clear() {
   clear_revert_entries();
 }
 
-void Segments::CopyFrom(const Segments &src) {
-  Clear();
-  max_history_segments_size_ = src.max_history_segments_size();
-  max_prediction_candidates_size_ = src.max_prediction_candidates_size();
-  max_conversion_candidates_size_ = src.max_conversion_candidates_size();
-  resized_ = src.resized();
-  user_history_enabled_ = src.user_history_enabled();
-
-  request_type_ = src.request_type();
-
-  for (size_t i = 0; i < src.segments_size(); ++i) {
-    Segment *segment = add_segment();
-    segment->CopyFrom(src.segment(i));
-  }
-
-  for (size_t i = 0; i < src.revert_entries_size(); ++i) {
-    RevertEntry *revert_entry = push_back_revert_entry();
-    revert_entry->CopyFrom(src.revert_entry(i));
-  }
-}
-
 void Segments::clear_segments() {
-  pool_->Free();
+  pool_.Free();
   resized_ = false;
   segments_.clear();
 }
@@ -622,7 +639,7 @@ void Segments::clear_history_segments() {
 void Segments::clear_conversion_segments() {
   const size_t size = history_segments_size();
   for (size_t i = size; i < segments_size(); ++i) {
-    pool_->Release(mutable_segment(i));
+    pool_.Release(mutable_segment(i));
   }
   resized_ = false;
   segments_.resize(size);

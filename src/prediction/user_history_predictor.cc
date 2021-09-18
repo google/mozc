@@ -81,11 +81,11 @@ constexpr size_t kMaxSuggestionTrial = 3000;
 constexpr size_t kMaxPrevValueTrial = 500;
 
 // Cache size
-// Typically memory/storage footprint becomes kLRUCacheSize * 70 bytes.
+// Typically memory/storage footprint becomes kLruCacheSize * 70 bytes.
 #ifdef OS_ANDROID
-constexpr size_t kLRUCacheSize = 4000;
+constexpr size_t kLruCacheSize = 4000;
 #else   // OS_ANDROID
-constexpr size_t kLRUCacheSize = 10000;
+constexpr size_t kLruCacheSize = 10000;
 #endif  // OS_ANDROID
 
 // Don't save key/value that are
@@ -518,7 +518,7 @@ bool UserHistoryPredictor::ClearAllHistory() {
   WaitForSyncer();
 
   VLOG(1) << "Clearing user prediction";
-  // Renews DicCache as LRUCache tries to reuse the internal value by
+  // Renews DicCache as LruCache tries to reuse the internal value by
   // using FreeList
   dic_ = absl::make_unique<DicCache>(UserHistoryPredictor::cache_size());
 
@@ -2106,7 +2106,7 @@ uint32_t UserHistoryPredictor::GetScore(const Entry &entry) {
 
 // Returns the size of cache.
 // static
-uint32_t UserHistoryPredictor::cache_size() { return kLRUCacheSize; }
+uint32_t UserHistoryPredictor::cache_size() { return kLruCacheSize; }
 
 // Returns the size of next entries.
 // static

@@ -312,8 +312,7 @@ TEST(SegmentsTest, RevertEntryTest) {
 
   {
     const Segments::RevertEntry &src = segments.revert_entry(0);
-    Segments::RevertEntry dest;
-    dest.CopyFrom(src);
+    Segments::RevertEntry dest = src;
     EXPECT_EQ(src.revert_entry_type, dest.revert_entry_type);
     EXPECT_EQ(src.id, dest.id);
     EXPECT_EQ(src.timestamp, dest.timestamp);
@@ -324,7 +323,7 @@ TEST(SegmentsTest, RevertEntryTest) {
   EXPECT_EQ(0, segments.revert_entries_size());
 }
 
-TEST(SegmentsTest, CopyFromTest) {
+TEST(SegmentsTest, CopyTest) {
   Segments src;
 
   src.set_max_history_segments_size(1);
@@ -348,8 +347,7 @@ TEST(SegmentsTest, CopyFromTest) {
   EXPECT_EQ(kSegmentsSize, src.segments_size());
   EXPECT_EQ(kCandidatesSize, src.segment(0).candidates_size());
 
-  Segments dest;
-  dest.CopyFrom(src);
+  Segments dest = src;
   EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
   EXPECT_EQ(src.max_prediction_candidates_size(),
             dest.max_prediction_candidates_size());
@@ -481,8 +479,8 @@ TEST(CandidateTest, InnerSegmentIterator) {
   }
 }
 
-TEST(SegmentTest, CopyFrom) {
-  Segment src, dest;
+TEST(SegmentTest, Copy) {
+  Segment src;
 
   src.set_key("key");
   src.set_segment_type(Segment::FIXED_VALUE);
@@ -493,8 +491,18 @@ TEST(SegmentTest, CopyFrom) {
   Segment::Candidate *meta_candidate = src.add_meta_candidate();
   meta_candidate->key = "meta_candidate->key";
 
-  dest.CopyFrom(src);
+  // Test copy constructor.
+  Segment dest(src);
+  EXPECT_EQ(src.key(), dest.key());
+  EXPECT_EQ(src.segment_type(), dest.segment_type());
+  EXPECT_EQ(src.candidate(0).key, dest.candidate(0).key);
+  EXPECT_EQ(src.candidate(1).key, dest.candidate(1).key);
+  EXPECT_EQ(src.meta_candidate(0).key, dest.meta_candidate(0).key);
 
+  // Test copy assignment.
+  dest.add_candidate()->key = "dummy";
+  dest.add_candidate()->key = "dummy";
+  dest = src;
   EXPECT_EQ(src.key(), dest.key());
   EXPECT_EQ(src.segment_type(), dest.segment_type());
   EXPECT_EQ(src.candidate(0).key, dest.candidate(0).key);

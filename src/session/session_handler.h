@@ -99,7 +99,7 @@ class SessionHandler : public SessionHandlerInterface {
   FRIEND_TEST(SessionHandlerTest, StorageTest);
 
   using SessionMap =
-      mozc::storage::LRUCache<SessionID, session::SessionInterface *>;
+      mozc::storage::LruCache<SessionID, session::SessionInterface *>;
   using SessionElement = SessionMap::Element;
 
   void Init(std::unique_ptr<EngineInterface> engine,

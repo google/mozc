@@ -107,8 +107,8 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   }
 
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
-                         bool is_expanded) override {
-    return callback_->OnActualKey(key, actual_key, is_expanded);
+                         int num_expanded) override {
+    return callback_->OnActualKey(key, actual_key, num_expanded);
   }
 
   ResultType OnToken(absl::string_view key, absl::string_view actual_key,

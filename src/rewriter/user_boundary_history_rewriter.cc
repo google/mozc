@@ -51,11 +51,11 @@
 
 namespace mozc {
 
-using storage::LRUStorage;
+using storage::LruStorage;
 
 namespace {
 constexpr int kValueSize = 4;
-constexpr uint32_t kLRUSize = 5000;
+constexpr uint32_t kLruSize = 5000;
 constexpr uint32_t kSeedValue = 0x761fea81;
 
 constexpr char kFileName[] = "user://boundary.db";
@@ -107,7 +107,7 @@ class LengthArray {
 
 UserBoundaryHistoryRewriter::UserBoundaryHistoryRewriter(
     const ConverterInterface *parent_converter)
-    : parent_converter_(parent_converter), storage_(new LRUStorage) {
+    : parent_converter_(parent_converter), storage_(new LruStorage) {
   DCHECK(parent_converter_);
   Reload();
 }
@@ -150,12 +150,12 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     // Note: we can #ifdef inside SetInteger, but to build it we need to build
     // other methods in usage_stats as well. So we'll exclude the method here
     // for now.
-#else
+#else  // OS_ANDROID
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
         "UserBoundaryHistoryEntrySize",
         static_cast<int>(storage_->used_size()));
-#endif
+#endif  // OS_ANDROID
   }
 }
 
@@ -201,7 +201,7 @@ bool UserBoundaryHistoryRewriter::Sync() {
 
 bool UserBoundaryHistoryRewriter::Reload() {
   const std::string filename = ConfigFileStream::GetFileName(kFileName);
-  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLRUSize,
+  if (!storage_->OpenOrCreate(filename.c_str(), kValueSize, kLruSize,
                               kSeedValue)) {
     LOG(WARNING) << "cannot initialize UserBoundaryHistoryRewriter";
     storage_.reset();
