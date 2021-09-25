@@ -68,7 +68,7 @@ class KatakanaPromotionRewriterTest : public ::testing::Test {
  protected:
   KatakanaPromotionRewriterTest() {
     t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()));
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
 
     desktop_request_.set_mixed_conversion(false);
     desktop_conv_request_.set_request(&desktop_request_);

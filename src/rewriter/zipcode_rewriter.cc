@@ -41,7 +41,7 @@
 
 namespace mozc {
 namespace {
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 }  // namespace
 
 bool ZipcodeRewriter::GetZipcodeCandidatePositions(const Segment &seg,
@@ -126,7 +126,7 @@ bool ZipcodeRewriter::InsertCandidate(size_t insert_pos,
   return true;
 }
 
-ZipcodeRewriter::ZipcodeRewriter(const POSMatcher *pos_matcher)
+ZipcodeRewriter::ZipcodeRewriter(const PosMatcher *pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
 ZipcodeRewriter::~ZipcodeRewriter() = default;

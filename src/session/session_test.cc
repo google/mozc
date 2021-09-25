@@ -420,7 +420,7 @@ class MockConverterEngineForReset : public EngineInterface {
     return absl::string_view();
   }
 
-  std::vector<std::string> GetPOSList() const override { return {}; }
+  std::vector<std::string> GetPosList() const override { return {}; }
 
   const ConverterMockForReset &converter_mock() const {
     return *converter_mock_;
@@ -479,7 +479,7 @@ class MockConverterEngineForRevert : public EngineInterface {
     return absl::string_view();
   }
 
-  std::vector<std::string> GetPOSList() const override { return {}; }
+  std::vector<std::string> GetPosList() const override { return {}; }
 
   const ConverterMockForRevert &converter_mock() const {
     return *converter_mock_;
@@ -507,7 +507,7 @@ class SessionTest : public ::testing::Test {
     engine_ = absl::make_unique<MockConverterEngine>();
 
     t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()));
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
   void TearDown() override { UsageStats::ClearAllStatsForTest(); }
@@ -7115,7 +7115,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 #if defined(OS_WIN) || defined(__APPLE__)
   // meta candidates are in cascading window
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
-#else
+#else   // OS_WIN, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
   GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
                                           true);
@@ -7126,7 +7126,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
   EXPECT_RESULT("TOK", command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_EQ(0, command.output().preedit().cursor());
-#endif
+#endif  // OS_WIN, __APPLE__
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {

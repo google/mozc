@@ -44,7 +44,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {
@@ -106,7 +106,7 @@ inline void NBestGenerator::Agenda::Pop() {
 NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
                                const Segmenter *segmenter,
                                const Connector *connector,
-                               const POSMatcher *pos_matcher,
+                               const PosMatcher *pos_matcher,
                                const Lattice *lattice,
                                const SuggestionFilter *suggestion_filter,
                                bool apply_suggestion_filter_for_exact_match)

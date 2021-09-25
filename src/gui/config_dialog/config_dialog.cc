@@ -41,7 +41,7 @@
 #include <windows.h>
 #include <QtGui/QGuiApplication>
 // clang-format on
-#endif
+#endif  // OS_WIN
 
 #include <QtWidgets/QMessageBox>
 #include <algorithm>
@@ -271,7 +271,7 @@ ConfigDialog::ConfigDialog()
   usageStatsCheckBox->setVisible(false);
   usageStatsMessage->setDisabled(true);
   usageStatsMessage->setVisible(false);
-#else
+#else   // OS_WIN
   launchAdministrationDialogButton->setEnabled(false);
   launchAdministrationDialogButton->setVisible(false);
   launchAdministrationDialogButtonForUsageStats->setEnabled(false);
@@ -299,9 +299,9 @@ ConfigDialog::ConfigDialog()
 
 #ifdef OS_WIN
   IMEHotKeyDisabledCheckBox->setChecked(WinUtil::GetIMEHotKeyDisabled());
-#else
+#else   // OS_WIN
   IMEHotKeyDisabledCheckBox->setVisible(false);
-#endif
+#endif  // OS_WIN
 
 #ifdef CHANNEL_DEV
   usageStatsCheckBox->setEnabled(false);
@@ -524,7 +524,7 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // InfoListConfig
   localUsageDictionaryCheckBox->setChecked(
       config.information_list_config().use_local_usage_dictionary());
-  information_list_config_.CopyFrom(config.information_list_config());
+  information_list_config_ = config.information_list_config();
 
   // tab3
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
@@ -838,7 +838,7 @@ bool ConfigDialog::eventFilter(QObject *obj, QEvent *event) {
     if (obj == usageStatsMessage) {
 #ifndef CHANNEL_DEV
       usageStatsCheckBox->toggle();
-#endif
+#endif  // CHANNEL_DEV
     } else if (obj == incognitoModeMessage) {
       incognitoModeCheckBox->toggle();
     }

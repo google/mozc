@@ -53,7 +53,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
     const Segment::Candidate *candidate;
   };
 
-  UserSegmentHistoryRewriter(const dictionary::POSMatcher *pos_matcher,
+  UserSegmentHistoryRewriter(const dictionary::PosMatcher *pos_matcher,
                              const dictionary::PosGroup *pos_group);
   ~UserSegmentHistoryRewriter() override;
 
@@ -90,7 +90,7 @@ class UserSegmentHistoryRewriter : public RewriterInterface {
                       Segment *segment) const;
 
   std::unique_ptr<storage::LruStorage> storage_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
 };
 

@@ -42,7 +42,6 @@
 namespace mozc {
 namespace {
 constexpr size_t kMaxHistorySize = 32;
-constexpr size_t kMaxConversionCandidatesSize = 200;
 }  // namespace
 
 absl::string_view Segment::Candidate::functional_key() const {
@@ -460,8 +459,6 @@ std::string Segment::DebugString() const {
 
 Segments::Segments()
     : max_history_segments_size_(0),
-      max_prediction_candidates_size_(0),
-      max_conversion_candidates_size_(kMaxConversionCandidatesSize),
       resized_(false),
       user_history_enabled_(true),
       request_type_(Segments::CONVERSION),
@@ -470,8 +467,6 @@ Segments::Segments()
 
 Segments::Segments(const Segments &x)
     : max_history_segments_size_(x.max_history_segments_size_),
-      max_prediction_candidates_size_(x.max_prediction_candidates_size_),
-      max_conversion_candidates_size_(x.max_conversion_candidates_size_),
       resized_(x.resized_),
       user_history_enabled_(x.user_history_enabled_),
       request_type_(x.request_type_),
@@ -491,8 +486,6 @@ Segments &Segments::operator=(const Segments &x) {
   Clear();
 
   max_history_segments_size_ = x.max_history_segments_size_;
-  max_prediction_candidates_size_ = x.max_prediction_candidates_size_;
-  max_conversion_candidates_size_ = x.max_conversion_candidates_size_;
   resized_ = x.resized_;
   user_history_enabled_ = x.user_history_enabled_;
   request_type_ = x.request_type_;
@@ -658,22 +651,6 @@ void Segments::set_max_history_segments_size(size_t max_history_segments_size) {
 void Segments::set_resized(bool resized) { resized_ = resized; }
 
 bool Segments::resized() const { return resized_; }
-
-size_t Segments::max_prediction_candidates_size() const {
-  return max_prediction_candidates_size_;
-}
-
-void Segments::set_max_prediction_candidates_size(size_t size) {
-  max_prediction_candidates_size_ = size;
-}
-
-size_t Segments::max_conversion_candidates_size() const {
-  return max_conversion_candidates_size_;
-}
-
-void Segments::set_max_conversion_candidates_size(size_t size) {
-  max_conversion_candidates_size_ = size;
-}
 
 void Segments::clear_revert_entries() { revert_entries_.clear(); }
 

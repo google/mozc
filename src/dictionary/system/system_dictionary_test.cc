@@ -74,7 +74,7 @@ namespace {
 class SystemDictionaryTest : public ::testing::Test {
  protected:
   SystemDictionaryTest()
-      : pos_matcher_(mock_data_manager_.GetPOSMatcherData()),
+      : pos_matcher_(mock_data_manager_.GetPosMatcherData()),
         text_dict_(pos_matcher_),
         dic_fn_(
             FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "mozc.dic")) {
@@ -120,7 +120,7 @@ class SystemDictionaryTest : public ::testing::Test {
 
   const testing::ScopedTmpUserProfileDirectory scoped_profile_dir_;
   const testing::MockDataManager mock_data_manager_;
-  dictionary::POSMatcher pos_matcher_;
+  dictionary::PosMatcher pos_matcher_;
   TextDictionaryLoader text_dict_;
 
   ConversionRequest convreq_;

@@ -107,7 +107,7 @@ bool UIContext::GetLastOutput(mozc::commands::Output *output) const {
   if (!private_context_->Validate()) {
     return false;
   }
-  output->CopyFrom(*private_context_->last_output);
+  *output = *private_context_->last_output;
   return true;
 }
 

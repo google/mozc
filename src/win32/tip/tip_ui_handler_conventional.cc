@@ -332,7 +332,7 @@ void UpdateCommand(TipTextService *text_service, ITfContext *context,
 
   TipPrivateContext *private_context = text_service->GetPrivateContext(context);
   if (private_context != nullptr) {
-    command->mutable_output()->CopyFrom(private_context->last_output());
+    *command->mutable_output() = private_context->last_output();
     private_context->GetUiElementManager()->OnUpdate(text_service, context);
   }
 

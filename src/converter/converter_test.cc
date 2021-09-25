@@ -91,7 +91,7 @@ using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
 using dictionary::DictionaryMock;
 using dictionary::PosGroup;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
@@ -195,7 +195,7 @@ class ConverterTest : public ::testing::Test {
     std::unique_ptr<const SuggestionFilter> suggestion_filter;
     std::unique_ptr<ImmutableConverterInterface> immutable_converter;
     std::unique_ptr<ConverterImpl> converter;
-    dictionary::POSMatcher pos_matcher;
+    dictionary::PosMatcher pos_matcher;
   };
 
   // Returns initialized predictor for the given type.
@@ -205,7 +205,7 @@ class ConverterTest : public ::testing::Test {
   // initializing. Prease see mozc/engine/engine.cc for details.
   // Caller should manage the ownership.
   std::unique_ptr<PredictorInterface> CreatePredictor(
-      PredictorType predictor_type, const POSMatcher *pos_matcher,
+      PredictorType predictor_type, const PosMatcher *pos_matcher,
       const ConverterAndData &converter_and_data) {
     if (predictor_type == STUB_PREDICTOR) {
       return absl::make_unique<StubPredictor>();
@@ -272,7 +272,7 @@ class ConverterTest : public ::testing::Test {
     int dictionary_size = 0;
     data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-    converter_and_data->pos_matcher.Set(data_manager.GetPOSMatcherData());
+    converter_and_data->pos_matcher.Set(data_manager.GetPosMatcherData());
 
     std::unique_ptr<SystemDictionary> sysdic =
         SystemDictionary::Builder(dictionary_data, dictionary_size)
@@ -346,11 +346,11 @@ class ConverterTest : public ::testing::Test {
       PredictorType predictor_type) {
     auto ret = absl::make_unique<ConverterAndData>();
 
-    ret->pos_matcher.Set(mock_data_manager_.GetPOSMatcherData());
+    ret->pos_matcher.Set(mock_data_manager_.GetPosMatcherData());
 
     auto suppression_dictionary = absl::make_unique<SuppressionDictionary>();
     auto user_dictionary = absl::make_unique<dictionary::UserDictionary>(
-        dictionary::UserPOS::CreateFromDataManager(mock_data_manager_),
+        dictionary::UserPos::CreateFromDataManager(mock_data_manager_),
         ret->pos_matcher, suppression_dictionary.get());
     {
       user_dictionary::UserDictionaryStorage storage;
@@ -897,7 +897,7 @@ TEST_F(ConverterTest, Regression3437022) {
   dic->UnLock();
 }
 
-TEST_F(ConverterTest, CompletePOSIds) {
+TEST_F(ConverterTest, CompletePosIds) {
   const char *kTestKeys[] = {
       "きょうと", "いきます",         "うつくしい",
       "おおきな", "いっちゃわないね", "わたしのなまえはなかのです",
@@ -912,8 +912,10 @@ TEST_F(ConverterTest, CompletePOSIds) {
     Segment *seg = segments.add_segment();
     seg->set_key(kTestKeys[i]);
     seg->set_segment_type(Segment::FREE);
-    segments.set_max_prediction_candidates_size(20);
-    CHECK(converter_and_data->immutable_converter->Convert(&segments));
+    ConversionRequest request;
+    request.set_max_conversion_candidates_size(20);
+    CHECK(converter_and_data->immutable_converter->ConvertForRequest(
+        request, &segments));
     const int lid = segments.segment(0).candidate(0).lid;
     const int rid = segments.segment(0).candidate(0).rid;
     Segment::Candidate candidate;
@@ -921,7 +923,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.key = segments.segment(0).candidate(0).key;
     candidate.lid = 0;
     candidate.rid = 0;
-    converter->CompletePOSIds(&candidate);
+    converter->CompletePosIds(&candidate);
     EXPECT_EQ(lid, candidate.lid);
     EXPECT_EQ(rid, candidate.rid);
     EXPECT_NE(candidate.lid, 0);
@@ -934,7 +936,7 @@ TEST_F(ConverterTest, CompletePOSIds) {
     candidate.value = "test";
     candidate.lid = 10;
     candidate.rid = 11;
-    converter->CompletePOSIds(&candidate);
+    converter->CompletePosIds(&candidate);
     EXPECT_EQ(10, candidate.lid);
     EXPECT_EQ(11, candidate.rid);
   }
@@ -1199,7 +1201,7 @@ TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
 
-  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
 
   std::unique_ptr<SystemDictionary> sysdic =
       SystemDictionary::Builder(dictionary_data, dictionary_size)

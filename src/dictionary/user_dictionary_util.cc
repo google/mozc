@@ -67,7 +67,7 @@ size_t UserDictionaryUtil::max_dictionary_size() { return kMaxDictionarySize; }
 size_t UserDictionaryUtil::max_entry_size() { return kMaxEntrySize; }
 
 bool UserDictionaryUtil::IsValidEntry(
-    const UserPOSInterface &user_pos,
+    const UserPosInterface &user_pos,
     const user_dictionary::UserDictionary::Entry &entry) {
   return ValidateEntry(entry) ==
          UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;

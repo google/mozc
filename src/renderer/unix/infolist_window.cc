@@ -74,7 +74,7 @@ InfolistWindow::InfolistWindow(TextRendererInterface *text_renderer,
 }
 
 Size InfolistWindow::Update(const commands::Candidates &candidates) {
-  candidates_.CopyFrom(candidates);
+  candidates_ = candidates;
 
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
   const InformationList &usages = candidates_.usages();

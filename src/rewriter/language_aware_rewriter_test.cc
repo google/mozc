@@ -85,7 +85,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
   LanguageAwareRewriter *CreateLanguageAwareRewriter() const {
     return new LanguageAwareRewriter(
-        dictionary::POSMatcher(data_manager_.GetPOSMatcherData()),
+        dictionary::PosMatcher(data_manager_.GetPosMatcherData()),
         dictionary_mock_.get());
   }
 

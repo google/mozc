@@ -66,7 +66,7 @@ QString ReplaceString(const QString &str) {
   Replace(replaced, "[ProductUrl]", "https://www.google.co.jp/ime/");
   Replace(replaced, "[ForumUrl]",
           "https://support.google.com/gboard/community?hl=ja");
-  Replace(replaced, "[ForumName]", QObject::tr("issues"));
+  Replace(replaced, "[ForumName]", QObject::tr("product forum"));
 #else
   Replace(replaced, "[ProductUrl]", "https://github.com/google/mozc");
   Replace(replaced, "[ForumUrl]", "https://github.com/google/mozc/issues");

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <ostream>
 
 #include "base/logging.h"
@@ -40,6 +41,7 @@
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -47,7 +49,7 @@ namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n"
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 constexpr absl::string_view kDataSetMagicNumber = "\xEFMOZC\r\n";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -114,6 +116,23 @@ absl::string_view DataManager::GetDataSetMagicNumber(absl::string_view type) {
     return kDataSetMagicNumberOss;
   }
   return kDataSetMagicNumber;
+}
+
+absl::StatusOr<std::unique_ptr<DataManager>> DataManager::CreateFromFile(
+    const std::string &path) {
+  return CreateFromFile(path, kDataSetMagicNumber);
+}
+
+absl::StatusOr<std::unique_ptr<DataManager>> DataManager::CreateFromFile(
+    const std::string &path, absl::string_view magic) {
+  auto data_manager = std::make_unique<DataManager>();
+  const Status status = data_manager->InitFromFile(path, magic);
+  if (status != DataManager::Status::OK) {
+    return absl::InternalError(
+        absl::StrFormat("%s: Failed to initialize a data manager from %s",
+                        DataManager::StatusCodeToString(status), path));
+  }
+  return data_manager;
 }
 
 DataManager::DataManager() = default;
@@ -451,13 +470,13 @@ void DataManager::GetSuggestionFilterData(const char **data,
   *size = suggestion_filter_data_.size();
 }
 
-void DataManager::GetUserPOSData(absl::string_view *token_array_data,
+void DataManager::GetUserPosData(absl::string_view *token_array_data,
                                  absl::string_view *string_array_data) const {
   *token_array_data = user_pos_token_array_data_;
   *string_array_data = user_pos_string_array_data_;
 }
 
-const uint16_t *DataManager::GetPOSMatcherData() const {
+const uint16_t *DataManager::GetPosMatcherData() const {
   return reinterpret_cast<const uint16_t *>(pos_matcher_data_.data());
 }
 

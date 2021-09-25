@@ -64,7 +64,7 @@ namespace {
 using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
 using dictionary::PosGroup;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
@@ -77,7 +77,7 @@ class MockDataAndImmutableConverter {
   MockDataAndImmutableConverter() {
     data_manager_ = absl::make_unique<testing::MockDataManager>();
 
-    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
+    pos_matcher_.Set(data_manager_->GetPosMatcherData());
 
     suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
     CHECK(suppression_dictionary_);
@@ -145,7 +145,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
-  dictionary::POSMatcher pos_matcher_;
+  dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace

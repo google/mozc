@@ -79,7 +79,7 @@ class EngineInterface {
   virtual const DataManagerInterface *GetDataManager() const = 0;
 
   // Gets the user POS list.
-  virtual std::vector<std::string> GetPOSList() const = 0;
+  virtual std::vector<std::string> GetPosList() const = 0;
 
  protected:
   EngineInterface() = default;

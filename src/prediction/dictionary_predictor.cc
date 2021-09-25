@@ -82,7 +82,7 @@ namespace {
 
 using ::mozc::commands::Request;
 using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::Token;
 using ::mozc::usage_stats::UsageStats;
 
@@ -181,16 +181,26 @@ bool IsLongKeyForRealtimeCandidates(const Segments &segments) {
           Util::CharsLen(segments.segment(0).key()) >= kFewResultThreshold);
 }
 
-size_t GetMaxSizeForRealtimeCandidates(const Segments &segments,
+size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
+                                       const Segments &segments,
                                        bool is_long_key) {
   const auto &segment = segments.conversion_segment(0);
-  const size_t size =
-      (segments.max_prediction_candidates_size() - segment.candidates_size());
+  const size_t size = (request.max_dictionary_prediction_candidates_size() -
+                       segment.candidates_size());
   return is_long_key ? std::min(size, static_cast<size_t>(8)) : size;
 }
 
 size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
   return is_long_key ? 5 : 10;
+}
+
+ConversionRequest GetConversionRequestForRealtimeCandidates(
+    const ConversionRequest &request, size_t realtime_candidates_size,
+    size_t current_candidates_size) {
+  ConversionRequest ret = request;
+  ret.set_max_conversion_candidates_size(current_candidates_size +
+                                         realtime_candidates_size);
+  return ret;
 }
 }  // namespace
 
@@ -341,7 +351,7 @@ DictionaryPredictor::DictionaryPredictor(
     const ImmutableConverterInterface *immutable_converter,
     const DictionaryInterface *dictionary,
     const DictionaryInterface *suffix_dictionary, const Connector *connector,
-    const Segmenter *segmenter, const POSMatcher *pos_matcher,
+    const Segmenter *segmenter, const PosMatcher *pos_matcher,
     const SuggestionFilter *suggestion_filter)
     : converter_(converter),
       immutable_converter_(immutable_converter),
@@ -480,7 +490,7 @@ DictionaryPredictor::AggregatePredictionForRequest(
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
   // In mixed conversion mode, the number of real time candidates is increased.
   const size_t realtime_max_size =
-      GetRealtimeCandidateMaxSize(*segments, is_mixed_conversion);
+      GetRealtimeCandidateMaxSize(request, *segments, is_mixed_conversion);
   const auto &unigram_config = GetUnigramConfig(request, *segments);
 
   return AggregatePrediction(request, realtime_max_size, unigram_config,
@@ -612,8 +622,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   // we can pop as many results as we need efficiently.
   std::make_heap(results->begin(), results->end(), ResultCostLess());
 
-  const size_t size =
-      std::min(segments->max_prediction_candidates_size(), results->size());
+  const size_t size = std::min(
+      request.max_dictionary_prediction_candidates_size(), results->size());
 
   int added = 0;
   std::set<std::string> seen;
@@ -1374,7 +1384,8 @@ bool DictionaryPredictor::IsAggressiveSuggestion(
 }
 
 size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
-    const Segments &segments, bool mixed_conversion) const {
+    const ConversionRequest &request, const Segments &segments,
+    bool mixed_conversion) const {
   const Segments::RequestType request_type = segments.request_type();
   DCHECK(request_type == Segments::PREDICTION ||
          request_type == Segments::SUGGESTION ||
@@ -1385,7 +1396,7 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
   }
   const bool is_long_key = IsLongKeyForRealtimeCandidates(segments);
   const size_t max_size =
-      GetMaxSizeForRealtimeCandidates(segments, is_long_key);
+      GetMaxSizeForRealtimeCandidates(request, segments, is_long_key);
   const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
   size_t size = 0;
   switch (request_type) {
@@ -1420,8 +1431,8 @@ bool DictionaryPredictor::PushBackTopConversionResult(
   DCHECK_EQ(1, segments.conversion_segments_size());
 
   Segments tmp_segments = segments;
-  tmp_segments.set_max_conversion_candidates_size(20);
   ConversionRequest tmp_request = request;
+  tmp_request.set_max_conversion_candidates_size(20);
   tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
   // Some rewriters cause significant performance loss. So we skip them.
   tmp_request.set_skip_slow_rewriters(true);
@@ -1506,16 +1517,15 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   // Currently, immutable converter handles such ranking in prediction mode to
   // generate single segment results. So we want to share that code.
 
-  // Preserve the current max_prediction_candidates_size and candidates_size to
-  // restore them at the end of this method.
+  // Preserve the current candidates_size to restore segments at the end of this
+  // method.
   const size_t prev_candidates_size = segment->candidates_size();
-  const size_t prev_max_prediction_candidates_size =
-      segments->max_prediction_candidates_size();
 
-  segments->set_max_prediction_candidates_size(prev_candidates_size +
-                                               realtime_candidates_size);
-
-  if (!immutable_converter_->ConvertForRequest(request, segments) ||
+  const ConversionRequest request_for_realtime =
+      GetConversionRequestForRealtimeCandidates(
+          request, realtime_candidates_size, prev_candidates_size);
+  if (!immutable_converter_->ConvertForRequest(request_for_realtime,
+                                               segments) ||
       prev_candidates_size >= segment->candidates_size()) {
     LOG(WARNING) << "Convert failed";
     return;
@@ -1549,9 +1559,6 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   // Remove candidates created by ImmutableConverter.
   segment->erase_candidates(prev_candidates_size,
                             segment->candidates_size() - prev_candidates_size);
-  // Restore the max_prediction_candidates_size.
-  segments->set_max_prediction_candidates_size(
-      prev_max_prediction_candidates_size);
 }
 
 size_t DictionaryPredictor::GetCandidateCutoffThreshold(

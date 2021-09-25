@@ -48,7 +48,7 @@
 namespace mozc {
 namespace {
 
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 
 class CollocationRewriterTest : public ::testing::Test {
  protected:
@@ -84,7 +84,7 @@ class CollocationRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 
     const mozc::testing::MockDataManager data_manager;
-    pos_matcher_.Set(data_manager.GetPOSMatcherData());
+    pos_matcher_.Set(data_manager.GetPosMatcherData());
     collocation_rewriter_ =
         absl::make_unique<CollocationRewriter>(&data_manager);
   }
@@ -130,7 +130,7 @@ class CollocationRewriterTest : public ::testing::Test {
     return result;
   }
 
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
 
  private:
   std::unique_ptr<const CollocationRewriter> collocation_rewriter_;

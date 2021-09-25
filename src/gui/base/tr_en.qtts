@@ -5,7 +5,7 @@
     <name>QObject</name>
     <message>
         <location filename="util.cc" line="21"/>
-        <source>Mozc</source>
+        <source>Google Japanese Input</source>
         <translation></translation>
     </message>
     <message>
@@ -15,7 +15,7 @@
     </message>
     <message>
         <location filename="../about_dialog/about_dialog.cc" line="39"/>
-        <source>issues</source>
+        <source>product forum</source>
         <translation></translation>
     </message>
 </context>

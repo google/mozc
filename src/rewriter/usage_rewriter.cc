@@ -52,7 +52,7 @@ namespace mozc {
 
 UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
                              const DictionaryInterface *dictionary)
-    : pos_matcher_(data_manager->GetPOSMatcherData()),
+    : pos_matcher_(data_manager->GetPosMatcherData()),
       dictionary_(dictionary),
       base_conjugation_suffix_(nullptr) {
   absl::string_view base_conjugation_suffix_data;

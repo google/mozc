@@ -443,19 +443,6 @@ class Segments final {
   void set_max_history_segments_size(size_t max_history_segments_size);
   size_t max_history_segments_size() const;
 
-  // Let predictor know the maximum size of
-  // candidates prediction/suggestion can generate.
-  void set_max_prediction_candidates_size(size_t size);
-  size_t max_prediction_candidates_size() const;
-
-  // Let converter know the maximum size of
-  // candidates converter can generate.
-  // NOTE: This field is used as an "optional" field.
-  // Rewriter might insert more than |size| candidates.
-  // Default setting is 200.
-  void set_max_conversion_candidates_size(size_t size);
-  size_t max_conversion_candidates_size() const;
-
   bool resized() const;
   void set_resized(bool resized);
 
@@ -477,8 +464,6 @@ class Segments final {
 
  private:
   size_t max_history_segments_size_;
-  size_t max_prediction_candidates_size_;
-  size_t max_conversion_candidates_size_;
   bool resized_;
   bool user_history_enabled_;
 

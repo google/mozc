@@ -49,7 +49,7 @@ class RewriterImpl : public MergerRewriter {
                const dictionary::DictionaryInterface *dictionary);
 
  private:
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
   DISALLOW_COPY_AND_ASSIGN(RewriterImpl);
 };
 

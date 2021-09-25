@@ -85,7 +85,7 @@ class FocusCandidateRewriter : public RewriterInterface {
                             uint32_t *script_type) const;
 
   SerializedStringArray suffix_array_;
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(FocusCandidateRewriter);
 };

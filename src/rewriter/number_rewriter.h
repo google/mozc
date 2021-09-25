@@ -51,7 +51,7 @@ class NumberRewriter : public RewriterInterface {
 
  private:
   SerializedStringArray suffix_array_;
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
 
   DISALLOW_COPY_AND_ASSIGN(NumberRewriter);
 };

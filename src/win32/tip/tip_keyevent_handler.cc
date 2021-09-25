@@ -282,7 +282,7 @@ HRESULT OnTestKey(TipTextService *text_service, ITfContext *context,
   *private_context->mutable_last_down_key() = next_state.last_down_key;
 
   if (result.should_be_sent_to_server && temporal_output.has_consumed()) {
-    private_context->mutable_last_output()->CopyFrom(temporal_output);
+    *private_context->mutable_last_output() = temporal_output;
   }
   const TipInputModeManager::Action action =
       text_service->GetThreadContext()->GetInputModeManager()->OnTestKey(

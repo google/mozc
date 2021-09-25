@@ -39,7 +39,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 
 namespace mozc {
 namespace number_compound_util {
@@ -142,7 +142,7 @@ TEST(NumberCompoundUtilTest, IsNumber) {
   ASSERT_TRUE(suffix_array.Init(data));
 
   const testing::MockDataManager data_manager;
-  const POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  const PosMatcher pos_matcher(data_manager.GetPosMatcherData());
 
   Segment::Candidate c;
 

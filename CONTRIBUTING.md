@@ -12,6 +12,7 @@ Files and directories we may accept pull requests:
 * [src/BUILD.(library).bazel](https://github.com/google/mozc/tree/master/src/)
 * [src/data/oss/](https://github.com/google/mozc/tree/master/src/data/oss/)
 * [src/data/test/quality_regression_test/](https://github.com/google/mozc/tree/master/src/data/test/quality_regression_test/)
+* [src/unix/emacs/mozc.el](https://github.com/google/mozc/tree/master/src/unix/emacs/mozc.el)
 * [src/WORKSPACE.bazel](https://github.com/google/mozc/tree/master/src/WORKSPAE.bazel)
 
 Although Google company policy certainly allows Mozc team to accept pull

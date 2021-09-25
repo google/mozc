@@ -82,12 +82,6 @@ TEST(SegmentsTest, BasicTest) {
   segments.set_max_history_segments_size(5);
   EXPECT_EQ(5, segments.max_history_segments_size());
 
-  segments.set_max_prediction_candidates_size(10);
-  EXPECT_EQ(10, segments.max_prediction_candidates_size());
-
-  segments.set_max_prediction_candidates_size(5);
-  EXPECT_EQ(5, segments.max_prediction_candidates_size());
-
   for (int i = 0; i < kSegmentsSize; ++i) {
     EXPECT_EQ(seg[i], segments.mutable_segment(i));
   }
@@ -327,8 +321,6 @@ TEST(SegmentsTest, CopyTest) {
   Segments src;
 
   src.set_max_history_segments_size(1);
-  src.set_max_prediction_candidates_size(2);
-  src.set_max_conversion_candidates_size(2);
   src.set_resized(true);
   src.set_user_history_enabled(true);
   src.set_request_type(Segments::PREDICTION);
@@ -349,10 +341,6 @@ TEST(SegmentsTest, CopyTest) {
 
   Segments dest = src;
   EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
-  EXPECT_EQ(src.max_prediction_candidates_size(),
-            dest.max_prediction_candidates_size());
-  EXPECT_EQ(src.max_conversion_candidates_size(),
-            dest.max_conversion_candidates_size());
   EXPECT_EQ(src.resized(), dest.resized());
   EXPECT_EQ(src.user_history_enabled(), dest.user_history_enabled());
   EXPECT_EQ(src.request_type(), dest.request_type());

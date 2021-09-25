@@ -55,7 +55,7 @@
 
 namespace mozc {
 namespace {
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 }  // namespace
 
 DataManagerTestBase::DataManagerTestBase(
@@ -147,7 +147,7 @@ void DataManagerTestBase::SegmenterTest_NodeTest() {
 void DataManagerTestBase::SegmenterTest_ParticleTest() {
   std::unique_ptr<Segmenter> segmenter(
       Segmenter::CreateFromDataManager(*data_manager_));
-  const POSMatcher pos_matcher(data_manager_->GetPOSMatcherData());
+  const PosMatcher pos_matcher(data_manager_->GetPosMatcherData());
 
   Node lnode, rnode;
   lnode.Init();

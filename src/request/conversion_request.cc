@@ -42,13 +42,7 @@ ConversionRequest::ConversionRequest()
 ConversionRequest::ConversionRequest(const composer::Composer *c,
                                      const commands::Request *request,
                                      const config::Config *config)
-    : composer_(c),
-      request_(request),
-      config_(config),
-      use_actual_converter_for_realtime_conversion_(false),
-      composer_key_selection_(CONVERSION_KEY),
-      skip_slow_rewriters_(false),
-      create_partial_candidates_(false) {}
+    : composer_(c), request_(request), config_(config) {}
 
 ConversionRequest::ConversionRequest(const ConversionRequest &x) = default;
 ConversionRequest &ConversionRequest::operator=(const ConversionRequest &x) =
@@ -123,6 +117,44 @@ void ConversionRequest::set_create_partial_candidates(bool value) {
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
          config_->use_kana_modifier_insensitive_conversion();
+}
+
+size_t ConversionRequest::max_conversion_candidates_size() const {
+  return max_conversion_candidates_size_;
+}
+
+void ConversionRequest::set_max_conversion_candidates_size(size_t value) {
+  max_conversion_candidates_size_ = value;
+}
+
+size_t ConversionRequest::max_user_history_prediction_candidates_size() const {
+  return max_user_history_prediction_candidates_size_;
+}
+
+void ConversionRequest::set_max_user_history_prediction_candidates_size(
+    size_t value) {
+  max_user_history_prediction_candidates_size_ = value;
+}
+
+size_t
+ConversionRequest::max_user_history_prediction_candidates_size_for_zero_query()
+    const {
+  return max_user_history_prediction_candidates_size_for_zero_query_;
+}
+
+void ConversionRequest::
+    set_max_user_history_prediction_candidates_size_for_zero_query(
+        size_t value) {
+  max_user_history_prediction_candidates_size_for_zero_query_ = value;
+}
+
+size_t ConversionRequest::max_dictionary_prediction_candidates_size() const {
+  return max_dictionary_prediction_candidates_size_;
+}
+
+void ConversionRequest::set_max_dictionary_prediction_candidates_size(
+    size_t value) {
+  max_dictionary_prediction_candidates_size_ = value;
 }
 
 }  // namespace mozc

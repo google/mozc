@@ -51,7 +51,7 @@ using mozc::storage::louds::LoudsTrie;
 namespace mozc {
 namespace dictionary {
 
-ValueDictionary::ValueDictionary(const POSMatcher &pos_matcher,
+ValueDictionary::ValueDictionary(const PosMatcher &pos_matcher,
                                  const LoudsTrie *value_trie)
     : value_trie_(value_trie),
       codec_(SystemDictionaryCodecFactory::GetCodec()),

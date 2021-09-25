@@ -893,7 +893,7 @@ TEST_F(CandidateWindowTest, DrawInformationIconTest) {
     }
   }
 
-  testkit.window->candidates_.CopyFrom(candidates);
+  testkit.window->candidates_ = candidates;
   testkit.window->DrawInformationIcon();
   FinalizeTestKit(&testkit);
 }

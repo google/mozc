@@ -59,27 +59,27 @@ namespace dictionary {
 namespace {
 
 struct OrderByKey {
-  bool operator()(const UserPOS::Token &token, absl::string_view key) const {
+  bool operator()(const UserPos::Token &token, absl::string_view key) const {
     return token.key < key;
   }
 
-  bool operator()(absl::string_view key, const UserPOS::Token &token) const {
+  bool operator()(absl::string_view key, const UserPos::Token &token) const {
     return key < token.key;
   }
 };
 
 struct OrderByKeyPrefix {
-  bool operator()(const UserPOS::Token &token, absl::string_view prefix) const {
+  bool operator()(const UserPos::Token &token, absl::string_view prefix) const {
     return absl::string_view(token.key).substr(0, prefix.size()) < prefix;
   }
 
-  bool operator()(absl::string_view prefix, const UserPOS::Token &token) const {
+  bool operator()(absl::string_view prefix, const UserPos::Token &token) const {
     return prefix < absl::string_view(token.key).substr(0, prefix.size());
   }
 };
 
 struct OrderByKeyThenById {
-  bool operator()(const UserPOS::Token &lhs, const UserPOS::Token &rhs) const {
+  bool operator()(const UserPos::Token &lhs, const UserPos::Token &rhs) const {
     const int comp = lhs.key.compare(rhs.key);
     return comp == 0 ? (lhs.id < rhs.id) : (comp < 0);
   }
@@ -112,7 +112,7 @@ class UserDictionaryFileManager {
   Mutex mutex_;
 };
 
-void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
+void FillTokenFromUserPosToken(const UserPos::Token &user_pos_token,
                                Token *token) {
   token->key = user_pos_token.key;
   token->value = user_pos_token.value;
@@ -126,7 +126,7 @@ void FillTokenFromUserPOSToken(const UserPOS::Token &user_pos_token,
 
 class UserDictionary::TokensIndex {
  public:
-  TokensIndex(const UserPOSInterface *user_pos,
+  TokensIndex(const UserPosInterface *user_pos,
               SuppressionDictionary *suppression_dictionary)
       : user_pos_(user_pos), suppression_dictionary_(suppression_dictionary) {}
 
@@ -135,17 +135,17 @@ class UserDictionary::TokensIndex {
   bool empty() const { return user_pos_tokens_.empty(); }
   size_t size() const { return user_pos_tokens_.size(); }
 
-  std::vector<UserPOS::Token>::const_iterator begin() const {
+  std::vector<UserPos::Token>::const_iterator begin() const {
     return user_pos_tokens_.begin();
   }
-  std::vector<UserPOS::Token>::const_iterator end() const {
+  std::vector<UserPos::Token>::const_iterator end() const {
     return user_pos_tokens_.end();
   }
 
   void Load(const user_dictionary::UserDictionaryStorage &storage) {
     user_pos_tokens_.clear();
     std::set<uint64_t> seen;
-    std::vector<UserPOS::Token> tokens;
+    std::vector<UserPos::Token> tokens;
 
     const SuppressionDictionaryLock l(suppression_dictionary_);
     suppression_dictionary_->Clear();
@@ -215,9 +215,9 @@ class UserDictionary::TokensIndex {
   }
 
  private:
-  const UserPOSInterface *user_pos_;
+  const UserPosInterface *user_pos_;
   SuppressionDictionary *suppression_dictionary_;
-  std::vector<UserPOS::Token> user_pos_tokens_;
+  std::vector<UserPos::Token> user_pos_tokens_;
 };
 
 class UserDictionary::UserDictionaryReloader : public Thread {
@@ -280,8 +280,8 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   DISALLOW_COPY_AND_ASSIGN(UserDictionaryReloader);
 };
 
-UserDictionary::UserDictionary(std::unique_ptr<const UserPOSInterface> user_pos,
-                               POSMatcher pos_matcher,
+UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
+                               PosMatcher pos_matcher,
                                SuppressionDictionary *suppression_dictionary)
     : ALLOW_THIS_IN_INITIALIZER_LIST(
           reloader_(new UserDictionaryReloader(this))),
@@ -336,7 +336,7 @@ void UserDictionary::LookupPredictive(
   for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
                                             key, OrderByKeyPrefix());
        begin != end; ++begin) {
-    const UserPOS::Token &user_pos_token = *begin;
+    const UserPos::Token &user_pos_token = *begin;
     switch (callback->OnKey(user_pos_token.key)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -346,7 +346,7 @@ void UserDictionary::LookupPredictive(
       default:
         break;
     }
-    FillTokenFromUserPOSToken(user_pos_token, &token);
+    FillTokenFromUserPosToken(user_pos_token, &token);
     // Override POS IDs for suggest only words.
     if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       token.lid = token.rid = pos_matcher_.GetUnknownId();
@@ -382,7 +382,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
   for (auto it = std::lower_bound(tokens_->begin(), tokens_->end(), first_char,
                                   OrderByKey());
        it != tokens_->end(); ++it) {
-    const UserPOS::Token &user_pos_token = *it;
+    const UserPos::Token &user_pos_token = *it;
     if (user_pos_token.key > key) {
       break;
     }
@@ -403,7 +403,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
       default:
         break;
     }
-    FillTokenFromUserPOSToken(user_pos_token, &token);
+    FillTokenFromUserPosToken(user_pos_token, &token);
     switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -435,11 +435,11 @@ void UserDictionary::LookupExact(absl::string_view key,
 
   Token token;
   for (; begin != end; ++begin) {
-    const UserPOS::Token &user_pos_token = *begin;
+    const UserPos::Token &user_pos_token = *begin;
     if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
-    FillTokenFromUserPOSToken(user_pos_token, &token);
+    FillTokenFromUserPosToken(user_pos_token, &token);
     if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
       return;
     }
@@ -467,7 +467,7 @@ bool UserDictionary::LookupComment(absl::string_view key,
   for (auto [begin, end] = std::equal_range(tokens_->begin(), tokens_->end(),
                                             key, OrderByKey());
        begin != end; ++begin) {
-    const UserPOS::Token &token = *begin;
+    const UserPos::Token &token = *begin;
     if (token.value == value && !token.comment.empty()) {
       comment->assign(token.comment);
       return true;
@@ -536,9 +536,9 @@ bool UserDictionary::Load(
   // current dictionary to save memory usage.
 #ifdef OS_ANDROID
   constexpr size_t kVeryBigUserDictionarySize = 5000;
-#else
+#else   // OS_ANDROID
   constexpr size_t kVeryBigUserDictionarySize = 100000;
-#endif
+#endif  // OS_ANDROID
 
   if (size >= kVeryBigUserDictionarySize) {
     TokensIndex *dummy_empty_tokens =
@@ -553,9 +553,9 @@ bool UserDictionary::Load(
   return true;
 }
 
-std::vector<std::string> UserDictionary::GetPOSList() const {
+std::vector<std::string> UserDictionary::GetPosList() const {
   std::vector<std::string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  user_pos_->GetPosList(&pos_list);
   return pos_list;
 }
 

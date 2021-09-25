@@ -48,13 +48,13 @@
 
 namespace mozc {
 
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 
 class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
   SingleKanjiRewriterTest() {
     data_manager_ = absl::make_unique<testing::MockDataManager>();
-    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
+    pos_matcher_.Set(data_manager_->GetPosMatcherData());
   }
 
   ~SingleKanjiRewriterTest() override = default;
@@ -67,13 +67,13 @@ class SingleKanjiRewriterTest : public ::testing::Test {
     return new SingleKanjiRewriter(*data_manager_);
   }
 
-  const POSMatcher &pos_matcher() { return pos_matcher_; }
+  const PosMatcher &pos_matcher() { return pos_matcher_; }
 
   const ConversionRequest default_request_;
 
  protected:
   std::unique_ptr<testing::MockDataManager> data_manager_;
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
 };
 
 TEST_F(SingleKanjiRewriterTest, CapabilityTest) {

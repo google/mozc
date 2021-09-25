@@ -65,7 +65,7 @@ class DictionaryPredictor : public PredictorInterface {
                       const dictionary::DictionaryInterface *dictionary,
                       const dictionary::DictionaryInterface *suffix_dictionary,
                       const Connector *connector, const Segmenter *segmenter,
-                      const dictionary::POSMatcher *pos_matcher,
+                      const dictionary::PosMatcher *pos_matcher,
                       const SuggestionFilter *suggestion_filter);
   ~DictionaryPredictor() override;
 
@@ -456,7 +456,8 @@ class DictionaryPredictor : public PredictorInterface {
   static bool IsZipCodeRequest(const std::string &key);
 
   // Returns max size of realtime candidates.
-  size_t GetRealtimeCandidateMaxSize(const Segments &segments,
+  size_t GetRealtimeCandidateMaxSize(const ConversionRequest &request,
+                                     const Segments &segments,
                                      bool mixed_conversion) const;
 
   // Returns config to gather unigram candidates.

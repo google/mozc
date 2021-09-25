@@ -56,7 +56,7 @@ class DictionaryImpl : public DictionaryInterface {
                  std::unique_ptr<const DictionaryInterface> value_dictionary,
                  DictionaryInterface *user_dictionary,
                  const SuppressionDictionary *suppression_dictionary,
-                 const POSMatcher *pos_matcher);
+                 const PosMatcher *pos_matcher);
 
   DictionaryImpl(const DictionaryImpl &) = delete;
   DictionaryImpl &operator=(const DictionaryImpl &) = delete;
@@ -96,7 +96,7 @@ class DictionaryImpl : public DictionaryInterface {
   };
 
   // Used to check POS IDs.
-  const POSMatcher *pos_matcher_;
+  const PosMatcher *pos_matcher_;
 
   // Main three dictionaries.
   std::unique_ptr<const DictionaryInterface> system_dictionary_;

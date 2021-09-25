@@ -42,7 +42,7 @@
 
 namespace mozc {
 
-class UserPOSInterface;
+class UserPosInterface;
 
 // TODO(hidehiko): Move this class into user_dictionary namespace.
 class UserDictionaryUtil {
@@ -66,7 +66,7 @@ class UserDictionaryUtil {
   // invalid character and so on. If the function returns false, we
   // shouldn't accept the data being passed into the dictionary.
   // TODO(hidehikoo): Replace this method by the following ValidateEntry.
-  static bool IsValidEntry(const UserPOSInterface &user_pos,
+  static bool IsValidEntry(const UserPosInterface &user_pos,
                            const user_dictionary::UserDictionary::Entry &entry);
 
   // Returns the error status of the validity for the given entry.

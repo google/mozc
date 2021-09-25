@@ -50,7 +50,7 @@ class CandidateFilter {
  public:
   CandidateFilter(
       const dictionary::SuppressionDictionary *suppression_dictionary,
-      const dictionary::POSMatcher *pos_matcher,
+      const dictionary::PosMatcher *pos_matcher,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
   ~CandidateFilter();
@@ -77,7 +77,7 @@ class CandidateFilter {
                                      Segments::RequestType request_type);
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const SuggestionFilter *suggestion_filter_;
 
   std::set<std::string> seen_;

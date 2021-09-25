@@ -44,13 +44,13 @@ class DataManagerInterface {
  public:
   virtual ~DataManagerInterface() = default;
 
-  // Returns data set for UserPOS.
-  virtual void GetUserPOSData(absl::string_view *token_array_data,
+  // Returns data set for UserPos.
+  virtual void GetUserPosData(absl::string_view *token_array_data,
                               absl::string_view *string_array_data) const = 0;
 
-  // Returns a reference to POSMatcher class handling POS rules. Don't
+  // Returns a reference to PosMatcher class handling POS rules. Don't
   // delete the returned pointer, which is owned by the manager.
-  virtual const uint16_t *GetPOSMatcherData() const = 0;
+  virtual const uint16_t *GetPosMatcherData() const = 0;
 
   // Returns the address of an array of lid group.
   virtual const uint8_t *GetPosGroupData() const = 0;

@@ -408,7 +408,7 @@ HRESULT UpdatePrivateContext(TipTextService *text_service, ITfContext *context,
   if (private_context == nullptr) {
     return S_FALSE;
   }
-  private_context->mutable_last_output()->CopyFrom(output);
+  *private_context->mutable_last_output() = output;
   if (!output.has_status()) {
     return S_FALSE;
   }

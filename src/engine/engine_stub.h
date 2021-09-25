@@ -49,7 +49,7 @@ class EngineStub : public EngineInterface {
   const DataManagerInterface *GetDataManager() const override {
     return nullptr;
   }
-  std::vector<std::string> GetPOSList() const override { return {}; }
+  std::vector<std::string> GetPosList() const override { return {}; }
 };
 
 }  // namespace mozc

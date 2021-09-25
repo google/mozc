@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "prediction/predictor.h"
-
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -43,6 +41,7 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
@@ -63,15 +62,16 @@ using ::testing::_;
 using ::testing::AtMost;
 using ::testing::Return;
 
-class CheckCandSizePredictor : public PredictorInterface {
+class CheckCandSizeDictionaryPredictor : public PredictorInterface {
  public:
-  explicit CheckCandSizePredictor(int expected_cand_size)
+  explicit CheckCandSizeDictionaryPredictor(int expected_cand_size)
       : expected_cand_size_(expected_cand_size),
-        predictor_name_("CheckCandSizePredictor") {}
+        predictor_name_("CheckCandSizeDictionaryPredictor") {}
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
-    EXPECT_EQ(expected_cand_size_, segments->max_prediction_candidates_size());
+    EXPECT_EQ(expected_cand_size_,
+              request.max_dictionary_prediction_candidates_size());
     return true;
   }
 
@@ -81,6 +81,34 @@ class CheckCandSizePredictor : public PredictorInterface {
 
  private:
   const int expected_cand_size_;
+  const std::string predictor_name_;
+};
+
+class CheckCandSizeUserHistoryPredictor : public PredictorInterface {
+ public:
+  CheckCandSizeUserHistoryPredictor(int expected_cand_size,
+                                    int expected_cand_size_for_zero_query)
+      : expected_cand_size_(expected_cand_size),
+        expected_cand_size_for_zero_query_(expected_cand_size_for_zero_query),
+        predictor_name_("CheckCandSizeUserHistoryPredictor") {}
+
+  bool PredictForRequest(const ConversionRequest &request,
+                         Segments *segments) const override {
+    EXPECT_EQ(expected_cand_size_,
+              request.max_user_history_prediction_candidates_size());
+    EXPECT_EQ(
+        expected_cand_size_for_zero_query_,
+        request.max_user_history_prediction_candidates_size_for_zero_query());
+    return true;
+  }
+
+  const std::string &GetPredictorName() const override {
+    return predictor_name_;
+  }
+
+ private:
+  const int expected_cand_size_;
+  const int expected_cand_size_for_zero_query_;
   const std::string predictor_name_;
 };
 
@@ -146,8 +174,8 @@ class MobilePredictorTest : public ::testing::Test {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
   auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizePredictor>(20),
-      absl::make_unique<CheckCandSizePredictor>(3));
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(20),
+      absl::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -159,9 +187,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
   auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizePredictor>(20),
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictior
-      absl::make_unique<CheckCandSizePredictor>(-1));
+      absl::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_SUGGESTION);
@@ -173,8 +201,8 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
   auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizePredictor>(200),
-      absl::make_unique<CheckCandSizePredictor>(3));
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      absl::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -187,10 +215,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   DictionaryMock dictionary_mock;
   testing::MockDataManager data_manager;
-  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   const SuppressionDictionary suppression_dictionary;
   auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizePredictor>(200),
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(200),
       absl::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
                                               &suppression_dictionary, true));
   Segments segments;
@@ -285,8 +313,9 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
   auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<CheckCandSizePredictor>(suggestions_size),
-      absl::make_unique<CheckCandSizePredictor>(suggestions_size));
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
+      absl::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
+                                                           suggestions_size));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -299,8 +328,9 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   constexpr int kPredictionSize = 100;
   auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<CheckCandSizePredictor>(kPredictionSize),
-      absl::make_unique<CheckCandSizePredictor>(kPredictionSize));
+      absl::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
+      absl::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
+                                                           kPredictionSize));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);

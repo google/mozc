@@ -60,14 +60,14 @@ namespace {
 struct DictionaryData {
   std::unique_ptr<DictionaryInterface> user_dictionary;
   std::unique_ptr<SuppressionDictionary> suppression_dictionary;
-  POSMatcher pos_matcher;
+  PosMatcher pos_matcher;
   std::unique_ptr<DictionaryInterface> dictionary;
 };
 
 std::unique_ptr<DictionaryData> CreateDictionaryData() {
   auto ret = absl::make_unique<DictionaryData>();
   testing::MockDataManager data_manager;
-  ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
+  ret->pos_matcher.Set(data_manager.GetPosMatcherData());
   const char *dictionary_data = nullptr;
   int dictionary_size = 0;
   data_manager.GetSystemDictionaryData(&dictionary_data, &dictionary_size);
@@ -144,7 +144,7 @@ class DictionaryImplTest : public ::testing::Test {
    public:
     explicit CheckZipCodeExistenceCallback(absl::string_view key,
                                            absl::string_view value,
-                                           const POSMatcher *pos_matcher)
+                                           const PosMatcher *pos_matcher)
         : key_(key), value_(value), pos_matcher_(pos_matcher), found_(false) {}
 
     ResultType OnToken(absl::string_view /* key */,
@@ -162,7 +162,7 @@ class DictionaryImplTest : public ::testing::Test {
 
    private:
     const absl::string_view key_, value_;
-    const POSMatcher *pos_matcher_;
+    const PosMatcher *pos_matcher_;
     bool found_;
   };
 

@@ -91,27 +91,23 @@ std::string JstringToCcString(JNIEnv *env, jstring j_string) {
   return cc_string;
 }
 
-absl::StatusOr<std::unique_ptr<DataManager>> CreateDataManager(
-    const std::string &data_file_path) {
-  auto data_manager = absl::make_unique<DataManager>();
-  const auto status = data_manager->InitFromFile(data_file_path);
-  if (status != DataManager::Status::OK) {
-    return absl::FailedPreconditionError(
-        DataManager::StatusCodeToString(status));
-  }
-  return data_manager;
-}
-
 std::unique_ptr<EngineInterface> CreateMobileEngine(
     const std::string &data_file_path) {
-  auto data_manager = CreateDataManager(data_file_path);
+  absl::StatusOr<std::unique_ptr<DataManager>> data_manager =
+      DataManager::CreateFromFile(data_file_path);
   if (!data_manager.ok()) {
-    LOG(ERROR) << "Failed to create a data manager from " << data_file_path
-               << ": " << data_manager.status()
-               << ": Fallback to minimal engine";
+    LOG(ERROR)
+        << "Fallback to minimal engine due to data manager creation failure: "
+        << data_manager.status();
     return absl::make_unique<MinimalEngine>();
   }
-  const absl::string_view data_version = (*data_manager)->GetDataVersion();
+  // NOTE: we need to copy the data version to our local string before calling
+  // `Engine::CreateMobileEngine` because, if the engine creation below fails,
+  // it deletes `data_manager` and all the references to its data get
+  // invalidated. We want to log the data version on failure, so its copy is
+  // necessary.
+  const std::string data_version =
+      std::string((*data_manager)->GetDataVersion());
   auto engine = Engine::CreateMobileEngine(*std::move(data_manager));
   if (!engine.ok()) {
     LOG(ERROR) << "Failed to create a mobile engine: file " << data_file_path

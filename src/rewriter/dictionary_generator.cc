@@ -77,10 +77,10 @@ static constexpr size_t kTokenSize = 1000;
 DictionaryGenerator::DictionaryGenerator(
     const DataManagerInterface &data_manager)
     : token_pool_(kTokenSize) {
-  const dictionary::POSMatcher pos_matcher(data_manager.GetPOSMatcherData());
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   open_bracket_id_ = pos_matcher.GetOpenBracketId();
   close_bracket_id_ = pos_matcher.GetCloseBracketId();
-  user_pos_ = dictionary::UserPOS::CreateFromDataManager(data_manager);
+  user_pos_ = dictionary::UserPos::CreateFromDataManager(data_manager);
 }
 
 DictionaryGenerator::~DictionaryGenerator() = default;
@@ -155,7 +155,7 @@ bool DictionaryGenerator::Output(const std::string &filename) const {
     } else if (pos == "括弧閉") {
       id = close_bracket_id_;
     } else {
-      CHECK(user_pos_->GetPOSIDs(pos, &id)) << "Unknown POS type: " << pos;
+      CHECK(user_pos_->GetPosIds(pos, &id)) << "Unknown POS type: " << pos;
     }
 
     // Output in mozc dictionary format

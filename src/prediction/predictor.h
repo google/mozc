@@ -99,7 +99,6 @@ class DefaultPredictor : public BasePredictor {
   }
 
  private:
-  const ConversionRequest empty_request_;
   const std::string predictor_name_;
 };
 
@@ -120,8 +119,10 @@ class MobilePredictor : public BasePredictor {
     return predictor_name_;
   }
 
+  static ConversionRequest GetRequestForPredict(
+      const ConversionRequest &request, const Segments &segments);
+
  private:
-  const ConversionRequest empty_request_;
   const std::string predictor_name_;
 };
 

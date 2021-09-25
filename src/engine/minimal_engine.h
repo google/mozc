@@ -51,7 +51,7 @@ class MinimalEngine : public EngineInterface {
   UserDataManagerInterface *GetUserDataManager() override;
   absl::string_view GetDataVersion() const override { return "0.0.0"; }
   const DataManagerInterface *GetDataManager() const override;
-  std::vector<std::string> GetPOSList() const override;
+  std::vector<std::string> GetPosList() const override;
 
  private:
   std::unique_ptr<ConverterInterface> converter_;

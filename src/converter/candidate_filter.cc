@@ -47,7 +47,7 @@
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 using mozc::dictionary::SuppressionDictionary;
 
 namespace mozc {
@@ -86,7 +86,7 @@ const int32_t kStopEnmerationCacheSize = 15;
 // Returns true if the given node sequence is noisy weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsNoisyWeakCompound(const std::vector<const Node *> &nodes,
-                                const dictionary::POSMatcher *pos_matcher) {
+                                const dictionary::PosMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -118,7 +118,7 @@ inline bool IsNoisyWeakCompound(const std::vector<const Node *> &nodes,
 // Returns true if the given node sequence is connected weak compound.
 // Please refer to the comment in FilterCandidateInternal for the idea.
 inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
-                                    const dictionary::POSMatcher *pos_matcher) {
+                                    const dictionary::PosMatcher *pos_matcher) {
   if (nodes.size() <= 1) {
     return false;
   }
@@ -139,14 +139,14 @@ inline bool IsConnectedWeakCompound(const std::vector<const Node *> &nodes,
   return false;
 }
 
-bool IsIsolatedWordOrGeneralSymbol(const dictionary::POSMatcher &pos_matcher,
+bool IsIsolatedWordOrGeneralSymbol(const dictionary::PosMatcher &pos_matcher,
                                    uint16_t pos_id) {
   return pos_matcher.IsIsolatedWord(pos_id) ||
          pos_matcher.IsGeneralSymbol(pos_id);
 }
 
 bool ContainsIsolatedWordOrGeneralSymbol(
-    const dictionary::POSMatcher &pos_matcher,
+    const dictionary::PosMatcher &pos_matcher,
     const std::vector<const Node *> &nodes) {
   for (const Node *node : nodes) {
     if (IsIsolatedWordOrGeneralSymbol(pos_matcher, node->lid)) {
@@ -165,7 +165,7 @@ bool IsNormalOrConstrainedNode(const Node *node) {
 
 CandidateFilter::CandidateFilter(
     const SuppressionDictionary *suppression_dictionary,
-    const POSMatcher *pos_matcher, const SuggestionFilter *suggestion_filter,
+    const PosMatcher *pos_matcher, const SuggestionFilter *suggestion_filter,
     bool apply_suggestion_filter_for_exact_match)
     : suppression_dictionary_(suppression_dictionary),
       pos_matcher_(pos_matcher),

@@ -66,14 +66,14 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   TextDictionaryLoaderTest() {}
 
   void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
   std::unique_ptr<TextDictionaryLoader> CreateTextDictionaryLoader() {
     return absl::make_unique<TextDictionaryLoader>(pos_matcher_);
   }
 
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
 
  private:
   const testing::MockDataManager mock_data_manager_;

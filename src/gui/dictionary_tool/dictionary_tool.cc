@@ -238,12 +238,12 @@ class MultiByteTextLineIterator
     // We won't enable it as it increases the binary size.
     if (encoding_type_ == UserDictionaryImporter::SHIFT_JIS) {
       const std::string input = *line;
-      EncodingUtil::SJISToUTF8(input, line);
+      EncodingUtil::SjisToUtf8(input, line);
     }
 
     // strip UTF8 BOM
     if (first_line_ && encoding_type_ == UserDictionaryImporter::UTF8) {
-      mozc::Util::StripUTF8BOM(line);
+      mozc::Util::StripUtf8Bom(line);
     }
 
     mozc::Util::ChopReturns(line);
@@ -278,9 +278,9 @@ UserDictionaryImporter::TextLineIteratorInterface *CreateTextLineIterator(
     // set default encoding
 #ifdef OS_WIN
     encoding_type = UserDictionaryImporter::SHIFT_JIS;
-#else
+#else   // OS_WIN
     encoding_type = UserDictionaryImporter::UTF16;
-#endif
+#endif  // OS_WIN
   }
 
   VLOG(1) << "Setting Encoding to: " << static_cast<int>(encoding_type);
@@ -327,7 +327,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       client_(client::ClientFactory::NewClient()),
       is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      pos_list_provider_(new POSListProvider()) {
+      pos_list_provider_(new PosListProvider()) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -364,7 +364,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // For some reason setCentralWidget crashes the dictionary_tool on Linux
   // TODO(taku): investigate the cause of the crashes
   setCentralWidget(splitter_);
-#endif
+#endif  // OS_LINUX
 
   setContextMenuPolicy(Qt::NoContextMenu);
 
@@ -389,7 +389,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   dic_content_->setFrameStyle(QFrame::NoFrame);
   dic_content_->setShowGrid(false);
-#endif
+#endif  // __APPLE__
 
   dic_content_->setWordWrap(false);
   dic_content_->verticalHeader()->hide();
@@ -406,7 +406,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // Get a list of POS and set a custom delagate that holds the list.
   std::vector<std::string> tmp_pos_vec;
-  pos_list_provider_->GetPOSList(&tmp_pos_vec);
+  pos_list_provider_->GetPosList(&tmp_pos_vec);
   QStringList pos_list;
   for (size_t i = 0; i < tmp_pos_vec.size(); ++i) {
     pos_list.append(QUtf8(tmp_pos_vec[i]));
@@ -439,11 +439,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Backspace), dic_content_);
   connect(shortcut1, SIGNAL(activated()), this, SLOT(DeleteWord()));
   connect(shortcut2, SIGNAL(activated()), this, SLOT(DeleteWord()));
-#else
+#else   // __APPLE__
   QShortcut *shortcut =
       new QShortcut(QKeySequence(QKeySequence::Delete), dic_content_);
   connect(shortcut, SIGNAL(activated()), this, SLOT(DeleteWord()));
-#endif
+#endif  // __APPLE__
 
   dic_content_->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(dic_content_, SIGNAL(customContextMenuRequested(const QPoint &)),
@@ -533,7 +533,7 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   // for Mac-like style
 #ifdef __APPLE__
   setUnifiedTitleAndToolBarOnMac(true);
-#endif
+#endif  // __APPLE__
 
   StartMonitoringUserEdit();
   UpdateUIStatus();
@@ -960,7 +960,7 @@ void DictionaryTool::ImportFromDefaultIME() {
   UpdateUIStatus();
 
   ReportImportError(error, dic_name, added_entries_size);
-#endif
+#endif  // OS_WIN
 }
 
 void DictionaryTool::ExportDictionary() {
@@ -1103,7 +1103,7 @@ void DictionaryTool::DeleteWord() {
   modified_ = true;
 }
 
-void DictionaryTool::EditPOS(const std::string &pos) {
+void DictionaryTool::EditPos(const std::string &pos) {
   const QList<QTableWidgetItem *> items = dic_content_->selectedItems();
   if (items.empty()) {
     return;
@@ -1310,7 +1310,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
   menu->addSeparator();
   QMenu *change_category_to = menu->addMenu(tr("Change category to"));
   std::vector<std::string> pos_list;
-  pos_list_provider_->GetPOSList(&pos_list);
+  pos_list_provider_->GetPosList(&pos_list);
   std::vector<QAction *> change_pos_actions(pos_list.size());
   for (size_t i = 0; i < pos_list.size(); ++i) {
     change_pos_actions[i] =
@@ -1330,7 +1330,7 @@ void DictionaryTool::OnContextMenuRequestedForContent(const QPoint &pos) {
     bool found = false;
     for (int i = 0; i < change_pos_actions.size(); ++i) {
       if (selected_action == change_pos_actions[i]) {
-        EditPOS(pos_list[i]);
+        EditPos(pos_list[i]);
         found = true;
         break;
       }
@@ -1561,9 +1561,9 @@ bool DictionaryTool::IsWritableToExport(const std::string &file_name) {
     // that export fails on Windows.
 #ifdef OS_WIN
     return dir_info.isExecutable();
-#else
+#else   // OS_WIN
     return dir_info.isExecutable() && dir_info.isWritable();
-#endif
+#endif  // OS_WIN
   }
 }
 
@@ -1577,7 +1577,7 @@ void DictionaryTool::UpdateUIStatus() {
   import_append_action_->setEnabled(dic_list_->count() > 0);
 #ifdef OS_WIN
   import_default_ime_action_->setEnabled(dic_list_->count() > 0);
-#endif
+#endif  // OS_WIN
 
   const bool is_enable_new_word =
       dic_list_->count() > 0 && dic_content_->rowCount() < max_entry_size_;

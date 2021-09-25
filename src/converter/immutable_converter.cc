@@ -67,7 +67,7 @@ namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
 using ::mozc::dictionary::PosGroup;
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::Token;
 
@@ -276,7 +276,7 @@ ImmutableConverterImpl::ImmutableConverterImpl(
     const DictionaryInterface *suffix_dictionary,
     const SuppressionDictionary *suppression_dictionary,
     const Connector *connector, const Segmenter *segmenter,
-    const POSMatcher *pos_matcher, const PosGroup *pos_group,
+    const PosMatcher *pos_matcher, const PosGroup *pos_group,
     const SuggestionFilter *suggestion_filter)
     : dictionary_(dictionary),
       suffix_dictionary_(suffix_dictionary),
@@ -1177,7 +1177,7 @@ namespace {
 class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
  public:
   NodeListBuilderForPredictiveNodes(NodeAllocator *allocator, int limit,
-                                    const POSMatcher *pos_matcher)
+                                    const PosMatcher *pos_matcher)
       : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
 
   ~NodeListBuilderForPredictiveNodes() override = default;
@@ -1215,7 +1215,7 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
   }
 
  private:
-  const POSMatcher *pos_matcher_;
+  const PosMatcher *pos_matcher_;
 };
 
 }  // namespace
@@ -1964,8 +1964,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
   auto do_suggestion = [this, &request, &lattice, &group, &segments,
                         &allow_exact, &filter_type, &is_prediction,
                         &is_simplified_ranking]() {
-    const size_t max_candidates_size =
-        segments->max_prediction_candidates_size();
+    const size_t max_candidates_size = request.max_conversion_candidates_size();
 
     if (request.create_partial_candidates()) {
       // TODO(toshiyuki): It may be better to change this value
@@ -1998,10 +1997,9 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
       // This is a temporal workaround to fill all personal names appeared
       // as exact partial candidates. Expand candidates as many as possible
       if (is_prediction && !is_simplified_ranking) {
-        InsertFirstSegmentToCandidates(
-            segments, lattice, group,
-            segments->max_conversion_candidates_size(), filter_type,
-            true /* allow exact */);
+        InsertFirstSegmentToCandidates(segments, lattice, group,
+                                       request.max_conversion_candidates_size(),
+                                       filter_type, true /* allow exact */);
       }
 
     } else {
@@ -2014,12 +2012,12 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                         &allow_exact, &filter_type]() {
     if (request.create_partial_candidates()) {
       InsertFirstSegmentToCandidates(segments, lattice, group,
-                                     segments->max_conversion_candidates_size(),
+                                     request.max_conversion_candidates_size(),
                                      filter_type, allow_exact);
     } else {
       InsertCandidates(segments, lattice, group,
-                       segments->max_prediction_candidates_size(),
-                       SINGLE_SEGMENT, filter_type);
+                       request.max_conversion_candidates_size(), SINGLE_SEGMENT,
+                       filter_type);
     }
   };
 
@@ -2032,7 +2030,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     const size_t max_candidates_size =
         ((type == Segments::REVERSE_CONVERSION)
              ? 1
-             : segments->max_conversion_candidates_size());
+             : request.max_conversion_candidates_size());
 
     // InsertCandidates inserts new segments after the existing
     // conversion segments. So we have to erase old conversion segments.

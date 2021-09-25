@@ -41,7 +41,7 @@ namespace {
 
 constexpr size_t kMaxReadingChars = 512;
 
-void UTF8ToSJIS(absl::string_view input, std::string *output) {
+void Utf8ToSjis(absl::string_view input, std::string *output) {
   std::wstring utf16;
   Util::Utf8ToWide(input, &utf16);
   if (utf16.empty()) {
@@ -80,7 +80,7 @@ std::wstring StringUtil::KeyToReading(absl::string_view key) {
   DWORD lcid =
       MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), SORT_JAPANESE_XJIS);
   std::string sjis;
-  UTF8ToSJIS(katakana, &sjis);
+  Utf8ToSjis(katakana, &sjis);
 
   // Convert "\x81\x65" (backquote in SJIFT-JIS) to ` by myself since
   // LCMapStringA converts it to ' for some reason.

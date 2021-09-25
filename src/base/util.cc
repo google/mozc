@@ -785,7 +785,7 @@ bool Util::EndsWith(absl::string_view str, absl::string_view suffix) {
   return absl::EndsWith(str, suffix);
 }
 
-void Util::StripUTF8BOM(std::string *line) {
+void Util::StripUtf8Bom(std::string *line) {
   static constexpr char kUTF8BOM[] = "\xef\xbb\xbf";
   *line = std::string(absl::StripPrefix(*line, kUTF8BOM));
 }

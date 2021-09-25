@@ -45,12 +45,12 @@
 namespace mozc {
 namespace dictionary {
 
-class POSMatcher;
+class PosMatcher;
 
 class TextDictionaryLoader {
  public:
   // TODO(noriyukit): Better to pass the pointer of pos_matcher.
-  explicit TextDictionaryLoader(const POSMatcher &pos_matcher);
+  explicit TextDictionaryLoader(const PosMatcher &pos_matcher);
   TextDictionaryLoader(uint16_t zipcode_id, uint16_t isolated_word_id);
 
   TextDictionaryLoader(const TextDictionaryLoader &) = delete;

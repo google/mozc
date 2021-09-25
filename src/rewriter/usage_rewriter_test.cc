@@ -56,7 +56,7 @@ namespace {
 
 using dictionary::SuppressionDictionary;
 using dictionary::UserDictionary;
-using dictionary::UserPOS;
+using dictionary::UserPos;
 
 void AddCandidate(const std::string &key, const std::string &value,
                   const std::string &content_key,
@@ -83,10 +83,10 @@ class UsageRewriterTest : public ::testing::Test {
     config::ConfigHandler::GetDefaultConfig(&config_);
 
     data_manager_ = absl::make_unique<testing::MockDataManager>();
-    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
+    pos_matcher_.Set(data_manager_->GetPosMatcherData());
     suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
     user_dictionary_ = absl::make_unique<UserDictionary>(
-        UserPOS::CreateFromDataManager(*data_manager_), pos_matcher_,
+        UserPos::CreateFromDataManager(*data_manager_), pos_matcher_,
         suppression_dictionary_.get());
   }
 
@@ -106,7 +106,7 @@ class UsageRewriterTest : public ::testing::Test {
   std::unique_ptr<SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDictionary> user_dictionary_;
   std::unique_ptr<testing::MockDataManager> data_manager_;
-  dictionary::POSMatcher pos_matcher_;
+  dictionary::PosMatcher pos_matcher_;
 };
 
 TEST_F(UsageRewriterTest, CapabilityTest) {

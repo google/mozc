@@ -53,7 +53,7 @@ class SingleKanjiRewriter : public RewriterInterface {
                Segments *segments) const override;
 
  private:
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
 
   absl::string_view single_kanji_token_array_;
   SerializedStringArray single_kanji_string_array_;

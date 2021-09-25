@@ -102,9 +102,9 @@ constexpr char kUserDictionary0[] =
 constexpr char kUserDictionary1[] = "end\tend\tverb\n";
 
 void PushBackToken(const std::string &key, const std::string &value,
-                   uint16_t id, std::vector<UserPOS::Token> *tokens) {
+                   uint16_t id, std::vector<UserPos::Token> *tokens) {
   tokens->resize(tokens->size() + 1);
-  UserPOS::Token *t = &tokens->back();
+  UserPos::Token *t = &tokens->back();
   t->key = key;
   t->value = value;
   t->id = id;
@@ -115,17 +115,17 @@ void PushBackToken(const std::string &key, const std::string &value,
 // depends on POS. It accepts only two values for part-of-speech:
 // "noun" as words without inflection and "verb" as words with
 // inflection.
-class UserPOSMock : public UserPOSInterface {
+class UserPosMock : public UserPosInterface {
  public:
-  UserPOSMock() = default;
+  UserPosMock() = default;
 
-  UserPOSMock(const UserPOSMock &) = delete;
-  UserPOSMock &operator=(const UserPOSMock &) = delete;
+  UserPosMock(const UserPosMock &) = delete;
+  UserPosMock &operator=(const UserPosMock &) = delete;
 
-  ~UserPOSMock() override = default;
+  ~UserPosMock() override = default;
 
   // This method returns true if the given pos is "noun" or "verb".
-  bool IsValidPOS(const std::string &pos) const override { return true; }
+  bool IsValidPos(const std::string &pos) const override { return true; }
 
   static const char *kNoun;
   static const char *kVerb;
@@ -144,7 +144,7 @@ class UserPOSMock : public UserPOSInterface {
   //  verb (-ing form) | 220 | 220
   bool GetTokens(const std::string &key, const std::string &value,
                  const std::string &pos, const std::string &locale,
-                 std::vector<UserPOS::Token> *tokens) const override {
+                 std::vector<UserPos::Token> *tokens) const override {
     if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
       return false;
     }
@@ -163,15 +163,15 @@ class UserPOSMock : public UserPOSInterface {
     }
   }
 
-  void GetPOSList(std::vector<std::string> *pos_list) const override {}
+  void GetPosList(std::vector<std::string> *pos_list) const override {}
 
-  bool GetPOSIDs(const std::string &pos, uint16_t *id) const override {
+  bool GetPosIds(const std::string &pos, uint16_t *id) const override {
     return false;
   }
 };
 
-const char *UserPOSMock::kNoun = "名詞";
-const char *UserPOSMock::kVerb = "動詞ワ行五段";
+const char *UserPosMock::kNoun = "名詞";
+const char *UserPosMock::kVerb = "動詞ワ行五段";
 
 std::string GenRandomAlphabet(int size) {
   std::string result;
@@ -208,16 +208,16 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
     return new UserDictionary(
-        absl::make_unique<UserPOSMock>(),
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
+        absl::make_unique<UserPosMock>(),
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
         suppression_dictionary_.get());
   }
 
   // Creates a user dictionary with actual pos data.
   UserDictionary *CreateDictionary() {
     return new UserDictionary(
-        UserPOS::CreateFromDataManager(mock_data_manager_),
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()),
+        UserPos::CreateFromDataManager(mock_data_manager_),
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
         Singleton<SuppressionDictionary>::get());
   }
 
@@ -533,8 +533,8 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
 
   // "suggestion_only" should not be looked up.
   const testing::MockDataManager mock_data_manager;
-  const dictionary::POSMatcher pos_matcher(
-      mock_data_manager.GetPOSMatcherData());
+  const dictionary::PosMatcher pos_matcher(
+      mock_data_manager.GetPosMatcherData());
   const uint16_t kNounId = pos_matcher.GetGeneralNounId();
   const Entry kExpected1[] = {{"key", "noun", kNounId, kNounId}};
   TestLookupExactHelper(kExpected1, std::size(kExpected1), "key", 3, *user_dic);

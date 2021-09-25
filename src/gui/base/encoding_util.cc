@@ -99,7 +99,7 @@ size_t ComputeIndex(uint8_t first, uint8_t second) {
   return first_index * width + second_index;
 }
 
-bool SJISToUTF8Internal(absl::string_view input, std::string *output) {
+bool SjisToUtf8Internal(absl::string_view input, std::string *output) {
   bool expect_first_byte = true;
   uint8_t first_byte = 0;
   for (const char c : input) {
@@ -138,9 +138,9 @@ bool SJISToUTF8Internal(absl::string_view input, std::string *output) {
 
 }  // namespace
 
-void EncodingUtil::SJISToUTF8(const std::string &input, std::string *output) {
+void EncodingUtil::SjisToUtf8(const std::string &input, std::string *output) {
   output->clear();
-  if (!SJISToUTF8Internal(input, output)) {
+  if (!SjisToUtf8Internal(input, output)) {
     output->clear();
   }
 }

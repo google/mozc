@@ -271,15 +271,14 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
 
   const Config config;
 
-  segments->set_max_conversion_candidates_size(
-      absl::GetFlag(FLAGS_max_conversion_candidates_size));
-
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
     Table table;
     Composer composer(&table, &request, &config);
     composer.SetPreeditTextForTestOnly(fields[1]);
     ConversionRequest conversion_request(&composer, &request, &config);
+    conversion_request.set_max_conversion_candidates_size(
+        absl::GetFlag(FLAGS_max_conversion_candidates_size));
     return converter.StartConversionForRequest(conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
@@ -287,6 +286,9 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
         NumberUtil::SimpleAtoi(fields[2]),  // begin pos
         NumberUtil::SimpleAtoi(fields[3]),  // end pos
         fields[4]);
+    ConversionRequest conversion_request;
+    conversion_request.set_max_conversion_candidates_size(
+        absl::GetFlag(FLAGS_max_conversion_candidates_size));
     const bool result = converter.StartConversion(segments, fields[1]);
     Lattice::ResetDebugDisplayNode();
     return result;
@@ -469,17 +471,18 @@ int main(int argc, char **argv) {
             << "\nData file: " << absl::GetFlag(FLAGS_engine_data_path)
             << "\nid.def: " << absl::GetFlag(FLAGS_id_def) << std::endl;
 
-  std::unique_ptr<mozc::DataManager> data_manager(new mozc::DataManager);
-  const auto status = data_manager->InitFromFile(
-      absl::GetFlag(FLAGS_engine_data_path), absl::GetFlag(FLAGS_magic));
-  CHECK_EQ(status, mozc::DataManager::Status::OK);
+  absl::StatusOr<std::unique_ptr<mozc::DataManager>> data_manager =
+      mozc::DataManager::CreateFromFile(absl::GetFlag(FLAGS_engine_data_path),
+                                        absl::GetFlag(FLAGS_magic));
+  CHECK(data_manager.ok()) << data_manager.status();
 
   mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;
   if (absl::GetFlag(FLAGS_engine_type) == "desktop") {
-    engine = mozc::Engine::CreateDesktopEngine(std::move(data_manager)).value();
+    engine =
+        mozc::Engine::CreateDesktopEngine(*std::move(data_manager)).value();
   } else if (absl::GetFlag(FLAGS_engine_type) == "mobile") {
-    engine = mozc::Engine::CreateMobileEngine(std::move(data_manager)).value();
+    engine = mozc::Engine::CreateMobileEngine(*std::move(data_manager)).value();
     mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
   } else {
     LOG(FATAL) << "Invalid type: --engine_type="

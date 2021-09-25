@@ -47,39 +47,39 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-class UserPOSTest : public ::testing::Test {
+class UserPosTest : public ::testing::Test {
  protected:
   void SetUp() override {
     absl::string_view token_array_data, string_array_data;
-    mock_data_manager_.GetUserPOSData(&token_array_data, &string_array_data);
-    user_pos_ = absl::make_unique<UserPOS>(token_array_data, string_array_data);
+    mock_data_manager_.GetUserPosData(&token_array_data, &string_array_data);
+    user_pos_ = absl::make_unique<UserPos>(token_array_data, string_array_data);
     CHECK(user_pos_.get());
   }
 
-  std::unique_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const UserPosInterface> user_pos_;
 
  private:
   const testing::MockDataManager mock_data_manager_;
 };
 
-TEST_F(UserPOSTest, UserPOSBasicTest) {
+TEST_F(UserPosTest, UserPosBasicTest) {
   std::vector<std::string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  user_pos_->GetPosList(&pos_list);
   EXPECT_FALSE(pos_list.empty());
 
   uint16_t id = 0;
   for (size_t i = 0; i < pos_list.size(); ++i) {
-    EXPECT_TRUE(user_pos_->IsValidPOS(pos_list[i]));
-    EXPECT_TRUE(user_pos_->GetPOSIDs(pos_list[i], &id));
+    EXPECT_TRUE(user_pos_->IsValidPos(pos_list[i]));
+    EXPECT_TRUE(user_pos_->GetPosIds(pos_list[i], &id));
     EXPECT_GT(id, 0);
   }
 }
 
-TEST_F(UserPOSTest, UserPOSGetTokensTest) {
+TEST_F(UserPosTest, UserPosGetTokensTest) {
   std::vector<std::string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  user_pos_->GetPosList(&pos_list);
 
-  std::vector<UserPOS::Token> tokens;
+  std::vector<UserPos::Token> tokens;
   EXPECT_FALSE(user_pos_->GetTokens("", "test", pos_list[0], &tokens));
   EXPECT_FALSE(user_pos_->GetTokens("test", "", pos_list[0], &tokens));
   EXPECT_FALSE(user_pos_->GetTokens("test", "test", "", &tokens));
@@ -93,11 +93,11 @@ TEST_F(UserPOSTest, UserPOSGetTokensTest) {
   }
 }
 
-TEST_F(UserPOSTest, UserPOSGetTokensWithLocaleTest) {
+TEST_F(UserPosTest, UserPosGetTokensWithLocaleTest) {
   std::vector<std::string> pos_list;
-  user_pos_->GetPOSList(&pos_list);
+  user_pos_->GetPosList(&pos_list);
 
-  std::vector<UserPOS::Token> tokens, tokens_ja, tokens_en;
+  std::vector<UserPos::Token> tokens, tokens_ja, tokens_en;
   EXPECT_TRUE(user_pos_->GetTokens("あか", "赤", "形容詞", "", &tokens));
   EXPECT_TRUE(user_pos_->GetTokens("あか", "赤", "形容詞", "ja", &tokens_ja));
   EXPECT_TRUE(user_pos_->GetTokens("あか", "赤", "形容詞", "en", &tokens_en));
@@ -111,8 +111,8 @@ TEST_F(UserPOSTest, UserPOSGetTokensWithLocaleTest) {
   }
 }
 
-TEST_F(UserPOSTest, ConjugationTest) {
-  std::vector<UserPOS::Token> tokens1, tokens2;
+TEST_F(UserPosTest, ConjugationTest) {
+  std::vector<UserPos::Token> tokens1, tokens2;
   EXPECT_TRUE(user_pos_->GetTokens("わら", "嗤", "動詞ワ行五段", &tokens1));
   EXPECT_TRUE(user_pos_->GetTokens("わらう", "嗤う", "動詞ワ行五段", &tokens2));
   EXPECT_EQ(tokens1.size(), tokens2.size());
@@ -134,9 +134,9 @@ TEST_F(UserPOSTest, ConjugationTest) {
   }
 }
 
-TEST_F(UserPOSTest, SwapToken) {
-  UserPOS::Token token1 = {"key1", "value1", 1, 1, "comment1"};
-  UserPOS::Token token2 = {"key2", "value2", 2, 2, "comment2"};
+TEST_F(UserPosTest, SwapToken) {
+  UserPos::Token token1 = {"key1", "value1", 1, 1, "comment1"};
+  UserPos::Token token2 = {"key2", "value2", 2, 2, "comment2"};
 
   using std::swap;
   swap(token1, token2);

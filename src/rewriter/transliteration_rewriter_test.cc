@@ -87,7 +87,7 @@ class TransliterationRewriterTest : public ::testing::Test {
 
   TransliterationRewriter *CreateTransliterationRewriter() const {
     return new TransliterationRewriter(
-        dictionary::POSMatcher(mock_data_manager_.GetPOSMatcherData()));
+        dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
   const commands::Request &default_request() const { return default_request_; }

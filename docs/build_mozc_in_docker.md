@@ -36,8 +36,22 @@ bazel build package --config oss_linux -c opt
 Unittests can be executed as follows.
 
 ```
+bazel test ... --config oss_linux -c dbg -- -net/... -/third_party/...
+```
+
+* `...` means all targets under the current and sub directories.
+* `--` means the end of the flags which start from `-`.
+* `-<dir>/...` means exclusion of all targets under the `dir`.
+  + `net` and `third_party` are not supported yet.
+
+Here is a sampe command to run a specific test.
+
+```
 bazel test base:util_test --config oss_linux -c dbg
 ```
+
+* `util_test` is defined in `base/BUILD.bazel`.
+
 
 ### Build Mozc on other Linux environment
 

@@ -47,7 +47,7 @@ HEADER = """// Copyright 2009 Google Inc. All Rights Reserved.
 #define MOZC_DICTIONARY_POS_MAP_H_
 
 // POS conversion rules
-const POSMap kPOSMap[] = {
+const PosMap kPosMap[] = {
 """
 FOOTER = """};
 
