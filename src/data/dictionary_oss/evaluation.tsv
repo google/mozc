@@ -51,18 +51,18 @@ FAILED:	ぜいたくをいえばきりがないけど	贅沢を言えば霧が�
 OK:	じかんにおわれている	時間に追われている	Conversion Not Match	負われて	2.26.4465
 OK:	きんじて	禁じて	Conversion Expected 2	禁じ手	2.26.4465
 OK:	じょしこうせい	女子高生	Conversion Expected 2	女子高生	2.26.4465
-OK:	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Match	ダックスフントは短足です。	2.26.4465
-OK:	おわりをむかえた	終わりを迎えた	Conversion Match	終わりを迎えた	2.26.4465
-OK:	かねのなるき	金のなる木	Conversion Match	金のなる木	2.26.4472
+OK:	だっくすふんとはたんそくです。	ダックスフントは短足です。	Conversion Expected	ダックスフントは短足です。	2.26.4465
+OK:	おわりをむかえた	終わりを迎えた	Conversion Expected	終わりを迎えた	2.26.4465
+OK:	かねのなるき	金のなる木	Conversion Expected	金のなる木	2.26.4472
 OK:	しょうてん	商店	Conversion Expected 9	笑点	2.26.4465
 OK:	べっどしーつをこうかんした	ベッドシーツを交換した	Conversion Match	ベッドシーツ	2.26.4465
-OK:	いわせるな	言わせるな	Conversion Match	言わせるな	2.26.4465
-OK:	ならには	奈良には	Conversion Match	奈良には	2.26.4465
-OK:	かいごかんせい	下位互換性	Conversion Match	下位互換性	2.26.4472
-OK:	けんざかいには	県境には	Conversion Match	県境には	2.26.4465
-OK:	あいてをたたきのめす	相手を叩きのめす	Conversion Match	相手を叩きのめす	2.26.4465
-OK:	けいししている	軽視している	Conversion Match	軽視している	2.26.4465
-OK:	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Match	沖縄航空ビルディング	2.26.4465
+OK:	いわせるな	言わせるな	Conversion Expected	言わせるな	2.26.4465
+OK:	ならには	奈良には	Conversion Expected	奈良には	2.26.4465
+OK:	かいごかんせい	下位互換性	Conversion Expected	下位互換性	2.26.4472
+OK:	けんざかいには	県境には	Conversion Expected	県境には	2.26.4465
+OK:	あいてをたたきのめす	相手を叩きのめす	Conversion Expected	相手を叩きのめす	2.26.4465
+OK:	けいししている	軽視している	Conversion Expected	軽視している	2.26.4465
+OK:	おきなわこうくうびるでぃんぐ	沖縄航空ビルディング	Conversion Expected	沖縄航空ビルディング	2.26.4465
 OK:	とっぷちーむ	トップチーム	Conversion Expected	トップチーム	2.26.4479
 OK:	かんせいどがたかいのでおどろいた	完成度が高いので驚いた	Conversion Match	完成度が高い	2.26.4479
 OK:	あけましておめでとうございます	あけましておめでとうございます	Conversion Not Match	開け	2.26.4479
@@ -97,3 +97,12 @@ OK:	てんさいとしかいいようがない	天才としか言いようがな
 OK:	そのあとどうなるかは	その後どうなるかは	Conversion Match	どうなるかは	2.26.4479
 OK:	ばくそうする	爆走する	Conversion Expected	爆走する	2.26.4479
 OK:	ゆうきがひつようだ	勇気が必要だ	Conversion Expected	勇気が必要だ	2.26.4479
+OK:	ばーべきゅー	バーベキュー	Conversion Expected	バーベキュー	2.26.4500
+OK:	にじゅうにかさなる	二重に重なる	Conversion Not Match	二十	2.26.4500
+OK:	さんじゅうにかさなる	三重に重なる	Conversion Not Match	三十	2.26.4500
+OK:	わかりづらくなる	分かりづらくなる	Conversion Expected	分かりづらくなる	2.26.4500
+OK:	そういうこと	そういうこと	Conversion Expected	そういうこと	2.26.4500
+OK:	れべるのさでひどいことになる	レベルの差でひどいことになる	Conversion Match	なる	2.26.4500
+FAILED:	わざのうまさにおどろいた	技の旨さに驚いた	Conversion Not Match	旨さ	2.26.4500
+OK:	いってる	言ってる	Conversion Expected 2	言ってる	2.26.4500
+OK:	りょうほう	両方	Conversion Expected	両方	2.26.4500
