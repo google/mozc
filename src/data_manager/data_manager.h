@@ -39,6 +39,7 @@
 #include "base/mmap.h"
 #include "base/port.h"
 #include "data_manager/data_manager_interface.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -64,7 +65,18 @@ class DataManager : public DataManagerInterface {
   static std::string StatusCodeToString(Status code);
   static absl::string_view GetDataSetMagicNumber(absl::string_view type);
 
+  // Creates an instance of DataManager from a data set file or returns error
+  // status on failure.
+  static absl::StatusOr<std::unique_ptr<DataManager>> CreateFromFile(
+      const std::string &path);
+  static absl::StatusOr<std::unique_ptr<DataManager>> CreateFromFile(
+      const std::string &path, absl::string_view magic);
+
   DataManager();
+
+  DataManager(const DataManager &) = delete;
+  DataManager &operator=(const DataManager &) = delete;
+
   ~DataManager() override;
 
   // Parses |array| and extracts byte blocks of data set.  The |array| must
@@ -89,8 +101,8 @@ class DataManager : public DataManagerInterface {
                                         absl::string_view magic);
 
   // Implementation of DataManagerInterface.
-  const uint16_t *GetPOSMatcherData() const override;
-  void GetUserPOSData(absl::string_view *token_array_data,
+  const uint16_t *GetPosMatcherData() const override;
+  void GetUserPosData(absl::string_view *token_array_data,
                       absl::string_view *string_array_data) const override;
   void GetConnectorData(const char **data, size_t *size) const override;
   void GetSystemDictionaryData(const char **data, int *size) const override;
@@ -195,8 +207,6 @@ class DataManager : public DataManagerInterface {
   absl::string_view usage_string_array_data_;
   std::vector<std::pair<std::string, absl::string_view>> typing_model_data_;
   absl::string_view data_version_;
-
-  DISALLOW_COPY_AND_ASSIGN(DataManager);
 };
 
 // Print helper for DataManager::Status.  Logging, e.g., CHECK_EQ(), requires

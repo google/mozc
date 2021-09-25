@@ -49,7 +49,7 @@ namespace mozc {
 namespace {
 
 using ::mozc::config::CharacterFormManager;
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 
 // Append |src| to |dst| with a separator ' '.
 void AppendString(absl::string_view src, std::string *dst) {
@@ -91,14 +91,14 @@ bool HasCharacterFormDescription(const std::string &value) {
 
 }  // namespace
 
-VariantsRewriter::VariantsRewriter(const POSMatcher pos_matcher)
+VariantsRewriter::VariantsRewriter(const PosMatcher pos_matcher)
     : pos_matcher_(pos_matcher) {}
 
 VariantsRewriter::~VariantsRewriter() = default;
 
 // static
 void VariantsRewriter::SetDescriptionForCandidate(
-    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(
       pos_matcher,
       (FULL_HALF_WIDTH | CHARACTER_FORM | ZIPCODE | SPELLING_CORRECTION),
@@ -107,7 +107,7 @@ void VariantsRewriter::SetDescriptionForCandidate(
 
 // static
 void VariantsRewriter::SetDescriptionForTransliteration(
-    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
                  (FULL_HALF_WIDTH | FULL_HALF_WIDTH_WITH_UNKNOWN |
                   CHARACTER_FORM | SPELLING_CORRECTION),
@@ -116,12 +116,12 @@ void VariantsRewriter::SetDescriptionForTransliteration(
 
 // static
 void VariantsRewriter::SetDescriptionForPrediction(
-    const POSMatcher &pos_matcher, Segment::Candidate *candidate) {
+    const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher, ZIPCODE | SPELLING_CORRECTION, candidate);
 }
 
 // static
-void VariantsRewriter::SetDescription(const POSMatcher &pos_matcher,
+void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
                                       int description_type,
                                       Segment::Candidate *candidate) {
   absl::string_view character_form_message;

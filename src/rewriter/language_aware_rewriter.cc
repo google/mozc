@@ -48,10 +48,10 @@
 namespace mozc {
 
 using dictionary::DictionaryInterface;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 
 LanguageAwareRewriter::LanguageAwareRewriter(
-    const POSMatcher &pos_matcher, const DictionaryInterface *dictionary)
+    const PosMatcher &pos_matcher, const DictionaryInterface *dictionary)
     : unknown_id_(pos_matcher.GetUnknownId()), dictionary_(dictionary) {}
 
 LanguageAwareRewriter::~LanguageAwareRewriter() = default;

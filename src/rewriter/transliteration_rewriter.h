@@ -43,7 +43,7 @@ namespace mozc {
 
 class TransliterationRewriter : public RewriterInterface {
  public:
-  explicit TransliterationRewriter(const dictionary::POSMatcher &pos_matcher);
+  explicit TransliterationRewriter(const dictionary::PosMatcher &pos_matcher);
   ~TransliterationRewriter() override;
 
   int capability(const ConversionRequest &request) const override;

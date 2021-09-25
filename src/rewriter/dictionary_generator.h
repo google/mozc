@@ -112,7 +112,7 @@ class DictionaryGenerator {
  private:
   ObjectPool<Token> token_pool_;
   std::map<uint64_t, Token *> token_map_;
-  std::unique_ptr<const UserPOSInterface> user_pos_;
+  std::unique_ptr<const UserPosInterface> user_pos_;
   uint16_t open_bracket_id_;
   uint16_t close_bracket_id_;
 };

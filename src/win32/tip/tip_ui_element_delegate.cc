@@ -109,7 +109,7 @@ const GUID KGuidIndicatorWindow = {
     0x4ff9,
     {0x9d, 0xea, 0x43, 0x2d, 0x8, 0xdc, 0xb0, 0xff}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {AD2489FB-D4C4-4632-85A9-7F9F917AB0FD}
 const GUID KGuidNonobservableSuggestWindow = {
@@ -525,13 +525,13 @@ class TipUiElementDelegateImpl : public TipUiElementDelegate {
     }
     const CandidateList &list = output.all_candidate_words();
     if (last_candidate_list_.candidates_size() != list.candidates_size()) {
-      last_candidate_list_.CopyFrom(list);
+      last_candidate_list_ = list;
       return true;
     }
     for (int i = 0; i < list.candidates_size(); ++i) {
       if (last_candidate_list_.candidates(i).value() !=
           list.candidates(i).value()) {
-        last_candidate_list_.CopyFrom(list);
+        last_candidate_list_ = list;
         return true;
       }
     }

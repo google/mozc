@@ -50,8 +50,8 @@ namespace dictionary {
 
 class UserDictionary : public DictionaryInterface {
  public:
-  UserDictionary(std::unique_ptr<const UserPOSInterface> user_pos,
-                 POSMatcher pos_matcher,
+  UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
+                 PosMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
   ~UserDictionary() override;
 
@@ -91,7 +91,7 @@ class UserDictionary : public DictionaryInterface {
   void WaitForReloader();
 
   // Gets the user POS list.
-  std::vector<std::string> GetPOSList() const;
+  std::vector<std::string> GetPosList() const;
 
   // Sets user dicitonary filename for unittesting
   static void SetUserDictionaryName(const std::string &filename);
@@ -104,8 +104,8 @@ class UserDictionary : public DictionaryInterface {
   void Swap(TokensIndex *new_tokens);
 
   std::unique_ptr<UserDictionaryReloader> reloader_;
-  std::unique_ptr<const UserPOSInterface> user_pos_;
-  const POSMatcher pos_matcher_;
+  std::unique_ptr<const UserPosInterface> user_pos_;
+  const PosMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   TokensIndex *tokens_;
   mutable std::unique_ptr<ReaderWriterMutex> mutex_;

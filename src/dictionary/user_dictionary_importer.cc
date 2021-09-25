@@ -76,7 +76,7 @@ uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
                            static_cast<char>(entry.pos()));
 }
 
-void NormalizePOS(const std::string &input, std::string *output) {
+void NormalizePos(const std::string &input, std::string *output) {
   std::string tmp;
   output->clear();
   Util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
@@ -85,7 +85,7 @@ void NormalizePOS(const std::string &input, std::string *output) {
 
 // A data type to hold conversion rules of POSes. If mozc_pos is set to be an
 // empty string (""), it means that words of the POS should be ignored in Mozc.
-struct POSMap {
+struct PosMap {
   const char *source_pos;            // POS string of a third party IME.
   UserDictionary::PosType mozc_pos;  // POS of Mozc.
 };
@@ -93,17 +93,17 @@ struct POSMap {
 // Include actual POS mapping rules defined outside the file.
 #include "dictionary/pos_map.inc"
 
-// A functor for searching an array of POSMap for the given POS. The class is
+// A functor for searching an array of PosMap for the given POS. The class is
 // used with std::lower_bound().
-class POSMapCompare {
+class PosMapCompare {
  public:
-  bool operator()(const POSMap &l_pos_map, const POSMap &r_pos_map) const {
+  bool operator()(const PosMap &l_pos_map, const PosMap &r_pos_map) const {
     return (strcmp(l_pos_map.source_pos, r_pos_map.source_pos) < 0);
   }
 };
 
 // Convert POS of a third party IME to that of Mozc using the given mapping.
-bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
+bool ConvertEntryInternal(const PosMap *pos_map, size_t map_size,
                           const UserDictionaryImporter::RawEntry &from,
                           UserDictionary::Entry *to) {
   if (to == nullptr) {
@@ -119,7 +119,7 @@ bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
 
   // Normalize POS (remove full width ascii and half width katakana)
   std::string pos;
-  NormalizePOS(from.pos, &pos);
+  NormalizePos(from.pos, &pos);
 
   std::string locale;
   // TODO(all): Better to use StrSplit.
@@ -137,13 +137,13 @@ bool ConvertEntryInternal(const POSMap *pos_map, size_t map_size,
     pos.resize(pos.size() - 1);
   }
 
-  POSMap key;
+  PosMap key;
   key.source_pos = pos.c_str();
   key.mozc_pos = static_cast<UserDictionary::PosType>(0);
 
   // Search for mapping for the given POS.
-  const POSMap *found =
-      std::lower_bound(pos_map, pos_map + map_size, key, POSMapCompare());
+  const PosMap *found =
+      std::lower_bound(pos_map, pos_map + map_size, key, PosMapCompare());
   if (found == pos_map + map_size ||
       strcmp(found->source_pos, key.source_pos) != 0) {
     LOG(WARNING) << "Invalid POS is passed: " << from.pos;
@@ -382,7 +382,7 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
 
 bool UserDictionaryImporter::ConvertEntry(const RawEntry &from,
                                           UserDictionary::Entry *to) {
-  return ConvertEntryInternal(kPOSMap, std::size(kPOSMap), from, to);
+  return ConvertEntryInternal(kPosMap, std::size(kPosMap), from, to);
 }
 
 UserDictionaryImporter::IMEType UserDictionaryImporter::GuessIMEType(

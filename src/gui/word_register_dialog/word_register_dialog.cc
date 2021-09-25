@@ -113,7 +113,7 @@ WordRegisterDialog::WordRegisterDialog()
           UserDictionaryUtil::GetUserDictionaryFileName())),
       client_(client::ClientFactory::NewClient()),
       window_title_(GuiUtil::ProductName()),
-      pos_list_provider_(new POSListProvider()) {
+      pos_list_provider_(new PosListProvider()) {
   setupUi(this);
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::WindowStaysOnTopHint);
@@ -154,7 +154,7 @@ WordRegisterDialog::WordRegisterDialog()
 
   // Initialize ComboBox
   std::vector<std::string> pos_set;
-  pos_list_provider_->GetPOSList(&pos_set);
+  pos_list_provider_->GetPosList(&pos_set);
   CHECK(!pos_set.empty());
 
   for (const std::string &pos : pos_set) {

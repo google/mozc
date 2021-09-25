@@ -550,7 +550,7 @@ class CollocationRewriter::SuppressionFilter {
 
 CollocationRewriter::CollocationRewriter(
     const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPOSMatcherData()),
+    : pos_matcher_(data_manager->GetPosMatcherData()),
       first_name_id_(pos_matcher_.GetFirstNameId()),
       last_name_id_(pos_matcher_.GetLastNameId()) {
   const char *data = nullptr;

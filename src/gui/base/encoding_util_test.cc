@@ -93,7 +93,7 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
   };
   for (const char* sjis : kTestCases) {
     std::string actual;
-    EncodingUtil::SJISToUTF8(sjis, &actual);
+    EncodingUtil::SjisToUtf8(sjis, &actual);
     std::string expected;
     ASSERT_TRUE(Convert(sjis, &expected));
     EXPECT_EQ(expected, actual);
@@ -104,7 +104,7 @@ TEST(EncodingUtilTest, CompareToWinAPI) {
 
 TEST(EncodingUtilTest, Issue2190350) {
   std::string result = "";
-  EncodingUtil::SJISToUTF8("\x82\xA0", &result);
+  EncodingUtil::SjisToUtf8("\x82\xA0", &result);
   EXPECT_EQ(3, result.length());
   EXPECT_EQ("あ", result);
 }
@@ -130,7 +130,7 @@ TEST(EncodingUtilTest, ValidSJIS) {
   };
   for (const auto& tc : kTestCases) {
     std::string actual;
-    EncodingUtil::SJISToUTF8(tc.sjis, &actual);
+    EncodingUtil::SjisToUtf8(tc.sjis, &actual);
     EXPECT_EQ(tc.utf8, actual);
   }
 }
@@ -152,7 +152,7 @@ TEST(EncodingUtilTest, InvalidSJIS) {
   };
   for (const char* input : kInvalidInputs) {
     std::string actual = "to be cleared";
-    EncodingUtil::SJISToUTF8(input, &actual);
+    EncodingUtil::SjisToUtf8(input, &actual);
     EXPECT_TRUE(actual.empty());
   }
 }

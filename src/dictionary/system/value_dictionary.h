@@ -44,13 +44,13 @@
 namespace mozc {
 namespace dictionary {
 
-class POSMatcher;
+class PosMatcher;
 class SystemDictionaryCodecInterface;
 
 class ValueDictionary : public DictionaryInterface {
  public:
   // This class doesn't take the ownership of |value_trie|.
-  ValueDictionary(const POSMatcher &pos_matcher,
+  ValueDictionary(const PosMatcher &pos_matcher,
                   const storage::louds::LoudsTrie *value_trie);
 
   ValueDictionary(const ValueDictionary &) = delete;

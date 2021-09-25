@@ -73,7 +73,7 @@ using ::mozc::dictionary::SuffixDictionary;
 using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::UserDictionary;
-using ::mozc::dictionary::UserPOS;
+using ::mozc::dictionary::UserPos;
 using ::mozc::dictionary::ValueDictionary;
 
 class UserDataManagerImpl final : public UserDataManagerInterface {
@@ -186,12 +186,12 @@ absl::Status Engine::Init(
   suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
   RETURN_IF_NULL(suppression_dictionary_);
 
-  pos_matcher_ = absl::make_unique<dictionary::POSMatcher>(
-      data_manager->GetPOSMatcherData());
+  pos_matcher_ = absl::make_unique<dictionary::PosMatcher>(
+      data_manager->GetPosMatcherData());
   RETURN_IF_NULL(pos_matcher_);
 
-  std::unique_ptr<UserPOS> user_pos =
-      UserPOS::CreateFromDataManager(*data_manager);
+  std::unique_ptr<UserPos> user_pos =
+      UserPos::CreateFromDataManager(*data_manager);
   RETURN_IF_NULL(user_pos);
 
   user_dictionary_ = absl::make_unique<UserDictionary>(

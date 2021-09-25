@@ -47,7 +47,7 @@ using ::ATL::CComPtr;
 using ::ATL::CComQIPtr;
 using ::ATL::CComVariant;
 
-std::string UTF16ToUTF8(const std::wstring &str) {
+std::string Utf16ToUtf8(const std::wstring &str) {
   std::string utf8;
   Util::WideToUtf8(str, &utf8);
   return utf8;
@@ -57,7 +57,7 @@ std::string BSTRToUTF8(const BSTR &bstr) {
   if (bstr == nullptr) {
     return "";
   }
-  return UTF16ToUTF8(std::wstring(bstr, ::SysStringLen(bstr)));
+  return Utf16ToUtf8(std::wstring(bstr, ::SysStringLen(bstr)));
 }
 
 std::string RoleToString(const CComVariant &role) {

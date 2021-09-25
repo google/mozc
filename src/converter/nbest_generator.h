@@ -84,7 +84,7 @@ class NBestGenerator {
   NBestGenerator(
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const Segmenter *segmenter, const Connector *connector,
-      const dictionary::POSMatcher *pos_matcher, const Lattice *lattice,
+      const dictionary::PosMatcher *pos_matcher, const Lattice *lattice,
       const SuggestionFilter *suggestion_filter,
       bool apply_suggestion_filter_for_exact_match);
   ~NBestGenerator();
@@ -161,7 +161,7 @@ class NBestGenerator {
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const Segmenter *segmenter_;
   const Connector *connector_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const Lattice *lattice_;
 
   const Node *begin_node_;

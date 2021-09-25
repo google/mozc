@@ -121,7 +121,7 @@ bool SafeStrToInt(absl::string_view s, int *n) {
 
 }  // namespace
 
-TextDictionaryLoader::TextDictionaryLoader(const POSMatcher &pos_matcher)
+TextDictionaryLoader::TextDictionaryLoader(const PosMatcher &pos_matcher)
     : zipcode_id_(pos_matcher.GetZipcodeId()),
       isolated_word_id_(pos_matcher.GetIsolatedWordId()) {}
 

@@ -72,7 +72,7 @@ void VKBackBasedDeleter::BeginDeletion(int deletion_count,
   }
 
   *pending_ime_state_ = ime_state;
-  pending_output_->CopyFrom(output);
+  *pending_output_ = output;
 
   wait_queue_->push_back(
       std::make_pair(WAIT_INITIAL_VK_BACK_TESTDOWN, SEND_KEY_TO_APPLICATION));

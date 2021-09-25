@@ -71,7 +71,7 @@
   if (::IsDebuggerPresent()) {                                          \
     __debugbreak();                                                     \
   }
-#else
+#else   // _DEBUG
 #define DEBUG_BREAK_FOR_DEBUGGER()
 #endif  // _DEBUG
 
@@ -141,7 +141,7 @@ bool DisableErrorReportingInternal(const wchar_t *key_name,
   }
   return true;
 }
-#endif
+#endif  // MOZC_NO_LOGGING
 
 std::wstring FormatMessageByResourceId(int resourceID, ...) {
   wchar_t format_message[4096];
@@ -194,7 +194,7 @@ bool WriteOmahaError(const wchar_t (&function)[num_elements], int line) {
   log.Format(L"%s: %s; %s(%d)", L"WriteOmahaError: ",
              mozc::Version::GetMozcVersionW().c_str(), function, line);
   ::OutputDebugStringW(log);
-#endif
+#endif  // !defined(MOZC_NO_LOGGING)
   const std::wstring &message =
       FormatMessageByResourceId(IDS_FORMAT_FUNCTION_AND_LINE, function, line);
   return OmahaUtil::WriteOmahaError(message, GetVersionHeader());
@@ -274,7 +274,7 @@ UINT __stdcall CallIERefreshElevationPolicy(MSIHANDLE msi_handle) {
 UINT __stdcall OpenUninstallSurveyPage(MSIHANDLE msi_handle) {
   DEBUG_BREAK_FOR_DEBUGGER();
   std::string url;
-  mozc::URL::GetUninstallationSurveyURL(mozc::Version::GetMozcVersion(), &url);
+  mozc::Url::GetUninstallationSurveyUrl(mozc::Version::GetMozcVersion(), &url);
   mozc::Process::OpenBrowser(url);
   return ERROR_SUCCESS;
 }
@@ -517,7 +517,7 @@ UINT __stdcall RegisterTIP(MSIHANDLE msi_handle) {
   const std::wstring &path = GetMozcComponentPath(mozc::kMozcTIP64);
 #elif defined(_M_IX86)
   const std::wstring &path = GetMozcComponentPath(mozc::kMozcTIP32);
-#else
+#else  // _M_X64, _M_IX86
 #error "Unsupported CPU architecture"
 #endif  // _M_X64, _M_IX86, and others
   HRESULT result =

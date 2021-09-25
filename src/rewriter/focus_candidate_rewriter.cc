@@ -127,7 +127,7 @@ bool RewriteNumber(Segment *segment, const Segment::Candidate &candidate) {
 
 FocusCandidateRewriter::FocusCandidateRewriter(
     const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPOSMatcherData()) {
+    : pos_matcher_(data_manager->GetPosMatcherData()) {
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);

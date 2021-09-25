@@ -42,7 +42,7 @@ namespace mozc {
 
 class LanguageAwareRewriter : public RewriterInterface {
  public:
-  LanguageAwareRewriter(const dictionary::POSMatcher &pos_matcher,
+  LanguageAwareRewriter(const dictionary::PosMatcher &pos_matcher,
                         const dictionary::DictionaryInterface *dictionary);
   ~LanguageAwareRewriter() override;
 

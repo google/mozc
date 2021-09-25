@@ -56,7 +56,7 @@
 namespace mozc {
 namespace {
 
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 
 constexpr char kKanjiDescription[] = "漢数字";
 constexpr char kArabicDescription[] = "数字";
@@ -74,7 +74,7 @@ bool FindValue(const Segment &segment, const std::string &value) {
   return false;
 }
 
-Segment *SetupSegments(const POSMatcher &pos_matcher,
+Segment *SetupSegments(const PosMatcher &pos_matcher,
                        const std::string &candidate_value, Segments *segments) {
   segments->Clear();
   Segment *segment = segments->push_back_segment();
@@ -116,7 +116,7 @@ class NumberRewriterTest : public ::testing::Test {
   NumberRewriterTest() {}
 
   void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
   NumberRewriter *CreateNumberRewriter() {
@@ -124,7 +124,7 @@ class NumberRewriterTest : public ::testing::Test {
   }
 
   const testing::MockDataManager mock_data_manager_;
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
   const ConversionRequest default_request_;
 
  private:

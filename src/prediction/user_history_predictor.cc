@@ -68,7 +68,7 @@ namespace {
 
 using commands::Request;
 using dictionary::DictionaryInterface;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 using dictionary::SuppressionDictionary;
 using usage_stats::UsageStats;
 
@@ -365,7 +365,7 @@ class UserHistoryPredictorSyncer : public Thread {
 };
 
 UserHistoryPredictor::UserHistoryPredictor(
-    const DictionaryInterface *dictionary, const POSMatcher *pos_matcher,
+    const DictionaryInterface *dictionary, const PosMatcher *pos_matcher,
     const SuppressionDictionary *suppression_dictionary,
     bool enable_content_word_learning)
     : dictionary_(dictionary),
@@ -1135,6 +1135,44 @@ bool UserHistoryPredictor::Predict(Segments *segments) const {
 
 bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
                                              Segments *segments) const {
+  const RequestType request_type = request.request().zero_query_suggestion()
+                                       ? ZERO_QUERY_SUGGESTION
+                                       : DEFAULT;
+  if (!ShouldPredict(request_type, request, *segments)) {
+    return false;
+  }
+
+  const size_t input_key_len =
+      Util::CharsLen(segments->conversion_segment(0).key());
+  const Entry *prev_entry =
+      LookupPrevEntry(*segments, request.request().available_emoji_carrier());
+  if (input_key_len == 0 && prev_entry == nullptr) {
+    VLOG(1) << "If input_key_len is 0, prev_entry must be set";
+    return false;
+  }
+
+  const bool is_zero_query =
+      ((request_type == ZERO_QUERY_SUGGESTION) && (input_key_len == 0));
+  const size_t max_prediction_size =
+      is_zero_query
+          ? request.max_user_history_prediction_candidates_size_for_zero_query()
+          : request.max_user_history_prediction_candidates_size();
+
+  EntryPriorityQueue results;
+  GetResultsFromHistoryDictionary(request_type, request, *segments, prev_entry,
+                                  max_prediction_size * 5, &results);
+  if (results.size() == 0) {
+    VLOG(2) << "no prefix match candidate is found.";
+    return false;
+  }
+
+  return InsertCandidates(request_type, request, max_prediction_size, segments,
+                          &results);
+}
+
+bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
+                                         const ConversionRequest &request,
+                                         const Segments &segments) const {
   if (!CheckSyncerAndDelete()) {
     LOG(WARNING) << "Syncer is running";
     return false;
@@ -1150,18 +1188,18 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  if (segments->request_type() == Segments::CONVERSION) {
+  if (segments.request_type() == Segments::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return false;
   }
 
   if (!request.config().use_history_suggest() &&
-      segments->request_type() == Segments::SUGGESTION) {
+      segments.request_type() == Segments::SUGGESTION) {
     VLOG(2) << "no history suggest";
     return false;
   }
 
-  if (segments->conversion_segments_size() < 1) {
+  if (segments.conversion_segments_size() < 1) {
     VLOG(2) << "segment size < 1";
     return false;
   }
@@ -1171,10 +1209,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  const RequestType request_type = request.request().zero_query_suggestion()
-                                       ? ZERO_QUERY_SUGGESTION
-                                       : DEFAULT;
-  const std::string &input_key = segments->conversion_segment(0).key();
+  const std::string &input_key = segments.conversion_segment(0).key();
   if (IsPunctuation(Util::Utf8SubString(input_key, 0, 1))) {
     VLOG(2) << "input_key starts with punctuations";
     return false;
@@ -1186,22 +1221,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
     return false;
   }
 
-  const Entry *prev_entry =
-      LookupPrevEntry(*segments, request.request().available_emoji_carrier());
-  if (input_key_len == 0 && prev_entry == nullptr) {
-    VLOG(1) << "If input_key_len is 0, prev_entry must be set";
-    return false;
-  }
-
-  EntryPriorityQueue results;
-  GetResultsFromHistoryDictionary(request_type, request, *segments, prev_entry,
-                                  &results);
-  if (results.size() == 0) {
-    VLOG(2) << "no prefix match candidate is found.";
-    return false;
-  }
-
-  return InsertCandidates(request_type, request, segments, &results);
+  return true;
 }
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
@@ -1259,11 +1279,9 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
 
 void UserHistoryPredictor::GetResultsFromHistoryDictionary(
     RequestType request_type, const ConversionRequest &request,
-    const Segments &segments, const Entry *prev_entry,
+    const Segments &segments, const Entry *prev_entry, size_t max_results_size,
     EntryPriorityQueue *results) const {
   DCHECK(results);
-  const size_t max_results_size = 5 * segments.max_prediction_candidates_size();
-
   // Gets romanized input key if the given preedit looks misspelled.
   const std::string roman_input_key = GetRomanMisspelledKey(request, segments);
 
@@ -1354,6 +1372,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
 
 bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
                                             const ConversionRequest &request,
+                                            size_t max_prediction_size,
                                             Segments *segments,
                                             EntryPriorityQueue *results) const {
   DCHECK(results);
@@ -1363,8 +1382,9 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
     return false;
   }
   const uint32_t input_key_len = Util::CharsLen(segment->key());
-  while (segment->candidates_size() <
-         segments->max_prediction_candidates_size()) {
+
+  size_t inserted_num = 0;
+  while (inserted_num < max_prediction_size) {
     // |results| is a priority queue where the elemtnt
     // in the queue is sorted by the score defined in GetScore().
     const Entry *result_entry = results->Pop();
@@ -1435,9 +1455,10 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       candidate->description += " History";
     }
 #endif  // DEBUG
+    ++inserted_num;
   }
 
-  return (segment->candidates_size() > 0);
+  return inserted_num > 0;
 }
 
 void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
@@ -2087,7 +2108,6 @@ bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
   // conversion_freq is less aggressively affecting to the final decision.
   const uint32_t freq =
       std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
-
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
   const uint32_t base_prefix_len = 3 - std::min(static_cast<uint32_t>(2), freq);
   return (prefix_len >= base_prefix_len);

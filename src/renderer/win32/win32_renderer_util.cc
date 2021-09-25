@@ -1723,7 +1723,7 @@ bool LayoutManager::LayoutCompositionWindow(
 
   CompositionForm composition_form;
   if (command.application_info().has_composition_form()) {
-    composition_form.CopyFrom(command.application_info().composition_form());
+    composition_form = command.application_info().composition_form();
   } else {
     // No composition form is available.  Use client rect instead.
     CRect client_rect;
@@ -2436,64 +2436,64 @@ int LayoutManager::GetCompatibilityMode(
   }
 
   int mode = COMPATIBILITY_MODE_NONE;
-  {{const wchar_t * kUseCandidateFormForSuggest[] = {
+  {
+    const wchar_t *kUseCandidateFormForSuggest[] = {
         L"Chrome_RenderWidgetHostHWND",
         L"JsTaroCtrl",
         L"MozillaWindowClass",
         L"OperaWindowClass",
         L"QWidget",
     };
-  for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
-    if (kUseCandidateFormForSuggest[i] == class_name) {
-      mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
-      break;
+    for (size_t i = 0; i < ARRAYSIZE(kUseCandidateFormForSuggest); ++i) {
+      if (kUseCandidateFormForSuggest[i] == class_name) {
+        mode |= CAN_USE_CANDIDATE_FORM_FOR_SUGGEST;
+        break;
+      }
     }
   }
-}
-}  // namespace win32
 
-{
-  const wchar_t *kUseLocalCoord[] = {
-      L"gdkWindowToplevel",
-      L"SunAwtDialog",
-      L"SunAwtFrame",
-  };
-  for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
-    if (kUseLocalCoord[i] == class_name) {
-      mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
-      break;
+  {
+    const wchar_t *kUseLocalCoord[] = {
+        L"gdkWindowToplevel",
+        L"SunAwtDialog",
+        L"SunAwtFrame",
+    };
+    for (size_t i = 0; i < ARRAYSIZE(kUseLocalCoord); ++i) {
+      if (kUseLocalCoord[i] == class_name) {
+        mode |= USE_LOCAL_COORD_FOR_CANDIDATE_FORM;
+        break;
+      }
     }
   }
-}
 
-{
-  const wchar_t *kIgnoreDefaultCompositionForm[] = {
-      L"SunAwtDialog",
-      L"SunAwtFrame",
-  };
-  for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
-    if (kIgnoreDefaultCompositionForm[i] == class_name) {
-      mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
-      break;
+  {
+    const wchar_t *kIgnoreDefaultCompositionForm[] = {
+        L"SunAwtDialog",
+        L"SunAwtFrame",
+    };
+    for (size_t i = 0; i < ARRAYSIZE(kIgnoreDefaultCompositionForm); ++i) {
+      if (kIgnoreDefaultCompositionForm[i] == class_name) {
+        mode |= IGNORE_DEFAULT_COMPOSITION_FORM;
+        break;
+      }
     }
   }
-}
 
-{
-  const wchar_t *kShowInfolistImmediately[] = {
-      L"Emacs",
-      L"MEADOW",
-  };
-  for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
-    if (kShowInfolistImmediately[i] == class_name) {
-      mode |= SHOW_INFOLIST_IMMEDIATELY;
-      break;
+  {
+    const wchar_t *kShowInfolistImmediately[] = {
+        L"Emacs",
+        L"MEADOW",
+    };
+    for (size_t i = 0; i < ARRAYSIZE(kShowInfolistImmediately); ++i) {
+      if (kShowInfolistImmediately[i] == class_name) {
+        mode |= SHOW_INFOLIST_IMMEDIATELY;
+        break;
+      }
     }
   }
-}
 
-return mode;
-}  // namespace renderer
+  return mode;
+}
 
 bool LayoutManager::LayoutIndicatorWindow(
     const commands::RendererCommand_ApplicationInfo &app_info,

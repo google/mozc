@@ -58,7 +58,7 @@ class CollocationRewriter : public RewriterInterface {
   bool RewriteUsingNextSegment(Segment *next_seg, Segment *seg) const;
   bool RewriteCollocation(Segments *segments) const;
 
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
   const uint16_t first_name_id_;
   const uint16_t last_name_id_;
 

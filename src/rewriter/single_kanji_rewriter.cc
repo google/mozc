@@ -50,7 +50,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 
 namespace mozc {
 namespace {
@@ -315,7 +315,7 @@ void InsertCandidate(absl::string_view variant_token_array,
   }
 }
 
-void InsertNounPrefix(const POSMatcher &pos_matcher, Segment *segment,
+void InsertNounPrefix(const PosMatcher &pos_matcher, Segment *segment,
                       SerializedDictionary::iterator begin,
                       SerializedDictionary::iterator end) {
   DCHECK(begin != end);
@@ -358,7 +358,7 @@ void InsertNounPrefix(const POSMatcher &pos_matcher, Segment *segment,
 
 SingleKanjiRewriter::SingleKanjiRewriter(
     const DataManagerInterface &data_manager)
-    : pos_matcher_(data_manager.GetPOSMatcherData()) {
+    : pos_matcher_(data_manager.GetPosMatcherData()) {
   absl::string_view string_array_data;
   absl::string_view variant_type_array_data;
   absl::string_view variant_string_array_data;

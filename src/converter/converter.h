@@ -55,7 +55,7 @@ class ConverterImpl : public ConverterInterface {
   ~ConverterImpl() override;
 
   // Lazily initializes the internal members. Must be called before the use.
-  void Init(const dictionary::POSMatcher *pos_matcher,
+  void Init(const dictionary::PosMatcher *pos_matcher,
             const dictionary::SuppressionDictionary *suppression_dictionary,
             std::unique_ptr<PredictorInterface> predictor,
             std::unique_ptr<RewriterInterface> rewriter,
@@ -117,7 +117,7 @@ class ConverterImpl : public ConverterInterface {
                      size_t array_size) const override;
 
  private:
-  FRIEND_TEST(ConverterTest, CompletePOSIds);
+  FRIEND_TEST(ConverterTest, CompletePosIds);
   FRIEND_TEST(ConverterTest, DefaultPredictor);
   FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
   FRIEND_TEST(ConverterTest, GetLastConnectivePart);
@@ -127,7 +127,7 @@ class ConverterImpl : public ConverterInterface {
   // input hiragana sequence only with composition mode. Converter
   // cannot know which POS ids should be used for these directly-
   // input strings. This function estimates IDs from value heuristically.
-  void CompletePOSIds(Segment::Candidate *candidate) const;
+  void CompletePosIds(Segment::Candidate *candidate) const;
 
   bool CommitSegmentValueInternal(Segments *segments, size_t segment_index,
                                   int candidate_index,
@@ -164,7 +164,7 @@ class ConverterImpl : public ConverterInterface {
                              std::string *key, std::string *value,
                              uint16_t *id) const;
 
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   std::unique_ptr<PredictorInterface> predictor_;
   std::unique_ptr<RewriterInterface> rewriter_;

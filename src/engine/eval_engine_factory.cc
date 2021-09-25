@@ -41,21 +41,18 @@ namespace mozc {
 absl::StatusOr<std::unique_ptr<Engine>> CreateEvalEngine(
     absl::string_view data_file_path, absl::string_view data_type,
     absl::string_view engine_type) {
-  std::unique_ptr<DataManager> data_manager(new DataManager);
   const absl::string_view magic_number =
       DataManager::GetDataSetMagicNumber(data_type);
-  const auto status =
-      data_manager->InitFromFile(std::string(data_file_path), magic_number);
-  if (status != DataManager::Status::OK) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Failed to load ", data_file_path, ": ",
-                     DataManager::StatusCodeToString(status)));
+  absl::StatusOr<std::unique_ptr<DataManager>> data_manager =
+      DataManager::CreateFromFile(std::string(data_file_path), magic_number);
+  if (!data_manager.ok()) {
+    return std::move(data_manager).status();
   }
   if (engine_type == "desktop") {
-    return Engine::CreateDesktopEngine(std::move(data_manager));
+    return Engine::CreateDesktopEngine(*std::move(data_manager));
   }
   if (engine_type == "mobile") {
-    return Engine::CreateMobileEngine(std::move(data_manager));
+    return Engine::CreateMobileEngine(*std::move(data_manager));
   }
   return absl::InvalidArgumentError(
       absl::StrCat("Invalid engine type: ", engine_type));

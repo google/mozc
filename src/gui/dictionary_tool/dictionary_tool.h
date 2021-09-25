@@ -45,7 +45,7 @@
 
 namespace mozc {
 
-class POSListProviderInterface;
+class PosListProviderInterface;
 
 namespace client {
 class ClientInterface;
@@ -161,7 +161,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   void EditComment();
 
   // Changes the POS of all selected items to |pos|.
-  void EditPOS(const std::string &pos);
+  void EditPos(const std::string &pos);
 
   // Moves selected items to the dictionary whose row is |dictionary_row|.
   void MoveTo(int dictionary_row);
@@ -244,7 +244,7 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
-  std::unique_ptr<const POSListProviderInterface> pos_list_provider_;
+  std::unique_ptr<const PosListProviderInterface> pos_list_provider_;
 };
 
 }  // namespace gui

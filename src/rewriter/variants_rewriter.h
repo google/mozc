@@ -63,7 +63,7 @@ class VariantsRewriter : public RewriterInterface {
   static constexpr absl::string_view kDidYouMean = "<もしかして>";
   static constexpr absl::string_view kYenKigou = "円記号";
 
-  explicit VariantsRewriter(dictionary::POSMatcher pos_matcher);
+  explicit VariantsRewriter(dictionary::PosMatcher pos_matcher);
   ~VariantsRewriter() override;
   int capability(const ConversionRequest &request) const override;
   bool Rewrite(const ConversionRequest &request,
@@ -74,11 +74,11 @@ class VariantsRewriter : public RewriterInterface {
   // Used by UserSegmentHistoryRewriter.
   // TODO(noriyukit): I'd be better to prepare some utility for rewriters.
   static void SetDescriptionForCandidate(
-      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
+      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
   static void SetDescriptionForTransliteration(
-      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
+      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
   static void SetDescriptionForPrediction(
-      const dictionary::POSMatcher &pos_matcher, Segment::Candidate *candidate);
+      const dictionary::PosMatcher &pos_matcher, Segment::Candidate *candidate);
 
  private:
   // 1) Full width / half width description
@@ -104,7 +104,7 @@ class VariantsRewriter : public RewriterInterface {
     SELECT_VARIANT = 1,  // Select preferred form
   };
 
-  static void SetDescription(const dictionary::POSMatcher &pos_matcher,
+  static void SetDescription(const dictionary::PosMatcher &pos_matcher,
                              int description_type,
                              Segment::Candidate *candidate);
   bool RewriteSegment(RewriteType type, Segment *seg) const;
@@ -115,7 +115,7 @@ class VariantsRewriter : public RewriterInterface {
       std::vector<uint32_t> *default_inner_segment_boundary,
       std::vector<uint32_t> *alternative_inner_segment_boundary) const;
 
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace mozc

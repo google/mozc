@@ -38,7 +38,7 @@ namespace mozc {
 
 class EncodingUtil {
  public:
-  static void SJISToUTF8(const std::string &input, std::string *output);
+  static void SjisToUtf8(const std::string &input, std::string *output);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(EncodingUtil);

@@ -41,6 +41,7 @@
         'data_manager.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',

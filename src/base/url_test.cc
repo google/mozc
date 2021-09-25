@@ -38,7 +38,7 @@
 namespace mozc {
 namespace {
 
-constexpr char kSurveyBaseURL[] =
+constexpr char kSurveyBaseUrl[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 
 bool FindEncodedParam(const std::vector<std::string> &params,
@@ -54,13 +54,13 @@ bool FindEncodedParam(const std::vector<std::string> &params,
   return false;
 }
 
-TEST(URLTest, UninstallationSurveyURL) {
+TEST(UrlTest, UninstallationSurveyUrl) {
   std::string url;
-  URL::GetUninstallationSurveyURL("0.1.2.3", &url);
+  Url::GetUninstallationSurveyUrl("0.1.2.3", &url);
   std::vector<std::string> url_and_params;
   Util::SplitStringUsing(url, "?", &url_and_params);
   EXPECT_EQ(2, url_and_params.size());
-  EXPECT_EQ(kSurveyBaseURL, url_and_params[0]);
+  EXPECT_EQ(kSurveyBaseUrl, url_and_params[0]);
   std::vector<std::string> params;
   Util::SplitStringUsing(url_and_params[1], "&", &params);
   EXPECT_EQ(4, params.size());
@@ -70,13 +70,13 @@ TEST(URLTest, UninstallationSurveyURL) {
   EXPECT_TRUE(FindEncodedParam(params, "version", "0.1.2.3"));
 }
 
-TEST(URLTest, UninstallationSurveyURLWithNoVersion) {
+TEST(UrlTest, UninstallationSurveyUrlWithNoVersion) {
   std::string url;
-  URL::GetUninstallationSurveyURL("", &url);
+  Url::GetUninstallationSurveyUrl("", &url);
   std::vector<std::string> url_and_params;
   Util::SplitStringUsing(url, "?", &url_and_params);
   EXPECT_EQ(2, url_and_params.size());
-  EXPECT_EQ(kSurveyBaseURL, url_and_params[0]);
+  EXPECT_EQ(kSurveyBaseUrl, url_and_params[0]);
   std::vector<std::string> params;
   Util::SplitStringUsing(url_and_params[1], "&", &params);
   EXPECT_EQ(3, params.size());

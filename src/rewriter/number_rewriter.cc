@@ -50,7 +50,7 @@
 #include "rewriter/number_compound_util.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 
 namespace mozc {
 namespace {
@@ -74,7 +74,7 @@ struct RewriteCandidateInfo {
 // POS information, cost, etc will be copied from base candidate.
 RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
                                   const Segment &seg, int base_candidate_pos,
-                                  const POSMatcher &pos_matcher,
+                                  const PosMatcher &pos_matcher,
                                   Segment::Candidate *arabic_candidate) {
   DCHECK(arabic_candidate);
 
@@ -127,7 +127,7 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
 
 void GetRewriteCandidateInfos(
     const SerializedStringArray &suffix_array, const Segment &seg,
-    const POSMatcher &pos_matcher,
+    const PosMatcher &pos_matcher,
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info) {
   DCHECK(rewrite_candidate_info);
   RewriteCandidateInfo info;
@@ -364,7 +364,7 @@ void GetNumbers(RewriteType type, bool exec_radix_conversion,
 }
 
 bool RewriteOneSegment(const SerializedStringArray &suffix_array,
-                       const POSMatcher &pos_matcher,
+                       const PosMatcher &pos_matcher,
                        bool exec_radix_conversion, Segment *seg) {
   DCHECK(seg);
   bool modified = false;
@@ -420,7 +420,7 @@ bool RewriteOneSegment(const SerializedStringArray &suffix_array,
 }  // namespace
 
 NumberRewriter::NumberRewriter(const DataManagerInterface *data_manager)
-    : pos_matcher_(data_manager->GetPOSMatcherData()) {
+    : pos_matcher_(data_manager->GetPosMatcherData()) {
   const char *array = nullptr;
   size_t size = 0;
   data_manager->GetCounterSuffixSortedArray(&array, &size);

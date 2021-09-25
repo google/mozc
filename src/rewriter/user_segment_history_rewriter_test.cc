@@ -63,7 +63,7 @@ using config::CharacterFormManager;
 using config::Config;
 using config::ConfigHandler;
 using dictionary::PosGroup;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 
 constexpr size_t kCandidatesSize = 20;
 
@@ -131,7 +131,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
 
     Clock::SetClockForUnitTest(nullptr);
 
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     pos_group_ =
         absl::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
     ASSERT_TRUE(pos_group_.get() != nullptr);
@@ -148,7 +148,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
-  const POSMatcher &pos_matcher() const { return pos_matcher_; }
+  const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
   NumberRewriter *CreateNumberRewriter() const {
     return new NumberRewriter(&mock_data_manager_);
@@ -175,7 +175,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
 
  private:
   const testing::MockDataManager mock_data_manager_;
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
   std::unique_ptr<const PosGroup> pos_group_;
   DISALLOW_COPY_AND_ASSIGN(UserSegmentHistoryRewriterTest);
 };

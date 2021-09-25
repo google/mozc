@@ -565,7 +565,7 @@ BOOL WINAPI ImeProcessKey(HIMC himc, UINT virtual_key, LPARAM lParam,
   *private_context->ime_state = next_state;
 
   if (result.should_be_sent_to_server && temporal_output.has_consumed()) {
-    private_context->last_output->CopyFrom(temporal_output);
+    *private_context->last_output = temporal_output;
   }
 
   const mozc::win32::IndicatorVisibilityTracker::Action indicator_action =
@@ -966,7 +966,7 @@ UINT WINAPI ImeToAsciiEx(UINT virtual_key, UINT scan_code,
   bool should_be_sent_to_server = false;
   if (use_pending_status) {
     next_state = private_context->deleter->pending_ime_state();
-    temporal_output.CopyFrom(private_context->deleter->pending_output());
+    temporal_output = private_context->deleter->pending_output();
     should_be_sent_to_server = true;
   } else {
     mozc::win32::InputBehavior behavior = *private_context->ime_behavior;

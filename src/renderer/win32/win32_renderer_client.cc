@@ -75,7 +75,7 @@ class SenderThread {
 
   void UpdateCommand(const RendererCommand &new_command) {
     scoped_lock lock(&mutex_);
-    renderer_command_.CopyFrom(new_command);
+    renderer_command_ = new_command;
     ::SetEvent(command_event_.get());
   }
 

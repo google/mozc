@@ -370,7 +370,7 @@ Size CandidateWindow::Update(const commands::Candidates &candidates) {
          (candidates_.category() == commands::USAGE))
       << "Unknown candidate category" << candidates_.category();
 
-  candidates_.CopyFrom(candidates);
+  candidates_ = candidates;
 
   table_layout_->Initialize(candidates_.candidate_size(), NUMBER_OF_COLUMNS);
   table_layout_->SetWindowBorder(kWindowBorder);

@@ -101,7 +101,7 @@ class UserHistoryPredictor : public PredictorInterface {
  public:
   UserHistoryPredictor(
       const dictionary::DictionaryInterface *dictionary,
-      const dictionary::POSMatcher *pos_matcher,
+      const dictionary::PosMatcher *pos_matcher,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       bool enable_content_word_learning);
   ~UserHistoryPredictor() override;
@@ -283,6 +283,10 @@ class UserHistoryPredictor : public PredictorInterface {
     NOT_FOUND,
   };
 
+  // Returns true if this predictor should return results for the input.
+  bool ShouldPredict(RequestType request_type, const ConversionRequest &request,
+                     const Segments &segments) const;
+
   // Loads user history data to an on-memory LRU from the local file.
   bool Load();
   // Loads user history data to an on-memory LRU.
@@ -407,6 +411,7 @@ class UserHistoryPredictor : public PredictorInterface {
                                        const ConversionRequest &request,
                                        const Segments &segments,
                                        const Entry *prev_entry,
+                                       size_t max_results_size,
                                        EntryPriorityQueue *results) const;
 
   // Gets input data from segments.
@@ -417,7 +422,8 @@ class UserHistoryPredictor : public PredictorInterface {
       std::unique_ptr<Trie<std::string>> *expanded);
 
   bool InsertCandidates(RequestType request_type,
-                        const ConversionRequest &request, Segments *segments,
+                        const ConversionRequest &request,
+                        size_t max_prediction_size, Segments *segments,
                         EntryPriorityQueue *results) const;
 
   void MakeLearningSegments(const Segments &segments,
@@ -494,7 +500,7 @@ class UserHistoryPredictor : public PredictorInterface {
   void MaybeRecordUsageStats(const Segments &segments) const;
 
   const dictionary::DictionaryInterface *dictionary_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const std::string predictor_name_;
 

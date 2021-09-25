@@ -59,7 +59,7 @@
 using mozc::config::CharacterFormManager;
 using mozc::config::Config;
 using mozc::dictionary::PosGroup;
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 using mozc::storage::LruStorage;
 
 namespace mozc {
@@ -512,7 +512,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 }
 
 UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
-    const POSMatcher *pos_matcher, const PosGroup *pos_group)
+    const PosMatcher *pos_matcher, const PosGroup *pos_group)
     : storage_(new LruStorage),
       pos_matcher_(pos_matcher),
       pos_group_(pos_group) {

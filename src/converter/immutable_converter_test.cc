@@ -68,7 +68,7 @@ namespace {
 using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
 using dictionary::PosGroup;
-using dictionary::POSMatcher;
+using dictionary::PosMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;
@@ -85,7 +85,7 @@ void SetCandidate(absl::string_view key, absl::string_view value,
   candidate->value = value;
   candidate->content_key = key;
   candidate->content_value = value;
-#else
+#else   // ABSL_USES_STD_STRING_VIEW
   candidate->key = std::string(key);
   candidate->value = std::string(value);
   candidate->content_key = std::string(key);
@@ -127,7 +127,7 @@ class MockDataAndImmutableConverter {
       const DictionaryInterface *suffix_dictionary = nullptr) {
     data_manager_ = absl::make_unique<testing::MockDataManager>();
 
-    pos_matcher_.Set(data_manager_->GetPOSMatcherData());
+    pos_matcher_.Set(data_manager_->GetPosMatcherData());
 
     suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
     CHECK(suppression_dictionary_.get());
@@ -197,7 +197,7 @@ class MockDataAndImmutableConverter {
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   std::unique_ptr<ImmutableConverterImpl> immutable_converter_;
   UserDictionaryStub user_dictionary_stub_;
-  dictionary::POSMatcher pos_matcher_;
+  dictionary::PosMatcher pos_matcher_;
 };
 
 }  // namespace
@@ -207,11 +207,13 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  segments.set_max_prediction_candidates_size(10);
+  ConversionRequest request;
+  request.set_max_conversion_candidates_size(10);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "よろしくおねがいしま";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   EXPECT_EQ(1, segments.segments_size());
   EXPECT_GT(segments.segment(0).candidates_size(), 0);
   EXPECT_EQ(kRequestKey, segments.segment(0).key());
@@ -363,11 +365,13 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  segments.set_max_prediction_candidates_size(1);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->Convert(&segments));
+  ConversionRequest request;
+  request.set_max_conversion_candidates_size(1);
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
+                                                                    &segments));
   ASSERT_EQ(1, segments.segments_size());
   ASSERT_EQ(1, segments.segment(0).candidates_size());
 
@@ -502,12 +506,13 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
       new MockDataAndImmutableConverter);
   Segments segments;
   segments.set_request_type(Segments::PREDICTION);
-  segments.set_max_prediction_candidates_size(10);
+  ConversionRequest conversion_request = request;
+  conversion_request.set_max_conversion_candidates_size(10);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
-  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
-                                                                    &segments));
+  EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(
+      conversion_request, &segments));
   EXPECT_EQ(1, segments.conversion_segments_size());
   EXPECT_LT(0, segments.segment(0).candidates_size());
   bool includes_only_first = false;
@@ -555,6 +560,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   ConversionRequest conversion_request;
   conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
+  conversion_request.set_max_conversion_candidates_size(10);
 
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
@@ -566,7 +572,6 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   for (size_t testcase = 0; testcase < std::size(kRequestKeys); ++testcase) {
     Segments segments;
     segments.set_request_type(Segments::PREDICTION);
-    segments.set_max_prediction_candidates_size(10);
     Segment *segment = segments.add_segment();
     segment->set_key(kRequestKeys[testcase]);
     EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(

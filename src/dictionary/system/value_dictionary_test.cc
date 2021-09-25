@@ -51,7 +51,7 @@ namespace dictionary {
 class ValueDictionaryTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     louds_trie_builder_ = absl::make_unique<LoudsTrieBuilder>();
     louds_trie_ = absl::make_unique<LoudsTrie>();
   }
@@ -82,7 +82,7 @@ class ValueDictionaryTest : public ::testing::Test {
   }
 
   const testing::MockDataManager mock_data_manager_;
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
   ConversionRequest convreq_;
   std::unique_ptr<LoudsTrieBuilder> louds_trie_builder_;
   std::unique_ptr<LoudsTrie> louds_trie_;

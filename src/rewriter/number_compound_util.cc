@@ -36,7 +36,7 @@
 #include "dictionary/pos_matcher.h"
 #include "absl/strings/string_view.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 
 namespace mozc {
 namespace number_compound_util {
@@ -101,7 +101,7 @@ bool SplitStringIntoNumberAndCounterSuffix(
 }
 
 bool IsNumber(const SerializedStringArray &suffix_array,
-              const POSMatcher &pos_matcher, const Segment::Candidate &cand) {
+              const PosMatcher &pos_matcher, const Segment::Candidate &cand) {
   // Compound number entries have the left POS ID of number.
   if (pos_matcher.IsNumber(cand.lid) || pos_matcher.IsKanjiNumber(cand.lid)) {
     return true;

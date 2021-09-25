@@ -51,7 +51,7 @@ namespace {
 using ::mozc::commands::Request;
 using ::mozc::config::CharacterFormManager;
 using ::mozc::config::Config;
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 
 std::string AppendString(absl::string_view lhs, absl::string_view rhs) {
   auto result = std::string(lhs);
@@ -71,7 +71,7 @@ class VariantsRewriterTest : public ::testing::Test {
 
   void SetUp() override {
     Reset();
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
   void TearDown() override { Reset(); }
@@ -99,7 +99,7 @@ class VariantsRewriterTest : public ::testing::Test {
     return new VariantsRewriter(pos_matcher_);
   }
 
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
 
  private:
   const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;

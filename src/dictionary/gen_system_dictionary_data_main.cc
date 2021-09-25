@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
       << "Failed to initialize data manager from "
       << absl::GetFlag(FLAGS_user_pos_manager_data);
 
-  const mozc::dictionary::POSMatcher pos_matcher(
-      data_manager.GetPOSMatcherData());
+  const mozc::dictionary::PosMatcher pos_matcher(
+      data_manager.GetPosMatcherData());
 
   mozc::dictionary::TextDictionaryLoader loader(pos_matcher);
   loader.Load(system_dictionary_input, reading_correction_input);

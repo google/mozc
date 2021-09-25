@@ -56,7 +56,7 @@ constexpr size_t kMaxHierarchyLevel = 50;
 DWORD g_tls_index = TLS_OUT_OF_INDEXES;
 HMODULE g_module_handle = nullptr;
 
-std::string UTF16ToUTF8(const std::wstring &str) {
+std::string Utf16ToUtf8(const std::wstring &str) {
   std::string utf8;
   Util::WideToUtf8(str, &utf8);
   return utf8;
@@ -75,7 +75,7 @@ std::string GetWindowTestAsUTF8(HWND window_handle) {
       copied_len_without_null + 1 > buffer_len) {
     return "";
   }
-  return UTF16ToUTF8(std::wstring(buffer.get(), copied_len_without_null));
+  return Utf16ToUtf8(std::wstring(buffer.get(), copied_len_without_null));
 }
 
 std::string GetWindowClassNameAsUTF8(HWND window_handle) {
@@ -87,7 +87,7 @@ std::string GetWindowClassNameAsUTF8(HWND window_handle) {
       copied_len_without_null + 1 > kBufferLen) {
     return "";
   }
-  return UTF16ToUTF8(std::wstring(buffer.get(), copied_len_without_null));
+  return Utf16ToUtf8(std::wstring(buffer.get(), copied_len_without_null));
 }
 
 DWORD GetProcessIdFromWindow(HWND window_handle) {

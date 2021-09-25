@@ -92,7 +92,7 @@ typedef ::mozc::commands::Preedit_Segment::Annotation Annotation;
 const wchar_t kImmersiveUIWindowClassName[] =
     L"Google Japanese Input Immersive UI Window";
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 const wchar_t kImmersiveUIWindowClassName[] = L"Mozc Immersive UI Window";
 
@@ -221,7 +221,7 @@ bool FillRenderInfo(TipTextService *text_service, ITfContext *context,
   } else {
     return false;
   }
-  info->output.CopyFrom(output);
+  info->output = output;
   return true;
 }
 

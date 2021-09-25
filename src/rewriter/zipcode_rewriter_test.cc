@@ -42,7 +42,7 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
-using mozc::dictionary::POSMatcher;
+using mozc::dictionary::PosMatcher;
 
 namespace mozc {
 namespace {
@@ -53,7 +53,7 @@ enum SegmentType {
 };
 
 void AddSegment(const std::string &key, const std::string &value,
-                SegmentType type, const POSMatcher &pos_matcher,
+                SegmentType type, const PosMatcher &pos_matcher,
                 Segments *segments) {
   segments->Clear();
   Segment *seg = segments->push_back_segment();
@@ -89,14 +89,14 @@ bool HasZipcodeAndAddress(const Segments &segments,
 class ZipcodeRewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
   }
 
   ZipcodeRewriter *CreateZipcodeRewriter() const {
     return new ZipcodeRewriter(&pos_matcher_);
   }
 
-  dictionary::POSMatcher pos_matcher_;
+  dictionary::PosMatcher pos_matcher_;
 
  private:
   const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;

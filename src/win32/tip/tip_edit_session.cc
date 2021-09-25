@@ -353,7 +353,7 @@ class AsyncSessionCommandEditSessionImpl : public ITfEditSession {
                                      CComPtr<ITfContext> context,
                                      const SessionCommand &session_command)
       : text_service_(text_service), context_(context) {
-    session_command_.CopyFrom(session_command);
+    session_command_ = session_command;
   }
   ~AsyncSessionCommandEditSessionImpl() {}
 
@@ -515,8 +515,7 @@ bool UndoCommint(TipTextService *text_service, ITfContext *context) {
 
     // Make sure the pending output does not have |deletion_range|.
     // Otherwise, an infinite loop will be created.
-    Output pending_output;
-    pending_output.CopyFrom(output);
+    Output pending_output = output;
     pending_output.clear_deletion_range();
 
     // actually |next_state| will be ignored in TSF Mozc.
@@ -567,7 +566,7 @@ class SyncEditSessionImpl : public ITfEditSession {
   SyncEditSessionImpl(CComPtr<TipTextService> text_service,
                       CComPtr<ITfContext> context, const Output &output)
       : text_service_(text_service), context_(context) {
-    output_.CopyFrom(output);
+    output_ = output;
   }
   ~SyncEditSessionImpl() {}
 

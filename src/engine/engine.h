@@ -112,8 +112,8 @@ class Engine : public EngineInterface {
     return data_manager_.get();
   }
 
-  std::vector<std::string> GetPOSList() const override {
-    return user_dictionary_->GetPOSList();
+  std::vector<std::string> GetPosList() const override {
+    return user_dictionary_->GetPosList();
   }
 
  private:
@@ -127,7 +127,7 @@ class Engine : public EngineInterface {
                     bool enable_content_word_learning);
 
   std::unique_ptr<const DataManagerInterface> data_manager_;
-  std::unique_ptr<const dictionary::POSMatcher> pos_matcher_;
+  std::unique_ptr<const dictionary::PosMatcher> pos_matcher_;
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<const Connector> connector_;
   std::unique_ptr<const Segmenter> segmenter_;

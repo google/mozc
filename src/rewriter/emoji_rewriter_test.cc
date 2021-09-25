@@ -404,7 +404,7 @@ TEST_F(EmojiRewriterTest, CheckDescription) {
   const testing::MockDataManager data_manager;
   Segments segments;
   VariantsRewriter variants_rewriter(
-      dictionary::POSMatcher(data_manager.GetPOSMatcherData()));
+      dictionary::PosMatcher(data_manager.GetPosMatcherData()));
 
   SetSegment("Emoji", "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));

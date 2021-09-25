@@ -51,7 +51,7 @@ namespace mozc {
 namespace converter {
 namespace {
 
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 
 const Segments::RequestType kRequestTypes[] = {
@@ -70,7 +70,7 @@ class CandidateFilterTest : public ::testing::Test {
   void SetUp() override {
     candidate_freelist_ = absl::make_unique<FreeList<Segment::Candidate>>(1024);
     node_freelist_ = absl::make_unique<FreeList<Node>>(1024);
-    pos_matcher_.Set(mock_data_manager_.GetPOSMatcherData());
+    pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     {
       const char *data = nullptr;
       size_t size = 0;
@@ -113,7 +113,7 @@ class CandidateFilterTest : public ::testing::Test {
     return c;
   }
 
-  const POSMatcher &pos_matcher() const { return pos_matcher_; }
+  const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
   CandidateFilter *CreateCandidateFilter(
       bool apply_suggestion_filter_for_exact_match) const {
@@ -124,7 +124,7 @@ class CandidateFilterTest : public ::testing::Test {
 
   std::unique_ptr<FreeList<Segment::Candidate> > candidate_freelist_;
   std::unique_ptr<FreeList<Node> > node_freelist_;
-  POSMatcher pos_matcher_;
+  PosMatcher pos_matcher_;
   SuppressionDictionary suppression_dictionary_;
   std::unique_ptr<SuggestionFilter> suggestion_filter_;
 

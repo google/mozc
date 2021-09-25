@@ -62,7 +62,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const dictionary::DictionaryInterface *suffix_dictionary,
       const dictionary::SuppressionDictionary *suppression_dictionary,
       const Connector *connector, const Segmenter *segmenter,
-      const dictionary::POSMatcher *pos_matcher,
+      const dictionary::PosMatcher *pos_matcher,
       const dictionary::PosGroup *pos_group,
       const SuggestionFilter *suggestion_filter);
   ~ImmutableConverterImpl() override = default;
@@ -189,7 +189,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const Connector *connector_;
   const Segmenter *segmenter_;
-  const dictionary::POSMatcher *pos_matcher_;
+  const dictionary::PosMatcher *pos_matcher_;
   const dictionary::PosGroup *pos_group_;
   const SuggestionFilter *suggestion_filter_;
 

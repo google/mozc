@@ -41,7 +41,7 @@
 namespace mozc {
 namespace dictionary {
 
-UserPOS::UserPOS(absl::string_view token_array_data,
+UserPos::UserPos(absl::string_view token_array_data,
                  absl::string_view string_array_data)
     : token_array_data_(token_array_data) {
   DCHECK_EQ(token_array_data.size() % 8, 0);
@@ -49,9 +49,9 @@ UserPOS::UserPOS(absl::string_view token_array_data,
   string_array_.Set(string_array_data);
 }
 
-UserPOS::~UserPOS() = default;
+UserPos::~UserPos() = default;
 
-void UserPOS::GetPOSList(std::vector<std::string> *pos_list) const {
+void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
   pos_list->clear();
   std::set<uint16_t> seen;
   for (auto iter = begin(); iter != end(); ++iter) {
@@ -63,7 +63,7 @@ void UserPOS::GetPOSList(std::vector<std::string> *pos_list) const {
   }
 }
 
-bool UserPOS::IsValidPOS(const std::string &pos) const {
+bool UserPos::IsValidPos(const std::string &pos) const {
   const auto iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (iter == string_array_.end()) {
@@ -72,7 +72,7 @@ bool UserPOS::IsValidPOS(const std::string &pos) const {
   return std::binary_search(begin(), end(), iter.index());
 }
 
-bool UserPOS::GetPOSIDs(const std::string &pos, uint16_t *id) const {
+bool UserPos::GetPosIds(const std::string &pos, uint16_t *id) const {
   const auto str_iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (str_iter == string_array_.end() || *str_iter != pos) {
@@ -86,7 +86,7 @@ bool UserPOS::GetPOSIDs(const std::string &pos, uint16_t *id) const {
   return true;
 }
 
-bool UserPOS::GetTokens(const std::string &key, const std::string &value,
+bool UserPos::GetTokens(const std::string &key, const std::string &value,
                         const std::string &pos, const std::string &locale,
                         std::vector<Token> *tokens) const {
   if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
@@ -115,14 +115,14 @@ bool UserPOS::GetTokens(const std::string &key, const std::string &value,
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.
   const int16_t kIsolatedWordCost = 200;
-  constexpr char kIsolatedWordPOS[] = "短縮よみ";
+  constexpr char kIsolatedWordPos[] = "短縮よみ";
 
   if (size == 1) {  // no conjugation
     const auto &token_iter = range.first;
     (*tokens)[0].key = key;
     (*tokens)[0].value = value;
     (*tokens)[0].id = token_iter.conjugation_id();
-    if (pos == kIsolatedWordPOS) {
+    if (pos == kIsolatedWordPos) {
       (*tokens)[0].cost = kIsolatedWordCost;
     } else {
       (*tokens)[0].cost = kDefaultCost;
@@ -162,11 +162,11 @@ bool UserPOS::GetTokens(const std::string &key, const std::string &value,
   return true;
 }
 
-std::unique_ptr<UserPOS> UserPOS::CreateFromDataManager(
+std::unique_ptr<UserPos> UserPos::CreateFromDataManager(
     const DataManagerInterface &manager) {
   absl::string_view token_array_data, string_array_data;
-  manager.GetUserPOSData(&token_array_data, &string_array_data);
-  return absl::make_unique<UserPOS>(token_array_data, string_array_data);
+  manager.GetUserPosData(&token_array_data, &string_array_data);
+  return absl::make_unique<UserPos>(token_array_data, string_array_data);
 }
 
 }  // namespace dictionary

@@ -71,7 +71,6 @@ using dictionary::SuppressionDictionary;
 using dictionary::Token;
 
 void AddSegmentForSuggestion(const std::string &key, Segments *segments) {
-  segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
@@ -112,7 +111,6 @@ void SetUpInputForSuggestionWithHistory(const std::string &key,
 }
 
 void AddSegmentForPrediction(const std::string &key, Segments *segments) {
-  segments->set_max_prediction_candidates_size(10);
   segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
@@ -129,6 +127,15 @@ void SetUpInputForPrediction(const std::string &key,
   composer->Reset();
   composer->SetPreeditTextForTestOnly(key);
   MakeSegmentsForPrediction(key, segments);
+}
+
+void SetUpInputForPredictionWithHistory(const std::string &key,
+                                        const std::string &hist_key,
+                                        const std::string &hist_value,
+                                        composer::Composer *composer,
+                                        Segments *segments) {
+  SetUpInputForPrediction(key, composer, segments);
+  PrependHistorySegments(hist_key, hist_value, segments);
 }
 
 void AddSegmentForConversion(const std::string &key, Segments *segments) {
@@ -215,6 +222,9 @@ class UserHistoryPredictorTest : public ::testing::Test {
         table_.get(), request_.get(), config_.get());
     convreq_ = absl::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
+    convreq_->set_max_user_history_prediction_candidates_size(10);
+    convreq_->set_max_user_history_prediction_candidates_size_for_zero_query(
+        10);
     data_and_predictor_.reset(CreateDataAndPredictor());
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
@@ -371,7 +381,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
     std::unique_ptr<DictionaryMock> dictionary;
     std::unique_ptr<SuppressionDictionary> suppression_dictionary;
     std::unique_ptr<UserHistoryPredictor> predictor;
-    dictionary::POSMatcher pos_matcher;
+    dictionary::PosMatcher pos_matcher;
   };
 
   DataAndPredictor *CreateDataAndPredictor() const {
@@ -379,7 +389,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
     testing::MockDataManager data_manager;
     ret->dictionary = absl::make_unique<DictionaryMock>();
     ret->suppression_dictionary = absl::make_unique<SuppressionDictionary>();
-    ret->pos_matcher.Set(data_manager.GetPOSMatcherData());
+    ret->pos_matcher.Set(data_manager.GetPosMatcherData());
     ret->predictor = absl::make_unique<UserHistoryPredictor>(
         ret->dictionary.get(), &ret->pos_matcher,
         ret->suppression_dictionary.get(), false);
@@ -616,7 +626,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
 TEST_F(UserHistoryPredictorTest, DescriptionTest) {
 #ifdef DEBUG
   constexpr char kDescription[] = "テスト History";
-#else
+#else   // DEBUG
   constexpr char kDescription[] = "テスト";
 #endif  // DEBUG
 
@@ -1016,7 +1026,8 @@ struct StartsWithPunctuationsTestData {
 TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
   const StartsWithPunctuationsTestData kTestCases[] = {
-      {"。", false}, {"、", false}, {"？", false}, {"！", false}, {"ぬ", true},
+      {"。", false}, {"、", false},    {"？", false},
+      {"！", false}, {"あああ", true},
   };
 
   for (size_t i = 0; i < std::size(kTestCases); ++i) {
@@ -4125,6 +4136,125 @@ TEST_F(UserHistoryPredictorTest, FutureTimestamp) {
   SetUpInputForPrediction("わたしの", composer_.get(), &segments);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
   EXPECT_TRUE(FindCandidateByValue("私の名前は中野です", segments));
+}
+
+TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSize) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  Segments segments;
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "てすと", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "テスト", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "Test", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    convreq_->set_max_user_history_prediction_candidates_size(2);
+    MakeSegmentsForSuggestion("てすと", &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    MakeSegmentsForPrediction("てすと", &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+  }
+  {
+    convreq_->set_max_user_history_prediction_candidates_size(3);
+    SetUpInputForSuggestion("てすと", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(3, segments.segment(0).candidates_size());
+
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(3, segments.segment(0).candidates_size());
+  }
+
+  {
+    // Only 3 candidates in user history
+    convreq_->set_max_user_history_prediction_candidates_size(4);
+    SetUpInputForSuggestion("てすと", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(3, segments.segment(0).candidates_size());
+
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(3, segments.segment(0).candidates_size());
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, MaxPredictionCandidatesSizeForZeroQuery) {
+  UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+  Segments segments;
+  {
+    SetUpInputForPrediction("てすと", composer_.get(), &segments);
+    AddCandidate(0, "てすと", &segments);
+    predictor->Finish(*convreq_, &segments);
+    segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
+  }
+  {
+    AddSegmentForPrediction("かお", &segments);
+    AddCandidate(1, "😀", &segments);
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    Segment::Candidate *candidate =
+        segments.mutable_segment(1)->mutable_candidate(0);
+    candidate->value = "😎";
+    candidate->content_value = candidate->value;
+    predictor->Finish(*convreq_, &segments);
+  }
+  {
+    Segment::Candidate *candidate =
+        segments.mutable_segment(1)->mutable_candidate(0);
+    candidate->value = "😂";
+    candidate->content_value = candidate->value;
+    predictor->Finish(*convreq_, &segments);
+  }
+
+  convreq_->set_max_user_history_prediction_candidates_size(2);
+  convreq_->set_max_user_history_prediction_candidates_size_for_zero_query(3);
+  // normal prediction candidates size
+  {
+    SetUpInputForSuggestion("かお", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    SetUpInputForPrediction("かお", composer_.get(), &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+  }
+
+  // prediction candidates for zero query
+  {
+    SetUpInputForSuggestionWithHistory("", "てすと", "てすと", composer_.get(),
+                                       &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+
+    SetUpInputForPredictionWithHistory("", "てすと", "てすと", composer_.get(),
+                                       &segments);
+    EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
+    EXPECT_EQ(1, segments.conversion_segments_size());
+    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+  }
 }
 
 }  // namespace mozc

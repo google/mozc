@@ -115,7 +115,7 @@ class UsageRewriter : public RewriterInterface {
   UsageDictItemIterator LookupUsage(const Segment::Candidate &candidate) const;
 
   std::map<StrPair, UsageDictItemIterator> key_value_usageitem_map_;
-  const dictionary::POSMatcher pos_matcher_;
+  const dictionary::PosMatcher pos_matcher_;
   const dictionary::DictionaryInterface *dictionary_;
   const uint32_t *base_conjugation_suffix_;
   SerializedStringArray string_array_;

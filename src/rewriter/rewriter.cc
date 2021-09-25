@@ -82,7 +82,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
                            const DataManagerInterface *data_manager,
                            const PosGroup *pos_group,
                            const DictionaryInterface *dictionary)
-    : pos_matcher_(data_manager->GetPOSMatcherData()) {
+    : pos_matcher_(data_manager->GetPosMatcherData()) {
   DCHECK(parent_converter);
   DCHECK(data_manager);
   DCHECK(pos_group);

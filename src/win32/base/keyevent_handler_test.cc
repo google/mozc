@@ -259,8 +259,7 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   std::vector<KeyInformation> GetDirectModeKeysCtrlJToEnableIME() const {
-    config::Config config;
-    config.CopyFrom(default_config_);
+    config::Config config = default_config_;
 
     const char custom_keymap_table[] =
         "status\tkey\tcommand\n"
@@ -274,8 +273,7 @@ class KeyEventHandlerTest : public testing::Test {
 
   std::vector<KeyInformation> GetDirectModeKeysCtrlBackslashToEnableIME()
       const {
-    config::Config config;
-    config.CopyFrom(default_config_);
+    config::Config config = default_config_;
 
     const char custom_keymap_table[] =
         "status\tkey\tcommand\n"

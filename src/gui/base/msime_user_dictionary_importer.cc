@@ -176,7 +176,7 @@ class MSIMEImportIterator
 
     std::string name;
     for (int i = 0; i < pos_size; ++i) {
-      EncodingUtil::SJISToUTF8(reinterpret_cast<char *>(pos_table->szName),
+      EncodingUtil::SjisToUtf8(reinterpret_cast<char *>(pos_table->szName),
                                &name);
       pos_map_.insert(std::make_pair(pos_table->nPos, name));
       ++pos_table;
@@ -237,7 +237,7 @@ class MSIMEImportIterator
       // set comment
       if (buf_[index_].pvComment != nullptr) {
         if (buf_[index_].uct == IFED_UCT_STRING_SJIS) {
-          EncodingUtil::SJISToUTF8(
+          EncodingUtil::SjisToUtf8(
               reinterpret_cast<const char *>(buf_[index_].pvComment),
               &entry->comment);
         } else if (buf_[index_].uct == IFED_UCT_STRING_UNICODE) {

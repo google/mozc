@@ -39,7 +39,7 @@
 
 namespace mozc {
 namespace {
-constexpr char kSurveyBaseURL[] =
+constexpr char kSurveyBaseUrl[] =
     "http://www.google.com/support/ime/japanese/bin/request.py";
 constexpr char kSurveyVersionEntry[] = "version";
 constexpr char kSurveyContactTypeEntry[] = "contact_type";
@@ -49,11 +49,11 @@ constexpr char kSurveyHtmlLanguage[] = "jp";
 constexpr char kSurveyFormatEntry[] = "format";
 constexpr char kSurveyFormat[] = "inproduct";
 
-class URLImpl {
+class UrlImpl {
  public:
-  URLImpl() { InitUninstallationSurveyURL(); }
+  UrlImpl() { InitUninstallationSurveyUrl(); }
 
-  bool GetUninstallationSurveyURL(const std::string &version,
+  bool GetUninstallationSurveyUrl(const std::string &version,
                                   std::string *url) const {
     DCHECK(url);
     *url = uninstallation_survey_url_;
@@ -67,9 +67,9 @@ class URLImpl {
   }
 
  private:
-  void InitUninstallationSurveyURL() {
+  void InitUninstallationSurveyUrl() {
     uninstallation_survey_url_.clear();
-    uninstallation_survey_url_ = kSurveyBaseURL;
+    uninstallation_survey_url_ = kSurveyBaseUrl;
     uninstallation_survey_url_ += "?";
     std::vector<std::pair<std::string, std::string> > params;
     params.push_back(
@@ -84,9 +84,9 @@ class URLImpl {
 };
 }  // namespace
 
-bool URL::GetUninstallationSurveyURL(const std::string &version,
+bool Url::GetUninstallationSurveyUrl(const std::string &version,
                                      std::string *url) {
-  return Singleton<URLImpl>::get()->GetUninstallationSurveyURL(version, url);
+  return Singleton<UrlImpl>::get()->GetUninstallationSurveyUrl(version, url);
 }
 
 }  // namespace mozc

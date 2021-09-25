@@ -57,7 +57,7 @@
 namespace mozc {
 namespace {
 
-using ::mozc::dictionary::POSMatcher;
+using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::usage_stats::UsageStats;
 
@@ -228,7 +228,7 @@ ConverterImpl::ConverterImpl()
 
 ConverterImpl::~ConverterImpl() = default;
 
-void ConverterImpl::Init(const POSMatcher *pos_matcher,
+void ConverterImpl::Init(const PosMatcher *pos_matcher,
                          const SuppressionDictionary *suppression_dictionary,
                          std::unique_ptr<PredictorInterface> predictor,
                          std::unique_ptr<RewriterInterface> rewriter,
@@ -500,7 +500,7 @@ bool ConverterImpl::FinishConversion(const ConversionRequest &request,
       seg->set_segment_type(Segment::FIXED_VALUE);
     }
     if (seg->candidates_size() > 0) {
-      CompletePOSIds(seg->mutable_candidate(0));
+      CompletePosIds(seg->mutable_candidate(0));
     }
   }
 
@@ -848,7 +848,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   return true;
 }
 
-void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
+void ConverterImpl::CompletePosIds(Segment::Candidate *candidate) const {
   DCHECK(candidate);
   if (candidate->value.empty() || candidate->key.empty()) {
     return;
@@ -869,6 +869,7 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
   // In order to reduce the latency, first, expand 5 candidates.
   // If no valid candidates are found within 5 candidates, expand
   // candidates step-by-step.
+  ConversionRequest request;
   for (size_t size = kExpandSizeStart; size < kExpandSizeMax;
        size += kExpandSizeDiff) {
     Segments segments;
@@ -879,9 +880,9 @@ void ConverterImpl::CompletePOSIds(Segment::Candidate *candidate) const {
     // that keys of result candidate are not always the same as
     // query key. It would be nice to have PREDICTION_REALTIME_CONVERSION_ONLY.
     segments.set_request_type(Segments::PREDICTION);
-    segments.set_max_prediction_candidates_size(size);
-    // In order to complete POSIds, call ImmutableConverter again.
-    if (!immutable_converter_->Convert(&segments)) {
+    request.set_max_conversion_candidates_size(size);
+    // In order to complete PosIds, call ImmutableConverter again.
+    if (!immutable_converter_->ConvertForRequest(request, &segments)) {
       LOG(ERROR) << "ImmutableConverter::Convert() failed";
       return;
     }

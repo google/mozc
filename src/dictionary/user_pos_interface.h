@@ -42,22 +42,22 @@ namespace mozc {
 // Provides a list of part-of-speech (POS) used by Mozc.  This minimal interface
 // is used by GUI tools so that we can minimize the data embedded in
 // executables.
-class POSListProviderInterface {
+class PosListProviderInterface {
  public:
-  virtual ~POSListProviderInterface() = default;
+  virtual ~PosListProviderInterface() = default;
 
   // Sets posssible list of POS which Mozc can handle.
-  virtual void GetPOSList(std::vector<std::string> *pos_list) const = 0;
+  virtual void GetPosList(std::vector<std::string> *pos_list) const = 0;
 
  protected:
-  POSListProviderInterface() = default;
+  PosListProviderInterface() = default;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(POSListProviderInterface);
+  DISALLOW_COPY_AND_ASSIGN(PosListProviderInterface);
 };
 
 // Interface of the helper class used by POS.
-class UserPOSInterface : public POSListProviderInterface {
+class UserPosInterface : public PosListProviderInterface {
  public:
   struct Token {
     std::string key;
@@ -76,14 +76,14 @@ class UserPOSInterface : public POSListProviderInterface {
     }
   };
 
-  ~UserPOSInterface() override = default;
+  ~UserPosInterface() override = default;
 
   // Returns true if the given string is one of the POSes Mozc can handle.
-  virtual bool IsValidPOS(const std::string &pos) const = 0;
+  virtual bool IsValidPos(const std::string &pos) const = 0;
 
   // Returns iid from Mozc POS. If the pos has inflection, this method only
   // returns the ids of base form.
-  virtual bool GetPOSIDs(const std::string &pos, uint16_t *id) const = 0;
+  virtual bool GetPosIds(const std::string &pos, uint16_t *id) const = 0;
 
   // Converts the given tuple (key, value, pos, locale) to Token.  If the pos
   // has inflection, this function expands possible inflections automatically.
@@ -97,10 +97,10 @@ class UserPOSInterface : public POSListProviderInterface {
   }
 
  protected:
-  UserPOSInterface() = default;
+  UserPosInterface() = default;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(UserPOSInterface);
+  DISALLOW_COPY_AND_ASSIGN(UserPosInterface);
 };
 
 }  // namespace mozc

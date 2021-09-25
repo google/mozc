@@ -49,7 +49,7 @@ DictionaryImpl::DictionaryImpl(
     std::unique_ptr<const DictionaryInterface> value_dictionary,
     DictionaryInterface *user_dictionary,
     const SuppressionDictionary *suppression_dictionary,
-    const POSMatcher *pos_matcher)
+    const PosMatcher *pos_matcher)
     : pos_matcher_(pos_matcher),
       system_dictionary_(std::move(system_dictionary)),
       value_dictionary_(std::move(value_dictionary)),
@@ -92,7 +92,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   CallbackWithFilter(const bool use_spelling_correction,
                      const bool use_zip_code_conversion,
                      const bool use_t13n_conversion,
-                     const POSMatcher *pos_matcher,
+                     const PosMatcher *pos_matcher,
                      const SuppressionDictionary *suppression_dictionary,
                      DictionaryInterface::Callback *callback)
       : use_spelling_correction_(use_spelling_correction),
@@ -136,7 +136,7 @@ class CallbackWithFilter : public DictionaryInterface::Callback {
   const bool use_spelling_correction_;
   const bool use_zip_code_conversion_;
   const bool use_t13n_conversion_;
-  const POSMatcher *pos_matcher_;
+  const PosMatcher *pos_matcher_;
   const SuppressionDictionary *suppression_dictionary_;
   DictionaryInterface::Callback *callback_;
 };

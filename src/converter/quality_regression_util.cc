@@ -244,11 +244,11 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
     commands::Request request = *request_;
     request.set_zero_query_suggestion(true);
     request.set_mixed_conversion(true);
-    segments_->set_max_conversion_candidates_size(10);
     {
       composer::Composer composer(&table, &request, config_.get());
       composer.SetPreeditTextForTestOnly(key);
       ConversionRequest conversion_request(&composer, &request, config_.get());
+      conversion_request.set_max_conversion_candidates_size(10);
       converter_->StartSuggestionForRequest(conversion_request,
                                             segments_.get());
       converter_->CommitSegmentValue(segments_.get(), 0, 0);
@@ -258,6 +258,7 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
       // Issues zero-query request.
       composer::Composer composer(&table, &request, config_.get());
       ConversionRequest conversion_request(&composer, &request, config_.get());
+      conversion_request.set_max_conversion_candidates_size(10);
       converter_->StartPredictionForRequest(conversion_request,
                                             segments_.get());
       segments_->clear_history_segments();

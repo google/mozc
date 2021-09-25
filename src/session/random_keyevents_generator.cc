@@ -334,7 +334,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
           key.set_key_code(GetRandomAsciiKey());
           break;
         default:
-          key.CopyFrom(basic_keys[i]);
+          key = basic_keys[i];
           break;
       }
 

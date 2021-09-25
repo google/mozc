@@ -92,7 +92,7 @@ class ClientMock : public client::ClientInterface {
  public:                                                                    \
   arg_type called_##method_name() const { return called_##method_name##_; } \
   void set_output_##method_name(const commands::Output &output) {           \
-    outputs_[#method_name].CopyFrom(output);                                \
+    outputs_[#method_name] = output;                                        \
   }
   TEST_METHODS(SendKeyWithContext, commands::KeyEvent);
   TEST_METHODS(TestSendKeyWithContext, commands::KeyEvent);

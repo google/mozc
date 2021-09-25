@@ -57,28 +57,17 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 const char *kIosSystemDictionaryName = "iOS_system_dictionary";
 
-std::unique_ptr<DataManager> CreateDataManager(
-    const std::string &data_file_path) {
-  std::unique_ptr<DataManager> data_manager(new DataManager());
-  const auto status = data_manager->InitFromFile(data_file_path);
-  if (status != DataManager::Status::OK) {
-    LOG(ERROR) << "Failed to load data file from " << data_file_path << "("
-               << DataManager::StatusCodeToString(status) << "). "
-               << "Fall back to the embedded data.";
-    data_manager.reset();
-  }
-  return data_manager;
-}
-
 std::unique_ptr<EngineInterface> CreateMobileEngine(
     const std::string &data_file_path) {
-  std::unique_ptr<DataManager> data_manager = CreateDataManager(data_file_path);
-  if (!data_manager) {
-    LOG(ERROR) << "Failed to create a data manager from " << data_file_path
-               << ". Fallback to MinimalEngine";
+  absl::StatusOr<std::unique_ptr<DataManager>> data_manager =
+      DataManager::CreateFromFile(data_file_path);
+  if (!data_manager.ok()) {
+    LOG(ERROR)
+        << "Fallback to MinimalEngine due to data manager creation error: "
+        << data_manager.status();
     return absl::make_unique<MinimalEngine>();
   }
-  auto engine = Engine::CreateMobileEngine(std::move(data_manager));
+  auto engine = Engine::CreateMobileEngine(*std::move(data_manager));
   if (!engine.ok()) {
     LOG(ERROR) << "Failed to create an engine: " << engine.status()
                << ". Faillback to MinimalEngine";

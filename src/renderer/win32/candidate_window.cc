@@ -435,7 +435,7 @@ void CandidateWindow::OnSettingChange(UINT uFlags, LPCTSTR /*lpszSection*/) {
 }
 
 void CandidateWindow::UpdateLayout(const commands::Candidates &candidates) {
-  candidates_->CopyFrom(candidates);
+  *candidates_ = candidates;
 
   // If we detect any change of font parameters, update text renderer
   if (metrics_changed_) {

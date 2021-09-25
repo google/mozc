@@ -847,19 +847,19 @@ TEST(UtilTest, EndsWith) {
   EXPECT_FALSE(Util::EndsWith(str, "foobarbuzbuz"));
 }
 
-TEST(UtilTest, StripUTF8BOM) {
+TEST(UtilTest, StripUtf8Bom) {
   std::string line;
 
   // Should be stripped.
   line =
       "\xef\xbb\xbf"
       "abc";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ("abc", line);
 
   // Should be stripped.
   line = "\xef\xbb\xbf";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ("", line);
 
   // BOM in the middle of text. Shouldn't be stripped.
@@ -867,7 +867,7 @@ TEST(UtilTest, StripUTF8BOM) {
       "a"
       "\xef\xbb\xbf"
       "bc";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ(
       "a"
       "\xef\xbb\xbf"
@@ -878,7 +878,7 @@ TEST(UtilTest, StripUTF8BOM) {
   line =
       "\xef\xbb"
       "abc";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ(
       "\xef\xbb"
       "abc",
@@ -886,12 +886,12 @@ TEST(UtilTest, StripUTF8BOM) {
 
   // String shorter than the BOM. Do nothing.
   line = "a";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ("a", line);
 
   // Empty string. Do nothing.
   line = "";
-  Util::StripUTF8BOM(&line);
+  Util::StripUtf8Bom(&line);
   EXPECT_EQ("", line);
 }
 
