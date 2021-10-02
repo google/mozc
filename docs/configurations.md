@@ -1,5 +1,29 @@
 # Configurations
 
+## Date format converted from "きょう"
+
+This is an EXPERIMENTAL feature. This feature may be changed or removed in
+future.
+
+The conversion from "きょう" returns the current date in some formats like
+"2021年10月1日" and "2021-10-01".
+
+You can add an extra format by adding an entry of "DATA_FORMAT" to the user
+dictionary.
+
+| Reading     | Word                  | Category |
+| ----------- | --------------------- | -------- |
+| DATE_FORMAT | {YEAR}.{MONTH}.{DATE} | 名詞      |
+
+Any category is OK so far.
+
+| key     | value                |
+| ------- | -------------------- |
+| {YEAR}  | 4 digits year (2021) |
+| {MONTH} | 2 digits month (10)  |
+| {DATE}  | 2 digits date (01)   |
+| {{}     | sinle { character    |
+
 ## Configuration path
 
 Mozc creates configuration files under `$XDG_CONFIG_HOME/mozc` (default:

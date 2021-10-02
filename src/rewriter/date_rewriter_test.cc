@@ -1261,4 +1261,65 @@ TEST_F(DateRewriterTest, ConsecutiveDigitsInsertPositionWithHistory) {
   ASSERT_LT(3, segments.conversion_segment(0).candidates_size());
 }
 
+TEST_F(DateRewriterTest, ExtraFormatTest) {
+  ClockMock clock(kTestSeconds, kTestMicroSeconds);
+  Clock::SetClockForUnitTest(&clock);
+
+  dictionary::DictionaryMock dictionary;
+  dictionary.AddLookupExact(DateRewriter::kExtraFormatKey,
+                            DateRewriter::kExtraFormatKey,
+                            "{YEAR}{MONTH}{DATE}",
+                            dictionary::Token::USER_DICTIONARY);
+
+  DateRewriter rewriter(&dictionary);
+  Segments segments;
+  const ConversionRequest request;
+
+  {
+    InitSegment("きょう", "今日", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(6, CountDescription(segments, "今日の日付"));
+    EXPECT_TRUE(ContainCandidate(segments, "平成23年4月18日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011年4月18日"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011-04-18"));
+    EXPECT_TRUE(ContainCandidate(segments, "2011/04/18"));
+    EXPECT_TRUE(ContainCandidate(segments, "月曜日"));
+    EXPECT_EQ(GetNthCandidateValue(segments, 1), "20110418");
+  }
+  Clock::SetClockForUnitTest(nullptr);
+}
+
+TEST_F(DateRewriterTest, ExtraFormatSyntaxTest) {
+  ClockMock clock(kTestSeconds, kTestMicroSeconds);
+  Clock::SetClockForUnitTest(&clock);
+
+  auto syntax_test = [](const std::string &input, const std::string &output) {
+    const ConversionRequest request;
+    dictionary::DictionaryMock dictionary;
+    dictionary.AddLookupExact(DateRewriter::kExtraFormatKey,
+                              DateRewriter::kExtraFormatKey,
+                              input, dictionary::Token::USER_DICTIONARY);
+
+    DateRewriter rewriter(&dictionary);
+    Segments segments;
+    InitSegment("きょう", "今日", &segments);
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+    EXPECT_EQ(GetNthCandidateValue(segments, 1), output);
+  };
+
+  syntax_test("%", "%");  // Single % (illformat)
+  syntax_test("%%", "%%");  // Double
+  syntax_test("%Y", "%Y");  // %Y remains as-is.
+  syntax_test("{{}", "{");  // {{} is converted to {.
+  syntax_test("{{}}}", "{}}");
+  syntax_test("{}", "{}");
+  syntax_test("{{}YEAR}", "{YEAR}");
+  syntax_test("{MOZC}", "{MOZC}");  // invalid keyword.
+  syntax_test("{year}", "{year}");  // upper case only.
+
+  // If the format is empty, it is ignored.
+  // "2011/04/18" is the default first conversion.
+  syntax_test("", "2011/04/18");
+  Clock::SetClockForUnitTest(nullptr);
+}
 }  // namespace mozc

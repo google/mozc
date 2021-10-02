@@ -130,8 +130,17 @@ class DateRewriter : public RewriterInterface {
   static bool ConvertDateWithYear(uint32_t year, uint32_t month, uint32_t day,
                                   std::vector<std::string> *results);
 
+  // The key of the extra format.
+  // The value can be specified via user dictionary.
+  // The value accepts the same format with absl::FormatTime, which is extended
+  // from std::strftime.
+  // https://abseil.io/docs/cpp/guides/time#formatting-absltime
+  //
+  // THIS IS EXPERIMENTAL. This functionality may be dropped or changed.
+  static constexpr char kExtraFormatKey[] = "DATE_FORMAT";
+
  private:
-  static bool RewriteDate(Segment *segment);
+  static bool RewriteDate(Segment *segment, const std::string &extra_format);
   static bool RewriteEra(Segment *current_segment, const Segment &next_segment);
   static bool RewriteAd(Segment *segment);
 
@@ -157,6 +166,8 @@ class DateRewriter : public RewriterInterface {
   static bool RewriteConsecutiveFourDigits(
       absl::string_view str,
       std::vector<std::pair<std::string, const char *>> *results);
+
+  const dictionary::DictionaryInterface *dictionary_ = nullptr;
 };
 
 }  // namespace mozc

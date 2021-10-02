@@ -53,7 +53,7 @@ UnicodeRewriter::~UnicodeRewriter() {}
 namespace {
 
 // Checks given string is ucs4 expression or not.
-bool IsValidUCS4Expression(const std::string &input) {
+bool IsValidUcs4Expression(const std::string &input) {
   if (input.size() < 3 || input.size() > 8) {
     return false;
   }
@@ -163,7 +163,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     key += segments->conversion_segment(i).key();
   }
 
-  if (!IsValidUCS4Expression(key)) {
+  if (!IsValidUcs4Expression(key)) {
     return false;
   }
 

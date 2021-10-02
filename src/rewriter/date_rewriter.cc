@@ -55,6 +55,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 
@@ -132,7 +133,7 @@ constexpr char kTimeDescription[] = "時刻";
 
 struct YearData {
   int ad;           // AD year
-  const char *era;  // Japanese year a.k.a, GENGO
+  const char *era;  // Japanese year a.k.a., GENGO
   const char *key;  // reading of the `era`
 };
 
@@ -839,9 +840,16 @@ absl::CivilMinute GetCivilMinuteWithDiff(int type, int diff) {
   return absl::ToCivilMinute(at, tz);
 }
 
-std::vector<std::string> GetConversions(const DateRewriter::DateData &data) {
+std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
+                                        const std::string &extra_format) {
   std::vector<std::string> results;
   const absl::CivilMinute cm = GetCivilMinuteWithDiff(data.type, data.diff);
+
+  if (!extra_format.empty()) {
+    const absl::TimeZone &tz = Clock::GetTimeZone();
+    const absl::Time at = absl::FromCivil(cm, tz);
+    results.push_back(absl::FormatTime(extra_format, at, tz));
+  }
 
   switch (data.type) {
     case DATE:
@@ -896,20 +904,23 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data) {
       // Unknown type
     }
   }
+
   return results;
 }
 }  // namespace
 
-bool DateRewriter::RewriteDate(Segment *segment) {
+bool DateRewriter::RewriteDate(Segment *segment,
+                               const std::string &extra_format) {
   const std::string &key = segment->key();
   auto rit = std::find_if(std::begin(kDateData), std::end(kDateData),
                           [&key](auto data) { return key == data.key; });
   if (rit == std::end(kDateData)) {
     return false;
   }
-  const DateData &data = *rit;
-  const std::vector<std::string> &conversions = GetConversions(data);
 
+  const DateData &data = *rit;
+  const std::vector<std::string> &conversions =
+      GetConversions(data, extra_format);
   if (conversions.empty()) {
     return false;
   }
@@ -1268,7 +1279,8 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
 DateRewriter::DateRewriter() = default;
 DateRewriter::~DateRewriter() = default;
 
-DateRewriter::DateRewriter(const dictionary::DictionaryInterface *dictionary) {}
+DateRewriter::DateRewriter(const dictionary::DictionaryInterface *dictionary)
+    : dictionary_(dictionary) {}
 
 int DateRewriter::capability(const ConversionRequest &request) const {
   if (request.request().mixed_conversion()) {
@@ -1276,6 +1288,44 @@ int DateRewriter::capability(const ConversionRequest &request) const {
   }
   return RewriterInterface::CONVERSION;
 }
+
+namespace {
+std::string ConvertExtraFormat(const std::string &base) {
+  return absl::StrReplaceAll(base, {{"%", "%%"},
+                                    {"{YEAR}", "%Y"},
+                                    {"{MONTH}", "%m"},
+                                    {"{DATE}", "%d"},
+                                    {"{{}", "{"}});
+}
+
+std::string GetExtraFormat(const dictionary::DictionaryInterface *dictionary) {
+  if (dictionary == nullptr) {
+    return "";
+  }
+
+  class EntryCollector : public dictionary::DictionaryInterface::Callback {
+   public:
+    explicit EntryCollector(std::string *token) : token_(token) {}
+    ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                       const dictionary::Token &token) override {
+      if (token.attributes != dictionary::Token::USER_DICTIONARY) {
+        return TRAVERSE_CONTINUE;
+      }
+      *token_ = token.value;
+      return TRAVERSE_DONE;
+    }
+    std::string *token_;
+  };
+
+  std::string extra_format;
+
+  ConversionRequest crequest;
+  EntryCollector callback(&extra_format);
+  dictionary->LookupExact(DateRewriter::kExtraFormatKey, crequest, &callback);
+
+  return ConvertExtraFormat(extra_format);
+}
+}  // namespace
 
 bool DateRewriter::Rewrite(const ConversionRequest &request,
                            Segments *segments) const {
@@ -1294,6 +1344,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
     }
   }
 
+  const std::string extra_format = GetExtraFormat(dictionary_);
   for (size_t i = segments->history_segments_size();
        i < segments->segments_size(); ++i) {
     Segment *seg = segments->mutable_segment(i);
@@ -1302,7 +1353,7 @@ bool DateRewriter::Rewrite(const ConversionRequest &request,
       return false;
     }
 
-    if (RewriteDate(seg)) {
+    if (RewriteDate(seg, extra_format)) {
       modified = true;
     } else if (i + 1 < segments->segments_size() &&
                RewriteEra(seg, segments->segment(i + 1))) {
