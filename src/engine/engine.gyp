@@ -37,12 +37,14 @@
       'target_name': 'engine_builder',
       'type': 'static_library',
       'sources': [
+        '<(gen_out_dir)/../dictionary/pos_matcher.h',
         'engine_builder.cc',
       ],
       'dependencies': [
         'engine',
         '../base/base.gyp:base',
         '../data_manager/data_manager_base.gyp:data_manager',
+        '../dictionary/dictionary_base.gyp:pos_matcher',
         '../protocol/protocol.gyp:engine_builder_proto',
       ],
     },

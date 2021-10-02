@@ -37,6 +37,8 @@
 
 #include "base/port.h"
 #include "protocol/config.pb.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 namespace mozc {
 class Segments;
@@ -68,17 +70,18 @@ class QualityRegressionUtil {
     // Target platform. Can set multiple platform defined in enum |Platform|.
     uint32_t platform;
     std::string OutputAsTSV() const;
-    bool ParseFromTSV(const std::string &tsv_line);
+    absl::Status ParseFromTSV(const std::string &tsv_line);
   };
 
   explicit QualityRegressionUtil(ConverterInterface *converter);
   virtual ~QualityRegressionUtil();
 
   // Pase |filename| and save the all test items into |outputs|.
-  static bool ParseFile(const std::string &filename,
-                        std::vector<TestItem> *outputs);
+  static absl::Status ParseFile(const std::string &filename,
+                                std::vector<TestItem> *outputs);
 
-  bool ConvertAndTest(const TestItem &item, std::string *actual_value);
+  absl::StatusOr<bool> ConvertAndTest(const TestItem &item,
+                                      std::string *actual_value);
 
   void SetRequest(const commands::Request &request);
   void SetConfig(const config::Config &config);

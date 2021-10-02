@@ -35,12 +35,12 @@
 #include <string>
 
 #include "base/port.h"
+#include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "transliteration/transliteration.h"
 
 namespace mozc {
-class ConverterInterface;
 
 namespace commands {
 class Context;
@@ -56,8 +56,8 @@ namespace session {
 class CandidateList;
 
 struct ConversionPreferences {
-  bool use_history;
   int max_history_size;
+  bool use_history;
 
   // This is a flag to check if the converter should return the suggestion
   // or not. Indeed, the design is actually twisted, because clients should

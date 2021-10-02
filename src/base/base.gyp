@@ -118,6 +118,7 @@
         'hash',
         'mutex',
         'singleton',
+        'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
         'absl.gyp:absl_time',
       ],

@@ -84,7 +84,14 @@ bool LinkOrCopyFile(const std::string &src_path, const std::string &dst_path) {
     return false;
   }
 
-  return FileUtil::AtomicRename(tmp_dst_path, dst_path);
+  if (absl::Status s = FileUtil::AtomicRename(tmp_dst_path, dst_path);
+      !s.ok()) {
+    LOG(ERROR) << "AtomicRename failed: " << s << "; from: " << tmp_dst_path
+               << ", to: " << dst_path;
+    return false;
+  }
+
+  return true;
 }
 }  // namespace
 

@@ -66,7 +66,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
   for (size_t i = 0; kTestData[i].line; ++i) {
     const std::string &tsv_line = kTestData[i].line;
     QualityRegressionUtil::TestItem item;
-    if (!item.ParseFromTSV(tsv_line)) {
+    if (!item.ParseFromTSV(tsv_line).ok()) {
       return absl::FailedPreconditionError(
           absl::StrFormat("Failed to parse test item: %s", tsv_line));
     }
@@ -74,7 +74,11 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
       continue;
     }
     std::string actual_value;
-    const bool test_result = util->ConvertAndTest(item, &actual_value);
+    const auto &test_result = util->ConvertAndTest(item, &actual_value);
+    if (!test_result.ok()) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Failed to test the entry: ", tsv_line));
+    }
 
     std::map<std::string, std::vector<std::pair<float, std::string>>> *table =
         nullptr;
@@ -90,7 +94,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
     const std::string &label = item.label;
     std::string line = tsv_line;
     line.append("\tActual: ").append(actual_value);
-    if (test_result) {
+    if (*test_result) {
       // use "-1.0" as a dummy expected ratio
       (*table)[label].push_back(std::make_pair(-1.0, line));
     } else {

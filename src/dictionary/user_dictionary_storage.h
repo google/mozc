@@ -67,6 +67,7 @@
 
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 
@@ -116,7 +117,7 @@ class UserDictionaryStorage {
 
   // Serialize user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
-  bool Save();
+  absl::Status Save();
 
   // Lock the dictionary so that other processes/threads cannot
   // execute mutable operations on this dictionary.
@@ -197,8 +198,9 @@ class UserDictionaryStorage {
 
   user_dictionary::UserDictionaryStorage proto_;
   std::string file_name_;
-  bool locked_;
-  UserDictionaryStorageErrorType last_error_type_;
+  bool locked_ = false;
+  UserDictionaryStorageErrorType last_error_type_ =
+      USER_DICTIONARY_STORAGE_NO_ERROR;
   std::unique_ptr<Mutex> local_mutex_;
   std::unique_ptr<ProcessMutex> process_mutex_;
 };

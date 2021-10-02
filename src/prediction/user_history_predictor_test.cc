@@ -1985,7 +1985,7 @@ TEST_F(UserHistoryPredictorTest, EntryPriorityQueueTest) {
 
 namespace {
 
-std::string RemoveLastUCS4Character(const std::string &input) {
+std::string RemoveLastUcs4Character(const std::string &input) {
   const size_t ucs4_count = Util::CharsLen(input);
   if (ucs4_count == 0) {
     return "";
@@ -2112,7 +2112,7 @@ TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
     const std::string description(data.scenario_description);
     const std::string input(data.input);
     const std::string output(data.output);
-    const std::string &partial_input = RemoveLastUCS4Character(input);
+    const std::string &partial_input = RemoveLastUcs4Character(input);
     const bool expect_sensitive = data.is_sensitive;
 
     // Initial commit.

@@ -39,6 +39,7 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -300,9 +301,9 @@ TEST_F(FileUtilTest, AtomicRename) {
   FileUtil::Unlink(to);
 
   // |from| is not found
-  EXPECT_FALSE(FileUtil::AtomicRename(from, to));
+  EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
   CreateTestFile(from, "test");
-  EXPECT_TRUE(FileUtil::AtomicRename(from, to));
+  EXPECT_OK(FileUtil::AtomicRename(from, to));
 
   // from is deleted
   EXPECT_FALSE(FileUtil::FileExists(from));
@@ -316,7 +317,7 @@ TEST_F(FileUtilTest, AtomicRename) {
     EXPECT_EQ("test", line);
   }
 
-  EXPECT_FALSE(FileUtil::AtomicRename(from, to));
+  EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
 
   FileUtil::Unlink(from);
   FileUtil::Unlink(to);
@@ -324,7 +325,7 @@ TEST_F(FileUtilTest, AtomicRename) {
   // overwrite the file
   CreateTestFile(from, "test");
   CreateTestFile(to, "test");
-  EXPECT_TRUE(FileUtil::AtomicRename(from, to));
+  EXPECT_OK(FileUtil::AtomicRename(from, to));
 
 #ifdef OS_WIN
   struct TestData {
@@ -363,7 +364,7 @@ TEST_F(FileUtilTest, AtomicRename) {
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
-    EXPECT_TRUE(FileUtil::AtomicRename(from, to));
+    EXPECT_OK(FileUtil::AtomicRename(from, to));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
     EXPECT_FALSE(FileUtil::FileExists(from));
     EXPECT_TRUE(FileUtil::FileExists(to));
@@ -379,7 +380,7 @@ TEST_F(FileUtilTest, AtomicRename) {
 
 #ifdef OS_WIN
 #define SP "\\"
-#else
+#else  // OS_WIN
 #define SP "/"
 #endif  // OS_WIN
 
@@ -436,7 +437,7 @@ TEST_F(FileUtilTest, NormalizeDirectorySeparator) {
   EXPECT_EQ("", FileUtil::NormalizeDirectorySeparator(""));
   EXPECT_EQ("\\", FileUtil::NormalizeDirectorySeparator("/"));
   EXPECT_EQ("\\", FileUtil::NormalizeDirectorySeparator("\\"));
-#else
+#else   // OS_WIN
   EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("\\foo\\bar"));
   EXPECT_EQ("/foo\\bar", FileUtil::NormalizeDirectorySeparator("/foo\\bar"));
   EXPECT_EQ("\\foo/bar", FileUtil::NormalizeDirectorySeparator("\\foo/bar"));

@@ -931,6 +931,7 @@ cc_library_mozc(
     deps = [
         "//base:port",
         "//converter",
+        "//converter:converter_interface",
         "//converter:segments",
         "//protocol:config_cc_proto",
         "//transliteration",

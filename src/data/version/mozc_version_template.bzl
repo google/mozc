@@ -32,7 +32,7 @@ MAJOR = 2
 MINOR = 26
 
 # Number to be increased. This value may be replaced by other tools.
-BUILD = 4507
+BUILD = 4514
 
 # Represent the platform and release channel.
 REVISION = 100

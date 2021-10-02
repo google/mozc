@@ -105,9 +105,10 @@ int main(int argc, char **argv) {
     writer.Finish(&output);
     output.close();
   }
-  CHECK(mozc::FileUtil::AtomicRename(tmpfile, absl::GetFlag(FLAGS_output)))
-      << "Failed to rename " << tmpfile << " to "
-      << absl::GetFlag(FLAGS_output);
+  absl::Status s =
+      mozc::FileUtil::AtomicRename(tmpfile, absl::GetFlag(FLAGS_output));
+  CHECK(s.ok()) << "Atomic rename failed: " << s << "; from: " << tmpfile
+                << " to: " << absl::GetFlag(FLAGS_output);
 
   return 0;
 }

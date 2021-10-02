@@ -54,6 +54,7 @@
 #include "dictionary/user_pos_interface.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
@@ -593,7 +594,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
       entry->set_comment(GenRandomAlphabet(10));
       keys.push_back(entry->key());
     }
-    EXPECT_TRUE(storage.Save());
+    EXPECT_OK(storage.Save());
     EXPECT_TRUE(storage.UnLock());
   }
 

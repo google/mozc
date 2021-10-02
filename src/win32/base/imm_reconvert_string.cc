@@ -51,7 +51,7 @@ bool CheckAddressSpace(const T *ptr) {
 #elif defined(_M_IX86)
   const DWORD addr = reinterpret_cast<DWORD>(ptr);
   DWORD addr_last = 0;
-#endif
+#endif  // _M_X64, _M_IX86
   if (!SafeAdd(addr, ptr->dwSize, addr_last)) {
     // buffer exceeds process address space.
     return false;
@@ -68,7 +68,7 @@ bool IsControlCode(wchar_t c) {
 }
 
 // TODO(yukawa): Move this to util.cc.
-char32 SurrogatePairToUCS4(wchar_t high, wchar_t low) {
+char32 SurrogatePairToUcs4(wchar_t high, wchar_t low) {
   return (((high - 0xD800) & 0x3FF) << 10) + ((low - 0xDC00) & 0x3FF) + 0x10000;
 }
 }  // namespace
@@ -391,7 +391,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
     ++involved_following_len;
     ++involved_preceding_len;
     const char32 unichar =
-        SurrogatePairToUCS4(*preceding_text.rbegin(), *following_text.begin());
+        SurrogatePairToUcs4(*preceding_text.rbegin(), *following_text.begin());
     script_type = Util::GetScriptType(unichar);
   }
 
@@ -408,7 +408,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
         IS_LOW_SURROGATE(following_text[involved_following_len + 1])) {
       const char32 high_surrogate = unichar;
       const char32 low_surrogate = following_text[involved_following_len + 1];
-      unichar = SurrogatePairToUCS4(high_surrogate, low_surrogate);
+      unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
       num_wchar = 2;
     }
     // Stop searching when any control code is found.
@@ -441,7 +441,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
         IS_HIGH_SURROGATE(preceding_text[index - 1])) {
       const char32 high_surrogate = preceding_text[index - 1];
       const char32 low_surrogate = unichar;
-      unichar = SurrogatePairToUCS4(high_surrogate, low_surrogate);
+      unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
       num_wchar = 2;
     }
     // Stop searching when any control code is found.

@@ -422,13 +422,13 @@ UserDictionaryCommandStatus::Status UserDictionarySession::Save() {
     return UserDictionaryCommandStatus::UNKNOWN_ERROR;
   }
 
-  if (!storage_->Save()) {
+  if (absl::Status s = storage_->Save(); !s.ok()) {
+    LOG(ERROR) << "Failed to save to storage: " << s;
     switch (storage_->GetLastError()) {
       case mozc::UserDictionaryStorage::TOO_BIG_FILE_BYTES:
         return UserDictionaryCommandStatus::FILE_SIZE_LIMIT_EXCEEDED;
         // TODO(hidehiko): Handle SYNC_FAILURE.
       default:
-        LOG(ERROR) << "Unknown error code: " << storage_->GetLastError();
         return UserDictionaryCommandStatus::UNKNOWN_ERROR;
     }
     // Should never reach here.

@@ -97,16 +97,16 @@ constexpr uint8_t kValueCharMarkAscii = 0xfc;
 // UCS4 character 0x??00.
 constexpr uint8_t kValueCharMarkXX00 = 0xfd;
 // This UCS4 character is neither Hiragana nor above 2 patterns 0x????
-constexpr uint8_t kValueCharMarkOtherUCS2 = 0xfe;
+constexpr uint8_t kValueCharMarkOtherUcs2 = 0xfe;
 
 // UCS4 character 0x00?????? (beyond UCS2 range)
 // UCS4 characters never exceed 10FFFF. (three 8bits, A-B-C).
 // For left most 8bits A, we will use upper 2bits for the flag
 // that indicating whether B and C is 0 or not.
-constexpr uint8_t kValueCharMarkUCS4 = 0xff;
-constexpr uint8_t kValueCharMarkUCS4Middle0 = 0x80;
-constexpr uint8_t kValueCharMarkUCS4Right0 = 0x40;
-constexpr uint8_t kValueCharMarkUCS4LeftMask = 0x1f;
+constexpr uint8_t kValueCharMarkUcs4 = 0xff;
+constexpr uint8_t kValueCharMarkUcs4Middle0 = 0x80;
+constexpr uint8_t kValueCharMarkUcs4Right0 = 0x40;
+constexpr uint8_t kValueCharMarkUcs4LeftMask = 0x1f;
 
 // character code related constants
 constexpr int kValueKanjiOffset = 0x01;
@@ -281,12 +281,12 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
       const int middle = ((c >> 8) & 255);
       const int right = (c & 255);
       if (middle == 0) {
-        left |= kValueCharMarkUCS4Middle0;
+        left |= kValueCharMarkUcs4Middle0;
       }
       if (right == 0) {
-        left |= kValueCharMarkUCS4Right0;
+        left |= kValueCharMarkUcs4Right0;
       }
-      dst->push_back(kValueCharMarkUCS4);
+      dst->push_back(kValueCharMarkUcs4);
       dst->push_back(left);
       if (middle != 0) {
         dst->push_back(middle);
@@ -297,7 +297,7 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
     } else {
       DCHECK_LE(c, 0x10ffff);
       // Other charaters encoded into 3bytes.
-      dst->push_back(kValueCharMarkOtherUCS2);
+      dst->push_back(kValueCharMarkOtherUcs2);
       dst->push_back((c >> 8) & 255);
       dst->push_back(c & 255);
     }
@@ -328,18 +328,18 @@ void SystemDictionaryCodec::DecodeValue(const absl::string_view src,
       // xx00
       c = (p[1] << 8);
       p += 2;
-    } else if (cc == kValueCharMarkUCS4) {
+    } else if (cc == kValueCharMarkUcs4) {
       // UCS4
-      c = ((p[1] & kValueCharMarkUCS4LeftMask) << 16);
+      c = ((p[1] & kValueCharMarkUcs4LeftMask) << 16);
       int pos = 2;
-      if (!(p[1] & kValueCharMarkUCS4Middle0)) {
+      if (!(p[1] & kValueCharMarkUcs4Middle0)) {
         c += (p[pos++] << 8);
       }
-      if (!(p[1] & kValueCharMarkUCS4Right0)) {
+      if (!(p[1] & kValueCharMarkUcs4Right0)) {
         c += p[pos++];
       }
       p += pos;
-    } else if (cc == kValueCharMarkOtherUCS2) {
+    } else if (cc == kValueCharMarkOtherUcs2) {
       // other
       c = (p[1] << 8);
       c += p[2];
