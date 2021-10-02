@@ -148,7 +148,9 @@ WordRegisterDialog::WordRegisterDialog()
   if (session_->mutable_storage()
           ->ConvertSyncDictionariesToNormalDictionaries()) {
     LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
-    session_->mutable_storage()->Save();
+    if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
+      LOG(ERROR) << "Failed to save the storage: " << s;
+    }
   }
 #endif  // !ENABLE_CLOUD_SYNC
 
@@ -317,10 +319,10 @@ WordRegisterDialog::ErrorCode WordRegisterDialog::SaveEntry() {
   entry->set_value(value);
   entry->set_pos(pos);
 
-  if (!session_->mutable_storage()->Save() &&
-      session_->mutable_storage()->GetLastError() ==
-          mozc::UserDictionaryStorage::SYNC_FAILURE) {
-    LOG(ERROR) << "Cannot save dictionary";
+  if (absl::Status s = session_->mutable_storage()->Save();
+      !s.ok() && session_->mutable_storage()->GetLastError() ==
+                     mozc::UserDictionaryStorage::SYNC_FAILURE) {
+    LOG(ERROR) << "Cannot save dictionary: " << s;
     return SAVE_FAILURE;
   }
 

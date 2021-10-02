@@ -33,7 +33,17 @@ bazel build package --config oss_linux -c opt
 * //unix/icons
 * //unix/emacs:mozc_emacs_helper
 
-Unittests can be executed as follows.
+### Install paths
+
+| build path   | install path |
+| ------------ | ------------ |
+| bazel-bin/server/mozc_server           | /usr/lib/mozc/mozc_server |
+| bazel-bin/gui/tool/mozc_tool           | /usr/lib/mozc/mozc_tool |
+| bazel-bin/renderer/mozc_renderer       | /usr/lib/mozc_renderer |
+| bazel-bin/unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
+| bazel-bin/unix/emacs/mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
+
+### Unittests
 
 ```
 bazel test ... --config oss_linux -c dbg -- -net/... -/third_party/...

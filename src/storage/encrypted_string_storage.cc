@@ -31,7 +31,7 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#endif
+#endif  // OS_WIN
 
 #include <cstring>
 #include <string>
@@ -150,8 +150,10 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
     ofs.write(output.data(), output.size());
   }
 
-  if (!FileUtil::AtomicRename(tmp_filename, filename_)) {
-    LOG(ERROR) << "AtomicRename failed";
+  if (absl::Status s = FileUtil::AtomicRename(tmp_filename, filename_);
+      !s.ok()) {
+    LOG(ERROR) << "AtomicRename failed: " << s << "; from: " << tmp_filename
+               << ", to: " << filename_;
     return false;
   }
 
@@ -160,7 +162,7 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
     LOG(ERROR) << "Cannot make hidden: " << filename_ << " "
                << ::GetLastError();
   }
-#endif
+#endif  // OS_WIN
 
   return true;
 }

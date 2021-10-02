@@ -34,16 +34,14 @@
 #include <string>
 
 #include "base/file_util.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 class FileUtilMock : public FileUtilInterface {
  public:
-  FileUtilMock() {
-    FileUtil::SetMockForUnitTest(this);
-  }
-  ~FileUtilMock() override {
-    FileUtil::SetMockForUnitTest(nullptr);
-  }
+  FileUtilMock() { FileUtil::SetMockForUnitTest(this); }
+  ~FileUtilMock() override { FileUtil::SetMockForUnitTest(nullptr); }
 
   // This is not an override function.
   void CreateFile(const std::string &path) {
@@ -96,8 +94,7 @@ class FileUtilMock : public FileUtilInterface {
 
   bool IsEqualFile(const std::string &filename1,
                    const std::string &filename2) const override {
-    return (FileExists(filename1) &&
-            FileExists(filename2) &&
+    return (FileExists(filename1) && FileExists(filename2) &&
             files_[filename1] == files_[filename2]);
   }
 
@@ -108,23 +105,22 @@ class FileUtilMock : public FileUtilInterface {
     return canonical1 == canonical2;
   }
 
-  bool AtomicRename(const std::string &from,
-                    const std::string &to) const override {
+  absl::Status AtomicRename(const std::string &from,
+                            const std::string &to) const override {
     if (FileExists(from)) {
       files_[to] = files_[from];
       files_[from] = 0;
-      return true;
+      return absl::OkStatus();
     }
     if (DirectoryExists(from)) {
       dirs_[to] = dirs_[from];
       dirs_[from] = false;
-      return true;
+      return absl::OkStatus();
     }
-    return false;
+    return absl::NotFoundError(absl::StrFormat("%s doesn't exist", from));
   }
 
-  bool CreateHardLink(const std::string &from,
-                      const std::string &to) override {
+  bool CreateHardLink(const std::string &from, const std::string &to) override {
     if (!FileExists(from) && !DirectoryExists(from)) {
       // `from` doesn't exist.
       return false;
@@ -156,7 +152,7 @@ class FileUtilMock : public FileUtilInterface {
   // Use FileTimeStamp as time stamp and also file id.
   // 0 means that the file is removed.
   mutable std::map<std::string, FileTimeStamp> files_;
-  FileTimeStamp base_id_ {1'000'000'000};
+  FileTimeStamp base_id_{1'000'000'000};
   mutable std::map<std::string, bool> dirs_;
   mutable std::map<std::string, std::string> canonical_paths_;
 

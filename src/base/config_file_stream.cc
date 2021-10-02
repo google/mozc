@@ -181,8 +181,10 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
     ofs << new_binary_contens;
   }
 
-  if (!FileUtil::AtomicRename(tmp_filename, real_filename)) {
-    LOG(ERROR) << "FileUtil::AtomicRename failed";
+  if (absl::Status s = FileUtil::AtomicRename(tmp_filename, real_filename);
+      !s.ok()) {
+    LOG(ERROR) << "AtomicRename failed: " << s << "; from: " << tmp_filename
+               << ", to: " << real_filename;
     return false;
   }
 

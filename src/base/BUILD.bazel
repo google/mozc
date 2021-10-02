@@ -708,14 +708,20 @@ cc_library_mozc(
         ":singleton",
         ":util",
         ":win_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
 cc_library_mozc(
     name = "file_util_mock",
     hdrs = ["file_util_mock.h"],
-    deps = [":file_util"],
+    deps = [
+        ":file_util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+    ],
 )
 
 cc_test_mozc(

@@ -29,11 +29,10 @@
 
 #include "base/file_util_mock.h"
 
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
-
-// class FileUtilMockTest : public testing::Test {};
 
 TEST(FileUtilMockTest, DirectoryMockTests) {
   FileUtilMock mock;
@@ -58,7 +57,7 @@ TEST(FileUtilMockTest, FileMockTests) {
   EXPECT_TRUE(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
   EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
 
-  EXPECT_TRUE(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));
+  EXPECT_OK(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));
   EXPECT_FALSE(FileUtil::FileExists("/mozc/file3.txt"));
   EXPECT_TRUE(FileUtil::FileExists("/mozc/file4.txt"));
   EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));

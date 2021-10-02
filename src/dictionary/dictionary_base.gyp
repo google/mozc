@@ -171,6 +171,8 @@
         'user_dictionary_util.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../config/config.gyp:config_handler',

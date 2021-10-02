@@ -262,7 +262,9 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     if (storage->ConvertSyncDictionariesToNormalDictionaries()) {
       LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
       if (storage->Lock()) {
-        storage->Save();
+        if (absl::Status s = storage->Save(); !s.ok()) {
+          LOG(ERROR) << "Failed to save to storage: " << s;
+        }
         storage->UnLock();
       }
     }

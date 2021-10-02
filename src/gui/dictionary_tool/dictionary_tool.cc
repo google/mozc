@@ -86,9 +86,7 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 using ::mozc::user_dictionary::UserDictionarySession;
 using ::mozc::user_dictionary::UserDictionaryStorage;
 
-inline QString QUtf8(const char str[]) {
-  return QString::fromUtf8(str);
-}
+inline QString QUtf8(const char str[]) { return QString::fromUtf8(str); }
 
 inline QString QUtf8(const std::string &str) {
   return QString::fromUtf8(str.c_str());
@@ -355,7 +353,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
   if (session_->mutable_storage()
           ->ConvertSyncDictionariesToNormalDictionaries()) {
     LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
-    session_->mutable_storage()->Save();
+    if (absl::Status s = session_->mutable_storage()->Save(); !s.ok()) {
+      LOG(ERROR) << "Failed to save the storage: " << s;
+    }
   }
 #endif  // !ENABLE_CLOUD_SYNC
 
@@ -809,7 +809,8 @@ void DictionaryTool::ReportImportError(UserDictionaryImporter::ErrorType error,
                                   "unsupported file format.\n\n"
                                   "Please check the file format. "
                                   "ATOK11 or older format is not supported by "
-                                  "%1.").arg(GuiUtil::ProductName()));
+                                  "%1.")
+                                   .arg(GuiUtil::ProductName()));
       break;
     case UserDictionaryImporter::IMPORT_TOO_MANY_WORDS:
       QMessageBox::information(
@@ -1519,10 +1520,10 @@ void DictionaryTool::StopMonitoringUserEdit() {
 }
 
 void DictionaryTool::SaveAndReloadServer() {
-  if (!session_->mutable_storage()->Save() &&
-      session_->mutable_storage()->GetLastError() ==
-          mozc::UserDictionaryStorage::SYNC_FAILURE) {
-    LOG(ERROR) << "Cannot save dictionary";
+  if (absl::Status s = session_->mutable_storage()->Save();
+      !s.ok() && session_->mutable_storage()->GetLastError() ==
+                     mozc::UserDictionaryStorage::SYNC_FAILURE) {
+    LOG(ERROR) << "Cannot save dictionary: " << s;
     return;
   }
 

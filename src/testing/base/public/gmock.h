@@ -32,4 +32,17 @@
 
 #include <gmock/gmock.h>
 
+#ifndef EXPECT_OK
+
+namespace mozc {
+
+MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
+
+}  // namespace mozc
+
+#define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
+
+#endif  // EXPECT_OK
+
+
 #endif  // MOZC_TESTING_BASE_PUBLIC_GMOCK_H_

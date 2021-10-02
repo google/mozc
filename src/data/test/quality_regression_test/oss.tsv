@@ -106,3 +106,11 @@ oss_issue89	れべるのさでひどいことになる	なる	Conversion Match
 oss_issue89	わざのうまさにおどろいた	旨さ	Conversion Not Match
 oss_issue92	いってる	言ってる	Conversion Expected 2
 oss_issue92	りょうほう	両方	Conversion Expected
+oss_issue82	てれこむ	テレコム	Conversion Expected 2
+oss_issue93	しゅうせいされずにいた	修正されずにいた	Conversion Expected
+oss_issue93	これぐらいだとおもいます	これぐらいだと思います	Conversion Expected
+oss_issue93	なんかいかやっているので	何回かやっているので	Conversion Expected
+oss_issue93	とうきょうでぃずにー	東京ディズニーラ	Suggestion Not Expected
+oss_issue93	ぱわふる	パワフル急速沸騰	Suggestion Not Expected
+oss_issue93	てんいんにきけよ	店員に聞けよ	Conversion Expected
+oss_issue93	これがぶなんそうだった	これが無難そうだった	Conversion Expected

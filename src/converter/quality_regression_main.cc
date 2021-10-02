@@ -49,22 +49,32 @@ using mozc::quality_regression::QualityRegressionUtil;
 int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
-  absl::StatusOr<std::unique_ptr<Engine>> result = mozc::CreateEvalEngine(
-      absl::GetFlag(FLAGS_data_file), absl::GetFlag(FLAGS_data_type),
-      absl::GetFlag(FLAGS_engine_type));
-  if (!result.ok()) {
-    LOG(ERROR) << result.status().message();
-    return static_cast<int>(result.status().code());
+  absl::StatusOr<std::unique_ptr<Engine>> create_result =
+      mozc::CreateEvalEngine(absl::GetFlag(FLAGS_data_file),
+                             absl::GetFlag(FLAGS_data_type),
+                             absl::GetFlag(FLAGS_engine_type));
+  if (!create_result.ok()) {
+    LOG(ERROR) << create_result.status();
+    return static_cast<int>(create_result.status().code());
   }
-  QualityRegressionUtil util(result.value()->GetConverter());
+  QualityRegressionUtil util((*create_result)->GetConverter());
 
   std::vector<QualityRegressionUtil::TestItem> items;
-  QualityRegressionUtil::ParseFile(absl::GetFlag(FLAGS_test_file), &items);
+  const absl::Status parse_result =
+      QualityRegressionUtil::ParseFile(absl::GetFlag(FLAGS_test_file), &items);
+  if (!parse_result.ok()) {
+    LOG(ERROR) << parse_result;
+    return static_cast<int>(parse_result.code());
+  }
 
   for (size_t i = 0; i < items.size(); ++i) {
     std::string actual_value;
-    const bool result = util.ConvertAndTest(items[i], &actual_value);
-    std::cout << (result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
+    const auto &result = util.ConvertAndTest(items[i], &actual_value);
+    if (!result.ok()) {
+      LOG(ERROR) << result.status();
+      return static_cast<int>(result.status().code());
+    }
+    std::cout << (*result ? "OK:\t" : "FAILED:\t") << items[i].key << "\t"
               << actual_value << "\t" << items[i].command;
     if (items[i].expected_rank != 0) {
       std::cout << " " << items[i].expected_rank;

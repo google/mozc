@@ -52,9 +52,9 @@ namespace {
 
 constexpr uint32_t kStorageVersion = 0;
 constexpr uint32_t kStorageMagicId = 0x431fe241;  // random seed
-constexpr size_t kMaxElementSize = 1024;      // max map size
-constexpr size_t kMaxKeySize = 4096;          // 4k for key/value
-constexpr size_t kMaxValueSize = 4096;        // 4k for key/value
+constexpr size_t kMaxElementSize = 1024;          // max map size
+constexpr size_t kMaxKeySize = 4096;              // 4k for key/value
+constexpr size_t kMaxValueSize = 4096;            // 4k for key/value
 // 1024 * (4096 + 4096) =~ 8MByte
 // so 10Mbyte data is reasonable upper bound for file size
 constexpr size_t kMaxFileSize = 1024 * 1024 * 10;  // 10Mbyte
@@ -270,8 +270,10 @@ bool TinyStorageImpl::Sync() {
   // should call close(). Othrwise AtomicRename will be failed.
   ofs.close();
 
-  if (!FileUtil::AtomicRename(output_filename, filename_)) {
-    LOG(ERROR) << "AtomicRename failed";
+  if (absl::Status s = FileUtil::AtomicRename(output_filename, filename_);
+      !s.ok()) {
+    LOG(ERROR) << "AtomicRename failed: " << s << "; from: " << output_filename
+               << ", to:" << filename_;
     return false;
   }
 
@@ -280,7 +282,7 @@ bool TinyStorageImpl::Sync() {
     LOG(ERROR) << "Cannot make hidden: " << filename_ << " "
                << ::GetLastError();
   }
-#endif
+#endif  // OS_WIN
 
   should_sync_ = false;
 

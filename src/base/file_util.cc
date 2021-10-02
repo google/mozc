@@ -32,7 +32,7 @@
 #ifdef OS_WIN
 #include <KtmW32.h>
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -48,12 +48,13 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "base/win_util.h"
+#include "absl/status/status.h"
 
 namespace {
 
 #ifdef OS_WIN
 constexpr char kFileDelimiter = '\\';
-#else
+#else   // OS_WIN
 constexpr char kFileDelimiter = '/';
 #endif  // OS_WIN
 
@@ -91,10 +92,9 @@ class FileUtilImpl : public FileUtilInterface {
                    const std::string &filename2) const override;
   bool IsEquivalent(const std::string &filename1,
                     const std::string &filename2) const override;
-  bool AtomicRename(const std::string &from,
-                    const std::string &to) const override;
-  bool CreateHardLink(const std::string &from,
-                      const std::string &to) override;
+  absl::Status AtomicRename(const std::string &from,
+                            const std::string &to) const override;
+  bool CreateHardLink(const std::string &from, const std::string &to) override;
   bool GetModificationTime(const std::string &filename,
                            FileTimeStamp *modified_at) const override;
 };
@@ -110,18 +110,32 @@ namespace {
 // has some special attribute like read-only. This method tries to strip system,
 // hidden, and read-only attributes from |filename|.
 // This function does nothing if |filename| does not exist.
-void StripWritePreventingAttributesIfExists(const std::string &filename) {
+absl::Status StripWritePreventingAttributesIfExists(
+    const std::string &filename) {
   if (!FileUtil::FileExists(filename)) {
-    return;
+    return absl::OkStatus();
   }
   std::wstring wide_filename;
   Util::Utf8ToWide(filename, &wide_filename);
   constexpr DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
   const DWORD attributes = ::GetFileAttributesW(wide_filename.c_str());
-  if (attributes & kDropAttributes) {
-    ::SetFileAttributesW(wide_filename.c_str(), attributes & ~kDropAttributes);
+  if (attributes == INVALID_FILE_ATTRIBUTES) {
+    const DWORD error = ::GetLastError();
+    return absl::UnknownError(absl::StrFormat(
+        "Cannot get the file attributes of %s: %d", filename, error));
   }
+  if (attributes & kDropAttributes) {
+    if (!::SetFileAttributesW(wide_filename.c_str(),
+                              attributes & ~kDropAttributes)) {
+      const DWORD error = ::GetLastError();
+      return absl::UnknownError(
+          absl::StrFormat("Cannot drop the write-preventing file attributes of "
+                          "%s: %d, attrs = %d",
+                          filename, error, attributes));
+    }
+  }
+  return absl::OkStatus();
 }
 
 }  // namespace
@@ -207,48 +221,47 @@ bool FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 #ifdef OS_WIN
 namespace {
 
-bool TransactionalMoveFile(const std::wstring &from, const std::wstring &to) {
+absl::Status TransactionalMoveFile(const std::wstring &from,
+                                   const std::wstring &to) {
   constexpr DWORD kTimeout = 5000;  // 5 sec.
   ScopedHandle handle(
       ::CreateTransaction(nullptr, 0, 0, 0, 0, kTimeout, nullptr));
-  const DWORD create_transaction_error = ::GetLastError();
   if (handle.get() == 0) {
-    LOG(ERROR) << "CreateTransaction failed: " << create_transaction_error;
-    return false;
+    const DWORD create_transaction_error = ::GetLastError();
+    return absl::UnknownError(absl::StrFormat("CreateTransaction failed: %d",
+                                              create_transaction_error));
   }
 
   WIN32_FILE_ATTRIBUTE_DATA file_attribute_data = {};
   if (!::GetFileAttributesTransactedW(from.c_str(), GetFileExInfoStandard,
                                       &file_attribute_data, handle.get())) {
     const DWORD get_file_attributes_error = ::GetLastError();
-    LOG(ERROR) << "GetFileAttributesTransactedW failed: "
-               << get_file_attributes_error;
-    return false;
+    return absl::UnknownError(absl::StrFormat(
+        "GetFileAttributesTransactedW failed: %d", get_file_attributes_error));
   }
 
   if (!::MoveFileTransactedW(from.c_str(), to.c_str(), nullptr, nullptr,
                              MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING,
                              handle.get())) {
     const DWORD move_file_transacted_error = ::GetLastError();
-    LOG(ERROR) << "MoveFileTransactedW failed: " << move_file_transacted_error;
-    return false;
+    return absl::UnknownError(absl::StrFormat("MoveFileTransactedW failed: %d",
+                                              move_file_transacted_error));
   }
 
   if (!::SetFileAttributesTransactedW(
           to.c_str(), file_attribute_data.dwFileAttributes, handle.get())) {
     const DWORD set_file_attributes_error = ::GetLastError();
-    LOG(ERROR) << "SetFileAttributesTransactedW failed: "
-               << set_file_attributes_error;
-    return false;
+    return absl::UnknownError(absl::StrFormat(
+        "SetFileAttributesTransactedW failed: %d", set_file_attributes_error));
   }
 
   if (!::CommitTransaction(handle.get())) {
     const DWORD commit_transaction_error = ::GetLastError();
-    LOG(ERROR) << "CommitTransaction failed: " << commit_transaction_error;
-    return false;
+    return absl::UnknownError(absl::StrFormat("CommitTransaction failed: %d",
+                                              commit_transaction_error));
   }
 
-  return true;
+  return absl::OkStatus();
 }
 
 }  // namespace
@@ -354,7 +367,7 @@ bool FileUtilImpl::IsEquivalent(const std::string &filename1,
 #ifdef __APPLE__
   // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
   return false;
-#else
+#else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
   const std::filesystem::path src = std::filesystem::u8path(filename1);
@@ -365,37 +378,62 @@ bool FileUtilImpl::IsEquivalent(const std::string &filename1,
 #endif  // __APPLE__
 }
 
-bool FileUtil::AtomicRename(const std::string &from, const std::string &to) {
+absl::Status FileUtil::AtomicRename(const std::string &from,
+                                    const std::string &to) {
   return FileUtilSingleton::Get()->AtomicRename(from, to);
 }
 
-bool FileUtilImpl::AtomicRename(const std::string &from,
-                                const std::string &to) const {
+absl::Status FileUtilImpl::AtomicRename(const std::string &from,
+                                        const std::string &to) const {
 #ifdef OS_WIN
   std::wstring fromw, tow;
   Util::Utf8ToWide(from, &fromw);
   Util::Utf8ToWide(to, &tow);
 
-  if (TransactionalMoveFile(fromw, tow)) {
-    return true;
+  absl::Status s = TransactionalMoveFile(fromw, tow);
+  if (s.ok()) {
+    return absl::OkStatus();
   }
+  LOG(WARNING) << "TransactionalMoveFile failed: from: " << from
+               << ", to: " << to << ", status: " << s;
 
   const DWORD original_attributes = ::GetFileAttributesW(fromw.c_str());
-  StripWritePreventingAttributesIfExists(to);
+  if (original_attributes == INVALID_FILE_ATTRIBUTES) {
+    const DWORD get_file_attributes_error = ::GetLastError();
+    return absl::UnknownError(absl::StrFormat(
+        "GetFileAttributesW failed: %d; Status of TransactionalMoveFile: %s",
+        get_file_attributes_error, s.ToString()));
+  }
+  if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
+    return absl::UnknownError(absl::StrFormat(
+        "StripWritePreventingAttributesIfExists failed: %s", s.ToString()));
+  }
   if (!::MoveFileExW(fromw.c_str(), tow.c_str(),
                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
     const DWORD move_file_ex_error = ::GetLastError();
-    LOG(ERROR) << "MoveFileEx failed: " << move_file_ex_error;
-    return false;
+    return absl::UnknownError(absl::StrFormat(
+        "MoveFileExW failed: %d; Status of TransactionalMoveFile: %s",
+        move_file_ex_error, s.ToString()));
   }
-  ::SetFileAttributesW(tow.c_str(), original_attributes);
+  if (!::SetFileAttributesW(tow.c_str(), original_attributes)) {
+    const DWORD set_file_attributes_error = ::GetLastError();
+    return absl::UnknownError(absl::StrFormat(
+        "SetFileAttributesW failed: %d, original_attributes: %d; Status of "
+        "TransactionalMoveFile: %s",
+        set_file_attributes_error, original_attributes, s.ToString()));
+  }
 
-  return true;
+  return absl::OkStatus();
 #else   // !OS_WIN
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
   // is not properly implemented, atomic rename is POSIX spec though.
   // http://www.weirdnet.nl/apple/rename.html
-  return rename(from.c_str(), to.c_str()) == 0;
+  if (const int r = rename(from.c_str(), to.c_str()); r != 0) {
+    const int err = errno;
+    return absl::UnknownError(
+        absl::StrFormat("errno(%d): %s", err, std::strerror(err)));
+  }
+  return absl::OkStatus();
 #endif  // OS_WIN
 }
 
@@ -408,7 +446,7 @@ bool FileUtilImpl::CreateHardLink(const std::string &from,
 #ifdef __APPLE__
   // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
   return false;
-#else
+#else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
   const std::filesystem::path src = std::filesystem::u8path(from);
@@ -467,7 +505,7 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
                       std::string(1, kFileDelimiterForWindows), true,
                       &normalized);
   return normalized;
-#else
+#else   // OS_WIN
   return path;
 #endif  // OS_WIN
 }

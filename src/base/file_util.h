@@ -34,12 +34,13 @@
 #include <windows.h>
 #else  // OS_WIN
 #include <sys/types.h>
-#endif
+#endif  // OS_WIN
 
 #include <string>
 #include <vector>
 
 #include "base/port.h"
+#include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
 // Ad-hoc workaround against macro problem on Windows.
@@ -61,7 +62,7 @@ namespace mozc {
 
 #if defined(OS_WIN)
 using FileTimeStamp = uint64;
-#else
+#else   // OS_WIN
 using FileTimeStamp = time_t;
 #endif  // OS_WIN
 
@@ -77,15 +78,15 @@ class FileUtilInterface {
   virtual bool CopyFile(const std::string &from,
                         const std::string &to) const = 0;
   virtual bool IsEqualFile(const std::string &filename1,
-                          const std::string &filename2) const = 0;
+                           const std::string &filename2) const = 0;
   virtual bool IsEquivalent(const std::string &filename1,
                             const std::string &filename2) const = 0;
-  virtual bool AtomicRename(const std::string &from,
-                            const std::string &to) const = 0;
+  virtual absl::Status AtomicRename(const std::string &from,
+                                    const std::string &to) const = 0;
   virtual bool CreateHardLink(const std::string &from,
                               const std::string &to) = 0;
   virtual bool GetModificationTime(const std::string &filename,
-                                  FileTimeStamp *modified_at) const = 0;
+                                   FileTimeStamp *modified_at) const = 0;
 
  protected:
   FileUtilInterface() = default;
@@ -134,8 +135,9 @@ class FileUtil {
                            const std::string &filename2);
 
   // Moves/Renames a file atomically.
-  // Returns true if the file is renamed successfully.
-  static bool AtomicRename(const std::string &from, const std::string &to);
+  // Returns OK if the file is renamed successfully.
+  static absl::Status AtomicRename(const std::string &from,
+                                   const std::string &to);
 
   // Creates a hard link. This returns false if the filesystem does not support
   // hard link or the target file already exists.

@@ -372,6 +372,8 @@ cc_library_mozc(
         "//base:util",
         "//base/protobuf:zero_copy_stream_impl",
         "//protocol:user_dictionary_storage_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

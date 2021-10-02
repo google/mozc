@@ -45,6 +45,8 @@
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -97,7 +99,7 @@ int GetRank(const std::string &value, const Segments *segments,
   return -1;
 }
 
-uint32_t GetPlatformFromString(absl::string_view str) {
+absl::StatusOr<uint32_t> GetPlatformFromString(absl::string_view str) {
   std::string lower;
   lower.assign(str.data(), str.size());
   Util::LowerString(&lower);
@@ -113,8 +115,8 @@ uint32_t GetPlatformFromString(absl::string_view str) {
   if (str == "mobile_ambiguous") {
     return QualityRegressionUtil::MOBILE_AMBIGUOUS;
   }
-  LOG(FATAL) << "Unknown platform name: " << str;
-  return QualityRegressionUtil::DESKTOP;
+  return absl::InvalidArgumentError(
+      absl::StrCat("Unknown platform name: ", str));
 }
 }  // namespace
 
@@ -126,11 +128,13 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
   return os.str();
 }
 
-bool QualityRegressionUtil::TestItem::ParseFromTSV(const std::string &line) {
+absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
+    const std::string &line) {
   std::vector<absl::string_view> tokens;
   Util::SplitStringUsing(line, "\t", &tokens);
   if (tokens.size() < 4) {
-    return false;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Invalid token size: ", line));
   }
   label.assign(tokens[0].data(), tokens[0].size());
   key.assign(tokens[1].data(), tokens[1].size());
@@ -160,13 +164,17 @@ bool QualityRegressionUtil::TestItem::ParseFromTSV(const std::string &line) {
     std::vector<absl::string_view> platforms;
     Util::SplitStringUsing(tokens[6], ",", &platforms);
     for (size_t i = 0; i < platforms.size(); ++i) {
-      platform |= GetPlatformFromString(platforms[i]);
+      auto result = GetPlatformFromString(platforms[i]);
+      if (!result.ok()) {
+        return std::move(result.status());
+      }
+      platform |= *result;
     }
   } else {
     // Default platform: desktop
     platform = QualityRegressionUtil::DESKTOP;
   }
-  return true;
+  return absl::OkStatus();
 }
 
 QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
@@ -178,13 +186,13 @@ QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
 QualityRegressionUtil::~QualityRegressionUtil() {}
 
 // static
-bool QualityRegressionUtil::ParseFile(const std::string &filename,
-                                      std::vector<TestItem> *outputs) {
+absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
+                                              std::vector<TestItem> *outputs) {
   // TODO(taku): support an XML file of Mozcsu.
   outputs->clear();
   InputFileStream ifs(filename.c_str());
   if (!ifs.good()) {
-    return false;
+    return absl::UnavailableError(absl::StrCat("Failed to read: ", filename));
   }
   std::string line;
   while (!std::getline(ifs, line).fail()) {
@@ -192,19 +200,19 @@ bool QualityRegressionUtil::ParseFile(const std::string &filename,
       continue;
     }
     TestItem item;
-    if (!item.ParseFromTSV(line)) {
-      LOG(ERROR) << "Cannot parse: " << line;
-      return false;
+    if (!item.ParseFromTSV(line).ok()) {
+      return absl::InvalidArgumentError(
+          absl::StrCat("Failed to parse: ", line));
     }
     outputs->push_back(item);
   }
-  return true;
+  return absl::OkStatus();
 }
 
 // static
 
-bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
-                                           std::string *actual_value) {
+absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
+    const TestItem &item, std::string *actual_value) {
   const std::string &key = item.key;
   const std::string &expected_value = item.expected_value;
   const std::string &command = item.command;
@@ -264,7 +272,8 @@ bool QualityRegressionUtil::ConvertAndTest(const TestItem &item,
       segments_->clear_history_segments();
     }
   } else {
-    LOG(FATAL) << "Unknown command: " << command;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Unknown command: ", item.OutputAsTSV()));
   }
 
   // No results is OK if "prediction not expect" command

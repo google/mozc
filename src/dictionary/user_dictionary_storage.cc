@@ -43,6 +43,8 @@
 #include "base/protobuf/zero_copy_stream_impl.h"
 #include "base/util.h"
 #include "dictionary/user_dictionary_util.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -57,16 +59,14 @@ constexpr size_t kDefaultTotalBytesLimit = 512 << 20;
 constexpr size_t kDefaultWarningTotalBytesLimit = 256 << 20;
 
 constexpr char kDefaultSyncDictionaryName[] = "Sync Dictionary";
-const char *kDictionaryNameConvertedFromSyncableDictionary = "同期用辞書";
-
-}  // namespace
+constexpr char kDictionaryNameConvertedFromSyncableDictionary[] = "同期用辞書";
 
 using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
+}  // namespace
+
 UserDictionaryStorage::UserDictionaryStorage(const std::string &file_name)
     : file_name_(file_name),
-      locked_(false),
-      last_error_type_(USER_DICTIONARY_STORAGE_NO_ERROR),
       local_mutex_(new Mutex),
       process_mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
 
@@ -103,8 +103,7 @@ bool UserDictionaryStorage::LoadInternal() {
   mozc::protobuf::io::CodedInputStream decoder(&zero_copy_input);
   decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit);
   if (!proto_.ParseFromCodedStream(&decoder) ||
-      !decoder.ConsumedEntireMessage() ||
-      !ifs.eof()) {
+      !decoder.ConsumedEntireMessage() || !ifs.eof()) {
     LOG(ERROR) << "ParseFromStream failed: file seems broken";
     last_error_type_ = BROKEN_FILE;
     return false;
@@ -139,53 +138,73 @@ bool UserDictionaryStorage::Load() {
   return result;
 }
 
-bool UserDictionaryStorage::Save() {
+absl::Status UserDictionaryStorage::Save() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   {
     scoped_lock l(local_mutex_.get());
     if (!locked_) {
-      LOG(ERROR) << "Dictionary is not locked. "
-                 << "Call Lock() before saving the dictionary";
       last_error_type_ = SYNC_FAILURE;
-      return false;
+      return absl::FailedPreconditionError(
+          "Must be locked before saving the dictionary (SYNC_FAILURE)");
     }
   }
 
   const std::string tmp_file_name = file_name_ + ".tmp";
+  std::string size_error_msg;
   {
     OutputFileStream ofs(tmp_file_name.c_str(),
                          std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs) {
-      LOG(ERROR) << "cannot open file: " << tmp_file_name;
       last_error_type_ = SYNC_FAILURE;
-      return false;
+      return absl::PermissionDeniedError(absl::StrFormat(
+          "Cannot open %s for write (SYNC_FAILURE)", tmp_file_name));
     }
 
     if (!proto_.SerializeToOstream(&ofs)) {
-      LOG(ERROR) << "SerializeToString failed";
       last_error_type_ = SYNC_FAILURE;
-      return false;
+      return absl::InternalError(
+          absl::StrFormat("SerializeToOstream failed (SYNC_FAILURE); path = %s",
+                          tmp_file_name));
     }
 
-    if (static_cast<size_t>(ofs.tellp()) >= kDefaultWarningTotalBytesLimit) {
-      LOG(ERROR) << "The file size exceeds " << kDefaultWarningTotalBytesLimit;
-      // continue "AtomicRename"
+    const size_t file_size = ofs.tellp();
+
+    ofs.close();
+    if (ofs.fail()) {
+      last_error_type_ = SYNC_FAILURE;
+      return absl::UnknownError(
+          absl::StrFormat("Failed to close %s (SYNC_FAILURE)", tmp_file_name));
+    }
+
+    if (file_size >= kDefaultWarningTotalBytesLimit) {
+      size_error_msg = absl::StrFormat(
+          "The file size exceeds the limit: size = %d, limit = %d", file_size,
+          kDefaultWarningTotalBytesLimit);
+      // Perform "AtomicRename" even if the size exceeded.
       last_error_type_ = TOO_BIG_FILE_BYTES;
     }
   }
 
-  if (!FileUtil::AtomicRename(tmp_file_name, file_name_)) {
-    LOG(ERROR) << "AtomicRename failed";
+  if (absl::Status s = FileUtil::AtomicRename(tmp_file_name, file_name_);
+      !s.ok()) {
+    std::string msg =
+        absl::StrFormat("%s; Atomic rename from %s to %s failed (SYNC_FAILURE)",
+                        s.message(), tmp_file_name, file_name_);
+    if (last_error_type_ == TOO_BIG_FILE_BYTES) {
+      msg.append("; ").append(size_error_msg);
+    }
     last_error_type_ = SYNC_FAILURE;
-    return false;
+    return absl::Status(s.code(), msg);
   }
 
   if (last_error_type_ == TOO_BIG_FILE_BYTES) {
-    return false;
+    return absl::FailedPreconditionError(absl::StrFormat(
+        "Save was successful with error (TOO_BIG_FILE_BYTES): %s",
+        size_error_msg));
   }
 
-  return true;
+  return absl::OkStatus();
 }
 
 bool UserDictionaryStorage::Lock() {

@@ -106,3 +106,11 @@ OK:	れべるのさでひどいことになる	レベルの差でひどいこと
 FAILED:	わざのうまさにおどろいた	技の旨さに驚いた	Conversion Not Match	旨さ	2.26.4500
 OK:	いってる	言ってる	Conversion Expected 2	言ってる	2.26.4500
 OK:	りょうほう	両方	Conversion Expected	両方	2.26.4500
+OK:	てれこむ	テレコム	Conversion Expected 2	テレコム	2.26.4507
+OK:	しゅうせいされずにいた	修正されずにいた	Conversion Expected	修正されずにいた	2.26.4507
+OK:	これぐらいだとおもいます	これぐらいだと思います	Conversion Expected	これぐらいだと思います	2.26.4507
+OK:	なんかいかやっているので	何回かやっているので	Conversion Expected	何回かやっているので	2.26.4507
+OK:	とうきょうでぃずにー	東京ディズニーランド	Suggestion Not Expected	東京ディズニーラ	2.26.4507
+OK:	ぱわふる	パワフル	Suggestion Not Expected	パワフル急速沸騰	2.26.4507
+OK:	てんいんにきけよ	店員に聞けよ	Conversion Expected	店員に聞けよ	2.26.4507
+OK:	これがぶなんそうだった	これが無難そうだった	Conversion Expected	これが無難そうだった	2.26.4507
