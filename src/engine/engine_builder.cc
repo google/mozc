@@ -71,7 +71,7 @@ bool LinkOrCopyFile(const std::string &src_path, const std::string &dst_path) {
 
   const std::string tmp_dst_path = dst_path + ".tmp";
   // Even if tmp_dst does not exist, Unlink() works but returns false.
-  FileUtil::Unlink(tmp_dst_path);
+  FileUtil::UnlinkOrLogError(tmp_dst_path);
   bool result = FileUtil::CreateHardLink(src_path, tmp_dst_path);
 
   if (!result) {

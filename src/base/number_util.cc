@@ -84,10 +84,10 @@ const char *const kCircledNumbers[] = {
 // Structure to store character set variations.
 struct NumberStringVariation {
   const char *const *const digits;
-  const int numbers_size;
   const char *description;
   const char *separator;
   const char *point;
+  const int numbers_size;
   const NumberUtil::NumberString::Style style;
 };
 
@@ -175,13 +175,13 @@ namespace {
 // To know what "大字" means, please refer
 // http://ja.wikipedia.org/wiki/%E5%A4%A7%E5%AD%97_(%E6%95%B0%E5%AD%97)
 const NumberStringVariation kKanjiVariations[] = {
-    {kNumHalfWidthDigits, 10, "数字", nullptr, nullptr,
+    {kNumHalfWidthDigits, "数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_HALFWIDTH},
-    {kNumFullWidthDigits, 10, "数字", nullptr, nullptr,
+    {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_ARABIC_AND_KANJI_FULLWIDTH},
-    {kNumKanjiDigits, 10, "漢数字", nullptr, nullptr,
+    {kNumKanjiDigits, "漢数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_KANJI},
-    {kNumKanjiOldDigits, 10, "大字", nullptr, nullptr,
+    {kNumKanjiOldDigits, "大字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_OLD_KANJI},
 };
 
@@ -323,9 +323,9 @@ bool NumberUtil::ArabicToKanji(absl::string_view input_num,
 namespace {
 
 const NumberStringVariation kNumDigitsVariations[] = {
-    {kNumHalfWidthDigits, 10, "数字", ",", ".",
+    {kNumHalfWidthDigits, "数字", ",", ".", 10,
      NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_HALFWIDTH},
-    {kNumFullWidthDigits, 10, "数字", "，", "．",
+    {kNumFullWidthDigits, "数字", "，", "．", 10,
      NumberUtil::NumberString::NUMBER_SEPARATED_ARABIC_FULLWIDTH},
 };
 
@@ -392,9 +392,9 @@ namespace {
 // use default for wide Arabic, because half/full width for
 // normal number is learned by character form manager.
 const NumberStringVariation kSingleDigitsVariations[] = {
-    {kNumKanjiDigits, 10, "漢数字", nullptr, nullptr,
+    {kNumKanjiDigits, "漢数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::NUMBER_KANJI_ARABIC},
-    {kNumFullWidthDigits, 10, "数字", nullptr, nullptr,
+    {kNumFullWidthDigits, "数字", nullptr, nullptr, 10,
      NumberUtil::NumberString::DEFAULT_STYLE},
 };
 
@@ -427,12 +427,13 @@ bool NumberUtil::ArabicToWideArabic(absl::string_view input_num,
 namespace {
 
 const NumberStringVariation kSpecialNumericVariations[] = {
-    {kRomanNumbersCapital, std::size(kRomanNumbersCapital),
-     "ローマ数字(大文字)", nullptr, nullptr,
+    {kRomanNumbersCapital, "ローマ数字(大文字)", nullptr, nullptr,
+     std::size(kRomanNumbersCapital),
      NumberUtil::NumberString::NUMBER_ROMAN_CAPITAL},
-    {kRomanNumbersSmall, std::size(kRomanNumbersSmall), "ローマ数字(小文字)",
-     nullptr, nullptr, NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
-    {kCircledNumbers, std::size(kCircledNumbers), "丸数字", nullptr, nullptr,
+    {kRomanNumbersSmall, "ローマ数字(小文字)", nullptr, nullptr,
+     std::size(kRomanNumbersSmall),
+     NumberUtil::NumberString::NUMBER_ROMAN_SMALL},
+    {kCircledNumbers, "丸数字", nullptr, nullptr, std::size(kCircledNumbers),
      NumberUtil::NumberString::NUMBER_CIRCLED},
 };
 

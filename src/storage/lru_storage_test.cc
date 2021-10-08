@@ -43,6 +43,7 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "storage/lru_cache.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -132,9 +133,7 @@ class LruStorageTest : public ::testing::Test {
 
   static void UnlinkDBFileIfExists() {
     const std::string path = GetTemporaryFilePath();
-    if (FileUtil::FileExists(path)) {
-      FileUtil::Unlink(path);
-    }
+    EXPECT_OK(FileUtil::UnlinkIfExists(path));
   }
 
   static std::string GetTemporaryFilePath() {
@@ -332,8 +331,8 @@ TEST_F(LruStorageTest, Merge) {
     EXPECT_EQ(0, last_access_time);
   }
 
-  FileUtil::Unlink(file1);
-  FileUtil::Unlink(file2);
+  EXPECT_OK(FileUtil::Unlink(file1));
+  EXPECT_OK(FileUtil::Unlink(file2));
 }
 
 TEST_F(LruStorageTest, InvalidFileOpenTest) {
@@ -341,7 +340,7 @@ TEST_F(LruStorageTest, InvalidFileOpenTest) {
   EXPECT_FALSE(storage.Insert("test", nullptr));
 
   const std::string filename = GetTemporaryFilePath();
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
 
   // cannot open
   EXPECT_FALSE(storage.Open(filename.c_str()));

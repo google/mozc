@@ -136,14 +136,19 @@ class ConversionRequest {
   // Input config.
   const config::Config *config_;
 
+  // Which composer's method to use for conversion key; see the comment around
+  // the definition of ComposerKeySelection above.
+  ComposerKeySelection composer_key_selection_ = CONVERSION_KEY;
+
+  int max_conversion_candidates_size_ = kMaxConversionCandidatesSize;
+  int max_user_history_prediction_candidates_size_ = 3;
+  int max_user_history_prediction_candidates_size_for_zero_query_ = 4;
+  int max_dictionary_prediction_candidates_size_ = 20;
+
   // If true, insert a top candidate from the actual (non-immutable) converter
   // to realtime conversion results. Note that setting this true causes a big
   // performance loss (3 times slower).
   bool use_actual_converter_for_realtime_conversion_ = false;
-
-  // Which composer's method to use for conversion key; see the comment around
-  // the definition of ComposerKeySelection above.
-  ComposerKeySelection composer_key_selection_ = CONVERSION_KEY;
 
   // Don't use this flag directly. This flag is used by DictionaryPredictor to
   // skip some heavy rewriters, such as UserBoundaryHistoryRewriter and
@@ -154,11 +159,6 @@ class ConversionRequest {
   // If true, partial candidates are created on prediction/suggestion.
   // For example, "私の" is created from composition "わたしのなまえ".
   bool create_partial_candidates_ = false;
-
-  int max_conversion_candidates_size_ = kMaxConversionCandidatesSize;
-  int max_user_history_prediction_candidates_size_ = 3;
-  int max_user_history_prediction_candidates_size_for_zero_query_ = 4;
-  int max_dictionary_prediction_candidates_size_ = 20;
 
   // TODO(noriyukit): Moves all the members of Segments that are irrelevant to
   // this structure, e.g., Segments::user_history_enabled_ and

@@ -27,8 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This dictionary supports system dicitonary that will belookup from
+// This dictionary supports system dicitonary that will be looked up from
 // value, rather than key.
+// Value dictionary is mainly used to lookup the English words from
+// user-typed literal sequences. (English has no 'reading' representation.)
 // Token's key, cost, ids will not be looked up due to performance concern
 
 #ifndef MOZC_DICTIONARY_SYSTEM_VALUE_DICTIONARY_H_

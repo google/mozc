@@ -509,7 +509,7 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   // Create dictionary
   const std::string filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
   UserDictionaryStorage storage(filename);
   {
     uint64_t id = 0;
@@ -572,7 +572,7 @@ TEST_F(UserDictionaryTest, IncognitoModeTest) {
 TEST_F(UserDictionaryTest, AsyncLoadTest) {
   const std::string filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "async_load_test.db");
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 
   // Create dictionary
   std::vector<std::string> keys;
@@ -616,7 +616,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
     }
     dic->WaitForReloader();
   }
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
@@ -625,7 +625,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
 
   const std::string filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "suppression_test.db");
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
 
   UserDictionaryStorage storage(filename);
 
@@ -686,7 +686,7 @@ TEST_F(UserDictionaryTest, TestSuppressionDictionary) {
           "suppress_value" + std::to_string(static_cast<uint32_t>(j))));
     }
   }
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
@@ -695,7 +695,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
 
   const std::string filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "suggestion_only_test.db");
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
 
   UserDictionaryStorage storage(filename);
 
@@ -745,7 +745,7 @@ TEST_F(UserDictionaryTest, TestSuggestionOnlyWord) {
     }
   }
 
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserDictionaryTest, TestUsageStats) {

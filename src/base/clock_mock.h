@@ -75,11 +75,12 @@ class ClockMock : public ClockInterface {
 
  private:
   uint64_t seconds_;
-  uint32_t micro_seconds_;
   uint64_t frequency_;
   uint64_t ticks_;
   absl::TimeZone timezone_;
   int32_t timezone_offset_sec_;
+  // To optimize the padding, micro_seconds_ is after another int32_t value.
+  uint32_t micro_seconds_;
   // Everytime user requests time clock, following time is added to the
   // internal clock.
   uint64_t delta_seconds_;

@@ -1097,6 +1097,7 @@ cc_library_mozc(
         ":singleton",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/status",
     ] + select_mozc(
         ios = [":mac_util"],
     ),

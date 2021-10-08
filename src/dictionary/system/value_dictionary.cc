@@ -38,6 +38,7 @@
 #include "base/logging.h"
 #include "base/mmap.h"
 #include "base/port.h"
+#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file.h"
@@ -83,6 +84,21 @@ inline void FillToken(const uint16_t suggestion_only_word_id,
   token->attributes = Token::NONE;
 }
 
+inline bool IsValidKey(absl::string_view key) {
+  // Do nothing for empty key, although looking up all the entries with empty
+  // string seems natural.
+  if (key.empty()) {
+    return false;
+  }
+  // Value dictionary is used to suggest English words from literal ASCII
+  // query.
+  const Util::ScriptType type = Util::GetFirstScriptType(key);
+  if (type == Util::HIRAGANA || type == Util::KANJI || type == Util::KATAKANA) {
+    return false;
+  }
+  return true;
+}
+
 inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
     const LoudsTrie &value_trie, const SystemDictionaryCodecInterface &codec,
     const uint16_t suggestion_only_word_id, const LoudsTrie::Node &node,
@@ -108,11 +124,10 @@ inline DictionaryInterface::Callback::ResultType HandleTerminalNode(
 void ValueDictionary::LookupPredictive(
     absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
-  // Do nothing for empty key, although looking up all the entries with empty
-  // string seems natural.
-  if (key.empty()) {
+  if (!IsValidKey(key)) {
     return;
   }
+
   std::string encoded_key;
   codec_->EncodeValue(key, &encoded_key);
 
@@ -160,9 +175,7 @@ void ValueDictionary::LookupPrefix(absl::string_view key,
 void ValueDictionary::LookupExact(absl::string_view key,
                                   const ConversionRequest &conversion_request,
                                   Callback *callback) const {
-  if (key.empty()) {
-    // For empty string, return nothing for compatibility reason; see the
-    // comment above.
+  if (!IsValidKey(key)) {
     return;
   }
 

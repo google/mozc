@@ -2413,6 +2413,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   const char *kExpectedSuggestionValues[] = {
       "Realtime top result",
       "PCテスト",
+      "PCてすと",
   };
 
   // Set up mock converter for realtime top result.
@@ -2433,10 +2434,11 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   convreq_->set_use_actual_converter_for_realtime_conversion(false);
   predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
                                          &segments, &results);
-  ASSERT_EQ(1, results.size());
+  ASSERT_EQ(2, results.size());
 
   EXPECT_EQ(DictionaryPredictor::REALTIME, results[0].types);
   EXPECT_EQ(kExpectedSuggestionValues[1], results[0].value);
+  EXPECT_EQ(kExpectedSuggestionValues[2], results[1].value);
   EXPECT_EQ(1, segments.conversion_segments_size());
 }
 

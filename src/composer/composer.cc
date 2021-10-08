@@ -233,7 +233,6 @@ Composer::Composer()
 Composer::Composer(const Table *table, const commands::Request *request,
                    const config::Config *config)
     : position_(0),
-      is_new_input_(true),
       input_mode_(transliteration::HIRAGANA),
       output_mode_(transliteration::HIRAGANA),
       comeback_input_mode_(transliteration::HIRAGANA),
@@ -245,7 +244,8 @@ Composer::Composer(const Table *table, const commands::Request *request,
           absl::GetFlag(FLAGS_max_typing_correction_query_results)),
       max_length_(kMaxPreeditLength),
       request_(request),
-      config_(config) {
+      config_(config),
+      is_new_input_(true) {
   SetInputMode(transliteration::HIRAGANA);
   if (config_ == nullptr) {
     config_ = &config::ConfigHandler::DefaultConfig();

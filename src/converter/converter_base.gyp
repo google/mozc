@@ -84,6 +84,7 @@
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',
+        '../protocol/protocol.gyp:commands_proto',
         '../transliteration/transliteration.gyp:transliteration',
         'connector',
         'lattice',

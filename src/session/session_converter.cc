@@ -111,15 +111,15 @@ const size_t SessionConverter::kConsumedAllCharacters =
 SessionConverter::SessionConverter(const ConverterInterface *converter,
                                    const Request *request, const Config *config)
     : SessionConverterInterface(),
-      state_(COMPOSITION),
       converter_(converter),
       segments_(new Segments),
       segment_index_(0),
       result_(new commands::Result),
       candidate_list_(new CandidateList(true)),
-      candidate_list_visible_(false),
       request_(request),
-      client_revision_(0) {
+      state_(COMPOSITION),
+      client_revision_(0),
+      candidate_list_visible_(false) {
   conversion_preferences_.use_history = true;
   conversion_preferences_.max_history_size = kDefaultMaxHistorySize;
   conversion_preferences_.request_suggestion = true;

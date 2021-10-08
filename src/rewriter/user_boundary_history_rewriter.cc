@@ -150,7 +150,7 @@ void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
     // Note: we can #ifdef inside SetInteger, but to build it we need to build
     // other methods in usage_stats as well. So we'll exclude the method here
     // for now.
-#else  // OS_ANDROID
+#else   // OS_ANDROID
     // update usage stats here
     usage_stats::UsageStats::SetInteger(
         "UserBoundaryHistoryEntrySize",
@@ -214,7 +214,7 @@ bool UserBoundaryHistoryRewriter::Reload() {
   // merge pending file does not always exist.
   if (FileUtil::FileExists(merge_pending_file)) {
     storage_->Merge(merge_pending_file.c_str());
-    FileUtil::Unlink(merge_pending_file);
+    FileUtil::UnlinkOrLogError(merge_pending_file);
   }
 
   return true;

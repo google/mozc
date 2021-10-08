@@ -327,9 +327,12 @@ void SessionHandlerInterpreter::ClearState() {
   // Some destructors may save the state on storages. To clear the state, we
   // explicitly call destructors before clearing storages.
   mozc::storage::Registry::Clear();
-  FileUtil::Unlink(mozc::ConfigFileStream::GetFileName("user://boundary.db"));
-  FileUtil::Unlink(mozc::ConfigFileStream::GetFileName("user://segment.db"));
-  FileUtil::Unlink(mozc::UserHistoryPredictor::GetUserHistoryFileName());
+  FileUtil::UnlinkOrLogError(
+      mozc::ConfigFileStream::GetFileName("user://boundary.db"));
+  FileUtil::UnlinkOrLogError(
+      mozc::ConfigFileStream::GetFileName("user://segment.db"));
+  FileUtil::UnlinkOrLogError(
+      mozc::UserHistoryPredictor::GetUserHistoryFileName());
 }
 
 void SessionHandlerInterpreter::ClearAll() {

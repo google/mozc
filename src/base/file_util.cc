@@ -84,7 +84,7 @@ class FileUtilImpl : public FileUtilInterface {
 
   bool CreateDirectory(const std::string &path) const override;
   bool RemoveDirectory(const std::string &dirname) const override;
-  bool Unlink(const std::string &filename) const override;
+  absl::Status Unlink(const std::string &filename) const override;
   bool FileExists(const std::string &filename) const override;
   bool DirectoryExists(const std::string &dirname) const override;
   bool CopyFile(const std::string &from, const std::string &to) const override;
@@ -169,19 +169,44 @@ bool FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #endif  // OS_WIN
 }
 
-bool FileUtil::Unlink(const std::string &filename) {
+absl::Status FileUtil::Unlink(const std::string &filename) {
   return FileUtilSingleton::Get()->Unlink(filename);
 }
 
-bool FileUtilImpl::Unlink(const std::string &filename) const {
+absl::Status FileUtilImpl::Unlink(const std::string &filename) const {
 #ifdef OS_WIN
-  StripWritePreventingAttributesIfExists(filename);
+  if (absl::Status s = StripWritePreventingAttributesIfExists(filename);
+      !s.ok()) {
+    return absl::UnknownError(absl::StrFormat(
+        "StripWritePreventingAttributesIfExists failed: %s", s.ToString()));
+  }
   std::wstring wide;
-  return (Util::Utf8ToWide(filename, &wide) > 0 &&
-          ::DeleteFileW(wide.c_str()) != 0);
+  if (Util::Utf8ToWide(filename, &wide) <= 0) {
+    return absl::InvalidArgumentError("Utf8ToWide failed");
+  }
+  if (!::DeleteFileW(wide.c_str())) {
+    const DWORD err = ::GetLastError();
+    return absl::UnknownError(absl::StrFormat("DeleteFileW failed: %d", err));
+  }
+  return absl::OkStatus();
 #else   // !OS_WIN
-  return ::unlink(filename.c_str()) == 0;
+  if (::unlink(filename.c_str()) != 0) {
+    const int err = errno;
+    return absl::UnknownError(
+        absl::StrFormat("unlink failed: errno = %d", err));
+  }
+  return absl::OkStatus();
 #endif  // OS_WIN
+}
+
+absl::Status FileUtil::UnlinkIfExists(const std::string &filename) {
+  return FileExists(filename) ? Unlink(filename) : absl::OkStatus();
+}
+
+void FileUtil::UnlinkOrLogError(const std::string &filename) {
+  if (absl::Status s = Unlink(filename); !s.ok()) {
+    LOG(ERROR) << "Cannot unlink " << filename << ": " << s;
+  }
 }
 
 bool FileUtil::FileExists(const std::string &filename) {

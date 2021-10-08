@@ -266,12 +266,6 @@ class Composer final {
                              std::string *result) const;
 
   size_t position_;
-  // Whether the next insertion is the beginning of typing after an
-  // editing command like SetInputMode or not.  Some conversion rules
-  // refer this state.  Assuming the input events are
-  // "abc<left-cursor>d", when "a" or "d" is typed, this value should
-  // be true.  When "b" or "c" is typed, the value should be false.
-  bool is_new_input_;
   transliteration::TransliterationType input_mode_;
   transliteration::TransliterationType output_mode_;
   // On reset, comeback_input_mode_ is used as the input mode.
@@ -300,6 +294,13 @@ class Composer final {
   // the STOP_KEY_TOGGLING event is sent before the next key input.
   // If the value is 0, STOP_KEY_TOGGLING is not sent.
   int timeout_threshold_msec_ = 0;
+
+  // Whether the next insertion is the beginning of typing after an
+  // editing command like SetInputMode or not.  Some conversion rules
+  // refer this state.  Assuming the input events are
+  // "abc<left-cursor>d", when "a" or "d" is typed, this value should
+  // be true.  When "b" or "c" is typed, the value should be false.
+  bool is_new_input_;
 };
 
 }  // namespace composer

@@ -364,8 +364,6 @@ class SessionConverter : public SessionConverterInterface {
       SessionConverterInterface::State commit_state,
       const commands::Context &context, size_t commit_segments_size);
 
-  SessionConverterInterface::State state_;
-
   const ConverterInterface *converter_;
   std::unique_ptr<Segments> segments_;
   size_t segment_index_;
@@ -373,32 +371,36 @@ class SessionConverter : public SessionConverterInterface {
   // Previous suggestions to be merged with the current predictions.
   Segment previous_suggestions_;
 
-  // Default conversion preferences.
-  ConversionPreferences conversion_preferences_;
-
   std::unique_ptr<commands::Result> result_;
 
   std::unique_ptr<CandidateList> candidate_list_;
-  bool candidate_list_visible_;
 
   const commands::Request *request_;
   const config::Config *config_;
 
-  // Mutable values of |config_|.  These values may be changed temporaliry per
-  // session.
-  bool use_cascading_window_;
-  config::Config::SelectionShortcut selection_shortcut_;
+  SessionConverterInterface::State state_;
 
-  // Indicates whether config_ will be updated by the command candidate.
-  Segment::Candidate::Command updated_command_;
+  // Default conversion preferences.
+  ConversionPreferences conversion_preferences_;
+
+  config::Config::SelectionShortcut selection_shortcut_;
 
   // Selected index data of each segments for usage stats.
   std::vector<int> selected_candidate_indices_;
+
+  // Indicates whether config_ will be updated by the command candidate.
+  Segment::Candidate::Command updated_command_;
 
   // Revision number of client context with which the converter determines when
   // the history segments should be invalidated. See the implementation of
   // OnStartComposition for details.
   int32_t client_revision_;
+
+  bool candidate_list_visible_;
+
+  // Mutable values of |config_|.  These values may be changed temporaliry per
+  // session.
+  bool use_cascading_window_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionConverter);
 };

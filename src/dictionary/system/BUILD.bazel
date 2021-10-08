@@ -141,6 +141,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:mmap",
         "//base:port",
+        "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
         "//dictionary:pos_matcher_lib",

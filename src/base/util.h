@@ -278,7 +278,7 @@ class Util {
 
   template <typename... Args>
   static std::string StringPrintf(const absl::FormatSpec<Args...> &format,
-                                  const Args &... args) {
+                                  const Args &...args) {
     return absl::StrFormat(format, args...);
   }
 
@@ -396,7 +396,7 @@ class Util {
                                   size_t *mblen);
 
   // return script type of first character in str
-  static ScriptType GetFirstScriptType(const std::string &str);
+  static ScriptType GetFirstScriptType(absl::string_view str);
 
   // return script type of string. all chars in str must be
   // KATAKANA/HIRAGANA/KANJI/NUMBER or ALPHABET.
@@ -562,9 +562,9 @@ class SplitIterator<Delimiter, AllowEmpty> {
 
  private:
   const char *const end_;
-  const Delimiter delim_;
   const char *sp_begin_;
   absl::string_view::size_type sp_len_;
+  const Delimiter delim_;
   bool done_;
 
   DISALLOW_COPY_AND_ASSIGN(SplitIterator);

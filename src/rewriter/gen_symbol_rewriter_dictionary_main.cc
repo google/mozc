@@ -232,7 +232,8 @@ int main(int argc, char **argv) {
   mozc::SerializedDictionary::CompileToFiles(
       tmp_text_file, absl::GetFlag(FLAGS_output_token_array),
       absl::GetFlag(FLAGS_output_string_array));
-  mozc::FileUtil::Unlink(tmp_text_file);
+  absl::Status s = mozc::FileUtil::Unlink(tmp_text_file);
+  CHECK(s.ok()) << s;
 
   return 0;
 }

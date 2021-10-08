@@ -47,7 +47,7 @@ TEST(FileUtilMockTest, FileMockTests) {
   FileUtilMock mock;
 
   mock.CreateFile("/mozc/file.txt");
-  EXPECT_TRUE(FileUtil::Unlink("/mozc/file.txt"));
+  EXPECT_OK(FileUtil::Unlink("/mozc/file.txt"));
   EXPECT_FALSE(FileUtil::FileExists("/mozc/file.txt"));
 
   mock.CreateFile("/mozc/file1.txt");

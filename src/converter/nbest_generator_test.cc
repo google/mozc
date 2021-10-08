@@ -158,7 +158,7 @@ class NBestGeneratorTest : public ::testing::Test {
       Segment::Candidate *candidate = segment->push_back_candidate();
       candidate->Init();
 
-      if (!nbest->Next(segment->key(), candidate, request_type)) {
+      if (!nbest->Next(request_, segment->key(), candidate, request_type)) {
         segment->pop_back_candidate();
         break;
       }
@@ -180,6 +180,8 @@ class NBestGeneratorTest : public ::testing::Test {
     }
     return end_node;
   }
+
+  const ConversionRequest request_;
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {

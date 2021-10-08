@@ -96,7 +96,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
     MOBILE,
   };
 
-  void ExpandCandidates(const std::string &original_key, NBestGenerator *nbest,
+  void ExpandCandidates(const ConversionRequest &request,
+                        const std::string &original_key, NBestGenerator *nbest,
                         Segment *segment, Segments::RequestType request_type,
                         size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
@@ -144,14 +145,16 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   // Inserts first segment from conversion result to candidates.
   // Costs will be modified using the existing candidates.
-  void InsertFirstSegmentToCandidates(Segments *segments,
+  void InsertFirstSegmentToCandidates(const ConversionRequest &request,
+                                      Segments *segments,
                                       const Lattice &lattice,
                                       const std::vector<uint16_t> &group,
                                       size_t max_candidates_size,
                                       FilterType filter_type,
                                       bool allow_exact) const;
 
-  void InsertCandidates(Segments *segments, const Lattice &lattice,
+  void InsertCandidates(const ConversionRequest &request, Segments *segments,
+                        const Lattice &lattice,
                         const std::vector<uint16_t> &group,
                         size_t max_candidates_size, InsertCandidatesType type,
                         FilterType filter_type) const;
