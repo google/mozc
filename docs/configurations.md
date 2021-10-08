@@ -13,7 +13,7 @@ dictionary.
 
 | Reading     | Word                  | Category |
 | ----------- | --------------------- | -------- |
-| DATE_FORMAT | {YEAR}.{MONTH}.{DATE} | 名詞      |
+| DATE_FORMAT | {YEAR}.{MONTH}.{DATE} | 名詞     |
 
 Any category is OK so far.
 
