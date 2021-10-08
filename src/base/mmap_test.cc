@@ -35,6 +35,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -48,8 +49,8 @@ TEST(MmapTest, MmapTest) {
 
   constexpr size_t kFileNameSize[] = {1, 100, 1024, 8192};
   for (int i = 0; i < std::size(kFileNameSize); ++i) {
-    FileUtil::Unlink(filename);
-    std::unique_ptr<char[]> buf(new char[kFileNameSize[i]]);
+    ASSERT_OK(FileUtil::UnlinkIfExists(filename));
+    auto buf = std::make_unique<char[]>(kFileNameSize[i]);
     memset(buf.get(), 0, kFileNameSize[i]);
 
     {
@@ -94,7 +95,7 @@ TEST(MmapTest, MmapTest) {
       }
     }
 
-    FileUtil::Unlink(filename);
+    EXPECT_OK(FileUtil::Unlink(filename));
   }
 }
 

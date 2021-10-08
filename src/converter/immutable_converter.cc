@@ -303,8 +303,9 @@ ImmutableConverterImpl::ImmutableConverterImpl(
 }
 
 void ImmutableConverterImpl::ExpandCandidates(
-    const std::string &original_key, NBestGenerator *nbest, Segment *segment,
-    Segments::RequestType request_type, size_t expand_size) const {
+    const ConversionRequest &request, const std::string &original_key,
+    NBestGenerator *nbest, Segment *segment, Segments::RequestType request_type,
+    size_t expand_size) const {
   DCHECK(nbest);
   DCHECK(segment);
   CHECK_GT(expand_size, 0);
@@ -316,7 +317,7 @@ void ImmutableConverterImpl::ExpandCandidates(
 
     // if NBestGenerator::Next() returns nullptr,
     // no more entries are generated.
-    if (!nbest->Next(original_key, candidate, request_type)) {
+    if (!nbest->Next(request, original_key, candidate, request_type)) {
       segment->pop_back_candidate();
       break;
     }
@@ -1733,12 +1734,13 @@ void ImmutableConverterImpl::Resegment(const Segments &segments,
 
 // Single segment conversion results should be set to |segments|.
 void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
-    Segments *segments, const Lattice &lattice,
-    const std::vector<uint16_t> &group, size_t max_candidates_size,
-    FilterType filter_type, bool allow_exact) const {
+    const ConversionRequest &request, Segments *segments,
+    const Lattice &lattice, const std::vector<uint16_t> &group,
+    size_t max_candidates_size, FilterType filter_type,
+    bool allow_exact) const {
   const size_t only_first_segment_candidate_pos =
       segments->conversion_segment(0).candidates_size();
-  InsertCandidates(segments, lattice, group, max_candidates_size,
+  InsertCandidates(request, segments, lattice, group, max_candidates_size,
                    ONLY_FIRST_SEGMENT, filter_type);
   // Note that inserted candidates might consume the entire key.
   // e.g. key: "なのは", value: "ナノは"
@@ -1872,9 +1874,10 @@ Segment *ImmutableConverterImpl::GetInsertTargetSegment(
 }
 
 void ImmutableConverterImpl::InsertCandidates(
-    Segments *segments, const Lattice &lattice,
-    const std::vector<uint16_t> &group, size_t max_candidates_size,
-    InsertCandidatesType type, FilterType filter_type) const {
+    const ConversionRequest &request, Segments *segments,
+    const Lattice &lattice, const std::vector<uint16_t> &group,
+    size_t max_candidates_size, InsertCandidatesType type,
+    FilterType filter_type) const {
   // skip HIS_NODE(s)
   Node *prev = lattice.bos_nodes();
   for (Node *node = lattice.bos_nodes()->next;
@@ -1921,7 +1924,7 @@ void ImmutableConverterImpl::InsertCandidates(
     }
     nbest_generator.Reset(prev, node->next, mode);
 
-    ExpandCandidates(original_key, &nbest_generator, segment,
+    ExpandCandidates(request, original_key, &nbest_generator, segment,
                      segments->request_type(), expand_size);
 
     if (type == MULTI_SEGMENTS || type == SINGLE_SEGMENT) {
@@ -1974,8 +1977,9 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
           ((max_candidates_size > kOnlyFirstSegmentCandidateSize)
                ? max_candidates_size - kOnlyFirstSegmentCandidateSize
                : 1);
-      InsertCandidates(segments, lattice, group, single_segment_candidates_size,
-                       SINGLE_SEGMENT, filter_type);
+      InsertCandidates(request, segments, lattice, group,
+                       single_segment_candidates_size, SINGLE_SEGMENT,
+                       filter_type);
 
       // Even if single_segment_candidates_size + kOnlyFirstSegmentCandidateSize
       // is greater than max_candidates_size, we cannot skip
@@ -1990,20 +1994,20 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
       const size_t only_first_segment_candidates_size =
           std::min(max_candidates_size, single_segment_candidates_size +
                                             kOnlyFirstSegmentCandidateSize);
-      InsertFirstSegmentToCandidates(segments, lattice, group,
+      InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                      only_first_segment_candidates_size,
                                      filter_type, allow_exact);
       // TODO(taku): We do not want to refer `is_prediciton` here.
       // This is a temporal workaround to fill all personal names appeared
       // as exact partial candidates. Expand candidates as many as possible
       if (is_prediction && !is_simplified_ranking) {
-        InsertFirstSegmentToCandidates(segments, lattice, group,
+        InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                        request.max_conversion_candidates_size(),
                                        filter_type, true /* allow exact */);
       }
 
     } else {
-      InsertCandidates(segments, lattice, group, max_candidates_size,
+      InsertCandidates(request, segments, lattice, group, max_candidates_size,
                        SINGLE_SEGMENT, filter_type);
     }
   };
@@ -2011,11 +2015,11 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
   auto do_prediction = [this, &request, &lattice, &group, &segments,
                         &allow_exact, &filter_type]() {
     if (request.create_partial_candidates()) {
-      InsertFirstSegmentToCandidates(segments, lattice, group,
+      InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                      request.max_conversion_candidates_size(),
                                      filter_type, allow_exact);
     } else {
-      InsertCandidates(segments, lattice, group,
+      InsertCandidates(request, segments, lattice, group,
                        request.max_conversion_candidates_size(), SINGLE_SEGMENT,
                        filter_type);
     }
@@ -2039,7 +2043,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     // TODO(toshiyuki): We want more beautiful structure.
     const size_t old_conversion_segments_size =
         segments->conversion_segments_size();
-    InsertCandidates(segments, lattice, group, max_candidates_size,
+    InsertCandidates(request, segments, lattice, group, max_candidates_size,
                      MULTI_SEGMENTS, filter_type);
     if (old_conversion_segments_size > 0) {
       segments->erase_segments(segments->history_segments_size(),

@@ -185,6 +185,8 @@ cc_library_mozc(
         "//base:util",
         "//dictionary:pos_matcher_lib",
         "//dictionary:suppression_dictionary",
+        "//prediction:suggestion_filter",
+        "//request:conversion_request",
     ],
 )
 
@@ -243,6 +245,9 @@ cc_library_mozc(
         "//dictionary:pos_matcher_lib",
         "//dictionary:suppression_dictionary",
         "//prediction:suggestion_filter",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -263,6 +268,8 @@ cc_test_mozc(
         "//dictionary:pos_matcher_lib",
         "//dictionary:suppression_dictionary",
         "//prediction:suggestion_filter",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
     ],

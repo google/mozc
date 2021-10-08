@@ -38,6 +38,7 @@
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -55,13 +56,13 @@ class CodecTest : public ::testing::Test {
  protected:
   void SetUp() override {
     DictionaryFileCodecFactory::SetCodec(nullptr);
-    FileUtil::Unlink(test_file_);
+    EXPECT_OK(FileUtil::UnlinkIfExists(test_file_));
   }
 
   void TearDown() override {
     // Reset to default setting
     DictionaryFileCodecFactory::SetCodec(nullptr);
-    FileUtil::Unlink(test_file_);
+    EXPECT_OK(FileUtil::UnlinkIfExists(test_file_));
   }
 
   void AddSection(const DictionaryFileCodecInterface *codec,

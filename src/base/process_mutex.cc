@@ -31,7 +31,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -62,9 +62,9 @@ std::string CreateProcessMutexFileName(const char *name) {
 
 #ifdef OS_WIN
   std::string basename;
-#else
+#else   // OS_WIN
   std::string basename = ".";
-#endif
+#endif  // OS_WIN
 
   basename += name;
   basename += ".lock";
@@ -130,7 +130,7 @@ bool ProcessMutex::LockAndWrite(const std::string &message) {
 
 bool ProcessMutex::UnLock() {
   handle_.reset(nullptr);
-  FileUtil::Unlink(filename_);
+  FileUtil::UnlinkOrLogError(filename_);
   locked_ = false;
   return true;
 }
@@ -213,7 +213,7 @@ class FileLockManager {
       return;
     }
     ::close(it->second);
-    FileUtil::Unlink(filename);
+    FileUtil::UnlinkOrLogError(filename);
     fdmap_.erase(it);
   }
 

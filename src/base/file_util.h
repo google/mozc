@@ -72,7 +72,7 @@ class FileUtilInterface {
 
   virtual bool CreateDirectory(const std::string &path) const = 0;
   virtual bool RemoveDirectory(const std::string &dirname) const = 0;
-  virtual bool Unlink(const std::string &filename) const = 0;
+  virtual absl::Status Unlink(const std::string &filename) const = 0;
   virtual bool FileExists(const std::string &filename) const = 0;
   virtual bool DirectoryExists(const std::string &dirname) const = 0;
   virtual bool CopyFile(const std::string &from,
@@ -94,14 +94,21 @@ class FileUtilInterface {
 
 class FileUtil {
  public:
+  FileUtil() = delete;
+  ~FileUtil() = delete;
+
   // Creates a directory. Does not create directories in the way to the path.
   static bool CreateDirectory(const std::string &path);
 
   // Removes an empty directory.
   static bool RemoveDirectory(const std::string &dirname);
 
-  // Removes a file.
-  static bool Unlink(const std::string &filename);
+  // Removes a file. The second version returns OK when `filename` doesn't
+  // exist. The third version logs error message on failure (i.e., it ignores
+  // any error and is not recommended).
+  static absl::Status Unlink(const std::string &filename);
+  static absl::Status UnlinkIfExists(const std::string &filename);
+  static void UnlinkOrLogError(const std::string &filename);
 
   // Returns true if a file or a directory with the name exists.
   static bool FileExists(const std::string &filename);
@@ -173,9 +180,6 @@ class FileUtil {
 
   // Sets a mock for unittest.
   static void SetMockForUnitTest(FileUtilInterface *mock);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(FileUtil);
 };
 
 }  // namespace mozc

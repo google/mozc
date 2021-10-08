@@ -114,6 +114,11 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   AddValue("war");
   AddValue("word");
   AddValue("world");
+
+  // These values are not fetched.
+  AddValue("あいう");
+  AddValue("東京");
+  AddValue("アイウ");
   std::unique_ptr<ValueDictionary> dictionary(BuildValueDictionary());
 
   // Reading fields are irrelevant to value dictionary.  Prepare actual tokens
@@ -150,6 +155,17 @@ TEST_F(ValueDictionaryTest, LookupPredictive) {
   {
     CollectTokenCallback callback;
     dictionary->LookupPredictive("ho", convreq_, &callback);
+    EXPECT_TRUE(callback.tokens().empty());
+  }
+  {
+    CollectTokenCallback callback;
+    dictionary->LookupPredictive("あ", convreq_, &callback);
+    EXPECT_TRUE(callback.tokens().empty());
+
+    dictionary->LookupPredictive("東", convreq_, &callback);
+    EXPECT_TRUE(callback.tokens().empty());
+
+    dictionary->LookupPredictive("ア", convreq_, &callback);
     EXPECT_TRUE(callback.tokens().empty());
   }
 }

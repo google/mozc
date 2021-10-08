@@ -38,17 +38,17 @@
 #include "base/freelist.h"
 #include "base/port.h"
 #include "converter/candidate_filter.h"
+#include "converter/connector.h"
+#include "converter/lattice.h"
+#include "converter/node.h"
+#include "converter/segmenter.h"
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "prediction/suggestion_filter.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
-
-class Connector;
-class Lattice;
-class Segmenter;
-class SuggestionFilter;
-struct Node;
 
 class NBestGenerator {
  public:
@@ -95,8 +95,8 @@ class NBestGenerator {
 
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
-  bool Next(const std::string &original_key, Segment::Candidate *candidate,
-            Segments::RequestType request_type);
+  bool Next(const ConversionRequest &request, const std::string &original_key,
+            Segment::Candidate *candidate, Segments::RequestType request_type);
 
  private:
   enum BoundaryCheckResult {
@@ -133,7 +133,8 @@ class NBestGenerator {
     DISALLOW_COPY_AND_ASSIGN(Agenda);
   };
 
-  int InsertTopResult(const std::string &original_key,
+  int InsertTopResult(const ConversionRequest &request,
+                      const std::string &original_key,
                       Segment::Candidate *candidate,
                       Segments::RequestType request_type);
 
@@ -164,17 +165,18 @@ class NBestGenerator {
   const dictionary::PosMatcher *pos_matcher_;
   const Lattice *lattice_;
 
-  const Node *begin_node_;
-  const Node *end_node_;
+  const Node *begin_node_ = nullptr;
+  const Node *end_node_ = nullptr;
 
   Agenda agenda_;
   FreeList<QueueElement> freelist_;
   std::vector<const Node *> nodes_;
+  std::vector<const Node *> top_nodes_;
   std::unique_ptr<converter::CandidateFilter> filter_;
-  bool viterbi_result_checked_;
-  BoundaryCheckMode check_mode_;
+  bool viterbi_result_checked_ = false;
+  BoundaryCheckMode check_mode_ = STRICT;
 
-  BoundaryChecker boundary_checker_;
+  BoundaryChecker boundary_checker_ = nullptr;
 
   DISALLOW_COPY_AND_ASSIGN(NBestGenerator);
 };

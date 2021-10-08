@@ -53,6 +53,7 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "storage/encrypted_string_storage.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "usage_stats/usage_stats.h"
@@ -2223,7 +2224,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorage) {
 
   EXPECT_EQ(storage1.GetProto().DebugString(),
             storage2.GetProto().DebugString());
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
@@ -2261,7 +2262,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
       EXPECT_TRUE(Util::StartsWith(entry.key(), "new_"));
       EXPECT_TRUE(Util::StartsWith(entry.value(), "new_"));
     }
-    FileUtil::Unlink(filename);
+    EXPECT_OK(FileUtil::Unlink(filename));
   }
 
   // Test Save().
@@ -2283,7 +2284,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
       EXPECT_TRUE(Util::StartsWith(entry.key(), "new_"));
       EXPECT_TRUE(Util::StartsWith(entry.value(), "new_"));
     }
-    FileUtil::Unlink(filename);
+    EXPECT_OK(FileUtil::Unlink(filename));
   }
 }
 

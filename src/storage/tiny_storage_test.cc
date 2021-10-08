@@ -39,6 +39,7 @@
 #include "base/file_util.h"
 #include "base/port.h"
 #include "storage/storage_interface.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -71,9 +72,7 @@ class TinyStorageTest : public testing::Test {
 
   static void UnlinkDBFileIfExists() {
     const std::string path = GetTemporaryFilePath();
-    if (FileUtil::FileExists(path)) {
-      FileUtil::Unlink(path);
-    }
+    EXPECT_OK(FileUtil::UnlinkIfExists(path));
   }
 
   static StorageInterface *CreateStorage() { return TinyStorage::New(); }
@@ -94,7 +93,7 @@ TEST_F(TinyStorageTest, TinyStorageTest) {
   static constexpr int kSize[] = {10, 100, 1000};
 
   for (int i = 0; i < std::size(kSize); ++i) {
-    FileUtil::Unlink(filename);
+    EXPECT_OK(FileUtil::UnlinkIfExists(filename));
     std::unique_ptr<StorageInterface> storage(CreateStorage());
 
     // Insert

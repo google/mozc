@@ -38,6 +38,7 @@
 #include "converter/segments.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "request/conversion_request.h"
 
 namespace mozc {
 
@@ -62,8 +63,13 @@ class CandidateFilter {
   };
 
   // Checks if the candidate should be filtered out.
-  ResultType FilterCandidate(const std::string &original_key,
+  //
+  // top_nodes: Node vector for the top candidate for the segment.
+  // nodes: Node vector for the target candidate
+  ResultType FilterCandidate(const ConversionRequest &request,
+                             const std::string &original_key,
                              const Segment::Candidate *candidate,
+                             const std::vector<const Node *> &top_nodes,
                              const std::vector<const Node *> &nodes,
                              Segments::RequestType request_type);
 
@@ -71,8 +77,10 @@ class CandidateFilter {
   void Reset();
 
  private:
-  ResultType FilterCandidateInternal(const std::string &original_key,
+  ResultType FilterCandidateInternal(const ConversionRequest &request,
+                                     const std::string &original_key,
                                      const Segment::Candidate *candidate,
+                                     const std::vector<const Node *> &top_nodes,
                                      const std::vector<const Node *> &nodes,
                                      Segments::RequestType request_type);
 

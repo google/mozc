@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "dictionary/file/codec_factory.h"
 #include "dictionary/file/dictionary_file_builder.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -84,9 +85,9 @@ TEST(DictionaryFileTest, Basic) {
     EXPECT_TRUE(ptr == nullptr);
   }
 
-  FileUtil::Unlink(dfn);
-  FileUtil::Unlink(fn1);
-  FileUtil::Unlink(fn2);
+  EXPECT_OK(FileUtil::Unlink(dfn));
+  EXPECT_OK(FileUtil::Unlink(fn1));
+  EXPECT_OK(FileUtil::Unlink(fn2));
 }
 
 }  // namespace

@@ -39,6 +39,7 @@
 #include "base/system_util.h"
 #include "dictionary/user_dictionary_storage.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
@@ -64,11 +65,11 @@ class UserDictionarySessionTest : public ::testing::Test {
   void SetUp() override {
     original_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    FileUtil::Unlink(GetUserDictionaryFile());
+    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
   }
 
   void TearDown() override {
-    FileUtil::Unlink(GetUserDictionaryFile());
+    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
     SystemUtil::SetUserProfileDirectory(original_user_profile_directory_);
   }
 

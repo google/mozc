@@ -40,6 +40,7 @@ MATCHER(IsOkStatus, negation ? "is not OK" : "is OK") { return arg.ok(); }
 
 }  // namespace mozc
 
+#define ASSERT_OK(expr) ASSERT_THAT(expr, ::mozc::IsOkStatus())
 #define EXPECT_OK(expr) EXPECT_THAT(expr, ::mozc::IsOkStatus())
 
 #endif  // EXPECT_OK

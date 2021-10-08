@@ -39,6 +39,7 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -155,7 +156,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
     EXPECT_EQ(3, tokens.size());
   }
 
-  FileUtil::Unlink(filename);
+  EXPECT_OK(FileUtil::Unlink(filename));
 }
 
 TEST_F(TextDictionaryLoaderTest, RewriteSpecialTokenTest) {
@@ -233,8 +234,8 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
     EXPECT_EQ(6, loader->tokens().size());
   }
 
-  FileUtil::Unlink(filename1);
-  FileUtil::Unlink(filename2);
+  EXPECT_OK(FileUtil::Unlink(filename1));
+  EXPECT_OK(FileUtil::Unlink(filename2));
 }
 
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {

@@ -65,12 +65,13 @@ class FileUtilMock : public FileUtilInterface {
     return true;
   }
 
-  bool Unlink(const std::string &filename) const override {
+  absl::Status Unlink(const std::string &filename) const override {
     if (DirectoryExists(filename)) {
-      return false;
+      return absl::FailedPreconditionError(
+          absl::StrFormat("%s is a directory", filename));
     }
     files_[filename] = 0;
-    return true;
+    return absl::OkStatus();
   }
 
   bool FileExists(const std::string &filename) const override {

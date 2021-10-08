@@ -46,6 +46,9 @@
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
 #include "prediction/suggestion_filter.h"
+#include "protocol/commands.pb.h"
+#include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 using mozc::dictionary::PosMatcher;
 using mozc::dictionary::SuppressionDictionary;
@@ -161,6 +164,43 @@ bool IsNormalOrConstrainedNode(const Node *node) {
                              node->node_type == Node::CON_NODE);
 }
 
+bool IsCompoundCandidate(const std::vector<const Node *> &nodes) {
+  return nodes.size() == 1 && nodes[0]->lid != nodes[0]->rid;
+}
+
+bool IsSuffixNode(const dictionary::PosMatcher &pos_matcher, const Node &node) {
+  return pos_matcher.IsSuffixWord(node.lid) &&
+         pos_matcher.IsSuffixWord(node.rid);
+}
+
+// Returns true if the node structure is content_word + suffix_word.
+// Example: "行き+ます", "山+が", etc.
+bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
+                            const std::vector<const Node *> &nodes) {
+  return nodes.size() == 2 && !IsSuffixNode(pos_matcher, *nodes[0]) &&
+         IsSuffixNode(pos_matcher, *nodes[1]);
+}
+
+// Returns true if |lnodes| and |rnodes| have the same Pos structure.
+bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
+                         const std::vector<const Node *> &rnodes) {
+  if (lnodes.size() != rnodes.size()) {
+    return false;
+  }
+  for (int i = 0; i < lnodes.size(); ++i) {
+    if (lnodes[i]->lid != rnodes[i]->lid || lnodes[i]->rid != rnodes[i]->rid) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsStrictModeEnabled(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_strict_candidate_filter();
+}
+
 }  // namespace
 
 CandidateFilter::CandidateFilter(
@@ -186,10 +226,13 @@ void CandidateFilter::Reset() {
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
-    const std::string &original_key, const Segment::Candidate *candidate,
+    const ConversionRequest &request, const std::string &original_key,
+    const Segment::Candidate *candidate,
+    const std::vector<const Node *> &top_nodes,
     const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   DCHECK(candidate);
+  const bool is_strict_mode = IsStrictModeEnabled(request);
 
   // Filtering by the suggestion filter, which is applied only for the
   // PREDICTION and SUGGESTION modes.
@@ -335,13 +378,13 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
 
   // The candidate consists of only one token
   if (nodes.size() == 1) {
-    VLOG(1) << "don't filter single segment";
+    VLOG(1) << "don't filter single segment: " << candidate->value;
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
   // don't drop single character
   if (Util::CharsLen(candidate->value) == 1) {
-    VLOG(1) << "don't filter single character";
+    VLOG(1) << "don't filter single character: " << candidate->value;
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -375,21 +418,31 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   if (!is_noisy_weak_compound && top_candidate_->structure_cost == 0 &&
       candidate->lid == top_candidate_->lid &&
       candidate->rid == top_candidate_->rid) {
-    VLOG(1) << "don't filter lid/rid are the same";
+    VLOG(1) << "don't filter lid/rid are the same:" << candidate->value;
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
   // "好かっ|たり" vs  "良かっ|たり" have same non_content_value.
   // "良かっ|たり" is also a good candidate but it is not the top candidate.
+  // non_content_value ("たり") should be Hiragana.
+  // Background:
+  // 名詞,接尾 nodes ("済み", "損", etc) can also be non_content_value.
+  const absl::string_view top_non_content_value(
+      top_candidate_->value.data() + top_candidate_->content_value.size());
+  const absl::string_view non_content_value(candidate->value.data() +
+                                            candidate->content_value.size());
   if (!is_noisy_weak_compound && top_candidate_ != candidate &&
       top_candidate_->content_value != top_candidate_->value &&
-      (top_candidate_->value.compare(
-           top_candidate_->content_value.size(),
-           top_candidate_->value.size() - top_candidate_->content_value.size(),
-           candidate->value, candidate->content_value.size(),
-           candidate->value.size() - candidate->content_value.size()) == 0)) {
-    VLOG(1) << "don't filter if non-content value are the same";
-    return CandidateFilter::GOOD_CANDIDATE;
+      Util::GetScriptType(top_non_content_value) == Util::HIRAGANA &&
+      top_non_content_value == non_content_value) {
+    VLOG(1) << "don't filter if non-content value are the same: "
+            << candidate->value;
+    if (!is_strict_mode || top_nodes.size() == nodes.size()) {
+      // In strict mode, also checks the nodes size.
+      // i.e. do not allow the candidate, "め+移転+も" for the top candidate,
+      // "名店も"
+      return CandidateFilter::GOOD_CANDIDATE;
+    }
   }
 
   // Check Katakana transliterations
@@ -398,10 +451,12 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // that starts with alphabets.
   if (!(candidate->attributes & Segment::Candidate::REALTIME_CONVERSION)) {
     const bool is_top_english_t13n =
-        Util::IsEnglishTransliteration(nodes[0]->value);
+        (Util::GetScriptType(nodes[0]->key) == Util::HIRAGANA &&
+         Util::IsEnglishTransliteration(nodes[0]->value));
     for (size_t i = 1; i < nodes.size(); ++i) {
       // EnglishT13N must be the prefix of the candidate.
-      if (Util::IsEnglishTransliteration(nodes[i]->value)) {
+      if (Util::GetScriptType(nodes[i]->key) == Util::HIRAGANA &&
+          Util::IsEnglishTransliteration(nodes[i]->value)) {
         return CandidateFilter::BAD_CANDIDATE;
       }
       // nodes[1..] are non-functional candidates.
@@ -422,8 +477,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
   // TOP candidate is compound and the structure cost for it is "0"
   // If 2nd or 3rd candidates are regular candidate but not having
   // non-zero cost, they might be removed. This hack removes such case.
-  if (candidate_size < 3 && candidate->cost < top_cost + 2302 &&
-      candidate->structure_cost < 6907) {
+  if (IsCompoundCandidate(top_nodes) && candidate_size < 3 &&
+      candidate->cost < top_cost + 2302 && candidate->structure_cost < 6907) {
     return CandidateFilter::GOOD_CANDIDATE;
   }
 
@@ -479,11 +534,23 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
+  if (is_strict_mode) {
+    // Filter candidates:
+    // 1) which have the different Pos structure with the top candidate, and
+    // 2) which have atypical Pos structure
+    if (!IsSameNodeStructure(top_nodes, nodes) &&
+        !IsTypicalNodeStructure(*pos_matcher_, nodes)) {
+      return CandidateFilter::BAD_CANDIDATE;
+    }
+  }
+
   return CandidateFilter::GOOD_CANDIDATE;
 }
 
 CandidateFilter::ResultType CandidateFilter::FilterCandidate(
-    const std::string &original_key, const Segment::Candidate *candidate,
+    const ConversionRequest &request, const std::string &original_key,
+    const Segment::Candidate *candidate,
+    const std::vector<const Node *> &top_nodes,
     const std::vector<const Node *> &nodes,
     Segments::RequestType request_type) {
   if (request_type == Segments::REVERSE_CONVERSION) {
@@ -493,8 +560,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const bool inserted = seen_.insert(candidate->value).second;
     return inserted ? GOOD_CANDIDATE : BAD_CANDIDATE;
   } else {
-    const ResultType result =
-        FilterCandidateInternal(original_key, candidate, nodes, request_type);
+    const ResultType result = FilterCandidateInternal(
+        request, original_key, candidate, top_nodes, nodes, request_type);
     if (result != GOOD_CANDIDATE) {
       return result;
     }

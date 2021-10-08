@@ -834,7 +834,7 @@ bool UserSegmentHistoryRewriter::Reload() {
   // merge pending file does not always exist.
   if (FileUtil::FileExists(merge_pending_file)) {
     storage_->Merge(merge_pending_file.c_str());
-    FileUtil::Unlink(merge_pending_file);
+    FileUtil::UnlinkOrLogError(merge_pending_file);
   }
 
   return true;

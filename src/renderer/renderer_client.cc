@@ -51,7 +51,7 @@
 
 #ifdef __APPLE__
 #include "base/mac_util.h"
-#endif
+#endif  // __APPLE__
 
 #ifdef OS_WIN
 #include "base/win_sandbox.h"
@@ -158,7 +158,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     // Start renderer process by using launch_msg API.
     pid_t pid = 0;
     const bool result = MacUtil::StartLaunchdService("Renderer", &pid);
-#else
+#else                     // OS_WIN, __APPLE__
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);
     uint32_t pid = static_cast<uint32_t>(tmp);
@@ -250,12 +250,12 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   }
 
   RendererLauncher()
-      : renderer_status_(RendererLauncher::RENDERER_UNKNOWN),
-        last_launch_time_(0),
+      : last_launch_time_(0),
         error_times_(0),
+        ipc_client_factory_interface_(nullptr),
+        renderer_status_(RendererLauncher::RENDERER_UNKNOWN),
         disable_renderer_path_check_(false),
-        suppress_error_dialog_(false),
-        ipc_client_factory_interface_(nullptr) {}
+        suppress_error_dialog_(false) {}
 
   ~RendererLauncher() override {
     if (!IsRunning()) {
@@ -305,14 +305,14 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
 
   std::string name_;
   std::string path_;
-  volatile RendererStatus renderer_status_;
   volatile uint64_t last_launch_time_;
   volatile size_t error_times_;
-  bool disable_renderer_path_check_;
-  bool suppress_error_dialog_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
   std::unique_ptr<commands::RendererCommand> pending_command_;
   Mutex pending_command_mutex_;
+  volatile RendererStatus renderer_status_;
+  bool disable_renderer_path_check_;
+  bool suppress_error_dialog_;
 };
 
 RendererClient::RendererClient()

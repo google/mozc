@@ -32,7 +32,7 @@
 #include <stddef.h>
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <sys/stat.h>
 #endif  // OS_WIN
 
@@ -49,15 +49,16 @@
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace {
 
 #ifdef OS_WIN
 constexpr char kPasswordFile[] = "encrypt_key.db";
-#else
+#else   // OS_WIN
 constexpr char kPasswordFile[] = ".encrypt_key.db";  // dot-file (hidden file)
-#endif
+#endif  // OS_WIN
 
 constexpr size_t kPasswordSize = 32;
 
@@ -82,9 +83,9 @@ class ScopedReadWriteFile {
     if (!::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL)) {
       LOG(ERROR) << "Cannot make writable: " << filename_;
     }
-#else
-    chmod(filename_.c_str(), 0600);              // write temporary
-#endif
+#else   // OS_WIN
+    chmod(filename_.c_str(), 0600);                  // write temporary
+#endif  // OS_WIN
   }
 
   ~ScopedReadWriteFile() {
@@ -97,9 +98,9 @@ class ScopedReadWriteFile {
                                                FILE_ATTRIBUTE_READONLY)) {
       LOG(ERROR) << "Cannot make readonly: " << filename_;
     }
-#else
-    chmod(filename_.c_str(), 0400);              // read only
-#endif
+#else   // OS_WIN
+    chmod(filename_.c_str(), 0400);                  // read only
+#endif  // OS_WIN
   }
 
  private:
@@ -152,8 +153,13 @@ bool LoadPassword(std::string *password) {
 bool RemovePasswordFile() {
   const std::string filename = GetFileName();
   ScopedReadWriteFile l(filename);
-  return FileUtil::Unlink(filename);
+  if (absl::Status s = FileUtil::Unlink(filename); !s.ok()) {
+    LOG(ERROR) << "Cannot unlink " << filename << ": " << s;
+    return false;
+  }
+  return true;
 }
+
 }  // namespace
 
 //////////////////////////////////////////////////////////////////
@@ -271,7 +277,7 @@ typedef PlainPasswordManager DefaultPasswordManager;
 // Windows or Mac
 #if (defined(OS_WIN) || defined(__APPLE__))
 typedef WinMacPasswordManager DefaultPasswordManager;
-#endif
+#endif  // (defined(OS_WIN) || defined(__APPLE__))
 
 namespace {
 class PasswordManagerImpl {

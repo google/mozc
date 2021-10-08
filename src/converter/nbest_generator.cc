@@ -115,15 +115,10 @@ NBestGenerator::NBestGenerator(const SuppressionDictionary *suppression_dic,
       connector_(connector),
       pos_matcher_(pos_matcher),
       lattice_(lattice),
-      begin_node_(nullptr),
-      end_node_(nullptr),
       freelist_(kFreeListSize),
       filter_(new CandidateFilter(suppression_dic, pos_matcher,
                                   suggestion_filter,
-                                  apply_suggestion_filter_for_exact_match)),
-      viterbi_result_checked_(false),
-      check_mode_(STRICT),
-      boundary_checker_(nullptr) {
+                                  apply_suggestion_filter_for_exact_match)) {
   DCHECK(suppression_dictionary_);
   DCHECK(segmenter);
   DCHECK(connector);
@@ -141,6 +136,7 @@ void NBestGenerator::Reset(const Node *begin_node, const Node *end_node,
                            const BoundaryCheckMode mode) {
   agenda_.Clear();
   freelist_.Free();
+  top_nodes_.clear();
   filter_->Reset();
   viterbi_result_checked_ = false;
   check_mode_ = mode;
@@ -274,7 +270,8 @@ void NBestGenerator::MakeCandidate(
   }
 }
 
-bool NBestGenerator::Next(const std::string &original_key,
+bool NBestGenerator::Next(const ConversionRequest &request,
+                          const std::string &original_key,
                           Segment::Candidate *candidate,
                           Segments::RequestType request_type) {
   DCHECK(begin_node_);
@@ -316,7 +313,7 @@ bool NBestGenerator::Next(const std::string &original_key,
   if (!viterbi_result_checked_) {
     // Use CandidateFilter so that filter is initialized with the
     // Viterbi-best path.
-    switch (InsertTopResult(original_key, candidate, request_type)) {
+    switch (InsertTopResult(request, original_key, candidate, request_type)) {
       case CandidateFilter::GOOD_CANDIDATE:
         return true;
       case CandidateFilter::STOP_ENUMERATION:
@@ -352,10 +349,13 @@ bool NBestGenerator::Next(const std::string &original_key,
         nodes_.push_back(elm->node);
       }
       CHECK(!nodes_.empty());
+      if (top_nodes_.empty()) {
+        top_nodes_ = nodes_;
+      }
 
       MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes_);
       const int filter_result = filter_->FilterCandidate(
-          original_key, candidate, nodes_, request_type);
+          request, original_key, candidate, top_nodes_, nodes_, request_type);
       nodes_.clear();
 
       switch (filter_result) {
@@ -557,7 +557,8 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
   }
 }
 
-int NBestGenerator::InsertTopResult(const std::string &original_key,
+int NBestGenerator::InsertTopResult(const ConversionRequest &request,
+                                    const std::string &original_key,
                                     Segment::Candidate *candidate,
                                     Segments::RequestType request_type) {
   nodes_.clear();
@@ -570,6 +571,10 @@ int NBestGenerator::InsertTopResult(const std::string &original_key,
     }
   }
   DCHECK(!nodes_.empty());
+
+  if (top_nodes_.empty()) {
+    top_nodes_ = nodes_;
+  }
 
   const int cost = end_node_->cost - begin_node_->cost - end_node_->wcost;
   const int structure_cost =
@@ -584,8 +589,8 @@ int NBestGenerator::InsertTopResult(const std::string &original_key,
   }
 
   viterbi_result_checked_ = true;
-  const int result =
-      filter_->FilterCandidate(original_key, candidate, nodes_, request_type);
+  const int result = filter_->FilterCandidate(request, original_key, candidate,
+                                              top_nodes_, nodes_, request_type);
   nodes_.clear();
   return result;
 }

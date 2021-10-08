@@ -82,8 +82,8 @@ class CompositionInput final {
  private:
   std::string raw_;
   std::string conversion_;
-  bool has_conversion_ = false;
   ProbableKeyEvents probable_key_events_;
+  bool has_conversion_ = false;
   bool is_new_input_ = false;
 };
 

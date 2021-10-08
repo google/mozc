@@ -36,11 +36,11 @@ namespace mozc {
 
 ClockMock::ClockMock(uint64_t sec, uint32_t usec)
     : seconds_(sec),
-      micro_seconds_(usec),
       frequency_(1000000000),
       ticks_(0),
       timezone_(absl::UTCTimeZone()),
       timezone_offset_sec_(0),
+      micro_seconds_(usec),
       delta_seconds_(0),
       delta_micro_seconds_(0) {}
 

@@ -60,18 +60,15 @@
 #endif  // CopyFile
 
 namespace mozc {
-
-class FileUtilTest : public testing::Test {};
-
 namespace {
+
 void CreateTestFile(const std::string &filename, const std::string &data) {
   OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::trunc);
   ofs << data;
   EXPECT_TRUE(ofs.good());
 }
-}  // namespace
 
-TEST_F(FileUtilTest, CreateDirectory) {
+TEST(FileUtilTest, CreateDirectory) {
   EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
   // dirpath = FLAGS_test_tmpdir/testdir
   const std::string dirpath =
@@ -92,15 +89,13 @@ TEST_F(FileUtilTest, CreateDirectory) {
   ASSERT_FALSE(FileUtil::FileExists(dirpath));
 }
 
-TEST_F(FileUtilTest, DirectoryExists) {
+TEST(FileUtilTest, DirectoryExists) {
   EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
   const std::string filepath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
 
   // Delete filepath, if it exists.
-  if (FileUtil::FileExists(filepath)) {
-    FileUtil::Unlink(filepath);
-  }
+  ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
   ASSERT_FALSE(FileUtil::FileExists(filepath));
 
   // Create a file.
@@ -109,19 +104,19 @@ TEST_F(FileUtilTest, DirectoryExists) {
   EXPECT_FALSE(FileUtil::DirectoryExists(filepath));
 
   // Delete the file.
-  FileUtil::Unlink(filepath);
+  ASSERT_OK(FileUtil::Unlink(filepath));
   ASSERT_FALSE(FileUtil::FileExists(filepath));
 }
 
-TEST_F(FileUtilTest, Unlink) {
+TEST(FileUtilTest, Unlink) {
   const std::string filepath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
-  FileUtil::Unlink(filepath);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
   EXPECT_FALSE(FileUtil::FileExists(filepath));
 
   CreateTestFile(filepath, "simple test");
   EXPECT_TRUE(FileUtil::FileExists(filepath));
-  EXPECT_TRUE(FileUtil::Unlink(filepath));
+  EXPECT_OK(FileUtil::Unlink(filepath));
   EXPECT_FALSE(FileUtil::FileExists(filepath));
 
 #ifdef OS_WIN
@@ -140,19 +135,19 @@ TEST_F(FileUtilTest, Unlink) {
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));
     EXPECT_TRUE(FileUtil::FileExists(filepath));
-    EXPECT_TRUE(FileUtil::Unlink(filepath));
+    EXPECT_OK(FileUtil::Unlink(filepath));
     EXPECT_FALSE(FileUtil::FileExists(filepath));
   }
 #endif  // OS_WIN
 
-  FileUtil::Unlink(filepath);
+  EXPECT_OK(FileUtil::UnlinkIfExists(filepath));
 }
 
 #ifdef OS_WIN
-TEST_F(FileUtilTest, HideFile) {
+TEST(FileUtilTest, HideFile) {
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
 
   EXPECT_FALSE(FileUtil::HideFile(filename));
 
@@ -193,17 +188,17 @@ TEST_F(FileUtilTest, HideFile) {
                 FILE_ATTRIBUTE_TEMPORARY,
             ::GetFileAttributesW(wfilename.c_str()));
 
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::Unlink(filename));
 }
 #endif  // OS_WIN
 
-TEST_F(FileUtilTest, IsEqualFile) {
+TEST(FileUtilTest, IsEqualFile) {
   const std::string filename1 =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
   const std::string filename2 =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
-  FileUtil::Unlink(filename1);
-  FileUtil::Unlink(filename2);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
   EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
 
   CreateTestFile(filename1, "test data1");
@@ -218,18 +213,18 @@ TEST_F(FileUtilTest, IsEqualFile) {
   CreateTestFile(filename2, "test data2");
   EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
 
-  FileUtil::Unlink(filename1);
-  FileUtil::Unlink(filename2);
+  ASSERT_OK(FileUtil::Unlink(filename1));
+  ASSERT_OK(FileUtil::Unlink(filename2));
 }
 
-TEST_F(FileUtilTest, CopyFile) {
+TEST(FileUtilTest, CopyFile) {
   // just test rename operation works as intended
   const std::string from =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "copy_from");
   const std::string to =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "copy_to");
-  FileUtil::Unlink(from);
-  FileUtil::Unlink(to);
+  ASSERT_OK(FileUtil::UnlinkIfExists(from));
+  ASSERT_OK(FileUtil::UnlinkIfExists(to));
 
   CreateTestFile(from, "simple test");
   EXPECT_TRUE(FileUtil::CopyFile(from, to));
@@ -287,18 +282,18 @@ TEST_F(FileUtilTest, CopyFile) {
   }
 #endif  // OS_WIN
 
-  FileUtil::Unlink(from);
-  FileUtil::Unlink(to);
+  ASSERT_OK(FileUtil::Unlink(from));
+  ASSERT_OK(FileUtil::Unlink(to));
 }
 
-TEST_F(FileUtilTest, AtomicRename) {
+TEST(FileUtilTest, AtomicRename) {
   // just test rename operation works as intended
   const std::string from = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                                               "atomic_rename_test_from");
   const std::string to = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
                                             "atomic_rename_test_to");
-  FileUtil::Unlink(from);
-  FileUtil::Unlink(to);
+  ASSERT_OK(FileUtil::UnlinkIfExists(from));
+  ASSERT_OK(FileUtil::UnlinkIfExists(to));
 
   // |from| is not found
   EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
@@ -319,8 +314,8 @@ TEST_F(FileUtilTest, AtomicRename) {
 
   EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
 
-  FileUtil::Unlink(from);
-  FileUtil::Unlink(to);
+  ASSERT_OK(FileUtil::UnlinkIfExists(from));
+  ASSERT_OK(FileUtil::UnlinkIfExists(to));
 
   // overwrite the file
   CreateTestFile(from, "test");
@@ -374,8 +369,8 @@ TEST_F(FileUtilTest, AtomicRename) {
   }
 #endif  // OS_WIN
 
-  FileUtil::Unlink(from);
-  FileUtil::Unlink(to);
+  ASSERT_OK(FileUtil::UnlinkIfExists(from));
+  ASSERT_OK(FileUtil::UnlinkIfExists(to));
 }
 
 #ifdef OS_WIN
@@ -384,7 +379,7 @@ TEST_F(FileUtilTest, AtomicRename) {
 #define SP "/"
 #endif  // OS_WIN
 
-TEST_F(FileUtilTest, JoinPath) {
+TEST(FileUtilTest, JoinPath) {
   EXPECT_TRUE(FileUtil::JoinPath({}).empty());
   EXPECT_EQ("foo", FileUtil::JoinPath({"foo"}));
   EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar"}));
@@ -405,7 +400,7 @@ TEST_F(FileUtilTest, JoinPath) {
   EXPECT_EQ("foo" SP "bar", FileUtil::JoinPath({"foo", "bar", ""}));
 }
 
-TEST_F(FileUtilTest, Dirname) {
+TEST(FileUtilTest, Dirname) {
   EXPECT_EQ(SP "foo", FileUtil::Dirname(SP "foo" SP "bar"));
   EXPECT_EQ(SP "foo" SP "bar",
             FileUtil::Dirname(SP "foo" SP "bar" SP "foo.txt"));
@@ -413,7 +408,7 @@ TEST_F(FileUtilTest, Dirname) {
   EXPECT_EQ("", FileUtil::Dirname(SP));
 }
 
-TEST_F(FileUtilTest, Basename) {
+TEST(FileUtilTest, Basename) {
   EXPECT_EQ("bar", FileUtil::Basename(SP "foo" SP "bar"));
   EXPECT_EQ("foo.txt", FileUtil::Basename(SP "foo" SP "bar" SP "foo.txt"));
   EXPECT_EQ("foo.txt", FileUtil::Basename("foo.txt"));
@@ -425,7 +420,7 @@ TEST_F(FileUtilTest, Basename) {
 
 #undef SP
 
-TEST_F(FileUtilTest, NormalizeDirectorySeparator) {
+TEST(FileUtilTest, NormalizeDirectorySeparator) {
 #ifdef OS_WIN
   EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("\\foo\\bar"));
   EXPECT_EQ("\\foo\\bar", FileUtil::NormalizeDirectorySeparator("/foo\\bar"));
@@ -451,7 +446,7 @@ TEST_F(FileUtilTest, NormalizeDirectorySeparator) {
 #endif  // OS_WIN
 }
 
-TEST_F(FileUtilTest, GetModificationTime) {
+TEST(FileUtilTest, GetModificationTime) {
   FileTimeStamp time_stamp = 0;
   EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file", &time_stamp));
 
@@ -466,7 +461,8 @@ TEST_F(FileUtilTest, GetModificationTime) {
   EXPECT_EQ(time_stamp, time_stamp2);
 
   // Cleanup
-  FileUtil::Unlink(path);
+  ASSERT_OK(FileUtil::Unlink(path));
 }
 
+}  // namespace
 }  // namespace mozc

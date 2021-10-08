@@ -36,6 +36,7 @@
 
 #include "base/file_util.h"
 #include "base/system_util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -130,9 +131,7 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
   EXPECT_EQ(new_contents, GetFileData(filename));
 
-  if (FileUtil::FileExists(filename)) {
-    FileUtil::Unlink(filename);
-  }
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
 }
 
 TEST_F(ConfigFileStreamTest, OpenReadBinary) {
@@ -168,7 +167,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
   }
 
   // Remove test file just in case.
-  EXPECT_TRUE(FileUtil::Unlink(test_file_path));
+  EXPECT_OK(FileUtil::Unlink(test_file_path));
   EXPECT_FALSE(FileUtil::FileExists(test_file_path));
 }
 
@@ -193,9 +192,9 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
 
 #ifdef OS_WIN
 #define TRAILING_CARRIAGE_RETURN ""
-#else
+#else  // OS_WIN
 #define TRAILING_CARRIAGE_RETURN "\r"
-#endif
+#endif  // OS_WIN
   const char *kExpectedLines[] = {
       "ab\rc",
       "d" TRAILING_CARRIAGE_RETURN,
@@ -218,7 +217,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   }
 
   // Remove test file just in case.
-  EXPECT_TRUE(FileUtil::Unlink(test_file_path));
+  EXPECT_OK(FileUtil::Unlink(test_file_path));
   EXPECT_FALSE(FileUtil::FileExists(test_file_path));
 }
 

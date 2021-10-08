@@ -573,13 +573,14 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 3
+// Next ID: 4
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
 message DecoderExperimentParams {
   optional bool enable_simplified_ranking = 1;
   optional int32 mobile_history_prediction_size = 2;
+  optional bool enable_strict_candidate_filter = 3;
 }
 
 // Clients' request to the server.

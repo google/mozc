@@ -156,9 +156,9 @@ template <typename Delimiter>
 SplitIterator<Delimiter, AllowEmpty>::SplitIterator(absl::string_view s,
                                                     const char *delim)
     : end_(s.data() + s.size()),
-      delim_(delim),
       sp_begin_(s.data()),
       sp_len_(0),
+      delim_(delim),
       done_(sp_begin_ == end_) {
   const char *p = sp_begin_;
   for (; p != end_ && !delim_.Contains(*p); ++p) {
@@ -1464,9 +1464,9 @@ Util::ScriptType Util::GetScriptType(absl::string_view str) {
   return GetScriptTypeInternal(str, false);
 }
 
-Util::ScriptType Util::GetFirstScriptType(const std::string &str) {
+Util::ScriptType Util::GetFirstScriptType(absl::string_view str) {
   size_t mblen = 0;
-  return GetScriptType(str.c_str(), str.c_str() + str.size(), &mblen);
+  return GetScriptType(str.data(), str.data() + str.size(), &mblen);
 }
 
 Util::ScriptType Util::GetScriptTypeWithoutSymbols(const std::string &str) {
@@ -1519,7 +1519,6 @@ bool Util::IsAscii(absl::string_view str) {
   }
   return true;
 }
-
 
 namespace {
 // const uint32_t* kJisX0208Bitmap[]

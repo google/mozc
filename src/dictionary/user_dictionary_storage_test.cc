@@ -69,11 +69,11 @@ class UserDictionaryStorageTest : public ::testing::Test {
   void SetUp() override {
     backup_user_profile_directory_ = SystemUtil::GetUserProfileDirectory();
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    FileUtil::Unlink(GetUserDictionaryFile());
+    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
   }
 
   void TearDown() override {
-    FileUtil::Unlink(GetUserDictionaryFile());
+    EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
     SystemUtil::SetUserProfileDirectory(backup_user_profile_directory_);
   }
 
@@ -252,7 +252,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
   // Repeat 20 times
   const std::string filepath = GetUserDictionaryFile();
   for (int n = 0; n < 20; ++n) {
-    FileUtil::Unlink(filepath);
+    ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
     UserDictionaryStorage storage1(filepath);
 
     {

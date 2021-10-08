@@ -45,6 +45,7 @@
 #include "base/thread.h"
 #include "base/util.h"
 #include "protocol/config.pb.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
@@ -100,7 +101,7 @@ TEST_F(ConfigHandlerTest, SetConfig) {
 
   const std::string config_file = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
-  FileUtil::Unlink(config_file);
+  ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   EXPECT_EQ(config_file, ConfigHandler::GetConfigFileName());
   ASSERT_TRUE(ConfigHandler::Reload())
@@ -160,7 +161,7 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
 
   const std::string config_file = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "mozc_config_test_tmp");
-  FileUtil::Unlink(config_file);
+  ASSERT_OK(FileUtil::UnlinkIfExists(config_file));
   ScopedSetConfigFileName scoped_config_file_name(config_file);
   ASSERT_TRUE(ConfigHandler::Reload())
       << "failed to reload: " << ConfigHandler::GetConfigFileName();
@@ -235,7 +236,7 @@ TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
 
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), config_file);
-  FileUtil::Unlink(filename);
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename));
   Config input;
   ConfigHandler::SetConfig(input);
   FileUtil::FileExists(filename);
@@ -294,7 +295,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 #endif  // OS_WIN
 
     // Remove test file just in case.
-    ASSERT_TRUE(FileUtil::Unlink(dest_path));
+    ASSERT_OK(FileUtil::Unlink(dest_path));
     EXPECT_FALSE(FileUtil::FileExists(dest_path));
   }
 }
