@@ -114,3 +114,7 @@ OK:	とうきょうでぃずにー	東京ディズニーランド	Suggestion Not
 OK:	ぱわふる	パワフル	Suggestion Not Expected	パワフル急速沸騰	2.26.4507
 OK:	てんいんにきけよ	店員に聞けよ	Conversion Expected	店員に聞けよ	2.26.4507
 OK:	これがぶなんそうだった	これが無難そうだった	Conversion Expected	これが無難そうだった	2.26.4507
+OK:	そんなにうつくしいひとだとはおもわなかったので	そんなに美しい人だとは思わなかったので	Conversion Expected	そんなに美しい人だとは思わなかったので	2.26.4514
+OK:	ゆうきがいります	勇気がいります	Conversion Expected	勇気がいります	2.26.4514
+FAILED:	いっしょにいたいので	一緒に痛いので	Conversion Expected	一緒にいたいので	2.26.4514
+OK:	すーつのぼたんをかけちがっている	スーツのボタンをかけ違っている	Conversion Match	スーツのボタンを	2.26.4514
