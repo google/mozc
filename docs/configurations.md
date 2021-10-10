@@ -62,9 +62,19 @@ IBus specific configurations are customizable in
 The file path may be `~/.mozc/ibus_config.textproto` if `~/.mozc` directry
 already exists.
 
-Here is the default configuration. `engines { name : "mozc-jp" longname : "Mozc"
-layout : "default" layout_variant : "" layout_option : "" rank : 80 }
-active_on_launch: False`
+Here is the default configuration.
+
+```
+engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+}
+active_on_launch: False
+```
 
 The variables of `engines` are mapped to the same named variables of IBus.
 
@@ -75,18 +85,38 @@ restart` might be necessary to apply changes.
 
 `layout` represents the keyboard layout (e.g. JIS keyboard, US keyboard, etc.).
 
-Sample configuration `engines { name : "mozc-jp" longname : "Mozc" layout :
-"ja" # or "us" layout_variant : "" layout_option : "" rank : 80 }
-active_on_launch: False`
+Sample configuration:
+
+```
+engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout : "ja"  # or "us"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+}
+active_on_launch: False
+```
 
 ### Activate Mozc on launch
 
 `active_on_launch` represents the default input. If it's True, Hiragana input is
 the default mode.
 
-Sample configuration `engines { name : "mozc-jp" longname : "Mozc" layout :
-"default" layout_variant : "" layout_option : "" rank : 80 } active_on_launch:
-True # default is False.`
+Sample configuration:
+
+```
+engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout :"default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+}
+active_on_launch: True  # default is False.
+```
 
 ### Multiple engines with different keyboard layouts
 
