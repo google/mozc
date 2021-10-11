@@ -30,9 +30,13 @@
 #include "unix/fcitx/fcitx_mozc.h"
 
 #include <string>
+#include <fcitx/context.h>
 #include <fcitx/candidate.h>
 #include <fcitx/module.h>
 #include <fcitx-config/xdg.h>
+
+// Resolve macro naming conflict with absl.
+#undef InvokeFunction
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -42,7 +46,6 @@
 #include "base/system_util.h"
 #include "unix/fcitx/mozc_connection.h"
 #include "unix/fcitx/mozc_response_parser.h"
-#include <fcitx/context.h>
 
 #define N_(x) (x)
 

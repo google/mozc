@@ -60,6 +60,7 @@ cc_library_mozc(
         "//base:port",
         "//protocol:config_cc_proto",
         "//protocol:commands_cc_proto",
+        "@fcitx//:fcitx",
     ],
 )
 
@@ -75,6 +76,7 @@ cc_library_mozc(
         "//base:util",
         "//base:logging",
         "//base:port",
+        "@fcitx//:fcitx",
     ],
 )
 

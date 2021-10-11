@@ -17,6 +17,7 @@ cc_library(
     ]),
     copts = ["-pthread"],
     includes = [
+        "include",
     ],
     linkopts = [
         "-lfcitx-core",
