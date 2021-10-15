@@ -173,8 +173,8 @@ class ConverterMock : public ConverterInterface {
     Segments segments;
     std::string key;
     size_t segment_index;
-    int candidate_index;
     std::vector<size_t> candidate_index_list;
+    int candidate_index;
     int offset_length;
     size_t start_segment_index;
     size_t segments_size;
