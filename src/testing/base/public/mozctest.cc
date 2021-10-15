@@ -59,8 +59,8 @@ std::string GetSourcePath(const std::vector<absl::string_view> &components) {
 absl::StatusOr<std::string> GetSourceFile(
     const std::vector<absl::string_view> &components) {
   std::string path = GetSourcePath(components);
-  if (!FileUtil::FileExists(path)) {
-    return absl::NotFoundError("File doesn't exist: " + path);
+  if (absl::Status s = FileUtil::FileExists(path); !s.ok()) {
+    return s;
   }
   return path;
 }
@@ -75,7 +75,8 @@ std::string GetSourceFileOrDie(
 std::string GetSourceDirOrDie(
     const std::vector<absl::string_view> &components) {
   const std::string path = GetSourcePath(components);
-  CHECK(FileUtil::DirectoryExists(path)) << "Directory doesn't exist: " << path;
+  const absl::Status s = FileUtil::DirectoryExists(path);
+  CHECK(s.ok()) << "Directory doesn't exist: " << path << ": " << s;
   return path;
 }
 
@@ -86,8 +87,8 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
   std::vector<std::string> paths;
   for (size_t i = 0; i < filenames.size(); ++i) {
     paths.push_back(FileUtil::JoinPath({dir, filenames[i]}));
-    CHECK(FileUtil::FileExists(paths.back()))
-        << "File doesn't exist: " << paths.back();
+    absl::Status s = FileUtil::FileExists(paths.back());
+    CHECK(s.ok()) << "File doesn't exist: " << paths.back() << ": " << s;
   }
   return paths;
 }

@@ -49,6 +49,9 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "absl/status/status.h"
+#ifdef OS_WIN
+#include "absl/status/statusor.h"
+#endif  // OS_WIN
 
 namespace {
 
@@ -85,8 +88,8 @@ class FileUtilImpl : public FileUtilInterface {
   bool CreateDirectory(const std::string &path) const override;
   bool RemoveDirectory(const std::string &dirname) const override;
   absl::Status Unlink(const std::string &filename) const override;
-  bool FileExists(const std::string &filename) const override;
-  bool DirectoryExists(const std::string &dirname) const override;
+  absl::Status FileExists(const std::string &filename) const override;
+  absl::Status DirectoryExists(const std::string &dirname) const override;
   bool CopyFile(const std::string &from, const std::string &to) const override;
   bool IsEqualFile(const std::string &filename1,
                    const std::string &filename2) const override;
@@ -106,33 +109,43 @@ using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
 #ifdef OS_WIN
 namespace {
 
+absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
+  if (const DWORD attrs = ::GetFileAttributesW(filename.c_str());
+      attrs != INVALID_FILE_ATTRIBUTES) {
+    return attrs;
+  }
+  const DWORD error = ::GetLastError();
+  return WinUtil::ErrorToCanonicalStatus(error, "GetFileAttributesW failed");
+}
+
 // Some high-level file APIs such as MoveFileEx simply fail if the target file
 // has some special attribute like read-only. This method tries to strip system,
 // hidden, and read-only attributes from |filename|.
 // This function does nothing if |filename| does not exist.
 absl::Status StripWritePreventingAttributesIfExists(
     const std::string &filename) {
-  if (!FileUtil::FileExists(filename)) {
+  if (absl::Status s = FileUtil::FileExists(filename); absl::IsNotFound(s)) {
     return absl::OkStatus();
+  } else if (!s.ok()) {
+    return s;
   }
   std::wstring wide_filename;
   Util::Utf8ToWide(filename, &wide_filename);
   constexpr DWORD kDropAttributes =
       FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_READONLY;
-  const DWORD attributes = ::GetFileAttributesW(wide_filename.c_str());
-  if (attributes == INVALID_FILE_ATTRIBUTES) {
-    const DWORD error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat(
-        "Cannot get the file attributes of %s: %d", filename, error));
+  absl::StatusOr<DWORD> attributes = GetFileAttributes(wide_filename);
+  if (!attributes.ok()) {
+    return std::move(attributes).status();
   }
-  if (attributes & kDropAttributes) {
+  if (*attributes & kDropAttributes) {
     if (!::SetFileAttributesW(wide_filename.c_str(),
-                              attributes & ~kDropAttributes)) {
+                              *attributes & ~kDropAttributes)) {
       const DWORD error = ::GetLastError();
-      return absl::UnknownError(
+      return WinUtil::ErrorToCanonicalStatus(
+          error,
           absl::StrFormat("Cannot drop the write-preventing file attributes of "
-                          "%s: %d, attrs = %d",
-                          filename, error, attributes));
+                          "%s, whose attrs is %d",
+                          filename, *attributes));
     }
   }
   return absl::OkStatus();
@@ -200,7 +213,14 @@ absl::Status FileUtilImpl::Unlink(const std::string &filename) const {
 }
 
 absl::Status FileUtil::UnlinkIfExists(const std::string &filename) {
-  return FileExists(filename) ? Unlink(filename) : absl::OkStatus();
+  absl::Status s = FileExists(filename);
+  if (s.ok()) {
+    return Unlink(filename);
+  }
+  if (absl::IsNotFound(s)) {
+    return absl::OkStatus();
+  }
+  return s;
 }
 
 void FileUtil::UnlinkOrLogError(const std::string &filename) {
@@ -209,37 +229,55 @@ void FileUtil::UnlinkOrLogError(const std::string &filename) {
   }
 }
 
-bool FileUtil::FileExists(const std::string &filename) {
+absl::Status FileUtil::FileExists(const std::string &filename) {
   return FileUtilSingleton::Get()->FileExists(filename);
 }
 
-bool FileUtilImpl::FileExists(const std::string &filename) const {
+absl::Status FileUtilImpl::FileExists(const std::string &filename) const {
 #ifdef OS_WIN
   std::wstring wide;
-  return (Util::Utf8ToWide(filename, &wide) > 0 &&
-          ::GetFileAttributesW(wide.c_str()) != -1);
+  if (Util::Utf8ToWide(filename, &wide) <= 0) {
+    return absl::InvalidArgumentError("Utf8ToWide failed");
+  }
+  return GetFileAttributes(wide).status();
 #else   // !OS_WIN
   struct stat s;
-  return ::stat(filename.c_str(), &s) == 0;
+  if (::stat(filename.c_str(), &s) == 0) {
+    return absl::OkStatus();
+  }
+  const int err = errno;
+  return Util::ErrnoToCanonicalStatus(err,
+                                      absl::StrCat("Cannot stat ", filename));
 #endif  // OS_WIN
 }
 
-bool FileUtil::DirectoryExists(const std::string &dirname) {
+absl::Status FileUtil::DirectoryExists(const std::string &dirname) {
   return FileUtilSingleton::Get()->DirectoryExists(dirname);
 }
 
-bool FileUtilImpl::DirectoryExists(const std::string &dirname) const {
+absl::Status FileUtilImpl::DirectoryExists(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
   if (Util::Utf8ToWide(dirname, &wide) <= 0) {
-    return false;
+    return absl::InvalidArgumentError("Utf8ToWide failed");
   }
 
-  const DWORD attribute = ::GetFileAttributesW(wide.c_str());
-  return ((attribute != -1) && (attribute & FILE_ATTRIBUTE_DIRECTORY));
+  absl::StatusOr<DWORD> attrs = GetFileAttributes(wide);
+  if (!attrs.ok()) {
+    return std::move(attrs).status();
+  }
+  return (*attrs & FILE_ATTRIBUTE_DIRECTORY) ? absl::OkStatus()
+                                             : absl::NotFoundError(dirname);
 #else   // !OS_WIN
   struct stat s;
-  return (::stat(dirname.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
+  if (::stat(dirname.c_str(), &s) == 0) {
+    return S_ISDIR(s.st_mode)
+               ? absl::OkStatus()
+               : absl::NotFoundError("Path exists but it's not a directory");
+  }
+  const int err = errno;
+  return Util::ErrnoToCanonicalStatus(err,
+                                      absl::StrCat("Cannot stat ", dirname));
 #endif  // OS_WIN
 }
 
@@ -297,19 +335,24 @@ bool FileUtil::HideFile(const std::string &filename) {
 
 bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
                                            DWORD extra_attributes) {
-  if (!FileUtil::FileExists(filename)) {
-    LOG(WARNING) << "File not exists. " << filename;
+  if (absl::Status s = FileUtil::FileExists(filename); !s.ok()) {
+    LOG(WARNING) << "File not exists: " << filename << ": " << s;
     return false;
   }
 
   std::wstring wfilename;
   Util::Utf8ToWide(filename, &wfilename);
 
-  const DWORD original_attributes = ::GetFileAttributesW(wfilename.c_str());
+  const absl::StatusOr<DWORD> original_attributes =
+      GetFileAttributes(wfilename);
+  if (!original_attributes.ok()) {
+    LOG(ERROR) << original_attributes.status();
+    return false;
+  }
   const auto result = ::SetFileAttributesW(
       wfilename.c_str(), (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
                           FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-                          original_attributes | extra_attributes) &
+                          *original_attributes | extra_attributes) &
                              ~FILE_ATTRIBUTE_NORMAL);
   return result != 0;
 }
@@ -350,7 +393,12 @@ bool FileUtilImpl::CopyFile(const std::string &from,
 #ifdef OS_WIN
   std::wstring wfrom;
   Util::Utf8ToWide(from, &wfrom);
-  ::SetFileAttributesW(wto.c_str(), ::GetFileAttributesW(wfrom.c_str()));
+  absl::StatusOr<DWORD> attrs = GetFileAttributes(wfrom);
+  if (attrs.ok()) {
+    ::SetFileAttributesW(wto.c_str(), *attrs);
+  } else {
+    LOG(ERROR) << attrs.status();
+  }
 #endif  // OS_WIN
 
   return true;
@@ -422,12 +470,11 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
   LOG(WARNING) << "TransactionalMoveFile failed: from: " << from
                << ", to: " << to << ", status: " << s;
 
-  const DWORD original_attributes = ::GetFileAttributesW(fromw.c_str());
-  if (original_attributes == INVALID_FILE_ATTRIBUTES) {
-    const DWORD get_file_attributes_error = ::GetLastError();
+  const absl::StatusOr<DWORD> original_attributes = GetFileAttributes(fromw);
+  if (!original_attributes.ok()) {
     return absl::UnknownError(absl::StrFormat(
-        "GetFileAttributesW failed: %d; Status of TransactionalMoveFile: %s",
-        get_file_attributes_error, s.ToString()));
+        "GetFileAttributes failed: %s; Status of TransactionalMoveFile: %s",
+        original_attributes.status().ToString(), s.ToString()));
   }
   if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
     return absl::UnknownError(absl::StrFormat(
@@ -440,12 +487,12 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
         "MoveFileExW failed: %d; Status of TransactionalMoveFile: %s",
         move_file_ex_error, s.ToString()));
   }
-  if (!::SetFileAttributesW(tow.c_str(), original_attributes)) {
+  if (!::SetFileAttributesW(tow.c_str(), *original_attributes)) {
     const DWORD set_file_attributes_error = ::GetLastError();
     return absl::UnknownError(absl::StrFormat(
         "SetFileAttributesW failed: %d, original_attributes: %d; Status of "
         "TransactionalMoveFile: %s",
-        set_file_attributes_error, original_attributes, s.ToString()));
+        set_file_attributes_error, *original_attributes, s.ToString()));
   }
 
   return absl::OkStatus();

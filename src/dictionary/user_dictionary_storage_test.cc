@@ -88,7 +88,7 @@ class UserDictionaryStorageTest : public ::testing::Test {
 TEST_F(UserDictionaryStorageTest, FileTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
   EXPECT_EQ(storage.filename(), GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Exists());
+  EXPECT_FALSE(storage.Exists().ok());
 }
 
 TEST_F(UserDictionaryStorageTest, LockTest) {
@@ -114,7 +114,7 @@ TEST_F(UserDictionaryStorageTest, LockTest) {
 
 TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
+  EXPECT_FALSE(storage.Load().ok());
 
   constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
@@ -171,7 +171,7 @@ TEST_F(UserDictionaryStorageTest, BasicOperationsTest) {
 
 TEST_F(UserDictionaryStorageTest, DeleteTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
+  EXPECT_FALSE(storage.Load().ok());
 
   // repeat 10 times
   for (int i = 0; i < 10; ++i) {
@@ -256,7 +256,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
     UserDictionaryStorage storage1(filepath);
 
     {
-      EXPECT_FALSE(storage1.Load()) << "n = " << n;
+      EXPECT_FALSE(storage1.Load().ok()) << "n = " << n;
       const size_t dic_size = Util::Random(50) + 1;
 
       for (size_t i = 0; i < dic_size; ++i) {
@@ -283,7 +283,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
     }
 
     UserDictionaryStorage storage2(GetUserDictionaryFile());
-    EXPECT_TRUE(storage2.Load()) << "n = " << n;
+    EXPECT_OK(storage2.Load()) << "n = " << n;
 
     EXPECT_EQ(storage1.GetProto().DebugString(),
               storage2.GetProto().DebugString())
@@ -293,7 +293,7 @@ TEST_F(UserDictionaryStorageTest, SerializeTest) {
 
 TEST_F(UserDictionaryStorageTest, GetUserDictionaryIdTest) {
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load());
+  EXPECT_FALSE(storage.Load().ok());
 
   constexpr size_t kDictionariesSize = 3;
   uint64_t id[kDictionariesSize];
@@ -336,7 +336,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   };
 
   UserDictionaryStorage storage(GetUserDictionaryFile());
-  EXPECT_FALSE(storage.Load())
+  EXPECT_FALSE(storage.Load().ok())
       << "At first, we expect there is not user dictionary file.";
   EXPECT_FALSE(storage.ConvertSyncDictionariesToNormalDictionaries())
       << "No sync dictionary available.";

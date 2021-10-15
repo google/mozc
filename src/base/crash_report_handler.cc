@@ -66,9 +66,9 @@ const wchar_t kGoogleCrashHandlerPipePostfix[] = L"-x64";
 #elif defined(_M_IX86)
 // No postfix for the x86 crash handler.
 const wchar_t kGoogleCrashHandlerPipePostfix[] = L"";
-#else
+#else  // other than _M_X64 or _M_IX86.
 #error "unsupported platform"
-#endif
+#endif  // _M_X64 or _M_IX86
 
 // The product name registered in the crash server.
 const wchar_t kProductNameInCrash[] = L"Google_Japanese_IME";
@@ -88,9 +88,9 @@ std::wstring GetBuildMode() {
   return L"rel";
 #elif defined(DEBUG)
   return L"dbg";
-#else
+#else   // Other than MOZC_NO_LOGGING or DEBUG
   return L"opt";
-#endif
+#endif  // MOZC_NO_LOGGING, DEBUG
 }
 
 // Reduces the size of the string |str| to a max of 64 chars (Extra 1 char is
@@ -209,9 +209,9 @@ bool IsCurrentModuleInStack(PCONTEXT context) {
   stack.AddrStack.Mode = AddrModeFlat;
   stack.AddrFrame.Offset = context->Rbp;
   stack.AddrFrame.Mode = AddrModeFlat;
-#else
+#else  // Other than  _M_IX86 or _M_X64
 #error "unsupported platform"
-#endif
+#endif  // _M_IX86, _M_X64, and others.
 
   while (StackWalk64(IMAGE_FILE_MACHINE_I386, GetCurrentProcess(),
                      GetCurrentThread(), &stack, context, 0,
@@ -230,9 +230,9 @@ bool FilterHandler(void *context, EXCEPTION_POINTERS *exinfo,
     // We do not catch CRT error in release build.
 #ifdef MOZC_NO_LOGGING
     return false;
-#else
+#else   // MOZC_NO_LOGGING
     return true;
-#endif
+#endif  // MOZC_NO_LOGGING
   }
 
   // Make sure it's our module which cause the crash.
@@ -259,7 +259,7 @@ bool CrashReportHandler::Initialize(bool check_address) {
     const std::string acrashdump_directory =
         SystemUtil::GetCrashReportDirectory();
     // create a crash dump directory if not exist.
-    if (!FileUtil::FileExists(acrashdump_directory)) {
+    if (absl::Status s = FileUtil::FileExists(acrashdump_directory); !s.ok()) {
       FileUtil::CreateDirectory(acrashdump_directory);
     }
 

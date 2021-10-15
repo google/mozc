@@ -42,6 +42,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace {
@@ -56,8 +57,11 @@ class ProcessMutexTest : public testing::Test {
 
   void TearDown() override {
     ProcessMutex mutex(kName);
-    if (FileUtil::FileExists(mutex.lock_filename())) {
-      LOG(FATAL) << "Lock file unexpectedly remains: " << mutex.lock_filename();
+    if (absl::Status s = FileUtil::FileExists(mutex.lock_filename());
+        !absl::IsNotFound(s)) {
+      LOG(FATAL)
+          << "Lock file unexpectedly remains or cannot check the existence: "
+          << mutex.lock_filename() << ": " << s;
     }
 
     SystemUtil::SetUserProfileDirectory(original_user_profile_dir_);

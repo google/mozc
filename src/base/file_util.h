@@ -73,8 +73,8 @@ class FileUtilInterface {
   virtual bool CreateDirectory(const std::string &path) const = 0;
   virtual bool RemoveDirectory(const std::string &dirname) const = 0;
   virtual absl::Status Unlink(const std::string &filename) const = 0;
-  virtual bool FileExists(const std::string &filename) const = 0;
-  virtual bool DirectoryExists(const std::string &dirname) const = 0;
+  virtual absl::Status FileExists(const std::string &filename) const = 0;
+  virtual absl::Status DirectoryExists(const std::string &dirname) const = 0;
   virtual bool CopyFile(const std::string &from,
                         const std::string &to) const = 0;
   virtual bool IsEqualFile(const std::string &filename1,
@@ -111,10 +111,10 @@ class FileUtil {
   static void UnlinkOrLogError(const std::string &filename);
 
   // Returns true if a file or a directory with the name exists.
-  static bool FileExists(const std::string &filename);
+  static absl::Status FileExists(const std::string &filename);
 
   // Returns true if the directory exists.
-  static bool DirectoryExists(const std::string &dirname);
+  static absl::Status DirectoryExists(const std::string &dirname);
 
 #ifdef OS_WIN
   // Adds file attributes to the file to hide it.

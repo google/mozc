@@ -38,10 +38,15 @@
 #include "base/port.h"
 #include "testing/base/public/gunit_prod.h"
 // for FRIEND_TEST()
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 class WinUtil {
  public:
+  WinUtil() = delete;
+  ~WinUtil() = delete;
+
   // Load a DLL which has the specified base-name and is located in the
   // system directory.
   // If the function succeeds, the return value is a handle to the module.
@@ -161,8 +166,12 @@ class WinUtil {
   static bool ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
                                       const wchar_t *parameters);
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WinUtil);
+  // Converts the error code to canonical status code.
+  static absl::StatusCode ErrorToCanonicalCode(DWORD error_code);
+
+  // Converts the error code to canonical status.
+  static absl::Status ErrorToCanonicalStatus(DWORD error_code,
+                                             absl::string_view message);
 };
 
 // Initializes COM in the constructor (STA), and uninitializes COM in the

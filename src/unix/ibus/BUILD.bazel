@@ -219,6 +219,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:system_util",
         "//base/protobuf:text_format",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

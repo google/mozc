@@ -50,7 +50,7 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   bool CreateDirectory(const std::string &path) const override {
-    if (FileExists(path)) {
+    if (FileExists(path).ok()) {
       return false;
     }
     dirs_[path] = true;
@@ -58,7 +58,7 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   bool RemoveDirectory(const std::string &dirname) const override {
-    if (FileExists(dirname)) {
+    if (FileExists(dirname).ok()) {
       return false;
     }
     dirs_[dirname] = false;
@@ -66,7 +66,7 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   absl::Status Unlink(const std::string &filename) const override {
-    if (DirectoryExists(filename)) {
+    if (DirectoryExists(filename).ok()) {
       return absl::FailedPreconditionError(
           absl::StrFormat("%s is a directory", filename));
     }
@@ -74,18 +74,20 @@ class FileUtilMock : public FileUtilInterface {
     return absl::OkStatus();
   }
 
-  bool FileExists(const std::string &filename) const override {
-    auto it = files_.find(filename);
-    return it != files_.end() && it->second > 0;
+  absl::Status FileExists(const std::string &filename) const override {
+    const auto it = files_.find(filename);
+    return it != files_.end() && it->second > 0 ? absl::OkStatus()
+                                                : absl::NotFoundError(filename);
   }
 
-  bool DirectoryExists(const std::string &dirname) const override {
+  absl::Status DirectoryExists(const std::string &dirname) const override {
     auto it = dirs_.find(dirname);
-    return it != dirs_.end() ? it->second : false;
+    return it != dirs_.end() && it->second ? absl::OkStatus()
+                                           : absl::NotFoundError(dirname);
   }
 
   bool CopyFile(const std::string &from, const std::string &to) const override {
-    if (!FileExists(from)) {
+    if (!FileExists(from).ok()) {
       return false;
     }
 
@@ -95,7 +97,7 @@ class FileUtilMock : public FileUtilInterface {
 
   bool IsEqualFile(const std::string &filename1,
                    const std::string &filename2) const override {
-    return (FileExists(filename1) && FileExists(filename2) &&
+    return (FileExists(filename1).ok() && FileExists(filename2).ok() &&
             files_[filename1] == files_[filename2]);
   }
 
@@ -108,12 +110,12 @@ class FileUtilMock : public FileUtilInterface {
 
   absl::Status AtomicRename(const std::string &from,
                             const std::string &to) const override {
-    if (FileExists(from)) {
+    if (FileExists(from).ok()) {
       files_[to] = files_[from];
       files_[from] = 0;
       return absl::OkStatus();
     }
-    if (DirectoryExists(from)) {
+    if (DirectoryExists(from).ok()) {
       dirs_[to] = dirs_[from];
       dirs_[from] = false;
       return absl::OkStatus();
@@ -122,18 +124,18 @@ class FileUtilMock : public FileUtilInterface {
   }
 
   bool CreateHardLink(const std::string &from, const std::string &to) override {
-    if (!FileExists(from) && !DirectoryExists(from)) {
+    if (!FileExists(from).ok() && !DirectoryExists(from).ok()) {
       // `from` doesn't exist.
       return false;
     }
 
-    if (FileExists(to) || DirectoryExists(to)) {
+    if (FileExists(to).ok() || DirectoryExists(to).ok()) {
       // `to` already exists.
       return false;
     }
 
     canonical_paths_[to] = from;
-    if (FileExists(from)) {
+    if (FileExists(from).ok()) {
       CreateFile(to);
     } else {
       CreateDirectory(to);
@@ -143,7 +145,7 @@ class FileUtilMock : public FileUtilInterface {
 
   bool GetModificationTime(const std::string &filename,
                            FileTimeStamp *modified_at) const override {
-    if (!FileExists(filename)) {
+    if (!FileExists(filename).ok()) {
       return false;
     }
     *modified_at = files_[filename];

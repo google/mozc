@@ -160,14 +160,11 @@ class CandidateList final {
   bool IsFirstPage(size_t index) const { return index < page_size_; }
   bool IsLastPage(size_t index) const;
 
-  bool rotate_;
   size_t page_size_;
   size_t focused_index_;
-  bool focused_;
   std::string name_;
   ObjectPool<Candidate> candidate_pool_;
   std::vector<Candidate *> candidates_;
-  int next_available_id_;
 
   // Map marking added candidate values.  The keys are fingerprints of
   // the candidate values, the values of the map are candidate ids.
@@ -178,6 +175,10 @@ class CandidateList final {
   // The key ids are not directly stored in candidates, so accessing
   // these ids, they should be converted with this map.
   std::map<int, int> alternative_ids_;
+
+  int next_available_id_;
+  bool rotate_;
+  bool focused_;
 };
 
 }  // namespace session

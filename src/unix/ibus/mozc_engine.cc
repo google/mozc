@@ -60,7 +60,6 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 
-
 #ifdef ENABLE_GTK_RENDERER
 #include "renderer/renderer_client.h"
 #include "unix/ibus/gtk_candidate_window_handler.h"
@@ -282,8 +281,7 @@ MozcEngine::MozcEngine()
   ibus_config_.Initialize();
   property_handler_ = absl::make_unique<PropertyHandler>(
       absl::make_unique<LocaleBasedMessageTranslator>(GetMessageLocale()),
-      ibus_config_.IsActiveOnLaunch(),
-      client_.get());
+      ibus_config_.IsActiveOnLaunch(), client_.get());
 
   // TODO(yusukes): write a unit test to check if the capability is set
   // as expected.
@@ -676,7 +674,7 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
     IBusEngine *engine) {
 #ifndef ENABLE_GTK_RENDERER
   return ibus_candidate_window_handler_.get();
-#else
+#else   // ENABLE_GTK_RENDERER
   if (!gtk_candidate_window_handler_) {
     return ibus_candidate_window_handler_.get();
   }
@@ -688,7 +686,8 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
   // TODO(nona): integrate with renderer/renderer_client.cc
   const std::string renderer_path =
       FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
-  if (!FileUtil::FileExists(renderer_path)) {
+  if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
+    LOG(ERROR) << s;
     return ibus_candidate_window_handler_.get();
   }
 

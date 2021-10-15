@@ -116,19 +116,19 @@ TEST_F(ConfigFileStreamTest, AtomicUpdate) {
   const std::string filename = ConfigFileStream::GetFileName(prefixed_filename);
   const std::string tmp_filename = filename + ".tmp";
 
-  EXPECT_FALSE(FileUtil::FileExists(filename));
-  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
+  EXPECT_FALSE(FileUtil::FileExists(filename).ok());
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
 
   const std::string contents = "123\n2\n3";
   ConfigFileStream::AtomicUpdate(prefixed_filename, contents);
-  EXPECT_TRUE(FileUtil::FileExists(filename));
-  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
+  EXPECT_OK(FileUtil::FileExists(filename));
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
   EXPECT_EQ(contents, GetFileData(filename));
 
   const std::string new_contents = "246\n4\n6";
   ConfigFileStream::AtomicUpdate(prefixed_filename, new_contents);
-  EXPECT_TRUE(FileUtil::FileExists(filename));
-  EXPECT_FALSE(FileUtil::FileExists(tmp_filename));
+  EXPECT_OK(FileUtil::FileExists(filename));
+  EXPECT_FALSE(FileUtil::FileExists(tmp_filename).ok());
   EXPECT_EQ(new_contents, GetFileData(filename));
 
   EXPECT_OK(FileUtil::UnlinkIfExists(filename));
@@ -151,7 +151,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     ofs.write(kBinaryData, kBinaryDataSize);
   }
 
-  ASSERT_TRUE(FileUtil::FileExists(test_file_path));
+  ASSERT_OK(FileUtil::FileExists(test_file_path));
 
   {
     std::unique_ptr<std::istream> ifs(ConfigFileStream::OpenReadBinary(
@@ -168,7 +168,7 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
 
   // Remove test file just in case.
   EXPECT_OK(FileUtil::Unlink(test_file_path));
-  EXPECT_FALSE(FileUtil::FileExists(test_file_path));
+  EXPECT_FALSE(FileUtil::FileExists(test_file_path).ok());
 }
 
 TEST_F(ConfigFileStreamTest, OpenReadText) {
@@ -188,7 +188,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
     ofs.write(kSourceTextData, sizeof(kSourceTextData));
   }
 
-  ASSERT_TRUE(FileUtil::FileExists(test_file_path));
+  ASSERT_OK(FileUtil::FileExists(test_file_path));
 
 #ifdef OS_WIN
 #define TRAILING_CARRIAGE_RETURN ""
@@ -218,7 +218,7 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
 
   // Remove test file just in case.
   EXPECT_OK(FileUtil::Unlink(test_file_path));
-  EXPECT_FALSE(FileUtil::FileExists(test_file_path));
+  EXPECT_FALSE(FileUtil::FileExists(test_file_path).ok());
 }
 
 }  // namespace mozc

@@ -69,55 +69,55 @@ void CreateTestFile(const std::string &filename, const std::string &data) {
 }
 
 TEST(FileUtilTest, CreateDirectory) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
   // dirpath = FLAGS_test_tmpdir/testdir
   const std::string dirpath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testdir");
 
   // Delete dirpath, if it exists.
-  if (FileUtil::FileExists(dirpath)) {
+  if (FileUtil::FileExists(dirpath).ok()) {
     FileUtil::RemoveDirectory(dirpath);
   }
-  ASSERT_FALSE(FileUtil::FileExists(dirpath));
+  ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 
   // Create the directory.
   EXPECT_TRUE(FileUtil::CreateDirectory(dirpath));
-  EXPECT_TRUE(FileUtil::DirectoryExists(dirpath));
+  EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
   // Delete the directory.
   ASSERT_TRUE(FileUtil::RemoveDirectory(dirpath));
-  ASSERT_FALSE(FileUtil::FileExists(dirpath));
+  ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 }
 
 TEST(FileUtilTest, DirectoryExists) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
   const std::string filepath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
 
   // Delete filepath, if it exists.
   ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
-  ASSERT_FALSE(FileUtil::FileExists(filepath));
+  ASSERT_FALSE(FileUtil::FileExists(filepath).ok());
 
   // Create a file.
   CreateTestFile(filepath, "test data");
-  EXPECT_TRUE(FileUtil::FileExists(filepath));
-  EXPECT_FALSE(FileUtil::DirectoryExists(filepath));
+  EXPECT_OK(FileUtil::FileExists(filepath));
+  EXPECT_FALSE(FileUtil::DirectoryExists(filepath).ok());
 
   // Delete the file.
   ASSERT_OK(FileUtil::Unlink(filepath));
-  ASSERT_FALSE(FileUtil::FileExists(filepath));
+  ASSERT_FALSE(FileUtil::FileExists(filepath).ok());
 }
 
 TEST(FileUtilTest, Unlink) {
   const std::string filepath =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
   ASSERT_OK(FileUtil::UnlinkIfExists(filepath));
-  EXPECT_FALSE(FileUtil::FileExists(filepath));
+  EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
 
   CreateTestFile(filepath, "simple test");
-  EXPECT_TRUE(FileUtil::FileExists(filepath));
+  EXPECT_OK(FileUtil::FileExists(filepath));
   EXPECT_OK(FileUtil::Unlink(filepath));
-  EXPECT_FALSE(FileUtil::FileExists(filepath));
+  EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
 
 #ifdef OS_WIN
   constexpr DWORD kTestAttributeList[] = {
@@ -134,9 +134,9 @@ TEST(FileUtilTest, Unlink) {
     CreateTestFile(filepath, "attribute_test");
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));
-    EXPECT_TRUE(FileUtil::FileExists(filepath));
+    EXPECT_OK(FileUtil::FileExists(filepath));
     EXPECT_OK(FileUtil::Unlink(filepath));
-    EXPECT_FALSE(FileUtil::FileExists(filepath));
+    EXPECT_FALSE(FileUtil::FileExists(filepath).ok());
   }
 #endif  // OS_WIN
 
@@ -155,7 +155,7 @@ TEST(FileUtilTest, HideFile) {
   Util::Utf8ToWide(filename.c_str(), &wfilename);
 
   CreateTestFile(filename, "test data");
-  EXPECT_TRUE(FileUtil::FileExists(filename));
+  EXPECT_OK(FileUtil::FileExists(filename));
 
   EXPECT_NE(FALSE,
             ::SetFileAttributesW(wfilename.c_str(), FILE_ATTRIBUTE_NORMAL));
@@ -301,8 +301,8 @@ TEST(FileUtilTest, AtomicRename) {
   EXPECT_OK(FileUtil::AtomicRename(from, to));
 
   // from is deleted
-  EXPECT_FALSE(FileUtil::FileExists(from));
-  EXPECT_TRUE(FileUtil::FileExists(to));
+  EXPECT_FALSE(FileUtil::FileExists(from).ok());
+  EXPECT_OK(FileUtil::FileExists(to));
 
   {
     InputFileStream ifs(to.c_str());
@@ -361,8 +361,8 @@ TEST(FileUtilTest, AtomicRename) {
 
     EXPECT_OK(FileUtil::AtomicRename(from, to));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
-    EXPECT_FALSE(FileUtil::FileExists(from));
-    EXPECT_TRUE(FileUtil::FileExists(to));
+    EXPECT_FALSE(FileUtil::FileExists(from).ok());
+    EXPECT_OK(FileUtil::FileExists(to));
 
     ::SetFileAttributesW(wfrom.c_str(), FILE_ATTRIBUTE_NORMAL);
     ::SetFileAttributesW(wto.c_str(), FILE_ATTRIBUTE_NORMAL);

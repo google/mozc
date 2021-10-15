@@ -165,7 +165,7 @@ WordRegisterDialog::WordRegisterDialog()
   }
 
   // Create new dictionary if empty
-  if (!session_->mutable_storage()->Exists() ||
+  if (!session_->mutable_storage()->Exists().ok() ||
       session_->storage().dictionaries_size() == 0) {
     const QString name = tr("User Dictionary 1");
     uint64_t dic_id = 0;

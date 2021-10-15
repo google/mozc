@@ -46,9 +46,9 @@ using commands::Request;
 ImeContext::ImeContext()
     : create_time_(0),
       last_command_time_(0),
-      state_(NONE),
       request_(&Request::default_instance()),
       config_(&config::ConfigHandler::DefaultConfig()),
+      state_(NONE),
       keymap_(config::ConfigHandler::GetDefaultKeyMap()) {}
 ImeContext::~ImeContext() {}
 

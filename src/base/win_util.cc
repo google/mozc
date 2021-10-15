@@ -50,6 +50,13 @@
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
+
+// Disable StrCat macro to use absl::StrCat.
+#ifdef StrCat
+#undef StrCat
+#endif  // StrCat
 
 namespace mozc {
 namespace {
@@ -532,6 +539,26 @@ bool WinUtil::ShellExecuteInSystemDir(const wchar_t *verb, const wchar_t *file,
       << ", error:" << result << ", verb: " << verb << ", file: " << file
       << ", parameters: " << parameters;
   return result > 32;
+}
+
+absl::StatusCode WinUtil::ErrorToCanonicalCode(DWORD error_code) {
+  switch (error_code) {
+    case ERROR_SUCCESS:
+      return absl::StatusCode::kOk;
+    case ERROR_FILE_NOT_FOUND:
+    case ERROR_PATH_NOT_FOUND:
+      return absl::StatusCode::kNotFound;
+    case ERROR_ACCESS_DENIED:
+      return absl::StatusCode::kPermissionDenied;
+    default:
+      return absl::StatusCode::kUnknown;
+  }
+}
+
+absl::Status WinUtil::ErrorToCanonicalStatus(DWORD error_code,
+                                             absl::string_view message) {
+  return absl::Status(ErrorToCanonicalCode(error_code),
+                      absl::StrCat(message, ": error_code=", error_code));
 }
 
 ScopedCOMInitializer::ScopedCOMInitializer() : hr_(::CoInitialize(nullptr)) {}

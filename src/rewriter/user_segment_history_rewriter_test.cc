@@ -50,6 +50,7 @@
 #include "request/conversion_request.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/variants_rewriter.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -185,7 +186,7 @@ TEST_F(UserSegmentHistoryRewriterTest, CreateFile) {
       CreateUserSegmentHistoryRewriter());
   const std::string history_file =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "/segment.db");
-  EXPECT_TRUE(FileUtil::FileExists(history_file));
+  EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
 TEST_F(UserSegmentHistoryRewriterTest, InvalidInputsTest) {

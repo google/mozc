@@ -38,6 +38,7 @@
 #include "base/file_util_mock.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
@@ -65,10 +66,10 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
   SystemUtil::SetUserProfileDirectory("");
 
   // The default path is "$HOME/.config/mozc".
-  EXPECT_FALSE(FileUtil::DirectoryExists("/home/mozcuser/.config/mozc"));
+  EXPECT_FALSE(FileUtil::DirectoryExists("/home/mozcuser/.config/mozc").ok());
   EXPECT_EQ("/home/mozcuser/.config/mozc",
             SystemUtil::GetUserProfileDirectory());
-  EXPECT_TRUE(FileUtil::DirectoryExists("/home/mozcuser/.config/mozc"));
+  EXPECT_OK(FileUtil::DirectoryExists("/home/mozcuser/.config/mozc"));
 
   environ_mock.SetEnv("XDG_CONFIG_HOME", "/tmp/config");
 
@@ -81,26 +82,26 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
 
   // $XDG_CONFIG_HOME is already set with "/tmp/config" in above.
   // If $XDG_CONFIG_HOME is specified, "$XDG_CONFIG_HOME/mozc" is used.
-  EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/config/mozc"));
+  EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/config/mozc").ok());
   EXPECT_EQ("/tmp/config/mozc", SystemUtil::GetUserProfileDirectory());
-  EXPECT_TRUE(FileUtil::DirectoryExists("/tmp/config/mozc"));
+  EXPECT_OK(FileUtil::DirectoryExists("/tmp/config/mozc"));
 
   // Resets again.
   SystemUtil::SetUserProfileDirectory("");
 
   // If "$HOME/.mozc" exists, it is used for backward compatibility.
   FileUtil::CreateDirectory("/home/mozcuser/.mozc");
-  EXPECT_TRUE(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));
+  EXPECT_OK(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));
   EXPECT_EQ("/home/mozcuser/.mozc", SystemUtil::GetUserProfileDirectory());
-  EXPECT_TRUE(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));
+  EXPECT_OK(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));
 
   // Resets again to avoid side effects to other tests.
   SystemUtil::SetUserProfileDirectory("");
 
-#else
+#else  // Platforms
 #error Undefined target platform.
 
-#endif
+#endif  // Platforms
 }
 
 TEST_F(SystemUtilTest, IsWindowsX64Test) {

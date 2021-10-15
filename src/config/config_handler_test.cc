@@ -232,14 +232,14 @@ TEST_F(ConfigHandlerTest, SetImposedConfig) {
 
 TEST_F(ConfigHandlerTest, ConfigFileNameConfig) {
   const std::string config_file =
-      std::string("config") + std::to_string(config::CONFIG_VERSION);
+      std::string("config") + std::to_string(config::CONFIG_VERSION) + ".db";
 
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), config_file);
   ASSERT_OK(FileUtil::UnlinkIfExists(filename));
   Config input;
   ConfigHandler::SetConfig(input);
-  FileUtil::FileExists(filename);
+  EXPECT_OK(FileUtil::FileExists(filename));
 }
 
 TEST_F(ConfigHandlerTest, SetConfigFileName) {
@@ -296,7 +296,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
 
     // Remove test file just in case.
     ASSERT_OK(FileUtil::Unlink(dest_path));
-    EXPECT_FALSE(FileUtil::FileExists(dest_path));
+    EXPECT_FALSE(FileUtil::FileExists(dest_path).ok());
   }
 }
 #endif  // !OS_ANDROID

@@ -140,10 +140,10 @@ class ImeContext {
 
   KeyEventTransformer key_event_transformer_;
 
-  State state_;
-
   const commands::Request *request_;
   const config::Config *config_;
+
+  State state_;
 
   config::Config::SessionKeymap keymap_;
 

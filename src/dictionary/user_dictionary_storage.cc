@@ -76,21 +76,21 @@ const std::string &UserDictionaryStorage::filename() const {
   return file_name_;
 }
 
-bool UserDictionaryStorage::Exists() const {
+absl::Status UserDictionaryStorage::Exists() const {
   return FileUtil::FileExists(file_name_);
 }
 
-bool UserDictionaryStorage::LoadInternal() {
+absl::Status UserDictionaryStorage::LoadInternal() {
   InputFileStream ifs(file_name_.c_str(), std::ios::binary);
   if (!ifs) {
-    if (Exists()) {
-      LOG(ERROR) << file_name_ << " exists but cannot be opened.";
+    absl::Status s = Exists();
+    if (s.ok()) {
       last_error_type_ = UNKNOWN_ERROR;
-    } else {
-      LOG(ERROR) << file_name_ << " does not exist.";
-      last_error_type_ = FILE_NOT_EXISTS;
+      return absl::UnknownError(absl::StrCat(
+          file_name_, " exists but cannot open it: ", s.ToString()));
     }
-    return false;
+    last_error_type_ = FILE_NOT_EXISTS;
+    return s;
   }
 
   // Increase the maximum capacity of file size
@@ -104,26 +104,31 @@ bool UserDictionaryStorage::LoadInternal() {
   decoder.SetTotalBytesLimit(kDefaultTotalBytesLimit);
   if (!proto_.ParseFromCodedStream(&decoder) ||
       !decoder.ConsumedEntireMessage() || !ifs.eof()) {
-    LOG(ERROR) << "ParseFromStream failed: file seems broken";
     last_error_type_ = BROKEN_FILE;
-    return false;
+    return absl::UnknownError("ParseFromCodedStream failed. File seems broken");
   }
-  return true;
+  return absl::OkStatus();
 }
 
-bool UserDictionaryStorage::Load() {
+absl::Status UserDictionaryStorage::Load() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
-  bool result = false;
+  absl::Status status = Exists();
 
   // Check if the user dictionary exists or not.
-  if (Exists()) {
-    result = LoadInternal();
-  } else {
+  if (status.ok()) {
+    status = LoadInternal();
+  } else if (absl::IsNotFound(status)) {
     // This is also an expected scenario: e.g., clean installation, unit tests.
-    VLOG(1) << "User dictionary file has not been created.";
+    VLOG(1) << "User dictionary file has not been created";
     last_error_type_ = FILE_NOT_EXISTS;
-    result = false;
+  } else {
+    // Failed to check file existnce.
+    status = absl::Status(
+        status.code(),
+        absl::StrCat("Cannot check if the user dictionary file exists: file=",
+                     file_name_, ": ", status.message()));
+    last_error_type_ = UNKNOWN_ERROR;
   }
 
   // Check dictionary id here. if id is 0, assign random ID.
@@ -135,7 +140,7 @@ bool UserDictionaryStorage::Load() {
     }
   }
 
-  return result;
+  return status;
 }
 
 absl::Status UserDictionaryStorage::Save() {

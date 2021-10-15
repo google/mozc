@@ -386,6 +386,7 @@
         'dictionary_tool/zero_width_splitter.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
@@ -458,6 +459,7 @@
         'word_register_dialog/word_register_dialog_libmain.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_status',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../data_manager/data_manager.gyp:pos_list_provider',

@@ -41,6 +41,7 @@
 #include "converter/segments.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -116,7 +117,7 @@ TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
   UserBoundaryHistoryRewriter rewriter(&mock());
   const std::string history_file =
       absl::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
-  EXPECT_TRUE(FileUtil::FileExists(history_file));
+  EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
 // "たんぽぽ" -> "たん|ぽぽ"

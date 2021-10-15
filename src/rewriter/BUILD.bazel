@@ -142,6 +142,7 @@ cc_library_mozc(
         "//storage:lru_storage",
         "//transliteration",
         "//usage_stats",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -202,6 +203,7 @@ cc_library_mozc(
         "//storage:lru_storage",
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )

@@ -78,7 +78,7 @@ SUFFIX 接頭詞,名詞接続,*,*,*,*,*,(低|未|非|高|大) 1000
 
 # 代用品
 # major 接頭辞 will be covered by compound
-PREFIX 接頭詞,名詞接続               200
+PREFIX 接頭詞,名詞接続               250
 
 PREFIX 動詞,自立                     100
 PREFIX 動詞,非自立                    4000

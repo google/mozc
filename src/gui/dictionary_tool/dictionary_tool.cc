@@ -310,8 +310,6 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       session_(new UserDictionarySession(
           UserDictionaryUtil::GetUserDictionaryFileName())),
       current_dic_id_(0),
-      modified_(false),
-      monitoring_user_edit_(false),
       window_title_(GuiUtil::ProductName()),
       dic_menu_(new QMenu),
       new_action_(nullptr),
@@ -323,9 +321,11 @@ DictionaryTool::DictionaryTool(QWidget *parent)
       export_action_(nullptr),
       import_default_ime_action_(nullptr),
       client_(client::ClientFactory::NewClient()),
-      is_available_(true),
       max_entry_size_(mozc::UserDictionaryStorage::max_entry_size()),
-      pos_list_provider_(new PosListProvider()) {
+      pos_list_provider_(new PosListProvider()),
+      modified_(false),
+      monitoring_user_edit_(false),
+      is_available_(true) {
   setupUi(this);
 
   // Create and set up ImportDialog object.
@@ -526,7 +526,9 @@ DictionaryTool::DictionaryTool(QWidget *parent)
 
   // If this is the first time for the user dictionary is used, create
   // a default dictionary.
-  if (!session_->mutable_storage()->Exists()) {
+  if (absl::Status s = session_->mutable_storage()->Exists(); !s.ok()) {
+    LOG_IF(ERROR, !absl::IsNotFound(s))
+        << "Cannot check if the storage file exists: " << s;
     CreateDictionaryHelper(tr("User Dictionary 1"));
   }
 

@@ -36,13 +36,13 @@
 #include <shlobj.h>
 #include <time.h>
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#endif
+#endif  // OS_WIN
 
 #ifdef __APPLE__
 #include <fstream>
@@ -50,7 +50,7 @@
 
 #include "base/mac_util.h"
 #include "base/mutex.h"
-#endif
+#endif  // __APPLE__
 
 #if defined(OS_ANDROID)
 #include "config/config_handler.h"
@@ -92,7 +92,7 @@ class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
 bool WinStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
-#else
+#else   // CHANNEL_DEV
   const REGSAM sam_desired =
       KEY_QUERY_VALUE | (SystemUtil::IsWindowsX64() ? KEY_WOW64_32KEY : 0);
   // Like the crash handler, check the "ClientStateMedium" key first.
@@ -130,7 +130,7 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
   val = true;
   // We always returns true in DevChannel.
   constexpr bool kReturnCodeInError = true;
-#else
+#else   // CHANNEL_DEV
   constexpr bool kReturnCodeInError = false;
 #endif  // CHANNEL_DEV
 
@@ -176,7 +176,7 @@ MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
 bool MacStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
-#else
+#else   // CHANNEL_DEV
   scoped_lock l(&mutex_);
   constexpr bool kDefaultValue = false;
 
@@ -203,11 +203,11 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
 bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef CHANNEL_DEV
   return true;
-#else
+#else   // CHANNEL_DEV
   scoped_lock l(&mutex_);
   const uint32 value = static_cast<uint32>(val);
 
-  if (FileUtil::FileExists(config_file_)) {
+  if (FileUtil::FileExists(config_file_).ok()) {
     ::chmod(config_file_.c_str(), S_IRUSR | S_IWUSR);  // read/write
   }
   std::ofstream ofs(config_file_.c_str(),
@@ -270,10 +270,10 @@ typedef WinStatsConfigUtilImpl DefaultConfigUtilImpl;
 typedef MacStatsConfigUtilImpl DefaultConfigUtilImpl;
 #elif defined(OS_ANDROID)
 typedef AndroidStatsConfigUtilImpl DefaultConfigUtilImpl;
-#else
+#else   // Platforms
 // Fall back mode.  Use null implementation.
 typedef NullStatsConfigUtilImpl DefaultConfigUtilImpl;
-#endif
+#endif  // Platforms
 
 StatsConfigUtilInterface &GetStatsConfigUtil() {
   if (g_stats_config_util_handler == nullptr) {

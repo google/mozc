@@ -40,6 +40,7 @@
 
 #include "base/double_array.h"
 #include "base/port.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -109,6 +110,9 @@ class SplitIterator {
 
 class Util {
  public:
+  Util() = delete;
+  ~Util() = delete;
+
   // String utils
   static void SplitStringUsing(absl::string_view str, const char *delim,
                                std::vector<std::string> *output);
@@ -447,8 +451,12 @@ class Util {
   // Checks endian-ness at runtime.
   static bool IsLittleEndian();
 
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Util);
+  // Converts `errno` to absl::StatusCode.
+  static absl::StatusCode ErrnoToCanonicalCode(int error_number);
+
+  // Converts `errno` to absl::Status.
+  static absl::Status ErrnoToCanonicalStatus(int error_number,
+                                             absl::string_view message);
 };
 
 // Const iterator implementation to traverse on a (utf8) string as a char32
@@ -569,6 +577,7 @@ class SplitIterator<Delimiter, AllowEmpty> {
 
   DISALLOW_COPY_AND_ASSIGN(SplitIterator);
 };
+
 
 }  // namespace mozc
 
