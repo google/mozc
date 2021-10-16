@@ -108,8 +108,8 @@ std::string UserProfileDirectoryImpl::GetDir() {
   }
   const std::string dir = GetUserProfileDirectory();
   FileUtil::CreateDirectory(dir);
-  if (!FileUtil::DirectoryExists(dir)) {
-    LOG(ERROR) << "Failed to create directory: " << dir;
+  if (absl::Status s = FileUtil::DirectoryExists(dir); !s.ok()) {
+    LOG(ERROR) << "Failed to create directory: " << dir << ": " << s;
   }
 
   dir_ = dir;
@@ -302,7 +302,7 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   }
 
   const std::string old_dir = FileUtil::JoinPath(home, ".mozc");
-  if (FileUtil::DirectoryExists(old_dir)) {
+  if (FileUtil::DirectoryExists(old_dir).ok()) {
     return old_dir;
   }
 
@@ -312,10 +312,10 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
   }
   return FileUtil::JoinPath(home, ".config/mozc");
 
-#else
+#else  // Supported platforms
 #error Undefined target platform.
 
-#endif
+#endif  // Platforms
 }
 
 }  // namespace
@@ -432,7 +432,7 @@ std::string SystemUtil::GetServerDirectory() {
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
 #if defined(MOZC_SERVER_DIRECTORY)
   return MOZC_SERVER_DIRECTORY;
-#else
+#else   // MOZC_SERVER_DIRECTORY
   return "/usr/lib/mozc";
 #endif  // MOZC_SERVER_DIRECTORY
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
@@ -473,7 +473,7 @@ std::string SystemUtil::GetDocumentDirectory() {
   return GetServerDirectory();
 #elif defined(MOZC_DOCUMENT_DIRECTORY)
   return MOZC_DOCUMENT_DIRECTORY;
-#else
+#else   // __APPLE__
   return FileUtil::JoinPath(GetServerDirectory(), "documents");
 #endif  // __APPLE__
 }
@@ -749,7 +749,7 @@ bool SystemUtil::IsWindows7OrLater() {
 #ifdef OS_WIN
   static const bool result = ::IsWindows7OrGreater();
   return result;
-#else
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -758,7 +758,7 @@ bool SystemUtil::IsWindows8OrLater() {
 #ifdef OS_WIN
   static const bool result = ::IsWindows8OrGreater();
   return result;
-#else
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -767,7 +767,7 @@ bool SystemUtil::IsWindows8_1OrLater() {
 #ifdef OS_WIN
   static const bool result = ::IsWindows8Point1OrGreater();
   return result;
-#else
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -799,7 +799,7 @@ bool SystemUtil::IsWindowsX64() {
   // This function never fails.
   ::GetNativeSystemInfo(&system_info);
   return (system_info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64);
-#else
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }

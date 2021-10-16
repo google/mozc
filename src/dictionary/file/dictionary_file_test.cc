@@ -67,7 +67,7 @@ TEST(DictionaryFileTest, Basic) {
     builder.WriteImageToFile(dfn);
   }
 
-  EXPECT_TRUE(FileUtil::FileExists(dfn));
+  EXPECT_OK(FileUtil::FileExists(dfn));
 
   {
     DictionaryFile df(DictionaryFileCodecFactory::GetCodec());

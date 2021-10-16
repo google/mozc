@@ -251,25 +251,26 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   }
 
   void Run() override {
-    std::unique_ptr<UserDictionaryStorage> storage(new UserDictionaryStorage(
-        Singleton<UserDictionaryFileManager>::get()->GetFileName()));
+    UserDictionaryStorage storage(
+        Singleton<UserDictionaryFileManager>::get()->GetFileName());
 
     // Load from file
-    if (!storage->Load()) {
+    if (absl::Status s = storage.Load(); !s.ok()) {
+      LOG(ERROR) << "Failed to load the user dictionary: " << s;
       return;
     }
 
-    if (storage->ConvertSyncDictionariesToNormalDictionaries()) {
+    if (storage.ConvertSyncDictionariesToNormalDictionaries()) {
       LOG(INFO) << "Syncable dictionaries are converted to normal dictionaries";
-      if (storage->Lock()) {
-        if (absl::Status s = storage->Save(); !s.ok()) {
+      if (storage.Lock()) {
+        if (absl::Status s = storage.Save(); !s.ok()) {
           LOG(ERROR) << "Failed to save to storage: " << s;
         }
-        storage->UnLock();
+        storage.UnLock();
       }
     }
 
-    dic_->Load(storage->GetProto());
+    dic_->Load(storage.GetProto());
   }
 
  private:

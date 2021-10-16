@@ -106,14 +106,14 @@ class UserDictionaryStorage {
   // Return true if data tied with this object already
   // exists. Otherwise, it means that the space for the data is used
   // for the first time.
-  bool Exists() const;
+  absl::Status Exists() const;
 
-  // Load user dictionary from the file.
+  // Loads a user dictionary from the file.
   // NOTE: If the file is not existent, nothing is updated.
   //       Therefore if the file is deleted after first load(),
   //       second load() does nothing so the content loaded by first load()
   //       is kept as is.
-  bool Load();
+  absl::Status Load();
 
   // Serialize user dictionary to local file.
   // Need to call Lock() the dictionary before calling Save().
@@ -194,7 +194,7 @@ class UserDictionaryStorage {
   bool IsValidDictionaryName(const std::string &name);
 
   // Load the data from file_name actually.
-  bool LoadInternal();
+  absl::Status LoadInternal();
 
   user_dictionary::UserDictionaryStorage proto_;
   std::string file_name_;

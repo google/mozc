@@ -29,6 +29,7 @@
 
 #include "base/util.h"
 
+#include <cerrno>
 #include <cstdint>
 
 #ifdef OS_WIN
@@ -1605,4 +1606,22 @@ bool Util::IsLittleEndian() {
   return u.c[0] == 0x78U;
 }
 
+absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
+  switch (error_number) {
+    case 0:
+      return absl::StatusCode::kOk;
+    case EACCES:
+      return absl::StatusCode::kPermissionDenied;
+    case ENOENT:
+      return absl::StatusCode::kNotFound;
+    default:
+      return absl::StatusCode::kUnknown;
+  }
+}
+
+absl::Status Util::ErrnoToCanonicalStatus(int error_number,
+                                          absl::string_view message) {
+  return absl::Status(ErrnoToCanonicalCode(error_number),
+                      absl::StrCat(message, ": errno=", error_number));
+}
 }  // namespace mozc

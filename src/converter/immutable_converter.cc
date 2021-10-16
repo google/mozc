@@ -84,12 +84,26 @@ bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
       .enable_simplified_ranking();
 }
 
+// Propagates the spatial_cost_penalty only when enable_new_spatial_scoring is
+// enabled.
+int GetSpatialCostPenalty(const ConversionRequest &request) {
+  return request.request()
+                 .decoder_experiment_params()
+                 .enable_new_spatial_scoring()
+             ? request.request()
+                   .decoder_experiment_params()
+                   .spatial_cost_penalty()
+             : kKanaModifierInsensitivePenalty;
+}
+
 class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
  public:
   KeyCorrectedNodeListBuilder(size_t pos, absl::string_view original_lookup_key,
                               const KeyCorrector *key_corrector,
+                              int spatial_cost_penalty,
                               NodeAllocator *allocator)
-      : BaseNodeListBuilder(allocator, allocator->max_nodes_size()),
+      : BaseNodeListBuilder(allocator, allocator->max_nodes_size(),
+                            spatial_cost_penalty),
         pos_(pos),
         original_lookup_key_(original_lookup_key),
         key_corrector_(key_corrector),
@@ -140,6 +154,7 @@ void InsertCorrectedNodes(size_t pos, const std::string &key,
     return;
   }
   KeyCorrectedNodeListBuilder builder(pos, key, key_corrector,
+                                      GetSpatialCostPenalty(request),
                                       lattice->node_allocator());
   dictionary->LookupPrefix(absl::string_view(str, length), request, &builder);
   if (builder.tail() != nullptr) {
@@ -732,9 +747,10 @@ namespace {
 class NodeListBuilderWithCacheEnabled : public NodeListBuilderForLookupPrefix {
  public:
   NodeListBuilderWithCacheEnabled(NodeAllocator *allocator,
-                                  size_t min_key_length)
+                                  size_t min_key_length,
+                                  int spatial_cost_penalty)
       : NodeListBuilderForLookupPrefix(allocator, allocator->max_nodes_size(),
-                                       min_key_length) {
+                                       min_key_length, spatial_cost_penalty) {
     DCHECK(allocator);
   }
 
@@ -763,14 +779,16 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos, const int end_pos,
   Node *result_node = nullptr;
   if (is_reverse) {
     BaseNodeListBuilder builder(lattice->node_allocator(),
-                                lattice->node_allocator()->max_nodes_size());
+                                lattice->node_allocator()->max_nodes_size(),
+                                GetSpatialCostPenalty(request));
     dictionary_->LookupReverse(absl::string_view(begin, len), request,
                                &builder);
     result_node = builder.result();
   } else {
     if (is_prediction) {
       NodeListBuilderWithCacheEnabled builder(
-          lattice->node_allocator(), lattice->cache_info(begin_pos) + 1);
+          lattice->node_allocator(), lattice->cache_info(begin_pos) + 1,
+          GetSpatialCostPenalty(request));
       dictionary_->LookupPrefix(absl::string_view(begin, len), request,
                                 &builder);
       result_node = builder.result();
@@ -778,7 +796,8 @@ Node *ImmutableConverterImpl::Lookup(const int begin_pos, const int end_pos,
     } else {
       // When cache feature is not used, look up normally
       BaseNodeListBuilder builder(lattice->node_allocator(),
-                                  lattice->node_allocator()->max_nodes_size());
+                                  lattice->node_allocator()->max_nodes_size(),
+                                  GetSpatialCostPenalty(request));
       dictionary_->LookupPrefix(absl::string_view(begin, len), request,
                                 &builder);
       result_node = builder.result();
@@ -1178,8 +1197,10 @@ namespace {
 class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
  public:
   NodeListBuilderForPredictiveNodes(NodeAllocator *allocator, int limit,
+                                    int spatial_cost_penalty,
                                     const PosMatcher *pos_matcher)
-      : BaseNodeListBuilder(allocator, limit), pos_matcher_(pos_matcher) {}
+      : BaseNodeListBuilder(allocator, limit, spatial_cost_penalty),
+        pos_matcher_(pos_matcher) {}
 
   ~NodeListBuilderForPredictiveNodes() override = default;
 
@@ -1267,7 +1288,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
         DCHECK_GE(key.size(), pos);
         NodeListBuilderForPredictiveNodes builder(
             lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(), pos_matcher_);
+            lattice->node_allocator()->max_nodes_size(),
+            GetSpatialCostPenalty(request), pos_matcher_);
         suffix_dictionary_->LookupPredictive(
             absl::string_view(key.data() + pos, key.size() - pos), request,
             &builder);
@@ -1297,7 +1319,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
 
         NodeListBuilderForPredictiveNodes builder(
             lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(), pos_matcher_);
+            lattice->node_allocator()->max_nodes_size(),
+            GetSpatialCostPenalty(request), pos_matcher_);
         dictionary_->LookupPredictive(
             absl::string_view(key.data() + pos, key.size() - pos), request,
             &builder);
@@ -1329,7 +1352,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
         DCHECK_GT(key.size(), pos);
         NodeListBuilderForPredictiveNodes builder(
             lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(), pos_matcher_);
+            lattice->node_allocator()->max_nodes_size(),
+            GetSpatialCostPenalty(request), pos_matcher_);
         suffix_dictionary_->LookupPredictive(
             absl::string_view(key.data() + pos, key.size() - pos), request,
             &builder);
@@ -1358,7 +1382,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
 
         NodeListBuilderForPredictiveNodes builder(
             lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(), pos_matcher_);
+            lattice->node_allocator()->max_nodes_size(),
+            GetSpatialCostPenalty(request), pos_matcher_);
         dictionary_->LookupPredictive(
             absl::string_view(key.data() + pos, key.size() - pos), request,
             &builder);

@@ -76,6 +76,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_status',
         'base.gyp:base',
         'base.gyp:codegen_bytearray_stream#host',
         'clock_mock',

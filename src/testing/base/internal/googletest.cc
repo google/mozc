@@ -32,7 +32,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <unistd.h>
 #endif  // OS_WIN
 
@@ -77,14 +77,15 @@ std::string GetProgramPath() {
 
 std::string GetTestSrcdir() {
   const std::string srcdir(kMozcDataDir);
-  CHECK(FileUtil::DirectoryExists(srcdir)) << srcdir << " is not a directory.";
+  CHECK(FileUtil::DirectoryExists(srcdir).ok())
+      << srcdir << " is not a directory.";
   return srcdir;
 }
 
 std::string GetTestTmpdir() {
   const std::string tmpdir = GetProgramPath() + ".tmp";
 
-  if (!FileUtil::DirectoryExists(tmpdir)) {
+  if (!FileUtil::DirectoryExists(tmpdir).ok()) {
     CHECK(FileUtil::CreateDirectory(tmpdir));
   }
   return tmpdir;

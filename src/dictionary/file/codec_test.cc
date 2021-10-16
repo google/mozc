@@ -131,7 +131,7 @@ TEST_F(CodecTest, FactoryTest) {
     codec->WriteSections(sections, &ofs);
   }
   {
-    EXPECT_TRUE(FileUtil::FileExists(test_file_));
+    EXPECT_OK(FileUtil::FileExists(test_file_));
     InputFileStream ifs;
     ifs.open(test_file_.c_str(), std::ios_base::in | std::ios_base::binary);
     ifs.seekg(0, std::ios::end);
@@ -168,7 +168,7 @@ TEST_F(CodecTest, DefaultTest) {
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_TRUE(FileUtil::FileExists(test_file_));
+  ASSERT_OK(FileUtil::FileExists(test_file_));
   buf = InputFileStream(test_file_.c_str(),
                         std::ios_base::in | std::ios_base::binary)
             .Read();
@@ -204,7 +204,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_TRUE(FileUtil::FileExists(test_file_));
+  ASSERT_OK(FileUtil::FileExists(test_file_));
   buf = InputFileStream(test_file_.c_str(),
                         std::ios_base::in | std::ios_base::binary)
             .Read();

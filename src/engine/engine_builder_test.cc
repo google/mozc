@@ -33,6 +33,7 @@
 
 #include "base/file_util.h"
 #include "prediction/predictor_interface.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
@@ -100,8 +101,8 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     builder_.GetResponse(&response_);
     EXPECT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
     // Verify |src_path| was copied.
-    EXPECT_TRUE(FileUtil::FileExists(src_path));
-    EXPECT_TRUE(FileUtil::FileExists(install_path));
+    EXPECT_OK(FileUtil::FileExists(src_path));
+    EXPECT_OK(FileUtil::FileExists(install_path));
   }
 }
 
@@ -179,8 +180,8 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
     ASSERT_EQ(EngineReloadResponse::RELOAD_READY, response_.status());
 
     // |tmp_src| should be copied to |install_path|.
-    ASSERT_TRUE(FileUtil::FileExists(tmp_src));
-    ASSERT_TRUE(FileUtil::FileExists(install_path));
+    ASSERT_OK(FileUtil::FileExists(tmp_src));
+    ASSERT_OK(FileUtil::FileExists(install_path));
 
     // Build an engine and verify its predictor type (desktop or mobile).
     auto engine = builder_.BuildFromPreparedData();

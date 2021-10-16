@@ -579,7 +579,7 @@ TEST_F(UserDictionaryTest, AsyncLoadTest) {
   {
     UserDictionaryStorage storage(filename);
 
-    EXPECT_FALSE(storage.Load());
+    EXPECT_FALSE(storage.Load().ok());
     EXPECT_TRUE(storage.Lock());
 
     uint64_t id = 0;

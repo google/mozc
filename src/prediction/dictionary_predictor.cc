@@ -105,6 +105,24 @@ bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
       .enable_simplified_ranking();
 }
 
+bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enable_new_spatial_scoring();
+}
+
+// Propagates the spatial_cost_penalty only when enable_new_spatial_scoring is
+// enabled.
+int GetSpatialCostPenalty(const ConversionRequest &request) {
+  return request.request()
+                 .decoder_experiment_params()
+                 .enable_new_spatial_scoring()
+             ? request.request()
+                   .decoder_experiment_params()
+                   .spatial_cost_penalty()
+             : kKanaModifierInsensitivePenalty;
+}
+
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const std::string &reference, const std::string &target) {
   return Util::StartsWith(target, reference);
@@ -212,6 +230,8 @@ class DictionaryPredictor::PredictiveLookupCallback
                            const std::set<std::string> *subsequent_chars,
                            Segment::Candidate::SourceInfo source_info,
                            int unknown_id,
+                           absl::string_view non_expanded_original_key,
+                           int spatial_cost_penalty,
                            std::vector<DictionaryPredictor::Result> *results)
       : penalty_(0),
         types_(types),
@@ -220,6 +240,8 @@ class DictionaryPredictor::PredictiveLookupCallback
         subsequent_chars_(subsequent_chars),
         source_info_(source_info),
         unknown_id_(unknown_id),
+        non_expanded_original_key_(non_expanded_original_key),
+        spatial_cost_penalty_(spatial_cost_penalty),
         results_(results) {}
 
   PredictiveLookupCallback(const PredictiveLookupCallback &) = delete;
@@ -253,8 +275,12 @@ class DictionaryPredictor::PredictiveLookupCallback
 
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    // TODO(taku): Considers to change the penalty depending on `num_expanded`.
-    penalty_ = num_expanded > 0 ? kKanaModifierInsensitivePenalty : 0;
+    penalty_ = 0;
+    if (num_expanded > 0 ||
+        (!non_expanded_original_key_.empty() &&
+         !Util::StartsWith(actual_key, non_expanded_original_key_))) {
+      penalty_ = spatial_cost_penalty_;
+    }
     return TRAVERSE_CONTINUE;
   }
 
@@ -287,6 +313,8 @@ class DictionaryPredictor::PredictiveLookupCallback
   const std::set<std::string> *subsequent_chars_;
   const Segment::Candidate::SourceInfo source_info_;
   const int unknown_id_;
+  absl::string_view non_expanded_original_key_;
+  const int spatial_cost_penalty_;
   std::vector<DictionaryPredictor::Result> *results_;
 };
 
@@ -298,10 +326,12 @@ class DictionaryPredictor::PredictiveBigramLookupCallback
       size_t original_key_len, const std::set<std::string> *subsequent_chars,
       absl::string_view history_value,
       Segment::Candidate::SourceInfo source_info, int unknown_id,
+      absl::string_view non_expanded_original_key, int spatial_cost_penalty,
       std::vector<DictionaryPredictor::Result> *results)
       : PredictiveLookupCallback(types, limit, original_key_len,
                                  subsequent_chars, source_info, unknown_id,
-                                 results),
+                                 non_expanded_original_key,
+                                 spatial_cost_penalty, results),
         history_value_(history_value) {}
 
   PredictiveBigramLookupCallback(const PredictiveBigramLookupCallback &) =
@@ -463,7 +493,9 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 
   if (is_mixed_conversion) {
     SetPredictionCostForMixedConversion(*segments, &results);
-    ApplyPenaltyForKeyExpansion(*segments, &results);
+    if (!IsEnableNewSpatialScoring(request)) {
+      ApplyPenaltyForKeyExpansion(*segments, &results);
+    }
     // Currently, we don't have spelling correction feature when in
     // the mixed conversion mode, so RemoveMissSpelledCandidates() is
     // not called.
@@ -475,7 +507,9 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 
   // Normal prediction.
   SetPredictionCost(*segments, &results);
-  ApplyPenaltyForKeyExpansion(*segments, &results);
+  if (!IsEnableNewSpatialScoring(request)) {
+    ApplyPenaltyForKeyExpansion(*segments, &results);
+  }
   const std::string &input_key = segments->conversion_segment(0).key();
   const size_t input_key_len = Util::CharsLen(input_key);
   RemoveMissSpelledCandidates(input_key_len, &results);
@@ -1247,6 +1281,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   }
 }
 
+// This method should be deprecated, as it is unintentionally adding extra
+// spatial penalty to the candidate.
 void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
     const Segments &segments, std::vector<Result> *results) const {
   if (segments.conversion_segments_size() == 0) {
@@ -1849,8 +1885,8 @@ void DictionaryPredictor::GetPredictiveResults(
     std::string input_key = history_key;
     input_key.append(segments.conversion_segment(0).key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, unknown_id_,
-                                      results);
+                                      nullptr, source_info, unknown_id_, "",
+                                      GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1867,11 +1903,20 @@ void DictionaryPredictor::GetPredictiveResults(
   if (expanded.empty()) {
     input_key.assign(history_key).append(base);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, unknown_id_,
-                                      results);
+                                      nullptr, source_info, unknown_id_, "",
+                                      GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
+
+  // `non_expanded_original_key` keeps the original key request before
+  // key expansions. This key is passed to the callback so that it can
+  // identify whether the key is actually expanded or not.
+  const std::string non_expanded_original_key =
+      IsEnableNewSpatialScoring(request)
+          ? history_key + segments.conversion_segment(0).key()
+          : "";
+
   // |expanded| is a very small set, so calling LookupPredictive multiple
   // times is not so expensive.  Also, the number of lookup results is limited
   // by |lookup_limit|.
@@ -1879,7 +1924,8 @@ void DictionaryPredictor::GetPredictiveResults(
     input_key.assign(history_key).append(base).append(expanded_char);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       nullptr, source_info, unknown_id_,
-                                      results);
+                                      non_expanded_original_key,
+                                      GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
 }
@@ -1895,7 +1941,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, history_value,
-        source_info, unknown_id_, results);
+        source_info, unknown_id_, "", GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1908,12 +1954,17 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
   std::string base;
   std::set<std::string> expanded;
   request.composer().GetQueriesForPrediction(&base, &expanded);
-  std::string input_key = history_key;
-  input_key.append(base);
+  const std::string input_key = history_key + base;
+  const std::string non_expanded_original_key =
+      IsEnableNewSpatialScoring(request)
+          ? history_key + segments.conversion_segment(0).key()
+          : "";
+
   PredictiveBigramLookupCallback callback(
       types, lookup_limit, input_key.size(),
       expanded.empty() ? nullptr : &expanded, history_value, source_info,
-      unknown_id_, results);
+      unknown_id_, non_expanded_original_key, GetSpatialCostPenalty(request),
+      results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
 
@@ -1929,7 +1980,8 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      unknown_id_, results);
+                                      unknown_id_, "",
+                                      GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&(*results)[i].value);
@@ -1941,7 +1993,8 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      unknown_id_, results);
+                                      unknown_id_, "",
+                                      GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&(*results)[i].value);
@@ -1950,7 +2003,8 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     // For other cases (lower and as-is), just look up directly.
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr,
-        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, results);
+        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
+        GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
@@ -1982,7 +2036,8 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
         query.expanded.empty() ? nullptr : &query.expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, results);
+        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
+        GetSpatialCostPenalty(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {

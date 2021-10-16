@@ -50,8 +50,13 @@ static const int32_t kKanaModifierInsensitivePenalty = 1700;
 // dictionary lookup.
 class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
  public:
-  BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit)
-      : allocator_(allocator), limit_(limit), penalty_(0), result_(nullptr) {
+  BaseNodeListBuilder(mozc::NodeAllocator *allocator, int limit,
+                      int spatial_cost_penalty)
+      : allocator_(allocator),
+        limit_(limit),
+        penalty_(0),
+        spatial_cost_penalty_(spatial_cost_penalty),
+        result_(nullptr) {
     DCHECK(allocator_) << "Allocator must not be nullptr";
   }
 
@@ -61,7 +66,7 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   // Determines a penalty for tokens of this (key, actual_key) pair.
   ResultType OnActualKey(absl::string_view key, absl::string_view actual_key,
                          int num_expanded) override {
-    penalty_ = num_expanded > 0 ? kKanaModifierInsensitivePenalty : 0;
+    penalty_ = num_expanded > 0 ? spatial_cost_penalty_ : 0;
     return TRAVERSE_CONTINUE;
   }
 
@@ -95,6 +100,7 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
   NodeAllocator *allocator_;
   int limit_;
   int penalty_;
+  const int spatial_cost_penalty_;
   Node *result_;
 };
 
@@ -103,8 +109,9 @@ class BaseNodeListBuilder : public dictionary::DictionaryInterface::Callback {
 class NodeListBuilderForLookupPrefix : public BaseNodeListBuilder {
  public:
   NodeListBuilderForLookupPrefix(mozc::NodeAllocator *allocator, int limit,
-                                 size_t min_key_length)
-      : BaseNodeListBuilder(allocator, limit),
+                                 size_t min_key_length,
+                                 int spatial_cost_penalty)
+      : BaseNodeListBuilder(allocator, limit, spatial_cost_penalty),
         min_key_length_(min_key_length) {}
 
   NodeListBuilderForLookupPrefix(const NodeListBuilderForLookupPrefix &) =

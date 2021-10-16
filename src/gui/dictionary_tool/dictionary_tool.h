@@ -189,26 +189,6 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
   // changed. It takes -1 when no dictionary is selected.
   uint64_t current_dic_id_;
 
-  // Whether any change has been made on the current dictionary and
-  // not been saved.
-  bool modified_;
-
-  // Holds information on whether dictionary entries are sorted, key
-  // column of sort and order of sort.
-  //
-  // Current implementation of sort may not be perfect. It doesn't
-  // check if entries are already sorted when they are loaded nor
-  // whether modification is made keeping sorted entries sorted.
-  struct SortState {
-    bool sorted;
-    int column;
-    Qt::SortOrder order;
-  } sort_state_;
-
-  // See comment above StartMonitoringUserEdit() for role of the
-  // variable.
-  bool monitoring_user_edit_;
-
   // POS shown in the combo box by default.
   QString default_pos_;
 
@@ -239,12 +219,32 @@ class DictionaryTool : public QMainWindow, private Ui::DictionaryTool {
 
   std::unique_ptr<client::ClientInterface> client_;
 
-  bool is_available_;
+  // Holds information on whether dictionary entries are sorted, key
+  // column of sort and order of sort.
+  //
+  // Current implementation of sort may not be perfect. It doesn't
+  // check if entries are already sorted when they are loaded nor
+  // whether modification is made keeping sorted entries sorted.
+  struct SortState {
+    bool sorted;
+    int column;
+    Qt::SortOrder order;
+  } sort_state_;
 
   // The maximum number of entries for a dictionary currently selected.
   int max_entry_size_;
 
   std::unique_ptr<const PosListProviderInterface> pos_list_provider_;
+
+  // Whether any change has been made on the current dictionary and
+  // not been saved.
+  bool modified_;
+
+  // See comment above StartMonitoringUserEdit() for role of the
+  // variable.
+  bool monitoring_user_edit_;
+
+  bool is_available_;
 };
 
 }  // namespace gui

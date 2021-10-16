@@ -75,12 +75,12 @@ void Candidate::set_subcandidate_list(CandidateList *subcandidate_list) {
 static constexpr size_t kDefaultPageSize = 9;
 
 CandidateList::CandidateList(const bool rotate)
-    : rotate_(rotate),
-      page_size_(kDefaultPageSize),
+    : page_size_(kDefaultPageSize),
       focused_index_(0),
-      focused_(false),
       candidate_pool_(kDefaultPageSize),
-      next_available_id_(0) {}
+      next_available_id_(0),
+      rotate_(rotate),
+      focused_(false) {}
 
 CandidateList::~CandidateList() { Clear(); }
 

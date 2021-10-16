@@ -174,6 +174,7 @@
         'surrounding_text_util.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_status',
         '../../base/absl.gyp:absl_strings',
         '../../client/client.gyp:client',
         '../../protocol/protocol.gyp:commands_proto',

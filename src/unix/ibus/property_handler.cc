@@ -60,7 +60,12 @@ constexpr char kMozcToolIconPath[] = "tool.png";
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
-  return FileUtil::FileExists(SystemUtil::GetToolPath());
+  if (absl::Status s = FileUtil::FileExists(SystemUtil::GetToolPath());
+      !s.ok()) {
+    LOG(ERROR) << s;
+    return false;
+  }
+  return true;
 }
 
 bool GetDisabled(IBusEngine *engine) {
@@ -79,8 +84,7 @@ bool GetDisabled(IBusEngine *engine) {
 
 PropertyHandler::PropertyHandler(
     std::unique_ptr<MessageTranslatorInterface> translator,
-    bool is_active_on_launch,
-    client::ClientInterface *client)
+    bool is_active_on_launch, client::ClientInterface *client)
     : prop_root_(ibus_prop_list_new()),
       prop_composition_mode_(nullptr),
       prop_mozc_tool_(nullptr),
@@ -161,10 +165,10 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       icon_path_for_panel = GetIconPath(entry.icon);
       mode_symbol = entry.label_for_panel;
     }
-    IBusProperty *item = ibus_property_new(
-        entry.key, PROP_TYPE_RADIO, label, nullptr /* icon */,
-        nullptr /* tooltip */, TRUE /* sensitive */, TRUE /* visible */, state,
-        nullptr /* sub props */);
+    IBusProperty *item =
+        ibus_property_new(entry.key, PROP_TYPE_RADIO, label, nullptr /* icon */,
+                          nullptr /* tooltip */, TRUE /* sensitive */,
+                          TRUE /* visible */, state, nullptr /* sub props */);
     g_object_set_data(G_OBJECT(item), kGObjectDataKey, (gpointer)&entry);
     ibus_prop_list_append(sub_prop_list, item);
     // |sub_prop_list| owns |item| by calling g_object_ref_sink for the |item|.
@@ -225,8 +229,7 @@ void PropertyHandler::UpdateContentType(IBusEngine *engine) {
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendToolPropertyToPanel() {
   if (kMozcEngineToolProperties == nullptr ||
-      kMozcEngineToolPropertiesSize == 0 ||
-      !IsMozcToolAvailable()) {
+      kMozcEngineToolPropertiesSize == 0 || !IsMozcToolAvailable()) {
     return;
   }
 

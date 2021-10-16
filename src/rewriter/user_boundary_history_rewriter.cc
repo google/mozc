@@ -48,6 +48,7 @@
 #include "rewriter/rewriter_interface.h"
 #include "storage/lru_storage.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 
@@ -212,9 +213,11 @@ bool UserBoundaryHistoryRewriter::Reload() {
   const std::string merge_pending_file = filename + kFileSuffix;
 
   // merge pending file does not always exist.
-  if (FileUtil::FileExists(merge_pending_file)) {
+  if (absl::Status s = FileUtil::FileExists(merge_pending_file); s.ok()) {
     storage_->Merge(merge_pending_file.c_str());
     FileUtil::UnlinkOrLogError(merge_pending_file);
+  } else if (!absl::IsNotFound(s)) {
+    LOG(ERROR) << "Cannot check if " << merge_pending_file << " exists: " << s;
   }
 
   return true;

@@ -73,8 +73,8 @@ class ScopedReadWriteFile {
  public:
   explicit ScopedReadWriteFile(const std::string &filename)
       : filename_(filename) {
-    if (!FileUtil::FileExists(filename_)) {
-      LOG(WARNING) << "file not found: " << filename;
+    if (absl::Status s = FileUtil::FileExists(filename_); !s.ok()) {
+      LOG(WARNING) << "file not found: " << filename << ": " << s;
       return;
     }
 #ifdef OS_WIN
@@ -89,7 +89,7 @@ class ScopedReadWriteFile {
   }
 
   ~ScopedReadWriteFile() {
-    if (!FileUtil::FileExists(filename_)) {
+    if (absl::Status s = FileUtil::FileExists(filename_); !s.ok()) {
       LOG(WARNING) << "file not found: " << filename_;
       return;
     }

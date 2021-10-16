@@ -366,9 +366,11 @@ UserDictionarySession::LoadWithEnsuringNonEmptyStorage() {
 UserDictionaryCommandStatus::Status UserDictionarySession::LoadInternal(
     bool ensure_non_empty_storage) {
   UserDictionaryCommandStatus::Status status;
-  if (storage_->Load()) {
+  if (absl::Status s = storage_->Load(); s.ok()) {
     status = UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS;
   } else {
+    LOG(ERROR) << "Load failed: " << s
+               << ": last error=" << storage_->GetLastError();
     switch (storage_->GetLastError()) {
       case mozc::UserDictionaryStorage::FILE_NOT_EXISTS:
         status = UserDictionaryCommandStatus::FILE_NOT_FOUND;
@@ -377,7 +379,6 @@ UserDictionaryCommandStatus::Status UserDictionarySession::LoadInternal(
         status = UserDictionaryCommandStatus::INVALID_FILE_FORMAT;
         break;
       default:
-        LOG(ERROR) << "Unknown error code: " << storage_->GetLastError();
         status = UserDictionaryCommandStatus::UNKNOWN_ERROR;
         break;
     }

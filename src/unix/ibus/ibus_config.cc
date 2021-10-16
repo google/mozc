@@ -35,6 +35,7 @@
 #include "base/protobuf/text_format.h"
 #include "base/system_util.h"
 #include "unix/ibus/main.h"
+#include "absl/status/status.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -49,16 +50,19 @@ namespace {
 std::string UpdateConfigFile() {
   const std::string engines_file = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), kIbusConfigFile);
-  if (FileUtil::FileExists(engines_file)) {
+  if (absl::Status s = FileUtil::FileExists(engines_file); s.ok()) {
     InputFileStream ifs(engines_file.c_str());
     return ifs.Read();
-  } else {
+  } else if (absl::IsNotFound(s)) {
     OutputFileStream ofs(engines_file.c_str());
     ofs << kIbusConfigTextProto;
     ofs.close();
     if (ofs.fail()) {
       LOG(ERROR) << "Failed to write " << engines_file;
     }
+    return kIbusConfigTextProto;
+  } else {
+    LOG(ERROR) << "Cannot check if " << engines_file << "exists: " << s;
     return kIbusConfigTextProto;
   }
 }
@@ -83,6 +87,7 @@ std::string EscapeXmlValue(const std::string &value) {
 std::string CreateEnginesXml(const ibus::Config &config) {
   std::string output = "<engines>\n";
   for (const ibus::Engine &engine : config.engines()) {
+    // clang-format off
     absl::StrAppend(
         &output,
         "<engine>\n",
@@ -101,6 +106,7 @@ std::string CreateEnginesXml(const ibus::Config &config) {
         "  <layout_option>", EscapeXmlValue(engine.layout_option()),
         "</layout_option>\n",
         "</engine>\n");
+    // clang-format on
   }
   absl::StrAppend(&output, "</engines>\n");
   return output;
@@ -113,22 +119,19 @@ bool IbusConfig::Initialize() {
 
   engine_xml_ = CreateEnginesXml(config_);
   if (!valid_user_config) {
-    engine_xml_ += ("<!-- Failed to parse the user config. -->\n"
-                    "<!-- Used the default setting instead. -->\n");
+    engine_xml_ +=
+        ("<!-- Failed to parse the user config. -->\n"
+         "<!-- Used the default setting instead. -->\n");
   }
 
   return valid_user_config;
 }
 
-const std::string &IbusConfig::GetEnginesXml() const {
-  return engine_xml_;
-}
+const std::string &IbusConfig::GetEnginesXml() const { return engine_xml_; }
 
-const ibus::Config &IbusConfig::GetConfig() const {
-  return config_;
-}
+const ibus::Config &IbusConfig::GetConfig() const { return config_; }
 
-const std::string &IbusConfig::GetLayout(const std::string& name) const {
+const std::string &IbusConfig::GetLayout(const std::string &name) const {
   for (const ibus::Engine &engine : config_.engines()) {
     if (engine.name() == name) {
       return engine.layout();

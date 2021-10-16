@@ -50,6 +50,7 @@
 #include "base/util.h"
 #include "base/win_font_test_helper.h"
 #include "net/jsoncpp.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -286,7 +287,7 @@ TEST_P(BalloonImageTest, TestImpl) {
   const std::string &expected_image_path =
       mozc::testing::GetSourceFileOrDie({GetParam()});
   const std::string json_path = expected_image_path + ".json";
-  ASSERT_TRUE(FileUtil::FileExists(json_path))
+  ASSERT_OK(FileUtil::FileExists(json_path))
       << "Manifest file is not found: " << json_path;
 
   Json::Value tail;

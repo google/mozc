@@ -35,6 +35,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -83,7 +84,7 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
 }
 
 TEST(InputMultiFileTest, ReadSingleFileTest) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
   const std::string path =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "i_am_a_test_file");
 
@@ -113,7 +114,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
 }
 
 TEST(InputMultiFileTest, ReadMultipleFilesTest) {
-  EXPECT_TRUE(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
+  EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
 
   constexpr int kNumFile = 3;
   constexpr int kNumLinesPerFile = 10;
