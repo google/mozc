@@ -4,15 +4,16 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# JungHee Lee <daemul72@gmail.com>, 2021
+# 이정희 <daemul72@gmail.com>, 2021
+# Bon Keun Seo <scobyseo@gmail.com>, 2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-08-30 20:24+0000\n"
+"POT-Creation-Date: 2021-10-17 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: JungHee Lee <daemul72@gmail.com>, 2021\n"
+"Last-Translator: Bon Keun Seo <scobyseo@gmail.com>, 2021\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -30,11 +31,11 @@ msgstr "단어 추가"
 
 #: mozc_engine.h:46
 msgid "Always"
-msgstr ""
+msgstr "항상"
 
 #: mozc_engine.cc:96
 msgid "Composition Mode"
-msgstr ""
+msgstr "조합 모드"
 
 #: mozc_engine.h:61 mozc_engine.cc:173
 msgid "Configuration Tool"
@@ -46,7 +47,7 @@ msgstr "사전 도구"
 
 #: mozc_engine.cc:52
 msgid "Direct"
-msgstr ""
+msgstr "직접"
 
 #: mozc_engine.h:57
 msgid "Expand Usage"
@@ -55,26 +56,26 @@ msgstr ""
 #. Full width ASCII letter A.
 #: mozc_engine.cc:82
 msgid "Full ASCII"
-msgstr ""
+msgstr "전각 아스키"
 
 #. Katakana letter A.
 #: mozc_engine.cc:66
 msgid "Full Katakana"
-msgstr ""
+msgstr "전각 가타가나"
 
 #: mozc_engine.cc:74
 msgid "Half ASCII"
-msgstr ""
+msgstr "반각 아스키"
 
 #. Half width Katakana letter A.
 #: mozc_engine.cc:89
 msgid "Half Katakana"
-msgstr ""
+msgstr "반각 가타가나"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_engine.cc:59
 msgid "Hiragana"
-msgstr ""
+msgstr "히라가나"
 
 #: mozc_engine.h:47
 msgid "Hotkey"
@@ -86,11 +87,11 @@ msgstr ""
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
-msgstr ""
+msgstr "Mozc 기반 일본어 입력기"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
-msgstr ""
+msgstr "Fcitx 5 용 Mozc"
 
 #: mozc_engine.h:46
 msgid "On Focus"
@@ -109,4 +110,4 @@ msgstr "돌아가려면 Esc 키를 누르십시오."
 
 #: mozc_engine.cc:159 mozc_engine.cc:160
 msgid "Tool"
-msgstr ""
+msgstr "도구"
