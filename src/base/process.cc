@@ -31,7 +31,7 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <string.h>
 #include <sys/stat.h>
 
@@ -81,7 +81,7 @@ static char **environ = *_NSGetEnviron();
 // posix_spawn() since Qt applications use (at least) DISPLAY and QT_IM_MODULE
 // environment variables.
 extern char **environ;
-#endif
+#endif  // __APPLE__
 
 namespace mozc {
 
@@ -96,7 +96,7 @@ bool Process::OpenBrowser(const std::string &url) {
   std::wstring wurl;
   Util::Utf8ToWide(url, &wurl);
   return WinUtil::ShellExecuteInSystemDir(L"open", wurl.c_str(), nullptr);
-#endif
+#endif  // OS_WIN
 
 #if defined(OS_LINUX) || defined(OS_ANDROID)
   static constexpr char kBrowserCommand[] = "/usr/bin/xdg-open";
@@ -159,7 +159,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
 #elif defined(OS_WASM)
   // Spawning processes is not supported in WASM.
   return false;
-#else
+#else  // OS_WASM
 
   std::vector<std::string> arg_tmp;
   Util::SplitStringUsing(arg, " ", &arg_tmp);
@@ -183,7 +183,7 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
     // In mac launchApplication cannot accept any arguments.
     return MacProcess::OpenApplication(path);
   }
-#endif
+#endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID)
   // Do not call posix_spawn() for obviously bad path.
@@ -271,7 +271,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 #elif defined(OS_WASM)
   // Process handling is not supported in WASM.
   return false;
-#else
+#else   // OS_WASM
   pid_t processe_id = static_cast<pid_t>(pid);
   constexpr int kPollingDuration = 250;
   int left_time = timeout < 0 ? 1 : timeout;
@@ -290,7 +290,7 @@ bool Process::WaitProcess(size_t pid, int timeout) {
 
   LOG(ERROR) << pid << " didn't terminate within " << timeout << " msec";
   return false;
-#endif
+#endif  // OS_WASM
 }
 
 bool Process::IsProcessAlive(size_t pid, bool default_result) {
