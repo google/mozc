@@ -778,6 +778,7 @@ cc_library_mozc(
         ":singleton",
         ":util",
         ":win_util",
+        "@com_google_absl//absl/status",
     ] + select_mozc(
         android = [
             # android_util.h includes this for FRIEND_TEST

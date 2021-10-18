@@ -49,12 +49,12 @@ class FileUtilMock : public FileUtilInterface {
     base_id_ += 100'000;
   }
 
-  bool CreateDirectory(const std::string &path) const override {
+  absl::Status CreateDirectory(const std::string &path) const override {
     if (FileExists(path).ok()) {
-      return false;
+      return absl::AlreadyExistsError(path);
     }
     dirs_[path] = true;
-    return true;
+    return absl::OkStatus();
   }
 
   bool RemoveDirectory(const std::string &dirname) const override {
@@ -137,10 +137,9 @@ class FileUtilMock : public FileUtilInterface {
     canonical_paths_[to] = from;
     if (FileExists(from).ok()) {
       CreateFile(to);
-    } else {
-      CreateDirectory(to);
+      return true;
     }
-    return true;
+    return CreateDirectory(to).ok();
   }
 
   bool GetModificationTime(const std::string &filename,

@@ -52,24 +52,26 @@
 #include "base/thread.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
+#include "absl/status/status.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
 #endif  // UNIX_PATH_MAX
 
 namespace mozc {
-
 namespace {
 
 constexpr int kInvalidSocket = -1;
 
-void mkdir_p(const std::string &dirname) {
+absl::Status mkdir_p(const std::string &dirname) {
   const std::string parent_dir = FileUtil::Dirname(dirname);
   struct stat st;
   if (!parent_dir.empty() && ::stat(parent_dir.c_str(), &st) < 0) {
-    mkdir_p(parent_dir);
+    if (absl::Status s = mkdir_p(parent_dir); !s.ok()) {
+      return s;
+    }
   }
-  FileUtil::CreateDirectory(dirname);
+  return FileUtil::CreateDirectory(dirname);
 }
 
 bool IsReadTimeout(int socket, int timeout) {
@@ -359,7 +361,9 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   DCHECK(!server_address_.empty());
 
   const std::string dirname = FileUtil::Dirname(server_address_);
-  mkdir_p(dirname);
+  if (absl::Status s = mkdir_p(dirname); !s.ok()) {
+    LOG(ERROR) << s << ": Cannot create " << dirname;
+  }
 
   sockaddr_un addr;
   ::memset(&addr, 0, sizeof(addr));

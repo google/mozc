@@ -85,7 +85,7 @@ class FileUtilImpl : public FileUtilInterface {
   FileUtilImpl() = default;
   ~FileUtilImpl() override = default;
 
-  bool CreateDirectory(const std::string &path) const override;
+  absl::Status CreateDirectory(const std::string &path) const override;
   bool RemoveDirectory(const std::string &dirname) const override;
   absl::Status Unlink(const std::string &filename) const override;
   absl::Status FileExists(const std::string &filename) const override;
@@ -154,17 +154,27 @@ absl::Status StripWritePreventingAttributesIfExists(
 }  // namespace
 #endif  // OS_WIN
 
-bool FileUtil::CreateDirectory(const std::string &path) {
+absl::Status FileUtil::CreateDirectory(const std::string &path) {
   return FileUtilSingleton::Get()->CreateDirectory(path);
 }
 
-bool FileUtilImpl::CreateDirectory(const std::string &path) const {
+absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
 #if defined(OS_WIN)
   std::wstring wide;
-  return (Util::Utf8ToWide(path, &wide) > 0 &&
-          ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
+  if (Util::Utf8ToWide(path, &wide) <= 0) {
+    return absl::InvalidArgumentError("Failed to convert to wstring");
+  }
+  if (!::CreateDirectoryW(wide.c_str(), nullptr)) {
+    return WinUtil::ErrorToCanonicalStatus(::GetLastError(),
+                                           "CreateDirectoryW failed");
+  }
+  return absl::OkStatus();
 #else   // !OS_WIN
-  return ::mkdir(path.c_str(), 0700) == 0;
+  if (::mkdir(path.c_str(), 0700) != 0) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(err, "mkdir failed");
+  }
+  return absl::OkStatus();
 #endif  // OS_WIN
 }
 

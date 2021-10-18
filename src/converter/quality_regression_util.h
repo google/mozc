@@ -65,9 +65,9 @@ class QualityRegressionUtil {
     std::string key;
     std::string expected_value;
     std::string command;
-    int expected_rank;
     double accuracy;
     // Target platform. Can set multiple platform defined in enum |Platform|.
+    int expected_rank;
     uint32_t platform;
     std::string OutputAsTSV() const;
     absl::Status ParseFromTSV(const std::string &tsv_line);

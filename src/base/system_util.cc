@@ -31,6 +31,8 @@
 
 #include <cstdint>
 
+#include "absl/status/status.h"
+
 #ifdef OS_WIN
 // clang-format off
 #include <Windows.h>
@@ -107,9 +109,12 @@ std::string UserProfileDirectoryImpl::GetDir() {
     return dir_;
   }
   const std::string dir = GetUserProfileDirectory();
-  FileUtil::CreateDirectory(dir);
-  if (absl::Status s = FileUtil::DirectoryExists(dir); !s.ok()) {
+  if (absl::Status s = FileUtil::CreateDirectory(dir);
+      !s.ok() && !absl::IsAlreadyExists(s)) {
     LOG(ERROR) << "Failed to create directory: " << dir << ": " << s;
+  }
+  if (absl::Status s = FileUtil::DirectoryExists(dir); !s.ok()) {
+    LOG(ERROR) << "User profile directory doesn't exist: " << dir << ": " << s;
   }
 
   dir_ = dir;

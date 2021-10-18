@@ -70,7 +70,7 @@ class FileUtilInterface {
  public:
   virtual ~FileUtilInterface() = default;
 
-  virtual bool CreateDirectory(const std::string &path) const = 0;
+  virtual absl::Status CreateDirectory(const std::string &path) const = 0;
   virtual bool RemoveDirectory(const std::string &dirname) const = 0;
   virtual absl::Status Unlink(const std::string &filename) const = 0;
   virtual absl::Status FileExists(const std::string &filename) const = 0;
@@ -98,7 +98,7 @@ class FileUtil {
   ~FileUtil() = delete;
 
   // Creates a directory. Does not create directories in the way to the path.
-  static bool CreateDirectory(const std::string &path);
+  static absl::Status CreateDirectory(const std::string &path);
 
   // Removes an empty directory.
   static bool RemoveDirectory(const std::string &dirname);

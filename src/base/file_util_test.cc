@@ -81,7 +81,7 @@ TEST(FileUtilTest, CreateDirectory) {
   ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 
   // Create the directory.
-  EXPECT_TRUE(FileUtil::CreateDirectory(dirpath));
+  EXPECT_OK(FileUtil::CreateDirectory(dirpath));
   EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
   // Delete the directory.

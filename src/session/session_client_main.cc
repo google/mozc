@@ -45,6 +45,7 @@
 #include "session/session.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
 ABSL_FLAG(std::string, output, "", "Output file");
@@ -100,7 +101,11 @@ int main(int argc, char **argv) {
 
   if (!flags_profile_dir.empty()) {
     // TODO(komatsu): Make a tmp dir and use it.
-    mozc::FileUtil::CreateDirectory(flags_profile_dir);
+    if (absl::Status s = mozc::FileUtil::CreateDirectory(flags_profile_dir);
+        !s.ok() && absl::IsAlreadyExists(s)) {
+      LOG(ERROR) << s;
+      return -1;
+    }
     mozc::SystemUtil::SetUserProfileDirectory(flags_profile_dir);
   }
 

@@ -37,7 +37,7 @@ namespace mozc {
 TEST(FileUtilMockTest, DirectoryMockTests) {
   FileUtilMock mock;
 
-  EXPECT_TRUE(FileUtil::CreateDirectory("/tmp/mozc"));
+  EXPECT_OK(FileUtil::CreateDirectory("/tmp/mozc"));
   EXPECT_TRUE(FileUtil::RemoveDirectory("/tmp/mozc"));
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/no_mozc").ok());
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/").ok());  // Limitation of mock.
@@ -100,7 +100,7 @@ TEST(FileUtilMockTest, HardLinkTests) {
   // dir1 does not exist.
   EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
 
-  EXPECT_TRUE(FileUtil::CreateDirectory("/mozc/dir1"));
+  EXPECT_OK(FileUtil::CreateDirectory("/mozc/dir1"));
   EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
   EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
