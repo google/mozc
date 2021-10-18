@@ -357,8 +357,9 @@ def GypMain(options, unused_args):
     qt_version = ''
   else:
     qt_version = '5'
+  version_override = os.environ.get('MOZC_VERSION', None)
   GenerateVersionFile(template_path, version_path, options.target_platform,
-                      qt_version)
+                      qt_version, version_override)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())
