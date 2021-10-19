@@ -270,7 +270,9 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
-  FileUtil::CreateDirectory(dir);
+  if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
+    LOG(ERROR) << s;
+  }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(dir, kProductNameInEnglish);
 
@@ -332,7 +334,9 @@ std::string SystemUtil::GetUserProfileDirectory() {
 std::string SystemUtil::GetLoggingDirectory() {
 #ifdef __APPLE__
   std::string dir = MacUtil::GetLoggingDirectory();
-  FileUtil::CreateDirectory(dir);
+  if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
+    LOG(ERROR) << s;
+  }
   return dir;
 #else   // __APPLE__
   return GetUserProfileDirectory();
