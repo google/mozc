@@ -71,12 +71,12 @@ class FileUtilInterface {
   virtual ~FileUtilInterface() = default;
 
   virtual absl::Status CreateDirectory(const std::string &path) const = 0;
-  virtual bool RemoveDirectory(const std::string &dirname) const = 0;
+  virtual absl::Status RemoveDirectory(const std::string &dirname) const = 0;
   virtual absl::Status Unlink(const std::string &filename) const = 0;
   virtual absl::Status FileExists(const std::string &filename) const = 0;
   virtual absl::Status DirectoryExists(const std::string &dirname) const = 0;
-  virtual bool CopyFile(const std::string &from,
-                        const std::string &to) const = 0;
+  virtual absl::Status CopyFile(const std::string &from,
+                                const std::string &to) const = 0;
   virtual bool IsEqualFile(const std::string &filename1,
                            const std::string &filename2) const = 0;
   virtual bool IsEquivalent(const std::string &filename1,
@@ -101,7 +101,8 @@ class FileUtil {
   static absl::Status CreateDirectory(const std::string &path);
 
   // Removes an empty directory.
-  static bool RemoveDirectory(const std::string &dirname);
+  static absl::Status RemoveDirectory(const std::string &dirname);
+  static absl::Status RemoveDirectoryIfExists(const std::string &dirname);
 
   // Removes a file. The second version returns OK when `filename` doesn't
   // exist. The third version logs error message on failure (i.e., it ignores
@@ -127,7 +128,7 @@ class FileUtil {
   // Copies a file to another file, using mmap internally.
   // The destination file will be overwritten if exists.
   // Returns true if the file is copied successfully.
-  static bool CopyFile(const std::string &from, const std::string &to);
+  static absl::Status CopyFile(const std::string &from, const std::string &to);
 
   // Compares the contents of two given files. Ignores the difference between
   // their path strings.

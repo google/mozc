@@ -76,7 +76,10 @@ bool LinkOrCopyFile(const std::string &src_path, const std::string &dst_path) {
 
   if (!result) {
     // If an error happens, fallback to file copy.
-    result = FileUtil::CopyFile(src_path, tmp_dst_path);
+    absl::Status s = FileUtil::CopyFile(src_path, tmp_dst_path);
+    LOG_IF(ERROR, !s.ok()) << "Cannot copy file. from: " << src_path
+                           << " to: " << tmp_dst_path << ": " << s;
+    result = s.ok();
   }
 
   if (!result) {

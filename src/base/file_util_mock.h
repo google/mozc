@@ -57,12 +57,12 @@ class FileUtilMock : public FileUtilInterface {
     return absl::OkStatus();
   }
 
-  bool RemoveDirectory(const std::string &dirname) const override {
+  absl::Status RemoveDirectory(const std::string &dirname) const override {
     if (FileExists(dirname).ok()) {
-      return false;
+      return absl::NotFoundError(dirname);
     }
     dirs_[dirname] = false;
-    return true;
+    return absl::OkStatus();
   }
 
   absl::Status Unlink(const std::string &filename) const override {
@@ -86,13 +86,13 @@ class FileUtilMock : public FileUtilInterface {
                                            : absl::NotFoundError(dirname);
   }
 
-  bool CopyFile(const std::string &from, const std::string &to) const override {
+  absl::Status CopyFile(const std::string &from,
+                        const std::string &to) const override {
     if (!FileExists(from).ok()) {
-      return false;
+      return absl::NotFoundError(from);
     }
-
     files_[to] = files_[from];
-    return true;
+    return absl::OkStatus();
   }
 
   bool IsEqualFile(const std::string &filename1,

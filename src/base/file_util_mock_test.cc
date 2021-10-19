@@ -38,7 +38,7 @@ TEST(FileUtilMockTest, DirectoryMockTests) {
   FileUtilMock mock;
 
   EXPECT_OK(FileUtil::CreateDirectory("/tmp/mozc"));
-  EXPECT_TRUE(FileUtil::RemoveDirectory("/tmp/mozc"));
+  EXPECT_OK(FileUtil::RemoveDirectory("/tmp/mozc"));
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/no_mozc").ok());
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/").ok());  // Limitation of mock.
 }
@@ -54,7 +54,7 @@ TEST(FileUtilMockTest, FileMockTests) {
   mock.CreateFile("/mozc/file2.txt");
   EXPECT_FALSE(FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
 
-  EXPECT_TRUE(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
+  EXPECT_OK(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
   EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
 
   EXPECT_OK(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));

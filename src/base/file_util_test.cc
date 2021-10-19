@@ -75,9 +75,7 @@ TEST(FileUtilTest, CreateDirectory) {
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testdir");
 
   // Delete dirpath, if it exists.
-  if (FileUtil::FileExists(dirpath).ok()) {
-    FileUtil::RemoveDirectory(dirpath);
-  }
+  ASSERT_OK(FileUtil::RemoveDirectoryIfExists(dirpath));
   ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 
   // Create the directory.
@@ -85,7 +83,7 @@ TEST(FileUtilTest, CreateDirectory) {
   EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
   // Delete the directory.
-  ASSERT_TRUE(FileUtil::RemoveDirectory(dirpath));
+  ASSERT_OK(FileUtil::RemoveDirectory(dirpath));
   ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 }
 
@@ -227,11 +225,11 @@ TEST(FileUtilTest, CopyFile) {
   ASSERT_OK(FileUtil::UnlinkIfExists(to));
 
   CreateTestFile(from, "simple test");
-  EXPECT_TRUE(FileUtil::CopyFile(from, to));
+  EXPECT_OK(FileUtil::CopyFile(from, to));
   EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
 
   CreateTestFile(from, "overwrite test");
-  EXPECT_TRUE(FileUtil::CopyFile(from, to));
+  EXPECT_OK(FileUtil::CopyFile(from, to));
   EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
 
 #ifdef OS_WIN
@@ -271,7 +269,7 @@ TEST(FileUtilTest, CopyFile) {
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
-    EXPECT_TRUE(FileUtil::CopyFile(from, to));
+    EXPECT_OK(FileUtil::CopyFile(from, to));
     EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wfrom.c_str()));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
