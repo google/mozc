@@ -41,6 +41,7 @@
 
 #include "base/port.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 // Ad-hoc workaround against macro problem on Windows.
@@ -77,10 +78,10 @@ class FileUtilInterface {
   virtual absl::Status DirectoryExists(const std::string &dirname) const = 0;
   virtual absl::Status CopyFile(const std::string &from,
                                 const std::string &to) const = 0;
-  virtual bool IsEqualFile(const std::string &filename1,
-                           const std::string &filename2) const = 0;
-  virtual bool IsEquivalent(const std::string &filename1,
-                            const std::string &filename2) const = 0;
+  virtual absl::StatusOr<bool> IsEqualFile(
+      const std::string &filename1, const std::string &filename2) const = 0;
+  virtual absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1, const std::string &filename2) const = 0;
   virtual absl::Status AtomicRename(const std::string &from,
                                     const std::string &to) const = 0;
   virtual bool CreateHardLink(const std::string &from,
@@ -133,14 +134,14 @@ class FileUtil {
   // Compares the contents of two given files. Ignores the difference between
   // their path strings.
   // Returns true if both files have same contents.
-  static bool IsEqualFile(const std::string &filename1,
-                          const std::string &filename2);
+  static absl::StatusOr<bool> IsEqualFile(const std::string &filename1,
+                                          const std::string &filename2);
 
   // Compares the two filenames point to the same file. Symbolic/hard links are
   // considered. This is a wrapper of std::filesystem::equivalent.
   // IsEqualFile reads the contents of the files, but IsEquivalent does not.
-  static bool IsEquivalent(const std::string &filename1,
-                           const std::string &filename2);
+  static absl::StatusOr<bool> IsEquivalent(const std::string &filename1,
+                                           const std::string &filename2);
 
   // Moves/Renames a file atomically.
   // Returns OK if the file is renamed successfully.

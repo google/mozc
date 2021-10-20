@@ -197,19 +197,25 @@ TEST(FileUtilTest, IsEqualFile) {
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
   ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
   ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2).ok());
 
   CreateTestFile(filename1, "test data1");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2).ok());
 
   CreateTestFile(filename2, "test data1");
-  EXPECT_TRUE(FileUtil::IsEqualFile(filename1, filename2));
+  absl::StatusOr<bool> s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
   CreateTestFile(filename2, "test data1 test data1");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
 
   CreateTestFile(filename2, "test data2");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
 
   ASSERT_OK(FileUtil::Unlink(filename1));
   ASSERT_OK(FileUtil::Unlink(filename2));
@@ -226,11 +232,15 @@ TEST(FileUtilTest, CopyFile) {
 
   CreateTestFile(from, "simple test");
   EXPECT_OK(FileUtil::CopyFile(from, to));
-  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+  absl::StatusOr<bool> s = FileUtil::IsEqualFile(from, to);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
   CreateTestFile(from, "overwrite test");
   EXPECT_OK(FileUtil::CopyFile(from, to));
-  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+  s = FileUtil::IsEqualFile(from, to);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
 #ifdef OS_WIN
   struct TestData {
@@ -270,7 +280,9 @@ TEST(FileUtilTest, CopyFile) {
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
     EXPECT_OK(FileUtil::CopyFile(from, to));
-    EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+    absl::StatusOr<bool> s = FileUtil::IsEqualFile(from, to);
+    EXPECT_OK(s);
+    EXPECT_TRUE(*s);
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wfrom.c_str()));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
 

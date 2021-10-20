@@ -33,6 +33,19 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
+
+// The following are helpers to verify that the status of absl::StatusOr<bool>
+// is OK and its value is true/false.
+MATCHER(IsOkAndTrue, negation ? "is not OK or false" : "is OK and true") {
+  return arg.ok() && *arg;
+}
+MATCHER(IsOkAndFalse, negation ? "is not OK or true" : "is OK and false") {
+  return arg.ok() && !*arg;
+}
+
+#define EXPECT_OK_AND_TRUE(expr) EXPECT_THAT(expr, ::mozc::IsOkAndTrue());
+#define EXPECT_OK_AND_FALSE(expr) EXPECT_THAT(expr, ::mozc::IsOkAndFalse());
 
 TEST(FileUtilMockTest, DirectoryMockTests) {
   FileUtilMock mock;
@@ -52,15 +65,18 @@ TEST(FileUtilMockTest, FileMockTests) {
 
   mock.CreateFile("/mozc/file1.txt");
   mock.CreateFile("/mozc/file2.txt");
-  EXPECT_FALSE(FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_FALSE(
+      FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
 
   EXPECT_OK(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
-  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
 
   EXPECT_OK(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));
   EXPECT_FALSE(FileUtil::FileExists("/mozc/file3.txt").ok());
   EXPECT_OK(FileUtil::FileExists("/mozc/file4.txt"));
-  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
 
   FileTimeStamp time1;
   EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file1.txt", &time1));
@@ -79,34 +95,39 @@ TEST(FileUtilMockTest, HardLinkTests) {
   FileUtilMock mock;
 
   // # Hard link for files.
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file1.txt"));
-  EXPECT_FALSE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file1.txt"));
+  EXPECT_OK_AND_FALSE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file1 does not exist.
   EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
 
   mock.CreateFile("/mozc/file1.txt");
   EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file2 already exists.
   EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // # Hard link for directories.
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir1"));
-  EXPECT_FALSE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir1"));
+  EXPECT_OK_AND_FALSE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir1 does not exist.
   EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
 
   EXPECT_OK(FileUtil::CreateDirectory("/mozc/dir1"));
   EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir2 already exists.
   EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 }
 
+}  // namespace
 }  // namespace mozc

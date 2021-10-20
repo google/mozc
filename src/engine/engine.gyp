@@ -42,6 +42,7 @@
       ],
       'dependencies': [
         'engine',
+        '../base/absl.gyp:absl_status',
         '../base/base.gyp:base',
         '../data_manager/data_manager_base.gyp:data_manager',
         '../dictionary/dictionary_base.gyp:pos_matcher',

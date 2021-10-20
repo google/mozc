@@ -49,9 +49,7 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "absl/status/status.h"
-#ifdef OS_WIN
 #include "absl/status/statusor.h"
-#endif  // OS_WIN
 
 namespace {
 
@@ -92,10 +90,11 @@ class FileUtilImpl : public FileUtilInterface {
   absl::Status DirectoryExists(const std::string &dirname) const override;
   absl::Status CopyFile(const std::string &from,
                         const std::string &to) const override;
-  bool IsEqualFile(const std::string &filename1,
-                   const std::string &filename2) const override;
-  bool IsEquivalent(const std::string &filename1,
-                    const std::string &filename2) const override;
+  absl::StatusOr<bool> IsEqualFile(const std::string &filename1,
+                                   const std::string &filename2) const override;
+  absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1,
+      const std::string &filename2) const override;
   absl::Status AtomicRename(const std::string &from,
                             const std::string &to) const override;
   bool CreateHardLink(const std::string &from, const std::string &to) override;
@@ -454,42 +453,34 @@ absl::Status FileUtilImpl::CopyFile(const std::string &from,
   return absl::OkStatus();
 }
 
-bool FileUtil::IsEqualFile(const std::string &filename1,
-                           const std::string &filename2) {
+absl::StatusOr<bool> FileUtil::IsEqualFile(const std::string &filename1,
+                                           const std::string &filename2) {
   return FileUtilSingleton::Get()->IsEqualFile(filename1, filename2);
 }
 
-bool FileUtilImpl::IsEqualFile(const std::string &filename1,
-                               const std::string &filename2) const {
+absl::StatusOr<bool> FileUtilImpl::IsEqualFile(
+    const std::string &filename1, const std::string &filename2) const {
   Mmap mmap1, mmap2;
-
   if (!mmap1.Open(filename1.c_str(), "r")) {
-    LOG(ERROR) << "Cannot open: " << filename1;
-    return false;
+    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename1));
   }
-
   if (!mmap2.Open(filename2.c_str(), "r")) {
-    LOG(ERROR) << "Cannot open: " << filename2;
-    return false;
+    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename2));
   }
-
-  if (mmap1.size() != mmap2.size()) {
-    return false;
-  }
-
-  return memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
+  return mmap1.size() == mmap2.size() &&
+         memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
 }
 
-bool FileUtil::IsEquivalent(const std::string &filename1,
-                            const std::string &filename2) {
+absl::StatusOr<bool> FileUtil::IsEquivalent(const std::string &filename1,
+                                            const std::string &filename2) {
   return FileUtilSingleton::Get()->IsEquivalent(filename1, filename2);
 }
 
-bool FileUtilImpl::IsEquivalent(const std::string &filename1,
-                                const std::string &filename2) const {
+absl::StatusOr<bool> FileUtilImpl::IsEquivalent(
+    const std::string &filename1, const std::string &filename2) const {
 #ifdef __APPLE__
-  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
-  return false;
+  return absl::UnimplementedError(
+      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later");
 #else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
@@ -497,7 +488,12 @@ bool FileUtilImpl::IsEquivalent(const std::string &filename1,
   const std::filesystem::path dst = std::filesystem::u8path(filename2);
 
   std::error_code error_code;
-  return std::filesystem::equivalent(src, dst, error_code);
+  if (bool is_equiv = std::filesystem::equivalent(src, dst, error_code);
+      error_code) {
+    return is_equiv;
+  }
+  return absl::UnknownError(
+      absl::StrCat(error_code.value(), " ", error_code.message()));
 #endif  // __APPLE__
 }
 

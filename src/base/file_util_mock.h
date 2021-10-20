@@ -95,14 +95,21 @@ class FileUtilMock : public FileUtilInterface {
     return absl::OkStatus();
   }
 
-  bool IsEqualFile(const std::string &filename1,
-                   const std::string &filename2) const override {
-    return (FileExists(filename1).ok() && FileExists(filename2).ok() &&
-            files_[filename1] == files_[filename2]);
+  absl::StatusOr<bool> IsEqualFile(
+      const std::string &filename1,
+      const std::string &filename2) const override {
+    if (absl::Status s = FileExists(filename1); !s.ok()) {
+      return s;
+    }
+    if (absl::Status s = FileExists(filename2); !s.ok()) {
+      return s;
+    }
+    return files_[filename1] == files_[filename2];
   }
 
-  bool IsEquivalent(const std::string &filename1,
-                    const std::string &filename2) const override {
+  absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1,
+      const std::string &filename2) const override {
     const std::string canonical1 = At(canonical_paths_, filename1, filename1);
     const std::string canonical2 = At(canonical_paths_, filename2, filename2);
     return canonical1 == canonical2;
