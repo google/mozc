@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-12-02 00:02+0100\n"
+"POT-Creation-Date: 2021-10-24 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
 "Language-Team: Catalan (https://www.transifex.com/fcitx/teams/12005/ca/)\n"
@@ -19,68 +19,72 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mozc_engine.h:67 mozc_engine.cc:193
+#: mozc_engine.h:76 mozc_engine.cc:196
 msgid "About Mozc"
 msgstr ""
 
-#: mozc_engine.h:65 mozc_engine.cc:186
+#: mozc_engine.h:74 mozc_engine.cc:189
 msgid "Add Word"
 msgstr ""
 
-#: mozc_engine.h:46
+#: mozc_engine.h:48
 msgid "Always"
 msgstr ""
 
-#: mozc_engine.cc:94
+#: mozc_engine.cc:96
 msgid "Composition Mode"
 msgstr ""
 
-#: mozc_engine.h:61 mozc_engine.cc:170
+#: mozc_engine.h:70 mozc_engine.cc:173
 msgid "Configuration Tool"
 msgstr "Eina de configuració"
 
-#: mozc_engine.h:63 mozc_engine.cc:178
+#: mozc_engine.h:72 mozc_engine.cc:181
 msgid "Dictionary Tool"
 msgstr "Eina de diccionari"
 
-#: mozc_engine.cc:50 mozc_state.cc:64
+#: mozc_engine.h:51 mozc_engine.cc:52
 msgid "Direct"
 msgstr ""
 
-#: mozc_engine.h:57
+#: mozc_engine.h:66
 msgid "Expand Usage"
 msgstr ""
 
 #. Full width ASCII letter A.
-#: mozc_engine.cc:80 mozc_state.cc:88
+#: mozc_engine.h:53 mozc_engine.cc:82
 msgid "Full ASCII"
 msgstr ""
 
 #. Katakana letter A.
-#: mozc_engine.cc:64 mozc_state.cc:76
+#: mozc_engine.h:52 mozc_engine.cc:66
 msgid "Full Katakana"
 msgstr ""
 
-#: mozc_engine.cc:72 mozc_state.cc:82
+#: mozc_engine.h:52 mozc_engine.cc:74
 msgid "Half ASCII"
 msgstr ""
 
 #. Half width Katakana letter A.
-#: mozc_engine.cc:87 mozc_state.cc:94
+#: mozc_engine.h:53 mozc_engine.cc:89
 msgid "Half Katakana"
 msgstr ""
 
 #. Hiragana letter A in UTF-8.
-#: mozc_engine.cc:57 mozc_state.cc:70
+#: mozc_engine.h:51 mozc_engine.cc:59
 msgid "Hiragana"
 msgstr ""
 
-#: mozc_engine.h:47
+#: mozc_engine.h:49
 msgid "Hotkey"
 msgstr ""
 
-#: mozc_engine.h:58
+#: mozc_engine.h:67
 msgid "Hotkey to expand usage"
+msgstr ""
+
+#: mozc_engine.h:63
+msgid "Initial Mode"
 msgstr ""
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
@@ -91,19 +95,21 @@ msgstr ""
 msgid "Mozc for Fcitx 5"
 msgstr ""
 
-#: mozc_engine.h:46
+#: mozc_engine.h:48
 msgid "On Focus"
 msgstr ""
 
-#: mozc_response_parser.cc:173
+#. We don't have a good library option for this, just do the simple
+#. replace. absl's runtime parsed format string is too copmlex.
+#: mozc_response_parser.cc:174
 #, c-format
 msgid "Press %s to show usages."
 msgstr ""
 
-#: mozc_state.cc:437
+#: mozc_state.cc:403
 msgid "Press Escape to go back"
 msgstr ""
 
-#: mozc_engine.cc:156 mozc_engine.cc:157
+#: mozc_engine.cc:159 mozc_engine.cc:160
 msgid "Tool"
 msgstr ""
