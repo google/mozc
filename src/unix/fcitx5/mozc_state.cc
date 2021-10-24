@@ -285,6 +285,7 @@ void MozcState::FocusOut() {
 }
 
 bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
+  auto oldMode = composition_mode_;
   ClearAll();
   const bool consumed = parser_->ParseResponse(raw_response, ic_);
   if (!consumed) {
@@ -292,6 +293,10 @@ bool MozcState::ParseResponse(const mozc::commands::Output& raw_response) {
   }
   OpenUrl();
   DrawAll();
+  if (oldMode != composition_mode_ && aux_.empty() && preedit_.empty() &&
+      !ic_->inputPanel().candidateList()) {
+    engine_->instance()->showInputMethodInformation(ic_);
+  }
   return consumed;
 }
 
@@ -316,11 +321,7 @@ void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
   std::string error;
   mozc::commands::Output raw_response;
   if (TrySendCompositionMode(mode, &raw_response, &error)) {
-    auto oldMode = composition_mode_;
     parser_->ParseResponse(raw_response, ic_);
-    if (oldMode != composition_mode_) {
-      engine_->instance()->showInputMethodInformation(ic_);
-    }
   }
 }
 
