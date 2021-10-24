@@ -67,6 +67,15 @@ MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
   if (client_->EnsureConnection()) {
     UpdatePreeditMethod();
   }
+
+  std::string error;
+  mozc::commands::Output raw_response;
+  if (TrySendCompositionMode(*engine_->config().initialMode, &raw_response,
+                             &error)) {
+    if (raw_response.has_mode()) {
+      SetCompositionMode(raw_response.mode());
+    }
+  }
 }
 
 MozcState::~MozcState() {

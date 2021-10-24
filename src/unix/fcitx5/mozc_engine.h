@@ -43,8 +43,14 @@ class MozcEngine;
 
 enum class ExpandMode { Always, OnFocus, Hotkey };
 
+using CompositionMode = mozc::commands::CompositionMode;
+
 FCITX_CONFIG_ENUM_NAME_WITH_I18N(ExpandMode, N_("Always"), N_("On Focus"),
                                  N_("Hotkey"));
+
+FCITX_CONFIG_ENUM_NAME_WITH_I18N(CompositionMode, N_("Direct"), N_("Hiragana"),
+                                 N_("Full Katakana"), N_("Half ASCII"),
+                                 N_("Full ASCII"), N_("Half Katakana"));
 
 FCITX_CONFIGURATION(
     MozcEngineConfig, const std::string toolPath_ = mozc::FileUtil::JoinPath(
@@ -53,8 +59,11 @@ FCITX_CONFIGURATION(
       return stringutils::concat(toolPath_, " ", arg);
     }
 
-    OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation>
-        expandMode{this, "ExpandMode", _("Expand Usage"), ExpandMode::OnFocus};
+    OptionWithAnnotation<CompositionMode, CompositionModeI18NAnnotation>
+        initialMode{this, "InitialMode", _("Initial Mode"),
+                    mozc::commands::HIRAGANA};
+    OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation> expandMode{
+        this, "ExpandMode", _("Expand Usage"), ExpandMode::OnFocus};
     Option<Key> expand{this, "ExpandKey", _("Hotkey to expand usage"),
                        Key("Control+Alt+H")};
 

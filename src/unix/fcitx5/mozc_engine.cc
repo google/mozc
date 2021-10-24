@@ -38,7 +38,7 @@
 
 namespace fcitx {
 
-const struct CompositionMode {
+const struct CompositionModeInfo {
   const char *name;
   const char *icon;
   const char *label;
