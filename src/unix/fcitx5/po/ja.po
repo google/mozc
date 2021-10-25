@@ -4,16 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# Takuro Onoue <kusanaginoturugi@gmail.com>, 2020
-# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020
+# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-10-24 20:24+0000\n"
+"POT-Creation-Date: 2021-10-25 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2020\n"
+"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2021\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -23,7 +22,7 @@ msgstr ""
 
 #: mozc_engine.h:76 mozc_engine.cc:196
 msgid "About Mozc"
-msgstr "Mozcについて"
+msgstr "Mozc について"
 
 #: mozc_engine.h:74 mozc_engine.cc:189
 msgid "Add Word"
@@ -87,15 +86,15 @@ msgstr "用例を表示するホットキー"
 
 #: mozc_engine.h:63
 msgid "Initial Mode"
-msgstr ""
+msgstr "初期モード"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
-msgstr "Mozcに基づく日本語入力メソッド"
+msgstr "Mozc をベースとした日本語入力メソッド"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
-msgstr "Mozc for Fcitx 5"
+msgstr "Fcitx 5 用の Mozc"
 
 #: mozc_engine.h:48
 msgid "On Focus"
@@ -110,7 +109,7 @@ msgstr "%s で用例表示"
 
 #: mozc_state.cc:403
 msgid "Press Escape to go back"
-msgstr "Escキーを押して戻る"
+msgstr "Esc キーを押して戻る"
 
 #: mozc_engine.cc:159 mozc_engine.cc:160
 msgid "Tool"
