@@ -43,6 +43,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 
 // Ad-hoc workadound against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -221,6 +222,34 @@ TEST(FileUtilTest, IsEqualFile) {
   ASSERT_OK(FileUtil::Unlink(filename2));
 }
 
+TEST(FileUtilTest, IsEquivalent) {
+  const std::string filename1 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
+  const std::string filename2 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename1).ok());
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename2).ok());
+
+  CreateTestFile(filename1, "test data");
+  absl::StatusOr<bool> s = FileUtil::IsEquivalent(filename1, filename1);
+  if (absl::IsUnimplemented(s.status())) {
+    return;
+  }
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
+
+  // filename2 doesn't exist, so the status is not OK.
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename2).ok());
+
+  // filename2 exists but it's a different file.
+  CreateTestFile(filename2, "test data");
+  s = FileUtil::IsEquivalent(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
+}
+
 TEST(FileUtilTest, CopyFile) {
   // just test rename operation works as intended
   const std::string from =
@@ -381,6 +410,27 @@ TEST(FileUtilTest, AtomicRename) {
 
   ASSERT_OK(FileUtil::UnlinkIfExists(from));
   ASSERT_OK(FileUtil::UnlinkIfExists(to));
+}
+
+TEST(FileUtilTest, CreateHardLink) {
+  const std::string filename1 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
+  const std::string filename2 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+
+  CreateTestFile(filename1, "test data");
+  absl::Status s = FileUtil::CreateHardLink(filename1, filename2);
+  if (absl::IsUnimplemented(s)) {
+    return;
+  }
+  EXPECT_OK(s);
+  absl::StatusOr<bool> equiv = FileUtil::IsEquivalent(filename1, filename2);
+  ASSERT_OK(equiv);
+  EXPECT_TRUE(*equiv);
+
+  EXPECT_FALSE(FileUtil::CreateHardLink(filename1, filename2).ok());
 }
 
 #ifdef OS_WIN

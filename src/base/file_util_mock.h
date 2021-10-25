@@ -86,6 +86,12 @@ class FileUtilMock : public FileUtilInterface {
                                            : absl::NotFoundError(dirname);
   }
 
+  absl::Status FileOrDirectoryExists(const std::string &path) const {
+    return FileExists(path).ok() || DirectoryExists(path).ok()
+               ? absl::OkStatus()
+               : absl::NotFoundError(path);
+  }
+
   absl::Status CopyFile(const std::string &from,
                         const std::string &to) const override {
     if (!FileExists(from).ok()) {
@@ -130,23 +136,22 @@ class FileUtilMock : public FileUtilInterface {
     return absl::NotFoundError(absl::StrFormat("%s doesn't exist", from));
   }
 
-  bool CreateHardLink(const std::string &from, const std::string &to) override {
-    if (!FileExists(from).ok() && !DirectoryExists(from).ok()) {
-      // `from` doesn't exist.
-      return false;
+  absl::Status CreateHardLink(const std::string &from,
+                              const std::string &to) override {
+    // Error if `from` doesn't exist.
+    if (absl::Status s = FileOrDirectoryExists(from); !s.ok()) {
+      return s;
     }
-
-    if (FileExists(to).ok() || DirectoryExists(to).ok()) {
-      // `to` already exists.
-      return false;
+    // Error if `to` already exists.
+    if (absl::Status s = FileOrDirectoryExists(to); s.ok()) {
+      return absl::AlreadyExistsError(to);
     }
-
     canonical_paths_[to] = from;
     if (FileExists(from).ok()) {
       CreateFile(to);
-      return true;
+      return absl::OkStatus();
     }
-    return CreateDirectory(to).ok();
+    return CreateDirectory(to);
   }
 
   bool GetModificationTime(const std::string &filename,

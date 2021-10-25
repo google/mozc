@@ -77,7 +77,10 @@ absl::Status LinkOrCopyFile(const std::string &src_path,
 
   const std::string tmp_dst_path = dst_path + ".tmp";
   FileUtil::UnlinkOrLogError(tmp_dst_path);
-  if (!FileUtil::CreateHardLink(src_path, tmp_dst_path)) {
+  if (absl::Status s = FileUtil::CreateHardLink(src_path, tmp_dst_path);
+      !s.ok()) {
+    LOG(WARNING) << "Cannot create hardlink from " << src_path << " to "
+                 << tmp_dst_path << ": " << s;
     // If an error happens, fallback to file copy.
     if (absl::Status s = FileUtil::CopyFile(src_path, tmp_dst_path); !s.ok()) {
       return absl::Status(

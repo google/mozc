@@ -97,7 +97,8 @@ class FileUtilImpl : public FileUtilInterface {
       const std::string &filename2) const override;
   absl::Status AtomicRename(const std::string &from,
                             const std::string &to) const override;
-  bool CreateHardLink(const std::string &from, const std::string &to) override;
+  absl::Status CreateHardLink(const std::string &from,
+                              const std::string &to) override;
   bool GetModificationTime(const std::string &filename,
                            FileTimeStamp *modified_at) const override;
 };
@@ -489,7 +490,7 @@ absl::StatusOr<bool> FileUtilImpl::IsEquivalent(
 
   std::error_code error_code;
   if (bool is_equiv = std::filesystem::equivalent(src, dst, error_code);
-      error_code) {
+      !error_code) {
     return is_equiv;
   }
   return absl::UnknownError(
@@ -561,15 +562,16 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
 #endif  // OS_WIN
 }
 
-bool FileUtil::CreateHardLink(const std::string &from, const std::string &to) {
+absl::Status FileUtil::CreateHardLink(const std::string &from,
+                                      const std::string &to) {
   return FileUtilSingleton::Get()->CreateHardLink(from, to);
 }
 
-bool FileUtilImpl::CreateHardLink(const std::string &from,
-                                  const std::string &to) {
+absl::Status FileUtilImpl::CreateHardLink(const std::string &from,
+                                          const std::string &to) {
 #ifdef __APPLE__
-  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
-  return false;
+  return absl::UnimplementedError(
+      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later.");
 #else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
@@ -578,7 +580,11 @@ bool FileUtilImpl::CreateHardLink(const std::string &from,
 
   std::error_code error_code;
   std::filesystem::create_hard_link(src, dst, error_code);
-  return !error_code;
+  if (error_code) {
+    return absl::UnknownError(
+        absl::StrCat(error_code.message(), " (code=", error_code.value(), ")"));
+  }
+  return absl::OkStatus();
 #endif  // __APPLE__
 }
 

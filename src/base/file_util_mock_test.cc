@@ -101,15 +101,17 @@ TEST(FileUtilMockTest, HardLinkTests) {
       FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file1 does not exist.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_FALSE(
+      FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt").ok());
 
   mock.CreateFile("/mozc/file1.txt");
-  EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
   EXPECT_OK_AND_TRUE(
       FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file2 already exists.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_FALSE(
+      FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt").ok());
   EXPECT_OK_AND_TRUE(
       FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
@@ -118,14 +120,14 @@ TEST(FileUtilMockTest, HardLinkTests) {
   EXPECT_OK_AND_FALSE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir1 does not exist.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2").ok());
 
   EXPECT_OK(FileUtil::CreateDirectory("/mozc/dir1"));
-  EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
   EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir2 already exists.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2").ok());
   EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 }
 
