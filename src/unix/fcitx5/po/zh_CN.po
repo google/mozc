@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the fcitx5-mozc package.
 #
 # Translators:
-# csslayer <wengxt@gmail.com>, 2020
+# csslayer <wengxt@gmail.com>, 2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-10-24 20:24+0000\n"
+"POT-Creation-Date: 2021-10-26 07:27+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2020\n"
+"Last-Translator: csslayer <wengxt@gmail.com>, 2021\n"
 "Language-Team: Chinese (China) (https://www.transifex.com/fcitx/teams/12005/"
 "zh_CN/)\n"
 "Language: zh_CN\n"
@@ -86,7 +86,7 @@ msgstr "展开用法的快捷键"
 
 #: mozc_engine.h:63
 msgid "Initial Mode"
-msgstr ""
+msgstr "初始模式"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
