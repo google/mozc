@@ -140,6 +140,7 @@ class FileUtil {
   // Compares the two filenames point to the same file. Symbolic/hard links are
   // considered. This is a wrapper of std::filesystem::equivalent.
   // IsEqualFile reads the contents of the files, but IsEquivalent does not.
+  // Returns an error, if either of files doesn't exist.
   static absl::StatusOr<bool> IsEquivalent(const std::string &filename1,
                                            const std::string &filename2);
 

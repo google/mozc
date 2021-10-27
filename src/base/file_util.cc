@@ -479,6 +479,13 @@ absl::StatusOr<bool> FileUtil::IsEquivalent(const std::string &filename1,
 
 absl::StatusOr<bool> FileUtilImpl::IsEquivalent(
     const std::string &filename1, const std::string &filename2) const {
+  // If either of filename1 or filename2 does not exist, an error is returned.
+  // Because filesystem::equivalent on some environments returns false instead,
+  // that case is checked here to keep the consistency.
+  if (FileExists(filename1).ok() != FileExists(filename2).ok()) {
+    return absl::UnknownError("No such file or directory");
+  }
+
 #ifdef __APPLE__
   return absl::UnimplementedError(
       "std::filesystem is only available on macOS 10.15, iOS 13.0, or later");

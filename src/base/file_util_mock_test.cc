@@ -133,5 +133,21 @@ TEST(FileUtilMockTest, HardLinkTests) {
   EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 }
 
+TEST(FileUtilMockTest, IsEquivalentTests) {
+  FileUtilMock mock;
+  constexpr char kFile1[] = "/mozc/file1.txt";
+  constexpr char kFile2[] = "/mozc/file2.txt";
+
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile1));
+  EXPECT_OK_AND_FALSE(FileUtil::IsEquivalent(kFile1, kFile2));
+
+  mock.CreateFile(kFile1);
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile1));
+  EXPECT_FALSE(FileUtil::IsEquivalent(kFile1, kFile2).ok());
+
+  EXPECT_OK(FileUtil::CreateHardLink(kFile1, kFile2));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile2));
+}
+
 }  // namespace
 }  // namespace mozc

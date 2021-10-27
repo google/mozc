@@ -118,6 +118,10 @@ class FileUtilMock : public FileUtilInterface {
       const std::string &filename2) const override {
     const std::string canonical1 = At(canonical_paths_, filename1, filename1);
     const std::string canonical2 = At(canonical_paths_, filename2, filename2);
+    // If either of files does not exist, an error is returned.
+    if (FileExists(canonical1).ok() != FileExists(canonical2).ok()) {
+      return absl::UnknownError("No such file or directory");
+    }
     return canonical1 == canonical2;
   }
 
