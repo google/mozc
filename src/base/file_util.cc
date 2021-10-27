@@ -99,8 +99,8 @@ class FileUtilImpl : public FileUtilInterface {
                             const std::string &to) const override;
   absl::Status CreateHardLink(const std::string &from,
                               const std::string &to) override;
-  bool GetModificationTime(const std::string &filename,
-                           FileTimeStamp *modified_at) const override;
+  absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const override;
 };
 
 using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
@@ -640,36 +640,35 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 #endif  // OS_WIN
 }
 
-bool FileUtil::GetModificationTime(const std::string &filename,
-                                   FileTimeStamp *modified_at) {
-  return FileUtilSingleton::Get()->GetModificationTime(filename, modified_at);
+absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
+    const std::string &filename) {
+  return FileUtilSingleton::Get()->GetModificationTime(filename);
 }
 
-bool FileUtilImpl::GetModificationTime(const std::string &filename,
-                                       FileTimeStamp *modified_at) const {
+absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
+    const std::string &filename) const {
 #if defined(OS_WIN)
   std::wstring wide;
   if (!Util::Utf8ToWide(filename, &wide)) {
-    return false;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Utf8ToWide failed: ", filename));
   }
   WIN32_FILE_ATTRIBUTE_DATA info = {};
   if (!::GetFileAttributesEx(wide.c_str(), GetFileExInfoStandard, &info)) {
     const auto last_error = ::GetLastError();
-    LOG(ERROR) << "GetFileAttributesEx(" << filename
-               << ") failed. error=" << last_error;
-    return false;
+    return WinUtil::ErrorToCanonicalStatus(
+        last_error, absl::StrCat("GetFileAttributesEx(", filename, ") failed"));
   }
-  *modified_at =
-      (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
-      info.ftLastWriteTime.dwLowDateTime;
-  return true;
+  return (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
+         info.ftLastWriteTime.dwLowDateTime;
 #else   // !OS_WIN
   struct stat stat_info;
   if (::stat(filename.c_str(), &stat_info)) {
-    return false;
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(
+        err, absl::StrCat("stat failed: ", filename));
   }
-  *modified_at = stat_info.st_mtime;
-  return true;
+  return stat_info.st_mtime;
 #endif  // OS_WIN
 }
 

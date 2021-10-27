@@ -86,8 +86,8 @@ class FileUtilInterface {
                                     const std::string &to) const = 0;
   virtual absl::Status CreateHardLink(const std::string &from,
                                       const std::string &to) = 0;
-  virtual bool GetModificationTime(const std::string &filename,
-                                   FileTimeStamp *modified_at) const = 0;
+  virtual absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const = 0;
 
  protected:
   FileUtilInterface() = default;
@@ -178,8 +178,8 @@ class FileUtil {
 
   // Returns the modification time in `modified_at`.
   // Returns false if something went wrong.
-  static bool GetModificationTime(const std::string &filename,
-                                  FileTimeStamp *modified_at);
+  static absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename);
 
   // Sets a mock for unittest.
   static void SetMockForUnitTest(FileUtilInterface *mock);

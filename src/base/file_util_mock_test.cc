@@ -78,17 +78,19 @@ TEST(FileUtilMockTest, FileMockTests) {
   EXPECT_OK_AND_TRUE(
       FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
 
-  FileTimeStamp time1;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file1.txt", &time1));
-  FileTimeStamp time2;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file2.txt", &time2));
-  EXPECT_NE(time1, time2);
+  absl::StatusOr<FileTimeStamp> time1 =
+      FileUtil::GetModificationTime("/mozc/file1.txt");
+  ASSERT_OK(time1);
+  absl::StatusOr<FileTimeStamp> time2 =
+      FileUtil::GetModificationTime("/mozc/file2.txt");
+  ASSERT_OK(time2);
+  EXPECT_NE(*time1, *time2);
 
-  FileTimeStamp time3;
-  EXPECT_FALSE(FileUtil::GetModificationTime("/mozc/file3.txt", &time3));
-  FileTimeStamp time4;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file4.txt", &time4));
-  EXPECT_EQ(time2, time4);
+  EXPECT_FALSE(FileUtil::GetModificationTime("/mozc/file3.txt").ok());
+  absl::StatusOr<FileTimeStamp> time4 =
+      FileUtil::GetModificationTime("/mozc/file4.txt");
+  ASSERT_OK(time4);
+  EXPECT_EQ(*time2, *time4);
 }
 
 TEST(FileUtilMockTest, HardLinkTests) {

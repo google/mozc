@@ -507,18 +507,20 @@ TEST(FileUtilTest, NormalizeDirectorySeparator) {
 }
 
 TEST(FileUtilTest, GetModificationTime) {
-  FileTimeStamp time_stamp = 0;
-  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file", &time_stamp));
+  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file").ok());
 
   const std::string &path =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
   CreateTestFile(path, "content");
-  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp));
-  EXPECT_NE(0, time_stamp);
+  absl::StatusOr<FileTimeStamp> time_stamp1 =
+      FileUtil::GetModificationTime(path);
+  ASSERT_OK(time_stamp1);
+  EXPECT_NE(0, *time_stamp1);
 
-  FileTimeStamp time_stamp2 = 0;
-  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp2));
-  EXPECT_EQ(time_stamp, time_stamp2);
+  absl::StatusOr<FileTimeStamp> time_stamp2 =
+      FileUtil::GetModificationTime(path);
+  ASSERT_OK(time_stamp2);
+  EXPECT_EQ(*time_stamp1, *time_stamp2);
 
   // Cleanup
   ASSERT_OK(FileUtil::Unlink(path));

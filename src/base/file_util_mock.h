@@ -154,13 +154,12 @@ class FileUtilMock : public FileUtilInterface {
     return CreateDirectory(to);
   }
 
-  bool GetModificationTime(const std::string &filename,
-                           FileTimeStamp *modified_at) const override {
-    if (!FileExists(filename).ok()) {
-      return false;
+  absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const override {
+    if (absl::Status s = FileExists(filename); !s.ok()) {
+      return s;
     }
-    *modified_at = files_[filename];
-    return true;
+    return files_[filename];
   }
 
   // Use FileTimeStamp as time stamp and also file id.
