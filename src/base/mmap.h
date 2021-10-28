@@ -30,18 +30,18 @@
 #ifndef MOZC_BASE_MMAP_H_
 #define MOZC_BASE_MMAP_H_
 
-#include <string>
-
-#include "base/mmap_sync_interface.h"
-#include "base/port.h"
-
+#include <cstddef>
 
 namespace mozc {
 
-class Mmap : public MmapSyncInterface {
+class Mmap final {
  public:
   Mmap();
-  ~Mmap() override { Close(); }
+
+  Mmap(const Mmap &) = delete;
+  Mmap &operator=(const Mmap &) = delete;
+
+  ~Mmap() { Close(); }
 
   bool Open(const char *filename, const char *mode = "r");
   void Close();
@@ -73,8 +73,6 @@ class Mmap : public MmapSyncInterface {
  private:
   char *text_;
   size_t size_;
-
-  DISALLOW_COPY_AND_ASSIGN(Mmap);
 };
 
 }  // namespace mozc

@@ -645,18 +645,11 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "mmap_sync_interface",
-    hdrs = ["mmap_sync_interface.h"],
-    visibility = ["//visibility:private"],
-)
-
-cc_library_mozc(
     name = "mmap",
     srcs = ["mmap.cc"],
     hdrs = ["mmap.h"],
     deps = [
         ":logging",
-        ":mmap_sync_interface",
         ":port",
         ":scoped_handle",
         ":util",
