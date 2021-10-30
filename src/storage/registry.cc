@@ -47,9 +47,9 @@ namespace {
 Mutex g_mutex;
 #ifdef OS_WIN
 constexpr char kRegistryFileName[] = "registry.db";
-#else
+#else   // OS_WIN
 constexpr char kRegistryFileName[] = ".registry.db";  // hidden file
-#endif
+#endif  // OS_WIN
 
 class StorageInitializer {
  public:

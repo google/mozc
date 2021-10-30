@@ -516,6 +516,7 @@ cc_binary_mozc(
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ],
 )
 

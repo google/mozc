@@ -49,20 +49,20 @@ class FileUtilMock : public FileUtilInterface {
     base_id_ += 100'000;
   }
 
-  bool CreateDirectory(const std::string &path) const override {
+  absl::Status CreateDirectory(const std::string &path) const override {
     if (FileExists(path).ok()) {
-      return false;
+      return absl::AlreadyExistsError(path);
     }
     dirs_[path] = true;
-    return true;
+    return absl::OkStatus();
   }
 
-  bool RemoveDirectory(const std::string &dirname) const override {
+  absl::Status RemoveDirectory(const std::string &dirname) const override {
     if (FileExists(dirname).ok()) {
-      return false;
+      return absl::NotFoundError(dirname);
     }
     dirs_[dirname] = false;
-    return true;
+    return absl::OkStatus();
   }
 
   absl::Status Unlink(const std::string &filename) const override {
@@ -86,25 +86,42 @@ class FileUtilMock : public FileUtilInterface {
                                            : absl::NotFoundError(dirname);
   }
 
-  bool CopyFile(const std::string &from, const std::string &to) const override {
+  absl::Status FileOrDirectoryExists(const std::string &path) const {
+    return FileExists(path).ok() || DirectoryExists(path).ok()
+               ? absl::OkStatus()
+               : absl::NotFoundError(path);
+  }
+
+  absl::Status CopyFile(const std::string &from,
+                        const std::string &to) const override {
     if (!FileExists(from).ok()) {
-      return false;
+      return absl::NotFoundError(from);
     }
-
     files_[to] = files_[from];
-    return true;
+    return absl::OkStatus();
   }
 
-  bool IsEqualFile(const std::string &filename1,
-                   const std::string &filename2) const override {
-    return (FileExists(filename1).ok() && FileExists(filename2).ok() &&
-            files_[filename1] == files_[filename2]);
+  absl::StatusOr<bool> IsEqualFile(
+      const std::string &filename1,
+      const std::string &filename2) const override {
+    if (absl::Status s = FileExists(filename1); !s.ok()) {
+      return s;
+    }
+    if (absl::Status s = FileExists(filename2); !s.ok()) {
+      return s;
+    }
+    return files_[filename1] == files_[filename2];
   }
 
-  bool IsEquivalent(const std::string &filename1,
-                    const std::string &filename2) const override {
+  absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1,
+      const std::string &filename2) const override {
     const std::string canonical1 = At(canonical_paths_, filename1, filename1);
     const std::string canonical2 = At(canonical_paths_, filename2, filename2);
+    // If either of files does not exist, an error is returned.
+    if (FileExists(canonical1).ok() != FileExists(canonical2).ok()) {
+      return absl::UnknownError("No such file or directory");
+    }
     return canonical1 == canonical2;
   }
 
@@ -123,33 +140,30 @@ class FileUtilMock : public FileUtilInterface {
     return absl::NotFoundError(absl::StrFormat("%s doesn't exist", from));
   }
 
-  bool CreateHardLink(const std::string &from, const std::string &to) override {
-    if (!FileExists(from).ok() && !DirectoryExists(from).ok()) {
-      // `from` doesn't exist.
-      return false;
+  absl::Status CreateHardLink(const std::string &from,
+                              const std::string &to) override {
+    // Error if `from` doesn't exist.
+    if (absl::Status s = FileOrDirectoryExists(from); !s.ok()) {
+      return s;
     }
-
-    if (FileExists(to).ok() || DirectoryExists(to).ok()) {
-      // `to` already exists.
-      return false;
+    // Error if `to` already exists.
+    if (absl::Status s = FileOrDirectoryExists(to); s.ok()) {
+      return absl::AlreadyExistsError(to);
     }
-
     canonical_paths_[to] = from;
     if (FileExists(from).ok()) {
       CreateFile(to);
-    } else {
-      CreateDirectory(to);
+      return absl::OkStatus();
     }
-    return true;
+    return CreateDirectory(to);
   }
 
-  bool GetModificationTime(const std::string &filename,
-                           FileTimeStamp *modified_at) const override {
-    if (!FileExists(filename).ok()) {
-      return false;
+  absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const override {
+    if (absl::Status s = FileExists(filename); !s.ok()) {
+      return s;
     }
-    *modified_at = files_[filename];
-    return true;
+    return files_[filename];
   }
 
   // Use FileTimeStamp as time stamp and also file id.

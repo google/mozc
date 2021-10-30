@@ -52,6 +52,7 @@
 #include "renderer/renderer_client.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
@@ -114,7 +115,7 @@ int Loop(std::istream *input) {
         ::GetCurrentProcessId());
     renderer_command.mutable_application_info()->set_thread_id(
         ::GetCurrentThreadId());
-#endif
+#endif  // OS_WIN
 #if defined(OS_WIN) || defined(__APPLE__)
     renderer_command.mutable_preedit_rectangle()->set_left(10);
     renderer_command.mutable_preedit_rectangle()->set_top(10);
@@ -122,9 +123,9 @@ int Loop(std::istream *input) {
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
     renderer_client = absl::make_unique<renderer::RendererClient>();
     CHECK(renderer_client->Activate());
-#else
+#else   // defined(OS_WIN) || defined(__APPLE__)
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
-#endif
+#endif  // defined(OS_WIN) || defined(__APPLE__)
   }
 
   commands::Command command;
@@ -176,7 +177,12 @@ int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
 
   if (!absl::GetFlag(FLAGS_profile_dir).empty()) {
-    mozc::FileUtil::CreateDirectory(absl::GetFlag(FLAGS_profile_dir));
+    if (absl::Status s =
+            mozc::FileUtil::CreateDirectory(absl::GetFlag(FLAGS_profile_dir));
+        !s.ok() && !absl::IsAlreadyExists(s)) {
+      LOG(ERROR) << s;
+      return -1;
+    }
     mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_profile_dir));
   }
 

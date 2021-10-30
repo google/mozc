@@ -97,7 +97,7 @@ class ClockImpl : public ClockInterface {
   uint64_t GetTime() override {
 #ifdef OS_WIN
     return static_cast<uint64>(_time64(nullptr));
-#else
+#else   // OS_WIN
     return static_cast<uint64_t>(time(nullptr));
 #endif  // OS_WIN
   }

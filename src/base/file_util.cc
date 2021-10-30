@@ -49,9 +49,7 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "absl/status/status.h"
-#ifdef OS_WIN
 #include "absl/status/statusor.h"
-#endif  // OS_WIN
 
 namespace {
 
@@ -85,21 +83,24 @@ class FileUtilImpl : public FileUtilInterface {
   FileUtilImpl() = default;
   ~FileUtilImpl() override = default;
 
-  bool CreateDirectory(const std::string &path) const override;
-  bool RemoveDirectory(const std::string &dirname) const override;
+  absl::Status CreateDirectory(const std::string &path) const override;
+  absl::Status RemoveDirectory(const std::string &dirname) const override;
   absl::Status Unlink(const std::string &filename) const override;
   absl::Status FileExists(const std::string &filename) const override;
   absl::Status DirectoryExists(const std::string &dirname) const override;
-  bool CopyFile(const std::string &from, const std::string &to) const override;
-  bool IsEqualFile(const std::string &filename1,
-                   const std::string &filename2) const override;
-  bool IsEquivalent(const std::string &filename1,
-                    const std::string &filename2) const override;
+  absl::Status CopyFile(const std::string &from,
+                        const std::string &to) const override;
+  absl::StatusOr<bool> IsEqualFile(const std::string &filename1,
+                                   const std::string &filename2) const override;
+  absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1,
+      const std::string &filename2) const override;
   absl::Status AtomicRename(const std::string &from,
                             const std::string &to) const override;
-  bool CreateHardLink(const std::string &from, const std::string &to) override;
-  bool GetModificationTime(const std::string &filename,
-                           FileTimeStamp *modified_at) const override;
+  absl::Status CreateHardLink(const std::string &from,
+                              const std::string &to) override;
+  absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const override;
 };
 
 using FileUtilSingleton = SingletonMockable<FileUtilInterface, FileUtilImpl>;
@@ -116,6 +117,15 @@ absl::StatusOr<DWORD> GetFileAttributes(const std::wstring &filename) {
   }
   const DWORD error = ::GetLastError();
   return WinUtil::ErrorToCanonicalStatus(error, "GetFileAttributesW failed");
+}
+
+absl::Status SetFileAttributes(const std::wstring &filename, DWORD attrs) {
+  if (::SetFileAttributesW(filename.c_str(), attrs)) {
+    return absl::OkStatus();
+  }
+  const DWORD error = ::GetLastError();
+  return WinUtil::ErrorToCanonicalStatus(
+      error, absl::StrCat("SetFileAttributesW failed: attrs = ", attrs));
 }
 
 // Some high-level file APIs such as MoveFileEx simply fail if the target file
@@ -138,14 +148,13 @@ absl::Status StripWritePreventingAttributesIfExists(
     return std::move(attributes).status();
   }
   if (*attributes & kDropAttributes) {
-    if (!::SetFileAttributesW(wide_filename.c_str(),
-                              *attributes & ~kDropAttributes)) {
-      const DWORD error = ::GetLastError();
-      return WinUtil::ErrorToCanonicalStatus(
-          error,
-          absl::StrFormat("Cannot drop the write-preventing file attributes of "
-                          "%s, whose attrs is %d",
-                          filename, *attributes));
+    const DWORD attrs = *attributes & ~kDropAttributes;
+    if (absl::Status s = SetFileAttributes(wide_filename, attrs); !s.ok()) {
+      return absl::Status(
+          s.code(),
+          absl::StrFormat(
+              "Cannot drop the write-preventing file attributes of %s: %s",
+              filename, s.message()));
     }
   }
   return absl::OkStatus();
@@ -154,32 +163,63 @@ absl::Status StripWritePreventingAttributesIfExists(
 }  // namespace
 #endif  // OS_WIN
 
-bool FileUtil::CreateDirectory(const std::string &path) {
+absl::Status FileUtil::CreateDirectory(const std::string &path) {
   return FileUtilSingleton::Get()->CreateDirectory(path);
 }
 
-bool FileUtilImpl::CreateDirectory(const std::string &path) const {
+absl::Status FileUtilImpl::CreateDirectory(const std::string &path) const {
 #if defined(OS_WIN)
   std::wstring wide;
-  return (Util::Utf8ToWide(path, &wide) > 0 &&
-          ::CreateDirectoryW(wide.c_str(), nullptr) != 0);
+  if (Util::Utf8ToWide(path, &wide) <= 0) {
+    return absl::InvalidArgumentError("Failed to convert to wstring");
+  }
+  if (!::CreateDirectoryW(wide.c_str(), nullptr)) {
+    return WinUtil::ErrorToCanonicalStatus(::GetLastError(),
+                                           "CreateDirectoryW failed");
+  }
+  return absl::OkStatus();
 #else   // !OS_WIN
-  return ::mkdir(path.c_str(), 0700) == 0;
+  if (::mkdir(path.c_str(), 0700) != 0) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(err, "mkdir failed");
+  }
+  return absl::OkStatus();
 #endif  // OS_WIN
 }
 
-bool FileUtil::RemoveDirectory(const std::string &dirname) {
+absl::Status FileUtil::RemoveDirectory(const std::string &dirname) {
   return FileUtilSingleton::Get()->RemoveDirectory(dirname);
 }
 
-bool FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
+absl::Status FileUtilImpl::RemoveDirectory(const std::string &dirname) const {
 #ifdef OS_WIN
   std::wstring wide;
-  return (Util::Utf8ToWide(dirname, &wide) > 0 &&
-          ::RemoveDirectoryW(wide.c_str()) != 0);
+  if (Util::Utf8ToWide(dirname, &wide) <= 0) {
+    return absl::InvalidArgumentError("Failed to convert to wstring");
+  }
+  if (!::RemoveDirectoryW(wide.c_str())) {
+    return WinUtil::ErrorToCanonicalStatus(::GetLastError(),
+                                           "RemoveDirectoryW failed");
+  }
+  return absl::OkStatus();
 #else   // !OS_WIN
-  return ::rmdir(dirname.c_str()) == 0;
+  if (::rmdir(dirname.c_str()) != 0) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(err, "rmdir failed");
+  }
+  return absl::OkStatus();
 #endif  // OS_WIN
+}
+
+absl::Status FileUtil::RemoveDirectoryIfExists(const std::string &dirname) {
+  absl::Status s = FileExists(dirname);
+  if (s.ok()) {
+    return RemoveDirectory(dirname);
+  }
+  if (absl::IsNotFound(s)) {
+    return absl::OkStatus();
+  }
+  return s;
 }
 
 absl::Status FileUtil::Unlink(const std::string &filename) {
@@ -349,97 +389,106 @@ bool FileUtil::HideFileWithExtraAttributes(const std::string &filename,
     LOG(ERROR) << original_attributes.status();
     return false;
   }
-  const auto result = ::SetFileAttributesW(
-      wfilename.c_str(), (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
-                          FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
-                          *original_attributes | extra_attributes) &
-                             ~FILE_ATTRIBUTE_NORMAL);
-  return result != 0;
+  absl::Status s = SetFileAttributes(
+      wfilename, (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM |
+                  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED | *original_attributes |
+                  extra_attributes) &
+                     ~FILE_ATTRIBUTE_NORMAL);
+  if (!s.ok()) {
+    LOG(ERROR) << s;
+  }
+  return s.ok();
 }
 #endif  // OS_WIN
 
-bool FileUtil::CopyFile(const std::string &from, const std::string &to) {
+absl::Status FileUtil::CopyFile(const std::string &from,
+                                const std::string &to) {
   return FileUtilSingleton::Get()->CopyFile(from, to);
 }
 
-bool FileUtilImpl::CopyFile(const std::string &from,
-                            const std::string &to) const {
+absl::Status FileUtilImpl::CopyFile(const std::string &from,
+                                    const std::string &to) const {
+#ifdef OS_WIN
+  std::wstring wfrom, wto;
+  if (Util::Utf8ToWide(from, &wfrom) <= 0) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Cannot convert to wstring: ", from));
+  }
+  if (Util::Utf8ToWide(to, &wto) <= 0) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Cannot convert to wstring: ", to));
+  }
+  if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
+    return s;
+  }
+#endif  // OS_WIN
+
   InputFileStream ifs(from.c_str(), std::ios::binary);
   if (!ifs) {
-    LOG(ERROR) << "Can't open input file. " << from;
-    return false;
+    return absl::UnknownError(absl::StrCat("Can't open input file ", from));
   }
-
-#ifdef OS_WIN
-  std::wstring wto;
-  Util::Utf8ToWide(to, &wto);
-  StripWritePreventingAttributesIfExists(to);
-#endif  // OS_WIN
 
   OutputFileStream ofs(to.c_str(), std::ios::binary | std::ios::trunc);
   if (!ofs) {
-    LOG(ERROR) << "Can't open output file. " << to;
-    return false;
+    return absl::UnknownError(absl::StrCat("Can't open output file ", to));
   }
 
   // TODO(taku): we have to check disk quota in advance.
   if (!(ofs << ifs.rdbuf())) {
-    LOG(ERROR) << "Can't write data.";
-    return false;
+    return absl::UnknownError("Can't write data");
   }
   ifs.close();
   ofs.close();
 
 #ifdef OS_WIN
-  std::wstring wfrom;
-  Util::Utf8ToWide(from, &wfrom);
   absl::StatusOr<DWORD> attrs = GetFileAttributes(wfrom);
   if (attrs.ok()) {
-    ::SetFileAttributesW(wto.c_str(), *attrs);
+    if (absl::Status s = SetFileAttributes(wto, *attrs); !s.ok()) {
+      LOG(ERROR) << s;
+    }
   } else {
     LOG(ERROR) << attrs.status();
   }
 #endif  // OS_WIN
 
-  return true;
+  return absl::OkStatus();
 }
 
-bool FileUtil::IsEqualFile(const std::string &filename1,
-                           const std::string &filename2) {
+absl::StatusOr<bool> FileUtil::IsEqualFile(const std::string &filename1,
+                                           const std::string &filename2) {
   return FileUtilSingleton::Get()->IsEqualFile(filename1, filename2);
 }
 
-bool FileUtilImpl::IsEqualFile(const std::string &filename1,
-                               const std::string &filename2) const {
+absl::StatusOr<bool> FileUtilImpl::IsEqualFile(
+    const std::string &filename1, const std::string &filename2) const {
   Mmap mmap1, mmap2;
-
   if (!mmap1.Open(filename1.c_str(), "r")) {
-    LOG(ERROR) << "Cannot open: " << filename1;
-    return false;
+    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename1));
   }
-
   if (!mmap2.Open(filename2.c_str(), "r")) {
-    LOG(ERROR) << "Cannot open: " << filename2;
-    return false;
+    return absl::UnknownError(absl::StrCat("Cannot open by mmap: ", filename2));
   }
-
-  if (mmap1.size() != mmap2.size()) {
-    return false;
-  }
-
-  return memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
+  return mmap1.size() == mmap2.size() &&
+         memcmp(mmap1.begin(), mmap2.begin(), mmap1.size()) == 0;
 }
 
-bool FileUtil::IsEquivalent(const std::string &filename1,
-                            const std::string &filename2) {
+absl::StatusOr<bool> FileUtil::IsEquivalent(const std::string &filename1,
+                                            const std::string &filename2) {
   return FileUtilSingleton::Get()->IsEquivalent(filename1, filename2);
 }
 
-bool FileUtilImpl::IsEquivalent(const std::string &filename1,
-                                const std::string &filename2) const {
+absl::StatusOr<bool> FileUtilImpl::IsEquivalent(
+    const std::string &filename1, const std::string &filename2) const {
+  // If either of filename1 or filename2 does not exist, an error is returned.
+  // Because filesystem::equivalent on some environments returns false instead,
+  // that case is checked here to keep the consistency.
+  if (FileExists(filename1).ok() != FileExists(filename2).ok()) {
+    return absl::UnknownError("No such file or directory");
+  }
+
 #ifdef __APPLE__
-  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
-  return false;
+  return absl::UnimplementedError(
+      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later");
 #else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
@@ -447,7 +496,12 @@ bool FileUtilImpl::IsEquivalent(const std::string &filename1,
   const std::filesystem::path dst = std::filesystem::u8path(filename2);
 
   std::error_code error_code;
-  return std::filesystem::equivalent(src, dst, error_code);
+  if (bool is_equiv = std::filesystem::equivalent(src, dst, error_code);
+      !error_code) {
+    return is_equiv;
+  }
+  return absl::UnknownError(
+      absl::StrCat(error_code.value(), " ", error_code.message()));
 #endif  // __APPLE__
 }
 
@@ -463,38 +517,44 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
   Util::Utf8ToWide(from, &fromw);
   Util::Utf8ToWide(to, &tow);
 
-  absl::Status s = TransactionalMoveFile(fromw, tow);
-  if (s.ok()) {
+  absl::Status move_status = TransactionalMoveFile(fromw, tow);
+  if (move_status.ok()) {
     return absl::OkStatus();
   }
   LOG(WARNING) << "TransactionalMoveFile failed: from: " << from
-               << ", to: " << to << ", status: " << s;
+               << ", to: " << to << ", status: " << move_status;
 
   const absl::StatusOr<DWORD> original_attributes = GetFileAttributes(fromw);
   if (!original_attributes.ok()) {
-    return absl::UnknownError(absl::StrFormat(
-        "GetFileAttributes failed: %s; Status of TransactionalMoveFile: %s",
-        original_attributes.status().ToString(), s.ToString()));
+    return absl::Status(
+        original_attributes.status().code(),
+        absl::StrFormat(
+            "GetFileAttributes failed: %s; Status of TransactionalMoveFile: %s",
+            original_attributes.status().message(), move_status.ToString()));
   }
   if (absl::Status s = StripWritePreventingAttributesIfExists(to); !s.ok()) {
-    return absl::UnknownError(absl::StrFormat(
-        "StripWritePreventingAttributesIfExists failed: %s", s.ToString()));
+    return absl::Status(
+        s.code(),
+        absl::StrFormat("StripWritePreventingAttributesIfExists failed: %s; "
+                        "Status of TransactionalMoveFile: %s",
+                        s.message(), move_status.ToString()));
   }
   if (!::MoveFileExW(fromw.c_str(), tow.c_str(),
                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)) {
     const DWORD move_file_ex_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat(
-        "MoveFileExW failed: %d; Status of TransactionalMoveFile: %s",
-        move_file_ex_error, s.ToString()));
+    return WinUtil::ErrorToCanonicalStatus(
+        move_file_ex_error,
+        absl::StrFormat(
+            "MoveFileExW failed; Status of TransactionalMoveFile: %s",
+            move_status.ToString()));
   }
-  if (!::SetFileAttributesW(tow.c_str(), *original_attributes)) {
-    const DWORD set_file_attributes_error = ::GetLastError();
-    return absl::UnknownError(absl::StrFormat(
-        "SetFileAttributesW failed: %d, original_attributes: %d; Status of "
-        "TransactionalMoveFile: %s",
-        set_file_attributes_error, *original_attributes, s.ToString()));
+  if (absl::Status s = SetFileAttributes(tow, *original_attributes); !s.ok()) {
+    return absl::Status(
+        s.code(),
+        absl::StrFormat("SetFileAttributes failed: original_attrs: %d; Status "
+                        "of TransactionalMoveFile: %s",
+                        *original_attributes, move_status.ToString()));
   }
-
   return absl::OkStatus();
 #else   // !OS_WIN
   // Mac OSX: use rename(2), but rename(2) on Mac OSX
@@ -509,15 +569,16 @@ absl::Status FileUtilImpl::AtomicRename(const std::string &from,
 #endif  // OS_WIN
 }
 
-bool FileUtil::CreateHardLink(const std::string &from, const std::string &to) {
+absl::Status FileUtil::CreateHardLink(const std::string &from,
+                                      const std::string &to) {
   return FileUtilSingleton::Get()->CreateHardLink(from, to);
 }
 
-bool FileUtilImpl::CreateHardLink(const std::string &from,
-                                  const std::string &to) {
+absl::Status FileUtilImpl::CreateHardLink(const std::string &from,
+                                          const std::string &to) {
 #ifdef __APPLE__
-  // std::filesystem is only available on macOS 10.15, iOS 13.0, or later.
-  return false;
+  return absl::UnimplementedError(
+      "std::filesystem is only available on macOS 10.15, iOS 13.0, or later.");
 #else   // __APPLE__
 
   // u8path is deprecated in C++20. The current target is C++17.
@@ -526,7 +587,11 @@ bool FileUtilImpl::CreateHardLink(const std::string &from,
 
   std::error_code error_code;
   std::filesystem::create_hard_link(src, dst, error_code);
-  return !error_code;
+  if (error_code) {
+    return absl::UnknownError(
+        absl::StrCat(error_code.message(), " (code=", error_code.value(), ")"));
+  }
+  return absl::OkStatus();
 #endif  // __APPLE__
 }
 
@@ -582,36 +647,35 @@ std::string FileUtil::NormalizeDirectorySeparator(const std::string &path) {
 #endif  // OS_WIN
 }
 
-bool FileUtil::GetModificationTime(const std::string &filename,
-                                   FileTimeStamp *modified_at) {
-  return FileUtilSingleton::Get()->GetModificationTime(filename, modified_at);
+absl::StatusOr<FileTimeStamp> FileUtil::GetModificationTime(
+    const std::string &filename) {
+  return FileUtilSingleton::Get()->GetModificationTime(filename);
 }
 
-bool FileUtilImpl::GetModificationTime(const std::string &filename,
-                                       FileTimeStamp *modified_at) const {
+absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
+    const std::string &filename) const {
 #if defined(OS_WIN)
   std::wstring wide;
   if (!Util::Utf8ToWide(filename, &wide)) {
-    return false;
+    return absl::InvalidArgumentError(
+        absl::StrCat("Utf8ToWide failed: ", filename));
   }
   WIN32_FILE_ATTRIBUTE_DATA info = {};
   if (!::GetFileAttributesEx(wide.c_str(), GetFileExInfoStandard, &info)) {
     const auto last_error = ::GetLastError();
-    LOG(ERROR) << "GetFileAttributesEx(" << filename
-               << ") failed. error=" << last_error;
-    return false;
+    return WinUtil::ErrorToCanonicalStatus(
+        last_error, absl::StrCat("GetFileAttributesEx(", filename, ") failed"));
   }
-  *modified_at =
-      (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
-      info.ftLastWriteTime.dwLowDateTime;
-  return true;
+  return (static_cast<uint64>(info.ftLastWriteTime.dwHighDateTime) << 32) +
+         info.ftLastWriteTime.dwLowDateTime;
 #else   // !OS_WIN
   struct stat stat_info;
   if (::stat(filename.c_str(), &stat_info)) {
-    return false;
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(
+        err, absl::StrCat("stat failed: ", filename));
   }
-  *modified_at = stat_info.st_mtime;
-  return true;
+  return stat_info.st_mtime;
 #endif  // OS_WIN
 }
 

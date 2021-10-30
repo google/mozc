@@ -43,6 +43,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
 
 // Ad-hoc workadound against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -75,17 +76,15 @@ TEST(FileUtilTest, CreateDirectory) {
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testdir");
 
   // Delete dirpath, if it exists.
-  if (FileUtil::FileExists(dirpath).ok()) {
-    FileUtil::RemoveDirectory(dirpath);
-  }
+  ASSERT_OK(FileUtil::RemoveDirectoryIfExists(dirpath));
   ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 
   // Create the directory.
-  EXPECT_TRUE(FileUtil::CreateDirectory(dirpath));
+  EXPECT_OK(FileUtil::CreateDirectory(dirpath));
   EXPECT_OK(FileUtil::DirectoryExists(dirpath));
 
   // Delete the directory.
-  ASSERT_TRUE(FileUtil::RemoveDirectory(dirpath));
+  ASSERT_OK(FileUtil::RemoveDirectory(dirpath));
   ASSERT_FALSE(FileUtil::FileExists(dirpath).ok());
 }
 
@@ -199,22 +198,56 @@ TEST(FileUtilTest, IsEqualFile) {
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
   ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
   ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2).ok());
 
   CreateTestFile(filename1, "test data1");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2).ok());
 
   CreateTestFile(filename2, "test data1");
-  EXPECT_TRUE(FileUtil::IsEqualFile(filename1, filename2));
+  absl::StatusOr<bool> s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
   CreateTestFile(filename2, "test data1 test data1");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
 
   CreateTestFile(filename2, "test data2");
-  EXPECT_FALSE(FileUtil::IsEqualFile(filename1, filename2));
+  s = FileUtil::IsEqualFile(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
 
   ASSERT_OK(FileUtil::Unlink(filename1));
   ASSERT_OK(FileUtil::Unlink(filename2));
+}
+
+TEST(FileUtilTest, IsEquivalent) {
+  const std::string filename1 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
+  const std::string filename2 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename1).ok());
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename2).ok());
+
+  CreateTestFile(filename1, "test data");
+  absl::StatusOr<bool> s = FileUtil::IsEquivalent(filename1, filename1);
+  if (absl::IsUnimplemented(s.status())) {
+    return;
+  }
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
+
+  // filename2 doesn't exist, so the status is not OK.
+  EXPECT_FALSE(FileUtil::IsEquivalent(filename1, filename2).ok());
+
+  // filename2 exists but it's a different file.
+  CreateTestFile(filename2, "test data");
+  s = FileUtil::IsEquivalent(filename1, filename2);
+  EXPECT_OK(s);
+  EXPECT_FALSE(*s);
 }
 
 TEST(FileUtilTest, CopyFile) {
@@ -227,12 +260,16 @@ TEST(FileUtilTest, CopyFile) {
   ASSERT_OK(FileUtil::UnlinkIfExists(to));
 
   CreateTestFile(from, "simple test");
-  EXPECT_TRUE(FileUtil::CopyFile(from, to));
-  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+  EXPECT_OK(FileUtil::CopyFile(from, to));
+  absl::StatusOr<bool> s = FileUtil::IsEqualFile(from, to);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
   CreateTestFile(from, "overwrite test");
-  EXPECT_TRUE(FileUtil::CopyFile(from, to));
-  EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+  EXPECT_OK(FileUtil::CopyFile(from, to));
+  s = FileUtil::IsEqualFile(from, to);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
 
 #ifdef OS_WIN
   struct TestData {
@@ -271,8 +308,10 @@ TEST(FileUtilTest, CopyFile) {
               ::SetFileAttributesW(wfrom.c_str(), kData.from_attributes));
     EXPECT_NE(FALSE, ::SetFileAttributesW(wto.c_str(), kData.to_attributes));
 
-    EXPECT_TRUE(FileUtil::CopyFile(from, to));
-    EXPECT_TRUE(FileUtil::IsEqualFile(from, to));
+    EXPECT_OK(FileUtil::CopyFile(from, to));
+    absl::StatusOr<bool> s = FileUtil::IsEqualFile(from, to);
+    EXPECT_OK(s);
+    EXPECT_TRUE(*s);
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wfrom.c_str()));
     EXPECT_EQ(kData.from_attributes, ::GetFileAttributesW(wto.c_str()));
 
@@ -373,6 +412,27 @@ TEST(FileUtilTest, AtomicRename) {
   ASSERT_OK(FileUtil::UnlinkIfExists(to));
 }
 
+TEST(FileUtilTest, CreateHardLink) {
+  const std::string filename1 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test1");
+  const std::string filename2 =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2");
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename1));
+  ASSERT_OK(FileUtil::UnlinkIfExists(filename2));
+
+  CreateTestFile(filename1, "test data");
+  absl::Status s = FileUtil::CreateHardLink(filename1, filename2);
+  if (absl::IsUnimplemented(s)) {
+    return;
+  }
+  EXPECT_OK(s);
+  absl::StatusOr<bool> equiv = FileUtil::IsEquivalent(filename1, filename2);
+  ASSERT_OK(equiv);
+  EXPECT_TRUE(*equiv);
+
+  EXPECT_FALSE(FileUtil::CreateHardLink(filename1, filename2).ok());
+}
+
 #ifdef OS_WIN
 #define SP "\\"
 #else  // OS_WIN
@@ -447,18 +507,20 @@ TEST(FileUtilTest, NormalizeDirectorySeparator) {
 }
 
 TEST(FileUtilTest, GetModificationTime) {
-  FileTimeStamp time_stamp = 0;
-  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file", &time_stamp));
+  EXPECT_FALSE(FileUtil::GetModificationTime("not_existent_file").ok());
 
   const std::string &path =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testfile");
   CreateTestFile(path, "content");
-  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp));
-  EXPECT_NE(0, time_stamp);
+  absl::StatusOr<FileTimeStamp> time_stamp1 =
+      FileUtil::GetModificationTime(path);
+  ASSERT_OK(time_stamp1);
+  EXPECT_NE(0, *time_stamp1);
 
-  FileTimeStamp time_stamp2 = 0;
-  EXPECT_TRUE(FileUtil::GetModificationTime(path, &time_stamp2));
-  EXPECT_EQ(time_stamp, time_stamp2);
+  absl::StatusOr<FileTimeStamp> time_stamp2 =
+      FileUtil::GetModificationTime(path);
+  ASSERT_OK(time_stamp2);
+  EXPECT_EQ(*time_stamp1, *time_stamp2);
 
   // Cleanup
   ASSERT_OK(FileUtil::Unlink(path));

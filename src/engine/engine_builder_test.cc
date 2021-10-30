@@ -85,7 +85,7 @@ TEST_F(EngineBuilderTest, PrepareAsync) {
     // |mock_data_path_| is copied to a temporary file.
     const std::string src_path =
         FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "src.data"});
-    ASSERT_TRUE(FileUtil::CopyFile(mock_data_path_, src_path));
+    ASSERT_OK(FileUtil::CopyFile(mock_data_path_, src_path));
 
     const std::string install_path =
         FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "dst.data"});
@@ -162,7 +162,7 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
 
     // Since requested file is copied, copy |mock_data_path_| to a temporary
     // file.
-    ASSERT_TRUE(FileUtil::CopyFile(mock_data_path_, tmp_src));
+    ASSERT_OK(FileUtil::CopyFile(mock_data_path_, tmp_src));
 
     // Request preparation with install.
     request_.set_engine_type(test_case.type);

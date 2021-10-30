@@ -41,6 +41,7 @@
 
 #include "base/port.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
 // Ad-hoc workaround against macro problem on Windows.
@@ -70,23 +71,23 @@ class FileUtilInterface {
  public:
   virtual ~FileUtilInterface() = default;
 
-  virtual bool CreateDirectory(const std::string &path) const = 0;
-  virtual bool RemoveDirectory(const std::string &dirname) const = 0;
+  virtual absl::Status CreateDirectory(const std::string &path) const = 0;
+  virtual absl::Status RemoveDirectory(const std::string &dirname) const = 0;
   virtual absl::Status Unlink(const std::string &filename) const = 0;
   virtual absl::Status FileExists(const std::string &filename) const = 0;
   virtual absl::Status DirectoryExists(const std::string &dirname) const = 0;
-  virtual bool CopyFile(const std::string &from,
-                        const std::string &to) const = 0;
-  virtual bool IsEqualFile(const std::string &filename1,
-                           const std::string &filename2) const = 0;
-  virtual bool IsEquivalent(const std::string &filename1,
-                            const std::string &filename2) const = 0;
+  virtual absl::Status CopyFile(const std::string &from,
+                                const std::string &to) const = 0;
+  virtual absl::StatusOr<bool> IsEqualFile(
+      const std::string &filename1, const std::string &filename2) const = 0;
+  virtual absl::StatusOr<bool> IsEquivalent(
+      const std::string &filename1, const std::string &filename2) const = 0;
   virtual absl::Status AtomicRename(const std::string &from,
                                     const std::string &to) const = 0;
-  virtual bool CreateHardLink(const std::string &from,
-                              const std::string &to) = 0;
-  virtual bool GetModificationTime(const std::string &filename,
-                                   FileTimeStamp *modified_at) const = 0;
+  virtual absl::Status CreateHardLink(const std::string &from,
+                                      const std::string &to) = 0;
+  virtual absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename) const = 0;
 
  protected:
   FileUtilInterface() = default;
@@ -98,10 +99,11 @@ class FileUtil {
   ~FileUtil() = delete;
 
   // Creates a directory. Does not create directories in the way to the path.
-  static bool CreateDirectory(const std::string &path);
+  static absl::Status CreateDirectory(const std::string &path);
 
   // Removes an empty directory.
-  static bool RemoveDirectory(const std::string &dirname);
+  static absl::Status RemoveDirectory(const std::string &dirname);
+  static absl::Status RemoveDirectoryIfExists(const std::string &dirname);
 
   // Removes a file. The second version returns OK when `filename` doesn't
   // exist. The third version logs error message on failure (i.e., it ignores
@@ -127,19 +129,20 @@ class FileUtil {
   // Copies a file to another file, using mmap internally.
   // The destination file will be overwritten if exists.
   // Returns true if the file is copied successfully.
-  static bool CopyFile(const std::string &from, const std::string &to);
+  static absl::Status CopyFile(const std::string &from, const std::string &to);
 
   // Compares the contents of two given files. Ignores the difference between
   // their path strings.
   // Returns true if both files have same contents.
-  static bool IsEqualFile(const std::string &filename1,
-                          const std::string &filename2);
+  static absl::StatusOr<bool> IsEqualFile(const std::string &filename1,
+                                          const std::string &filename2);
 
   // Compares the two filenames point to the same file. Symbolic/hard links are
   // considered. This is a wrapper of std::filesystem::equivalent.
   // IsEqualFile reads the contents of the files, but IsEquivalent does not.
-  static bool IsEquivalent(const std::string &filename1,
-                           const std::string &filename2);
+  // Returns an error, if either of files doesn't exist.
+  static absl::StatusOr<bool> IsEquivalent(const std::string &filename1,
+                                           const std::string &filename2);
 
   // Moves/Renames a file atomically.
   // Returns OK if the file is renamed successfully.
@@ -149,7 +152,8 @@ class FileUtil {
   // Creates a hard link. This returns false if the filesystem does not support
   // hard link or the target file already exists.
   // This is a wrapper of std::filesystem::create_hard_link.
-  static bool CreateHardLink(const std::string &from, const std::string &to);
+  static absl::Status CreateHardLink(const std::string &from,
+                                     const std::string &to);
 
   // Joins the give path components using the OS-specific path delimiter.
   static std::string JoinPath(const std::vector<absl::string_view> &components);
@@ -175,8 +179,8 @@ class FileUtil {
 
   // Returns the modification time in `modified_at`.
   // Returns false if something went wrong.
-  static bool GetModificationTime(const std::string &filename,
-                                  FileTimeStamp *modified_at);
+  static absl::StatusOr<FileTimeStamp> GetModificationTime(
+      const std::string &filename);
 
   // Sets a mock for unittest.
   static void SetMockForUnitTest(FileUtilInterface *mock);

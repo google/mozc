@@ -232,20 +232,22 @@ class UserDictionary::UserDictionaryReloader : public Thread {
   // When the user dictionary exists AND the modification time has been updated,
   // reloads the dictionary.  Returns true when reloader thread is started.
   bool MaybeStartReload() {
-    FileTimeStamp modification_time;
-    if (!FileUtil::GetModificationTime(
-            Singleton<UserDictionaryFileManager>::get()->GetFileName(),
-            &modification_time)) {
+    absl::StatusOr<FileTimeStamp> modification_time =
+        FileUtil::GetModificationTime(
+            Singleton<UserDictionaryFileManager>::get()->GetFileName());
+    if (!modification_time.ok()) {
       // If the file doesn't exist, return doing nothing.
       // Therefore if the file is deleted after first reload,
       // second reload does nothing so the content loaded by first reload
       // is kept as is.
+      LOG(WARNING) << "Cannot get modification time of the user dictionary: "
+                   << modification_time.status();
       return false;
     }
-    if (modified_at_ == modification_time) {
+    if (modified_at_ == *modification_time) {
       return false;
     }
-    modified_at_ = modification_time;
+    modified_at_ = *modification_time;
     Start("UserDictionaryReloader");
     return true;
   }

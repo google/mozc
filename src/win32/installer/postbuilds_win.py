@@ -120,8 +120,8 @@ def RunOrDie(argv):
     raise RunOrDieError('\n'.join(['',
                                    '==========',
                                    ' ERROR: %s' % ' '.join(argv),
-                                   ' Stdout', out,
-                                   ' Stderr', err,
+                                   ' Stdout', out.decode('utf-8'),
+                                   ' Stderr', err.decode('utf-8'),
                                    '==========']))
 
 

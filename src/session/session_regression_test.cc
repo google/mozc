@@ -235,9 +235,9 @@ TEST_F(SessionRegressionTest,
     // The MacOS default short cut of F10 is DisplayAsHalfAlphanumeric.
     // It does not start the conversion so output does not have any result.
     EXPECT_FALSE(command.output().has_result());
-#else
+#else   // __APPLE__
     EXPECT_TRUE(command.output().has_result());
-#endif
+#endif  // __APPLE__
     EXPECT_EQ(commands::HIRAGANA, command.output().status().mode());
     EXPECT_EQ(commands::HIRAGANA, command.output().mode());  // obsolete
   }

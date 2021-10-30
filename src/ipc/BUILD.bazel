@@ -62,6 +62,7 @@ cc_library_mozc(
         "//base:util",
         "//base:win_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
     ] + select_mozc(
         ios = ["//base:mac_util"],
     ),

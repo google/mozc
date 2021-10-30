@@ -35,7 +35,7 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <unistd.h>
 #endif  // OS_WIN
 
@@ -77,7 +77,7 @@ constexpr size_t kMaxPlayBackSize = 512;  // size of maximum history
 
 #ifdef DEBUG
 constexpr int kDefaultTimeout = 100000;  // 100 sec for dbg
-#else
+#else                                    // DEBUG
 constexpr int kDefaultTimeout = 30000;  // 30 sec for opt
 #endif  // DEBUG
 
@@ -278,7 +278,7 @@ void Client::ResetHistory() {
     input.mutable_key()->set_mode(last_mode_);
     history_inputs_.push_back(input);
   }
-#endif
+#endif  // __APPLE__
 }
 
 void Client::GetHistoryInputs(std::vector<commands::Input> *result) const {
@@ -436,10 +436,10 @@ bool Client::CreateSession() {
 #ifdef OS_WIN
   info->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   info->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
-#else
+#else   // OS_WIN
   info->set_process_id(static_cast<uint32_t>(getpid()));
   info->set_thread_id(0);
-#endif
+#endif  // OS_WIN
 
   commands::Output output;
   if (!CheckVersionOrRestartServerInternal(input, &output)) {

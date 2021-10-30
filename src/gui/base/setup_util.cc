@@ -85,7 +85,7 @@ void SetupUtil::SetDefaultProperty(uint32_t flags) {
       LOG(ERROR) << "Failed to migrate dictionary";
     }
   }
-#else
+#else   // OS_WIN
   // not supported on Mac and Linux
 #endif  // OS_WIN
 }
@@ -96,12 +96,12 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
   if (!is_userdictionary_locked_ && !storage_->Lock()) {
     return false;
   }
-  if (!storage_->Load()) {
+  if (!storage_->Load().ok()) {
     return false;
   }
 
   // create UserDictionary if the current user dictionary is empty
-  if (!storage_->Exists()) {
+  if (!storage_->Exists().ok()) {
     const std::string kUserdictionaryName = "User Dictionary 1";
     uint64 dic_id = 0;
     if (!storage_->CreateDictionary(kUserdictionaryName, &dic_id)) {
@@ -148,9 +148,12 @@ bool SetupUtil::MigrateDictionaryFromMSIME() {
     return false;
   }
 
-  storage_->Save();
+  if (!storage_->Save().ok()) {
+    LOG(ERROR) << "Failed to save the dictionary.";
+    return false;
+  }
   return true;
-#else
+#else   // OS_WIN
   return false;
 #endif  // OS_WIN
 }

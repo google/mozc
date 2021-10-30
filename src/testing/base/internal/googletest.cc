@@ -86,7 +86,8 @@ std::string GetTestTmpdir() {
   const std::string tmpdir = GetProgramPath() + ".tmp";
 
   if (!FileUtil::DirectoryExists(tmpdir).ok()) {
-    CHECK(FileUtil::CreateDirectory(tmpdir));
+    absl::Status s = FileUtil::CreateDirectory(tmpdir);
+    CHECK(s.ok()) << s;
   }
   return tmpdir;
 }
@@ -137,7 +138,8 @@ std::string GetTestTmpdir() {
   }
 
   if (access(tmpdir.c_str(), R_OK | X_OK) != 0) {
-    CHECK(FileUtil::CreateDirectory(tmpdir));
+    absl::Status s = FileUtil::CreateDirectory(tmpdir);
+    CHECK(s.ok()) << s;
   }
   return tmpdir;
 }

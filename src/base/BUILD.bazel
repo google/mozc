@@ -645,18 +645,11 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "mmap_sync_interface",
-    hdrs = ["mmap_sync_interface.h"],
-    visibility = ["//visibility:private"],
-)
-
-cc_library_mozc(
     name = "mmap",
     srcs = ["mmap.cc"],
     hdrs = ["mmap.h"],
     deps = [
         ":logging",
-        ":mmap_sync_interface",
         ":port",
         ":scoped_handle",
         ":util",
@@ -710,6 +703,7 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -749,6 +743,7 @@ cc_test_mozc(
         ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
     ],
 )
 
@@ -778,6 +773,7 @@ cc_library_mozc(
         ":singleton",
         ":util",
         ":win_util",
+        "@com_google_absl//absl/status",
     ] + select_mozc(
         android = [
             # android_util.h includes this for FRIEND_TEST

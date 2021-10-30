@@ -140,6 +140,7 @@ class DictionaryPredictor : public PredictorInterface {
     int cost;
     int lid;
     int rid;
+    uint32_t candidate_attributes;
     // Boundary information for realtime conversion.
     // This will be set only for realtime conversion result candidates.
     // This contains inner segment size for key and value.
@@ -147,7 +148,6 @@ class DictionaryPredictor : public PredictorInterface {
     // "わたしの|なまえは|なかのです", " 私の|名前は|中野です",
     // |inner_segment_boundary| have [(4,2), (4, 3), (5, 4)].
     std::vector<uint32_t> inner_segment_boundary;
-    uint32_t candidate_attributes;
     // Segment::Candidate::SourceInfo.
     // Will be used for usage stats.
     uint32_t source_info;

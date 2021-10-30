@@ -31,6 +31,8 @@
 
 #include <cstdint>
 
+#include "absl/status/status.h"
+
 #ifdef OS_WIN
 // clang-format off
 #include <Windows.h>
@@ -107,9 +109,12 @@ std::string UserProfileDirectoryImpl::GetDir() {
     return dir_;
   }
   const std::string dir = GetUserProfileDirectory();
-  FileUtil::CreateDirectory(dir);
-  if (absl::Status s = FileUtil::DirectoryExists(dir); !s.ok()) {
+  if (absl::Status s = FileUtil::CreateDirectory(dir);
+      !s.ok() && !absl::IsAlreadyExists(s)) {
     LOG(ERROR) << "Failed to create directory: " << dir << ": " << s;
+  }
+  if (absl::Status s = FileUtil::DirectoryExists(dir); !s.ok()) {
+    LOG(ERROR) << "User profile directory doesn't exist: " << dir << ": " << s;
   }
 
   dir_ = dir;
@@ -265,7 +270,9 @@ std::string UserProfileDirectoryImpl::GetUserProfileDirectory() const {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   dir = FileUtil::JoinPath(dir, kCompanyNameInEnglish);
-  FileUtil::CreateDirectory(dir);
+  if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
+    LOG(ERROR) << s;
+  }
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   return FileUtil::JoinPath(dir, kProductNameInEnglish);
 
@@ -327,7 +334,9 @@ std::string SystemUtil::GetUserProfileDirectory() {
 std::string SystemUtil::GetLoggingDirectory() {
 #ifdef __APPLE__
   std::string dir = MacUtil::GetLoggingDirectory();
-  FileUtil::CreateDirectory(dir);
+  if (absl::Status s = FileUtil::CreateDirectory(dir); !s.ok()) {
+    LOG(ERROR) << s;
+  }
   return dir;
 #else   // __APPLE__
   return GetUserProfileDirectory();

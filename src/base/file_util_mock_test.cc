@@ -33,12 +33,25 @@
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace {
+
+// The following are helpers to verify that the status of absl::StatusOr<bool>
+// is OK and its value is true/false.
+MATCHER(IsOkAndTrue, negation ? "is not OK or false" : "is OK and true") {
+  return arg.ok() && *arg;
+}
+MATCHER(IsOkAndFalse, negation ? "is not OK or true" : "is OK and false") {
+  return arg.ok() && !*arg;
+}
+
+#define EXPECT_OK_AND_TRUE(expr) EXPECT_THAT(expr, ::mozc::IsOkAndTrue());
+#define EXPECT_OK_AND_FALSE(expr) EXPECT_THAT(expr, ::mozc::IsOkAndFalse());
 
 TEST(FileUtilMockTest, DirectoryMockTests) {
   FileUtilMock mock;
 
-  EXPECT_TRUE(FileUtil::CreateDirectory("/tmp/mozc"));
-  EXPECT_TRUE(FileUtil::RemoveDirectory("/tmp/mozc"));
+  EXPECT_OK(FileUtil::CreateDirectory("/tmp/mozc"));
+  EXPECT_OK(FileUtil::RemoveDirectory("/tmp/mozc"));
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/no_mozc").ok());
   EXPECT_FALSE(FileUtil::DirectoryExists("/tmp/").ok());  // Limitation of mock.
 }
@@ -52,61 +65,89 @@ TEST(FileUtilMockTest, FileMockTests) {
 
   mock.CreateFile("/mozc/file1.txt");
   mock.CreateFile("/mozc/file2.txt");
-  EXPECT_FALSE(FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_FALSE(
+      FileUtil::IsEqualFile("/mozc/file1.txt", "/mozc/file2.txt"));
 
-  EXPECT_TRUE(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
-  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
+  EXPECT_OK(FileUtil::CopyFile("/mozc/file2.txt", "/mozc/file3.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file3.txt"));
 
   EXPECT_OK(FileUtil::AtomicRename("/mozc/file3.txt", "/mozc/file4.txt"));
   EXPECT_FALSE(FileUtil::FileExists("/mozc/file3.txt").ok());
   EXPECT_OK(FileUtil::FileExists("/mozc/file4.txt"));
-  EXPECT_TRUE(FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEqualFile("/mozc/file2.txt", "/mozc/file4.txt"));
 
-  FileTimeStamp time1;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file1.txt", &time1));
-  FileTimeStamp time2;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file2.txt", &time2));
-  EXPECT_NE(time1, time2);
+  absl::StatusOr<FileTimeStamp> time1 =
+      FileUtil::GetModificationTime("/mozc/file1.txt");
+  ASSERT_OK(time1);
+  absl::StatusOr<FileTimeStamp> time2 =
+      FileUtil::GetModificationTime("/mozc/file2.txt");
+  ASSERT_OK(time2);
+  EXPECT_NE(*time1, *time2);
 
-  FileTimeStamp time3;
-  EXPECT_FALSE(FileUtil::GetModificationTime("/mozc/file3.txt", &time3));
-  FileTimeStamp time4;
-  EXPECT_TRUE(FileUtil::GetModificationTime("/mozc/file4.txt", &time4));
-  EXPECT_EQ(time2, time4);
+  EXPECT_FALSE(FileUtil::GetModificationTime("/mozc/file3.txt").ok());
+  absl::StatusOr<FileTimeStamp> time4 =
+      FileUtil::GetModificationTime("/mozc/file4.txt");
+  ASSERT_OK(time4);
+  EXPECT_EQ(*time2, *time4);
 }
 
 TEST(FileUtilMockTest, HardLinkTests) {
   FileUtilMock mock;
 
   // # Hard link for files.
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file1.txt"));
-  EXPECT_FALSE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file1.txt"));
+  EXPECT_OK_AND_FALSE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file1 does not exist.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_FALSE(
+      FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt").ok());
 
   mock.CreateFile("/mozc/file1.txt");
-  EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // file2 already exists.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
+  EXPECT_FALSE(
+      FileUtil::CreateHardLink("/mozc/file1.txt", "/mozc/file2.txt").ok());
+  EXPECT_OK_AND_TRUE(
+      FileUtil::IsEquivalent("/mozc/file1.txt", "/mozc/file2.txt"));
 
   // # Hard link for directories.
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir1"));
-  EXPECT_FALSE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir1"));
+  EXPECT_OK_AND_FALSE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir1 does not exist.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2").ok());
 
-  EXPECT_TRUE(FileUtil::CreateDirectory("/mozc/dir1"));
-  EXPECT_TRUE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK(FileUtil::CreateDirectory("/mozc/dir1"));
+  EXPECT_OK(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 
   // dir2 already exists.
-  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2"));
-  EXPECT_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
+  EXPECT_FALSE(FileUtil::CreateHardLink("/mozc/dir1", "/mozc/dir2").ok());
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent("/mozc/dir1", "/mozc/dir2"));
 }
 
+TEST(FileUtilMockTest, IsEquivalentTests) {
+  FileUtilMock mock;
+  constexpr char kFile1[] = "/mozc/file1.txt";
+  constexpr char kFile2[] = "/mozc/file2.txt";
+
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile1));
+  EXPECT_OK_AND_FALSE(FileUtil::IsEquivalent(kFile1, kFile2));
+
+  mock.CreateFile(kFile1);
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile1));
+  EXPECT_FALSE(FileUtil::IsEquivalent(kFile1, kFile2).ok());
+
+  EXPECT_OK(FileUtil::CreateHardLink(kFile1, kFile2));
+  EXPECT_OK_AND_TRUE(FileUtil::IsEquivalent(kFile1, kFile2));
+}
+
+}  // namespace
 }  // namespace mozc

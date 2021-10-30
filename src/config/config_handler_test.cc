@@ -275,7 +275,7 @@ TEST_F(ConfigHandlerTest, LoadTestConfig) {
         {"data", "test", "config", file_name});
     const std::string &dest_path =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), file_name);
-    ASSERT_TRUE(FileUtil::CopyFile(src_path, dest_path))
+    ASSERT_OK(FileUtil::CopyFile(src_path, dest_path))
         << "Copy failed: " << src_path << " to " << dest_path;
 
     ScopedSetConfigFileName scoped_config_file_name("user://" +

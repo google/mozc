@@ -107,14 +107,16 @@ def _GetRevisionForPlatform(revision, target_platform):
 
 
 def _ParseVersionTemplateFile(template_path, target_platform,
-                              qt_version, build_override):
+                              qt_version, version_override):
   """Parses a version definition file.
 
   Args:
     template_path: A filename which has the version definition.
     target_platform: The target platform on which the programs run.
-    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
-    build_override: An optional string to override BUILD number.
+    qt_version: '5' for Qt5, and '' or None for no-Qt.
+    version_override: An optional string to override version number.
+      If it is a single number, it means a build number (e.g. "4500").
+      If it is a four numbers, it means a full version (e.g. "2.28.4500.0").
   Returns:
     A dictionary generated from the template file.
   """
@@ -137,8 +139,15 @@ def _ParseVersionTemplateFile(template_path, target_platform,
 
   template_dict['TARGET_PLATFORM'] = target_platform
   template_dict['QT_VERSION'] = qt_version
-  if build_override is not None:
-    template_dict['BUILD'] = build_override
+  if version_override:
+    nums = version_override.split('.')
+    if len(nums) == 1:
+      template_dict['BUILD'] = nums[0]
+    if len(nums) == 4:
+      template_dict['MAJOR'] = nums[0]
+      template_dict['MINOR'] = nums[1]
+      template_dict['BUILD'] = nums[2]
+      template_dict['REVISION'] = nums[3]
   return template_dict
 
 
@@ -185,7 +194,7 @@ def GenerateVersionFileFromTemplate(template_path,
                                     version_format,
                                     target_platform,
                                     qt_version='',
-                                    build_override=None):
+                                    version_override=None):
   """Generates version file from template file and given parameters.
 
   Args:
@@ -195,13 +204,15 @@ def GenerateVersionFileFromTemplate(template_path,
       (the timestamp is not updated).
     version_format: A string which contans version patterns.
     target_platform: The target platform on which the programs run.
-    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
-    build_override: An optional string to override BUILD number
+    qt_version: '5' for Qt5, and '' or None for no-Qt.
+    version_override: An optional string to override BUILD number
       in the template.
+      If it is a single number, it means a build number (e.g. "4500").
+      If it is a four numbers, it means a full version (e.g. "2.28.4500.0").
   """
 
   properties = _ParseVersionTemplateFile(template_path, target_platform,
-                                         qt_version, build_override)
+                                         qt_version, version_override)
   version_definition = _GetVersionInFormat(properties, version_format)
   old_content = ''
   if os.path.exists(output_path):
@@ -218,7 +229,7 @@ def GenerateVersionFileFromTemplate(template_path,
 
 
 def GenerateVersionFile(version_template_path, version_path, target_platform,
-                        qt_version, build_override=None):
+                        qt_version, version_override=None):
   """Reads the version template file and stores it into version_path.
 
   This doesn't update the "version_path" if nothing will be changed to
@@ -228,8 +239,10 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
     version_template_path: a file name which contains the template of version.
     version_path: a file name to be stored the official version.
     target_platform: target platform name. c.f. --target_platform option
-    qt_version: '4' for Qt4, '5' for Qt5, and '' or None for no-Qt.
-    build_override: an optional string to override BUILD number in the template.
+    qt_version: '5' for Qt5, and '' or None for no-Qt.
+    version_override: an optional string to override version number.
+      If it is a single number, it means a build number (e.g. "4500").
+      If it is a four numbers, it means a full version (e.g. "2.28.4500.0").
   """
   version_format = '\n'.join([
       'MAJOR=@MAJOR@',
@@ -247,7 +260,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       version_format,
       target_platform=target_platform,
       qt_version=qt_version,
-      build_override=build_override)
+      version_override=version_override)
 
 
 class MozcVersion(object):
@@ -305,7 +318,7 @@ class MozcVersion(object):
 
     Returns:
       A string that indicates the Qt version.
-      '4' for Qt4, '5' for Qt5, and '' for no-Qt.
+      '5' for Qt5, and '' for no-Qt.
     """
     return self._properties.get('QT_VERSION', None)
 
@@ -342,7 +355,7 @@ def main():
                     help='Path to the output version file.')
   parser.add_option('--target_platform', dest='target_platform',
                     help='Target platform of the version info.')
-  parser.add_option('--qtver', dest='qtver', choices=('4', '5', ''),
+  parser.add_option('--qtver', dest='qtver', choices=('5', ''),
                     default='', help='Specifies Qt version (desktop only)')
   parser.add_option('--build_override', dest='build_override',
                     help='Overrides BUILD number in the template.')
@@ -361,7 +374,7 @@ def main():
       version_path=options.output,
       target_platform=options.target_platform,
       qt_version=options.qtver,
-      build_override=cl_number)
+      version_override=cl_number)
 
 if __name__ == '__main__':
   main()

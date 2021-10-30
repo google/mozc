@@ -64,6 +64,8 @@ cc_library_mozc(
         "//data_manager",
         "//protocol:engine_builder_cc_proto",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
 )
 

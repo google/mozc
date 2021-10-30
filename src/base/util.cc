@@ -1614,6 +1614,8 @@ absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
       return absl::StatusCode::kPermissionDenied;
     case ENOENT:
       return absl::StatusCode::kNotFound;
+    case EEXIST:
+      return absl::StatusCode::kAlreadyExists;
     default:
       return absl::StatusCode::kUnknown;
   }

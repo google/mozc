@@ -40,6 +40,7 @@
 #include "engine/engine.h"
 #include "protocol/engine_builder.pb.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 
 namespace mozc {
 namespace {
@@ -62,37 +63,42 @@ EngineReloadResponse::Status ConvertStatus(DataManager::Status status) {
   return EngineReloadResponse::UNKNOWN_ERROR;
 }
 
-bool LinkOrCopyFile(const std::string &src_path, const std::string &dst_path) {
-  if (FileUtil::IsEquivalent(src_path, dst_path)) {
+absl::Status LinkOrCopyFile(const std::string &src_path,
+                            const std::string &dst_path) {
+  absl::StatusOr<bool> is_equiv = FileUtil::IsEquivalent(src_path, dst_path);
+  if (!is_equiv.ok()) {
+    LOG(WARNING) << "Cannot test file equivalence: " << is_equiv.status();
+    // Try hard link or copy.
+  } else if (*is_equiv) {
     // IsEquivalent() checks if src and dst are the same path or sym/hard link.
     // This does not check the contents of the files.
-    return true;
+    return absl::OkStatus();
   }
 
   const std::string tmp_dst_path = dst_path + ".tmp";
-  // Even if tmp_dst does not exist, Unlink() works but returns false.
   FileUtil::UnlinkOrLogError(tmp_dst_path);
-  bool result = FileUtil::CreateHardLink(src_path, tmp_dst_path);
-
-  if (!result) {
+  if (absl::Status s = FileUtil::CreateHardLink(src_path, tmp_dst_path);
+      !s.ok()) {
+    LOG(WARNING) << "Cannot create hardlink from " << src_path << " to "
+                 << tmp_dst_path << ": " << s;
     // If an error happens, fallback to file copy.
-    result = FileUtil::CopyFile(src_path, tmp_dst_path);
-  }
-
-  if (!result) {
-    // If both of CreateHardLink and CopyFile failed, returns false.
-    return false;
+    if (absl::Status s = FileUtil::CopyFile(src_path, tmp_dst_path); !s.ok()) {
+      return absl::Status(
+          s.code(), absl::StrCat("Cannot copy file. from: ", src_path,
+                                 " to: ", tmp_dst_path, ": ", s.message()));
+    }
   }
 
   if (absl::Status s = FileUtil::AtomicRename(tmp_dst_path, dst_path);
       !s.ok()) {
-    LOG(ERROR) << "AtomicRename failed: " << s << "; from: " << tmp_dst_path
-               << ", to: " << dst_path;
-    return false;
+    return absl::Status(
+        s.code(), absl::StrCat("AtomicRename failed: ", s.message(),
+                               "; from: ", tmp_dst_path, ", to: ", dst_path));
   }
 
-  return true;
+  return absl::OkStatus();
 }
+
 }  // namespace
 
 class EngineBuilder::Preparator : public Thread {
@@ -106,7 +112,7 @@ class EngineBuilder::Preparator : public Thread {
   void Run() override {
     const EngineReloadRequest &request = response_.request();
 
-    std::unique_ptr<DataManager> tmp_data_manager(new DataManager());
+    auto tmp_data_manager = std::make_unique<DataManager>();
     const DataManager::Status status =
         InitDataManager(request, tmp_data_manager.get());
     if (status != DataManager::Status::OK) {
@@ -116,11 +122,14 @@ class EngineBuilder::Preparator : public Thread {
       return;
     }
 
-    if (request.has_install_location() &&
-        !LinkOrCopyFile(request.file_path(), request.install_location())) {
-      LOG(ERROR) << "Copy faild: " << request.Utf8DebugString();
-      response_.set_status(EngineReloadResponse::INSTALL_FAILURE);
-      return;
+    if (request.has_install_location()) {
+      if (absl::Status s =
+              LinkOrCopyFile(request.file_path(), request.install_location());
+          !s.ok()) {
+        LOG(ERROR) << "Copy faild: " << request.Utf8DebugString() << ": " << s;
+        response_.set_status(EngineReloadResponse::INSTALL_FAILURE);
+        return;
+      }
     }
 
     response_.set_status(EngineReloadResponse::RELOAD_READY);

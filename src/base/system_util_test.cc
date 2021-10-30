@@ -90,7 +90,7 @@ TEST_F(SystemUtilTest, GetUserProfileDirectory) {
   SystemUtil::SetUserProfileDirectory("");
 
   // If "$HOME/.mozc" exists, it is used for backward compatibility.
-  FileUtil::CreateDirectory("/home/mozcuser/.mozc");
+  EXPECT_OK(FileUtil::CreateDirectory("/home/mozcuser/.mozc"));
   EXPECT_OK(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));
   EXPECT_EQ("/home/mozcuser/.mozc", SystemUtil::GetUserProfileDirectory());
   EXPECT_OK(FileUtil::DirectoryExists("/home/mozcuser/.mozc"));

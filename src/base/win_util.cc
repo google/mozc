@@ -550,6 +550,8 @@ absl::StatusCode WinUtil::ErrorToCanonicalCode(DWORD error_code) {
       return absl::StatusCode::kNotFound;
     case ERROR_ACCESS_DENIED:
       return absl::StatusCode::kPermissionDenied;
+    case ERROR_ALREADY_EXISTS:
+      return absl::StatusCode::kAlreadyExists;
     default:
       return absl::StatusCode::kUnknown;
   }
