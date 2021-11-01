@@ -117,7 +117,6 @@ cc_test_mozc(
         ":lru_storage",
         "//base",
         "//base:clock_mock",
-        "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:port",

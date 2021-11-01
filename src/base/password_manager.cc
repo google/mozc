@@ -115,16 +115,10 @@ std::string GetFileName() {
 bool SavePassword(const std::string &password) {
   const std::string filename = GetFileName();
   ScopedReadWriteFile l(filename);
-
-  {
-    OutputFileStream ofs(filename.c_str(), std::ios::out | std::ios::binary);
-    if (!ofs) {
-      LOG(ERROR) << "cannot open: " << filename;
-      return false;
-    }
-    ofs.write(password.data(), password.size());
+  if (absl::Status s = FileUtil::SetContents(filename, password); !s.ok()) {
+    LOG(ERROR) << "Cannot save password: " << s;
+    return false;
   }
-
   return true;
 }
 

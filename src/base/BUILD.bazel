@@ -662,7 +662,6 @@ cc_test_mozc(
     srcs = ["mmap_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
         ":file_util",
         ":mmap",
         ":util",
@@ -736,7 +735,6 @@ cc_test_mozc(
     srcs = ["file_util_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
         ":file_util",
         ":logging",
         ":number_util",
@@ -1125,10 +1123,9 @@ cc_binary_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
-        ":file_stream",
+        ":file_util",
         ":init_mozc",
         ":logging",
-        ":mmap",
         ":util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -1441,7 +1438,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":embedded_file",
-        ":file_stream",
+        ":file_util",
         ":port",
         "//testing:gunit_main",
         "//testing:mozctest",
@@ -1453,7 +1450,7 @@ cc_library_mozc(
     srcs = ["serialized_string_array.cc"],
     hdrs = ["serialized_string_array.h"],
     deps = [
-        ":file_stream",
+        ":file_util",
         ":logging",
         ":port",
         ":util",

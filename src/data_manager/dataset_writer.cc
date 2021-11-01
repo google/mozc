@@ -31,7 +31,7 @@
 
 #include <string>
 
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/unverified_sha1.h"
@@ -63,10 +63,9 @@ void DataSetWriter::Add(const std::string &name, int alignment,
 
 void DataSetWriter::AddFile(const std::string &name, int alignment,
                             const std::string &filepath) {
-  mozc::InputFileStream ifs(filepath.c_str(),
-                            std::ios_base::in | std::ios_base::binary);
-  CHECK(ifs.good()) << "Failed to open " << name;
-  Add(name, alignment, ifs.Read());
+  absl::StatusOr<std::string> content = FileUtil::GetContents(filepath);
+  CHECK(content.ok()) << content.status();
+  Add(name, alignment, *content);
 }
 
 void DataSetWriter::Finish(std::ostream *output) {

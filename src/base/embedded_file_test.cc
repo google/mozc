@@ -31,8 +31,9 @@
 
 #include <string>
 
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/port.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 
@@ -43,12 +44,10 @@ namespace {
 #include "base/embedded_file_test_data.inc"
 
 TEST(EmbeddedFileTest, Basic) {
-  const std::string expected =
-      InputFileStream(
-          testing::GetSourceFileOrDie({"base", "embedded_file.h"}).c_str(),
-          std::ios_base::in | std::ios_base::binary)
-          .Read();
-  EXPECT_EQ(expected, LoadEmbeddedFile(kEmbeddedFileTestData));
+  const absl::StatusOr<std::string> expected = FileUtil::GetContents(
+      testing::GetSourceFileOrDie({"base", "embedded_file.h"}));
+  ASSERT_OK(expected);
+  EXPECT_EQ(*expected, LoadEmbeddedFile(kEmbeddedFileTestData));
 }
 
 }  // namespace

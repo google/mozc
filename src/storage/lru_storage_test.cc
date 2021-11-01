@@ -37,7 +37,6 @@
 #include <vector>
 
 #include "base/clock_mock.h"
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -349,10 +348,7 @@ TEST_F(LruStorageTest, InvalidFileOpenTest) {
 
 TEST_F(LruStorageTest, OpenOrCreateTest) {
   const std::string file = GetTemporaryFilePath();
-  {
-    OutputFileStream ofs(file.c_str());
-    ofs << "test";
-  }
+  ASSERT_OK(FileUtil::SetContents(file, "test"));
 
   {
     LruStorage storage;

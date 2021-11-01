@@ -96,6 +96,7 @@ cc_library_mozc(
         "//dictionary:pos_matcher_lib",
         "//prediction:suggestion_filter",
         "//testing",
+        "//testing:gunit",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -151,7 +152,7 @@ cc_library_mozc(
     hdrs = ["dataset_writer.h"],
     deps = [
         ":dataset_cc_proto",
-        "//base:file_stream",
+        "//base:file_util",
         "//base:logging",
         "//base:obfuscator_support",
         "//base:port",
@@ -245,6 +246,7 @@ cc_library_mozc(
     hdrs = ["serialized_dictionary.h"],
     deps = [
         "//base:file_stream",
+        "//base:file_util",
         "//base:logging",
         "//base:number_util",
         "//base:port",

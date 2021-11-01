@@ -57,10 +57,6 @@ class InputFileStream : public std::ifstream {
   void open(const char* filename,
             std::ios_base::openmode mode = std::ios_base::in);
 
-  // Helper functions to load the entire content of a file into string.
-  void ReadToString(std::string* s);
-  std::string Read();
-
  private:
   virtual void UnusedKeyMethod();  // go/definekeymethod
 };

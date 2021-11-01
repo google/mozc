@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -203,15 +204,11 @@ void SerializedDictionary::CompileToFiles(
       Compile(dic, &buf1, &buf2);
   CHECK(VerifyData(data.first, data.second));
 
-  OutputFileStream token_ofs(output_token_array.c_str(),
-                             std::ios_base::out | std::ios_base::binary);
-  CHECK(token_ofs.good());
-  CHECK(token_ofs.write(data.first.data(), data.first.size()));
+  absl::Status s = FileUtil::SetContents(output_token_array, data.first);
+  CHECK(s.ok()) << s;
 
-  OutputFileStream string_ofs(output_string_array.c_str(),
-                              std::ios_base::out | std::ios_base::binary);
-  CHECK(string_ofs.good());
-  CHECK(string_ofs.write(data.second.data(), data.second.size()));
+  s = FileUtil::SetContents(output_string_array, data.second);
+  CHECK(s.ok()) << s;
 }
 
 bool SerializedDictionary::VerifyData(absl::string_view token_array_data,

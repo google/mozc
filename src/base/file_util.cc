@@ -29,6 +29,8 @@
 
 #include "base/file_util.h"
 
+#include <iterator>
+
 #ifdef OS_WIN
 #include <KtmW32.h>
 #include <Windows.h>
@@ -677,6 +679,72 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
   }
   return stat_info.st_mtime;
 #endif  // OS_WIN
+}
+
+absl::Status FileUtil::GetContents(const std::string &filename,
+                                   std::string *output,
+                                   std::ios_base::openmode mode) {
+  InputFileStream ifs(filename.c_str(), mode | std::ios::ate);
+  if (ifs.fail()) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(err,
+                                        absl::StrCat("Cannot open ", filename));
+  }
+  const ptrdiff_t size = ifs.tellg();
+  if (size == -1) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(
+        err, absl::StrCat("tellg failed: ", filename));
+  }
+  ifs.seekg(0, std::ios_base::beg);
+  if (mode & std::ios::binary) {
+    output->resize(size);
+    ifs.read(&(*output)[0], size);
+  } else {
+    // In the text mode, the read size can be smaller than the file size as
+    // "\r\n" can be translated to "\n" on Windows. Therefore, we just reserve a
+    // buffer size and perform sequential read.
+    output->reserve(size);
+    output->assign(std::istreambuf_iterator<char>(ifs),
+                   std::istreambuf_iterator<char>());
+  }
+  ifs.close();
+  if (ifs.fail()) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(
+        err,
+        absl::StrCat("Cannot read ", filename, " of size ", size, " bytes"));
+  }
+  return absl::OkStatus();
+}
+
+absl::StatusOr<std::string> FileUtil::GetContents(
+    const std::string &filename, std::ios_base::openmode mode) {
+  std::string content;
+  if (absl::Status s = GetContents(filename, &content, mode); !s.ok()) {
+    return s;
+  }
+  return content;
+}
+
+absl::Status FileUtil::SetContents(const std::string &filename,
+                                   absl::string_view content,
+                                   std::ios_base::openmode mode) {
+  OutputFileStream ofs(filename.c_str(), mode);
+  if (ofs.fail()) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(err,
+                                        absl::StrCat("Cannot open ", filename));
+  }
+  ofs << content;
+  ofs.close();
+  if (ofs.fail()) {
+    const int err = errno;
+    return Util::ErrnoToCanonicalStatus(
+        err,
+        absl::StrCat("Cannot write ", content.size(), " bytes to ", filename));
+  }
+  return absl::OkStatus();
 }
 
 void FileUtil::SetMockForUnitTest(FileUtilInterface *mock) {

@@ -32,10 +32,9 @@
 #include <string>
 
 #include "base/encryptor.h"
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
-#include "base/mmap.h"
 #include "base/util.h"
 #include "absl/flags/flag.h"
 
@@ -79,10 +78,10 @@ int main(int argc, char **argv) {
     mozc::Encryptor::Key key;
     CHECK(key.DeriveFromPassword(absl::GetFlag(FLAGS_password),
                                  absl::GetFlag(FLAGS_salt), iv));
-
-    mozc::Mmap mmap;
-    CHECK(mmap.Open(absl::GetFlag(FLAGS_input_file).c_str(), "r"));
-    std::string buf(mmap.begin(), mmap.size());
+    std::string buf;
+    absl::Status s =
+        mozc::FileUtil::GetContents(absl::GetFlag(FLAGS_input_file), &buf);
+    CHECK(s.ok()) << s;
     if (absl::GetFlag(FLAGS_encrypt)) {
       CHECK(mozc::Encryptor::EncryptString(key, &buf));
     } else if (absl::GetFlag(FLAGS_decrypt)) {
@@ -90,10 +89,8 @@ int main(int argc, char **argv) {
     } else {
       LOG(FATAL) << "unknown mode. set --encrypt or --decrypt";
     }
-    mozc::OutputFileStream ofs(absl::GetFlag(FLAGS_output_file).c_str(),
-                               std::ios::binary);
-    CHECK(ofs);
-    ofs.write(buf.data(), buf.size());
+    s = mozc::FileUtil::SetContents(absl::GetFlag(FLAGS_output_file), buf);
+    CHECK(s.ok()) << s;
   } else if (!absl::GetFlag(FLAGS_test_input).empty()) {
     mozc::Encryptor::Key key1, key2;
     CHECK(key1.DeriveFromPassword(absl::GetFlag(FLAGS_password),

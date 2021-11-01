@@ -102,19 +102,19 @@ class CodecMock : public DictionaryFileCodecInterface {
  public:
   void WriteSections(const std::vector<DictionaryFileSection> &sections,
                      std::ostream *ofs) const override {
-    const std::string value = "dummy value";
+    const std::string value = "placeholder value";
     ofs->write(value.data(), value.size());
   }
 
   absl::Status ReadSections(
       const char *image, int length,
       std::vector<DictionaryFileSection> *sections) const override {
-    sections->emplace_back(nullptr, 0, "dummy name");
+    sections->emplace_back(nullptr, 0, "placeholder name");
     return absl::Status();
   }
 
   std::string GetSectionName(const std::string &name) const override {
-    return "dummy section name";
+    return "placeholder section name";
   }
 };
 
@@ -131,23 +131,17 @@ TEST_F(CodecTest, FactoryTest) {
     codec->WriteSections(sections, &ofs);
   }
   {
-    EXPECT_OK(FileUtil::FileExists(test_file_));
-    InputFileStream ifs;
-    ifs.open(test_file_.c_str(), std::ios_base::in | std::ios_base::binary);
-    ifs.seekg(0, std::ios::end);
-    const int len = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
-    char buf[64];
-    ifs.read(buf, len);
-    EXPECT_EQ("dummy value", std::string(buf, len));
+    absl::StatusOr<std::string> content = FileUtil::GetContents(test_file_);
+    ASSERT_OK(content);
+    EXPECT_EQ("placeholder value", *content);
   }
   {
     EXPECT_EQ(0, sections.size());
     EXPECT_TRUE(codec->ReadSections(nullptr, 0, &sections).ok());
     EXPECT_EQ(1, sections.size());
-    EXPECT_EQ("dummy name", sections[0].name);
+    EXPECT_EQ("placeholder name", sections[0].name);
   }
-  { EXPECT_EQ("dummy section name", codec->GetSectionName("test")); }
+  { EXPECT_EQ("placeholder section name", codec->GetSectionName("test")); }
 }
 
 TEST_F(CodecTest, DefaultTest) {
@@ -168,10 +162,7 @@ TEST_F(CodecTest, DefaultTest) {
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::FileExists(test_file_));
-  buf = InputFileStream(test_file_.c_str(),
-                        std::ios_base::in | std::ios_base::binary)
-            .Read();
+  ASSERT_OK(FileUtil::GetContents(test_file_, &buf));
   ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
   ASSERT_EQ(2, sections.size());
   int index = -1;
@@ -204,10 +195,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
   }
   std::string buf;  // sections will reference this buffer.
   std::vector<DictionaryFileSection> sections;
-  ASSERT_OK(FileUtil::FileExists(test_file_));
-  buf = InputFileStream(test_file_.c_str(),
-                        std::ios_base::in | std::ios_base::binary)
-            .Read();
+  ASSERT_OK(FileUtil::GetContents(test_file_, &buf));
   ASSERT_TRUE(codec->ReadSections(buf.data(), buf.size(), &sections).ok());
   ASSERT_EQ(2, sections.size());
   int index = -1;

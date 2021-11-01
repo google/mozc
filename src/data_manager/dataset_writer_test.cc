@@ -33,11 +33,11 @@
 #include <sstream>
 #include <string>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -56,11 +56,8 @@ TEST(DatasetWriterTest, Write) {
   // Create a dummy file to be packed.
   const std::string &in =
       FileUtil::JoinPath({absl::GetFlag(FLAGS_test_tmpdir), "in"});
-  {
-    OutputFileStream f(in.c_str(), std::ios_base::out | std::ios_base::binary);
-    f.write("m\0zc\xEF", 5);
-    f.close();
-  }
+  absl::Status s = FileUtil::SetContents(in, absl::string_view("m\0zc\xEF", 5));
+  ASSERT_OK(s);
 
   // Generate a packed file into |actual|.
   std::string actual;

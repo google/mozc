@@ -32,7 +32,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -151,9 +151,8 @@ void SerializedStringArray::SerializeToFile(
     const std::vector<absl::string_view> &strs, const std::string &filepath) {
   std::unique_ptr<uint32_t[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
-  OutputFileStream ofs(filepath.c_str(),
-                       std::ios_base::out | std::ios_base::binary);
-  CHECK(ofs.write(data.data(), data.size()));
+  absl::Status s = FileUtil::SetContents(filepath, data);
+  CHECK(s.ok()) << s;
 }
 
 }  // namespace mozc

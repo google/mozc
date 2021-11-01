@@ -514,7 +514,6 @@ cc_test_mozc(
         ":dictionary_token",
         ":pos_matcher_lib",
         ":text_dictionary_loader",
-        "//base:file_stream",
         "//base:file_util",
         "//base:util",
         "//data_manager/testing:mock_data_manager",

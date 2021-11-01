@@ -214,7 +214,6 @@ cc_library_mozc(
     copts = ["-Wno-unused-variable"],
     deps = [
         ":ibus_config_cc_proto",
-        "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:system_util",

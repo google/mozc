@@ -33,7 +33,6 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -90,10 +89,7 @@ TEST_F(TextDictionaryLoaderTest, BasicTest) {
 
   const std::string filename =
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.tsv");
-  {
-    OutputFileStream ofs(filename.c_str());
-    ofs << kTextLines;
-  }
+  ASSERT_OK(FileUtil::SetContents(filename, kTextLines));
 
   {
     std::unique_ptr<TextDictionaryLoader> loader = CreateTextDictionaryLoader();
@@ -219,23 +215,16 @@ TEST_F(TextDictionaryLoaderTest, LoadMultipleFilesTest) {
       FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test2.tsv");
   const std::string filename = filename1 + "," + filename2;
 
-  {
-    OutputFileStream ofs(filename1.c_str());
-    ofs << kTextLines;
-  }
-  {
-    OutputFileStream ofs(filename2.c_str());
-    ofs << kTextLines;
-  }
+  ASSERT_OK(FileUtil::SetContents(filename1, kTextLines));
+  FileUnlinker unlinker1(filename1);
+  ASSERT_OK(FileUtil::SetContents(filename2, kTextLines));
+  FileUnlinker unlinker2(filename2);
 
   {
     std::unique_ptr<TextDictionaryLoader> loader = CreateTextDictionaryLoader();
     loader->Load(filename, "");
     EXPECT_EQ(6, loader->tokens().size());
   }
-
-  EXPECT_OK(FileUtil::Unlink(filename1));
-  EXPECT_OK(FileUtil::Unlink(filename2));
 }
 
 TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
@@ -246,14 +235,11 @@ TEST_F(TextDictionaryLoaderTest, ReadingCorrectionTest) {
   const std::string reading_correction_filename = FileUtil::JoinPath(
       absl::GetFlag(FLAGS_test_tmpdir), "reading_correction.tsv");
 
-  {
-    OutputFileStream ofs(dic_filename.c_str());
-    ofs << kTextLines;
-  }
-  {
-    OutputFileStream ofs(reading_correction_filename.c_str());
-    ofs << kReadingCorrectionLines;
-  }
+  ASSERT_OK(FileUtil::SetContents(dic_filename, kTextLines));
+  FileUnlinker dic_unlinker(dic_filename);
+  ASSERT_OK(FileUtil::SetContents(reading_correction_filename,
+                                  kReadingCorrectionLines));
+  FileUnlinker reading_correction_unlinker(reading_correction_filename);
 
   loader->Load(dic_filename, reading_correction_filename);
   const std::vector<std::unique_ptr<Token>> &tokens = loader->tokens();
