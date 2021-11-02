@@ -1,0 +1,115 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the fcitx5-mozc package.
+#
+# Translators:
+# abc Def <hdogan1974@gmail.com>, 2021
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: fcitx5-mozc\n"
+"Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
+"POT-Creation-Date: 2021-11-02 20:24+0000\n"
+"PO-Revision-Date: 2017-11-23 05:28+0000\n"
+"Last-Translator: abc Def <hdogan1974@gmail.com>, 2021\n"
+"Language-Team: Turkish (https://www.transifex.com/fcitx/teams/12005/tr/)\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: mozc_engine.h:76 mozc_engine.cc:196
+msgid "About Mozc"
+msgstr "Mozc Hakkında"
+
+#: mozc_engine.h:74 mozc_engine.cc:189
+msgid "Add Word"
+msgstr "Kelime Ekle"
+
+#: mozc_engine.h:48
+msgid "Always"
+msgstr ""
+
+#: mozc_engine.cc:96
+msgid "Composition Mode"
+msgstr ""
+
+#: mozc_engine.h:70 mozc_engine.cc:173
+msgid "Configuration Tool"
+msgstr ""
+
+#: mozc_engine.h:72 mozc_engine.cc:181
+msgid "Dictionary Tool"
+msgstr ""
+
+#: mozc_engine.h:51 mozc_engine.cc:52
+msgid "Direct"
+msgstr ""
+
+#: mozc_engine.h:66
+msgid "Expand Usage"
+msgstr ""
+
+#. Full width ASCII letter A.
+#: mozc_engine.h:53 mozc_engine.cc:82
+msgid "Full ASCII"
+msgstr ""
+
+#. Katakana letter A.
+#: mozc_engine.h:52 mozc_engine.cc:66
+msgid "Full Katakana"
+msgstr ""
+
+#: mozc_engine.h:52 mozc_engine.cc:74
+msgid "Half ASCII"
+msgstr ""
+
+#. Half width Katakana letter A.
+#: mozc_engine.h:53 mozc_engine.cc:89
+msgid "Half Katakana"
+msgstr ""
+
+#. Hiragana letter A in UTF-8.
+#: mozc_engine.h:51 mozc_engine.cc:59
+msgid "Hiragana"
+msgstr ""
+
+#: mozc_engine.h:49
+msgid "Hotkey"
+msgstr ""
+
+#: mozc_engine.h:67
+msgid "Hotkey to expand usage"
+msgstr ""
+
+#: mozc_engine.h:63
+msgid "Initial Mode"
+msgstr ""
+
+#: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
+msgid "Japanese input method based on Mozc"
+msgstr ""
+
+#: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
+msgid "Mozc for Fcitx 5"
+msgstr ""
+
+#: mozc_engine.h:48
+msgid "On Focus"
+msgstr ""
+
+#. We don't have a good library option for this, just do the simple
+#. replace. absl's runtime parsed format string is too copmlex.
+#: mozc_response_parser.cc:174
+#, c-format
+msgid "Press %s to show usages."
+msgstr ""
+
+#: mozc_state.cc:403
+msgid "Press Escape to go back"
+msgstr ""
+
+#: mozc_engine.cc:159 mozc_engine.cc:160
+msgid "Tool"
+msgstr ""
