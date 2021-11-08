@@ -29,6 +29,10 @@
 
 #include "base/logging.h"
 
+#ifdef OS_ANDROID
+#include <android/log.h>
+#endif  // OS_ANDROID
+
 #ifdef OS_WIN
 #define NO_MINMAX
 #include <windows.h>
@@ -37,19 +41,17 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
-#ifdef OS_ANDROID
-#include <android/log.h>
-#endif  // OS_ANDROID
-
+#include <algorithm>
 #ifdef OS_WIN
 #include <codecvt>
-#include <locale>
 #endif  // OS_WIN
-
-#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#ifdef OS_WIN
+#include <locale>
+#endif  // OS_WIN
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -60,6 +62,7 @@
 #include "base/mutex.h"
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 
 ABSL_FLAG(bool, colored_log, true,
@@ -210,8 +213,8 @@ class LogStreamImpl {
  private:
   // Real backing log stream.
   // This is not thread-safe so must be guarded.
-  // If std::cerr is real log stream, this is nullptr.
-  std::ostream *real_log_stream_;
+  // If std::cerr is real log stream, this is empty.
+  std::unique_ptr<std::ostream> real_log_stream_;
   int config_verbose_level_;
   bool support_color_ = false;
   bool use_cerr_ = false;
@@ -239,14 +242,14 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
   }
 }
 
-LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
+LogStreamImpl::LogStreamImpl() { Reset(); }
 
 // Initializes real log stream.
 // After initialization, use_cerr_ and real_log_stream_ become like following:
-// OS, --logtostderr => use_cerr_, real_log_stream_
-// Android, *     => false, nullptr
-// Others,  true  => true,  nullptr
-// Others,  false => true,  non-null
+// OS,      --logtostderr => use_cerr_, real_log_stream_
+// Android, *             => false,     empty
+// Others,  true          => true,      empty
+// Others,  false         => true,      initialized
 void LogStreamImpl::Init(const std::string &log_file_path) {
   scoped_lock l(&mutex_);
   Reset();
@@ -262,13 +265,14 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   // here.
   DCHECK_NE(log_file_path.size(), 0);
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
-  real_log_stream_ = new std::ofstream(
+  real_log_stream_ = absl::make_unique<std::ofstream>(
       utf8_to_wide.from_bytes(log_file_path).c_str(), std::ios::app);
 #elif !defined(OS_ANDROID)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = new std::ofstream(log_file_path.c_str(), std::ios::app);
+  real_log_stream_ = absl::make_unique<std::ofstream>(
+      log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
 #endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);
@@ -276,8 +280,7 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
 
 void LogStreamImpl::Reset() {
   scoped_lock l(&mutex_);
-  delete real_log_stream_;
-  real_log_stream_ = nullptr;
+  real_log_stream_.reset();
   config_verbose_level_ = 0;
 #if defined(OS_ANDROID) || defined(OS_WIN)
   // On Android, the standard log library is used.
