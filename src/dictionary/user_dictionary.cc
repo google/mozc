@@ -40,7 +40,6 @@
 #include "base/file_util.h"
 #include "base/hash.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "base/util.h"
@@ -53,6 +52,7 @@
 #include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
@@ -94,7 +94,7 @@ class UserDictionaryFileManager {
       delete;
 
   const std::string GetFileName() {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     if (filename_.empty()) {
       return UserDictionaryUtil::GetUserDictionaryFileName();
     } else {
@@ -103,13 +103,13 @@ class UserDictionaryFileManager {
   }
 
   void SetFileName(const std::string &filename) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     filename_ = filename;
   }
 
  private:
   std::string filename_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 void FillTokenFromUserPosToken(const UserPos::Token &user_pos_token,
@@ -227,6 +227,9 @@ class UserDictionary::UserDictionaryReloader : public Thread {
     DCHECK(dic_);
   }
 
+  UserDictionaryReloader(const UserDictionaryReloader &) = delete;
+  UserDictionaryReloader &operator=(const UserDictionaryReloader &) = delete;
+
   ~UserDictionaryReloader() override { Join(); }
 
   // When the user dictionary exists AND the modification time has been updated,
@@ -277,12 +280,9 @@ class UserDictionary::UserDictionaryReloader : public Thread {
 
  private:
   FileTimeStamp modified_at_;
-  Mutex mutex_;
   UserDictionary *dic_;
   std::string key_;
   std::string value_;
-
-  DISALLOW_COPY_AND_ASSIGN(UserDictionaryReloader);
 };
 
 UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
@@ -293,8 +293,7 @@ UserDictionary::UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
       user_pos_(std::move(user_pos)),
       pos_matcher_(pos_matcher),
       suppression_dictionary_(suppression_dictionary),
-      tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)),
-      mutex_(new ReaderWriterMutex) {
+      tokens_(new TokensIndex(user_pos_.get(), suppression_dictionary)) {
   DCHECK(user_pos_.get());
   DCHECK(suppression_dictionary_);
   Reload();
@@ -323,7 +322,7 @@ bool UserDictionary::HasValue(absl::string_view value) const {
 void UserDictionary::LookupPredictive(
     absl::string_view key, const ConversionRequest &conversion_request,
     Callback *callback) const {
-  scoped_reader_lock l(mutex_.get());
+  absl::ReaderMutexLock l(&mutex_);
 
   if (key.empty()) {
     VLOG(2) << "string of length zero is passed.";
@@ -367,7 +366,7 @@ void UserDictionary::LookupPredictive(
 void UserDictionary::LookupPrefix(absl::string_view key,
                                   const ConversionRequest &conversion_request,
                                   Callback *callback) const {
-  scoped_reader_lock l(mutex_.get());
+  absl::ReaderMutexLock l(&mutex_);
 
   if (key.empty()) {
     LOG(WARNING) << "string of length zero is passed.";
@@ -424,7 +423,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
 void UserDictionary::LookupExact(absl::string_view key,
                                  const ConversionRequest &conversion_request,
                                  Callback *callback) const {
-  scoped_reader_lock l(mutex_.get());
+  absl::ReaderMutexLock l(&mutex_);
   if (key.empty() || tokens_->empty() ||
       conversion_request.config().incognito_mode()) {
     return;
@@ -463,7 +462,7 @@ bool UserDictionary::LookupComment(absl::string_view key,
     return false;
   }
 
-  scoped_reader_lock l(mutex_.get());
+  absl::ReaderMutexLock l(&mutex_);
   if (tokens_->empty()) {
     return false;
   }
@@ -523,7 +522,7 @@ void UserDictionary::Swap(TokensIndex *new_tokens) {
   DCHECK(new_tokens);
   TokensIndex *old_tokens = tokens_;
   {
-    scoped_writer_lock l(mutex_.get());
+    absl::WriterMutexLock l(&mutex_);
     tokens_ = new_tokens;
   }
   delete old_tokens;
@@ -533,7 +532,7 @@ bool UserDictionary::Load(
     const user_dictionary::UserDictionaryStorage &storage) {
   size_t size = 0;
   {
-    scoped_reader_lock l(mutex_.get());
+    absl::ReaderMutexLock l(&mutex_);
     size = tokens_->size();
   }
 

@@ -51,12 +51,10 @@ namespace mozc {
 #if defined(__APPLE__)
 // Mac requires relatively large buffer for pthread mutex object.
 #define MOZC_MUTEX_PTR_ARRAYSIZE 11
-#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 32
-#else
+#else  // defined(__APPLE__)
 // Currently following sizes seem to be enough to support all other platforms.
 #define MOZC_MUTEX_PTR_ARRAYSIZE 8
-#define MOZC_RW_MUTEX_PTR_ARRAYSIZE 12
-#endif
+#endif  // defined(__APPLE__)
 
 class ABSL_LOCKABLE Mutex {
  public:
@@ -73,31 +71,6 @@ class ABSL_LOCKABLE Mutex {
 };
 
 #undef MOZC_MUTEX_PTR_ARRAYSIZE
-
-// IMPORTANT NOTE: Unlike mozc::Mutex, this class does not always support
-//     recursive lock.
-// TODO(yukawa): Rename this as ReaderWriterNonRecursiveMutex.
-class ABSL_LOCKABLE ReaderWriterMutex {
- public:
-  ReaderWriterMutex();
-  ~ReaderWriterMutex();
-
-  void ReaderLock() ABSL_SHARED_LOCK_FUNCTION();
-  void WriterLock() ABSL_EXCLUSIVE_LOCK_FUNCTION();
-  void ReaderUnlock() ABSL_UNLOCK_FUNCTION();
-  void WriterUnlock() ABSL_UNLOCK_FUNCTION();
-
-  // Returns true if multiple reader thread can grant the lock at the same time
-  // on the current platform.
-  static bool MultipleReadersThreadsSupported();
-
- private:
-  void *opaque_buffer_[MOZC_RW_MUTEX_PTR_ARRAYSIZE];
-
-  DISALLOW_COPY_AND_ASSIGN(ReaderWriterMutex);
-};
-
-#undef MOZC_RW_MUTEX_PTR_ARRAYSIZE
 
 // Implementation of this class is left in header for poor compilers where link
 // time code generation has not been proven well.
@@ -138,45 +111,7 @@ class ABSL_SCOPED_LOCKABLE scoped_try_lock {
   DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_try_lock);
 };
 
-// Implementation of this class is left in header for poor compilers where link
-// time code generation has not been proven well.
-// TODO(yukawa): Rename this as scoped_nonrecursive_writer_lock.
-class ABSL_SCOPED_LOCKABLE scoped_writer_lock {
- public:
-  explicit scoped_writer_lock(ReaderWriterMutex *mutex)
-      ABSL_SHARED_LOCK_FUNCTION(mutex)
-      : mutex_(mutex) {
-    mutex_->WriterLock();
-  }
-  ~scoped_writer_lock() ABSL_UNLOCK_FUNCTION() { mutex_->WriterUnlock(); }
-
- private:
-  ReaderWriterMutex *mutex_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_writer_lock);
-};
-
-// Implementation of this class is left in header for poor compilers where link
-// time code generation has not been proven well.
-// TODO(yukawa): Rename this as scoped_nonrecursive_reader_lock.
-class ABSL_SCOPED_LOCKABLE scoped_reader_lock {
- public:
-  explicit scoped_reader_lock(ReaderWriterMutex *mutex)
-      ABSL_EXCLUSIVE_LOCK_FUNCTION(mutex)
-      : mutex_(mutex) {
-    mutex_->ReaderLock();
-  }
-  ~scoped_reader_lock() ABSL_UNLOCK_FUNCTION() { mutex_->ReaderUnlock(); }
-
- private:
-  ReaderWriterMutex *mutex_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(scoped_reader_lock);
-};
-
 using MutexLock = scoped_lock;
-using ReaderMutexLock = scoped_reader_lock;
-using WriterMutexLock = scoped_writer_lock;
 
 using once_t = std::atomic<int>;
 

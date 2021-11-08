@@ -41,11 +41,9 @@
 #include "dictionary/user_pos_interface.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/strings/string_view.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
-
-class ReaderWriterMutex;
-
 namespace dictionary {
 
 class UserDictionary : public DictionaryInterface {
@@ -53,6 +51,10 @@ class UserDictionary : public DictionaryInterface {
   UserDictionary(std::unique_ptr<const UserPosInterface> user_pos,
                  PosMatcher pos_matcher,
                  SuppressionDictionary *suppression_dictionary);
+
+  UserDictionary(const UserDictionary &) = delete;
+  UserDictionary &operator=(const UserDictionary &) = delete;
+
   ~UserDictionary() override;
 
   bool HasKey(absl::string_view key) const override;
@@ -108,10 +110,9 @@ class UserDictionary : public DictionaryInterface {
   const PosMatcher pos_matcher_;
   SuppressionDictionary *suppression_dictionary_;
   TokensIndex *tokens_;
-  mutable std::unique_ptr<ReaderWriterMutex> mutex_;
+  mutable absl::Mutex mutex_;
 
   friend class UserDictionaryTest;
-  DISALLOW_COPY_AND_ASSIGN(UserDictionary);
 };
 
 }  // namespace dictionary

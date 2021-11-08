@@ -158,7 +158,6 @@ cc_library_mozc(
         "//base:file_util",
         "//base:hash",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:singleton",
         "//base:thread",
@@ -168,6 +167,7 @@ cc_library_mozc(
         "//protocol:user_dictionary_storage_cc_proto",
         "//usage_stats",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

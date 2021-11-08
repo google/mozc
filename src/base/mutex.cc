@@ -31,21 +31,13 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <pthread.h>
-#endif
+#endif  // OS_WIN
 
 #include <atomic>
 
 #include "base/port.h"
-
-#if defined(OS_WIN)
-// We do not use pthread on Windows
-#elif defined(OS_WASM)
-// TODO(team): Consider to use glibc rwlock.
-#else
-#define MOZC_PTHREAD_HAS_READER_WRITER_LOCK
-#endif
 
 namespace mozc {
 namespace {
@@ -98,30 +90,6 @@ void Mutex::Unlock() {
   ::LeaveCriticalSection(AsCriticalSection(&opaque_buffer_));
 }
 
-ReaderWriterMutex::ReaderWriterMutex() {
-  ::InitializeSRWLock(AsSRWLock(&opaque_buffer_));
-}
-
-ReaderWriterMutex::~ReaderWriterMutex() {}
-
-void ReaderWriterMutex::ReaderLock() {
-  ::AcquireSRWLockShared(AsSRWLock(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterLock() {
-  ::AcquireSRWLockExclusive(AsSRWLock(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::ReaderUnlock() {
-  ::ReleaseSRWLockShared(AsSRWLock(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterUnlock() {
-  ::ReleaseSRWLockExclusive(AsSRWLock(&opaque_buffer_));
-}
-
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return true; }
-
 #else  // Hereafter, we have pthread-based implementation
 
 namespace {
@@ -152,9 +120,9 @@ Mutex::Mutex() {
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 #elif defined(OS_LINUX) || defined(OS_ANDROID)
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
-#else
+#else  // Other platforms
 #error "This platform is not supported."
-#endif
+#endif  // Platforms
   pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), &attr);
 }
 
@@ -167,78 +135,6 @@ bool Mutex::TryLock() {
 }
 
 void Mutex::Unlock() { pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_)); }
-
-#ifdef MOZC_PTHREAD_HAS_READER_WRITER_LOCK
-// Use pthread native reader writer lock.
-namespace {
-
-template <typename T>
-pthread_rwlock_t *AsPthreadRWLockT(T *opaque_buffer) {
-  static_assert(sizeof(T) >= sizeof(pthread_rwlock_t),
-                "The opaque buffer must have sufficient space to store a "
-                "pthread_rwlock_t structure");
-  return reinterpret_cast<pthread_rwlock_t *>(opaque_buffer);
-}
-
-}  // namespace
-
-ReaderWriterMutex::ReaderWriterMutex() {
-  pthread_rwlock_init(AsPthreadRWLockT(&opaque_buffer_), nullptr);
-}
-
-ReaderWriterMutex::~ReaderWriterMutex() {
-  pthread_rwlock_destroy(AsPthreadRWLockT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::ReaderLock() {
-  pthread_rwlock_rdlock(AsPthreadRWLockT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::ReaderUnlock() {
-  pthread_rwlock_unlock(AsPthreadRWLockT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterLock() {
-  pthread_rwlock_wrlock(AsPthreadRWLockT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterUnlock() {
-  pthread_rwlock_unlock(AsPthreadRWLockT(&opaque_buffer_));
-}
-
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return true; }
-
-#else
-
-// Fallback implementations as ReaderWriterLock is not available.
-ReaderWriterMutex::ReaderWriterMutex() {
-  // Non-recursive lock is OK.
-  pthread_mutex_init(AsPthreadMutexT(&opaque_buffer_), nullptr);
-}
-
-ReaderWriterMutex::~ReaderWriterMutex() {
-  pthread_mutex_destroy(AsPthreadMutexT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::ReaderLock() {
-  pthread_mutex_lock(AsPthreadMutexT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterLock() {
-  pthread_mutex_lock(AsPthreadMutexT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::ReaderUnlock() {
-  pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_));
-}
-
-void ReaderWriterMutex::WriterUnlock() {
-  pthread_mutex_unlock(AsPthreadMutexT(&opaque_buffer_));
-}
-
-bool ReaderWriterMutex::MultipleReadersThreadsSupported() { return false; }
-
-#endif  // MOZC_PTHREAD_HAS_READER_WRITER_LOCK
 
 #endif  // OS_WIN or pthread
 
