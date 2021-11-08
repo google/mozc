@@ -32,10 +32,10 @@
 #ifdef OS_WIN
 #define NO_MINMAX
 #include <windows.h>
-#else
+#else   // OS_WIN
 #include <sys/stat.h>
 #include <unistd.h>
-#endif
+#endif  // OS_WIN
 
 #ifdef OS_ANDROID
 #include <android/log.h>
@@ -65,7 +65,10 @@
 ABSL_FLAG(bool, colored_log, true,
           "Enables colored log messages on tty devices");
 ABSL_FLAG(bool, logtostderr, false,
-          "log messages go to stderr instead of logfiles");
+          "log messages go to stderr instead of logfiles")
+    .OnUpdate([] {
+      mozc::Logging::SetLogToStderr(absl::GetFlag(FLAGS_logtostderr));
+    });
 ABSL_FLAG(int32, v, 0, "verbose level");
 
 namespace mozc {
@@ -163,6 +166,8 @@ void Logging::SetVerboseLevel(int verboselevel) {}
 
 void Logging::SetConfigVerboseLevel(int verboselevel) {}
 
+void Logging::SetLogToStderr(bool log_to_stderr) {}
+
 #else  // MOZC_NO_LOGGING
 
 namespace {
@@ -192,6 +197,15 @@ class LogStreamImpl {
   bool support_color() const { return support_color_; }
 
   void Write(LogSeverity, const std::string &log);
+  void set_log_to_stderr(bool log_to_stderr) {
+#if defined(OS_ANDROID)
+    // Android uses Android's log library.
+    use_cerr_ = false;
+#else   // OS_ANDROID
+    scoped_lock l(&mutex_);
+    use_cerr_ = log_to_stderr;
+#endif  // OS_ANDROID
+  }
 
  private:
   // Real backing log stream.
@@ -199,8 +213,8 @@ class LogStreamImpl {
   // If std::cerr is real log stream, this is nullptr.
   std::ostream *real_log_stream_;
   int config_verbose_level_;
-  bool support_color_;
-  bool use_cerr_;
+  bool support_color_ = false;
+  bool use_cerr_ = false;
   Mutex mutex_;
 };
 
@@ -265,21 +279,17 @@ void LogStreamImpl::Reset() {
   delete real_log_stream_;
   real_log_stream_ = nullptr;
   config_verbose_level_ = 0;
-#if defined(OS_ANDROID)
-  // Android uses Android's log library.
-  use_cerr_ = false;
-  support_color_ = false;
-#elif defined(OS_WIN)
-  // Coloring is disabled on windows
+#if defined(OS_ANDROID) || defined(OS_WIN)
+  // On Android, the standard log library is used.
+  // On Windows, coloring is disabled
   // because cmd.exe doesn't support ANSI color escape sequences.
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
-  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
   support_color_ = false;
 #else   // OS_ANDROID, OS_WIN
-  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
   support_color_ = (use_cerr_ && absl::GetFlag(FLAGS_colored_log) &&
                     ::isatty(::fileno(stderr)));
 #endif  // OS_ANDROID, OS_WIN
+  // use_cerr_ is updated by ABSL_FLAG.OnUpdate().
 }
 
 LogStreamImpl::~LogStreamImpl() { Reset(); }
@@ -336,7 +346,7 @@ const struct SeverityProperty {
     {"INFO", kCyanEscapeSequence},    {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},    {"FATAL", kRedEscapeSequence},
     {"SILENT", kCyanEscapeSequence},
-#else
+#else   // OS_ANDROID
     {"INFO", kCyanEscapeSequence},
     {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},
@@ -374,6 +384,10 @@ void Logging::SetVerboseLevel(int verboselevel) {
 void Logging::SetConfigVerboseLevel(int verboselevel) {
   Singleton<LogStreamImpl>::get()->set_config_verbose_level(verboselevel);
 }
+
+void Logging::SetLogToStderr(bool log_to_stderr) {
+  Singleton<LogStreamImpl>::get()->set_log_to_stderr(log_to_stderr);
+}
 #endif  // MOZC_NO_LOGGING
 
 LogFinalizer::LogFinalizer(LogSeverity severity) : severity_(severity) {}
@@ -385,10 +399,10 @@ LogFinalizer::~LogFinalizer() {
     // make stack trace and minidump
 #ifdef OS_WIN
     ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else
+#else   // OS_WIN
     mozc::Logging::CloseLogStream();
     exit(-1);
-#endif
+#endif  // OS_WIN
   }
 }
 
@@ -399,9 +413,9 @@ void LogFinalizer::operator&(std::ostream &working_stream) {
 void NullLogFinalizer::OnFatal() {
 #ifdef OS_WIN
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else
+#else   // OS_WIN
   exit(-1);
-#endif
+#endif  // OS_WIN
 }
 
 }  // namespace mozc
