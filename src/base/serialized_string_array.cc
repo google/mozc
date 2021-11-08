@@ -35,6 +35,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/status.h"
 #include "base/util.h"
 
 namespace mozc {
@@ -151,8 +152,7 @@ void SerializedStringArray::SerializeToFile(
     const std::vector<absl::string_view> &strs, const std::string &filepath) {
   std::unique_ptr<uint32_t[]> buffer;
   const absl::string_view data = SerializeToBuffer(strs, &buffer);
-  absl::Status s = FileUtil::SetContents(filepath, data);
-  CHECK(s.ok()) << s;
+  CHECK_OK(FileUtil::SetContents(filepath, data));
 }
 
 }  // namespace mozc

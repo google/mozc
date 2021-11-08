@@ -42,6 +42,7 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
+#include "base/status.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -474,7 +475,7 @@ int main(int argc, char **argv) {
   absl::StatusOr<std::unique_ptr<mozc::DataManager>> data_manager =
       mozc::DataManager::CreateFromFile(absl::GetFlag(FLAGS_engine_data_path),
                                         absl::GetFlag(FLAGS_magic));
-  CHECK(data_manager.ok()) << data_manager.status();
+  CHECK_OK(data_manager);
 
   mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;

@@ -1126,6 +1126,7 @@ cc_binary_mozc(
         ":file_util",
         ":init_mozc",
         ":logging",
+        ":status",
         ":util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -1453,6 +1454,7 @@ cc_library_mozc(
         ":file_util",
         ":logging",
         ":port",
+        ":status",
         ":util",
         "@com_google_absl//absl/strings",
     ],
@@ -1467,5 +1469,13 @@ cc_test_mozc(
         ":serialized_string_array",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "status",
+    hdrs = ["status.h"],
+    deps = [
+        ":logging",
     ],
 )

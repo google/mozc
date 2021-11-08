@@ -48,6 +48,7 @@
 #include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
@@ -232,8 +233,7 @@ int main(int argc, char **argv) {
   mozc::SerializedDictionary::CompileToFiles(
       tmp_text_file, absl::GetFlag(FLAGS_output_token_array),
       absl::GetFlag(FLAGS_output_string_array));
-  absl::Status s = mozc::FileUtil::Unlink(tmp_text_file);
-  CHECK(s.ok()) << s;
+  CHECK_OK(mozc::FileUtil::Unlink(tmp_text_file));
 
   return 0;
 }

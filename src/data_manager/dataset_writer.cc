@@ -34,6 +34,7 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "base/status.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "absl/strings/string_view.h"
@@ -64,7 +65,7 @@ void DataSetWriter::Add(const std::string &name, int alignment,
 void DataSetWriter::AddFile(const std::string &name, int alignment,
                             const std::string &filepath) {
   absl::StatusOr<std::string> content = FileUtil::GetContents(filepath);
-  CHECK(content.ok()) << content.status();
+  CHECK_OK(content);
   Add(name, alignment, *content);
 }
 

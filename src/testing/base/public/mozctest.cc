@@ -31,6 +31,7 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/status.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "testing/base/public/googletest.h"
@@ -68,15 +69,15 @@ absl::StatusOr<std::string> GetSourceFile(
 std::string GetSourceFileOrDie(
     const std::vector<absl::string_view> &components) {
   absl::StatusOr<std::string> abs_path = GetSourceFile(components);
-  CHECK(abs_path.ok()) << abs_path.status();
+  CHECK_OK(abs_path);
   return *std::move(abs_path);
 }
 
 std::string GetSourceDirOrDie(
     const std::vector<absl::string_view> &components) {
   const std::string path = GetSourcePath(components);
-  const absl::Status s = FileUtil::DirectoryExists(path);
-  CHECK(s.ok()) << "Directory doesn't exist: " << path << ": " << s;
+  CHECK_OK(FileUtil::DirectoryExists(path))
+      << ": Directory doesn't exist: " << path;
   return path;
 }
 
@@ -87,8 +88,8 @@ std::vector<std::string> GetSourceFilesInDirOrDie(
   std::vector<std::string> paths;
   for (size_t i = 0; i < filenames.size(); ++i) {
     paths.push_back(FileUtil::JoinPath({dir, filenames[i]}));
-    absl::Status s = FileUtil::FileExists(paths.back());
-    CHECK(s.ok()) << "File doesn't exist: " << paths.back() << ": " << s;
+    CHECK_OK(FileUtil::FileExists(paths.back()))
+        << ": File doesn't exist: " << paths.back();
   }
   return paths;
 }

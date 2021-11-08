@@ -903,6 +903,7 @@ cc_binary_mozc(
         "//base:file_util",
         "//base:init_mozc_buildtool",
         "//base:logging",
+        "//base:status",
         "//base:util",
         "//data_manager",
         "//data_manager:serialized_dictionary",

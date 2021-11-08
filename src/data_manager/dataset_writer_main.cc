@@ -50,6 +50,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/number_util.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
@@ -107,8 +108,8 @@ int main(int argc, char **argv) {
   }
   absl::Status s =
       mozc::FileUtil::AtomicRename(tmpfile, absl::GetFlag(FLAGS_output));
-  CHECK(s.ok()) << "Atomic rename failed: " << s << "; from: " << tmpfile
-                << " to: " << absl::GetFlag(FLAGS_output);
+  CHECK_OK(s) << ": Atomic rename failed. from: " << tmpfile
+              << " to: " << absl::GetFlag(FLAGS_output);
 
   return 0;
 }
