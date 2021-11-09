@@ -43,7 +43,6 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//config:config_handler",
         "//data_manager",
@@ -58,6 +57,7 @@ cc_library_mozc(
         "//session:session_handler_interface",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -88,5 +88,6 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/synchronization",
     ],
 )
