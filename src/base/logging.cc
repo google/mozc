@@ -36,7 +36,7 @@
 #ifdef OS_WIN
 #define NO_MINMAX
 #include <windows.h>
-#else   // OS_WIN
+#else  // OS_WIN
 #include <sys/stat.h>
 #include <unistd.h>
 #endif  // OS_WIN
@@ -59,11 +59,11 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/clock.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
+#include "absl/synchronization/mutex.h"
 
 ABSL_FLAG(bool, colored_log, true,
           "Enables colored log messages on tty devices");
@@ -111,26 +111,25 @@ std::string Logging::GetLogMessageHeader() {
   const absl::TimeZone tz = Clock::GetTimeZone();
   const std::string timestamp = absl::FormatTime("%Y-%m-%d %H:%M:%S ", at, tz);
 
-# if defined(OS_WASM)
+#if defined(OS_WASM)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       static_cast<unsigned int>(pthread_self());
-# elif defined(OS_LINUX)
+#elif defined(OS_LINUX)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       // It returns unsigned long.
                       pthread_self());
-# elif defined(__APPLE__)
-#  ifdef __LP64__
+#elif defined(__APPLE__)
+#ifdef __LP64__
   return absl::StrCat(timestamp, ::getpid(), " ",
                       reinterpret_cast<uint64>(pthread_self()));
-#  else  // __LP64__
-  return absl::StrCat(timestamp, ::getpid(), " ",
-                      ::getpid(),
+#else   // __LP64__
+  return absl::StrCat(timestamp, ::getpid(), " ", ::getpid(),
                       reinterpret_cast<uint32>(pthread_self()));
-#  endif  // __LP64__
-# elif defined(OS_WIN)
+#endif  // __LP64__
+#elif defined(OS_WIN)
   return absl::StrCat(timestamp, ::GetCurrentProcessId(), " ",
                       ::GetCurrentThreadId());
-# endif  // OS_WIN
+#endif  // OS_WIN
 #endif  // OS_ANDROID
 }
 
@@ -188,12 +187,12 @@ class LogStreamImpl {
   }
 
   void set_verbose_level(int level) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     absl::SetFlag(&FLAGS_v, level);
   }
 
   void set_config_verbose_level(int level) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     config_verbose_level_ = level;
   }
 
@@ -205,7 +204,7 @@ class LogStreamImpl {
     // Android uses Android's log library.
     use_cerr_ = false;
 #else   // OS_ANDROID
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     use_cerr_ = log_to_stderr;
 #endif  // OS_ANDROID
   }
@@ -218,11 +217,11 @@ class LogStreamImpl {
   int config_verbose_level_;
   bool support_color_ = false;
   bool use_cerr_ = false;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   if (use_cerr_) {
     std::cerr << log;
   } else {
@@ -251,7 +250,7 @@ LogStreamImpl::LogStreamImpl() { Reset(); }
 // Others,  true          => true,      empty
 // Others,  false         => true,      initialized
 void LogStreamImpl::Init(const std::string &log_file_path) {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   Reset();
 
   if (use_cerr_) {
@@ -271,15 +270,15 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = absl::make_unique<std::ofstream>(
-      log_file_path.c_str(), std::ios::app);
+  real_log_stream_ =
+      absl::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
 #endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);
 }
 
 void LogStreamImpl::Reset() {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   real_log_stream_.reset();
   config_verbose_level_ = 0;
 #if defined(OS_ANDROID) || defined(OS_WIN)

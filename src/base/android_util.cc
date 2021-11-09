@@ -32,12 +32,12 @@
 #include <fstream>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/util.h"
+#include "absl/synchronization/mutex.h"
 
 namespace {
 constexpr char kBuildPropPath[] = "/system/build.prop";
-static mozc::Mutex sys_prop_mutex;
+ABSL_CONST_INIT absl::Mutex sys_prop_mutex(absl::kConstInit);
 }  // namespace
 
 namespace mozc {
@@ -50,7 +50,7 @@ const char AndroidUtil::kSystemPropertySdkVersion[] = "ro.build.version.sdk";
 // static
 std::string AndroidUtil::GetSystemProperty(const std::string &key,
                                            const std::string &default_value) {
-  mozc::scoped_lock lock(&sys_prop_mutex);
+  absl::MutexLock lock(&sys_prop_mutex);
   std::map<std::string, std::string>::iterator it = property_cache.find(key);
   if (it != property_cache.end()) {
     // Cache is found.

@@ -45,11 +45,11 @@
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -282,24 +282,19 @@ class PasswordManagerImpl {
   }
 
   bool InitPassword() {
-    std::string password;
-    if (password_manager_->GetPassword(&password)) {
-      return true;
-    }
-    password = CreateRandomPassword();
-    scoped_lock l(&mutex_);
-    return password_manager_->SetPassword(password);
+    absl::MutexLock l(&mutex_);
+    return InitPasswordUnlocked();
   }
 
   bool GetPassword(std::string *password) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     if (password_manager_->GetPassword(password)) {
       return true;
     }
 
     LOG(WARNING) << "Cannot get password. call InitPassword";
 
-    if (!InitPassword()) {
+    if (!InitPasswordUnlocked()) {
       LOG(ERROR) << "InitPassword failed";
       return false;
     }
@@ -313,18 +308,27 @@ class PasswordManagerImpl {
   }
 
   bool RemovePassword() {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     return password_manager_->RemovePassword();
   }
 
   void SetPasswordManagerHandler(PasswordManagerInterface *handler) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     password_manager_ = handler;
   }
 
- public:
+ private:
+  bool InitPasswordUnlocked() {
+    std::string password;
+    if (password_manager_->GetPassword(&password)) {
+      return true;
+    }
+    password = CreateRandomPassword();
+    return password_manager_->SetPassword(password);
+  }
+
   PasswordManagerInterface *password_manager_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 }  // namespace
 

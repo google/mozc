@@ -77,13 +77,13 @@
 #include "base/mac_util.h"
 #endif  // __APPLE__
 
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/util.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
 #endif  // OS_WIN
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -100,11 +100,11 @@ class UserProfileDirectoryImpl final {
   std::string GetUserProfileDirectory() const;
 
   std::string dir_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 std::string UserProfileDirectoryImpl::GetDir() {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   if (!dir_.empty()) {
     return dir_;
   }
@@ -122,7 +122,7 @@ std::string UserProfileDirectoryImpl::GetDir() {
 }
 
 void UserProfileDirectoryImpl::SetDir(const std::string &dir) {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   dir_ = dir;
 }
 

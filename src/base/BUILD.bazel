@@ -196,6 +196,7 @@ cc_library_mozc(
         default = [
             "//base",
             "//base:logging_extensions",
+            "@com_google_absl//absl/synchronization",
         ],
         linux = [
             ":clock",
@@ -775,6 +776,7 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         android = [
             # android_util.h includes this for FRIEND_TEST
@@ -855,6 +857,7 @@ cc_library_mozc(
         ":singleton",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -1097,6 +1100,7 @@ cc_library_mozc(
         ":system_util",
         ":util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         ios = [":mac_util"],
     ),
@@ -1164,6 +1168,7 @@ cc_library_mozc(
         ":thread",
         ":unnamed_event",
         ":util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
