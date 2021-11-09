@@ -38,12 +38,12 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/version.h"
 #include "protocol/config.pb.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace config {
@@ -99,6 +99,7 @@ class ConfigHandlerImpl {
   // platform dependent hooks/rewrites
   bool SetConfigInternal(const Config &config);
   void UpdateMergedConfig();
+  bool ReloadUnlocked();
 
   std::string filename_;
   Config stored_config_;
@@ -106,7 +107,7 @@ class ConfigHandlerImpl {
   // equals to config_.MergeFrom(imposed_config_)
   Config merged_config_;
   Config default_config_;
-  mutable Mutex mutex_;
+  mutable absl::Mutex mutex_;
 };
 
 ConfigHandlerImpl *GetConfigHandlerImpl() {
@@ -115,7 +116,7 @@ ConfigHandlerImpl *GetConfigHandlerImpl() {
 
 // return current Config
 bool ConfigHandlerImpl::GetConfig(Config *config) const {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   *config = merged_config_;
   return true;
 }
@@ -126,7 +127,7 @@ const Config &ConfigHandlerImpl::DefaultConfig() const {
 
 // return stored Config
 bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   *config = stored_config_;
   return true;
 }
@@ -142,7 +143,7 @@ bool ConfigHandlerImpl::SetConfigInternal(const Config &config) {
   if (stored_config_.verbose_level() != 0) {
     stored_config_.set_verbose_level(0);
   }
-#endif
+#endif  // MOZC_NO_LOGGING
 
   Logging::SetConfigVerboseLevel(stored_config_.verbose_level());
 
@@ -171,7 +172,7 @@ void ConfigHandlerImpl::UpdateMergedConfig() {
 }
 
 bool ConfigHandlerImpl::SetConfig(const Config &config) {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   Config output_config;
   output_config = config;
 
@@ -192,7 +193,7 @@ bool ConfigHandlerImpl::SetConfig(const Config &config) {
 }
 
 void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   VLOG(1) << "Setting new overriding config";
   imposed_config_ = config;
 
@@ -208,7 +209,11 @@ void ConfigHandlerImpl::SetImposedConfig(const Config &config) {
 
 // Reload from file
 bool ConfigHandlerImpl::Reload() {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
+  return ReloadUnlocked();
+}
+
+bool ConfigHandlerImpl::ReloadUnlocked() {
   VLOG(1) << "Reloading config file: " << filename_;
   std::unique_ptr<std::istream> is(ConfigFileStream::OpenReadBinary(filename_));
   Config input_proto;
@@ -230,14 +235,14 @@ bool ConfigHandlerImpl::Reload() {
 }
 
 void ConfigHandlerImpl::SetConfigFileName(const std::string &filename) {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   VLOG(1) << "set new config file name: " << filename;
   filename_ = filename;
-  Reload();
+  ReloadUnlocked();
 }
 
 std::string ConfigHandlerImpl::GetConfigFileName() {
-  scoped_lock lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   return filename_;
 }
 }  // namespace
@@ -324,9 +329,9 @@ Config::SessionKeymap ConfigHandler::GetDefaultKeyMap() {
   return config::Config::KOTOERI;
 #elif defined(OS_CHROMEOS)  // __APPLE__
   return config::Config::CHROMEOS;
-#else                   // __APPLE__ or OS_CHROMEOS
+#else   // __APPLE__ or OS_CHROMEOS
   return config::Config::MSIME;
-#endif                  // __APPLE__ or OS_CHROMEOS
+#endif  // __APPLE__ or OS_CHROMEOS
 }
 
 }  // namespace config
