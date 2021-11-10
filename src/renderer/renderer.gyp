@@ -462,6 +462,7 @@
             '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',

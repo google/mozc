@@ -35,11 +35,11 @@
 #include "renderer/mac/mac_server.h"
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/mac_server_send_command.h"
 #include "renderer/mac/CandidateController.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -67,7 +67,7 @@ MacServer::MacServer(int argc, const char **argv)
 
 bool MacServer::AsyncExecCommand(std::string *proto_message) {
   {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     message_.swap(*proto_message);
     ::pthread_cond_signal(&event_);
   }
@@ -85,8 +85,8 @@ bool MacServer::AsyncExecCommand(std::string *proto_message) {
 void MacServer::RunExecCommand() {
   std::string message;
   {
-    scoped_lock l(&mutex_);
-      message.swap(message_);
+    absl::MutexLock l(&mutex_);
+    message.swap(message_);
   }
   commands::RendererCommand command;
   if (!command.ParseFromString(message)) {
