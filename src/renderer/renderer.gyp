@@ -401,6 +401,7 @@
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
@@ -431,6 +432,7 @@
             'win32/win32_renderer_client.cc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../protocol/protocol.gyp:renderer_proto',
             'renderer_client',

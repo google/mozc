@@ -32,12 +32,12 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -50,7 +50,7 @@ class SenderThread;
 SenderThread *g_sender_thread = nullptr;
 
 // Used to lock |g_sender_thread|.
-Mutex *g_mutex = nullptr;
+ABSL_CONST_INIT absl::Mutex g_mutex(absl::kConstInit);
 
 // Represents the module handle of this module.
 volatile HMODULE g_module = nullptr;
@@ -71,10 +71,13 @@ class SenderThread {
   SenderThread(HANDLE command_event, HANDLE quit_event)
       : command_event_(command_event), quit_event_(quit_event) {}
 
+  SenderThread(const SenderThread &) = delete;
+  SenderThread &operator=(const SenderThread &) = delete;
+
   void RequestQuit() { ::SetEvent(quit_event_.get()); }
 
   void UpdateCommand(const RendererCommand &new_command) {
-    scoped_lock lock(&mutex_);
+    absl::MutexLock lock(&mutex_);
     renderer_command_ = new_command;
     ::SetEvent(command_event_.get());
   }
@@ -117,7 +120,7 @@ class SenderThread {
       // handles[1], that is, renderer event is signaled.
       RendererCommand command;
       {
-        scoped_lock lock(&mutex_);
+        absl::MutexLock lock(&mutex_);
         command.Swap(&renderer_command_);
         ::ResetEvent(command_event_.get());
       }
@@ -131,15 +134,13 @@ class SenderThread {
   ScopedHandle command_event_;
   ScopedHandle quit_event_;
   RendererCommand renderer_command_;
-  Mutex mutex_;
-
-  DISALLOW_COPY_AND_ASSIGN(SenderThread);
+  absl::Mutex mutex_;
 };
 
 static DWORD WINAPI ThreadProc(void * /*unused*/) {
   SenderThread *thread = nullptr;
   {
-    scoped_lock lock(g_mutex);
+    absl::MutexLock lock(&g_mutex);
     thread = g_sender_thread;
   }
   if (thread != nullptr) {
@@ -228,7 +229,7 @@ bool EnsureUIThreadInitialized() {
     return true;
   }
   {
-    scoped_lock lock(g_mutex);
+    absl::MutexLock lock(&g_mutex);
     ++g_ui_thread_count;
     if (g_ui_thread_count == 1) {
       g_sender_thread = CreateSenderThread();
@@ -243,7 +244,6 @@ bool EnsureUIThreadInitialized() {
 
 void Win32RendererClient::OnModuleLoaded(HMODULE module_handle) {
   g_module = module_handle;
-  g_mutex = new Mutex();
   g_tls_index = ::TlsAlloc();
 }
 
@@ -251,7 +251,6 @@ void Win32RendererClient::OnModuleUnloaded() {
   if (g_tls_index != TLS_OUT_OF_INDEXES) {
     ::TlsFree(g_tls_index);
   }
-  delete g_mutex;
   g_module_unloaded = true;
   g_module = nullptr;
 }
@@ -268,7 +267,7 @@ void Win32RendererClient::OnUIThreadUninitialized() {
     return;
   }
   {
-    scoped_lock lock(g_mutex);
+    absl::MutexLock lock(&g_mutex);
     if (g_ui_thread_count > 0) {
       --g_ui_thread_count;
       if (g_ui_thread_count == 0 && g_sender_thread != nullptr) {
@@ -290,7 +289,7 @@ void Win32RendererClient::OnUpdated(const RendererCommand &command) {
   }
   SenderThread *thread = nullptr;
   {
-    scoped_lock lock(g_mutex);
+    absl::MutexLock lock(&g_mutex);
     thread = g_sender_thread;
   }
   if (thread != nullptr) {
