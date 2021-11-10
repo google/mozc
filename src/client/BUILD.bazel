@@ -120,6 +120,7 @@ cc_library_mozc(
         "//base:mutex",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

@@ -141,6 +141,7 @@
         'session_usage_observer.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../config/config.gyp:stats_config_util',
         '../protocol/protocol.gyp:state_proto',

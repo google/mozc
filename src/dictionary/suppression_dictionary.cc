@@ -33,7 +33,7 @@
 #include <thread>  // NOLINT for portability
 
 #include "base/logging.h"
-#include "base/mutex.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
@@ -93,7 +93,7 @@ void SuppressionDictionary::Clear() {
 }
 
 void SuppressionDictionary::Lock() {
-  scoped_lock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
+  absl::MutexLock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
   for (;;) {
     bool expected = false;
     if (locked_.compare_exchange_weak(expected, true, std::memory_order_acquire,
@@ -105,7 +105,7 @@ void SuppressionDictionary::Lock() {
 }
 
 void SuppressionDictionary::UnLock() {
-  scoped_lock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
+  absl::MutexLock l(&mutex_);  // TODO(noriyukit): Check if we need this lock.
   bool expected = true;
   if (!locked_.compare_exchange_weak(expected, false, std::memory_order_release,
                                      std::memory_order_relaxed)) {

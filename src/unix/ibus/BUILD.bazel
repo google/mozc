@@ -313,5 +313,8 @@ cc_library_mozc(
             "-lxcb-xfixes",
         ],
     ),
-    deps = ["//base"],
+    deps = [
+        "//base",
+        "@com_google_absl//absl/synchronization",
+    ],
 )

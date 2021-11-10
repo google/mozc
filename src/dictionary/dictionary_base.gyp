@@ -155,6 +155,7 @@
         'suppression_dictionary.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
       ],
     },

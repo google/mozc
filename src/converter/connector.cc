@@ -191,7 +191,7 @@ absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
     const DataManagerInterface &data_manager) {
 #ifdef OS_ANDROID
   constexpr int kCacheSize = 256;
-#else
+#else   // OS_ANDROID
   constexpr int kCacheSize = 1024;
 #endif  // OS_ANDROID
   const char *connection_data = nullptr;

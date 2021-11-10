@@ -133,7 +133,6 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:util",
         "//data_manager:data_manager_interface",
@@ -142,6 +141,7 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

@@ -68,10 +68,10 @@
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"
 #include "absl/status/status.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 
-class Mutex;
 class ProcessMutex;
 
 class UserDictionaryStorage {
@@ -201,7 +201,7 @@ class UserDictionaryStorage {
   bool locked_ = false;
   UserDictionaryStorageErrorType last_error_type_ =
       USER_DICTIONARY_STORAGE_NO_ERROR;
-  std::unique_ptr<Mutex> local_mutex_;
+  absl::Mutex local_mutex_;
   std::unique_ptr<ProcessMutex> process_mutex_;
 };
 

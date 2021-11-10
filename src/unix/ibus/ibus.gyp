@@ -348,6 +348,7 @@
             'selection_monitor.cc',
           ],
           'dependencies': [
+            '../../base/absl.gyp:absl_synchronization',
             '../../base/base.gyp:base',
             'xcb_build_environment',
           ],

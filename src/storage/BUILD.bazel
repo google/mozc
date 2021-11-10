@@ -215,6 +215,7 @@ cc_library_mozc(
         "//base:port",
         "//base:singleton",
         "//base:system_util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

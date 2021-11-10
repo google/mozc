@@ -33,10 +33,10 @@
 #include <map>
 #include <string>
 
-#include "base/mutex.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace client {
@@ -114,7 +114,7 @@ class ClientMock : public client::ClientInterface {
 
   // ClientMock is called from a thread in SessionWatchDog, and
   // SessionWatchDogTest. So a mutex lock is required.
-  mutable Mutex mutex_;
+  mutable absl::Mutex mutex_;
 };
 }  // namespace client
 }  // namespace mozc
