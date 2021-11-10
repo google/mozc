@@ -103,6 +103,7 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         ios = ["//base:mac_util"],
     ),
@@ -238,6 +239,7 @@ cc_library_mozc(
         "//base:scoped_handle",
         "//base:thread",
         "//base:util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

@@ -31,16 +31,16 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <errno.h>
 #include <signal.h>
-#endif
+#endif  // OS_WIN
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/scoped_handle.h"
 #include "base/util.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 
@@ -50,25 +50,20 @@ ProcessWatchDog::ProcessWatchDog()
       process_id_(UnknownProcessID),
       thread_id_(UnknownThreadID),
       timeout_(-1),
-      is_finished_(false),
-      mutex_(new Mutex) {
+      is_finished_(false) {
   if (event_.get() == nullptr) {
     LOG(ERROR) << "::CreateEvent() failed.";
     return;
   }
 }
 
-ProcessWatchDog::~ProcessWatchDog() {
-  StopWatchDog();
-}
+ProcessWatchDog::~ProcessWatchDog() { StopWatchDog(); }
 
-void ProcessWatchDog::StartWatchDog() {
-  Thread::Start("WatchDog");
-}
+void ProcessWatchDog::StartWatchDog() { Thread::Start("WatchDog"); }
 
 void ProcessWatchDog::StopWatchDog() {
   {
-    scoped_lock l(mutex_.get());
+    absl::MutexLock l(&mutex_);
     is_finished_ = true;  // set the flag to terminate the thread
   }
 
@@ -94,7 +89,7 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
 
   // rewrite the values
   {
-    scoped_lock l(mutex_.get());
+    absl::MutexLock l(&mutex_);
     process_id_ = process_id;
     thread_id_ = thread_id;
     timeout_ = timeout;
@@ -109,7 +104,7 @@ bool ProcessWatchDog::SetID(ProcessID process_id, ThreadID thread_id,
 void ProcessWatchDog::Run() {
   while (true) {
     {
-      scoped_lock l(mutex_.get());
+      absl::MutexLock l(&mutex_);
       if (is_finished_) {
         break;
       }
@@ -121,7 +116,7 @@ void ProcessWatchDog::Run() {
 
     // read the current ids/timeout
     {
-      scoped_lock l(mutex_.get());
+      absl::MutexLock l(&mutex_);
 
       if (process_id_ != UnknownProcessID) {
         const HANDLE handle = ::OpenProcess(SYNCHRONIZE, FALSE, process_id_);
@@ -235,8 +230,7 @@ void ProcessWatchDog::Run() {
 ProcessWatchDog::ProcessWatchDog()
     : process_id_(UnknownProcessID),
       thread_id_(UnknownProcessID),
-      is_finished_(false),
-      mutex_(new Mutex) {}
+      is_finished_(false) {}
 
 ProcessWatchDog::~ProcessWatchDog() {
   // StopWatchDog() should be called before the deconstructor.
@@ -244,13 +238,11 @@ ProcessWatchDog::~ProcessWatchDog() {
   StopWatchDog();
 }
 
-void ProcessWatchDog::StartWatchDog() {
-  Thread::Start("WatchDog");
-}
+void ProcessWatchDog::StartWatchDog() { Thread::Start("WatchDog"); }
 
 void ProcessWatchDog::StopWatchDog() {
   {
-    scoped_lock l(mutex_.get());
+    absl::MutexLock l(&mutex_);
     is_finished_ = true;  // set the flag to terminate the thread
   }
   Join();
@@ -278,7 +270,7 @@ bool ProcessWatchDog::SetID(ProcessWatchDog::ProcessID process_id,
   }
 
   {
-    scoped_lock l(mutex_.get());
+    absl::MutexLock l(&mutex_);
     process_id_ = process_id;
     thread_id_ = thread_id;
     timeout_ = -1;
@@ -297,7 +289,7 @@ void ProcessWatchDog::Run() {
   // TODO(team): use kqueue with EVFILT_PROC/NOTE_EXIT for Mac.
   while (true) {
     {
-      scoped_lock l(mutex_.get());
+      absl::MutexLock l(&mutex_);
       if (is_finished_) {
         break;
       }
@@ -305,7 +297,7 @@ void ProcessWatchDog::Run() {
 
     Util::Sleep(250);
     {
-      scoped_lock l(mutex_.get());
+      absl::MutexLock l(&mutex_);
       if (process_id_ == UnknownProcessID) {
         continue;
       }
@@ -321,7 +313,7 @@ void ProcessWatchDog::Run() {
       } else {
         Signaled(ProcessWatchDog::PROCESS_ERROR_SIGNALED);
       }
-      scoped_lock l(mutex_.get());
+      absl::MutexLock l(&mutex_);
       process_id_ = UnknownProcessID;
     }
   }
