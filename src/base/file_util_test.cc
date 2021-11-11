@@ -43,6 +43,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 
 // Ad-hoc workadound against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -125,7 +126,7 @@ TEST(FileUtilTest, Unlink) {
   std::wstring wfilepath;
   Util::Utf8ToWide(filepath, &wfilepath);
   for (size_t i = 0; i < std::size(kTestAttributeList); ++i) {
-    SCOPED_TRACE(Util::StringPrintf("AttributeTest %zd", i));
+    SCOPED_TRACE(absl::StrFormat("AttributeTest %zd", i));
     CreateTestFile(filepath, "attribute_test");
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));

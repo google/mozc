@@ -37,6 +37,7 @@
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -330,10 +331,10 @@ TEST(SegmentsTest, CopyTest) {
 
   for (int i = 0; i < kSegmentsSize; ++i) {
     Segment *segment = src.add_segment();
-    segment->set_key(Util::StringPrintf("segment_%d", i));
+    segment->set_key(absl::StrFormat("segment_%d", i));
     for (int j = 0; j < kCandidatesSize; ++j) {
       Segment::Candidate *candidate = segment->add_candidate();
-      candidate->key = Util::StringPrintf("candidate_%d", i);
+      candidate->key = absl::StrFormat("candidate_%d", i);
     }
   }
   EXPECT_EQ(kSegmentsSize, src.segments_size());

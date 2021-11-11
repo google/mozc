@@ -41,6 +41,7 @@
 #include "renderer/unix/draw_tool.h"
 #include "renderer/unix/font_spec.h"
 #include "renderer/unix/text_renderer.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace renderer {
@@ -56,7 +57,7 @@ std::string GetIndexGuideString(const commands::Candidates &candidates) {
   const int total_items = candidates.size();
 
   std::stringstream footer_string;
-  return Util::StringPrintf("%d/%d ", focused_index + 1, total_items);
+  return absl::StrFormat("%d/%d ", focused_index + 1, total_items);
 }
 
 int GetCandidateArrayIndexByCandidateIndex(

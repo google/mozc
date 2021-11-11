@@ -39,6 +39,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace ibus {
@@ -439,8 +440,8 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
         is_key_up = true;
       }
 
-      key_sequence += Util::StringPrintf("is_key_up: %d, key_index = %d\n",
-                                         is_key_up, key_index);
+      key_sequence += absl::StrFormat("is_key_up: %d, key_index = %d\n",
+                                      is_key_up, key_index);
 
       commands::KeyEvent key;
       for (std::set<guint>::const_iterator it = pressed_keys.begin();
@@ -466,7 +467,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
 
     {
       const bool is_key_up = static_cast<bool>(Util::Random(2));
-      SCOPED_TRACE(Util::StringPrintf(
+      SCOPED_TRACE(absl::StrFormat(
           "Should be reset by non_modifier_key %s. key_sequence:\n%s",
           (is_key_up ? "up" : "down"), key_sequence.c_str()));
       EXPECT_FALSE(is_non_modifier_key_pressed());

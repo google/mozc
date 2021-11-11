@@ -48,6 +48,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace converter {
@@ -218,7 +219,7 @@ TEST_P(CandidateFilterTestWithParam, FilterTest) {
   // the limit.
   for (int i = 0; i < 1000; ++i) {
     Segment::Candidate *cand = NewCandidate();
-    cand->key = Util::StringPrintf("%d", i);
+    cand->key = absl::StrFormat("%d", i);
     cand->value = cand->key;
     filter->FilterCandidate(*request_, cand->key, cand, n, n,
                             Segments::CONVERSION);

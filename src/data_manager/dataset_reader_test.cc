@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -185,7 +186,7 @@ TEST(DataSetReaderTest, OneBitError) {
     constexpr int kAlignments[] = {8, 16, 32, 64};
     DataSetWriter w(kTestMagicNumber);
     for (int i = 0; i < 10; ++i) {
-      w.Add(Util::StringPrintf("key%d", i), kAlignments[Util::Random(4)],
+      w.Add(absl::StrFormat("key%d", i), kAlignments[Util::Random(4)],
             GenerateRandomBytes(1 + Util::Random(1024)));
     }
     std::stringstream out;

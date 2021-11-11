@@ -572,6 +572,7 @@
             'unix/window_manager.cc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_strings',
             '../base/base.gyp:base',
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',

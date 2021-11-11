@@ -65,6 +65,7 @@
         'key_event_util_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../config/config.gyp:config_handler',
         '../testing/testing.gyp:gtest_main',

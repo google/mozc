@@ -397,6 +397,7 @@ cc_test_mozc(
         "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -781,6 +782,7 @@ cc_library_mozc(
         "//testing",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

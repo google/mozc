@@ -253,6 +253,7 @@
         'surrounding_text_util_test.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../client/client.gyp:client_mock',

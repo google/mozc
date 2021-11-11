@@ -39,6 +39,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
@@ -94,7 +95,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
   {
     OutputFileStream ofs(path.c_str());
     for (int i = 0; i < kNumLines; ++i) {
-      std::string line = Util::StringPrintf("Hi, line %d", i);
+      std::string line = absl::StrFormat("Hi, line %d", i);
       expected_lines.push_back(line);
       ofs << line << std::endl;
     }
@@ -125,14 +126,14 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   {
     int serial_line_no = 0;
     for (int fileno = 0; fileno < kNumFile; ++fileno) {
-      std::string filename = Util::StringPrintf("testfile%d", fileno);
+      std::string filename = absl::StrFormat("testfile%d", fileno);
       std::string path =
           FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), filename);
       paths.push_back(path);
 
       OutputFileStream ofs(path.c_str());
       for (int i = 0; i < kNumLinesPerFile; ++i) {
-        std::string line = Util::StringPrintf("Hi, line %d", ++serial_line_no);
+        std::string line = absl::StrFormat("Hi, line %d", ++serial_line_no);
         expected_lines.push_back(line);
         ofs << line << std::endl;
       }

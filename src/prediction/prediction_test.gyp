@@ -43,6 +43,7 @@
         'zero_query_dict_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base_test.gyp:clock_mock',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',

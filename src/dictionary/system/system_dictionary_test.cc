@@ -59,6 +59,7 @@
 #include "testing/base/public/mozctest.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(int32_t, dictionary_test_size, 100000,
@@ -196,8 +197,8 @@ bool SystemDictionaryTest::CompareTokensForLookup(const Token &a,
 TEST_F(SystemDictionaryTest, HasValue) {
   std::vector<Token> tokens;
   for (int i = 0; i < 4; ++i) {
-    tokens.emplace_back(Util::StringPrintf("きー%d", i),
-                        Util::StringPrintf("バリュー%d", i));
+    tokens.emplace_back(absl::StrFormat("きー%d", i),
+                        absl::StrFormat("バリュー%d", i));
   }
 
   const std::string kFull = "ｆｕｌｌ";

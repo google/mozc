@@ -58,6 +58,7 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
@@ -103,7 +104,7 @@ class PosIdPrintUtil {
     if (pos_string.empty()) {
       return std::to_string(id);
     }
-    return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
+    return absl::StrFormat("%s (%d)", pos_string.c_str(), id);
   }
 
   std::unique_ptr<InputFileStream> pos_id_;
@@ -214,9 +215,8 @@ void PrintCandidate(const Segment &parent, int num,
   }
   lines.push_back("content_vk: " + cand.content_value + "  " +
                   cand.content_key);
-  lines.push_back(Util::StringPrintf("cost: %d  scost: %d  wcost: %d",
-                                     cand.cost, cand.structure_cost,
-                                     cand.wcost));
+  lines.push_back(absl::StrFormat("cost: %d  scost: %d  wcost: %d", cand.cost,
+                                  cand.structure_cost, cand.wcost));
   lines.push_back("lid: " + PosIdPrintUtil::IdToString(cand.lid));
   lines.push_back("rid: " + PosIdPrintUtil::IdToString(cand.rid));
   lines.push_back("attr: " + CandidateAttributesToString(cand.attributes));

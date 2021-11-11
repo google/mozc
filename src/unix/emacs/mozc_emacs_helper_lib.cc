@@ -451,7 +451,7 @@ void PrintFieldValue(const protobuf::Message &message,
     // Number (integer and floating point)
 #define PRINT_FIELD_VALUE(PROTO_CPP_TYPE, METHOD_TYPE, CPP_TYPE, FORMAT) \
   case protobuf::FieldDescriptor::CPPTYPE_##PROTO_CPP_TYPE:              \
-    output->push_back(mozc::Util::StringPrintf(                          \
+    output->push_back(absl::StrFormat(                                   \
         FORMAT, static_cast<CPP_TYPE>(GET_FIELD_VALUE(METHOD_TYPE))));   \
     break;
 

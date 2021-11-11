@@ -282,8 +282,8 @@ class Util {
 
   template <typename... Args>
   static std::string StringPrintf(const absl::FormatSpec<Args...> &format,
-                                  const Args &...args) {
-    return absl::StrFormat(format, args...);
+                                  Args &&...args) {
+    return absl::StrFormat(format, std::forward<Args>(args)...);
   }
 
   // Chop the return characters (i.e. '\n' and '\r') at the end of the

@@ -396,7 +396,7 @@ bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
                                                         new_dictionary_name) !=
              UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
         ++index;
-        new_dictionary_name = Util::StringPrintf(
+        new_dictionary_name = absl::StrFormat(
             "%s_%d", kDictionaryNameConvertedFromSyncableDictionary, index);
       }
       dic->set_name(new_dictionary_name);

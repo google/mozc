@@ -279,6 +279,7 @@
         'password_manager.cc',
       ],
       'dependencies': [
+        'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',
         'base',
         'obfuscator_support',

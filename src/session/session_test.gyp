@@ -75,6 +75,7 @@
         'session_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../engine/engine.gyp:engine',
@@ -306,6 +307,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_status',
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',

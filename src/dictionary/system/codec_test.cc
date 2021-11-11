@@ -41,6 +41,7 @@
 #include "dictionary/system/words_info.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -53,7 +54,7 @@ namespace {
     return ::testing::AssertionSuccess();
   }
   return ::testing::AssertionFailure()
-         << message << " c = " << Util::StringPrintf("U+%05X", c);
+         << message << " c = " << absl::StrFormat("U+%05X", c);
 }
 
 ::testing::AssertionResult IsExpectedEncodedSize(char32 c,

@@ -118,6 +118,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
         'base.gyp:base_core',
       ],
       'variables': {
@@ -237,6 +238,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
         'base.gyp:base_core',
       ],
       'variables': {
@@ -352,6 +354,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
         'base.gyp:multifile',
       ],
     },

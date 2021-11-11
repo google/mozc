@@ -78,6 +78,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -1398,7 +1399,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
   // by MaybeRedundant(); see dictionary_predictor.cc.
   for (int i = 0; i < 10; ++i) {
     mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA,
-                                  Util::StringPrintf("a%d", i), Token::NONE);
+                                  absl::StrFormat("a%d", i), Token::NONE);
   }
   // A user dictionary entry "aaa".  MaybeRedundant() detects this entry as
   // redundant but it should not be filtered in prediction.
@@ -3486,9 +3487,9 @@ struct TestEntry {
       if (i != 0) {
         types.append(", ");
       }
-      types.append(Util::StringPrintf("%d", types[i]));
+      types.append(absl::StrFormat("%d", types[i]));
     }
-    return Util::StringPrintf(
+    return absl::StrFormat(
         "available_emoji_carrier: %d\n"
         "key: %s\n"
         "expected_result: %d\n"
