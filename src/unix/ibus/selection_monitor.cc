@@ -517,7 +517,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   SelectionInfo GetSelectionInfo() override {
     SelectionInfo info;
     {
-      scoped_lock l(&mutex_);
+      absl::MutexLock l(&mutex_);
       info = last_selection_info_;
     }
     return info;
@@ -527,7 +527,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   void Run() override {
     while (!quit_) {
       if (!server_->checkConnection()) {
-        scoped_lock l(&mutex_);
+        absl::MutexLock l(&mutex_);
         last_selection_info_ = SelectionInfo();
         quit_ = true;
         break;
@@ -538,7 +538,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
       // X11 message is received. In order to interrupt, you can call
       // SendNoopEventMessage() method from other threads.
       if (server_->WaitForNextSelectionEvent(max_text_bytes_, &next_info)) {
-        scoped_lock l(&mutex_);
+        absl::MutexLock l(&mutex_);
         last_selection_info_ = next_info;
       }
     }
