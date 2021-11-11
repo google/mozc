@@ -210,6 +210,8 @@ class LogStreamImpl {
   }
 
  private:
+  void ResetUnlocked();
+
   // Real backing log stream.
   // This is not thread-safe so must be guarded.
   // If std::cerr is real log stream, this is empty.
@@ -251,7 +253,7 @@ LogStreamImpl::LogStreamImpl() { Reset(); }
 // Others,  false         => true,      initialized
 void LogStreamImpl::Init(const std::string &log_file_path) {
   absl::MutexLock l(&mutex_);
-  Reset();
+  ResetUnlocked();
 
   if (use_cerr_) {
     return;
@@ -279,6 +281,10 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
 
 void LogStreamImpl::Reset() {
   absl::MutexLock l(&mutex_);
+  ResetUnlocked();
+}
+
+void LogStreamImpl::ResetUnlocked() {
   real_log_stream_.reset();
   config_verbose_level_ = 0;
 #if defined(OS_ANDROID) || defined(OS_WIN)
