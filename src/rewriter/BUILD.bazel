@@ -142,6 +142,7 @@ cc_library_mozc(
         "//storage:lru_storage",
         "//transliteration",
         "//usage_stats",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -878,6 +879,7 @@ cc_library_mozc(
         "//data_manager:data_manager_interface",
         "//dictionary:pos_matcher_lib",
         "//dictionary:user_pos",
+        "@com_google_absl//absl/container:btree",
     ],
 )
 
@@ -907,6 +909,7 @@ cc_binary_mozc(
         "//base:util",
         "//data_manager",
         "//data_manager:serialized_dictionary",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -996,6 +999,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
@@ -1336,6 +1340,7 @@ cc_binary_mozc(
         "//base:logging",
         "//base:serialized_string_array",
         "//base:util",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

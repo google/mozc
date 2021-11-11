@@ -54,6 +54,7 @@
 #include "storage/lru_storage.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/container/btree_set.h"
 #include "absl/status/status.h"
 #include "absl/strings/string_view.h"
 
@@ -440,7 +441,7 @@ bool UserSegmentHistoryRewriter::SortCandidates(
   const uint32_t top_score = sorted_scores[0].score;
   const size_t size = std::min(sorted_scores.size(), kMaxRerankSize);
   constexpr uint32_t kScoreGap = 20;  // TODO(taku): no justification
-  std::set<std::string> seen;
+  absl::btree_set<std::string> seen;
 
   size_t next_pos = 0;
   for (size_t n = 0; n < size; ++n) {

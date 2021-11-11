@@ -43,6 +43,7 @@
 #include "base/logging.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/user_pos.h"
+#include "absl/container/btree_map.h"
 
 namespace mozc {
 namespace rewriter {
@@ -114,7 +115,7 @@ struct CompareToken {
 };
 
 std::vector<const Token *> GetSortedTokens(
-    const std::map<uint64_t, Token *> &token_map) {
+    const absl::btree_map<uint64_t, Token *> &token_map) {
   std::vector<const Token *> tokens;
   tokens.reserve(token_map.size());
   for (auto [unused, token] : token_map) {
