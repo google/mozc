@@ -67,6 +67,7 @@
         'renderer_client.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../ipc/ipc.gyp:ipc',
         '../protocol/protocol.gyp:commands_proto',
@@ -573,6 +574,7 @@
           ],
           'dependencies': [
             '../base/absl.gyp:absl_strings',
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',
