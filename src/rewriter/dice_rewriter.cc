@@ -37,6 +37,7 @@
 #include "converter/segments.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -70,7 +71,7 @@ bool InsertCandidate(int top_face_number, size_t insert_pos, Segment *segment) {
   c->lid = trigger_c.lid;
   c->rid = trigger_c.rid;
   c->cost = trigger_c.cost;
-  c->value = Util::StringPrintf("%d", top_face_number);
+  c->value = absl::StrFormat("%d", top_face_number);
   c->content_value = c->value;
   c->key = base_candidate.key;
   c->content_key = base_candidate.content_key;

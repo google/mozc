@@ -40,6 +40,7 @@
 #include "data_manager/serialized_dictionary.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "Emoticon dictionary file");
@@ -75,8 +76,8 @@ std::string GetDescription(
               }
               return x_count < y_count;
             });
-  return Util::StringPrintf("%s %s", sorted_key_list.back().c_str(),
-                            sorted_key_list.front().c_str());
+  return absl::StrFormat("%s %s", sorted_key_list.back().c_str(),
+                         sorted_key_list.front().c_str());
 }
 
 std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {

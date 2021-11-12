@@ -44,6 +44,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/str_format.h"
 
 // To show the value of size_t, 'z' speficier should be used.
 // But MSVC doesn't support it yet so use 'l' instead.
@@ -171,7 +172,7 @@ TEST_F(NumberRewriterTest, BasicTest) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
     EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
@@ -245,7 +246,7 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
     EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
@@ -543,7 +544,7 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
     EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);
@@ -593,7 +594,7 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   EXPECT_EQ(kExpectResultSize, seg->candidates_size());
 
   for (size_t i = 0; i < kExpectResultSize; ++i) {
-    SCOPED_TRACE(Util::StringPrintf("i = " SIZE_T_PRINTF_FORMAT, i));
+    SCOPED_TRACE(absl::StrFormat("i = " SIZE_T_PRINTF_FORMAT, i));
     EXPECT_EQ(kExpectResults[i].value, seg->candidate(i).value);
     EXPECT_EQ(kExpectResults[i].content_value, seg->candidate(i).content_value);
     EXPECT_EQ(kExpectResults[i].description, seg->candidate(i).description);

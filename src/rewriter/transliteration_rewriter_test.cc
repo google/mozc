@@ -50,6 +50,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -825,9 +826,8 @@ TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
     InsertASCIISequence(ascii_input, &composer);
     std::string query;
     composer.GetQueryForConversion(&query);
-    SCOPED_TRACE(
-        Util::StringPrintf("char code = %d, ascii_input = %s, query = %s", i,
-                           ascii_input.c_str(), query.c_str()));
+    SCOPED_TRACE(absl::StrFormat("char code = %d, ascii_input = %s, query = %s",
+                                 i, ascii_input.c_str(), query.c_str()));
 
     Segments segments;
     Segment *segment = segments.add_segment();

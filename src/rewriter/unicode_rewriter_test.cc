@@ -49,6 +49,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -169,7 +170,7 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
 
   // All ascii code would be accepted.
   for (uint32_t ascii = 0x20; ascii < 0x7F; ++ascii) {
-    const std::string ucs4 = Util::StringPrintf("U+00%02X", ascii);
+    const std::string ucs4 = absl::StrFormat("U+00%02X", ascii);
     InitSegments(ucs4, ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(ascii, segments.segment(0).candidate(0).value.at(0));

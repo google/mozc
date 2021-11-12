@@ -98,6 +98,7 @@
         'single_kanji_rewriter_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../session/session_base.gyp:request_test_util',
