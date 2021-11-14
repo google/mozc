@@ -35,10 +35,10 @@
 #include <memory>
 #include <string>
 
-#include "base/mutex.h"
 #include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -53,8 +53,13 @@ class MacServer : public RendererServer {
  public:
   MacServer(int argc, const char **argv);
 
-  virtual bool AsyncExecCommand(std::string *proto_message);
-  virtual int StartMessageLoop();
+  MacServer(const MacServer &) = delete;
+  MacServer &operator=(const MacServer &) = delete;
+
+  ~MacServer() override = default;
+
+  bool AsyncExecCommand(std::string *proto_message) override;
+  int StartMessageLoop() override;
 
   // This method is called when an asynchronous exec-command message
   // arrives.  This is public because it will be called from carbon
@@ -65,14 +70,12 @@ class MacServer : public RendererServer {
   static void Init();
 
  private:
-  Mutex mutex_;
+  absl::Mutex mutex_;
   pthread_cond_t event_;
   std::string message_;
   std::unique_ptr<CandidateController> controller_;
   int argc_;
   const char **argv_;
-
-  DISALLOW_COPY_AND_ASSIGN(MacServer);
 };
 
 }  // namespace mac

@@ -42,6 +42,7 @@
 #include "base/number_util.h"
 #include "base/port.h"
 #include "base/singleton.h"
+#include "base/status.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -57,6 +58,7 @@
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
@@ -102,7 +104,7 @@ class PosIdPrintUtil {
     if (pos_string.empty()) {
       return std::to_string(id);
     }
-    return Util::StringPrintf("%s (%d)", pos_string.c_str(), id);
+    return absl::StrFormat("%s (%d)", pos_string.c_str(), id);
   }
 
   std::unique_ptr<InputFileStream> pos_id_;
@@ -213,9 +215,8 @@ void PrintCandidate(const Segment &parent, int num,
   }
   lines.push_back("content_vk: " + cand.content_value + "  " +
                   cand.content_key);
-  lines.push_back(Util::StringPrintf("cost: %d  scost: %d  wcost: %d",
-                                     cand.cost, cand.structure_cost,
-                                     cand.wcost));
+  lines.push_back(absl::StrFormat("cost: %d  scost: %d  wcost: %d", cand.cost,
+                                  cand.structure_cost, cand.wcost));
   lines.push_back("lid: " + PosIdPrintUtil::IdToString(cand.lid));
   lines.push_back("rid: " + PosIdPrintUtil::IdToString(cand.rid));
   lines.push_back("attr: " + CandidateAttributesToString(cand.attributes));
@@ -474,7 +475,7 @@ int main(int argc, char **argv) {
   absl::StatusOr<std::unique_ptr<mozc::DataManager>> data_manager =
       mozc::DataManager::CreateFromFile(absl::GetFlag(FLAGS_engine_data_path),
                                         absl::GetFlag(FLAGS_magic));
-  CHECK(data_manager.ok()) << data_manager.status();
+  CHECK_OK(data_manager);
 
   mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;

@@ -171,14 +171,10 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
   }
 
   const std::string tmp_filename = real_filename + ".tmp";
-  {
-    OutputFileStream ofs(tmp_filename.c_str(),
-                         std::ios::out | std::ios::binary);
-    if (!ofs.good()) {
-      LOG(ERROR) << "cannot open " << tmp_filename;
-      return false;
-    }
-    ofs << new_binary_contens;
+  if (absl::Status s = FileUtil::SetContents(tmp_filename, new_binary_contens);
+      !s.ok()) {
+    LOG(ERROR) << "Cannot write the contents to " << tmp_filename << ": " << s;
+    return false;
   }
 
   if (absl::Status s = FileUtil::AtomicRename(tmp_filename, real_filename);

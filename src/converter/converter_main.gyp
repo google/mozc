@@ -40,6 +40,7 @@
         'converter_main.cc',
        ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../composer/composer.gyp:composer',
         '../engine/engine.gyp:oss_engine_factory',
         '../engine/engine.gyp:engine',

@@ -233,6 +233,7 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -563,11 +564,11 @@ cc_test_mozc(
         "//base",
         "//base:cpu_stats",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:util",
         "//client:client_mock",
         "//testing:gunit_main",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -580,7 +581,6 @@ cc_library_mozc(
         "//base",
         "//base:clock",
         "//base:logging",
-        "//base:mutex",
         "//base:number_util",
         "//base:port",
         "//base:scheduler",
@@ -590,6 +590,7 @@ cc_library_mozc(
         "//protocol:state_cc_proto",
         "//usage_stats",
         "//usage_stats:usage_stats_cc_proto",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -910,6 +911,7 @@ cc_test_mozc(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

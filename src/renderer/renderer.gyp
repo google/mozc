@@ -67,6 +67,7 @@
         'renderer_client.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../ipc/ipc.gyp:ipc',
         '../protocol/protocol.gyp:commands_proto',
@@ -401,6 +402,7 @@
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
@@ -431,6 +433,7 @@
             'win32/win32_renderer_client.cc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../protocol/protocol.gyp:renderer_proto',
             'renderer_client',
@@ -462,6 +465,7 @@
             '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
@@ -569,6 +573,8 @@
             'unix/window_manager.cc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_strings',
+            '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',

@@ -29,7 +29,8 @@
 
 #include "unix/ibus/ibus_config.h"
 
-#include "base/file_stream.h"
+#include <utility>
+
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/protobuf/text_format.h"
@@ -51,14 +52,17 @@ std::string UpdateConfigFile() {
   const std::string engines_file = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), kIbusConfigFile);
   if (absl::Status s = FileUtil::FileExists(engines_file); s.ok()) {
-    InputFileStream ifs(engines_file.c_str());
-    return ifs.Read();
+    absl::StatusOr<std::string> config = FileUtil::GetContents(engines_file);
+    if (!config.ok()) {
+      LOG(ERROR) << config.status();
+      return kIbusConfigTextProto;
+    }
+    return *std::move(config);
   } else if (absl::IsNotFound(s)) {
-    OutputFileStream ofs(engines_file.c_str());
-    ofs << kIbusConfigTextProto;
-    ofs.close();
-    if (ofs.fail()) {
-      LOG(ERROR) << "Failed to write " << engines_file;
+    if (absl::Status s =
+            FileUtil::SetContents(engines_file, kIbusConfigTextProto);
+        !s.ok()) {
+      LOG(ERROR) << "Failed to write " << engines_file << ": " << s;
     }
     return kIbusConfigTextProto;
   } else {

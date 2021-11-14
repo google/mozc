@@ -49,7 +49,6 @@
 #include <string>
 
 #include "base/mac_util.h"
-#include "base/mutex.h"
 #endif  // __APPLE__
 
 #if defined(OS_ANDROID)
@@ -60,6 +59,7 @@
 #include "base/file_util.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace config {
@@ -157,15 +157,17 @@ bool WinStatsConfigUtilImpl::SetEnabled(bool val) {
 class MacStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   MacStatsConfigUtilImpl();
-  virtual ~MacStatsConfigUtilImpl() {}
-  virtual bool IsEnabled();
-  virtual bool SetEnabled(bool val);
+
+  MacStatsConfigUtilImpl(const MacStatsConfigUtilImpl &) = delete;
+  MacStatsConfigUtilImpl &operator=(const MacStatsConfigUtilImpl &) = delete;
+
+  ~MacStatsConfigUtilImpl() override = default;
+  bool IsEnabled() override;
+  bool SetEnabled(bool val) override;
 
  private:
   std::string config_file_;
-  Mutex mutex_;
-
-  DISALLOW_COPY_AND_ASSIGN(MacStatsConfigUtilImpl);
+  absl::Mutex mutex_;
 };
 
 MacStatsConfigUtilImpl::MacStatsConfigUtilImpl() {
@@ -177,7 +179,7 @@ bool MacStatsConfigUtilImpl::IsEnabled() {
 #ifdef CHANNEL_DEV
   return true;
 #else   // CHANNEL_DEV
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   constexpr bool kDefaultValue = false;
 
   std::ifstream ifs(config_file_.c_str(), std::ios::binary | std::ios::in);
@@ -204,7 +206,7 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 #ifdef CHANNEL_DEV
   return true;
 #else   // CHANNEL_DEV
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   const uint32 value = static_cast<uint32>(val);
 
   if (FileUtil::FileExists(config_file_).ok()) {

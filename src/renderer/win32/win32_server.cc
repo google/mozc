@@ -37,6 +37,7 @@
 #include "base/util.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/win32/window_manager.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -83,7 +84,7 @@ Win32Server::~Win32Server() { ::CloseHandle(event_); }
 void Win32Server::AsyncHide() {
   {
     // Cancel the remaining event
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     ::ResetEvent(event_);
   }
   window_manager_->AsyncHideAllWindows();
@@ -92,7 +93,7 @@ void Win32Server::AsyncHide() {
 void Win32Server::AsyncQuit() {
   {
     // Cancel the remaining event
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     ::ResetEvent(event_);
   }
   window_manager_->AsyncQuitAllWindows();
@@ -144,7 +145,7 @@ void Win32Server::SetSendCommandInterface(
 bool Win32Server::AsyncExecCommand(std::string *proto_message) {
   // Take the ownership of |proto_message|.
   std::unique_ptr<std::string> proto_message_owner(proto_message);
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   if (message_ == *proto_message_owner.get()) {
     // This is exactly the same to the previous message. Theoretically it is
     // safe to do nothing here.
@@ -184,7 +185,7 @@ int Win32Server::StartMessageLoop() {
       // stored in "message_"
       std::string message;
       {
-        scoped_lock l(&mutex_);
+        absl::MutexLock l(&mutex_);
         message.assign(message_);
         ::ResetEvent(event_);
       }

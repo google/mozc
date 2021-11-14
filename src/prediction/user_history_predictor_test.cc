@@ -60,6 +60,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -2234,15 +2235,15 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
   user_history_predictor::UserHistory history;
   for (int i = 0; i < 10; ++i) {
     auto *entry = history.add_entries();
-    entry->set_key(Util::StringPrintf("old_key%d", i));
-    entry->set_value(Util::StringPrintf("old_value%d", i));
+    entry->set_key(absl::StrFormat("old_key%d", i));
+    entry->set_value(absl::StrFormat("old_value%d", i));
     entry->set_last_access_time(clock->GetTime());
   }
   clock->PutClockForward(63 * 24 * 60 * 60, 0);  // Advance clock for 63 days.
   for (int i = 0; i < 10; ++i) {
     auto *entry = history.add_entries();
-    entry->set_key(Util::StringPrintf("new_key%d", i));
-    entry->set_value(Util::StringPrintf("new_value%d", i));
+    entry->set_key(absl::StrFormat("new_key%d", i));
+    entry->set_value(absl::StrFormat("new_value%d", i));
     entry->set_last_access_time(clock->GetTime());
   }
 

@@ -36,7 +36,6 @@
 #include <string>
 #include <vector>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
@@ -46,6 +45,7 @@
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
@@ -108,7 +108,7 @@ TEST_F(IPCPathManagerTest, IPCPathManagerTest) {
   // On Linux, |path| should be abstract (see man unix(7) for details.)
   ASSERT_FALSE(path.empty());
   EXPECT_EQ('\0', path[0]);
-#endif
+#endif  // OS_LINUX
 }
 
 // Test the thread-safeness of GetPathName() and
@@ -144,10 +144,7 @@ TEST_F(IPCPathManagerTest, ReloadTest) {
   Util::Sleep(1000);  // msec
   std::string filename = FileUtil::JoinPath(
       SystemUtil::GetUserProfileDirectory(), ".reload_test.ipc");
-  OutputFileStream outf(filename.c_str());
-  outf << "foobar";
-  outf.close();
-
+  ASSERT_OK(FileUtil::SetContents(filename, "foobar"));
   EXPECT_TRUE(manager->ShouldReload());
 #endif  // OS_WIN
 }

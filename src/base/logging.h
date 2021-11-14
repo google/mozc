@@ -55,7 +55,7 @@ enum LogSeverity {
   LOG_FATAL = 7,    // ANDROID_LOG_FATAL
   LOG_SILENT = 8,   // ANDROID_LOG_SILENT
   LOG_SEVERITY_SIZE = 9,
-#else
+#else   // OS_ANDROID
   LOG_INFO = 0,
   LOG_WARNING = 1,
   LOG_ERROR = 2,
@@ -65,13 +65,13 @@ enum LogSeverity {
 #endif  // OS_WIN
   LOG_FATAL = 3,
   LOG_SEVERITY_SIZE = 4,
-#endif
+#endif  // OS_ANDROID
 };
 
 // DFATAL is FATAL in debug mode, ERROR in normal mode
 #ifdef DEBUG
 #define LOG_DFATAL LOG_FATAL
-#else
+#else   // DEBUG
 #define LOG_DFATAL LOG_ERROR
 #endif  // DEBUG
 
@@ -120,6 +120,8 @@ class Logging {
   // Gets an escape sequence to colorize log messages on tty devices.
   static const char *GetBeginColorEscapeSequence(LogSeverity severity);
   static const char *GetEndColorEscapeSequence();
+
+  static void SetLogToStderr(bool log_to_stderr);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Logging);
@@ -298,6 +300,6 @@ class NullLogFinalizer {
 #ifndef DVLOG_IF
 #define DVLOG_IF(verboselevel, condition) \
   DLOG_IF(INFO, (condition) && VLOG_IS_ON(verboselevel))
-#endif
+#endif  // DVLOG_IF
 
 #endif  // MOZC_BASE_LOGGING_H_

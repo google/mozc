@@ -55,6 +55,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
@@ -373,6 +374,7 @@ const YearData kEraData[] = {
     {2019, "令和", "れいわ"}};
 
 const YearData kNorthEraData[] = {
+    // clang-format off
     // "元徳", "建武" and "明徳" are used for both south and north courts.
     {1329, "元徳", "げんとく"},
     {1332, "正慶", "しょうけい"},
@@ -392,7 +394,9 @@ const YearData kNorthEraData[] = {
     {1384, "至徳", "しとく"},
     {1387, "嘉慶", "かけい"},
     {1389, "康応", "こうおう"},
-    {1390, "明徳", "めいとく"}};
+    {1390, "明徳", "めいとく"},
+    // clang-format on
+};
 
 bool PrintUint32(const char *format, uint32_t num, char *buf, size_t buf_size) {
   const int ret = std::snprintf(buf, buf_size, format, num);
@@ -408,13 +412,12 @@ void GenerateKanjiTimeFormats(
       !PrintUint32(min_format, min, min_s, 4)) {
     return;
   }
-  results->emplace_back(Util::StringPrintf("%s時%s分", hour_s, min_s),
+  results->emplace_back(absl::StrFormat("%s時%s分", hour_s, min_s),
                         kTimeDescription);
   // "H時半".  Don't generate it when the printed hour starts with 0 because
   // formats like "03時半" is rarely used (but "3時半" is ok).
   if (hour_s[0] != '0' && min == 30) {
-    results->emplace_back(Util::StringPrintf("%s時半", hour_s),
-                          kTimeDescription);
+    results->emplace_back(absl::StrFormat("%s時半", hour_s), kTimeDescription);
   }
 }
 
@@ -431,17 +434,17 @@ void GenerateGozenGogoTimeFormats(
       !PrintUint32(min_format, min, min_s, 4)) {
     return;
   }
-  results->emplace_back(Util::StringPrintf("午前%s時%s分", hour_s, min_s),
+  results->emplace_back(absl::StrFormat("午前%s時%s分", hour_s, min_s),
                         kTimeDescription);
   if (min == 30) {
-    results->emplace_back(Util::StringPrintf("午前%s時半", hour_s),
+    results->emplace_back(absl::StrFormat("午前%s時半", hour_s),
                           kTimeDescription);
   }
 
-  results->emplace_back(Util::StringPrintf("午後%s時%s分", hour_s, min_s),
+  results->emplace_back(absl::StrFormat("午後%s時%s分", hour_s, min_s),
                         kTimeDescription);
   if (min == 30) {
-    results->emplace_back(Util::StringPrintf("午後%s時半", hour_s),
+    results->emplace_back(absl::StrFormat("午後%s時半", hour_s),
                           kTimeDescription);
   }
 }
@@ -778,22 +781,21 @@ bool DateRewriter::ConvertTime(uint32_t hour, uint32_t min,
   if (!IsValidTime(hour, min)) {
     return false;
   }
-  results->push_back(Util::StringPrintf("%d:%2.2d", hour, min));
-  results->push_back(Util::StringPrintf("%d時%2.2d分", hour, min));
+  results->push_back(absl::StrFormat("%d:%2.2d", hour, min));
+  results->push_back(absl::StrFormat("%d時%2.2d分", hour, min));
   if (min == 30) {
-    results->push_back(Util::StringPrintf("%d時半", hour));
+    results->push_back(absl::StrFormat("%d時半", hour));
   }
 
   if ((hour % 24) * 60 + min < 720) {  // 0:00 -- 11:59
-    results->push_back(Util::StringPrintf("午前%d時%d分", hour % 24, min));
+    results->push_back(absl::StrFormat("午前%d時%d分", hour % 24, min));
     if (min == 30) {
-      results->push_back(Util::StringPrintf("午前%d時半", hour % 24));
+      results->push_back(absl::StrFormat("午前%d時半", hour % 24));
     }
   } else {
-    results->push_back(
-        Util::StringPrintf("午後%d時%d分", (hour - 12) % 24, min));
+    results->push_back(absl::StrFormat("午後%d時%d分", (hour - 12) % 24, min));
     if (min == 30) {
-      results->push_back(Util::StringPrintf("午後%d時半", (hour - 12) % 24));
+      results->push_back(absl::StrFormat("午後%d時半", (hour - 12) % 24));
     }
   }
   return true;
@@ -807,9 +809,9 @@ bool DateRewriter::ConvertDateWithYear(uint32_t year, uint32_t month,
     return false;
   }
   // Generate "Y/MM/DD", "Y-MM-DD" and "Y年M月D日" formats.
-  results->push_back(Util::StringPrintf("%d/%2.2d/%2.2d", year, month, day));
-  results->push_back(Util::StringPrintf("%d-%2.2d-%2.2d", year, month, day));
-  results->push_back(Util::StringPrintf("%d年%d月%d日", year, month, day));
+  results->push_back(absl::StrFormat("%d/%2.2d/%2.2d", year, month, day));
+  results->push_back(absl::StrFormat("%d-%2.2d-%2.2d", year, month, day));
+  results->push_back(absl::StrFormat("%d年%d月%d日", year, month, day));
   return true;
 }
 
@@ -859,28 +861,28 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
       std::vector<std::string> era;
       if (DateRewriter::AdToEra(cm.year(), cm.month(), &era) && !era.empty()) {
         results.push_back(
-            Util::StringPrintf("%s年%d月%d日", era[0], cm.month(), cm.day()));
+            absl::StrFormat("%s年%d月%d日", era[0], cm.month(), cm.day()));
       }
       const int weekday = static_cast<int>(absl::GetWeekday(cm));
-      results.push_back(Util::StringPrintf("%s曜日", kWeekDayString[weekday]));
+      results.push_back(absl::StrFormat("%s曜日", kWeekDayString[weekday]));
       break;
     }
 
     case MONTH: {
-      results.push_back(Util::StringPrintf("%d", cm.month()));
-      results.push_back(Util::StringPrintf("%d月", cm.month()));
+      results.push_back(absl::StrFormat("%d", cm.month()));
+      results.push_back(absl::StrFormat("%d月", cm.month()));
       break;
     }
 
     case YEAR: {
-      results.push_back(Util::StringPrintf("%d", cm.year()));
-      results.push_back(Util::StringPrintf("%d年", cm.year()));
+      results.push_back(absl::StrFormat("%d", cm.year()));
+      results.push_back(absl::StrFormat("%d年", cm.year()));
 
       std::vector<std::string> era;
       if (DateRewriter::AdToEra(cm.year(), 0, /* unknown mounth */ &era) &&
           !era.empty()) {
         for (auto rit = era.crbegin(); rit != era.crend(); ++rit) {
-          results.push_back(Util::StringPrintf("%s年", *rit));
+          results.push_back(absl::StrFormat("%s年", *rit));
         }
       }
       break;
@@ -894,8 +896,8 @@ std::vector<std::string> GetConversions(const DateRewriter::DateData &data,
     case DATE_AND_CURRENT_TIME: {
       // Y/MM/DD H:MM
       const std::string ymmddhmm =
-          Util::StringPrintf("%d/%2.2d/%2.2d %2d:%2.2d", cm.year(), cm.month(),
-                             cm.day(), cm.hour(), cm.minute());
+          absl::StrFormat("%d/%2.2d/%2.2d %2d:%2.2d", cm.year(), cm.month(),
+                          cm.day(), cm.hour(), cm.minute());
       results.push_back(ymmddhmm);
       break;
     }
@@ -1144,9 +1146,9 @@ bool DateRewriter::RewriteConsecutiveTwoDigits(
   const uint32_t high = static_cast<uint32_t>(str[0] - '0');
   const uint32_t low = static_cast<uint32_t>(str[1] - '0');
   if (IsValidMonthAndDay(high, low)) {
-    results->emplace_back(Util::StringPrintf("%c/%c", str[0], str[1]),
+    results->emplace_back(absl::StrFormat("%c/%c", str[0], str[1]),
                           kDateDescription);
-    results->emplace_back(Util::StringPrintf("%c月%c日", str[0], str[1]),
+    results->emplace_back(absl::StrFormat("%c月%c日", str[0], str[1]),
                           kDateDescription);
   }
   if (IsValidTime(high, low)) {
@@ -1182,32 +1184,30 @@ bool DateRewriter::RewriteConsecutiveThreeDigits(
 
   if (is_valid_date1) {
     // "M/DD"
-    results->emplace_back(Util::StringPrintf("%c/%c%c", str[0], str[1], str[2]),
+    results->emplace_back(absl::StrFormat("%c/%c%c", str[0], str[1], str[2]),
                           kDateDescription);
   }
   if (is_valid_date2) {
     // "MM/D"
-    results->emplace_back(Util::StringPrintf("%c%c/%c", str[0], str[1], str[2]),
+    results->emplace_back(absl::StrFormat("%c%c/%c", str[0], str[1], str[2]),
                           kDateDescription);
   }
   if (is_valid_time1) {
     // "H:MM"
-    results->emplace_back(Util::StringPrintf("%c:%c%c", str[0], str[1], str[2]),
+    results->emplace_back(absl::StrFormat("%c:%c%c", str[0], str[1], str[2]),
                           kTimeDescription);
   }
   // Don't generate HH:M form as it is unusual.
 
   if (is_valid_date1) {
     // "M月DD日".
-    results->emplace_back(
-        Util::StringPrintf("%c月%c%c日", str[0], str[1], str[2]),
-        kDateDescription);
+    results->emplace_back(absl::StrFormat("%c月%c%c日", str[0], str[1], str[2]),
+                          kDateDescription);
   }
   if (is_valid_date2) {
     // "MM月D日"
-    results->emplace_back(
-        Util::StringPrintf("%c%c月%c日", str[0], str[1], str[2]),
-        kDateDescription);
+    results->emplace_back(absl::StrFormat("%c%c月%c日", str[0], str[1], str[2]),
+                          kDateDescription);
   }
   if (is_valid_time1) {
     // "M時DD分" etc.
@@ -1246,13 +1246,13 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
   if (is_valid_date) {
     // "MM/DD"
     results->emplace_back(
-        Util::StringPrintf("%c%c/%c%c", str[0], str[1], str[2], str[3]),
+        absl::StrFormat("%c%c/%c%c", str[0], str[1], str[2], str[3]),
         kDateDescription);
   }
   if (is_valid_time) {
     // "MM:DD"
     results->emplace_back(
-        Util::StringPrintf("%c%c:%c%c", str[0], str[1], str[2], str[3]),
+        absl::StrFormat("%c%c:%c%c", str[0], str[1], str[2], str[3]),
         kTimeDescription);
   }
   if (is_valid_date && str[0] != '0' && str[2] != '0') {
@@ -1261,7 +1261,7 @@ bool DateRewriter::RewriteConsecutiveFourDigits(
     // generate "1月1日" too, as we shouldn't remove the zero explicitly added
     // by user.
     results->emplace_back(
-        Util::StringPrintf("%c%c月%c%c日", str[0], str[1], str[2], str[3]),
+        absl::StrFormat("%c%c月%c%c日", str[0], str[1], str[2], str[3]),
         kDateDescription);
   }
   if (is_valid_time) {

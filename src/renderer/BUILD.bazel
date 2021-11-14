@@ -53,7 +53,6 @@ cc_library_mozc(
         "//base",
         "//base:clock",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:process",
         "//base:run_level",
@@ -65,6 +64,7 @@ cc_library_mozc(
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         ios = ["//base:mac_util"],
     ),
@@ -290,6 +290,7 @@ cc_library_mozc(
         "//ipc",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/synchronization",
         ":renderer_server",
         ":renderer_style_handler",
         ":table_layout",

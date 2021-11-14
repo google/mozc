@@ -41,6 +41,7 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
@@ -77,7 +78,7 @@ std::string GetProgramPath() {
 
 std::string GetTestSrcdir() {
   const std::string srcdir(kMozcDataDir);
-  CHECK(FileUtil::DirectoryExists(srcdir).ok())
+  CHECK_OK(FileUtil::DirectoryExists(srcdir))
       << srcdir << " is not a directory.";
   return srcdir;
 }
@@ -86,8 +87,7 @@ std::string GetTestTmpdir() {
   const std::string tmpdir = GetProgramPath() + ".tmp";
 
   if (!FileUtil::DirectoryExists(tmpdir).ok()) {
-    absl::Status s = FileUtil::CreateDirectory(tmpdir);
-    CHECK(s.ok()) << s;
+    CHECK_OK(FileUtil::CreateDirectory(tmpdir));
   }
   return tmpdir;
 }
@@ -138,8 +138,7 @@ std::string GetTestTmpdir() {
   }
 
   if (access(tmpdir.c_str(), R_OK | X_OK) != 0) {
-    absl::Status s = FileUtil::CreateDirectory(tmpdir);
-    CHECK(s.ok()) << s;
+    CHECK_OK(FileUtil::CreateDirectory(tmpdir));
   }
   return tmpdir;
 }

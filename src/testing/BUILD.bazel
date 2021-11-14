@@ -154,6 +154,7 @@ cc_library_mozc(
         client = [
             ":mozc_data_dir_header",
             "//base",
+            "//base:status",
             "//base:logging",
             "//base:file_util",
             "@com_google_absl//absl/flags:flag",
@@ -177,6 +178,7 @@ cc_library_mozc(
         "//base:file_util",
         "//base:logging",
         "//base:port",
+        "//base:status",
         "//base:system_util",
         "//base:util",
         "@com_google_absl//absl/flags:flag",

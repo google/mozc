@@ -34,11 +34,11 @@
 #include <memory>
 #include <string>
 
-#include "base/mutex.h"
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/base/thread_annotations.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 
@@ -198,7 +198,7 @@ class IosEngine {
                           commands::Command *command);
   bool Reload(commands::Command *command);
 
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::unique_ptr<SessionHandlerInterface> session_handler_
       ABSL_PT_GUARDED_BY(mutex_);
   uint64_t session_id_ = 0;

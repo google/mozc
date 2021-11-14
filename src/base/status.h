@@ -27,23 +27,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_BASE_MUTEX_H_
-#define MOZC_BASE_MUTEX_H_
+#ifndef MOZC_BASE_STATUS_H_
+#define MOZC_BASE_STATUS_H_
 
-#include <atomic>
 
-namespace mozc {
+#include "base/logging.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
-using once_t = std::atomic<int>;
+namespace mozc::status_internal {
 
-#define MOZC_ONCE_INIT ATOMIC_VAR_INIT(0)
+template <typename T>
+inline const absl::Status &AsStatus(const absl::StatusOr<T> &status_or) {
+  return status_or.status();
+}
 
-// Portable re-implementation of pthread_once.
-void CallOnce(once_t *once, void (*func)());
+inline const absl::Status &AsStatus(const absl::Status &status) {
+  return status;
+}
 
-// Resets once_t.
-void ResetOnce(once_t *once);
+}  // namespace mozc::status_internal
 
-}  // namespace mozc
+#define CHECK_OK(val) \
+  CHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
+#define DCHECK_OK(val) \
+  DCHECK_EQ(absl::OkStatus(), ::mozc::status_internal::AsStatus(val))
 
-#endif  // MOZC_BASE_MUTEX_H_
+
+#endif  // MOZC_BASE_STATUS_H_

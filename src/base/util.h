@@ -280,12 +280,6 @@ class Util {
   // in the range of Android Emoji PUA.
   static bool IsAndroidPuaEmoji(absl::string_view s);
 
-  template <typename... Args>
-  static std::string StringPrintf(const absl::FormatSpec<Args...> &format,
-                                  const Args &...args) {
-    return absl::StrFormat(format, args...);
-  }
-
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
   static bool ChopReturns(std::string *line);

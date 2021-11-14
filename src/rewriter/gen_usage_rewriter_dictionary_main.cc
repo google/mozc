@@ -105,6 +105,7 @@
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
 #include "base/util.h"
+#include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
@@ -143,7 +144,7 @@ bool UsageItemKeynameCmp(const UsageItem &l, const UsageItem &r) {
 // Load cforms_file
 void LoadConjugation(
     const std::string &filename,
-    std::map<std::string, std::vector<ConjugationType>> *output,
+    absl::btree_map<std::string, std::vector<ConjugationType>> *output,
     std::map<std::string, ConjugationType> *baseform_map) {
   InputFileStream ifs(filename.c_str());
   CHECK(ifs.good());
@@ -183,7 +184,7 @@ void LoadUsage(const std::string &filename,
 
   std::string line;
   std::vector<std::string> fields;
-  std::map<std::string, int> conjugation_id_map;
+  absl::btree_map<std::string, int> conjugation_id_map;
 
   int conjugation_id = 0;
   while (!std::getline(ifs, line).fail()) {
@@ -202,7 +203,7 @@ void LoadUsage(const std::string &filename,
     std::string tmp = ((fields[3] == "*") ? "" : fields[3]);
     Util::StringReplace(tmp, "\\n", "\n", true, &item.meaning);
 
-    std::map<std::string, int>::iterator it =
+    absl::btree_map<std::string, int>::iterator it =
         conjugation_id_map.find(item.conjugation);
     if (it == conjugation_id_map.end()) {
       conjugation_id_map.insert(
@@ -247,7 +248,7 @@ void RemoveBaseformConjugationSuffix(
   }
 }
 
-uint32_t Lookup(const std::map<std::string, uint32_t> &m,
+uint32_t Lookup(const absl::btree_map<std::string, uint32_t> &m,
                 const std::string &key) {
   const auto iter = m.find(key);
   CHECK(iter != m.end()) << "Cannot find key=" << key;
@@ -258,7 +259,7 @@ void Convert() {
   CHECK(Util::IsLittleEndian());
 
   // Load cforms_file
-  std::map<std::string, std::vector<ConjugationType>> inflection_map;
+  absl::btree_map<std::string, std::vector<ConjugationType>> inflection_map;
   std::map<std::string, ConjugationType> baseform_map;
   LoadConjugation(absl::GetFlag(FLAGS_cforms_file), &inflection_map,
                   &baseform_map);
@@ -273,7 +274,7 @@ void Convert() {
 
   // Assign unique index to every string data.  The same string share the same
   // index, so the data is slightly compressed.
-  std::map<std::string, uint32_t> string_index;
+  absl::btree_map<std::string, uint32_t> string_index;
   {
     // Collect all the strings while assigning temporary index 0.
     string_index[""] = 0;

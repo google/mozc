@@ -40,6 +40,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
@@ -146,7 +147,7 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
   size_t mblen = 0;
   const char32 ucs4 = Util::Utf8ToUcs4(
       source_char.data(), source_char.data() + source_char.size(), &mblen);
-  const std::string value = Util::StringPrintf("U+%04X", ucs4);
+  const std::string value = absl::StrFormat("U+%04X", ucs4);
 
   const std::string &key = segments->conversion_segment(0).key();
   Segment *segment = segments->mutable_conversion_segment(0);

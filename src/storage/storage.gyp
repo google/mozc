@@ -43,6 +43,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../base/base.gyp:encryptor',
         '../base/base_test.gyp:clock_mock',

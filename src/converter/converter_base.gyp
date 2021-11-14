@@ -81,6 +81,7 @@
         'segments.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction_base.gyp:suggestion_filter',

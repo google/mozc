@@ -40,6 +40,7 @@
 #include "base/port.h"
 #include "base/scoped_handle.h"
 #include "base/thread.h"
+#include "absl/synchronization/mutex.h"
 
 // Usage:
 //
@@ -54,8 +55,6 @@
 
 namespace mozc {
 
-class Mutex;
-
 class ProcessWatchDog : public Thread {
  public:
   enum SignalType {
@@ -64,23 +63,23 @@ class ProcessWatchDog : public Thread {
     PROCESS_NOT_FOUND_SIGNALED = 3,      // process id was not found
     PROCESS_ACCESS_DENIED_SIGNALED = 4,  // operation was not allowed
     PROCESS_ERROR_SIGNALED = 5,         // unknown error in getting process info
-    THREAD_SIGNALED = 6,                 // thread is signaled
-    THREAD_NOT_FOUND_SIGNALED = 7,       // thread id was not found
-    THREAD_ACCESS_DENIED_SIGNALED = 8,   // operation was not allowed
-    THREAD_ERROR_SIGNALED = 9,           // unknown error in getting thread info
-    TIMEOUT_SIGNALED = 10,               // timeout is signaled
+    THREAD_SIGNALED = 6,                // thread is signaled
+    THREAD_NOT_FOUND_SIGNALED = 7,      // thread id was not found
+    THREAD_ACCESS_DENIED_SIGNALED = 8,  // operation was not allowed
+    THREAD_ERROR_SIGNALED = 9,          // unknown error in getting thread info
+    TIMEOUT_SIGNALED = 10,              // timeout is signaled
   };
 
 #ifdef OS_WIN
   typedef uint32 ProcessID;
   typedef uint32 ThreadID;
-#else
+#else   // OS_WIN
   typedef pid_t ProcessID;
   // Linux/Mac has no way to export ThreadID to other process.
   // For instance, Mac's thread id is just a pointer to the some
   // internal data structure (_opaque_pthread_t*).
   typedef uint32_t ThreadID;
-#endif
+#endif  // OS_WIN
 
   static constexpr ProcessID UnknownProcessID = static_cast<ProcessID>(-1);
   static constexpr ThreadID UnknownThreadID = static_cast<ThreadID>(-1);
@@ -110,12 +109,12 @@ class ProcessWatchDog : public Thread {
  private:
 #ifdef OS_WIN
   ScopedHandle event_;
-#endif
+#endif  // OS_WIN
   ProcessID process_id_;
   ThreadID thread_id_;
   int timeout_;
   volatile bool is_finished_;
-  std::unique_ptr<Mutex> mutex_;
+  absl::Mutex mutex_;
 };
 
 }  // namespace mozc

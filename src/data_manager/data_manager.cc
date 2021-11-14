@@ -106,7 +106,7 @@ std::string DataManager::StatusCodeToString(Status code) {
       s.assign("Status::UNKNOWN");
       break;
   }
-  s.append(Util::StringPrintf("(%d)", static_cast<int>(code)));
+  s.append(absl::StrFormat("(%d)", static_cast<int>(code)));
   return s;
 }
 

@@ -48,10 +48,13 @@
 #include "base/file_util.h"
 #include "base/init_mozc.h"
 #include "base/logging.h"
+#include "base/status.h"
 #include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "data_manager/serialized_dictionary.h"
 #include "rewriter/dictionary_generator.h"
+#include "absl/container/btree_map.h"
+#include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
@@ -67,7 +70,7 @@ namespace mozc {
 namespace {
 
 void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
-                   std::map<std::string, uint16_t> *sorting_map) {
+                   absl::btree_map<std::string, uint16_t> *sorting_map) {
   CHECK(sorting_map);
   sorting_map->clear();
   std::string line;
@@ -104,15 +107,15 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
   }
 }
 
-void AddSymbolToDictionary(const std::string &pos, const std::string &value,
-                           const std::vector<std::string> &keys,
-                           const std::string &description,
-                           const std::string &additional_description,
-                           const std::map<std::string, uint16_t> &sorting_map,
-                           rewriter::DictionaryGenerator *dictionary) {
+void AddSymbolToDictionary(
+    const std::string &pos, const std::string &value,
+    const std::vector<std::string> &keys, const std::string &description,
+    const std::string &additional_description,
+    const absl::btree_map<std::string, uint16_t> &sorting_map,
+    rewriter::DictionaryGenerator *dictionary) {
   // use first char of value as sorting key.
   const auto first_value = std::string(Util::Utf8SubString(value, 0, 1));
-  std::map<std::string, uint16_t>::const_iterator itr =
+  absl::btree_map<std::string, uint16_t>::const_iterator itr =
       sorting_map.find(first_value);
   uint16_t sorting_key = 0;
   if (itr == sorting_map.end()) {
@@ -151,8 +154,8 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
                     const std::string &sorting_map_file,
                     const std::string &ordering_rule_file,
                     rewriter::DictionaryGenerator *dictionary) {
-  std::set<std::string> seen;
-  std::map<std::string, uint16_t> sorting_map;
+  absl::btree_set<std::string> seen;
+  absl::btree_map<std::string, uint16_t> sorting_map;
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
   InputFileStream ifs(symbol_dictionary_file.c_str());
@@ -232,8 +235,7 @@ int main(int argc, char **argv) {
   mozc::SerializedDictionary::CompileToFiles(
       tmp_text_file, absl::GetFlag(FLAGS_output_token_array),
       absl::GetFlag(FLAGS_output_string_array));
-  absl::Status s = mozc::FileUtil::Unlink(tmp_text_file);
-  CHECK(s.ok()) << s;
+  CHECK_OK(mozc::FileUtil::Unlink(tmp_text_file));
 
   return 0;
 }

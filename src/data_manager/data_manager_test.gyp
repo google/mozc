@@ -73,6 +73,7 @@
         'dataset_reader_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:testing',

@@ -38,12 +38,12 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "base/unnamed_event.h"
 #include "base/util.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -178,7 +178,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   ~SchedulerImpl() override { RemoveAllJobs(); }
 
   void RemoveAllJobs() override {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     jobs_.clear();
   }
 
@@ -191,7 +191,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   }
 
   bool AddJob(const Scheduler::JobSetting &job_setting) override {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
 
     ValidateSetting(job_setting);
     if (HasJob(job_setting.name())) {
@@ -222,7 +222,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   }
 
   bool RemoveJob(const std::string &name) override {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     if (!HasJob(name)) {
       LOG(WARNING) << "Job " << name << " is not registered";
       return false;
@@ -274,7 +274,7 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   }
 
   std::map<std::string, Job> jobs_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 
   DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);
 };

@@ -45,16 +45,15 @@
 
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
 #include "base/util.h"
 #ifdef OS_WIN
 #include "base/win_sandbox.h"
 #endif  // OS_WIN
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
-
 namespace {
 
 std::string CreateProcessMutexFileName(const char *name) {
@@ -163,7 +162,7 @@ namespace {
 class FileLockManager {
  public:
   bool Lock(const std::string &filename, int *fd) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
 
     if (fd == nullptr) {
       LOG(ERROR) << "fd is nullptr";
@@ -206,7 +205,7 @@ class FileLockManager {
   }
 
   void UnLock(const std::string &filename) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     std::map<std::string, int>::iterator it = fdmap_.find(filename);
     if (it == fdmap_.end()) {
       LOG(ERROR) << filename << " is not locked";
@@ -228,7 +227,7 @@ class FileLockManager {
   }
 
  private:
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::map<std::string, int> fdmap_;
 };
 

@@ -55,6 +55,7 @@
         'client_pool.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
         '../../client/client.gyp:client',
         '../../composer/composer.gyp:key_parser',

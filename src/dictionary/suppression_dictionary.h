@@ -34,7 +34,7 @@
 #include <set>
 #include <string>
 
-#include "base/mutex.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace dictionary {
@@ -91,7 +91,8 @@ class SuppressionDictionary final {
   bool has_key_empty_;
   bool has_value_empty_;
   mutable std::atomic<bool> locked_;
-  Mutex mutex_;  // TODO(noriyukit): Check if this mutex is still necessary.
+  // TODO(noriyukit): Check if this mutex is still necessary.
+  absl::Mutex mutex_;
 };
 
 class SuppressionDictionaryLock final {

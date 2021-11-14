@@ -158,7 +158,6 @@ cc_library_mozc(
         "//base:file_util",
         "//base:hash",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:singleton",
         "//base:thread",
@@ -168,6 +167,7 @@ cc_library_mozc(
         "//protocol:user_dictionary_storage_cc_proto",
         "//usage_stats",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -375,6 +375,7 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -396,6 +397,7 @@ cc_test_mozc(
         "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -514,7 +516,6 @@ cc_test_mozc(
         ":dictionary_token",
         ":pos_matcher_lib",
         ":text_dictionary_loader",
-        "//base:file_stream",
         "//base:file_util",
         "//base:util",
         "//data_manager/testing:mock_data_manager",
@@ -674,8 +675,8 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -781,6 +782,7 @@ cc_library_mozc(
         "//testing",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

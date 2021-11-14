@@ -36,7 +36,6 @@
 #include <fstream>
 #include <string>
 
-#include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "testing/base/public/gmock.h"
@@ -44,6 +43,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 
 // Ad-hoc workadound against macro problem on Windows.
 // On Windows, following macros, defined when you include <Windows.h>,
@@ -63,11 +63,8 @@
 namespace mozc {
 namespace {
 
-void CreateTestFile(const std::string &filename, const std::string &data) {
-  OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::trunc);
-  ofs << data;
-  EXPECT_TRUE(ofs.good());
-}
+#define CreateTestFile(filename, data) \
+  ASSERT_OK(::mozc::FileUtil::SetContents(filename, data))
 
 TEST(FileUtilTest, CreateDirectory) {
   EXPECT_OK(FileUtil::DirectoryExists(absl::GetFlag(FLAGS_test_tmpdir)));
@@ -129,7 +126,7 @@ TEST(FileUtilTest, Unlink) {
   std::wstring wfilepath;
   Util::Utf8ToWide(filepath, &wfilepath);
   for (size_t i = 0; i < std::size(kTestAttributeList); ++i) {
-    SCOPED_TRACE(Util::StringPrintf("AttributeTest %zd", i));
+    SCOPED_TRACE(absl::StrFormat("AttributeTest %zd", i));
     CreateTestFile(filepath, "attribute_test");
     EXPECT_NE(FALSE,
               ::SetFileAttributesW(wfilepath.c_str(), kTestAttributeList[i]));
@@ -344,11 +341,9 @@ TEST(FileUtilTest, AtomicRename) {
   EXPECT_OK(FileUtil::FileExists(to));
 
   {
-    InputFileStream ifs(to.c_str());
-    EXPECT_TRUE(ifs.good());
-    std::string line;
-    std::getline(ifs, line);
-    EXPECT_EQ("test", line);
+    absl::StatusOr<std::string> content = FileUtil::GetContents(to);
+    ASSERT_OK(content);
+    EXPECT_EQ("test", *content);
   }
 
   EXPECT_FALSE(FileUtil::AtomicRename(from, to).ok());
@@ -524,6 +519,55 @@ TEST(FileUtilTest, GetModificationTime) {
 
   // Cleanup
   ASSERT_OK(FileUtil::Unlink(path));
+}
+
+TEST(FileUtilTest, GetAndSetContents) {
+  const std::string filename =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.txt");
+
+  // File doesn't exist yet.
+  std::string content;
+  EXPECT_TRUE(absl::IsNotFound(FileUtil::GetContents(filename, &content)));
+
+  // Basic write and read test.
+  ASSERT_OK(FileUtil::SetContents(filename, "test"));
+  FileUnlinker unlinker(filename);
+  EXPECT_OK(FileUtil::GetContents(filename, &content));
+  EXPECT_EQ("test", content);
+
+  // Overwrite test.
+  ASSERT_OK(FileUtil::SetContents(filename, "more tests!"));
+  EXPECT_OK(FileUtil::GetContents(filename, &content));
+  EXPECT_EQ("more tests!", content);
+
+  // Text mode write.
+  ASSERT_OK(FileUtil::SetContents(filename, "test\ntest\n", std::ios::out));
+  EXPECT_OK(FileUtil::GetContents(filename, &content));
+#ifdef OS_WIN
+  EXPECT_EQ("test\r\ntest\r\n", content);
+#else   // OS_WIN
+  EXPECT_EQ("test\ntest\n", content);
+#endif  // OS_WIN
+
+  // Text mode read.
+  ASSERT_OK(FileUtil::SetContents(filename, "test\r\ntest\r\n"));
+  EXPECT_OK(FileUtil::GetContents(filename, &content, std::ios::in));
+#ifdef OS_WIN
+  EXPECT_EQ("test\ntest\n", content);
+#else   // OS_WIN
+  EXPECT_EQ("test\r\ntest\r\n", content);
+#endif  // OS_WIN
+}
+
+TEST(FileUtilTest, FileUnlinker) {
+  const std::string filename =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "test.txt");
+  ASSERT_OK(FileUtil::SetContents(filename, "test"));
+  {
+    FileUnlinker unlinker(filename);
+    EXPECT_OK(FileUtil::FileExists(filename));
+  }
+  EXPECT_FALSE(FileUtil::FileExists(filename).ok());
 }
 
 }  // namespace

@@ -145,14 +145,10 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
       ' ', ' ', '\r', ' ', '\n', ' ', '\r', '\n', ' ', '\0', ' ',
   };
   constexpr size_t kBinaryDataSize = sizeof(kBinaryData);
-  {
-    OutputFileStream ofs(test_file_path.c_str(),
-                         std::ios::out | std::ios::binary);
-    ofs.write(kBinaryData, kBinaryDataSize);
-  }
-
+  ASSERT_OK(FileUtil::SetContents(
+      test_file_path, absl::string_view(kBinaryData, kBinaryDataSize)));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
-
+  FileUnlinker unlinker(test_file_path);
   {
     std::unique_ptr<std::istream> ifs(ConfigFileStream::OpenReadBinary(
         "user://" + std::string(kTestFileName)));
@@ -165,10 +161,6 @@ TEST_F(ConfigFileStreamTest, OpenReadBinary) {
     }
     EXPECT_TRUE(IsEof(ifs.get()));
   }
-
-  // Remove test file just in case.
-  EXPECT_OK(FileUtil::Unlink(test_file_path));
-  EXPECT_FALSE(FileUtil::FileExists(test_file_path).ok());
 }
 
 TEST_F(ConfigFileStreamTest, OpenReadText) {
@@ -181,14 +173,11 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
   constexpr char kSourceTextData[] = {
       'a', 'b', '\r', 'c', '\n', 'd', '\r', '\n', 'e',
   };
-  {
-    // Use |ios::binary| to preserve the line-end character.
-    OutputFileStream ofs(test_file_path.c_str(),
-                         std::ios::out | std::ios::binary);
-    ofs.write(kSourceTextData, sizeof(kSourceTextData));
-  }
-
+  ASSERT_OK(FileUtil::SetContents(
+      test_file_path,
+      absl::string_view(kSourceTextData, sizeof(kSourceTextData))));
   ASSERT_OK(FileUtil::FileExists(test_file_path));
+  FileUnlinker unlinker(test_file_path);
 
 #ifdef OS_WIN
 #define TRAILING_CARRIAGE_RETURN ""
@@ -215,10 +204,6 @@ TEST_F(ConfigFileStreamTest, OpenReadText) {
           << "failed at line: " << line_number;
     }
   }
-
-  // Remove test file just in case.
-  EXPECT_OK(FileUtil::Unlink(test_file_path));
-  EXPECT_FALSE(FileUtil::FileExists(test_file_path).ok());
 }
 
 }  // namespace mozc

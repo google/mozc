@@ -32,7 +32,6 @@
 #include <cstring>
 #include <memory>
 
-#include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/util.h"
 #include "testing/base/public/gmock.h"
@@ -52,12 +51,8 @@ TEST(MmapTest, MmapTest) {
     ASSERT_OK(FileUtil::UnlinkIfExists(filename));
     auto buf = std::make_unique<char[]>(kFileNameSize[i]);
     memset(buf.get(), 0, kFileNameSize[i]);
-
-    {
-      OutputFileStream ofs(filename.c_str(), std::ios::out | std::ios::binary);
-      EXPECT_TRUE(ofs.good());
-      ofs.write(buf.get(), kFileNameSize[i]);
-    }
+    ASSERT_OK(FileUtil::SetContents(
+        filename, absl::string_view(buf.get(), kFileNameSize[i])));
 
     Util::GetRandomSequence(buf.get(), kFileNameSize[i]);
 

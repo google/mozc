@@ -36,6 +36,7 @@
 #include "composer/key_parser.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 using commands::KeyEvent;
@@ -54,12 +55,12 @@ namespace {
       const std::string expected_value =
           (expected_key_code == -1)
               ? "None"
-              : Util::StringPrintf("%c (%d)", expected_key_code,
-                                   expected_key_code);
+              : absl::StrFormat("%c (%d)", expected_key_code,
+                                expected_key_code);
       const std::string actual_value =
           (actual_key_code == -1)
               ? std::string("None")
-              : Util::StringPrintf("%c (%d)", actual_key_code, actual_key_code);
+              : absl::StrFormat("%c (%d)", actual_key_code, actual_key_code);
       return ::testing::AssertionFailure()
              << "Key codes are not same\n"
              << "Expected: " << expected_value << "\n"
@@ -299,7 +300,7 @@ TEST(KeyEventUtilTest, RemoveModifiers) {
   };
 
   for (size_t i = 0; i < std::size(kRemoveModifiersTestData); ++i) {
-    SCOPED_TRACE(Util::StringPrintf("index = %d", static_cast<int>(i)));
+    SCOPED_TRACE(absl::StrFormat("index = %d", static_cast<int>(i)));
     const RemoveModifiersTestData &data = kRemoveModifiersTestData[i];
 
     KeyEvent input, remove, output;
@@ -468,7 +469,7 @@ TEST(KeyEventUtilTest, IsModifiers) {
 
   for (size_t i = 0; i < std::size(kIsModifiersTestData); ++i) {
     const IsModifiersTestData &data = kIsModifiersTestData[i];
-    SCOPED_TRACE(Util::StringPrintf("index: %d", static_cast<int>(i)));
+    SCOPED_TRACE(absl::StrFormat("index: %d", static_cast<int>(i)));
 
     EXPECT_EQ(data.is_alt, KeyEventUtil::IsAlt(data.modifiers));
     EXPECT_EQ(data.is_ctrl, KeyEventUtil::IsCtrl(data.modifiers));

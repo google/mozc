@@ -61,6 +61,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
@@ -2854,7 +2855,7 @@ TEST_F(SessionTest, ConvertNextPage_PrevPage) {
     for (int page_index = 0; page_index < 3; ++page_index) {
       for (int cand_index = 0; cand_index < 9; ++cand_index) {
         segment->add_candidate()->value =
-            Util::StringPrintf("page%d-cand%d", page_index, cand_index);
+            absl::StrFormat("page%d-cand%d", page_index, cand_index);
       }
     }
     GetConverterMock()->SetStartConversionForRequest(&segments, true);

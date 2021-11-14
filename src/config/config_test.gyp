@@ -36,6 +36,7 @@
         'config_handler_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
         'config.gyp:config_handler',

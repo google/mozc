@@ -47,6 +47,7 @@
         'ios_engine.h',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base_core',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',

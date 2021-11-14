@@ -36,6 +36,7 @@
 #include "dictionary/dictionary_token.h"
 #include "testing/base/public/gunit.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -113,9 +114,9 @@ CheckMultiTokensExistenceCallback::OnToken(absl::string_view,  // key
 }
 
 std::string PrintToken(const Token &token) {
-  return Util::StringPrintf(
-      "{key:%s, val:%s, cost:%d, lid:%d, rid:%d, attr:%d}", token.key.c_str(),
-      token.value.c_str(), token.cost, token.lid, token.rid, token.attributes);
+  return absl::StrFormat("{key:%s, val:%s, cost:%d, lid:%d, rid:%d, attr:%d}",
+                         token.key.c_str(), token.value.c_str(), token.cost,
+                         token.lid, token.rid, token.attributes);
 }
 
 std::string PrintTokens(const std::vector<Token> &tokens) {

@@ -48,6 +48,7 @@
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/pos_matcher.h"
 #include "prediction/suggestion_filter.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
@@ -280,9 +281,9 @@ void DataManagerTestBase::CounterSuffixTest_ValidateTest() {
 void DataManagerTestBase::TypingModelTest() {
   // Check if typing models are included in the data set.
   for (const auto &key_and_fname : typing_model_files_) {
-    InputFileStream ifs(key_and_fname.second.c_str(),
-                        std::ios_base::in | std::ios_base::binary);
-    EXPECT_EQ(ifs.Read(), data_manager_->GetTypingModel(key_and_fname.first));
+    std::string content;
+    ASSERT_OK(FileUtil::GetContents(key_and_fname.second, &content));
+    EXPECT_EQ(content, data_manager_->GetTypingModel(key_and_fname.first));
   }
 }
 

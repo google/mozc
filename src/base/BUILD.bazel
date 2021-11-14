@@ -196,12 +196,14 @@ cc_library_mozc(
         default = [
             "//base",
             "//base:logging_extensions",
+            "@com_google_absl//absl/synchronization",
         ],
         linux = [
             ":clock",
             ":const",
             ":mutex",
             ":singleton",
+            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
         oss = [
@@ -209,6 +211,7 @@ cc_library_mozc(
             ":const",
             ":mutex",
             ":singleton",
+            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
         wasm = [
@@ -216,6 +219,7 @@ cc_library_mozc(
             ":const",
             ":mutex",
             ":singleton",
+            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
     ) + [
@@ -470,15 +474,7 @@ cc_library_mozc(
     name = "mutex",
     srcs = ["mutex.cc"],
     hdrs = ["mutex.h"],
-    linkopts = select_mozc(
-        linux = ["-pthread"],
-    ),
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":port",
-        ":win_util",
-        "@com_google_absl//absl/base:core_headers",
-    ],
 )
 
 cc_test_mozc(
@@ -489,13 +485,11 @@ cc_test_mozc(
     ],
     requires_full_emulation = False,
     deps = [
-        ":clock",
         ":logging",
         ":mutex",
         ":thread",
         ":util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -662,7 +656,6 @@ cc_test_mozc(
     srcs = ["mmap_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
         ":file_util",
         ":mmap",
         ":util",
@@ -736,7 +729,6 @@ cc_test_mozc(
     srcs = ["file_util_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":file_stream",
         ":file_util",
         ":logging",
         ":number_util",
@@ -744,6 +736,7 @@ cc_test_mozc(
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -774,6 +767,7 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         android = [
             # android_util.h includes this for FRIEND_TEST
@@ -854,6 +848,7 @@ cc_library_mozc(
         ":singleton",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -1030,6 +1025,7 @@ cc_test_mozc(
         ":util",
         ":version",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -1096,6 +1092,8 @@ cc_library_mozc(
         ":system_util",
         ":util",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/strings:str_format",
     ] + select_mozc(
         ios = [":mac_util"],
     ),
@@ -1125,10 +1123,10 @@ cc_binary_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":encryptor",
-        ":file_stream",
+        ":file_util",
         ":init_mozc",
         ":logging",
-        ":mmap",
+        ":status",
         ":util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
@@ -1163,6 +1161,7 @@ cc_library_mozc(
         ":thread",
         ":unnamed_event",
         ":util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -1328,6 +1327,7 @@ cc_test_mozc(
         ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -1441,7 +1441,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":embedded_file",
-        ":file_stream",
+        ":file_util",
         ":port",
         "//testing:gunit_main",
         "//testing:mozctest",
@@ -1453,9 +1453,10 @@ cc_library_mozc(
     srcs = ["serialized_string_array.cc"],
     hdrs = ["serialized_string_array.h"],
     deps = [
-        ":file_stream",
+        ":file_util",
         ":logging",
         ":port",
+        ":status",
         ":util",
         "@com_google_absl//absl/strings",
     ],
@@ -1470,5 +1471,13 @@ cc_test_mozc(
         ":serialized_string_array",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "status",
+    hdrs = ["status.h"],
+    deps = [
+        ":logging",
     ],
 )

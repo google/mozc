@@ -62,6 +62,12 @@ bazel test base:util_test --config oss_linux -c dbg
 
 * `util_test` is defined in `base/BUILD.bazel`.
 
+The `--test_arg=--logtostderr --test_output=all` flags shows the output of
+unitests to stderr.
+
+```
+bazel test base:util_test --config oss_linux --test_arg=--logtostderr --test_output=all
+```
 
 ### Build Mozc on other Linux environment
 

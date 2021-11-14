@@ -40,6 +40,7 @@
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -178,7 +179,7 @@ inline void TokenDecodeIterator::NextInternal() {
 
   if (token_info_.accent_encoding_type == TokenInfo::EMBEDDED_IN_TOKEN) {
     token_.value.append(1, '_').append(
-        Util::StringPrintf("%d", token_info_.accent_type));
+        absl::StrFormat("%d", token_info_.accent_type));
   }
 
   if (token_info_.pos_type == TokenInfo::FREQUENT_POS) {

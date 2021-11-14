@@ -47,12 +47,12 @@ cc_library_mozc(
         "//base:clock",
         "//base:config_file_stream",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:singleton",
         "//base:system_util",
         "//base:version",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -77,6 +77,7 @@ cc_test_mozc(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -90,6 +91,7 @@ cc_library_mozc(
         "//base:mutex",
         "//base:singleton",
         "//base:system_util",
+        "@com_google_absl//absl/synchronization",
     ] + select_mozc(
         ios = ["//base:mac_util"],
     ) + [

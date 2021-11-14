@@ -35,12 +35,12 @@
 
 #include "base/cpu_stats.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "client/client_mock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -50,7 +50,7 @@ class TestCPUStats : public CPUStatsInterface {
   TestCPUStats() : cpu_loads_index_(0) {}
 
   float GetSystemCPULoad() override {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     CHECK_LT(cpu_loads_index_, cpu_loads_.size());
     return cpu_loads_[cpu_loads_index_++];
   }
@@ -62,13 +62,13 @@ class TestCPUStats : public CPUStatsInterface {
   }
 
   void SetCPULoads(const std::vector<float> &cpu_loads) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     cpu_loads_index_ = 0;
     cpu_loads_ = cpu_loads;
   }
 
  private:
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::vector<float> cpu_loads_;
   int cpu_loads_index_;
 };

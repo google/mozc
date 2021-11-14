@@ -120,6 +120,7 @@ cc_library_mozc(
         "//base:mutex",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -196,6 +197,7 @@ cc_binary_mozc(
         "//protocol:commands_cc_proto",
         "//session:random_keyevents_generator",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -244,6 +246,7 @@ cc_binary_mozc(
         "//base:util",
         "//evaluation:scorer",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

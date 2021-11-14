@@ -117,7 +117,6 @@ cc_test_mozc(
         ":lru_storage",
         "//base",
         "//base:clock_mock",
-        "//base:file_stream",
         "//base:file_util",
         "//base:logging",
         "//base:port",
@@ -216,6 +215,7 @@ cc_library_mozc(
         "//base:port",
         "//base:singleton",
         "//base:system_util",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

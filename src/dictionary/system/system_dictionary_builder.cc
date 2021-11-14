@@ -37,6 +37,7 @@
 #include <sstream>
 
 #include "base/file_stream.h"
+#include "base/file_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -78,8 +79,11 @@ struct TokenGreaterThan {
 
 void WriteSectionToFile(const DictionaryFileSection &section,
                         const std::string &filename) {
-  OutputFileStream ofs(filename.c_str(), std::ios::binary | std::ios::out);
-  ofs.write(section.ptr, section.len);
+  if (absl::Status s = FileUtil::SetContents(
+          filename, absl::string_view(section.ptr, section.len));
+      !s.ok()) {
+    LOG(ERROR) << "Cannot write a section to " << filename;
+  }
 }
 
 }  // namespace

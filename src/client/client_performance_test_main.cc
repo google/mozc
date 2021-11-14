@@ -47,6 +47,7 @@
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 ABSL_FLAG(std::string, server_path, "", "specify server path");
 ABSL_FLAG(std::string, log_path, "", "specify log output file path");
@@ -182,10 +183,9 @@ std::string GetBasicStats(const std::vector<uint32_t> times) {
     med_time = tmp[tmp.size() / 2];
   }
 
-  return Util::StringPrintf(
-      "size=%d total=%d avg=%d max=%d min=%d st=%d med=%d",
-      static_cast<int>(times.size()), total_time, avg_time, max_time, min_time,
-      sd_time, med_time);
+  return absl::StrFormat("size=%d total=%d avg=%d max=%d min=%d st=%d med=%d",
+                         static_cast<int>(times.size()), total_time, avg_time,
+                         max_time, min_time, sd_time, med_time);
 }
 
 class PreeditCommon : public TestScenarioInterface {

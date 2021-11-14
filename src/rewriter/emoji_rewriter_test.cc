@@ -50,6 +50,7 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/container/btree_map.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -160,7 +161,7 @@ class TestDataManager : public testing::MockDataManager {
  public:
   TestDataManager() {
     // Collect all the strings and temporarily assign 0 as index.
-    std::map<std::string, size_t> string_index;
+    absl::btree_map<std::string, size_t> string_index;
     for (const EmojiData &data : kTestEmojiList) {
       string_index[data.key] = 0;
       string_index[data.unicode] = 0;

@@ -38,7 +38,6 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/number_util.h"
 #include "base/port.h"
 #include "config/stats_config_util.h"
@@ -47,15 +46,16 @@
 #include "protocol/state.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats.pb.h"
-
-using mozc::protocol::SessionState;
-using mozc::usage_stats::UsageStats;
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace session {
-
 namespace {
-Mutex g_stats_cache_mutex;  // NOLINT
+
+using ::mozc::protocol::SessionState;
+using ::mozc::usage_stats::UsageStats;
+
+ABSL_CONST_INIT absl::Mutex g_stats_cache_mutex(absl::kConstInit);
 
 constexpr size_t kMaxSession = 64;
 
@@ -124,7 +124,7 @@ bool SessionUsageObserver::SaveCachedStats(void *data) {
   UsageCache *cache = reinterpret_cast<UsageCache *>(data);
 
   {
-    scoped_lock l(&g_stats_cache_mutex);
+    absl::MutexLock l(&g_stats_cache_mutex);
     if (!cache->touch_event.empty()) {
       UsageStats::StoreTouchEventStats("VirtualKeyboardStats",
                                        cache->touch_event);
@@ -405,7 +405,7 @@ void SessionUsageObserver::StoreTouchEventStats(
   if (!config::StatsConfigUtil::IsEnabled()) {
     return;
   }
-  scoped_lock l(&g_stats_cache_mutex);
+  absl::MutexLock l(&g_stats_cache_mutex);
 
   usage_stats::Stats::TouchEventStats *touch_event_stats =
       &(*touch_event_stats_map)[touch_event.source_id()];

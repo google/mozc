@@ -45,7 +45,7 @@
 #include <windows.h>
 #include <psapi.h>  // GetModuleFileNameExW
 // clang-format on
-#else
+#else  // OS_WIN
 // For stat system call
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@
 #include <map>
 #ifdef OS_WIN
 #include <memory>  // for std::unique_ptr
-#endif
+#endif             // OS_WIN
 
 #include "base/const.h"
 #include "base/file_stream.h"
@@ -71,7 +71,6 @@
 #if defined(__APPLE__) || defined(OS_IOS)
 #include "base/mac_util.h"
 #endif  // __APPLE__ || OS_IOS
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
@@ -84,6 +83,7 @@
 #endif  // OS_WIN
 #include "ipc/ipc.h"
 #include "ipc/ipc.pb.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -96,9 +96,9 @@ constexpr size_t kKeySize = 32;
 std::string GetIPCKeyFileName(const std::string &name) {
 #ifdef OS_WIN
   std::string basename;
-#else
+#else   // OS_WIN
   std::string basename = ".";  // hidden file
-#endif
+#endif  // OS_WIN
   basename += name + ".ipc";
   return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), basename);
 }
@@ -132,10 +132,10 @@ std::string CreateIPCKey() {
   for (int i = 0; i < sizeof(buf) && i < sha1.size(); ++i) {
     buf[i] = sha1.at(i);
   }
-#else
+#else   // OS_WIN
   // get 128 bit key: Note that collision will happen.
   Util::GetRandomSequence(buf, sizeof(buf));
-#endif
+#endif  // OS_WIN
 
   // escape
   for (size_t i = 0; i < sizeof(buf); ++i) {
@@ -152,7 +152,7 @@ std::string CreateIPCKey() {
 class IPCPathManagerMap {
  public:
   IPCPathManager *GetIPCPathManager(const std::string &name) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     std::map<std::string, IPCPathManager *>::const_iterator it =
         manager_map_.find(name);
     if (it != manager_map_.end()) {
@@ -166,7 +166,7 @@ class IPCPathManagerMap {
   IPCPathManagerMap() {}
 
   ~IPCPathManagerMap() {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     for (std::map<std::string, IPCPathManager *>::iterator it =
              manager_map_.begin();
          it != manager_map_.end(); ++it) {
@@ -177,14 +177,13 @@ class IPCPathManagerMap {
 
  private:
   std::map<std::string, IPCPathManager *> manager_map_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
 };
 
 }  // namespace
 
 IPCPathManager::IPCPathManager(const std::string &name)
-    : mutex_(new Mutex),
-      ipc_path_info_(new ipc::IPCPathInfo),
+    : ipc_path_info_(new ipc::IPCPathInfo),
       name_(name),
       server_pid_(0),
       last_modified_(-1) {}
@@ -198,7 +197,11 @@ IPCPathManager *IPCPathManager::GetIPCPathManager(const std::string &name) {
 }
 
 bool IPCPathManager::CreateNewPathName() {
-  scoped_lock l(mutex_.get());
+  absl::MutexLock l(&mutex_);
+  return CreateNewPathNameUnlocked();
+}
+
+bool IPCPathManager::CreateNewPathNameUnlocked() {
   if (ipc_path_info_->key().empty()) {
     ipc_path_info_->set_key(CreateIPCKey());
   }
@@ -206,17 +209,15 @@ bool IPCPathManager::CreateNewPathName() {
 }
 
 bool IPCPathManager::SavePathName() {
-  scoped_lock l(mutex_.get());
+  absl::MutexLock l(&mutex_);
   if (path_mutex_ != nullptr) {
     return true;
   }
 
   path_mutex_ = absl::make_unique<ProcessMutex>("ipc");
-
   path_mutex_->set_lock_filename(GetIPCKeyFileName(name_));
 
-  // a little tricky as CreateNewPathName() tries mutex lock
-  CreateNewPathName();
+  CreateNewPathNameUnlocked();
 
   // set the server version
   ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
@@ -225,10 +226,10 @@ bool IPCPathManager::SavePathName() {
 #ifdef OS_WIN
   ipc_path_info_->set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
   ipc_path_info_->set_thread_id(static_cast<uint32>(::GetCurrentThreadId()));
-#else
+#else   // OS_WIN
   ipc_path_info_->set_process_id(static_cast<uint32_t>(getpid()));
   ipc_path_info_->set_thread_id(0);
-#endif
+#endif  // OS_WIN
 
   std::string buf;
   if (!ipc_path_info_->SerializeToString(&buf)) {
@@ -271,10 +272,10 @@ bool IPCPathManager::LoadPathName() {
   ipc_path_info_->set_protocol_version(IPC_PROTOCOL_VERSION);
   ipc_path_info_->set_product_version(Version::GetMozcVersion());
   return true;
-#else
+#else   // defined(OS_WIN)
   LOG(ERROR) << "LoadPathName failed";
   return false;
-#endif
+#endif  // defined(OS_WIN)
 }
 
 bool IPCPathManager::GetPathName(std::string *ipc_name) const {
@@ -301,7 +302,7 @@ bool IPCPathManager::GetPathName(std::string *ipc_name) const {
 #ifdef OS_LINUX
   // On Linux, use abstract namespace which is independent of the file system.
   (*ipc_name)[0] = '\0';
-#endif
+#endif  // OS_LINUX
 
   ipc_name->append(ipc_path_info_->key());
   ipc_name->append(".");
@@ -323,13 +324,13 @@ uint32_t IPCPathManager::GetServerProcessId() const {
 }
 
 void IPCPathManager::Clear() {
-  scoped_lock l(mutex_.get());
+  absl::MutexLock l(&mutex_);
   ipc_path_info_->Clear();
 }
 
 bool IPCPathManager::IsValidServer(uint32_t pid,
                                    const std::string &server_path) {
-  scoped_lock l(mutex_.get());
+  absl::MutexLock l(&mutex_);
   if (pid == 0) {
     // For backward compatibility.
     return true;
@@ -447,8 +448,8 @@ bool IPCPathManager::ShouldReload() const {
   // In windows, no reloading mechanism is necessary because IPC files
   // are automatically removed.
   return false;
-#else
-  scoped_lock l(mutex_.get());
+#else   // OS_WIN
+  absl::MutexLock l(&mutex_);
 
   time_t last_modified = GetIPCFileTimeStamp();
   if (last_modified == last_modified_) {
@@ -464,7 +465,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
   // In windows, we don't need to get the exact file timestamp, so
   // just returns -1 at this time.
   return static_cast<time_t>(-1);
-#else
+#else   // OS_WIN
   const std::string filename = GetIPCKeyFileName(name_);
   struct stat filestat;
   if (::stat(filename.c_str(), &filestat) == -1) {
@@ -476,7 +477,7 @@ time_t IPCPathManager::GetIPCFileTimeStamp() const {
 }
 
 bool IPCPathManager::LoadPathNameInternal() {
-  scoped_lock l(mutex_.get());
+  absl::MutexLock l(&mutex_);
 
   // try the new file name first.
   const std::string filename = GetIPCKeyFileName(name_);
@@ -531,7 +532,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     }
   }
 
-#else
+#else   // OS_WIN
 
   InputFileStream is(filename.c_str(), std::ios::binary | std::ios::in);
   if (!is) {
@@ -543,7 +544,7 @@ bool IPCPathManager::LoadPathNameInternal() {
     LOG(ERROR) << "ParseFromStream failed";
     return false;
   }
-#endif
+#endif  // OS_WIN
 
   if (!IsValidKey(ipc_path_info_->key())) {
     LOG(ERROR) << "IPCServer::key is invalid";

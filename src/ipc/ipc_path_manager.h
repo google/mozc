@@ -32,20 +32,20 @@
 
 #include <cstdint>
 #ifdef OS_WIN
-#include <time.h>  // for time_t
-#else
-#include <sys/time.h>  // for time_t
-#endif                 // OS_WIN
+#include <time.h>
+#else  // OS_WIN
+#include <sys/time.h>
+#endif  // OS_WIN
 #ifdef OS_WIN
 #include <map>
 #endif  // OS_WIN
 #include <memory>
 #include <string>
 
-#include "base/mutex.h"
 #include "base/port.h"
 // For FRIEND_TEST
 #include "testing/base/public/gunit_prod.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 
@@ -124,11 +124,13 @@ class IPCPathManager {
   // Returns true if the ipc file is updated after it load.
   bool ShouldReload() const;
 
+  bool CreateNewPathNameUnlocked();
+
   // Returns the last modified timestamp of the IPC file.
   time_t GetIPCFileTimeStamp() const;
 
   std::unique_ptr<ProcessMutex> path_mutex_;  // lock ipc path file
-  std::unique_ptr<Mutex> mutex_;              // mutex for methods
+  mutable absl::Mutex mutex_;                 // mutex for methods
   std::unique_ptr<ipc::IPCPathInfo> ipc_path_info_;
   std::string name_;
   std::string server_path_;  // cache for server_path

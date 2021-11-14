@@ -49,6 +49,7 @@
       ],
       'dependencies': [
         'base_core',
+        'absl.gyp:absl_synchronization',
       ],
       'conditions': [
         ['OS=="mac"', {
@@ -120,6 +121,7 @@
         'singleton',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
+        'absl.gyp:absl_synchronization',
         'absl.gyp:absl_time',
       ],
       'conditions': [
@@ -277,6 +279,8 @@
         'password_manager.cc',
       ],
       'dependencies': [
+        'absl.gyp:absl_strings',
+        'absl.gyp:absl_synchronization',
         'base',
         'obfuscator_support',
       ],

@@ -182,8 +182,39 @@ class FileUtil {
   static absl::StatusOr<FileTimeStamp> GetModificationTime(
       const std::string &filename);
 
+  // Reads the contents of the file `filename` into `output`.
+  static absl::Status GetContents(
+      const std::string &filename, std::string *output,
+      std::ios_base::openmode mode = std::ios::binary);
+
+  // Reads the contents of the file `filename` and returns it.
+  static absl::StatusOr<std::string> GetContents(
+      const std::string &filename,
+      std::ios_base::openmode mode = std::ios::binary);
+
+  // Writes the data provided in `content` to the file `filename`, overwriting
+  // any existing content.
+  static absl::Status SetContents(
+      const std::string &filename, absl::string_view content,
+      std::ios_base::openmode mode = std::ios::binary);
+
   // Sets a mock for unittest.
   static void SetMockForUnitTest(FileUtilInterface *mock);
+};
+
+// RAII wrapper for a file. Unlinks the file when this instance goes out of
+// scope.
+class FileUnlinker final {
+ public:
+  explicit FileUnlinker(const std::string &filename) : filename_(filename) {}
+
+  FileUnlinker(const FileUnlinker &) = delete;
+  FileUnlinker &operator=(const FileUnlinker &) = delete;
+
+  ~FileUnlinker() { FileUtil::UnlinkOrLogError(filename_); }
+
+ private:
+  const std::string filename_;
 };
 
 }  // namespace mozc

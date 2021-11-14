@@ -54,6 +54,7 @@
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -384,8 +385,8 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {
     ++line_number;
-    SCOPED_TRACE(Util::StringPrintf("Scenario: %s [%s:%d]", line_text.c_str(),
-                                    scenario_path->c_str(), line_number));
+    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text.c_str(),
+                                 scenario_path->c_str(), line_number));
     ParseLine(*handler_, line_text);
   }
 }

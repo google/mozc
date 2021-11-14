@@ -52,6 +52,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace config {
@@ -507,11 +508,11 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     // background threads.
     for (size_t i = 0; i < set_threads.size(); ++i) {
       set_threads[i]->Start(
-          Util::StringPrintf("SetConfigThread%d", static_cast<int>(i)));
+          absl::StrFormat("SetConfigThread%d", static_cast<int>(i)));
     }
     for (size_t i = 0; i < get_threads.size(); ++i) {
       get_threads[i]->Start(
-          Util::StringPrintf("GetConfigThread%d", static_cast<int>(i)));
+          absl::StrFormat("GetConfigThread%d", static_cast<int>(i)));
     }
     // Wait for a while to see if everything goes well.
     Util::Sleep(kTestDurationMSec);

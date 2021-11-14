@@ -37,14 +37,13 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/thread.h"
 #include "base/util.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace ibus {
-
 namespace {
 
 class ScopedXcbGenericError {
@@ -486,7 +485,10 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   SelectionMonitorImpl(SelectionMonitorServer *server, size_t max_text_bytes)
       : server_(server), max_text_bytes_(max_text_bytes), quit_(false) {}
 
-  virtual ~SelectionMonitorImpl() {
+  SelectionMonitorImpl(const SelectionMonitorImpl &) = delete;
+  SelectionMonitorImpl &operator=(const SelectionMonitorImpl &) = delete;
+
+  ~SelectionMonitorImpl() override {
     // Currently mozc::Thread cannot safely detach the attached thread since
     // the detached thread continues running on a heap allocated to this
     // object.
@@ -499,10 +501,10 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   }
 
   // Implements SelectionMonitorInterface::StartMonitoring.
-  virtual void StartMonitoring() { Thread::Start("SelectionMonitor"); }
+  void StartMonitoring() override { Thread::Start("SelectionMonitor"); }
 
   // Implements SelectionMonitorInterface::QueryQuit.
-  virtual void QueryQuit() {
+  void QueryQuit() override {
     if (Thread::IsRunning()) {
       quit_ = true;
       // Awake the message pump thread so that it can see the updated
@@ -512,20 +514,20 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   }
 
   // Implements SelectionMonitorInterface::GetSelectionInfo.
-  virtual SelectionInfo GetSelectionInfo() {
+  SelectionInfo GetSelectionInfo() override {
     SelectionInfo info;
     {
-      scoped_lock l(&mutex_);
+      absl::MutexLock l(&mutex_);
       info = last_selection_info_;
     }
     return info;
   }
 
   // Implements Thread::Run.
-  virtual void Run() {
+  void Run() override {
     while (!quit_) {
       if (!server_->checkConnection()) {
-        scoped_lock l(&mutex_);
+        absl::MutexLock l(&mutex_);
         last_selection_info_ = SelectionInfo();
         quit_ = true;
         break;
@@ -536,7 +538,7 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
       // X11 message is received. In order to interrupt, you can call
       // SendNoopEventMessage() method from other threads.
       if (server_->WaitForNextSelectionEvent(max_text_bytes_, &next_info)) {
-        scoped_lock l(&mutex_);
+        absl::MutexLock l(&mutex_);
         last_selection_info_ = next_info;
       }
     }
@@ -546,10 +548,8 @@ class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {
   std::unique_ptr<SelectionMonitorServer> server_;
   const size_t max_text_bytes_;
   volatile bool quit_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
   SelectionInfo last_selection_info_;
-
-  DISALLOW_COPY_AND_ASSIGN(SelectionMonitorImpl);
 };
 
 }  // namespace

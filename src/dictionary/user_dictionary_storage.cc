@@ -37,7 +37,6 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/process_mutex.h"
 #include "base/protobuf/zero_copy_stream_impl.h"
@@ -45,6 +44,7 @@
 #include "dictionary/user_dictionary_util.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace {
@@ -67,7 +67,6 @@ using ::mozc::user_dictionary::UserDictionaryCommandStatus;
 
 UserDictionaryStorage::UserDictionaryStorage(const std::string &file_name)
     : file_name_(file_name),
-      local_mutex_(new Mutex),
       process_mutex_(new ProcessMutex(FileUtil::Basename(file_name).c_str())) {}
 
 UserDictionaryStorage::~UserDictionaryStorage() { UnLock(); }
@@ -147,7 +146,7 @@ absl::Status UserDictionaryStorage::Save() {
   last_error_type_ = USER_DICTIONARY_STORAGE_NO_ERROR;
 
   {
-    scoped_lock l(local_mutex_.get());
+    absl::MutexLock l(&local_mutex_);
     if (!locked_) {
       last_error_type_ = SYNC_FAILURE;
       return absl::FailedPreconditionError(
@@ -213,14 +212,14 @@ absl::Status UserDictionaryStorage::Save() {
 }
 
 bool UserDictionaryStorage::Lock() {
-  scoped_lock l(local_mutex_.get());
+  absl::MutexLock l(&local_mutex_);
   locked_ = process_mutex_->Lock();
   LOG_IF(ERROR, !locked_) << "Lock() failed";
   return locked_;
 }
 
 bool UserDictionaryStorage::UnLock() {
-  scoped_lock l(local_mutex_.get());
+  absl::MutexLock l(&local_mutex_);
   process_mutex_->UnLock();
   locked_ = false;
   return true;
@@ -397,7 +396,7 @@ bool UserDictionaryStorage::ConvertSyncDictionariesToNormalDictionaries() {
                                                         new_dictionary_name) !=
              UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS) {
         ++index;
-        new_dictionary_name = Util::StringPrintf(
+        new_dictionary_name = absl::StrFormat(
             "%s_%d", kDictionaryNameConvertedFromSyncableDictionary, index);
       }
       dic->set_name(new_dictionary_name);

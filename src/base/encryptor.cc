@@ -39,7 +39,7 @@
 #elif defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
-#else
+#else  // Other platforms
 #include <string.h>
 #endif  // platforms (OS_WIN, __APPLE__, ...)
 
@@ -50,6 +50,7 @@
 #include "base/unverified_aes256.h"
 #include "base/unverified_sha1.h"
 #include "base/util.h"
+#include "absl/strings/str_format.h"
 
 #ifdef __APPLE__
 #include "base/mac_util.h"
@@ -354,7 +355,7 @@ bool Encryptor::ProtectData(const std::string &plain_text,
   DCHECK(cipher_text);
   Encryptor::Key key;
   const std::string serial_number = MacUtil::GetSerialNumber();
-  const std::string salt = Util::StringPrintf("%x", ::getuid());
+  const std::string salt = absl::StrFormat("%x", ::getuid());
   if (serial_number.empty()) {
     LOG(ERROR) << "Cannot get the serial number";
     return false;
@@ -379,7 +380,7 @@ bool Encryptor::UnprotectData(const std::string &cipher_text,
   DCHECK(plain_text);
   Encryptor::Key key;
   const std::string serial_number = MacUtil::GetSerialNumber();
-  const std::string salt = Util::StringPrintf("%x", ::getuid());
+  const std::string salt = absl::StrFormat("%x", ::getuid());
   if (serial_number.empty()) {
     LOG(ERROR) << "Cannot get the serial number";
     return false;

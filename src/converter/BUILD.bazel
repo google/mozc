@@ -61,6 +61,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//dictionary:pos_matcher_lib",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -78,6 +79,7 @@ cc_test_mozc(
         "//config:config_handler",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -133,7 +135,6 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:util",
         "//data_manager:data_manager_interface",
@@ -142,6 +143,7 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 
@@ -272,6 +274,7 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -617,6 +620,7 @@ cc_binary_mozc(
         "//base:number_util",
         "//base:port",
         "//base:singleton",
+        "//base:status",
         "//base:system_util",
         "//base:util",
         "//composer",
@@ -628,6 +632,7 @@ cc_binary_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

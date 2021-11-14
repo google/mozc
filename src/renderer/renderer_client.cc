@@ -37,7 +37,6 @@
 
 #include "base/clock.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/process.h"
 #include "base/run_level.h"
 #include "base/system_util.h"
@@ -48,6 +47,7 @@
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/memory/memory.h"
+#include "absl/synchronization/mutex.h"
 
 #ifdef __APPLE__
 #include "base/mac_util.h"
@@ -162,7 +162,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     size_t tmp = 0;
     const bool result = Process::SpawnProcess(path_, "", &tmp);
     uint32_t pid = static_cast<uint32_t>(tmp);
-#endif  // OS_WIN, __APPLE__
+#endif                    // OS_WIN, __APPLE__
 
     if (!result) {
       LOG(ERROR) << "Can't start process";
@@ -237,7 +237,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   void SetPendingCommand(const commands::RendererCommand &command) override {
     // ignore NOOP|SHUTDOWN
     if (command.type() == commands::RendererCommand::UPDATE) {
-      scoped_lock l(&pending_command_mutex_);
+      absl::MutexLock l(&pending_command_mutex_);
       if (!pending_command_) {
         pending_command_ = absl::make_unique<commands::RendererCommand>();
       }
@@ -277,7 +277,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   };
 
   void FlushPendingCommand() {
-    scoped_lock l(&pending_command_mutex_);
+    absl::MutexLock l(&pending_command_mutex_);
     if (ipc_client_factory_interface_ != nullptr && pending_command_) {
       std::unique_ptr<IPCClientInterface> client(CreateIPCClient());
       if (!client) {
@@ -309,7 +309,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
   volatile size_t error_times_;
   IPCClientFactoryInterface *ipc_client_factory_interface_;
   std::unique_ptr<commands::RendererCommand> pending_command_;
-  Mutex pending_command_mutex_;
+  absl::Mutex pending_command_mutex_;
   volatile RendererStatus renderer_status_;
   bool disable_renderer_path_check_;
   bool suppress_error_dialog_;

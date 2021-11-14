@@ -31,6 +31,7 @@
 
 #include "base/util.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_format.h"
 
 // Import the generated version_def.h.
 #include "base/version_def.h"
@@ -48,7 +49,7 @@ TEST(VersionTest, VersionNumberTest) {
   const int revision = Version::GetMozcVersionRevision();
   EXPECT_EQ(
       Version::GetMozcVersion(),
-      Util::StringPrintf("%d.%d.%d.%d", major, minor, build_number, revision));
+      absl::StrFormat("%d.%d.%d.%d", major, minor, build_number, revision));
 }
 
 TEST(VersionTest, CompareVersion) {

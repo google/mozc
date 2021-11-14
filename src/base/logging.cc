@@ -29,27 +29,29 @@
 
 #include "base/logging.h"
 
-#ifdef OS_WIN
-#define NO_MINMAX
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#include <unistd.h>
-#endif
-
 #ifdef OS_ANDROID
 #include <android/log.h>
 #endif  // OS_ANDROID
 
 #ifdef OS_WIN
-#include <codecvt>
-#include <locale>
+#define NO_MINMAX
+#include <windows.h>
+#else  // OS_WIN
+#include <sys/stat.h>
+#include <unistd.h>
 #endif  // OS_WIN
 
 #include <algorithm>
+#ifdef OS_WIN
+#include <codecvt>
+#endif  // OS_WIN
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#ifdef OS_WIN
+#include <locale>
+#endif  // OS_WIN
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -57,15 +59,19 @@
 #include "base/const.h"
 #endif  // OS_ANDROID
 #include "base/clock.h"
-#include "base/mutex.h"
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
+#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
+#include "absl/synchronization/mutex.h"
 
 ABSL_FLAG(bool, colored_log, true,
           "Enables colored log messages on tty devices");
 ABSL_FLAG(bool, logtostderr, false,
-          "log messages go to stderr instead of logfiles");
+          "log messages go to stderr instead of logfiles")
+    .OnUpdate([] {
+      mozc::Logging::SetLogToStderr(absl::GetFlag(FLAGS_logtostderr));
+    });
 ABSL_FLAG(int32, v, 0, "verbose level");
 
 namespace mozc {
@@ -105,26 +111,25 @@ std::string Logging::GetLogMessageHeader() {
   const absl::TimeZone tz = Clock::GetTimeZone();
   const std::string timestamp = absl::FormatTime("%Y-%m-%d %H:%M:%S ", at, tz);
 
-# if defined(OS_WASM)
+#if defined(OS_WASM)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       static_cast<unsigned int>(pthread_self());
-# elif defined(OS_LINUX)
+#elif defined(OS_LINUX)
   return absl::StrCat(timestamp, ::getpid(), " ",
                       // It returns unsigned long.
                       pthread_self());
-# elif defined(__APPLE__)
-#  ifdef __LP64__
+#elif defined(__APPLE__)
+#ifdef __LP64__
   return absl::StrCat(timestamp, ::getpid(), " ",
                       reinterpret_cast<uint64>(pthread_self()));
-#  else  // __LP64__
-  return absl::StrCat(timestamp, ::getpid(), " ",
-                      ::getpid(),
+#else   // __LP64__
+  return absl::StrCat(timestamp, ::getpid(), " ", ::getpid(),
                       reinterpret_cast<uint32>(pthread_self()));
-#  endif  // __LP64__
-# elif defined(OS_WIN)
+#endif  // __LP64__
+#elif defined(OS_WIN)
   return absl::StrCat(timestamp, ::GetCurrentProcessId(), " ",
                       ::GetCurrentThreadId());
-# endif  // OS_WIN
+#endif  // OS_WIN
 #endif  // OS_ANDROID
 }
 
@@ -163,6 +168,8 @@ void Logging::SetVerboseLevel(int verboselevel) {}
 
 void Logging::SetConfigVerboseLevel(int verboselevel) {}
 
+void Logging::SetLogToStderr(bool log_to_stderr) {}
+
 #else  // MOZC_NO_LOGGING
 
 namespace {
@@ -180,32 +187,43 @@ class LogStreamImpl {
   }
 
   void set_verbose_level(int level) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     absl::SetFlag(&FLAGS_v, level);
   }
 
   void set_config_verbose_level(int level) {
-    scoped_lock l(&mutex_);
+    absl::MutexLock l(&mutex_);
     config_verbose_level_ = level;
   }
 
   bool support_color() const { return support_color_; }
 
   void Write(LogSeverity, const std::string &log);
+  void set_log_to_stderr(bool log_to_stderr) {
+#if defined(OS_ANDROID)
+    // Android uses Android's log library.
+    use_cerr_ = false;
+#else   // OS_ANDROID
+    absl::MutexLock l(&mutex_);
+    use_cerr_ = log_to_stderr;
+#endif  // OS_ANDROID
+  }
 
  private:
+  void ResetUnlocked();
+
   // Real backing log stream.
   // This is not thread-safe so must be guarded.
-  // If std::cerr is real log stream, this is nullptr.
-  std::ostream *real_log_stream_;
+  // If std::cerr is real log stream, this is empty.
+  std::unique_ptr<std::ostream> real_log_stream_;
   int config_verbose_level_;
-  bool support_color_;
-  bool use_cerr_;
-  Mutex mutex_;
+  bool support_color_ = false;
+  bool use_cerr_ = false;
+  absl::Mutex mutex_;
 };
 
 void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   if (use_cerr_) {
     std::cerr << log;
   } else {
@@ -225,17 +243,17 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
   }
 }
 
-LogStreamImpl::LogStreamImpl() : real_log_stream_(nullptr) { Reset(); }
+LogStreamImpl::LogStreamImpl() { Reset(); }
 
 // Initializes real log stream.
 // After initialization, use_cerr_ and real_log_stream_ become like following:
-// OS, --logtostderr => use_cerr_, real_log_stream_
-// Android, *     => false, nullptr
-// Others,  true  => true,  nullptr
-// Others,  false => true,  non-null
+// OS,      --logtostderr => use_cerr_, real_log_stream_
+// Android, *             => false,     empty
+// Others,  true          => true,      empty
+// Others,  false         => true,      initialized
 void LogStreamImpl::Init(const std::string &log_file_path) {
-  scoped_lock l(&mutex_);
-  Reset();
+  absl::MutexLock l(&mutex_);
+  ResetUnlocked();
 
   if (use_cerr_) {
     return;
@@ -248,38 +266,38 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   // here.
   DCHECK_NE(log_file_path.size(), 0);
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
-  real_log_stream_ = new std::ofstream(
+  real_log_stream_ = absl::make_unique<std::ofstream>(
       utf8_to_wide.from_bytes(log_file_path).c_str(), std::ios::app);
 #elif !defined(OS_ANDROID)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
-  real_log_stream_ = new std::ofstream(log_file_path.c_str(), std::ios::app);
+  real_log_stream_ =
+      absl::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
 #endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);
 }
 
 void LogStreamImpl::Reset() {
-  scoped_lock l(&mutex_);
-  delete real_log_stream_;
-  real_log_stream_ = nullptr;
+  absl::MutexLock l(&mutex_);
+  ResetUnlocked();
+}
+
+void LogStreamImpl::ResetUnlocked() {
+  real_log_stream_.reset();
   config_verbose_level_ = 0;
-#if defined(OS_ANDROID)
-  // Android uses Android's log library.
-  use_cerr_ = false;
-  support_color_ = false;
-#elif defined(OS_WIN)
-  // Coloring is disabled on windows
+#if defined(OS_ANDROID) || defined(OS_WIN)
+  // On Android, the standard log library is used.
+  // On Windows, coloring is disabled
   // because cmd.exe doesn't support ANSI color escape sequences.
   // TODO(team): Considers to use SetConsoleTextAttribute on Windows.
-  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
   support_color_ = false;
 #else   // OS_ANDROID, OS_WIN
-  use_cerr_ = absl::GetFlag(FLAGS_logtostderr);
   support_color_ = (use_cerr_ && absl::GetFlag(FLAGS_colored_log) &&
                     ::isatty(::fileno(stderr)));
 #endif  // OS_ANDROID, OS_WIN
+  // use_cerr_ is updated by ABSL_FLAG.OnUpdate().
 }
 
 LogStreamImpl::~LogStreamImpl() { Reset(); }
@@ -336,7 +354,7 @@ const struct SeverityProperty {
     {"INFO", kCyanEscapeSequence},    {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},    {"FATAL", kRedEscapeSequence},
     {"SILENT", kCyanEscapeSequence},
-#else
+#else   // OS_ANDROID
     {"INFO", kCyanEscapeSequence},
     {"WARNING", kYellowEscapeSequence},
     {"ERROR", kRedEscapeSequence},
@@ -374,6 +392,10 @@ void Logging::SetVerboseLevel(int verboselevel) {
 void Logging::SetConfigVerboseLevel(int verboselevel) {
   Singleton<LogStreamImpl>::get()->set_config_verbose_level(verboselevel);
 }
+
+void Logging::SetLogToStderr(bool log_to_stderr) {
+  Singleton<LogStreamImpl>::get()->set_log_to_stderr(log_to_stderr);
+}
 #endif  // MOZC_NO_LOGGING
 
 LogFinalizer::LogFinalizer(LogSeverity severity) : severity_(severity) {}
@@ -385,10 +407,10 @@ LogFinalizer::~LogFinalizer() {
     // make stack trace and minidump
 #ifdef OS_WIN
     ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else
+#else   // OS_WIN
     mozc::Logging::CloseLogStream();
     exit(-1);
-#endif
+#endif  // OS_WIN
   }
 }
 
@@ -399,9 +421,9 @@ void LogFinalizer::operator&(std::ostream &working_stream) {
 void NullLogFinalizer::OnFatal() {
 #ifdef OS_WIN
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else
+#else   // OS_WIN
   exit(-1);
-#endif
+#endif  // OS_WIN
 }
 
 }  // namespace mozc

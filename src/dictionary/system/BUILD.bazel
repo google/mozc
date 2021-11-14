@@ -79,6 +79,7 @@ cc_test_mozc(
         "//dictionary:dictionary_token",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -95,6 +96,7 @@ cc_library_mozc(
         "//dictionary:dictionary_token",
         "//storage/louds:louds_trie",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -163,6 +165,7 @@ cc_library_mozc(
         ":codec",
         ":words_info",
         "//base:file_stream",
+        "//base:file_util",
         "//base:logging",
         "//base:port",
         "//base:util",
@@ -215,6 +218,7 @@ cc_test_mozc(
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

@@ -32,9 +32,9 @@
 
 #include <memory>
 
-#include "base/mutex.h"
 #include "renderer/renderer_server.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
@@ -49,14 +49,15 @@ class UnixServer : public RendererServer {
     GPollFD poll_fd;
     UnixServer *unix_server;
   };
+
   // UnixServer takes arguments' ownership.
   explicit UnixServer(GtkWrapperInterface *gtk);
-  ~UnixServer();
+  ~UnixServer() override;
 
-  virtual void AsyncHide();
-  virtual void AsyncQuit();
-  virtual bool AsyncExecCommand(std::string *proto_message);
-  virtual int StartMessageLoop();
+  void AsyncHide() override;
+  void AsyncQuit() override;
+  bool AsyncExecCommand(std::string *proto_message) override;
+  int StartMessageLoop() override;
 
   virtual bool Render();
 
@@ -64,7 +65,7 @@ class UnixServer : public RendererServer {
 
  private:
   std::string message_;
-  Mutex mutex_;
+  absl::Mutex mutex_;
   std::unique_ptr<GtkWrapperInterface> gtk_;
 
   // Following pipe is used to communicate IPC receiving thread and
@@ -72,8 +73,6 @@ class UnixServer : public RendererServer {
   // receiving thread writes small data to notify gtk-main thread to update when
   // new packet is arrived.
   int pipefd_[2];
-
-  DISALLOW_COPY_AND_ASSIGN(UnixServer);
 };
 
 }  // namespace gtk

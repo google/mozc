@@ -152,6 +152,7 @@
         'gen_emoticon_rewriter_data.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../data_manager/data_manager_base.gyp:serialized_dictionary',
       ],

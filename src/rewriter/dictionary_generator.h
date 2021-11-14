@@ -42,6 +42,7 @@
 #include "base/port.h"
 #include "data_manager/data_manager_interface.h"
 #include "dictionary/user_pos.h"
+#include "absl/container/btree_map.h"
 
 namespace mozc {
 namespace rewriter {
@@ -111,7 +112,7 @@ class DictionaryGenerator {
 
  private:
   ObjectPool<Token> token_pool_;
-  std::map<uint64_t, Token *> token_map_;
+  absl::btree_map<uint64_t, Token *> token_map_;
   std::unique_ptr<const UserPosInterface> user_pos_;
   uint16_t open_bracket_id_;
   uint16_t close_bracket_id_;

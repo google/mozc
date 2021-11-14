@@ -35,7 +35,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "config/config_handler.h"
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
@@ -47,6 +46,7 @@
 #include "session/session_handler.h"
 #include "session/session_handler_interface.h"
 #include "absl/flags/flag.h"
+#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace ios {
@@ -284,10 +284,12 @@ bool IosEngine::MaybeCreateNewChunk(commands::Command *command)
   input->set_type(commands::Input::SEND_COMMAND);
   commands::SessionCommand *session_command = input->mutable_command();
   session_command->set_type(commands::SessionCommand::STOP_KEY_TOGGLING);
-  {
-    scoped_try_lock l(&mutex_);
-    return l.locked() && session_handler_->EvalCommand(command);
+  if (!mutex_.TryLock()) {
+    return false;
   }
+  const bool ret = session_handler_->EvalCommand(command);
+  mutex_.Unlock();
+  return ret;
 }
 
 bool IosEngine::SendSessionCommand(
@@ -302,7 +304,7 @@ bool IosEngine::SendSessionCommand(
 }
 
 bool IosEngine::EvalCommandLockGuarded(commands::Command *command) {
-  scoped_lock l(&mutex_);
+  absl::MutexLock l(&mutex_);
   if (command->input().has_command()) {
     previous_command_ = command->input().command().type();
   } else {

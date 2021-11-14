@@ -81,20 +81,6 @@ void OutputFileStream::open(const char* filename,
 
 // Common implementations.
 
-void InputFileStream::ReadToString(std::string* s) {
-  seekg(0, end);
-  const size_t size = tellg();
-  seekg(0, beg);
-  s->resize(size);
-  read(&(*s)[0], size);
-}
-
-std::string InputFileStream::Read() {
-  std::string s;
-  ReadToString(&s);
-  return s;
-}
-
 void InputFileStream::UnusedKeyMethod() {}   // go/definekeymethod
 void OutputFileStream::UnusedKeyMethod() {}  // go/definekeymethod
 

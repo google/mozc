@@ -45,6 +45,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
@@ -191,7 +192,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
     candidate->Init();
     candidate->key = segment->key();
     candidate->content_key = segment->key();
-    candidate->value = Util::StringPrintf("cand%d", i);
+    candidate->value = absl::StrFormat("cand%d", i);
     candidate->content_value = candidate->value;
   }
 
@@ -202,7 +203,7 @@ TEST_F(SingleKanjiRewriterTest, InsertionPositionTest) {
   for (int i = 0; i < 10; ++i) {
     // First 10 candidates have not changed.
     const Segment::Candidate &candidate = segment->candidate(i);
-    EXPECT_EQ(Util::StringPrintf("cand%d", i), candidate.value);
+    EXPECT_EQ(absl::StrFormat("cand%d", i), candidate.value);
   }
 }
 

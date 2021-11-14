@@ -45,6 +45,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 namespace {
@@ -342,7 +343,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
       << "No sync dictionary available.";
 
   for (size_t i = 0; i < std::size(test_data); ++i) {
-    SCOPED_TRACE(Util::StringPrintf("add %d", static_cast<int>(i)));
+    SCOPED_TRACE(absl::StrFormat("add %d", static_cast<int>(i)));
     const TestData &data = test_data[i];
     CHECK(data.is_sync_dictionary ||
           !(data.is_removed_dictionary || data.has_removed_entry))
@@ -391,7 +392,7 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
       0, UserDictionaryStorage::CountSyncableDictionaries(storage.GetProto()));
   ASSERT_EQ(std::size(expected_data), storage.GetProto().dictionaries_size());
   for (size_t i = 0; i < std::size(expected_data); ++i) {
-    SCOPED_TRACE(Util::StringPrintf("verify %d", static_cast<int>(i)));
+    SCOPED_TRACE(absl::StrFormat("verify %d", static_cast<int>(i)));
     const ExpectedData &expected = expected_data[i];
     const UserDictionaryStorage::UserDictionary &dict =
         storage.GetProto().dictionaries(i);
@@ -428,9 +429,9 @@ TEST_F(UserDictionaryStorageTest, ConvertSyncDictionariesToNormalDictionaries) {
   EXPECT_EQ(
       0, UserDictionaryStorage::CountSyncableDictionaries(storage.GetProto()));
   EXPECT_EQ(2, storage.GetProto().dictionaries_size());
-  EXPECT_EQ(Util::StringPrintf("%s_1",
-                               kDictionaryNameConvertedFromSyncableDictionary),
-            storage.GetProto().dictionaries(0).name());
+  EXPECT_EQ(
+      absl::StrFormat("%s_1", kDictionaryNameConvertedFromSyncableDictionary),
+      storage.GetProto().dictionaries(0).name());
   EXPECT_EQ(kDictionaryNameConvertedFromSyncableDictionary,
             storage.GetProto().dictionaries(1).name());
 }
