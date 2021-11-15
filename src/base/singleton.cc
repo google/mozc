@@ -31,11 +31,9 @@
 
 #ifdef OS_WIN
 #include <Windows.h>
-#else
+#else  // OS_WIN
 #include <cstdlib>
 #endif  // OS_WIN
-
-#include "base/mutex.h"
 
 namespace mozc {
 namespace {
@@ -57,10 +55,11 @@ void ExitWithError() {
   // This logic is copied from logging.h
 #ifdef OS_WIN
   ::RaiseException(::GetLastError(), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-#else
+#else   // OS_WIN
   exit(-1);
-#endif
+#endif  // OS_WIN
 }
+
 }  // namespace
 
 void SingletonFinalizer::AddFinalizer(FinalizerFunc func) {
@@ -84,4 +83,5 @@ void SingletonFinalizer::Finalize() {
   }
   g_finalizers_size = 0;
 }
+
 }  // namespace mozc

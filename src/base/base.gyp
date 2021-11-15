@@ -184,7 +184,7 @@
         'singleton.cc',
       ],
       'dependencies': [
-        'mutex',
+        'absl.gyp:absl_base',
       ],
     },
     {

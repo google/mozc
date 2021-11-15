@@ -30,7 +30,9 @@
 #ifndef MOZC_BASE_SINGLETON_H_
 #define MOZC_BASE_SINGLETON_H_
 
-#include "base/mutex.h"
+#include <optional>
+
+#include "absl/base/call_once.h"
 
 namespace mozc {
 
@@ -61,8 +63,15 @@ template <typename T>
 class Singleton {
  public:
   static T *get() {
-    CallOnce(&once_, &Singleton<T>::Init);
+    absl::call_once(*once_, &Singleton<T>::Init);
     return instance_;
+  }
+
+  // TEST ONLY! Do not call this method in production code.
+  static void Delete() {
+    delete instance_;
+    instance_ = nullptr;
+    once_.emplace();  // Reconstruct absl::once_flag in place.
   }
 
  private:
@@ -71,22 +80,15 @@ class Singleton {
     instance_ = new T;
   }
 
-  static void Delete() {
-    delete instance_;
-    instance_ = nullptr;
-    ResetOnce(&once_);
-  }
-
-  static once_t once_;
+  static std::optional<absl::once_flag> once_;
   static T *instance_;
 };
 
 template <typename T>
-once_t Singleton<T>::once_ = MOZC_ONCE_INIT;
+std::optional<absl::once_flag> Singleton<T>::once_(std::in_place);
 
 template <typename T>
 T *Singleton<T>::instance_ = nullptr;
-
 
 // SingletonMockable class.
 // Usage: (quote from clock.cc)
@@ -110,9 +112,8 @@ class SingletonMockable {
     static Impl *impl = new Impl();
     return impl;
   }
-  static void SetMock(Interface *mock) {
-    mock_ = mock;
-  }
+  static void SetMock(Interface *mock) { mock_ = mock; }
+
  private:
   static Interface *mock_;
 };

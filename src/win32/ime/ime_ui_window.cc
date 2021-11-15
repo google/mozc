@@ -45,6 +45,7 @@
 
 #include "base/const.h"
 #include "base/logging.h"
+#include "base/mutex.h"
 #include "base/process.h"
 #include "base/process_mutex.h"
 #include "base/run_level.h"
@@ -452,7 +453,8 @@ class LangBarCallbackImpl : public LangBarCallback {
         }
         break;
       }
-      default: { break; }
+      default:
+        break;
     }
     return result;
   }

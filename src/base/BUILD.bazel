@@ -331,7 +331,7 @@ cc_library_mozc(
     srcs = ["singleton.cc"],
     hdrs = ["singleton.h"],
     visibility = ["//:__subpackages__"],
-    deps = [":mutex"],
+    deps = ["@com_google_absl//absl/base"],
 )
 
 cc_test_mozc(

@@ -41,9 +41,6 @@ using once_t = std::atomic<int>;
 // Portable re-implementation of pthread_once.
 void CallOnce(once_t *once, void (*func)());
 
-// Resets once_t.
-void ResetOnce(once_t *once);
-
 }  // namespace mozc
 
 #endif  // MOZC_BASE_MUTEX_H_

@@ -71,10 +71,4 @@ void CallOnce(once_t *once, void (*func)()) {
   }     // Busy loop
 }
 
-void ResetOnce(once_t *once) {
-  if (once) {
-    *once = ONCE_INIT;
-  }
-}
-
 }  // namespace mozc
