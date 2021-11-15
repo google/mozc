@@ -60,6 +60,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//composer:table",
+        "@com_google_absl//absl/container:btree",
     ],
 )
 
@@ -307,6 +308,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],

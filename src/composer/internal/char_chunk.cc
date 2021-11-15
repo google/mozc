@@ -38,6 +38,7 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
+#include "absl/container/btree_set.h"
 
 namespace mozc {
 namespace composer {
@@ -74,7 +75,7 @@ bool DeleteEnd(const std::string &end, std::string *target) {
 // '{*}い' -> '', '{*}ぃ'
 // Here, we want to get '{*}あ' <-> '{*}ぁ' loop from the input, 'あ'
 bool GetFromPending(const Table *table, const std::string &key,
-                    int recursion_count, std::set<std::string> *result) {
+                    int recursion_count, absl::btree_set<std::string> *result) {
   DCHECK(result);
   if (recursion_count == 0) {
     // Don't find the loop within the |recursion_count|.
@@ -244,12 +245,12 @@ void CharChunk::GetExpandedResults(std::set<std::string> *results) const {
     if (entries[i]->pending().empty()) {
       continue;
     }
-    std::set<std::string> loop_result;
+    absl::btree_set<std::string> loop_result;
     if (!GetFromPending(table_, entries[i]->pending(), kMaxRecursion,
                         &loop_result)) {
       continue;
     }
-    for (std::set<std::string>::const_iterator itr = loop_result.begin();
+    for (absl::btree_set<std::string>::const_iterator itr = loop_result.begin();
          itr != loop_result.end(); ++itr) {
       results->insert(Table::DeleteSpecialKey(*itr));
     }
