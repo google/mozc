@@ -128,6 +128,7 @@
         ['OS=="win"', {
           'dependencies': [
             'scoped_handle',
+            'absl.gyp:absl_base',
           ],
           'link_settings': {
             'msvs_settings': {
