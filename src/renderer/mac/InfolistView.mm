@@ -49,8 +49,6 @@ using mozc::commands::InformationList;
 using mozc::renderer::RendererStyle;
 using mozc::renderer::RendererStyleHandler;
 using mozc::renderer::mac::MacViewUtil;
-using mozc::once_t;
-using mozc::CallOnce;
 
 // Private method declarations.
 @interface InfolistView ()

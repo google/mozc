@@ -508,6 +508,7 @@ objc_library_mozc(
         "//config:stats_config_util",
         "//ipc:ipc",
         "//mac:common",
+        "@com_google_absl//absl/base",
         ":proto_wrapper",
         ":renderer_server",
         ":renderer_style_handler",

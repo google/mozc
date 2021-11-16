@@ -47,7 +47,6 @@
 #include "base/logging.h"
 #include "base/mac_process.h"
 #include "base/mac_util.h"
-#include "base/mutex.h"
 #include "base/process.h"
 #include "base/util.h"
 #include "client/client.h"
@@ -69,8 +68,6 @@ using mozc::commands::SessionCommand;
 using mozc::config::Config;
 using mozc::config::ImeSwitchUtil;
 using mozc::kProductNameInEnglish;
-using mozc::once_t;
-using mozc::CallOnce;
 using mozc::MacProcess;
 
 namespace {

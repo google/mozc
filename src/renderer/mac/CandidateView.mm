@@ -32,13 +32,13 @@
 #import "renderer/mac/CandidateView.h"
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/mac/mac_view_util.h"
 #include "renderer/table_layout.h"
 #include "renderer/renderer_style_handler.h"
+#include "absl/base/call_once.h"
 
 
 using mozc::client::SendCommandInterface;
@@ -49,8 +49,6 @@ using mozc::renderer::TableLayout;
 using mozc::renderer::RendererStyle;
 using mozc::renderer::RendererStyleHandler;
 using mozc::renderer::mac::MacViewUtil;
-using mozc::once_t;
-using mozc::CallOnce;
 
 // Those constants and most rendering logic is as same as Windows
 // native candidate window.
@@ -59,7 +57,7 @@ using mozc::CallOnce;
 namespace {
 const NSImage *g_LogoImage = nullptr;
 int g_column_minimum_width = 0;
-once_t g_OnceForInitializeStyle = MOZC_ONCE_INIT;
+absl::once_flag g_OnceForInitializeStyle;
 
 void InitializeDefaultStyle() {
   RendererStyle style;
@@ -116,7 +114,7 @@ void InitializeDefaultStyle() {
 #pragma mark initialization
 
 - (id)initWithFrame:(NSRect)frame {
-  CallOnce(&g_OnceForInitializeStyle, InitializeDefaultStyle);
+  absl::call_once(g_OnceForInitializeStyle, &InitializeDefaultStyle);
   self = [super initWithFrame:frame];
   if (self) {
     tableLayout_ = new(std::nothrow)TableLayout;

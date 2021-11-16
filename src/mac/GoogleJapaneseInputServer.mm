@@ -33,8 +33,8 @@
 
 #include "base/const.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "protocol/commands.pb.h"
+#include "absl/base/call_once.h"
 
 GoogleJapaneseInputServer *g_imkServer = nil;
 
@@ -56,7 +56,7 @@ void InitializeServer() {
                bundleIdentifier:[bundle bundleIdentifier]];
   [g_imkServer registerRendererConnection];
 }
-mozc::once_t gOnceForServer = MOZC_ONCE_INIT;
+absl::once_flag gOnceForServer;
 }
 
 @implementation GoogleJapaneseInputServer
@@ -94,7 +94,7 @@ mozc::once_t gOnceForServer = MOZC_ONCE_INIT;
 }
 
 + (GoogleJapaneseInputServer *)getServer {
-  mozc::CallOnce(&gOnceForServer, InitializeServer);
+  absl::call_once(gOnceForServer, &InitializeServer);
   return g_imkServer;
 }
 @end

@@ -132,12 +132,12 @@ objc_library_mozc(
         "//base:logging",
         "//base:mac_process",
         "//base:mac_util",
-        "//base:mutex",
         "//base:util",
         "//client",
         "//ipc",
         "//renderer:renderer_client",
         "//session:ime_switch_util",
+        "@com_google_absl//absl/base",
     ],
 )
 
@@ -150,7 +150,7 @@ objc_library_mozc(
     deps = [
         ":common",
         "//base:logging",
-        "//base:mutex",
+        "@com_google_absl//absl/base",
     ],
 )
 
@@ -167,7 +167,7 @@ objc_library_mozc(
     ],
     deps = [
         "//base:logging",
-        "//base:mutex",
+        "@com_google_absl//absl/base",
     ],
 )
 
