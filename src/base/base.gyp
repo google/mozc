@@ -117,7 +117,6 @@
         'gen_character_set#host',
         'gen_version_def#host',
         'hash',
-        'mutex',
         'singleton',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
@@ -167,14 +166,6 @@
       'toolsets': ['host', 'target'],
       'sources': [
         'scoped_handle.cc',
-      ],
-    },
-    {
-      'target_name': 'mutex',
-      'type': 'static_library',
-      'toolsets': ['host', 'target'],
-      'sources': [
-        'mutex.cc',
       ],
     },
     {

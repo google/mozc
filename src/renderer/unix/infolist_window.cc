@@ -30,7 +30,6 @@
 #include "renderer/unix/infolist_window.h"
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/renderer_style_handler.h"

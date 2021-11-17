@@ -90,7 +90,6 @@ cc_library_mozc(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:mutex",
         "//base:obfuscator_support",
         "//base:port",
         "//base:process_mutex",
@@ -234,7 +233,6 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:scoped_handle",
         "//base:thread",

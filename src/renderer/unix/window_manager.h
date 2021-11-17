@@ -34,7 +34,6 @@
 #include <memory>
 #include <string>
 
-#include "base/mutex.h"
 #include "base/port.h"
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"

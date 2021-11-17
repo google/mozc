@@ -45,7 +45,6 @@
 #include "base/file_stream.h"
 #include "base/logging.h"
 #include "base/mmap.h"
-#include "base/mutex.h"
 #include "base/scoped_handle.h"
 #include "base/singleton.h"
 #include "base/util.h"

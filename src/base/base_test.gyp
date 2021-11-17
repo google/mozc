@@ -126,20 +126,6 @@
       },
     },
     {
-      'target_name': 'mutex_test',
-      'type': 'executable',
-      'sources': [
-        'mutex_test.cc',
-      ],
-      'dependencies': [
-        '../testing/testing.gyp:gtest_main',
-        'base.gyp:mutex',
-      ],
-      'variables': {
-        'test_size': 'small',
-      },
-    },
-    {
       'target_name': 'clock_mock',
       'toolsets': ['host', 'target'],
       'type': 'static_library',
@@ -434,7 +420,6 @@
         'file_util_test',
         'hash_test',
         'multifile_test',
-        'mutex_test',
         'number_util_test',
         'obfuscator_support_test',
         'scheduler_stub_test',

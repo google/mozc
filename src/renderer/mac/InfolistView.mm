@@ -32,7 +32,6 @@
 #import "renderer/mac/InfolistView.h"
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "client/client_interface.h"
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
