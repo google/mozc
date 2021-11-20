@@ -64,6 +64,9 @@ FCITX_CONFIGURATION(
                     mozc::commands::HIRAGANA};
     OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation> expandMode{
         this, "ExpandMode", _("Expand Usage"), ExpandMode::OnFocus};
+    Option<bool> preeditCursorPositionAtBeginning{
+        this, "PreeditCursorPositionAtBeginning",
+        _("Fix embedded preedit cursor at the beginning of the preedit"), true};
     Option<Key> expand{this, "ExpandKey", _("Hotkey to expand usage"),
                        Key("Control+Alt+H")};
 

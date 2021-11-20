@@ -351,7 +351,11 @@ void MozcState::DrawAll() {
     aux += "]";
   }
   if (ic_->capabilityFlags().test(CapabilityFlag::Preedit)) {
-    ic_->inputPanel().setClientPreedit(preedit_);
+    Text preedit = preedit_;
+    if (*engine_->config().preeditCursorPositionAtBeginning) {
+      preedit.setCursor(0);
+    }
+    ic_->inputPanel().setClientPreedit(preedit);
     if (!aux_.empty()) {
       ic_->inputPanel().setAuxUp(Text(aux));
     }
