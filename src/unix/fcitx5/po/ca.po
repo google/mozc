@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-10-24 20:24+0000\n"
+"POT-Creation-Date: 2021-11-20 15:07+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
 "Language-Team: Catalan (https://www.transifex.com/fcitx/teams/12005/ca/)\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mozc_engine.h:76 mozc_engine.cc:196
+#: mozc_engine.h:79 mozc_engine.cc:196
 msgid "About Mozc"
 msgstr ""
 
-#: mozc_engine.h:74 mozc_engine.cc:189
+#: mozc_engine.h:77 mozc_engine.cc:189
 msgid "Add Word"
 msgstr ""
 
@@ -35,11 +35,11 @@ msgstr ""
 msgid "Composition Mode"
 msgstr ""
 
-#: mozc_engine.h:70 mozc_engine.cc:173
+#: mozc_engine.h:73 mozc_engine.cc:173
 msgid "Configuration Tool"
 msgstr "Eina de configuració"
 
-#: mozc_engine.h:72 mozc_engine.cc:181
+#: mozc_engine.h:75 mozc_engine.cc:181
 msgid "Dictionary Tool"
 msgstr "Eina de diccionari"
 
@@ -49,6 +49,10 @@ msgstr ""
 
 #: mozc_engine.h:66
 msgid "Expand Usage"
+msgstr ""
+
+#: mozc_engine.h:69
+msgid "Fix embedded preedit cursor at the beginning of the preedit"
 msgstr ""
 
 #. Full width ASCII letter A.
@@ -79,7 +83,7 @@ msgstr ""
 msgid "Hotkey"
 msgstr ""
 
-#: mozc_engine.h:67
+#: mozc_engine.h:70
 msgid "Hotkey to expand usage"
 msgstr ""
 
@@ -106,7 +110,7 @@ msgstr ""
 msgid "Press %s to show usages."
 msgstr ""
 
-#: mozc_state.cc:403
+#: mozc_state.cc:407
 msgid "Press Escape to go back"
 msgstr ""
 
