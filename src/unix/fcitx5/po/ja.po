@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-11-20 20:24+0000\n"
+"POT-Creation-Date: 2021-11-23 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2021\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
@@ -54,7 +54,7 @@ msgstr "用例を表示"
 
 #: mozc_engine.h:69
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
-msgstr "プリエディット先頭の埋め込みプリエディットカーソルを修正する"
+msgstr "プリエディットの先頭にプリエディットカーソルを置く"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:53 mozc_engine.cc:82
