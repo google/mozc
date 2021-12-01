@@ -62,7 +62,7 @@ class StateTable {
     CHECK_LT(id, idarray_.size());
 #ifdef ABSL_USES_STD_STRING_VIEW
     idarray_[id] = str;
-#else
+#else   // ABSL_USES_STD_STRING_VIEW
     idarray_[id] = std::string(str);
 #endif  // ABSL_USES_STD_STRING_VIEW
   }
