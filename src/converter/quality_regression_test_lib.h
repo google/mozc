@@ -39,6 +39,7 @@
 #include "converter/quality_regression_util.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 
 namespace mozc {
@@ -53,7 +54,7 @@ class QualityRegressionTest : public ::testing::Test {
   // results don't affect test results but closable issues are reported.
   static void ExamineResults(
       const bool enabled, uint32_t platform,
-      std::map<std::string, std::vector<std::pair<float, std::string>>>
+      absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
           *results);
 
  private:

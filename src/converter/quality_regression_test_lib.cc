@@ -40,6 +40,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "converter/quality_regression_util.h"
+#include "absl/container/btree_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 
@@ -59,8 +60,8 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
   if (!util) {
     return absl::InvalidArgumentError("util is null");
   }
-  std::map<std::string, std::vector<std::pair<float, std::string>>> results,
-      disabled_results;
+  absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
+      results, disabled_results;
 
   int num_executed_cases = 0, num_disabled_cases = 0;
   for (size_t i = 0; kTestData[i].line; ++i) {
@@ -80,8 +81,8 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
           absl::StrCat("Failed to test the entry: ", tsv_line));
     }
 
-    std::map<std::string, std::vector<std::pair<float, std::string>>> *table =
-        nullptr;
+    absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
+        *table = nullptr;
     if (kTestData[i].enabled) {
       ++num_executed_cases;
       table = &results;
@@ -113,7 +114,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
 
 void QualityRegressionTest::ExamineResults(
     const bool enabled, uint32_t platform,
-    std::map<std::string, std::vector<std::pair<float, std::string>>>
+    absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
         *results) {
   for (auto it = results->begin(); it != results->end(); ++it) {
     std::vector<std::pair<float, std::string>> *values = &it->second;
