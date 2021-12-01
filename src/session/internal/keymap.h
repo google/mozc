@@ -40,6 +40,7 @@
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
+#include "absl/container/btree_set.h"
 
 namespace mozc {
 
@@ -118,19 +119,19 @@ class KeyMapManager {
 
   // Get command names
   void GetAvailableCommandNameDirect(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNamePrecomposition(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNameComposition(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNameConversion(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNameZeroQuerySuggestion(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNameSuggestion(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
   void GetAvailableCommandNamePrediction(
-      std::set<std::string> *command_names) const;
+      absl::btree_set<std::string> *command_names) const;
 
   // Return the file name bound with the keymap enum.
   static const char *GetKeyMapFileName(config::Config::SessionKeymap keymap);

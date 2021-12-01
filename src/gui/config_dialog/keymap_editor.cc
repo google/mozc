@@ -59,6 +59,7 @@
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
+#include "absl/container/btree_set.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
 namespace mozc {
@@ -205,7 +206,7 @@ class KeyMapTableLoader {
     KeyMapValidator *validator = mozc::Singleton<KeyMapValidator>::get();
 
     // get all command names
-    std::set<std::string> command_names;
+    absl::btree_set<std::string> command_names;
     mozc::keymap::KeyMapManager manager;
     manager.GetAvailableCommandNameDirect(&command_names);
     manager.GetAvailableCommandNamePrecomposition(&command_names);
@@ -214,7 +215,8 @@ class KeyMapTableLoader {
     manager.GetAvailableCommandNameZeroQuerySuggestion(&command_names);
     manager.GetAvailableCommandNameSuggestion(&command_names);
     manager.GetAvailableCommandNamePrediction(&command_names);
-    for (std::set<std::string>::const_iterator itr = command_names.begin();
+    for (absl::btree_set<std::string>::const_iterator itr =
+             command_names.begin();
          itr != command_names.end(); ++itr) {
       if (validator->IsVisibleCommand(*itr)) {
         commands.insert(*itr);
