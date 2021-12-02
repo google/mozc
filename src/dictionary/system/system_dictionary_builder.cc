@@ -50,6 +50,7 @@
 #include "dictionary/text_dictionary_loader.h"
 #include "storage/louds/bit_vector_based_array_builder.h"
 #include "storage/louds/louds_trie_builder.h"
+#include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
 
@@ -263,7 +264,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   // Calculate the frequency of each POS.
   // TODO(toshiyuki): It might be better to count frequency
   // with considering same_as_prev_pos.
-  std::map<uint32_t, int> pos_map;
+  absl::btree_map<uint32_t, int> pos_map;
   for (const KeyInfo &key_info : key_info_list) {
     for (const TokenInfo &token_info : key_info.tokens) {
       const Token *token = token_info.token;
@@ -272,7 +273,7 @@ void SystemDictionaryBuilder::BuildFrequentPos(
   }
 
   // Get histgram of frequency.
-  std::map<int, int> freq_map;
+  absl::btree_map<int, int> freq_map;
   for (auto [unused, freq] : pos_map) {
     freq_map[freq]++;
   }

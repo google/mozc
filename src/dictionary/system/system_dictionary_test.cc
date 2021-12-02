@@ -57,6 +57,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/container/btree_set.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
@@ -446,7 +447,7 @@ TEST_F(SystemDictionaryTest, LookupPrefix) {
     const char *kExpectedKeys[] = {
         "は", "ば", "はひ", "ばひ", "はび", "ばび",
     };
-    const std::set<std::string> expected(
+    const absl::btree_set<std::string> expected(
         kExpectedKeys, kExpectedKeys + std::size(kExpectedKeys));
     for (size_t i = 0; i < kKeyValuesSize; ++i) {
       const bool to_be_found =
