@@ -45,6 +45,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 namespace client {
@@ -62,9 +63,7 @@ const std::string UpdateVersion(int diff) {
   absl::SNPrintF(buf, sizeof(buf), "%d",
                  NumberUtil::SimpleAtoi(tokens[3]) + diff);
   tokens[3] = buf;
-  std::string output;
-  Util::JoinStrings(tokens, ".", &output);
-  return output;
+  return absl::StrJoin(tokens, ".");
 }
 
 }  // namespace
@@ -859,10 +858,10 @@ TEST_F(SessionPlaybackTest, PushAndResetHistoryWithModeTest) {
   EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
   EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
   EXPECT_EQ(commands::HIRAGANA, history[0].key().mode());
-#else
+#else   // __APPLE__
   // history is reset, but initializer is not required.
   EXPECT_EQ(0, history.size());
-#endif
+#endif  // __APPLE__
 }
 
 // b/2797557
@@ -943,11 +942,11 @@ TEST_F(SessionPlaybackTest, PlaybackHistoryTest) {
   // PlaybackHistory and push history
   client_->GetHistoryInputs(&history);
   EXPECT_EQ(3, history.size());
-#else
+#else   // DEBUG
   // PlaybackHistory, dump history(including reset), and add last input
   client_->GetHistoryInputs(&history);
   EXPECT_EQ(1, history.size());
-#endif
+#endif  // DEBUG
 }
 
 // b/2797557
@@ -1004,10 +1003,10 @@ TEST_F(SessionPlaybackTest, SetModeInitializerTest) {
   EXPECT_EQ(commands::Input::SEND_KEY, history[0].type());
   EXPECT_EQ(commands::KeyEvent::ON, history[0].key().special_key());
   EXPECT_EQ(commands::FULL_KATAKANA, history[0].key().mode());
-#else
+#else   // __APPLE__
   // history is reset, but initializer is not required.
   EXPECT_EQ(0, history.size());
-#endif
+#endif  // __APPLE__
 }
 
 TEST_F(SessionPlaybackTest, ConsumedTest) {

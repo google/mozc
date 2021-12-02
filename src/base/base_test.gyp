@@ -167,6 +167,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:mozctest',
+        'absl.gyp:absl_strings',
         'base.gyp:base_core',
       ],
       'variables': {

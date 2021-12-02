@@ -56,6 +56,7 @@ cc_binary_mozc(
         "//ipc",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -100,5 +101,6 @@ cc_test_mozc(
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )

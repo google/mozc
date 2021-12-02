@@ -41,6 +41,7 @@
       ],
       'dependencies': [
         'client.gyp:client',
+        '../base/absl.gyp:absl_strings',
         '../testing/testing.gyp:gtest_main',
       ],
       'variables': {

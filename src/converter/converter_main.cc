@@ -59,6 +59,7 @@
 #include "session/request_test_util.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
@@ -154,9 +155,7 @@ std::string CandidateAttributesToString(uint32_t attrs) {
   ADD_STR(USER_HISTORY_PREDICTION);
 
 #undef ADD_STR
-  std::string s;
-  Util::JoinStrings(v, " | ", &s);
-  return s;
+  return absl::StrJoin(v, " | ");
 }
 
 std::string NumberStyleToString(NumberUtil::NumberString::Style style) {
@@ -202,9 +201,7 @@ std::string InnerSegmentBoundaryToString(const Segment::Candidate &cand) {
     s.append(1, '>');
     pieces.push_back(s);
   }
-  std::string s;
-  Util::JoinStrings(pieces, " | ", &s);
-  return s;
+  return absl::StrJoin(pieces, " | ");
 }
 
 void PrintCandidate(const Segment &parent, int num,

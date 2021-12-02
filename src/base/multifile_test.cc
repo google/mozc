@@ -40,6 +40,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 
@@ -74,8 +75,7 @@ TEST(InputMultiFileTest, OpenNonexistentFilesTest) {
     filenames.push_back(
         FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "exists"));
 
-    std::string joined_path;
-    Util::JoinStrings(filenames, ",", &joined_path);
+    std::string joined_path = absl::StrJoin(filenames, ",");
     InputMultiFile multfile(joined_path);
     std::string line;
     EXPECT_FALSE(multfile.ReadLine(&line));
@@ -142,8 +142,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
   EXPECT_EQ(kNumLinesPerFile * kNumFile, expected_lines.size());
 
   // Read lines
-  std::string joined_path;
-  Util::JoinStrings(paths, ",", &joined_path);
+  std::string joined_path = absl::StrJoin(paths, ",");
   InputMultiFile multfile(joined_path);
   std::string line;
   for (int i = 0; i < kNumFile * kNumLinesPerFile; ++i) {

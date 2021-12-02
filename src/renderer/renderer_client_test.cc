@@ -43,12 +43,12 @@
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/gunit.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
-
 namespace renderer {
-
 namespace {
+
 const std::string UpdateVersion(int diff) {
   std::vector<std::string> tokens;
   Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
@@ -57,9 +57,7 @@ const std::string UpdateVersion(int diff) {
   absl::SNPrintF(buf, sizeof(buf), "%d",
                  NumberUtil::SimpleAtoi(tokens[3]) + diff);
   tokens[3] = buf;
-  std::string output;
-  Util::JoinStrings(tokens, ".", &output);
-  return output;
+  return absl::StrJoin(tokens, ".");
 }
 
 int g_counter = 0;

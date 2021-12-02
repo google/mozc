@@ -97,6 +97,7 @@
         'renderer_client_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../testing/testing.gyp:gtest_main',
         'renderer_client',
       ],

@@ -164,7 +164,7 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
 }
 
 // JoinStringWithTabN joins N strings with TAB delimiters ('\t') in a way
-// similar to Util::JoinStrings() and/or Util::AppendStringWithDelimiter() but
+// similar to absl::StrJoin() and/or Util::AppendStringWithDelimiter() but
 // in a more efficient way. Since this module is called every key stroke and
 // performs many string concatenation, we use these functions instead of ones
 // from Util.
