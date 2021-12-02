@@ -282,12 +282,6 @@ void Util::SplitCSV(const std::string &input,
   }
 }
 
-void Util::ConcatStrings(absl::string_view s1, absl::string_view s2,
-                         std::string *output) {
-  output->clear();
-  absl::StrAppend(output, s1, s2);
-}
-
 void Util::AppendStringWithDelimiter(absl::string_view delimiter,
                                      absl::string_view append_string,
                                      std::string *output) {

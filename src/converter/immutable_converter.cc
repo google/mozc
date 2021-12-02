@@ -60,6 +60,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -365,9 +366,9 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     *new_candidate = *top_candidate;
     Util::HiraganaToKatakana(segment->candidate(0).content_key,
                              &new_candidate->content_value);
-    Util::ConcatStrings(new_candidate->content_value,
-                        top_candidate->functional_value(),
-                        &new_candidate->value);
+    new_candidate->value.clear();
+    absl::StrAppend(&new_candidate->value, new_candidate->content_value,
+                    top_candidate->functional_value());
     new_candidate->cost = last_candidate->cost + 1;
     new_candidate->wcost = last_candidate->wcost + 1;
     new_candidate->structure_cost = last_candidate->structure_cost + 1;

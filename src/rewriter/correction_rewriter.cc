@@ -151,10 +151,12 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
           segment->insert_candidate(kInsertPosition);
       DCHECK(mutable_candidate);
       *mutable_candidate = top_candidate;
-      Util::ConcatStrings(results[k].error, top_candidate.functional_key(),
-                          &mutable_candidate->key);
-      Util::ConcatStrings(results[k].value, top_candidate.functional_value(),
-                          &mutable_candidate->value);
+      mutable_candidate->key.clear();
+      mutable_candidate->value.clear();
+      absl::StrAppend(&mutable_candidate->key, results[k].error,
+                      top_candidate.functional_key());
+      absl::StrAppend(&mutable_candidate->value, results[k].value,
+                      top_candidate.functional_value());
       mutable_candidate->inner_segment_boundary.clear();
       SetCandidate(results[k], mutable_candidate);
       modified = true;

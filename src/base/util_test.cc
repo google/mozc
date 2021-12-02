@@ -48,22 +48,6 @@
 
 namespace mozc {
 
-TEST(UtilTest, ConcatStrings) {
-  std::string s;
-
-  Util::ConcatStrings("", "", &s);
-  EXPECT_TRUE(s.empty());
-
-  Util::ConcatStrings("ABC", "", &s);
-  EXPECT_EQ("ABC", s);
-
-  Util::ConcatStrings("", "DEF", &s);
-  EXPECT_EQ("DEF", s);
-
-  Util::ConcatStrings("ABC", "DEF", &s);
-  EXPECT_EQ("ABCDEF", s);
-}
-
 TEST(UtilTest, AppendStringWithDelimiter) {
   std::string result;
   std::string input;

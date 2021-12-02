@@ -30,6 +30,7 @@
 #include "rewriter/english_variants_rewriter.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -39,6 +40,7 @@
 #include "request/conversion_request.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 
 namespace mozc {
 
@@ -146,9 +148,8 @@ bool EnglishVariantsRewriter::ExpandEnglishVariantsWithSegment(
       if (ExpandEnglishVariants(original_candidate->content_value, &variants)) {
         CHECK(!variants.empty());
         for (auto it = variants.rbegin(); it != variants.rend(); ++it) {
-          std::string new_value;
-          Util::ConcatStrings(*it, original_candidate->functional_value(),
-                              &new_value);
+          const std::string new_value =
+              absl::StrCat(*it, original_candidate->functional_value());
           expanded_t13n_candidates.insert(new_value);
           if (original_candidates.find(new_value) !=
               original_candidates.end()) {

@@ -127,11 +127,6 @@ class Util {
   static void SplitCSV(const std::string &input,
                        std::vector<std::string> *output);
 
-  // Concatenate s1 and s2 then store it to output.
-  // s1 or s2 should not be a reference into output.
-  static void ConcatStrings(absl::string_view s1, absl::string_view s2,
-                            std::string *output);
-
   static void AppendStringWithDelimiter(absl::string_view delimiter,
                                         absl::string_view append_string,
                                         std::string *output);
