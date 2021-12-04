@@ -39,7 +39,6 @@
       'toolsets': ['host', 'target'],
       'sources': [
         '<(absl_srcdir)/base/internal/cycleclock.cc',
-        '<(absl_srcdir)/base/internal/exponential_biased.cc',
         '<(absl_srcdir)/base/internal/low_level_alloc.cc',
         '<(absl_srcdir)/base/internal/raw_logging.cc',
         '<(absl_srcdir)/base/internal/spinlock.cc',
@@ -49,6 +48,7 @@
         '<(absl_srcdir)/base/internal/throw_delegate.cc',
         '<(absl_srcdir)/base/internal/unscaledcycleclock.cc',
         '<(absl_srcdir)/base/log_severity.cc',
+        '<(absl_srcdir)/profiling/internal/exponential_biased.cc',
       ],
       'dependencies': [
         'absl_hash_internal',
@@ -135,8 +135,7 @@
         '<(absl_srcdir)/container/internal/raw_hash_set.cc',
         '<(absl_srcdir)/hash/internal/city.cc',
         '<(absl_srcdir)/hash/internal/hash.cc',
-        # The OSS version uses Abseil lts_2021_03_24.
-        '<(absl_srcdir)/hash/internal/wyhash.cc',
+        '<(absl_srcdir)/hash/internal/low_level_hash.cc',
       ],
     },
     {
@@ -158,7 +157,14 @@
         '<(absl_srcdir)/strings/internal/charconv_bigint.cc',
         '<(absl_srcdir)/strings/internal/charconv_parse.cc',
         '<(absl_srcdir)/strings/internal/cord_internal.cc',
+        '<(absl_srcdir)/strings/internal/cord_rep_btree.cc',
+        '<(absl_srcdir)/strings/internal/cord_rep_btree_navigator.cc',
+        '<(absl_srcdir)/strings/internal/cord_rep_btree_reader.cc',
+        '<(absl_srcdir)/strings/internal/cord_rep_consume.cc',
         '<(absl_srcdir)/strings/internal/cord_rep_ring.cc',
+        '<(absl_srcdir)/strings/internal/cordz_functions.cc',
+        '<(absl_srcdir)/strings/internal/cordz_handle.cc',
+        '<(absl_srcdir)/strings/internal/cordz_info.cc',
         '<(absl_srcdir)/strings/internal/escaping.cc',
         '<(absl_srcdir)/strings/internal/memutil.cc',
         '<(absl_srcdir)/strings/internal/str_format/arg.cc',

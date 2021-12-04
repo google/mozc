@@ -34,10 +34,10 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/port.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/base/call_once.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -88,12 +88,7 @@ void InitSeedWithRandomValue() {
   Util::SetRandomSeed(seed);
 }
 
-void DoNothing() {
-  // Do nothing.
-  // Used only for marking the seed initialized.
-}
-
-once_t seed_init_once = MOZC_ONCE_INIT;
+absl::once_flag seed_init_once;
 }  // namespace
 
 void RandomKeyEventsGenerator::PrepareForMemoryLeakTest() {
@@ -141,8 +136,7 @@ std::string ToRomaji(absl::string_view hiragana) {
 }
 
 void RandomKeyEventsGenerator::InitSeed(uint32_t seed) {
-  Util::SetRandomSeed(seed);
-  CallOnce(&seed_init_once, &DoNothing);
+  absl::call_once(seed_init_once, &Util::SetRandomSeed, seed);
 }
 
 // Generates KeyEvent instances based on |sentence| and stores into |keys|.
@@ -168,7 +162,7 @@ void RandomKeyEventsGenerator::GenerateMobileSequence(
   keys->clear();
 
   // If seed was not initialized, set seed randomly.
-  CallOnce(&seed_init_once, &InitSeedWithRandomValue);
+  absl::call_once(seed_init_once, &InitSeedWithRandomValue);
 
   const absl::string_view sentence(
       kTestSentences[Util::Random(std::size(kTestSentences))]);
@@ -189,7 +183,7 @@ void RandomKeyEventsGenerator::GenerateSequence(
   keys->clear();
 
   // If seed was not initialized, set seed randomly.
-  CallOnce(&seed_init_once, &InitSeedWithRandomValue);
+  absl::call_once(seed_init_once, &InitSeedWithRandomValue);
 
   const std::string sentence =
       kTestSentences[Util::Random(std::size(kTestSentences))];

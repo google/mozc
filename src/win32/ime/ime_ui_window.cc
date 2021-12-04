@@ -68,6 +68,7 @@
 #include "win32/ime/ime_types.h"
 #include "win32/ime/ime_ui_context.h"
 #include "win32/ime/ime_ui_visibility_tracker.h"
+#include "absl/base/call_once.h"
 
 namespace mozc {
 namespace win32 {
@@ -94,8 +95,8 @@ volatile bool g_module_unloaded = false;
     }                                        \
   } while (false)
 
-// A global variable of mozc::once_t, which is POD, has no bad side effect.
-static once_t g_launch_set_default_dialog = MOZC_ONCE_INIT;
+// absl::once_flag can be allocated as a global variable.
+absl::once_flag g_launch_set_default_dialog;
 
 void LaunchSetDefaultDialog() {
   config::Config config;
@@ -452,7 +453,8 @@ class LangBarCallbackImpl : public LangBarCallback {
         }
         break;
       }
-      default: { break; }
+      default:
+        break;
     }
     return result;
   }
@@ -651,7 +653,7 @@ class DefaultUIWindow {
     // SetDefaultDialog.
     if (context.ui_visibility_tracker()->IsSuggestWindowVisible()) {
       if (!IsProcessSandboxed() && RunLevel::IsValidClientRunLevel()) {
-        CallOnce(&g_launch_set_default_dialog, &LaunchSetDefaultDialog);
+        absl::call_once(g_launch_set_default_dialog, &LaunchSetDefaultDialog);
       }
     }
   }

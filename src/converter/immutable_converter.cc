@@ -60,6 +60,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -365,9 +366,9 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     *new_candidate = *top_candidate;
     Util::HiraganaToKatakana(segment->candidate(0).content_key,
                              &new_candidate->content_value);
-    Util::ConcatStrings(new_candidate->content_value,
-                        top_candidate->functional_value(),
-                        &new_candidate->value);
+    new_candidate->value.clear();
+    absl::StrAppend(&new_candidate->value, new_candidate->content_value,
+                    top_candidate->functional_value());
     new_candidate->cost = last_candidate->cost + 1;
     new_candidate->wcost = last_candidate->wcost + 1;
     new_candidate->structure_cost = last_candidate->structure_cost + 1;
@@ -883,6 +884,68 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
 
 namespace {
 
+// A wrapper for Connector to minimize calls of Connector::GetTransitionCost()
+// in Viterbi algorithm. This way the performance of Viterbi algorithm improves
+// significantly in terms of time consumption because
+// Connector::GetTransitionCost() is slow due to its compression format. This
+// class implements a cache strategy designed for the access pattern in Viterbi
+// algorithm.
+//
+// In Viterbi algorithm, the connection matrix is looked up in a nested loop as
+// follows:
+//
+// for each right node `r`:
+//   for each left node `l`:
+//     ...
+//     transition cost = connector.GetTransitionCost(l.rid, r.lid)
+//     ...
+//
+// Therefore, in the inner loop, `r.lid` is fixed. So we can simply use an array
+// to cache the transition cost for (l.rid, r.lid) in `cache[l.rid]`, and cache
+// is reset before the inner loop. Moreover, right nodes are likely to be
+// ordered by `r.lid` although it's not guaranteed in general. This fact is plus
+// for this caching strategy as we only need to reset the cache if `r.lid` is
+// different from the previous value.
+//
+// NOTE: This class is designed only for Viterbi algorithm and won't work for
+// other purposes.
+class CachingConnector final {
+ public:
+  explicit CachingConnector(const Connector &connector)
+      : connector_{connector} {}
+
+  CachingConnector(const CachingConnector &) = delete;
+  CachingConnector &operator=(const CachingConnector &) = delete;
+
+  void ResetCacheIfNecessary(uint16_t rnode_lid) {
+    if (cache_lid_ != rnode_lid) {
+      std::fill_n(cache_, kCacheSize, -1);
+      cache_lid_ = rnode_lid;
+    }
+  }
+
+  int GetTransitionCost(uint16_t lnode_rid, uint16_t rnode_lid) {
+    DCHECK_EQ(cache_lid_, rnode_lid);
+    // Values for rid >= kCacheSize cannot be cached. However, frequent PoSs
+    // have smaller IDs, so caching only for rid in [0, kCacheSize) works well.
+    if (lnode_rid >= kCacheSize) {
+      return connector_.GetTransitionCost(lnode_rid, rnode_lid);
+    }
+    if (cache_[lnode_rid] != -1) {
+      return cache_[lnode_rid];
+    }
+    cache_[lnode_rid] = connector_.GetTransitionCost(lnode_rid, rnode_lid);
+    return cache_[lnode_rid];
+  }
+
+ private:
+  constexpr static int kCacheSize = 2048;
+
+  const Connector &connector_;
+  int cache_[kCacheSize];
+  uint16_t cache_lid_ = std::numeric_limits<uint16_t>::max();
+};
+
 // Reasonably big cost. Cannot use INT_MAX because a new cost will be
 // calculated based on kVeryBigCost.
 constexpr int kVeryBigCost = (INT_MAX >> 2);
@@ -893,6 +956,7 @@ constexpr int kVeryBigCost = (INT_MAX >> 2);
 // the next).
 inline void ViterbiInternal(const Connector &connector, size_t pos,
                             size_t right_boundary, Lattice *lattice) {
+  CachingConnector conn(connector);
   for (Node *rnode = lattice->begin_nodes(pos); rnode != nullptr;
        rnode = rnode->bnext) {
     if (rnode->end_pos > right_boundary) {
@@ -901,6 +965,8 @@ inline void ViterbiInternal(const Connector &connector, size_t pos,
       continue;
     }
 
+    conn.ResetCacheIfNecessary(rnode->lid);
+
     if (rnode->constrained_prev != nullptr) {
       // Constrained node.
       if (rnode->constrained_prev->prev == nullptr) {
@@ -908,7 +974,7 @@ inline void ViterbiInternal(const Connector &connector, size_t pos,
       } else {
         rnode->prev = rnode->constrained_prev;
         rnode->cost = rnode->prev->cost + rnode->wcost +
-                      connector.GetTransitionCost(rnode->prev->rid, rnode->lid);
+                      conn.GetTransitionCost(rnode->prev->rid, rnode->lid);
       }
       continue;
     }
@@ -923,8 +989,7 @@ inline void ViterbiInternal(const Connector &connector, size_t pos,
         continue;
       }
 
-      int cost =
-          lnode->cost + connector.GetTransitionCost(lnode->rid, rnode->lid);
+      int cost = lnode->cost + conn.GetTransitionCost(lnode->rid, rnode->lid);
       if (cost < best_cost) {
         best_cost = cost;
         best_node = lnode;

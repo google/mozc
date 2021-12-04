@@ -96,6 +96,7 @@
             'tip_ui_renderer_immersive.cc',
           ],
           'dependencies': [
+            '../../base/absl.gyp:absl_base',
             '../../base/base.gyp:base',
             '../../base/base.gyp:crash_report_handler',
             '../../base/base.gyp:update_util',

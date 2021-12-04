@@ -62,6 +62,7 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 namespace {
@@ -650,8 +651,8 @@ UserHistoryPredictor::RemoveNgramChain(
       value_ngrams_len == target_value.size()) {
     key_ngrams->push_back(entry->key());
     value_ngrams->push_back(entry->value());
-    const std::string ngram_key = Util::JoinStrings(*key_ngrams, "");
-    const std::string ngram_value = Util::JoinStrings(*value_ngrams, "");
+    const std::string ngram_key = absl::StrJoin(*key_ngrams, "");
+    const std::string ngram_value = absl::StrJoin(*value_ngrams, "");
     if (ngram_key == target_key && ngram_value == target_value) {
       // |entry| is the last node. So return TAIL to tell the caller so
       // that it can remove the link to this last node.

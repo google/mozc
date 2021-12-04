@@ -33,7 +33,6 @@
 #include <climits>
 #include <cstdint>
 #include <ctime>
-#include <initializer_list>
 #include <string>
 #include <utility>
 #include <vector>
@@ -127,28 +126,6 @@ class Util {
 
   static void SplitCSV(const std::string &input,
                        std::vector<std::string> *output);
-
-  template <typename Range>
-  static std::string JoinStrings(const Range &range, absl::string_view delim) {
-    return absl::StrJoin(range, delim);
-  }
-
-  template <typename Range>
-  static void JoinStrings(const Range &range, absl::string_view delim,
-                          std::string *output) {
-    output->assign(absl::StrJoin(range, delim));
-  }
-
-  template <typename T>
-  static std::string JoinStrings(std::initializer_list<T> il,
-                                 absl::string_view delim) {
-    return absl::StrJoin(il, delim);
-  }
-
-  // Concatenate s1 and s2 then store it to output.
-  // s1 or s2 should not be a reference into output.
-  static void ConcatStrings(absl::string_view s1, absl::string_view s2,
-                            std::string *output);
 
   static void AppendStringWithDelimiter(absl::string_view delimiter,
                                         absl::string_view append_string,

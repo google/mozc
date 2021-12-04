@@ -366,7 +366,6 @@ cc_library_mozc(
         "//base:file_stream",
         "//base:file_util",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:process_mutex",
         "//base:util",

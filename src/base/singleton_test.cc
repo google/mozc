@@ -66,7 +66,6 @@ class ThreadTest : public Thread {
  private:
   ThreadInstance *instance_;
 };
-}  // namespace
 
 // Cannot have a testcase for Singleton::SingletonFinalizer,
 // since it affects other tests using Singleton objects.
@@ -106,4 +105,36 @@ TEST(SingletonTest, ThreadTest) {
   EXPECT_EQ(test1.get(), test2.get());
   EXPECT_EQ(test2.get(), test3.get());
 }
+
+class ValueHolder {
+ public:
+  ValueHolder() = default;
+  ~ValueHolder() { *dtor_called_ = true; }
+
+  int value_ = 0;
+  bool *dtor_called_ = nullptr;
+};
+
+TEST(SingletonTest, Reset) {
+  bool dtor_called = false;
+  {
+    auto *ptr = Singleton<ValueHolder>::get();
+    ptr->value_ = 12345;
+    ptr->dtor_called_ = &dtor_called;
+  }
+  {
+    auto *ptr = Singleton<ValueHolder>::get();
+    EXPECT_EQ(12345, ptr->value_);
+    EXPECT_FALSE(dtor_called);
+  }
+  {
+    Singleton<ValueHolder>::Delete();
+    EXPECT_TRUE(dtor_called);
+    auto *ptr = Singleton<ValueHolder>::get();
+    // Reconstructed value, so the it's not equal to 12345.
+    EXPECT_EQ(0, ptr->value_);
+  }
+}
+
+}  // namespace
 }  // namespace mozc

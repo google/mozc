@@ -33,7 +33,6 @@
 
 #include "google/protobuf/stubs/common.h"
 #include "base/crash_report_handler.h"
-#include "base/mutex.h"
 #include "base/protobuf/protobuf.h"
 #include "base/singleton.h"
 #include "config/stats_config_util.h"
@@ -44,11 +43,11 @@
 #include "win32/tip/tip_class_factory.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_ui_handler.h"
+#include "absl/base/call_once.h"
 
 namespace {
 
 using mozc::CrashReportHandler;
-using mozc::once_t;
 using mozc::SingletonFinalizer;
 using mozc::config::StatsConfigUtil;
 using mozc::win32::BrowserInfo;
@@ -62,8 +61,8 @@ using mozc::win32::tsf::TipUiHandler;
 bool g_in_safe_mode = true;
 
 // Marker objects for one-time initialization.
-once_t g_initialize_once = MOZC_ONCE_INIT;
-once_t g_uninitialize_once = MOZC_ONCE_INIT;
+absl::once_flag g_initialize_once;
+absl::once_flag g_uninitialize_once;
 
 // Creates the global resources shared among all the ImeTextService objects.
 void TipBuildGlobalObjects() {
@@ -111,7 +110,7 @@ class ModuleImpl {
         // functions here.
         // - SingletonFinalizer::Finalize()               // see b/10233768
         // - mozc::protobuf::ShutdownProtobufLibrary()  // see b/2126375
-        mozc::CallOnce(&g_uninitialize_once, TipShutdownCrashReportHandler);
+        absl::call_once(g_uninitialize_once, &TipShutdownCrashReportHandler);
       }
     }
     return ref_count_;
@@ -180,7 +179,7 @@ CRITICAL_SECTION ModuleImpl::critical_section_for_breakpad_;
 // that creates an instance of the COM objects implemented by this module.
 STDAPI DllGetClassObject(REFCLSID class_id, REFIID interface_id,
                          void **object) {
-  mozc::CallOnce(&g_initialize_once, TipBuildGlobalObjects);
+  absl::call_once(g_initialize_once, &TipBuildGlobalObjects);
   if (object == nullptr) {
     return E_INVALIDARG;
   }

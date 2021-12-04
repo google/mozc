@@ -46,10 +46,10 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/scoped_handle.h"
 #include "base/system_util.h"
 #include "base/util.h"
+#include "absl/base/call_once.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 
@@ -61,7 +61,7 @@
 namespace mozc {
 namespace {
 
-once_t g_aux_lib_initialized = MOZC_ONCE_INIT;
+absl::once_flag g_aux_lib_initialized;
 
 void CallAuxUlibInitialize() { ::AuxUlibInitialize(); }
 
@@ -155,7 +155,7 @@ HMODULE WinUtil::GetSystemModuleHandleAndIncrementRefCount(
 }
 
 bool WinUtil::IsDLLSynchronizationHeld(bool *lock_status) {
-  mozc::CallOnce(&g_aux_lib_initialized, &CallAuxUlibInitialize);
+  absl::call_once(g_aux_lib_initialized, &CallAuxUlibInitialize);
 
   if (lock_status == nullptr) {
     return false;

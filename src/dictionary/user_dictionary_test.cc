@@ -62,6 +62,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -304,9 +305,7 @@ class UserDictionaryTest : public ::testing::Test {
       encoded_items.push_back(EncodeEntry(array[i]));
     }
     std::sort(encoded_items.begin(), encoded_items.end());
-    std::string result;
-    Util::JoinStrings(encoded_items, "", &result);
-    return result;
+    return absl::StrJoin(encoded_items, "");
   }
 
   static void CompareEntries(const Entry *expected, size_t expected_size,

@@ -124,6 +124,7 @@
         'session_usage_stats_util.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../protobuf/protobuf.gyp:protobuf',
         '../protocol/protocol.gyp:commands_proto',

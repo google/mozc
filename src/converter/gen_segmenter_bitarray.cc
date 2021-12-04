@@ -45,6 +45,7 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -61,7 +62,7 @@ class StateTable {
     CHECK_LT(id, idarray_.size());
 #ifdef ABSL_USES_STD_STRING_VIEW
     idarray_[id] = str;
-#else
+#else   // ABSL_USES_STD_STRING_VIEW
     idarray_[id] = std::string(str);
 #endif  // ABSL_USES_STD_STRING_VIEW
   }
@@ -69,9 +70,9 @@ class StateTable {
   void Build() {
     compressed_table_.resize(idarray_.size());
     uint16_t id = 0;
-    std::map<std::string, uint16_t> dup;
+    absl::btree_map<std::string, uint16_t> dup;
     for (size_t i = 0; i < idarray_.size(); ++i) {
-      std::map<std::string, uint16_t>::const_iterator it =
+      absl::btree_map<std::string, uint16_t>::const_iterator it =
           dup.find(idarray_[i]);
       if (it != dup.end()) {
         compressed_table_[i] = it->second;

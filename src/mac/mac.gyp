@@ -41,6 +41,7 @@
       'target_name': 'mac_test',
       'type': 'executable',
       'dependencies': [
+        '../base/absl.gyp:absl_base',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../client/client.gyp:client_mock',
@@ -275,6 +276,7 @@
           ],
           'product_name': '<(branding)',
           'dependencies': [
+            '../base/absl.gyp:absl_base',
             '../base/base.gyp:crash_report_handler',
             '../client/client.gyp:client',
             '../config/config.gyp:stats_config_util',

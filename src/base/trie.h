@@ -33,89 +33,70 @@
 #define MOZC_BASE_TRIE_H_
 
 #include <map>
+#include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
 
 template <typename T>
-class Trie {
+class Trie final {
  public:
-  Trie() : has_data_(false) {}
+  Trie() = default;
 
-  virtual ~Trie() {
-    typename SubTrie::iterator it;
-    for (it = trie_.begin(); it != trie_.end(); ++it) {
-      delete it->second;
-    }
-  }
+  Trie(const Trie &) = delete;
+  Trie &operator=(const Trie &) = delete;
 
-  void AddEntry(absl::string_view key, T data) {
+  ~Trie() = default;
+
+  template <typename U>
+  void AddEntry(absl::string_view key, U &&data) {
     if (key.empty()) {
-      data_ = data;
-      has_data_ = true;
+      data_ = std::forward<U>(data);
       return;
     }
-
-    Trie *sub_trie;
-    if (HasSubTrie(GetKeyHead(key))) {
-      sub_trie = trie_[std::string(GetKeyHead(key))];
-    } else {
-      sub_trie = new Trie();
-      trie_[std::string(GetKeyHead(key))] = sub_trie;
+    FindResult res = FindSubTrie(key);
+    if (res.trie == nullptr) {
+      auto t = std::make_unique<Trie>();
+      res.trie = t.get();
+      trie_[res.first_char] = std::move(t);
     }
-
-    const absl::string_view key_tail = GetKeyTail(key);
-    sub_trie->AddEntry(key_tail, data);
+    res.trie->AddEntry(res.rest, std::forward<U>(data));
   }
 
   bool DeleteEntry(absl::string_view key) {
     if (key.empty()) {
       if (trie_.empty()) {
         return true;
-      } else {
-        has_data_ = false;
-        return false;
       }
-    }
-
-    if (!HasSubTrie(GetKeyHead(key))) {
+      data_.reset();
       return false;
     }
-
-    Trie *sub_trie = GetSubTrie(key);
-    const absl::string_view sub_key = GetKeyTail(key);
-    const bool should_delete_subtrie = sub_trie->DeleteEntry(sub_key);
-    if (should_delete_subtrie) {
-      delete sub_trie;
-      trie_.erase(std::string(GetKeyHead(key)));
-      // If the size of trie_ is 0, This trie should be deleted.
+    if (const FindResult res = FindSubTrie(key);
+        res.trie != nullptr && res.trie->DeleteEntry(res.rest)) {
+      trie_.erase(res.first_char);
       return trie_.empty();
-    } else {
-      return false;
     }
+    return false;
   }
 
   bool LookUp(absl::string_view key, T *data) const {
     if (key.empty()) {
-      if (!has_data_) {
+      if (!data_.has_value()) {
         return false;
       }
-      *data = data_;
+      *data = *data_;
       return true;
     }
-
-    if (!HasSubTrie(GetKeyHead(key))) {
-      return false;
-    }
-
-    Trie *sub_trie = GetSubTrie(key);
-    const absl::string_view sub_key = GetKeyTail(key);
-    return sub_trie->LookUp(sub_key, data);
+    const FindResult res = FindSubTrie(key);
+    return res.trie != nullptr && res.trie->LookUp(res.rest, data);
   }
 
   // If key's prefix matches to trie with data, return true and set data
@@ -131,34 +112,22 @@ class Trie {
   //  -- Matches in prefix by 'a', and 'a' have data
   bool LookUpPrefix(absl::string_view key, T *data, size_t *key_length,
                     bool *fixed) const {
-    if (key.empty() || !HasSubTrie(GetKeyHead(key))) {
+    const FindResult res = FindSubTrie(key);
+    if (res.trie == nullptr) {
       *key_length = 0;
-      if (has_data_) {
-        *data = data_;
+      if (data_.has_value()) {
+        *data = *data_;
         *fixed = trie_.empty();
         return true;
-      } else {
-        *fixed = true;
-        return false;
       }
-    }
-
-    Trie *sub_trie = GetSubTrie(key);
-    const absl::string_view sub_key = GetKeyTail(key);
-    if (sub_trie->LookUpPrefix(sub_key, data, key_length, fixed)) {
-      *key_length += GetKeyHeadLength(key);
-      return true;
-    } else if (HasSubTrie(GetKeyHead(key))) {
-      *key_length += GetKeyHeadLength(key);
-      return false;
-    } else if (has_data_) {
-      *data = data_;
-      *key_length = 0;
-      return true;
-    } else {
-      *key_length += GetKeyHeadLength(key);
+      *fixed = true;
       return false;
     }
+    const bool found =
+        res.trie->LookUpPrefix(res.rest, data, key_length, fixed);
+    const size_t first_char_len = key.size() - res.rest.size();
+    *key_length += first_char_len;
+    return found;
   }
 
   // Return all result starts with key
@@ -170,60 +139,56 @@ class Trie {
                            std::vector<T> *data_list) const {
     DCHECK(data_list);
     if (!key.empty()) {
-      if (!HasSubTrie(GetKeyHead(key))) {
-        return;
+      if (const FindResult res = FindSubTrie(key); res.trie != nullptr) {
+        res.trie->LookUpPredictiveAll(res.rest, data_list);
       }
-      const Trie *sub_trie = GetSubTrie(key);
-      const absl::string_view sub_key = GetKeyTail(key);
-      return sub_trie->LookUpPredictiveAll(sub_key, data_list);
+      return;
     }
 
-    if (has_data_) {
-      data_list->push_back(data_);
+    if (data_.has_value()) {
+      data_list->push_back(*data_);
     }
 
-    for (typename SubTrie::const_iterator it = trie_.begin(); it != trie_.end();
-         ++it) {
-      it->second->LookUpPredictiveAll("", data_list);
+    for (auto &[unused, trie] : trie_) {
+      trie->LookUpPredictiveAll("", data_list);
     }
   }
 
   bool HasSubTrie(absl::string_view key) const {
-    const absl::string_view head = GetKeyHead(key);
-
-    const typename SubTrie::const_iterator it = trie_.find(std::string(head));
-    if (it == trie_.end()) {
+    const FindResult res = FindSubTrie(key);
+    if (res.trie == nullptr) {
       return false;
     }
-
-    if (key.size() == head.size()) {
-      return true;
-    }
-
-    return it->second->HasSubTrie(GetKeyTail(key));
+    return res.rest.empty() || res.trie->HasSubTrie(res.rest);
   }
 
  private:
-  absl::string_view GetKeyHead(absl::string_view key) const {
-    return Util::Utf8SubString(key, 0, 1);
+  using SubTrie = absl::flat_hash_map<char32, std::unique_ptr<Trie<T>>>;
+
+  struct FindResult {
+    Trie<T> *trie = nullptr;
+    char32 first_char = 0;
+    absl::string_view rest;
+  };
+
+  // Finds the subtrie that is reachable by the first UTF8 character of `key`.
+  // If `key` is empty or no such trie exists, `FindResult::trie` is set to
+  // nullptr. If `key` is nonempty, this method also sets the value of char32
+  // for the first character and the rest of strings regardless of the find
+  // result.
+  FindResult FindSubTrie(absl::string_view key) const {
+    FindResult res;
+    if (!key.empty()) {
+      Util::SplitFirstChar32(key, &res.first_char, &res.rest);
+      if (const auto it = trie_.find(res.first_char); it != trie_.end()) {
+        res.trie = it->second.get();
+      }
+    }
+    return res;
   }
 
-  size_t GetKeyHeadLength(absl::string_view key) const {
-    return Util::OneCharLen(key.data());
-  }
-
-  absl::string_view GetKeyTail(absl::string_view key) const {
-    return absl::ClippedSubstr(key, Util::OneCharLen(key.data()));
-  }
-
-  Trie<T> *GetSubTrie(absl::string_view key) const {
-    return trie_.find(std::string(GetKeyHead(key)))->second;
-  }
-
-  typedef std::map<const std::string, Trie<T> *> SubTrie;
   SubTrie trie_;
-  bool has_data_;
-  T data_;
+  std::optional<T> data_;
 };
 
 }  // namespace mozc

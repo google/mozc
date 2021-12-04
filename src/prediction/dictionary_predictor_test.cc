@@ -79,6 +79,7 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -3480,8 +3481,7 @@ struct TestEntry {
   std::vector<int32_t> expected_types;
 
   std::string DebugString() const {
-    std::string candidates;
-    Util::JoinStrings(expected_candidates, ", ", &candidates);
+    const std::string candidates = absl::StrJoin(expected_candidates, ", ");
     std::string types;
     for (size_t i = 0; i < expected_types.size(); ++i) {
       if (i != 0) {

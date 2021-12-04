@@ -323,6 +323,7 @@ cc_test_mozc(
         "//base",
         "//base:port",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:btree",
     ],
 )
 
@@ -632,6 +633,7 @@ cc_binary_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -649,6 +651,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//protocol:segmenter_data_cc_proto",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -806,6 +809,7 @@ cc_library_mozc(
         "//base:port",
         "//testing:gunit",
         "//testing:mozctest",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",

@@ -45,6 +45,7 @@
 #include "session/internal/keymap_factory.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
@@ -396,7 +397,7 @@ TEST_F(KeyMapTest, DirectModeDoesNotSupportInsertSpace) {
   // InsertSpace, InsertAlternateSpace, InsertHalfSpace, and InsertFullSpace
   // are not supported in direct mode.
   KeyMapManager manager;
-  std::set<std::string> names;
+  absl::btree_set<std::string> names;
   manager.GetAvailableCommandNameDirect(&names);
 
   // We cannot use EXPECT_EQ because of overload resolution here.

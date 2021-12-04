@@ -35,6 +35,7 @@
 #include "base/port.h"
 #include "converter/node.h"
 #include "testing/base/public/gunit.h"
+#include "absl/container/btree_set.h"
 
 namespace mozc {
 
@@ -152,7 +153,7 @@ TEST(LatticeTest, AddSuffixTest) {
     for (size_t i = 0; i <= key_size; ++i) {
       // check for begin_nodes
       if (i < key_size) {
-        std::set<int> lengths;
+        absl::btree_set<int> lengths;
         for (Node *node = lattice.begin_nodes(i); node != nullptr;
              node = node->bnext) {
           lengths.insert(node->key.size());
@@ -161,7 +162,7 @@ TEST(LatticeTest, AddSuffixTest) {
       }
       // check for end_nodes
       if (i > 0) {
-        std::set<int> lengths;
+        absl::btree_set<int> lengths;
         for (Node *node = lattice.end_nodes(i); node != nullptr;
              node = node->enext) {
           lengths.insert(node->key.size());
@@ -202,7 +203,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
     for (size_t i = 0; i <= key_size; ++i) {
       // check for begin_nodes
       if (i < key_size) {
-        std::set<int> lengths;
+        absl::btree_set<int> lengths;
         for (Node *node = lattice.begin_nodes(i); node != nullptr;
              node = node->bnext) {
           lengths.insert(node->key.size());
@@ -211,7 +212,7 @@ TEST(LatticeTest, ShrinkKeyTest) {
       }
       // check for end_nodes
       if (i > 0) {
-        std::set<int> lengths;
+        absl::btree_set<int> lengths;
         for (Node *node = lattice.end_nodes(i); node != nullptr;
              node = node->enext) {
           lengths.insert(node->key.size());

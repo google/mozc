@@ -69,6 +69,7 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/container/btree_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
@@ -262,8 +263,8 @@ class SystemDictionary::ReverseLookupCache {
  public:
   ReverseLookupCache() {}
 
-  bool IsAvailable(const std::set<int> &id_set) const {
-    for (std::set<int>::const_iterator itr = id_set.begin();
+  bool IsAvailable(const absl::btree_set<int> &id_set) const {
+    for (absl::btree_set<int>::const_iterator itr = id_set.begin();
          itr != id_set.end(); ++itr) {
       if (results.find(*itr) == results.end()) {
         return false;
@@ -341,9 +342,9 @@ class SystemDictionary::ReverseLookupIndex {
 
   ~ReverseLookupIndex() {}
 
-  void FillResultMap(const std::set<int> &id_set,
+  void FillResultMap(const absl::btree_set<int> &id_set,
                      std::multimap<int, ReverseLookupResult> *result_map) {
-    for (std::set<int>::const_iterator id_itr = id_set.begin();
+    for (absl::btree_set<int>::const_iterator id_itr = id_set.begin();
          id_itr != id_set.end(); ++id_itr) {
       const ReverseLookupResultArray &result_array = index_[*id_itr];
       for (size_t i = 0; i < result_array.size; ++i) {
@@ -1029,7 +1030,7 @@ namespace {
 
 class AddKeyIdsToSet {
  public:
-  explicit AddKeyIdsToSet(std::set<int> *output) : output_(output) {}
+  explicit AddKeyIdsToSet(absl::btree_set<int> *output) : output_(output) {}
 
   void operator()(absl::string_view key, size_t prefix_len,
                   const LoudsTrie &trie, LoudsTrie::Node node) {
@@ -1037,11 +1038,11 @@ class AddKeyIdsToSet {
   }
 
  private:
-  std::set<int> *output_;
+  absl::btree_set<int> *output_;
 };
 
 inline void AddKeyIdsOfAllPrefixes(const LoudsTrie &trie, absl::string_view key,
-                                   std::set<int> *key_ids) {
+                                   absl::btree_set<int> *key_ids) {
   trie.PrefixSearch(key, AddKeyIdsToSet(key_ids));
 }
 
@@ -1057,7 +1058,7 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
   DCHECK(reverse_lookup_cache_.get());
 
   // Iterate each suffix and collect IDs of all substrings.
-  std::set<int> id_set;
+  absl::btree_set<int> id_set;
   int pos = 0;
   std::string lookup_key;
   lookup_key.reserve(str.size());
@@ -1123,7 +1124,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   std::string lookup_key;
   codec_->EncodeValue(value, &lookup_key);
 
-  std::set<int> id_set;
+  absl::btree_set<int> id_set;
   AddKeyIdsOfAllPrefixes(value_trie_, lookup_key, &id_set);
 
   ReverseLookupCache *results = nullptr;
@@ -1144,7 +1145,7 @@ void SystemDictionary::RegisterReverseLookupTokensForValue(
   RegisterReverseLookupResults(id_set, *results, callback);
 }
 
-void SystemDictionary::ScanTokens(const std::set<int> &id_set,
+void SystemDictionary::ScanTokens(const absl::btree_set<int> &id_set,
                                   ReverseLookupCache *cache) const {
   for (TokenScanIterator iter(codec_, token_array_); !iter.Done();
        iter.Next()) {
@@ -1159,11 +1160,11 @@ void SystemDictionary::ScanTokens(const std::set<int> &id_set,
 }
 
 void SystemDictionary::RegisterReverseLookupResults(
-    const std::set<int> &id_set, const ReverseLookupCache &cache,
+    const absl::btree_set<int> &id_set, const ReverseLookupCache &cache,
     Callback *callback) const {
   const uint8_t *encoded_tokens_ptr = GetTokenArrayPtr(token_array_, 0);
   char buffer[LoudsTrie::kMaxDepth + 1];
-  for (std::set<int>::const_iterator set_itr = id_set.begin();
+  for (absl::btree_set<int>::const_iterator set_itr = id_set.begin();
        set_itr != id_set.end(); ++set_itr) {
     const int value_id = *set_itr;
     typedef std::multimap<int, ReverseLookupResult>::const_iterator ResultItr;

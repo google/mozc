@@ -48,44 +48,6 @@
 
 namespace mozc {
 
-TEST(UtilTest, JoinStrings) {
-  std::vector<std::string> input = {"ab", "cdef", "ghr"};
-  std::string output;
-  Util::JoinStrings(input, ":", &output);
-  EXPECT_EQ("ab:cdef:ghr", output);
-}
-
-TEST(UtilTest, JoinStrings2) {
-  {
-    const std::vector<absl::string_view> input = {"ab"};
-    EXPECT_EQ("ab", Util::JoinStrings(input, ":"));
-  }
-  {
-    const std::vector<absl::string_view> input = {"ab", "cdef", "ghr"};
-    EXPECT_EQ("ab:cdef:ghr", Util::JoinStrings(input, ":"));
-  }
-  {
-    const std::vector<absl::string_view> input = {"ab", "cdef", "ghr"};
-    EXPECT_EQ("ab::cdef::ghr", Util::JoinStrings(input, "::"));
-  }
-}
-
-TEST(UtilTest, ConcatStrings) {
-  std::string s;
-
-  Util::ConcatStrings("", "", &s);
-  EXPECT_TRUE(s.empty());
-
-  Util::ConcatStrings("ABC", "", &s);
-  EXPECT_EQ("ABC", s);
-
-  Util::ConcatStrings("", "DEF", &s);
-  EXPECT_EQ("DEF", s);
-
-  Util::ConcatStrings("ABC", "DEF", &s);
-  EXPECT_EQ("ABCDEF", s);
-}
-
 TEST(UtilTest, AppendStringWithDelimiter) {
   std::string result;
   std::string input;
@@ -1443,7 +1405,7 @@ TEST(UtilTest, IsJisX0208) {
 
   // boundary edges
   EXPECT_TRUE(Util::IsJisX0208("ﾟ"));  // U+FF9F, the last char of JIS X 0208
-  EXPECT_TRUE(Util::IsJisX0208(u8"\uFF9F"));  // U+FF9F
+  EXPECT_TRUE(Util::IsJisX0208(u8"\uFF9F"));   // U+FF9F
   EXPECT_FALSE(Util::IsJisX0208(u8"\uFFA0"));  // U+FF9F + 1
   EXPECT_FALSE(Util::IsJisX0208(u8"\uFFFF"));
   EXPECT_FALSE(Util::IsJisX0208(u8"\U00010000"));

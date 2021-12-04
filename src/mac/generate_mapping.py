@@ -73,7 +73,7 @@ class Mapping(object):
 namespace {
 static std::map<%(key_type)s, %(result_type)s> *k%(mapname)s = nullptr;
 static std::map<%(key_type)s, %(result_type)s> *k%(mapname)sShift = nullptr;
-static once_t kOnceFor%(mapname)s = MOZC_ONCE_INIT;
+static absl::once_flag kOnceFor%(mapname)s;
 void Init%(mapname)s() {
   if (k%(mapname)s != nullptr || k%(mapname)sShift != nullptr) {
     return;

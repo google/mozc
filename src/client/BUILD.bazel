@@ -104,6 +104,7 @@ cc_test_mozc(
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -117,7 +118,6 @@ cc_library_mozc(
         ":client_interface",
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/synchronization",

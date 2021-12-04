@@ -211,7 +211,6 @@ cc_library_mozc(
         "//base",
         "//base:file_util",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:singleton",
         "//base:system_util",

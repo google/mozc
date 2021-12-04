@@ -48,6 +48,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -335,9 +336,7 @@ std::string QualityRegressionUtil::GetPlatformString(
   if (v.empty()) {
     v.push_back("UNKNOWN");
   }
-  std::string s;
-  Util::JoinStrings(v, "|", &s);
-  return s;
+  return absl::StrJoin(v, "|");
 }
 
 }  // namespace quality_regression

@@ -728,6 +728,7 @@ cc_library_mozc(
         "//base/protobuf:message",
         "//protocol:commands_cc_proto",
         "//usage_stats",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -772,12 +773,12 @@ cc_library_mozc(
     deps = [
         "//base",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:util",
         "//composer:key_parser",
         "//protocol:commands_cc_proto",
         "//session/internal:keymap",
+        "@com_google_absl//absl/base",
         "@com_google_absl//absl/strings",
     ],
 )

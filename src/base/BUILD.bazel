@@ -62,7 +62,6 @@ test_suite(
         ":hash_test_android",
         ":logging_test_android",
         ":mmap_test_android",
-        ":mutex_test_android",
         ":number_util_test_android",
         ":obfuscator_support_test_android",
         ":process_mutex_test_android",
@@ -98,7 +97,6 @@ cc_library_mozc(
         ":file_stream",
         ":file_util",
         ":mmap",
-        ":mutex",
         ":number_util",
         ":port",
         ":process_mutex",
@@ -201,7 +199,6 @@ cc_library_mozc(
         linux = [
             ":clock",
             ":const",
-            ":mutex",
             ":singleton",
             "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
@@ -209,7 +206,6 @@ cc_library_mozc(
         oss = [
             ":clock",
             ":const",
-            ":mutex",
             ":singleton",
             "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
@@ -217,7 +213,6 @@ cc_library_mozc(
         wasm = [
             ":clock",
             ":const",
-            ":mutex",
             ":singleton",
             "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
@@ -331,7 +326,7 @@ cc_library_mozc(
     srcs = ["singleton.cc"],
     hdrs = ["singleton.h"],
     visibility = ["//:__subpackages__"],
-    deps = [":mutex"],
+    deps = ["@com_google_absl//absl/base"],
 )
 
 cc_test_mozc(
@@ -422,7 +417,6 @@ cc_test_mozc(
     deps = [
         ":clock",
         ":clock_mock",
-        ":mutex",
         ":port",
         "//testing:gunit_main",
     ],
@@ -467,29 +461,7 @@ cc_test_mozc(
         ":util",
         "//testing:gunit_main",
         "//testing:mozctest",
-    ],
-)
-
-cc_library_mozc(
-    name = "mutex",
-    srcs = ["mutex.cc"],
-    hdrs = ["mutex.h"],
-    visibility = ["//:__subpackages__"],
-)
-
-cc_test_mozc(
-    name = "mutex_test",
-    size = "small",
-    srcs = [
-        "mutex_test.cc",
-    ],
-    requires_full_emulation = False,
-    deps = [
-        ":logging",
-        ":mutex",
-        ":thread",
-        ":util",
-        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -551,6 +523,7 @@ cc_library_mozc(
     deps = [
         ":logging",
         ":util",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -689,7 +662,6 @@ cc_library_mozc(
         ":file_stream",
         ":logging",
         ":mmap",
-        ":mutex",
         ":port",
         ":scoped_handle",
         ":singleton",
@@ -761,7 +733,6 @@ cc_library_mozc(
         ":environ",
         ":file_util",
         ":logging",
-        ":mutex",
         ":port",
         ":singleton",
         ":util",
@@ -842,7 +813,6 @@ cc_library_mozc(
     deps = [
         ":file_util",
         ":logging",
-        ":mutex",
         ":port",
         ":scoped_handle",
         ":singleton",
@@ -1085,7 +1055,6 @@ cc_library_mozc(
         ":file_util",
         ":logging",
         ":mmap",
-        ":mutex",
         ":obfuscator_support",
         ":port",
         ":singleton",
@@ -1155,7 +1124,6 @@ cc_library_mozc(
     deps = [
         ":clock",
         ":logging",
-        ":mutex",
         ":port",
         ":singleton",
         ":thread",
@@ -1327,6 +1295,7 @@ cc_test_mozc(
         ":util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

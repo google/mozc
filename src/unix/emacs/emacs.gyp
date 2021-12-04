@@ -39,6 +39,7 @@
         'mozc_emacs_helper.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
         '../../config/config.gyp:config_handler',
         '../../ipc/ipc.gyp:ipc',
@@ -71,6 +72,7 @@
         'mozc_emacs_helper_lib_test.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../testing/testing.gyp:gtest_main',
         'mozc_emacs_helper_lib',
       ],

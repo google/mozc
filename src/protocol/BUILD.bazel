@@ -31,6 +31,7 @@ load("//tools/build_defs:stubs.bzl", "jspb_proto_library")
 
 package(default_visibility = [
     "//:__subpackages__",
+    "//chrome/inputs/service/proto:__pkg__",
 ])
 
 cc_proto_library(
@@ -119,7 +120,6 @@ java_lite_proto_library(
 proto_library(
     name = "config_proto",
     srcs = ["config.proto"],
-    visibility = [],
 )
 
 jspb_proto_library(
@@ -169,7 +169,6 @@ proto_library(
 proto_library(
     name = "user_dictionary_storage_proto",
     srcs = ["user_dictionary_storage.proto"],
-    visibility = [],
 )
 
 jspb_proto_library(

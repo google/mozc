@@ -45,6 +45,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/usage_rewriter.h"
+#include "absl/strings/str_cat.h"
 
 using mozc::dictionary::DictionaryInterface;
 
@@ -87,12 +88,11 @@ UsageRewriter::UsageRewriter(const DataManagerInterface *data_manager,
           string_array_[conjugation_suffix[2 * i + 1]];
       const absl::string_view value_suffix =
           string_array_[conjugation_suffix[2 * i]];
-      StrPair key_value1;
-      Util::ConcatStrings(key, key_suffix, &key_value1.first);
-      Util::ConcatStrings(value, value_suffix, &key_value1.second);
+      const StrPair key_value1(absl::StrCat(key, key_suffix),
+                               absl::StrCat(value, value_suffix));
       key_value_usageitem_map_[key_value1] = begin;
 
-      StrPair key_value2("", key_value1.second);
+      const StrPair key_value2("", key_value1.second);
       key_value_usageitem_map_[key_value2] = begin;
     }
   }

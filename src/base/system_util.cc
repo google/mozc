@@ -140,7 +140,7 @@ class LocalAppDataDirectoryCache {
  private:
   // b/5707813 implies that TryGetLocalAppData causes an exception and makes
   // Singleton<LocalAppDataDirectoryCache> invalid state which results in an
-  // infinite spin loop in CallOnce. To prevent this, the constructor of
+  // infinite spin loop in call_once. To prevent this, the constructor of
   // LocalAppDataDirectoryCache must be exception free.
   // Note that __try and __except does not guarantees that any destruction
   // of internal C++ objects when a non-C++ exception occurs except that
@@ -361,8 +361,8 @@ class ProgramFilesX86Cache {
 
  private:
   // b/5707813 implies that the Shell API causes an exception in some cases.
-  // In order to avoid potential infinite loops in CallOnce. the constructor of
-  // ProgramFilesX86Cache must be exception free.
+  // In order to avoid potential infinite loops in call_once. the constructor
+  // of ProgramFilesX86Cache must be exception free.
   // Note that __try and __except does not guarantees that any destruction
   // of internal C++ objects when a non-C++ exception occurs except that
   // /EHa compiler option is specified.

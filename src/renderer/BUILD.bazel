@@ -89,6 +89,7 @@ cc_test_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -508,6 +509,7 @@ objc_library_mozc(
         "//config:stats_config_util",
         "//ipc:ipc",
         "//mac:common",
+        "@com_google_absl//absl/base",
         ":proto_wrapper",
         ":renderer_server",
         ":renderer_style_handler",

@@ -114,6 +114,7 @@
             'ime_ui_window.cc',
           ],
           'dependencies': [
+            '../../base/absl.gyp:absl_base',
             '../../base/base.gyp:base',
             '../../client/client.gyp:client',
             '../../config/config.gyp:config_handler',

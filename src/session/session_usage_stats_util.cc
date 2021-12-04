@@ -38,6 +38,7 @@
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/str_join.h"
 
 using mozc::commands::Input;
 using mozc::commands::Output;
@@ -55,7 +56,7 @@ void CamelCaseString(std::string *str, const char *delm) {
   for (size_t i = 0; i < pieces.size(); ++i) {
     Util::CapitalizeString(&pieces[i]);
   }
-  Util::JoinStrings(pieces, "", str);
+  *str = absl::StrJoin(pieces, "");
 }
 }  // namespace
 

@@ -42,6 +42,7 @@
 #include "unix/emacs/mozc_emacs_helper_lib.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 
 ABSL_FLAG(bool, suppress_stderr, false, "Discards all the output to stderr.");
 
@@ -113,8 +114,7 @@ void ProcessLoop() {
     // Output results.
     std::vector<std::string> buffer;
     mozc::emacs::PrintMessage(command.output(), &buffer);
-    std::string output;
-    mozc::Util::JoinStrings(buffer, "", &output);
+    const std::string output = absl::StrJoin(buffer, "");
     absl::FPrintF(
         stdout, "((emacs-event-id . %u)(emacs-session-id . %u)(output . %s))\n",
         event_id, session_id, output);
@@ -129,9 +129,9 @@ int main(int argc, char **argv) {
   if (absl::GetFlag(FLAGS_suppress_stderr)) {
 #ifdef OS_WIN
     const char path[] = "NUL";
-#else
+#else   // OS_WIN
     const char path[] = "/dev/null";
-#endif
+#endif  // OS_WIN
     if (!freopen(path, "a", stderr)) {
       mozc::emacs::ErrorExit(mozc::emacs::kErrFileError,
                              "freopen for stderr failed");

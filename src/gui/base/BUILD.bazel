@@ -157,7 +157,6 @@ cc_qt_library_mozc(
         ":gui_base",
         "//base:file_stream",
         "//base:logging",
-        "//base:mutex",
         "//base:port",
         "//base:process_mutex",
         "//base:scoped_handle",

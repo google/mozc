@@ -117,7 +117,6 @@
         'gen_character_set#host',
         'gen_version_def#host',
         'hash',
-        'mutex',
         'singleton',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
@@ -128,6 +127,7 @@
         ['OS=="win"', {
           'dependencies': [
             'scoped_handle',
+            'absl.gyp:absl_base',
           ],
           'link_settings': {
             'msvs_settings': {
@@ -169,14 +169,6 @@
       ],
     },
     {
-      'target_name': 'mutex',
-      'type': 'static_library',
-      'toolsets': ['host', 'target'],
-      'sources': [
-        'mutex.cc',
-      ],
-    },
-    {
       'target_name': 'singleton',
       'type': 'static_library',
       'toolsets': ['host', 'target'],
@@ -184,7 +176,7 @@
         'singleton.cc',
       ],
       'dependencies': [
-        'mutex',
+        'absl.gyp:absl_base',
       ],
     },
     {

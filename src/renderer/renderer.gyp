@@ -97,6 +97,7 @@
         'renderer_client_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../testing/testing.gyp:gtest_main',
         'renderer_client',
       ],
@@ -465,6 +466,7 @@
             '../data/images/mac/product_icon.icns',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_base',
             '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',

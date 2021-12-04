@@ -34,16 +34,14 @@
 #import <Carbon/Carbon.h>
 
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "protocol/commands.pb.h"
 
 using mozc::commands::KeyEvent;
-using mozc::once_t;
-using mozc::CallOnce;
 
 #include "mac/init_kanamap.h"
 #include "mac/init_specialcharmap.h"
 #include "mac/init_specialkeymap.h"
+#include "absl/base/call_once.h"
 
 static const unichar kYenMark = 0xA5;
 
@@ -64,9 +62,9 @@ static const unichar kYenMark = 0xA5;
 @synthesize inputMode = inputMode_;
 
 - (id)init {
-  CallOnce(&kOnceForKanaMap, InitKanaMap);
-  CallOnce(&kOnceForSpecialKeyMap, InitSpecialKeyMap);
-  CallOnce(&kOnceForSpecialCharMap, InitSpecialCharMap);
+  absl::call_once(kOnceForKanaMap, &InitKanaMap);
+  absl::call_once(kOnceForSpecialKeyMap, &InitSpecialKeyMap);
+  absl::call_once(kOnceForSpecialCharMap, &InitSpecialCharMap);
   if (kSpecialKeyMap == nullptr) {
     self = nil;
     return self;
@@ -208,7 +206,7 @@ static const unichar kYenMark = 0xA5;
   // will compute the string-to-be-logged even in production.
   LOG(INFO) << [[NSString stringWithFormat:@"%@", event] UTF8String]
             << " -> " << keyEvent->DebugString();
-#endif
+#endif  // DEBUG
 
   if (nsModifiers == NSShiftKeyMask && !keyEvent->has_special_key()) {
     // If only the modifier is Shift and |keyEvent| is not normal key,

@@ -43,6 +43,7 @@
 #include "dictionary/system/words_info.h"
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
+#include "absl/container/btree_set.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 
@@ -142,8 +143,9 @@ class SystemDictionary : public DictionaryInterface {
                                           Callback *callback) const;
   void RegisterReverseLookupTokensForValue(absl::string_view value,
                                            Callback *callback) const;
-  void ScanTokens(const std::set<int> &id_set, ReverseLookupCache *cache) const;
-  void RegisterReverseLookupResults(const std::set<int> &id_set,
+  void ScanTokens(const absl::btree_set<int> &id_set,
+                  ReverseLookupCache *cache) const;
+  void RegisterReverseLookupResults(const absl::btree_set<int> &id_set,
                                     const ReverseLookupCache &cache,
                                     Callback *callback) const;
   void InitReverseLookupIndex();

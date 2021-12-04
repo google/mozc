@@ -41,6 +41,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 
@@ -73,9 +74,7 @@ std::string GetCandidates(const Segments &segments) {
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     results.push_back(seg.candidate(i).value);
   }
-  std::string result;
-  Util::JoinStrings(results, " ", &result);
-  return result;
+  return absl::StrJoin(results, " ");
 }
 }  // namespace
 

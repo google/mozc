@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -151,8 +152,10 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
           string_array_[token_iter.key_suffix_index()];
       const absl::string_view value_suffix =
           string_array_[token_iter.value_suffix_index()];
-      Util::ConcatStrings(key_stem, key_suffix, &(*tokens)[i].key);
-      Util::ConcatStrings(value_stem, value_suffix, &(*tokens)[i].value);
+      (*tokens)[i].key.clear();
+      (*tokens)[i].value.clear();
+      absl::StrAppend(&(*tokens)[i].key, key_stem, key_suffix);
+      absl::StrAppend(&(*tokens)[i].value, value_stem, value_suffix);
       (*tokens)[i].id = token_iter.conjugation_id();
       (*tokens)[i].cost = kDefaultCost;
     }

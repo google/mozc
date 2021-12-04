@@ -33,17 +33,16 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
-#include <unistd.h>  // for getpid()
-#endif
+#else  // OS_WIN
+#include <unistd.h>
+#endif  // OS_WIN
 
 #ifdef OS_WIN
-#include <memory>  // for std::unique_ptr
-#endif             // OS_WIN
+#include <memory>
+#endif  // OS_WIN
 
 #include "base/file_stream.h"
 #include "base/logging.h"
-#include "base/mutex.h"
 #include "base/process_mutex.h"
 #include "base/scoped_handle.h"
 #include "base/util.h"
@@ -99,7 +98,7 @@ bool ReadWindowInfo(const std::string &lock_name,
       return false;
     }
   }
-#else
+#else   // OS_WIN
   InputFileStream is(lock_name.c_str(), std::ios::binary | std::ios::in);
   if (!is) {
     LOG(ERROR) << "cannot open: " << lock_name;
@@ -110,7 +109,7 @@ bool ReadWindowInfo(const std::string &lock_name,
     LOG(ERROR) << "ParseFromStream failed";
     return false;
   }
-#endif
+#endif  // OS_WIN
   return true;
 }
 }  // namespace
@@ -125,9 +124,9 @@ bool SingletonWindowHelper::FindPreviousWindow() {
   ipc::WindowInfo window_info;
 #ifdef OS_WIN
   window_info.set_process_id(static_cast<uint32>(::GetCurrentProcessId()));
-#else
+#else   // OS_WIN
   window_info.set_process_id(static_cast<uint32_t>(getpid()));
-#endif
+#endif  // OS_WIN
 
   std::string window_info_str;
   if (!window_info.SerializeToString(&window_info_str)) {
@@ -155,10 +154,10 @@ bool SingletonWindowHelper::ActivatePreviousWindow() {
 #ifdef OS_WIN
   WinUtil::ActivateWindow(window_info.process_id());
   return true;
-#else
+#else   // OS_WIN
   // not implemented
   return false;
-#endif
+#endif  // OS_WIN
 }
 
 }  // namespace gui

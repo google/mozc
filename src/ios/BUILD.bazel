@@ -83,7 +83,6 @@ cc_library_mozc(
     srcs = ["ios_engine_stub.cc"],
     hdrs = ["ios_engine.h"],
     deps = [
-        "//base:mutex",
         "//base:port",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",

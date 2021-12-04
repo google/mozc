@@ -43,6 +43,7 @@
 #include "composer/type_corrected_query.h"
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
+#include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 
@@ -183,7 +184,7 @@ void TypingCorrector::GetQueriesForPrediction(
   // e.g. "shamoji" -> "しゃもじ"
   // If there is ambiguity, queries are created.
   // e.g. "kaish" -> "かいしゃ", "かいしゅ" and "かいしょ".
-  std::set<std::string> raw_queries;
+  absl::btree_set<std::string> raw_queries;
   {
     input.set_raw(raw_key_);
     input.set_is_new_input(true);

@@ -38,6 +38,7 @@
 #include "protocol/commands.pb.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/strings/str_join.h"
 
 class MozcEmacsHelperLibTest : public testing::Test {
  protected:
@@ -57,8 +58,7 @@ class MozcEmacsHelperLibTest : public testing::Test {
                          const std::string &sexpr) {
     std::vector<std::string> buffer;
     mozc::emacs::PrintMessage(message, &buffer);
-    std::string output;
-    mozc::Util::JoinStrings(buffer, "", &output);
+    const std::string output = absl::StrJoin(buffer, "");
     EXPECT_EQ(sexpr, output);
   }
 
