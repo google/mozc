@@ -51,6 +51,7 @@
 #include "dictionary/user_pos.h"
 #include "protocol/config.pb.h"
 #include "usage_stats/usage_stats.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
@@ -393,7 +394,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
     if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
       continue;
     }
-    if (!Util::StartsWith(key, user_pos_token.key)) {
+    if (!absl::StartsWith(key, user_pos_token.key)) {
       continue;
     }
     switch (callback->OnKey(user_pos_token.key)) {

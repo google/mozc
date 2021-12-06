@@ -51,6 +51,7 @@
 #include "dictionary/pos_matcher.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(int32_t, tokens_reserve_size, 1400000,
@@ -137,16 +138,16 @@ bool TextDictionaryLoader::RewriteSpecialToken(Token *token,
   if (label.empty()) {
     return true;
   }
-  if (Util::StartsWith(label, "SPELLING_CORRECTION")) {
+  if (absl::StartsWith(label, "SPELLING_CORRECTION")) {
     token->attributes = Token::SPELLING_CORRECTION;
     return true;
   }
-  if (Util::StartsWith(label, "ZIP_CODE")) {
+  if (absl::StartsWith(label, "ZIP_CODE")) {
     token->lid = zipcode_id_;
     token->rid = zipcode_id_;
     return true;
   }
-  if (Util::StartsWith(label, "ENGLISH")) {
+  if (absl::StartsWith(label, "ENGLISH")) {
     // TODO(noriyukit): Might be better to use special POS for english words.
     token->lid = isolated_word_id_;
     token->rid = isolated_word_id_;

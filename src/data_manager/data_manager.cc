@@ -41,6 +41,7 @@
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -373,7 +374,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
   }
 
   for (const auto &kv : reader.name_to_data_map()) {
-    if (!Util::StartsWith(kv.first, "typing_model")) {
+    if (!absl::StartsWith(kv.first, "typing_model")) {
       continue;
     }
     typing_model_data_.push_back(kv);

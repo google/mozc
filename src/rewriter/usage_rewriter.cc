@@ -45,6 +45,7 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/usage_rewriter.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
 using mozc::dictionary::DictionaryInterface;
@@ -160,7 +161,7 @@ UsageRewriter::LookupUnmatchedUsageHeuristically(
   }
   // Check result key part is a prefix of the content_key.
   const absl::string_view key = string_array_[itr->second.key_index()];
-  if (Util::StartsWith(candidate.content_key, key)) {
+  if (absl::StartsWith(candidate.content_key, key)) {
     return itr->second;
   }
 

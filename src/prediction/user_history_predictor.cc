@@ -689,8 +689,8 @@ bool UserHistoryPredictor::ClearHistoryEntry(const std::string &key,
     for (DicElement *elm = dic_->MutableHead(); elm != nullptr;
          elm = elm->next) {
       Entry *entry = &elm->value;
-      if (!Util::StartsWith(key, entry->key()) ||
-          !Util::StartsWith(value, entry->value())) {
+      if (!absl::StartsWith(key, entry->key()) ||
+          !absl::StartsWith(value, entry->value())) {
         continue;
       }
       std::vector<absl::string_view> key_ngrams, value_ngrams;
@@ -785,7 +785,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
       if (!isalnum(prefix[i])) {
         std::string replaced_prefix = prefix;
         replaced_prefix[i] = str[i];
-        if (Util::StartsWith(str, replaced_prefix)) {
+        if (absl::StartsWith(str, replaced_prefix)) {
           return true;
         }
       }
@@ -793,7 +793,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
       // deletion.
       std::string inserted_prefix = prefix;
       inserted_prefix.insert(i, 1, str[i]);
-      if (Util::StartsWith(str, inserted_prefix)) {
+      if (absl::StartsWith(str, inserted_prefix)) {
         return true;
       }
 
@@ -802,7 +802,7 @@ bool UserHistoryPredictor::RomanFuzzyPrefixMatch(const std::string &str,
         std::string swapped_prefix = prefix;
         using std::swap;
         swap(swapped_prefix[i], swapped_prefix[i + 1]);
-        if (Util::StartsWith(str, swapped_prefix)) {
+        if (absl::StartsWith(str, swapped_prefix)) {
           return true;
         }
       }

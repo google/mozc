@@ -241,9 +241,6 @@ class Util {
   static void Utf8SubString(absl::string_view src, size_t start, size_t length,
                             std::string *result);
 
-  // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(absl::string_view str, absl::string_view prefix);
-
   // Determines whether the end of |str| matches |suffix|.
   static bool EndsWith(absl::string_view str, absl::string_view suffix);
 

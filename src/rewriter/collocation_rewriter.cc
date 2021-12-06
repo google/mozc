@@ -46,6 +46,7 @@
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -102,7 +103,7 @@ bool ParseCompound(const absl::string_view value,
   // Check if the middle part matches |pattern|.
   const absl::string_view remaining_value =
       absl::ClippedSubstr(value, first_content->size());
-  if (!Util::StartsWith(remaining_value, pattern)) {
+  if (!absl::StartsWith(remaining_value, pattern)) {
     return false;
   }
 

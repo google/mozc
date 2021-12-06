@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -111,7 +112,7 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
 
   // TODO(taku)  Change the cost by seeing cost_type
   const int16_t kDefaultCost =
-      (!locale.empty() && !Util::StartsWith(locale, "ja")) ? 10000 : 5000;
+      (!locale.empty() && !absl::StartsWith(locale, "ja")) ? 10000 : 5000;
 
   // Set smaller cost for "短縮よみ" in order to make
   // the rank of the word higher than others.

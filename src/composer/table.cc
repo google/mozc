@@ -50,6 +50,7 @@
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace composer {
@@ -314,7 +315,7 @@ bool Table::IsLoopingEntry(const std::string &input,
   do {
     // If input is a prefix of key, it should be looping.
     // (ex. input="a", pending="abc").
-    if (Util::StartsWith(key, input)) {
+    if (absl::StartsWith(key, input)) {
       return true;
     }
 

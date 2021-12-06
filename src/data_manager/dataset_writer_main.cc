@@ -54,6 +54,7 @@
 #include "base/util.h"
 #include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 
 ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
 ABSL_FLAG(std::string, output, "", "Output file");
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
   std::vector<Input> inputs;
   for (int i = 1; i < argc; ++i) {
     // InitMozc doesn't remove flags from argv, so ignore flags here.
-    if (mozc::Util::StartsWith(argv[i], "--")) {
+    if (absl::StartsWith(argv[i], "--")) {
       continue;
     }
     std::vector<std::string> params;

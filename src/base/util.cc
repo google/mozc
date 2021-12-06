@@ -772,10 +772,6 @@ void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
-bool Util::StartsWith(absl::string_view str, absl::string_view prefix) {
-  return absl::StartsWith(str, prefix);
-}
-
 bool Util::EndsWith(absl::string_view str, absl::string_view suffix) {
   return absl::EndsWith(str, suffix);
 }

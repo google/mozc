@@ -41,6 +41,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -75,7 +76,7 @@ class VersionRewriterTest : public ::testing::Test {
                                       const Segments &segments) {
     for (size_t i = 0; i < segments.segments_size(); ++i) {
       for (size_t j = 0; j < segments.segment(i).candidates_size(); ++j) {
-        if (Util::StartsWith(segments.segment(i).candidate(j).value, prefix)) {
+        if (absl::StartsWith(segments.segment(i).candidate(j).value, prefix)) {
           return true;
         }
       }
@@ -113,7 +114,7 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   static constexpr char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
   static constexpr char kVersionPrefixUnexpected[] = "Mozc-";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   static constexpr char kVersionPrefixExpected[] = "Mozc-";
   static constexpr char kVersionPrefixUnexpected[] = "GoogleJapaneseInput-";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD

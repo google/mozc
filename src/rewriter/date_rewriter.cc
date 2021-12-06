@@ -54,6 +54,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
@@ -544,7 +545,7 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
 
   // Util::EndsWith(key, kNenKey) is expected to always return true
   DCHECK(Util::EndsWith(key, kNenKey));
-  if (!Util::StartsWith(key, year_data.key)) {
+  if (!absl::StartsWith(key, year_data.key)) {
     return false;
   }
   // key="しょうわ59ねん" -> era_year_str="59"
@@ -583,7 +584,7 @@ bool EraToAdForCourt(const YearData *data, size_t size, const std::string &key,
   bool modified = false;
   for (size_t i = 0; i < size; ++i) {
     const YearData &year_data = data[i];
-    if (!Util::StartsWith(key, year_data.key)) {
+    if (!absl::StartsWith(key, year_data.key)) {
       continue;
     }
 

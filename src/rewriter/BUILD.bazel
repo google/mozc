@@ -801,6 +801,7 @@ cc_library_mozc(
         "//converter:segments",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,

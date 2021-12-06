@@ -78,6 +78,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -710,7 +711,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     std::set<std::string> values;
     for (size_t i = 0; i < results.size(); ++i) {
       EXPECT_EQ(TestableDictionaryPredictor::ENGLISH, results[i].types);
-      EXPECT_TRUE(Util::StartsWith(results[i].value, expected_prefix))
+      EXPECT_TRUE(absl::StartsWith(results[i].value, expected_prefix))
           << results[i].value << " doesn't start with " << expected_prefix;
       values.insert(results[i].value);
     }
@@ -894,8 +895,8 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
   EXPECT_EQ(2, segments.segments_size());  // history + current
   for (int i = 0; i < segments.segment(1).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(1).candidate(i);
-    EXPECT_FALSE(Util::StartsWith(candidate.content_value, "京都"));
-    EXPECT_TRUE(Util::StartsWith(candidate.content_key, "だい"));
+    EXPECT_FALSE(absl::StartsWith(candidate.content_value, "京都"));
+    EXPECT_TRUE(absl::StartsWith(candidate.content_key, "だい"));
   }
 }
 
@@ -1383,7 +1384,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
 
   for (const auto &result : results) {
     EXPECT_EQ(DictionaryPredictor::UNIGRAM, result.types);
-    EXPECT_TRUE(Util::StartsWith(result.key, kKey));
+    EXPECT_TRUE(absl::StartsWith(result.key, kKey));
   }
 
   EXPECT_EQ(1, segments.conversion_segments_size());
@@ -1515,8 +1516,8 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
         EXPECT_TRUE(results[i].removed);
       }
       EXPECT_EQ(DictionaryPredictor::BIGRAM, results[i].types);
-      EXPECT_TRUE(Util::StartsWith(results[i].key, kHistoryKey));
-      EXPECT_TRUE(Util::StartsWith(results[i].value, kHistoryValue));
+      EXPECT_TRUE(absl::StartsWith(results[i].key, kHistoryKey));
+      EXPECT_TRUE(absl::StartsWith(results[i].value, kHistoryValue));
       // Not zero query
       EXPECT_FALSE(results[i].source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1571,8 +1572,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(results.empty());
 
     for (const auto &result : results) {
-      EXPECT_TRUE(Util::StartsWith(result.key, kHistoryKey));
-      EXPECT_TRUE(Util::StartsWith(result.value, kHistoryValue));
+      EXPECT_TRUE(absl::StartsWith(result.key, kHistoryKey));
+      EXPECT_TRUE(absl::StartsWith(result.value, kHistoryValue));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1627,8 +1628,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
     EXPECT_FALSE(FindResultByValue(results, "ありがとうね"));
 
     for (const auto &result : results) {
-      EXPECT_TRUE(Util::StartsWith(result.key, kHistory));
-      EXPECT_TRUE(Util::StartsWith(result.value, kHistory));
+      EXPECT_TRUE(absl::StartsWith(result.key, kHistory));
+      EXPECT_TRUE(absl::StartsWith(result.value, kHistory));
       // Zero query
       EXPECT_FALSE(result.source_info &
                    Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX);
@@ -1959,7 +1960,7 @@ class TestSuffixDictionary : public DictionaryInterface {
     Token token;
     for (size_t i = 0; i < std::size(kSuffixTokens); ++i) {
       const SimpleSuffixToken &suffix_token = kSuffixTokens[i];
-      if (!key.empty() && !Util::StartsWith(suffix_token.key, key)) {
+      if (!key.empty() && !absl::StartsWith(suffix_token.key, key)) {
         continue;
       }
       switch (callback->OnKey(suffix_token.key)) {
@@ -3026,7 +3027,7 @@ TEST_F(DictionaryPredictorTest, MobileUnigramSuggestion) {
 
   int prefix_count = 0;
   for (const auto &result : results) {
-    if (Util::StartsWith(result.value, "東京")) {
+    if (absl::StartsWith(result.value, "東京")) {
       ++prefix_count;
     }
   }

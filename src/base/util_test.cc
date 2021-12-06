@@ -45,6 +45,7 @@
 #include "base/port.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 
@@ -786,16 +787,6 @@ TEST(UtilTest, Utf8SubString3) {
   // Doesn't clear result and call Util::Utf8SubString
   Util::Utf8SubString(src, 5, std::string::npos, &result);
   EXPECT_EQ(result, "中野です");
-}
-
-TEST(UtilTest, StartsWith) {
-  const std::string str = "abcdefg";
-  EXPECT_TRUE(Util::StartsWith(str, ""));
-  EXPECT_TRUE(Util::StartsWith(str, "a"));
-  EXPECT_TRUE(Util::StartsWith(str, "abc"));
-  EXPECT_TRUE(Util::StartsWith(str, "abcdefg"));
-  EXPECT_FALSE(Util::StartsWith(str, "abcdefghi"));
-  EXPECT_FALSE(Util::StartsWith(str, "foobar"));
 }
 
 TEST(UtilTest, EndsWith) {

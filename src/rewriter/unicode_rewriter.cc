@@ -40,6 +40,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -59,7 +60,7 @@ bool IsValidUcs4Expression(const std::string &input) {
     return false;
   }
 
-  if (!Util::StartsWith(input, "U+")) {
+  if (!absl::StartsWith(input, "U+")) {
     return false;
   }
 

@@ -761,6 +761,7 @@ cc_test_mozc(
         ":system_util",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -911,6 +912,7 @@ cc_library_mozc(
         ":singleton",
         ":system_util",
         ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
