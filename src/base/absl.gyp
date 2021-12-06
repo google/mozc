@@ -160,7 +160,6 @@
         '<(absl_srcdir)/strings/internal/cord_rep_btree.cc',
         '<(absl_srcdir)/strings/internal/cord_rep_btree_navigator.cc',
         '<(absl_srcdir)/strings/internal/cord_rep_btree_reader.cc',
-        '<(absl_srcdir)/strings/internal/cord_rep_concat.cc',
         '<(absl_srcdir)/strings/internal/cord_rep_consume.cc',
         '<(absl_srcdir)/strings/internal/cord_rep_ring.cc',
         '<(absl_srcdir)/strings/internal/cordz_functions.cc',
