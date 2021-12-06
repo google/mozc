@@ -86,8 +86,9 @@ class VariantsRewriter : public RewriterInterface {
   // 3) Zipcode description (XXX-XXXX)
   //     * note that this overrides other descriptions
   enum DescriptionType {
-    FULL_HALF_WIDTH = 1,               // automatically detect full/haflwidth.
-    FULL_HALF_WIDTH_WITH_UNKNOWN = 2,  // set half/full widith for symbols.
+    FULL_HALF_WIDTH = 1,  // automatically detect full/haflwidth.
+    DEPRECATED_FULL_HALF_WIDTH_WITH_UNKNOWN = 2,  // Deprecated.
+    // Set half/full widith for symbols.
     // This flag must be used together with FULL_HALF_WIDTH.
     // If WITH_UNKNOWN is specified, assign FULL/HALF width annotation
     // more aggressively.

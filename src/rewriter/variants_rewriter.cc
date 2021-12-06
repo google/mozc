@@ -43,6 +43,7 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -62,13 +63,30 @@ void AppendString(absl::string_view src, std::string *dst) {
   }
 }
 
-// Return true if all charcters in |value| are UNKNOWN_SCRIPT
-// and FormType of |value| are consistent, e.g. all fullwith or
-// all halfwidth.
+// Returns true if |full| has the corresponding half width form.
+bool IsConvertibleToHalfWidthForm(const std::string &full) {
+  // TODO(b/209357879): remove this line once FullWidthToHalfWidth() itself will
+  // support the conversion.
+  const std::string tmp =
+      absl::StrReplaceAll(full, {{"＼", "\\"}, {"￥", "¥"}});
+
+  std::string half;
+  Util::FullWidthToHalfWidth(tmp, &half);
+  return full != half;
+}
+
+// Returns true if |value| meets all the following 1) ~ 3) conditions.
+// 1) all charcters in |value| are UNKNOWN_SCRIPT
+// 2) FormType of |value| are consistent, e.g. all fullwith or all halfwidth
+// 3) if they're all fullwidth characters, they're potentially convertible to
+//    their corresponding halfwidth form, e.g. '／' => '/'
 // Example:
 // "&-()" => true (all symbol and all half)
+// "／" => true (all symbol, all full and convertible to the corresponding half)
 // "&-（）" => false (all symbol but contains both full/half width)
 // "google" => false (not symbol)
+// "㌫" => false (all symbol, all full but not convertible to the corresponding
+// half)
 bool HasCharacterFormDescription(const std::string &value) {
   if (value.empty()) {
     return false;
@@ -86,7 +104,14 @@ bool HasCharacterFormDescription(const std::string &value) {
     }
     prev = type;
   }
-  return true;
+
+  if (prev == Util::HALF_WIDTH) {
+    return true;
+  }
+
+  // returns false here only if all the characters are fullwidth and they're not
+  // convertible to their corresponding halfwidth forms.
+  return IsConvertibleToHalfWidthForm(value);
 }
 
 }  // namespace
@@ -109,8 +134,7 @@ void VariantsRewriter::SetDescriptionForCandidate(
 void VariantsRewriter::SetDescriptionForTransliteration(
     const PosMatcher &pos_matcher, Segment::Candidate *candidate) {
   SetDescription(pos_matcher,
-                 (FULL_HALF_WIDTH | FULL_HALF_WIDTH_WITH_UNKNOWN |
-                  CHARACTER_FORM | SPELLING_CORRECTION),
+                 (FULL_HALF_WIDTH | CHARACTER_FORM | SPELLING_CORRECTION),
                  candidate);
 }
 
@@ -156,8 +180,7 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
         description_type &= ~FULL_HALF_WIDTH;
         break;
       case Util::UNKNOWN_SCRIPT:  // mixed character
-        if ((description_type & FULL_HALF_WIDTH_WITH_UNKNOWN) ||
-            HasCharacterFormDescription(candidate->value)) {
+        if (HasCharacterFormDescription(candidate->value)) {
           description_type |= FULL_HALF_WIDTH;
         } else {
           description_type &= ~FULL_HALF_WIDTH;
