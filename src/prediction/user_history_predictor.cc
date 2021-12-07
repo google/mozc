@@ -1269,7 +1269,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
           entry != prev_entry && entry->next_entries_size() > 0 &&
           Util::CharsLen(entry->value()) >= 2 &&
           (entry->value() == prev_value ||
-           Util::EndsWith(prev_value, entry->value()))) {
+           absl::EndsWith(prev_value, entry->value()))) {
         prev_entry = entry;
         break;
       }
@@ -1745,7 +1745,7 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
             .value;
     // Check if the head value in LRU ends with the candidate value in history
     // segments.
-    if (Util::EndsWith(entry->value(), last_value)) {
+    if (absl::EndsWith(entry->value(), last_value)) {
       const Segment::Candidate &candidate =
           segments->conversion_segment(0).candidate(0);
       const std::string key = entry->key() + candidate.key;

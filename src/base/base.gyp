@@ -324,6 +324,7 @@
       ],
       'dependencies': [
         'gen_config_file_stream_data#host',
+        'absl.gyp:absl_strings',
       ],
     },
     {

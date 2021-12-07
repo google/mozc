@@ -789,17 +789,6 @@ TEST(UtilTest, Utf8SubString3) {
   EXPECT_EQ(result, "中野です");
 }
 
-TEST(UtilTest, EndsWith) {
-  const std::string str = "abcdefg";
-  EXPECT_TRUE(Util::EndsWith(str, ""));
-  EXPECT_TRUE(Util::EndsWith(str, "g"));
-  EXPECT_TRUE(Util::EndsWith(str, "fg"));
-  EXPECT_TRUE(Util::EndsWith(str, "abcdefg"));
-  EXPECT_FALSE(Util::EndsWith(str, "aaabcdefg"));
-  EXPECT_FALSE(Util::EndsWith(str, "foobar"));
-  EXPECT_FALSE(Util::EndsWith(str, "foobarbuzbuz"));
-}
-
 TEST(UtilTest, StripUtf8Bom) {
   std::string line;
 

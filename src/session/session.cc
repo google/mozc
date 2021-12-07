@@ -61,6 +61,7 @@
 #include "session/session_usage_stats_util.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace session {
@@ -1448,7 +1449,7 @@ bool Session::InsertCharacter(commands::Command *command) {
           commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION &&
       context_->state() == ImeContext::COMPOSITION &&
       // TODO(komatsu): Support FullWidthSpace
-      Util::EndsWith(composition, " ")) {
+      absl::EndsWith(composition, " ")) {
     should_commit = true;
   }
 
@@ -2282,7 +2283,7 @@ bool Session::Convert(commands::Command *command) {
       command->input().key().has_special_key() &&
       command->input().key().special_key() == commands::KeyEvent::SPACE) {
     // TODO(komatsu): Consider FullWidth Space too.
-    if (!Util::EndsWith(composition, " ") ||
+    if (!absl::EndsWith(composition, " ") ||
         context_->composer().GetLength() != context_->composer().GetCursor()) {
       if (context_->GetRequest().space_on_alphanumeric() ==
           commands::Request::COMMIT) {

@@ -543,8 +543,8 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
   constexpr char kGanKey[] = "がん";
   constexpr char kGanValue[] = "元";
 
-  // Util::EndsWith(key, kNenKey) is expected to always return true
-  DCHECK(Util::EndsWith(key, kNenKey));
+  // absl::EndsWith(key, kNenKey) is expected to always return true
+  DCHECK(absl::EndsWith(key, kNenKey));
   if (!absl::StartsWith(key, year_data.key)) {
     return false;
   }
@@ -577,7 +577,7 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
 bool EraToAdForCourt(const YearData *data, size_t size, const std::string &key,
                      std::vector<std::string> *results,
                      std::vector<std::string> *descriptions) {
-  if (!Util::EndsWith(key, kNenKey)) {
+  if (!absl::EndsWith(key, kNenKey)) {
     return false;
   }
 
@@ -1010,7 +1010,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
 
 bool DateRewriter::RewriteAd(Segment *segment) {
   const std::string &key = segment->key();
-  if (!Util::EndsWith(key, kNenKey)) {
+  if (!absl::EndsWith(key, kNenKey)) {
     return false;
   }
   if (segment->candidates_size() == 0) {

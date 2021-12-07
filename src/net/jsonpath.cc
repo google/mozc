@@ -131,7 +131,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       return false;
     }
 
-    if (Util::EndsWith(jsonpath, ".") || absl::StrContains(jsonpath, "...")) {
+    if (absl::EndsWith(jsonpath, ".") || absl::StrContains(jsonpath, "...")) {
       LOG(ERROR) << "Parse error: " << jsonpath;
       return false;
     }

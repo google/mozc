@@ -772,10 +772,6 @@ void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
-bool Util::EndsWith(absl::string_view str, absl::string_view suffix) {
-  return absl::EndsWith(str, suffix);
-}
-
 void Util::StripUtf8Bom(std::string *line) {
   static constexpr char kUTF8BOM[] = "\xef\xbb\xbf";
   *line = std::string(absl::StripPrefix(*line, kUTF8BOM));

@@ -911,7 +911,6 @@ cc_library_mozc(
         ":port",
         ":singleton",
         ":system_util",
-        ":util",
         "@com_google_absl//absl/strings",
     ],
 )

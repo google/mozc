@@ -55,6 +55,7 @@
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -1609,12 +1610,12 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
     DCHECK(!preceding_text.empty());
     DCHECK(!history_text.empty());
     if (preceding_text.size() > history_text.size()) {
-      if (Util::EndsWith(preceding_text, history_text)) {
+      if (absl::EndsWith(preceding_text, history_text)) {
         // History segments seem to be consistent with preceding text.
         return;
       }
     } else {
-      if (Util::EndsWith(history_text, preceding_text)) {
+      if (absl::EndsWith(history_text, preceding_text)) {
         // History segments seem to be consistent with preceding text.
         return;
       }

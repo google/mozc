@@ -241,9 +241,6 @@ class Util {
   static void Utf8SubString(absl::string_view src, size_t start, size_t length,
                             std::string *result);
 
-  // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(absl::string_view str, absl::string_view suffix);
-
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUtf8Bom(std::string *line);
 

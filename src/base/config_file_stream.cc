@@ -43,7 +43,6 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "absl/strings/match.h"
 
 namespace mozc {
@@ -188,7 +187,7 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
 #ifdef OS_WIN
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
-  if (!Util::EndsWith(real_filename, ".db")) {
+  if (!absl::EndsWith(real_filename, ".db")) {
     // TODO(yukawa): Provide a way to
     // integrate ::SetFileAttributesTransacted with
     // AtomicRename.

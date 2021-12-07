@@ -32,9 +32,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <set>
+#include <string>
 
 #include "base/logging.h"
-#include "base/util.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
@@ -142,8 +142,8 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
 
     if (base_key_suffix.size() < key.size() &&
         base_value_suffix.size() < value.size() &&
-        Util::EndsWith(key, base_key_suffix) &&
-        Util::EndsWith(value, base_value_suffix)) {
+        absl::EndsWith(key, base_key_suffix) &&
+        absl::EndsWith(value, base_value_suffix)) {
       key_stem.assign(key, 0, key.size() - base_key_suffix.size());
       value_stem.assign(value, 0, value.size() - base_value_suffix.size());
     }

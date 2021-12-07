@@ -40,6 +40,7 @@
 #include "base/win_util.h"
 #include "win32/base/accessible_object.h"
 #include "win32/base/focus_hierarchy_observer.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace win32 {
@@ -80,13 +81,13 @@ BrowserInfo::BrowserType BrowserInfo::GetBrowerType() {
     std::string exe_path_utf8;
     Util::WideToUtf8(GetProcessModuleName(), &exe_path_utf8);
     Util::LowerString(&exe_path_utf8);
-    if (Util::EndsWith(exe_path_utf8, "chrome.exe")) {
+    if (absl::EndsWith(exe_path_utf8, "chrome.exe")) {
       g_browser_type_ = kBrowserTypeChrome;
-    } else if (Util::EndsWith(exe_path_utf8, "firefox.exe")) {
+    } else if (absl::EndsWith(exe_path_utf8, "firefox.exe")) {
       g_browser_type_ = kBrowserTypeFirefox;
-    } else if (Util::EndsWith(exe_path_utf8, "iexplore.exe")) {
+    } else if (absl::EndsWith(exe_path_utf8, "iexplore.exe")) {
       g_browser_type_ = kBrowserTypeIE;
-    } else if (Util::EndsWith(exe_path_utf8, "opera.exe")) {
+    } else if (absl::EndsWith(exe_path_utf8, "opera.exe")) {
       g_browser_type_ = kBrowserTypeOpera;
     } else {
       g_browser_type_ = kBrowserTypeUnknown;
@@ -130,10 +131,10 @@ bool BrowserInfo::IsInIncognitoMode(
       suffix_en = "[InPrivate]";
       break;
   }
-  if (suffix_ja != nullptr && Util::EndsWith(root_window_name, suffix_ja)) {
+  if (suffix_ja != nullptr && absl::EndsWith(root_window_name, suffix_ja)) {
     return true;
   }
-  if (suffix_en != nullptr && Util::EndsWith(root_window_name, suffix_en)) {
+  if (suffix_en != nullptr && absl::EndsWith(root_window_name, suffix_en)) {
     return true;
   }
   return false;
