@@ -38,7 +38,8 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/util.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace internal {
@@ -49,13 +50,12 @@ PosIdPrinter::PosIdPrinter(std::istream *id_def) {
   }
 
   std::string line;
-  std::vector<std::string> columns;
   while (std::getline(*id_def, line)) {
-    columns.clear();
-    Util::SplitStringUsing(line, " ", &columns);
+    const std::vector<absl::string_view> columns =
+        absl::StrSplit(line, ' ', absl::SkipEmpty());
     CHECK_EQ(2, columns.size());
     const int id = NumberUtil::SimpleAtoi(columns[0]);
-    id_to_pos_map_[id] = columns[1];
+    id_to_pos_map_[id] = std::string(columns[1]);
   }
 }
 

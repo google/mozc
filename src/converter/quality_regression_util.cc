@@ -49,6 +49,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -131,8 +132,8 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 
 absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
     const std::string &line) {
-  std::vector<absl::string_view> tokens;
-  Util::SplitStringUsing(line, "\t", &tokens);
+  std::vector<absl::string_view> tokens =
+      absl::StrSplit(line, '\t', absl::SkipEmpty());
   if (tokens.size() < 4) {
     return absl::InvalidArgumentError(
         absl::StrCat("Invalid token size: ", line));

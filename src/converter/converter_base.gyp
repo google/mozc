@@ -166,6 +166,7 @@
         'pos_id_printer.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
       ],
     },

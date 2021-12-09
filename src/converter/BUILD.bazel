@@ -576,7 +576,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:number_util",
         "//base:port",
-        "//base:util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -623,7 +623,6 @@ cc_binary_mozc(
         "//base:singleton",
         "//base:status",
         "//base:system_util",
-        "//base:util",
         "//composer",
         "//composer:table",
         "//data_manager",
