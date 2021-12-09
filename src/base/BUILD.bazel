@@ -1282,6 +1282,7 @@ cc_library_mozc(
         ":port",
         ":util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 

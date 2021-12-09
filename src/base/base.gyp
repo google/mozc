@@ -49,6 +49,7 @@
       ],
       'dependencies': [
         'base_core',
+        'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',
       ],
       'conditions': [
@@ -381,6 +382,7 @@
         'multifile.cc',
       ],
       'dependencies': [
+        'absl.gyp:absl_strings',
         'base_core',
       ],
     },

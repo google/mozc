@@ -63,6 +63,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 #ifdef OS_WIN
 #include "base/scoped_handle.h"
@@ -161,9 +162,9 @@ bool Process::SpawnProcess(const std::string &path, const std::string &arg,
   return false;
 #else  // OS_WASM
 
-  std::vector<std::string> arg_tmp;
-  Util::SplitStringUsing(arg, " ", &arg_tmp);
-  std::unique_ptr<const char *[]> argv(new const char *[arg_tmp.size() + 2]);
+  const std::vector<std::string> arg_tmp =
+      absl::StrSplit(arg, ' ', absl::SkipEmpty());
+  auto argv = std::make_unique<const char *[]>(arg_tmp.size() + 2);
   argv[0] = path.c_str();
   for (size_t i = 0; i < arg_tmp.size(); ++i) {
     argv[i + 1] = arg_tmp[i].c_str();
