@@ -52,6 +52,7 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(int32_t, tokens_reserve_size, 1400000,
@@ -302,8 +303,8 @@ void TextDictionaryLoader::CollectTokens(std::vector<Token *> *res) const {
 
 std::unique_ptr<Token> TextDictionaryLoader::ParseTSVLine(
     absl::string_view line) const {
-  std::vector<absl::string_view> columns;
-  Util::SplitStringUsing(line, "\t", &columns);
+  const std::vector<absl::string_view> columns =
+      absl::StrSplit(line, '\t', absl::SkipEmpty());
   return ParseTSV(columns);
 }
 
