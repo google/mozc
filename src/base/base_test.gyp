@@ -93,6 +93,7 @@
       ],
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
         'base.gyp:base_core',  # for util
         'base.gyp:url',
       ],
