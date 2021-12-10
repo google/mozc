@@ -31,7 +31,6 @@ load("//tools/build_defs:stubs.bzl", "jspb_proto_library")
 
 package(default_visibility = [
     "//:__subpackages__",
-    "//chrome/inputs/service/proto:__pkg__",
 ])
 
 cc_proto_library(
@@ -79,7 +78,8 @@ proto_library(
 
 jspb_proto_library(
     name = "commands_jspb_proto",
-    visibility = [],
+    visibility = [
+    ],
     deps = [":commands_proto"],
 )
 
