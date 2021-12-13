@@ -101,6 +101,7 @@
         'gen_collocation_data_main.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         'gen_existence_data',
       ],
     },

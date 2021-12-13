@@ -56,6 +56,7 @@
 #include "absl/container/btree_map.h"
 #include "absl/container/btree_set.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 
 ABSL_FLAG(std::string, sorting_table, "", "sorting table file");
 ABSL_FLAG(std::string, ordering_rule, "", "sorting order file");
@@ -92,8 +93,8 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    std::vector<std::string> fields;
-    Util::SplitStringUsing(line, "\t ", &fields);
+    const std::vector<std::string> fields =
+        absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
     CHECK_GE(fields.size(), 2);
     const char32 ucs4 = strtol(fields[1].c_str(), nullptr, 16);
     std::string utf8;
@@ -187,8 +188,8 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
     std::string keys_str;
     Util::StringReplace(fields[2], "　",  // Full-width space
                         " ", true, &keys_str);
-    std::vector<std::string> keys;
-    Util::SplitStringUsing(keys_str, " ", &keys);
+    const std::vector<std::string> keys =
+        absl::StrSplit(keys_str, ' ', absl::SkipEmpty());
     const std::string &description = (fields.size()) > 3 ? fields[3] : "";
     const std::string &additional_description =
         (fields.size()) > 4 ? fields[4] : "";
