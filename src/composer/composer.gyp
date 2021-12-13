@@ -83,6 +83,7 @@
         'key_parser.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../protocol/protocol.gyp:config_proto',
         '../protocol/protocol.gyp:commands_proto',

@@ -51,6 +51,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace composer {
@@ -420,13 +421,13 @@ bool Table::LoadFromFile(const char *filepath) {
 const TypingModel *Table::typing_model() const { return typing_model_.get(); }
 
 namespace {
-constexpr char kAttributeDelimiter[] = " ";
+constexpr char kAttributeDelimiter = ' ';
 
 TableAttributes ParseAttributes(const std::string &input) {
   TableAttributes attributes = NO_TABLE_ATTRIBUTE;
 
-  std::vector<std::string> attribute_strings;
-  Util::SplitStringAllowEmpty(input, kAttributeDelimiter, &attribute_strings);
+  std::vector<std::string> attribute_strings =
+      absl::StrSplit(input, kAttributeDelimiter, absl::AllowEmpty());
 
   for (size_t i = 0; i < attribute_strings.size(); ++i) {
     if (attribute_strings[i] == "NewChunk") {
@@ -454,8 +455,8 @@ bool Table::LoadFromStream(std::istream *is) {
       continue;
     }
 
-    std::vector<std::string> rules;
-    Util::SplitStringAllowEmpty(line, "\t", &rules);
+    std::vector<std::string> rules =
+        absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (rules.size() == 4) {
       const TableAttributes attributes = ParseAttributes(rules[3]);
       AddRuleWithAttributes(rules[0], rules[1], rules[2], attributes);

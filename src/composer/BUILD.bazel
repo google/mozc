@@ -206,6 +206,7 @@ cc_library_mozc(
         "//base:singleton",
         "//base:util",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 
