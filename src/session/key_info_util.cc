@@ -44,6 +44,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 using commands::KeyEvent;
@@ -68,8 +69,8 @@ std::vector<KeyInformation> ExtractSortedDirectModeKeysFromStream(
       // empty or comment
       continue;
     }
-    std::vector<std::string> rules;
-    Util::SplitStringUsing(line, "\t", &rules);
+    std::vector<std::string> rules =
+        absl::StrSplit(line, '\t', absl::SkipEmpty());
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;
       continue;

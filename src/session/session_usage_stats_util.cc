@@ -39,6 +39,7 @@
 #include "protocol/commands.pb.h"
 #include "usage_stats/usage_stats.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 using mozc::commands::Input;
 using mozc::commands::Output;
@@ -46,15 +47,15 @@ using mozc::usage_stats::UsageStats;
 
 namespace mozc {
 namespace session {
-
 namespace {
+
 // Splits a text by delimitor, capitalizes each piece and joins them.
-// ex. "AbCd_efgH" => "AbcdEfgh" (delimitor = "_")
-void CamelCaseString(std::string *str, const char *delm) {
-  std::vector<std::string> pieces;
-  Util::SplitStringUsing(*str, delm, &pieces);
-  for (size_t i = 0; i < pieces.size(); ++i) {
-    Util::CapitalizeString(&pieces[i]);
+// ex. "AbCd_efgH" => "AbcdEfgh" (delimitor = '_')
+void CamelCaseString(std::string *str, char delm) {
+  std::vector<std::string> pieces =
+      absl::StrSplit(*str, delm, absl::SkipEmpty());
+  for (std::string &piece : pieces) {
+    Util::CapitalizeString(&piece);
   }
   *str = absl::StrJoin(pieces, "");
 }
@@ -95,7 +96,7 @@ void SessionUsageStatsUtil::AddSendCommandInputStats(const Input &input) {
 
   std::string name =
       commands::SessionCommand::CommandType_Name(input.command().type());
-  CamelCaseString(&name, "_");
+  CamelCaseString(&name, '_');
   UsageStats::IncrementCount("SendCommand_" + name);
 
   if (input.command().type() == commands::SessionCommand::REVERT) {

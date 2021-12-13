@@ -80,6 +80,7 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/container:btree",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -145,6 +146,7 @@ cc_library_mozc(
         "//converter:segments",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -47,6 +47,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "session/internal/candidate_list.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace session {
@@ -75,55 +76,53 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
   return is_modified;
 }
 
-void FillCandidateWord(
-    const Segment::Candidate &segment_candidate,
-    const int id, const int index, const std::string base_key,
-    commands::CandidateWord *candidate_word_proto) {
+void FillCandidateWord(const Segment::Candidate &segment_candidate,
+                       const int id, const int index,
+                       const std::string base_key,
+                       commands::CandidateWord *candidate_word_proto) {
+  // id
+  candidate_word_proto->set_id(id);
 
-    // id
-    candidate_word_proto->set_id(id);
+  // index
+  candidate_word_proto->set_index(index);
 
-    // index
-    candidate_word_proto->set_index(index);
+  // key
+  if (base_key != segment_candidate.content_key) {
+    candidate_word_proto->set_key(segment_candidate.content_key);
+  }
+  // value
+  candidate_word_proto->set_value(segment_candidate.value);
 
-    // key
-    if (base_key != segment_candidate.content_key) {
-      candidate_word_proto->set_key(segment_candidate.content_key);
-    }
-    // value
-    candidate_word_proto->set_value(segment_candidate.value);
+  // annotations
+  commands::Annotation annotation;
+  if (FillAnnotation(segment_candidate, &annotation)) {
+    *candidate_word_proto->mutable_annotation() = annotation;
+  }
 
-    // annotations
-    commands::Annotation annotation;
-    if (FillAnnotation(segment_candidate, &annotation)) {
-      *candidate_word_proto->mutable_annotation() = annotation;
-    }
+  if (segment_candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
+    candidate_word_proto->add_attributes(commands::USER_DICTIONARY);
+  }
+  if (segment_candidate.attributes &
+      Segment::Candidate::USER_HISTORY_PREDICTION) {
+    candidate_word_proto->add_attributes(commands::USER_HISTORY);
+  }
+  if (segment_candidate.attributes & Segment::Candidate::SPELLING_CORRECTION) {
+    candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
+  }
+  if (segment_candidate.attributes & Segment::Candidate::TYPING_CORRECTION) {
+    candidate_word_proto->add_attributes(commands::TYPING_CORRECTION);
+  }
 
-    if (segment_candidate.attributes & Segment::Candidate::USER_DICTIONARY) {
-      candidate_word_proto->add_attributes(commands::USER_DICTIONARY);
-    }
-    if (segment_candidate.attributes &
-        Segment::Candidate::USER_HISTORY_PREDICTION) {
-      candidate_word_proto->add_attributes(commands::USER_HISTORY);
-    }
-    if (segment_candidate.attributes &
-        Segment::Candidate::SPELLING_CORRECTION) {
-      candidate_word_proto->add_attributes(commands::SPELLING_CORRECTION);
-    }
-    if (segment_candidate.attributes & Segment::Candidate::TYPING_CORRECTION) {
-      candidate_word_proto->add_attributes(commands::TYPING_CORRECTION);
-    }
-
-    // number of segments
-    candidate_word_proto->set_num_segments_in_candidate(1);
-    if (!segment_candidate.inner_segment_boundary.empty()) {
-      candidate_word_proto->set_num_segments_in_candidate(
-          segment_candidate.inner_segment_boundary.size());
-    }
+  // number of segments
+  candidate_word_proto->set_num_segments_in_candidate(1);
+  if (!segment_candidate.inner_segment_boundary.empty()) {
+    candidate_word_proto->set_num_segments_in_candidate(
+        segment_candidate.inner_segment_boundary.size());
+  }
 
 #ifndef NDEBUG
-    candidate_word_proto->set_log(segment_candidate.DebugString() +
-                                  segment_candidate.log);
+  candidate_word_proto->set_log(segment_candidate.DebugString() +
+                                segment_candidate.log);
 #endif  // NDEBUG
 }
 
@@ -338,8 +337,8 @@ void SessionOutput::FillSubLabel(commands::Footer *footer) {
 
   // Append third number of the version to sub_label.
   const std::string version = Version::GetMozcVersion();
-  std::vector<std::string> version_numbers;
-  Util::SplitStringUsing(version, ".", &version_numbers);
+  std::vector<std::string> version_numbers =
+      absl::StrSplit(version, '.', absl::SkipEmpty());
   if (version_numbers.size() > 2) {
     std::string sub_label("build ");
     sub_label.append(version_numbers[2]);

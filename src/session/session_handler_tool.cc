@@ -416,8 +416,8 @@ bool ParseProtobufFromString(const std::string &text, Message *message) {
   const size_t separator_pos = text.find('=');
   const std::string full_name = text.substr(0, separator_pos);
   const std::string value = text.substr(separator_pos + 1);
-  std::vector<std::string> names;
-  Util::SplitStringUsing(full_name, ".", &names);
+  std::vector<std::string> names =
+      absl::StrSplit(full_name, '.', absl::SkipEmpty());
 
   Message *msg = message;
   for (size_t i = 0; i < names.size() - 1; ++i) {
