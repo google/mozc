@@ -36,6 +36,7 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/strings/str_split.h"
 
 namespace {
 
@@ -58,7 +59,7 @@ const TranslationMap kUTF8JapaneseMap[] = {
     {"Input Mode", "入力モード"},
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
     {"About Mozc", "Google 日本語入力について"},
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
     {"About Mozc", "Mozc について"},
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 };
@@ -80,8 +81,8 @@ std::string NullMessageTranslator::MaybeTranslate(
 LocaleBasedMessageTranslator::LocaleBasedMessageTranslator(
     const std::string &locale_name) {
   // Currently we support ja_JP.UTF-8 and ja_JP.utf8 only.
-  std::vector<std::string> tokens;
-  Util::SplitStringUsing(locale_name, ".", &tokens);
+  std::vector<std::string> tokens =
+      absl::StrSplit(locale_name, '.', absl::SkipEmpty());
   if (tokens.size() != 2) {
     return;
   }

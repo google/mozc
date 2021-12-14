@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <sstream>  // NOLINT
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -163,8 +164,8 @@ absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
   }
   platform = 0;
   if (tokens.size() >= 7) {
-    std::vector<absl::string_view> platforms;
-    Util::SplitStringUsing(tokens[6], ",", &platforms);
+    std::vector<absl::string_view> platforms =
+        absl::StrSplit(tokens[6], ',', absl::SkipEmpty());
     for (size_t i = 0; i < platforms.size(); ++i) {
       auto result = GetPlatformFromString(platforms[i]);
       if (!result.ok()) {

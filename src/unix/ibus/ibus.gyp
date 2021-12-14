@@ -131,6 +131,7 @@
         'message_translator.cc',
       ],
       'dependencies': [
+        '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
       ],
     },

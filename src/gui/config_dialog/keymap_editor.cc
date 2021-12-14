@@ -60,6 +60,7 @@
 #include "protocol/commands.pb.h"
 #include "session/internal/keymap.h"
 #include "absl/container/btree_set.h"
+#include "absl/strings/str_split.h"
 // TODO(komatsu): internal files should not be used from external modules.
 
 namespace mozc {
@@ -168,7 +169,7 @@ class KeyMapValidator {
     if (fields[2] == kReportBugCommand) {
       return false;
     }
-#endif
+#endif  // MOZC_NO_LOGGING
     return true;
   }
 
@@ -333,7 +334,6 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
     return false;
   }
 
-  std::vector<std::string> fields;
   int row = 0;
   mutable_table_widget()->setRowCount(0);
   mutable_table_widget()->verticalHeader()->hide();
@@ -346,8 +346,8 @@ bool KeyMapEditorDialog::LoadFromStream(std::istream *is) {
     }
     Util::ChopReturns(&line);
 
-    fields.clear();
-    Util::SplitStringUsing(line, "\t", &fields);
+    std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::SkipEmpty());
     if (fields.size() < 3) {
       VLOG(3) << "field size < 3";
       continue;

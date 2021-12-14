@@ -299,6 +299,7 @@
         'config_dialog/roman_table_editor.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
         '../client/client.gyp:client',

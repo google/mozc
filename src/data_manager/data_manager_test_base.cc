@@ -52,6 +52,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -227,11 +228,10 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   for (size_t i = 0; i < dictionary_files_.size(); ++i) {
     InputFileStream input(dictionary_files_[i].c_str());
     CHECK(input) << "cannot open: " << dictionary_files_[i];
-    std::vector<std::string> fields;
     std::string line;
     while (std::getline(input, line)) {
-      fields.clear();
-      Util::SplitStringUsing(line, "\t", &fields);
+      std::vector<std::string> fields =
+          absl::StrSplit(line, '\t', absl::SkipEmpty());
       CHECK_GE(fields.size(), 5);
       std::string value = fields[4];
       Util::LowerString(&value);

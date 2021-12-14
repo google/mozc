@@ -55,6 +55,7 @@
 #include "data_manager/dataset_writer.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 ABSL_FLAG(std::string, magic, "", "Hex-encoded magic number to be embedded");
 ABSL_FLAG(std::string, output, "", "Output file");
@@ -82,8 +83,8 @@ int main(int argc, char **argv) {
     if (absl::StartsWith(argv[i], "--")) {
       continue;
     }
-    std::vector<std::string> params;
-    mozc::Util::SplitStringUsing(argv[i], ":", &params);
+    std::vector<std::string> params =
+        absl::StrSplit(argv[i], ':', absl::SkipEmpty());
     CHECK_EQ(3, params.size()) << "Unexpected arg[" << i << "] = " << argv[i];
     inputs.emplace_back(params[0], mozc::NumberUtil::SimpleAtoi(params[1]),
                         params[2]);
