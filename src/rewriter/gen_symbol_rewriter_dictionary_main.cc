@@ -165,13 +165,12 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
   std::string line;
   CHECK(!std::getline(ifs, line).fail());  // get first line
 
-  std::vector<std::string> fields;
   while (!std::getline(ifs, line).fail()) {
-    fields.clear();
     // Format:
     // POS <tab> value <tab> readings(space delimitered) <tab>
     // description <tab> memo
-    Util::SplitStringAllowEmpty(line, "\t", &fields);
+    std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 3 || (fields[1].empty() && fields[2].empty())) {
       VLOG(3) << "invalid format. skip line: " << line;
       continue;

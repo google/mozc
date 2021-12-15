@@ -32,7 +32,6 @@
 #include <QtGui/QtGui>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
-
 #include <cctype>
 #include <memory>
 #include <sstream>
@@ -45,6 +44,7 @@
 #include "gui/base/table_util.h"
 #include "gui/base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace gui {
@@ -96,14 +96,13 @@ std::string RomanTableEditorDialog::GetDefaultRomanTable() {
       ConfigFileStream::LegacyOpen(kRomanTableFile));
   CHECK(ifs.get() != nullptr);  // should never happen
   std::string line, result;
-  std::vector<std::string> fields;
   while (std::getline(*ifs, line)) {
     if (line.empty()) {
       continue;
     }
     Util::ChopReturns(&line);
-    fields.clear();
-    Util::SplitStringAllowEmpty(line, "\t", &fields);
+    std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 2) {
       VLOG(3) << "field size < 2";
       continue;
@@ -123,7 +122,6 @@ std::string RomanTableEditorDialog::GetDefaultRomanTable() {
 bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
   CHECK(is);
   std::string line;
-  std::vector<std::string> fields;
   mutable_table_widget()->setRowCount(0);
   mutable_table_widget()->verticalHeader()->hide();
 
@@ -134,8 +132,8 @@ bool RomanTableEditorDialog::LoadFromStream(std::istream *is) {
     }
     Util::ChopReturns(&line);
 
-    fields.clear();
-    Util::SplitStringAllowEmpty(line, "\t", &fields);
+    std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::AllowEmpty());
     if (fields.size() < 2) {
       VLOG(3) << "field size < 2";
       continue;

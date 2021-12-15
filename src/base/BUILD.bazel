@@ -485,6 +485,7 @@ cc_binary_mozc(
         "@com_google_absl//absl/flags:flag",
         # For OSS, darts is also required.
         # http://chasen.org/~taku/software/darts/
+        "@com_google_absl//absl/strings",
     ],
 )
 

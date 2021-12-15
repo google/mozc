@@ -45,6 +45,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/double_array.h"
@@ -53,6 +54,7 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 #include "third_party/darts/v0_32/darts.h"
 
 ABSL_FLAG(std::string, input, "", "input");
@@ -73,16 +75,14 @@ static void Compile(const std::string &files,
       << "namespace japanese_util_rule {\n"
       << std::endl;
 
-  std::vector<std::pair<std::string, std::string> > rules;
+  std::vector<std::pair<std::string, std::string>> rules;
   {
-    std::vector<std::string> patterns;
-    std::vector<std::string> col;
-    mozc::Util::SplitStringUsing(files, ",", &patterns);
-    for (size_t i = 0; i < patterns.size(); ++i) {
-      col.clear();
-      mozc::Util::SplitStringUsing(patterns[i], ":", &col);
+    for (absl::string_view pattern :
+         absl::StrSplit(files, ',', absl::SkipEmpty())) {
+      std::vector<std::string> col =
+          absl::StrSplit(pattern, ':', absl::SkipEmpty());
       CHECK_GE(col.size(), 2);
-      rules.push_back(std::make_pair(col[0], col[1]));
+      rules.emplace_back(std::move(col[0]), std::move(col[1]));
     }
   }
 
@@ -93,12 +93,11 @@ static void Compile(const std::string &files,
     const std::string &name = rules[i].second;
     InputFileStream ifs(filename.c_str());
     CHECK(ifs.good());
-    std::vector<std::string> col;
     std::string line, output;
-    std::vector<std::pair<std::string, int> > dic;
+    std::vector<std::pair<std::string, int>> dic;
     while (!std::getline(ifs, line).fail()) {
-      col.clear();
-      mozc::Util::SplitStringUsing(line, "\t", &col);
+      std::vector<std::string> col =
+          absl::StrSplit(line, '\t', absl::SkipEmpty());
       CHECK_GE(col.size(), 2) << "format error: " << line;
       const std::string &key = col[0];
       const std::string &value = col[1];
@@ -108,8 +107,7 @@ static void Compile(const std::string &files,
       }
       CHECK_LT(rewind_len, 256) << "rewind length must be < 256";
       CHECK_GT(key.size(), rewind_len) << "rewind_length < key.size()";
-      dic.push_back(
-          std::pair<std::string, int>(key, static_cast<int>(output.size())));
+      dic.emplace_back(key, static_cast<int>(output.size()));
       output += value;
       output += '\0';
       output += static_cast<uint8_t>(rewind_len);
