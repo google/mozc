@@ -187,42 +187,6 @@ template class SplitIterator<MultiDelimiter, SkipEmpty>;
 template class SplitIterator<SingleDelimiter, AllowEmpty>;
 template class SplitIterator<MultiDelimiter, AllowEmpty>;
 
-void Util::SplitStringUsing(absl::string_view str, const char *delim,
-                            std::vector<std::string> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->emplace_back(str.data(), str.size());
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
-}
-
-void Util::SplitStringUsing(absl::string_view str, const char *delim,
-                            std::vector<absl::string_view> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->push_back(str);
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
-}
-
-void Util::SplitStringAllowEmpty(absl::string_view str, const char *delim,
-                                 std::vector<std::string> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->emplace_back(str.data(), str.size());
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::AllowEmpty());
-}
-
 void Util::SplitStringToUtf8Chars(absl::string_view str,
                                   std::vector<std::string> *output) {
   const char *begin = str.data();

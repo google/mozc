@@ -113,14 +113,6 @@ class Util {
   ~Util() = delete;
 
   // String utils
-  static void SplitStringUsing(absl::string_view str, const char *delim,
-                               std::vector<std::string> *output);
-  static void SplitStringUsing(absl::string_view str, const char *delim,
-                               std::vector<absl::string_view> *output);
-
-  static void SplitStringAllowEmpty(absl::string_view str, const char *delim,
-                                    std::vector<std::string> *output);
-
   static void SplitStringToUtf8Chars(absl::string_view str,
                                      std::vector<std::string> *output);
 
