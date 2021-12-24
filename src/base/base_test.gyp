@@ -160,6 +160,21 @@
       ],
     },
     {
+      'target_name': 'japanese_util_test',
+      'type': 'executable',
+      'sources': [
+        'japanese_util_test.cc',
+      ],
+      'dependencies': [
+        '../testing/testing.gyp:gtest_main',
+        'absl.gyp:absl_strings',
+        'base.gyp:japanese_util',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'util_test',
       'type': 'executable',
       'sources': [
@@ -421,6 +436,7 @@
         'encryptor_test',
         'file_util_test',
         'hash_test',
+        'japanese_util_test',
         'multifile_test',
         'number_util_test',
         'obfuscator_support_test',
