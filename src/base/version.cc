@@ -29,6 +29,10 @@
 
 #include "base/version.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -36,13 +40,16 @@
 // Import the generated version_def.h.
 #include "base/version_def.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
-
 namespace {
-bool StringAsIntegerComparator(const std::string &lhs, const std::string &rhs) {
+
+bool StringAsIntegerComparator(absl::string_view lhs, absl::string_view rhs) {
   return NumberUtil::SimpleAtoi(lhs) < NumberUtil::SimpleAtoi(rhs);
 }
+
 }  // namespace
 
 std::string Version::GetMozcVersion() { return version::kMozcVersion; }
@@ -53,7 +60,7 @@ std::wstring Version::GetMozcVersionW() {
   Util::Utf8ToWide(version::kMozcVersion, &version);
   return version;
 }
-#endif
+#endif  // OS_WIN
 
 int Version::GetMozcVersionMajor() { return version::kMozcVersionMajor; }
 
@@ -77,10 +84,10 @@ bool Version::CompareVersion(const std::string &lhs, const std::string &rhs) {
     LOG(WARNING) << "Unknown is given as version";
     return false;
   }
-  std::vector<std::string> vlhs;
-  Util::SplitStringUsing(lhs, ".", &vlhs);
-  std::vector<std::string> vrhs;
-  Util::SplitStringUsing(rhs, ".", &vrhs);
+  const std::vector<absl::string_view> vlhs =
+      absl::StrSplit(lhs, '.', absl::SkipEmpty());
+  const std::vector<absl::string_view> vrhs =
+      absl::StrSplit(rhs, '.', absl::SkipEmpty());
   return std::lexicographical_compare(vlhs.begin(), vlhs.end(), vrhs.begin(),
                                       vrhs.end(), StringAsIntegerComparator);
 }

@@ -31,6 +31,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -41,6 +42,7 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "Emoticon dictionary file");
@@ -89,16 +91,15 @@ std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
   std::vector<std::pair<std::string, KeyList>> data;
   absl::flat_hash_map<std::string, int> key_count;
   while (std::getline(ifs, line)) {
-    std::vector<absl::string_view> field_list;
-    Util::SplitStringUsing(line, "\t", &field_list);
+    const std::vector<absl::string_view> field_list =
+        absl::StrSplit(line, '\t', absl::SkipEmpty());
     CHECK_GE(field_list.size(), 2) << "Format error: " << line;
     LOG_IF(WARNING, field_list.size() > 3) << "Ignore extra columns: " << line;
 
     std::string replaced;
     Util::StringReplace(field_list[1], "　",  // Full-width space
                         " ", true, &replaced);
-    KeyList key_list;
-    Util::SplitStringUsing(field_list[1], " ", &key_list);
+    KeyList key_list = absl::StrSplit(field_list[1], ' ', absl::SkipEmpty());
 
     for (const auto &key : key_list) {
       ++key_count[key];

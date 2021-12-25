@@ -40,8 +40,8 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace net {
@@ -131,7 +131,7 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       return false;
     }
 
-    if (Util::EndsWith(jsonpath, ".") || absl::StrContains(jsonpath, "...")) {
+    if (absl::EndsWith(jsonpath, ".") || absl::StrContains(jsonpath, "...")) {
       LOG(ERROR) << "Parse error: " << jsonpath;
       return false;
     }
@@ -222,8 +222,8 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
       node.object_index = nodes_exp;
       nodes->push_back(node);
     } else if (nodes_type == IN_BRACKET) {
-      std::vector<std::string> nodes_exps;
-      Util::SplitStringUsing(nodes_exp, ",", &nodes_exps);
+      std::vector<std::string> nodes_exps =
+          absl::StrSplit(nodes_exp, ',', absl::SkipEmpty());
       for (size_t i = 0; i < nodes_exps.size(); ++i) {
         JsonPathNode node;
         node.type = JsonPathNode::UNDEFINED_INDEX;
@@ -236,8 +236,8 @@ class JsonPathExp : public std::vector<std::vector<JsonPathNode> > {
           node.type = JsonPathNode::OBJECT_INDEX;
           node.object_index = "*";
         } else {
-          std::vector<std::string> slice;
-          Util::SplitStringAllowEmpty(nodes_exps[i], ":", &slice);
+          std::vector<std::string> slice =
+              absl::StrSplit(nodes_exps[i], ':', absl::AllowEmpty());
           if (slice.size() == 1) {
             if (GetDigit(slice[0], &node.array_index)) {
               node.type = JsonPathNode::ARRAY_INDEX;

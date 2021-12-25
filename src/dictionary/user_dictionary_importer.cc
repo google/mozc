@@ -29,19 +29,16 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
-#include <cstdint>
-
-#include "absl/strings/match.h"
-#include "absl/strings/string_view.h"
-
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/compiler_specific.h"
@@ -54,6 +51,9 @@
 #include "base/util.h"
 #include "base/win_util.h"
 #include "dictionary/user_dictionary_util.h"
+#include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -349,15 +349,15 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
       case MSIME:
       case ATOK:
       case MOZC:
-        Util::SplitStringAllowEmpty(line, "\t", &values);
+        values = absl::StrSplit(line, '\t', absl::AllowEmpty());
         if (values.size() < 3) {
           continue;  // Ignore this line.
         }
-        entry->key = values[0];
-        entry->value = values[1];
-        entry->pos = values[2];
+        entry->key = std::move(values[0]);
+        entry->value = std::move(values[1]);
+        entry->pos = std::move(values[2]);
         if (values.size() >= 4) {
-          entry->comment = values[3];
+          entry->comment = std::move(values[3]);
         }
         return true;
         break;
@@ -366,9 +366,9 @@ bool UserDictionaryImporter::TextInputIterator::Next(RawEntry *entry) {
         if (values.size() < 3) {
           continue;  // Ignore this line.
         }
-        entry->key = values[0];
-        entry->value = values[1];
-        entry->pos = values[2];
+        entry->key = std::move(values[0]);
+        entry->value = std::move(values[1]);
+        entry->pos = std::move(values[2]);
         return true;
         break;
       default:

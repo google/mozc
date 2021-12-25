@@ -37,7 +37,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc_mock.h"
 #include "protocol/commands.pb.h"
@@ -46,6 +45,7 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace client {
@@ -56,8 +56,8 @@ constexpr char kFollowingText[] = "following_text";
 constexpr bool kSuppressSuggestion = true;
 
 const std::string UpdateVersion(int diff) {
-  std::vector<std::string> tokens;
-  Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
+  std::vector<std::string> tokens =
+      absl::StrSplit(Version::GetMozcVersion(), '.', absl::SkipEmpty());
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];
   absl::SNPrintF(buf, sizeof(buf), "%d",

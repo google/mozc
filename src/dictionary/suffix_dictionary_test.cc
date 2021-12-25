@@ -39,6 +39,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -83,7 +84,7 @@ TEST(SuffixDictionaryTest, LookupPredictive) {
     EXPECT_FALSE(callback.tokens().empty());
     for (size_t i = 0; i < callback.tokens().size(); ++i) {
       const Token &token = callback.tokens()[i];
-      EXPECT_TRUE(Util::StartsWith(token.key, kPrefix));
+      EXPECT_TRUE(absl::StartsWith(token.key, kPrefix));
       EXPECT_FALSE(token.value.empty());
       EXPECT_LT(0, token.lid);
       EXPECT_LT(0, token.rid);

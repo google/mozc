@@ -33,11 +33,11 @@
 #include "base/logging.h"
 #include "base/status.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "testing/base/public/googletest.h"
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {

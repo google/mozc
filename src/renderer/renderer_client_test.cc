@@ -35,7 +35,6 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
@@ -44,14 +43,15 @@
 #include "testing/base/public/gunit.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace renderer {
 namespace {
 
 const std::string UpdateVersion(int diff) {
-  std::vector<std::string> tokens;
-  Util::SplitStringUsing(Version::GetMozcVersion(), ".", &tokens);
+  std::vector<std::string> tokens =
+      absl::StrSplit(Version::GetMozcVersion(), '.', absl::SkipEmpty());
   EXPECT_EQ(tokens.size(), 4);
   char buf[64];
   absl::SNPrintF(buf, sizeof(buf), "%d",

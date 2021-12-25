@@ -156,6 +156,7 @@ cc_library_mozc(
         "//composer:table",
         "//testing:gunit_prod",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 

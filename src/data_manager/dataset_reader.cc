@@ -36,6 +36,7 @@
 #include "base/unverified_sha1.h"
 #include "base/util.h"
 #include "data_manager/dataset.pb.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -56,7 +57,7 @@ bool DataSetReader::Init(absl::string_view memblock, absl::string_view magic) {
   // see dataset.proto.
 
   // Check the file magic string.
-  if (!Util::StartsWith(memblock, magic)) {
+  if (!absl::StartsWith(memblock, magic)) {
     LOG(ERROR) << "Invalid format: magic number doesn't match: "
                << Util::Escape(memblock.substr(0, magic.size())) << " vs "
                << Util::Escape(magic);

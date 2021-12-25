@@ -66,7 +66,6 @@
 #include <vector>
 
 #include "base/double_array.h"
-#include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/numeric/bits.h"
@@ -186,42 +185,6 @@ template class SplitIterator<SingleDelimiter, SkipEmpty>;
 template class SplitIterator<MultiDelimiter, SkipEmpty>;
 template class SplitIterator<SingleDelimiter, AllowEmpty>;
 template class SplitIterator<MultiDelimiter, AllowEmpty>;
-
-void Util::SplitStringUsing(absl::string_view str, const char *delim,
-                            std::vector<std::string> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->emplace_back(str.data(), str.size());
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
-}
-
-void Util::SplitStringUsing(absl::string_view str, const char *delim,
-                            std::vector<absl::string_view> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->push_back(str);
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::SkipEmpty());
-}
-
-void Util::SplitStringAllowEmpty(absl::string_view str, const char *delim,
-                                 std::vector<std::string> *output) {
-  if (delim[0] == '\0') {
-    // absl::StrSplit decomposes all characters if delim is empty.
-    // e.g. absl::StrSplit("abc", "") -> ["a", "b", "c"].
-    // This block can be deleted if the above spec is practically no problem.
-    output->emplace_back(str.data(), str.size());
-    return;
-  }
-  *output = absl::StrSplit(str, absl::ByAnyChar(delim), absl::AllowEmpty());
-}
 
 void Util::SplitStringToUtf8Chars(absl::string_view str,
                                   std::vector<std::string> *output) {
@@ -772,14 +735,6 @@ void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
   result->assign(substr.data(), substr.size());
 }
 
-bool Util::StartsWith(absl::string_view str, absl::string_view prefix) {
-  return absl::StartsWith(str, prefix);
-}
-
-bool Util::EndsWith(absl::string_view str, absl::string_view suffix) {
-  return absl::EndsWith(str, suffix);
-}
-
 void Util::StripUtf8Bom(std::string *line) {
   static constexpr char kUTF8BOM[] = "\xef\xbb\xbf";
   *line = std::string(absl::StripPrefix(*line, kUTF8BOM));
@@ -906,172 +861,6 @@ void EscapeInternal(char input, absl::string_view prefix, std::string *output) {
   *output += static_cast<char>(hi >= 10 ? hi - 10 + 'A' : hi + '0');
   *output += static_cast<char>(lo >= 10 ? lo - 10 + 'A' : lo + '0');
 }
-
-int LookupDoubleArray(const japanese_util_rule::DoubleArray *array,
-                      const char *key, int len, int *result) {
-  int seekto = 0;
-  int n = 0;
-  int b = array[0].base;
-  uint32_t p = 0;
-  *result = -1;
-  uint32_t num = 0;
-
-  for (int i = 0; i < len; ++i) {
-    p = b;
-    n = array[p].base;
-    if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
-      seekto = i;
-      *result = -n - 1;
-      ++num;
-    }
-    p = b + static_cast<uint8_t>(key[i]) + 1;
-    if (static_cast<uint32_t>(b) == array[p].check) {
-      b = array[p].base;
-    } else {
-      return seekto;
-    }
-  }
-  p = b;
-  n = array[p].base;
-  if (static_cast<uint32_t>(b) == array[p].check && n < 0) {
-    seekto = len;
-    *result = -n - 1;
-  }
-
-  return seekto;
-}
-
-}  // namespace
-
-void Util::ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
-                                   const char *ctable, absl::string_view input,
-                                   std::string *output) {
-  output->clear();
-  const char *begin = input.data();
-  const char *const end = input.data() + input.size();
-  while (begin < end) {
-    int result = 0;
-    int mblen =
-        LookupDoubleArray(da, begin, static_cast<int>(end - begin), &result);
-    if (mblen > 0) {
-      const char *p = &ctable[result];
-      const size_t len = strlen(p);
-      output->append(p, len);
-      mblen -= static_cast<int32_t>(p[len + 1]);
-      begin += mblen;
-    } else {
-      mblen = OneCharLen(begin);
-      output->append(begin, mblen);
-      begin += mblen;
-    }
-  }
-}
-
-void Util::HiraganaToKatakana(absl::string_view input, std::string *output) {
-  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
-                          japanese_util_rule::hiragana_to_katakana_table, input,
-                          output);
-}
-
-void Util::HiraganaToHalfwidthKatakana(absl::string_view input,
-                                       std::string *output) {
-  // combine two rules
-  std::string tmp;
-  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_katakana_da,
-                          japanese_util_rule::hiragana_to_katakana_table, input,
-                          &tmp);
-  ConvertUsingDoubleArray(
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table, tmp,
-      output);
-}
-
-void Util::HiraganaToRomanji(absl::string_view input, std::string *output) {
-  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
-                          japanese_util_rule::hiragana_to_romanji_table, input,
-                          output);
-}
-
-void Util::HalfWidthAsciiToFullWidthAscii(absl::string_view input,
-                                          std::string *output) {
-  ConvertUsingDoubleArray(
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_table, input,
-      output);
-}
-
-void Util::FullWidthAsciiToHalfWidthAscii(absl::string_view input,
-                                          std::string *output) {
-  ConvertUsingDoubleArray(
-      japanese_util_rule::fullwidthascii_to_halfwidthascii_da,
-      japanese_util_rule::fullwidthascii_to_halfwidthascii_table, input,
-      output);
-}
-
-void Util::HiraganaToFullwidthRomanji(absl::string_view input,
-                                      std::string *output) {
-  std::string tmp;
-  ConvertUsingDoubleArray(japanese_util_rule::hiragana_to_romanji_da,
-                          japanese_util_rule::hiragana_to_romanji_table, input,
-                          &tmp);
-  ConvertUsingDoubleArray(
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_da,
-      japanese_util_rule::halfwidthascii_to_fullwidthascii_table, tmp, output);
-}
-
-void Util::RomanjiToHiragana(absl::string_view input, std::string *output) {
-  ConvertUsingDoubleArray(japanese_util_rule::romanji_to_hiragana_da,
-                          japanese_util_rule::romanji_to_hiragana_table, input,
-                          output);
-}
-
-void Util::KatakanaToHiragana(absl::string_view input, std::string *output) {
-  ConvertUsingDoubleArray(japanese_util_rule::katakana_to_hiragana_da,
-                          japanese_util_rule::katakana_to_hiragana_table, input,
-                          output);
-}
-
-void Util::HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
-                                                std::string *output) {
-  ConvertUsingDoubleArray(
-      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_da,
-      japanese_util_rule::halfwidthkatakana_to_fullwidthkatakana_table, input,
-      output);
-}
-
-void Util::FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
-                                                std::string *output) {
-  ConvertUsingDoubleArray(
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_da,
-      japanese_util_rule::fullwidthkatakana_to_halfwidthkatakana_table, input,
-      output);
-}
-
-void Util::FullWidthToHalfWidth(absl::string_view input, std::string *output) {
-  std::string tmp;
-  FullWidthAsciiToHalfWidthAscii(input, &tmp);
-  output->clear();
-  FullWidthKatakanaToHalfWidthKatakana(tmp, output);
-}
-
-void Util::HalfWidthToFullWidth(absl::string_view input, std::string *output) {
-  std::string tmp;
-  HalfWidthAsciiToFullWidthAscii(input, &tmp);
-  output->clear();
-  HalfWidthKatakanaToFullWidthKatakana(tmp, output);
-}
-
-// TODO(tabata): Add another function to split voice mark
-// of some UNICODE only characters (required to display
-// and commit for old clients)
-void Util::NormalizeVoicedSoundMark(absl::string_view input,
-                                    std::string *output) {
-  ConvertUsingDoubleArray(japanese_util_rule::normalize_voiced_sound_da,
-                          japanese_util_rule::normalize_voiced_sound_table,
-                          input, output);
-}
-
-namespace {
 
 struct BracketPair {
   absl::string_view GetOpenBracket() const {

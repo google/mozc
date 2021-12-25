@@ -41,6 +41,7 @@
 // > embedded_collocation_suppression_data.h
 
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -49,6 +50,7 @@
 #include "base/util.h"
 #include "rewriter/gen_existence_data.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 
 ABSL_FLAG(std::string, suppression_data, "", "suppression data text");
 ABSL_FLAG(std::string, output, "", "output file name (default: stdout)");
@@ -73,8 +75,8 @@ void Convert() {
       if (line.empty()) {
         continue;
       }
-      std::vector<std::string> fields;
-      Util::SplitStringUsing(line, kSeparator, &fields);
+      const std::vector<std::string> fields =
+          absl::StrSplit(line, kSeparator, absl::SkipEmpty());
       CHECK_GE(fields.size(), 2);
       entries.push_back(fields[0] + kSeparator + fields[1]);
     }

@@ -27,47 +27,40 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/pos_id_printer.h"
+#ifndef MOZC_BASE_JAPANESE_UTIL_H_
+#define MOZC_BASE_JAPANESE_UTIL_H_
 
-#include <istream>
-#include <map>
 #include <string>
-#include <vector>
 
-#include "base/file_stream.h"
-#include "base/logging.h"
-#include "base/number_util.h"
-#include "base/port.h"
-#include "absl/strings/str_split.h"
+#include "base/double_array.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
-namespace internal {
+namespace japanese_util {
 
-PosIdPrinter::PosIdPrinter(std::istream *id_def) {
-  if (id_def == nullptr) {
-    return;
-  }
+// Japanese utilities for character form transliteration.
+void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
+                             const char *table, absl::string_view input,
+                             std::string *output);
+void HiraganaToKatakana(absl::string_view input, std::string *output);
+void HiraganaToHalfwidthKatakana(absl::string_view input, std::string *output);
+void HiraganaToRomanji(absl::string_view input, std::string *output);
+void HalfWidthAsciiToFullWidthAscii(absl::string_view input,
+                                    std::string *output);
+void FullWidthAsciiToHalfWidthAscii(absl::string_view input,
+                                    std::string *output);
+void HiraganaToFullwidthRomanji(absl::string_view input, std::string *output);
+void RomanjiToHiragana(absl::string_view input, std::string *output);
+void KatakanaToHiragana(absl::string_view input, std::string *output);
+void HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
+                                          std::string *output);
+void FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
+                                          std::string *output);
+void FullWidthToHalfWidth(absl::string_view input, std::string *output);
+void HalfWidthToFullWidth(absl::string_view input, std::string *output);
+void NormalizeVoicedSoundMark(absl::string_view input, std::string *output);
 
-  std::string line;
-  while (std::getline(*id_def, line)) {
-    const std::vector<absl::string_view> columns =
-        absl::StrSplit(line, ' ', absl::SkipEmpty());
-    CHECK_EQ(2, columns.size());
-    const int id = NumberUtil::SimpleAtoi(columns[0]);
-    id_to_pos_map_[id] = std::string(columns[1]);
-  }
-}
-
-PosIdPrinter::~PosIdPrinter() {}
-
-std::string PosIdPrinter::IdToString(int id) const {
-  std::map<int, std::string>::const_iterator iter = id_to_pos_map_.find(id);
-  if (iter == id_to_pos_map_.end()) {
-    return "";
-  }
-  return iter->second;
-}
-
-}  // namespace internal
+}  // namespace japanese_util
 }  // namespace mozc
+
+#endif  // MOZC_BASE_JAPANESE_UTIL_H_

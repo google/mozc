@@ -49,6 +49,7 @@
 #include "protocol/config.pb.h"
 #include "session/internal/keymap-inl.h"
 #include "absl/container/btree_set.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 namespace keymap {
@@ -63,7 +64,7 @@ static constexpr char kChromeOsKeyMapFile[] = "system://chromeos.tsv";
 
 #if defined(__APPLE__)
 const bool KeyMapManager::kInputModeXCommandSupported = false;
-#else
+#else   // __APPLE__
 const bool KeyMapManager::kInputModeXCommandSupported = true;
 #endif  // __APPLE__
 
@@ -126,7 +127,7 @@ bool KeyMapManager::ReloadConfig(const config::Config &config) {
     ofs << "# Nothing happens when you edit this file manually." << std::endl;
     ofs << custom_keymap_table;
   }
-#endif
+#endif  // MOZC_NO_LOGGING
 
   std::istringstream ifs(custom_keymap_table);
   return LoadStream(&ifs);
@@ -192,8 +193,8 @@ bool KeyMapManager::LoadStreamWithErrors(std::istream *ifs,
       continue;
     }
 
-    std::vector<std::string> rules;
-    Util::SplitStringUsing(line, "\t", &rules);
+    std::vector<std::string> rules =
+        absl::StrSplit(line, '\t', absl::SkipEmpty());
     if (rules.size() != 3) {
       LOG(ERROR) << "Invalid format: " << line;
       continue;

@@ -46,6 +46,7 @@
 #include "base/serialized_string_array.h"
 #include "base/status.h"
 #include "base/util.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -64,12 +65,11 @@ struct CompareByCost {
 void LoadTokens(std::istream *ifs, std::map<std::string, TokenList> *dic) {
   dic->clear();
   std::string line;
-  std::vector<std::string> fields;
   while (!std::getline(*ifs, line).fail()) {
-    fields.clear();
-    Util::SplitStringUsing(line, "\t", &fields);
+    std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::SkipEmpty());
     CHECK_GE(fields.size(), 4);
-    std::unique_ptr<CompilerToken> token(new CompilerToken);
+    auto token = std::make_unique<CompilerToken>();
     const std::string &key = fields[0];
     token->value = fields[4];
     CHECK(NumberUtil::SafeStrToUInt16(fields[1], &token->lid));

@@ -801,6 +801,7 @@ cc_library_mozc(
         "//converter:segments",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
@@ -917,6 +918,7 @@ cc_binary_mozc(
         "//data_manager:serialized_dictionary",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1603,6 +1605,7 @@ cc_binary_mozc(
         "//base:logging",
         "//base:util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 

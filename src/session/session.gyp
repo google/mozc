@@ -41,6 +41,7 @@
         'session_converter.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
@@ -67,6 +68,7 @@
         'internal/key_event_transformer.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',

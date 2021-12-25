@@ -60,6 +60,7 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
 
@@ -2260,8 +2261,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     // Only the new entries are loaded.
     EXPECT_EQ(10, storage.GetProto().entries_size());
     for (const auto &entry : storage.GetProto().entries()) {
-      EXPECT_TRUE(Util::StartsWith(entry.key(), "new_"));
-      EXPECT_TRUE(Util::StartsWith(entry.value(), "new_"));
+      EXPECT_TRUE(absl::StartsWith(entry.key(), "new_"));
+      EXPECT_TRUE(absl::StartsWith(entry.value(), "new_"));
     }
     EXPECT_OK(FileUtil::Unlink(filename));
   }
@@ -2282,8 +2283,8 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
     ASSERT_TRUE(modified_history.ParseFromString(content));
     EXPECT_EQ(10, modified_history.entries_size());
     for (const auto &entry : storage.GetProto().entries()) {
-      EXPECT_TRUE(Util::StartsWith(entry.key(), "new_"));
-      EXPECT_TRUE(Util::StartsWith(entry.value(), "new_"));
+      EXPECT_TRUE(absl::StartsWith(entry.key(), "new_"));
+      EXPECT_TRUE(absl::StartsWith(entry.value(), "new_"));
     }
     EXPECT_OK(FileUtil::Unlink(filename));
   }

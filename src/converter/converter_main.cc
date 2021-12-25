@@ -44,7 +44,6 @@
 #include "base/singleton.h"
 #include "base/status.h"
 #include "base/system_util.h"
-#include "base/util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
 #include "converter/converter_interface.h"
@@ -60,6 +59,7 @@
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 ABSL_FLAG(int32_t, max_conversion_candidates_size, 200,
           "maximum candidates size");
@@ -255,8 +255,8 @@ void PrintSegments(const Segments &segments, std::ostream *os) {
 
 bool ExecCommand(const ConverterInterface &converter, Segments *segments,
                  const std::string &line, const commands::Request &request) {
-  std::vector<std::string> fields;
-  Util::SplitStringUsing(line, "\t ", &fields);
+  std::vector<std::string> fields =
+      absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
 
 #define CHECK_FIELDS_LENGTH(length) \
   if (fields.size() < (length)) {   \

@@ -60,6 +60,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -520,7 +521,7 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &cand = segments.segment(0).candidate(i);
     if (cand.key.size() < segment_key.size() &&
-        Util::StartsWith(segment_key, cand.key)) {
+        absl::StartsWith(segment_key, cand.key)) {
       includes_only_first = true;
       break;
     }

@@ -44,6 +44,7 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 
 // To show the value of size_t, 'z' speficier should be used.
@@ -944,7 +945,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   ASSERT_LE(2, seg.candidates_size());
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const Segment::Candidate &candidate = seg.candidate(i);
-    EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
+    EXPECT_TRUE(absl::StartsWith(candidate.description, kBubun));
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }
@@ -983,7 +984,7 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     }
     found_halfwidth = true;
     EXPECT_EQ(3, candidate.consumed_key_size);
-    EXPECT_TRUE(Util::StartsWith(candidate.description, kBubun));
+    EXPECT_TRUE(absl::StartsWith(candidate.description, kBubun));
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }

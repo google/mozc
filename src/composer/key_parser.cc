@@ -41,6 +41,7 @@
 #include "base/singleton.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 using commands::KeyEvent;
@@ -183,8 +184,8 @@ class KeyParserData {
 }  // namespace
 
 bool KeyParser::ParseKey(const std::string &key_string, KeyEvent *key_event) {
-  std::vector<std::string> keys;
-  Util::SplitStringUsing(key_string, " ", &keys);
+  std::vector<std::string> keys =
+      absl::StrSplit(key_string, ' ', absl::SkipEmpty());
   if (keys.empty()) {
     LOG(ERROR) << "keys is empty";
     return false;

@@ -423,6 +423,33 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "japanese_util",
+    srcs = [
+        "japanese_util.cc",
+    ],
+    hdrs = ["japanese_util.h"],
+    deps = [
+        ":double_array_def",
+        ":japanese_util_rule",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "japanese_util_test",
+    size = "small",
+    srcs = [
+        "japanese_util_test.cc",
+    ],
+    requires_full_emulation = False,
+    deps = [
+        ":japanese_util",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
     name = "util",
     srcs = [
         "util.cc",
@@ -434,7 +461,7 @@ cc_library_mozc(
     ],
     deps = [
         ":double_array_def",
-        ":japanese_util_rule",
+        ":japanese_util",
         ":logging",
         ":port",
         "@com_google_absl//absl/numeric:bits",
@@ -485,6 +512,7 @@ cc_binary_mozc(
         "@com_google_absl//absl/flags:flag",
         # For OSS, darts is also required.
         # http://chasen.org/~taku/software/darts/
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -761,6 +789,7 @@ cc_test_mozc(
         ":system_util",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -910,7 +939,7 @@ cc_library_mozc(
         ":port",
         ":singleton",
         ":system_util",
-        ":util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1266,6 +1295,7 @@ cc_test_mozc(
         ":url",
         ":util",
         "//testing:gunit_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1280,6 +1310,7 @@ cc_library_mozc(
         ":port",
         ":util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 

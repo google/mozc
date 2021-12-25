@@ -211,6 +211,7 @@ cc_qt_library_mozc(
         "//session/internal:keymap",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )
 

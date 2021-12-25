@@ -49,6 +49,7 @@
       ],
       'dependencies': [
         'base_core',
+        'absl.gyp:absl_strings',
         'absl.gyp:absl_synchronization',
       ],
       'conditions': [
@@ -100,7 +101,6 @@
         'file_stream.cc',
         'file_util.cc',
         'init_mozc.cc',
-        'japanese_util_rule.cc',
         'logging.cc',
         'mmap.cc',
         'number_util.cc',
@@ -117,6 +117,7 @@
         'gen_character_set#host',
         'gen_version_def#host',
         'hash',
+        'japanese_util',
         'singleton',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
@@ -158,6 +159,15 @@
       'toolsets': ['host', 'target'],
       'sources': [
         'update_util.cc',
+      ],
+    },
+    {
+      'target_name': 'japanese_util',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'japanese_util.cc',
+        'japanese_util_rule.cc',
       ],
     },
     {
@@ -324,6 +334,7 @@
       ],
       'dependencies': [
         'gen_config_file_stream_data#host',
+        'absl.gyp:absl_strings',
       ],
     },
     {
@@ -380,6 +391,7 @@
         'multifile.cc',
       ],
       'dependencies': [
+        'absl.gyp:absl_strings',
         'base_core',
       ],
     },

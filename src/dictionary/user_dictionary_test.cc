@@ -36,6 +36,7 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_util.h"
@@ -63,6 +64,7 @@
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -330,20 +332,20 @@ class UserDictionaryTest : public ::testing::Test {
       if (line.empty() || line[0] == '#') {
         continue;
       }
-      std::vector<std::string> fields;
-      Util::SplitStringAllowEmpty(line, "\t", &fields);
+      std::vector<std::string> fields =
+          absl::StrSplit(line, '\t', absl::AllowEmpty());
       EXPECT_GE(fields.size(), 3) << line;
       UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
       CHECK(entry);
-      entry->set_key(fields[0]);
-      entry->set_value(fields[1]);
+      entry->set_key(std::move(fields[0]));
+      entry->set_value(std::move(fields[1]));
       if (fields[2] == "verb") {
         entry->set_pos(user_dictionary::UserDictionary::WA_GROUP1_VERB);
       } else if (fields[2] == "noun") {
         entry->set_pos(user_dictionary::UserDictionary::NOUN);
       }
       if (fields.size() >= 4 && !fields[3].empty()) {
-        entry->set_comment(fields[3]);
+        entry->set_comment(std::move(fields[3]));
       }
     }
   }

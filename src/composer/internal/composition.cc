@@ -39,6 +39,7 @@
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace composer {
@@ -468,7 +469,7 @@ bool Composition::IsToggleable(size_t position) const {
   if (it == chunks_.end()) {
     return false;
   }
-  return Util::StartsWith((*it)->pending(), Table::ParseSpecialKey("{?}"));
+  return absl::StartsWith((*it)->pending(), Table::ParseSpecialKey("{?}"));
 }
 
 }  // namespace composer

@@ -59,12 +59,6 @@ cc_library_mozc(
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "lru_storage_main",
-##           srcs = [ "lru_storage_main.cc" ],
-##           deps = [ ":lru_storage",
-##                    "//base:base",])
-
 cc_library_mozc(
     name = "lru_cache",
     hdrs = ["lru_cache.h"],
@@ -85,11 +79,6 @@ cc_test_mozc(
     ],
 )
 
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "lru_cache_main",
-##           srcs = ["lru_cache_main.cc", ],
-##           deps = [ "//base:base" ]);
-
 cc_library_mozc(
     name = "existence_filter",
     srcs = ["existence_filter.cc"],
@@ -101,12 +90,6 @@ cc_library_mozc(
         "@com_google_absl//absl/memory",
     ],
 )
-
-##    Commented out on 2011-03-09, because no other rule depends on it.
-## cc_binary_mozc(name = "existence_filter_main",
-##           srcs = [ "existence_filter_main.cc" ],
-##           deps = [ ":existence_filter",
-##                    "//base:base",])
 
 cc_test_mozc(
     name = "lru_storage_test",

@@ -36,12 +36,13 @@
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
-#include "base/util.h"
 #include "base/version.h"
 #include "data_manager/dataset_reader.h"
 #include "data_manager/serialized_dictionary.h"
 #include "protocol/segmenter_data.pb.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -373,7 +374,7 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
   }
 
   for (const auto &kv : reader.name_to_data_map()) {
-    if (!Util::StartsWith(kv.first, "typing_model")) {
+    if (!absl::StartsWith(kv.first, "typing_model")) {
       continue;
     }
     typing_model_data_.push_back(kv);
@@ -389,8 +390,8 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     return Status::DATA_MISSING;
   }
   {
-    std::vector<absl::string_view> components;
-    Util::SplitStringUsing(data_version_, ".", &components);
+    std::vector<absl::string_view> components =
+        absl::StrSplit(data_version_, '.', absl::SkipEmpty());
     if (components.size() != 3) {
       LOG(ERROR) << "Invalid version format: " << data_version_;
       return Status::DATA_BROKEN;

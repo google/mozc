@@ -62,6 +62,7 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 #ifndef NDEBUG
@@ -125,7 +126,7 @@ int GetSpatialCostPenalty(const ConversionRequest &request) {
 
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const std::string &reference, const std::string &target) {
-  return Util::StartsWith(target, reference);
+  return absl::StartsWith(target, reference);
 }
 
 bool IsLatinInputMode(const ConversionRequest &request) {
@@ -257,7 +258,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     // set.  For example, if original key is "he" and "hello" was found,
     // continue traversing only when one of "l", "ll", or "llo" is in
     // |subsequent_chars_|.
-    // Implementation note: Although Util::StartsWith is called at most N times
+    // Implementation note: Although absl::StartsWith is called at most N times
     // where N = subsequent_chars_.size(), N is very small in practice, less
     // than 10.  Thus, this linear order algorithm is fast enough.
     // Theoretically, we can construct a trie of strings in |subsequent_chars_|
@@ -266,7 +267,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     // To this end, we need to fix Comopser as well.
     const absl::string_view rest = absl::ClippedSubstr(key, original_key_len_);
     for (const std::string &chr : *subsequent_chars_) {
-      if (Util::StartsWith(rest, chr)) {
+      if (absl::StartsWith(rest, chr)) {
         return TRAVERSE_CONTINUE;
       }
     }
@@ -278,7 +279,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     penalty_ = 0;
     if (num_expanded > 0 ||
         (!non_expanded_original_key_.empty() &&
-         !Util::StartsWith(actual_key, non_expanded_original_key_))) {
+         !absl::StartsWith(actual_key, non_expanded_original_key_))) {
       penalty_ = spatial_cost_penalty_;
     }
     return TRAVERSE_CONTINUE;
@@ -343,7 +344,7 @@ class DictionaryPredictor::PredictiveBigramLookupCallback
                      const Token &token) override {
     // Skip the token if its value doesn't start with the previous user input,
     // |history_value_|.
-    if (!Util::StartsWith(token.value, history_value_) ||
+    if (!absl::StartsWith(token.value, history_value_) ||
         token.value.size() <= history_value_.size()) {
       return TRAVERSE_CONTINUE;
     }
@@ -1299,7 +1300,7 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
     if (result.types & TYPING_CORRECTION) {
       continue;
     }
-    if (!Util::StartsWith(result.key, conversion_key)) {
+    if (!absl::StartsWith(result.key, conversion_key)) {
       result.cost += kKeyExpansionPenalty;
       MOZC_WORD_LOG(result, absl::StrCat("KeyExpansionPenalty: ", result.cost));
     }

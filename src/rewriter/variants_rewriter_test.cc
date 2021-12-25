@@ -382,7 +382,7 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.Init();
     candidate.value = "＼";  // Full-width backslash
     candidate.content_value = candidate.value;
-    candidate.content_key = "えん";
+    candidate.content_key = "ばっくすらっしゅ";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     const char *expected = "[全] バックスラッシュ";
     EXPECT_EQ(expected, candidate.description);
@@ -417,6 +417,30 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.description = "絵文字";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
     std::string expected = "絵文字";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // A symbol representing "パーセント".
+    candidate.value = "㌫";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "ぱーせんと";
+    candidate.description = "単位";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    std::string expected = "単位";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // Minus sign.
+    candidate.value = "−";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "まいなす";
+    candidate.description = "マイナス";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    std::string expected = "[全] マイナス";
     EXPECT_EQ(expected, candidate.description);
   }
 }
@@ -458,6 +482,32 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     EXPECT_EQ(
         AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
         candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // A symbol representing "パーセント".
+    candidate.value = "㌫";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "ぱーせんと";
+    candidate.description = "単位";
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
+                                                       &candidate);
+    std::string expected = "単位";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // Minus sign.
+    candidate.value = "−";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "まいなす";
+    candidate.description = "マイナス";
+    VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
+                                                       &candidate);
+    std::string expected = "[全] マイナス";
+    EXPECT_EQ(expected, candidate.description);
   }
 }
 
@@ -516,6 +566,28 @@ TEST_F(VariantsRewriterTest, SetDescriptionForPrediction) {
     candidate.content_key = "[ABC]";
     VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
     EXPECT_EQ("", candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // A symbol representing "パーセント".
+    candidate.value = "㌫";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "ぱーせんと";
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
+    std::string expected = "";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    // Minus sign.
+    candidate.value = "−";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "まいなす";
+    VariantsRewriter::SetDescriptionForPrediction(pos_matcher_, &candidate);
+    std::string expected = "";
+    EXPECT_EQ(expected, candidate.description);
   }
 }
 

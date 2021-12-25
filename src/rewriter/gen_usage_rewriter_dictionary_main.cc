@@ -107,6 +107,7 @@
 #include "base/util.h"
 #include "absl/container/btree_map.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, usage_data_file, "", "usage data file");
@@ -150,13 +151,12 @@ void LoadConjugation(
   CHECK(ifs.good());
 
   std::string line;
-  std::vector<std::string> fields;
   while (!std::getline(ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    fields.clear();
-    Util::SplitStringUsing(line, "\t ", &fields);
+    const std::vector<std::string> fields =
+        absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
     CHECK_GE(fields.size(), 4) << "format error: " << line;
 
     ConjugationType tmp;
@@ -183,7 +183,6 @@ void LoadUsage(const std::string &filename,
   }
 
   std::string line;
-  std::vector<std::string> fields;
   absl::btree_map<std::string, int> conjugation_id_map;
 
   int conjugation_id = 0;
@@ -192,8 +191,8 @@ void LoadUsage(const std::string &filename,
       // starting with '#' is a comment line.
       continue;
     }
-    fields.clear();
-    Util::SplitStringAllowEmpty(line, "\t", &fields);
+    const std::vector<std::string> fields =
+        absl::StrSplit(line, '\t', absl::AllowEmpty());
     CHECK_GE(fields.size(), 4) << "format error: " << line;
 
     UsageItem item;

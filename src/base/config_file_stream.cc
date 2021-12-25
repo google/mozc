@@ -43,7 +43,7 @@
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/system_util.h"
-#include "base/util.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 
@@ -94,7 +94,7 @@ class OnMemoryFileMap {
 std::istream *ConfigFileStream::Open(const std::string &filename,
                                      std::ios_base::openmode mode) {
   // system://foo.bar.txt
-  if (Util::StartsWith(filename, kSystemPrefix)) {
+  if (absl::StartsWith(filename, kSystemPrefix)) {
     const std::string new_filename = RemovePrefix(kSystemPrefix, filename);
     for (size_t i = 0; i < std::size(kFileData); ++i) {
       if (new_filename == kFileData[i].name) {
@@ -109,7 +109,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
       }
     }
     // user://foo.bar.txt
-  } else if (Util::StartsWith(filename, kUserPrefix)) {
+  } else if (absl::StartsWith(filename, kUserPrefix)) {
     const std::string new_filename =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                            RemovePrefix(kUserPrefix, filename));
@@ -121,7 +121,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
     delete ifs;
     return nullptr;
     // file:///foo.map
-  } else if (Util::StartsWith(filename, kFilePrefix)) {
+  } else if (absl::StartsWith(filename, kFilePrefix)) {
     const std::string new_filename = RemovePrefix(kFilePrefix, filename);
     InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
     CHECK(ifs);
@@ -130,7 +130,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
     }
     delete ifs;
     return nullptr;
-  } else if (Util::StartsWith(filename, kMemoryPrefix)) {
+  } else if (absl::StartsWith(filename, kMemoryPrefix)) {
     std::istringstream *ifs = new std::istringstream(
         Singleton<OnMemoryFileMap>::get()->get(filename), mode);
     CHECK(ifs);
@@ -155,10 +155,10 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
 
 bool ConfigFileStream::AtomicUpdate(const std::string &filename,
                                     const std::string &new_binary_contens) {
-  if (Util::StartsWith(filename, kMemoryPrefix)) {
+  if (absl::StartsWith(filename, kMemoryPrefix)) {
     Singleton<OnMemoryFileMap>::get()->set(filename, new_binary_contens);
     return true;
-  } else if (Util::StartsWith(filename, kSystemPrefix)) {
+  } else if (absl::StartsWith(filename, kSystemPrefix)) {
     LOG(ERROR) << "Cannot update system:// files.";
     return false;
   }
@@ -187,7 +187,7 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
 #ifdef OS_WIN
   // If file name doesn't end with ".db", the file
   // is more likely a temporary file.
-  if (!Util::EndsWith(real_filename, ".db")) {
+  if (!absl::EndsWith(real_filename, ".db")) {
     // TODO(yukawa): Provide a way to
     // integrate ::SetFileAttributesTransacted with
     // AtomicRename.
@@ -201,13 +201,13 @@ bool ConfigFileStream::AtomicUpdate(const std::string &filename,
 }
 
 std::string ConfigFileStream::GetFileName(const std::string &filename) {
-  if (Util::StartsWith(filename, kSystemPrefix) ||
-      Util::StartsWith(filename, kMemoryPrefix)) {
+  if (absl::StartsWith(filename, kSystemPrefix) ||
+      absl::StartsWith(filename, kMemoryPrefix)) {
     return "";
-  } else if (Util::StartsWith(filename, kUserPrefix)) {
+  } else if (absl::StartsWith(filename, kUserPrefix)) {
     return FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                               RemovePrefix(kUserPrefix, filename));
-  } else if (Util::StartsWith(filename, kFilePrefix)) {
+  } else if (absl::StartsWith(filename, kFilePrefix)) {
     return RemovePrefix(kUserPrefix, filename);
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";

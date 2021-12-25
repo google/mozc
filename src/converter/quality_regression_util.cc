@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <sstream>  // NOLINT
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"
@@ -49,6 +50,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -131,8 +133,8 @@ std::string QualityRegressionUtil::TestItem::OutputAsTSV() const {
 
 absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
     const std::string &line) {
-  std::vector<absl::string_view> tokens;
-  Util::SplitStringUsing(line, "\t", &tokens);
+  std::vector<absl::string_view> tokens =
+      absl::StrSplit(line, '\t', absl::SkipEmpty());
   if (tokens.size() < 4) {
     return absl::InvalidArgumentError(
         absl::StrCat("Invalid token size: ", line));
@@ -162,8 +164,8 @@ absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
   }
   platform = 0;
   if (tokens.size() >= 7) {
-    std::vector<absl::string_view> platforms;
-    Util::SplitStringUsing(tokens[6], ",", &platforms);
+    std::vector<absl::string_view> platforms =
+        absl::StrSplit(tokens[6], ',', absl::SkipEmpty());
     for (size_t i = 0; i < platforms.size(); ++i) {
       auto result = GetPlatformFromString(platforms[i]);
       if (!result.ok()) {

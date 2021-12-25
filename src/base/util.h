@@ -38,6 +38,8 @@
 #include <vector>
 
 #include "base/double_array.h"
+// TODO(yukiokamoto): Removes dependency on "japanese_util.h".
+#include "base/japanese_util.h"
 #include "base/port.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
@@ -113,14 +115,6 @@ class Util {
   ~Util() = delete;
 
   // String utils
-  static void SplitStringUsing(absl::string_view str, const char *delim,
-                               std::vector<std::string> *output);
-  static void SplitStringUsing(absl::string_view str, const char *delim,
-                               std::vector<absl::string_view> *output);
-
-  static void SplitStringAllowEmpty(absl::string_view str, const char *delim,
-                                    std::vector<std::string> *output);
-
   static void SplitStringToUtf8Chars(absl::string_view str,
                                      std::vector<std::string> *output);
 
@@ -241,12 +235,6 @@ class Util {
   static void Utf8SubString(absl::string_view src, size_t start, size_t length,
                             std::string *result);
 
-  // Determines whether the beginning of |str| matches |prefix|.
-  static bool StartsWith(absl::string_view str, absl::string_view prefix);
-
-  // Determines whether the end of |str| matches |suffix|.
-  static bool EndsWith(absl::string_view str, absl::string_view suffix);
-
   // Strip a heading UTF-8 BOM (binary order mark) sequence (= \xef\xbb\xbf).
   static void StripUtf8Bom(std::string *line);
 
@@ -283,30 +271,80 @@ class Util {
   static void Sleep(uint32_t msec);
 
   // Japanese utilities for character form transliteration.
+  //
+  // TODO(yukiokamoto): Removes the dependencies on functions in japanese_util
+  // namespace. The following wrapper functions are currently necessary just for
+  // the existing callers to call the Japanese util functions with the same
+  // signatures as before (ie. Util::FuncName() rather than
+  // japanese_util::FuncName()). In the long term goal, all the callers should
+  // migrate to call japanese_util::FuncName() directly.
   static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
-                                      const char *table,
+                                      const char *ctable,
                                       absl::string_view input,
-                                      std::string *output);
-  static void HiraganaToKatakana(absl::string_view input, std::string *output);
+                                      std::string *output) {
+    japanese_util::ConvertUsingDoubleArray(da, ctable, input, output);
+  }
+
+  static void HiraganaToKatakana(absl::string_view input, std::string *output) {
+    japanese_util::HiraganaToKatakana(input, output);
+  }
+
   static void HiraganaToHalfwidthKatakana(absl::string_view input,
-                                          std::string *output);
-  static void HiraganaToRomanji(absl::string_view input, std::string *output);
+                                          std::string *output) {
+    japanese_util::HiraganaToHalfwidthKatakana(input, output);
+  }
+
+  static void HiraganaToRomanji(absl::string_view input, std::string *output) {
+    japanese_util::HiraganaToRomanji(input, output);
+  }
+
   static void HalfWidthAsciiToFullWidthAscii(absl::string_view input,
-                                             std::string *output);
+                                             std::string *output) {
+    japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
+  }
+
   static void FullWidthAsciiToHalfWidthAscii(absl::string_view input,
-                                             std::string *output);
+                                             std::string *output) {
+    japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
+  }
+
   static void HiraganaToFullwidthRomanji(absl::string_view input,
-                                         std::string *output);
-  static void RomanjiToHiragana(absl::string_view input, std::string *output);
-  static void KatakanaToHiragana(absl::string_view input, std::string *output);
+                                         std::string *output) {
+    japanese_util::HiraganaToFullwidthRomanji(input, output);
+  }
+
+  static void RomanjiToHiragana(absl::string_view input, std::string *output) {
+    japanese_util::RomanjiToHiragana(input, output);
+  }
+
+  static void KatakanaToHiragana(absl::string_view input, std::string *output) {
+    japanese_util::KatakanaToHiragana(input, output);
+  }
+
   static void HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
-                                                   std::string *output);
+                                                   std::string *output) {
+    japanese_util::HalfWidthKatakanaToFullWidthKatakana(input, output);
+  }
+
   static void FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
-                                                   std::string *output);
+                                                   std::string *output) {
+    japanese_util::FullWidthKatakanaToHalfWidthKatakana(input, output);
+  }
+
   static void FullWidthToHalfWidth(absl::string_view input,
-                                   std::string *output);
+                                   std::string *output) {
+    japanese_util::FullWidthToHalfWidth(input, output);
+  }
+
   static void HalfWidthToFullWidth(absl::string_view input,
-                                   std::string *output);
+                                   std::string *output) {
+    japanese_util::HalfWidthToFullWidth(input, output);
+  }
+
+  static void NormalizeVoicedSoundMark(absl::string_view input,
+                                       std::string *output) {
+    japanese_util::NormalizeVoicedSoundMark(input, output);
+  }
 
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area
@@ -320,9 +358,6 @@ class Util {
 
   // Returns true if |input| looks like a pure English word.
   static bool IsEnglishTransliteration(const std::string &value);
-
-  static void NormalizeVoicedSoundMark(absl::string_view input,
-                                       std::string *output);
 
   // Returns true if key is an open bracket.  If key is an open bracket,
   // corresponding close bracket is assigned.

@@ -46,6 +46,7 @@
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 
@@ -102,7 +103,7 @@ bool ParseCompound(const absl::string_view value,
   // Check if the middle part matches |pattern|.
   const absl::string_view remaining_value =
       absl::ClippedSubstr(value, first_content->size());
-  if (!Util::StartsWith(remaining_value, pattern)) {
+  if (!absl::StartsWith(remaining_value, pattern)) {
     return false;
   }
 
@@ -198,7 +199,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     // "舞って" workaround
     // V+"て" is often treated as one compound.
     static constexpr char kPat[] = "て";
-    if (Util::EndsWith(content, absl::string_view(kPat, std::size(kPat) - 1))) {
+    if (absl::EndsWith(content, absl::string_view(kPat, std::size(kPat) - 1))) {
       PushBackStringView(Util::Utf8SubString(content, 0, content_len - 1),
                          output);
     }
@@ -267,8 +268,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     static constexpr char kPat[] = "いる";  // "いる"
     const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
-        Util::EndsWith(top_value, kSuffix) &&
-        Util::EndsWith(aux_value, kSuffix)) {
+        absl::EndsWith(top_value, kSuffix) &&
+        absl::EndsWith(aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YYいる" in addition to "YY"
         output->push_back(value);
@@ -276,8 +277,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
       return true;
     }
     if (aux_value_len == 0 && top_aux_value_len == 2 &&
-        Util::EndsWith(value, kSuffix) &&
-        Util::EndsWith(top_aux_value, kSuffix)) {
+        absl::EndsWith(value, kSuffix) &&
+        absl::EndsWith(top_aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYいる"
         PushBackStringView(Util::Utf8SubString(value, 0, value_len - 2),
@@ -292,8 +293,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
     constexpr char kPat[] = "せる";
     const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
     if (top_aux_value_len == 0 && aux_value_len == 2 &&
-        Util::EndsWith(top_value, kSuffix) &&
-        Util::EndsWith(aux_value, kSuffix)) {
+        absl::EndsWith(top_value, kSuffix) &&
+        absl::EndsWith(aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YYせる" in addition to "YY"
         output->push_back(value);
@@ -301,8 +302,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
       return true;
     }
     if (aux_value_len == 0 && top_aux_value_len == 2 &&
-        Util::EndsWith(value, kSuffix) &&
-        Util::EndsWith(top_aux_value, kSuffix)) {
+        absl::EndsWith(value, kSuffix) &&
+        absl::EndsWith(top_aux_value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYせる"
         PushBackStringView(Util::Utf8SubString(value, 0, value_len - 2),
@@ -319,7 +320,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   {
     static constexpr char kPat[] = "する";
     const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
-    if (aux_value_len == 2 && Util::EndsWith(aux_value, kSuffix)) {
+    if (aux_value_len == 2 && absl::EndsWith(aux_value, kSuffix)) {
       if (content_script_type != Util::KATAKANA &&
           content_script_type != Util::HIRAGANA &&
           content_script_type != Util::KANJI &&
@@ -340,7 +341,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   {
     static constexpr char kPat[] = "る";
     const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
-    if (aux_value_len == 0 && Util::EndsWith(value, kSuffix)) {
+    if (aux_value_len == 0 && absl::EndsWith(value, kSuffix)) {
       if (type == RIGHT) {
         // "YY" in addition to "YYる"
         PushBackStringView(Util::Utf8SubString(value, 0, value_len - 1),
@@ -354,7 +355,7 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   {
     static constexpr char kPat[] = "す";
     const absl::string_view kSuffix(kPat, std::size(kPat) - 1);
-    if (Util::EndsWith(value, kSuffix) &&
+    if (absl::EndsWith(value, kSuffix) &&
         Util::IsScriptType(Util::Utf8SubString(value, 0, value_len - 1),
                            Util::KANJI)) {
       if (type == RIGHT) {
@@ -371,8 +372,8 @@ bool IsNaturalContent(const Segment::Candidate &cand,
   {
     static constexpr char kPat[] = "した";
     const absl::string_view kShi(kPat, 3), kTa(kPat + 3, 3);
-    if (Util::EndsWith(content, kShi) && aux_value == kTa &&
-        Util::EndsWith(top_content, kShi) && top_aux_value == kTa) {
+    if (absl::EndsWith(content, kShi) && aux_value == kTa &&
+        absl::EndsWith(top_content, kShi) && top_aux_value == kTa) {
       if (type == RIGHT) {
         const absl::string_view val =
             Util::Utf8SubString(content, 0, content_len - 1);

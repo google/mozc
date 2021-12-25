@@ -48,6 +48,7 @@
 #include "dictionary/system/system_dictionary_builder.h"
 #include "dictionary/text_dictionary_loader.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
 ABSL_FLAG(std::string, input, "", "space separated input text files");
@@ -78,7 +79,7 @@ void GetInputFileName(const std::string &input_file,
   for (SplitIterator<SingleDelimiter> iter(input_file, " "); !iter.Done();
        iter.Next()) {
     const absl::string_view &input_file = iter.Get();
-    if (Util::EndsWith(input_file, kReadingCorrectionFile)) {
+    if (absl::EndsWith(input_file, kReadingCorrectionFile)) {
       Util::AppendStringWithDelimiter(kDelimiter, input_file,
                                       reading_correction_input);
     } else {

@@ -45,6 +45,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -65,7 +66,7 @@ bool HasEmoticon(const Segments &segments) {
   CHECK_EQ(segments.segments_size(), 1);
   for (size_t i = 0; i < segments.segment(0).candidates_size(); ++i) {
     const Segment::Candidate &candidate = segments.segment(0).candidate(i);
-    if (Util::StartsWith(candidate.description, "顔文字")) {
+    if (absl::StartsWith(candidate.description, "顔文字")) {
       return true;
     }
   }

@@ -65,6 +65,7 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "//transliteration",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
     ],
 )
@@ -116,6 +117,7 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -204,6 +206,7 @@ cc_library_mozc(
         "//base:singleton",
         "//base:util",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ],
 )
 

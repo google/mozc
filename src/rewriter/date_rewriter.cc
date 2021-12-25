@@ -54,6 +54,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
@@ -542,9 +543,9 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
   constexpr char kGanKey[] = "がん";
   constexpr char kGanValue[] = "元";
 
-  // Util::EndsWith(key, kNenKey) is expected to always return true
-  DCHECK(Util::EndsWith(key, kNenKey));
-  if (!Util::StartsWith(key, year_data.key)) {
+  // absl::EndsWith(key, kNenKey) is expected to always return true
+  DCHECK(absl::EndsWith(key, kNenKey));
+  if (!absl::StartsWith(key, year_data.key)) {
     return false;
   }
   // key="しょうわ59ねん" -> era_year_str="59"
@@ -576,14 +577,14 @@ bool ExtractYearFromKey(const YearData &year_data, const std::string &key,
 bool EraToAdForCourt(const YearData *data, size_t size, const std::string &key,
                      std::vector<std::string> *results,
                      std::vector<std::string> *descriptions) {
-  if (!Util::EndsWith(key, kNenKey)) {
+  if (!absl::EndsWith(key, kNenKey)) {
     return false;
   }
 
   bool modified = false;
   for (size_t i = 0; i < size; ++i) {
     const YearData &year_data = data[i];
-    if (!Util::StartsWith(key, year_data.key)) {
+    if (!absl::StartsWith(key, year_data.key)) {
       continue;
     }
 
@@ -1009,7 +1010,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
 
 bool DateRewriter::RewriteAd(Segment *segment) {
   const std::string &key = segment->key();
-  if (!Util::EndsWith(key, kNenKey)) {
+  if (!absl::EndsWith(key, kNenKey)) {
     return false;
   }
   if (segment->candidates_size() == 0) {

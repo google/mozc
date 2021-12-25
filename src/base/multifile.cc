@@ -29,16 +29,19 @@
 
 #include "base/multifile.h"
 
+#include <string>
+
 #include "base/logging.h"
 #include "base/util.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_split.h"
 
 namespace mozc {
 
 InputMultiFile::InputMultiFile(const std::string &filenames,
                                std::ios_base::openmode mode)
-    : mode_(mode) {
-  Util::SplitStringUsing(filenames, ",", &filenames_);
+    : filenames_(absl::StrSplit(filenames, ',', absl::SkipEmpty())),
+      mode_(mode) {
   next_iter_ = filenames_.begin();
   if (next_iter_ != filenames_.end()) {
     OpenNext();

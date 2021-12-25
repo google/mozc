@@ -48,6 +48,7 @@
 #include "base/win_util.h"
 #include "ipc/ipc.h"
 #include "ipc/ipc_path_manager.h"
+#include "absl/strings/match.h"
 
 namespace mozc {
 namespace {
@@ -178,10 +179,10 @@ class FallbackClientMutex : public IPCClientMutexBase {
 // serialize each client. Currently |ipc_name| starts with "session" and
 // "renderer" are expected.
 HANDLE GetClientMutex(const std::string &ipc_name) {
-  if (Util::StartsWith(ipc_name, "session")) {
+  if (absl::StartsWith(ipc_name, "session")) {
     return Singleton<ConverterClientMutex>::get()->get();
   }
-  if (Util::StartsWith(ipc_name, "renderer")) {
+  if (absl::StartsWith(ipc_name, "renderer")) {
     return Singleton<RendererClientMutex>::get()->get();
   }
   LOG(WARNING) << "unexpected IPC name: " << ipc_name;
@@ -682,9 +683,9 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
   // TODO(taku): enable them on Mac/Linux
 #ifdef DEBUG
   constexpr size_t kMaxTrial = 256;
-#else
+#else   // DEBUG
   constexpr size_t kMaxTrial = 2;
-#endif
+#endif  // DEBUG
 
   for (size_t trial = 0; trial < kMaxTrial; ++trial) {
     std::string server_address;
@@ -738,9 +739,9 @@ void IPCClient::Init(const std::string &name, const std::string &server_path) {
     // TODO(taku): control the timeout via flag.
 #ifdef DEBUG
     constexpr int kNamedPipeTimeout = 100000;  // 100 sec
-#else
+#else                                          // DEBUG
     constexpr int kNamedPipeTimeout = 10000;  // 10 sec
-#endif
+#endif                                         // DEBUG
     DLOG(ERROR) << "Server is busy. waiting for " << kNamedPipeTimeout
                 << " msec";
     if (!::WaitNamedPipe(wserver_address.c_str(), kNamedPipeTimeout)) {
