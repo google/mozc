@@ -165,4 +165,10 @@ OK:	あさひがでてきたので	朝日が出てきたので	Conversion Expect
 OK:	ここでおわるはずがないのに	ここで終わるはずがないのに	Conversion Expected	ここで終わるはずがないのに	2.26.4520
 FAILED:	ここでかうから	ココデカウから	Conversion Expected	ここで買うから	2.26.4520
 OK:	あしきたぐん	葦北郡	Conversion Expected	葦北郡	2.26.4520
-FAILED:	たごうら	他強羅	Conversion Expected	田子浦	2.26.4520
+OK:	たごうら	田子浦	Conversion Expected	田子浦	2.26.4596
+FAILED:	みにおぼえのない	見に覚えのない	Conversion Expected	身に覚えのない	2.26.4596
+OK:	とっけつ	突厥	Conversion Expected	突厥	2.26.4596
+OK:	とっくつ	突厥	Conversion Expected	突厥	2.26.4596
+OK:	かいかい	開会	Conversion Expected 9	回回	2.26.4596
+OK:	ふいふい	回回	Conversion Expected 9	回回	2.26.4596
+OK:	れいわがんねん	令和元年	Conversion Expected	令和元年	2.26.4596
