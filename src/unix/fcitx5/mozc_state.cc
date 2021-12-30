@@ -61,8 +61,6 @@ MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
       parser_(std::make_unique<MozcResponseParser>(engine_)) {
   // mozc::Logging::SetVerboseLevel(1);
   VLOG(1) << "MozcState created.";
-  const bool is_vertical = true;
-  parser_->SetUseAnnotation(is_vertical);
 
   if (client_->EnsureConnection()) {
     UpdatePreeditMethod();

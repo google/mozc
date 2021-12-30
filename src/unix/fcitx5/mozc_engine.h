@@ -62,8 +62,12 @@ FCITX_CONFIGURATION(
     OptionWithAnnotation<CompositionMode, CompositionModeI18NAnnotation>
         initialMode{this, "InitialMode", _("Initial Mode"),
                     mozc::commands::HIRAGANA};
+    Option<bool> verticalList{this, "Vertical", _("Vertical candidate list"),
+                              true};
     OptionWithAnnotation<ExpandMode, ExpandModeI18NAnnotation> expandMode{
-        this, "ExpandMode", _("Expand Usage"), ExpandMode::OnFocus};
+        this, "ExpandMode",
+        _("Expand Usage (Requires vertical candidate list)"),
+        ExpandMode::OnFocus};
     Option<bool> preeditCursorPositionAtBeginning{
         this, "PreeditCursorPositionAtBeginning",
         _("Fix embedded preedit cursor at the beginning of the preedit"),

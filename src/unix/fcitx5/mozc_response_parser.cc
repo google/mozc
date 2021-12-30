@@ -88,7 +88,7 @@ class MozcCandidateList final : public CandidateList,
   MozcCandidateList(const mozc::commands::Candidates &candidates,
                     InputContext *ic, MozcEngine *engine, bool use_annotation)
       : ic_(ic), engine_(engine) {
-    auto state = engine->mozcState(ic);
+    auto state = engine_->mozcState(ic);
     setPageable(this);
     bool index_visible = false;
     if (candidates.has_footer()) {
@@ -105,10 +105,11 @@ class MozcCandidateList final : public CandidateList,
         hasNext_ = true;
       }
     }
-    if (candidates.has_direction() &&
-        candidates.direction() == mozc::commands::Candidates::HORIZONTAL) {
-      layout_ = CandidateLayoutHint::Horizontal;
-    }
+    const bool isVertical = *engine_->config().verticalList;
+    // candidates.direction is never used, we just override it with our
+    // configuration.
+    layout_ = isVertical ? CandidateLayoutHint::Vertical
+                         : CandidateLayoutHint::Horizontal;
 
     int focused_index = -1;
     cursor_ = -1;
@@ -244,8 +245,7 @@ class MozcCandidateList final : public CandidateList,
 
 }  // namespace
 
-MozcResponseParser::MozcResponseParser(MozcEngine *engine)
-    : engine_(engine), use_annotation_(false) {}
+MozcResponseParser::MozcResponseParser(MozcEngine *engine) : engine_(engine) {}
 
 MozcResponseParser::~MozcResponseParser() {}
 
@@ -391,10 +391,6 @@ bool MozcResponseParser::ParseResponse(const mozc::commands::Output &response,
   return true;  // mozc consumed the key.
 }
 
-void MozcResponseParser::SetUseAnnotation(bool use_annotation) {
-  use_annotation_ = use_annotation;
-}
-
 void MozcResponseParser::ParseResult(const mozc::commands::Result &result,
                                      InputContext *ic) const {
   auto mozc_state = engine_->mozcState(ic);
@@ -439,7 +435,7 @@ void MozcResponseParser::ParseCandidates(
   }
 
   ic->inputPanel().setCandidateList(std::make_unique<MozcCandidateList>(
-      candidates, ic, engine_, use_annotation_));
+      candidates, ic, engine_, *engine_->config().verticalList));
 }
 
 void MozcResponseParser::ParsePreedit(const mozc::commands::Preedit &preedit,

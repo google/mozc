@@ -64,10 +64,6 @@ class MozcResponseParser {
   bool ParseResponse(const mozc::commands::Output &response,
                      InputContext *ic) const;
 
-  // Setter for use_annotation_. If use_annotation_ is true, ParseCandidates()
-  // uses annotation infomation.
-  void SetUseAnnotation(bool use_annotation);
-
  private:
   void UpdateDeletionRange(const mozc::commands::Output &response,
                            InputContext *ic) const;
@@ -83,7 +79,6 @@ class MozcResponseParser {
                     InputContext *ic) const;
 
   MozcEngine *engine_;
-  bool use_annotation_;
 
   DISALLOW_COPY_AND_ASSIGN(MozcResponseParser);
 };
