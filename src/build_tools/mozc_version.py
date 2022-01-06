@@ -77,6 +77,7 @@ VERSION_PROPERTIES = [
     'BUILD',
     'REVISION',
     'TARGET_PLATFORM',
+    'BUILD_OSS',
     'QT_VERSION',
     'ENGINE_VERSION',
     'DATA_VERSION',
@@ -131,6 +132,9 @@ def _ParseVersionTemplateFile(template_path, target_platform,
           logging.warning(('Dupulicate key: "%s". Later definition "%s"'
                            'overrides earlier one "%s".'),
                           var, val, template_dict[var])
+        # If `val` is a variable (e.g. BUILD_OSS), replace it with the value.
+        if val in template_dict:
+          val = template_dict[val]
         template_dict[var] = val
 
   # Some properties need to be tweaked.
@@ -202,7 +206,7 @@ def GenerateVersionFileFromTemplate(template_path,
     output_path: A path to generated version file.
       If already exists and the content will not be updated, nothing is done
       (the timestamp is not updated).
-    version_format: A string which contans version patterns.
+    version_format: A string which contains version patterns.
     target_platform: The target platform on which the programs run.
     qt_version: '5' for Qt5, and '' or None for no-Qt.
     version_override: An optional string to override BUILD number
@@ -250,6 +254,7 @@ def GenerateVersionFile(version_template_path, version_path, target_platform,
       'BUILD=@BUILD@',
       'REVISION=@REVISION@',
       'TARGET_PLATFORM=@TARGET_PLATFORM@',
+      'BUILD_OSS=@BUILD_OSS@',
       'QT_VERSION=@QT_VERSION@',
       'ENGINE_VERSION=@ENGINE_VERSION@',
       'DATA_VERSION=@DATA_VERSION@',
@@ -330,12 +335,17 @@ class MozcVersion(object):
     """
     return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@.@REVISION@')
 
-  def GetShortVersionString(self):
+  def GetShortVersionString(self, use_build_oss=False):
     """Returns the short version info string.
+
+    Args:
+      use_build_oss: use BUILD_OSS if true.
 
     Returns:
       a string in format of "MAJOR.MINOR.BUILD"
     """
+    if use_build_oss:
+      return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD_OSS@')
     return self.GetVersionInFormat('@MAJOR@.@MINOR@.@BUILD@')
 
   def GetVersionInFormat(self, version_format):

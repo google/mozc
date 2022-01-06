@@ -83,11 +83,13 @@ def main():
   parser.add_argument('--input')
   parser.add_argument('--version_file')
   parser.add_argument('--output')
+  parser.add_argument('--data_type')
   args = parser.parse_args()
 
   if args.version_file:
     version = mozc_version.MozcVersion(args.version_file)
-    version_string = version.GetShortVersionString()
+    use_build_oss = (args.data_type == 'oss')
+    version_string = version.GetShortVersionString(use_build_oss=use_build_oss)
   else:
     version_string = ''
 

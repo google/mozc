@@ -110,6 +110,7 @@ def evaluation(name, outs, data_file, data_type, engine_type, test_file, base_fi
         outs = outs,
         cmd = ("$(location //converter:quality_regression) " +
                "--version_file $(location //base:mozc_version_txt) " +
+               "--data_type=%s " % data_type +
                "--input $(location %s) --output $@ " % evaluation_name +
                "--base $(location %s)" % base_file),
         exec_tools = ["//converter:quality_regression"],
