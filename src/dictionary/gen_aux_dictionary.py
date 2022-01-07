@@ -31,7 +31,10 @@
 """A tool to generate aux_dictionary.txt from aux_dictionary.tsv.
 
 * Create a dictionary with entries of key and value in the TSV file.
+  + Fields: [key, value, base_key, base_value, cost_offset]
 * lid, rid and cost are copied from entries of base_key and base_value.
+* cost_offset adjusts the cost copied from the base entry. If the cost_offset
+  is -1, the new entry is ranked higher than the base entry.
 
 gen_aux_dictionary.py --output aux_dictionary.txt
 --aux_tsv data/oss/aux_dictionary.tsv
@@ -89,13 +92,14 @@ class AuxDictionary():
     for line in open(aux_tsv, encoding='utf-8'):
       if line.startswith('#'):
         continue
-      key, value, base_key, base_value = line.rstrip().split('\t')
+      key, value, base_key, base_value, cost_offset = line.rstrip().split('\t')
       for data in self.dictionary.GetDataList(base_key, base_value):
         base_lid, base_rid, base_cost = data
         if self.dictionary.Exists(key, value, base_lid, base_rid):
           # Not overwrite the existing entry.
           continue
-        self.aux_list.append([key, base_lid, base_rid, base_cost, value])
+        cost = int(base_cost) + int(cost_offset)
+        self.aux_list.append([key, base_lid, base_rid, str(cost), value])
 
   def WriteFile(self, output):
     with open(output, 'w', encoding='utf-8') as file:

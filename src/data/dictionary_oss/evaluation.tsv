@@ -183,7 +183,7 @@ FAILED:	えいえいじてん	えいえい時点	Conversion Expected	英英辞�
 FAILED:	ぱーせんとにかんさんすると	％に換算すると	Conversion Expected	パーセントに換算すると	2.26.4596
 FAILED:	あらいながらもこんごにきたい	洗いながらも今後に期待	Conversion Expected	荒いながらも今後に期待	2.26.4596
 OK:	かうかちがあるとおもうなら	買う価値があると思うなら	Conversion Expected	買う価値があると思うなら	2.26.4596
-FAILED:	みにおぼえのない	見に覚えのない	Conversion Expected	身に覚えのない	2.26.4596
+OK:	みにおぼえのない	身に覚えのない	Conversion Expected	身に覚えのない	2.26.4596
 FAILED:	まめまめしい	まめまめしい	Conversion Expected 2	忠実忠実しい	2.26.4596
 OK:	とっけつ	突厥	Conversion Expected	突厥	2.26.4596
 OK:	とっくつ	突厥	Conversion Expected	突厥	2.26.4596
