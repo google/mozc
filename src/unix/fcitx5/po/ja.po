@@ -4,15 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2021
+# UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-12-30 02:39+0000\n"
+"POT-Creation-Date: 2022-01-07 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2021\n"
+"Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2022\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -50,7 +50,7 @@ msgstr "直接入力"
 
 #: mozc_engine.h:69
 msgid "Expand Usage (Requires vertical candidate list)"
-msgstr ""
+msgstr "用例を展開する (候補を縦に並べているとき)"
 
 #: mozc_engine.h:73
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
@@ -121,4 +121,4 @@ msgstr "ツール"
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
-msgstr ""
+msgstr "候補を縦に並べる"
