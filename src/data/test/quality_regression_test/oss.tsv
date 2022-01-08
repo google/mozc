@@ -164,5 +164,29 @@ oss_issue134	ここからさきは	ここから先は	Conversion Expected
 oss_issue134	あさひがでてきたので	朝日が出てきたので	Conversion Expected
 oss_issue134	ここでおわるはずがないのに	ここで終わるはずがないのに	Conversion Expected
 oss_issue134	ここでかうから	ここで買うから	Conversion Expected
+oss_issue139	5まんえんごえのしょうひん	５万円超えの商品	Conversion Expected
+oss_issue139	せんぱいごえをめざす	先輩超えを目指す	Conversion Expected
 oss_issue140	あしきたぐん	葦北郡	Conversion Expected
 oss_issue141	たごうら	田子浦	Conversion Expected
+oss_issue142	あいろんがわりにつかう	アイロン代わりに使う	Conversion Expected 2
+oss_issue144	あそうわん	浅海湾	Conversion Expected 2
+oss_issue150	たちあらい	太刀洗	Conversion Expected 2
+oss_issue151	ぐぐってみたけど	ググってみたけど	Conversion Expected 2
+oss_issue152	そざいがぷらすちっくなので	素材がプラスチックなので	Conversion Expected
+oss_issue152	よろしくおねがいします	よろしくお願いします	Conversion Expected
+oss_issue152	おかあさんといっしょなので	お母さんと一緒なので	Conversion Expected 2
+oss_issue152	そのしごとはあとにしよう	しよう	Conversion Not Match
+oss_issue152	がいこくめーかーのものはからだにあわない	外国メーカーのものは体に合わない	Conversion Expected
+oss_issue154	よかったりする	良かったりする	Conversion Expected 2
+oss_issue154	1つめのはなしは	１つ目の話は	Conversion Expected
+oss_issue154	えいえいじてん	英英辞典	Conversion Expected
+oss_issue154	ぱーせんとにかんさんすると	パーセントに換算すると	Conversion Expected
+oss_issue165	あらいながらもこんごにきたい	荒いながらも今後に期待	Conversion Expected
+oss_issue175	かうかちがあるとおもうなら	買う価値があると思うなら	Conversion Expected
+oss_issue192	みにおぼえのない	身に覚えのない	Conversion Expected
+oss_issue212	まめまめしい	忠実忠実しい	Conversion Expected 2
+oss_issue528	とっけつ	突厥	Conversion Expected
+oss_issue528	とっくつ	突厥	Conversion Expected
+oss_issue529	かいかい	回回	Conversion Expected 9
+oss_issue529	ふいふい	回回	Conversion Expected 9
+oss_issue531	れいわがんねん	令和元年	Conversion Expected

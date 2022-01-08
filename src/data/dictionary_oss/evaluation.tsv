@@ -164,5 +164,29 @@ OK:	ここからさきは	ここから先は	Conversion Expected	ここから先
 OK:	あさひがでてきたので	朝日が出てきたので	Conversion Expected	朝日が出てきたので	2.26.4520
 OK:	ここでおわるはずがないのに	ここで終わるはずがないのに	Conversion Expected	ここで終わるはずがないのに	2.26.4520
 FAILED:	ここでかうから	ココデカウから	Conversion Expected	ここで買うから	2.26.4520
+OK:	5まんえんごえのしょうひん	５万円超えの商品	Conversion Expected	５万円超えの商品	2.26.4596
+OK:	せんぱいごえをめざす	先輩超えを目指す	Conversion Expected	先輩超えを目指す	2.26.4596
 OK:	あしきたぐん	葦北郡	Conversion Expected	葦北郡	2.26.4520
-FAILED:	たごうら	他強羅	Conversion Expected	田子浦	2.26.4520
+OK:	たごうら	田子浦	Conversion Expected	田子浦	2.26.4596
+OK:	あいろんがわりにつかう	アイロン代わりに使う	Conversion Expected 2	アイロン代わりに使う	2.26.4596
+OK:	あそうわん	浅茅湾	Conversion Expected 2	浅海湾	2.26.4596
+OK:	たちあらい	太刀洗	Conversion Expected 2	太刀洗	2.26.4596
+OK:	ぐぐってみたけど	ググってみたけど	Conversion Expected 2	ググってみたけど	2.26.4596
+OK:	そざいがぷらすちっくなので	素材がプラスチックなので	Conversion Expected	素材がプラスチックなので	2.26.4596
+OK:	よろしくおねがいします	よろしくお願いします	Conversion Expected	よろしくお願いします	2.26.4596
+FAILED:	おかあさんといっしょなので	おかあさんといっしょなので	Conversion Expected 2	お母さんと一緒なので	2.26.4596
+OK:	そのしごとはあとにしよう	その仕事はあとに使用	Conversion Not Match	しよう	2.26.4596
+FAILED:	がいこくめーかーのものはからだにあわない	外国メーカーのものは躰に合わない	Conversion Expected	外国メーカーのものは体に合わない	2.26.4596
+OK:	よかったりする	良かったりする	Conversion Expected 2	良かったりする	2.26.4596
+OK:	1つめのはなしは	１つ目の話は	Conversion Expected	１つ目の話は	2.26.4596
+OK:	えいえいじてん	英英辞典	Conversion Expected	英英辞典	2.26.4596
+FAILED:	ぱーせんとにかんさんすると	％に換算すると	Conversion Expected	パーセントに換算すると	2.26.4596
+FAILED:	あらいながらもこんごにきたい	洗いながらも今後に期待	Conversion Expected	荒いながらも今後に期待	2.26.4596
+OK:	かうかちがあるとおもうなら	買う価値があると思うなら	Conversion Expected	買う価値があると思うなら	2.26.4596
+OK:	みにおぼえのない	身に覚えのない	Conversion Expected	身に覚えのない	2.26.4596
+OK:	まめまめしい	まめまめしい	Conversion Expected 2	忠実忠実しい	2.26.4596
+OK:	とっけつ	突厥	Conversion Expected	突厥	2.26.4596
+OK:	とっくつ	突厥	Conversion Expected	突厥	2.26.4596
+OK:	かいかい	開会	Conversion Expected 9	回回	2.26.4596
+OK:	ふいふい	回回	Conversion Expected 9	回回	2.26.4596
+OK:	れいわがんねん	令和元年	Conversion Expected	令和元年	2.26.4596

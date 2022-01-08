@@ -78,8 +78,7 @@ proto_library(
 
 jspb_proto_library(
     name = "commands_jspb_proto",
-    visibility = [
-    ],
+    visibility = [],
     deps = [":commands_proto"],
 )
 
@@ -124,8 +123,7 @@ proto_library(
 
 jspb_proto_library(
     name = "config_jspb_proto",
-    visibility = [
-    ],
+    visibility = [],
     deps = [":config_proto"],
 )
 
@@ -153,8 +151,7 @@ proto_library(
 
 jspb_proto_library(
     name = "candidates_jspb_proto",
-    visibility = [
-    ],
+    visibility = [],
     deps = [":candidates_proto"],
 )
 
@@ -175,8 +172,7 @@ proto_library(
 
 jspb_proto_library(
     name = "user_dictionary_storage_jspb_proto",
-    visibility = [
-    ],
+    visibility = [],
     deps = [":user_dictionary_storage_proto"],
 )
 

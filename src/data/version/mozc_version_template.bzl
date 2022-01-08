@@ -31,8 +31,11 @@ MAJOR = 2
 
 MINOR = 26
 
+# BUILD number used for the OSS version.
+BUILD_OSS = 4610
+
 # Number to be increased. This value may be replaced by other tools.
-BUILD = 4596
+BUILD = BUILD_OSS
 
 # Represent the platform and release channel.
 REVISION = 100

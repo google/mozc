@@ -272,10 +272,11 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':
-    targets = ['out_win/%s:mozc_win32_build32' % config]
-    if version.GetQtVersion():
-      targets.append('out_win/%sDynamic:mozc_win32_build32_dynamic' % config)
-    targets.append('out_win/%s_x64:mozc_win32_build64' % config)
+    targets = [
+        'out_win/%s:mozc_win32_build32' % config,
+        'out_win/%sDynamic:mozc_win32_build32_dynamic' % config,
+        'out_win/%s_x64:mozc_win32_build64' % config,
+    ]
 
   return dependencies + targets
 
@@ -353,13 +354,9 @@ def GypMain(options, unused_args):
   logging.info('Generating version definition file...')
   template_path = '%s/%s' % (SRC_DIR, options.version_file)
   version_path = '%s/mozc_version.txt' % SRC_DIR
-  if options.noqt:
-    qt_version = ''
-  else:
-    qt_version = '5'
   version_override = os.environ.get('MOZC_VERSION', None)
   GenerateVersionFile(template_path, version_path, options.target_platform,
-                      qt_version, version_override)
+                      version_override)
   version = GetMozcVersion()
   target_platform = version.GetTargetPlatform()
   logging.info('Version string is %s', version.GetVersionString())
@@ -519,7 +516,7 @@ def GypMain(options, unused_args):
     out_dir = os.path.join(MOZC_ROOT, 'out_win')
     AddPythonPathToEnvironmentFilesForWindows(out_dir)
 
-  if IsWindows() and qt_version:
+  if IsWindows() and (not options.noqt):
     # When Windows build is configured to use DLL version of Qt, copy Qt's DLLs
     # and debug symbols into Mozc's build directory. This is important because:
     # - We can easily back up all the artifacts if relevant product binaries and
@@ -532,33 +529,32 @@ def GypMain(options, unused_args):
     abs_qtdir = os.path.abspath(options.qtdir)
     abs_qt_bin_dir = os.path.join(abs_qtdir, 'bin')
     abs_qt_lib_dir = os.path.join(abs_qtdir, 'lib')
-    abs_out_win_dir = GetBuildBaseName(target_platform)
-    copy_script = os.path.join(
-        ABS_SCRIPT_DIR, 'build_tools', 'copy_dll_and_symbol.py')
-    copy_params = []
-    if qt_version == '5':
-      copy_params.append({
-          'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
-          'dll_paths': abs_qt_bin_dir,
-          'pdb_paths': abs_qt_lib_dir,
-          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic')})
-      copy_params.append({
-          'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets',
-          'dll_paths': abs_qt_bin_dir,
-          'pdb_paths': abs_qt_lib_dir,
-          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic')})
-      copy_params.append({
-          'basenames': 'qwindowsd',
-          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-          'target_dir': os.path.join(abs_out_win_dir, 'DebugDynamic',
-                                     'platforms')})
-      copy_params.append({
-          'basenames': 'qwindows',
-          'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-          'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
-          'target_dir': os.path.join(abs_out_win_dir, 'ReleaseDynamic',
-                                     'platforms')})
+    abs_out_win = GetBuildBaseName(target_platform)
+    abs_out_win_debug_dynamic = os.path.join(abs_out_win, 'DebugDynamic')
+    abs_out_win_release_dynamic = os.path.join(abs_out_win, 'ReleaseDynamic')
+    copy_script = os.path.join(ABS_SCRIPT_DIR, 'build_tools',
+                               'copy_dll_and_symbol.py')
+    copy_params = [{
+        'basenames': 'Qt5Cored;Qt5Guid;Qt5Widgetsd',
+        'dll_paths': abs_qt_bin_dir,
+        'pdb_paths': abs_qt_lib_dir,
+        'target_dir': abs_out_win_debug_dynamic,
+    }, {
+        'basenames': 'Qt5Core;Qt5Gui;Qt5Widgets',
+        'dll_paths': abs_qt_bin_dir,
+        'pdb_paths': abs_qt_lib_dir,
+        'target_dir': abs_out_win_release_dynamic,
+    }, {
+        'basenames': 'qwindowsd',
+        'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'target_dir': os.path.join(abs_out_win_debug_dynamic, 'platforms'),
+    }, {
+        'basenames': 'qwindows',
+        'dll_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'pdb_paths': os.path.join(abs_qtdir, 'plugins', 'platforms'),
+        'target_dir': os.path.join(abs_out_win_release_dynamic, 'platforms'),
+    }]
     for copy_param in copy_params:
       copy_commands = [
           copy_script,
