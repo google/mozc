@@ -272,10 +272,11 @@ def ExpandMetaTarget(options, meta_target_name):
   elif target_platform == 'Mac':
     targets = [SRC_DIR + '/mac/mac.gyp:codesign_DiskImage']
   elif target_platform == 'Windows':
-    targets = ['out_win/%s:mozc_win32_build32' % config]
-    if version.GetQtVersion():
-      targets.append('out_win/%sDynamic:mozc_win32_build32_dynamic' % config)
-    targets.append('out_win/%s_x64:mozc_win32_build64' % config)
+    targets = [
+        'out_win/%s:mozc_win32_build32' % config,
+        'out_win/%sDynamic:mozc_win32_build32_dynamic' % config,
+        'out_win/%s_x64:mozc_win32_build64' % config,
+    ]
 
   return dependencies + targets
 
