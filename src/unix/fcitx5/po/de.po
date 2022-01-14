@@ -4,14 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
+# Ettore Atalan <atalanttore@googlemail.com>, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-12-30 02:39+0000\n"
+"POT-Creation-Date: 2022-01-14 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"Last-Translator: Ettore Atalan <atalanttore@googlemail.com>, 2022\n"
 "Language-Team: German (https://www.transifex.com/fcitx/teams/12005/de/)\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -25,7 +26,7 @@ msgstr ""
 
 #: mozc_engine.h:82 mozc_engine.cc:189
 msgid "Add Word"
-msgstr ""
+msgstr "Wort hinzufügen"
 
 #: mozc_engine.h:48
 msgid "Always"
