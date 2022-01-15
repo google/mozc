@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-01-14 20:24+0000\n"
+"POT-Creation-Date: 2022-01-15 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: Ettore Atalan <atalanttore@googlemail.com>, 2022\n"
 "Language-Team: German (https://www.transifex.com/fcitx/teams/12005/de/)\n"
@@ -30,11 +30,11 @@ msgstr "Wort hinzufügen"
 
 #: mozc_engine.h:48
 msgid "Always"
-msgstr ""
+msgstr "Immer"
 
 #: mozc_engine.cc:96
 msgid "Composition Mode"
-msgstr ""
+msgstr "Kompositionsmodus"
 
 #: mozc_engine.h:78 mozc_engine.cc:173
 msgid "Configuration Tool"
@@ -46,7 +46,7 @@ msgstr "Wörterbuchwerkzeug"
 
 #: mozc_engine.h:51 mozc_engine.cc:52
 msgid "Direct"
-msgstr ""
+msgstr "Direkt"
 
 #: mozc_engine.h:69
 msgid "Expand Usage (Requires vertical candidate list)"
@@ -82,7 +82,7 @@ msgstr ""
 
 #: mozc_engine.h:49
 msgid "Hotkey"
-msgstr ""
+msgstr "Kurzbefehl"
 
 #: mozc_engine.h:75
 msgid "Hotkey to expand usage"
@@ -90,7 +90,7 @@ msgstr ""
 
 #: mozc_engine.h:63
 msgid "Initial Mode"
-msgstr ""
+msgstr "Anfangsmodus"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
@@ -102,7 +102,7 @@ msgstr ""
 
 #: mozc_engine.h:48
 msgid "On Focus"
-msgstr ""
+msgstr "Im Fokus"
 
 #. We don't have a good library option for this, just do the simple
 #. replace. absl's runtime parsed format string is too copmlex.
@@ -117,7 +117,7 @@ msgstr ""
 
 #: mozc_engine.cc:159 mozc_engine.cc:160
 msgid "Tool"
-msgstr ""
+msgstr "Werkzeug"
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
