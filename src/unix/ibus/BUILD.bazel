@@ -40,7 +40,7 @@ load(
     "IBUS_MOZC_ICON_PATH",
     "IBUS_MOZC_INSTALL_DIR",
     "IBUS_MOZC_PATH",
-    "LINUX_MOZC_SERVER_DIRECTORY",
+    "LINUX_MOZC_SERVER_DIR",
 )
 
 package(default_visibility = ["//:__subpackages__"])
@@ -54,7 +54,7 @@ genrule(
     name = "gen_mozc_xml",
     outs = ["mozc.xml"],
     cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
-           " --server_dir=" + LINUX_MOZC_SERVER_DIRECTORY +
+           " --server_dir=" + LINUX_MOZC_SERVER_DIR +
            " --ibus_mozc_path=" + IBUS_MOZC_PATH +
            " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
            " > $@"),
@@ -66,7 +66,7 @@ genrule(
     outs = ["main.h"],
     cmd = ("$(location :gen_mozc_xml_main) --branding=Mozc" +
            " --output_cpp" +
-           " --server_dir=" + LINUX_MOZC_SERVER_DIRECTORY +
+           " --server_dir=" + LINUX_MOZC_SERVER_DIR +
            " --ibus_mozc_path=" + IBUS_MOZC_PATH +
            " --ibus_mozc_icon_path=" + IBUS_MOZC_ICON_PATH +
            " > $@"),
