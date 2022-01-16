@@ -100,10 +100,14 @@ bool Process::OpenBrowser(const std::string &url) {
 #endif  // OS_WIN
 
 #if defined(OS_LINUX) || defined(OS_ANDROID)
-  static constexpr char kBrowserCommand[] = "/usr/bin/xdg-open";
+
+#ifndef MOZC_BROWSER_COMMAND
   // xdg-open which uses kfmclient or gnome-open internally works both on KDE
   // and GNOME environments.
-  return SpawnProcess(kBrowserCommand, url);
+#define MOZC_BROWSER_COMMAND "/usr/bin/xdg-open"
+#endif  // MOZC_BROWSER_COMMAND
+
+  return SpawnProcess(MOZC_BROWSER_COMMAND, url);
 #endif  // OS_LINUX || OS_ANDROID
 
 #ifdef __APPLE__

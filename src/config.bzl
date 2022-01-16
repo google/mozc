@@ -29,6 +29,7 @@
 
 BRANDING = "Mozc"
 
+LINUX_MOZC_BROWSER_COMMAND = "/usr/bin/xdg-open"
 LINUX_MOZC_SERVER_DIRECTORY = "/usr/lib/mozc"
 IBUS_MOZC_INSTALL_DIR = "/usr/share/ibus-mozc"
 IBUS_MOZC_ICON_PATH = IBUS_MOZC_INSTALL_DIR + "/product_icon.png"
