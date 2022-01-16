@@ -29,15 +29,15 @@
 
 #include "unix/ibus/path_util.h"
 
-namespace {
-constexpr char kInstalledDirectory[] = "/usr/share/ibus-mozc";
-}
+#ifndef MOZC_IBUS_INSTALL_DIR
+#define MOZC_IBUS_INSTALL_DIR "/usr/share/ibus-mozc"
+#endif  // MOZC_IBUS_INSTALL_DIR
 
 namespace mozc {
 namespace ibus {
 
 std::string GetIconPath(const std::string &icon_file) {
-  return kInstalledDirectory + std::string("/") + icon_file;
+  return std::string(MOZC_IBUS_INSTALL_DIR) + "/" + icon_file;
 }
 
 }  // namespace ibus

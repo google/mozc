@@ -38,6 +38,7 @@ load(
 load(
     "//:config.bzl",
     "IBUS_MOZC_ICON_PATH",
+    "IBUS_MOZC_INSTALL_DIR",
     "IBUS_MOZC_PATH",
     "LINUX_MOZC_SERVER_DIRECTORY",
 )
@@ -111,6 +112,9 @@ cc_library_mozc(
     hdrs = [
         "message_translator.h",
         "path_util.h",
+    ],
+    local_defines = [
+        "MOZC_IBUS_INSTALL_DIR=\\\"" + IBUS_MOZC_INSTALL_DIR + "\\\"",
     ],
     deps = [
         "//base",
