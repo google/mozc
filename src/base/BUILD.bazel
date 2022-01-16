@@ -37,7 +37,11 @@ load(
     "py_library_mozc",
     "select_mozc",
 )
-load("//:config.bzl", "LINUX_MOZC_SERVER_DIRECTORY")
+load(
+    "//:config.bzl",
+    "LINUX_MOZC_BROWSER_COMMAND",
+    "LINUX_MOZC_SERVER_DIR",
+)
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -750,7 +754,7 @@ cc_library_mozc(
     ),
     local_defines = select_mozc(
         linux = [
-            "MOZC_SERVER_DIRECTORY=\\\"" + LINUX_MOZC_SERVER_DIRECTORY + "\\\"",
+            "MOZC_SERVER_DIR=\\\"" + LINUX_MOZC_SERVER_DIR + "\\\"",
         ],
     ),
     visibility = [
@@ -797,6 +801,9 @@ cc_library_mozc(
     name = "process",
     srcs = ["process.cc"],
     hdrs = ["process.h"],
+    local_defines = [
+        "MOZC_BROWSER_COMMAND=\\\"" + LINUX_MOZC_BROWSER_COMMAND + "\\\"",
+    ],
     visibility = ["//:__subpackages__"],
     deps = [
         ":const",

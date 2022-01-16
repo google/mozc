@@ -29,8 +29,10 @@
 
 BRANDING = "Mozc"
 
-LINUX_MOZC_SERVER_DIRECTORY = "/usr/lib/mozc"
-IBUS_MOZC_ICON_PATH = "/usr/share/ibus-mozc/product_icon.png"
+LINUX_MOZC_BROWSER_COMMAND = "/usr/bin/xdg-open"
+LINUX_MOZC_SERVER_DIR = "/usr/lib/mozc"
+IBUS_MOZC_INSTALL_DIR = "/usr/share/ibus-mozc"
+IBUS_MOZC_ICON_PATH = IBUS_MOZC_INSTALL_DIR + "/product_icon.png"
 IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
 
 MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"

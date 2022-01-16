@@ -439,11 +439,10 @@ std::string SystemUtil::GetServerDirectory() {
 #endif  // __APPLE__
 
 #if defined(OS_LINUX) || defined(OS_ANDROID) || defined(OS_WASM)
-#if defined(MOZC_SERVER_DIRECTORY)
-  return MOZC_SERVER_DIRECTORY;
-#else   // MOZC_SERVER_DIRECTORY
-  return "/usr/lib/mozc";
-#endif  // MOZC_SERVER_DIRECTORY
+#ifndef MOZC_SERVER_DIR
+#define MOZC_SERVER_DIR "/usr/lib/mozc"
+#endif  // MOZC_SERVER_DIR
+  return MOZC_SERVER_DIR;
 #endif  // OS_LINUX || OS_ANDROID || OS_WASM
 
   // If none of the above platforms is specified, the compiler raises an error
