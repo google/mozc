@@ -143,7 +143,7 @@
         }],
         ['target_platform=="Linux" and server_dir!=""', {
           'defines': [
-            'MOZC_SERVER_DIRECTORY="<(server_dir)"',
+            'MOZC_SERVER_DIR="<(server_dir)"',
           ],
         }],
         ['target_platform=="Linux" and document_dir!=""', {
