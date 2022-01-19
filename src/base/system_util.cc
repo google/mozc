@@ -477,13 +477,18 @@ std::string SystemUtil::GetToolPath() {
 }
 
 std::string SystemUtil::GetDocumentDirectory() {
-#if defined(__APPLE__)
+#if defined(OS_LINUX)
+
+#ifndef MOZC_DOCUMENT_DIR
+#define MOZC_DOCUMENT_DIR "/usr/lib/mozc/documents"
+#endif  // MOZC_DOCUMENT_DIR
+  return MOZC_DOCUMENT_DIR;
+
+#elif defined(__APPLE__)
   return GetServerDirectory();
-#elif defined(MOZC_DOCUMENT_DIRECTORY)
-  return MOZC_DOCUMENT_DIRECTORY;
-#else   // __APPLE__
+#else   // OS_LINUX, __APPLE__
   return FileUtil::JoinPath(GetServerDirectory(), "documents");
-#endif  // __APPLE__
+#endif  // OS_LINUX, __APPLE__
 }
 
 std::string SystemUtil::GetCrashReportDirectory() {

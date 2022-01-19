@@ -148,7 +148,7 @@
         }],
         ['target_platform=="Linux" and document_dir!=""', {
           'defines': [
-            'MOZC_DOCUMENT_DIRECTORY="<(document_dir)"',
+            'MOZC_DOCUMENT_DIR="<(document_dir)"',
           ],
         }],
       ],
