@@ -20,8 +20,7 @@ local_repository(
 # git_repository(
 #     name = "com_google_absl",
 #     remote = "https://github.com/abseil/abseil-cpp.git",
-#     # Abseil does not have tags.
-#     commit = "7aa411ceafc1272a28579cca739a97a2fb79055a",  # 2018-07-20
+#     tag = "20211102.0"  # 2021-11-04
 # )
 
 local_repository(
@@ -35,7 +34,7 @@ protobuf_deps()
 # git_repository(
 #     name = "com_google_protobuf",
 #     remote = "https://github.com/google/protobuf.git",
-#     tag = "v3.6.0.1",  # 2018-06-09
+#     tag = "v3.19.3",  # 2022-01-11
 # )
 
 # Gtest
@@ -99,12 +98,12 @@ http_archive(
    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
 )
 
-# Bazel macOS build
+# Bazel macOS build (2021-10-30)
 # https://github.com/bazelbuild/rules_apple/
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "a41a75c291c69676b9974458ceee09aea60cee0e1ee282e27cdc90b679dfd30f",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.21.2/rules_apple.0.21.2.tar.gz",
+    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
 )
 load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
