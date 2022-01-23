@@ -39,9 +39,12 @@ bazel build package --config oss_linux -c opt
 | ------------ | ------------ |
 | bazel-bin/server/mozc_server           | /usr/lib/mozc/mozc_server |
 | bazel-bin/gui/tool/mozc_tool           | /usr/lib/mozc/mozc_tool |
-| bazel-bin/renderer/mozc_renderer       | /usr/lib/mozc_renderer |
+| bazel-bin/renderer/mozc_renderer       | /usr/lib/mozc/mozc_renderer |
 | bazel-bin/unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
+| bazel-bin/unix/ibus/mozc.xml           | /usr/share/ibus/component/mozc.xml |
 | bazel-bin/unix/emacs/mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
+
+Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 
 ### Unittests
 
