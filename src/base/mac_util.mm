@@ -33,11 +33,12 @@
 
 #ifdef OS_IOS
 #import <UIKit/UIKit.h>
-#else
+#else  // OS_IOS
 #include <launch.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <CoreGraphics/CoreGraphics.h>
 #include <IOKit/IOKitLib.h>
-#endif
+#endif  // OS_IOS
 
 #include "base/const.h"
 #include "base/logging.h"
@@ -59,9 +60,9 @@ const unsigned char kPrelauncherPath[] =
 const char kProjectPrefix[] = "com.google.inputmethod.Japanese.";
 #elif defined(MOZC_BUILD)
 const char kProjectPrefix[] = "org.mozc.inputmethod.Japanese.";
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD, MOZC_BUILD
 #error Unknown branding
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD, MOZC_BUILD
 
 #ifndef OS_IOS
 // Returns the reference of prelauncher login item.
@@ -201,7 +202,7 @@ std::string MacUtil::GetSerialNumber() {
   }
   return result;
 }
-#else
+#else  // OS_IOS
 std::string MacUtil::GetSerialNumber() {
   // Please refer to TN1103 for the details
   // http://developer.apple.com/library/mac/#technotes/tn/tn1103.html
