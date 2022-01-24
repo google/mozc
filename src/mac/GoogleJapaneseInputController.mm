@@ -356,7 +356,7 @@ bool IsBannedApplication(const std::set<std::string>* bundleIdSet,
 - (NSUInteger)recognizedEvents:(id)sender {
   // Because we want to handle single Shift key pressing later, now I
   // turned on NSFlagsChanged also.
-  return NSKeyDownMask | NSFlagsChangedMask;
+  return NSEventMaskKeyDown | NSEventMaskFlagsChanged;
 }
 
 // This method is called when a user changes the input mode.
@@ -879,11 +879,11 @@ bool IsBannedApplication(const std::set<std::string>* bundleIdSet,
 }
 
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
-  if ([event type] == NSCursorUpdate) {
+  if ([event type] == NSEventTypeCursorUpdate) {
     [self updateComposition];
     return NO;
   }
-  if ([event type] != NSKeyDown && [event type] != NSFlagsChanged) {
+  if ([event type] != NSEventTypeKeyDown && [event type] != NSEventTypeFlagsChanged) {
     return NO;
   }
 
@@ -891,7 +891,7 @@ bool IsBannedApplication(const std::set<std::string>* bundleIdSet,
   // for mode switch because some text area such like iPhoto person
   // name editor does not call setValue:forTag:client: method.
   // see: http://www.google.com/support/forum/p/ime/thread?tid=3aafb74ff71a1a69&hl=ja&fid=3aafb74ff71a1a690004aa3383bc9f5d
-  if ([event type] == NSKeyDown) {
+  if ([event type] == NSEventTypeKeyDown) {
     NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
     const NSTimeInterval elapsedTime = currentTime - lastKeyDownTime_;
     const bool isDoubleTap = ([event keyCode] == lastKeyCode_) &&
