@@ -33,7 +33,7 @@
 #include <windows.h>
 #endif  // OS_WIN
 
-#include <QtGui/QtGui>
+#include <QtGui>
 
 #ifdef __APPLE__
 #include <cstdlib>

@@ -29,8 +29,8 @@
 
 #include "gui/dictionary_tool/import_dialog.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QFileDialog>
+#include <QFileDialog>
+#include <QtGui>
 
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"

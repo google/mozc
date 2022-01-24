@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
-#include <QtWidgets/QTableWidget>
+#include <QTableWidget>
 #include <memory>
 
 #include "base/port.h"

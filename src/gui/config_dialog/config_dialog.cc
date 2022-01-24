@@ -39,11 +39,11 @@
 #ifdef OS_WIN
 // clang-format off
 #include <windows.h>
-#include <QtGui/QGuiApplication>
+#include <QGuiApplication>
 // clang-format on
 #endif  // OS_WIN
 
-#include <QtWidgets/QMessageBox>
+#include <QMessageBox>
 #include <algorithm>
 #include <cstdlib>
 #include <memory>

@@ -35,14 +35,14 @@
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
 
-#include <QtCore/QTimer>
-#include <QtGui/QtGui>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QInputDialog>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QProgressDialog>
-#include <QtWidgets/QShortcut>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMenu>
+#include <QMessageBox>
+#include <QProgressDialog>
+#include <QShortcut>
+#include <QTimer>
+#include <QtGui>
 
 #ifdef OS_WIN
 #include <Windows.h>

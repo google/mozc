@@ -29,10 +29,10 @@
 
 #include "gui/error_message_dialog/error_message_dialog.h"
 
-#include <QtCore/QTimer>
-#include <QtGui/QtGui>
-#include <QtWidgets/QAbstractButton>
-#include <QtWidgets/QMessageBox>
+#include <QAbstractButton>
+#include <QMessageBox>
+#include <QTimer>
+#include <QtGui>
 
 #include "gui/base/util.h"
 #include "absl/flags/flag.h"

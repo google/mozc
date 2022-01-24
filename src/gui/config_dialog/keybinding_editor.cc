@@ -41,11 +41,11 @@
 // clang-format on
 #endif  // OS_WIN
 
-#include <QtCore/QString>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QTableWidget>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QString>
+#include <QTableWidget>
 
 #include "base/logging.h"
 #include "base/util.h"

@@ -29,11 +29,11 @@
 
 #include "gui/base/window_title_modifier.h"
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtGui/QGuiApplication>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QWidget>
+#include <QApplication>
+#include <QGuiApplication>
+#include <QObject>
+#include <QString>
+#include <QWidget>
 
 #include "base/version.h"
 

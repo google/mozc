@@ -30,11 +30,11 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_COMBOBOX_DELEGATE_H_
 #define MOZC_GUI_CONFIG_DIALOG_COMBOBOX_DELEGATE_H_
 
-#include <QtCore/QModelIndex>
-#include <QtCore/QObject>
-#include <QtCore/QStringList>
-#include <QtWidgets/QComboBox>
-#include <QtWidgets/QItemDelegate>
+#include <QComboBox>
+#include <QItemDelegate>
+#include <QModelIndex>
+#include <QObject>
+#include <QStringList>
 
 class QMouseEvent;
 

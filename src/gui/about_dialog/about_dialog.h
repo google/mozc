@@ -32,7 +32,7 @@
 #ifndef MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 #define MOZC_GUI_ABOUT_DIALOG_ABOUT_DIALOG_H_
 
-#include <QtWidgets/QDialog>
+#include <QDialog>
 #include <memory>
 
 #include "base/port.h"

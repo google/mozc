@@ -35,14 +35,13 @@
 #define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
-
-#include <QtCore/QObject>
-#include <QtGui/QFont>
-#include <QtGui/QGuiApplication>
-#include <QtGui/QtGui>
-#include <QtWidgets/QAbstractButton>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QStyleFactory>
+#include <QAbstractButton>
+#include <QApplication>
+#include <QFont>
+#include <QGuiApplication>
+#include <QObject>
+#include <QStyleFactory>
+#include <QtGui>
 #include <memory>
 
 #include "base/logging.h"

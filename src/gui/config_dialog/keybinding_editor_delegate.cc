@@ -29,8 +29,8 @@
 
 #include "gui/config_dialog/keybinding_editor_delegate.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QPushButton>
+#include <QPushButton>
+#include <QtGui>
 #include <memory>
 
 #include "base/logging.h"

@@ -33,7 +33,7 @@
 #include <windows.h>
 #endif  // OS_WIN
 
-#include <QtGui/QtGui>
+#include <QtGui>
 #include <memory>
 
 #include "base/logging.h"

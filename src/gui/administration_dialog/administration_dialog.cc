@@ -29,7 +29,7 @@
 
 #include "gui/administration_dialog/administration_dialog.h"
 
-#include <QtWidgets/QMessageBox>
+#include <QMessageBox>
 
 #include "base/run_level.h"
 #include "config/stats_config_util.h"

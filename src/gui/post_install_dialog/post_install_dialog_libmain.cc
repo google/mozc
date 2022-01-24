@@ -31,8 +31,8 @@
 #include <windows.h>
 #endif  // OS_WIN
 
-#include <QtGui/QGuiApplication>
-#include <QtGui/QtGui>
+#include <QGuiApplication>
+#include <QtGui>
 
 #include "base/logging.h"
 #include "base/process_mutex.h"

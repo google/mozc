@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_FIND_DIALOG_H_
 #define MOZC_GUI_DICTIONARY_TOOL_FIND_DIALOG_H_
 
-#include <QtWidgets/QDialog>
+#include <QDialog>
 
 #include "gui/dictionary_tool/ui_find_dialog.h"
 

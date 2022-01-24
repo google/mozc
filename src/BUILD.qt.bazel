@@ -13,7 +13,12 @@ cc_library(
         "QtGui/**",
         "QtWidgets/**",
     ]),
-    includes = ["."],
+    includes = [
+      ".",
+      "QtCore",
+      "QtGui",
+      "QtWidgets",
+    ],
     linkopts = [
         "-lQt5Core",
         "-lQt5Gui",
@@ -38,6 +43,9 @@ cc_library(
     ),
     includes = [
       "include",
+      "include/QtCore",
+      "include/QtGui",
+      "include/QtWidgets",
     ],
 )
 

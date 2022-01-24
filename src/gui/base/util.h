@@ -30,9 +30,9 @@
 #ifndef MOZC_GUI_BASE_UTIL_H_
 #define MOZC_GUI_BASE_UTIL_H_
 
-#include <QtCore/QString>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QLabel>
+#include <QApplication>
+#include <QLabel>
+#include <QString>
 #include <memory>
 
 namespace mozc {

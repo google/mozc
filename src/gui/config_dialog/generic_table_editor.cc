@@ -29,16 +29,15 @@
 
 #include "gui/config_dialog/generic_table_editor.h"
 
-#include <QtCore/QFile>
-#include <QtGui/QtGui>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
-
+#include <QFile>
+#include <QFileDialog>
+#include <QMenu>
+#include <QMessageBox>
+#include <QtGui>
 #include <algorithm>  // for unique
 #include <cctype>
-#include <sstream>
 #include <set>
+#include <sstream>
 #include <string>
 
 #include "base/file_stream.h"

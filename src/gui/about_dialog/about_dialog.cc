@@ -29,7 +29,7 @@
 
 #include "gui/about_dialog/about_dialog.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
 #include <string>
 
 #include "base/file_util.h"

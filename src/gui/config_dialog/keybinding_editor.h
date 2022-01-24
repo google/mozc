@@ -30,8 +30,8 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_H_
 
-#include <QtGui/QGuiApplication>
-#include <QtGui/QtGui>
+#include <QGuiApplication>
+#include <QtGui>
 #include <memory>
 #include <string>
 

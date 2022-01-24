@@ -29,9 +29,9 @@
 
 #include "gui/dictionary_tool/find_dialog.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QTableWidget>
+#include <QMessageBox>
+#include <QTableWidget>
+#include <QtGui>
 
 #include "base/logging.h"
 #include "gui/base/util.h"

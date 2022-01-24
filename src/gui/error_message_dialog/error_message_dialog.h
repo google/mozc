@@ -30,8 +30,8 @@
 #ifndef MOZC_GUI_ERROR_MESSAGE_DIALOG_ERROR_MESSAGE_DIALOG_H_
 #define MOZC_GUI_ERROR_MESSAGE_DIALOG_ERROR_MESSAGE_DIALOG_H_
 
-#include <QtCore/QObject>
-#include <QtWidgets/QMessageBox>
+#include <QMessageBox>
+#include <QObject>
 
 namespace mozc {
 namespace gui {

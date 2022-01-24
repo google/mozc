@@ -30,10 +30,10 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 #define MOZC_GUI_DICTIONARY_TOOL_DICTIONARY_TOOL_H_
 
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QSplitter>
-#include <QtWidgets/QSplitterHandle>
+#include <QLabel>
+#include <QPushButton>
+#include <QSplitter>
+#include <QSplitterHandle>
 #include <cstdint>
 #include <memory>
 #include <string>

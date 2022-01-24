@@ -29,11 +29,11 @@
 
 // The main function of configure dialog for Mozc.
 
-#include <QtCore/QStringList>
-#include <QtCore/QTextCodec>
-#include <QtGui/QtGui>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QDialog>
+#include <QApplication>
+#include <QDialog>
+#include <QStringList>
+#include <QTextCodec>
+#include <QtGui>
 
 #include "base/system_util.h"
 #include "gui/base/singleton_window_helper.h"

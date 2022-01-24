@@ -30,9 +30,9 @@
 #ifndef MOZC_GUI_WORD_REGISTER_DIALOG_WORD_REGISTER_DIALOG_H_
 #define MOZC_GUI_WORD_REGISTER_DIALOG_WORD_REGISTER_DIALOG_H_
 
-#include <QtCore/QString>
-#include <QtGui/QtGui>
-#include <QtWidgets/QDialog>
+#include <QDialog>
+#include <QString>
+#include <QtGui>
 #include <memory>
 
 #include "base/port.h"

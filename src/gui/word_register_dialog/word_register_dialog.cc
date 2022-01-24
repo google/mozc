@@ -42,8 +42,8 @@
 // clang-format on
 #endif  // OS_WIN
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QMessageBox>
+#include <QMessageBox>
+#include <QtGui>
 #include <cstdlib>
 #ifdef OS_WIN
 #include <memory>  // for std::unique_ptr

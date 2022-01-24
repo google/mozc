@@ -35,11 +35,11 @@
 #error "This platform is not supported."
 #endif  // OS_ANDROID || OS_WASM
 
-#include <QtCore/QFile>
-#include <QtGui/QtGui>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
+#include <QFile>
+#include <QFileDialog>
+#include <QMenu>
+#include <QMessageBox>
+#include <QtGui>
 #include <algorithm>  // for unique
 #include <cctype>
 #include <memory>

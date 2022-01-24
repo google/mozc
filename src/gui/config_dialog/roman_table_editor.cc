@@ -29,9 +29,9 @@
 
 #include "gui/config_dialog/roman_table_editor.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
+#include <QMenu>
+#include <QMessageBox>
+#include <QtGui>
 #include <cctype>
 #include <memory>
 #include <sstream>

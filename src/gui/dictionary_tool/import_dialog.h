@@ -35,7 +35,7 @@
 #ifndef MOZC_GUI_DICTIONARY_TOOL_IMPORT_DIALOG_H_
 #define MOZC_GUI_DICTIONARY_TOOL_IMPORT_DIALOG_H_
 
-#include <QtWidgets/QDialog>
+#include <QDialog>
 
 #include "dictionary/user_dictionary_importer.h"
 #include "gui/dictionary_tool/ui_import_dialog.h"
