@@ -55,7 +55,7 @@
 @implementation MockIMKServer
 @synthesize expectedController = expectedController_;
 
-- (MockIMKServer*)init {
+- (MockIMKServer *)init {
   self = [super init];
   expectedController_ = nil;
   setCurrentController_count_ = 0;
@@ -119,8 +119,7 @@
   return nil;
 }
 
-- (NSDictionary *)attributesForCharacterIndex:(int)index
-                          lineHeightRectangle:(NSRect *)rect {
+- (NSDictionary *)attributesForCharacterIndex:(int)index lineHeightRectangle:(NSRect *)rect {
   counters_["attributesForCharacterIndex:lineHeightRectangle:"]++;
   *rect = expectedCursor;
   return nil;
@@ -149,7 +148,7 @@
   return [attributedString_ length];
 }
 
-- (NSAttributedString*)attributedSubstringFromRange:(NSRange)range {
+- (NSAttributedString *)attributedSubstringFromRange:(NSRange)range {
   return [attributedString_ attributedSubstringFromRange:range];
 }
 
@@ -200,42 +199,29 @@ NSArray *dummy_screens(id self, SEL selector) {
 }
 }  // namespace
 
-
 class MockRenderer : public mozc::renderer::RendererInterface {
  public:
-  MockRenderer()
-      : Activate_counter_(0),
-        IsAvailable_counter_(0),
-        ExecCommand_counter_(0) {
-  }
+  MockRenderer() : Activate_counter_(0), IsAvailable_counter_(0), ExecCommand_counter_(0) {}
 
   virtual bool Activate() {
     Activate_counter_++;
     return true;
   }
-  int counter_Activate() const {
-    return Activate_counter_;
-  }
+  int counter_Activate() const { return Activate_counter_; }
 
   virtual bool ExecCommand(const mozc::commands::RendererCommand &command) {
     ExecCommand_counter_++;
     called_command_.CopyFrom(command);
     return true;
   }
-  int counter_ExecCommand() const {
-    return ExecCommand_counter_;
-  }
-  const mozc::commands::RendererCommand &CalledCommand() const {
-    return called_command_;
-  }
+  int counter_ExecCommand() const { return ExecCommand_counter_; }
+  const mozc::commands::RendererCommand &CalledCommand() const { return called_command_; }
 
- virtual bool IsAvailable() const {
-   IsAvailable_counter_++;
-   return true;
- }
- int counter_IsAvailable() const {
-   return IsAvailable_counter_;
- }
+  virtual bool IsAvailable() const {
+    IsAvailable_counter_++;
+    return true;
+  }
+  int counter_IsAvailable() const { return IsAvailable_counter_; }
 
 #undef MockMethod
 
@@ -252,8 +238,7 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     mock_server_ = [[MockIMKServer alloc] init];
     mock_client_ = [[MockClient alloc] init];
     // setup workspace
-    Method method = class_getInstanceMethod(
-        [NSWorkspace class], @selector(openURL:));
+    Method method = class_getInstanceMethod([NSWorkspace class], @selector(openURL:));
     method_setImplementation(method, reinterpret_cast<IMP>(openURL_test));
     openURL_count = 0;
 
@@ -266,10 +251,9 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
   }
 
   void SetUpController() {
-    controller_ = [[GoogleJapaneseInputController alloc]
-                    initWithServer:mock_server_
-                          delegate:nil
-                            client:mock_client_];
+    controller_ = [[GoogleJapaneseInputController alloc] initWithServer:mock_server_
+                                                               delegate:nil
+                                                                 client:mock_client_];
     controller_.imkClientForTest = mock_client_;
     mock_server_.expectedController = controller_;
     mock_mozc_client_ = new mozc::client::ClientMock;
@@ -311,17 +295,14 @@ bool ComparePreedit(NSAttributedString *expected, NSAttributedString *actual) {
   // Check the attributes
   int cursor = 0;
   NSSet *knownAttributeNames =
-      [NSSet setWithObjects:NSUnderlineStyleAttributeName,
-             NSUnderlineColorAttributeName,
-             NSMarkedClauseSegmentAttributeName,
-             nil];
+      [NSSet setWithObjects:NSUnderlineStyleAttributeName, NSUnderlineColorAttributeName,
+                            NSMarkedClauseSegmentAttributeName, nil];
   while (cursor < [expected length]) {
     NSRange expectedRange = NSMakeRange(NSNotFound, NSNotFound);
     NSRange actualRange = NSMakeRange(NSNotFound, NSNotFound);
-    NSDictionary *expectedAttributes =
-        [expected attributesAtIndex:cursor effectiveRange:&expectedRange];
-    NSDictionary *actualAttributes =
-        [actual attributesAtIndex:cursor effectiveRange:&actualRange];
+    NSDictionary *expectedAttributes = [expected attributesAtIndex:cursor
+                                                    effectiveRange:&expectedRange];
+    NSDictionary *actualAttributes = [actual attributesAtIndex:cursor effectiveRange:&actualRange];
     // false if attribute over different range.
     if (expectedRange.location != actualRange.location ||
         expectedRange.length != actualRange.length) {
@@ -332,24 +313,19 @@ bool ComparePreedit(NSAttributedString *expected, NSAttributedString *actual) {
     // Check attributes for underlines
     NSNumber *expectedUnderlineStyle =
         [expectedAttributes valueForKey:NSUnderlineStyleAttributeName];
-    NSNumber *actualUnderlineStyle =
-        [expectedAttributes valueForKey:NSUnderlineStyleAttributeName];
+    NSNumber *actualUnderlineStyle = [expectedAttributes valueForKey:NSUnderlineStyleAttributeName];
     if (![expectedUnderlineStyle isEqualToNumber:actualUnderlineStyle] ||
         actualUnderlineStyle == nil) {
-      LOG(ERROR) << "underline style is different at range ("
-                 << expectedRange.location << ", "
+      LOG(ERROR) << "underline style is different at range (" << expectedRange.location << ", "
                  << expectedRange.length << ")";
       return false;
     }
     NSColor *expectedUnderlineColor =
         [expectedAttributes valueForKey:NSUnderlineColorAttributeName];
-    NSColor *actualUnderlineColor =
-        [actualAttributes valueForKey:NSUnderlineColorAttributeName];
+    NSColor *actualUnderlineColor = [actualAttributes valueForKey:NSUnderlineColorAttributeName];
     if (![[NSString stringWithFormat:@"%@", expectedUnderlineColor]
-          isEqualToString:[NSString stringWithFormat:@"%@",
-                                    actualUnderlineColor]]) {
-      LOG(ERROR) << "underline color is different at range ("
-                 << expectedRange.location << ", "
+            isEqualToString:[NSString stringWithFormat:@"%@", actualUnderlineColor]]) {
+      LOG(ERROR) << "underline color is different at range (" << expectedRange.location << ", "
                  << expectedRange.length << ")";
       return false;
     }
@@ -357,15 +333,13 @@ bool ComparePreedit(NSAttributedString *expected, NSAttributedString *actual) {
     // Check if it contains unknown attributes
     for (NSString *key in [expectedAttributes keyEnumerator]) {
       if (![knownAttributeNames containsObject:key]) {
-        LOG(ERROR) << "expected value contains an unknown key: "
-                   << [key UTF8String];
+        LOG(ERROR) << "expected value contains an unknown key: " << [key UTF8String];
         return false;
       }
     }
     for (NSString *key in [actualAttributes keyEnumerator]) {
       if (![knownAttributeNames containsObject:key]) {
-        LOG(ERROR) << "actual value contains an unknown key: "
-                   << [key UTF8String];
+        LOG(ERROR) << "actual value contains an unknown key: " << [key UTF8String];
         return false;
       }
     }
@@ -381,8 +355,7 @@ NSTimeInterval GetDoubleTapInterval() {
   return kDoubleTapInterval;
 }
 
-BOOL SendKeyEvent(unsigned short keyCode,
-                  GoogleJapaneseInputController *controller,
+BOOL SendKeyEvent(unsigned short keyCode, GoogleJapaneseInputController *controller,
                   MockClient *client) {
   // tap Kana-key
   NSEvent *kanaKeyEvent = [NSEvent keyEventWithType:NSKeyDown
@@ -400,11 +373,9 @@ BOOL SendKeyEvent(unsigned short keyCode,
 
 TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
   // If preedit is nullptr, it still calls setMarkedText, with an empty string.
-  NSMutableAttributedString *expected =
-      [[NSMutableAttributedString alloc] initWithString:@""];
+  NSMutableAttributedString *expected = [[NSMutableAttributedString alloc] initWithString:@""];
   [controller_ updateComposedString:nullptr];
-  EXPECT_TRUE([expected
-                isEqualToAttributedString:[controller_ composedString:nil]]);
+  EXPECT_TRUE([expected isEqualToAttributedString:[controller_ composedString:nil]]);
 
   // If preedit has some data, it returns a data with highlighting information
   mozc::commands::Preedit preedit;
@@ -425,22 +396,18 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateComposedString) {
   new_segment->set_value("def");
   new_segment->set_value_length(2);
 
-  NSDictionary *highlightAttributes =
-      [controller_ markForStyle:kTSMHiliteSelectedConvertedText
-                        atRange:NSMakeRange(NSNotFound, 0)];
-  NSDictionary *underlineAttributes =
-      [controller_ markForStyle:kTSMHiliteConvertedText
-                        atRange:NSMakeRange(NSNotFound, 0)];
-  expected =
-      [[NSMutableAttributedString alloc] initWithString:@"abcdef"];
+  NSDictionary *highlightAttributes = [controller_ markForStyle:kTSMHiliteSelectedConvertedText
+                                                        atRange:NSMakeRange(NSNotFound, 0)];
+  NSDictionary *underlineAttributes = [controller_ markForStyle:kTSMHiliteConvertedText
+                                                        atRange:NSMakeRange(NSNotFound, 0)];
+  expected = [[NSMutableAttributedString alloc] initWithString:@"abcdef"];
   [expected addAttributes:underlineAttributes range:NSMakeRange(0, 1)];
   [expected addAttributes:highlightAttributes range:NSMakeRange(1, 2)];
   [expected addAttributes:underlineAttributes range:NSMakeRange(3, 3)];
   [controller_ updateComposedString:&preedit];
   NSAttributedString *actual = [controller_ composedString:nil];
   EXPECT_TRUE(ComparePreedit(expected, actual))
-      << [[NSString stringWithFormat:@"expected:%@ actual:%@", expected, actual]
-           UTF8String];
+      << [[NSString stringWithFormat:@"expected:%@ actual:%@", expected, actual] UTF8String];
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, ClearCandidates) {
@@ -454,13 +421,10 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   // When output is null, same as ClearCandidate
   [controller_ updateCandidates:nullptr];
   // Run the runloop so "delayedUpdateCandidates" can be called
-  [[NSRunLoop currentRunLoop]
-      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   EXPECT_EQ(1, mock_renderer_->counter_ExecCommand());
   EXPECT_FALSE(mock_renderer_->CalledCommand().visible());
-  EXPECT_EQ(0,
-            [mock_client_
-              getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
+  EXPECT_EQ(0, [mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
 
   // create an output
   mozc::commands::Output output;
@@ -468,8 +432,7 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   mozc::commands::Candidates *candidates = output.mutable_candidates();
   candidates->set_focused_index(0);
   candidates->set_size(1);
-  mozc::commands::Candidates::Candidate *candidate =
-      candidates->add_candidate();
+  mozc::commands::Candidates::Candidate *candidate = candidates->add_candidate();
   candidate->set_index(0);
   candidate->set_value("abc");
   NSRect screen_rect = [MockScreen mockScreen];
@@ -478,51 +441,38 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   mock_client_.expectedCursor = NSMakeRect(50, 50, 1, 10);
   [controller_ updateCandidates:&output];
   // Run the runloop so "delayedUpdateCandidates" can be called
-  [[NSRunLoop currentRunLoop]
-      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
-  EXPECT_EQ(1,
-            [mock_client_
-              getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
-  const mozc::commands::RendererCommand *rendererCommand =
-      controller_.rendererCommand;
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  EXPECT_EQ(1, [mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
+  const mozc::commands::RendererCommand *rendererCommand = controller_.rendererCommand;
   EXPECT_EQ(2, mock_renderer_->counter_ExecCommand());
   EXPECT_TRUE(rendererCommand->visible());
   const mozc::commands::RendererCommand::Rectangle &preedit_rectangle =
       rendererCommand->preedit_rectangle();
   EXPECT_EQ(50, preedit_rectangle.left());
-  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 60,
-            preedit_rectangle.top());
+  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 60, preedit_rectangle.top());
   EXPECT_EQ(51, preedit_rectangle.right());
-  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 50,
-            preedit_rectangle.bottom());
+  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 50, preedit_rectangle.bottom());
 
   // reshow the candidate window again -- but cursor position has changed.
   mock_client_.expectedCursor = NSMakeRect(60, 50, 1, 10);
   [controller_ updateCandidates:&output];
   // Run the runloop so "delayedUpdateCandidates" can be called
-  [[NSRunLoop currentRunLoop]
-      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
-  EXPECT_EQ(1,
-            [mock_client_
-              getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
+  EXPECT_EQ(1, [mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
   rendererCommand = controller_.rendererCommand;
   EXPECT_EQ(3, mock_renderer_->counter_ExecCommand());
   EXPECT_TRUE(rendererCommand->visible());
   // Does not change the position
-  EXPECT_EQ(preedit_rectangle.DebugString(),
-            rendererCommand->preedit_rectangle().DebugString());
+  EXPECT_EQ(preedit_rectangle.DebugString(), rendererCommand->preedit_rectangle().DebugString());
 
   // Then update without candidate entries -- goes invisible.
   output.Clear();
   [controller_ updateCandidates:&output];
   // Run the runloop so "delayedUpdateCandidates" can be called
-  [[NSRunLoop currentRunLoop]
-      runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+  [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
   // Does not change: not call again
-  EXPECT_EQ(1,
-            [mock_client_
-              getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
+  EXPECT_EQ(1, [mock_client_ getCounter:"attributesForCharacterIndex:lineHeightRectangle:"]);
   EXPECT_EQ(4, mock_renderer_->counter_ExecCommand());
   EXPECT_FALSE(rendererCommand->visible());
 }
@@ -576,33 +526,28 @@ TEST_F(GoogleJapaneseInputControllerTest, SwitchModeInternal) {
   EXPECT_TRUE(mock_mozc_client_->called_SendKeyWithContext().has_special_key());
   EXPECT_EQ(mozc::commands::KeyEvent::ON,
             mock_mozc_client_->called_SendKeyWithContext().special_key());
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::SWITCH_INPUT_MODE,
             mock_mozc_client_->called_SendCommandWithContext().type());
-  EXPECT_EQ(
-      mozc::commands::HIRAGANA,
-      mock_mozc_client_->called_SendCommandWithContext().composition_mode());
+  EXPECT_EQ(mozc::commands::HIRAGANA,
+            mock_mozc_client_->called_SendCommandWithContext().composition_mode());
 
   // Switch from HIRAGANA to KATAKANA.  Just sending mode switching command.
   controller_.mode = mozc::commands::HIRAGANA;
   [controller_ switchModeInternal:mozc::commands::HALF_KATAKANA];
   EXPECT_EQ(mozc::commands::HALF_KATAKANA, controller_.mode);
   EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
-  EXPECT_EQ(2,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(2, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::SWITCH_INPUT_MODE,
             mock_mozc_client_->called_SendCommandWithContext().type());
-  EXPECT_EQ(
-      mozc::commands::HALF_KATAKANA,
-      mock_mozc_client_->called_SendCommandWithContext().composition_mode());
+  EXPECT_EQ(mozc::commands::HALF_KATAKANA,
+            mock_mozc_client_->called_SendCommandWithContext().composition_mode());
 
   // going to same mode does not cause sendcommand
   [controller_ switchModeInternal:mozc::commands::HALF_KATAKANA];
   EXPECT_EQ(mozc::commands::HALF_KATAKANA, controller_.mode);
   EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
-  EXPECT_EQ(2,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(2, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SwitchDisplayMode) {
@@ -649,8 +594,7 @@ TEST_F(GoogleJapaneseInputControllerTest, handleConfig) {
   EXPECT_EQ(KANA, controller_.keyCodeMap.inputMode);
   EXPECT_EQ(mozc::config::Config::BACKSLASH, controller_.yenSignCharacter);
   EXPECT_EQ(1, [mock_client_ getCounter:"overrideKeyboardWithKeyboardNamed:"]);
-  EXPECT_TRUE([@"com.apple.keylayout.US"
-                isEqualToString:mock_client_.overriddenLayout])
+  EXPECT_TRUE([@"com.apple.keylayout.US" isEqualToString:mock_client_.overriddenLayout])
       << [mock_client_.overriddenLayout UTF8String];
 }
 
@@ -659,8 +603,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaReconvert) {
   controller_.mode = mozc::commands::HIRAGANA;
 
   // set attributedString for Reconvert
-  [mock_client_ setAttributedString:
-      [[NSAttributedString alloc] initWithString:@"abcde"]];
+  [mock_client_ setAttributedString:[[NSAttributedString alloc] initWithString:@"abcde"]];
   mock_client_.expectedRange = NSMakeRange(1, 3);
 
   // Send Kana-key.
@@ -669,8 +612,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaReconvert) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -680,12 +622,10 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaReconvert) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::CONVERT_REVERSE,
             mock_mozc_client_->called_SendCommandWithContext().type());
-  EXPECT_EQ("bcd",
-            mock_mozc_client_->called_SendCommandWithContext().text());
+  EXPECT_EQ("bcd", mock_mozc_client_->called_SendCommandWithContext().text());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
@@ -701,8 +641,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -712,14 +651,13 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
- // tap (long) tap -> don't emit undo command
+  // tap (long) tap -> don't emit undo command
   controller_.mode = mozc::commands::HIRAGANA;
 
   // set expectedRange for Undo
@@ -731,8 +669,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep more than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
@@ -742,8 +679,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapKanaUndoTimeOver) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
@@ -759,8 +695,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep more than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 * 2.0);
@@ -770,8 +705,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -781,8 +715,7 @@ TEST_F(GoogleJapaneseInputControllerTest, SingleAndDoubleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 }
@@ -800,8 +733,7 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -811,8 +743,7 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 
@@ -824,8 +755,7 @@ TEST_F(GoogleJapaneseInputControllerTest, TripleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(2,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(2, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 }
@@ -843,8 +773,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -854,8 +783,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 
@@ -867,8 +795,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(2,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(2, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 
@@ -880,8 +807,7 @@ TEST_F(GoogleJapaneseInputControllerTest, QuadrupleTapKanaUndo) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(3,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(3, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::UNDO,
             mock_mozc_client_->called_SendCommandWithContext().type());
 }
@@ -893,8 +819,7 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapEisuCommitRawText) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it did not send command.
-  EXPECT_EQ(0,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
 
   // Sleep less than DoubleTapInterval (sec)
   mozc::Util::Sleep(GetDoubleTapInterval() * 1000.0 / 2.0);
@@ -904,15 +829,13 @@ TEST_F(GoogleJapaneseInputControllerTest, DoubleTapEisuCommitRawText) {
   // Check if it did not send key.
   EXPECT_EQ(0, mock_mozc_client_->GetFunctionCallCount("SendKeyWithContext"));
   // Check if it sent an undo command.
-  EXPECT_EQ(1,
-            mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
+  EXPECT_EQ(1, mock_mozc_client_->GetFunctionCallCount("SendCommandWithContext"));
   EXPECT_EQ(mozc::commands::SessionCommand::COMMIT_RAW_TEXT,
             mock_mozc_client_->called_SendCommandWithContext().type());
 }
 
 TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
-  [mock_client_ setAttributedString:
-      [[NSAttributedString alloc] initWithString:@"abcde"]];
+  [mock_client_ setAttributedString:[[NSAttributedString alloc] initWithString:@"abcde"]];
   mock_client_.expectedRange = NSMakeRange(2, 1);
   mozc::commands::Context context;
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
@@ -920,9 +843,8 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   EXPECT_EQ(1, [mock_client_ getCounter:"selectedRange"]);
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
-  [mock_client_ setAttributedString:
-      [[NSAttributedString alloc]
-          initWithString:@"012345678901234567890abcde"]];
+  [mock_client_ setAttributedString:[[NSAttributedString alloc]
+                                        initWithString:@"012345678901234567890abcde"]];
 
   mock_client_.expectedRange = NSMakeRange(1, 0);
   [controller_ fillSurroundingContext:&context client:(id)mock_client_];
@@ -936,8 +858,7 @@ TEST_F(GoogleJapaneseInputControllerTest, fillSurroundingContext) {
   EXPECT_EQ(3, [mock_client_ getCounter:"selectedRange"]);
   EXPECT_EQ(0, [mock_client_ getCounter:"markedRange"]);
 
-  [mock_client_ setAttributedString:
-      [[NSAttributedString alloc] initWithString:@"012abc345"]];
+  [mock_client_ setAttributedString:[[NSAttributedString alloc] initWithString:@"012abc345"]];
   mozc::commands::Preedit preedit;
   mozc::commands::Preedit::Segment *new_segment = preedit.add_segment();
   new_segment->set_annotation(mozc::commands::Preedit::Segment::HIGHLIGHT);

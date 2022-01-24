@@ -31,12 +31,12 @@
 
 #include "base/coordinates.h"
 #include "protocol/commands.pb.h"
-#include "renderer/table_layout.h"
-#include "renderer/window_util.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/CandidateWindow.h"
 #include "renderer/mac/InfolistWindow.h"
 #include "renderer/mac/mac_view_util.h"
+#include "renderer/table_layout.h"
+#include "renderer/window_util.h"
 
 namespace mozc {
 using client::SendCommandInterface;
@@ -44,23 +44,21 @@ using commands::RendererCommand;
 using commands::Candidates;
 
 namespace renderer {
-namespace mac{
+namespace mac {
 
 namespace {
 const int kHideWindowDelay = 500;  // msec
-const int kWindowMargin = 10;  // pixel
+const int kWindowMargin = 10;      // pixel
 
 // In Cocoa's coordinate system the origin point is left-bottom and the Y-axis
 // points up. But in Mozc's coordinate system the Y-axis points down. So we use
 // OriginPointInCocoaCoord and RectInMozcCoord to convert the coordinate system.
 NSPoint OriginPointInCocoaCoord(const mozc::Rect &rect) {
-  return NSMakePoint(rect.Left(), - rect.Bottom());
+  return NSMakePoint(rect.Left(), -rect.Bottom());
 }
 
 mozc::Rect RectInMozcCoord(const NSRect &rect) {
-  return mozc::Rect(rect.origin.x,
-                    - rect.origin.y - rect.size.height,
-                    rect.size.width,
+  return mozc::Rect(rect.origin.x, -rect.origin.y - rect.size.height, rect.size.width,
                     rect.size.height);
 }
 
@@ -107,7 +105,6 @@ int GetBaseScreenHeight() {
 
 }  // namespace
 
-
 CandidateController::CandidateController()
     : candidate_window_(new mac::CandidateWindow),
       cascading_window_(new mac::CandidateWindow),
@@ -130,12 +127,9 @@ bool CandidateController::Activate() {
   return true;
 }
 
-bool CandidateController::IsAvailable() const {
-  return true;
-}
+bool CandidateController::IsAvailable() const { return true; }
 
-void CandidateController::SetSendCommandInterface(
-    SendCommandInterface *send_command_interface) {
+void CandidateController::SetSendCommandInterface(SendCommandInterface *send_command_interface) {
   candidate_window_->SetSendCommandInterface(send_command_interface);
   cascading_window_->SetSendCommandInterface(send_command_interface);
   infolist_window_->SetSendCommandInterface(send_command_interface);
@@ -157,16 +151,13 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
   candidate_window_->SetCandidates(command_.output().candidates());
 
   bool cascading_visible = false;
-  if (command_.output().has_candidates() &&
-      command_.output().candidates().has_subcandidates()) {
-    cascading_window_->SetCandidates(
-        command_.output().candidates().subcandidates());
+  if (command_.output().has_candidates() && command_.output().candidates().has_subcandidates()) {
+    cascading_window_->SetCandidates(command_.output().candidates().subcandidates());
     cascading_visible = true;
   }
 
   bool infolist_visible = false;
-  if (command_.output().has_candidates() &&
-      command_.output().candidates().has_usages() &&
+  if (command_.output().has_candidates() && command_.output().candidates().has_usages() &&
       command_.output().candidates().usages().information_size() > 0) {
     infolist_window_->SetCandidates(command_.output().candidates());
     infolist_visible = true;
@@ -183,8 +174,7 @@ bool CandidateController::ExecCommand(const RendererCommand &command) {
   if (infolist_visible && !cascading_visible) {
     const Candidates &candidates = command_.output().candidates();
     if (candidates.has_focused_index() && candidates.candidate_size() > 0) {
-      const int focused_row =
-        candidates.focused_index() - candidates.candidate(0).index();
+      const int focused_row = candidates.focused_index() - candidates.candidate(0).index();
       if (candidates.candidate_size() >= focused_row &&
           candidates.candidate(focused_row).has_information_id()) {
         infolist_window_->DelayShow(candidates.usages().delay());
@@ -208,18 +198,16 @@ void CandidateController::AlignWindows() {
     return;
   }
 
-  const mozc::Size preedit_size(command_.preedit_rectangle().right() -
-                                command_.preedit_rectangle().left(),
-                                command_.preedit_rectangle().bottom() -
-                                command_.preedit_rectangle().top());
+  const mozc::Size preedit_size(
+      command_.preedit_rectangle().right() - command_.preedit_rectangle().left(),
+      command_.preedit_rectangle().bottom() - command_.preedit_rectangle().top());
   // The origin point of command_.preedit_rectangle() is the left-top of the
   // base screen which is set in GoogleJapaneseInputController. It is
   // unnecessary calculation but to support older version of GoogleJapaneseInput
   // process we should not change it. So we minus the height of the screen here.
-  mozc::Rect preedit_rect(
-      mozc::Point(command_.preedit_rectangle().left(),
-                  command_.preedit_rectangle().top() - GetBaseScreenHeight()),
-      preedit_size);
+  mozc::Rect preedit_rect(mozc::Point(command_.preedit_rectangle().left(),
+                                      command_.preedit_rectangle().top() - GetBaseScreenHeight()),
+                          preedit_size);
 
   // This is a hacky way to check vertical writing.
   // TODO(komatsu): We should use the return value of attributesForCharacterIndex
@@ -243,22 +231,18 @@ void CandidateController::AlignWindows() {
   // the top-left position of the window because we want to show the
   // window just below of the preedit.
   const TableLayout *candidate_layout = candidate_window_->GetTableLayout();
-  const mozc::Point candidate_zero_point(
-      candidate_layout->GetColumnRect(COLUMN_CANDIDATE).Left(), 0);
+  const mozc::Point candidate_zero_point(candidate_layout->GetColumnRect(COLUMN_CANDIDATE).Left(),
+                                         0);
 
   const mozc::Point target_point(preedit_rect.Left(), preedit_rect.Bottom());
-  const mozc::Rect candidate_rect =
-      WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
-          target_point, preedit_rect,
-          candidate_window_->GetWindowSize(), candidate_zero_point,
-          display_rect, is_vertical);
+  const mozc::Rect candidate_rect = WindowUtil::GetWindowRectForMainWindowFromTargetPointAndPreedit(
+      target_point, preedit_rect, candidate_window_->GetWindowSize(), candidate_zero_point,
+      display_rect, is_vertical);
   candidate_window_->MoveWindow(OriginPointInCocoaCoord(candidate_rect));
 
   // Align infolist window
-  const mozc::Rect infolist_rect =
-      WindowUtil::GetWindowRectForInfolistWindow(
-          infolist_window_->GetWindowSize(),
-          candidate_rect, display_rect);
+  const mozc::Rect infolist_rect = WindowUtil::GetWindowRectForInfolistWindow(
+      infolist_window_->GetWindowSize(), candidate_rect, display_rect);
   infolist_window_->MoveWindow(OriginPointInCocoaCoord(infolist_rect));
 
   // If there is no need to show cascading window, we just finish the
@@ -272,8 +256,7 @@ void CandidateController::AlignWindows() {
   // Fix cascading window position
   // 1. starting position is at the focused row
   const Candidates &candidates = command_.output().candidates();
-  const int focused_row =
-      candidates.focused_index() - candidates.candidate(0).index();
+  const int focused_row = candidates.focused_index() - candidates.candidate(0).index();
   mozc::Rect focused_rect = candidate_layout->GetRowRect(focused_row);
   // move the focused_rect to the monitor's coordinates
   focused_rect.origin.x += candidate_rect.origin.x;
@@ -281,13 +264,10 @@ void CandidateController::AlignWindows() {
   // focused_rect doesn't have the width for scroll bar
   focused_rect.size.width += candidate_layout->GetVScrollBarRect().Width();
 
-  const mozc::Rect cascading_rect =
-      WindowUtil::GetWindowRectForCascadingWindow(
-          focused_rect, cascading_window_->GetWindowSize(),
-          mozc::Point(0, 0), display_rect);
+  const mozc::Rect cascading_rect = WindowUtil::GetWindowRectForCascadingWindow(
+      focused_rect, cascading_window_->GetWindowSize(), mozc::Point(0, 0), display_rect);
   cascading_window_->MoveWindow(OriginPointInCocoaCoord(cascading_rect));
 }
-
 
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer

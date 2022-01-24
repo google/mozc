@@ -38,14 +38,11 @@
 #include "protocol/commands.pb.h"
 #include "renderer/mac/RendererBaseWindow.h"
 
-
 namespace mozc {
-namespace renderer{
+namespace renderer {
 namespace mac {
 
-RendererBaseWindow::RendererBaseWindow()
-    : window_level_(NSPopUpMenuWindowLevel) {
-}
+RendererBaseWindow::RendererBaseWindow() : window_level_(NSPopUpMenuWindowLevel) {}
 
 void RendererBaseWindow::InitWindow() {
   if (window_) {
@@ -70,9 +67,7 @@ void RendererBaseWindow::InitWindow() {
   [window_ orderOut:window_];
 }
 
-RendererBaseWindow::~RendererBaseWindow() {
-  [window_ close];
-}
+RendererBaseWindow::~RendererBaseWindow() { [window_ close]; }
 
 Size RendererBaseWindow::GetWindowSize() const {
   if (!window_) {

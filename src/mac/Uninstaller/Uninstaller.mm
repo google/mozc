@@ -48,8 +48,7 @@ bool GetPrevilegeRights(AuthorizationRef *auth) {
   OSStatus status;
   AuthorizationFlags authFlags = kAuthorizationFlagDefaults;
 
-  status = AuthorizationCreate(
-      nullptr, kAuthorizationEmptyEnvironment, authFlags, auth);
+  status = AuthorizationCreate(nullptr, kAuthorizationEmptyEnvironment, authFlags, auth);
   if (status != errAuthorizationSuccess) {
     return status;
   }
@@ -62,42 +61,35 @@ bool GetPrevilegeRights(AuthorizationRef *auth) {
   AuthorizationItem item = {kAuthorizationRightExecute, 0, nullptr, 0};
   AuthorizationRights rights = {1, &item};
 
-  authFlags = kAuthorizationFlagDefaults |
-      kAuthorizationFlagInteractionAllowed |
-      kAuthorizationFlagPreAuthorize |
-      kAuthorizationFlagExtendRights;
+  authFlags = kAuthorizationFlagDefaults | kAuthorizationFlagInteractionAllowed |
+              kAuthorizationFlagPreAuthorize | kAuthorizationFlagExtendRights;
   status = AuthorizationCopyRights(*auth, &rights, nullptr, authFlags, nullptr);
 
   return status == errAuthorizationSuccess;
 }
 
-bool OpenUninstallSurvey() {
-  return [[NSWorkspace sharedWorkspace] openURL:kUninstallSurveyUrl];
-}
+bool OpenUninstallSurvey() { return [[NSWorkspace sharedWorkspace] openURL:kUninstallSurveyUrl]; }
 
 bool DeleteFiles(const AuthorizationRef &auth) {
   const char *kRmPath = "/bin/rm";
   const char *rmArgs[] = {"-rf", nullptr, nullptr};
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   const char *kRemovePaths[] = {
-    "/Library/Input Methods/GoogleJapaneseInput.app",
-    "/Library/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
-    "/Library/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
-    "/Applications/GoogleJapaneseInput.localized",
-    nullptr};
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+      "/Library/Input Methods/GoogleJapaneseInput.app",
+      "/Library/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+      "/Library/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
+      "/Applications/GoogleJapaneseInput.localized", nullptr};
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   const char *kRemovePaths[] = {
-    "/Library/Input Methods/Mozc.app",
-    "/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-    "/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
-    "/Applications/Mozc",
-    nullptr};
-#endif // GOOGLE_JAPANESE_INPUT_BUILD
+      "/Library/Input Methods/Mozc.app",
+      "/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+      "/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist", "/Applications/Mozc",
+      nullptr};
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
   for (int i = 0; kRemovePaths[i] != nullptr; ++i) {
     rmArgs[1] = kRemovePaths[i];
     OSStatus status = AuthorizationExecuteWithPrivileges(
-        auth, kRmPath, kAuthorizationFlagDefaults,
-        const_cast<char * const *>(rmArgs), nullptr);
+        auth, kRmPath, kAuthorizationFlagDefaults, const_cast<char *const *>(rmArgs), nullptr);
     if (status != errAuthorizationSuccess) {
       NSLog(@"Failed to remove path: %s", kRemovePaths[i]);
       return false;
@@ -108,21 +100,20 @@ bool DeleteFiles(const AuthorizationRef &auth) {
 
 bool UnregisterKeystoneTicket(const AuthorizationRef &auth) {
   const char *kKsadminPath = "/Library/Google/GoogleSoftwareUpdate/"
-      "GoogleSoftwareUpdate.bundle/Contents/MacOS/ksadmin";
-  const char *kKsadminArgs[] =
-      {"--delete", "--productid", "com.google.JapaneseIME", nullptr};
-  OSStatus status = AuthorizationExecuteWithPrivileges(
-      auth, kKsadminPath, kAuthorizationFlagDefaults,
-      const_cast<char * const *>(kKsadminArgs), nullptr);
+                             "GoogleSoftwareUpdate.bundle/Contents/MacOS/ksadmin";
+  const char *kKsadminArgs[] = {"--delete", "--productid", "com.google.JapaneseIME", nullptr};
+  OSStatus status =
+      AuthorizationExecuteWithPrivileges(auth, kKsadminPath, kAuthorizationFlagDefaults,
+                                         const_cast<char *const *>(kKsadminArgs), nullptr);
   return status == errAuthorizationSuccess;
 }
 
 bool RunReboot(const AuthorizationRef &auth) {
   // TODO(mukai): Use OS-specific API instead of calling reboot command.
   const char *rebootPath = "/sbin/reboot";
-  char * args[] = {nullptr};
-  OSStatus status = AuthorizationExecuteWithPrivileges(
-      auth, rebootPath, kAuthorizationFlagDefaults, args, nullptr);
+  char *args[] = {nullptr};
+  OSStatus status = AuthorizationExecuteWithPrivileges(auth, rebootPath, kAuthorizationFlagDefaults,
+                                                       args, nullptr);
   return status == errAuthorizationSuccess;
 }
 }  // namespace
@@ -140,11 +131,10 @@ bool RunReboot(const AuthorizationRef &auth) {
     return;
   }
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-  if (OpenUninstallSurvey() &&
-      DeleteFiles(auth) && UnregisterKeystoneTicket(auth)) {
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+  if (OpenUninstallSurvey() && DeleteFiles(auth) && UnregisterKeystoneTicket(auth)) {
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   if (DeleteFiles(auth)) {
-#endif // GOOGLE_JAPANESE_INPUT_BUILD
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
     if ([dialogs reportUninstallSuccess]) {
       RunReboot(auth);
     }
@@ -163,10 +153,9 @@ bool RunReboot(const AuthorizationRef &auth) {
                                                   encoding:NSUTF8StringEncoding];
   kUninstallSurveyUrl = [NSURL URLWithString:uninstallUrl];
 
-  kUninstallerScriptPath =
-      [[NSBundle mainBundle] pathForResource:@"uninstaller"
-                                      ofType:@"py"
-                                 inDirectory:nil];
+  kUninstallerScriptPath = [[NSBundle mainBundle] pathForResource:@"uninstaller"
+                                                           ofType:@"py"
+                                                      inDirectory:nil];
 }
 
 @end

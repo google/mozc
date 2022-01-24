@@ -39,16 +39,12 @@
 namespace mozc {
 namespace renderer {
 namespace mac {
-bool MacServerSendCommand::SendCommand(
-    const mozc::commands::SessionCommand &command,
-    mozc::commands::Output *output) {
+bool MacServerSendCommand::SendCommand(const mozc::commands::SessionCommand &command,
+                                       mozc::commands::Output *output) {
   NSConnection *connection =
-      [NSConnection
-        connectionWithRegisteredName:@ kProductPrefix "_Renderer_Connection"
-                                host:nil];
+      [NSConnection connectionWithRegisteredName:@kProductPrefix "_Renderer_Connection" host:nil];
   const std::string command_string = command.SerializeAsString();
-  NSData *sending_data = [NSData dataWithBytes:command_string.data()
-                                        length:command_string.size()];
+  NSData *sending_data = [NSData dataWithBytes:command_string.data() length:command_string.size()];
   id peer = [connection rootProxy];
   [peer setProtocolForProxy:@protocol(ServerCallback)];
   [peer sendData:sending_data];
@@ -57,4 +53,3 @@ bool MacServerSendCommand::SendCommand(
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer
 }  // namespace mozc
-

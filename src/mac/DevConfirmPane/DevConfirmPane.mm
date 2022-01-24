@@ -47,10 +47,8 @@
 }
 
 - (IBAction)checkBoxClicked:(id)sender {
-  _understandFlag =
-      ([_understandCheckBox state] == NSOnState);
-  _agreeFlag =
-      ([_agreeCheckBox state] == NSOnState);
+  _understandFlag = ([_understandCheckBox state] == NSOnState);
+  _agreeFlag = ([_agreeCheckBox state] == NSOnState);
   if (_understandFlag && _agreeFlag) {
     [self setNextEnabled:YES];
   } else {
@@ -75,8 +73,7 @@
   }
   // First checkbox messages
   // "I understand that this version may be unstable compared to the stable version."
-  NSString *understandMessage =
-      [self localizedStringForKey:@"understandMessage"];
+  NSString *understandMessage = [self localizedStringForKey:@"understandMessage"];
   if (understandMessage) {
     [_understandMessage setStringValue:understandMessage];
   }
@@ -100,7 +97,6 @@
     [self setNextEnabled:NO];
   }
 }
-
 
 - (NSString *)localizedStringForKey:(NSString *)key {
   NSBundle *bundle = [NSBundle bundleForClass:[self class]];

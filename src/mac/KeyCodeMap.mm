@@ -48,14 +48,12 @@ static const unichar kYenMark = 0xA5;
 @interface KeyCodeMap ()
 // Extract Mac modifier flag bits from |flags| and set them into
 // |keyEvent|.
-- (void)addModifierFlags:(NSUInteger)flags
-          toMozcKeyEvent:(KeyEvent *)keyEvent;
+- (void)addModifierFlags:(NSUInteger)flags toMozcKeyEvent:(KeyEvent *)keyEvent;
 
 // Extract key event information from |event| of NSFlagsChanged.
 // Returns YES only if the flag change should create an Mozc key
 // events.
-- (BOOL)handleModifierFlagsChange:(NSEvent *)event
-                   toMozcKeyEvent:(KeyEvent *)keyEvent;
+- (BOOL)handleModifierFlagsChange:(NSEvent *)event toMozcKeyEvent:(KeyEvent *)keyEvent;
 @end
 
 @implementation KeyCodeMap
@@ -76,8 +74,7 @@ static const unichar kYenMark = 0xA5;
   return self;
 }
 
-- (void)addModifierFlags:(NSUInteger)flags
-          toMozcKeyEvent:(KeyEvent *)keyEvent {
+- (void)addModifierFlags:(NSUInteger)flags toMozcKeyEvent:(KeyEvent *)keyEvent {
   if ((flags & NSShiftKeyMask)) {
     keyEvent->add_modifier_keys(KeyEvent::SHIFT);
   }
@@ -89,12 +86,10 @@ static const unichar kYenMark = 0xA5;
   }
 }
 
-- (BOOL)handleModifierFlagsChange:(NSEvent *)event
-                   toMozcKeyEvent:(KeyEvent *)keyEvent {
+- (BOOL)handleModifierFlagsChange:(NSEvent *)event toMozcKeyEvent:(KeyEvent *)keyEvent {
   NSUInteger newFlags = [event modifierFlags];
   // Clear unused modifier flag bits.
-  newFlags = newFlags & (NSShiftKeyMask |
-                         NSControlKeyMask | NSAlternateKeyMask);
+  newFlags = newFlags & (NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask);
   if (~modifierFlags_ & newFlags) {
     // New modifier key is pressed: overwrite |modifierFlags_|.
     // Consider the case as follows:
@@ -128,8 +123,7 @@ static const unichar kYenMark = 0xA5;
   return keyCode == kVK_JIS_Eisu || keyCode == kVK_JIS_Kana;
 }
 
-- (BOOL)getMozcKeyCodeFromKeyEvent:(NSEvent *)event
-                    toMozcKeyEvent:(KeyEvent *)keyEvent {
+- (BOOL)getMozcKeyCodeFromKeyEvent:(NSEvent *)event toMozcKeyEvent:(KeyEvent *)keyEvent {
   // This method uses |charactersIgnoringModifiers| basically but uses
   // |characters| if its modifier is only Shift.
   // For example:
@@ -164,8 +158,8 @@ static const unichar kYenMark = 0xA5;
   // strip caps lock effects.
   nsModifiers &= (~NSAlphaShiftKeyMask & NSDeviceIndependentModifierFlagsMask);
   unsigned short keyCode = [event keyCode];
-  unichar inputChar = [((nsModifiers == NSShiftKeyMask) ?
-                        inputString : inputStringRaw) characterAtIndex:0];
+  unichar inputChar =
+      [((nsModifiers == NSShiftKeyMask) ? inputString : inputStringRaw) characterAtIndex:0];
   std::map<unsigned short, KeyEvent::SpecialKey>::const_iterator sp_iter =
       kSpecialKeyMap->find(keyCode);
   if (sp_iter != kSpecialKeyMap->end()) {
@@ -187,8 +181,7 @@ static const unichar kYenMark = 0xA5;
       if (nsModifiers == NSShiftKeyMask && kKanaMapShift &&
           (kana_iter = kKanaMapShift->find(keyCode)) != kKanaMapShift->end()) {
         keyEvent->set_key_string(kana_iter->second);
-      } else if (kKanaMap &&
-                 (kana_iter = kKanaMap->find(keyCode)) != kKanaMap->end()) {
+      } else if (kKanaMap && (kana_iter = kKanaMap->find(keyCode)) != kKanaMap->end()) {
         keyEvent->set_key_string(kana_iter->second);
       }
     }
@@ -204,8 +197,8 @@ static const unichar kYenMark = 0xA5;
   // We enclose this logging with DEBUG explicitly because we found
   // that stringWithFormat is sometimes not trustworthy and DLOG(INFO)
   // will compute the string-to-be-logged even in production.
-  LOG(INFO) << [[NSString stringWithFormat:@"%@", event] UTF8String]
-            << " -> " << keyEvent->DebugString();
+  LOG(INFO) << [[NSString stringWithFormat:@"%@", event] UTF8String] << " -> "
+            << keyEvent->DebugString();
 #endif  // DEBUG
 
   if (nsModifiers == NSShiftKeyMask && !keyEvent->has_special_key()) {

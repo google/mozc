@@ -47,7 +47,7 @@ class GoogleJapaneseInputServerTest : public testing::Test {
   GoogleJapaneseInputServer *server_;
 };
 
-@interface MockController : NSObject<ControllerCallback> {
+@interface MockController : NSObject <ControllerCallback> {
   int numSendData_;
   mozc::commands::SessionCommand *expectedCommand_;
   int numOutputResult_;
@@ -69,14 +69,14 @@ class GoogleJapaneseInputServerTest : public testing::Test {
 @synthesize expectedData = expectedData_;
 
 - (void)sendCommand:(mozc::commands::SessionCommand &)command {
-  ASSERT_NE((void*)0, expectedCommand_);
+  ASSERT_NE((void *)0, expectedCommand_);
   EXPECT_EQ(expectedCommand_->DebugString(), command.DebugString());
   ++numSendData_;
 }
 
 - (void)outputResult:(mozc::commands::Output *)data {
-  ASSERT_NE((void*)0, data);
-  ASSERT_NE((void*)0, expectedData_);
+  ASSERT_NE((void *)0, data);
+  ASSERT_NE((void *)0, expectedData_);
   EXPECT_EQ(expectedData_->DebugString(), data->DebugString());
   ++numOutputResult_;
 }
@@ -93,8 +93,7 @@ TEST_F(GoogleJapaneseInputServerTest, sendData) {
   controller.expectedCommand = &command;
 
   std::string commandData = command.SerializeAsString();
-  [server_ sendData:[NSData dataWithBytes:commandData.data()
-                                   length:commandData.size()]];
+  [server_ sendData:[NSData dataWithBytes:commandData.data() length:commandData.size()]];
   EXPECT_EQ(1, controller.numSendData);
 }
 
@@ -110,7 +109,6 @@ TEST_F(GoogleJapaneseInputServerTest, outputResult) {
   controller.expectedData = &output;
 
   std::string outputData = output.SerializeAsString();
-  [server_ outputResult:[NSData dataWithBytes:outputData.data()
-                                       length:outputData.size()]];
+  [server_ outputResult:[NSData dataWithBytes:outputData.data() length:outputData.size()]];
   EXPECT_EQ(1, controller.numOutputResult);
 }
