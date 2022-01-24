@@ -31,7 +31,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
+#endif  // OS_WIN
 
 #include <QtGui/QtGui>
 
@@ -131,7 +131,7 @@ int RunMozcTool(int argc, char *argv[]) {
     // So we set kProductPrefix to the binary name.
     absl::SetFlag(&FLAGS_mode, "prelauncher");
   }
-#endif
+#endif  // __APPLE__
 
   if (absl::GetFlag(FLAGS_mode) != "administration_dialog" &&
       !mozc::RunLevel::IsValidClientRunLevel()) {

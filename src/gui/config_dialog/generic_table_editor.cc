@@ -59,7 +59,7 @@ int GetTableHeight(QTableWidget *widget) {
       QFontMetrics(widget->font()).boundingRect(QString::fromUtf8("龍"));
 #ifdef OS_WIN
   return static_cast<int>(rect.height() * 1.3);
-#else
+#else  // OS_WIN
   return static_cast<int>(rect.height() * 1.4);
 #endif  // OS_WIN
 }

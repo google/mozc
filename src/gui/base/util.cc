@@ -92,7 +92,7 @@ std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create(QLatin1String("fusion")));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif
+#endif  // QT_VERSION
 
   // QApplication takes argc as a reference.
   auto app = absl::make_unique<QApplication>(argc, argv);

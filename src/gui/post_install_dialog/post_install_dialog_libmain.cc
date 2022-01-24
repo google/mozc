@@ -29,7 +29,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
+#endif  // OS_WIN
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QtGui>
@@ -61,7 +61,7 @@ int RunPostInstallDialog(int argc, char *argv[]) {
 #ifdef OS_WIN
   // For ImeUtil::SetDefault.
   mozc::ScopedCOMInitializer com_initializer;
-#endif
+#endif  // OS_WIN
 
   auto app = mozc::gui::GuiUtil::InitQt(argc, argv);
 

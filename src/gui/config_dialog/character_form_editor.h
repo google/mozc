@@ -63,6 +63,6 @@ class CharacterFormEditor : public QTableWidget {
 
 #if defined UI_CONFIG_DIALOG_H
 using mozc::gui::CharacterFormEditor;
-#endif
+#endif  // UI_CONFIG_DIALOG_H
 
 #endif  // MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
