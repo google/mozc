@@ -237,7 +237,6 @@ bool MacUtil::StartLaunchdService(const std::string &service_name, pid_t *pid) {
     LOG(ERROR) << "Unexpected error: launchd doesn't return the data for the service.";
     return false;
   }
-  absl::Cleanup renderer_info_cleanup = [renderer_info & ] { launch_data_free(renderer_info); }
 
   launch_data_t pid_data = launch_data_dict_lookup(renderer_info, LAUNCH_JOBKEY_PID);
   if (pid_data == nullptr) {
