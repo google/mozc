@@ -770,7 +770,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	å	a A りんぐ	リング付き文字
 アルファベット	Æ	a A ae AE にじゅうぼいん ごうじ	二重母音 合字
 アルファベット	æ	a A ae AE にじゅうぼいん ごうじ	二重母音 合字
-アルファベット	ß	s S ss SS ごうじ	合字
+アルファベット	ß	s S ss SS ごうじ えすつぇっと	エスツェット 合字
+アルファベット	ẞ	s S ss SS ごうじ えすつぇっと	エスツェット大文字 合字
 記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER		U+02AC
 記号	₠	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう	通貨記号	エキュー	OTHER		U+20A0
 記号	₡	つうか たんい ころん ころんきごう	通貨記号	コロン	OTHER		U+20A1
