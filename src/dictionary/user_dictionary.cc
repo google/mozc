@@ -113,16 +113,6 @@ class UserDictionaryFileManager {
   absl::Mutex mutex_;
 };
 
-void FillTokenFromUserPosToken(const UserPos::Token &user_pos_token,
-                               Token *token) {
-  token->key = user_pos_token.key;
-  token->value = user_pos_token.value;
-  token->cost = user_pos_token.cost;
-  token->lid = user_pos_token.id;
-  token->rid = user_pos_token.id;
-  token->attributes = Token::USER_DICTIONARY;
-}
-
 }  // namespace
 
 class UserDictionary::TokensIndex {
@@ -156,6 +146,9 @@ class UserDictionary::TokensIndex {
       if (!dic.enabled() || dic.entries_size() == 0) {
         continue;
       }
+
+      const bool is_shortcuts =
+          (dic.name() == "__auto_imported_android_shortcuts_dictionary");
 
       for (const UserDictionaryStorage::UserDictionaryEntry &entry :
            dic.entries()) {
@@ -198,6 +191,17 @@ class UserDictionary::TokensIndex {
               UserDictionaryUtil::GetStringPosType(entry.pos()), &tokens);
           for (auto &token : tokens) {
             Util::StripWhiteSpaces(entry.comment(), &token.comment);
+            if (is_shortcuts &&
+                token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
+              // Words fed by Android shortcut are registered as SUGGESTION_ONLY
+              // POS in order to minimize the side-effect of extremely short
+              // reading. However, user expect that they should appear in the
+              // normal conversion. Here we replace the attribute from
+              // SUGGESTION_ONLY to SHORTCUT, which has more adaptive cost based
+              // on the length of the key.
+              token.remove_attribute(UserPos::Token::SUGGESTION_ONLY);
+              token.add_attribute(UserPos::Token::SHORTCUT);
+            }
             user_pos_tokens_.push_back(std::move(token));
           }
         }
@@ -351,11 +355,7 @@ void UserDictionary::LookupPredictive(
       default:
         break;
     }
-    FillTokenFromUserPosToken(user_pos_token, &token);
-    // Override POS IDs for suggest only words.
-    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
-      token.lid = token.rid = pos_matcher_.GetUnknownId();
-    }
+    PopulateTokenFromUserPosToken(user_pos_token, PREDICTIVE, &token);
     if (callback->OnToken(user_pos_token.key, user_pos_token.key, token) ==
         Callback::TRAVERSE_DONE) {
       return;
@@ -391,7 +391,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
     if (user_pos_token.key > key) {
       break;
     }
-    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
+    if (user_pos_token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
       continue;
     }
     if (!absl::StartsWith(key, user_pos_token.key)) {
@@ -408,7 +408,7 @@ void UserDictionary::LookupPrefix(absl::string_view key,
       default:
         break;
     }
-    FillTokenFromUserPosToken(user_pos_token, &token);
+    PopulateTokenFromUserPosToken(user_pos_token, PREFIX, &token);
     switch (callback->OnToken(user_pos_token.key, user_pos_token.key, token)) {
       case Callback::TRAVERSE_DONE:
         return;
@@ -441,10 +441,10 @@ void UserDictionary::LookupExact(absl::string_view key,
   Token token;
   for (; begin != end; ++begin) {
     const UserPos::Token &user_pos_token = *begin;
-    if (pos_matcher_.IsSuggestOnlyWord(user_pos_token.id)) {
+    if (user_pos_token.has_attribute(UserPos::Token::SUGGESTION_ONLY)) {
       continue;
     }
-    FillTokenFromUserPosToken(user_pos_token, &token);
+    PopulateTokenFromUserPosToken(user_pos_token, EXACT, &token);
     if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
       return;
     }
@@ -566,6 +566,47 @@ std::vector<std::string> UserDictionary::GetPosList() const {
 
 void UserDictionary::SetUserDictionaryName(const std::string &filename) {
   Singleton<UserDictionaryFileManager>::get()->SetFileName(filename);
+}
+
+void UserDictionary::PopulateTokenFromUserPosToken(
+    const UserPosInterface::Token &user_pos_token, RequestType request_type,
+    Token *token) const {
+  token->key = user_pos_token.key;
+  token->value = user_pos_token.value;
+  token->lid = token->rid = user_pos_token.id;
+  token->attributes = Token::USER_DICTIONARY;
+
+  // * Overwrites POS ids.
+  // Actual pos id of suggestion-only candidates are 名詞-サ変.
+  // TODO(taku): We would like to change the POS to 名詞-サ変 in user-pos.def,
+  // because SUGGEST_ONLY is not POS.
+  if (user_pos_token.has_attribute(UserPos::Token::SUGGESTION_ONLY) ||
+      user_pos_token.has_attribute(UserPos::Token::SHORTCUT)) {
+    token->lid = token->rid = pos_matcher_.GetUnknownId();
+  }
+
+  // * Overwrites costs.
+  // Locale is not Japanese.
+  if (user_pos_token.has_attribute(UserPos::Token::NON_JA_LOCALE)) {
+    token->cost = 10000;
+  } else if (user_pos_token.has_attribute(UserPos::Token::ISOLATED_WORD)) {
+    // Set smaller cost for "短縮よみ" in order to make
+    // the rank of the word higher than others.
+    token->cost = 200;
+  } else {
+    // default user dictionary cost.
+    token->cost = 5000;
+  }
+
+  // The words added via Android shortcut have adaptive cost based
+  // on the length of the key. Shorter keys have more penalty so that
+  // they are not shown in the context.
+  // TODO(taku): Better to apply this cost for all user defined words?
+  if (user_pos_token.has_attribute(UserPos::Token::SHORTCUT) &&
+      (request_type == PREFIX || request_type == EXACT)) {
+    const int key_length = Util::CharsLen(token->key);
+    token->cost += std::max<int>(0, 4 - key_length) * 2000;
+  }
 }
 
 }  // namespace dictionary

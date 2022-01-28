@@ -93,6 +93,29 @@ TEST_F(UserPosTest, UserPosGetTokensTest) {
   }
 }
 
+TEST_F(UserPosTest, UserPosGetTokensWithAttributesTest) {
+  std::vector<UserPos::Token> tokens;
+
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", "サジェストのみ", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SUGGESTION_ONLY));
+
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", "短縮よみ", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
+
+  EXPECT_TRUE(
+      user_pos_->GetTokens("test", "test", "サジェストのみ", "en", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::SUGGESTION_ONLY));
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
+
+  EXPECT_TRUE(user_pos_->GetTokens("test", "test", "短縮よみ", "en", &tokens));
+  EXPECT_EQ(tokens.size(), 1);
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::ISOLATED_WORD));
+  EXPECT_TRUE(tokens[0].has_attribute(UserPos::Token::NON_JA_LOCALE));
+}
+
 TEST_F(UserPosTest, UserPosGetTokensWithLocaleTest) {
   std::vector<std::string> pos_list;
   user_pos_->GetPosList(&pos_list);
@@ -105,9 +128,9 @@ TEST_F(UserPosTest, UserPosGetTokensWithLocaleTest) {
   EXPECT_EQ(tokens.size(), tokens_en.size());
 
   for (size_t i = 0; i < tokens.size(); ++i) {
-    EXPECT_EQ(tokens[i].cost, tokens_ja[i].cost);
-    EXPECT_GT(tokens_en[i].cost, tokens_ja[i].cost);
-    EXPECT_GT(tokens_en[i].cost, tokens[i].cost);
+    EXPECT_EQ(tokens[i].attributes, tokens_ja[i].attributes);
+    EXPECT_NE(tokens_en[i].attributes, tokens_ja[i].attributes);
+    EXPECT_NE(tokens_en[i].attributes, tokens[i].attributes);
   }
 }
 
@@ -120,7 +143,7 @@ TEST_F(UserPosTest, ConjugationTest) {
     EXPECT_EQ(tokens1[i].key, tokens2[i].key);
     EXPECT_EQ(tokens1[i].value, tokens2[i].value);
     EXPECT_EQ(tokens1[i].id, tokens2[i].id);
-    EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
+    EXPECT_EQ(tokens1[i].attributes, tokens2[i].attributes);
   }
 
   EXPECT_TRUE(user_pos_->GetTokens("おそれ", "惧れ", "動詞一段", &tokens1));
@@ -130,7 +153,7 @@ TEST_F(UserPosTest, ConjugationTest) {
     EXPECT_EQ(tokens1[i].key, tokens2[i].key);
     EXPECT_EQ(tokens1[i].value, tokens2[i].value);
     EXPECT_EQ(tokens1[i].id, tokens2[i].id);
-    EXPECT_EQ(tokens1[i].cost, tokens2[i].cost);
+    EXPECT_EQ(tokens1[i].attributes, tokens2[i].attributes);
   }
 }
 
@@ -144,14 +167,31 @@ TEST_F(UserPosTest, SwapToken) {
   EXPECT_EQ("key2", token1.key);
   EXPECT_EQ("value2", token1.value);
   EXPECT_EQ(2, token1.id);
-  EXPECT_EQ(2, token1.cost);
+  EXPECT_EQ(2, token1.attributes);
   EXPECT_EQ("comment2", token1.comment);
 
   EXPECT_EQ("key1", token2.key);
   EXPECT_EQ("value1", token2.value);
   EXPECT_EQ(1, token2.id);
-  EXPECT_EQ(1, token2.cost);
+  EXPECT_EQ(1, token2.attributes);
   EXPECT_EQ("comment1", token2.comment);
+}
+
+TEST_F(UserPosTest, Attributes) {
+  UserPos::Token token;
+
+  EXPECT_EQ(token.attributes, 0);
+  token.add_attribute(UserPos::Token::SHORTCUT);
+  token.add_attribute(UserPos::Token::SUGGESTION_ONLY);
+
+  EXPECT_TRUE(token.has_attribute(UserPos::Token::SHORTCUT));
+  EXPECT_TRUE(token.has_attribute(UserPos::Token::SUGGESTION_ONLY));
+  EXPECT_FALSE(token.has_attribute(UserPos::Token::ISOLATED_WORD));
+
+  token.remove_attribute(UserPos::Token::SUGGESTION_ONLY);
+  EXPECT_TRUE(token.has_attribute(UserPos::Token::SHORTCUT));
+  EXPECT_FALSE(token.has_attribute(UserPos::Token::SUGGESTION_ONLY));
+  EXPECT_FALSE(token.has_attribute(UserPos::Token::ISOLATED_WORD));
 }
 
 }  // namespace

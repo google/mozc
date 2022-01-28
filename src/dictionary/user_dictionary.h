@@ -98,6 +98,15 @@ class UserDictionary : public DictionaryInterface {
   // Sets user dicitonary filename for unittesting
   static void SetUserDictionaryName(const std::string &filename);
 
+  enum RequestType { PREFIX, PREDICTIVE, EXACT };
+
+  // Populates Token from UserToken.
+  // This method sets the actual cost and rewrites POS id depending
+  // on the POS and attribute.
+  void PopulateTokenFromUserPosToken(
+      const UserPosInterface::Token &user_pos_token, RequestType request_type,
+      Token *token) const;
+
  private:
   class TokensIndex;
   class UserDictionaryReloader;

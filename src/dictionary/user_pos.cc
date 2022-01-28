@@ -65,7 +65,7 @@ void UserPos::GetPosList(std::vector<std::string> *pos_list) const {
   }
 }
 
-bool UserPos::IsValidPos(const std::string &pos) const {
+bool UserPos::IsValidPos(absl::string_view pos) const {
   const auto iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (iter == string_array_.end()) {
@@ -74,7 +74,7 @@ bool UserPos::IsValidPos(const std::string &pos) const {
   return std::binary_search(begin(), end(), iter.index());
 }
 
-bool UserPos::GetPosIds(const std::string &pos, uint16_t *id) const {
+bool UserPos::GetPosIds(absl::string_view pos, uint16_t *id) const {
   const auto str_iter =
       std::lower_bound(string_array_.begin(), string_array_.end(), pos);
   if (str_iter == string_array_.end() || *str_iter != pos) {
@@ -88,8 +88,8 @@ bool UserPos::GetPosIds(const std::string &pos, uint16_t *id) const {
   return true;
 }
 
-bool UserPos::GetTokens(const std::string &key, const std::string &value,
-                        const std::string &pos, const std::string &locale,
+bool UserPos::GetTokens(absl::string_view key, absl::string_view value,
+                        absl::string_view pos, absl::string_view locale,
                         std::vector<Token> *tokens) const {
   if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
     return false;
@@ -111,29 +111,33 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
   tokens->resize(size);
 
   // TODO(taku)  Change the cost by seeing cost_type
-  const int16_t kDefaultCost =
-      (!locale.empty() && !absl::StartsWith(locale, "ja")) ? 10000 : 5000;
+  const bool is_non_ja_locale =
+      !locale.empty() && !absl::StartsWith(locale, "ja");
 
-  // Set smaller cost for "短縮よみ" in order to make
-  // the rank of the word higher than others.
-  const int16_t kIsolatedWordCost = 200;
   constexpr char kIsolatedWordPos[] = "短縮よみ";
+  constexpr char kSuggestionOnlyPos[] = "サジェストのみ";
+
+  uint16_t attributes = 0;
+  if (pos == kIsolatedWordPos) {
+    attributes = UserPos::Token::ISOLATED_WORD;
+  } else if (pos == kSuggestionOnlyPos) {
+    attributes = UserPos::Token::SUGGESTION_ONLY;
+  }
+  if (is_non_ja_locale) {
+    attributes |= UserPos::Token::NON_JA_LOCALE;
+  }
 
   if (size == 1) {  // no conjugation
     const auto &token_iter = range.first;
-    (*tokens)[0].key = key;
-    (*tokens)[0].value = value;
+    (*tokens)[0].key = std::string(key);
+    (*tokens)[0].value = std::string(value);
     (*tokens)[0].id = token_iter.conjugation_id();
-    if (pos == kIsolatedWordPos) {
-      (*tokens)[0].cost = kIsolatedWordCost;
-    } else {
-      (*tokens)[0].cost = kDefaultCost;
-    }
+    (*tokens)[0].attributes = attributes;
   } else {
     const auto &base_form_token_iter = range.first;
     // expand all other forms
-    std::string key_stem = key;
-    std::string value_stem = value;
+    std::string key_stem = std::string(key);
+    std::string value_stem = std::string(value);
     // assume that conjugation_form[0] contains the suffix of "base form".
     const absl::string_view base_key_suffix =
         string_array_[base_form_token_iter.key_suffix_index()];
@@ -144,8 +148,8 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
         base_value_suffix.size() < value.size() &&
         absl::EndsWith(key, base_key_suffix) &&
         absl::EndsWith(value, base_value_suffix)) {
-      key_stem.assign(key, 0, key.size() - base_key_suffix.size());
-      value_stem.assign(value, 0, value.size() - base_value_suffix.size());
+      key_stem.assign(key.data(), key.size() - base_key_suffix.size());
+      value_stem.assign(value.data(), value.size() - base_value_suffix.size());
     }
     for (size_t i = 0; i < size; ++i, ++range.first) {
       const auto &token_iter = range.first;
@@ -158,7 +162,7 @@ bool UserPos::GetTokens(const std::string &key, const std::string &value,
       absl::StrAppend(&(*tokens)[i].key, key_stem, key_suffix);
       absl::StrAppend(&(*tokens)[i].value, value_stem, value_suffix);
       (*tokens)[i].id = token_iter.conjugation_id();
-      (*tokens)[i].cost = kDefaultCost;
+      (*tokens)[i].attributes = attributes;
     }
     DCHECK(range.first == range.second);
   }

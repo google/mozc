@@ -184,10 +184,10 @@ class UserPos : public UserPosInterface {
 
   // Implementation of UserPosInterface.
   void GetPosList(std::vector<std::string> *pos_list) const override;
-  bool IsValidPos(const std::string &pos) const override;
-  bool GetPosIds(const std::string &pos, uint16_t *id) const override;
-  bool GetTokens(const std::string &key, const std::string &value,
-                 const std::string &pos, const std::string &locale,
+  bool IsValidPos(absl::string_view pos) const override;
+  bool GetPosIds(absl::string_view pos, uint16_t *id) const override;
+  bool GetTokens(absl::string_view key, absl::string_view value,
+                 absl::string_view pos, absl::string_view locale,
                  std::vector<Token> *tokens) const override;
 
   iterator begin() const { return iterator(token_array_data_.data()); }
