@@ -27,9 +27,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QtCore/QTextCodec>
-#include <QtCore/QTranslator>
-#include <QtGui/QGuiApplication>
+#include <QGuiApplication>
+#include <QTextCodec>
+#include <QTranslator>
 #include <string>
 
 #include "base/logging.h"

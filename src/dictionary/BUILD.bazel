@@ -267,8 +267,7 @@ genrule(
     ],
     outs = ["pos_map.inc"],
     cmd = (
-        "$(location :gen_pos_map) " +
-        "--user_pos_file=" +
+        "$(location :gen_pos_map) " + "--user_pos_file=" +
         "$(location //data/rules:user_pos.def) " +
         "--third_party_pos_map_file=" +
         "$(location //data/rules:third_party_pos_map.def) " +
@@ -613,11 +612,8 @@ genrule(
     name = "pos_matcher",
     srcs = ["//data/rules:pos_matcher_rule.def"],
     outs = ["pos_matcher.h"],
-    cmd = (
-        "$(location :gen_pos_matcher_code) " +
-        "--pos_matcher_rule_file=$< " +
-        "--output_pos_matcher_h=$@"
-    ),
+    cmd = ("$(location :gen_pos_matcher_code) " + "--pos_matcher_rule_file=$< " +
+           "--output_pos_matcher_h=$@"),
     exec_tools = [":gen_pos_matcher_code"],
     visibility = [
         "//visibility:private",
@@ -732,7 +728,9 @@ cc_test_mozc(
 py_library_mozc(
     name = "gen_suffix_data_lib",
     srcs = ["gen_suffix_data.py"],
-    deps = ["//build_tools:serialized_string_array_builder"],
+    deps = [
+        "//build_tools:serialized_string_array_builder",
+    ],
 )
 
 py_binary_mozc(
@@ -792,7 +790,10 @@ cc_library_mozc(
         "//data_manager:__subpackages__",
         "//engine:__subpackages__",
     ],
-    deps = ["//base:port"],
+    deps = [
+        "//base:port",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 py_binary_mozc(
@@ -808,8 +809,7 @@ py_binary_mozc(
 genrule(
     name = "zip_code_data",
     srcs = select_mozc(
-        default = [
-        ],
+        default = [],
         oss = [
             "@zip_code_ken_all//:KEN_ALL.CSV",
             "@zip_code_jigyosyo//:JIGYOSYO.CSV",
@@ -817,8 +817,7 @@ genrule(
     ),
     outs = ["zip_code.tsv"],
     cmd = (
-        "$(location :gen_zip_code_seed)" +
-        " --output $@ " + select_mozc(
+        "$(location :gen_zip_code_seed)" + " --output $@ " + select_mozc(
             default = "",
             oss = (" --zip_code $(location @zip_code_ken_all//:KEN_ALL.CSV)" +
                    " --jigyosyo $(location @zip_code_jigyosyo//:JIGYOSYO.CSV)"),

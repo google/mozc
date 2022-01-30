@@ -31,9 +31,9 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
+#endif  // OS_WIN
 
-#include <QtGui/QtGui>
+#include <QtGui>
 
 #include "base/logging.h"
 #include "base/process.h"
@@ -46,7 +46,7 @@
 #ifdef OS_WIN
 #include "base/win_util.h"
 #include "win32/base/imm_util.h"
-#endif
+#endif  // OS_WIN
 
 namespace mozc {
 namespace gui {
@@ -99,7 +99,7 @@ void PostInstallDialog::ApplySettings() {
     flags |= SetupUtil::IMPORT_MSIME_DICTIONARY;
   }
   setuputil_->SetDefaultProperty(flags);
-#else
+#else  // OS_WIN
   // not supported on Mac and Linux
 #endif  // OS_WIN
 }
@@ -109,7 +109,7 @@ void PostInstallDialog::OnsetAsDefaultCheckBoxToggled(int state) {
   // IMEHotKey is only activated when setAsDefaultCheckBox is checked.
   IMEHotKeyDisabledCheckBox->setChecked(state);
   IMEHotKeyDisabledCheckBox->setEnabled(static_cast<bool>(state));
-#endif
+#endif  // OS_WIN
 }
 
 }  // namespace gui

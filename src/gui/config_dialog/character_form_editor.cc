@@ -29,8 +29,8 @@
 
 #include "gui/config_dialog/character_form_editor.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QHeaderView>
+#include <QHeaderView>
+#include <QtGui>
 #include <memory>
 
 #include "config/config_handler.h"
@@ -111,7 +111,7 @@ CharacterFormEditor::CharacterFormEditor(QWidget *parent)
   // grid is basically hidden in mac ui.
   // Please take a look at iTunes.
   setShowGrid(false);
-#endif
+#endif  // __APPLE__
 }
 
 CharacterFormEditor::~CharacterFormEditor() {}

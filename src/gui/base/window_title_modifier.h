@@ -30,9 +30,9 @@
 #ifndef MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_H_
 #define MOZC_GUI_BASE_WINDOW_TITLE_MODIFIER_H_
 
-#include <QtCore/QEvent>
-#include <QtCore/QObject>
-#include <QtCore/QString>
+#include <QEvent>
+#include <QObject>
+#include <QString>
 
 namespace mozc {
 namespace gui {

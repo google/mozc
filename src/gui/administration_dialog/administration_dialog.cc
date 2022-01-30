@@ -29,7 +29,7 @@
 
 #include "gui/administration_dialog/administration_dialog.h"
 
-#include <QtWidgets/QMessageBox>
+#include <QMessageBox>
 
 #include "base/run_level.h"
 #include "config/stats_config_util.h"
@@ -76,7 +76,7 @@ AdministrationDialog::AdministrationDialog()
 
   CacheServiceEnabledcheckBox->setChecked(CacheServiceManager::IsEnabled() ||
                                           CacheServiceManager::IsRunning());
-#endif
+#endif  // OS_WIN
   GuiUtil::ReplaceWidgetLabels(this);
 }
 
@@ -158,7 +158,7 @@ bool AdministrationDialog::eventFilter(QObject *obj, QEvent *event) {
     if (obj == usageStatsMessage) {
 #ifndef CHANNEL_DEV
       usageStatsCheckBox->toggle();
-#endif
+#endif  // CHANNEL_DEV
     }
   }
   return QObject::eventFilter(obj, event);

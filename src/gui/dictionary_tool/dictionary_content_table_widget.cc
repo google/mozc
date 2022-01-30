@@ -29,7 +29,7 @@
 
 #include "gui/dictionary_tool/dictionary_content_table_widget.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
 
 DictionaryContentTableWidget::DictionaryContentTableWidget(QWidget *parent)
     : QTableWidget(parent) {}

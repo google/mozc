@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <QtGui/QGuiApplication>
-#include <QtGui/QtGui>
+#include <QGuiApplication>
+#include <QtGui>
 
 #include "base/system_util.h"
 #include "gui/administration_dialog/administration_dialog.h"

@@ -30,8 +30,8 @@
 #ifndef MOZC_GUI_ADMINISTRATION_DIALOG_ADMINISTRATION_DIALOG_H_
 #define MOZC_GUI_ADMINISTRATION_DIALOG_ADMINISTRATION_DIALOG_H_
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QDialog>
+#include <QDialog>
+#include <QtGui>
 
 #include "gui/administration_dialog/ui_administration_dialog.h"
 

@@ -31,9 +31,9 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#endif
+#endif  // OS_WIN
 
-#include <QtGui/QtGui>
+#include <QtGui>
 #include <memory>
 
 #include "base/logging.h"
@@ -45,7 +45,7 @@
 
 #ifdef OS_WIN
 #include "win32/base/migration_util.h"
-#endif
+#endif  // OS_WIN
 
 namespace mozc {
 namespace gui {
@@ -70,13 +70,13 @@ void SetDefaultDialog::accept() {
   if (!win32::MigrationUtil::LaunchBrokerForSetDefault(dont_ask_again)) {
     LOG(ERROR) << "Failed to set Mozc as the default IME";
   }
-#else
+#else  // OS_WIN
   if (dont_ask_again) {
     if (!SetCheckDefault(false)) {
       LOG(ERROR) << "Failed to set check_default";
     }
   }
-#endif
+#endif  // OS_WIN
   done(QDialog::Accepted);
 }
 

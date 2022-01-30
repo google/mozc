@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
-#include <QtWidgets/QWidget>
+#include <QWidget>
 #include <map>
 #include <memory>
 #include <set>

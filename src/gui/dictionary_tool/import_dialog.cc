@@ -29,8 +29,8 @@
 
 #include "gui/dictionary_tool/import_dialog.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QFileDialog>
+#include <QFileDialog>
+#include <QtGui>
 
 #include "base/util.h"
 #include "dictionary/user_dictionary_importer.h"
@@ -48,7 +48,7 @@ ImportDialog::ImportDialog(QWidget *parent)
 
 #ifdef __APPLE__
   layout()->setContentsMargins(8, 12, 8, 8);
-#endif
+#endif  // __APPLE__
 
   // Initialize combo boxes for lists of IMEs and character encodings.
   ime_combobox_->addItem(
@@ -64,14 +64,14 @@ ImportDialog::ImportDialog(QWidget *parent)
                          static_cast<int>(UserDictionaryImporter::ATOK));
   ime_combobox_->addItem(tr("Kotoeri"),
                          static_cast<int>(UserDictionaryImporter::KOTOERI));
-#else
+#else  // OS_WIN
   ime_combobox_->addItem(tr("Kotoeri"),
                          static_cast<int>(UserDictionaryImporter::KOTOERI));
   ime_combobox_->addItem(tr("ATOK"),
                          static_cast<int>(UserDictionaryImporter::ATOK));
   ime_combobox_->addItem(tr("Microsoft IME"),
                          static_cast<int>(UserDictionaryImporter::MSIME));
-#endif
+#endif  // OS_WIN
 
   encoding_combobox_->addItem(
       tr("Auto detection"),

@@ -43,33 +43,20 @@ TEST(MacUtil, GetSerialNumber) {
 
 #ifndef OS_IOS
 TEST(MacUtil, IsSuppressSuggestionWindow) {
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "", ""));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "", "Test"));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "Test", ""));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "Test", "Test"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("", "Test"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", ""));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Test", "Test"));
 
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "Google", "Google Chrome"));
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "Google", "Safari"));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "Google", "Firefox"));
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google 検索", "Google Chrome"));
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google 検索", "Safari"));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google 検索", "Firefox"));
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google Search", "Google Chrome"));
-  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google Search", "Safari"));
-  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow(
-      "ABC - Google Search", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("Google", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("Google", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google 検索", "Firefox"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Google Chrome"));
+  EXPECT_TRUE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Safari"));
+  EXPECT_FALSE(MacUtil::IsSuppressSuggestionWindow("ABC - Google Search", "Firefox"));
 }
 #endif  // OS_IOS
 

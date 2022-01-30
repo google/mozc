@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_
 
-#include <QtWidgets/QTableWidget>
+#include <QTableWidget>
 #include <memory>
 
 #include "base/port.h"
@@ -63,6 +63,6 @@ class CharacterFormEditor : public QTableWidget {
 
 #if defined UI_CONFIG_DIALOG_H
 using mozc::gui::CharacterFormEditor;
-#endif
+#endif  // UI_CONFIG_DIALOG_H
 
 #endif  // MOZC_GUI_CONFIG_DIALOG_CHARACTER_FORM_EDITOR_H_

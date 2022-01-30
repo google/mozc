@@ -36,8 +36,8 @@
 #include "protocol/commands.pb.h"
 #include "protocol/renderer_style.pb.h"
 #include "renderer/mac/mac_view_util.h"
-#include "renderer/table_layout.h"
 #include "renderer/renderer_style_handler.h"
+#include "renderer/table_layout.h"
 
 using mozc::client::SendCommandInterface;
 using mozc::commands::Candidates;
@@ -66,7 +66,7 @@ using mozc::renderer::mac::MacViewUtil;
 - (id)initWithFrame:(NSRect)frame {
   self = [super initWithFrame:frame];
   if (self) {
-    RendererStyle *style = new(std::nothrow)RendererStyle;
+    RendererStyle *style = new (std::nothrow) RendererStyle;
     if (style) {
       RendererStyleHandler::GetRendererStyle(style);
     }
@@ -88,52 +88,45 @@ using mozc::renderer::mac::MacViewUtil;
 }
 
 #pragma mark drawing
-- (CGFloat)drawRow:(int)row ypos:(CGFloat)ypos draw_flag:(bool)draw_flag{
+- (CGFloat)drawRow:(int)row ypos:(CGFloat)ypos draw_flag:(bool)draw_flag {
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
   const InformationList &usages = candidates_.usages();
   const RendererStyle::TextStyle &title_style = infostyle.title_style();
   const RendererStyle::TextStyle &desc_style = infostyle.description_style();
-  const int title_width = infostyle.window_width() -
-      title_style.left_padding() - title_style.right_padding() -
-      infostyle.window_border() * 2 -
-      infostyle.row_rect_padding() * 2;
-  const int desc_width = infostyle.window_width() -
-      desc_style.left_padding() - desc_style.right_padding() -
-      infostyle.window_border() * 2 -
-      infostyle.row_rect_padding() * 2;
-  const NSSize title_size = NSMakeSize(title_width,1000);
-  const NSSize desc_size = NSMakeSize(desc_width,1000);
+  const int title_width = infostyle.window_width() - title_style.left_padding() -
+                          title_style.right_padding() - infostyle.window_border() * 2 -
+                          infostyle.row_rect_padding() * 2;
+  const int desc_width = infostyle.window_width() - desc_style.left_padding() -
+                         desc_style.right_padding() - infostyle.window_border() * 2 -
+                         infostyle.row_rect_padding() * 2;
+  const NSSize title_size = NSMakeSize(title_width, 1000);
+  const NSSize desc_size = NSMakeSize(desc_width, 1000);
   const Information &info = usages.information(row);
 
-  NSAttributedString *title_string = MacViewUtil::ToNSAttributedString(
-      info.title(), title_style);
-  NSAttributedString *desc_string = MacViewUtil::ToNSAttributedString(
-      info.description(), desc_style);
+  NSAttributedString *title_string = MacViewUtil::ToNSAttributedString(info.title(), title_style);
+  NSAttributedString *desc_string =
+      MacViewUtil::ToNSAttributedString(info.description(), desc_style);
   NSRect title_rect = [title_string boundingRectWithSize:title_size
-                          options:NSStringDrawingUsesLineFragmentOrigin];
+                                                 options:NSStringDrawingUsesLineFragmentOrigin];
   NSRect desc_rect = [desc_string boundingRectWithSize:desc_size
-                         options:NSStringDrawingUsesLineFragmentOrigin];
-  CGFloat height = title_rect.size.height + desc_rect.size.height +
-                   infostyle.row_rect_padding() * 2;
+                                               options:NSStringDrawingUsesLineFragmentOrigin];
+  CGFloat height =
+      title_rect.size.height + desc_rect.size.height + infostyle.row_rect_padding() * 2;
 
   if (!draw_flag) {
     return height;
   }
-  title_rect.origin.x = infostyle.window_border() +
-                        infostyle.row_rect_padding() +
-                        title_style.left_padding();
+  title_rect.origin.x =
+      infostyle.window_border() + infostyle.row_rect_padding() + title_style.left_padding();
   title_rect.origin.y = ypos + infostyle.row_rect_padding();
-  desc_rect.origin.x =  infostyle.window_border() +
-                        infostyle.row_rect_padding() +
-                        desc_style.left_padding();
-  desc_rect.origin.y = ypos + infostyle.row_rect_padding() +
-                       title_rect.size.height;
+  desc_rect.origin.x =
+      infostyle.window_border() + infostyle.row_rect_padding() + desc_style.left_padding();
+  desc_rect.origin.y = ypos + infostyle.row_rect_padding() + title_rect.size.height;
 
   if (usages.has_focused_index() && (row == usages.focused_index())) {
-    NSRect focused_rect = NSMakeRect(infostyle.window_border(), ypos,
-        infostyle.window_width() - infostyle.window_border() * 2,
-        title_rect.size.height + desc_rect.size.height
-         + infostyle.row_rect_padding() * 2);
+    NSRect focused_rect = NSMakeRect(
+        infostyle.window_border(), ypos, infostyle.window_width() - infostyle.window_border() * 2,
+        title_rect.size.height + desc_rect.size.height + infostyle.row_rect_padding() * 2);
     [MacViewUtil::ToNSColor(infostyle.focused_background_color()) set];
     [NSBezierPath fillRect:focused_rect];
     [MacViewUtil::ToNSColor(infostyle.focused_border_color()) set];
@@ -148,30 +141,28 @@ using mozc::renderer::mac::MacViewUtil;
   } else {
     if (title_style.has_background_color()) {
       NSRect rect = NSMakeRect(infostyle.window_border(), ypos,
-          infostyle.window_width() - infostyle.window_border() * 2,
-          title_rect.size.height + infostyle.row_rect_padding());
+                               infostyle.window_width() - infostyle.window_border() * 2,
+                               title_rect.size.height + infostyle.row_rect_padding());
       [MacViewUtil::ToNSColor(title_style.background_color()) set];
       [NSBezierPath fillRect:rect];
     }
     if (desc_style.has_background_color()) {
       NSRect rect = NSMakeRect(infostyle.window_border(),
-          ypos + title_rect.size.height + infostyle.row_rect_padding(),
-          infostyle.window_width() - infostyle.window_border() * 2,
-          desc_rect.size.height + infostyle.row_rect_padding());
+                               ypos + title_rect.size.height + infostyle.row_rect_padding(),
+                               infostyle.window_width() - infostyle.window_border() * 2,
+                               desc_rect.size.height + infostyle.row_rect_padding());
       [MacViewUtil::ToNSColor(desc_style.background_color()) set];
       [NSBezierPath fillRect:rect];
     }
   }
-  [title_string drawWithRect:title_rect
-      options:NSStringDrawingUsesLineFragmentOrigin];
-  [desc_string drawWithRect:desc_rect
-      options:NSStringDrawingUsesLineFragmentOrigin];
+  [title_string drawWithRect:title_rect options:NSStringDrawingUsesLineFragmentOrigin];
+  [desc_string drawWithRect:desc_rect options:NSStringDrawingUsesLineFragmentOrigin];
   return height;
 }
 
 - (NSSize)drawView:(bool)draw_flag {
   if (!candidates_.has_usages()) {
-    return NSMakeSize(0,0);
+    return NSMakeSize(0, 0);
   }
 
   const RendererStyle::InfolistStyle &infostyle = style_->infolist_style();
@@ -180,25 +171,20 @@ using mozc::renderer::mac::MacViewUtil;
   int ypos = infostyle.window_border();
 
   if (draw_flag && infostyle.has_caption_string()) {
-    const RendererStyle::TextStyle &caption_style =
-      infostyle.caption_style();
+    const RendererStyle::TextStyle &caption_style = infostyle.caption_style();
     const int caption_height = infostyle.caption_height();
-    NSAttributedString *caption_string = MacViewUtil::ToNSAttributedString(
-      infostyle.caption_string(), caption_style);
-    NSRect rect = NSMakeRect(infostyle.window_border(),
-      ypos,
-      infostyle.window_width() - infostyle.window_border() * 2,
-      caption_height);
+    NSAttributedString *caption_string =
+        MacViewUtil::ToNSAttributedString(infostyle.caption_string(), caption_style);
+    NSRect rect =
+        NSMakeRect(infostyle.window_border(), ypos,
+                   infostyle.window_width() - infostyle.window_border() * 2, caption_height);
     [MacViewUtil::ToNSColor(infostyle.caption_background_color()) set];
     [NSBezierPath fillRect:rect];
     rect = NSMakeRect(
-      infostyle.window_border() + infostyle.caption_padding()
-      + caption_style.left_padding(),
-      ypos + infostyle.caption_padding(),
-      infostyle.window_width() - infostyle.window_border() * 2,
-      caption_height);
-    [caption_string drawWithRect:rect
-        options:NSStringDrawingUsesLineFragmentOrigin];
+        infostyle.window_border() + infostyle.caption_padding() + caption_style.left_padding(),
+        ypos + infostyle.caption_padding(),
+        infostyle.window_width() - infostyle.window_border() * 2, caption_height);
+    [caption_string drawWithRect:rect options:NSStringDrawingUsesLineFragmentOrigin];
   }
   ypos += infostyle.caption_height();
   for (int i = 0; i < usages.information_size(); ++i) {
@@ -210,11 +196,10 @@ using mozc::renderer::mac::MacViewUtil;
     [MacViewUtil::ToNSColor(infostyle.border_color()) set];
     [NSBezierPath setDefaultLineWidth:infostyle.window_border()];
     [NSBezierPath setDefaultLineJoinStyle:NSMiterLineJoinStyle];
-    [NSBezierPath
-      strokeRect:NSMakeRect(0.5, 0.5, infostyle.window_width() - 1, ypos - 1)];
+    [NSBezierPath strokeRect:NSMakeRect(0.5, 0.5, infostyle.window_width() - 1, ypos - 1)];
   }
 
-  return NSMakeSize(infostyle.window_width(),ypos);
+  return NSMakeSize(infostyle.window_width(), ypos);
 }
 
 - (NSSize)updateLayout {

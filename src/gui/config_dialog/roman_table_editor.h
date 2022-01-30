@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
-#include <QtWidgets/QWidget>
+#include <QWidget>
 #include <memory>
 #include <string>
 

@@ -30,7 +30,7 @@
 #ifndef MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 #define MOZC_RENDERER_QT_QT_WINDOW_MANAGER_H_
 
-#include <QtWidgets/QtWidgets>
+#include <QtWidgets>
 #include <functional>
 #include <memory>
 #include <string>

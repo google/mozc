@@ -30,7 +30,7 @@
 #ifndef MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
 #define MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
 
-#include <QtWidgets/QtWidgets>
+#include <QtWidgets>
 #include <functional>
 
 namespace mozc {

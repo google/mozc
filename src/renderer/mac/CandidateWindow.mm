@@ -32,8 +32,8 @@
 
 #import "CandidateView.h"
 
-#include "base/logging.h"
 #include "base/coordinates.h"
+#include "base/logging.h"
 #include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateWindow.h"
 
@@ -43,33 +43,30 @@ namespace mozc {
 namespace renderer {
 namespace mac {
 
-CandidateWindow::CandidateWindow()
-    : command_sender_(nullptr) {
-}
+CandidateWindow::CandidateWindow() : command_sender_(nullptr) {}
 
-CandidateWindow::~CandidateWindow() {
-}
+CandidateWindow::~CandidateWindow() {}
 
 void CandidateWindow::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
+    client::SendCommandInterface* send_command_interface) {
   DLOG(INFO) << "CandidateWindow::SetSendCommandInterface()";
   command_sender_ = send_command_interface;
 
-  const CandidateView* candidate_view = (CandidateView*) view_;
+  const CandidateView* candidate_view = (CandidateView*)view_;
   [candidate_view setSendCommandInterface:send_command_interface];
 }
 
 void CandidateWindow::InitWindow() {
   RendererBaseWindow::InitWindow();
-  const CandidateView* candidate_view = (CandidateView*) view_;
+  const CandidateView* candidate_view = (CandidateView*)view_;
   [candidate_view setSendCommandInterface:command_sender_];
 }
-const mozc::renderer::TableLayout *CandidateWindow::GetTableLayout() const {
-  const CandidateView* candidate_view = (CandidateView*) view_;
+const mozc::renderer::TableLayout* CandidateWindow::GetTableLayout() const {
+  const CandidateView* candidate_view = (CandidateView*)view_;
   return [candidate_view tableLayout];
 }
 
-void CandidateWindow::SetCandidates(const Candidates &candidates) {
+void CandidateWindow::SetCandidates(const Candidates& candidates) {
   DLOG(INFO) << "CandidateWindow::SetCandidates";
   if (candidates.candidate_size() == 0) {
     return;
@@ -78,14 +75,14 @@ void CandidateWindow::SetCandidates(const Candidates &candidates) {
   if (!window_) {
     InitWindow();
   }
-  CandidateView* candidate_view = (CandidateView*) view_;
+  CandidateView* candidate_view = (CandidateView*)view_;
   [candidate_view setCandidates:&candidates];
   [candidate_view setNeedsDisplay:YES];
   NSSize size = [candidate_view updateLayout];
   ResizeWindow(size.width, size.height);
 }
 
-void CandidateWindow::ResetView(){
+void CandidateWindow::ResetView() {
   DLOG(INFO) << "CandidateWindow::ResetView()";
   view_ = [[CandidateView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)];
 }

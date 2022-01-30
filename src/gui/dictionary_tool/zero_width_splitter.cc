@@ -29,8 +29,8 @@
 
 #include "gui/dictionary_tool/zero_width_splitter.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QSplitter>
+#include <QSplitter>
+#include <QtGui>
 
 void ZeroWidthSplitterHandle::paintEvent(QPaintEvent *event) {
 #ifdef __APPLE__

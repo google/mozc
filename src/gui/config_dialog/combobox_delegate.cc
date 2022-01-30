@@ -29,8 +29,8 @@
 
 #include "gui/config_dialog/combobox_delegate.h"
 
-#include <QtGui/QtGui>
-#include <QtWidgets/QComboBox>
+#include <QComboBox>
+#include <QtGui>
 
 namespace mozc {
 namespace gui {

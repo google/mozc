@@ -30,9 +30,9 @@
 #ifndef MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
 #define MOZC_GUI_CONFIG_DIALOG_KEYBINDING_EDITOR_DELEGATE_H_
 
-#include <QtCore/QModelIndex>
-#include <QtCore/QObject>
-#include <QtWidgets/QItemDelegate>
+#include <QItemDelegate>
+#include <QModelIndex>
+#include <QObject>
 
 namespace mozc {
 namespace gui {

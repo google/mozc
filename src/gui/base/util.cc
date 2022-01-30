@@ -35,14 +35,13 @@
 #define MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #endif  // CHANNEL_DEV && GOOGLE_JAPANESE_INPUT_BUILD
 
-
-#include <QtCore/QObject>
-#include <QtGui/QFont>
-#include <QtGui/QGuiApplication>
-#include <QtGui/QtGui>
-#include <QtWidgets/QAbstractButton>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QStyleFactory>
+#include <QAbstractButton>
+#include <QApplication>
+#include <QFont>
+#include <QGuiApplication>
+#include <QObject>
+#include <QStyleFactory>
+#include <QtGui>
 #include <memory>
 
 #include "base/logging.h"
@@ -92,7 +91,7 @@ std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
   QApplication::setStyle(QStyleFactory::create(QLatin1String("fusion")));
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif
+#endif  // QT_VERSION
 
   // QApplication takes argc as a reference.
   auto app = absl::make_unique<QApplication>(argc, argv);

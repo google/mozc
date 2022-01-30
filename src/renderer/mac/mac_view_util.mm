@@ -27,43 +27,36 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "renderer/mac/mac_view_util.h"
 #include "base/coordinates.h"
 #include "protocol/renderer_style.pb.h"
-#include "renderer/mac/mac_view_util.h"
 
 namespace mozc {
 namespace renderer {
 namespace mac {
 
-NSPoint MacViewUtil::ToNSPoint(const mozc::Point &point) {
-  return NSMakePoint(point.x, point.y);
-}
+NSPoint MacViewUtil::ToNSPoint(const mozc::Point &point) { return NSMakePoint(point.x, point.y); }
 
 mozc::Point MacViewUtil::ToPoint(const NSPoint &nspoint) {
   return mozc::Point(nspoint.x, nspoint.y);
 }
 
-NSSize MacViewUtil::ToNSSize(const mozc::Size &size) {
-  return NSMakeSize(size.width, size.height);
-}
+NSSize MacViewUtil::ToNSSize(const mozc::Size &size) { return NSMakeSize(size.width, size.height); }
 
 mozc::Size MacViewUtil::ToSize(const NSSize &nssize) {
   return mozc::Size(nssize.width, nssize.height);
 }
 
 NSRect MacViewUtil::ToNSRect(const mozc::Rect &rect) {
-  return NSMakeRect(rect.origin.x, rect.origin.y,
-                    rect.size.width, rect.size.height);
+  return NSMakeRect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
 }
 
 mozc::Rect MacViewUtil::ToRect(const NSRect &nsrect) {
   return mozc::Rect(ToPoint(nsrect.origin), ToSize(nsrect.size));
 }
 
-NSSize MacViewUtil::applyTheme(const NSSize &size,
-                               const RendererStyle::TextStyle &style) {
-  return NSMakeSize(size.width + style.left_padding() + style.right_padding(),
-                    size.height);
+NSSize MacViewUtil::applyTheme(const NSSize &size, const RendererStyle::TextStyle &style) {
+  return NSMakeSize(size.width + style.left_padding() + style.right_padding(), size.height);
 }
 
 NSColor *MacViewUtil::MacViewUtil::ToNSColor(
@@ -75,31 +68,25 @@ NSColor *MacViewUtil::MacViewUtil::ToNSColor(
 }
 
 NSAttributedString *MacViewUtil::ToNSAttributedString(const std::string &str,
-    const RendererStyle::TextStyle &style) {
+                                                      const RendererStyle::TextStyle &style) {
   NSString *nsstr = [NSString stringWithUTF8String:str.c_str()];
   NSFont *font;
   if (style.has_font_name()) {
-    font = [NSFont
-          fontWithName:[NSString stringWithUTF8String:style.font_name().c_str()]
-          size:style.font_size()];
+    font = [NSFont fontWithName:[NSString stringWithUTF8String:style.font_name().c_str()]
+                           size:style.font_size()];
   } else {
     font = [NSFont messageFontOfSize:style.font_size()];
   }
   NSDictionary *attr;
   if (style.has_foreground_color()) {
-    attr = [NSDictionary dictionaryWithObjectsAndKeys:font,
-            NSFontAttributeName,
-            ToNSColor(style.foreground_color()),
-            NSForegroundColorAttributeName,
-            nil];
+    attr = [NSDictionary dictionaryWithObjectsAndKeys:font, NSFontAttributeName,
+                                                      ToNSColor(style.foreground_color()),
+                                                      NSForegroundColorAttributeName, nil];
   } else {
-    attr = [NSDictionary dictionaryWithObjectsAndKeys:font,
-            NSFontAttributeName,
-            nil];
+    attr = [NSDictionary dictionaryWithObjectsAndKeys:font, NSFontAttributeName, nil];
   }
   return [[NSAttributedString alloc] initWithString:nsstr attributes:attr];
 }
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer
 }  // namespace mozc
-

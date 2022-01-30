@@ -39,13 +39,13 @@
 #include <imm.h>
 #include <ime.h>
 // clang-format on
-#endif
+#endif  // OS_WIN
 
-#include <QtCore/QString>
-#include <QtWidgets/QMenu>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QTableWidget>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QString>
+#include <QTableWidget>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -145,7 +145,7 @@ const WinVirtualKeyEntry kWinVirtualKeyModifierNonRequiredTable[] = {
     {0x16, "ON"},   // 0x16 = VK_IME_ON
     {0x1A, "OFF"},  // 0x1A = VK_IME_OFF
 };
-#endif
+#endif  // OS_WIN
 
 // On Windows Hiragana/Eisu keys only emits KEY_DOWN event.
 // for these keys we don't handle auto-key repeat.
@@ -154,7 +154,7 @@ bool IsDownOnlyKey(const QKeyEvent &key_event) {
   const DWORD virtual_key = key_event.nativeVirtualKey();
   return (virtual_key == VK_DBE_ALPHANUMERIC ||
           virtual_key == VK_DBE_HIRAGANA || virtual_key == VK_DBE_KATAKANA);
-#else
+#else  // OS_WIN
   return false;
 #endif  // OS_WIN
 }
@@ -247,10 +247,10 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   if (alt_pressed_) {
 #ifdef __APPLE__
     results << QLatin1String("Option");
-#else
+#else  // __APPLE__
     // Do not support and show keybindings with alt for Windows
     // results << "Alt";
-#endif
+#endif  // __APPLE__
   }
 
   const bool has_modifier = !results.isEmpty();
@@ -268,7 +268,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::Encode(QString *result) const {
   if (!unknown_key_.isEmpty()) {
     results << unknown_key_;
   }
-#endif
+#endif  // MOZC_NO_LOGGING
 
   KeyBindingFilter::KeyState result_state = KeyBindingFilter::ACCEPT_KEY;
 
@@ -351,7 +351,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
                        //    case Qt::Key_Control:  Command key
       alt_pressed_ = true;
       return Encode(result);
-#else
+#else  // __APPLE__
     case Qt::Key_Control:
       ctrl_pressed_ = true;
       return Encode(result);
@@ -359,7 +359,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     case Qt::Key_Alt:
       alt_pressed_ = true;
       return Encode(result);
-#endif
+#endif  // __APPLE__
     case Qt::Key_Shift:
       shift_pressed_ = true;
       return Encode(result);
@@ -411,7 +411,7 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
     modifier_non_required_key_ = QLatin1String("Katakana");
     return Encode(result);
   }
-#endif
+#endif  // OS_WIN, OS_LINUX
 
   if (qt_key == Qt::Key_yen) {
     // Japanese Yen mark, treat it as backslash for compatibility
@@ -490,10 +490,10 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
   // the edit is not raised. This might be a bug of setFocusProxy.
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool | Qt::WindowStaysOnTopHint);
-#else
+#else  // OS_LINUX
   setWindowFlags(Qt::WindowSystemMenuHint | Qt::WindowCloseButtonHint |
                  Qt::Tool);
-#endif
+#endif  // OS_LINUX
 
   QPushButton *ok_button =
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
@@ -509,7 +509,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
 
 #ifdef OS_WIN
   ::ImmAssociateContext(reinterpret_cast<HWND>(KeyBindingLineEdit->winId()), 0);
-#endif
+#endif  // OS_WIN
 
   QObject::connect(KeyBindingEditorbuttonBox,
                    SIGNAL(clicked(QAbstractButton *)), this,

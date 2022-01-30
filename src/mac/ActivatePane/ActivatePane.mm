@@ -33,20 +33,16 @@
 #import <Foundation/Foundation.h>
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
-static const unsigned char kInstalledLocation[] =
-    "/Library/Input Methods/GoogleJapaneseInput.app";
+static const unsigned char kInstalledLocation[] = "/Library/Input Methods/GoogleJapaneseInput.app";
 static NSString *kLaunchdPlistFiles[] = {
-  @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
-  @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist",
-  nil};
+    @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Converter.plist",
+    @"/Library/LaunchAgents/com.google.inputmethod.Japanese.Renderer.plist", nil};
 static NSString *const kSourceID = @"com.google.inputmethod.Japanese";
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
-static const unsigned char kInstalledLocation[] =
-    "/Library/Input Methods/Mozc.app";
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
+static const unsigned char kInstalledLocation[] = "/Library/Input Methods/Mozc.app";
 static NSString *kLaunchdPlistFiles[] = {
-  @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
-  @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist",
-  nil};
+    @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
+    @"/Library/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist", nil};
 static NSString *const kSourceID = @"org.mozc.inputmethod.Japanese";
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
@@ -64,10 +60,9 @@ static void RegisterGoogleJapaneseInput() {
 static void ActivateGoogleJapaneseInput() {
   CFArrayRef sourceList = TISCreateInputSourceList(nullptr, true);
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
-    TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
-        sourceList, i));
-    NSString *sourceID = (__bridge NSString *)(TISGetInputSourceProperty(
-        inputSource, kTISPropertyInputSourceID));
+    TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(sourceList, i));
+    NSString *sourceID =
+        (__bridge NSString *)(TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID));
     if ([sourceID isEqualToString:kSourceID]) {
       TISEnableInputSource(inputSource);
       TISSelectInputSource(inputSource);
@@ -81,10 +76,8 @@ static void LoadLaunchdPlistFiles() {
   int i = 0;
   for (; kLaunchdPlistFiles[i] != nil; ++i) {
     NSArray *arguments =
-        [NSArray arrayWithObjects:@"load", @"-S", @"Aqua",
-                 kLaunchdPlistFiles[i], nil];
-    NSTask *task = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl"
-                                            arguments:arguments];
+        [NSArray arrayWithObjects:@"load", @"-S", @"Aqua", kLaunchdPlistFiles[i], nil];
+    NSTask *task = [NSTask launchedTaskWithLaunchPath:@"/bin/launchctl" arguments:arguments];
     [task waitUntilExit];
   }
 }
@@ -96,15 +89,14 @@ static BOOL IsAlreadyActive() {
   BOOL isActive = NO;
   CFArrayRef sourceList = TISCreateInputSourceList(nullptr, true);
   for (int i = 0; i < CFArrayGetCount(sourceList); ++i) {
-    TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(
-        sourceList, i));
-    NSString *sourceID = (__bridge NSString *)(TISGetInputSourceProperty(
-        inputSource, kTISPropertyInputSourceID));
+    TISInputSourceRef inputSource = (TISInputSourceRef)(CFArrayGetValueAtIndex(sourceList, i));
+    NSString *sourceID =
+        (__bridge NSString *)(TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID));
     if ([sourceID isEqualToString:kSourceID]) {
-      CFBooleanRef isEnabled = (CFBooleanRef)(TISGetInputSourceProperty(
-          inputSource, kTISPropertyInputSourceIsEnabled));
-      CFBooleanRef isSelected = (CFBooleanRef)(TISGetInputSourceProperty(
-          inputSource, kTISPropertyInputSourceIsEnabled));
+      CFBooleanRef isEnabled =
+          (CFBooleanRef)(TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceIsEnabled));
+      CFBooleanRef isSelected =
+          (CFBooleanRef)(TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceIsEnabled));
       if (CFBooleanGetValue(isEnabled) || CFBooleanGetValue(isSelected)) {
         isActive = YES;
         break;
@@ -125,8 +117,8 @@ static BOOL HasUsageStatsDB() {
 #elif defined(CHANNEL_DEV)
   return YES;
 #endif  // CHANNEL_DEV
-  NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
-      NSLibraryDirectory, NSUserDomainMask, YES);
+  NSArray *libraryPaths =
+      NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
   NSFileManager *fileManager = [NSFileManager defaultManager];
   NSString *libraryPath = nil;
   NSString *usageStatsDBPath = nil;
@@ -135,11 +127,9 @@ static BOOL HasUsageStatsDB() {
     return NO;
   }
   libraryPath = [libraryPaths objectAtIndex:0];
-  usageStatsDBPath =
-      [[[[libraryPath stringByAppendingPathComponent:@"Application Support"]
-          stringByAppendingPathComponent:@"Google"]
-        stringByAppendingPathComponent:@"JapaneseInput"]
-        stringByAppendingPathComponent:@".usagestats.db"];
+  usageStatsDBPath = [[[[libraryPath stringByAppendingPathComponent:@"Application Support"]
+      stringByAppendingPathComponent:@"Google"] stringByAppendingPathComponent:@"JapaneseInput"]
+      stringByAppendingPathComponent:@".usagestats.db"];
   exists = [fileManager fileExistsAtPath:usageStatsDBPath];
   return exists;
 }
@@ -151,8 +141,8 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
 #ifndef GOOGLE_JAPANESE_INPUT_BUILD
   return NO;
 #endif  // !GOOGLE_JAPANESE_INPUT_BUILD
-  NSArray *libraryPaths = NSSearchPathForDirectoriesInDomains(
-      NSLibraryDirectory, NSUserDomainMask, YES);
+  NSArray *libraryPaths =
+      NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
   NSFileManager *fileManager = [NSFileManager defaultManager];
   NSString *libraryPath = nil;
   NSString *googlePath = nil;
@@ -163,9 +153,8 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   }
 
   libraryPath = [libraryPaths objectAtIndex:0];
-  googlePath =
-      [[libraryPath stringByAppendingPathComponent:@"Application Support"]
-        stringByAppendingPathComponent:@"Google"];
+  googlePath = [[libraryPath stringByAppendingPathComponent:@"Application Support"]
+      stringByAppendingPathComponent:@"Google"];
   if (![fileManager fileExistsAtPath:googlePath]) {
     NSDictionary *defaultAttributes =
         [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:0755]
@@ -178,8 +167,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     }
   }
 
-  japaneseInputPath =
-      [googlePath stringByAppendingPathComponent:@"JapaneseInput"];
+  japaneseInputPath = [googlePath stringByAppendingPathComponent:@"JapaneseInput"];
   if (![fileManager fileExistsAtPath:japaneseInputPath]) {
     NSDictionary *japaneseInputAttributes =
         [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:0700]
@@ -192,8 +180,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     }
   }
 
-  usageStatsDBPath =
-      [japaneseInputPath stringByAppendingPathComponent:@".usagestats.db"];
+  usageStatsDBPath = [japaneseInputPath stringByAppendingPathComponent:@".usagestats.db"];
   if (![fileManager fileExistsAtPath:usageStatsDBPath]) {
     // The value of usage stats is a 32-bit int and 1 means "sending
     // the usage stats to Google".
@@ -202,8 +189,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
         [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:0400]
                                     forKey:NSFilePosixPermissions];
     if ([fileManager createFileAtPath:usageStatsDBPath
-                             contents:[NSData dataWithBytes:&sending
-                                                     length:4]
+                             contents:[NSData dataWithBytes:&sending length:4]
                            attributes:usageStatsDBAttributes]) {
       return YES;
     }
@@ -270,8 +256,7 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
   }
 
   // Button label for "do not activate"
-  NSString *doNotActivateLabel =
-      [self localizedStringForKey:@"doNotActivateLabel"];
+  NSString *doNotActivateLabel = [self localizedStringForKey:@"doNotActivateLabel"];
   if (doNotActivateLabel) {
     [_doNotActivateCell setTitle:doNotActivateLabel];
   }
@@ -280,10 +265,9 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
 #ifndef GOOGLE_JAPANESE_INPUT_BUILD
   [_putUsageStatsDB removeFromSuperview];
   [_putUsageStatsDBMessage removeFromSuperview];
-#else  // GOOGLE_JAPANESE_INPUT_BUILD
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   if (!_hasUsageStatsDB) {
-    NSString *usageStatsMessage =
-        [self localizedStringForKey:@"usageStatsMessage"];
+    NSString *usageStatsMessage = [self localizedStringForKey:@"usageStatsMessage"];
     if (usageStatsMessage) {
       [_putUsageStatsDBMessage setStringValue:usageStatsMessage];
     }
@@ -306,12 +290,10 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
     LoadLaunchdPlistFiles();
   }
 
-  if (!_alreadyActivated &&
-      dir == InstallerDirectionForward) {
+  if (!_alreadyActivated && dir == InstallerDirectionForward) {
     // Make the package visible from i18n system preference
     RegisterGoogleJapaneseInput();
-    if ([_activateCell state] == NSOnState &&
-        [_doNotActivateCell state] == NSOffState) {
+    if ([_activateCell state] == NSOnState && [_doNotActivateCell state] == NSOffState) {
       // means clicks "next page" when "activate" menu is on
       ActivateGoogleJapaneseInput();
       _alreadyActivated = YES;
@@ -323,7 +305,6 @@ static BOOL StoreDefaultConfigWithSendingUsageStats() {
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
   }
 }
-
 
 - (NSString *)localizedStringForKey:(NSString *)key {
   NSBundle *bundle = [NSBundle bundleForClass:[self class]];

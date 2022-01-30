@@ -42,18 +42,15 @@ namespace {
 void InitializeServer() {
   NSBundle *bundle = [NSBundle mainBundle];
   NSDictionary *infoDictionary = [bundle infoDictionary];
-  NSString *connectionName =
-      [infoDictionary objectForKey:@"InputMethodConnectionName"];
-  if (connectionName == nil ||
-      ![connectionName isKindOfClass:[NSString class]]) {
+  NSString *connectionName = [infoDictionary objectForKey:@"InputMethodConnectionName"];
+  if (connectionName == nil || ![connectionName isKindOfClass:[NSString class]]) {
     LOG(ERROR) << "InputMethodConnectionName is not found or incorrect. "
                << "Possibly Info.plist is broken.";
     return;
   }
 
-  g_imkServer = [[GoogleJapaneseInputServer alloc]
-                   initWithName:connectionName
-               bundleIdentifier:[bundle bundleIdentifier]];
+  g_imkServer = [[GoogleJapaneseInputServer alloc] initWithName:connectionName
+                                               bundleIdentifier:[bundle bundleIdentifier]];
   [g_imkServer registerRendererConnection];
 }
 absl::once_flag gOnceForServer;
@@ -61,7 +58,7 @@ absl::once_flag gOnceForServer;
 
 @implementation GoogleJapaneseInputServer
 - (BOOL)registerRendererConnection {
-  NSString *connectionName = @ kProductPrefix "_Renderer_Connection";
+  NSString *connectionName = @kProductPrefix "_Renderer_Connection";
   renderer_conection_ = [[NSConnection alloc] init];
   [renderer_conection_ setRootObject:g_imkServer];
   return [renderer_conection_ registerName:connectionName];

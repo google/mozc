@@ -30,7 +30,7 @@
 #ifndef MOZC_GUI_BASE_TABLE_UTIL_H_
 #define MOZC_GUI_BASE_TABLE_UTIL_H_
 
-#include <QtCore/QString>
+#include <QString>
 
 class QTableWidget;
 

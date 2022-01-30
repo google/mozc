@@ -29,7 +29,7 @@
 
 #include "gui/about_dialog/about_dialog.h"
 
-#include <QtGui/QtGui>
+#include <QtGui>
 #include <string>
 
 #include "base/file_util.h"
@@ -67,7 +67,7 @@ QString ReplaceString(const QString &str) {
   Replace(replaced, "[ForumUrl]",
           "https://support.google.com/gboard/community?hl=ja");
   Replace(replaced, "[ForumName]", QObject::tr("product forum"));
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
   Replace(replaced, "[ProductUrl]", "https://github.com/google/mozc");
   Replace(replaced, "[ForumUrl]", "https://github.com/google/mozc/issues");
   Replace(replaced, "[ForumName]", QObject::tr("issues"));

@@ -105,14 +105,13 @@ constexpr char kUserDictionary0[] =
 
 constexpr char kUserDictionary1[] = "end\tend\tverb\n";
 
-void PushBackToken(const std::string &key, const std::string &value,
-                   uint16_t id, std::vector<UserPos::Token> *tokens) {
+void PushBackToken(absl::string_view key, absl::string_view value, uint16_t id,
+                   std::vector<UserPos::Token> *tokens) {
   tokens->resize(tokens->size() + 1);
   UserPos::Token *t = &tokens->back();
-  t->key = key;
-  t->value = value;
+  t->key = std::string(key);
+  t->value = std::string(value);
   t->id = id;
-  t->cost = 0;
 }
 
 // This class is a mock class for writing unit tests of a class that
@@ -129,7 +128,7 @@ class UserPosMock : public UserPosInterface {
   ~UserPosMock() override = default;
 
   // This method returns true if the given pos is "noun" or "verb".
-  bool IsValidPos(const std::string &pos) const override { return true; }
+  bool IsValidPos(absl::string_view pos) const override { return true; }
 
   static const char *kNoun;
   static const char *kVerb;
@@ -146,8 +145,8 @@ class UserPosMock : public UserPosInterface {
   //  verb (base form) | 200 | 200
   //  verb (-ed form)  | 210 | 210
   //  verb (-ing form) | 220 | 220
-  bool GetTokens(const std::string &key, const std::string &value,
-                 const std::string &pos, const std::string &locale,
+  bool GetTokens(absl::string_view key, absl::string_view value,
+                 absl::string_view pos, absl::string_view locale,
                  std::vector<UserPos::Token> *tokens) const override {
     if (key.empty() || value.empty() || pos.empty() || tokens == nullptr) {
       return false;
@@ -159,8 +158,10 @@ class UserPosMock : public UserPosInterface {
       return true;
     } else if (pos == kVerb) {
       PushBackToken(key, value, 200, tokens);
-      PushBackToken(key + "ed", value + "ed", 210, tokens);
-      PushBackToken(key + "ing", value + "ing", 220, tokens);
+      PushBackToken(absl::StrCat(key, "ed"), absl::StrCat(value, "ed"), 210,
+                    tokens);
+      PushBackToken(absl::StrCat(key, "ing"), absl::StrCat(value, "ing"), 220,
+                    tokens);
       return true;
     } else {
       return false;
@@ -169,7 +170,7 @@ class UserPosMock : public UserPosInterface {
 
   void GetPosList(std::vector<std::string> *pos_list) const override {}
 
-  bool GetPosIds(const std::string &pos, uint16_t *id) const override {
+  bool GetPosIds(absl::string_view pos, uint16_t *id) const override {
     return false;
   }
 };
@@ -542,6 +543,55 @@ TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {
   TestLookupExactHelper(kExpected1, std::size(kExpected1), "key", 3, *user_dic);
 }
 
+TEST_F(UserDictionaryTest, TestLookupWighShortCut) {
+  std::unique_ptr<UserDictionary> user_dic(CreateDictionary());
+  user_dic->WaitForReloader();
+
+  // Create dictionary
+  const std::string filename =
+      FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "shortcut_test.db");
+  EXPECT_OK(FileUtil::UnlinkIfExists(filename));
+  UserDictionaryStorage storage(filename);
+  {
+    uint64_t id = 0;
+    // Creates the shortcut dictionary.
+    EXPECT_TRUE(storage.CreateDictionary(
+        "__auto_imported_android_shortcuts_dictionary", &id));
+    UserDictionaryStorage::UserDictionary *dic =
+        storage.GetProto().mutable_dictionaries(0);
+
+    // "名詞"
+    UserDictionaryStorage::UserDictionaryEntry *entry = dic->add_entries();
+    entry->set_key("key");
+    entry->set_value("noun");
+    entry->set_pos(user_dictionary::UserDictionary::NOUN);
+
+    // SUGGESTION ONLY word is handled as SHORTCUT word.
+    entry = dic->add_entries();
+    entry->set_key("key");
+    entry->set_value("suggest_only");
+    entry->set_pos(user_dictionary::UserDictionary::SUGGESTION_ONLY);
+
+    user_dic->Load(storage.GetProto());
+  }
+
+  // shortcut words are looked up.
+  const testing::MockDataManager mock_data_manager;
+  const dictionary::PosMatcher pos_matcher(
+      mock_data_manager.GetPosMatcherData());
+  const uint16_t kNounId = pos_matcher.GetGeneralNounId();
+  const uint16_t kUnknownId = pos_matcher.GetUnknownId();
+  const Entry kExpected2[] = {
+      {"key", "noun", kNounId, kNounId},
+      {"key", "suggest_only", kUnknownId, kUnknownId},
+  };
+  TestLookupExactHelper(kExpected2, std::size(kExpected2), "key", 3, *user_dic);
+  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "ke",
+                             *user_dic);
+  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "keykey", 3,
+                         *user_dic);
+}
+
 TEST_F(UserDictionaryTest, IncognitoModeTest) {
   config_.set_incognito_mode(true);
   std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
@@ -845,6 +895,89 @@ TEST_F(UserDictionaryTest, LookupComment) {
   EXPECT_TRUE(LookupComment(*dic, "mismatching_key", "comment_value4").empty());
 }
 
+TEST_F(UserDictionaryTest, TestPopulateTokenFromUserPosToken) {
+  std::unique_ptr<UserDictionary> dic(CreateDictionaryWithMockPos());
+  dic->WaitForReloader();
+
+  const testing::MockDataManager mock_data_manager;
+  const dictionary::PosMatcher pos_matcher(
+      mock_data_manager.GetPosMatcherData());
+
+  UserPosInterface::Token user_token;
+  user_token.key = "key";
+  user_token.value = "value";
+  user_token.id = 10;
+
+  Token token;
+
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.key, "key");
+  EXPECT_EQ(token.value, "value");
+  EXPECT_EQ(token.lid, 10);
+  EXPECT_EQ(token.rid, 10);
+  EXPECT_EQ(token.cost, 5000);
+  EXPECT_EQ(token.attributes, Token::USER_DICTIONARY);
+
+  user_token.add_attribute(UserPos::Token::NON_JA_LOCALE);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 10000);
+
+  user_token.attributes = 0;
+  user_token.add_attribute(UserPos::Token::ISOLATED_WORD);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 200);
+
+  user_token.attributes = 0;
+  user_token.add_attribute(UserPos::Token::SUGGESTION_ONLY);
+  dic->PopulateTokenFromUserPosToken(
+      user_token, UserDictionary::UserDictionary::PREFIX, &token);
+  EXPECT_EQ(token.lid, pos_matcher.GetUnknownId());
+  EXPECT_EQ(token.rid, pos_matcher.GetUnknownId());
+  EXPECT_EQ(token.cost, 5000);
+
+  user_token.attributes = 0;
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREDICTIVE,
+                                     &token);
+  EXPECT_EQ(token.lid, pos_matcher.GetUnknownId());
+  EXPECT_EQ(token.rid, pos_matcher.GetUnknownId());
+  EXPECT_EQ(token.cost, 5000);
+
+  user_token.attributes = 0;
+
+  user_token.key = "a";  // one char
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 5000 + 2000 * 3);
+
+  user_token.key = "aa";
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 5000 + 2000 * 2);
+
+  user_token.key = "aaa";
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 5000 + 2000);
+
+  user_token.key = "aaaa";
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 5000);
+
+  user_token.key = "aaaaaaa";
+  user_token.add_attribute(UserPos::Token::SHORTCUT);
+  dic->PopulateTokenFromUserPosToken(user_token, UserDictionary::PREFIX,
+                                     &token);
+  EXPECT_EQ(token.cost, 5000);
+}
 }  // namespace
 }  // namespace dictionary
 }  // namespace mozc

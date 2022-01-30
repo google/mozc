@@ -37,8 +37,8 @@
 #include "base/logging.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
-#include "renderer/mac/mac_server_send_command.h"
 #include "renderer/mac/CandidateController.h"
+#include "renderer/mac/mac_server_send_command.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -46,23 +46,18 @@ namespace renderer {
 namespace mac {
 
 namespace {
-OSStatus EventHandler(EventHandlerCallRef handlerCallRef,
-                      EventRef carbonEvent,
-                      void *userData) {
+OSStatus EventHandler(EventHandlerCallRef handlerCallRef, EventRef carbonEvent, void *userData) {
   MacServer *server = reinterpret_cast<MacServer *>(userData);
   server->RunExecCommand();
   return noErr;
 }
 }
 
-MacServer::MacServer(int argc, const char **argv)
-    : argc_(argc),
-      argv_(argv) {
+MacServer::MacServer(int argc, const char **argv) : argc_(argc), argv_(argv) {
   pthread_cond_init(&event_, nullptr);
   EventHandlerUPP handler = ::NewEventHandlerUPP(EventHandler);
-  EventTypeSpec spec[] = { { kEventClassApplication, 0 } };
-  ::InstallEventHandler(GetApplicationEventTarget(), handler,
-                        arraysize(spec), spec, this, nullptr);
+  EventTypeSpec spec[] = {{kEventClassApplication, 0}};
+  ::InstallEventHandler(GetApplicationEventTarget(), handler, arraysize(spec), spec, this, nullptr);
 }
 
 bool MacServer::AsyncExecCommand(std::string *proto_message) {
@@ -74,8 +69,7 @@ bool MacServer::AsyncExecCommand(std::string *proto_message) {
   delete proto_message;
 
   EventRef event_ref = nullptr;
-  ::CreateEvent(nullptr, kEventClassApplication, 0, 0,
-              kEventAttributeNone, &event_ref);
+  ::CreateEvent(nullptr, kEventClassApplication, 0, 0, kEventAttributeNone, &event_ref);
   ::PostEventToQueue(::GetMainEventQueue(), event_ref, kEventPriorityHigh);
   ::ReleaseEvent(event_ref);
 
@@ -102,9 +96,7 @@ int MacServer::StartMessageLoop() {
   return 0;
 }
 
-void MacServer::Init() {
-  NSApplicationLoad();
-}
+void MacServer::Init() { NSApplicationLoad(); }
 }  // namespace mozc::renderer::mac
 }  // namespace mozc::renderer
 }  // namespace mozc

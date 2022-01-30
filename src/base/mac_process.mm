@@ -48,13 +48,13 @@ bool MacProcess::OpenBrowserForMac(const std::string &url) {
     // for making URL from "file://...", use fileURLWithPath
     const std::string filepath = url.substr(strlen(kFileSchema));
     NSString *nsStr = [[NSString alloc] initWithBytes:filepath.data()
-                                        length:filepath.size()
-                                        encoding:NSUTF8StringEncoding];
+                                               length:filepath.size()
+                                             encoding:NSUTF8StringEncoding];
     nsURL = [NSURL fileURLWithPath:nsStr];
   } else {
     NSString *nsStr = [[NSString alloc] initWithBytes:url.data()
-                                        length:url.size()
-                                        encoding:NSUTF8StringEncoding];
+                                               length:url.size()
+                                             encoding:NSUTF8StringEncoding];
     nsURL = [NSURL URLWithString:nsStr];
   }
   if (nsURL) {
@@ -67,15 +67,14 @@ bool MacProcess::OpenBrowserForMac(const std::string &url) {
 
 bool MacProcess::OpenApplication(const std::string &path) {
   NSString *nsStr = [[NSString alloc] initWithBytes:path.data()
-                                      length:path.size()
-                                      encoding:NSUTF8StringEncoding];
+                                             length:path.size()
+                                           encoding:NSUTF8StringEncoding];
   [[NSWorkspace sharedWorkspace] launchApplication:nsStr];
   return true;
 }
 
 namespace {
-bool LaunchMozcToolInternal(const std::string &tool_name,
-                            const std::string &error_type) {
+bool LaunchMozcToolInternal(const std::string &tool_name, const std::string &error_type) {
   // FLAGS_error_type is used where FLAGS_mode is "error_message_dialog".
   setenv("FLAGS_error_type", error_type.c_str(), 1);
 
@@ -98,8 +97,7 @@ bool LaunchMozcToolInternal(const std::string &tool_name,
   }
 
   // The Mozc Tool apps reside in the same directory where the mozc server does.
-  NSString *toolAppPath =
-      [NSString stringWithUTF8String:MacUtil::GetServerDirectory().c_str()];
+  NSString *toolAppPath = [NSString stringWithUTF8String:MacUtil::GetServerDirectory().c_str()];
 
   if (appName != nil) {
     toolAppPath = [toolAppPath stringByAppendingPathComponent:appName];
@@ -107,12 +105,10 @@ bool LaunchMozcToolInternal(const std::string &tool_name,
     // Otherwise, we tries to invoke the application by settings FLAGS_mode.
     // use --fromenv option to specify tool name
     setenv("FLAGS_mode", tool_name.c_str(), 1);
-    toolAppPath = [toolAppPath
-                   stringByAppendingPathComponent:@ kProductPrefix "Tool.app"];
+    toolAppPath = [toolAppPath stringByAppendingPathComponent:@kProductPrefix "Tool.app"];
   }
 
-  bool succeeded =
-      [[NSWorkspace sharedWorkspace] launchApplication:toolAppPath];
+  bool succeeded = [[NSWorkspace sharedWorkspace] launchApplication:toolAppPath];
   return succeeded;
 }
 }  // namespace
