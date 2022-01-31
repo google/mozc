@@ -4,14 +4,15 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
+# Dmitry <dmitrydmitry761@gmail.com>, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-12-30 02:39+0000\n"
+"POT-Creation-Date: 2022-01-31 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>, 2017\n"
+"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2022\n"
 "Language-Team: Russian (https://www.transifex.com/fcitx/teams/12005/ru/)\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -23,19 +24,19 @@ msgstr ""
 
 #: mozc_engine.h:84 mozc_engine.cc:196
 msgid "About Mozc"
-msgstr ""
+msgstr "О Mozc"
 
 #: mozc_engine.h:82 mozc_engine.cc:189
 msgid "Add Word"
-msgstr ""
+msgstr "Добавить слово"
 
 #: mozc_engine.h:48
 msgid "Always"
-msgstr ""
+msgstr "Всегда"
 
 #: mozc_engine.cc:96
 msgid "Composition Mode"
-msgstr ""
+msgstr "Композиционный режим"
 
 #: mozc_engine.h:78 mozc_engine.cc:173
 msgid "Configuration Tool"
@@ -47,79 +48,81 @@ msgstr "Инструмент словаря"
 
 #: mozc_engine.h:51 mozc_engine.cc:52
 msgid "Direct"
-msgstr ""
+msgstr "Непосредственный"
 
 #: mozc_engine.h:69
 msgid "Expand Usage (Requires vertical candidate list)"
-msgstr ""
+msgstr "Развернуть использование (требуется вертикальный список кандидатов)"
 
 #: mozc_engine.h:73
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
 msgstr ""
+"Зафиксировать встроенный курсор предварительного редактирования в начале "
+"предварительного редактирования."
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:53 mozc_engine.cc:82
 msgid "Full ASCII"
-msgstr ""
+msgstr "Полная ASCII"
 
 #. Katakana letter A.
 #: mozc_engine.h:52 mozc_engine.cc:66
 msgid "Full Katakana"
-msgstr ""
+msgstr "Полная Катакана"
 
 #: mozc_engine.h:52 mozc_engine.cc:74
 msgid "Half ASCII"
-msgstr ""
+msgstr "Половинная ASCII"
 
 #. Half width Katakana letter A.
 #: mozc_engine.h:53 mozc_engine.cc:89
 msgid "Half Katakana"
-msgstr ""
+msgstr "Половинная Катакана"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_engine.h:51 mozc_engine.cc:59
 msgid "Hiragana"
-msgstr ""
+msgstr "Хирагана"
 
 #: mozc_engine.h:49
 msgid "Hotkey"
-msgstr ""
+msgstr "Горячая клавиша"
 
 #: mozc_engine.h:75
 msgid "Hotkey to expand usage"
-msgstr ""
+msgstr "Горячая клавиша для расширения использования"
 
 #: mozc_engine.h:63
 msgid "Initial Mode"
-msgstr ""
+msgstr "Начальный режим"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
-msgstr ""
+msgstr "Японский метод ввода на основе Mozc"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
-msgstr ""
+msgstr "Mozc для Fcitx 5"
 
 #: mozc_engine.h:48
 msgid "On Focus"
-msgstr ""
+msgstr "В фокусе"
 
 #. We don't have a good library option for this, just do the simple
 #. replace. absl's runtime parsed format string is too copmlex.
 #: mozc_response_parser.cc:175
 #, c-format
 msgid "Press %s to show usages."
-msgstr ""
+msgstr "Нажмите %s , чтобы показать использование."
 
 #: mozc_state.cc:405
 msgid "Press Escape to go back"
-msgstr ""
+msgstr "Нажмите Escape, чтобы вернуться назад"
 
 #: mozc_engine.cc:159 mozc_engine.cc:160
 msgid "Tool"
-msgstr ""
+msgstr "Инструмент"
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
-msgstr ""
+msgstr "Вертикальный список кандидатов"
