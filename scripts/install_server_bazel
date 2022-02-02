@@ -1,0 +1,8 @@
+#!/bin/sh
+
+PREFIX="${PREFIX:-/usr}"
+
+install -D -m 755 "bazel-bin/server/mozc_server" "${PREFIX}/lib/mozc/mozc_server"
+install -D -m 755 "bazel-bin/gui/tool/mozc_tool"   "${PREFIX}/lib/mozc/mozc_tool"
+install -d "${PREFIX}/share/doc/mozc/"
+install -m 644 data/installer/*.html "${PREFIX}/share/doc/mozc/"

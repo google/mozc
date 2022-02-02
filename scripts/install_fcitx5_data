@@ -1,0 +1,22 @@
+#!/bin/sh
+
+PREFIX="${PREFIX:-/usr}"
+
+for pofile in unix/fcitx5/po/*.po
+do
+    filename=`basename $pofile`
+    lang=${filename/.po/}
+    mofile=${pofile/.po/.mo}
+    msgfmt $pofile -o $mofile
+    install -D -m 644 "$mofile" "${PREFIX}/share/locale/$lang/LC_MESSAGES/fcitx5-mozc.mo"
+    rm -f $mofile
+done
+
+install -D -m 644 unix/fcitx5/mozc-addon.conf "${PREFIX}/share/fcitx5/addon/mozc.conf"
+install -D -m 644 unix/fcitx5/mozc.conf "${PREFIX}/share/fcitx5/inputmethod/mozc.conf"
+
+PREFIX="${PREFIX}" ../scripts/install_fcitx5_icons
+
+msgfmt --xml -d unix/fcitx5/po/ --template unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in -o unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml
+install -Dm644 unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml "${PREFIX}/share/metainfo/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml"
+rm -f unix/fcitx5/org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml

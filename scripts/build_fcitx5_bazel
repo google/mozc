@@ -1,0 +1,3 @@
+#!/bin/sh
+
+bazel build -c opt --copt=-fPIC  --config oss_linux  unix/fcitx5:fcitx5-mozc.so server:mozc_server gui/tool:mozc_tool
