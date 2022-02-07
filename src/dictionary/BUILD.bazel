@@ -247,6 +247,7 @@ py_library_mozc(
     srcs = ["gen_pos_map.py"],
     deps = [
         "//build_tools:code_generator_util",
+        "//third_party/py/six",
     ],
 )
 
@@ -256,6 +257,7 @@ py_binary_mozc(
     deps = [
         ":gen_pos_map_lib",
         "//build_tools:code_generator_util",
+        "//third_party/py/six",
     ],
 )
 
@@ -595,6 +597,7 @@ py_library_mozc(
     srcs = ["gen_pos_matcher_code.py"],
     deps = [
         ":pos_util",
+        "//third_party/py/six",
     ],
 )
 
@@ -803,7 +806,7 @@ py_binary_mozc(
         "zip_code_util.py",
     ],
     visibility = ["//train/zip_code:__subpackages__"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 genrule(

@@ -672,7 +672,7 @@ py_library_mozc(
     name = "gen_boundary_data_lib",
     srcs = ["gen_boundary_data.py"],
     visibility = ["//visibility:private"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 py_binary_mozc(

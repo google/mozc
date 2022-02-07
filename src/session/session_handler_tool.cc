@@ -363,6 +363,28 @@ const Output &SessionHandlerInterpreter::LastOutput() const {
   return *last_output_;
 }
 
+const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
+    const absl::string_view value) {
+  const Output &output = LastOutput();
+
+  for (const CandidateWord &candidate :
+       output.all_candidate_words().candidates()) {
+    if (candidate.value() == value) {
+      return candidate;
+    }
+  }
+
+  for (const CandidateWord &candidate :
+       output.removed_candidate_words_for_debug().candidates()) {
+    if (candidate.value() == value) {
+      return candidate;
+    }
+  }
+
+  static CandidateWord *fallback_candidate = new CandidateWord;
+  return *fallback_candidate;
+}
+
 bool SessionHandlerInterpreter::GetCandidateIdByValue(
     const absl::string_view value, uint32_t *id) {
   const Output &output = LastOutput();

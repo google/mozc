@@ -62,13 +62,14 @@ py_test(
     deps = [
         ":replace_macros_lib",
         "//testing/pybase",
+        "//third_party/py/six",
     ],
 )
 
 py_library_mozc(
     name = "code_generator_util",
     srcs = ["code_generator_util.py"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
@@ -81,6 +82,7 @@ py_test(
     deps = [
         ":code_generator_util",
         "//testing/pybase",
+        "//third_party/py/six",
     ],
 )
 
@@ -118,7 +120,7 @@ py_binary_mozc(
 py_library_mozc(
     name = "util",
     srcs = ["util.py"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 py_library_mozc(
@@ -146,7 +148,7 @@ py_binary_mozc(
 py_library_mozc(
     name = "embed_file_lib",
     srcs = ["embed_file.py"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 py_binary_mozc(
@@ -158,7 +160,7 @@ py_binary_mozc(
 py_library_mozc(
     name = "serialized_string_array_builder",
     srcs = ["serialized_string_array_builder.py"],
-    deps = [],
+    deps = ["//third_party/py/six"],
 )
 
 py_library_mozc(

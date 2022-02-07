@@ -339,6 +339,7 @@ py_library_mozc(
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
+        "//third_party/py/six",
     ],
 )
 
