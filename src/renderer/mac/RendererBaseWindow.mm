@@ -49,8 +49,8 @@ void RendererBaseWindow::InitWindow() {
     LOG(ERROR) << "window is already initialized.";
     return;
   }
-  const NSUInteger style_mask =
-      NSUtilityWindowMask | NSDocModalWindowMask | NSNonactivatingPanelMask;
+  const NSUInteger style_mask = NSWindowStyleMaskUtilityWindow | NSWindowStyleMaskDocModalWindow |
+                                NSWindowStyleMaskNonactivatingPanel;
   window_ = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 1, 1)
                                        styleMask:style_mask
                                          backing:NSBackingStoreBuffered

@@ -195,7 +195,7 @@ using mozc::renderer::mac::MacViewUtil;
   if (draw_flag) {
     [MacViewUtil::ToNSColor(infostyle.border_color()) set];
     [NSBezierPath setDefaultLineWidth:infostyle.window_border()];
-    [NSBezierPath setDefaultLineJoinStyle:NSMiterLineJoinStyle];
+    [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
     [NSBezierPath strokeRect:NSMakeRect(0.5, 0.5, infostyle.window_width() - 1, ypos - 1)];
   }
 

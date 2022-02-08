@@ -89,7 +89,7 @@ void InitializeDefaultStyle() {
   // default line width is specified as 1.0 *pt*, but we want to draw
   // it as 1.0 px.
   [NSBezierPath setDefaultLineWidth:1.0];
-  [NSBezierPath setDefaultLineJoinStyle:NSMiterLineJoinStyle];
+  [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleMiter];
 }
 }
 
@@ -363,7 +363,7 @@ void InitializeDefaultStyle() {
     if (footer.logo_visible() && g_LogoImage) {
       [g_LogoImage drawAtPoint:footerRect.origin
                       fromRect:NSZeroRect /* means draw entire image */
-                     operation:NSCompositeSourceOver
+                     operation:NSCompositingOperationSourceOver
                       fraction:1.0 /* opacity */];
       NSSize logoSize = [g_LogoImage size];
       footerRect.origin.x += logoSize.width;
