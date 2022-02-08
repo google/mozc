@@ -122,8 +122,11 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:trie",
+        "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
         "@com_google_absl//absl/strings",
     ],
 )

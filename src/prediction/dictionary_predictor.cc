@@ -112,18 +112,6 @@ bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
       .enable_new_spatial_scoring();
 }
 
-// Propagates the spatial_cost_penalty only when enable_new_spatial_scoring is
-// enabled.
-int GetSpatialCostPenalty(const ConversionRequest &request) {
-  return request.request()
-                 .decoder_experiment_params()
-                 .enable_new_spatial_scoring()
-             ? request.request()
-                   .decoder_experiment_params()
-                   .spatial_cost_penalty()
-             : kKanaModifierInsensitivePenalty;
-}
-
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const std::string &reference, const std::string &target) {
   return absl::StartsWith(target, reference);
@@ -232,7 +220,7 @@ class DictionaryPredictor::PredictiveLookupCallback
                            Segment::Candidate::SourceInfo source_info,
                            int unknown_id,
                            absl::string_view non_expanded_original_key,
-                           int spatial_cost_penalty,
+                           const SpatialCostParams &spatial_cost_params,
                            std::vector<DictionaryPredictor::Result> *results)
       : penalty_(0),
         types_(types),
@@ -242,7 +230,7 @@ class DictionaryPredictor::PredictiveLookupCallback
         source_info_(source_info),
         unknown_id_(unknown_id),
         non_expanded_original_key_(non_expanded_original_key),
-        spatial_cost_penalty_(spatial_cost_penalty),
+        spatial_cost_params_(spatial_cost_params),
         results_(results) {}
 
   PredictiveLookupCallback(const PredictiveLookupCallback &) = delete;
@@ -280,7 +268,7 @@ class DictionaryPredictor::PredictiveLookupCallback
     if (num_expanded > 0 ||
         (!non_expanded_original_key_.empty() &&
          !absl::StartsWith(actual_key, non_expanded_original_key_))) {
-      penalty_ = spatial_cost_penalty_;
+      penalty_ = spatial_cost_params_.GetPenalty(key);
     }
     return TRAVERSE_CONTINUE;
   }
@@ -315,7 +303,7 @@ class DictionaryPredictor::PredictiveLookupCallback
   const Segment::Candidate::SourceInfo source_info_;
   const int unknown_id_;
   absl::string_view non_expanded_original_key_;
-  const int spatial_cost_penalty_;
+  const SpatialCostParams spatial_cost_params_;
   std::vector<DictionaryPredictor::Result> *results_;
 };
 
@@ -327,12 +315,13 @@ class DictionaryPredictor::PredictiveBigramLookupCallback
       size_t original_key_len, const std::set<std::string> *subsequent_chars,
       absl::string_view history_value,
       Segment::Candidate::SourceInfo source_info, int unknown_id,
-      absl::string_view non_expanded_original_key, int spatial_cost_penalty,
+      absl::string_view non_expanded_original_key,
+      const SpatialCostParams spatial_cost_params,
       std::vector<DictionaryPredictor::Result> *results)
       : PredictiveLookupCallback(types, limit, original_key_len,
                                  subsequent_chars, source_info, unknown_id,
-                                 non_expanded_original_key,
-                                 spatial_cost_penalty, results),
+                                 non_expanded_original_key, spatial_cost_params,
+                                 results),
         history_value_(history_value) {}
 
   PredictiveBigramLookupCallback(const PredictiveBigramLookupCallback &) =
@@ -1887,7 +1876,7 @@ void DictionaryPredictor::GetPredictiveResults(
     input_key.append(segments.conversion_segment(0).key());
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       nullptr, source_info, unknown_id_, "",
-                                      GetSpatialCostPenalty(request), results);
+                                      GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1905,7 +1894,7 @@ void DictionaryPredictor::GetPredictiveResults(
     input_key.assign(history_key).append(base);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       nullptr, source_info, unknown_id_, "",
-                                      GetSpatialCostPenalty(request), results);
+                                      GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1926,7 +1915,7 @@ void DictionaryPredictor::GetPredictiveResults(
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
                                       nullptr, source_info, unknown_id_,
                                       non_expanded_original_key,
-                                      GetSpatialCostPenalty(request), results);
+                                      GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
 }
@@ -1942,7 +1931,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, history_value,
-        source_info, unknown_id_, "", GetSpatialCostPenalty(request), results);
+        source_info, unknown_id_, "", GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1964,7 +1953,7 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
   PredictiveBigramLookupCallback callback(
       types, lookup_limit, input_key.size(),
       expanded.empty() ? nullptr : &expanded, history_value, source_info,
-      unknown_id_, non_expanded_original_key, GetSpatialCostPenalty(request),
+      unknown_id_, non_expanded_original_key, GetSpatialCostParams(request),
       results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
@@ -1982,7 +1971,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
                                       unknown_id_, "",
-                                      GetSpatialCostPenalty(request), results);
+                                      GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::UpperString(&(*results)[i].value);
@@ -1995,7 +1984,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
                                       unknown_id_, "",
-                                      GetSpatialCostPenalty(request), results);
+                                      GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       Util::CapitalizeString(&(*results)[i].value);
@@ -2005,7 +1994,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr,
         Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
-        GetSpatialCostPenalty(request), results);
+        GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
   // If input mode is FULL_ASCII, then convert the results to full-width.
@@ -2038,7 +2027,7 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
         types, lookup_limit, input_key.size(),
         query.expanded.empty() ? nullptr : &query.expanded,
         Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
-        GetSpatialCostPenalty(request), results);
+        GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
 
     for (size_t i = previous_results_size; i < results->size(); ++i) {
