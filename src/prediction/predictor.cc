@@ -166,8 +166,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
-    size = std::min(
-        9, std::max(1, static_cast<int>(request.config().suggestions_size())));
+    size = std::min(9, std::max<int>(1, request.config().suggestions_size()));
   }
 
   bool result = false;

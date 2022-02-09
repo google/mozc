@@ -149,8 +149,7 @@ class ScoreTypeCompare {
 inline int GetDefaultCandidateIndex(const Segment &segment) {
   // Check up to kMaxRerankSize + 1 candidates because candidate with
   // BEST_CANDIDATE is highly possibly in that range (http://b/9992330).
-  const int size =
-      static_cast<int>(std::min(segment.candidates_size(), kMaxRerankSize + 1));
+  const int size = std::min<int>(segment.candidates_size(), kMaxRerankSize + 1);
   for (int i = 0; i < size; ++i) {
     if (segment.candidate(i).attributes & Segment::Candidate::BEST_CANDIDATE) {
       return i;

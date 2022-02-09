@@ -221,7 +221,7 @@ class IndicatorWindow::WindowImpl
         SetTimer(kTimerEventFading, kFadingOutInterval);
         break;
       case kTimerEventFading:
-        alpha_ = std::max(static_cast<int>(alpha_) - kFadingOutAlphaDelta, 0);
+        alpha_ = std::max<int>(alpha_ - kFadingOutAlphaDelta, 0);
         if (alpha_ == 0) {
           KillTimer(kTimerEventFading);
         }

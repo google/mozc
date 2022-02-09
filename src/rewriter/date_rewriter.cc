@@ -491,7 +491,7 @@ bool ExpandYear(const std::string &prefix, int year,
 void Insert(const Segment::Candidate &base_candidate, int position,
             const std::string &value, const char *description,
             Segment *segment) {
-  position = std::min(position, static_cast<int>(segment->candidates_size()));
+  position = std::min<int>(position, segment->candidates_size());
   Segment::Candidate *c = segment->insert_candidate(position);
   DCHECK(c);
   c->Init();
@@ -994,8 +994,8 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   constexpr int kInsertPosition = 2;
-  const int position = std::min(
-      kInsertPosition, static_cast<int>(current_segment->candidates_size()));
+  const int position =
+      std::min<int>(kInsertPosition, current_segment->candidates_size());
 
   constexpr char kDescription[] = "和暦";
   for (auto rit = results.crbegin(); rit != results.crend(); ++rit) {

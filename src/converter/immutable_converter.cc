@@ -1967,8 +1967,7 @@ void ImmutableConverterImpl::InsertCandidates(
   }
 
   const size_t expand_size =
-      std::max(static_cast<size_t>(1),
-               std::min(static_cast<size_t>(512), max_candidates_size));
+      std::max<size_t>(1, std::min<size_t>(512, max_candidates_size));
 
   const bool is_single_segment = (type == SINGLE_SEGMENT);
   NBestGenerator nbest_generator(suppression_dictionary_, segmenter_,

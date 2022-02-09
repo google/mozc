@@ -2110,7 +2110,7 @@ bool UserHistoryPredictor::IsValidSuggestion(RequestType request_type,
   const uint32_t freq =
       std::max(entry.suggestion_freq(), entry.conversion_freq() / 4);
   // TODO(taku,komatsu): better to make it simpler and easier to be understood.
-  const uint32_t base_prefix_len = 3 - std::min(static_cast<uint32_t>(2), freq);
+  const uint32_t base_prefix_len = 3 - std::min<uint32_t>(2, freq);
   return (prefix_len >= base_prefix_len);
 }
 

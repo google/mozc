@@ -194,7 +194,7 @@ size_t GetMaxSizeForRealtimeCandidates(const ConversionRequest &request,
   const auto &segment = segments.conversion_segment(0);
   const size_t size = (request.max_dictionary_prediction_candidates_size() -
                        segment.candidates_size());
-  return is_long_key ? std::min(size, static_cast<size_t>(8)) : size;
+  return is_long_key ? std::min<size_t>(size, 8) : size;
 }
 
 size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
@@ -1155,9 +1155,7 @@ void DictionaryPredictor::SetPredictionCost(
     // TODO(team): want find the best parameter instead of kCostFactor.
     constexpr int kCostFactor = 500;
     results->at(i).cost =
-        cost -
-        kCostFactor *
-            log(1.0 + std::max(0, static_cast<int>(key_len - query_len)));
+        cost - kCostFactor * log(1.0 + std::max<int>(0, key_len - query_len));
 
     // Update the minimum cost for REALTIME candidates that have the same key
     // length as input_key.

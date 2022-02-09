@@ -42,7 +42,7 @@
 // platform.
 #error \
     "base/codegen_bytearray_stream.cc shouldn't be used from android platform."
-#endif
+#endif  // OS_ANDROID
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 #include <iomanip>
@@ -91,9 +91,9 @@ bool BasicCodeGenByteArrayStreamBuf::OpenVarDef(
   // Put the prefix "0x" by ourselves, otherwise it becomes "0X".
   output_stream_->unsetf(std::ios_base::showbase);
   word_buffer_ = 0;
-#else
+#else  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   *output_stream_ << "const char k" << var_name_base_ << "_data[] =\n";
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   output_count_ = 0;
   return is_open_ = !output_stream_->fail();
 }
@@ -115,14 +115,14 @@ bool BasicCodeGenByteArrayStreamBuf::CloseVarDef() {
                   << "const char * const k" << var_name_base_ << "_data = "
                   << "reinterpret_cast<const char *>("
                   << "k" << var_name_base_ << "_data_wordtype);\n";
-#else
+#else  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   if (output_count_ == 0) {
     *output_stream_ << "\"\"\n";
   } else if (output_count_ % kNumOfBytesOnOneLine != 0) {
     *output_stream_ << "\"\n";
   }
   *output_stream_ << ";\n";
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   *output_stream_ << "const size_t k" << var_name_base_
                   << "_size = " << output_count_ << ";\n";
   is_open_ = false;
@@ -183,8 +183,8 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char *begin,
   char *const buf = reinterpret_cast<char *>(&word_buffer_);
   constexpr size_t kWordSize = sizeof word_buffer_;
   while (begin < end) {
-    size_t output_length = std::min(static_cast<size_t>(end - begin),
-                                    kWordSize - output_count_ % kWordSize);
+    size_t output_length =
+        std::min<size_t>(end - begin, kWordSize - output_count_ % kWordSize);
     for (size_t i = 0; i < output_length; ++i) {
       buf[output_count_ % kWordSize + i] = *begin++;
     }
@@ -195,12 +195,12 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char *begin,
                                                                     : ", ");
     }
   }
-#else
+#else  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   static constexpr char kHex[] = "0123456789ABCDEF";
   while (begin < end) {
     size_t bucket_size =
-        std::min(static_cast<size_t>(end - begin),
-                 kNumOfBytesOnOneLine - output_count_ % kNumOfBytesOnOneLine);
+        std::min<size_t>(end - begin, kNumOfBytesOnOneLine -
+                                          output_count_ % kNumOfBytesOnOneLine);
     if (output_count_ % kNumOfBytesOnOneLine == 0) {
       *output_stream_ << '\"';
     }
@@ -214,7 +214,7 @@ void BasicCodeGenByteArrayStreamBuf::WriteBytes(const char *begin,
       *output_stream_ << "\"\n";
     }
   }
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 }
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
@@ -222,7 +222,7 @@ void BasicCodeGenByteArrayStreamBuf::WriteWordBuffer() {
   *output_stream_ << "0x" << std::setw(2 * sizeof word_buffer_) << word_buffer_;
   word_buffer_ = 0;
 }
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
 
 // Args:

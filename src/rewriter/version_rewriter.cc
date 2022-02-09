@@ -133,7 +133,7 @@ bool VersionRewriter::Rewrite(const ConversionRequest &request,
         const Segment::Candidate &c = seg->candidate(static_cast<int>(j));
         if (c.value == ent->base_candidate()) {
           Segment::Candidate *new_cand = seg->insert_candidate(
-              static_cast<int>(std::min(seg->candidates_size(), ent->rank())));
+              std::min<int>(seg->candidates_size(), ent->rank()));
           if (new_cand != nullptr) {
             new_cand->lid = c.lid;
             new_cand->rid = c.rid;

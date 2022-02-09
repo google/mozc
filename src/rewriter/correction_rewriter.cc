@@ -141,7 +141,7 @@ bool CorrectionRewriter::Rewrite(const ConversionRequest &request,
     // defined in the tsv file, we want to add miss-read entries to
     // the system dictionary.
     const size_t kInsertPosition =
-        std::min(static_cast<size_t>(3), segment->candidates_size());
+        std::min<size_t>(3, segment->candidates_size());
     const Segment::Candidate &top_candidate = segment->candidate(0);
     if (!LookupCorrection(top_candidate.content_key, "", &results)) {
       continue;

@@ -71,7 +71,7 @@ class TestSentenceGenerator {
     const char **sentences =
         session::RandomKeyEventsGenerator::GetTestSentences(&size);
     CHECK_GT(size, 0);
-    size = std::min(static_cast<size_t>(200), size);
+    size = std::min<size_t>(200, size);
 
     for (size_t i = 0; i < size; ++i) {
       std::string output;
