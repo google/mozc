@@ -247,7 +247,6 @@ py_library_mozc(
     srcs = ["gen_pos_map.py"],
     deps = [
         "//build_tools:code_generator_util",
-        "//third_party/py/six",
     ],
 )
 
@@ -257,7 +256,6 @@ py_binary_mozc(
     deps = [
         ":gen_pos_map_lib",
         "//build_tools:code_generator_util",
-        "//third_party/py/six",
     ],
 )
 
@@ -583,7 +581,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_user_pos_data",
     srcs = ["gen_user_pos_data.py"],
-    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_user_pos_data_lib",
@@ -597,7 +594,6 @@ py_library_mozc(
     srcs = ["gen_pos_matcher_code.py"],
     deps = [
         ":pos_util",
-        "//third_party/py/six",
     ],
 )
 
@@ -640,7 +636,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_pos_rewrite_rule",
     srcs = ["gen_pos_rewrite_rule.py"],
-    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [":gen_pos_rewrite_rule_lib"],
 )
@@ -739,7 +734,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_suffix_data",
     srcs = ["gen_suffix_data.py"],
-    python_version = "PY3",
     visibility = ["//:__subpackages__"],
     deps = [
         ":gen_suffix_data_lib",
@@ -806,7 +800,6 @@ py_binary_mozc(
         "zip_code_util.py",
     ],
     visibility = ["//train/zip_code:__subpackages__"],
-    deps = ["//third_party/py/six"],
 )
 
 genrule(

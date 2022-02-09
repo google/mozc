@@ -252,13 +252,11 @@ cc_binary_mozc(
 py_library_mozc(
     name = "gen_typing_model_lib",
     srcs = ["gen_typing_model.py"],
-    deps = ["//third_party/py/six"],
 )
 
 py_binary_mozc(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
-    python_version = "PY3",
     deps = [":gen_typing_model_lib"],
 )
 

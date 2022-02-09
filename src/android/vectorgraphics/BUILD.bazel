@@ -33,7 +33,6 @@ load("//android/vectorgraphics:PIC_FILES.bzl", "PIC_FILES")
 py_binary(
     name = "gen_mozc_drawable",
     srcs = ["gen_mozc_drawable.py"],
-    python_version = "PY3",
     deps = ["//build_tools:util"],
 )
 

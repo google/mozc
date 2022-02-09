@@ -339,7 +339,6 @@ py_library_mozc(
     deps = [
         "//build_tools:code_generator_util",
         "//build_tools:serialized_string_array_builder",
-        "//third_party/py/six",
     ],
 )
 
@@ -352,7 +351,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_zero_query_number_data_lib",
         ":gen_zero_query_util",
@@ -371,7 +369,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_zero_query_data_lib",
         ":gen_zero_query_util",
