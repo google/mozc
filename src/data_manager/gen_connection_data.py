@@ -41,10 +41,6 @@ import os
 import struct
 import sys
 
-import six
-from six.moves import range
-from six.moves import zip
-
 from build_tools import code_generator_util
 
 INVALID_COST = 30000
@@ -121,7 +117,7 @@ def CreateModeValueList(matrix):
         # Heuristically, we do not compress INVALID_COST.
         continue
       m[cost] = m.get(cost, 0) + 1
-    mode_value = max(six.iteritems(m), key=lambda __count: __count[1])[0]
+    mode_value = max(m.items(), key=lambda __count: __count[1])[0]
     result.append(mode_value)
   return result
 

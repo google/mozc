@@ -58,8 +58,6 @@ import re
 import struct
 import sys
 
-import six
-
 from build_tools import code_generator_util
 from build_tools import serialized_string_array_builder
 
@@ -89,7 +87,7 @@ _FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
 def NormalizeString(string):
   """Normalize full width ascii characters to half width characters."""
   offset = ord(u'Ａ') - ord(u'A')
-  normalized = _FULLWIDTH_RE.sub(lambda x: six.unichr(ord(x.group(0)) - offset),
+  normalized = _FULLWIDTH_RE.sub(lambda x: chr(ord(x.group(0)) - offset),
                                  string)
   return normalized
 
@@ -154,7 +152,7 @@ def ReadEmojiTsv(stream):
 def OutputData(emoji_data_list, token_dict,
                token_array_file, string_array_file):
   """Output token and string arrays to files."""
-  sorted_token_dict = sorted(six.iteritems(token_dict))
+  sorted_token_dict = sorted(token_dict.items())
 
   strings = {}
   for reading, _ in sorted_token_dict:

@@ -33,9 +33,6 @@
 from __future__ import absolute_import
 
 import struct
-import six
-
-from six.moves import range  # pylint: disable=redefined-builtin
 
 __author__ = "hidehiko"
 
@@ -101,7 +98,8 @@ def WriteCppDataArray(data, variable_name, target_compiler, stream):
 
     for word_index in range(0, len(data), 8):
       word_chunk = data[word_index:word_index + 8].ljust(8, '\x00')
-      stream.write('0x%016X, ' % struct.unpack('<Q', six.b(word_chunk)))
+      stream.write('0x%016X, ' %
+                   struct.unpack('<Q', word_chunk.encode('latin-1')))
       if (word_index // 8) % 4 == 3:
         # Line feed for every 4 elements.
         stream.write('\n')
@@ -133,7 +131,7 @@ def ToJavaStringLiteral(codepoint_list):
     return 'null'
   result = r'"'
   for codepoint in codepoint_list:
-    utf16_array = bytearray(six.unichr(codepoint).encode('utf-16be'))
+    utf16_array = bytearray(chr(codepoint).encode('utf-16be'))
     if len(utf16_array) == 2:
       (u0, l0) = utf16_array
       result += r'\u%02X%02X' % (u0, l0)
