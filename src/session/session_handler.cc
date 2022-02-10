@@ -407,6 +407,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::NO_OPERATION:
       eval_succeeded = NoOperation(command);
       break;
+    case commands::Input::CHECK_SPELLING:
+      eval_succeeded = CheckSpelling(command);
+      break;
     default:
       eval_succeeded = false;
   }
@@ -494,9 +497,8 @@ bool SessionHandler::SendCommand(commands::Command *command) {
 bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
-  const int create_session_minimum_interval =
-      std::max(0, std::min(absl::GetFlag(FLAGS_create_session_min_interval),
-                           10));
+  const int create_session_minimum_interval = std::max(
+      0, std::min(absl::GetFlag(FLAGS_create_session_min_interval), 10));
 
   uint64_t current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
@@ -687,6 +689,11 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
 }
 
 bool SessionHandler::NoOperation(commands::Command *command) { return true; }
+
+bool SessionHandler::CheckSpelling(commands::Command *command) {
+  // TODO(taku): Implement me.
+  return true;
+}
 
 // Create Random Session ID in order to make the session id unpredicable
 SessionID SessionHandler::CreateNewSessionID() {

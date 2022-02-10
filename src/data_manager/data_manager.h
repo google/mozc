@@ -154,6 +154,9 @@ class DataManager : public DataManagerInterface {
       absl::string_view *string_array_data) const override;
 #endif  // NO_USAGE_REWRITER
 
+  void GetSpellcheckerModelData(
+      absl::string_view *spellchecker_model_data) const override;
+
   absl::string_view GetTypingModel(const std::string &name) const override;
   absl::string_view GetDataVersion() const override;
 
@@ -205,6 +208,7 @@ class DataManager : public DataManagerInterface {
   absl::string_view usage_conjugation_index_data_;
   absl::string_view usage_items_data_;
   absl::string_view usage_string_array_data_;
+  absl::string_view spellchecker_model_data_;
   std::vector<std::pair<std::string, absl::string_view>> typing_model_data_;
   absl::string_view data_version_;
 };
