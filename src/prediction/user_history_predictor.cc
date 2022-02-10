@@ -60,7 +60,6 @@
 #include "usage_stats/usage_stats.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 
@@ -433,7 +432,7 @@ bool UserHistoryPredictor::AsyncLoad() {
     return true;
   }
 
-  syncer_ = absl::make_unique<UserHistoryPredictorSyncer>(
+  syncer_ = std::make_unique<UserHistoryPredictorSyncer>(
       this, UserHistoryPredictorSyncer::LOAD);
   syncer_->Start("UserHistoryPredictor:Load");
 
@@ -449,7 +448,7 @@ bool UserHistoryPredictor::AsyncSave() {
     return true;
   }
 
-  syncer_ = absl::make_unique<UserHistoryPredictorSyncer>(
+  syncer_ = std::make_unique<UserHistoryPredictorSyncer>(
       this, UserHistoryPredictorSyncer::SAVE);
   syncer_->Start("UserHistoryPredictor:Save");
 
@@ -521,7 +520,7 @@ bool UserHistoryPredictor::ClearAllHistory() {
   VLOG(1) << "Clearing user prediction";
   // Renews DicCache as LruCache tries to reuse the internal value by
   // using FreeList
-  dic_ = absl::make_unique<DicCache>(UserHistoryPredictor::cache_size());
+  dic_ = std::make_unique<DicCache>(UserHistoryPredictor::cache_size());
 
   // insert a dummy event entry.
   InsertEvent(Entry::CLEAN_ALL_EVENT);
@@ -1362,7 +1361,7 @@ void UserHistoryPredictor::GetInputKeyFromSegments(
   std::set<std::string> expanded_set;
   request.composer().GetQueriesForPrediction(base, &expanded_set);
   if (!expanded_set.empty()) {
-    *expanded = absl::make_unique<Trie<std::string>>();
+    *expanded = std::make_unique<Trie<std::string>>();
     for (std::set<std::string>::const_iterator itr = expanded_set.begin();
          itr != expanded_set.end(); ++itr) {
       // For getting matched key, insert values

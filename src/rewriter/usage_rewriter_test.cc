@@ -49,7 +49,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -82,10 +81,10 @@ class UsageRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
 
-    data_manager_ = absl::make_unique<testing::MockDataManager>();
+    data_manager_ = std::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
-    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
-    user_dictionary_ = absl::make_unique<UserDictionary>(
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
+    user_dictionary_ = std::make_unique<UserDictionary>(
         UserPos::CreateFromDataManager(*data_manager_), pos_matcher_,
         suppression_dictionary_.get());
   }

@@ -89,7 +89,6 @@ cc_test_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -201,7 +200,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -330,7 +328,6 @@ cc_library_mozc(
         "//base/protobuf",
         "//base/protobuf:repeated_field",
         "//protocol:user_dictionary_storage_cc_proto",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -350,7 +347,6 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//testing:testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -498,7 +494,6 @@ cc_library_mozc(
         "//base:util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -519,7 +514,6 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -538,7 +532,6 @@ cc_library_mozc(
         "//base:serialized_string_array",
         "//base:util",
         "//data_manager:data_manager_interface",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -555,7 +548,6 @@ cc_test_mozc(
         "//base:util",
         "//data_manager/testing:mock_data_manager",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -719,7 +711,6 @@ cc_test_mozc(
         "//base:util",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -755,7 +746,6 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

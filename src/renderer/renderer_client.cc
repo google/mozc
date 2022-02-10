@@ -46,7 +46,6 @@
 #include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
-#include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 
 #ifdef __APPLE__
@@ -239,7 +238,7 @@ class RendererLauncher : public RendererLauncherInterface, public Thread {
     if (command.type() == commands::RendererCommand::UPDATE) {
       absl::MutexLock l(&pending_command_mutex_);
       if (!pending_command_) {
-        pending_command_ = absl::make_unique<commands::RendererCommand>();
+        pending_command_ = std::make_unique<commands::RendererCommand>();
       }
       *pending_command_ = command;
     }

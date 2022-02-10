@@ -54,7 +54,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -134,7 +133,7 @@ class UserSegmentHistoryRewriterTest : public ::testing::Test {
 
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
     pos_group_ =
-        absl::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
+        std::make_unique<PosGroup>(mock_data_manager_.GetPosGroupData());
     ASSERT_TRUE(pos_group_.get() != nullptr);
   }
 

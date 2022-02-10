@@ -55,7 +55,6 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -75,11 +74,11 @@ class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries.
   MockDataAndImmutableConverter() {
-    data_manager_ = absl::make_unique<testing::MockDataManager>();
+    data_manager_ = std::make_unique<testing::MockDataManager>();
 
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
 
-    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     CHECK(suppression_dictionary_);
 
     const char *dictionary_data = nullptr;
@@ -90,8 +89,8 @@ class MockDataAndImmutableConverter {
             .Build()
             .value();
     auto value_dic =
-        absl::make_unique<ValueDictionary>(pos_matcher_, &sysdic->value_trie());
-    dictionary_ = absl::make_unique<DictionaryImpl>(
+        std::make_unique<ValueDictionary>(pos_matcher_, &sysdic->value_trie());
+    dictionary_ = std::make_unique<DictionaryImpl>(
         std::move(sysdic), std::move(value_dic), &user_dictionary_stub_,
         suppression_dictionary_.get(), &pos_matcher_);
     CHECK(dictionary_);
@@ -100,7 +99,7 @@ class MockDataAndImmutableConverter {
     const uint32_t *token_array = nullptr;
     data_manager_->GetSuffixDictionaryData(
         &suffix_key_array_data, &suffix_value_array_data, &token_array);
-    suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
+    suffix_dictionary_ = std::make_unique<SuffixDictionary>(
         suffix_key_array_data, suffix_value_array_data, token_array);
     CHECK(suffix_dictionary_);
 
@@ -109,17 +108,17 @@ class MockDataAndImmutableConverter {
     segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
     CHECK(segmenter_);
 
-    pos_group_ = absl::make_unique<PosGroup>(data_manager_->GetPosGroupData());
+    pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
     CHECK(pos_group_);
 
     {
       const char *data = nullptr;
       size_t size = 0;
       data_manager_->GetSuggestionFilterData(&data, &size);
-      suggestion_filter_ = absl::make_unique<SuggestionFilter>(data, size);
+      suggestion_filter_ = std::make_unique<SuggestionFilter>(data, size);
     }
 
-    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary_.get(),
         suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
         &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
@@ -129,7 +128,7 @@ class MockDataAndImmutableConverter {
   ImmutableConverterImpl *GetConverter() { return immutable_converter_.get(); }
 
   std::unique_ptr<NBestGenerator> CreateNBestGenerator(const Lattice *lattice) {
-    return absl::make_unique<NBestGenerator>(
+    return std::make_unique<NBestGenerator>(
         suppression_dictionary_.get(), segmenter_.get(), connector_.get(),
         &pos_matcher_, lattice, suggestion_filter_.get(), true);
   }
@@ -185,7 +184,7 @@ class NBestGeneratorTest : public ::testing::Test {
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
-  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
@@ -244,7 +243,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 }
 
 TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
-  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
@@ -295,7 +294,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 }
 
 TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
-  auto data_and_converter = absl::make_unique<MockDataAndImmutableConverter>();
+  auto data_and_converter = std::make_unique<MockDataAndImmutableConverter>();
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;

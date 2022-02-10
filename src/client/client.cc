@@ -55,7 +55,6 @@
 #include "ipc/ipc.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "absl/memory/memory.h"
 
 #ifdef OS_WIN
 #include "base/win_util.h"
@@ -400,7 +399,7 @@ bool Client::EnsureCallCommand(commands::Input *input,
 
 void Client::EnableCascadingWindow(const bool enable) {
   if (preferences_ == nullptr) {
-    preferences_ = absl::make_unique<config::Config>();
+    preferences_ = std::make_unique<config::Config>();
   }
   preferences_->set_use_cascading_window(enable);
 }

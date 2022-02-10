@@ -36,6 +36,7 @@
 #endif  // OS_WIN
 
 #include <atomic>
+#include <memory>
 #include <string>
 
 #include "base/file_util.h"
@@ -51,7 +52,6 @@
 #include "testing/base/public/mozctest.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -497,12 +497,12 @@ TEST_F(ConfigHandlerTest, ConcurrentAccess) {
     // Set up background threads for concurrent access.
     std::vector<std::unique_ptr<SetConfigThread>> set_threads;
     for (size_t i = 0; i < kNumSetThread; ++i) {
-      set_threads.emplace_back(absl::make_unique<SetConfigThread>(configs));
+      set_threads.emplace_back(std::make_unique<SetConfigThread>(configs));
     }
     std::vector<std::unique_ptr<GetConfigThread>> get_threads;
     for (size_t i = 0; i < kNumGetThread; ++i) {
       get_threads.emplace_back(
-          absl::make_unique<GetConfigThread>(character_form_rules_set));
+          std::make_unique<GetConfigThread>(character_form_rules_set));
     }
     // Let background threads start accessing ConfigHandler from multiple
     // background threads.

@@ -45,7 +45,6 @@
 #include "rewriter/collocation_util.h"
 #include "storage/existence_filter.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -558,10 +557,10 @@ CollocationRewriter::CollocationRewriter(
   size_t size = 0;
 
   data_manager->GetCollocationData(&data, &size);
-  collocation_filter_ = absl::make_unique<CollocationFilter>(data, size);
+  collocation_filter_ = std::make_unique<CollocationFilter>(data, size);
 
   data_manager->GetCollocationSuppressionData(&data, &size);
-  suppression_filter_ = absl::make_unique<SuppressionFilter>(data, size);
+  suppression_filter_ = std::make_unique<SuppressionFilter>(data, size);
 }
 
 CollocationRewriter::~CollocationRewriter() {}

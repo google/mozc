@@ -60,7 +60,6 @@
 #include "session/session_converter.h"
 #include "session/session_usage_stats_util.h"
 #include "usage_stats/usage_stats.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
 namespace mozc {
@@ -239,7 +238,7 @@ void Session::InitContext(ImeContext *context) const {
 
 void Session::PushUndoContext() {
   // TODO(komatsu): Support multiple undo.
-  prev_context_ = absl::make_unique<ImeContext>();
+  prev_context_ = std::make_unique<ImeContext>();
   InitContext(prev_context_.get());
   ImeContext::CopyContext(*context_, prev_context_.get());
 }

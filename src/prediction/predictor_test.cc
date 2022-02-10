@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "prediction/predictor.h"
+
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -41,7 +43,6 @@
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
-#include "prediction/predictor.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/user_history_predictor.h"
 #include "protocol/commands.pb.h"
@@ -51,7 +52,6 @@
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -154,15 +154,15 @@ class MockPredictor : public PredictorInterface {
 class MobilePredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    config_ = absl::make_unique<config::Config>();
+    config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
 
-    request_ = absl::make_unique<commands::Request>();
+    request_ = std::make_unique<commands::Request>();
     commands::RequestForUnitTest::FillMobileRequest(request_.get());
-    composer_ = absl::make_unique<composer::Composer>(nullptr, request_.get(),
-                                                      config_.get());
+    composer_ = std::make_unique<composer::Composer>(nullptr, request_.get(),
+                                                     config_.get());
 
-    convreq_ = absl::make_unique<ConversionRequest>(
+    convreq_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
   }
 
@@ -173,9 +173,9 @@ class MobilePredictorTest : public ::testing::Test {
 };
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
-  auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(20),
-      absl::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(20),
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -186,10 +186,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
-  auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(20),
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(20),
       // We don't call history predictior
-      absl::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_SUGGESTION);
@@ -200,9 +200,9 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
-  auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      absl::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -217,10 +217,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
   testing::MockDataManager data_manager;
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   const SuppressionDictionary suppression_dictionary;
-  auto predictor = absl::make_unique<MobilePredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(200),
-      absl::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
-                                              &suppression_dictionary, true));
+  auto predictor = std::make_unique<MobilePredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(200),
+      std::make_unique<UserHistoryPredictor>(&dictionary_mock, &pos_matcher,
+                                             &suppression_dictionary, true));
   Segments segments;
   {
     segments.set_request_type(Segments::PARTIAL_PREDICTION);
@@ -231,8 +231,8 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
-  auto predictor1 = absl::make_unique<MockPredictor>();
-  auto predictor2 = absl::make_unique<MockPredictor>();
+  auto predictor1 = std::make_unique<MockPredictor>();
+  auto predictor2 = std::make_unique<MockPredictor>();
   EXPECT_CALL(*predictor1, PredictForRequest(_, _))
       .Times(AtMost(1))
       .WillOnce(Return(true));
@@ -240,8 +240,8 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
       .Times(AtMost(1))
       .WillOnce(Return(true));
 
-  auto predictor = absl::make_unique<MobilePredictor>(std::move(predictor1),
-                                                      std::move(predictor2));
+  auto predictor = std::make_unique<MobilePredictor>(std::move(predictor1),
+                                                     std::move(predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -254,13 +254,13 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
 class PredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    config_ = absl::make_unique<config::Config>();
+    config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
 
-    request_ = absl::make_unique<commands::Request>();
-    composer_ = absl::make_unique<composer::Composer>(nullptr, request_.get(),
-                                                      config_.get());
-    convreq_ = absl::make_unique<ConversionRequest>(
+    request_ = std::make_unique<commands::Request>();
+    composer_ = std::make_unique<composer::Composer>(nullptr, request_.get(),
+                                                     config_.get());
+    convreq_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
   }
 
@@ -271,9 +271,9 @@ class PredictorTest : public ::testing::Test {
 };
 
 TEST_F(PredictorTest, AllPredictorsReturnTrue) {
-  auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<NullPredictor>(true),
-      absl::make_unique<NullPredictor>(true));
+  auto predictor =
+      std::make_unique<DefaultPredictor>(std::make_unique<NullPredictor>(true),
+                                         std::make_unique<NullPredictor>(true));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -284,9 +284,9 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
 }
 
 TEST_F(PredictorTest, MixedReturnValue) {
-  auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<NullPredictor>(true),
-      absl::make_unique<NullPredictor>(false));
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::make_unique<NullPredictor>(true),
+      std::make_unique<NullPredictor>(false));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -297,9 +297,9 @@ TEST_F(PredictorTest, MixedReturnValue) {
 }
 
 TEST_F(PredictorTest, AllPredictorsReturnFalse) {
-  auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<NullPredictor>(false),
-      absl::make_unique<NullPredictor>(false));
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::make_unique<NullPredictor>(false),
+      std::make_unique<NullPredictor>(false));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -312,10 +312,10 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
 TEST_F(PredictorTest, CallPredictorsForSuggestion) {
   const int suggestions_size =
       config::ConfigHandler::DefaultConfig().suggestions_size();
-  auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
-      absl::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
-                                                           suggestions_size));
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(suggestions_size),
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(suggestions_size,
+                                                          suggestions_size));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -327,10 +327,10 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
 
 TEST_F(PredictorTest, CallPredictorsForPrediction) {
   constexpr int kPredictionSize = 100;
-  auto predictor = absl::make_unique<DefaultPredictor>(
-      absl::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
-      absl::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
-                                                           kPredictionSize));
+  auto predictor = std::make_unique<DefaultPredictor>(
+      std::make_unique<CheckCandSizeDictionaryPredictor>(kPredictionSize),
+      std::make_unique<CheckCandSizeUserHistoryPredictor>(kPredictionSize,
+                                                          kPredictionSize));
   Segments segments;
   {
     segments.set_request_type(Segments::PREDICTION);
@@ -341,8 +341,8 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
 }
 
 TEST_F(PredictorTest, CallPredictForRequest) {
-  auto predictor1 = absl::make_unique<MockPredictor>();
-  auto predictor2 = absl::make_unique<MockPredictor>();
+  auto predictor1 = std::make_unique<MockPredictor>();
+  auto predictor2 = std::make_unique<MockPredictor>();
   EXPECT_CALL(*predictor1, PredictForRequest(_, _))
       .Times(AtMost(1))
       .WillOnce(Return(true));
@@ -350,8 +350,8 @@ TEST_F(PredictorTest, CallPredictForRequest) {
       .Times(AtMost(1))
       .WillOnce(Return(true));
 
-  auto predictor = absl::make_unique<DefaultPredictor>(std::move(predictor1),
-                                                       std::move(predictor2));
+  auto predictor = std::make_unique<DefaultPredictor>(std::move(predictor1),
+                                                      std::move(predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);
@@ -362,12 +362,12 @@ TEST_F(PredictorTest, CallPredictForRequest) {
 }
 
 TEST_F(PredictorTest, DisableAllSuggestion) {
-  auto predictor1 = absl::make_unique<NullPredictor>(true);
-  auto predictor2 = absl::make_unique<NullPredictor>(true);
+  auto predictor1 = std::make_unique<NullPredictor>(true);
+  auto predictor2 = std::make_unique<NullPredictor>(true);
   const auto *pred1 = predictor1.get();  // Keep the reference
   const auto *pred2 = predictor2.get();  // Keep the reference
-  auto predictor = absl::make_unique<DefaultPredictor>(std::move(predictor1),
-                                                       std::move(predictor2));
+  auto predictor = std::make_unique<DefaultPredictor>(std::move(predictor1),
+                                                      std::move(predictor2));
   Segments segments;
   {
     segments.set_request_type(Segments::SUGGESTION);

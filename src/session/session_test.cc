@@ -60,7 +60,6 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -397,7 +396,7 @@ class ConverterMockForReset : public ConverterMock {
 class MockConverterEngineForReset : public EngineInterface {
  public:
   MockConverterEngineForReset()
-      : converter_mock_(absl::make_unique<ConverterMockForReset>()) {}
+      : converter_mock_(std::make_unique<ConverterMockForReset>()) {}
   ~MockConverterEngineForReset() override = default;
 
   ConverterInterface *GetConverter() const override {
@@ -502,13 +501,13 @@ class SessionTest : public ::testing::Test {
   void SetUp() override {
     UsageStats::ClearAllStatsForTest();
 
-    mobile_request_ = absl::make_unique<Request>();
+    mobile_request_ = std::make_unique<Request>();
     commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_ = MockDataEngineFactory::Create().value();
-    engine_ = absl::make_unique<MockConverterEngine>();
+    engine_ = std::make_unique<MockConverterEngine>();
 
-    t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(
+    t13n_rewriter_ = std::make_unique<TransliterationRewriter>(
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
   }
 
@@ -629,7 +628,7 @@ class SessionTest : public ::testing::Test {
   void InitSessionWithRequest(Session *session,
                               const commands::Request &request) {
     session->SetRequest(&request);
-    table_ = absl::make_unique<composer::Table>();
+    table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(
         request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
     session->SetTable(table_.get());
@@ -857,7 +856,7 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  auto session = absl::make_unique<Session>(engine_.get());
+  auto session = std::make_unique<Session>(engine_.get());
   InitSessionToPrecomposition(session.get());
 
   commands::Command command;
@@ -903,7 +902,7 @@ TEST_F(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_candidates());
   // test of reseting the history segements
   MockConverterEngineForReset engine;
-  session = absl::make_unique<Session>(&engine);
+  session = std::make_unique<Session>(&engine);
   InitSessionToPrecomposition(session.get());
   SendCommand(commands::SessionCommand::RESET_CONTEXT, session.get(), &command);
   EXPECT_FALSE(command.output().consumed());
@@ -7029,7 +7028,7 @@ TEST_F(SessionTest, CommitCandidate_suggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
-  GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
                                           true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
@@ -7116,7 +7115,7 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else   // OS_WIN, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
-  GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
                                           true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
@@ -7534,7 +7533,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    GetConverterMock()->SetFinishConversion(absl::make_unique<Segments>().get(),
+    GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
                                             true);
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
@@ -7637,7 +7636,7 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
-  auto table = absl::make_unique<composer::Table>();
+  auto table = std::make_unique<composer::Table>();
   table->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());
@@ -7657,7 +7656,7 @@ TEST_F(SessionTest, Issue4437420) {
   request.set_special_romanji_table(
       commands::Request::TWELVE_KEYS_TO_HALFWIDTHASCII);
   session.SetRequest(&request);
-  table = absl::make_unique<composer::Table>();
+  table = std::make_unique<composer::Table>();
   table->InitializeWithRequestAndConfig(
       request, config::ConfigHandler::DefaultConfig(), mock_data_manager_);
   session.SetTable(table.get());

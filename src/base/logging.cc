@@ -61,7 +61,6 @@
 #include "base/clock.h"
 #include "base/singleton.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 
@@ -266,14 +265,14 @@ void LogStreamImpl::Init(const std::string &log_file_path) {
   // here.
   DCHECK_NE(log_file_path.size(), 0);
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
-  real_log_stream_ = absl::make_unique<std::ofstream>(
+  real_log_stream_ = std::make_unique<std::ofstream>(
       utf8_to_wide.from_bytes(log_file_path).c_str(), std::ios::app);
 #elif !defined(OS_ANDROID)
   // On non-Android platform, change file mode in addition.
   // Android uses logcat instead of log file.
   DCHECK_NE(log_file_path.size(), 0);
   real_log_stream_ =
-      absl::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
+      std::make_unique<std::ofstream>(log_file_path.c_str(), std::ios::app);
   ::chmod(log_file_path.c_str(), 0600);
 #endif  // OS_ANDROID
   DCHECK(!use_cerr_ || !real_log_stream_);

@@ -35,7 +35,6 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "absl/container/flat_hash_map.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -160,7 +159,7 @@ template <typename Key, typename Value>
 void LruCache<Key, Value>::AddBlock() {
   const size_t max_blocks = sizeof(blocks_) / sizeof(blocks_[0]);
   if (block_count_ < max_blocks && block_capacity_ < max_elements_) {
-    blocks_[block_count_] = absl::make_unique<Element[]>(next_block_size_);
+    blocks_[block_count_] = std::make_unique<Element[]>(next_block_size_);
     block_capacity_ += next_block_size_;
     // Add new elements to free list
     for (size_t i = 0; i < next_block_size_; ++i) {

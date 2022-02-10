@@ -50,7 +50,6 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -65,7 +64,7 @@ struct DictionaryData {
 };
 
 std::unique_ptr<DictionaryData> CreateDictionaryData() {
-  auto ret = absl::make_unique<DictionaryData>();
+  auto ret = std::make_unique<DictionaryData>();
   testing::MockDataManager data_manager;
   ret->pos_matcher.Set(data_manager.GetPosMatcherData());
   const char *dictionary_data = nullptr;
@@ -75,11 +74,11 @@ std::unique_ptr<DictionaryData> CreateDictionaryData() {
       SystemDictionary::Builder(dictionary_data, dictionary_size)
           .Build()
           .value();
-  auto val_dict = absl::make_unique<ValueDictionary>(ret->pos_matcher,
-                                                     &sys_dict->value_trie());
-  ret->user_dictionary = absl::make_unique<UserDictionaryStub>();
-  ret->suppression_dictionary = absl::make_unique<SuppressionDictionary>();
-  ret->dictionary = absl::make_unique<DictionaryImpl>(
+  auto val_dict = std::make_unique<ValueDictionary>(ret->pos_matcher,
+                                                    &sys_dict->value_trie());
+  ret->user_dictionary = std::make_unique<UserDictionaryStub>();
+  ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
+  ret->dictionary = std::make_unique<DictionaryImpl>(
       std::move(sys_dict), std::move(val_dict), ret->user_dictionary.get(),
       ret->suppression_dictionary.get(), &ret->pos_matcher);
   return ret;

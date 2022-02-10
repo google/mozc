@@ -59,7 +59,6 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -217,13 +216,13 @@ class UserHistoryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    request_ = absl::make_unique<Request>();
-    config_ = absl::make_unique<Config>();
+    request_ = std::make_unique<Request>();
+    config_ = std::make_unique<Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_ = absl::make_unique<composer::Table>();
-    composer_ = absl::make_unique<composer::Composer>(
+    table_ = std::make_unique<composer::Table>();
+    composer_ = std::make_unique<composer::Composer>(
         table_.get(), request_.get(), config_.get());
-    convreq_ = absl::make_unique<ConversionRequest>(
+    convreq_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
     convreq_->set_max_user_history_prediction_candidates_size(10);
     convreq_->set_max_user_history_prediction_candidates_size_for_zero_query(
@@ -390,10 +389,10 @@ class UserHistoryPredictorTest : public ::testing::Test {
   DataAndPredictor *CreateDataAndPredictor() const {
     DataAndPredictor *ret = new DataAndPredictor;
     testing::MockDataManager data_manager;
-    ret->dictionary = absl::make_unique<DictionaryMock>();
-    ret->suppression_dictionary = absl::make_unique<SuppressionDictionary>();
+    ret->dictionary = std::make_unique<DictionaryMock>();
+    ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
     ret->pos_matcher.Set(data_manager.GetPosMatcherData());
-    ret->predictor = absl::make_unique<UserHistoryPredictor>(
+    ret->predictor = std::make_unique<UserHistoryPredictor>(
         ret->dictionary.get(), &ret->pos_matcher,
         ret->suppression_dictionary.get(), false);
     ret->predictor->WaitForSyncer();

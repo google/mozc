@@ -70,7 +70,6 @@
 #include "storage/louds/bit_vector_based_array.h"
 #include "storage/louds/louds_trie.h"
 #include "absl/container/btree_set.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -293,7 +292,7 @@ class SystemDictionary::ReverseLookupIndex {
 
     CHECK_GE(value_id_max, 0);
     index_size_ = value_id_max + 1;
-    index_ = absl::make_unique<ReverseLookupResultArray[]>(index_size_);
+    index_ = std::make_unique<ReverseLookupResultArray[]>(index_size_);
 
     // Gets result size for each ids.
     for (TokenScanIterator iter(codec, token_array); !iter.Done();
@@ -307,7 +306,7 @@ class SystemDictionary::ReverseLookupIndex {
 
     for (size_t i = 0; i < index_size_; ++i) {
       index_[i].results =
-          absl::make_unique<ReverseLookupResult[]>(index_[i].size);
+          std::make_unique<ReverseLookupResult[]>(index_[i].size);
     }
 
     // Builds index.
@@ -537,7 +536,7 @@ void SystemDictionary::InitReverseLookupIndex() {
     return;
   }
   reverse_lookup_index_ =
-      absl::make_unique<ReverseLookupIndex>(codec_, token_array_);
+      std::make_unique<ReverseLookupIndex>(codec_, token_array_);
 }
 
 bool SystemDictionary::HasKey(absl::string_view key) const {
@@ -1054,7 +1053,7 @@ void SystemDictionary::PopulateReverseLookupCache(absl::string_view str) const {
     // as we have already built the index for reverse lookup.
     return;
   }
-  reverse_lookup_cache_ = absl::make_unique<ReverseLookupCache>();
+  reverse_lookup_cache_ = std::make_unique<ReverseLookupCache>();
   DCHECK(reverse_lookup_cache_.get());
 
   // Iterate each suffix and collect IDs of all substrings.

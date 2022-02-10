@@ -46,7 +46,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -111,7 +110,7 @@ class SymbolRewriterTest : public ::testing::Test {
     engine_ = MockDataEngineFactory::Create().value();
     converter_ = engine_->GetConverter();
 
-    data_manager_ = absl::make_unique<testing::MockDataManager>();
+    data_manager_ = std::make_unique<testing::MockDataManager>();
   }
 
   std::unique_ptr<EngineInterface> engine_;

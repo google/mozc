@@ -30,6 +30,7 @@
 #include "rewriter/correction_rewriter.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -40,7 +41,6 @@
 #include "data_manager/data_manager_interface.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -96,7 +96,7 @@ CorrectionRewriter::CreateCorrectionRewriter(
   absl::string_view value_array_data, error_array_data, correction_array_data;
   data_manager->GetReadingCorrectionData(&value_array_data, &error_array_data,
                                          &correction_array_data);
-  return absl::make_unique<CorrectionRewriter>(
+  return std::make_unique<CorrectionRewriter>(
       value_array_data, error_array_data, correction_array_data);
 }
 

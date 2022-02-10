@@ -155,7 +155,6 @@ cc_library_mozc(
         "//base:util",
         "//composer:table",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -175,7 +174,6 @@ cc_test_mozc(
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

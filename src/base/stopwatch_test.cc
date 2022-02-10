@@ -36,14 +36,13 @@
 #include "base/clock.h"
 #include "base/clock_mock.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 
 class StopwatchTest : public testing::Test {
  protected:
   void SetUp() override {
-    clock_mock_ = absl::make_unique<ClockMock>(0, 0);
+    clock_mock_ = std::make_unique<ClockMock>(0, 0);
     // 1GHz (Accuracy = 1ns)
     clock_mock_->SetFrequency(uint64_t{1000000000});
     Clock::SetClockForUnitTest(clock_mock_.get());

@@ -99,7 +99,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     LOG(ERROR)
         << "Fallback to minimal engine due to data manager creation failure: "
         << data_manager.status();
-    return absl::make_unique<MinimalEngine>();
+    return std::make_unique<MinimalEngine>();
   }
   // NOTE: we need to copy the data version to our local string before calling
   // `Engine::CreateMobileEngine` because, if the engine creation below fails,
@@ -113,7 +113,7 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     LOG(ERROR) << "Failed to create a mobile engine: file " << data_file_path
                << ", data version: " << data_version << ": " << engine.status()
                << ": Fallback to minimal engine";
-    return absl::make_unique<MinimalEngine>();
+    return std::make_unique<MinimalEngine>();
   }
   LOG(INFO) << "Successfully created a mobile engine from " << data_file_path
             << ", data version=" << data_version;
@@ -129,15 +129,15 @@ std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
   std::unique_ptr<EngineInterface> engine;
   if (j_data_file_path == nullptr) {
     LOG(ERROR) << "j_data_file_path is null.  Fallback to minimal engine.";
-    engine = absl::make_unique<MinimalEngine>();
+    engine = std::make_unique<MinimalEngine>();
   } else {
     const std::string &data_file_path =
         JstringToCcString(env, j_data_file_path);
     engine = CreateMobileEngine(data_file_path);
   }
   DCHECK(engine);
-  auto result = absl::make_unique<SessionHandler>(
-      std::move(engine), absl::make_unique<EngineBuilder>());
+  auto result = std::make_unique<SessionHandler>(
+      std::move(engine), std::make_unique<EngineBuilder>());
   result->AddObserver(Singleton<session::SessionUsageObserver>::get());
   return result;
 }

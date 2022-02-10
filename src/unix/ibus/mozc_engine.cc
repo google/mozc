@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <limits>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -58,7 +59,6 @@
 #include "unix/ibus/property_handler.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 #ifdef ENABLE_GTK_RENDERER
 #include "renderer/renderer_client.h"
@@ -279,8 +279,8 @@ MozcEngine::MozcEngine()
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
   ibus_config_.Initialize();
-  property_handler_ = absl::make_unique<PropertyHandler>(
-      absl::make_unique<LocaleBasedMessageTranslator>(GetMessageLocale()),
+  property_handler_ = std::make_unique<PropertyHandler>(
+      std::make_unique<LocaleBasedMessageTranslator>(GetMessageLocale()),
       ibus_config_.IsActiveOnLaunch(), client_.get());
 
   // TODO(yusukes): write a unit test to check if the capability is set

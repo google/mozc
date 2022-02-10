@@ -60,7 +60,6 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 ABSL_DECLARE_FLAG(bool, use_history_rewriter);
 
@@ -108,7 +107,7 @@ class SessionRegressionTest : public ::testing::Test {
     engine->GetUserDataManager()->ClearUserPrediction();
     engine->GetUserDataManager()->Wait();
 
-    handler_ = absl::make_unique<SessionHandler>(std::move(engine));
+    handler_ = std::make_unique<SessionHandler>(std::move(engine));
     ResetSession();
     CHECK(session_.get());
   }
@@ -168,7 +167,7 @@ class SessionRegressionTest : public ::testing::Test {
   void ResetSession() {
     session_.reset(static_cast<session::Session *>(handler_->NewSession()));
     commands::Request request;
-    table_ = absl::make_unique<composer::Table>();
+    table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(request, config_, data_manager_);
     session_->SetTable(table_.get());
   }

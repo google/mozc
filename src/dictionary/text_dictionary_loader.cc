@@ -50,7 +50,6 @@
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -271,7 +270,7 @@ TextDictionaryLoader::LoadReadingCorrectionTokens(
     // We here assume that the wrong reading appear with 1/100 probability
     // of the original (correct) reading.
     constexpr int kCostPenalty = 2302;  // -log(1/100) * 500;
-    auto token = absl::make_unique<Token>();
+    auto token = std::make_unique<Token>();
     token->key.assign(value_key.second.data(), value_key.second.size());
     token->value = max_cost_token->value;
     token->lid = max_cost_token->lid;
@@ -312,7 +311,7 @@ std::unique_ptr<Token> TextDictionaryLoader::ParseTSV(
     const std::vector<absl::string_view> &columns) const {
   CHECK_LE(5, columns.size()) << "Lack of columns: " << columns.size();
 
-  auto token = absl::make_unique<Token>();
+  auto token = std::make_unique<Token>();
 
   // Parse key, lid, rid, cost, value.
   Util::NormalizeVoicedSoundMark(columns[0], &token->key);

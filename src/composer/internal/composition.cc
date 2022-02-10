@@ -38,7 +38,6 @@
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
 namespace mozc {
@@ -48,7 +47,7 @@ namespace {
 CharChunkList DeepCopyCharChunkList(const CharChunkList &chunks) {
   CharChunkList copy;
   for (const std::unique_ptr<CharChunk> &chunk : chunks) {
-    copy.push_back(absl::make_unique<CharChunk>(*chunk));
+    copy.push_back(std::make_unique<CharChunk>(*chunk));
   }
   return copy;
 }
@@ -428,7 +427,7 @@ void Composition::CombinePendingChunks(CharChunkList::iterator it,
 // Insert a chunk to the prev of it.
 CharChunkList::iterator Composition::InsertChunk(
     CharChunkList::const_iterator it) {
-  return chunks_.insert(it, absl::make_unique<CharChunk>(input_t12r_, table_));
+  return chunks_.insert(it, std::make_unique<CharChunk>(input_t12r_, table_));
 }
 
 const CharChunkList &Composition::GetCharChunkList() const { return chunks_; }

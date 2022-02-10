@@ -44,7 +44,6 @@
 #include "session/session_handler.h"
 #include "session/session_usage_observer.h"
 #include "usage_stats/usage_stats_uploader.h"
-#include "absl/memory/memory.h"
 
 namespace {
 
@@ -53,7 +52,7 @@ namespace {
 // the same. To reduce the potential risk of DOS, we limit the maximum number
 // of pipe instances to 1 here.
 constexpr int kNumConnections = 1;
-#else
+#else   // OS_WIN
 constexpr int kNumConnections = 10;
 #endif  // OS_WIN
 
@@ -67,9 +66,9 @@ namespace mozc {
 
 SessionServer::SessionServer()
     : IPCServer(kSessionName, kNumConnections, kTimeOut),
-      usage_observer_(absl::make_unique<session::SessionUsageObserver>()),
+      usage_observer_(std::make_unique<session::SessionUsageObserver>()),
       session_handler_(
-          absl::make_unique<SessionHandler>(EngineFactory::Create().value())) {
+          std::make_unique<SessionHandler>(EngineFactory::Create().value())) {
   using usage_stats::UsageStatsUploader;
   // start session watch dog timer
   session_handler_->StartWatchDog();

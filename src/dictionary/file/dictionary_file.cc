@@ -29,6 +29,7 @@
 
 #include "dictionary/file/dictionary_file.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,6 @@
 #include "base/mmap.h"
 #include "dictionary/file/codec_interface.h"
 #include "dictionary/file/section.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 
@@ -51,7 +51,7 @@ DictionaryFile::DictionaryFile(const DictionaryFileCodecInterface *file_codec)
 DictionaryFile::~DictionaryFile() = default;
 
 absl::Status DictionaryFile::OpenFromFile(const std::string &file) {
-  mapping_ = absl::make_unique<Mmap>();
+  mapping_ = std::make_unique<Mmap>();
   if (!mapping_->Open(file.c_str())) {
     return absl::UnknownError(
         absl::StrCat("dictionary_file.cc: Failed to mmap ", file));

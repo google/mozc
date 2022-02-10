@@ -51,7 +51,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_client.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 
@@ -121,7 +120,7 @@ int Loop(std::istream *input) {
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
-    renderer_client = absl::make_unique<renderer::RendererClient>();
+    renderer_client = std::make_unique<renderer::RendererClient>();
     CHECK(renderer_client->Activate());
 #else   // defined(OS_WIN) || defined(__APPLE__)
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
@@ -191,7 +190,7 @@ int main(int argc, char **argv) {
 
   if (!absl::GetFlag(FLAGS_input).empty()) {
     // Batch mode loading the input file.
-    input_file = absl::make_unique<mozc::InputFileStream>(
+    input_file = std::make_unique<mozc::InputFileStream>(
         absl::GetFlag(FLAGS_input).c_str());
     if (input_file->fail()) {
       LOG(ERROR) << "File not opened: " << absl::GetFlag(FLAGS_input);

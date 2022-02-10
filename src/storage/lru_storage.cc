@@ -48,7 +48,6 @@
 #include "base/port.h"
 #include "base/util.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -327,7 +326,7 @@ bool LruStorage::OpenOrCreate(const char *filename, size_t new_value_size,
 }
 
 bool LruStorage::Open(const char *filename) {
-  mmap_ = absl::make_unique<Mmap>();
+  mmap_ = std::make_unique<Mmap>();
 
   if (!mmap_) {
     LOG(ERROR) << "cannot make Mmap object";

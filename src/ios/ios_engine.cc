@@ -65,13 +65,13 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
     LOG(ERROR)
         << "Fallback to MinimalEngine due to data manager creation error: "
         << data_manager.status();
-    return absl::make_unique<MinimalEngine>();
+    return std::make_unique<MinimalEngine>();
   }
   auto engine = Engine::CreateMobileEngine(*std::move(data_manager));
   if (!engine.ok()) {
     LOG(ERROR) << "Failed to create an engine: " << engine.status()
                << ". Faillback to MinimalEngine";
-    return absl::make_unique<MinimalEngine>();
+    return std::make_unique<MinimalEngine>();
   }
   return *std::move(engine);
 }
@@ -79,8 +79,8 @@ std::unique_ptr<EngineInterface> CreateMobileEngine(
 std::unique_ptr<SessionHandlerInterface> CreateSessionHandler(
     const std::string &data_file_path) {
   std::unique_ptr<EngineInterface> engine = CreateMobileEngine(data_file_path);
-  return absl::make_unique<SessionHandler>(std::move(engine),
-                                           absl::make_unique<EngineBuilder>());
+  return std::make_unique<SessionHandler>(std::move(engine),
+                                          std::make_unique<EngineBuilder>());
   // TODO(noriyukit): Add SessionUsageObserver by AddObserver().
 }
 

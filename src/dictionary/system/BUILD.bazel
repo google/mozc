@@ -125,7 +125,6 @@ cc_library_mozc(
         "//storage/louds:louds_trie",
         "//testing:gunit_prod",
         "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
@@ -240,7 +239,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//storage/louds:louds_trie_builder",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -77,7 +77,6 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
@@ -206,7 +205,7 @@ class MockDataAndPredictor {
   void Init(const DictionaryInterface *dictionary = nullptr,
             const DictionaryInterface *suffix_dictionary = nullptr) {
     pos_matcher_.Set(data_manager_.GetPosMatcherData());
-    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     if (!dictionary) {
       dictionary_mock_ = new DictionaryMock;
       dictionary_.reset(dictionary_mock_);
@@ -227,14 +226,14 @@ class MockDataAndPredictor {
     segmenter_.reset(Segmenter::CreateFromDataManager(data_manager_));
     CHECK(segmenter_.get());
 
-    pos_group_ = absl::make_unique<PosGroup>(data_manager_.GetPosGroupData());
+    pos_group_ = std::make_unique<PosGroup>(data_manager_.GetPosGroupData());
     suggestion_filter_.reset(CreateSuggestionFilter(data_manager_));
-    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary_.get(),
         suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
         &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
-    converter_ = absl::make_unique<ConverterMock>();
-    dictionary_predictor_ = absl::make_unique<TestableDictionaryPredictor>(
+    converter_ = std::make_unique<ConverterMock>();
+    dictionary_predictor_ = std::make_unique<TestableDictionaryPredictor>(
         data_manager_, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
         segmenter_.get(), &pos_matcher_, suggestion_filter_.get());
@@ -363,18 +362,18 @@ class DictionaryPredictorTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    request_ = absl::make_unique<commands::Request>();
-    config_ = absl::make_unique<config::Config>();
+    request_ = std::make_unique<commands::Request>();
+    config_ = std::make_unique<config::Config>();
     config::ConfigHandler::GetDefaultConfig(config_.get());
-    table_ = absl::make_unique<composer::Table>();
-    composer_ = absl::make_unique<composer::Composer>(
+    table_ = std::make_unique<composer::Table>();
+    composer_ = std::make_unique<composer::Composer>(
         table_.get(), request_.get(), config_.get());
-    convreq_ = absl::make_unique<ConversionRequest>(
+    convreq_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
-    convreq_for_suggestion_ = absl::make_unique<ConversionRequest>(
+    convreq_for_suggestion_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
     convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(10);
-    convreq_for_prediction_ = absl::make_unique<ConversionRequest>(
+    convreq_for_prediction_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
     convreq_for_prediction_->set_max_dictionary_prediction_candidates_size(50);
 
@@ -734,7 +733,7 @@ class DictionaryPredictorTest : public ::testing::Test {
         data_and_predictor->dictionary_predictor();
 
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
-    table_->typing_model_ = absl::make_unique<MockTypingModel>();
+    table_->typing_model_ = std::make_unique<MockTypingModel>();
     InsertInputSequenceForProbableKeyEvent(key, corrected_key_codes,
                                            composer_.get());
 

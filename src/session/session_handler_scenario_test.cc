@@ -51,7 +51,6 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -77,7 +76,7 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
 
     std::unique_ptr<EngineInterface> engine =
         MockDataEngineFactory::Create().value();
-    handler_ = absl::make_unique<SessionHandlerInterpreter>(std::move(engine));
+    handler_ = std::make_unique<SessionHandlerInterpreter>(std::move(engine));
   }
 
   void TearDown() override {

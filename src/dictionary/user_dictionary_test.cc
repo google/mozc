@@ -62,7 +62,6 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -193,7 +192,7 @@ class UserDictionaryTest : public ::testing::Test {
   UserDictionaryTest() { convreq_.set_config(&config_); }
 
   void SetUp() override {
-    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
     config::ConfigHandler::GetDefaultConfig(&config_);
@@ -213,7 +212,7 @@ class UserDictionaryTest : public ::testing::Test {
   // Creates a user dictionary with mock pos data.
   UserDictionary *CreateDictionaryWithMockPos() {
     return new UserDictionary(
-        absl::make_unique<UserPosMock>(),
+        std::make_unique<UserPosMock>(),
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()),
         suppression_dictionary_.get());
   }

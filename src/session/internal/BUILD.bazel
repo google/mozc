@@ -241,7 +241,6 @@ cc_test_mozc(
     deps = [
         ":candidate_list",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
     ],
 )
 

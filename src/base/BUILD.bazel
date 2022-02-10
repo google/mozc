@@ -205,21 +205,18 @@ cc_library_mozc(
             ":clock",
             ":const",
             ":singleton",
-            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
         oss = [
             ":clock",
             ":const",
             ":singleton",
-            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
         wasm = [
             ":clock",
             ":const",
             ":singleton",
-            "@com_google_absl//absl/memory",
             "@com_google_absl//absl/strings",
         ],
     ) + [
@@ -260,7 +257,6 @@ cc_test_mozc(
         ":codegen_bytearray_stream",
         ":port",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1241,7 +1237,6 @@ cc_binary_mozc(
         ":thread",
         ":util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1266,7 +1261,6 @@ cc_test_mozc(
         ":clock_mock",
         ":stopwatch",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -1318,7 +1312,6 @@ cc_library_mozc(
         ":logging",
         ":port",
         ":util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

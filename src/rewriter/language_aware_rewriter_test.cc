@@ -48,7 +48,6 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -75,7 +74,7 @@ class LanguageAwareRewriterTest : public ::testing::Test {
 
   void SetUp() override {
     usage_stats::UsageStats::ClearAllStatsForTest();
-    dictionary_mock_ = absl::make_unique<DictionaryMock>();
+    dictionary_mock_ = std::make_unique<DictionaryMock>();
   }
 
   void TearDown() override {

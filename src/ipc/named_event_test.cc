@@ -42,7 +42,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -148,7 +147,7 @@ TEST_F(NamedEventTest, NamedEventMultipleListenerTest) {
       kNumRequests);
   for (size_t i = 0; i < kNumRequests; ++i) {
     listeners[i] =
-        absl::make_unique<NamedEventListenerThread>(kName, 33 * i, 50, 100);
+        std::make_unique<NamedEventListenerThread>(kName, 33 * i, 50, 100);
     listeners[i]->Start("NamedEventMultipleListenerTest");
   }
 

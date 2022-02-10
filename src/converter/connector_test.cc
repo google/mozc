@@ -41,7 +41,6 @@
 #include "data_manager/connection_file_reader.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {

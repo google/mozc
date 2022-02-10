@@ -40,7 +40,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/user_pos_interface.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -52,7 +51,7 @@ class UserPosTest : public ::testing::Test {
   void SetUp() override {
     absl::string_view token_array_data, string_array_data;
     mock_data_manager_.GetUserPosData(&token_array_data, &string_array_data);
-    user_pos_ = absl::make_unique<UserPos>(token_array_data, string_array_data);
+    user_pos_ = std::make_unique<UserPos>(token_array_data, string_array_data);
     CHECK(user_pos_.get());
   }
 

@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session_handler.h"
 
 #include <cstdint>
+#include <memory>
 
 #include "base/file_util.h"
 #include "base/logging.h"
@@ -40,7 +41,6 @@
 #include "dictionary/user_dictionary_session.h"
 #include "dictionary/user_dictionary_util.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace user_dictionary {
@@ -156,7 +156,7 @@ void UserDictionarySessionHandler::CreateSession(
   uint64_t new_id = CreateNewSessionId();
 
   session_id_ = new_id;
-  session_ = absl::make_unique<UserDictionarySession>(dictionary_path_);
+  session_ = std::make_unique<UserDictionarySession>(dictionary_path_);
 
   status->set_status(
       UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS);

@@ -71,7 +71,6 @@
 #include "gui/dictionary_tool/find_dialog.h"
 #include "gui/dictionary_tool/import_dialog.h"
 #include "protocol/user_dictionary_storage.pb.h"
-#include "absl/memory/memory.h"
 
 #ifdef OS_WIN
 #include "gui/base/win_util.h"
@@ -173,7 +172,7 @@ class UTF16TextLineIterator
 
   void Reset() override {
     file_.seek(0);
-    stream_ = absl::make_unique<QTextStream>();
+    stream_ = std::make_unique<QTextStream>();
     stream_->setDevice(&file_);
     stream_->setCodec("UTF-16");
   }

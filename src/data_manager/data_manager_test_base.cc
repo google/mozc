@@ -51,7 +51,6 @@
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
@@ -202,7 +201,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
     const char *data = nullptr;
     size_t size;
     data_manager_->GetSuggestionFilterData(&data, &size);
-    suggestion_filter = absl::make_unique<SuggestionFilter>(data, size);
+    suggestion_filter = std::make_unique<SuggestionFilter>(data, size);
   }
 
   // Load the original suggestion filter from file.

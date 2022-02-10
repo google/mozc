@@ -44,7 +44,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -69,13 +68,13 @@ class RewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    converter_mock_ = absl::make_unique<ConverterMock>();
+    converter_mock_ = std::make_unique<ConverterMock>();
     const testing::MockDataManager data_manager;
-    pos_group_ = absl::make_unique<PosGroup>(data_manager.GetPosGroupData());
+    pos_group_ = std::make_unique<PosGroup>(data_manager.GetPosGroupData());
     const DictionaryInterface *kNullDictionary = nullptr;
     rewriter_ =
-        absl::make_unique<RewriterImpl>(converter_mock_.get(), &data_manager,
-                                        pos_group_.get(), kNullDictionary);
+        std::make_unique<RewriterImpl>(converter_mock_.get(), &data_manager,
+                                       pos_group_.get(), kNullDictionary);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
