@@ -30,7 +30,7 @@ bazel build package --config oss_linux -c opt
 * //gui/tool:mozc_tool
 * //renderer:mozc_renderer
 * //unix/ibus:ibus_mozc
-* //unix/icons
+* //unix:icons
 * //unix/emacs:mozc_emacs_helper
 
 ### Install paths
