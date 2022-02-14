@@ -49,17 +49,35 @@ TEST(TextNormalizerTest, NormalizeText) {
   output = TextNormalizer::NormalizeText("ぐ〜ぐる");
 #ifdef OS_WIN
   EXPECT_EQ("ぐ～ぐる", output);  // "～" is U+FF5E
-#else  // OS_WIN
+#else                             // OS_WIN
   EXPECT_EQ("ぐ〜ぐる", output);  // "〜" is U+301C
-#endif  // OS_WIN
+#endif                            // OS_WIN
+
+  // "〜" is U+301C
+  output =
+      TextNormalizer::NormalizeTextWithFlag("ぐ〜ぐる", TextNormalizer::kAll);
+  EXPECT_EQ("ぐ～ぐる", output);  // "～" is U+FF5E
+
+  output =
+      TextNormalizer::NormalizeTextWithFlag("ぐ〜ぐる", TextNormalizer::kNone);
+  EXPECT_EQ("ぐ〜ぐる", output);  // "～" is U+301C
 
   // "−" is U+2212
   output = TextNormalizer::NormalizeText("１−２−３");
 #ifdef OS_WIN
   EXPECT_EQ("１－２－３", output);  // "－" is U+FF0D
-#else  // OS_WIN
+#else                               // OS_WIN
   EXPECT_EQ("１−２−３", output);  // "−" is U+2212
-#endif  // OS_WIN
+#endif                              // OS_WIN
+
+  // "−" is U+2212
+  output =
+      TextNormalizer::NormalizeTextWithFlag("１−２−３", TextNormalizer::kAll);
+  EXPECT_EQ("１－２－３", output);  // "－" is U+FF0D
+
+  output =
+      TextNormalizer::NormalizeTextWithFlag("１−２−３", TextNormalizer::kNone);
+  EXPECT_EQ("１−２−３", output);  // "−" is U+2212
 
   // "¥" is U+00A5
   output = TextNormalizer::NormalizeText("¥298");

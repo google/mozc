@@ -36,7 +36,6 @@
 namespace mozc {
 namespace {
 
-#ifdef OS_WIN
 // Unicode vender specific character table:
 // http://hp.vector.co.jp/authors/VA010341/unicode/
 // http://www.notoinsatu.co.jp/font/omake/OTF_other.pdf
@@ -62,20 +61,30 @@ inline char32 NormalizeCharForWindows(char32 c) {
       break;
   }
 }
-#endif  // OS_WIN
 
-}  // namespace
-
-std::string TextNormalizer::NormalizeText(absl::string_view input) {
-#ifdef OS_WIN
+std::string NormalizeTextForWindows(absl::string_view input) {
   std::string output;
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     Util::Ucs4ToUtf8Append(NormalizeCharForWindows(iter.Get()), &output);
   }
   return output;
-#else  // OS_WIN
-  return std::string(input.data(), input.size());
-#endif  // OS_WIN
 }
+}  // namespace
 
+std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
+                                                  TextNormalizer::Flag flag) {
+  if (flag == TextNormalizer::kDefault) {
+#ifdef OS_WIN
+    flag = TextNormalizer::kAll;
+#else  // OS_WIN
+    flag = TextNormalizer::kNone;
+#endif  // OS_WIN
+  }
+
+  if (flag != TextNormalizer::kAll) {
+    return std::string(input.data(), input.size());
+  }
+
+  return NormalizeTextForWindows(input);
+}
 }  // namespace mozc
