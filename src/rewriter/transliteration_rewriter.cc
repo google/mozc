@@ -83,11 +83,8 @@ bool IsComposerApplicable(const ConversionRequest &request,
 
 void NormalizeT13ns(std::vector<std::string> *t13ns) {
   DCHECK(t13ns);
-  std::string normalized;
   for (size_t i = 0; i < t13ns->size(); ++i) {
-    normalized.clear();
-    TextNormalizer::NormalizeText(t13ns->at(i), &normalized);
-    t13ns->at(i) = normalized;
+    t13ns->at(i) = TextNormalizer::NormalizeText(t13ns->at(i));
   }
 }
 

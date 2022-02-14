@@ -141,7 +141,7 @@ absl::Status QualityRegressionUtil::TestItem::ParseFromTSV(
   }
   label.assign(tokens[0].data(), tokens[0].size());
   key.assign(tokens[1].data(), tokens[1].size());
-  TextNormalizer::NormalizeText(tokens[2], &expected_value);
+  expected_value = TextNormalizer::NormalizeText(tokens[2]);
   command.assign(tokens[3].data(), tokens[3].size());
 
   if (tokens.size() == 4) {

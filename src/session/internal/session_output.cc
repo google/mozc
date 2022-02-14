@@ -410,12 +410,11 @@ bool SessionOutput::AddSegment(const std::string &key, const std::string &value,
                                const uint32_t segment_type_mask,
                                commands::Preedit *preedit) {
   // Key is always normalized as a preedit text.
-  std::string normalized_key;
-  TextNormalizer::NormalizeText(key, &normalized_key);
+  const std::string normalized_key = TextNormalizer::NormalizeText(key);
 
   std::string normalized_value;
   if (segment_type_mask & PREEDIT) {
-    TextNormalizer::NormalizeText(value, &normalized_value);
+    normalized_value = TextNormalizer::NormalizeText(value);
   } else if (segment_type_mask & CONVERSION) {
     normalized_value = value;
   } else {
@@ -492,8 +491,7 @@ void SessionOutput::FillConversionResult(const std::string &key,
                                          const std::string &result,
                                          commands::Result *result_proto) {
   // Key should be normalized as a preedit text.
-  std::string normalized_key;
-  TextNormalizer::NormalizeText(key, &normalized_key);
+  const std::string normalized_key = TextNormalizer::NormalizeText(key);
 
   // value is already normalized by converter.
   FillConversionResultWithoutNormalization(normalized_key, result,
@@ -503,8 +501,7 @@ void SessionOutput::FillConversionResult(const std::string &key,
 // static
 void SessionOutput::FillPreeditResult(const std::string &preedit,
                                       commands::Result *result_proto) {
-  std::string normalized_preedit;
-  TextNormalizer::NormalizeText(preedit, &normalized_preedit);
+  const std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
 
   FillConversionResultWithoutNormalization(normalized_preedit,
                                            normalized_preedit, result_proto);

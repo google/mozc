@@ -42,7 +42,7 @@ namespace mozc {
 
 class TextNormalizer {
  public:
-  static void NormalizeText(absl::string_view input, std::string *output);
+  static std::string NormalizeText(absl::string_view input);
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);

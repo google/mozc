@@ -66,16 +66,16 @@ inline char32 NormalizeCharForWindows(char32 c) {
 
 }  // namespace
 
-void TextNormalizer::NormalizeText(absl::string_view input,
-                                   std::string *output) {
+std::string TextNormalizer::NormalizeText(absl::string_view input) {
 #ifdef OS_WIN
-  output->clear();
+  std::string output;
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    Util::Ucs4ToUtf8Append(NormalizeCharForWindows(iter.Get()), output);
+    Util::Ucs4ToUtf8Append(NormalizeCharForWindows(iter.Get()), &output);
   }
-#else
-  output->assign(input.data(), input.size());
-#endif
+  return output;
+#else  // OS_WIN
+  return std::string(input.data(), input.size());
+#endif  // OS_WIN
 }
 
 }  // namespace mozc
