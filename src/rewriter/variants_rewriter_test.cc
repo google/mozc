@@ -410,6 +410,16 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
   {
     Segment::Candidate candidate;
     candidate.Init();
+    candidate.value = "~";  // Tilde
+    candidate.content_value = candidate.value;
+    candidate.content_key = "~";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    std::string expected = "[半] チルダ";
+    EXPECT_EQ(expected, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
     // An emoji character of mouse face.
     candidate.value = "🐭";
     candidate.content_value = candidate.value;
@@ -642,6 +652,32 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
 
     EXPECT_EQ("abc", segments.segment(0).candidate(0).value);
     EXPECT_EQ("ａｂｃ", segments.segment(0).candidate(1).value);
+  }
+  {
+    Segments segments;
+    segments.set_request_type(Segments::CONVERSION);
+    {
+      Segment *segment = segments.push_back_segment();
+      segment->set_key("~");
+      Segment::Candidate *candidate = segment->add_candidate();
+      candidate->Init();
+      candidate->key = "~";
+      candidate->content_key = "~";
+      candidate->value = "〜";
+      candidate->content_value = "〜";
+      candidate->description = "波ダッシュ";
+    }
+    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_EQ(1, segments.segments_size());
+    EXPECT_EQ(2, segments.segment(0).candidates_size());
+
+    EXPECT_EQ(Config::FULL_WIDTH,
+              character_form_manager->GetConversionCharacterForm("~"));
+
+    EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
+    EXPECT_EQ("[全] 波ダッシュ", segments.segment(0).candidate(0).description);
+    EXPECT_EQ("~", segments.segment(0).candidate(1).value);
+    EXPECT_EQ("[半] チルダ", segments.segment(0).candidate(1).description);
   }
 }
 

@@ -237,11 +237,13 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
   } else if (candidate->value == "￥") {
     // if "￥" (full-width Yen sign), append only kYenKigou
     AppendString(kYenKigou, &description);
+  } else if (candidate->value == "~") {
+    AppendString("チルダ", &description);
   } else {
     AppendString(candidate->description, &description);
   }
 
-  // The follwoing description tries to overwrite existing description.
+  // The following description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Zipcode description
   if ((description_type & ZIPCODE) && pos_matcher.IsZipcode(candidate->lid) &&
@@ -251,7 +253,7 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
     AppendString(candidate->description, &description);
   }
 
-  // The follwoing description tries to overwrite existing description.
+  // The following description tries to overwrite existing description.
   // TODO(taku): reconsider this behavior.
   // Spelling Correction description
   if ((description_type & SPELLING_CORRECTION) &&
