@@ -123,13 +123,13 @@ class CandidateFilterTest : public ::testing::Test {
   }
 
   Node *NewNode() {
-    Node *n = node_freelist_->Alloc(1);
+    Node *n = node_freelist_->Alloc();
     n->Init();
     return n;
   }
 
   Segment::Candidate *NewCandidate() {
-    Segment::Candidate *c = candidate_freelist_->Alloc(1);
+    Segment::Candidate *c = candidate_freelist_->Alloc();
     c->Init();
     c->cost = 100;
     c->structure_cost = 100;

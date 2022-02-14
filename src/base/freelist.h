@@ -36,13 +36,7 @@
 
 namespace mozc {
 
-// Note: The program will be crashed in the following code;
-//   FreeList<int> freelist(10);
-//   freelist.Alloc(5);
-//   freelist.set_size(100);
-//   int* array = freelist.Alloc(10);
-//   array[8] = 0;  // crashed.
-// Also this class runs unneeded T's constructor along with the memory chunk
+// This class runs unneeded T's constructor along with the memory chunk
 // allocation.
 // Please do take care to use this class.
 template <class T>
@@ -70,10 +64,8 @@ class FreeList {
     chunk_index_ = 0;
   }
 
-  T* Alloc() { return Alloc(static_cast<size_t>(1)); }
-
-  T* Alloc(size_t len) {
-    if ((current_index_ + len) >= size_) {
+  T* Alloc() {
+    if ((current_index_ + 1) >= size_) {
       chunk_index_++;
       current_index_ = 0;
     }
@@ -83,12 +75,11 @@ class FreeList {
     }
 
     T* r = pool_[chunk_index_] + current_index_;
-    current_index_ += len;
+    current_index_++;
     return r;
   }
 
   size_t size() const { return size_; }
-  void set_size(size_t size) { size_ = size; }
 
  private:
   std::vector<T*> pool_;
@@ -117,13 +108,12 @@ class ObjectPool {
       released_.pop_back();
       return result;
     }
-    return freelist_.Alloc(1);
+    return freelist_.Alloc();
   }
 
   void Release(T* ptr) { released_.push_back(ptr); }
 
   size_t size() const { return freelist_.size(); }
-  void set_size(size_t size) { freelist_.set_size(size); }
 
  private:
   std::vector<T*> released_;

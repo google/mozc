@@ -203,7 +203,8 @@ absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
   return absl::string_view(value_offset_, encoded_lengths & 0xff);
 }
 
-Segment::Segment() : segment_type_(FREE), pool_(16) {}
+constexpr int kCandidatesPoolSize = 16;
+Segment::Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
 
 Segment::Segment(const Segment &x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
