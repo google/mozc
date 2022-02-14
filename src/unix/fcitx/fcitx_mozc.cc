@@ -413,7 +413,7 @@ void FcitxMozc::InitializeBar()
     );
 
     if ( mozc::FileUtil::FileExists ( mozc::FileUtil::JoinPath (
-                                      mozc::SystemUtil::GetServerDirectory(), mozc::kMozcTool ) ) )
+                                      mozc::SystemUtil::GetServerDirectory(), mozc::kMozcTool ) ).ok() )
     {
         FcitxUIRegisterComplexStatus(instance, this,
             "mozc-tool",
