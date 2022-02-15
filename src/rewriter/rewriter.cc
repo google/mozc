@@ -29,6 +29,8 @@
 
 #include "rewriter/rewriter.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "converter/converter_interface.h"
 #include "data_manager/data_manager_interface.h"
@@ -63,7 +65,6 @@
 #include "rewriter/version_rewriter.h"
 #include "rewriter/zipcode_rewriter.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #ifndef NO_USAGE_REWRITER
 #include "rewriter/usage_rewriter.h"
 #endif  // NO_USAGE_REWRITER
@@ -88,49 +89,48 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   DCHECK(pos_group);
   // |dictionary| can be NULL
 
-  AddRewriter(absl::make_unique<UserDictionaryRewriter>());
-  AddRewriter(absl::make_unique<FocusCandidateRewriter>(data_manager));
+  AddRewriter(std::make_unique<UserDictionaryRewriter>());
+  AddRewriter(std::make_unique<FocusCandidateRewriter>(data_manager));
   AddRewriter(
-      absl::make_unique<LanguageAwareRewriter>(pos_matcher_, dictionary));
-  AddRewriter(absl::make_unique<TransliterationRewriter>(pos_matcher_));
-  AddRewriter(absl::make_unique<EnglishVariantsRewriter>());
-  AddRewriter(absl::make_unique<NumberRewriter>(data_manager));
-  AddRewriter(absl::make_unique<CollocationRewriter>(data_manager));
-  AddRewriter(absl::make_unique<SingleKanjiRewriter>(*data_manager));
-  AddRewriter(absl::make_unique<EmojiRewriter>(*data_manager));
+      std::make_unique<LanguageAwareRewriter>(pos_matcher_, dictionary));
+  AddRewriter(std::make_unique<TransliterationRewriter>(pos_matcher_));
+  AddRewriter(std::make_unique<EnglishVariantsRewriter>());
+  AddRewriter(std::make_unique<NumberRewriter>(data_manager));
+  AddRewriter(std::make_unique<CollocationRewriter>(data_manager));
+  AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
+  AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
-  AddRewriter(absl::make_unique<CalculatorRewriter>(parent_converter));
-  AddRewriter(
-      absl::make_unique<SymbolRewriter>(parent_converter, data_manager));
-  AddRewriter(absl::make_unique<UnicodeRewriter>(parent_converter));
-  AddRewriter(absl::make_unique<VariantsRewriter>(pos_matcher_));
-  AddRewriter(absl::make_unique<ZipcodeRewriter>(&pos_matcher_));
-  AddRewriter(absl::make_unique<DiceRewriter>());
+  AddRewriter(std::make_unique<CalculatorRewriter>(parent_converter));
+  AddRewriter(std::make_unique<SymbolRewriter>(parent_converter, data_manager));
+  AddRewriter(std::make_unique<UnicodeRewriter>(parent_converter));
+  AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher_));
+  AddRewriter(std::make_unique<ZipcodeRewriter>(&pos_matcher_));
+  AddRewriter(std::make_unique<DiceRewriter>());
 
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(
-        absl::make_unique<UserBoundaryHistoryRewriter>(parent_converter));
-    AddRewriter(absl::make_unique<UserSegmentHistoryRewriter>(&pos_matcher_,
-                                                              pos_group));
+        std::make_unique<UserBoundaryHistoryRewriter>(parent_converter));
+    AddRewriter(
+        std::make_unique<UserSegmentHistoryRewriter>(&pos_matcher_, pos_group));
   }
 
-  AddRewriter(absl::make_unique<DateRewriter>(dictionary));
-  AddRewriter(absl::make_unique<FortuneRewriter>());
+  AddRewriter(std::make_unique<DateRewriter>(dictionary));
+  AddRewriter(std::make_unique<FortuneRewriter>());
 #if !(defined(OS_ANDROID) || defined(OS_IOS))
   // CommandRewriter is not tested well on Android or iOS.
   // So we temporarily disable it.
   // TODO(yukawa, team): Enable CommandRewriter on Android if necessary.
-  AddRewriter(absl::make_unique<CommandRewriter>());
+  AddRewriter(std::make_unique<CommandRewriter>());
 #endif  // !(OS_ANDROID || OS_IOS)
 #ifndef NO_USAGE_REWRITER
-  AddRewriter(absl::make_unique<UsageRewriter>(data_manager, dictionary));
+  AddRewriter(std::make_unique<UsageRewriter>(data_manager, dictionary));
 #endif  // NO_USAGE_REWRITER
   AddRewriter(
-      absl::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
+      std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
-  AddRewriter(absl::make_unique<KatakanaPromotionRewriter>());
-  AddRewriter(absl::make_unique<NormalizationRewriter>());
-  AddRewriter(absl::make_unique<RemoveRedundantCandidateRewriter>());
+  AddRewriter(std::make_unique<KatakanaPromotionRewriter>());
+  AddRewriter(std::make_unique<NormalizationRewriter>());
+  AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
 }
 
 }  // namespace mozc

@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -47,7 +48,6 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 // SymbolRewriter:
@@ -334,8 +334,8 @@ SymbolRewriter::SymbolRewriter(const ConverterInterface *parent_converter,
   absl::string_view token_array_data, string_array_data;
   data_manager->GetSymbolRewriterData(&token_array_data, &string_array_data);
   DCHECK(SerializedDictionary::VerifyData(token_array_data, string_array_data));
-  dictionary_ = absl::make_unique<SerializedDictionary>(token_array_data,
-                                                        string_array_data);
+  dictionary_ = std::make_unique<SerializedDictionary>(token_array_data,
+                                                       string_array_data);
 }
 
 SymbolRewriter::~SymbolRewriter() {}

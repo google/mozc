@@ -51,7 +51,6 @@
 #include "testing/base/public/mozctest.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -77,7 +76,7 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
 
     std::unique_ptr<EngineInterface> engine =
         MockDataEngineFactory::Create().value();
-    handler_ = absl::make_unique<SessionHandlerInterpreter>(std::move(engine));
+    handler_ = std::make_unique<SessionHandlerInterpreter>(std::move(engine));
   }
 
   void TearDown() override {
@@ -115,6 +114,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "convert_from_half_katakana_to_t13n.txt",
     DATA_DIR "convert_from_hiragana_to_t13n.txt",
     DATA_DIR "delete_history.txt",
+    DATA_DIR "description.txt",
     DATA_DIR "desktop_t13n_candidates.txt",
     DATA_DIR "domain_suggestion.txt",
 #if !defined(__APPLE__)
@@ -304,6 +304,16 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
                             << output.candidates().Utf8DebugString();
     if (has_result) {
       EXPECT_EQ(NumberUtil::SimpleAtoi(args[1]), candidate_id);
+    }
+  } else if (command == "EXPECT_CANDIDATE_DESCRIPTION") {
+    ASSERT_EQ(3, args.size());
+    const CandidateWord &cand = handler.GetCandidateByValue(args[1]);
+    const bool has_cand = !cand.value().empty();
+    EXPECT_TRUE(has_cand) << args[1] + " is not found\n"
+                        << output.candidates().Utf8DebugString();
+    if (has_cand) {
+      EXPECT_EQ(args[2], cand.annotation().description())
+          << cand.Utf8DebugString();
     }
   } else if (command == "EXPECT_RESULT") {
     if (args.size() == 2 && !args[1].empty()) {

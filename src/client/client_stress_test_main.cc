@@ -34,7 +34,7 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <sys/types.h>
 #include <unistd.h>
 #endif  // OS_WIN
@@ -91,9 +91,9 @@ int main(int argc, char **argv) {
     renderer_command.mutable_preedit_rectangle()->set_top(10);
     renderer_command.mutable_preedit_rectangle()->set_right(200);
     renderer_command.mutable_preedit_rectangle()->set_bottom(30);
-    renderer_client = absl::make_unique<mozc::renderer::RendererClient>();
+    renderer_client = std::make_unique<mozc::renderer::RendererClient>();
     CHECK(renderer_client->Activate());
-#else
+#else   // OS_WIN || __APPLE__
     LOG(FATAL) << "test_renderer is only supported on Windows and Mac";
 #endif  // OS_WIN || __APPLE__
   }

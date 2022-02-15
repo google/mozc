@@ -37,7 +37,6 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -49,7 +48,7 @@ void SetSegments(Segments *segments, absl::string_view cand_value) {
   Segment::Candidate *candidate = segment->add_candidate();
 #ifdef ABSL_USES_STD_STRING_VIEW
   candidate->value = cand_value;
-#else
+#else   // ABSL_USES_STD_STRING_VIEW
   candidate->value = std::string(cand_value);
 #endif  // ABSL_USES_STD_STRING_VIEW
 
@@ -61,7 +60,7 @@ void SetSegments(Segments *segments, absl::string_view cand_value) {
 
 class ConverterMockTest : public ::testing::Test {
  protected:
-  void SetUp() override { mock_ = absl::make_unique<ConverterMock>(); }
+  void SetUp() override { mock_ = std::make_unique<ConverterMock>(); }
 
   ConverterMock *GetMock() { return mock_.get(); }
 

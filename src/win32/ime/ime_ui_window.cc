@@ -344,7 +344,7 @@ class LangBarCallbackImpl : public LangBarCallback {
 
   virtual ULONG AddRef() {
     const LONG count = ::InterlockedIncrement(&reference_count_);
-    return static_cast<ULONG>(std::max(count, static_cast<LONG>(0)));
+    return static_cast<ULONG>(std::max<LONG>(count, 0));
   }
 
   virtual ULONG Release() {

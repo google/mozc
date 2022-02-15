@@ -30,6 +30,7 @@
 #include "prediction/predictor.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -39,7 +40,6 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -140,8 +140,8 @@ bool BasePredictor::Reload() { return user_history_predictor_->Reload(); }
 std::unique_ptr<PredictorInterface> DefaultPredictor::CreateDefaultPredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
     std::unique_ptr<PredictorInterface> user_history_predictor) {
-  return absl::make_unique<DefaultPredictor>(std::move(dictionary_predictor),
-                                             std::move(user_history_predictor));
+  return std::make_unique<DefaultPredictor>(std::move(dictionary_predictor),
+                                            std::move(user_history_predictor));
 }
 
 DefaultPredictor::DefaultPredictor(
@@ -166,8 +166,7 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 
   int size = kPredictionSize;
   if (segments->request_type() == Segments::SUGGESTION) {
-    size = std::min(
-        9, std::max(1, static_cast<int>(request.config().suggestions_size())));
+    size = std::min(9, std::max<int>(1, request.config().suggestions_size()));
   }
 
   bool result = false;
@@ -197,8 +196,8 @@ bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
 std::unique_ptr<PredictorInterface> MobilePredictor::CreateMobilePredictor(
     std::unique_ptr<PredictorInterface> dictionary_predictor,
     std::unique_ptr<PredictorInterface> user_history_predictor) {
-  return absl::make_unique<MobilePredictor>(std::move(dictionary_predictor),
-                                            std::move(user_history_predictor));
+  return std::make_unique<MobilePredictor>(std::move(dictionary_predictor),
+                                           std::move(user_history_predictor));
 }
 
 MobilePredictor::MobilePredictor(

@@ -46,11 +46,11 @@
 #include <QPushButton>
 #include <QString>
 #include <QTableWidget>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/util.h"
 #include "gui/base/util.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
@@ -499,7 +499,7 @@ KeyBindingEditor::KeyBindingEditor(QWidget *parent, QWidget *trigger_parent)
       KeyBindingEditorbuttonBox->button(QDialogButtonBox::Ok);
   CHECK(ok_button != nullptr);
 
-  filter_ = absl::make_unique<KeyBindingFilter>(KeyBindingLineEdit, ok_button);
+  filter_ = std::make_unique<KeyBindingFilter>(KeyBindingLineEdit, ok_button);
   KeyBindingLineEdit->installEventFilter(filter_.get());
 
   // no right click

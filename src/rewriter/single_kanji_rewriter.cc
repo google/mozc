@@ -47,7 +47,6 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/rewriter_util.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/string_view.h"
 
 using mozc::dictionary::PosMatcher;
@@ -385,7 +384,7 @@ SingleKanjiRewriter::SingleKanjiRewriter(
 
   DCHECK(SerializedDictionary::VerifyData(noun_prefix_token_array_data,
                                           noun_prefix_string_array_data));
-  noun_prefix_dictionary_ = absl::make_unique<SerializedDictionary>(
+  noun_prefix_dictionary_ = std::make_unique<SerializedDictionary>(
       noun_prefix_token_array_data, noun_prefix_string_array_data);
 }
 

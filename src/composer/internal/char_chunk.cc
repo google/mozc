@@ -561,7 +561,7 @@ std::unique_ptr<CharChunk> CharChunk::SplitChunk(
               Table::DeleteSpecialKey(conversion_ + pending_), &raw_lhs,
               &raw_rhs, &converted_lhs, &converted_rhs);
 
-  auto left_new_chunk = absl::make_unique<CharChunk>(transliterator_, table_);
+  auto left_new_chunk = std::make_unique<CharChunk>(transliterator_, table_);
   left_new_chunk->set_raw(raw_lhs);
   set_raw(raw_rhs);
 

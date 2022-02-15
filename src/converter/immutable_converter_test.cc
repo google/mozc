@@ -59,7 +59,6 @@
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
 
@@ -101,7 +100,7 @@ const ConversionRequest &GetSimplifiedRankingConversionRequest() {
       request_.mutable_decoder_experiment_params()
           ->set_enable_simplified_ranking(true);
       conversion_request_ =
-          absl::make_unique<ConversionRequest>(nullptr, &request_, &config_);
+          std::make_unique<ConversionRequest>(nullptr, &request_, &config_);
     }
 
     const ConversionRequest &Get() const { return *conversion_request_; }
@@ -126,11 +125,11 @@ class MockDataAndImmutableConverter {
   explicit MockDataAndImmutableConverter(
       const DictionaryInterface *dictionary = nullptr,
       const DictionaryInterface *suffix_dictionary = nullptr) {
-    data_manager_ = absl::make_unique<testing::MockDataManager>();
+    data_manager_ = std::make_unique<testing::MockDataManager>();
 
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
 
-    suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+    suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     CHECK(suppression_dictionary_.get());
 
     if (dictionary) {
@@ -144,9 +143,9 @@ class MockDataAndImmutableConverter {
           SystemDictionary::Builder(dictionary_data, dictionary_size)
               .Build()
               .value();
-      auto value_dic = absl::make_unique<ValueDictionary>(
-          pos_matcher_, &sysdic->value_trie());
-      dictionary_ = absl::make_unique<DictionaryImpl>(
+      auto value_dic = std::make_unique<ValueDictionary>(pos_matcher_,
+                                                         &sysdic->value_trie());
+      dictionary_ = std::make_unique<DictionaryImpl>(
           std::move(sysdic), std::move(value_dic), &user_dictionary_stub_,
           suppression_dictionary_.get(), &pos_matcher_);
     }
@@ -157,7 +156,7 @@ class MockDataAndImmutableConverter {
       const uint32_t *token_array;
       data_manager_->GetSuffixDictionaryData(
           &suffix_key_array_data, &suffix_value_array_data, &token_array);
-      suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
+      suffix_dictionary_ = std::make_unique<SuffixDictionary>(
           suffix_key_array_data, suffix_value_array_data, token_array);
       suffix_dictionary = suffix_dictionary_.get();
     }
@@ -168,17 +167,17 @@ class MockDataAndImmutableConverter {
     segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager_));
     CHECK(segmenter_.get());
 
-    pos_group_ = absl::make_unique<PosGroup>(data_manager_->GetPosGroupData());
+    pos_group_ = std::make_unique<PosGroup>(data_manager_->GetPosGroupData());
     CHECK(pos_group_.get());
 
     {
       const char *data = nullptr;
       size_t size = 0;
       data_manager_->GetSuggestionFilterData(&data, &size);
-      suggestion_filter_ = absl::make_unique<SuggestionFilter>(data, size);
+      suggestion_filter_ = std::make_unique<SuggestionFilter>(data, size);
     }
 
-    immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+    immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
         dictionary_.get(), suffix_dictionary, suppression_dictionary_.get(),
         connector_.get(), segmenter_.get(), &pos_matcher_, pos_group_.get(),
         suggestion_filter_.get());

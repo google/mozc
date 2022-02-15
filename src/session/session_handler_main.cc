@@ -148,13 +148,13 @@ void ParseLine(session::SessionHandlerInterpreter &handler, std::string line) {
 std::unique_ptr<const DataManagerInterface> CreateDataManager(
     const std::string &dictionary) {
   if (dictionary == "oss") {
-    return absl::make_unique<const oss::OssDataManager>();
+    return std::make_unique<const oss::OssDataManager>();
   }
   if (!dictionary.empty()) {
     std::cout << "ERROR: Unknown dictionary name: " << dictionary << std::endl;
   }
 
-  return absl::make_unique<const oss::OssDataManager>();
+  return std::make_unique<const oss::OssDataManager>();
 }
 
 absl::StatusOr<std::unique_ptr<Engine>> CreateEngine(

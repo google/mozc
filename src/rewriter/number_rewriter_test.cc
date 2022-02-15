@@ -898,7 +898,7 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
   Segments segments;
   Segment *segment = segments.push_back_segment();
-  segment->set_key("もず");
+  segment->set_key("");
   Segment::Candidate *cand = segment->add_candidate();
   cand->Init();
   cand->key = "もず";
@@ -908,6 +908,39 @@ TEST_F(NumberRewriterTest, NonNumberNounTest) {
   cand->lid = pos_matcher_.GetGeneralNounId();
   cand->rid = pos_matcher_.GetGeneralNounId();
   EXPECT_FALSE(number_rewriter->Rewrite(default_request_, &segments));
+}
+
+TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
+  std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
+  Segments segments;
+  Segment *segment = segments.push_back_segment();
+  segment->set_key("いち");
+  struct CandData {
+    const char *value;
+    int pos_id;
+  };
+  const CandData kCandList[] = {
+      {"1", pos_matcher_.GetNumberId()},
+      {"一", pos_matcher_.GetNumberId()},
+      {"位置", pos_matcher_.GetGeneralNounId()},
+      {"イチ", pos_matcher_.GetGeneralNounId()},
+      {"壱", pos_matcher_.GetGeneralNounId()},
+  };
+
+  for (const auto &cand_data : kCandList) {
+    Segment::Candidate *cand = segment->add_candidate();
+    cand->Init();
+    cand->key = "いち";
+    cand->content_key = cand->key;
+    cand->value = cand_data.value;
+    cand->content_value = cand->value;
+    cand->lid = cand_data.pos_id;
+    cand->rid = cand_data.pos_id;
+  }
+  EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+  EXPECT_GT(segment->candidates_size(), 1);
+  EXPECT_EQ("1", segment->candidate(0).value);
+  EXPECT_EQ("位置", segment->candidate(1).value);
 }
 
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {

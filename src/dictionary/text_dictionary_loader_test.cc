@@ -42,7 +42,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace dictionary {
@@ -70,7 +69,7 @@ class TextDictionaryLoaderTest : public ::testing::Test {
   }
 
   std::unique_ptr<TextDictionaryLoader> CreateTextDictionaryLoader() {
-    return absl::make_unique<TextDictionaryLoader>(pos_matcher_);
+    return std::make_unique<TextDictionaryLoader>(pos_matcher_);
   }
 
   PosMatcher pos_matcher_;

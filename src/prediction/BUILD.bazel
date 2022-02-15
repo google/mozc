@@ -90,7 +90,6 @@ cc_library_mozc(
         "//usage_stats",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -128,7 +127,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -222,7 +220,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -242,7 +239,6 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )
@@ -272,7 +268,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -351,7 +346,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_zero_query_number_data_lib",
         ":gen_zero_query_util",
@@ -370,7 +364,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_zero_query_data_lib",
         ":gen_zero_query_util",

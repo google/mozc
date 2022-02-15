@@ -62,8 +62,6 @@ from build_tools.util import RemoveFile
 from build_tools.util import RunOrDie
 from build_tools.util import RunOrDieError
 
-import six
-
 SRC_DIR = '.'
 # We need to obtain the absolute path of this script before change directory.
 # Note that if any import above has already changed the current
@@ -333,15 +331,17 @@ def AddPythonPathToEnvironmentFilesForWindows(out_dir):
   for d in os.listdir(out_dir):
     abs_dir = os.path.abspath(os.path.join(out_dir, d))
     with open(os.path.join(abs_dir, 'environment.x86'), 'rb') as x86_file:
-      x86_content = (x86_file.read()[:-1] +
-                     six.b('PYTHONPATH' + '=' + python_path + nul + nul))
+      x86_content = (
+          x86_file.read()[:-1] +
+          ('PYTHONPATH=' + python_path + nul + nul).encode('utf-8'))
     with open(os.path.join(abs_dir, 'environment.x86'), 'wb') as x86_file:
       x86_file.write(x86_content)
       print('== x86_content ==')
       print(x86_content.decode('utf-8'))
     with open(os.path.join(abs_dir, 'environment.x64'), 'rb') as x64_file:
-      x64_content = (x64_file.read()[:-1] +
-                     six.b('PYTHONPATH' + '=' + python_path + nul + nul))
+      x64_content = (
+          x64_file.read()[:-1] +
+          ('PYTHONPATH=' + python_path + nul + nul).encode('utf-8'))
     with open(os.path.join(abs_dir, 'environment.x64'), 'wb') as x64_file:
       x64_file.write(x64_content)
       print('== x64_content ==')

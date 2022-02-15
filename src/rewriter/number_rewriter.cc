@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/number_rewriter.h"
-
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -48,6 +46,8 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
+#include "rewriter/number_rewriter.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 using mozc::dictionary::PosMatcher;
@@ -132,15 +132,19 @@ void GetRewriteCandidateInfos(
   DCHECK(rewrite_candidate_info);
   RewriteCandidateInfo info;
 
+  // Use the higher ranked candidate for deciding the insertion position.
+  absl::flat_hash_set<std::string> seen;
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const RewriteType type = GetRewriteTypeAndBase(
         suffix_array, seg, i, pos_matcher, &info.candidate);
     if (type == NO_REWRITE) {
       continue;
     }
-    info.type = type;
-    info.position = i;
-    rewrite_candidate_info->push_back(info);
+    if (seen.insert(info.candidate.value).second) {
+      info.type = type;
+      info.position = i;
+      rewrite_candidate_info->push_back(info);
+    }
   }
 }
 
@@ -148,6 +152,11 @@ void GetRewriteCandidateInfos(
 // 5 candidates apart from base candidate.
 // http://b/issue?id=2872048
 constexpr int kArabicNumericOffset = 5;
+
+int GetInsertOffset(RewriteType type) {
+  // +2 for arabic half_width full_width expansion
+  return (type == ARABIC_FIRST) ? 2 : kArabicNumericOffset;
+}
 
 void PushBackCandidate(const std::string &value, const std::string &desc,
                        NumberUtil::NumberString::Style style,
@@ -195,15 +204,18 @@ class CheckValueOperator {
 
 // If we have the candidates to be inserted before the base candidate,
 // delete them.
-// TODO(toshiyuki): Delete candidates between base pos and insert pos
-// if necessary.
 void EraseExistingCandidates(
     const std::vector<Segment::Candidate> &results, int base_candidate_pos,
-    Segment *seg,
+    RewriteType type, Segment *seg,
     std::vector<RewriteCandidateInfo> *rewrite_candidate_info_list) {
   DCHECK(seg);
   // Remember base candidate value
-  for (int pos = base_candidate_pos - 1; pos >= 0; --pos) {
+  const int start_pos = std::min<int>(
+      base_candidate_pos + GetInsertOffset(type), seg->candidates_size() - 1);
+  for (int pos = start_pos; pos >= 0; --pos) {
+    if (pos == base_candidate_pos) {
+      continue;
+    }
     // Simple liner search. |results| size is small. (at most 10 or so)
     const std::vector<Segment::Candidate>::const_iterator iter =
         std::find_if(results.begin(), results.end(),
@@ -325,13 +337,8 @@ void InsertConvertedCandidates(const std::vector<Segment::Candidate> &results,
 }
 
 int GetInsertPos(int base_pos, const Segment &segment, RewriteType type) {
-  if (type == ARABIC_FIRST) {
-    // +2 for arabic half_width full_width expansion
-    return std::min(base_pos + 2, static_cast<int>(segment.candidates_size()));
-  } else {
-    return std::min(base_pos + kArabicNumericOffset,
-                    static_cast<int>(segment.candidates_size()));
-  }
+  return std::min<int>(base_pos + GetInsertOffset(type),
+                       segment.candidates_size());
 }
 
 void InsertHalfArabic(const std::string &half_arabic,
@@ -385,8 +392,8 @@ bool RewriteOneSegment(const SerializedStringArray &suffix_array,
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix
-        const int insert_pos = std::min(
-            info.position + 1, static_cast<int>(seg->candidates_size()));
+        const int insert_pos =
+            std::min<int>(info.position + 1, seg->candidates_size());
         InsertCandidate(seg, insert_pos, info.candidate, info.candidate);
         modified = true;
         continue;
@@ -407,7 +414,7 @@ bool RewriteOneSegment(const SerializedStringArray &suffix_array,
     // Caution!!!: This invocation will update the data inside of the
     // rewrite_candidate_infos. Thus, |info| also can be updated as well
     // regardless of whether it's const reference-ness.
-    EraseExistingCandidates(converted_numbers, info.position, seg,
+    EraseExistingCandidates(converted_numbers, info.position, info.type, seg,
                             &rewrite_candidate_infos);
     int insert_pos = GetInsertPos(info.position, *seg, info.type);
     DCHECK_LT(info.position, insert_pos);

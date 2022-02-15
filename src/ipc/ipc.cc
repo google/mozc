@@ -33,20 +33,20 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <errno.h>
 #include <signal.h>
 #include <sys/types.h>
-#endif
+#endif  // OS_WIN
 
 #include <cstdlib>
+#include <memory>
 
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
 #include "base/thread.h"
 #include "ipc/ipc_path_manager.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 
@@ -72,7 +72,7 @@ class IPCServerThread : public Thread {
 
 void IPCServer::LoopAndReturn() {
   if (server_thread_ == nullptr) {
-    server_thread_ = absl::make_unique<IPCServerThread>(this);
+    server_thread_ = std::make_unique<IPCServerThread>(this);
     server_thread_->SetJoinable(true);
     server_thread_->Start("IPCServer");
   } else {
@@ -156,13 +156,13 @@ bool IPCClient::TerminateServer(const std::string &name) {
   ::CloseHandle(handle);
 
   return true;
-#else
+#else   // OS_WIN
   if (-1 == ::kill(static_cast<pid_t>(pid), 9)) {
     LOG(ERROR) << "kill failed: " << errno;
     return false;
   }
 
   return true;
-#endif
+#endif  // OS_WIN
 }
 }  // namespace mozc

@@ -56,8 +56,6 @@ py_test(
     name = "replace_macros_test",
     size = "small",
     srcs = ["replace_macros_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     tags = ["manual"],
     deps = [
         ":replace_macros_lib",
@@ -68,7 +66,6 @@ py_test(
 py_library_mozc(
     name = "code_generator_util",
     srcs = ["code_generator_util.py"],
-    deps = [],
 )
 
 # TODO(noriyukit): Stop using //testing/pybase to support tests on iOS.
@@ -76,7 +73,6 @@ py_test(
     name = "code_generator_util_test",
     size = "small",
     srcs = ["code_generator_util_test.py"],
-    python_version = "PY3",
     tags = ["manual"],
     deps = [
         ":code_generator_util",
@@ -100,8 +96,6 @@ py_test(
     name = "mozc_version_test",
     size = "small",
     srcs = ["mozc_version_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     tags = ["manual"],
     deps = [
         ":mozc_version_lib",
@@ -118,7 +112,6 @@ py_binary_mozc(
 py_library_mozc(
     name = "util",
     srcs = ["util.py"],
-    deps = [],
 )
 
 py_library_mozc(
@@ -146,7 +139,6 @@ py_binary_mozc(
 py_library_mozc(
     name = "embed_file_lib",
     srcs = ["embed_file.py"],
-    deps = [],
 )
 
 py_binary_mozc(
@@ -158,7 +150,6 @@ py_binary_mozc(
 py_library_mozc(
     name = "serialized_string_array_builder",
     srcs = ["serialized_string_array_builder.py"],
-    deps = [],
 )
 
 py_library_mozc(

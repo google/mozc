@@ -39,8 +39,6 @@ from __future__ import print_function
 import os
 import struct
 
-import six
-
 from build_tools import code_generator_util as cgu
 from build_tools import serialized_string_array_builder
 
@@ -72,7 +70,7 @@ def WriteZeroQueryData(zero_query_dict, output_token_array,
                        output_string_array):
   # Collect all the strings and assign index in ascending order
   string_index = {}
-  for key, entry_list in six.iteritems(zero_query_dict):
+  for key, entry_list in zero_query_dict.items():
     string_index[key] = 0
     for entry in entry_list:
       string_index[entry.value] = 0

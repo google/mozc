@@ -36,6 +36,7 @@
 #endif  // OS_WIN
 
 #include <algorithm>
+#include <memory>
 
 #include "base/compiler_specific.h"
 #include "base/const.h"
@@ -51,7 +52,6 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -71,9 +71,9 @@ namespace renderer {
 namespace {
 #ifdef OS_WIN
 constexpr int kNumConnections = 1;
-#else
+#else   // OS_WIN
 constexpr int kNumConnections = 10;
-#endif  // OS_WIN or not
+#endif  // OS_WIN
 constexpr int kIPCServerTimeOut = 1000;
 constexpr char kServiceName[] = "renderer";
 
@@ -154,7 +154,7 @@ class RendererServerSendCommand : public client::SendCommandInterface {
       LPARAM id = static_cast<LPARAM>(command.id());
       ::PostMessage(target, mozc_msg, type, id);
     }
-#endif
+#endif  // OS_WIN
 
     // TODO(all): implementation for Mac/Linux
     return true;
@@ -174,7 +174,7 @@ RendererServer::RendererServer()
       renderer_interface_(nullptr),
       timeout_(0),
       send_command_(new RendererServerSendCommand) {
-  watch_dog_ = absl::make_unique<ParentApplicationWatchDog>(this);
+  watch_dog_ = std::make_unique<ParentApplicationWatchDog>(this);
   watch_dog_->StartWatchDog();
   if (absl::GetFlag(FLAGS_restricted)) {
     absl::SetFlag(&FLAGS_timeout,

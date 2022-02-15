@@ -77,18 +77,44 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
 
-  // Wave dash (U+301C)
+  // Wave dash (U+301C) per platform
   segments.Clear();
   AddSegment("なみ", "〜", &segments);
+  constexpr char description[] = "[全]波ダッシュ";
+  segments.mutable_segment(0)->mutable_candidate(0)->description = description;
 #ifdef OS_WIN
   EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
   // U+FF5E
   EXPECT_EQ("～", segments.segment(0).candidate(0).value);
-#else
+  EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
+#else  // OS_WIN
   EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
-#endif
+  EXPECT_EQ(description, segments.segment(0).candidate(0).description);
+#endif  // OS_WIN
+
+  // Wave dash (U+301C) w/ normalization
+  segments.Clear();
+  AddSegment("なみ", "〜", &segments);
+  segments.mutable_segment(0)->mutable_candidate(0)->description = description;
+
+  normalization_rewriter.SetNormalizationFlag(TextNormalizer::kAll);
+  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
+  // U+FF5E
+  EXPECT_EQ("～", segments.segment(0).candidate(0).value);
+  EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
+
+  // Wave dash (U+301C) w/o normalization
+  segments.Clear();
+  AddSegment("なみ", "〜", &segments);
+  segments.mutable_segment(0)->mutable_candidate(0)->description = description;
+
+  normalization_rewriter.SetNormalizationFlag(TextNormalizer::kNone);
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  // U+301C
+  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
+  EXPECT_EQ(description, segments.segment(0).candidate(0).description);
 
   // not normalized.
   segments.Clear();

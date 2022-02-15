@@ -43,7 +43,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -86,7 +85,7 @@ class CollocationRewriterTest : public ::testing::Test {
     const mozc::testing::MockDataManager data_manager;
     pos_matcher_.Set(data_manager.GetPosMatcherData());
     collocation_rewriter_ =
-        absl::make_unique<CollocationRewriter>(&data_manager);
+        std::make_unique<CollocationRewriter>(&data_manager);
   }
 
   // Makes a segment from SegmentData.

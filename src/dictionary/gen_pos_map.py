@@ -35,8 +35,6 @@ from __future__ import absolute_import
 import codecs
 import optparse
 
-import six  # pylint: disable=g-import-not-at-top
-
 from build_tools import code_generator_util
 
 
@@ -80,7 +78,7 @@ def GeneratePosMap(third_party_pos_map_file, user_pos_file):
       result[third_party_pos_name] = mozc_pos
 
   # Create mozc_pos to mozc_pos map.
-  for key, value in six.iteritems(user_pos_map):
+  for key, value in user_pos_map.items():
     if key in result:
       assert (result[key] == value)
       continue

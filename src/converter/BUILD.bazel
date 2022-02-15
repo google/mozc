@@ -122,8 +122,11 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:trie",
+        "//base:util",
         "//dictionary:dictionary_interface",
         "//dictionary:dictionary_token",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -139,7 +142,6 @@ cc_library_mozc(
         "//base:util",
         "//data_manager:data_manager_interface",
         "//storage/louds:simple_succinct_bit_vector_index",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -163,7 +165,6 @@ cc_test_mozc(
         "//data_manager:connection_file_reader",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -224,7 +225,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -273,7 +273,6 @@ cc_test_mozc(
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -375,7 +374,6 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -415,7 +413,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//session:request_test_util",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -534,7 +531,6 @@ cc_test_mozc(
         "//transliteration",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -594,7 +590,6 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//testing:mozctest",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -672,13 +667,11 @@ py_library_mozc(
     name = "gen_boundary_data_lib",
     srcs = ["gen_boundary_data.py"],
     visibility = ["//visibility:private"],
-    deps = [],
 )
 
 py_binary_mozc(
     name = "gen_boundary_data",
     srcs = ["gen_boundary_data.py"],
-    python_version = "PY3",
     visibility = ["//data_manager:__subpackages__"],
     deps = [":gen_boundary_data_lib"],
 )
@@ -738,7 +731,6 @@ cc_test_mozc(
         "//base",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )

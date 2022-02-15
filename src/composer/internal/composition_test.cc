@@ -39,7 +39,6 @@
 #include "composer/internal/transliterators.h"
 #include "composer/table.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -170,8 +169,8 @@ std::string ToString(const CharChunkList& chunks) {
 class CompositionTest : public testing::Test {
  protected:
   void SetUp() override {
-    table_ = absl::make_unique<Table>();
-    composition_ = absl::make_unique<Composition>(table_.get());
+    table_ = std::make_unique<Table>();
+    composition_ = std::make_unique<Composition>(table_.get());
     composition_->SetInputMode(Transliterators::CONVERSION_STRING);
   }
 

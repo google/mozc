@@ -39,7 +39,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace storage {
@@ -74,7 +73,7 @@ class TestEncryptedStringStorage : public EncryptedStringStorage {
   mutable std::string salt_;
   mutable std::string original_data_;
 };
-#else
+#else  // OS_ANDROID
 typedef EncryptedStringStorage TestEncryptedStringStorage;
 #endif  // OS_ANDROID
 }  // namespace
@@ -86,7 +85,7 @@ class EncryptedStringStorageTest : public testing::Test {
     filename_ = FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                                    "encrypted_string_storage_for_test.db");
 
-    storage_ = absl::make_unique<TestEncryptedStringStorage>(filename_);
+    storage_ = std::make_unique<TestEncryptedStringStorage>(filename_);
   }
 
   std::string filename_;

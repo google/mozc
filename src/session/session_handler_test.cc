@@ -55,7 +55,6 @@
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 ABSL_DECLARE_FLAG(int32_t, max_session_size);
 ABSL_DECLARE_FLAG(int32_t, create_session_min_interval);
@@ -480,7 +479,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
 // reload event.
 TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(absl::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Session handler receives reload request when engine builder is not running.
@@ -504,7 +503,7 @@ TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
 // async data load is already running.
 TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(absl::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where async data load is running.
@@ -527,7 +526,7 @@ TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
 // requested data is broken.
 TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(absl::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // Emulate the state where requested data is broken.
@@ -545,7 +544,7 @@ TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
 // sessions exist in create session event.
 TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
-  SessionHandler handler(absl::make_unique<EngineStub>(),
+  SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
 
   // A session is created before data is loaded.

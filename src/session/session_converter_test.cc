@@ -63,7 +63,6 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace session {
@@ -86,18 +85,18 @@ class SessionConverterTest : public ::testing::Test {
   ~SessionConverterTest() override {}
 
   void SetUp() override {
-    convertermock_ = absl::make_unique<ConverterMock>();
+    convertermock_ = std::make_unique<ConverterMock>();
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
 
-    config_ = absl::make_unique<Config>();
+    config_ = std::make_unique<Config>();
     config_->set_use_cascading_window(true);
-    request_ = absl::make_unique<Request>();
+    request_ = std::make_unique<Request>();
 
-    table_ = absl::make_unique<composer::Table>();
+    table_ = std::make_unique<composer::Table>();
     table_->InitializeWithRequestAndConfig(*request_, *config_,
                                            mock_data_manager_);
-    composer_ = absl::make_unique<composer::Composer>(
+    composer_ = std::make_unique<composer::Composer>(
         table_.get(), request_.get(), config_.get());
   }
 
@@ -1538,8 +1537,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   }
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(absl::make_unique<Segments>().get(),
-                                      true);
+  convertermock_->SetFinishConversion(std::make_unique<Segments>().get(), true);
 
   size_t committed_key_size = 0;
   converter.CommitSuggestionByIndex(1, *composer_, Context::default_instance(),
@@ -1600,8 +1598,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(absl::make_unique<Segments>().get(),
-                                      true);
+  convertermock_->SetFinishConversion(std::make_unique<Segments>().get(), true);
 
   constexpr int kCandidateIndex = 1;
   size_t committed_key_size = 0;

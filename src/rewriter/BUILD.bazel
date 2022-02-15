@@ -67,7 +67,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -93,7 +92,6 @@ cc_library_mozc(
         "//request:conversion_request",
         "//storage:existence_filter",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -114,7 +112,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -178,7 +175,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -306,6 +302,7 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -442,7 +439,6 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -460,7 +456,6 @@ cc_library_mozc(
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -506,7 +501,6 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -534,7 +528,6 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -557,7 +550,6 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -781,7 +773,6 @@ cc_test_mozc(
         "//rewriter/calculator:calculator_mock",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -951,7 +942,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_emoji_rewriter_data",
     srcs = ["gen_emoji_rewriter_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_emoji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -1009,7 +999,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/container:btree",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1034,7 +1023,6 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -1052,7 +1040,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_single_kanji_rewriter_data",
     srcs = ["gen_single_kanji_rewriter_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_single_kanji_rewriter_data_lib",
         "//build_tools:code_generator_util",
@@ -1089,7 +1076,6 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -1106,7 +1092,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_counter_suffix_array",
     srcs = ["gen_counter_suffix_array.py"],
-    python_version = "PY3",
     deps = [
         ":gen_counter_suffix_array_lib",
         "//build_tools:code_generator_util",
@@ -1153,7 +1138,6 @@ cc_test_mozc(
         "//testing:gunit_main",
         "//transliteration",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1236,7 +1220,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1406,7 +1389,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1423,7 +1405,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_reading_correction_data",
     srcs = ["gen_reading_correction_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_reading_correction_data_lib",
         "//build_tools:code_generator_util",
@@ -1447,7 +1428,6 @@ cc_library_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1468,7 +1448,6 @@ cc_test_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1518,7 +1497,6 @@ cc_library_mozc(
         "//dictionary:pos_group",
         "//dictionary:pos_matcher_lib",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )
@@ -1542,7 +1520,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 

@@ -48,7 +48,6 @@
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 
@@ -71,7 +70,7 @@ class Engine : public EngineInterface {
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
   static absl::StatusOr<std::unique_ptr<Engine>> CreateDesktopEngineHelper() {
-    return CreateDesktopEngine(absl::make_unique<const DataManagerType>());
+    return CreateDesktopEngine(std::make_unique<const DataManagerType>());
   }
 
   // Creates an instance with mobile configuration from a data manager.  The
@@ -83,7 +82,7 @@ class Engine : public EngineInterface {
   // by a default constructor.  Intended to be used for OssDataManager etc.
   template <typename DataManagerType>
   static absl::StatusOr<std::unique_ptr<Engine>> CreateMobileEngineHelper() {
-    return CreateMobileEngine(absl::make_unique<const DataManagerType>());
+    return CreateMobileEngine(std::make_unique<const DataManagerType>());
   }
 
   Engine();

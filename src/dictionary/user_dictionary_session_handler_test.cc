@@ -45,7 +45,6 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -73,9 +72,9 @@ class UserDictionarySessionHandlerTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     EXPECT_OK(FileUtil::UnlinkIfExists(GetUserDictionaryFile()));
 
-    handler_ = absl::make_unique<UserDictionarySessionHandler>();
-    command_ = absl::make_unique<UserDictionaryCommand>();
-    status_ = absl::make_unique<UserDictionaryCommandStatus>();
+    handler_ = std::make_unique<UserDictionarySessionHandler>();
+    command_ = std::make_unique<UserDictionaryCommand>();
+    status_ = std::make_unique<UserDictionaryCommandStatus>();
 
     handler_->set_dictionary_path(GetUserDictionaryFile());
   }

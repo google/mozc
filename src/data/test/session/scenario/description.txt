@@ -1,0 +1,30 @@
+# Test scenario for session/session_handler_scenario_test
+
+# Tests for Candidate descriptions.
+
+#############################
+# Composition(Preedit)
+
+SEND_KEY	ON
+SET_CONFIG	preedit_method	ROMAN
+SWITCH_INPUT_MODE	HIRAGANA
+
+SEND_KEYS	a
+EXPECT_PREEDIT	あ
+
+SEND_KEY	SPACE
+SEND_KEY	SPACE
+
+# Hiragana character form
+EXPECT_CANDIDATE_DESCRIPTION	あ	ひらがな
+
+# Old character form (旧字体)
+EXPECT_CANDIDATE_DESCRIPTION	亞	亜の旧字体
+
+RESET_CONTEXT
+
+# Tilde
+SEND_KEYS	~
+SEND_KEY	SPACE
+SEND_KEY	SPACE
+EXPECT_CANDIDATE_DESCRIPTION	~	[半] チルダ

@@ -97,7 +97,6 @@ cc_library_mozc(
         "//testing",
         "//testing:gunit",
         "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -113,7 +112,6 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_connection_data",
     srcs = ["gen_connection_data.py"],
-    python_version = "PY3",
     deps = [
         ":gen_connection_data_lib",
         "//build_tools:code_generator_util",

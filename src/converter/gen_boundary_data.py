@@ -64,8 +64,6 @@ import re
 import struct
 import sys
 
-from six.moves import range
-
 
 def PatternToRegexp(pattern):
   return '^' + pattern.replace('*', '[^,]+')

@@ -42,7 +42,19 @@ namespace mozc {
 
 class TextNormalizer {
  public:
-  static void NormalizeText(absl::string_view input, std::string *output);
+  enum Flag {
+    kNone = 0,  // No normalization.
+    kDefault = 1,  // Default behavior (different per platform).
+    kAll = 2,  // All normalizations.
+  };
+
+  // Normalizes `input` with all configurations.
+  static std::string NormalizeTextWithFlag(absl::string_view input, Flag flag);
+
+  // Normalizes `input` considering the platform.
+  static std::string NormalizeText(absl::string_view input) {
+    return NormalizeTextWithFlag(input, kDefault);
+  }
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);

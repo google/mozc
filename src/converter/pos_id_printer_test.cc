@@ -37,7 +37,6 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace internal {
@@ -47,8 +46,8 @@ class PosIdPrinterTest : public ::testing::Test {
   void SetUp() override {
     const std::string test_id_def_path =
         testing::GetSourceFileOrDie({"data", "test", "dictionary", "id.def"});
-    pos_id_ = absl::make_unique<InputFileStream>(test_id_def_path.c_str());
-    pos_id_printer_ = absl::make_unique<PosIdPrinter>(pos_id_.get());
+    pos_id_ = std::make_unique<InputFileStream>(test_id_def_path.c_str());
+    pos_id_printer_ = std::make_unique<PosIdPrinter>(pos_id_.get());
   }
 
   std::unique_ptr<InputFileStream> pos_id_;

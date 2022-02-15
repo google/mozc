@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 6
+// Next ID: 7
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -586,6 +586,10 @@ message DecoderExperimentParams {
   // TODO(taku): This flag will be deleted after the migration.
   optional bool enable_new_spatial_scoring = 4;
   optional int32 spatial_cost_penalty = 5 [default = 1700];
+  // Apply the adaptive `spatial_cost_penalty` penalty only if the
+  // `key_length` >= spatial_cost_penalty_min_char_length.
+  // Otherwise, use the default penalty 1700.
+  optional int32 spatial_cost_penalty_min_char_length = 6 [default = 0];
 }
 
 // Clients' request to the server.
@@ -840,6 +844,12 @@ message ApplicationInfo {
   optional int32 timezone_offset = 3;
 }
 
+// Spellchecker request.
+message CheckSpellingRequest {}
+
+// Spellchecker response.
+message CheckSpellingResponse {}
+
 message Input {
   enum CommandType {
     NONE = 0;
@@ -926,6 +936,9 @@ message Input {
     // Send an engine_reload_request (ID: 15) to reload the engine.
     SEND_ENGINE_RELOAD_REQUEST = 27;
 
+    // Send a spell checking request.
+    CHECK_SPELLING = 28;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
@@ -934,7 +947,7 @@ message Input {
     //       Please reuse these value if you can.
     //       15 have never been used before, and 19 was used to clear synced
     //       data on dev channel.
-    NUM_OF_COMMANDS = 28;
+    NUM_OF_COMMANDS = 29;
   }
   required CommandType type = 1;
 
@@ -1013,6 +1026,8 @@ message Input {
   optional bool request_suggestion = 14 [default = true];
 
   optional mozc.EngineReloadRequest engine_reload_request = 15;
+
+  optional CheckSpellingRequest check_spelling_request = 16;
 }
 
 // Result contains data to be submitted to the host application by the
@@ -1199,6 +1214,9 @@ message Output {
 
   // For debug. Candidate words removed throuth the conversion process.
   optional CandidateList removed_candidate_words_for_debug = 23;
+
+  // Spellchecker response.
+  optional CheckSpellingResponse check_spelling_response = 24;
 }
 
 message Command {

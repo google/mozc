@@ -61,7 +61,6 @@ cc_library_mozc(
         "//base:thread",
         "//base:util",
         "//base:win_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
     ] + select_mozc(
         ios = ["//base:mac_util"],
@@ -100,7 +99,6 @@ cc_library_mozc(
         "//base:version",
         "//base:win_util",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
     ] + select_mozc(
@@ -222,7 +220,6 @@ cc_test_mozc(
         "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 

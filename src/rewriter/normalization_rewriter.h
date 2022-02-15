@@ -30,6 +30,7 @@
 #ifndef MOZC_REWRITER_NORMALIZATION_REWRITER_H_
 #define MOZC_REWRITER_NORMALIZATION_REWRITER_H_
 
+#include "base/text_normalizer.h"
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
@@ -39,14 +40,18 @@ class Segments;
 
 class NormalizationRewriter : public RewriterInterface {
  public:
-  NormalizationRewriter();
-  ~NormalizationRewriter() override;
+  NormalizationRewriter() = default;
+  ~NormalizationRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
-};
+  void SetNormalizationFlag(TextNormalizer::Flag flag) { flag_ = flag; }
 
+ private:
+  // Controls the normalization behavior.
+  TextNormalizer::Flag flag_ = TextNormalizer::kDefault;
+};
 }  // namespace mozc
 #endif  // MOZC_REWRITER_NORMALIZATION_REWRITER_H_

@@ -48,7 +48,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 
 namespace mozc {
@@ -111,7 +110,7 @@ class CalculatorRewriterTest : public ::testing::Test {
   CalculatorMock &calculator_mock() { return calculator_mock_; }
 
   CalculatorRewriter *BuildCalculatorRewriterWithConverterMock() {
-    converter_mock_ = absl::make_unique<ConverterMock>();
+    converter_mock_ = std::make_unique<ConverterMock>();
     return new CalculatorRewriter(converter_mock_.get());
   }
 
@@ -202,7 +201,7 @@ TEST_F(CalculatorRewriterTest, SeparatedSegmentsTest) {
   std::unique_ptr<EngineInterface> engine_ =
       MockDataEngineFactory::Create().value();
   auto calculator_rewriter =
-      absl::make_unique<CalculatorRewriter>(engine_->GetConverter());
+      std::make_unique<CalculatorRewriter>(engine_->GetConverter());
 
   // Push back separated segments.
   Segments segments;

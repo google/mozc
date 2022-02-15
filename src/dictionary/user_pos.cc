@@ -31,11 +31,11 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
 
 #include "base/logging.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -174,7 +174,7 @@ std::unique_ptr<UserPos> UserPos::CreateFromDataManager(
     const DataManagerInterface &manager) {
   absl::string_view token_array_data, string_array_data;
   manager.GetUserPosData(&token_array_data, &string_array_data);
-  return absl::make_unique<UserPos>(token_array_data, string_array_data);
+  return std::make_unique<UserPos>(token_array_data, string_array_data);
 }
 
 }  // namespace dictionary

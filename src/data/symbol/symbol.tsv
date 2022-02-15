@@ -1497,3 +1497,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	龜	ぶしゅ	かめ
 記号	亀	ぶしゅ	かめ
 記号	龠	ぶしゅ やく やくのふえ	やく やくのふえ
+# Variant Kanji characters with specific readings
+記号	濵	まゆはま	濱の異体字				U+6FF5
+記号	髙	はしごだか	高の異体字				U+9AD9
+記号	﨑	たつさき	崎の異体字				U+FA11
+記号	𠮷	つちよし	吉の異体字				U+20BB7

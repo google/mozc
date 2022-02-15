@@ -44,7 +44,6 @@
 #include "config/config_handler.h"
 #include "protocol/config.pb.h"
 #include "storage/lru_storage.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace config {
@@ -568,8 +567,8 @@ CharacterFormManager::Data::Data() {
   storage_.reset(LruStorage::Create(filename.c_str(), sizeof(key_type),
                                     kLruSize, kSeedValue));
   LOG_IF(ERROR, storage_.get() == nullptr) << "cannot open " << filename;
-  preedit_ = absl::make_unique<PreeditCharacterFormManagerImpl>();
-  conversion_ = absl::make_unique<ConversionCharacterFormManagerImpl>();
+  preedit_ = std::make_unique<PreeditCharacterFormManagerImpl>();
+  conversion_ = std::make_unique<ConversionCharacterFormManagerImpl>();
   preedit_->set_storage(storage_.get());
   conversion_->set_storage(storage_.get());
 }

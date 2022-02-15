@@ -51,7 +51,6 @@ cc_library_mozc(
         "//base:logging",
         "//base:mmap",
         "//base:port",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -169,7 +168,6 @@ cc_test_mozc(
         "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
     ],
 )

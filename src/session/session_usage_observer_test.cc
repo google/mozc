@@ -49,7 +49,6 @@
 #include "usage_stats/usage_stats.pb.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 using mozc::usage_stats::Stats;
 using mozc::usage_stats::UsageStats;
@@ -65,10 +64,10 @@ class SessionUsageObserverTest : public testing::Test {
 
     Clock::SetClockForUnitTest(nullptr);
 
-    scheduler_stub_ = absl::make_unique<SchedulerStub>();
+    scheduler_stub_ = std::make_unique<SchedulerStub>();
     Scheduler::SetSchedulerHandler(scheduler_stub_.get());
 
-    stats_config_util_mock_ = absl::make_unique<config::StatsConfigUtilMock>();
+    stats_config_util_mock_ = std::make_unique<config::StatsConfigUtilMock>();
     config::StatsConfigUtil::SetHandler(stats_config_util_mock_.get());
   }
 

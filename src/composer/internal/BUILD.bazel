@@ -155,7 +155,6 @@ cc_library_mozc(
         "//base:util",
         "//composer:table",
         "//testing:gunit_prod",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -175,7 +174,6 @@ cc_test_mozc(
         ":transliterators",
         "//composer:table",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -252,13 +250,11 @@ cc_binary_mozc(
 py_library_mozc(
     name = "gen_typing_model_lib",
     srcs = ["gen_typing_model.py"],
-    deps = [],
 )
 
 py_binary_mozc(
     name = "gen_typing_model",
     srcs = ["gen_typing_model.py"],
-    python_version = "PY3",
     deps = [":gen_typing_model_lib"],
 )
 

@@ -827,10 +827,10 @@ void SessionConverter::CommitSegmentsInternal(
 
 void SessionConverter::CommitPreedit(const composer::Composer &composer,
                                      const commands::Context &context) {
-  std::string key, preedit, normalized_preedit;
+  std::string key, preedit;
   composer.GetQueryForConversion(&key);
   composer.GetStringForSubmission(&preedit);
-  TextNormalizer::NormalizeText(preedit, &normalized_preedit);
+  const std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(preedit, result_.get());
 
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
@@ -853,8 +853,7 @@ void SessionConverter::CommitHead(size_t count,
     *consumed_key_size = count;
   }
   Util::Utf8SubString(preedit, 0, *consumed_key_size, &preedit);
-  std::string composition;
-  TextNormalizer::NormalizeText(preedit, &composition);
+  const std::string composition = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(composition, result_.get());
 }
 

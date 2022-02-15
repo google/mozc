@@ -40,7 +40,6 @@
 #include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace dictionary {
@@ -48,9 +47,7 @@ namespace {
 
 class DictionaryMockTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    mock_ = absl::make_unique<DictionaryMock>();
-  }
+  void SetUp() override { mock_ = std::make_unique<DictionaryMock>(); }
 
   DictionaryMock *GetMock() { return mock_.get(); }
 

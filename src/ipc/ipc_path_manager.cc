@@ -31,7 +31,6 @@
 
 #include <cstdint>
 
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 #if defined(OS_ANDROID) || defined(OS_WASM)
@@ -57,9 +56,7 @@
 
 #include <cstdlib>
 #include <map>
-#ifdef OS_WIN
-#include <memory>  // for std::unique_ptr
-#endif             // OS_WIN
+#include <memory>
 
 #include "base/const.h"
 #include "base/file_stream.h"
@@ -214,7 +211,7 @@ bool IPCPathManager::SavePathName() {
     return true;
   }
 
-  path_mutex_ = absl::make_unique<ProcessMutex>("ipc");
+  path_mutex_ = std::make_unique<ProcessMutex>("ipc");
   path_mutex_->set_lock_filename(GetIPCKeyFileName(name_));
 
   CreateNewPathNameUnlocked();

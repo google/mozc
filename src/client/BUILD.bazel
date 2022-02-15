@@ -77,7 +77,6 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//testing:gunit_prod",
         "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
     ] + select_mozc(
         ios = [
             "//base:mac_process",
@@ -102,7 +101,6 @@ cc_test_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//testing:gunit_main",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -172,7 +170,6 @@ cc_binary_mozc(
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],

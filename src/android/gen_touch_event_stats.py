@@ -45,9 +45,7 @@ import csv
 import optparse
 import os
 import struct
-
-import six
-from six.moves import urllib
+import urllib
 
 __author__ = "matsuzakit"
 
@@ -118,7 +116,7 @@ def WriteKeyboardData(keyboard_value, stream):
   # c.f. usage_stats/usage_stats_uploader.cc
   keys = ('sxa', 'sya', 'sxv', 'syv', 'dxa', 'dya', 'dxv', 'dyv')
   stream.write(struct.pack('>i', len(keyboard_value)))
-  for source_id, source_value in six.iteritems(keyboard_value):
+  for source_id, source_value in keyboard_value.items():
     stream.write(struct.pack('>i', source_id))
     # Note that we are calculating
     # "Average of average" and "Average of variance".
@@ -130,7 +128,7 @@ def WriteKeyboardData(keyboard_value, stream):
 
 
 def WriteData(stats, output_dir):
-  for base_name_orientation in six.iterkeys(stats):
+  for base_name_orientation in stats.keys():
     with open(
         os.path.join(
             output_dir, '%s_%s.touch_stats' % (urllib.parse.unquote(

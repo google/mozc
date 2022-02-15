@@ -62,8 +62,9 @@
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
 #include "session/session_watch_dog.h"
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
+#include <memory>
+
 #include "usage_stats/usage_stats.h"
-#include "absl/memory/memory.h"
 
 using mozc::usage_stats::UsageStats;
 
@@ -140,13 +141,13 @@ void SessionHandler::Init(
   last_create_session_time_ = 0;
   engine_ = std::move(engine);
   engine_builder_ = std::move(engine_builder);
-  observer_handler_ = absl::make_unique<session::SessionObserverHandler>();
-  stopwatch_ = absl::make_unique<Stopwatch>();
+  observer_handler_ = std::make_unique<session::SessionObserverHandler>();
+  stopwatch_ = std::make_unique<Stopwatch>();
   user_dictionary_session_handler_ =
-      absl::make_unique<user_dictionary::UserDictionarySessionHandler>();
-  table_manager_ = absl::make_unique<composer::TableManager>();
-  request_ = absl::make_unique<commands::Request>();
-  config_ = absl::make_unique<config::Config>();
+      std::make_unique<user_dictionary::UserDictionarySessionHandler>();
+  table_manager_ = std::make_unique<composer::TableManager>();
+  request_ = std::make_unique<commands::Request>();
+  config_ = std::make_unique<config::Config>();
 
   if (absl::GetFlag(FLAGS_restricted)) {
     VLOG(1) << "Server starts with restricted mode";
@@ -163,7 +164,7 @@ void SessionHandler::Init(
   }
 
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
-  session_watch_dog_ = absl::make_unique<SessionWatchDog>(
+  session_watch_dog_ = std::make_unique<SessionWatchDog>(
       absl::GetFlag(FLAGS_watch_dog_interval));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
@@ -172,7 +173,7 @@ void SessionHandler::Init(
   // allow [2..128] sessions
   max_session_size_ =
       std::max(2, std::min(absl::GetFlag(FLAGS_max_session_size), 128));
-  session_map_ = absl::make_unique<SessionMap>(max_session_size_);
+  session_map_ = std::make_unique<SessionMap>(max_session_size_);
 
   if (!engine_) {
     return;
@@ -406,6 +407,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::NO_OPERATION:
       eval_succeeded = NoOperation(command);
       break;
+    case commands::Input::CHECK_SPELLING:
+      eval_succeeded = CheckSpelling(command);
+      break;
     default:
       eval_succeeded = false;
   }
@@ -493,9 +497,8 @@ bool SessionHandler::SendCommand(commands::Command *command) {
 bool SessionHandler::CreateSession(commands::Command *command) {
   // prevent DOS attack
   // don't allow CreateSession in very short period.
-  const int create_session_minimum_interval =
-      std::max(0, std::min(absl::GetFlag(FLAGS_create_session_min_interval),
-                           10));
+  const int create_session_minimum_interval = std::max(
+      0, std::min(absl::GetFlag(FLAGS_create_session_min_interval), 10));
 
   uint64_t current_time = Clock::GetTime();
   if (last_create_session_time_ != 0 &&
@@ -686,6 +689,11 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
 }
 
 bool SessionHandler::NoOperation(commands::Command *command) { return true; }
+
+bool SessionHandler::CheckSpelling(commands::Command *command) {
+  // TODO(taku): Implement me.
+  return true;
+}
 
 // Create Random Session ID in order to make the session id unpredicable
 SessionID SessionHandler::CreateNewSessionID() {

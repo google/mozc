@@ -131,11 +131,11 @@ class ComposerTest : public ::testing::Test {
   ~ComposerTest() override = default;
 
   void SetUp() override {
-    table_ = absl::make_unique<Table>();
-    config_ = absl::make_unique<Config>();
-    request_ = absl::make_unique<Request>();
-    composer_ = absl::make_unique<Composer>(table_.get(), request_.get(),
-                                            config_.get());
+    table_ = std::make_unique<Table>();
+    config_ = std::make_unique<Config>();
+    request_ = std::make_unique<Request>();
+    composer_ =
+        std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
     CharacterFormManager::GetCharacterFormManager()->SetDefaultRule();
   }
 
@@ -929,7 +929,7 @@ TEST_F(ComposerTest, InsertCharacterKeyEventWithInputMode) {
   }
 
   composer_ =
-      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {
     // "a" → "あ" (Hiragana)
@@ -1360,7 +1360,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
   }
 
   composer_ =
-      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {  // google
     InsertKey("g", composer_.get());
@@ -1426,7 +1426,7 @@ TEST_F(ComposerTest, AutoIMETurnOffEnabled) {
 
   config_->set_shift_key_mode_switch(Config::OFF);
   composer_ =
-      absl::make_unique<Composer>(table_.get(), request_.get(), config_.get());
+      std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
   {  // Google
     InsertKey("G", composer_.get());
@@ -2839,20 +2839,20 @@ class MockTypingModel : public TypingModel {
 class TypingCorrectionTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    config_ = absl::make_unique<Config>();
+    config_ = std::make_unique<Config>();
     ConfigHandler::GetDefaultConfig(config_.get());
     config_->set_use_typing_correction(true);
 
-    table_ = absl::make_unique<Table>();
+    table_ = std::make_unique<Table>();
     table_->LoadFromFile("system://qwerty_mobile-hiragana.tsv");
 
-    request_ = absl::make_unique<Request>();
+    request_ = std::make_unique<Request>();
     request_->set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    composer_ = absl::make_unique<Composer>(table_.get(), request_.get(),
-                                            config_.get());
+    composer_ =
+        std::make_unique<Composer>(table_.get(), request_.get(), config_.get());
 
-    table_->typing_model_ = absl::make_unique<MockTypingModel>();
+    table_->typing_model_ = std::make_unique<MockTypingModel>();
   }
 
   static bool IsTypingCorrectorClearedOrInvalidated(const Composer &composer) {

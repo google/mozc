@@ -37,9 +37,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
-#ifdef OS_WIN
 #include <memory>
-#endif  // OS_WIN
 
 #include "base/file_stream.h"
 #include "base/logging.h"
@@ -48,7 +46,6 @@
 #include "base/util.h"
 #include "gui/base/win_util.h"
 #include "ipc/window_info.pb.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace gui {
@@ -115,7 +112,7 @@ bool ReadWindowInfo(const std::string &lock_name,
 }  // namespace
 
 SingletonWindowHelper::SingletonWindowHelper(const std::string &name) {
-  mutex_ = absl::make_unique<mozc::ProcessMutex>(name.c_str());
+  mutex_ = std::make_unique<mozc::ProcessMutex>(name.c_str());
 }
 
 SingletonWindowHelper::~SingletonWindowHelper() {}

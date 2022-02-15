@@ -39,7 +39,6 @@
 #include "base/util.h"
 #include "data_manager/data_manager_interface.h"
 #include "storage/louds/simple_succinct_bit_vector_index.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -202,7 +201,7 @@ absl::StatusOr<std::unique_ptr<Connector>> Connector::CreateFromDataManager(
 
 absl::StatusOr<std::unique_ptr<Connector>> Connector::Create(
     const char *connection_data, size_t connection_size, int cache_size) {
-  auto connector = absl::make_unique<Connector>();
+  auto connector = std::make_unique<Connector>();
   auto status = connector->Init(connection_data, connection_size, cache_size);
   if (!status.ok()) {
     return status;
@@ -222,8 +221,8 @@ absl::Status Connector::Init(const char *connection_data,
   }
   cache_size_ = cache_size;
   cache_hash_mask_ = cache_size - 1;
-  cache_key_ = absl::make_unique<uint32_t[]>(cache_size);
-  cache_value_ = absl::make_unique<int[]>(cache_size);
+  cache_key_ = std::make_unique<uint32_t[]>(cache_size);
+  cache_value_ = std::make_unique<int[]>(cache_size);
 
   absl::StatusOr<Metadata> metadata =
       ParseMetadata(connection_data, connection_size);
@@ -281,7 +280,7 @@ absl::Status Connector::Init(const char *connection_data,
 
   const size_t chunk_bits_size = metadata->ChunkBitsSize();
   const uint16_t rsize = metadata->rsize;
-  rows_ = absl::make_unique<Row[]>(rsize);
+  rows_ = std::make_unique<Row[]>(rsize);
   for (size_t i = 0; i < rsize; ++i) {
     // Each row is formatted as follows:
     // +-------------------+-------------+------------+------------+---------+

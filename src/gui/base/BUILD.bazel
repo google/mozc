@@ -105,7 +105,6 @@ cc_qt_library_mozc(
         "//base:system_util",
         "//base:util",
         "//base:version",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -164,6 +163,5 @@ cc_qt_library_mozc(
         "//base:version",
         "//ipc",
         "//ipc:window_info_cc_proto",
-        "@com_google_absl//absl/memory",
     ],
 )

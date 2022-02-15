@@ -125,7 +125,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -190,7 +189,6 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "//transliteration",
         "//usage_stats",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -234,7 +232,6 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -273,7 +270,6 @@ cc_test_mozc(
         "//session/internal:keymap",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -353,7 +349,6 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "//usage_stats",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -424,7 +419,6 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -447,7 +441,6 @@ cc_library_mozc(
         "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//usage_stats:usage_stats_uploader",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -518,7 +511,6 @@ cc_binary_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
     ],
 )
@@ -551,7 +543,6 @@ cc_library_mozc(
         "//base:unnamed_event",
         "//client",
         "//client:client_interface",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -618,7 +609,6 @@ cc_test_mozc(
         "//usage_stats:usage_stats_cc_proto",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
     ],
 )
 
@@ -850,7 +840,6 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//storage:registry",
         "//usage_stats",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
@@ -912,7 +901,6 @@ cc_test_mozc(
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",

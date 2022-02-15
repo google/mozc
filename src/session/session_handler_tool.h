@@ -35,6 +35,7 @@
 
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/session_handler_interface.h"
@@ -106,6 +107,8 @@ class SessionHandlerInterpreter {
   void ClearUserPrediction();
   void ClearUsageStats();
   const commands::Output& LastOutput() const;
+  const commands::CandidateWord& GetCandidateByValue(
+      const absl::string_view value);
   bool GetCandidateIdByValue(const absl::string_view value, uint32_t *id);
   std::vector<std::string> Parse(const std::string &line);
   absl::Status Eval(const std::vector<std::string> &args);

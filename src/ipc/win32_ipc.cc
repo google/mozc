@@ -61,7 +61,7 @@ constexpr int kMaxSuccessiveConnectionFailureCount = 5;
 size_t GetNumberOfProcessors() {
   // thread-safety is not required.
   static size_t num = CPUStats().GetNumberOfProcessors();
-  return std::max(num, static_cast<size_t>(1));
+  return std::max<size_t>(num, 1);
 }
 
 // Least significant bit of OVERLAPPED::hEvent can be used for special

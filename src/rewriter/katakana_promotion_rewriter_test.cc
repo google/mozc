@@ -40,7 +40,6 @@
 #include "rewriter/transliteration_rewriter.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace {
@@ -67,7 +66,7 @@ int GetCandidateIndexByValue(const std::string &value, const Segment &segment) {
 class KatakanaPromotionRewriterTest : public ::testing::Test {
  protected:
   KatakanaPromotionRewriterTest() {
-    t13n_rewriter_ = absl::make_unique<TransliterationRewriter>(
+    t13n_rewriter_ = std::make_unique<TransliterationRewriter>(
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
 
     desktop_request_.set_mixed_conversion(false);

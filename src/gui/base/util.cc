@@ -45,7 +45,6 @@
 #include <memory>
 
 #include "base/logging.h"
-#include "absl/memory/memory.h"
 
 #ifdef MOZC_SHOW_BUILD_NUMBER_ON_TITLE
 #include "gui/base/window_title_modifier.h"
@@ -94,7 +93,7 @@ std::unique_ptr<QApplication> GuiUtil::InitQt(int &argc, char *argv[]) {
 #endif  // QT_VERSION
 
   // QApplication takes argc as a reference.
-  auto app = absl::make_unique<QApplication>(argc, argv);
+  auto app = std::make_unique<QApplication>(argc, argv);
 #ifdef __APPLE__
   app->setFont(QFont("Hiragino Sans"));
 #endif  // __APPLE__

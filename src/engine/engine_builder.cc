@@ -39,7 +39,6 @@
 #include "data_manager/data_manager.h"
 #include "engine/engine.h"
 #include "protocol/engine_builder.pb.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 
 namespace mozc {
@@ -165,7 +164,7 @@ void EngineBuilder::PrepareAsync(const EngineReloadRequest &request,
     preparator_->Join();
     VLOG(1) << "Previously loaded data is discarded";
   }
-  preparator_ = absl::make_unique<Preparator>(request);
+  preparator_ = std::make_unique<Preparator>(request);
   preparator_->SetJoinable(true);
   preparator_->Start("EngineBuilder::Preparator");
   response->set_status(EngineReloadResponse::ACCEPTED);

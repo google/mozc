@@ -44,7 +44,6 @@
 #include "protocol/commands.pb.h"
 #include "session/session.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 
 ABSL_FLAG(std::string, input, "", "Input file");
@@ -55,7 +54,7 @@ namespace mozc {
 
 void Loop(std::istream *input, std::ostream *output) {
   std::unique_ptr<EngineInterface> engine = EngineFactory::Create().value();
-  auto session = absl::make_unique<session::Session>(engine.get());
+  auto session = std::make_unique<session::Session>(engine.get());
 
   commands::Command command;
   std::string line;
@@ -65,7 +64,7 @@ void Loop(std::istream *input, std::ostream *output) {
       continue;
     }
     if (line.empty()) {
-      session = absl::make_unique<session::Session>(engine.get());
+      session = std::make_unique<session::Session>(engine.get());
       *output << std::endl << "## New session" << std::endl << std::endl;
       continue;
     }
@@ -111,7 +110,7 @@ int main(int argc, char **argv) {
 
   if (!flags_input.empty()) {
     // Batch mode loading the input file.
-    input_file = absl::make_unique<mozc::InputFileStream>(flags_input.c_str());
+    input_file = std::make_unique<mozc::InputFileStream>(flags_input.c_str());
     if (input_file->fail()) {
       LOG(ERROR) << "File not opend: " << flags_input;
       std::cerr << "File not opend: " << flags_input << std::endl;
@@ -125,7 +124,7 @@ int main(int argc, char **argv) {
 
   if (!flags_output.empty()) {
     output_file =
-        absl::make_unique<mozc::OutputFileStream>(flags_output.c_str());
+        std::make_unique<mozc::OutputFileStream>(flags_output.c_str());
     if (output_file->fail()) {
       LOG(ERROR) << "File not opend: " << flags_output;
       std::cerr << "File not opend: " << flags_output << std::endl;

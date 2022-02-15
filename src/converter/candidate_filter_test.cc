@@ -47,7 +47,6 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/gunit.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -91,15 +90,15 @@ class CandidateFilterTest : public ::testing::Test {
   CandidateFilterTest() {}
 
   void SetUp() override {
-    candidate_freelist_ = absl::make_unique<FreeList<Segment::Candidate>>(1024);
-    node_freelist_ = absl::make_unique<FreeList<Node>>(1024);
+    candidate_freelist_ = std::make_unique<FreeList<Segment::Candidate>>(1024);
+    node_freelist_ = std::make_unique<FreeList<Node>>(1024);
     pos_matcher_.Set(mock_data_manager_.GetPosMatcherData());
-    request_ = absl::make_unique<ConversionRequest>();
+    request_ = std::make_unique<ConversionRequest>();
     {
       const char *data = nullptr;
       size_t size = 0;
       mock_data_manager_.GetSuggestionFilterData(&data, &size);
-      suggestion_filter_ = absl::make_unique<SuggestionFilter>(data, size);
+      suggestion_filter_ = std::make_unique<SuggestionFilter>(data, size);
     }
   }
 
@@ -124,13 +123,13 @@ class CandidateFilterTest : public ::testing::Test {
   }
 
   Node *NewNode() {
-    Node *n = node_freelist_->Alloc(1);
+    Node *n = node_freelist_->Alloc();
     n->Init();
     return n;
   }
 
   Segment::Candidate *NewCandidate() {
-    Segment::Candidate *c = candidate_freelist_->Alloc(1);
+    Segment::Candidate *c = candidate_freelist_->Alloc();
     c->Init();
     c->cost = 100;
     c->structure_cost = 100;
@@ -958,7 +957,6 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
 
     Segment::Candidate *c = NewCandidate();
     c->key.assign(n1->key).append(n2->key).append(n3->key);
-    ;
     c->value.assign(n1->value).append(n2->value).append(n3->value);
     c->content_key = c->key;
     c->content_value = c->value;

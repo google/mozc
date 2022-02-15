@@ -38,7 +38,6 @@
 #include "base/thread.h"
 #include "base/util.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 
 ABSL_FLAG(int32_t, iterations, 1000, "number of iterations");
 ABSL_FLAG(int32_t, polling_duration, 1000, "duration period in msec");
@@ -67,7 +66,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<DummyThread[]> threads;
 
   if (absl::GetFlag(FLAGS_dummy_threads_size) > 0) {
-    threads = absl::make_unique<DummyThread[]>(
+    threads = std::make_unique<DummyThread[]>(
         absl::GetFlag(FLAGS_dummy_threads_size));
     for (int i = 0; i < absl::GetFlag(FLAGS_dummy_threads_size); ++i) {
       threads[i].Start("CpuStatsMain");

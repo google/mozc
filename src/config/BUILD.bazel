@@ -76,7 +76,6 @@ cc_test_mozc(
         "//testing:mozctest",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -139,7 +138,6 @@ cc_library_mozc(
         "//base:util",
         "//protocol:config_cc_proto",
         "//storage:lru_storage",
-        "@com_google_absl//absl/memory",
     ],
 )
 

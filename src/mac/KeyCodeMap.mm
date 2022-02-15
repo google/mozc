@@ -50,7 +50,7 @@ static const unichar kYenMark = 0xA5;
 // |keyEvent|.
 - (void)addModifierFlags:(NSUInteger)flags toMozcKeyEvent:(KeyEvent *)keyEvent;
 
-// Extract key event information from |event| of NSFlagsChanged.
+// Extract key event information from |event| of NSEventTypeFlagsChanged.
 // Returns YES only if the flag change should create an Mozc key
 // events.
 - (BOOL)handleModifierFlagsChange:(NSEvent *)event toMozcKeyEvent:(KeyEvent *)keyEvent;
@@ -75,13 +75,13 @@ static const unichar kYenMark = 0xA5;
 }
 
 - (void)addModifierFlags:(NSUInteger)flags toMozcKeyEvent:(KeyEvent *)keyEvent {
-  if ((flags & NSShiftKeyMask)) {
+  if ((flags & NSEventModifierFlagShift)) {
     keyEvent->add_modifier_keys(KeyEvent::SHIFT);
   }
-  if (flags & NSControlKeyMask) {
+  if (flags & NSEventModifierFlagControl) {
     keyEvent->add_modifier_keys(KeyEvent::CTRL);
   }
-  if (flags & NSAlternateKeyMask) {
+  if (flags & NSEventModifierFlagOption) {
     keyEvent->add_modifier_keys(KeyEvent::ALT);
   }
 }
@@ -89,7 +89,8 @@ static const unichar kYenMark = 0xA5;
 - (BOOL)handleModifierFlagsChange:(NSEvent *)event toMozcKeyEvent:(KeyEvent *)keyEvent {
   NSUInteger newFlags = [event modifierFlags];
   // Clear unused modifier flag bits.
-  newFlags = newFlags & (NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask);
+  newFlags = newFlags &
+             (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption);
   if (~modifierFlags_ & newFlags) {
     // New modifier key is pressed: overwrite |modifierFlags_|.
     // Consider the case as follows:
@@ -142,7 +143,7 @@ static const unichar kYenMark = 0xA5;
   // Mozc must have keyboard layout information like "\S-[ => {" for
   // the case of input is symbol.
 
-  if ([event type] == NSFlagsChanged) {
+  if ([event type] == NSEventTypeFlagsChanged) {
     return [self handleModifierFlagsChange:event toMozcKeyEvent:keyEvent];
   } else {
     modifierFlags_ = 0;
@@ -156,10 +157,10 @@ static const unichar kYenMark = 0xA5;
 
   NSUInteger nsModifiers = [event modifierFlags];
   // strip caps lock effects.
-  nsModifiers &= (~NSAlphaShiftKeyMask & NSDeviceIndependentModifierFlagsMask);
+  nsModifiers &= (~NSEventModifierFlagCapsLock & NSEventModifierFlagDeviceIndependentFlagsMask);
   unsigned short keyCode = [event keyCode];
-  unichar inputChar =
-      [((nsModifiers == NSShiftKeyMask) ? inputString : inputStringRaw) characterAtIndex:0];
+  unichar inputChar = [((nsModifiers == NSEventModifierFlagShift) ? inputString : inputStringRaw)
+      characterAtIndex:0];
   std::map<unsigned short, KeyEvent::SpecialKey>::const_iterator sp_iter =
       kSpecialKeyMap->find(keyCode);
   if (sp_iter != kSpecialKeyMap->end()) {
@@ -178,7 +179,7 @@ static const unichar kYenMark = 0xA5;
     // fill kana "key_string" if mode is kana.
     if (inputMode_ == KANA && !keyEvent->has_special_key()) {
       std::map<unsigned short, const char *>::const_iterator kana_iter;
-      if (nsModifiers == NSShiftKeyMask && kKanaMapShift &&
+      if (nsModifiers == NSEventModifierFlagShift && kKanaMapShift &&
           (kana_iter = kKanaMapShift->find(keyCode)) != kKanaMapShift->end()) {
         keyEvent->set_key_string(kana_iter->second);
       } else if (kKanaMap && (kana_iter = kKanaMap->find(keyCode)) != kKanaMap->end()) {
@@ -187,7 +188,7 @@ static const unichar kYenMark = 0xA5;
     }
   }
 
-  if (nsModifiers & NSCommandKeyMask) {
+  if (nsModifiers & NSEventModifierFlagCommand) {
     // When command key is pressed, it is not a mozc key command.
     // Just ignore.
     return NO;
@@ -201,7 +202,7 @@ static const unichar kYenMark = 0xA5;
             << keyEvent->DebugString();
 #endif  // DEBUG
 
-  if (nsModifiers == NSShiftKeyMask && !keyEvent->has_special_key()) {
+  if (nsModifiers == NSEventModifierFlagShift && !keyEvent->has_special_key()) {
     // If only the modifier is Shift and |keyEvent| is not normal key,
     // don't put any modifiers.
     return YES;

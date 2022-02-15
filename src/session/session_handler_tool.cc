@@ -56,7 +56,6 @@
 #include "session/session_usage_observer.h"
 #include "storage/registry.h"
 #include "usage_stats/usage_stats.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
@@ -293,10 +292,10 @@ SessionHandlerInterpreter::SessionHandlerInterpreter()
 
 SessionHandlerInterpreter::SessionHandlerInterpreter(
     std::unique_ptr<EngineInterface> engine) {
-  client_ = absl::make_unique<SessionHandlerTool>(std::move(engine));
-  config_ = absl::make_unique<Config>();
-  last_output_ = absl::make_unique<Output>();
-  request_ = absl::make_unique<Request>();
+  client_ = std::make_unique<SessionHandlerTool>(std::move(engine));
+  config_ = std::make_unique<Config>();
+  last_output_ = std::make_unique<Output>();
+  request_ = std::make_unique<Request>();
 
   ConfigHandler::GetConfig(config_.get());
 
@@ -361,6 +360,28 @@ void SessionHandlerInterpreter::ClearUsageStats() {
 
 const Output &SessionHandlerInterpreter::LastOutput() const {
   return *last_output_;
+}
+
+const CandidateWord &SessionHandlerInterpreter::GetCandidateByValue(
+    const absl::string_view value) {
+  const Output &output = LastOutput();
+
+  for (const CandidateWord &candidate :
+       output.all_candidate_words().candidates()) {
+    if (candidate.value() == value) {
+      return candidate;
+    }
+  }
+
+  for (const CandidateWord &candidate :
+       output.removed_candidate_words_for_debug().candidates()) {
+    if (candidate.value() == value) {
+      return candidate;
+    }
+  }
+
+  static CandidateWord *fallback_candidate = new CandidateWord;
+  return *fallback_candidate;
 }
 
 bool SessionHandlerInterpreter::GetCandidateIdByValue(

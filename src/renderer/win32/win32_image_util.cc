@@ -40,11 +40,11 @@
 
 #include <algorithm>
 #include <bitset>
+#include <memory>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"
-#include "absl/memory/memory.h"
 
 namespace mozc {
 namespace renderer {
@@ -464,7 +464,7 @@ std::vector<std::unique_ptr<TextLabel::BinarySubdivisionalPixel>> Get1bitGlyph(
             continue;
           }
           if (sub_pixels == nullptr) {
-            auto ptr = absl::make_unique<TextLabel::BinarySubdivisionalPixel>();
+            auto ptr = std::make_unique<TextLabel::BinarySubdivisionalPixel>();
             sub_pixels = ptr.get();
             pixels[pix_index] = std::move(ptr);
           }

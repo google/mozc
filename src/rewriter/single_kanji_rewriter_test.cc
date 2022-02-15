@@ -44,7 +44,6 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
-#include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 
 namespace mozc {
@@ -54,7 +53,7 @@ using dictionary::PosMatcher;
 class SingleKanjiRewriterTest : public ::testing::Test {
  protected:
   SingleKanjiRewriterTest() {
-    data_manager_ = absl::make_unique<testing::MockDataManager>();
+    data_manager_ = std::make_unique<testing::MockDataManager>();
     pos_matcher_.Set(data_manager_->GetPosMatcherData());
   }
 

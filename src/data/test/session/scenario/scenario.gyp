@@ -62,6 +62,7 @@
           'convert_from_half_katakana_to_t13n.txt',
           'convert_from_hiragana_to_t13n.txt',
           'delete_history.txt',
+          'description.txt',
           'desktop_t13n_candidates.txt',
           'domain_suggestion.txt',
           'input_mode.txt',

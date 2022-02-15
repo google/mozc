@@ -740,11 +740,9 @@ TEST(SessionOutputTest, AddSegment) {
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    std::string normalized_key;
-    TextNormalizer::NormalizeText(kKey, &normalized_key);
+    const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(normalized_key, segment.key());
-    std::string normalized_value;
-    TextNormalizer::NormalizeText(kValue, &normalized_value);
+    const std::string normalized_value = TextNormalizer::NormalizeText(kValue);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -759,11 +757,9 @@ TEST(SessionOutputTest, AddSegment) {
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    std::string normalized_key;
-    TextNormalizer::NormalizeText(kKey, &normalized_key);
+    const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(normalized_key, segment.key());
-    std::string normalized_value;
-    TextNormalizer::NormalizeText(kValue, &normalized_value);
+    const std::string normalized_value = TextNormalizer::NormalizeText(kValue);
     EXPECT_EQ(normalized_value, segment.value());
     EXPECT_EQ(Util::CharsLen(normalized_value), segment.value_length());
     EXPECT_EQ(commands::Preedit::Segment::UNDERLINE, segment.annotation());
@@ -778,8 +774,7 @@ TEST(SessionOutputTest, AddSegment) {
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    std::string normalized_key;
-    TextNormalizer::NormalizeText(kKey, &normalized_key);
+    const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
     std::string normalized_value = kValue;
@@ -797,8 +792,7 @@ TEST(SessionOutputTest, AddSegment) {
     EXPECT_EQ(index + 1, preedit.segment_size());
     const commands::Preedit::Segment &segment = preedit.segment(index);
 
-    std::string normalized_key;
-    TextNormalizer::NormalizeText(kKey, &normalized_key);
+    const std::string normalized_key = TextNormalizer::NormalizeText(kKey);
     EXPECT_EQ(normalized_key, segment.key());
     // Normalization is performed in Rewriter.
     std::string normalized_value = kValue;

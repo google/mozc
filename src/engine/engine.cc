@@ -30,6 +30,7 @@
 #include "engine/engine.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -61,7 +62,6 @@
 #include "prediction/user_history_predictor.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
-#include "absl/memory/memory.h"
 #include "absl/status/status.h"
 
 namespace mozc {
@@ -140,7 +140,7 @@ bool UserDataManagerImpl::Wait() { return predictor_->Wait(); }
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
-  auto engine = absl::make_unique<Engine>();
+  auto engine = std::make_unique<Engine>();
   auto status = engine->Init(std::move(data_manager),
                              &DefaultPredictor::CreateDefaultPredictor, false);
   if (!status.ok()) {
@@ -151,7 +151,7 @@ absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateDesktopEngine(
 
 absl::StatusOr<std::unique_ptr<Engine>> Engine::CreateMobileEngine(
     std::unique_ptr<const DataManagerInterface> data_manager) {
-  auto engine = absl::make_unique<Engine>();
+  auto engine = std::make_unique<Engine>();
   auto status = engine->Init(std::move(data_manager),
                              &MobilePredictor::CreateMobilePredictor, true);
   if (!status.ok()) {
@@ -183,10 +183,10 @@ absl::Status Engine::Init(
       return absl::ResourceExhaustedError("engigine.cc: " #ptr " is null"); \
   } while (false)
 
-  suppression_dictionary_ = absl::make_unique<SuppressionDictionary>();
+  suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
   RETURN_IF_NULL(suppression_dictionary_);
 
-  pos_matcher_ = absl::make_unique<dictionary::PosMatcher>(
+  pos_matcher_ = std::make_unique<dictionary::PosMatcher>(
       data_manager->GetPosMatcherData());
   RETURN_IF_NULL(pos_matcher_);
 
@@ -194,7 +194,7 @@ absl::Status Engine::Init(
       UserPos::CreateFromDataManager(*data_manager);
   RETURN_IF_NULL(user_pos);
 
-  user_dictionary_ = absl::make_unique<UserDictionary>(
+  user_dictionary_ = std::make_unique<UserDictionary>(
       std::move(user_pos), *pos_matcher_, suppression_dictionary_.get());
   RETURN_IF_NULL(user_dictionary_);
 
@@ -207,9 +207,9 @@ absl::Status Engine::Init(
   if (!sysdic.ok()) {
     return std::move(sysdic).status();
   }
-  auto value_dic = absl::make_unique<ValueDictionary>(*pos_matcher_,
-                                                      &(*sysdic)->value_trie());
-  dictionary_ = absl::make_unique<DictionaryImpl>(
+  auto value_dic = std::make_unique<ValueDictionary>(*pos_matcher_,
+                                                     &(*sysdic)->value_trie());
+  dictionary_ = std::make_unique<DictionaryImpl>(
       *std::move(sysdic), std::move(value_dic), user_dictionary_.get(),
       suppression_dictionary_.get(), pos_matcher_.get());
   RETURN_IF_NULL(dictionary_);
@@ -218,7 +218,7 @@ absl::Status Engine::Init(
   const uint32_t *token_array = nullptr;
   data_manager->GetSuffixDictionaryData(&suffix_key_array_data,
                                         &suffix_value_array_data, &token_array);
-  suffix_dictionary_ = absl::make_unique<SuffixDictionary>(
+  suffix_dictionary_ = std::make_unique<SuffixDictionary>(
       suffix_key_array_data, suffix_value_array_data, token_array);
   RETURN_IF_NULL(suffix_dictionary_);
 
@@ -231,7 +231,7 @@ absl::Status Engine::Init(
   segmenter_.reset(Segmenter::CreateFromDataManager(*data_manager));
   RETURN_IF_NULL(segmenter_);
 
-  pos_group_ = absl::make_unique<PosGroup>(data_manager->GetPosGroupData());
+  pos_group_ = std::make_unique<PosGroup>(data_manager->GetPosGroupData());
   RETURN_IF_NULL(pos_group_);
 
   {
@@ -240,10 +240,10 @@ absl::Status Engine::Init(
     data_manager->GetSuggestionFilterData(&suggestion_filter_data, &size);
     RETURN_IF_NULL(suggestion_filter_data);
     suggestion_filter_ =
-        absl::make_unique<SuggestionFilter>(suggestion_filter_data, size);
+        std::make_unique<SuggestionFilter>(suggestion_filter_data, size);
   }
 
-  immutable_converter_ = absl::make_unique<ImmutableConverterImpl>(
+  immutable_converter_ = std::make_unique<ImmutableConverterImpl>(
       dictionary_.get(), suffix_dictionary_.get(),
       suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
       pos_matcher_.get(), pos_group_.get(), suggestion_filter_.get());
@@ -255,20 +255,20 @@ absl::Status Engine::Init(
   // TODO(noriyukit): This circular dependency is a bad design as careful
   // handling is necessary to avoid infinite loop. Find more beautiful design
   // and fix it!
-  converter_ = absl::make_unique<ConverterImpl>();
+  converter_ = std::make_unique<ConverterImpl>();
   RETURN_IF_NULL(converter_);
 
   std::unique_ptr<PredictorInterface> predictor;
   {
     // Create a predictor with three sub-predictors, dictionary predictor, user
     // history predictor, and extra predictor.
-    auto dictionary_predictor = absl::make_unique<DictionaryPredictor>(
+    auto dictionary_predictor = std::make_unique<DictionaryPredictor>(
         *data_manager, converter_.get(), immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
         segmenter_.get(), pos_matcher_.get(), suggestion_filter_.get());
     RETURN_IF_NULL(dictionary_predictor);
 
-    auto user_history_predictor = absl::make_unique<UserHistoryPredictor>(
+    auto user_history_predictor = std::make_unique<UserHistoryPredictor>(
         dictionary_.get(), pos_matcher_.get(), suppression_dictionary_.get(),
         enable_content_word_learning);
     RETURN_IF_NULL(user_history_predictor);
@@ -280,8 +280,8 @@ absl::Status Engine::Init(
   predictor_ = predictor.get();  // Keep the reference
 
   auto rewriter =
-      absl::make_unique<RewriterImpl>(converter_.get(), data_manager.get(),
-                                      pos_group_.get(), dictionary_.get());
+      std::make_unique<RewriterImpl>(converter_.get(), data_manager.get(),
+                                     pos_group_.get(), dictionary_.get());
   RETURN_IF_NULL(rewriter);
   rewriter_ = rewriter.get();  // Keep the reference
 
@@ -290,7 +290,7 @@ absl::Status Engine::Init(
                    immutable_converter_.get());
 
   user_data_manager_ =
-      absl::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
+      std::make_unique<UserDataManagerImpl>(predictor_, rewriter_);
 
   data_manager_ = std::move(data_manager);
 

@@ -131,6 +131,7 @@ class SessionHandler : public SessionHandlerInterface {
   bool SendUserDictionaryCommand(commands::Command *command);
   bool SendEngineReloadRequest(commands::Command *command);
   bool NoOperation(commands::Command *command);
+  bool CheckSpelling(commands::Command *command);
 
   SessionID CreateNewSessionID();
   bool DeleteSessionID(SessionID id);
