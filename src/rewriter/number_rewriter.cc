@@ -27,6 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "rewriter/number_rewriter.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -46,7 +48,6 @@
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/number_compound_util.h"
-#include "rewriter/number_rewriter.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
@@ -87,7 +88,14 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
     *arabic_candidate = c;
     arabic_candidate->inner_segment_boundary.clear();
     DCHECK(arabic_candidate->IsValid());
-    return ARABIC_FIRST;
+    if (Util::GetScriptType(c.content_key) == Util::NUMBER ||
+        (c.attributes & Segment::Candidate::USER_DICTIONARY)) {
+      // ARABIC_FIRST when:
+      // - a user types number key
+      // - or, the entry came from the user dictionary
+      return ARABIC_FIRST;
+    }
+    return KANJI_FIRST;
   }
 
   std::string half_width_new_content_value;
