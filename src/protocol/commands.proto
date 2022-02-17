@@ -845,10 +845,30 @@ message ApplicationInfo {
 }
 
 // Spellchecker request.
-message CheckSpellingRequest {}
+message CheckSpellingRequest {
+  // spellchecker request.
+  optional string text = 1;
+}
 
 // Spellchecker response.
-message CheckSpellingResponse {}
+message CheckSpellingResponse {
+  message Correction {
+    // utf-8 byte offsets of the correction.
+    // Needs to convert them to Unicode char offset in Java layer.
+    optional uint32 begin = 1;
+    optional uint32 end = 2;
+
+    // The surface of the correction.
+    // We can verify the correct offsets are given with
+    // request.text().substr(begin, end) == surface.
+    optional string surface = 3;
+
+    // List of suggestions.
+    repeated string suggestions = 4;
+  }
+
+  repeated Correction corrections = 1;
+}
 
 message Input {
   enum CommandType {
