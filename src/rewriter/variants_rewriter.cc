@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -71,7 +72,7 @@ bool IsConvertibleToHalfWidthForm(const std::string &full) {
       absl::StrReplaceAll(full, {{"＼", "\\"}, {"￥", "¥"}});
 
   std::string half;
-  Util::FullWidthToHalfWidth(tmp, &half);
+  japanese_util::FullWidthToHalfWidth(tmp, &half);
   return full != half;
 }
 

@@ -106,10 +106,10 @@ cc_library_mozc(
     hdrs = ["key_event_transformer.h"],
     deps = [
         "//base",
+        "//base:japanese_util",
         "//base:logging",
         "//base:port",
         "//base:singleton",
-        "//base:util",
         "//composer:key_event_util",
         "//config:config_handler",
         "//protocol:commands_cc_proto",

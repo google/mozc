@@ -33,6 +33,7 @@
 #include <string>
 #include <utility>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/composer.h"
@@ -117,8 +118,8 @@ bool IsRawQuery(const composer::Composer &composer,
   // If the composition string is the full width form of the raw_text,
   // there is no need to add the candidate to suggestions.
   std::string composition_in_half_width_ascii;
-  Util::FullWidthAsciiToHalfWidthAscii(composition,
-                                       &composition_in_half_width_ascii);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(
+      composition, &composition_in_half_width_ascii);
   if (composition_in_half_width_ascii == raw_text) {
     return false;
   }

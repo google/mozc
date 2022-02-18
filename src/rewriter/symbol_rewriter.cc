@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -254,8 +255,8 @@ void SymbolRewriter::AddDescForCurrentCandidates(
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     Segment::Candidate *candidate = segment->mutable_candidate(i);
     std::string full_width_value, half_width_value;
-    Util::HalfWidthToFullWidth(candidate->value, &full_width_value);
-    Util::FullWidthToHalfWidth(candidate->value, &half_width_value);
+    japanese_util::HalfWidthToFullWidth(candidate->value, &full_width_value);
+    japanese_util::FullWidthToHalfWidth(candidate->value, &half_width_value);
 
     for (auto iter = range.first; iter != range.second; ++iter) {
       if (candidate->value == iter.value() ||

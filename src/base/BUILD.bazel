@@ -524,6 +524,7 @@ cc_library_mozc(
     visibility = ["//:__subpackages__"],
     deps = [
         ":double_array_def",
+        ":japanese_util",
         ":japanese_util_rule",
         ":logging",
         ":port",

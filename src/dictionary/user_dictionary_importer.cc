@@ -29,6 +29,8 @@
 
 #include "dictionary/user_dictionary_importer.h"
 
+#include "base/japanese_util.h"
+
 #ifdef OS_WIN
 #include <windows.h>
 #endif  // OS_WIN
@@ -79,8 +81,8 @@ uint64_t EntryFingerprint(const UserDictionary::Entry &entry) {
 void NormalizePos(const std::string &input, std::string *output) {
   std::string tmp;
   output->clear();
-  Util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
-  Util::HalfWidthKatakanaToFullWidthKatakana(tmp, output);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(input, &tmp);
+  japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp, output);
 }
 
 // A data type to hold conversion rules of POSes. If mozc_pos is set to be an

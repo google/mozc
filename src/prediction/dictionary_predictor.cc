@@ -41,6 +41,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -156,7 +157,7 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
     return false;
   }
 
-  Util::FullWidthToHalfWidth(history_value, number_key);
+  japanese_util::FullWidthToHalfWidth(history_value, number_key);
   return true;
 }
 
@@ -1297,7 +1298,7 @@ void DictionaryPredictor::ApplyPenaltyForKeyExpansion(
 size_t DictionaryPredictor::GetMissSpelledPosition(
     const std::string &key, const std::string &value) const {
   std::string hiragana_value;
-  Util::KatakanaToHiragana(value, &hiragana_value);
+  japanese_util::KatakanaToHiragana(value, &hiragana_value);
   // value is mixed type. return true if key == request_key.
   if (Util::GetScriptType(hiragana_value) != Util::HIRAGANA) {
     return Util::CharsLen(key);
@@ -2001,7 +2002,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     std::string tmp;
     for (size_t i = prev_results_size; i < results->size(); ++i) {
       tmp.assign((*results)[i].value);
-      Util::HalfWidthAsciiToFullWidthAscii(tmp, &(*results)[i].value);
+      japanese_util::HalfWidthAsciiToFullWidthAscii(tmp, &(*results)[i].value);
     }
   }
 }

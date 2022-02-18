@@ -29,6 +29,7 @@
 
 #include "composer/internal/transliterators.h"
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/util.h"
@@ -131,7 +132,7 @@ class HiraganaTransliterator : public TransliteratorInterface {
   std::string Transliterate(const std::string &raw,
                             const std::string &converted) const override {
     std::string full, output;
-    Util::HalfWidthToFullWidth(converted, &full);
+    japanese_util::HalfWidthToFullWidth(converted, &full);
     CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
         full, &output);
     return output;
@@ -154,8 +155,8 @@ class FullKatakanaTransliterator : public TransliteratorInterface {
   std::string Transliterate(const std::string &raw,
                             const std::string &converted) const override {
     std::string t13n, full;
-    Util::HiraganaToKatakana(converted, &t13n);
-    Util::HalfWidthToFullWidth(t13n, &full);
+    japanese_util::HiraganaToKatakana(converted, &t13n);
+    japanese_util::HalfWidthToFullWidth(t13n, &full);
 
     std::string output;
     CharacterFormManager::GetCharacterFormManager()->ConvertPreeditString(
@@ -180,16 +181,17 @@ class HalfKatakanaTransliterator : public TransliteratorInterface {
   static void HalfKatakanaToHiragana(const std::string &half_katakana,
                                      std::string *hiragana) {
     std::string full_katakana;
-    Util::HalfWidthKatakanaToFullWidthKatakana(half_katakana, &full_katakana);
-    Util::KatakanaToHiragana(full_katakana, hiragana);
+    japanese_util::HalfWidthKatakanaToFullWidthKatakana(half_katakana,
+                                                        &full_katakana);
+    japanese_util::KatakanaToHiragana(full_katakana, hiragana);
   }
 
   std::string Transliterate(const std::string &raw,
                             const std::string &converted) const override {
     std::string t13n;
     std::string katakana_output;
-    Util::HiraganaToKatakana(converted, &katakana_output);
-    Util::FullWidthToHalfWidth(katakana_output, &t13n);
+    japanese_util::HiraganaToKatakana(converted, &katakana_output);
+    japanese_util::FullWidthToHalfWidth(katakana_output, &t13n);
     return t13n;
   }
 
@@ -224,7 +226,7 @@ class HalfAsciiTransliterator : public TransliteratorInterface {
                             const std::string &converted) const override {
     std::string t13n;
     const std::string &input = raw.empty() ? converted : raw;
-    Util::FullWidthAsciiToHalfWidthAscii(input, &t13n);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(input, &t13n);
     return t13n;
   }
 
@@ -245,7 +247,7 @@ class FullAsciiTransliterator : public TransliteratorInterface {
                             const std::string &converted) const override {
     std::string t13n;
     const std::string &input = raw.empty() ? converted : raw;
-    Util::HalfWidthAsciiToFullWidthAscii(input, &t13n);
+    japanese_util::HalfWidthAsciiToFullWidthAscii(input, &t13n);
     return t13n;
   }
 

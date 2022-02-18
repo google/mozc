@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -216,10 +217,11 @@ void NormalizeHistorySegments(Segments *segments) {
     const std::string value = c->value;
     const std::string content_value = c->content_value;
     const std::string content_key = c->content_key;
-    Util::FullWidthAsciiToHalfWidthAscii(segment->key(), &key);
-    Util::FullWidthAsciiToHalfWidthAscii(value, &c->value);
-    Util::FullWidthAsciiToHalfWidthAscii(content_value, &c->content_value);
-    Util::FullWidthAsciiToHalfWidthAscii(content_key, &c->content_key);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key(), &key);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(value, &c->value);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(content_value,
+                                                  &c->content_value);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(content_key, &c->content_key);
     c->key = key;
     segment->set_key(key);
 
@@ -352,8 +354,8 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
     DCHECK(new_candidate);
 
     *new_candidate = *top_candidate;
-    Util::HiraganaToKatakana(segment->candidate(0).content_key,
-                             &new_candidate->content_value);
+    japanese_util::HiraganaToKatakana(segment->candidate(0).content_key,
+                                      &new_candidate->content_value);
     new_candidate->value.clear();
     absl::StrAppend(&new_candidate->value, new_candidate->content_value,
                     top_candidate->functional_value());
@@ -402,7 +404,7 @@ void ImmutableConverterImpl::InsertDummyCandidates(Segment *segment,
 
   // Insert a dummy katakana candidate.
   std::string katakana_value;
-  Util::HiraganaToKatakana(segment->key(), &katakana_value);
+  japanese_util::HiraganaToKatakana(segment->key(), &katakana_value);
   if (segment->candidates_size() > 0 &&
       segment->candidates_size() < expand_size &&
       Util::GetScriptType(katakana_value) == Util::KATAKANA) {

@@ -32,9 +32,9 @@
 #include <cstdint>
 #include <string>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "composer/key_event_util.h"
 #include "config/config_handler.h"
 #include "protocol/commands.pb.h"
@@ -168,8 +168,8 @@ bool KeyEventTransformer::TransformKeyEventForNumpad(
 
   if (is_full_width) {
     std::string full_width_key_string;
-    Util::HalfWidthAsciiToFullWidthAscii(half_width_key_string,
-                                         &full_width_key_string);
+    japanese_util::HalfWidthAsciiToFullWidthAscii(half_width_key_string,
+                                                  &full_width_key_string);
     key_event->set_key_string(full_width_key_string);
   } else {
     key_event->set_key_string(half_width_key_string);

@@ -31,6 +31,7 @@
 
 #include <memory>
 
+#include "base/japanese_util.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/string_view.h"
@@ -75,7 +76,7 @@ void Utf8ToSjis(absl::string_view input, std::string *output) {
 
 std::wstring StringUtil::KeyToReading(absl::string_view key) {
   std::string katakana;
-  Util::HiraganaToKatakana(key, &katakana);
+  japanese_util::HiraganaToKatakana(key, &katakana);
 
   DWORD lcid =
       MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT), SORT_JAPANESE_XJIS);

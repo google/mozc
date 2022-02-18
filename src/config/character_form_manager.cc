@@ -37,6 +37,7 @@
 #include <vector>
 
 #include "base/config_file_stream.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -211,7 +212,7 @@ uint16_t GetNormalizedCharacter(const std::string &str) {
       if (Util::CharsLen(str) == 1) {  // must be 1 character
         // normalize it to half width
         std::string tmp;
-        Util::HalfWidthToFullWidth(str, &tmp);
+        japanese_util::HalfWidthToFullWidth(str, &tmp);
         char32 ucs4 = 0;
         if (Util::SplitFirstChar32(tmp, &ucs4, nullptr) && ucs4 <= 0xffff) {
           ucs2 = static_cast<uint16_t>(ucs4);
@@ -231,11 +232,11 @@ void ConvertToAlternative(const std::string &input, std::string *output,
     case Util::FULL_WIDTH:
       if (type == Util::KATAKANA ||
           Util::IsFullWidthSymbolInHalfWidthKatakana(input)) {
-        return Util::HalfWidthToFullWidth(input, output);
+        return japanese_util::HalfWidthToFullWidth(input, output);
       }
-      return Util::FullWidthToHalfWidth(input, output);
+      return japanese_util::FullWidthToHalfWidth(input, output);
     case Util::HALF_WIDTH:
-      return Util::HalfWidthToFullWidth(input, output);
+      return japanese_util::HalfWidthToFullWidth(input, output);
     default:
       *output = input;
   }
@@ -606,10 +607,10 @@ void CharacterFormManager::ConvertWidth(const std::string &input,
                                         std::string *output,
                                         Config::CharacterForm form) {
   if (form == Config::FULL_WIDTH) {
-    Util::HalfWidthToFullWidth(input, output);
+    japanese_util::HalfWidthToFullWidth(input, output);
     return;
   } else if (form == Config::HALF_WIDTH) {
-    Util::FullWidthToHalfWidth(input, output);
+    japanese_util::FullWidthToHalfWidth(input, output);
     return;
   }
 

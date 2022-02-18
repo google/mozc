@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -249,7 +250,7 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
   std::string reading;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
-    Util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
     if (reading.empty()) {
       continue;
     }

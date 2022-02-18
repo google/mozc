@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
@@ -130,8 +131,8 @@ void TypeRawKeys(absl::string_view romaji, bool create_probable_key_events,
 // Converts from Hiragana to Romaji.
 std::string ToRomaji(absl::string_view hiragana) {
   std::string tmp, result;
-  Util::HiraganaToRomanji(hiragana, &tmp);
-  Util::FullWidthToHalfWidth(tmp, &result);
+  japanese_util::HiraganaToRomanji(hiragana, &tmp);
+  japanese_util::FullWidthToHalfWidth(tmp, &result);
   return result;
 }
 

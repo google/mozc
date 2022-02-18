@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/serialized_string_array.h"
@@ -99,7 +100,8 @@ RewriteType GetRewriteTypeAndBase(const SerializedStringArray &suffix_array,
   }
 
   std::string half_width_new_content_value;
-  Util::FullWidthToHalfWidth(c.content_key, &half_width_new_content_value);
+  japanese_util::FullWidthToHalfWidth(c.content_key,
+                                      &half_width_new_content_value);
   // Try to get normalized kanji_number and arabic_number.
   // If it failed, do nothing.
   // Retain suffix for later use.
@@ -395,8 +397,8 @@ bool RewriteOneSegment(const SerializedStringArray &suffix_array,
     }
 
     std::string arabic_content_value;
-    Util::FullWidthToHalfWidth(info.candidate.content_value,
-                               &arabic_content_value);
+    japanese_util::FullWidthToHalfWidth(info.candidate.content_value,
+                                        &arabic_content_value);
     if (Util::GetScriptType(arabic_content_value) != Util::NUMBER) {
       if (Util::GetFirstScriptType(arabic_content_value) == Util::NUMBER) {
         // Rewrite for number suffix

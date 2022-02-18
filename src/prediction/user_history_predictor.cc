@@ -40,6 +40,7 @@
 #include "base/clock.h"
 #include "base/config_file_stream.h"
 #include "base/hash.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/thread.h"
 #include "base/trie.h"
@@ -144,7 +145,7 @@ bool IsSentenceLikeCandidate(const Segment::Candidate &candidate) {
 // Returns romanaized string.
 std::string ToRoman(const std::string &str) {
   std::string result;
-  Util::HiraganaToRomanji(str, &result);
+  japanese_util::HiraganaToRomanji(str, &result);
   return result;
 }
 

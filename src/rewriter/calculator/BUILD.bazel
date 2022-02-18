@@ -45,10 +45,10 @@ cc_library_mozc(
     textual_hdrs = ["parser.c.inc"],
     deps = [
         "//base",
+        "//base:japanese_util",
         "//base:logging",
         "//base:number_util",
         "//base:singleton",
-        "//base:util",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
