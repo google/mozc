@@ -356,8 +356,6 @@ cc_binary_mozc(
     srcs = ["mozc_renderer_main.cc"],
     defines = ["ENABLE_QT_RENDERER"],
     deps = [
-        ":renderer_server",
-        ":table_layout",
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:run_level",

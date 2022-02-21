@@ -34,27 +34,44 @@
 #include <string>
 
 #include "base/port.h"
-#include "renderer/renderer_server.h"
+#include "ipc/ipc.h"
+#include "renderer/renderer_interface.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
 
-class WindowManager;
-
-class QtServer : public RendererServer {
+class QtServer : public IPCServer {
  public:
   QtServer(int argc, char **argv);
-  ~QtServer() override {};
+  ~QtServer() override;
 
-  void AsyncHide() override {};
-  void AsyncQuit() override {};
-  bool AsyncExecCommand(std::string *proto_message) override;
+  void SetRendererInterface(RendererInterface *renderer_interface);
+
+  // Enters the main event loop and waits UI events.
+  // This method is basically initialize IPC server and
+  // call StartMessageLoop() defined below.
+  // The return value is suppose to be used for the arg of exit().
+  int StartServer();
+
+  bool Process(const char *request, size_t request_size, char *response,
+               size_t *response_size) override;
+
+  bool AsyncExecCommand(std::string *proto_message);
 
   void StartReceiverLoop();
 
  protected:
-  int StartMessageLoop() override;
+  int StartMessageLoop();
+
+  // Call ExecCommandInternal() from the implementation
+  // of AsyncExecCommand()
+  bool ExecCommandInternal(const commands::RendererCommand &command);
+
+  // return timeout (msec) passed by FLAGS_timeout
+  uint32_t timeout() const;
+
+  RendererInterface *renderer_interface_ = nullptr;
 
  private:
   int argc_;
@@ -63,6 +80,9 @@ class QtServer : public RendererServer {
   absl::Mutex mutex_;
   bool updated_;
   std::string message_;
+
+  // From RendererServer
+  uint32_t timeout_;
 
   DISALLOW_COPY_AND_ASSIGN(QtServer);
 };
