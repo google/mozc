@@ -429,6 +429,9 @@ cc_library_mozc(
         "japanese_util.cc",
     ],
     hdrs = ["japanese_util.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
     deps = [
         ":double_array_def",
         ":japanese_util_rule",
