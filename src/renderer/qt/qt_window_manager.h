@@ -44,18 +44,13 @@
 namespace mozc {
 namespace renderer {
 
-using ReceiverLoopFunc = std::function<void(void)>;
-
 class QtWindowManager {
  public:
-  // WindowManager takes arguments' ownership
   QtWindowManager();
   ~QtWindowManager() = default;
 
-  int StartRendererLoop(int argc, char **argv);
-  void SetReceiverLoopFunction(ReceiverLoopFunc func);
+  void Initialize(QThread *thread);
 
-  void Initialize();
   void HideAllWindows();
   void ShowAllWindows();
   void UpdateLayout(const commands::RendererCommand &command);
@@ -97,8 +92,6 @@ class QtWindowManager {
   RendererStyle style_;
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
-
-  ReceiverLoopFunc receiver_loop_func_;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };

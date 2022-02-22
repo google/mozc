@@ -43,24 +43,16 @@ namespace renderer {
 
 class QtServer {
  public:
-  QtServer(int argc, char **argv);
+  QtServer();
   ~QtServer();
 
-  void SetRenderer(QtWindowManager *renderer);
-
-  // Enters the main event loop and waits UI events.
-  // This method is basically initialize IPC server and
-  // call StartMessageLoop() defined below.
-  // The return value is suppose to be used for the arg of exit().
-  int StartServer();
+  int StartServer(int argc, char** argv);
 
   bool AsyncExecCommand(std::string proto_message);
 
   void StartReceiverLoop();
 
  protected:
-  int StartMessageLoop();
-
   // Call ExecCommandInternal() from the implementation
   // of AsyncExecCommand()
   bool ExecCommandInternal(const commands::RendererCommand &command);
@@ -68,12 +60,9 @@ class QtServer {
   // return timeout (msec) passed by FLAGS_timeout
   uint32_t timeout() const;
 
-  QtWindowManager *renderer_ = nullptr;
+  QtWindowManager renderer_;
 
  private:
-  int argc_;
-  char **argv_;
-
   absl::Mutex mutex_;
   bool updated_;
   std::string message_;

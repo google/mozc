@@ -29,9 +29,10 @@
 
 #include "renderer/qt/qt_window_manager.h"
 
+#include <string>
+
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"
-#include "renderer/qt/qt_receiver_loop.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 #include "absl/strings/str_cat.h"
@@ -83,13 +84,7 @@ void QtWindowManager::OnClicked(int row, int column) {
   send_command_interface_->SendCommand(command, &output);
 }
 
-int QtWindowManager::StartRendererLoop(int argc, char **argv) {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif  // QT_VERSION
-
-  QApplication app(argc, argv);
-
+void QtWindowManager::Initialize(QThread *thread) {
   candidates_ = new QTableWidget();
   candidates_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
                               Qt::WindowStaysOnTopHint);
@@ -122,26 +117,9 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
 
-  QThread thread;
-  candidates_->moveToThread(&thread);
-  infolist_->moveToThread(&thread);
-
-  QtReceiverLoop *loop = nullptr;
-  if (receiver_loop_func_) {
-    loop = new QtReceiverLoop(receiver_loop_func_);
-    loop->moveToThread(&thread);
-    emit loop->EmitRunLoop();
-  }
-
-  thread.start();
-  return app.exec();
+  candidates_->moveToThread(thread);
+  infolist_->moveToThread(thread);
 }
-
-void QtWindowManager::SetReceiverLoopFunction(ReceiverLoopFunc func) {
-  receiver_loop_func_ = func;
-}
-
-void QtWindowManager::Initialize() { DLOG(INFO) << "Initialize"; }
 
 void QtWindowManager::HideAllWindows() {
   candidates_->hide();

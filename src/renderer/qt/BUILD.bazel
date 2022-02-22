@@ -64,6 +64,7 @@ cc_qt_library_mozc(
     ],
     deps = [
         ":qt_ipc_server",
+        ":qt_receiver_loop",
         ":qt_window_manager",
         "//base:logging",
         "//base:port",
@@ -102,7 +103,6 @@ cc_qt_library_mozc(
         "qt_window_manager.h",
     ],
     deps = [
-        ":qt_receiver_loop",
         "//base:coordinates",
         "//base:logging",
         "//base:port",

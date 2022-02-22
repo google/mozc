@@ -29,6 +29,7 @@
 
 #include "renderer/qt/qt_server.h"
 
+#include <QApplication>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -40,6 +41,7 @@
 #include "config/config_handler.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/qt/qt_receiver_loop.h"
 #include "absl/synchronization/mutex.h"
 
 // By default, mozc_renderer quits when user-input continues to be
@@ -65,9 +67,8 @@ std::string GetServiceName() {
 }
 }  // namespace
 
-QtServer::QtServer(int argc, char **argv)
-    : renderer_(nullptr),
-      argc_(argc), argv_(argv), updated_(false),
+QtServer::QtServer()
+    : updated_(false),
       timeout_(0) {
   if (absl::GetFlag(FLAGS_restricted)) {
     absl::SetFlag(&FLAGS_timeout,
@@ -131,22 +132,17 @@ void QtServer::StartReceiverLoop() {
   }
 }
 
-int QtServer::StartMessageLoop() {
-  ReceiverLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
-  renderer_->SetReceiverLoopFunction(receiver_loop_func);
-  renderer_->StartRendererLoop(argc_, argv_);
-  return 0;
-}
-
-void QtServer::SetRenderer(QtWindowManager *renderer) {
-  renderer_ = renderer;
-}
-
-int QtServer::StartServer() {
+int QtServer::StartServer(int argc, char **argv) {
   if (!ipc_.Connected()) {
     LOG(ERROR) << "cannot start server";
     return -1;
   }
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif  // QT_VERSION
+
+  QApplication app(argc, argv);
 
   ipc_.LoopAndReturn();
 
@@ -155,20 +151,24 @@ int QtServer::StartServer() {
   NamedEventNotifier notifier(name.c_str());
   notifier.Notify();
 
-  // start main event loop
-  return StartMessageLoop();
+  QThread thread;
+  renderer_.Initialize(&thread);
+
+  // start IPC receiver loop
+  RunLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
+  QtReceiverLoop loop(receiver_loop_func);
+  loop.moveToThread(&thread);
+  emit loop.EmitRunLoop();
+
+  thread.start();
+  return app.exec();
 }
 
 bool QtServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  if (renderer_ == nullptr) {
-    LOG(ERROR) << "renderer is nullptr";
-    return false;
-  }
-
   VLOG(2) << command.DebugString();
 
-  return renderer_->ExecCommand(command);
+  return renderer_.ExecCommand(command);
 }
 
 uint32_t QtServer::timeout() const { return timeout_; }
