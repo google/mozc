@@ -535,6 +535,30 @@ bool QtWindowManager::IsAvailable() const {
   return true;
 }
 
+bool QtWindowManager::ExecCommand(const commands::RendererCommand &command) {
+  switch (command.type()) {
+    case commands::RendererCommand::NOOP:
+      break;
+    case commands::RendererCommand::SHUTDOWN:
+      // TODO(nona): Implement shutdown command.
+      DLOG(ERROR) << "Shutdown command is not implemented.";
+      return false;
+      break;
+    case commands::RendererCommand::UPDATE:
+      if (!command.visible()) {
+        HideAllWindows();
+      } else {
+        UpdateLayout(command);
+      }
+      return true;
+      break;
+    default:
+      LOG(WARNING) << "Unknown command: " << command.type();
+      break;
+  }
+  return true;
+}
+
 bool QtWindowManager::SetSendCommandInterface(
     client::SendCommandInterface *send_command_interface) {
   send_command_interface_ = send_command_interface;

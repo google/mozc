@@ -39,24 +39,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-cc_library_mozc(
-    name = "qt_renderer_lib",
-    srcs = [
-        "qt_renderer.cc",
-    ],
-    hdrs = [
-        "qt_renderer.h",
-    ],
-    deps = [
-        ":qt_window_manager_interface",
-        "//base:logging",
-        "//base:port",
-        "//client:client_interface",
-        "//protocol:renderer_cc_proto",
-        "//renderer:renderer_interface",
-    ],
-)
-
 qt_moc_mozc(
     name = "moc_qt_receiver_loop",
     srcs = ["qt_receiver_loop.h"],
@@ -81,24 +63,33 @@ cc_qt_library_mozc(
         "qt_server.h",
     ],
     deps = [
-        ":qt_window_manager_interface",
+        ":qt_ipc_server",
+        ":qt_window_manager",
         "//base:logging",
         "//base:port",
         "//base:system_util",
         "//client:client_interface",
         "//config:config_handler",
-        "//ipc",
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
-        "//renderer:renderer_interface",
         "@com_google_absl//absl/synchronization",
     ],
 )
 
 cc_library_mozc(
-    name = "qt_window_manager_interface",
+    name = "qt_ipc_server",
+    srcs = [
+        "qt_ipc_server.cc",
+    ],
     hdrs = [
-        "qt_window_manager_interface.h",
+        "qt_ipc_server.h",
+    ],
+    deps = [
+        "//base:logging",
+        "//base:port",
+        "//base:system_util",
+        "//config:config_handler",
+        "//ipc",
     ],
 )
 
@@ -112,7 +103,6 @@ cc_qt_library_mozc(
     ],
     deps = [
         ":qt_receiver_loop",
-        ":qt_window_manager_interface",
         "//base:coordinates",
         "//base:logging",
         "//base:port",

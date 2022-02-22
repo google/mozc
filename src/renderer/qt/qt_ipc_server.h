@@ -27,63 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "renderer/qt/qt_renderer.h"
+#ifndef MOZC_RENDERER_QT_QT_IPC_SERVER_H_
+#define MOZC_RENDERER_QT_QT_IPC_SERVER_H_
 
-#include "base/logging.h"
-#include "protocol/renderer_command.pb.h"
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "base/port.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {
 
-QtRenderer::QtRenderer(QtWindowManagerInterface *window_manager)
-    : window_manager_(window_manager) {}
+class QtIpcServer : public IPCServer {
+ public:
+  using Callback = std::function<void(std::string)>;
 
-int QtRenderer::StartRendererLoop(int argc, char **argv) {
-  return window_manager_->StartRendererLoop(argc, argv);
-}
+  QtIpcServer();
+  ~QtIpcServer() override;
 
-void QtRenderer::SetReceiverLoopFunction(ReceiverLoopFunc func) {
-  window_manager_->SetReceiverLoopFunction(func);
-}
+  bool Process(const char *request, size_t request_size, char *response,
+               size_t *response_size) override;
 
-bool QtRenderer::Activate() {
-  return window_manager_->Activate();
-}
+  void SetCallback(Callback callback) { callback_ = std::move(callback); }
 
-bool QtRenderer::IsAvailable() const {
-  return window_manager_->IsAvailable();
-}
-
-bool QtRenderer::ExecCommand(const commands::RendererCommand &command) {
-  switch (command.type()) {
-    case commands::RendererCommand::NOOP:
-      break;
-    case commands::RendererCommand::SHUTDOWN:
-      // TODO(nona): Implement shutdown command.
-      DLOG(ERROR) << "Shutdown command is not implemented.";
-      return false;
-      break;
-    case commands::RendererCommand::UPDATE:
-      if (!command.visible()) {
-        window_manager_->HideAllWindows();
-      } else {
-        window_manager_->UpdateLayout(command);
-      }
-      return true;
-      break;
-    default:
-      LOG(WARNING) << "Unknown command: " << command.type();
-      break;
-  }
-  return true;
-}
-
-void QtRenderer::Initialize() { window_manager_->Initialize(); }
-
-void QtRenderer::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
-  window_manager_->SetSendCommandInterface(send_command_interface);
-}
+ private:
+  Callback callback_;
+  DISALLOW_COPY_AND_ASSIGN(QtIpcServer);
+};
 
 }  // namespace renderer
 }  // namespace mozc
+#endif  // MOZC_RENDERER_QT_QT_IPC_SERVER_H_

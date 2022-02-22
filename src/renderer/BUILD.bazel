@@ -317,12 +317,10 @@ cc_binary_mozc(
         "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
         default = [
-            "//renderer/qt:qt_renderer_lib",
             "//renderer/qt:qt_server",
             "//renderer/qt:qt_window_manager",
         ],
         linux = [
-            "//renderer/qt:qt_renderer_lib",
             "//renderer/qt:qt_server",
             "//renderer/qt:qt_window_manager",
         ],
@@ -362,7 +360,6 @@ cc_binary_mozc(
         "//base:system_util",
         "//base:util",
         "//config:stats_config_util",
-        "//renderer/qt:qt_renderer_lib",
         "//renderer/qt:qt_server",
         "//renderer/qt:qt_window_manager",
         "@com_google_absl//absl/flags:flag",

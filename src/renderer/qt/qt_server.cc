@@ -32,12 +32,12 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "client/client_interface.h"
 #include "config/config_handler.h"
-#include "ipc/ipc.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
 #include "absl/synchronization/mutex.h"
@@ -52,8 +52,6 @@ namespace mozc {
 namespace renderer {
 
 namespace {
-constexpr int kNumConnections = 10;
-constexpr int kIPCServerTimeOut = 1000;
 constexpr char kServiceName[] = "renderer";
 
 std::string GetServiceName() {
@@ -68,8 +66,7 @@ std::string GetServiceName() {
 }  // namespace
 
 QtServer::QtServer(int argc, char **argv)
-    : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut),
-      renderer_interface_(nullptr),
+    : renderer_(nullptr),
       argc_(argc), argv_(argv), updated_(false),
       timeout_(0) {
   if (absl::GetFlag(FLAGS_restricted)) {
@@ -87,16 +84,17 @@ QtServer::QtServer(int argc, char **argv)
   config::ConfigHandler::GetConfig(&config);
   Logging::SetConfigVerboseLevel(config.verbose_level());
 #endif  // MOZC_NO_LOGGING
+
+  ipc_.SetCallback([&](std::string command){ AsyncExecCommand(command); });
 }
 
 QtServer::~QtServer() {}
 
-bool QtServer::AsyncExecCommand(std::string *proto_message) {
+bool QtServer::AsyncExecCommand(std::string proto_message) {
   // Take the ownership of |proto_message|.
-  std::unique_ptr<std::string> proto_message_owner(proto_message);
   {
     absl::MutexLock l(&mutex_);
-    if (message_ == *proto_message_owner) {
+    if (message_ == proto_message) {
       // This is exactly the same to the previous message. Theoretically it is
       // safe to do nothing here.
       return true;
@@ -104,7 +102,7 @@ bool QtServer::AsyncExecCommand(std::string *proto_message) {
 
     // Since mozc rendering protocol is state-less, we can always ignore the
     // previous content of |message_|.
-    message_.swap(*proto_message_owner);
+    message_ = std::move(proto_message);
     updated_ = true;
   }
 
@@ -135,23 +133,22 @@ void QtServer::StartReceiverLoop() {
 
 int QtServer::StartMessageLoop() {
   ReceiverLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
-  renderer_interface_->SetReceiverLoopFunction(receiver_loop_func);
-  renderer_interface_->StartRendererLoop(argc_, argv_);
+  renderer_->SetReceiverLoopFunction(receiver_loop_func);
+  renderer_->StartRendererLoop(argc_, argv_);
   return 0;
 }
 
-void QtServer::SetRendererInterface(
-    RendererInterface *renderer_interface) {
-  renderer_interface_ = renderer_interface;
+void QtServer::SetRenderer(QtWindowManager *renderer) {
+  renderer_ = renderer;
 }
 
 int QtServer::StartServer() {
-  if (!Connected()) {
+  if (!ipc_.Connected()) {
     LOG(ERROR) << "cannot start server";
     return -1;
   }
 
-  LoopAndReturn();
+  ipc_.LoopAndReturn();
 
   // send "ready" event to the client
   const std::string name = GetServiceName();
@@ -162,38 +159,16 @@ int QtServer::StartServer() {
   return StartMessageLoop();
 }
 
-bool QtServer::Process(const char *request, size_t request_size,
-                             char *response, size_t *response_size) {
-  // here we just copy the serialized message in order
-  // to reply to the client ui as soon as possible.
-  // ParseFromString is executed in the main(another) thread.
-  //
-  // Since Process() and ExecCommand() are executed in
-  // different threads, we have to use heap to share the serialized message.
-  // If we use stack, this program will be crashed.
-  //
-  // The receiver of command_str takes the ownership of this string.
-  std::string *command_str = new std::string(request, request_size);
-
-  // no need to set the result code.
-  *response_size = 1;
-  response[0] = '\0';
-
-  // Cannot call the method directly like renderer_interface_->ExecCommand()
-  // as it's not thread-safe.
-  return AsyncExecCommand(command_str);
-}
-
 bool QtServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
-  if (renderer_interface_ == nullptr) {
-    LOG(ERROR) << "renderer_interface is nullptr";
+  if (renderer_ == nullptr) {
+    LOG(ERROR) << "renderer is nullptr";
     return false;
   }
 
   VLOG(2) << command.DebugString();
 
-  return renderer_interface_->ExecCommand(command);
+  return renderer_->ExecCommand(command);
 }
 
 uint32_t QtServer::timeout() const { return timeout_; }
