@@ -40,31 +40,22 @@ load(
 package(default_visibility = ["//:__subpackages__"])
 
 qt_moc_mozc(
-    name = "moc_qt_receiver_loop",
-    srcs = ["qt_receiver_loop.h"],
-    outs = ["out_qt_receiver_loop.cc"],
-)
-
-cc_qt_library_mozc(
-    name = "qt_receiver_loop",
-    srcs = [
-        "qt_receiver_loop.cc",
-        ":moc_qt_receiver_loop",
-    ],
-    hdrs = ["qt_receiver_loop.h"],
+    name = "moc_qt_server",
+    srcs = ["qt_server.h"],
+    outs = ["out_qt_server.cc"],
 )
 
 cc_qt_library_mozc(
     name = "qt_server",
     srcs = [
         "qt_server.cc",
+        ":moc_qt_server",
     ],
     hdrs = [
         "qt_server.h",
     ],
     deps = [
         ":qt_ipc_server",
-        ":qt_receiver_loop",
         ":qt_window_manager",
         "//base:logging",
         "//base:port",
@@ -73,7 +64,6 @@ cc_qt_library_mozc(
         "//config:config_handler",
         "//ipc:named_event",
         "//protocol:renderer_cc_proto",
-        "@com_google_absl//absl/synchronization",
     ],
 )
 

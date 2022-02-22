@@ -30,6 +30,7 @@
 #include "renderer/qt/qt_server.h"
 
 #include <QApplication>
+#include <QMetaType>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -41,14 +42,14 @@
 #include "config/config_handler.h"
 #include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
-#include "renderer/qt/qt_receiver_loop.h"
-#include "absl/synchronization/mutex.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
 ABSL_FLAG(int32_t, timeout, 10 * 60, "timeout of candidate server (sec)");
 ABSL_FLAG(bool, restricted, false,
           "launch candidates server with restricted mode");
+
+Q_DECLARE_METATYPE(std::string);
 
 namespace mozc {
 namespace renderer {
@@ -68,8 +69,7 @@ std::string GetServiceName() {
 }  // namespace
 
 QtServer::QtServer()
-    : updated_(false),
-      timeout_(0) {
+    : timeout_(0) {
   if (absl::GetFlag(FLAGS_restricted)) {
     absl::SetFlag(&FLAGS_timeout,
                   // set 60sec with restricted mode
@@ -85,30 +85,9 @@ QtServer::QtServer()
   config::ConfigHandler::GetConfig(&config);
   Logging::SetConfigVerboseLevel(config.verbose_level());
 #endif  // MOZC_NO_LOGGING
-
-  ipc_.SetCallback([&](std::string command){ AsyncExecCommand(command); });
 }
 
 QtServer::~QtServer() {}
-
-bool QtServer::AsyncExecCommand(std::string proto_message) {
-  // Take the ownership of |proto_message|.
-  {
-    absl::MutexLock l(&mutex_);
-    if (message_ == proto_message) {
-      // This is exactly the same to the previous message. Theoretically it is
-      // safe to do nothing here.
-      return true;
-    }
-
-    // Since mozc rendering protocol is state-less, we can always ignore the
-    // previous content of |message_|.
-    message_ = std::move(proto_message);
-    updated_ = true;
-  }
-
-  return true;
-}
 
 namespace {
 bool cond_func(bool *cond_var) {
@@ -116,34 +95,31 @@ bool cond_func(bool *cond_var) {
 }
 }  // namespace
 
-void QtServer::StartReceiverLoop() {
-  while (true) {
-    mutex_.LockWhen(absl::Condition(cond_func, &updated_));
-    std::string message(message_);
-    updated_ = false;
-    mutex_.Unlock();
+void QtServer::AsyncExecCommand(const std::string &command) {
+  emit EmitUpdated(command);
+}
 
-    commands::RendererCommand command;
-    if (command.ParseFromString(message)) {
-      ExecCommandInternal(command);
-    } else {
-      LOG(WARNING) << "Parse From String Failed";
-    }
+void QtServer::Update(std::string command) {
+  commands::RendererCommand protocol;
+  if (!protocol.ParseFromString(command)) {
+    LOG(WARNING) << "Parse From String Failed";
+    return;
   }
+  ExecCommandInternal(protocol);
 }
 
 int QtServer::StartServer(int argc, char **argv) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif  // QT_VERSION
+  qRegisterMetaType<std::string>("std::string");
+  QApplication app(argc, argv);
+
+  ipc_.SetCallback([&](std::string command){ AsyncExecCommand(command); });
   if (!ipc_.Connected()) {
     LOG(ERROR) << "cannot start server";
     return -1;
   }
-
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif  // QT_VERSION
-
-  QApplication app(argc, argv);
-
   ipc_.LoopAndReturn();
 
   // send "ready" event to the client
@@ -154,11 +130,7 @@ int QtServer::StartServer(int argc, char **argv) {
   QThread thread;
   renderer_.Initialize(&thread);
 
-  // start IPC receiver loop
-  RunLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
-  QtReceiverLoop loop(receiver_loop_func);
-  loop.moveToThread(&thread);
-  emit loop.EmitRunLoop();
+  connect(this, &QtServer::EmitUpdated, this, &QtServer::Update);
 
   thread.start();
   return app.exec();

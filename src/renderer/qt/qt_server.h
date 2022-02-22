@@ -36,21 +36,26 @@
 #include "base/port.h"
 #include "renderer/qt/qt_ipc_server.h"
 #include "renderer/qt/qt_window_manager.h"
-#include "absl/synchronization/mutex.h"
 
 namespace mozc {
 namespace renderer {
 
-class QtServer {
+class QtServer : public QObject {
+  Q_OBJECT
+
  public:
   QtServer();
-  ~QtServer();
+  ~QtServer() override;
 
   int StartServer(int argc, char** argv);
 
-  bool AsyncExecCommand(std::string proto_message);
+  void AsyncExecCommand(const std::string &command);
 
-  void StartReceiverLoop();
+ public slots:
+  void Update(std::string command);
+
+ signals:
+  void EmitUpdated(std::string command);
 
  protected:
   // Call ExecCommandInternal() from the implementation
@@ -63,10 +68,6 @@ class QtServer {
   QtWindowManager renderer_;
 
  private:
-  absl::Mutex mutex_;
-  bool updated_;
-  std::string message_;
-
   QtIpcServer ipc_;
 
   // From RendererServer
