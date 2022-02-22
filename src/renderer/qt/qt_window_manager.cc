@@ -29,9 +29,10 @@
 
 #include "renderer/qt/qt_window_manager.h"
 
+#include <string>
+
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"
-#include "renderer/qt/qt_receiver_loop.h"
 #include "renderer/renderer_style_handler.h"
 #include "renderer/window_util.h"
 #include "absl/strings/str_cat.h"
@@ -83,13 +84,7 @@ void QtWindowManager::OnClicked(int row, int column) {
   send_command_interface_->SendCommand(command, &output);
 }
 
-int QtWindowManager::StartRendererLoop(int argc, char **argv) {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif  // QT_VERSION
-
-  QApplication app(argc, argv);
-
+void QtWindowManager::Initialize() {
   candidates_ = new QTableWidget();
   candidates_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
                               Qt::WindowStaysOnTopHint);
@@ -101,8 +96,6 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   candidates_->setShowGrid(false);
   candidates_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   candidates_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  candidates_->move(0, 0);
-  candidates_->show();
 
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
@@ -121,27 +114,7 @@ int QtWindowManager::StartRendererLoop(int argc, char **argv) {
   infolist_->setColumnCount(1);
   infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
-
-  QThread thread;
-  candidates_->moveToThread(&thread);
-  infolist_->moveToThread(&thread);
-
-  QtReceiverLoop *loop = nullptr;
-  if (receiver_loop_func_) {
-    loop = new QtReceiverLoop(receiver_loop_func_);
-    loop->moveToThread(&thread);
-    emit loop->EmitRunLoop();
-  }
-
-  thread.start();
-  return app.exec();
 }
-
-void QtWindowManager::SetReceiverLoopFunction(ReceiverLoopFunc func) {
-  receiver_loop_func_ = func;
-}
-
-void QtWindowManager::Initialize() { DLOG(INFO) << "Initialize"; }
 
 void QtWindowManager::HideAllWindows() {
   candidates_->hide();
@@ -389,8 +362,6 @@ Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
   const commands::Candidates &candidates = command.output().candidates();
 
-  candidates_->hide();
-
   if (IsUpdated(prev_command_, command)) {
     FillCandidates(candidates, candidates_);
     const Size win_size(candidates_->width(), candidates_->height());
@@ -459,7 +430,6 @@ void QtWindowManager::UpdateInfolistWindow(
     return;
   }
 
-  infolist_->hide();
   infolist_->clear();
 
   const commands::InformationList &info =
@@ -532,6 +502,30 @@ bool QtWindowManager::Activate() {
 
 bool QtWindowManager::IsAvailable() const {
   DLOG(INFO) << "IsAvailable";
+  return true;
+}
+
+bool QtWindowManager::ExecCommand(const commands::RendererCommand &command) {
+  switch (command.type()) {
+    case commands::RendererCommand::NOOP:
+      break;
+    case commands::RendererCommand::SHUTDOWN:
+      // TODO(nona): Implement shutdown command.
+      DLOG(ERROR) << "Shutdown command is not implemented.";
+      return false;
+      break;
+    case commands::RendererCommand::UPDATE:
+      if (!command.visible()) {
+        HideAllWindows();
+      } else {
+        UpdateLayout(command);
+      }
+      return true;
+      break;
+    default:
+      LOG(WARNING) << "Unknown command: " << command.type();
+      break;
+  }
   return true;
 }
 

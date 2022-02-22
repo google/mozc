@@ -27,39 +27,53 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_QT_QT_RENDERER_H_
-#define MOZC_RENDERER_QT_QT_RENDERER_H_
+#include "renderer/qt/qt_ipc_server.h"
 
-#include <functional>
+#include <algorithm>
 #include <memory>
+#include <string>
 
-#include "base/port.h"
-#include "client/client_interface.h"
-#include "renderer/qt/qt_window_manager_interface.h"
-#include "renderer/renderer_interface.h"
+#include "base/logging.h"
+#include "base/system_util.h"
+#include "config/config_handler.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {
 
-class QtRenderer : public RendererInterface {
- public:
-  explicit QtRenderer(QtWindowManagerInterface *window_manager);
-  ~QtRenderer() override = default;
-  int StartRendererLoop(int argc, char **argv) override;
-  void SetReceiverLoopFunction(ReceiverLoopFunc func) override;
-  bool Activate() override;
-  bool IsAvailable() const override;
-  bool ExecCommand(const commands::RendererCommand &command) override;
-  void SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) override;
-  void Initialize();
+namespace {
+constexpr int kNumConnections = 10;
+constexpr int kIPCServerTimeOut = 1000;
+constexpr char kServiceName[] = "renderer";
 
- private:
-  std::unique_ptr<QtWindowManagerInterface> window_manager_;
+std::string GetServiceName() {
+  std::string name = kServiceName;
+  const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
+  if (!desktop_name.empty()) {
+    name += ".";
+    name += desktop_name;
+  }
+  return name;
+}
+}  // namespace
 
-  DISALLOW_COPY_AND_ASSIGN(QtRenderer);
-};
+QtIpcServer::QtIpcServer()
+    : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut) {}
+QtIpcServer::~QtIpcServer() {}
+
+bool QtIpcServer::Process(const char *request, size_t request_size,
+                          char *response, size_t *response_size) {
+  std::string command_str = std::string(request, request_size);
+
+  // no need to set the result code.
+  *response_size = 1;
+  response[0] = '\0';
+
+  if (callback_) {
+    callback_(command_str);
+  }
+  return true;
+}
 
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_QT_QT_RENDERER_H_

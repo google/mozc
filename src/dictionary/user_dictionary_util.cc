@@ -36,6 +36,7 @@
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
 #include "base/util.h"
@@ -109,9 +110,9 @@ void UserDictionaryUtil::NormalizeReading(const std::string &input,
                                           std::string *output) {
   output->clear();
   std::string tmp1, tmp2;
-  Util::FullWidthAsciiToHalfWidthAscii(input, &tmp1);
-  Util::HalfWidthKatakanaToFullWidthKatakana(tmp1, &tmp2);
-  Util::KatakanaToHiragana(tmp2, output);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(input, &tmp1);
+  japanese_util::HalfWidthKatakanaToFullWidthKatakana(tmp1, &tmp2);
+  japanese_util::KatakanaToHiragana(tmp2, output);
 }
 
 UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(

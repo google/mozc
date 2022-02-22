@@ -27,32 +27,37 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
-#define MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
+#ifndef MOZC_RENDERER_QT_QT_IPC_SERVER_H_
+#define MOZC_RENDERER_QT_QT_IPC_SERVER_H_
 
-#include <QtWidgets>
 #include <functional>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "base/port.h"
+#include "ipc/ipc.h"
 
 namespace mozc {
 namespace renderer {
 
-typedef std::function<void(void)> RunLoopFunc;
-
-class QtReceiverLoop : public QObject {
-  Q_OBJECT
-
+class QtIpcServer : public IPCServer {
  public:
-  explicit QtReceiverLoop(RunLoopFunc run_loop_func);
-  void RunLoop();
+  using Callback = std::function<void(std::string)>;
 
- signals:
-  void EmitRunLoop();
+  QtIpcServer();
+  ~QtIpcServer() override;
+
+  bool Process(const char *request, size_t request_size, char *response,
+               size_t *response_size) override;
+
+  void SetCallback(Callback callback) { callback_ = std::move(callback); }
 
  private:
-  RunLoopFunc run_loop_func_;
+  Callback callback_;
+  DISALLOW_COPY_AND_ASSIGN(QtIpcServer);
 };
 
 }  // namespace renderer
 }  // namespace mozc
-
-#endif  // MOZC_RENDERER_QT_QT_RECEIVER_LOOP_H_
+#endif  // MOZC_RENDERER_QT_QT_IPC_SERVER_H_

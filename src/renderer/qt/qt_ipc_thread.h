@@ -27,19 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "renderer/qt/qt_receiver_loop.h"
+#ifndef MOZC_RENDERER_QT_QT_IPC_THREAD_H_
+#define MOZC_RENDERER_QT_QT_IPC_THREAD_H_
+
+#include <QtWidgets>
+#include <string>
 
 namespace mozc {
 namespace renderer {
 
-QtReceiverLoop::QtReceiverLoop(RunLoopFunc run_loop_func)
-    : run_loop_func_(run_loop_func) {
-  connect(this, &QtReceiverLoop::EmitRunLoop, this, &QtReceiverLoop::RunLoop);
-}
+class QtIpcThread : public QThread {
+  Q_OBJECT
 
-void QtReceiverLoop::RunLoop() {
-  run_loop_func_();
-}
+ public:
+  QtIpcThread() = default;
+  ~QtIpcThread() override = default;
+
+  void run() override;
+
+ signals:
+  void EmitUpdated(std::string command);
+};
 
 }  // namespace renderer
 }  // namespace mozc
+
+#endif  // MOZC_RENDERER_QT_QT_IPC_THREAD_H_

@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "base/file_stream.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/number_util.h"
@@ -314,11 +315,11 @@ std::unique_ptr<Token> TextDictionaryLoader::ParseTSV(
   auto token = std::make_unique<Token>();
 
   // Parse key, lid, rid, cost, value.
-  Util::NormalizeVoicedSoundMark(columns[0], &token->key);
+  japanese_util::NormalizeVoicedSoundMark(columns[0], &token->key);
   CHECK(SafeStrToInt(columns[1], &token->lid)) << "Wrong lid: " << columns[1];
   CHECK(SafeStrToInt(columns[2], &token->rid)) << "Wrong rid: " << columns[2];
   CHECK(SafeStrToInt(columns[3], &token->cost)) << "Wrong cost: " << columns[3];
-  Util::NormalizeVoicedSoundMark(columns[4], &token->value);
+  japanese_util::NormalizeVoicedSoundMark(columns[4], &token->value);
 
   // Optionally, label (SPELLING_CORRECTION, ZIP_CODE, etc.) may be provided in
   // column 6.

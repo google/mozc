@@ -40,29 +40,26 @@
 #include "client/client_interface.h"
 #include "protocol/renderer_command.pb.h"
 #include "protocol/renderer_style.pb.h"
-#include "renderer/qt/qt_window_manager_interface.h"
 
 namespace mozc {
 namespace renderer {
 
-class QtWindowManager : public QtWindowManagerInterface {
+class QtWindowManager {
  public:
-  // WindowManager takes arguments' ownership
   QtWindowManager();
-  ~QtWindowManager() override = default;
+  ~QtWindowManager() = default;
 
-  int StartRendererLoop(int argc, char **argv) override;
-  void SetReceiverLoopFunction(ReceiverLoopFunc func) override;
+  void Initialize();
 
-  void Initialize() override;
-  void HideAllWindows() override;
-  void ShowAllWindows() override;
-  void UpdateLayout(const commands::RendererCommand &command) override;
-  bool Activate() override;
-  bool IsAvailable() const override;
+  void HideAllWindows();
+  void ShowAllWindows();
+  void UpdateLayout(const commands::RendererCommand &command);
+  bool Activate();
+  bool IsAvailable() const;
+  bool ExecCommand(const commands::RendererCommand &command);
   bool SetSendCommandInterface(
-      client::SendCommandInterface *send_command_interface) override;
-  void SetWindowPos(int x, int y) override;
+      client::SendCommandInterface *send_command_interface);
+  void SetWindowPos(int x, int y);
 
  protected:
   // If this function returns true, we should show/reload candidate window.
@@ -95,8 +92,6 @@ class QtWindowManager : public QtWindowManagerInterface {
   RendererStyle style_;
   commands::RendererCommand prev_command_;
   client::SendCommandInterface *send_command_interface_ = nullptr;
-
-  ReceiverLoopFunc receiver_loop_func_;
 
   DISALLOW_COPY_AND_ASSIGN(QtWindowManager);
 };

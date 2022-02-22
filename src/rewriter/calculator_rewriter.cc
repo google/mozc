@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <string>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "config/config_handler.h"
@@ -133,7 +134,8 @@ bool CalculatorRewriter::InsertCandidate(const std::string &value,
 
   // Normalize the expression, used in description.
   std::string temp, temp2, expression;
-  Util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key, &temp);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(base_candidate.content_key,
+                                                &temp);
   Util::StringReplace(temp, "・", "/", true, &temp2);
   // "ー", onbiki
   Util::StringReplace(temp2, "ー", "-", true, &expression);

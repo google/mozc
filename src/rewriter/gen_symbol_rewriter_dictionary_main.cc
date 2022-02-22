@@ -47,6 +47,7 @@
 #include "base/file_stream.h"
 #include "base/file_util.h"
 #include "base/init_mozc.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/status.h"
 #include "base/util.h"
@@ -142,7 +143,7 @@ void AddSymbolToDictionary(
     dictionary->AddToken(token);
 
     std::string fw_key;
-    Util::HalfWidthAsciiToFullWidthAscii(key, &fw_key);
+    japanese_util::HalfWidthAsciiToFullWidthAscii(key, &fw_key);
     if (fw_key != key) {
       token.set_key(fw_key);
       dictionary->AddToken(token);

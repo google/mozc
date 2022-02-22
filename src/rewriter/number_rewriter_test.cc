@@ -152,6 +152,8 @@ TEST_F(NumberRewriterTest, BasicTest) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012";
   candidate->content_value = "012";
+  candidate->key = "012";
+  candidate->content_key = "012";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -226,6 +228,8 @@ TEST_F(NumberRewriterTest, BasicTestWithSuffix) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "012が";
   candidate->content_value = "012";
+  candidate->key = "012が";
+  candidate->content_key = "012";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -389,6 +393,8 @@ TEST_F(NumberRewriterTest, OneOfCandidatesIsEmpty) {
   second_candidate->lid = pos_matcher_.GetNumberId();
   second_candidate->rid = pos_matcher_.GetNumberId();
   second_candidate->content_value = second_candidate->value;
+  second_candidate->key = "0";
+  second_candidate->content_key = "0";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -446,6 +452,8 @@ TEST_F(NumberRewriterTest, NumberIsZero) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "0";
   candidate->content_value = "0";
+  candidate->key = "0";
+  candidate->content_key = "0";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -481,6 +489,8 @@ TEST_F(NumberRewriterTest, NumberIsZeroZero) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "00";
   candidate->content_value = "00";
+  candidate->key = "00";
+  candidate->content_key = "00";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -516,6 +526,8 @@ TEST_F(NumberRewriterTest, NumberIs19Digit) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "1000000000000000000";
   candidate->content_value = "1000000000000000000";
+  candidate->key = "1000000000000000000";
+  candidate->content_key = "1000000000000000000";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -565,6 +577,8 @@ TEST_F(NumberRewriterTest, NumberIsGreaterThanUInt64Max) {
   candidate->rid = pos_matcher_.GetNumberId();
   candidate->value = "18446744073709551616";  // 2^64
   candidate->content_value = "18446744073709551616";
+  candidate->key = "18446744073709551616";
+  candidate->content_key = "18446744073709551616";
 
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
 
@@ -939,7 +953,7 @@ TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
   }
   EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
   EXPECT_GT(segment->candidates_size(), 1);
-  EXPECT_EQ("1", segment->candidate(0).value);
+  EXPECT_EQ("一", segment->candidate(0).value);
   EXPECT_EQ("位置", segment->candidate(1).value);
 }
 

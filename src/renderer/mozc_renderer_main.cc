@@ -51,9 +51,7 @@
 #include "renderer/mac/mac_server.h"
 #include "renderer/mac/mac_server_send_command.h"
 #elif defined(ENABLE_QT_RENDERER)
-#include "renderer/qt/qt_renderer.h"
 #include "renderer/qt/qt_server.h"
-#include "renderer/qt/qt_window_manager.h"
 #elif defined(ENABLE_GTK_RENDERER)
 #include "renderer/renderer_client.h"
 #include "renderer/table_layout.h"
@@ -120,12 +118,8 @@ int main(int argc, char *argv[]) {
     renderer.SetSendCommandInterface(&send_command);
     result_code = server.StartServer();
 #elif defined(ENABLE_QT_RENDERER)
-    mozc::renderer::QtRenderer renderer(
-        new mozc::renderer::QtWindowManager());
-    renderer.Initialize();
-    mozc::renderer::QtServer server(argc, argv);
-    server.SetRendererInterface(&renderer);
-    result_code = server.StartServer();
+    mozc::renderer::QtServer server;
+    result_code = server.StartServer(argc, argv);
 #elif defined(ENABLE_GTK_RENDERER)
     mozc::renderer::gtk::UnixRenderer renderer(
         new mozc::renderer::gtk::WindowManager(

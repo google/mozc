@@ -27,62 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "renderer/qt/qt_renderer.h"
+#include "renderer/qt/qt_ipc_thread.h"
+
+#include <string>
 
 #include "base/logging.h"
-#include "protocol/renderer_command.pb.h"
+#include "renderer/qt/qt_ipc_server.h"
 
 namespace mozc {
 namespace renderer {
 
-QtRenderer::QtRenderer(QtWindowManagerInterface *window_manager)
-    : window_manager_(window_manager) {}
-
-int QtRenderer::StartRendererLoop(int argc, char **argv) {
-  return window_manager_->StartRendererLoop(argc, argv);
-}
-
-void QtRenderer::SetReceiverLoopFunction(ReceiverLoopFunc func) {
-  window_manager_->SetReceiverLoopFunction(func);
-}
-
-bool QtRenderer::Activate() {
-  return window_manager_->Activate();
-}
-
-bool QtRenderer::IsAvailable() const {
-  return window_manager_->IsAvailable();
-}
-
-bool QtRenderer::ExecCommand(const commands::RendererCommand &command) {
-  switch (command.type()) {
-    case commands::RendererCommand::NOOP:
-      break;
-    case commands::RendererCommand::SHUTDOWN:
-      // TODO(nona): Implement shutdown command.
-      DLOG(ERROR) << "Shutdown command is not implemented.";
-      return false;
-      break;
-    case commands::RendererCommand::UPDATE:
-      if (!command.visible()) {
-        window_manager_->HideAllWindows();
-      } else {
-        window_manager_->UpdateLayout(command);
-      }
-      return true;
-      break;
-    default:
-      LOG(WARNING) << "Unknown command: " << command.type();
-      break;
+void QtIpcThread::run() {
+  QtIpcServer ipc;
+  ipc.SetCallback([&](std::string command){ emit EmitUpdated(command); });
+  if (!ipc.Connected()) {
+    LOG(ERROR) << "cannot start server";
+    return;
   }
-  return true;
-}
-
-void QtRenderer::Initialize() { window_manager_->Initialize(); }
-
-void QtRenderer::SetSendCommandInterface(
-    client::SendCommandInterface *send_command_interface) {
-  window_manager_->SetSendCommandInterface(send_command_interface);
+  ipc.Loop();
 }
 
 }  // namespace renderer

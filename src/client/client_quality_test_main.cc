@@ -36,6 +36,7 @@
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/multifile.h"
 #include "base/port.h"
@@ -86,8 +87,8 @@ bool GenerateKeySequenceFrom(const std::string& hiragana_sentence,
   keys->clear();
 
   std::string tmp, input;
-  Util::HiraganaToRomanji(hiragana_sentence, &tmp);
-  Util::FullWidthToHalfWidth(tmp, &input);
+  japanese_util::HiraganaToRomanji(hiragana_sentence, &tmp);
+  japanese_util::FullWidthToHalfWidth(tmp, &input);
 
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
     const char32 ucs4 = iter.Get();

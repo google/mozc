@@ -39,6 +39,7 @@
 #include "base/compiler_specific.h"
 #include "base/file_util.h"
 #include "base/hash.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"
 #include "base/thread.h"
@@ -162,7 +163,7 @@ class UserDictionary::TokensIndex {
         // We cannot call NormalizeVoiceSoundMark inside NormalizeReading,
         // because the normalization is user-visible.
         // http://b/2480844
-        Util::NormalizeVoicedSoundMark(tmp, &reading);
+        japanese_util::NormalizeVoicedSoundMark(tmp, &reading);
 
         DCHECK_LE(0, entry.pos());
         MOZC_CLANG_PUSH_WARNING();

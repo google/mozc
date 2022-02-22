@@ -73,6 +73,7 @@ cc_library_mozc(
     deps = [
         ":transliterator_interface",
         "//base",
+        "//base:japanese_util",
         "//base:logging",
         "//base:singleton",
         "//base:util",

@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/japanese_util_rule.h"
 #include "base/logging.h"
 #include "base/port.h"
@@ -1112,7 +1113,7 @@ bool NumberUtil::NormalizeNumbersWithSuffix(absl::string_view input,
 
 void NumberUtil::KanjiNumberToArabicNumber(absl::string_view input,
                                            std::string *output) {
-  Util::ConvertUsingDoubleArray(
+  japanese_util::ConvertUsingDoubleArray(
       japanese_util_rule::kanjinumber_to_arabicnumber_da,
       japanese_util_rule::kanjinumber_to_arabicnumber_table, input, output);
 }

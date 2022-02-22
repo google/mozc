@@ -34,35 +34,44 @@
 #include <string>
 
 #include "base/port.h"
-#include "renderer/renderer_server.h"
-#include "absl/synchronization/mutex.h"
+#include "renderer/qt/qt_ipc_thread.h"
+#include "renderer/qt/qt_window_manager.h"
 
 namespace mozc {
 namespace renderer {
 
-class WindowManager;
+class QtServer : public QObject {
+  Q_OBJECT
 
-class QtServer : public RendererServer {
  public:
-  QtServer(int argc, char **argv);
-  ~QtServer() override {};
+  QtServer();
+  ~QtServer() override;
 
-  void AsyncHide() override {};
-  void AsyncQuit() override {};
-  bool AsyncExecCommand(std::string *proto_message) override;
+  int StartServer(int argc, char** argv);
 
-  void StartReceiverLoop();
+  void AsyncExecCommand(const std::string &command);
+
+ public slots:
+  void Update(std::string command);
+
+ signals:
+  void EmitUpdated(std::string command);
 
  protected:
-  int StartMessageLoop() override;
+  // Call ExecCommandInternal() from the implementation
+  // of AsyncExecCommand()
+  bool ExecCommandInternal(const commands::RendererCommand &command);
+
+  // return timeout (msec) passed by FLAGS_timeout
+  uint32_t timeout() const;
+
+  QtWindowManager renderer_;
 
  private:
-  int argc_;
-  char **argv_;
+  QtIpcThread ipc_thread_;
 
-  absl::Mutex mutex_;
-  bool updated_;
-  std::string message_;
+  // From RendererServer
+  uint32_t timeout_;
 
   DISALLOW_COPY_AND_ASSIGN(QtServer);
 };

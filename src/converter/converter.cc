@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
@@ -1002,13 +1003,13 @@ bool ConverterImpl::GetLastConnectivePart(const std::string &preceding_text,
   // Currently only NUMBER and ALPHABET are supported.
   switch (last_script_type) {
     case Util::NUMBER: {
-      Util::FullWidthAsciiToHalfWidthAscii(last_token, key);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
       swap(*value, last_token);
       *id = pos_matcher_->GetNumberId();
       return true;
     }
     case Util::ALPHABET: {
-      Util::FullWidthAsciiToHalfWidthAscii(last_token, key);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(last_token, key);
       swap(*value, last_token);
       *id = pos_matcher_->GetUniqueNounId();
       return true;

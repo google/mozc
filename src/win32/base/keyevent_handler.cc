@@ -35,6 +35,7 @@
 
 #include <set>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "client/client_interface.h"
@@ -507,9 +508,10 @@ bool ConvertToKeyEventMain(const VirtualKey &virtual_key, BYTE scan_code,
     const wchar_t whalf_katakana[] = {static_cast<wchar_t>(kana_code), L'\0'};
     std::string half_katakana, full_katakana, full_hiragana;
     mozc::Util::WideToUtf8(whalf_katakana, &half_katakana);
-    mozc::Util::HalfWidthKatakanaToFullWidthKatakana(half_katakana.c_str(),
-                                                     &full_katakana);
-    mozc::Util::KatakanaToHiragana(full_katakana.c_str(), &full_hiragana);
+    mozc::japanese_util::HalfWidthKatakanaToFullWidthKatakana(
+        half_katakana.c_str(), &full_katakana);
+    mozc::japanese_util::KatakanaToHiragana(full_katakana.c_str(),
+                                            &full_hiragana);
     key->set_key_string(full_hiragana);
     has_valid_key_string = true;
   }

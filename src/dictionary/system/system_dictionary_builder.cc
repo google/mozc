@@ -38,6 +38,7 @@
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"
@@ -193,7 +194,7 @@ TokenInfo::ValueType GetValueType(const Token *token) {
     return TokenInfo::AS_IS_HIRAGANA;
   }
   std::string katakana;
-  Util::HiraganaToKatakana(token->key, &katakana);
+  japanese_util::HiraganaToKatakana(token->key, &katakana);
   if (token->value == katakana) {
     return TokenInfo::AS_IS_KATAKANA;
   }

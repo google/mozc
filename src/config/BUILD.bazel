@@ -132,6 +132,7 @@ cc_library_mozc(
         ":config_handler",
         "//base",
         "//base:config_file_stream",
+        "//base:japanese_util",
         "//base:logging",
         "//base:port",
         "//base:singleton",

@@ -32,8 +32,8 @@
 #include <memory>
 #include <string>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
-#include "base/util.h"
 #include "config/character_form_manager.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -244,7 +244,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
       EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 1).value);
       EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 1).content_value);
       std::string full_width;
-      Util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value, &full_width);
+      japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 1).value,
+                                          &full_width);
       EXPECT_EQ(full_width, seg->candidate(3 * i).value);
       EXPECT_EQ(full_width, seg->candidate(3 * i).content_value);
       EXPECT_EQ("ぐーぐる", seg->candidate(3 * i + 2).value);
@@ -275,7 +276,8 @@ TEST_F(VariantsRewriterTest, RewriteTestManyCandidates) {
       EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 2).value);
       EXPECT_EQ(std::to_string(i), seg->candidate(3 * i + 2).content_value);
       std::string full_width;
-      Util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value, &full_width);
+      japanese_util::HalfWidthToFullWidth(seg->candidate(3 * i + 2).value,
+                                          &full_width);
       EXPECT_EQ(full_width, seg->candidate(3 * i + 1).value);
       EXPECT_EQ(full_width, seg->candidate(3 * i + 1).content_value);
       EXPECT_EQ("ぐーぐる", seg->candidate(3 * i).value);

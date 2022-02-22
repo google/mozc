@@ -48,6 +48,7 @@ cc_library_mozc(
         ":type_corrected_query",
         "//base",
         "//base:clock",
+        "//base:japanese_util",
         "//base:logging",
         "//base:port",
         "//base:util",

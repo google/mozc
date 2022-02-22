@@ -29,37 +29,65 @@
 
 #include "renderer/qt/qt_server.h"
 
+#include <QApplication>
+#include <QMetaType>
+#include <algorithm>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
+#include "base/system_util.h"
+#include "client/client_interface.h"
+#include "config/config_handler.h"
+#include "ipc/named_event.h"
 #include "protocol/renderer_command.pb.h"
-#include "absl/synchronization/mutex.h"
+
+// By default, mozc_renderer quits when user-input continues to be
+// idle for 10min.
+ABSL_FLAG(int32_t, timeout, 10 * 60, "timeout of candidate server (sec)");
+ABSL_FLAG(bool, restricted, false,
+          "launch candidates server with restricted mode");
+
+Q_DECLARE_METATYPE(std::string);
 
 namespace mozc {
 namespace renderer {
 
-QtServer::QtServer(int argc, char **argv)
-    : argc_(argc), argv_(argv), updated_(false) {}
+namespace {
+constexpr char kServiceName[] = "renderer";
 
-bool QtServer::AsyncExecCommand(std::string *proto_message) {
-  // Take the ownership of |proto_message|.
-  std::unique_ptr<std::string> proto_message_owner(proto_message);
-  {
-    absl::MutexLock l(&mutex_);
-    if (message_ == *proto_message_owner.get()) {
-      // This is exactly the same to the previous message. Theoretically it is
-      // safe to do nothing here.
-      return true;
-    }
+std::string GetServiceName() {
+  std::string name = kServiceName;
+  const std::string desktop_name = SystemUtil::GetDesktopNameAsString();
+  if (!desktop_name.empty()) {
+    name += ".";
+    name += desktop_name;
+  }
+  return name;
+}
+}  // namespace
 
-    // Since mozc rendering protocol is state-less, we can always ignore the
-    // previous content of |message_|.
-    message_.swap(*proto_message_owner.get());
-    updated_ = true;
+QtServer::QtServer()
+    : timeout_(0) {
+  if (absl::GetFlag(FLAGS_restricted)) {
+    absl::SetFlag(&FLAGS_timeout,
+                  // set 60sec with restricted mode
+                  std::min(absl::GetFlag(FLAGS_timeout), 60));
   }
 
-  return true;
+  timeout_ = 1000 * std::max(3, std::min(24 * 60 * 60,
+                                         absl::GetFlag(FLAGS_timeout)));
+  VLOG(2) << "timeout is set to be : " << timeout_;
+
+#ifndef MOZC_NO_LOGGING
+  config::Config config;
+  config::ConfigHandler::GetConfig(&config);
+  Logging::SetConfigVerboseLevel(config.verbose_level());
+#endif  // MOZC_NO_LOGGING
 }
+
+QtServer::~QtServer() {}
 
 namespace {
 bool cond_func(bool *cond_var) {
@@ -67,28 +95,45 @@ bool cond_func(bool *cond_var) {
 }
 }  // namespace
 
-void QtServer::StartReceiverLoop() {
-  while (true) {
-    mutex_.LockWhen(absl::Condition(cond_func, &updated_));
-    std::string message(message_);
-    updated_ = false;
-    mutex_.Unlock();
+void QtServer::AsyncExecCommand(const std::string &command) {
+  emit EmitUpdated(command);
+}
 
-    commands::RendererCommand command;
-    if (command.ParseFromString(message)) {
-      ExecCommandInternal(command);
-    } else {
-      LOG(WARNING) << "Parse From String Failed";
-    }
+void QtServer::Update(std::string command) {
+  commands::RendererCommand protocol;
+  if (!protocol.ParseFromString(command)) {
+    LOG(WARNING) << "Parse From String Failed";
+    return;
   }
+  ExecCommandInternal(protocol);
 }
 
-int QtServer::StartMessageLoop() {
-  ReceiverLoopFunc receiver_loop_func = [&](){ StartReceiverLoop(); };
-  renderer_interface_->SetReceiverLoopFunction(receiver_loop_func);
-  renderer_interface_->StartRendererLoop(argc_, argv_);
-  return 0;
+int QtServer::StartServer(int argc, char **argv) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif  // QT_VERSION
+  qRegisterMetaType<std::string>("std::string");
+  QApplication app(argc, argv);
+
+  // send "ready" event to the client
+  const std::string name = GetServiceName();
+  NamedEventNotifier notifier(name.c_str());
+  notifier.Notify();
+
+  renderer_.Initialize();
+  connect(&ipc_thread_, &QtIpcThread::EmitUpdated, this, &QtServer::Update);
+  ipc_thread_.start();
+  return app.exec();
 }
+
+bool QtServer::ExecCommandInternal(
+    const commands::RendererCommand &command) {
+  VLOG(2) << command.DebugString();
+
+  return renderer_.ExecCommand(command);
+}
+
+uint32_t QtServer::timeout() const { return timeout_; }
 
 }  // namespace renderer
 }  // namespace mozc

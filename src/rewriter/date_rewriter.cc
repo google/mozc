@@ -44,6 +44,7 @@
 #include <vector>
 
 #include "base/clock.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/util.h"
@@ -981,7 +982,7 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
   }
 
   std::string year_str;
-  Util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(current_key, &year_str);
 
   uint32_t year = 0;
   if (!NumberUtil::SafeStrToUInt32(year_str, &year)) {
@@ -1055,15 +1056,15 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
 
   // 1. Segment's key
   if (IsNDigits(segment.key(), n)) {
-    Util::FullWidthAsciiToHalfWidthAscii(segment.key(), output);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(segment.key(), output);
     return true;
   }
 
   // 2. Meta candidates
   for (size_t i = 0; i < segment.meta_candidates_size(); ++i) {
     if (IsNDigits(segment.meta_candidate(i).value, n)) {
-      Util::FullWidthAsciiToHalfWidthAscii(segment.meta_candidate(i).value,
-                                           output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(
+          segment.meta_candidate(i).value, output);
       return true;
     }
   }
@@ -1075,7 +1076,7 @@ bool GetNDigits(const composer::Composer &composer, const Segments &segments,
   // the whole composition.
   composer.GetRawSubString(0, Util::CharsLen(segment.key()), &raw);
   if (IsNDigits(raw, n)) {
-    Util::FullWidthAsciiToHalfWidthAscii(raw, output);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(raw, output);
     return true;
   }
 

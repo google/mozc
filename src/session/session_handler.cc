@@ -691,7 +691,11 @@ bool SessionHandler::SendEngineReloadRequest(commands::Command *command) {
 bool SessionHandler::NoOperation(commands::Command *command) { return true; }
 
 bool SessionHandler::CheckSpelling(commands::Command *command) {
-  // TODO(taku): Implement me.
+  if (!command->input().has_check_spelling_request() ||
+      command->input().check_spelling_request().text().empty()) {
+    return true;
+  }
+
   return true;
 }
 

@@ -765,6 +765,7 @@ cc_library_mozc(
     hdrs = ["random_keyevents_generator.h"],
     deps = [
         "//base",
+        "//base:japanese_util",
         "//base:logging",
         "//base:port",
         "//base:util",

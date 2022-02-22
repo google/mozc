@@ -35,6 +35,7 @@
 #include <unordered_map>
 
 #include "base/clock.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/util.h"
 #include "composer/internal/composition.h"
@@ -121,46 +122,46 @@ void Transliterate(const transliteration::TransliterationType mode,
   // transformed.
   if (mode == transliteration::HALF_KATAKANA) {
     std::string tmp_input;
-    Util::HiraganaToKatakana(input, &tmp_input);
-    Util::FullWidthToHalfWidth(tmp_input, output);
+    japanese_util::HiraganaToKatakana(input, &tmp_input);
+    japanese_util::FullWidthToHalfWidth(tmp_input, output);
     return;
   }
 
   switch (mode) {
     case transliteration::HALF_ASCII:
-      Util::FullWidthAsciiToHalfWidthAscii(input, output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
       break;
     case transliteration::HALF_ASCII_UPPER:
-      Util::FullWidthAsciiToHalfWidthAscii(input, output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
       Util::UpperString(output);
       break;
     case transliteration::HALF_ASCII_LOWER:
-      Util::FullWidthAsciiToHalfWidthAscii(input, output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
       Util::LowerString(output);
       break;
     case transliteration::HALF_ASCII_CAPITALIZED:
-      Util::FullWidthAsciiToHalfWidthAscii(input, output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
       Util::CapitalizeString(output);
       break;
 
     case transliteration::FULL_ASCII:
-      Util::HalfWidthAsciiToFullWidthAscii(input, output);
+      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
       break;
     case transliteration::FULL_ASCII_UPPER:
-      Util::HalfWidthAsciiToFullWidthAscii(input, output);
+      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
       Util::UpperString(output);
       break;
     case transliteration::FULL_ASCII_LOWER:
-      Util::HalfWidthAsciiToFullWidthAscii(input, output);
+      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
       Util::LowerString(output);
       break;
     case transliteration::FULL_ASCII_CAPITALIZED:
-      Util::HalfWidthAsciiToFullWidthAscii(input, output);
+      japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
       Util::CapitalizeString(output);
       break;
 
     case transliteration::FULL_KATAKANA:
-      Util::HiraganaToKatakana(input, output);
+      japanese_util::HiraganaToKatakana(input, output);
       break;
     case transliteration::HIRAGANA:
       *output = input;
@@ -715,7 +716,7 @@ void Composer::GetStringForPreedit(std::string *output) const {
       field_type == commands::Context::PASSWORD ||
       field_type == commands::Context::TEL) {
     const std::string tmp = *output;
-    Util::FullWidthAsciiToHalfWidthAscii(tmp, output);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(tmp, output);
   }
 }
 
@@ -729,7 +730,7 @@ void Composer::GetQueryForConversion(std::string *output) const {
   std::string base_output;
   composition_.GetStringWithTrimMode(FIX, &base_output);
   TransformCharactersForNumbers(&base_output);
-  Util::FullWidthAsciiToHalfWidthAscii(base_output, output);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(base_output, output);
 }
 
 namespace {
@@ -800,7 +801,7 @@ void Composer::GetQueryForPrediction(std::string *output) const {
       return;
     }
     case transliteration::FULL_ASCII: {
-      Util::FullWidthAsciiToHalfWidthAscii(asis_query, output);
+      japanese_util::FullWidthAsciiToHalfWidthAscii(asis_query, output);
       return;
     }
     default: {
@@ -820,7 +821,7 @@ void Composer::GetQueryForPrediction(std::string *output) const {
   std::string *base_query =
       GetBaseQueryForPrediction(&asis_query, &trimed_query);
   TransformCharactersForNumbers(base_query);
-  Util::FullWidthAsciiToHalfWidthAscii(*base_query, output);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(*base_query, output);
 }
 
 void Composer::GetQueriesForPrediction(std::string *base,
@@ -853,7 +854,7 @@ void Composer::GetQueriesForPrediction(std::string *base,
     expanded->erase(iter->second);
   }
 
-  Util::FullWidthAsciiToHalfWidthAscii(base_query, base);
+  japanese_util::FullWidthAsciiToHalfWidthAscii(base_query, base);
 }
 
 void Composer::GetTypeCorrectedQueriesForPrediction(

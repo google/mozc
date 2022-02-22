@@ -33,9 +33,9 @@
 #include <cstdint>
 #include <string>
 
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
-#include "base/util.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/system/codec_interface.h"
 #include "dictionary/system/words_info.h"
@@ -166,7 +166,7 @@ inline void TokenDecodeIterator::NextInternal() {
     }
     case TokenInfo::AS_IS_KATAKANA: {
       if (!key_.empty() && key_katakana_.empty()) {
-        Util::HiraganaToKatakana(key_, &key_katakana_);
+        japanese_util::HiraganaToKatakana(key_, &key_katakana_);
       }
       token_.value = key_katakana_;
       break;

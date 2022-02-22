@@ -37,6 +37,7 @@
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"
+#include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/singleton.h"
@@ -75,7 +76,7 @@ class TestSentenceGenerator {
 
     for (size_t i = 0; i < size; ++i) {
       std::string output;
-      Util::HiraganaToRomanji(sentences[i], &output);
+      japanese_util::HiraganaToRomanji(sentences[i], &output);
       std::vector<commands::KeyEvent> tmp;
       for (ConstChar32Iterator iter(output); !iter.Done(); iter.Next()) {
         const char32 ucs4 = iter.Get();
