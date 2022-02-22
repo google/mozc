@@ -96,8 +96,6 @@ void QtWindowManager::Initialize() {
   candidates_->setShowGrid(false);
   candidates_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   candidates_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  candidates_->move(0, 0);
-  candidates_->show();
 
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
@@ -364,8 +362,6 @@ Rect QtWindowManager::UpdateCandidateWindow(
     const commands::RendererCommand &command) {
   const commands::Candidates &candidates = command.output().candidates();
 
-  candidates_->hide();
-
   if (IsUpdated(prev_command_, command)) {
     FillCandidates(candidates, candidates_);
     const Size win_size(candidates_->width(), candidates_->height());
@@ -434,7 +430,6 @@ void QtWindowManager::UpdateInfolistWindow(
     return;
   }
 
-  infolist_->hide();
   infolist_->clear();
 
   const commands::InformationList &info =
