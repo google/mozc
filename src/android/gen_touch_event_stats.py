@@ -45,7 +45,7 @@ import csv
 import optparse
 import os
 import struct
-import urllib
+import urllib.parse
 
 __author__ = "matsuzakit"
 
