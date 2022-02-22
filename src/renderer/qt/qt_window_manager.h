@@ -49,7 +49,7 @@ class QtWindowManager {
   QtWindowManager();
   ~QtWindowManager() = default;
 
-  void Initialize(QThread *thread);
+  void Initialize();
 
   void HideAllWindows();
   void ShowAllWindows();

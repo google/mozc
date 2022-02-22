@@ -27,55 +27,29 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_QT_QT_SERVER_H_
-#define MOZC_RENDERER_QT_QT_SERVER_H_
+#ifndef MOZC_RENDERER_QT_QT_IPC_THREAD_H_
+#define MOZC_RENDERER_QT_QT_IPC_THREAD_H_
 
-#include <memory>
+#include <QtWidgets>
 #include <string>
-
-#include "base/port.h"
-#include "renderer/qt/qt_ipc_thread.h"
-#include "renderer/qt/qt_window_manager.h"
 
 namespace mozc {
 namespace renderer {
 
-class QtServer : public QObject {
+class QtIpcThread : public QThread {
   Q_OBJECT
 
  public:
-  QtServer();
-  ~QtServer() override;
+  QtIpcThread() = default;
+  ~QtIpcThread() override = default;
 
-  int StartServer(int argc, char** argv);
-
-  void AsyncExecCommand(const std::string &command);
-
- public slots:
-  void Update(std::string command);
+  void run() override;
 
  signals:
   void EmitUpdated(std::string command);
-
- protected:
-  // Call ExecCommandInternal() from the implementation
-  // of AsyncExecCommand()
-  bool ExecCommandInternal(const commands::RendererCommand &command);
-
-  // return timeout (msec) passed by FLAGS_timeout
-  uint32_t timeout() const;
-
-  QtWindowManager renderer_;
-
- private:
-  QtIpcThread ipc_thread_;
-
-  // From RendererServer
-  uint32_t timeout_;
-
-  DISALLOW_COPY_AND_ASSIGN(QtServer);
 };
 
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_QT_QT_SERVER_H_
+
+#endif  // MOZC_RENDERER_QT_QT_IPC_THREAD_H_

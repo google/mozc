@@ -84,7 +84,7 @@ void QtWindowManager::OnClicked(int row, int column) {
   send_command_interface_->SendCommand(command, &output);
 }
 
-void QtWindowManager::Initialize(QThread *thread) {
+void QtWindowManager::Initialize() {
   candidates_ = new QTableWidget();
   candidates_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
                               Qt::WindowStaysOnTopHint);
@@ -116,9 +116,6 @@ void QtWindowManager::Initialize(QThread *thread) {
   infolist_->setColumnCount(1);
   infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
-
-  candidates_->moveToThread(thread);
-  infolist_->moveToThread(thread);
 }
 
 void QtWindowManager::HideAllWindows() {

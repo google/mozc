@@ -115,24 +115,14 @@ int QtServer::StartServer(int argc, char **argv) {
   qRegisterMetaType<std::string>("std::string");
   QApplication app(argc, argv);
 
-  ipc_.SetCallback([&](std::string command){ AsyncExecCommand(command); });
-  if (!ipc_.Connected()) {
-    LOG(ERROR) << "cannot start server";
-    return -1;
-  }
-  ipc_.LoopAndReturn();
-
   // send "ready" event to the client
   const std::string name = GetServiceName();
   NamedEventNotifier notifier(name.c_str());
   notifier.Notify();
 
-  QThread thread;
-  renderer_.Initialize(&thread);
-
-  connect(this, &QtServer::EmitUpdated, this, &QtServer::Update);
-
-  thread.start();
+  renderer_.Initialize();
+  connect(&ipc_thread_, &QtIpcThread::EmitUpdated, this, &QtServer::Update);
+  ipc_thread_.start();
   return app.exec();
 }
 

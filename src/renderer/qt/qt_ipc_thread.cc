@@ -27,55 +27,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_RENDERER_QT_QT_SERVER_H_
-#define MOZC_RENDERER_QT_QT_SERVER_H_
+#include "renderer/qt/qt_ipc_thread.h"
 
-#include <memory>
 #include <string>
 
-#include "base/port.h"
-#include "renderer/qt/qt_ipc_thread.h"
-#include "renderer/qt/qt_window_manager.h"
+#include "base/logging.h"
+#include "renderer/qt/qt_ipc_server.h"
 
 namespace mozc {
 namespace renderer {
 
-class QtServer : public QObject {
-  Q_OBJECT
-
- public:
-  QtServer();
-  ~QtServer() override;
-
-  int StartServer(int argc, char** argv);
-
-  void AsyncExecCommand(const std::string &command);
-
- public slots:
-  void Update(std::string command);
-
- signals:
-  void EmitUpdated(std::string command);
-
- protected:
-  // Call ExecCommandInternal() from the implementation
-  // of AsyncExecCommand()
-  bool ExecCommandInternal(const commands::RendererCommand &command);
-
-  // return timeout (msec) passed by FLAGS_timeout
-  uint32_t timeout() const;
-
-  QtWindowManager renderer_;
-
- private:
-  QtIpcThread ipc_thread_;
-
-  // From RendererServer
-  uint32_t timeout_;
-
-  DISALLOW_COPY_AND_ASSIGN(QtServer);
-};
+void QtIpcThread::run() {
+  QtIpcServer ipc;
+  ipc.SetCallback([&](std::string command){ emit EmitUpdated(command); });
+  if (!ipc.Connected()) {
+    LOG(ERROR) << "cannot start server";
+    return;
+  }
+  ipc.Loop();
+}
 
 }  // namespace renderer
 }  // namespace mozc
-#endif  // MOZC_RENDERER_QT_QT_SERVER_H_
