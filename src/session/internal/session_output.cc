@@ -78,7 +78,7 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
 
 void FillCandidateWord(const Segment::Candidate &segment_candidate,
                        const int id, const int index,
-                       const std::string base_key,
+                       const std::string &base_key,
                        commands::CandidateWord *candidate_word_proto) {
   // id
   candidate_word_proto->set_id(id);

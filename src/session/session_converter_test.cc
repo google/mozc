@@ -264,7 +264,7 @@ class SessionConverterTest : public ::testing::Test {
     convertermock_->SetStartConversionForRequest(segments, true);
   }
 
-  static void InsertASCIISequence(const std::string text,
+  static void InsertASCIISequence(const std::string &text,
                                   composer::Composer *composer) {
     for (size_t i = 0; i < text.size(); ++i) {
       commands::KeyEvent key;
