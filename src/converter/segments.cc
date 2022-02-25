@@ -271,26 +271,6 @@ Segment::Candidate *Segment::mutable_candidate(int i) {
   return candidates_[i];
 }
 
-int Segment::indexOf(const Segment::Candidate *candidate) {
-  if (candidate == nullptr) {
-    return static_cast<int>(candidates_size());
-  }
-
-  for (int i = 0; i < static_cast<int>(candidates_.size()); ++i) {
-    if (candidates_[i] == candidate) {
-      return i;
-    }
-  }
-
-  for (int i = 0; i < static_cast<int>(meta_candidates_.size()); ++i) {
-    if (&(meta_candidates_[i]) == candidate) {
-      return -i - 1;
-    }
-  }
-
-  return static_cast<int>(candidates_size());
-}
-
 size_t Segment::candidates_size() const { return candidates_.size(); }
 
 void Segment::clear_candidates() {

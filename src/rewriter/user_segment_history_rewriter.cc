@@ -465,16 +465,17 @@ bool UserSegmentHistoryRewriter::SortCandidates(
 
     if (normalized_value != candidate->value) {
       const Segment::Candidate *normalized_cand = nullptr;
+      int pos = segment->candidates_size();
       for (size_t l = 0; l < segment->candidates_size(); ++l) {
         if (segment->candidate(l).value == normalized_value) {
           normalized_cand = &segment->candidate(l);
+          pos = l;
           break;
         }
       }
 
       if (normalized_cand != nullptr) {
         if (seen.find(normalized_value) == seen.end()) {
-          const int pos = segment->indexOf(normalized_cand);
           DCHECK(pos != segment->candidates_size());
           segment->move_candidate(pos, next_pos);
           ++next_pos;
