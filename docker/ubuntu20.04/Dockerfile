@@ -34,20 +34,20 @@ ENV DEBIAN_FRONTEND noninteractive
 # Package installation
 RUN apt-get update
 ## Common packages for linux build environment
-RUN apt install -y clang libc++-dev libc++abi-dev python python-six python3-six pkg-config git curl bzip2 unzip make ninja-build
+RUN apt-get install -y clang libc++-dev libc++abi-dev python python-six python3-six pkg-config git curl bzip2 unzip make ninja-build
 ## Packages for linux desktop version
-RUN apt install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
+RUN apt-get install -y libibus-1.0-dev libglib2.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
 ## Packages for misc tools
-RUN apt install -y nano
+RUN apt-get install -y nano
 
 ## For Bazel
 ## https://docs.bazel.build/versions/master/install-ubuntu.html
-RUN apt install -y curl gnupg libncurses5
+RUN apt-get install -y curl gnupg libncurses5
 RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel.gpg
 RUN mv bazel.gpg /etc/apt/trusted.gpg.d/
 RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-RUN apt update
-RUN apt install -y bazel
+RUN apt-get update
+RUN apt-get install -y bazel
 
 # Working environemnt
 ENV HOME /home/mozc_builder
