@@ -4,11 +4,11 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl",
      "http_archive", "http_file")
 load("//:config.bzl", "QT_BASE_PATH")
 
-# This rule reffers $ANDROID_SDK_HOME
+# This rule refers to $ANDROID_SDK_HOME.
 android_sdk_repository(name = "androidsdk")
 
 # Android NDK version should be r11c+ for Abseil.
-# This rule reffers $ANDROID_NDK_HOME
+# This rule refers to $ANDROID_NDK_HOME.
 android_ndk_repository(name = "androidndk")
 
 local_repository(
