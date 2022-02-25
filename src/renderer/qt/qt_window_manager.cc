@@ -44,7 +44,7 @@ namespace {
 constexpr int kMarginHeight = 5;
 constexpr int kMarginWidth = 20;
 constexpr int kColumn0Width = 20;
-constexpr int kColumn3Width = 4;
+constexpr int kColumn3Width = 6;
 constexpr int kInfolistWidth = 520;
 
 // #RRGGBB or #AARRGGBB
@@ -85,32 +85,30 @@ void QtWindowManager::OnClicked(int row, int column) {
 }
 
 void QtWindowManager::Initialize() {
-  candidates_ = new QTableWidget();
-  candidates_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
-                              Qt::WindowStaysOnTopHint);
-  candidates_->horizontalHeader()->hide();
-  candidates_->setSelectionMode(QTableWidget::NoSelection);
-  candidates_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  candidates_->verticalHeader()->hide();
-  candidates_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  candidates_->setShowGrid(false);
-  candidates_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  candidates_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  const auto initialize_table = [](QTableWidget *table) {
+    table->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
+                          Qt::WindowStaysOnTopHint);
+    table->setSelectionMode(QTableWidget::NoSelection);
+    table->setShowGrid(false);
 
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->horizontalHeader()->hide();
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->horizontalHeader()->setMinimumSectionSize(1);
+
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->verticalHeader()->hide();
+    table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->verticalHeader()->setMinimumSectionSize(1);
+  };
+
+  candidates_ = new QTableWidget();
+  initialize_table(candidates_);
   QObject::connect(candidates_, &QTableWidget::cellClicked,
                    [&](int row, int col) { OnClicked(row, col); });
 
   infolist_ = new QTableWidget();
-  infolist_->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint |
-                            Qt::WindowStaysOnTopHint);
-  infolist_->horizontalHeader()->hide();
-  infolist_->setSelectionMode(QTableWidget::NoSelection);
-  infolist_->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  infolist_->verticalHeader()->hide();
-  infolist_->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-  infolist_->setShowGrid(false);
-  infolist_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  infolist_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  initialize_table(infolist_);
   infolist_->setColumnCount(1);
   infolist_->setRowCount(3);
   infolist_->setColumnWidth(0, kInfolistWidth);
@@ -337,9 +335,7 @@ void FillCandidates(const commands::Candidates &candidates,
   // Resize
   table->setColumnWidth(1, max_width1);
   table->setColumnWidth(2, max_width2);
-  const int magic_number_for_margin = 8;  // Heuristic number for margin
-  const int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width +
-                    magic_number_for_margin;
+  const int width = kColumn0Width + max_width1 + max_width2 + kColumn3Width;
   table->resize(width, total_height);
 }
 }  // namespace
