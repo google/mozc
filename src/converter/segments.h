@@ -287,10 +287,6 @@ class Segment final {
   // setter
   Candidate *mutable_candidate(int i);
 
-  // return the index of candidate
-  // if candidate is not found, return candidates_size()
-  int indexOf(const Candidate *candidate);
-
   // push and insert candidates
   Candidate *push_front_candidate();
   Candidate *push_back_candidate();

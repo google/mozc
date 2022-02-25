@@ -210,7 +210,7 @@ class SelectionMonitorServer {
     }
   }
 
-  bool CreateAtom(const std::string name, xcb_atom_t *atom) const {
+  bool CreateAtom(const std::string &name, xcb_atom_t *atom) const {
     DCHECK(atom);
     *atom = XCB_NONE;
     xcb_intern_atom_cookie_t cookie =

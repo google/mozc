@@ -305,7 +305,7 @@ ACTION_P4(LookupPrefixOneToken, key, value, lid, rid) {
   arg2->OnToken(key, key, token);
 }
 
-void MakeSegmentsForSuggestion(const std::string key, Segments *segments) {
+void MakeSegmentsForSuggestion(const std::string &key, Segments *segments) {
   segments->Clear();
   segments->set_request_type(Segments::SUGGESTION);
   Segment *seg = segments->add_segment();
@@ -313,7 +313,7 @@ void MakeSegmentsForSuggestion(const std::string key, Segments *segments) {
   seg->set_segment_type(Segment::FREE);
 }
 
-void MakeSegmentsForPrediction(const std::string key, Segments *segments) {
+void MakeSegmentsForPrediction(const std::string &key, Segments *segments) {
   segments->Clear();
   segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
