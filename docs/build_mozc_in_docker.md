@@ -49,7 +49,7 @@ Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 ### Unittests
 
 ```
-bazel test ... --config oss_linux -c dbg -- -net/... -/third_party/...
+bazel test ... --config oss_linux -c dbg -- -net/... -third_party/...
 ```
 
 * `...` means all targets under the current and sub directories.
@@ -57,7 +57,7 @@ bazel test ... --config oss_linux -c dbg -- -net/... -/third_party/...
 * `-<dir>/...` means exclusion of all targets under the `dir`.
   + `net` and `third_party` are not supported yet.
 
-Here is a sampe command to run a specific test.
+Here is a sample command to run a specific test.
 
 ```
 bazel test base:util_test --config oss_linux -c dbg
