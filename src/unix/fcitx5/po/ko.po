@@ -4,16 +4,16 @@
 #
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
-# Jung Hee Lee <daemul72@gmail.com>, 2021
 # Bon Keun Seo <scobyseo@gmail.com>, 2021
+# JungHee Lee <daemul72@gmail.com>, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-12-30 02:39+0000\n"
+"POT-Creation-Date: 2022-03-01 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: Bon Keun Seo <scobyseo@gmail.com>, 2021\n"
+"Last-Translator: JungHee Lee <daemul72@gmail.com>, 2022\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -39,7 +39,7 @@ msgstr "조합 모드"
 
 #: mozc_engine.h:78 mozc_engine.cc:173
 msgid "Configuration Tool"
-msgstr "환경설정 도구"
+msgstr "구성 도구"
 
 #: mozc_engine.h:80 mozc_engine.cc:181
 msgid "Dictionary Tool"
