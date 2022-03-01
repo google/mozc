@@ -341,7 +341,7 @@ class Segment final {
   std::string key_;
   std::deque<Candidate *> candidates_;
   std::vector<Candidate> meta_candidates_;
-  ObjectPool<Candidate> pool_;
+  std::vector<std::unique_ptr<Candidate>> pool_;
 };
 
 // Segments is basically an array of Segment.

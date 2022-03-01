@@ -187,7 +187,10 @@ TEST(CandidateTest, BasicTest) {
   segment.pop_front_candidate();
   EXPECT_EQ(cand[1], segment.mutable_candidate(0));
 
+  // Pop functions against empty candidates should not raise a runtime error.
   segment.Clear();
+  segment.pop_back_candidate();
+  segment.pop_front_candidate();
   EXPECT_EQ(0, segment.candidates_size());
 
   for (int i = 0; i < kCandidatesSize; ++i) {
