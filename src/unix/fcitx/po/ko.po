@@ -5,13 +5,14 @@
 # Translators:
 # Bon Keun Seo <scobyseo@gmail.com>, 2017
 # JungHee Lee <daemul72@gmail.com>, 2020
+# JungHee Lee <daemul72@gmail.com>, 2020,2022
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2020-11-11 00:03-0800\n"
-"PO-Revision-Date: 2020-11-10 08:03+0000\n"
-"Last-Translator: csslayer <wengxt@gmail.com>\n"
+"POT-Creation-Date: 2022-03-01 20:27+0000\n"
+"PO-Revision-Date: 2022-03-01 14:57+0000\n"
+"Last-Translator: JungHee Lee <daemul72@gmail.com>\n"
 "Language-Team: Korean (http://www.transifex.com/fcitx/fcitx/language/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -23,55 +24,55 @@ msgstr ""
 msgid "Press Escape to go back"
 msgstr "돌아가려면 ESC를 누르세요"
 
-#: ../fcitx_mozc.cc:65
+#: ../fcitx_mozc.cc:68
 msgid "Direct"
 msgstr "직접입력"
 
-#: ../fcitx_mozc.cc:70
+#: ../fcitx_mozc.cc:73
 msgid "Hiragana"
 msgstr "히라가나"
 
-#: ../fcitx_mozc.cc:75
+#: ../fcitx_mozc.cc:78
 msgid "Full Katakana"
 msgstr "전각 가타가나"
 
-#: ../fcitx_mozc.cc:80
+#: ../fcitx_mozc.cc:83
 msgid "Half ASCII"
 msgstr "반각 아스키"
 
-#: ../fcitx_mozc.cc:85
+#: ../fcitx_mozc.cc:88
 msgid "Full ASCII"
 msgstr "전각 아스키"
 
-#: ../fcitx_mozc.cc:90
+#: ../fcitx_mozc.cc:93
 msgid "Half Katakana"
 msgstr "반각 가타가나"
 
-#: ../fcitx_mozc.cc:406 ../fcitx_mozc.cc:407 ../fcitx_mozc.cc:469
+#: ../fcitx_mozc.cc:409 ../fcitx_mozc.cc:410 ../fcitx_mozc.cc:472
 msgid "Composition Mode"
 msgstr "조합 모드"
 
-#: ../fcitx_mozc.cc:417 ../fcitx_mozc.cc:418
+#: ../fcitx_mozc.cc:420 ../fcitx_mozc.cc:421
 msgid "Tool"
 msgstr "도구"
 
-#: ../fcitx_mozc.cc:482
+#: ../fcitx_mozc.cc:485
 msgid "Mozc Tool"
 msgstr "Mozc 도구"
 
-#: ../fcitx_mozc.cc:488
+#: ../fcitx_mozc.cc:491
 msgid "Configuration Tool"
-msgstr "환경설정 도구"
+msgstr "구성 도구"
 
-#: ../fcitx_mozc.cc:489
+#: ../fcitx_mozc.cc:492
 msgid "Dictionary Tool"
 msgstr "사전 도구"
 
-#: ../fcitx_mozc.cc:490
+#: ../fcitx_mozc.cc:493
 msgid "Add Word"
 msgstr "단어 추가"
 
-#: ../fcitx_mozc.cc:491
+#: ../fcitx_mozc.cc:494
 msgid "About Mozc"
 msgstr "Mozc에 대해"
 
