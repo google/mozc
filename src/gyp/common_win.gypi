@@ -331,6 +331,9 @@
           '/Zc:strictStrings',
           '/utf-8',
           '/std:c++17',
+          # MSVC 2017 apparently fails to build abseil-cpp/absl/types/compare.h
+          # if __cpp_inline_variables is defined.
+          '/U __cpp_inline_variables',  # Undefine the variable
         ],
       },
       'VCLinkerTool': {
