@@ -314,6 +314,27 @@ Segment::Candidate *Segment::insert_candidate(int i) {
   return candidate;
 }
 
+void Segment::insert_candidates(
+    int i, std::vector<std::unique_ptr<Candidate>> &&candidates) {
+  if (i < 0) {
+    i = 0;
+  } else if (i > static_cast<int>(candidates_.size())) {
+    i = static_cast<int>(candidates_.size());
+  }
+
+  const size_t orig_size = candidates_.size();
+  candidates_.resize(orig_size + candidates.size());
+  std::copy_backward(candidates_.begin() + i,
+                     candidates_.begin() + orig_size,
+                     candidates_.end());
+  for (const auto &candidate : candidates) {
+    candidates_[i++] = candidate.get();
+  }
+
+  pool_.insert(pool_.end(), std::make_move_iterator(candidates.begin()),
+               std::make_move_iterator(candidates.end()));
+}
+
 void Segment::pop_front_candidate() {
   if (!candidates_.empty()) {
     candidates_.pop_front();

@@ -292,6 +292,8 @@ class Segment final {
   Candidate *push_back_candidate();
   Candidate *add_candidate();  // alias of push_back_candidate()
   Candidate *insert_candidate(int i);
+  void insert_candidates(
+      int i, std::vector<std::unique_ptr<Candidate>>&& candidates);
 
   // get size of candidates
   size_t candidates_size() const;
