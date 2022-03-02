@@ -41,6 +41,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/clock.h"
@@ -489,24 +490,23 @@ bool ExpandYear(const std::string &prefix, int year,
   return true;
 }
 
-void Insert(const Segment::Candidate &base_candidate, int position,
-            const std::string &value, const char *description,
-            Segment *segment) {
-  position = std::min<int>(position, segment->candidates_size());
-  Segment::Candidate *c = segment->insert_candidate(position);
-  DCHECK(c);
-  c->Init();
-  c->lid = base_candidate.lid;
-  c->rid = base_candidate.rid;
-  c->cost = base_candidate.cost;
-  c->value = value;
-  c->key = base_candidate.key;
-  c->content_key = base_candidate.content_key;
-  c->attributes |= Segment::Candidate::NO_LEARNING;
-  c->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
+std::unique_ptr<Segment::Candidate> CreateCandidate(
+    const Segment::Candidate &base_candidate, const std::string &value,
+    const char *description) {
+  auto candidate = std::make_unique<Segment::Candidate>();
+  candidate->Init();
+  candidate->lid = base_candidate.lid;
+  candidate->rid = base_candidate.rid;
+  candidate->cost = base_candidate.cost;
+  candidate->value = value;
+  candidate->key = base_candidate.key;
+  candidate->content_key = base_candidate.content_key;
+  candidate->attributes |= (Segment::Candidate::NO_LEARNING |
+                            Segment::Candidate::NO_VARIANTS_EXPANSION);
   if (description != nullptr) {
-    c->description = description;
+    candidate->description = description;
   }
+  return candidate;
 }
 
 bool AdToEraForCourt(const YearData *data, int size, int year,
@@ -943,16 +943,20 @@ bool DateRewriter::RewriteDate(Segment *segment,
     return false;
   }
 
+  // Insert words.
+  const Segment::Candidate &base_cand = segment->candidate(cand_idx);
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(conversions.size());
+  for (const std::string &conversion : conversions) {
+    candidates.emplace_back(
+        CreateCandidate(base_cand, conversion, data.description));
+  }
+
   // Date candidates are too many, therefore highest candidate show at most 3rd.
   // TODO(nona): learn date candidate even if the date is changed.
   constexpr size_t kMinIdx = 3;
   size_t insert_idx = std::min(std::max(kMinIdx, cand_idx + 1), end_idx);
-
-  // Insert words.
-  const Segment::Candidate &base_cand = segment->candidate(cand_idx);
-  for (const std::string &conversion : conversions) {
-    Insert(base_cand, insert_idx++, conversion, data.description, segment);
-  }
+  segment->insert_candidates(insert_idx, std::move(candidates));
   return true;
 }
 
@@ -994,17 +998,19 @@ bool DateRewriter::RewriteEra(Segment *current_segment,
     return false;
   }
 
-  constexpr int kInsertPosition = 2;
-  const int position =
-      std::min<int>(kInsertPosition, current_segment->candidates_size());
-
   constexpr char kDescription[] = "和暦";
-  for (auto rit = results.crbegin(); rit != results.crend(); ++rit) {
-    Insert(current_segment->candidate(0), position, *rit, kDescription,
-           current_segment);
-    current_segment->mutable_candidate(position)->attributes &=
-        ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+  const Segment::Candidate &base_cand = current_segment->candidate(0);
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(results.size());
+  for (const std::string &value : results) {
+    std::unique_ptr<Segment::Candidate> candidate =
+        CreateCandidate(base_cand, value, kDescription);
+    candidate->attributes &= ~Segment::Candidate::NO_VARIANTS_EXPANSION;
+    candidates.push_back(std::move(candidate));
   }
+
+  constexpr int kInsertPosition = 2;
+  current_segment->insert_candidates(kInsertPosition, std::move(candidates));
 
   return true;
 }
@@ -1021,12 +1027,17 @@ bool DateRewriter::RewriteAd(Segment *segment) {
   std::vector<std::string> results, descriptions;
   const bool ret = EraToAd(key, &results, &descriptions);
 
+  const Segment::Candidate &base_cand = segment->candidate(0);
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(results.size());
+  for (size_t i = 0; i < results.size(); ++i) {
+    candidates.emplace_back(
+        CreateCandidate(base_cand, results[i], descriptions[i].c_str()));
+  }
+
   // Insert position is the last of candidates
   const int position = static_cast<int>(segment->candidates_size());
-  for (size_t i = 0; i < results.size(); ++i) {
-    Insert(segment->candidate(0), position, results[i], descriptions[i].c_str(),
-           segment);
-  }
+  segment->insert_candidates(position, std::move(candidates));
   return ret;
 }
 
@@ -1130,13 +1141,17 @@ bool DateRewriter::RewriteConsecutiveDigits(const composer::Composer &composer,
   const Segment::Candidate &top_cand = (segment->candidates_size() > 0)
                                            ? segment->candidate(0)
                                            : segment->meta_candidate(0);
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(results.size());
+  for (const auto &result : results) {
+    candidates.emplace_back(
+        CreateCandidate(top_cand, result.first, result.second));
+  }
+
   if (insert_position < 0) {
     insert_position = static_cast<int>(segment->candidates_size());
   }
-  for (const auto &result : results) {
-    Insert(top_cand, insert_position++, result.first, result.second, segment);
-  }
-
+  segment->insert_candidates(insert_position, std::move(candidates));
   return true;
 }
 
