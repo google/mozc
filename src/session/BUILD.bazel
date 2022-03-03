@@ -308,10 +308,14 @@ cc_library_mozc(
     ],
     hdrs = ["session_handler.h"],
     deps = select_mozc(
+        android = [
+            "//spelling:spellchecker_service",
+        ],
         client = [],
         default = [
             ":session_watch_dog",
             "//base:process",
+            "//spelling:spellchecker_service",
         ],
         linux = [
             ":session_watch_dog",
@@ -361,7 +365,14 @@ cc_library_mozc(
         "session_handler_test_util.cc",
     ],
     hdrs = ["session_handler_test_util.h"],
-    deps = [
+    deps = select_mozc(
+        android = [
+            "//spelling:spellchecker_service",
+        ],
+        default = [
+            "//spelling:spellchecker_service",
+        ],
+    ) + [
         ":session",
         ":session_handler",
         ":session_handler_interface",
@@ -749,7 +760,9 @@ py_binary_mozc(
 genrule(
     name = "session_stress_test_data",
     srcs = select_mozc(
-        oss = ["//data/test/quality_regression_test:oss.tsv"],
+        oss = [
+            "//data/test/quality_regression_test:oss.tsv",
+        ],
     ),
     outs = ["session_stress_test_data.h"],
     cmd = "$(location :gen_session_stress_test_data) --input $(SRCS) --output $@",
