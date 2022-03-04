@@ -1,7 +1,11 @@
 # An identifier for this repository.
 workspace(name = "mozc")
-load("@bazel_tools//tools/build_defs/repo:http.bzl",
-     "http_archive", "http_file")
+
+load(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_archive",
+    "http_file",
+)
 load("//:config.bzl", "QT_BASE_PATH")
 
 # This rule refers to $ANDROID_SDK_HOME.
@@ -27,7 +31,9 @@ local_repository(
     name = "com_google_protobuf",
     path = "third_party/protobuf",
 )
+
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
 protobuf_deps()
 
 # This git_repository rule is an alternative for the above rule.
@@ -40,48 +46,50 @@ protobuf_deps()
 # Gtest
 new_local_repository(
     name = "gtest",
-    path = "third_party/gtest",
     build_file = "third_party/gtest/BUILD.bazel",
+    path = "third_party/gtest",
 )
 
 # Gtk2
 new_local_repository(
     name = "gtk2",
+    build_file = "BUILD.gtk2.bazel",
     # This path should be updated per the environment.
     path = "/usr",  # For Debian
-    build_file = "BUILD.gtk2.bazel",
 )
 
 # iBus
 new_local_repository(
     name = "ibus",
+    build_file = "BUILD.ibus.bazel",
     # This path should be updated per the environment.
     path = "/usr",  # For Debian
-    build_file = "BUILD.ibus.bazel",
 )
 
 # Japanese Usage Dictionary
 new_local_repository(
     name = "ja_usage_dict",
-    path = "third_party/japanese_usage_dictionary",
     build_file = "BUILD.ja_usage_dict.bazel",
+    path = "third_party/japanese_usage_dictionary",
 )
 
 # Qt
 new_local_repository(
     name = "io_qt",
+    build_file = "BUILD.qt.bazel",
     # This path should be updated per the environment.
     path = QT_BASE_PATH,
-    build_file = "BUILD.qt.bazel",
 )
 
 # Python
 http_archive(
     name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
     sha256 = "aa96a691d3a8177f3215b14b0edc9641787abaaa30363a080165d06ab65e1161",
+    url = "https://github.com/bazelbuild/rules_python/releases/download/0.0.1/rules_python-0.0.1.tar.gz",
 )
+
 load("@rules_python//python:repositories.bzl", "py_repositories")
+
 py_repositories()
 
 # Only needed if using the packaging rules.
@@ -91,11 +99,11 @@ py_repositories()
 # Bazel Skylib
 http_archive(
     name = "bazel_skylib",
+    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
     urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-           ],
-   sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+    ],
 )
 
 # Bazel macOS build (2021-10-30)
@@ -105,70 +113,78 @@ http_archive(
     sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
     url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
 )
+
 load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
     "apple_rules_dependencies",
 )
+
 apple_rules_dependencies()
 
 # Material icons
 http_file(
     name = "material_icon_dictionary_png",
+    downloaded_file_path = "dictionary.png",
+    sha256 = "6d2ac7befa038d4f32e07136293acaf5d8645a4daecb6d063f34be2ffea59b55",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/chrome_reader_mode/materialiconsoutlined/48dp/1x/outline_chrome_reader_mode_black_48dp.png",
     ],
-    downloaded_file_path = "dictionary.png",
-    sha256 = "6d2ac7befa038d4f32e07136293acaf5d8645a4daecb6d063f34be2ffea59b55",
 )
+
 http_file(
     name = "material_icon_dictionary_svg",
+    downloaded_file_path = "dictionary.svg",
+    sha256 = "a4c7b9bfb442a7497b72d74358c31034c4fef1ab2a50659834784580751ac04d",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/chrome_reader_mode/materialiconsoutlined/24px.svg",
     ],
-    downloaded_file_path = "dictionary.svg",
-    sha256 = "a4c7b9bfb442a7497b72d74358c31034c4fef1ab2a50659834784580751ac04d",
 )
+
 http_file(
     name = "material_icon_properties_png",
+    downloaded_file_path = "properties.png",
+    sha256 = "c4ae8bb7992f43157be9d026f76a7039af6e0e3de0f220842208dfda8c38714a",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/settings/materialiconsround/48dp/1x/round_settings_black_48dp.png",
     ],
-    downloaded_file_path = "properties.png",
-    sha256 = "c4ae8bb7992f43157be9d026f76a7039af6e0e3de0f220842208dfda8c38714a",
 )
+
 http_file(
     name = "material_icon_properties_svg",
+    downloaded_file_path = "properties.svg",
+    sha256 = "9b01b133be1caffc680f132d385d0e594262d6cfd29759a63c428050b83fe628",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/settings/materialiconsround/24px.svg",
     ],
-    downloaded_file_path = "properties.svg",
-    sha256 = "9b01b133be1caffc680f132d385d0e594262d6cfd29759a63c428050b83fe628",
 )
+
 http_file(
     name = "material_icon_tool_png",
+    downloaded_file_path = "tool.png",
+    sha256 = "269433bf6d6948a93ab6a57a73ceb5930870223046052cfffe01eeca37327d3e",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/png/action/build/materialicons/48dp/1x/baseline_build_black_48dp.png",
     ],
-    downloaded_file_path = "tool.png",
-    sha256 = "269433bf6d6948a93ab6a57a73ceb5930870223046052cfffe01eeca37327d3e",
 )
+
 http_file(
     name = "material_icon_tool_svg",
+    downloaded_file_path = "tool.svg",
+    sha256 = "df34fba3d09778db69503a23b688761051dbf65b5bccb0d7b729c69ff61c3804",
     urls = [
         "https://raw.githubusercontent.com/google/material-design-icons/4.0.0/src/action/build/materialicons/24px.svg",
     ],
-    downloaded_file_path = "tool.svg",
-    sha256 = "df34fba3d09778db69503a23b688761051dbf65b5bccb0d7b729c69ff61c3804",
 )
 
 # Zip code
 http_archive(
     name = "zip_code_ken_all",
-    url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
     build_file_content = "exports_files([\"KEN_ALL.CSV\"])",
+    url = "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
 )
+
 http_archive(
     name = "zip_code_jigyosyo",
-    url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
     build_file_content = "exports_files([\"JIGYOSYO.CSV\"])",
+    url = "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
 )
