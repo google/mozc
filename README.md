@@ -11,9 +11,12 @@ OpenSource project originates from
 Build Status
 ------------
 
-|Android + OS X + Linux |Windows |
-|:----------------------------:|:------:|
-[![Build Status](https://travis-ci.org/google/mozc.svg?branch=master)](https://travis-ci.org/google/mozc) |[![Build status](https://ci.appveyor.com/api/projects/status/1rvmtp7f80jv7ehf/branch/master?svg=true)](https://ci.appveyor.com/project/google/mozc/branch/master) |
+| Linux | Windows | macOS | Android lib |
+|:-----:|:-------:|:-----:|:-----------:|
+| [![Linux](https://github.com/google/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/linux.yaml) | [![Windows](https://github.com/google/mozc/actions/workflows/windows.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/windows.yaml) | [![macOS](https://github.com/google/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/macos.yaml) | [![Android lib](https://github.com/google/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/android.yaml) |
+
+| [![Linux](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/linux.yaml) | [![Windows](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/windows.yaml/badge.svg)](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/windows.yaml) | [![macOS](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/macos.yaml) | [![Android lib](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/hiroyuki-komatsu/mozc/actions/workflows/android.yaml) |
+
 
 What's Mozc?
 ------------

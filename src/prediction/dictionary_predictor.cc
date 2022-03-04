@@ -101,12 +101,6 @@ constexpr int kInfinity = (2 << 20);
 constexpr size_t kSuggestionMaxResultsSize = 256;
 constexpr size_t kPredictionMaxResultsSize = 100000;
 
-bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_simplified_ranking();
-}
-
 bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
   return request.request()
       .decoder_experiment_params()
@@ -667,17 +661,10 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   const bool is_debug = request.config().verbose_level() >= 1;
 #endif  // NDEBUG
 
-  if (is_debug || IsSimplifiedRankingEnabled(request)) {
+  if (is_debug) {
     for (const auto &result : *results) {
       if (!result.removed) {
         merged_types[result.value] |= result.types;
-      }
-    }
-    if (IsSimplifiedRankingEnabled(request)) {
-      for (auto &result : *results) {
-        if (!result.removed) {
-          result.types = merged_types[result.value];
-        }
       }
     }
   }
@@ -1569,15 +1556,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     result->lid = candidate.lid;
     result->rid = candidate.rid;
     result->inner_segment_boundary = candidate.inner_segment_boundary;
-    if (IsSimplifiedRankingEnabled(request)) {
-      result->SetTypesAndTokenAttributes(
-          (candidate.attributes & Segment::Candidate::SUFFIX_DICTIONARY)
-              ? REALTIME | SUFFIX
-              : REALTIME,
-          Token::NONE);
-    } else {
-      result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
-    }
+    result->SetTypesAndTokenAttributes(REALTIME, Token::NONE);
     result->candidate_attributes |= candidate.attributes;
     result->consumed_key_size = candidate.consumed_key_size;
   }

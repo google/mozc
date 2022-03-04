@@ -63,6 +63,10 @@ const struct {
         "ばーじょん",
         "バージョン",
     },
+    {
+        "Version",
+        "Version",
+    },
 };
 
 }  // namespace

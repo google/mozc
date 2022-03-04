@@ -274,19 +274,21 @@ Segment::Candidate *Segment::mutable_candidate(int i) {
 size_t Segment::candidates_size() const { return candidates_.size(); }
 
 void Segment::clear_candidates() {
-  pool_.Free();
+  pool_.clear();
   candidates_.clear();
 }
 
 Segment::Candidate *Segment::push_back_candidate() {
-  Candidate *candidate = pool_.Alloc();
+  Candidate *candidate =
+      pool_.emplace_back(std::make_unique<Candidate>()).get();
   candidate->Init();
   candidates_.push_back(candidate);
   return candidate;
 }
 
 Segment::Candidate *Segment::push_front_candidate() {
-  Candidate *candidate = pool_.Alloc();
+  Candidate *candidate =
+      pool_.emplace_back(std::make_unique<Candidate>()).get();
   candidate->Init();
   candidates_.push_front(candidate);
   return candidate;
@@ -305,24 +307,42 @@ Segment::Candidate *Segment::insert_candidate(int i) {
                 << candidates_.size();
     i = static_cast<int>(candidates_.size());
   }
-  Candidate *candidate = pool_.Alloc();
+  Candidate *candidate =
+      pool_.emplace_back(std::make_unique<Candidate>()).get();
   candidate->Init();
   candidates_.insert(candidates_.begin() + i, candidate);
   return candidate;
 }
 
+void Segment::insert_candidates(
+    int i, std::vector<std::unique_ptr<Candidate>> &&candidates) {
+  if (i < 0) {
+    i = 0;
+  } else if (i > static_cast<int>(candidates_.size())) {
+    i = static_cast<int>(candidates_.size());
+  }
+
+  const size_t orig_size = candidates_.size();
+  candidates_.resize(orig_size + candidates.size());
+  std::copy_backward(candidates_.begin() + i,
+                     candidates_.begin() + orig_size,
+                     candidates_.end());
+  for (const auto &candidate : candidates) {
+    candidates_[i++] = candidate.get();
+  }
+
+  pool_.insert(pool_.end(), std::make_move_iterator(candidates.begin()),
+               std::make_move_iterator(candidates.end()));
+}
+
 void Segment::pop_front_candidate() {
   if (!candidates_.empty()) {
-    Candidate *c = candidates_.front();
-    pool_.Release(c);
     candidates_.pop_front();
   }
 }
 
 void Segment::pop_back_candidate() {
   if (!candidates_.empty()) {
-    Candidate *c = candidates_.back();
-    pool_.Release(c);
     candidates_.pop_back();
   }
 }
@@ -332,7 +352,6 @@ void Segment::erase_candidate(int i) {
     LOG(WARNING) << "invalid index";
     return;
   }
-  pool_.Release(mutable_candidate(i));
   candidates_.erase(candidates_.begin() + i);
 }
 
@@ -342,9 +361,6 @@ void Segment::erase_candidates(int i, size_t size) {
       end > candidates_size()) {
     LOG(WARNING) << "invalid index";
     return;
-  }
-  for (int j = i; j < static_cast<int>(end); ++j) {
-    pool_.Release(mutable_candidate(j));
   }
   candidates_.erase(candidates_.begin() + i, candidates_.begin() + end);
 }

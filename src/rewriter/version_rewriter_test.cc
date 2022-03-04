@@ -122,14 +122,26 @@ TEST_F(VersionRewriterTest, RewriteTest_Version) {
   VersionRewriter version_rewriter(kDummyDataVersion);
 
   const ConversionRequest request;
-  Segments segments;
-  VersionRewriterTest::AddSegment("ばーじょん", "バージョン", &segments);
+  {
+    Segments segments;
+    VersionRewriterTest::AddSegment("ばーじょん", "バージョン", &segments);
 
-  EXPECT_TRUE(version_rewriter.Rewrite(request, &segments));
-  EXPECT_TRUE(VersionRewriterTest::FindCandidateWithPrefix(
-      kVersionPrefixExpected, segments));
-  EXPECT_FALSE(VersionRewriterTest::FindCandidateWithPrefix(
-      kVersionPrefixUnexpected, segments));
+    EXPECT_TRUE(version_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(VersionRewriterTest::FindCandidateWithPrefix(
+        kVersionPrefixExpected, segments));
+    EXPECT_FALSE(VersionRewriterTest::FindCandidateWithPrefix(
+        kVersionPrefixUnexpected, segments));
+  }
+  {
+    Segments segments;
+    VersionRewriterTest::AddSegment("Version", "Version", &segments);
+
+    EXPECT_TRUE(version_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(VersionRewriterTest::FindCandidateWithPrefix(
+        kVersionPrefixExpected, segments));
+    EXPECT_FALSE(VersionRewriterTest::FindCandidateWithPrefix(
+        kVersionPrefixUnexpected, segments));
+  }
 }
 
 }  // namespace mozc

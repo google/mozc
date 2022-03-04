@@ -30,6 +30,7 @@
 #include "converter/segments.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/number_util.h"
@@ -187,7 +188,10 @@ TEST(CandidateTest, BasicTest) {
   segment.pop_front_candidate();
   EXPECT_EQ(cand[1], segment.mutable_candidate(0));
 
+  // Pop functions against empty candidates should not raise a runtime error.
   segment.Clear();
+  segment.pop_back_candidate();
+  segment.pop_front_candidate();
   EXPECT_EQ(0, segment.candidates_size());
 
   for (int i = 0; i < kCandidatesSize; ++i) {
@@ -208,6 +212,26 @@ TEST(CandidateTest, BasicTest) {
   cand[1] = segment.insert_candidate(1);
   EXPECT_EQ(cand[1], segment.mutable_candidate(1));
   EXPECT_EQ(cand[4], segment.mutable_candidate(2));
+
+  // insert multiple candidates
+  std::vector<std::unique_ptr<Segment::Candidate>> cand_vec;
+  cand[2] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
+  cand[3] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
+  segment.insert_candidates(2, std::move(cand_vec));
+  EXPECT_EQ(cand[1], segment.mutable_candidate(1));
+  EXPECT_EQ(cand[2], segment.mutable_candidate(2));
+  EXPECT_EQ(cand[3], segment.mutable_candidate(3));
+  EXPECT_EQ(cand[4], segment.mutable_candidate(4));
+
+  // insert candidates with index out of the range.
+  segment.Clear();
+  EXPECT_EQ(0, segment.candidates_size());
+  std::vector<std::unique_ptr<Segment::Candidate>> cand_vec2(2);
+  segment.insert_candidates(-1, std::move(cand_vec2));  // less than lower
+  EXPECT_EQ(2, segment.candidates_size());
+  std::vector<std::unique_ptr<Segment::Candidate>> cand_vec3(3);
+  segment.insert_candidates(5, std::move(cand_vec3));  // more than upper
+  EXPECT_EQ(5, segment.candidates_size());
 
   // move
   segment.Clear();

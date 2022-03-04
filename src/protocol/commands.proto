@@ -578,7 +578,8 @@ message Capability {
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
 message DecoderExperimentParams {
-  optional bool enable_simplified_ranking = 1;
+  reserved 1;
+
   optional int32 mobile_history_prediction_size = 2;
   optional bool enable_strict_candidate_filter = 3;
 

@@ -2,6 +2,7 @@
 
 Files and directories we may accept pull requests:
 * files in the [top directory](https://github.com/google/mozc/tree/master/)
+* [.github/](https://github.com/google/mozc/tree/master/.github/)
 * [docker/](https://github.com/google/mozc/tree/master/docker/)
 * [docs/](https://github.com/google/mozc/tree/master/docs/)
 * [src/.bazelrc](https://github.com/google/mozc/tree/master/src/.bazelrc)

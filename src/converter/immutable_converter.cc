@@ -80,12 +80,6 @@ constexpr int kMaxCost = 32767;
 constexpr int kMinCost = -32767;
 constexpr int kDefaultNumberCost = 3000;
 
-bool IsSimplifiedRankingEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_simplified_ranking();
-}
-
 class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
  public:
   KeyCorrectedNodeListBuilder(size_t pos, absl::string_view original_lookup_key,
@@ -1302,15 +1296,6 @@ class NodeListBuilderForPredictiveNodes : public BaseNodeListBuilder {
 void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
     const Segments &segments, const ConversionRequest &request,
     Lattice *lattice) const {
-  // In new experimental mode does not perform any suggestion in prediction
-  // mode, as the prediction candidates are simply appended to the suggestion
-  // candidates in the end. In addition, we want avoid to make noisy and
-  // ungrammatical candidates with the extensive use of realtime conversion.
-  if (IsSimplifiedRankingEnabled(request) &&
-      segments.request_type() != Segments::SUGGESTION) {
-    return;
-  }
-
   const std::string &key = lattice->key();
   std::string conversion_key;
   for (size_t i = 0; i < segments.conversion_segments_size(); ++i) {
@@ -1320,132 +1305,67 @@ void ImmutableConverterImpl::MakeLatticeNodesForPredictiveNodes(
   std::vector<std::string> conversion_key_chars;
   Util::SplitStringToUtf8Chars(conversion_key, &conversion_key_chars);
 
-  if (!IsSimplifiedRankingEnabled(request)) {
-    // *** Current behaviors ***
-    // - Starts suggestion from 6 characters, which is conservative.
-    // - Predictive nodes with zero-length prefix string are not generated.
-    // do nothing if the conversion key is short
-    constexpr size_t kKeyMinLength = 7;
-    if (conversion_key_chars.size() < kKeyMinLength) {
-      return;
-    }
+  // *** Current behaviors ***
+  // - Starts suggestion from 6 characters, which is conservative.
+  // - Predictive nodes with zero-length prefix string are not generated.
+  // do nothing if the conversion key is short
+  constexpr size_t kKeyMinLength = 7;
+  if (conversion_key_chars.size() < kKeyMinLength) {
+    return;
+  }
 
-    // Predictive search from suffix dictionary.
-    // (search words with between 1 and 6 characters)
-    {
-      constexpr size_t kMaxSuffixLookupKey = 6;
-      const size_t max_sufffix_len =
-          std::min(kMaxSuffixLookupKey, conversion_key_chars.size());
-      size_t pos = key.size();
+  // Predictive search from suffix dictionary.
+  // (search words with between 1 and 6 characters)
+  {
+    constexpr size_t kMaxSuffixLookupKey = 6;
+    const size_t max_sufffix_len =
+        std::min(kMaxSuffixLookupKey, conversion_key_chars.size());
+    size_t pos = key.size();
 
-      for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
-        pos -= conversion_key_chars[conversion_key_chars.size() - suffix_len]
-                   .size();
-        DCHECK_GE(key.size(), pos);
-        NodeListBuilderForPredictiveNodes builder(
-            lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(),
-            GetSpatialCostParams(request), pos_matcher_);
-        suffix_dictionary_->LookupPredictive(
-            absl::string_view(key.data() + pos, key.size() - pos), request,
-            &builder);
-        if (builder.result() != nullptr) {
-          lattice->Insert(pos, builder.result());
-        }
+    for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
+      pos -=
+          conversion_key_chars[conversion_key_chars.size() - suffix_len].size();
+      DCHECK_GE(key.size(), pos);
+      NodeListBuilderForPredictiveNodes builder(
+          lattice->node_allocator(),
+          lattice->node_allocator()->max_nodes_size(),
+          GetSpatialCostParams(request), pos_matcher_);
+      suffix_dictionary_->LookupPredictive(
+          absl::string_view(key.data() + pos, key.size() - pos), request,
+          &builder);
+      if (builder.result() != nullptr) {
+        lattice->Insert(pos, builder.result());
       }
     }
+  }
 
-    // Predictive search from system dictionary.
-    // (search words with between 5 and 8 characters)
-    {
-      constexpr size_t kMinSystemLookupKey = 5;
-      constexpr size_t kMaxSystemLookupKey = 8;
-      const size_t max_suffix_len =
-          std::min(kMaxSystemLookupKey, conversion_key_chars.size());
-      size_t pos = key.size();
-      for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
-        pos -= conversion_key_chars[conversion_key_chars.size() - suffix_len]
-                   .size();
-        DCHECK_GE(key.size(), pos);
+  // Predictive search from system dictionary.
+  // (search words with between 5 and 8 characters)
+  {
+    constexpr size_t kMinSystemLookupKey = 5;
+    constexpr size_t kMaxSystemLookupKey = 8;
+    const size_t max_suffix_len =
+        std::min(kMaxSystemLookupKey, conversion_key_chars.size());
+    size_t pos = key.size();
+    for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
+      pos -=
+          conversion_key_chars[conversion_key_chars.size() - suffix_len].size();
+      DCHECK_GE(key.size(), pos);
 
-        if (suffix_len < kMinSystemLookupKey) {
-          // Just update |pos|.
-          continue;
-        }
-
-        NodeListBuilderForPredictiveNodes builder(
-            lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(),
-            GetSpatialCostParams(request), pos_matcher_);
-        dictionary_->LookupPredictive(
-            absl::string_view(key.data() + pos, key.size() - pos), request,
-            &builder);
-        if (builder.result() != nullptr) {
-          lattice->Insert(pos, builder.result());
-        }
+      if (suffix_len < kMinSystemLookupKey) {
+        // Just update |pos|.
+        continue;
       }
-    }
-  } else {  // IsSimplifiedRankingEnabled
-    // *** New behaviors ***
-    // - Starts suggestion from 2 characters, which is more aggressive.
-    // - Predictive nodes with zero-length prefix string are generated.
-    // do nothing if the conversion key is short
-    constexpr size_t kKeyMinLength = 3;
-    if (conversion_key_chars.size() < kKeyMinLength) {
-      return;
-    }
 
-    // Predictive search from suffix dictionary.
-    {
-      constexpr size_t kMaxSuffixLookupKey = 8;
-      const size_t max_sufffix_len =
-          std::min(kMaxSuffixLookupKey, conversion_key_chars.size() - 1);
-      size_t pos = key.size();
-
-      for (size_t suffix_len = 1; suffix_len <= max_sufffix_len; ++suffix_len) {
-        pos -= conversion_key_chars[conversion_key_chars.size() - suffix_len]
-                   .size();
-        DCHECK_GT(key.size(), pos);
-        NodeListBuilderForPredictiveNodes builder(
-            lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(),
-            GetSpatialCostParams(request), pos_matcher_);
-        suffix_dictionary_->LookupPredictive(
-            absl::string_view(key.data() + pos, key.size() - pos), request,
-            &builder);
-        if (builder.result() != nullptr) {
-          lattice->Insert(pos, builder.result());
-        }
-      }
-    }
-
-    // Predictive search from system dictionary.
-    {
-      constexpr size_t kMinSystemLookupKey = 3;
-      constexpr size_t kMaxSystemLookupKey = 8;
-      const size_t max_suffix_len =
-          std::min(kMaxSystemLookupKey, conversion_key_chars.size() - 1);
-      size_t pos = key.size();
-      for (size_t suffix_len = 1; suffix_len <= max_suffix_len; ++suffix_len) {
-        pos -= conversion_key_chars[conversion_key_chars.size() - suffix_len]
-                   .size();
-        DCHECK_GT(key.size(), pos);
-
-        if (suffix_len < kMinSystemLookupKey) {
-          // Just update |pos|.
-          continue;
-        }
-
-        NodeListBuilderForPredictiveNodes builder(
-            lattice->node_allocator(),
-            lattice->node_allocator()->max_nodes_size(),
-            GetSpatialCostParams(request), pos_matcher_);
-        dictionary_->LookupPredictive(
-            absl::string_view(key.data() + pos, key.size() - pos), request,
-            &builder);
-        if (builder.result() != nullptr) {
-          lattice->Insert(pos, builder.result());
-        }
+      NodeListBuilderForPredictiveNodes builder(
+          lattice->node_allocator(),
+          lattice->node_allocator()->max_nodes_size(),
+          GetSpatialCostParams(request), pos_matcher_);
+      dictionary_->LookupPredictive(
+          absl::string_view(key.data() + pos, key.size() - pos), request,
+          &builder);
+      if (builder.result() != nullptr) {
+        lattice->Insert(pos, builder.result());
       }
     }
   }
@@ -2037,16 +1957,11 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
       (type == Segments::PREDICTION || type == Segments::PARTIAL_PREDICTION);
   const bool is_suggestion =
       (type == Segments::SUGGESTION || type == Segments::PARTIAL_SUGGESTION);
-  const bool is_simplified_ranking = IsSimplifiedRankingEnabled(request);
   const FilterType filter_type =
       request.request().mixed_conversion() ? MOBILE : DESKTOP;
 
-  // Exact candidate can be shown in simplified ranking mode.
-  const bool allow_exact = IsSimplifiedRankingEnabled(request);
-
   auto do_suggestion = [this, &request, &lattice, &group, &segments,
-                        &allow_exact, &filter_type, &is_prediction,
-                        &is_simplified_ranking]() {
+                        &filter_type, &is_prediction]() {
     const size_t max_candidates_size = request.max_conversion_candidates_size();
 
     if (request.create_partial_candidates()) {
@@ -2076,11 +1991,11 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                                             kOnlyFirstSegmentCandidateSize);
       InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                      only_first_segment_candidates_size,
-                                     filter_type, allow_exact);
+                                     filter_type, false /* allow_exact */);
       // TODO(taku): We do not want to refer `is_prediciton` here.
       // This is a temporal workaround to fill all personal names appeared
       // as exact partial candidates. Expand candidates as many as possible
-      if (is_prediction && !is_simplified_ranking) {
+      if (is_prediction) {
         InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                        request.max_conversion_candidates_size(),
                                        filter_type, true /* allow exact */);
@@ -2089,19 +2004,6 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     } else {
       InsertCandidates(request, segments, lattice, group, max_candidates_size,
                        SINGLE_SEGMENT, filter_type);
-    }
-  };
-
-  auto do_prediction = [this, &request, &lattice, &group, &segments,
-                        &allow_exact, &filter_type]() {
-    if (request.create_partial_candidates()) {
-      InsertFirstSegmentToCandidates(request, segments, lattice, group,
-                                     request.max_conversion_candidates_size(),
-                                     filter_type, allow_exact);
-    } else {
-      InsertCandidates(request, segments, lattice, group,
-                       request.max_conversion_candidates_size(), SINGLE_SEGMENT,
-                       filter_type);
     }
   };
 
@@ -2131,26 +2033,10 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     }
   };
 
-  // The difference between the current and simplified ranking.
-  // 1. Prediction and suggestion are the same in the current behavior.
-  // 2. New mode does not perform suggestions in prediction mode but only
-  //    perform partial conversion. This avoids the decoder from making many
-  //    noisy candidates.
-  // 3. New mode allows to have exact candidate even in partial conversion mode.
-  if (is_simplified_ranking) {
-    if (is_suggestion) {
-      do_suggestion();
-    } else if (is_prediction) {
-      do_prediction();
-    } else {
-      do_conversion();
-    }
+  if (is_suggestion || is_prediction) {
+    do_suggestion();
   } else {
-    if (is_suggestion || is_prediction) {
-      do_suggestion();
-    } else {
-      do_conversion();
-    }
+    do_conversion();
   }
 
   return true;

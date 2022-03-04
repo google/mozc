@@ -93,29 +93,6 @@ void SetCandidate(absl::string_view key, absl::string_view value,
 #endif  // ABSL_USES_STD_STRING_VIEW
 }
 
-const ConversionRequest &GetSimplifiedRankingConversionRequest() {
-  class ConversionRequestInitializer {
-   public:
-    ConversionRequestInitializer() {
-      request_.mutable_decoder_experiment_params()
-          ->set_enable_simplified_ranking(true);
-      conversion_request_ =
-          std::make_unique<ConversionRequest>(nullptr, &request_, &config_);
-    }
-
-    const ConversionRequest &Get() const { return *conversion_request_; }
-
-   private:
-    std::unique_ptr<ConversionRequest> conversion_request_;
-    commands::Request request_;
-    config::Config config_;
-  };
-
-  static const ConversionRequestInitializer *initializer =
-      new ConversionRequestInitializer;
-  return initializer->Get();
-}
-
 class MockDataAndImmutableConverter {
  public:
   // Initializes data and immutable converter with given dictionaries. If
@@ -341,21 +318,6 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
     EXPECT_EQ(segments.request_type(), Segments::CONVERSION);
     const ConversionRequest request;
     converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
-    EXPECT_TRUE(dictionary->received_target_query());
-  }
-
-  {
-    dictionary->clear_received_target_query();
-    converter->MakeLatticeNodesForPredictiveNodes(
-        segments, GetSimplifiedRankingConversionRequest(), &lattice);
-    EXPECT_FALSE(dictionary->received_target_query());
-  }
-
-  {
-    segments.set_request_type(Segments::SUGGESTION);
-    dictionary->clear_received_target_query();
-    converter->MakeLatticeNodesForPredictiveNodes(
-        segments, GetSimplifiedRankingConversionRequest(), &lattice);
     EXPECT_TRUE(dictionary->received_target_query());
   }
 }

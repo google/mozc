@@ -1,0 +1,45 @@
+name: CI for Windows
+# https://github.com/google/mozc/blob/master/docs/build_mozc_in_windows.md
+
+# Run on push.
+on: push
+
+# Prevent previous workflows from running.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2016-Readme.md
+    runs-on: windows-2016
+    timeout-minutes: 60
+
+    steps:
+      - name: config
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: setup
+        shell: cmd
+        working-directory: .\src\third_party
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          cd gyp
+          git apply ..\..\gyp\gyp.patch
+          cd ..\abseil-cpp
+          git apply ..\..\base\absl.patch
+
+      - name: build
+        shell: cmd
+        working-directory: .\src
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py gyp --noqt
+          python build_mozc.py build package
