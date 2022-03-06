@@ -29,6 +29,8 @@
 
 #include "data_manager/pos_list_provider.h"
 
+#include <string>
+
 #include "base/embedded_file.h"
 #include "base/logging.h"
 #include "base/serialized_string_array.h"
