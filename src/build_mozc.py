@@ -226,6 +226,9 @@ def ParseGypOptions(args):
                     'is installed. This option is used only on Linux.')
 
   if IsWindows():
+    parser.add_option('--msvs_version', dest='msvs_version',
+                      default='2017',
+                      help='Version of the Visual Studio.')
     parser.add_option('--wix_dir', dest='wix_dir',
                       default=GetDefaultWixPath(),
                       help='A path to the binary directory of wix.')
@@ -481,7 +484,7 @@ def GypMain(options, unused_args):
   gyp_options.extend(['-D', 'target_platform=%s' % target_platform_value])
 
   if IsWindows():
-    gyp_options.extend(['-G', 'msvs_version=2017'])
+    gyp_options.extend(['-G', 'msvs_version=%s' % options.msvs_version])
 
   if (target_platform == 'Linux' and
       '%s/unix/ibus/ibus.gyp' % SRC_DIR in gyp_file_names):

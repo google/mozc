@@ -48,6 +48,7 @@
     'msvs_libs_x64%': [],
 
     'conditions': [
+      # https://docs.microsoft.com/en-us/cpp/preprocessor/predefined-macros
       ['MSVS_VERSION=="2015"', {
         'compiler_target': 'msvs',
         'compiler_target_version_int': 1900,  # Visual C++ 2015 or higher
@@ -59,6 +60,12 @@
         'compiler_target_version_int': 1910,  # Visual C++ 2017 or higher
         'compiler_host': 'msvs',
         'compiler_host_version_int': 1910,  # Visual C++ 2017 or higher
+      }],
+      ['MSVS_VERSION=="2019"', {
+        'compiler_target': 'msvs',
+        'compiler_target_version_int': 1920,  # Visual C++ 2019 or higher
+        'compiler_host': 'msvs',
+        'compiler_host_version_int': 1920,  # Visual C++ 2019 or higher
       }],
     ],
     'msvc_disabled_warnings': [
