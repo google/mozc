@@ -11,8 +11,8 @@ concurrency:
 
 jobs:
   build:
-    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2016-Readme.md
-    runs-on: windows-2016
+    # https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
+    runs-on: windows-2019
     timeout-minutes: 60
 
     steps:
@@ -40,6 +40,6 @@ jobs:
         shell: cmd
         working-directory: .\src
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-          python build_mozc.py gyp --noqt
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+          python build_mozc.py gyp --noqt --msvs_version=2019
           python build_mozc.py build package
