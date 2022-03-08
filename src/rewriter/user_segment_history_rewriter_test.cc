@@ -281,41 +281,41 @@ TEST_F(UserSegmentHistoryRewriterTest, DisableTest) {
   Segments segments;
   std::unique_ptr<UserSegmentHistoryRewriter> rewriter(
       CreateUserSegmentHistoryRewriter());
+  ConversionRequest conversion_request(request_);
 
   {
     InitSegments(&segments, 1);
-    segments.set_user_history_enabled(true);
+    conversion_request.set_enable_user_history_for_conversion(true);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(request_, &segments);
+    rewriter->Finish(conversion_request, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(request_, &segments);
+    rewriter->Rewrite(conversion_request, &segments);
     EXPECT_EQ("candidate2", segments.segment(0).candidate(0).value);
 
     InitSegments(&segments, 1);
-    segments.set_user_history_enabled(false);
-    rewriter->Rewrite(request_, &segments);
+    conversion_request.set_enable_user_history_for_conversion(false);
+    rewriter->Rewrite(conversion_request, &segments);
     EXPECT_EQ("candidate0", segments.segment(0).candidate(0).value);
 
     InitSegments(&segments, 1);
-    segments.set_user_history_enabled(true);
-    rewriter->Rewrite(request_, &segments);
+    conversion_request.set_enable_user_history_for_conversion(true);
+    rewriter->Rewrite(conversion_request, &segments);
     EXPECT_EQ("candidate2", segments.segment(0).candidate(0).value);
   }
 
   {
     InitSegments(&segments, 1);
-    segments.set_user_history_enabled(false);
+    conversion_request.set_enable_user_history_for_conversion(false);
     segments.mutable_segment(0)->move_candidate(2, 0);
     segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
         Segment::Candidate::RERANKED;
     segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
-    rewriter->Finish(request_, &segments);
+    rewriter->Finish(conversion_request, &segments);
     InitSegments(&segments, 1);
-    rewriter->Rewrite(request_, &segments);
-    segments.set_user_history_enabled(true);
+    rewriter->Rewrite(conversion_request, &segments);
     EXPECT_EQ("candidate0", segments.segment(0).candidate(0).value);
   }
 }

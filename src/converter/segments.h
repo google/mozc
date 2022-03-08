@@ -292,8 +292,8 @@ class Segment final {
   Candidate *push_back_candidate();
   Candidate *add_candidate();  // alias of push_back_candidate()
   Candidate *insert_candidate(int i);
-  void insert_candidates(
-      int i, std::vector<std::unique_ptr<Candidate>>&& candidates);
+  void insert_candidates(int i,
+                         std::vector<std::unique_ptr<Candidate>> &&candidates);
 
   // get size of candidates
   size_t candidates_size() const;
@@ -402,10 +402,6 @@ class Segments final {
   RequestType request_type() const;
   void set_request_type(RequestType request_type);
 
-  // enable/disable user history
-  void set_user_history_enabled(bool user_history_enabled);
-  bool user_history_enabled() const;
-
   // getter
   const Segment &segment(size_t i) const;
   const Segment &conversion_segment(size_t i) const;
@@ -463,7 +459,6 @@ class Segments final {
  private:
   size_t max_history_segments_size_;
   bool resized_;
-  bool user_history_enabled_;
 
   RequestType request_type_;
   ObjectPool<Segment> pool_;

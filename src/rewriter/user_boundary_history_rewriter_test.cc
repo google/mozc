@@ -128,14 +128,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
 
   EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   const std::string segments_str = segments.DebugString();
@@ -173,14 +171,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
   Segments segments;
   SetSegments(&segments, true);
   segments.set_resized(true);
-  segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &segments);
   const std::string segments_str = segments.DebugString();
 
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, false);
-  bounded_segments.set_user_history_enabled(true);
 
   EXPECT_TRUE(rewriter.Rewrite(request_, &bounded_segments));
   const std::string bounded_segments_str = bounded_segments.DebugString();
@@ -216,14 +212,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
   const std::string segments_str = segments.DebugString();
 
   SetIncognito(false);  // no_incognito when rewrite
@@ -240,14 +234,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
   const std::string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
@@ -259,21 +251,22 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+  ConversionRequest request(request_);
   UserBoundaryHistoryRewriter rewriter(&mock());
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(false);
+  request.set_enable_user_history_for_conversion(false);
 
-  rewriter.Finish(request_, &bounded_segments);
+  rewriter.Finish(request, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
+  request.set_enable_user_history_for_conversion(true);
   const std::string segments_str = segments.DebugString();
 
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   const std::string segments_rewritten_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewritten_str);
@@ -286,14 +279,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(false);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
   const std::string segments_str = segments.DebugString();
 
   EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
@@ -309,14 +300,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
 
   // clear history
   rewriter.Clear();
@@ -335,14 +324,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
 
   const std::string segments_str = segments.DebugString();
   SetIncognito(true);
@@ -359,14 +346,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
 
   const std::string segments_str = segments.DebugString();
   SetLearningLevel(config::Config::NO_HISTORY);
@@ -380,20 +365,21 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
   UserBoundaryHistoryRewriter rewriter(&mock());
+  ConversionRequest request(request_);
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
+  request.set_enable_user_history_for_conversion(true);
 
-  rewriter.Finish(request_, &bounded_segments);
+  rewriter.Finish(request, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(false);
+  request.set_enable_user_history_for_conversion(false);
 
   const std::string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 
   const std::string segments_rewritten_str = segments.DebugString();
   EXPECT_EQ(segments_str, segments_rewritten_str);
@@ -406,14 +392,12 @@ TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   Segments bounded_segments;
   SetBoundedSegments(&bounded_segments, true);
   bounded_segments.set_resized(true);
-  bounded_segments.set_user_history_enabled(true);
 
   rewriter.Finish(request_, &bounded_segments);
   const std::string bounded_segments_str = bounded_segments.DebugString();
 
   Segments segments;
   SetSegments(&segments, false);
-  segments.set_user_history_enabled(true);
   segments.set_resized(true);
 
   const std::string segments_str = segments.DebugString();

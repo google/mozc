@@ -53,12 +53,6 @@ TEST(SegmentsTest, BasicTest) {
   segments.set_request_type(Segments::SUGGESTION);
   EXPECT_EQ(Segments::SUGGESTION, segments.request_type());
 
-  segments.set_user_history_enabled(true);
-  EXPECT_TRUE(segments.user_history_enabled());
-
-  segments.set_user_history_enabled(false);
-  EXPECT_FALSE(segments.user_history_enabled());
-
   EXPECT_EQ(0, segments.segments_size());
 
   constexpr int kSegmentsSize = 5;
@@ -343,7 +337,6 @@ TEST(SegmentsTest, CopyTest) {
 
   src.set_max_history_segments_size(1);
   src.set_resized(true);
-  src.set_user_history_enabled(true);
   src.set_request_type(Segments::PREDICTION);
 
   constexpr int kSegmentsSize = 3;
@@ -363,7 +356,6 @@ TEST(SegmentsTest, CopyTest) {
   Segments dest = src;
   EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
   EXPECT_EQ(src.resized(), dest.resized());
-  EXPECT_EQ(src.user_history_enabled(), dest.user_history_enabled());
   EXPECT_EQ(src.request_type(), dest.request_type());
 
   EXPECT_EQ(kSegmentsSize, dest.segments_size());

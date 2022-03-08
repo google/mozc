@@ -46,6 +46,7 @@
 #include "base/system_util.h"
 #include "composer/composer.h"
 #include "composer/table.h"
+#include "config/config_handler.h"
 #include "converter/converter_interface.h"
 #include "converter/lattice.h"
 #include "converter/pos_id_printer.h"
@@ -83,10 +84,6 @@ ABSL_FLAG(std::string, id_def, "",
 
 namespace mozc {
 namespace {
-
-using composer::Composer;
-using composer::Table;
-using config::Config;
 
 // Wrapper class for pos id printing
 class PosIdPrintUtil {
@@ -253,8 +250,9 @@ void PrintSegments(const Segments &segments, std::ostream *os) {
   }
 }
 
-bool ExecCommand(const ConverterInterface &converter, Segments *segments,
-                 const std::string &line, const commands::Request &request) {
+bool ExecCommand(const ConverterInterface &converter, const std::string &line,
+                 const commands::Request &request, config::Config *config,
+                 ConversionRequest *conversion_request, Segments *segments) {
   std::vector<std::string> fields =
       absl::StrSplit(line, absl::ByAnyChar("\t "), absl::SkipEmpty());
 
@@ -267,26 +265,20 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
 
   const std::string &func = fields[0];
 
-  const Config config;
+  composer::Composer composer(&composer::Table::GetDefaultTable(), &request,
+                              config);
+  conversion_request->set_composer(&composer);
 
   if (func == "startconversion" || func == "start" || func == "s") {
     CHECK_FIELDS_LENGTH(2);
-    Table table;
-    Composer composer(&table, &request, &config);
     composer.SetPreeditTextForTestOnly(fields[1]);
-    ConversionRequest conversion_request(&composer, &request, &config);
-    conversion_request.set_max_conversion_candidates_size(
-        absl::GetFlag(FLAGS_max_conversion_candidates_size));
-    return converter.StartConversionForRequest(conversion_request, segments);
+    return converter.StartConversionForRequest(*conversion_request, segments);
   } else if (func == "convertwithnodeinfo" || func == "cn") {
     CHECK_FIELDS_LENGTH(5);
     Lattice::SetDebugDisplayNode(
         NumberUtil::SimpleAtoi(fields[2]),  // begin pos
         NumberUtil::SimpleAtoi(fields[3]),  // end pos
         fields[4]);
-    ConversionRequest conversion_request;
-    conversion_request.set_max_conversion_candidates_size(
-        absl::GetFlag(FLAGS_max_conversion_candidates_size));
     const bool result = converter.StartConversion(segments, fields[1]);
     Lattice::ResetDebugDisplayNode();
     return result;
@@ -294,32 +286,21 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
     CHECK_FIELDS_LENGTH(2);
     return converter.StartReverseConversion(segments, fields[1]);
   } else if (func == "startprediction" || func == "predict" || func == "p") {
-    Table table;
-    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
-      ConversionRequest conversion_request(&composer, &request, &config);
-      return converter.StartPredictionForRequest(conversion_request, segments);
+      return converter.StartPredictionForRequest(*conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request, &config);
-      return converter.StartPredictionForRequest(conversion_request, segments);
+      return converter.StartPredictionForRequest(*conversion_request, segments);
     }
   } else if (func == "startsuggestion" || func == "suggest") {
-    Table table;
-    Composer composer(&table, &request, &config);
     if (fields.size() >= 2) {
       composer.SetPreeditTextForTestOnly(fields[1]);
-      ConversionRequest conversion_request(&composer, &request, &config);
-      return converter.StartSuggestionForRequest(conversion_request, segments);
+      return converter.StartSuggestionForRequest(*conversion_request, segments);
     } else {
-      ConversionRequest conversion_request(&composer, &request, &config);
-      return converter.StartSuggestionForRequest(conversion_request, segments);
+      return converter.StartSuggestionForRequest(*conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
-    Table table;
-    Composer composer(&table, &request, &config);
-    ConversionRequest conversion_request(&composer, &request, &config);
-    return converter.FinishConversion(conversion_request, segments);
+    return converter.FinishConversion(*conversion_request, segments);
   } else if (func == "resetconversion" || func == "reset") {
     return converter.ResetConversion(segments);
   } else if (func == "cancelconversion" || func == "cancel") {
@@ -336,10 +317,7 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
         if (!(converter.CommitSegmentValue(segments, i, 0))) return false;
       }
     }
-    Table table;
-    Composer composer(&table, &request, &config);
-    ConversionRequest conversion_request(&composer, &request, &config);
-    return converter.FinishConversion(conversion_request, segments);
+    return converter.FinishConversion(*conversion_request, segments);
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,
@@ -355,9 +333,8 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
     return converter.FreeSegmentValue(segments,
                                       NumberUtil::SimpleAtoi(fields[1]));
   } else if (func == "resizesegment" || func == "resize") {
-    const ConversionRequest request;
     if (fields.size() == 3) {
-      return converter.ResizeSegment(segments, request,
+      return converter.ResizeSegment(segments, *conversion_request,
                                      NumberUtil::SimpleAtoi(fields[1]),
                                      NumberUtil::SimpleAtoi(fields[2]));
     } else if (fields.size() > 3) {
@@ -367,13 +344,13 @@ bool ExecCommand(const ConverterInterface &converter, Segments *segments,
             static_cast<uint8_t>(NumberUtil::SimpleAtoi(fields[i])));
       }
       return converter.ResizeSegment(
-          segments, request, NumberUtil::SimpleAtoi(fields[1]),
+          segments, *conversion_request, NumberUtil::SimpleAtoi(fields[1]),
           NumberUtil::SimpleAtoi(fields[2]), &new_arrays[0], new_arrays.size());
     }
   } else if (func == "disableuserhistory") {
-    segments->set_user_history_enabled(false);
+    config->set_history_learning_level(config::Config::NO_HISTORY);
   } else if (func == "enableuserhistory") {
-    segments->set_user_history_enabled(true);
+    config->set_history_learning_level(config::Config::DEFAULT_HISTORY);
   } else {
     LOG(WARNING) << "Unknown command: " << func;
     return false;
@@ -499,8 +476,16 @@ int main(int argc, char **argv) {
   mozc::Segments segments;
   std::string line;
 
+  mozc::config::Config config;
+  mozc::config::ConfigHandler::GetDefaultConfig(&config);
+  mozc::ConversionRequest conversion_request =
+      mozc::ConversionRequest(nullptr, &request, &config);
+  conversion_request.set_max_conversion_candidates_size(
+      absl::GetFlag(FLAGS_max_conversion_candidates_size));
+
   while (!std::getline(std::cin, line).fail()) {
-    if (mozc::ExecCommand(*converter, &segments, line, request)) {
+    if (mozc::ExecCommand(*converter, line, request, &config,
+                          &conversion_request, &segments)) {
       if (absl::GetFlag(FLAGS_output_debug_string)) {
         mozc::PrintSegments(segments, &std::cout);
       }

@@ -757,8 +757,8 @@ bool UserSegmentHistoryRewriter::IsAvailable(const ConversionRequest &request,
     return false;
   }
 
-  if (!segments.user_history_enabled()) {
-    VLOG(2) << "!user_history_enabled";
+  if (!request.enable_user_history_for_conversion()) {
+    VLOG(2) << "user history for conversion is disabled";
     return false;
   }
 

@@ -622,6 +622,7 @@ cc_binary_mozc(
         "//base:system_util",
         "//composer",
         "//composer:table",
+        "//config:config_handler",
         "//data_manager",
         "//engine",
         "//protocol:commands_cc_proto",
