@@ -43,9 +43,8 @@ cc_library_mozc(
     hdrs = ["spellchecker_service.h"],
     deps = [
         "//base:port",
-        "//engine:engine_interface",
+        "//data_manager:data_manager_interface",
         "//protocol:commands_cc_proto",
-        "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
 )
@@ -57,8 +56,10 @@ cc_test_mozc(
     deps = [
         ":spellchecker_service",
         "//base",
+        "//data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

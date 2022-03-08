@@ -29,11 +29,13 @@
 
 #include "spelling/spellchecker_service.h"
 
+#include <string>
+
+#include "data_manager/data_manager.h"
 #include "protocol/commands.pb.h"
+#include "testing/base/public/gmock.h"
+#include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
+#include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 
-namespace mozc {
-namespace spelling {
-
-}  // namespace spelling
-}  // namespace mozc

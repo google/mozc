@@ -27,16 +27,3 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "spelling/spellchecker_service.h"
-
-#include <algorithm>
-#include <string>
-#include <utility>
-
-#include "absl/strings/string_view.h"
-
-namespace mozc {
-namespace spelling {
-
-}  // namespace spelling
-}  // namespace mozc

@@ -30,14 +30,4 @@
 #ifndef MOZC_SPELLING_SPELLCHECKER_SERVICE_H_
 #define MOZC_SPELLING_SPELLCHECKER_SERVICE_H_
 
-#include "base/port.h"
-#include "engine/engine_interface.h"
-#include "protocol/commands.pb.h"
-
-namespace mozc {
-namespace spelling {
-
-}  // namespace spelling
-}  // namespace mozc
-
 #endif  // MOZC_SPELLING_SPELLCHECKER_SERVICE_H_
