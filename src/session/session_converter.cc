@@ -153,9 +153,10 @@ bool SessionConverter::ConvertWithPreferences(
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
   segments_->set_request_type(Segments::CONVERSION);
-  SetConversionPreferences(preferences, segments_.get());
 
-  const ConversionRequest conversion_request(&composer, request_, config_);
+  ConversionRequest conversion_request(&composer, request_, config_);
+  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+
   if (!converter_->StartConversionForRequest(conversion_request,
                                              segments_.get())) {
     LOG(WARNING) << "StartConversionForRequest() failed";
@@ -420,10 +421,10 @@ bool SessionConverter::SuggestWithPreferences(
     return false;
   }
 
-  // Initialize the segments for suggestion.
-  SetConversionPreferences(preferences, segments_.get());
-
   ConversionRequest conversion_request(&composer, request_, config_);
+  // Initialize the conversion request and segments for suggestion.
+  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
       !request_->mixed_conversion()) {
@@ -490,8 +491,9 @@ bool SessionConverter::PredictWithPreferences(
   ResetResult();
 
   // Initialize the segments for prediction
+  ConversionRequest conversion_request(&composer, request_, config_);
   segments_->set_request_type(Segments::PREDICTION);
-  SetConversionPreferences(preferences, segments_.get());
+  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
@@ -504,7 +506,6 @@ bool SessionConverter::PredictWithPreferences(
   segments_->clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    ConversionRequest conversion_request(&composer, request_, config_);
     conversion_request.set_use_actual_converter_for_realtime_conversion(
         absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (!converter_->StartPredictionForRequest(conversion_request,
@@ -561,7 +562,8 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   //     after implementation of partial conversion.
 
   // Initialize the segments for prediction.
-  SetConversionPreferences(preferences, segments_.get());
+  ConversionRequest conversion_request(&composer, request_, config_);
+  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
 
   std::string preedit;
   composer.GetQueryForPrediction(&preedit);
@@ -569,8 +571,6 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // We do not need "segments_->clear_conversion_segments()".
   // Without this statement we can add additional candidates into
   // existing segments.
-
-  ConversionRequest conversion_request(&composer, request_, config_);
 
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
@@ -1151,9 +1151,10 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
 
 // static
 void SessionConverter::SetConversionPreferences(
-    const ConversionPreferences &preferences, Segments *segments) {
-  segments->set_user_history_enabled(preferences.use_history);
+    const ConversionPreferences &preferences, Segments *segments,
+    ConversionRequest *request) {
   segments->set_max_history_segments_size(preferences.max_history_size);
+  request->set_enable_user_history_for_conversion(preferences.use_history);
 }
 
 SessionConverter *SessionConverter::Clone() const {

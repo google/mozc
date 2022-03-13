@@ -114,6 +114,14 @@ void ConversionRequest::set_create_partial_candidates(bool value) {
   create_partial_candidates_ = value;
 }
 
+bool ConversionRequest::enable_user_history_for_conversion() const {
+  return enable_user_history_for_conversion_;
+}
+
+void ConversionRequest::set_enable_user_history_for_conversion(bool value) {
+  enable_user_history_for_conversion_ = value;
+}
+
 bool ConversionRequest::IsKanaModifierInsensitiveConversion() const {
   return request_->kana_modifier_insensitive_conversion() &&
          config_->use_kana_modifier_insensitive_conversion();

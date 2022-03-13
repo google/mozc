@@ -253,9 +253,10 @@ class SessionConverter : public SessionConverterInterface {
   // Set setting by the context.
   void OnStartComposition(const commands::Context &context) override;
 
-  // Fills segments with the conversion preferences.
+  // Fills conversion request and segments with the conversion preferences.
   static void SetConversionPreferences(const ConversionPreferences &preferences,
-                                       Segments *segments);
+                                       Segments *segments,
+                                       ConversionRequest *request);
 
   // Copies SessionConverter
   // TODO(hsumita): Copy all member variables.

@@ -96,6 +96,9 @@ class ConversionRequest {
   bool create_partial_candidates() const;
   void set_create_partial_candidates(bool value);
 
+  bool enable_user_history_for_conversion() const;
+  void set_enable_user_history_for_conversion(bool value);
+
   ComposerKeySelection composer_key_selection() const;
   void set_composer_key_selection(ComposerKeySelection selection);
 
@@ -160,10 +163,14 @@ class ConversionRequest {
   // For example, "私の" is created from composition "わたしのなまえ".
   bool create_partial_candidates_ = false;
 
+  // If false, stop using user history for conversion.
+  // This is used for supporting CONVERT_WITHOUT_HISTORY command.
+  // Please refer to session/internal/keymap_interface.h
+  bool enable_user_history_for_conversion_ = true;
+
   // TODO(noriyukit): Moves all the members of Segments that are irrelevant to
-  // this structure, e.g., Segments::user_history_enabled_ and
-  // Segments::request_type_. Also, a key for conversion is eligible to live in
-  // this class.
+  // this structure, e.g., Segments::request_type_.
+  // Also, a key for conversion is eligible to live in this class.
 };
 
 }  // namespace mozc
