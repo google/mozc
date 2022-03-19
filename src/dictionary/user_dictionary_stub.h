@@ -30,6 +30,8 @@
 #ifndef MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 #define MOZC_DICTIONARY_USER_DICTIONARY_STUB_H_
 
+#include <string>
+
 #include "dictionary/dictionary_interface.h"
 #include "absl/strings/string_view.h"
 
