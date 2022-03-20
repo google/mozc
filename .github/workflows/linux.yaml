@@ -23,6 +23,7 @@ jobs:
 
       - name: setup
         run: |
+          sudo apt-get update
           sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
 
       - name: build

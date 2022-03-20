@@ -849,6 +849,10 @@ message ApplicationInfo {
 message CheckSpellingRequest {
   // spellchecker request.
   optional string text = 1;
+  // Run spelling correction if
+  // score(suggestion) - score(original) >= score_threshold.
+  // Used to control the precision/recall trade-off.
+  optional float score_threshold = 2;
 }
 
 // Spellchecker response.

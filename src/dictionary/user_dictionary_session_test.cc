@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_session.h"
 
 #include <cstdint>
+#include <string>
 
 #ifndef OS_WIN
 #include <sys/stat.h>

@@ -30,6 +30,7 @@
 #include "dictionary/user_dictionary_util.h"
 
 #include <cstdint>
+#include <string>
 
 #include "base/util.h"
 #include "testing/base/public/googletest.h"

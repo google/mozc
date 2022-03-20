@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/port.h"
