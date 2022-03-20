@@ -359,10 +359,18 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
     return;
   }
   DCHECK(!server_address_.empty());
+  if (server_address_.size() >= UNIX_PATH_MAX) {
+    LOG(WARNING) << "server address is too long";
+    return;
+  }
 
-  const std::string dirname = FileUtil::Dirname(server_address_);
-  if (absl::Status s = mkdir_p(dirname); !s.ok()) {
-    LOG(ERROR) << s << ": Cannot create " << dirname;
+  const bool is_file_socket = !IsAbstractSocket(server_address_);
+  if (is_file_socket) {
+    // Linux does not use files for IPC.
+    const std::string dirname = FileUtil::Dirname(server_address_);
+    if (absl::Status s = mkdir_p(dirname); !s.ok()) {
+      LOG(ERROR) << s << ": Cannot create " << dirname;
+    }
   }
 
   sockaddr_un addr;
@@ -374,11 +382,6 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   }
   SetCloseOnExecFlag(socket_);
 
-  if (server_address_.size() >= UNIX_PATH_MAX) {
-    LOG(WARNING) << "server address is too long";
-    return;
-  }
-
   addr.sun_family = AF_UNIX;
   ::memcpy(addr.sun_path, server_address_.data(), server_address_.size());
   addr.sun_path[server_address_.size()] = '\0';
@@ -387,7 +390,7 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   ::setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&on),
                sizeof(on));
   const size_t sun_len = sizeof(addr.sun_family) + server_address_.size();
-  if (!IsAbstractSocket(server_address_)) {
+  if (is_file_socket) {
     // Linux does not use files for IPC.
     ::chmod(server_address_.c_str(), 0600);
   }
