@@ -41,6 +41,7 @@ genrule(
         "//data/images:half_ascii.svg",
         "//data/images:half_katakana.svg",
         "//data/images:hiragana.svg",
+        "//data/images:icon.svg",
         "//data/images/unix:48x48/alpha_full.png",
         "//data/images/unix:48x48/alpha_half.png",
         "//data/images/unix:48x48/direct.png",

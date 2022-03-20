@@ -35,4 +35,5 @@ exports_files([
     "half_ascii.svg",
     "half_katakana.svg",
     "hiragana.svg",
+    "icon.svg",
 ])
