@@ -42,6 +42,7 @@ from xml.dom import minidom
 
 RENAME_RULES = {
     'product_icon_32bpp-128.png': 'mozc.png',
+    'icon.svg': 'mozc.svg',
     'full_ascii.svg': 'alpha_full.svg',
     'full_katakana.svg': 'katakana_full.svg',
     'half_ascii.svg': 'alpha_half.svg',
