@@ -46,6 +46,7 @@
 #include <QPushButton>
 #include <QString>
 #include <QTableWidget>
+#include <map>
 #include <memory>
 
 #include "base/logging.h"
@@ -56,65 +57,60 @@ namespace mozc {
 namespace gui {
 
 namespace {
-struct QtKeyEntry {
-  Qt::Key qt_key;
-  const char *mozc_key_name;
-};
+static const auto *kQtKeyModifierNonRequiredTable =
+    new std::map<const int, const char *>({
+        {Qt::Key_Escape, "Escape"},
+        {Qt::Key_Tab, "Tab"},
+        {Qt::Key_Backtab, "Tab"},  // Qt handles Tab + Shift as a special key
+        {Qt::Key_Backspace, "Backspace"},
+        {Qt::Key_Return, "Enter"},
+        {Qt::Key_Enter, "Enter"},
+        {Qt::Key_Insert, "Insert"},
+        {Qt::Key_Delete, "Delete"},
+        {Qt::Key_Home, "Home"},
+        {Qt::Key_End, "End"},
+        {Qt::Key_Left, "Left"},
+        {Qt::Key_Up, "Up"},
+        {Qt::Key_Right, "Right"},
+        {Qt::Key_Down, "Down"},
+        {Qt::Key_PageUp, "PageUp"},
+        {Qt::Key_PageDown, "PageDown"},
+        {Qt::Key_Space, "Space"},
+        {Qt::Key_F1, "F1"},
+        {Qt::Key_F2, "F2"},
+        {Qt::Key_F3, "F3"},
+        {Qt::Key_F4, "F4"},
+        {Qt::Key_F5, "F5"},
+        {Qt::Key_F6, "F6"},
+        {Qt::Key_F7, "F7"},
+        {Qt::Key_F8, "F8"},
+        {Qt::Key_F9, "F9"},
+        {Qt::Key_F10, "F10"},
+        {Qt::Key_F11, "F11"},
+        {Qt::Key_F12, "F12"},
+        {Qt::Key_F13, "F13"},
+        {Qt::Key_F14, "F14"},
+        {Qt::Key_F15, "F15"},
+        {Qt::Key_F16, "F16"},
+        {Qt::Key_F17, "F17"},
+        {Qt::Key_F18, "F18"},
+        {Qt::Key_F19, "F19"},
+        {Qt::Key_F20, "F20"},
+        {Qt::Key_F21, "F21"},
+        {Qt::Key_F22, "F22"},
+        {Qt::Key_F23, "F23"},
+        {Qt::Key_F24, "F24"},
 
-// TODO(taku): check it these mappings are correct.
-const QtKeyEntry kQtKeyModifierNonRequiredTable[] = {
-    {Qt::Key_Escape, "Escape"},
-    {Qt::Key_Tab, "Tab"},
-    {Qt::Key_Backtab, "Tab"},  // Qt handles Tab + Shift as a special key
-    {Qt::Key_Backspace, "Backspace"},
-    {Qt::Key_Return, "Enter"},
-    {Qt::Key_Enter, "Enter"},
-    {Qt::Key_Insert, "Insert"},
-    {Qt::Key_Delete, "Delete"},
-    {Qt::Key_Home, "Home"},
-    {Qt::Key_End, "End"},
-    {Qt::Key_Left, "Left"},
-    {Qt::Key_Up, "Up"},
-    {Qt::Key_Right, "Right"},
-    {Qt::Key_Down, "Down"},
-    {Qt::Key_PageUp, "PageUp"},
-    {Qt::Key_PageDown, "PageDown"},
-    {Qt::Key_Space, "Space"},
-    {Qt::Key_F1, "F1"},
-    {Qt::Key_F2, "F2"},
-    {Qt::Key_F3, "F3"},
-    {Qt::Key_F4, "F4"},
-    {Qt::Key_F5, "F5"},
-    {Qt::Key_F6, "F6"},
-    {Qt::Key_F7, "F7"},
-    {Qt::Key_F8, "F8"},
-    {Qt::Key_F9, "F9"},
-    {Qt::Key_F10, "F10"},
-    {Qt::Key_F11, "F11"},
-    {Qt::Key_F12, "F12"},
-    {Qt::Key_F13, "F13"},
-    {Qt::Key_F14, "F14"},
-    {Qt::Key_F15, "F15"},
-    {Qt::Key_F16, "F16"},
-    {Qt::Key_F17, "F17"},
-    {Qt::Key_F18, "F18"},
-    {Qt::Key_F19, "F19"},
-    {Qt::Key_F20, "F20"},
-    {Qt::Key_F21, "F21"},
-    {Qt::Key_F22, "F22"},
-    {Qt::Key_F23, "F23"},
-    {Qt::Key_F24, "F24"},
-
-    {Qt::Key_Muhenkan, "Muhenkan"},
-    {Qt::Key_Henkan, "Henkan"},
-    {Qt::Key_Hiragana, "Hiragana"},
-    {Qt::Key_Katakana, "Katakana"},
-    // We need special hack for Hiragana_Katakana key. For the detail, please
-    // see KeyBindingFilter::AddKey implementation.
-    {Qt::Key_Hiragana_Katakana, "Hiragana"},
-    {Qt::Key_Eisu_toggle, "Eisu"},
-    {Qt::Key_Zenkaku_Hankaku, "Hankaku/Zenkaku"},
-};
+        {Qt::Key_Muhenkan, "Muhenkan"},
+        {Qt::Key_Henkan, "Henkan"},
+        {Qt::Key_Hiragana, "Hiragana"},
+        {Qt::Key_Katakana, "Katakana"},
+        // We need special hack for Hiragana_Katakana key. For the detail,
+        // please see KeyBindingFilter::AddKey implementation.
+        {Qt::Key_Hiragana_Katakana, "Hiragana"},
+        {Qt::Key_Eisu_toggle, "Eisu"},
+        {Qt::Key_Zenkaku_Hankaku, "Hankaku/Zenkaku"},
+    });
 
 #ifdef OS_WIN
 struct WinVirtualKeyEntry {
@@ -368,12 +364,10 @@ KeyBindingFilter::KeyState KeyBindingFilter::AddKey(const QKeyEvent &key_event,
   }
 
   // non-printable command, which doesn't require modifier keys
-  for (size_t i = 0; i < std::size(kQtKeyModifierNonRequiredTable); ++i) {
-    if (kQtKeyModifierNonRequiredTable[i].qt_key == qt_key) {
-      modifier_non_required_key_ =
-          QLatin1String(kQtKeyModifierNonRequiredTable[i].mozc_key_name);
-      return Encode(result);
-    }
+  const auto it = kQtKeyModifierNonRequiredTable->find(qt_key);
+  if (it != kQtKeyModifierNonRequiredTable->end()) {
+    modifier_non_required_key_ = QLatin1String(it->second);
+    return Encode(result);
   }
 
 #ifdef OS_WIN
