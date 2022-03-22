@@ -189,6 +189,7 @@
       'conditions': [
         ['enable_gtk_renderer==1', {
           'dependencies': [
+            '../../protocol/protocol.gyp:renderer_proto',
             'gtk_candidate_window_handler',
           ],
         }],
