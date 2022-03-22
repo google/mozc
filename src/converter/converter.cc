@@ -87,6 +87,40 @@ void SetKey(Segments *segments, const std::string &key) {
   VLOG(2) << segments->DebugString();
 }
 
+bool ShouldSetKeyForPrediction(const Segments &segments,
+                               const std::string &key) {
+  // (1) If the original request is not prediction relating one
+  //   (e.g. conversion), invoke SetKey because current segments has
+  //   data for conversion, not prediction.
+  // (2) If the segment size is 0, invoke SetKey because the segments is not
+  //   correctly prepared.
+  //   If the key of the segments differs from the input key,
+  //   invoke SetKey because current segments should be completely reset.
+  // (3) Otherwise keep current key and candidates.
+  //
+  // This SetKey omitting is for mobile predictor.
+  // On normal inputting, we are showing suggestion results. When users
+  // push expansion button, we will add prediction results just after the
+  // suggestion results. For this, we don't reset segments for prediction.
+  // However, we don't have to do so for suggestion. Here, we are deciding
+  // whether the input key is changed or not by using segment key. This is not
+  // perfect because for roman input, conversion key is not updated by
+  // incomplete input, for example, conversion key is "あ" for the input "a",
+  // and will still be "あ" for the input "ak". For avoiding mis-reset of
+  // the results, we will reset always for suggestion request type.
+  const Segments::RequestType original_request_type = segments.request_type();
+  if (original_request_type != Segments::PREDICTION &&
+      original_request_type != Segments::PARTIAL_PREDICTION) {
+    // SetKey: (1) The original request is not prediction related.
+    return true;
+  }
+  if (segments.conversion_segments_size() == 0 ||
+      segments.conversion_segment(0).key() != key) {
+    return true;  // SetKey for (2)
+  }
+  return false;  // (3)
+}
+
 bool IsMobile(const ConversionRequest &request) {
   return request.request().zero_query_suggestion() &&
          request.request().mixed_conversion();
@@ -359,30 +393,7 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
                             const std::string &key,
                             const Segments::RequestType request_type,
                             Segments *segments) const {
-  const Segments::RequestType original_request_type = segments->request_type();
-  if ((original_request_type != Segments::PREDICTION &&
-       original_request_type != Segments::PARTIAL_PREDICTION) ||
-      segments->conversion_segments_size() == 0 ||
-      segments->conversion_segment(0).key() != key) {
-    // - If the original request is not prediction relating one
-    //   (e.g. conversion), invoke SetKey because current segments has
-    //   data for conversion, not prediction.
-    // - If the segment size is 0, invoke SetKey because the segments is not
-    //   correctly prepared.
-    // - If the key of the segments differs from the input key,
-    //   invoke SetKey because current segments should be completely reset.
-    // - Otherwise keep current key and candidates.
-    //
-    // This SetKey omitting is for mobile predictor.
-    // On normal inputting, we are showing suggestion results. When users
-    // push expansion button, we will add prediction results just after the
-    // suggestion results. For this, we don't reset segments for prediction.
-    // However, we don't have to do so for suggestion. Here, we are deciding
-    // whether the input key is changed or not by using segment key. This is not
-    // perfect because for roman input, conversion key is not updated by
-    // incomplete input, for example, conversion key is "あ" for the input "a",
-    // and will still be "あ" for the input "ak". For avoiding mis-reset of
-    // the results, we will reset always for suggestion request type.
+  if (ShouldSetKeyForPrediction(*segments, key)) {
     SetKey(segments, key);
   }
   DCHECK_EQ(1, segments->conversion_segments_size());
