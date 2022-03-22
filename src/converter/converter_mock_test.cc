@@ -196,16 +196,6 @@ TEST_F(ConverterMockTest, SetFocusSegmentValue) {
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
-TEST_F(ConverterMockTest, SetFreeSegmentValue) {
-  ConverterInterface *converter = GetMock();
-
-  Segments output, expect;
-  SetSegments(&expect, "FreeSegmentValue");
-  GetMock()->SetFreeSegmentValue(&expect, true);
-  EXPECT_TRUE(converter->FreeSegmentValue(&output, 1));
-  EXPECT_EQ(expect.DebugString(), output.DebugString());
-}
-
 TEST_F(ConverterMockTest, SetCommitSegments) {
   ConverterInterface *converter = GetMock();
 
@@ -435,24 +425,6 @@ TEST_F(ConverterMockTest, GetFocusSegmentValue) {
   EXPECT_EQ(input_str, last_segment_str);
   EXPECT_EQ(input_idx, last_idx);
   EXPECT_EQ(input_cidx, last_cidx);
-}
-
-TEST_F(ConverterMockTest, GetFreeSegmentValue) {
-  ConverterInterface *converter = GetMock();
-
-  Segments input;
-  size_t input_idx = 1;
-  SetSegments(&input, "FreeSegmentValue");
-  const std::string input_str = input.DebugString();
-  converter->FreeSegmentValue(&input, input_idx);
-
-  Segments last_segment;
-  size_t last_idx;
-  GetMock()->GetFreeSegmentValue(&last_segment, &last_idx);
-  const std::string last_segment_str = last_segment.DebugString();
-
-  EXPECT_EQ(input_str, last_segment_str);
-  EXPECT_EQ(input_idx, last_idx);
 }
 
 TEST_F(ConverterMockTest, GetCommitSegments) {

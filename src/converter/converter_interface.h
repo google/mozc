@@ -146,10 +146,6 @@ class ConverterInterface {
   virtual bool FocusSegmentValue(Segments *segments, size_t segment_index,
                                  int candidate_index) const = 0;
 
-  // Revert the operation of CommitSegment
-  virtual bool FreeSegmentValue(Segments *segments,
-                                size_t segment_index) const = 0;
-
   // Commit segments of which the range is [0, candidate_index.size()]
   // and move the candidates into history segment temporally.
   // Session can use this method for PartialCommit.

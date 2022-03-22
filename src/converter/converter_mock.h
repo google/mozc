@@ -64,7 +64,6 @@ class ConverterMock : public ConverterInterface {
   void SetCommitSegmentValue(Segments *segments, bool result);
   void SetCommitPartialSuggestionSegmentValue(Segments *segments, bool result);
   void SetFocusSegmentValue(Segments *segments, bool result);
-  void SetFreeSegmentValue(Segments *segments, bool result);
   void SetCommitSegments(Segments *segments, bool result);
   void SetResizeSegment1(Segments *segments, bool result);
   void SetResizeSegment2(Segments *segments, bool result);
@@ -100,7 +99,6 @@ class ConverterMock : public ConverterInterface {
                                               std::string *new_segment_key);
   void GetFocusSegmentValue(Segments *segments, size_t *segment_index,
                             int *candidate_index);
-  void GetFreeSegmentValue(Segments *segments, size_t *segment_index);
   void GetCommitSegments(Segments *segments,
                          std::vector<size_t> *candidate_index);
   void GetResizeSegment1(Segments *segments, size_t *segment_index,
@@ -147,8 +145,6 @@ class ConverterMock : public ConverterInterface {
       absl::string_view new_segment_key) const override;
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const override;
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;
@@ -204,7 +200,6 @@ class ConverterMock : public ConverterInterface {
   mutable ConverterInput commitsegmentvalue_input_;
   mutable ConverterInput commitpartialsuggestionsegmentvalue_input_;
   mutable ConverterInput focussegmentvalue_input_;
-  mutable ConverterInput freesegmentvalue_input_;
   mutable ConverterInput submitsegments_input_;
   mutable ConverterInput resizesegment1_input_;
   mutable ConverterInput resizesegment2_input_;
@@ -228,7 +223,6 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput commitsegmentvalue_output_;
   ConverterOutput commitpartialsuggestionsegmentvalue_output_;
   ConverterOutput focussegmentvalue_output_;
-  ConverterOutput freesegmentvalue_output_;
   ConverterOutput submitsegments_output_;
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;

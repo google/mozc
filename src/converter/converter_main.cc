@@ -328,10 +328,6 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
     std::vector<size_t> singleton_vector;
     singleton_vector.push_back(NumberUtil::SimpleAtoi(fields[1]));
     return converter.CommitSegments(segments, singleton_vector);
-  } else if (func == "freesegmentvalue" || func == "free") {
-    CHECK_FIELDS_LENGTH(2);
-    return converter.FreeSegmentValue(segments,
-                                      NumberUtil::SimpleAtoi(fields[1]));
   } else if (func == "resizesegment" || func == "resize") {
     if (fields.size() == 3) {
       return converter.ResizeSegment(segments, *conversion_request,

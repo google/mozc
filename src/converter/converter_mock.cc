@@ -163,12 +163,6 @@ void ConverterMock::SetFocusSegmentValue(Segments *segments, bool result) {
   focussegmentvalue_output_.return_value = result;
 }
 
-void ConverterMock::SetFreeSegmentValue(Segments *segments, bool result) {
-  freesegmentvalue_output_.initialized = true;
-  freesegmentvalue_output_.segments = *segments;
-  freesegmentvalue_output_.return_value = result;
-}
-
 void ConverterMock::SetCommitSegments(Segments *segments, bool result) {
   submitsegments_output_.initialized = true;
   submitsegments_output_.segments = *segments;
@@ -289,12 +283,6 @@ void ConverterMock::GetFocusSegmentValue(Segments *segments,
   *segments = focussegmentvalue_input_.segments;
   *segment_index = focussegmentvalue_input_.segment_index;
   *candidate_index = focussegmentvalue_input_.candidate_index;
-}
-
-void ConverterMock::GetFreeSegmentValue(Segments *segments,
-                                        size_t *segment_index) {
-  *segments = freesegmentvalue_input_.segments;
-  *segment_index = freesegmentvalue_input_.segment_index;
 }
 
 void ConverterMock::GetCommitSegments(Segments *segments,
@@ -587,20 +575,6 @@ bool ConverterMock::FocusSegmentValue(Segments *segments, size_t segment_index,
   } else {
     *segments = focussegmentvalue_output_.segments;
     return focussegmentvalue_output_.return_value;
-  }
-}
-
-bool ConverterMock::FreeSegmentValue(Segments *segments,
-                                     size_t segment_index) const {
-  VLOG(2) << "mock function: FreeSegmentValue";
-  freesegmentvalue_input_.segments = *segments;
-  freesegmentvalue_input_.segment_index = segment_index;
-
-  if (!freesegmentvalue_output_.initialized) {
-    return false;
-  } else {
-    *segments = freesegmentvalue_output_.segments;
-    return freesegmentvalue_output_.return_value;
   }
 }
 

@@ -645,23 +645,6 @@ bool ConverterImpl::FocusSegmentValue(Segments *segments, size_t segment_index,
   return rewriter_->Focus(segments, segment_index, candidate_index);
 }
 
-bool ConverterImpl::FreeSegmentValue(Segments *segments,
-                                     size_t segment_index) const {
-  segment_index = GetSegmentIndex(segments, segment_index);
-  if (segment_index == kErrorIndex) {
-    return false;
-  }
-
-  Segment *segment = segments->mutable_segment(segment_index);
-  segment->set_segment_type(Segment::FREE);
-
-  if (segments->request_type() != Segments::CONVERSION) {
-    return false;
-  }
-
-  return immutable_converter_->Convert(segments);
-}
-
 bool ConverterImpl::CommitSegments(
     Segments *segments, const std::vector<size_t> &candidate_index) const {
   const size_t conversion_segment_index = segments->history_segments_size();

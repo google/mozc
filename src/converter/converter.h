@@ -104,8 +104,6 @@ class ConverterImpl : public ConverterInterface {
       absl::string_view new_segment_key) const override;
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const override;
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;

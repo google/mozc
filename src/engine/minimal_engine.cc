@@ -185,11 +185,6 @@ class MinimalConverter : public ConverterInterface {
     return true;
   }
 
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const override {
-    return true;
-  }
-
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override {
