@@ -45,6 +45,7 @@
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:serialized_string_array',
+        '../base/base.gyp:version',
         '../protocol/protocol.gyp:segmenter_data_proto',
         'dataset_reader',
         'serialized_dictionary',
@@ -115,8 +116,9 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:base_core',
-        'dataset_writer',
+        '../base/base.gyp:number_util',
         'dataset_proto',
+        'dataset_writer',
       ],
     },
     {
@@ -129,6 +131,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../base/base.gyp:serialized_string_array',
       ],
     },

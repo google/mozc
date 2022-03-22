@@ -237,6 +237,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../base/base.gyp:version',
         'gen_ibus_mozc_files',
         'gen_mozc_xml',
         'ibus_mozc_lib',

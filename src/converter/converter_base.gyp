@@ -121,6 +121,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:japanese_util',
         '../config/config.gyp:config_handler',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
@@ -168,6 +169,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
       ],
     },
   ],

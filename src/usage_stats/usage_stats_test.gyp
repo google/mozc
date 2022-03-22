@@ -68,6 +68,7 @@
         'usage_stats_uploader_test.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:version',
         '../testing/testing.gyp:gtest_main',
         'usage_stats_base.gyp:usage_stats_uploader',
         'usage_stats_testing_util',

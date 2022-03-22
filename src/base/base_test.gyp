@@ -121,6 +121,7 @@
         '../testing/testing.gyp:gtest_main',
         'absl.gyp:absl_strings',
         'base.gyp:base_core',
+        'base.gyp:version',
       ],
       'variables': {
         'test_size': 'small',
@@ -185,6 +186,7 @@
         '../testing/testing.gyp:mozctest',
         'absl.gyp:absl_strings',
         'base.gyp:base_core',
+        'base.gyp:number_util',
       ],
       'variables': {
         'test_size': 'small',
@@ -228,6 +230,7 @@
       'dependencies': [
         '../testing/testing.gyp:gtest_main',
         'base.gyp:base_core',
+        'base.gyp:number_util',
       ],
       'variables': {
         'test_size': 'small',

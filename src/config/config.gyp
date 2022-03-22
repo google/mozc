@@ -43,6 +43,7 @@
         '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../base/base.gyp:version',
         '../protocol/protocol.gyp:config_proto',
       ],
     },
@@ -67,6 +68,7 @@
         'config_handler',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../base/base.gyp:japanese_util',
         '../protocol/protocol.gyp:config_proto',
         # storage.gyp:storage is depended by character_form_manager.
         # TODO(komatsu): delete this line.

@@ -309,6 +309,7 @@
         '../base/absl.gyp:absl_status',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../data/test/session/scenario/scenario.gyp:install_session_handler_scenario_test_data',
         '../data/test/session/scenario/usage_stats/usage_stats.gyp:install_session_handler_usage_stats_scenario_test_data',
         '../engine/engine.gyp:mock_data_engine_factory',

@@ -61,6 +61,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
       ],
     },
   ],

@@ -71,6 +71,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../base/base.gyp:serialized_string_array',
         '../base/base_test.gyp:clock_mock',
         '../converter/converter.gyp:converter',
