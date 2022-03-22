@@ -29,6 +29,8 @@
 
 #include "unix/ibus/path_util.h"
 
+#include <string>
+
 #ifndef MOZC_IBUS_INSTALL_DIR
 #define MOZC_IBUS_INSTALL_DIR "/usr/share/ibus-mozc"
 #endif  // MOZC_IBUS_INSTALL_DIR
