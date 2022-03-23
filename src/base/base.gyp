@@ -97,7 +97,6 @@
       'toolsets': ['host', 'target'],
       'sources': [
         '<(gen_out_dir)/character_set.inc',
-        '<(gen_out_dir)/version_def.h',
         'environ.cc',
         'file_stream.cc',
         'file_util.cc',
@@ -114,7 +113,6 @@
         'clock',
         'flags',
         'gen_character_set#host',
-        'gen_version_def#host',
         'hash',
         'singleton',
         'absl.gyp:absl_status',
@@ -184,9 +182,11 @@
       'type': 'static_library',
       'toolsets': ['host', 'target'],
       'sources': [
+        '<(gen_out_dir)/version_def.h',
         'version.cc',
       ],
       'dependencies': [
+        'gen_version_def#host',
         'number_util',
       ],
     },
