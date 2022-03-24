@@ -29,6 +29,8 @@
 
 #include "client/client_mock.h"
 
+#include <string>
+
 #include "base/logging.h"
 #include "protocol/config.pb.h"
 #include "absl/synchronization/mutex.h"
