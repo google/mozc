@@ -107,7 +107,7 @@ class MozcModeSubAction : public SimpleAction {
   mozc::commands::CompositionMode mode_;
 };
 
-class MozcEngine final : public InputMethodEngine {
+class MozcEngine final : public InputMethodEngineV2 {
  public:
   MozcEngine(Instance *instance);
   ~MozcEngine();
@@ -122,6 +122,9 @@ class MozcEngine final : public InputMethodEngine {
   void save() override;
   std::string subMode(const fcitx::InputMethodEntry &,
                       fcitx::InputContext &) override;
+  std::string subModeIconImpl(const InputMethodEntry &entry,
+                              InputContext &ic) override;
+
   const Configuration *getConfig() const override { return &config_; }
   void setConfig(const RawConfig &config) override;
 

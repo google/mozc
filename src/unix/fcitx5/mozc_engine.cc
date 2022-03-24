@@ -269,6 +269,11 @@ std::string MozcEngine::subMode(const fcitx::InputMethodEntry &,
   return modeAction_.longText(&ic);
 }
 
+std::string MozcEngine::subModeIconImpl(const fcitx::InputMethodEntry &,
+                                        fcitx::InputContext &ic) {
+  return modeAction_.icon(&ic);
+}
+
 MozcState *MozcEngine::mozcState(InputContext *ic) {
   return ic->propertyFor(&factory_);
 }
