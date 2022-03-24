@@ -13,7 +13,7 @@ android_sdk_repository(name = "androidsdk")
 
 # Android NDK version should be r11c+ for Abseil.
 # This rule refers to $ANDROID_NDK_HOME.
-android_ndk_repository(name = "androidndk")
+# android_ndk_repository(name = "androidndk")
 
 local_repository(
     name = "com_google_absl",

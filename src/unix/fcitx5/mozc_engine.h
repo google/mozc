@@ -84,18 +84,6 @@ FCITX_CONFIGURATION(
     ExternalOption aboutTool{this, "About Mozc", _("About Mozc"),
                              toolCommand("--mode=about_dialog")};);
 
-class MozcModeAction : public Action {
- public:
-  MozcModeAction(MozcEngine *engine) : engine_(engine) {}
-
-  std::string shortText(fcitx::InputContext *) const override;
-  std::string longText(fcitx::InputContext *) const override;
-  std::string icon(fcitx::InputContext *) const override;
-
- private:
-  MozcEngine *engine_;
-};
-
 class MozcModeSubAction : public SimpleAction {
  public:
   MozcModeSubAction(MozcEngine *engine, mozc::commands::CompositionMode mode);
@@ -143,14 +131,12 @@ class MozcEngine final : public InputMethodEngineV2 {
   std::unique_ptr<MozcConnection> connection_;
   std::unique_ptr<mozc::client::ClientInterface> client_;
   FactoryFor<MozcState> factory_;
-  MozcModeAction modeAction_;
   SimpleAction toolAction_;
   std::vector<std::unique_ptr<MozcModeSubAction>> modeActions_;
 
   SimpleAction configToolAction_, dictionaryToolAction_, addWordAction_,
       aboutAction_;
   Menu toolMenu_;
-  Menu modeMenu_;
   MozcEngineConfig config_;
   uint64 lastSyncTime_;
 
