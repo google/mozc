@@ -43,6 +43,9 @@
           'target_name': 'mozc_win32_build64',
           'type': 'none',
           'dependencies': [
+            '../../renderer/renderer.gyp:mozc_renderer',
+            '../../server/server.gyp:mozc_cache_service',
+            '../../server/server.gyp:mozc_server',
             '../broker/broker.gyp:mozc_broker64',
             '../ime/ime.gyp:mozc_ime',
             '../tip/tip.gyp:mozc_tip64',
