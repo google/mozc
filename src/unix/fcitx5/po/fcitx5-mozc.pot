@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2021-12-30 02:39+0000\n"
+"POT-Creation-Date: 2022-03-25 04:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,11 +15,11 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: mozc_engine.h:84 mozc_engine.cc:196
+#: mozc_engine.h:84 mozc_engine.cc:180
 msgid "About Mozc"
 msgstr ""
 
-#: mozc_engine.h:82 mozc_engine.cc:189
+#: mozc_engine.h:82 mozc_engine.cc:173
 msgid "Add Word"
 msgstr ""
 
@@ -27,15 +27,11 @@ msgstr ""
 msgid "Always"
 msgstr ""
 
-#: mozc_engine.cc:96
-msgid "Composition Mode"
-msgstr ""
-
-#: mozc_engine.h:78 mozc_engine.cc:173
+#: mozc_engine.h:78 mozc_engine.cc:157
 msgid "Configuration Tool"
 msgstr ""
 
-#: mozc_engine.h:80 mozc_engine.cc:181
+#: mozc_engine.h:80 mozc_engine.cc:165
 msgid "Dictionary Tool"
 msgstr ""
 
@@ -110,8 +106,8 @@ msgstr ""
 msgid "Press Escape to go back"
 msgstr ""
 
-#: mozc_engine.cc:159 mozc_engine.cc:160
-msgid "Tool"
+#: mozc_engine.cc:143 mozc_engine.cc:144
+msgid "Settings"
 msgstr ""
 
 #: mozc_engine.h:65
