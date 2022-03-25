@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-03-25 04:31+0000\n"
+"POT-Creation-Date: 2022-03-25 04:41+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: UTUMI Hirosi <utuhiro78@yahoo.co.jp>, 2022\n"
 "Language-Team: Japanese (https://www.transifex.com/fcitx/teams/12005/ja/)\n"
@@ -92,6 +92,10 @@ msgstr "初期モード"
 msgid "Japanese input method based on Mozc"
 msgstr "Mozc をベースとした日本語入力メソッド"
 
+#: mozc_engine.cc:143 mozc_engine.cc:144
+msgid "Mozc Settings"
+msgstr ""
+
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
 msgstr "Fcitx 5 用の Mozc"
@@ -110,10 +114,6 @@ msgstr "%s で用例表示"
 #: mozc_state.cc:405
 msgid "Press Escape to go back"
 msgstr "Esc キーを押して戻る"
-
-#: mozc_engine.cc:143 mozc_engine.cc:144
-msgid "Settings"
-msgstr ""
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
