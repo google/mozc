@@ -140,8 +140,8 @@ MozcEngine::MozcEngine(Instance *instance)
   }
   instance_->inputContextManager().registerProperty("mozcState", &factory_);
   instance_->userInterfaceManager().registerAction("mozc-tool", &toolAction_);
-  toolAction_.setShortText(_("Settings"));
-  toolAction_.setLongText(_("Settings"));
+  toolAction_.setShortText(_("Mozc Settings"));
+  toolAction_.setLongText(_("Mozc Settings"));
   toolAction_.setIcon("fcitx-mozc-tool");
 
   int i = 0;
