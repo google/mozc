@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_CONFIG_FILE_STREAM_H_
 #define MOZC_BASE_CONFIG_FILE_STREAM_H_
 
+#include <string>
+
 #include "base/file_stream.h"
 
 namespace mozc {
