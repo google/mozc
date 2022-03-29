@@ -570,5 +570,20 @@ TEST(FileUtilTest, FileUnlinker) {
   EXPECT_FALSE(FileUtil::FileExists(filename).ok());
 }
 
+TEST(FileUtilTest, LinkOrCopyFile) {
+  const std::string from = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
+                                              "link_or_copy_test_from.txt");
+  const std::string to = FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir),
+                                            "link_or_copy_test_to.txt");
+  ASSERT_OK(FileUtil::UnlinkIfExists(from));
+  ASSERT_OK(FileUtil::UnlinkIfExists(to));
+  EXPECT_TRUE(!FileUtil::LinkOrCopyFile(from, to).ok());
+  ASSERT_OK(FileUtil::SetContents(from, "test"));
+  EXPECT_OK(FileUtil::LinkOrCopyFile(from, to));
+  auto s = FileUtil::IsEqualFile(from, to);
+  EXPECT_OK(s);
+  EXPECT_TRUE(*s);
+}
+
 }  // namespace
 }  // namespace mozc
