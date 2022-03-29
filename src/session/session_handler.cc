@@ -410,6 +410,9 @@ bool SessionHandler::EvalCommand(commands::Command *command) {
     case commands::Input::CHECK_SPELLING:
       eval_succeeded = CheckSpelling(command);
       break;
+    case commands::Input::RELOAD_SPELL_CHECKER:
+      eval_succeeded = ReloadSpellChecker(command);
+      break;
     default:
       eval_succeeded = false;
   }
@@ -696,6 +699,10 @@ bool SessionHandler::CheckSpelling(commands::Command *command) {
     return true;
   }
 
+  return true;
+}
+
+bool SessionHandler::ReloadSpellChecker(commands::Command *command) {
   return true;
 }
 
