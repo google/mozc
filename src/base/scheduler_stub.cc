@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <map>
+#include <string>
 
 #include "base/logging.h"
 

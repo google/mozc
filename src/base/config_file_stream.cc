@@ -36,6 +36,7 @@
 #include <cstring>
 #include <map>
 #include <sstream>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"

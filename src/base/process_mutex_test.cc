@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <string>
 #endif  // OS_WIN
 
 #include "base/file_util.h"

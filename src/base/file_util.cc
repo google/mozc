@@ -41,6 +41,7 @@
 #endif  // OS_WIN
 
 #include <filesystem>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/logging.h"

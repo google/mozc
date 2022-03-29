@@ -32,12 +32,13 @@
 #ifdef OS_WIN
 #include <process.h>  // for _beginthreadex
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <pthread.h>
 #endif  // OS_WIN
 
 #include <atomic>
 #include <memory>
+#include <string>
 
 #include "base/logging.h"
 
@@ -199,7 +200,7 @@ void PThreadCancel(pthread_t thread_id) {
   }
 }
 
-#else
+#else  // OS_ANDROID
 
 void InitPThreadCancel() {
   // Nothing is required.

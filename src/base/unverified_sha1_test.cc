@@ -30,6 +30,7 @@
 #include "base/unverified_sha1.h"
 
 #include <cstdint>
+#include <string>
 
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
