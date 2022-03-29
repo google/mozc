@@ -43,6 +43,8 @@
 #include <QStyleFactory>
 #include <QtGui>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
 

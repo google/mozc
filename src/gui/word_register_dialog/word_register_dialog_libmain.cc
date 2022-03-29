@@ -30,6 +30,7 @@
 #include <QDialog>
 #include <QGuiApplication>
 #include <QtGui>
+#include <string>
 
 #include "base/system_util.h"
 #include "gui/base/singleton_window_helper.h"

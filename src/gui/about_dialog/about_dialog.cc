@@ -30,6 +30,7 @@
 #include "gui/about_dialog/about_dialog.h"
 
 #include <QtGui>
+#include <algorithm>
 #include <memory>
 #include <string>
 

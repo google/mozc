@@ -48,6 +48,7 @@
 #include <cstdlib>
 #include <memory>
 #include <sstream>
+#include <string>
 
 #include "base/config_file_stream.h"
 #include "base/logging.h"

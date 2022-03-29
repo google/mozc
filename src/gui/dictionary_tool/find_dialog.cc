@@ -32,6 +32,7 @@
 #include <QMessageBox>
 #include <QTableWidget>
 #include <QtGui>
+#include <algorithm>
 
 #include "base/logging.h"
 #include "gui/base/util.h"

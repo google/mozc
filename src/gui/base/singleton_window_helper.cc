@@ -38,6 +38,7 @@
 #endif  // OS_WIN
 
 #include <memory>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/logging.h"
