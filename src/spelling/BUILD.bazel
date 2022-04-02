@@ -42,9 +42,12 @@ cc_library_mozc(
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
     deps = [
+        "//base:file_util",
         "//base:port",
-        "//data_manager:data_manager_interface",
+        "//base:thread",
+        "//engine:engine_builder",
         "//protocol:commands_cc_proto",
+        "//protocol:engine_builder_cc_proto",
     ],
     alwayslink = 1,
 )
@@ -56,6 +59,7 @@ cc_test_mozc(
     deps = [
         ":spellchecker_service",
         "//base",
+        "//base:file_util",
         "//data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",

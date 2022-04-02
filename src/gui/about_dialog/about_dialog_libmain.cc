@@ -29,6 +29,7 @@
 
 #include <QGuiApplication>
 #include <QtGui>
+#include <string>
 
 #include "base/system_util.h"
 #include "gui/about_dialog/about_dialog.h"

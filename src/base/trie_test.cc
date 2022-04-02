@@ -29,6 +29,8 @@
 
 #include "base/trie.h"
 
+#include <string>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

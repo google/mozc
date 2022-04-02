@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <climits>  // for CHAR_BIT
 #include <cstdint>
+#include <string>
 #include <type_traits>
 
 #include "base/logging.h"

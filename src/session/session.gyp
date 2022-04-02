@@ -43,6 +43,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:version',
         '../composer/composer.gyp:key_parser',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:converter_util',
@@ -129,6 +130,7 @@
         ':session_usage_observer',
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../config/config.gyp:config_handler',
         '../engine/engine.gyp:engine_factory',
         '../protocol/protocol.gyp:commands_proto',
@@ -145,6 +147,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../config/config.gyp:stats_config_util',
         '../protocol/protocol.gyp:state_proto',
         '../usage_stats/usage_stats_base.gyp:usage_stats',
@@ -174,6 +177,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/base.gyp:japanese_util',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         'gen_session_stress_test_data#host',

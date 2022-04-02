@@ -385,14 +385,6 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
               return l.first < r.first;
             });
 
-  // TODO(taku): Add test case for spellchecker_model_data once
-  // the actual model is ready to use. To test the behavior, we have
-  // to submit the actual model file.
-  if (!reader.Get("spellchecker_model_data", &spellchecker_model_data_)) {
-    spellchecker_model_data_ = "";
-    LOG(WARNING) << "Spellchecker model is not available. Ignored.";
-  }
-
   if (!reader.Get("version", &data_version_)) {
     LOG(ERROR) << "Cannot find data version";
     return Status::DATA_MISSING;
@@ -591,11 +583,6 @@ void DataManager::GetUsageRewriterData(
   *string_array_data = usage_string_array_data_;
 }
 #endif  // NO_USAGE_REWRITER
-
-void DataManager::GetSpellcheckerModelData(
-    absl::string_view *spellchecker_model_data) const {
-  *spellchecker_model_data = spellchecker_model_data_;
-}
 
 absl::string_view DataManager::GetTypingModel(const std::string &name) const {
   const auto iter = std::lower_bound(

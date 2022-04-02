@@ -58,6 +58,7 @@
       'dependencies': [
         '../../base/absl.gyp:absl_status',
         '../../base/base.gyp:base_core',
+        '../../base/base.gyp:japanese_util',
         '../../request/request.gyp:conversion_request',
         '../../storage/louds/louds.gyp:bit_vector_based_array',
         '../../storage/louds/louds.gyp:louds_trie',
@@ -91,6 +92,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base_core',
+        '../../base/base.gyp:japanese_util',
         '../../storage/louds/louds.gyp:bit_vector_based_array_builder',
         '../../storage/louds/louds.gyp:louds_trie_builder',
         '../dictionary_base.gyp:pos_matcher',

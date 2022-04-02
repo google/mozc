@@ -30,6 +30,7 @@
 #include "gui/base/encoding_util.h"
 
 #include <cstdint>
+#include <string>
 
 #include "base/port.h"
 #include "base/util.h"

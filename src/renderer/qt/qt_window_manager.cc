@@ -29,6 +29,7 @@
 
 #include "renderer/qt/qt_window_manager.h"
 
+#include <algorithm>
 #include <string>
 
 #include "base/logging.h"

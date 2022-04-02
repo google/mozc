@@ -46,6 +46,7 @@
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../base/base.gyp:config_file_stream',
+        '../base/base.gyp:number_util',
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:immutable_converter',

@@ -41,6 +41,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <string>
 
 #include "base/const.h"
 #include "base/file_stream.h"

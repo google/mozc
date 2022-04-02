@@ -51,7 +51,7 @@ config_setting(
     values = {
         "compilation_mode": "opt",
     },
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:private"],
 )
 
 # Special target so as to define special macros for each platforms.

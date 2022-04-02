@@ -32,6 +32,7 @@
 #include <QHeaderView>
 #include <QtGui>
 #include <memory>
+#include <string>
 
 #include "config/config_handler.h"
 #include "gui/config_dialog/combobox_delegate.h"

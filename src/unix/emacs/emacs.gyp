@@ -41,6 +41,7 @@
       'dependencies': [
         '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
+        '../../base/base.gyp:version',
         '../../config/config.gyp:config_handler',
         '../../ipc/ipc.gyp:ipc',
         '../../protocol/protocol.gyp:commands_proto',
@@ -58,6 +59,7 @@
       'dependencies': [
         '../../base/absl.gyp:absl_strings',
         '../../base/base.gyp:base',
+        '../../base/base.gyp:number_util',
         '../../client/client.gyp:client',
         '../../composer/composer.gyp:key_parser',
         '../../protocol/protocol.gyp:commands_proto',

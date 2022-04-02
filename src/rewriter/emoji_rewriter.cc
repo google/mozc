@@ -33,7 +33,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/japanese_util.h"
@@ -67,20 +69,10 @@ constexpr size_t kDefaultInsertPos = 6;
 using EmojiEntryList =
     std::vector<std::pair<absl::string_view, absl::string_view>>;
 
-// Inserts a candidate to the segment at insert_position.
-// Returns true if succeeded, otherwise false. Also, if succeeded, increments
-// the insert_position to represent the next insert position.
-bool InsertCandidate(absl::string_view key, absl::string_view value,
-                     absl::string_view description, int cost, Segment *segment,
-                     size_t *insert_position) {
-  Segment::Candidate *candidate = segment->insert_candidate(*insert_position);
-  if (candidate == nullptr) {
-    LOG(ERROR) << "cannot insert candidate at " << insert_position
-               << "th position nor tail of candidates.";
-    return false;
-  }
-  ++*insert_position;
-
+std::unique_ptr<Segment::Candidate> CreateCandidate(absl::string_view key,
+                                   absl::string_view value,
+                                   absl::string_view description, int cost) {
+  auto candidate = std::make_unique<Segment::Candidate>();
   candidate->Init();
   // Fill 0 (BOS/EOS) pos code intentionally.
   candidate->lid = 0;
@@ -98,22 +90,7 @@ bool InsertCandidate(absl::string_view key, absl::string_view value,
   candidate->attributes |= Segment::Candidate::NO_VARIANTS_EXPANSION;
   candidate->attributes |= Segment::Candidate::CONTEXT_SENSITIVE;
 
-  return true;
-}
-
-bool InsertEmojiData(absl::string_view key,
-                     EmojiRewriter::EmojiDataIterator iter,
-                     const SerializedStringArray &string_array, int cost,
-                     Segment *segment, size_t *insert_position) {
-  // Fill a candidate with Unicode emoji.
-  absl::string_view utf8_emoji = string_array[iter.emoji_index()];
-  if (utf8_emoji.empty()) {
-    return false;
-  }
-
-  return InsertCandidate(key, utf8_emoji,
-                         string_array[iter.description_utf8_index()], cost,
-                         segment, insert_position);
+  return candidate;
 }
 
 int GetEmojiCost(const Segment &segment) {
@@ -137,39 +114,32 @@ void GatherAllEmojiData(EmojiRewriter::EmojiDataIterator begin,
   std::sort(utf8_emoji_list->begin(), utf8_emoji_list->end());
 }
 
-bool GatherAndInsertAllEmojiData(absl::string_view key,
-                                 EmojiRewriter::EmojiDataIterator begin,
-                                 EmojiRewriter::EmojiDataIterator end,
-                                 const SerializedStringArray &string_array,
-                                 Segment *segment) {
-  EmojiEntryList utf8_emoji_list;
-  GatherAllEmojiData(begin, end, string_array, &utf8_emoji_list);
-
-  // Insert all candidates at the tail of the segment.
-  bool inserted = false;
-  size_t insert_position = segment->candidates_size();
-  const int cost = GetEmojiCost(*segment);
+std::vector<std::unique_ptr<Segment::Candidate>> CreateAllEmojiData(
+    absl::string_view key, const int cost, EmojiEntryList utf8_emoji_list) {
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(utf8_emoji_list.size());
   for (const auto &emoji_entry : utf8_emoji_list) {
-    inserted |= InsertCandidate(key, emoji_entry.first, emoji_entry.second,
-                                cost, segment, &insert_position);
+    candidates.emplace_back(
+        CreateCandidate(key, emoji_entry.first, emoji_entry.second, cost));
   }
-  return inserted;
+  return candidates;
 }
 
-bool InsertToken(absl::string_view key, EmojiRewriter::IteratorRange range,
-                 const SerializedStringArray &string_array, Segment *segment) {
-  bool inserted = false;
-
-  size_t insert_position =
-      RewriterUtil::CalculateInsertPosition(*segment, kDefaultInsertPos);
-  int cost = GetEmojiCost(*segment);
-  for (; range.first != range.second; ++range.first) {
-    inserted |= InsertEmojiData(key, range.first, string_array, cost, segment,
-                                &insert_position);
+std::vector<std::unique_ptr<Segment::Candidate>> CreateEmojiData(
+    absl::string_view key, const int cost, EmojiRewriter::IteratorRange range,
+    const SerializedStringArray &string_array) {
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(range.second - range.first);
+  for (auto iter = range.first; iter != range.second; ++iter) {
+    absl::string_view utf8_emoji = string_array[iter.emoji_index()];
+    if (utf8_emoji.empty()) {
+      continue;
+    }
+    candidates.emplace_back(CreateCandidate(
+        key, utf8_emoji, string_array[iter.description_utf8_index()], cost));
   }
-  return inserted;
+  return candidates;
 }
-
 }  // namespace
 
 EmojiRewriter::EmojiRewriter(const DataManagerInterface &data_manager) {
@@ -248,6 +218,19 @@ EmojiRewriter::LookUpToken(absl::string_view key) const {
 bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
   bool modified = false;
   std::string reading;
+
+  auto insert_candidates =
+      [](std::vector<std::unique_ptr<Segment::Candidate>> &&cands,
+         Segment *segment) -> bool {
+    if (cands.empty()) {
+      return false;
+    }
+    const size_t insert_position =
+      RewriterUtil::CalculateInsertPosition(*segment, kDefaultInsertPos);
+    segment->insert_candidates(insert_position, std::move(cands));
+    return true;
+  };
+
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *segment = segments->mutable_conversion_segment(i);
     japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key(), &reading);
@@ -257,16 +240,29 @@ bool EmojiRewriter::RewriteCandidates(Segments *segments) const {
 
     if (reading == kEmojiKey) {
       // When key is "えもじ", we expect to expand all Emoji characters.
-      modified |= GatherAndInsertAllEmojiData(reading, begin(), end(),
-                                              string_array_, segment);
+      EmojiEntryList utf8_emoji_list;
+      GatherAllEmojiData(begin(), end(), string_array_, &utf8_emoji_list);
+      if (utf8_emoji_list.empty()) {
+        continue;
+      }
+
+      const int cost = GetEmojiCost(*segment);
+      std::vector<std::unique_ptr<Segment::Candidate>> candidates =
+          CreateAllEmojiData(reading, cost, utf8_emoji_list);
+      modified |= insert_candidates(std::move(candidates), segment);
       continue;
     }
+
     const auto range = LookUpToken(reading);
     if (range.first == range.second) {
       VLOG(2) << "Token not found: " << reading;
       continue;
     }
-    modified |= InsertToken(reading, range, string_array_, segment);
+
+    const int cost = GetEmojiCost(*segment);
+    std::vector<std::unique_ptr<Segment::Candidate>> candidates =
+        CreateEmojiData(reading, cost, range, string_array_);
+    modified |= insert_candidates(std::move(candidates), segment);
   }
   return modified;
 }

@@ -44,6 +44,7 @@
 #endif  // platforms (OS_WIN, __APPLE__, ...)
 
 #include <memory>
+#include <string>
 
 #include "base/logging.h"
 #include "base/password_manager.h"

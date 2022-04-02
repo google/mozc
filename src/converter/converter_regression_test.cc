@@ -48,8 +48,6 @@
 namespace mozc {
 namespace {
 
-using commands::Request;
-using composer::Composer;
 using composer::Table;
 
 class ConverterRegressionTest : public ::testing::Test {

@@ -126,6 +126,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:japanese_util',
         '../base/base.gyp:serialized_string_array',
         '../data_manager/data_manager_base.gyp:data_manager',
         '../data_manager/data_manager_base.gyp:serialized_dictionary',

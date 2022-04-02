@@ -39,6 +39,7 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 
 #include "base/port.h"
 #include "testing/base/public/gunit.h"

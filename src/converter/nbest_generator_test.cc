@@ -63,7 +63,6 @@ namespace {
 using dictionary::DictionaryImpl;
 using dictionary::DictionaryInterface;
 using dictionary::PosGroup;
-using dictionary::PosMatcher;
 using dictionary::SuffixDictionary;
 using dictionary::SuppressionDictionary;
 using dictionary::SystemDictionary;

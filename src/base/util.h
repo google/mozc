@@ -38,8 +38,6 @@
 #include <vector>
 
 #include "base/double_array.h"
-// TODO(yukiokamoto): Removes dependency on "japanese_util.h".
-#include "base/japanese_util.h"
 #include "base/port.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
@@ -269,82 +267,6 @@ class Util {
   // Suspends the execution of the current thread until
   // the time-out interval elapses.
   static void Sleep(uint32_t msec);
-
-  // Japanese utilities for character form transliteration.
-  //
-  // TODO(yukiokamoto): Removes the dependencies on functions in japanese_util
-  // namespace. The following wrapper functions are currently necessary just for
-  // the existing callers to call the Japanese util functions with the same
-  // signatures as before (ie. Util::FuncName() rather than
-  // japanese_util::FuncName()). In the long term goal, all the callers should
-  // migrate to call japanese_util::FuncName() directly.
-  static void ConvertUsingDoubleArray(const japanese_util_rule::DoubleArray *da,
-                                      const char *ctable,
-                                      absl::string_view input,
-                                      std::string *output) {
-    japanese_util::ConvertUsingDoubleArray(da, ctable, input, output);
-  }
-
-  static void HiraganaToKatakana(absl::string_view input, std::string *output) {
-    japanese_util::HiraganaToKatakana(input, output);
-  }
-
-  static void HiraganaToHalfwidthKatakana(absl::string_view input,
-                                          std::string *output) {
-    japanese_util::HiraganaToHalfwidthKatakana(input, output);
-  }
-
-  static void HiraganaToRomanji(absl::string_view input, std::string *output) {
-    japanese_util::HiraganaToRomanji(input, output);
-  }
-
-  static void HalfWidthAsciiToFullWidthAscii(absl::string_view input,
-                                             std::string *output) {
-    japanese_util::HalfWidthAsciiToFullWidthAscii(input, output);
-  }
-
-  static void FullWidthAsciiToHalfWidthAscii(absl::string_view input,
-                                             std::string *output) {
-    japanese_util::FullWidthAsciiToHalfWidthAscii(input, output);
-  }
-
-  static void HiraganaToFullwidthRomanji(absl::string_view input,
-                                         std::string *output) {
-    japanese_util::HiraganaToFullwidthRomanji(input, output);
-  }
-
-  static void RomanjiToHiragana(absl::string_view input, std::string *output) {
-    japanese_util::RomanjiToHiragana(input, output);
-  }
-
-  static void KatakanaToHiragana(absl::string_view input, std::string *output) {
-    japanese_util::KatakanaToHiragana(input, output);
-  }
-
-  static void HalfWidthKatakanaToFullWidthKatakana(absl::string_view input,
-                                                   std::string *output) {
-    japanese_util::HalfWidthKatakanaToFullWidthKatakana(input, output);
-  }
-
-  static void FullWidthKatakanaToHalfWidthKatakana(absl::string_view input,
-                                                   std::string *output) {
-    japanese_util::FullWidthKatakanaToHalfWidthKatakana(input, output);
-  }
-
-  static void FullWidthToHalfWidth(absl::string_view input,
-                                   std::string *output) {
-    japanese_util::FullWidthToHalfWidth(input, output);
-  }
-
-  static void HalfWidthToFullWidth(absl::string_view input,
-                                   std::string *output) {
-    japanese_util::HalfWidthToFullWidth(input, output);
-  }
-
-  static void NormalizeVoicedSoundMark(absl::string_view input,
-                                       std::string *output) {
-    japanese_util::NormalizeVoicedSoundMark(input, output);
-  }
 
   // Returns true if all chars in input are both defined
   // in full width and half-width-katakana area

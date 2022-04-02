@@ -964,6 +964,9 @@ message Input {
     // Send a spell checking request.
     CHECK_SPELLING = 28;
 
+    // Sends reload spellchecker.
+    RELOAD_SPELL_CHECKER = 29;
+
     // Number of commands.
     // When new command is added, the command should use below number
     // and NUM_OF_COMMANDS should be incremented.
@@ -972,7 +975,7 @@ message Input {
     //       Please reuse these value if you can.
     //       15 have never been used before, and 19 was used to clear synced
     //       data on dev channel.
-    NUM_OF_COMMANDS = 29;
+    NUM_OF_COMMANDS = 30;
   }
   required CommandType type = 1;
 

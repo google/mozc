@@ -48,6 +48,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_synchronization',
         '../base/base.gyp:base',
+        '../base/base.gyp:version',
         'ipc_protocol',
       ],
       'conditions': [
@@ -131,6 +132,7 @@
         'process_watch_dog_test.cc',
       ],
       'dependencies': [
+        '../base/base.gyp:version',
         '../testing/testing.gyp:gtest_main',
         'ipc',
         'ipc_test_util',

@@ -29,6 +29,7 @@
 
 #include "unix/ibus/ibus_config.h"
 
+#include <string>
 #include <utility>
 
 #include "base/file_util.h"

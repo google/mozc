@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <string>
 
 #include "base/port.h"
 #include "testing/base/public/googletest.h"

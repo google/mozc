@@ -44,8 +44,8 @@ namespace ibus {
 // the input of session_interface.
 class KeyTranslator {
  public:
-  KeyTranslator();
-  virtual ~KeyTranslator();
+  KeyTranslator() = default;
+  virtual ~KeyTranslator() = default;
 
   // Converts ibus keycode to Mozc key code and stores them on |out_event|.
   // Returns true if ibus keycode is successfully converted to Mozc key code.
@@ -54,16 +54,6 @@ class KeyTranslator {
                  commands::KeyEvent *out_event) const;
 
  private:
-  typedef std::map<guint, commands::KeyEvent::SpecialKey> SpecialKeyMap;
-  typedef std::map<guint, commands::KeyEvent::ModifierKey> ModifierKeyMap;
-  typedef std::map<guint, std::pair<std::string, std::string> > KanaMap;
-
-  // Returns true iff key is modifier key such as SHIFT, ALT, or CAPSLOCK.
-  bool IsModifierKey(guint keyval, guint keycode, guint modifiers) const;
-
-  // Returns true iff key is special key such as ENTER, ESC, or PAGE_UP.
-  bool IsSpecialKey(guint keyval, guint keycode, guint modifiers) const;
-
   // Returns true iff |keyval| is a key with a kana assigned.
   bool IsKanaAvailable(guint keyval, guint keycode, guint modifiers,
                        bool layout_is_jp, std::string *out) const;
@@ -77,21 +67,6 @@ class KeyTranslator {
   // Returns true iff key is HiraganaKatakana with shift modifier.
   static bool IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
                                              guint modifiers);
-
-  // Initializes private fields.
-  void Init();
-
-  // Stores a mapping from ibus keys to Mozc's special keys.
-  SpecialKeyMap special_key_map_;
-  // Stores a mapping from ibus modifier keys to Mozc's modifier keys.
-  ModifierKeyMap modifier_key_map_;
-  // Stores a mapping from ibus modifier masks to Mozc's modifier keys.
-  ModifierKeyMap modifier_mask_map_;
-  // Stores a mapping from ASCII to Kana character. For example, ASCII character
-  // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
-  // 'Hiragana Letter Small U' (with Shift modifier).
-  KanaMap kana_map_jp_;  // mapping for JP keyboard.
-  KanaMap kana_map_us_;  // mapping for US keyboard.
 
   DISALLOW_COPY_AND_ASSIGN(KeyTranslator);
 };

@@ -47,7 +47,6 @@
 #include "absl/strings/str_split.h"
 
 namespace mozc {
-using commands::KeyEvent;
 
 namespace {
 

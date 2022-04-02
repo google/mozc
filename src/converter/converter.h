@@ -61,10 +61,6 @@ class ConverterImpl : public ConverterInterface {
             std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);
 
-  bool Predict(const ConversionRequest &request, const std::string &key,
-               const Segments::RequestType request_type,
-               Segments *segments) const;
-
   bool StartConversionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
   bool StartConversion(Segments *segments,
@@ -104,8 +100,6 @@ class ConverterImpl : public ConverterInterface {
       absl::string_view new_segment_key) const override;
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
-  bool FreeSegmentValue(Segments *segments,
-                        size_t segment_index) const override;
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;
@@ -121,6 +115,7 @@ class ConverterImpl : public ConverterInterface {
   FRIEND_TEST(ConverterTest, DefaultPredictor);
   FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
   FRIEND_TEST(ConverterTest, GetLastConnectivePart);
+  FRIEND_TEST(ConverterTest, Predict_SetKey);
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly
@@ -163,6 +158,10 @@ class ConverterImpl : public ConverterInterface {
   bool GetLastConnectivePart(const std::string &preceding_text,
                              std::string *key, std::string *value,
                              uint16_t *id) const;
+
+  bool Predict(const ConversionRequest &request, const std::string &key,
+               const Segments::RequestType request_type,
+               Segments *segments) const;
 
   const dictionary::PosMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;

@@ -29,6 +29,8 @@
 
 #include "unix/ibus/path_util.h"
 
+#include <string>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

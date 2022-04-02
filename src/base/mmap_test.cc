@@ -31,6 +31,7 @@
 
 #include <cstring>
 #include <memory>
+#include <string>
 
 #include "base/file_util.h"
 #include "base/util.h"

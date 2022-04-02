@@ -33,6 +33,7 @@
 
 #include <QGuiApplication>
 #include <QtGui>
+#include <string>
 
 #include "base/logging.h"
 #include "base/process_mutex.h"

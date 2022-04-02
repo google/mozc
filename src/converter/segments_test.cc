@@ -207,15 +207,34 @@ TEST(CandidateTest, BasicTest) {
   EXPECT_EQ(cand[1], segment.mutable_candidate(1));
   EXPECT_EQ(cand[4], segment.mutable_candidate(2));
 
+  // insert with a candidate
+  auto c0 = std::make_unique<Segment::Candidate>();
+  c0->value = "c0";
+  segment.insert_candidate(1, std::move(c0));
+  EXPECT_EQ(cand[0], segment.mutable_candidate(0));
+  EXPECT_EQ("c0", segment.candidate(1).value);
+  EXPECT_EQ(cand[1], segment.mutable_candidate(2));
+
   // insert multiple candidates
   std::vector<std::unique_ptr<Segment::Candidate>> cand_vec;
   cand[2] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
   cand[3] = cand_vec.emplace_back(std::make_unique<Segment::Candidate>()).get();
   segment.insert_candidates(2, std::move(cand_vec));
-  EXPECT_EQ(cand[1], segment.mutable_candidate(1));
+  EXPECT_EQ("c0", segment.candidate(1).value);
   EXPECT_EQ(cand[2], segment.mutable_candidate(2));
   EXPECT_EQ(cand[3], segment.mutable_candidate(3));
-  EXPECT_EQ(cand[4], segment.mutable_candidate(4));
+  EXPECT_EQ(cand[1], segment.mutable_candidate(4));
+  EXPECT_EQ(cand[4], segment.mutable_candidate(5));
+
+  // insert candidate with index out of the range.
+  segment.Clear();
+  EXPECT_EQ(0, segment.candidates_size());
+  auto c3 = std::make_unique<Segment::Candidate>();
+  segment.insert_candidate(-1, std::move(c3));  // less than lower
+  EXPECT_EQ(1, segment.candidates_size());
+  auto c4 = std::make_unique<Segment::Candidate>();
+  segment.insert_candidate(5, std::move(c4));  // more than upper
+  EXPECT_EQ(2, segment.candidates_size());
 
   // insert candidates with index out of the range.
   segment.Clear();

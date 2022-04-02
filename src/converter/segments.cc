@@ -34,6 +34,7 @@
 #include <limits>
 #include <sstream>  // For DebugString()
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"
@@ -312,6 +313,17 @@ Segment::Candidate *Segment::insert_candidate(int i) {
   candidate->Init();
   candidates_.insert(candidates_.begin() + i, candidate);
   return candidate;
+}
+
+void Segment::insert_candidate(int i, std::unique_ptr<Candidate> candidate) {
+  Candidate *cand_ptr = pool_.emplace_back(std::move(candidate)).get();
+  if (i <= 0) {
+    candidates_.push_front(cand_ptr);
+  } else if (i >= static_cast<int>(candidates_.size())) {
+    candidates_.push_back(cand_ptr);
+  } else {
+    candidates_.insert(candidates_.begin() + i, cand_ptr);
+  }
 }
 
 void Segment::insert_candidates(

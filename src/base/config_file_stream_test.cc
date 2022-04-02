@@ -33,6 +33,7 @@
 #include <ios>
 #include <istream>
 #include <memory>
+#include <string>
 
 #include "base/file_util.h"
 #include "base/system_util.h"

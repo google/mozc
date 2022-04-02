@@ -41,6 +41,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         'jsoncpp.gyp:jsoncpp',
       ],
     },
@@ -52,6 +53,7 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
+        '../base/base.gyp:number_util',
         '../protobuf/protobuf.gyp:protobuf',
         'jsoncpp.gyp:jsoncpp',
       ],

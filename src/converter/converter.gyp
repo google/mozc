@@ -42,6 +42,7 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
+        '../base/base.gyp:number_util',
         '../composer/composer.gyp:composer',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../prediction/prediction.gyp:prediction',

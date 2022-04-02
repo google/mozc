@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "base/password_manager.h"
 #include "base/system_util.h"

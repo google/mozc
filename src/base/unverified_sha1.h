@@ -30,6 +30,8 @@
 #ifndef MOZC_BASE_UNVERIFIED_SHA1_H_
 #define MOZC_BASE_UNVERIFIED_SHA1_H_
 
+#include <string>
+
 #include "base/port.h"
 #include "absl/strings/string_view.h"
 

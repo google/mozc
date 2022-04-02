@@ -40,6 +40,7 @@
       ],
       'dependencies': [
         '../../base/base.gyp:base',
+        '../../base/base.gyp:number_util',
       ],
       'msvs_disabled_warnings': [
         # switch statement contains 'default' but no 'case' labels

@@ -29,6 +29,8 @@
 
 #include "base/password_manager.h"
 
+#include <string>
+
 #include "base/system_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"

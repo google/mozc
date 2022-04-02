@@ -86,6 +86,7 @@
         'url.cc',
       ],
       'dependencies': [
+        'base.gyp:version',
         'base_core',  # for logging, util, version
         'singleton',
       ],
@@ -96,28 +97,23 @@
       'toolsets': ['host', 'target'],
       'sources': [
         '<(gen_out_dir)/character_set.inc',
-        '<(gen_out_dir)/version_def.h',
         'environ.cc',
         'file_stream.cc',
         'file_util.cc',
         'init_mozc.cc',
         'logging.cc',
         'mmap.cc',
-        'number_util.cc',
         'system_util.cc',
         'text_normalizer.cc',
         'thread.cc',
         'util.cc',
-        'version.cc',
         'win_util.cc',
       ],
       'dependencies': [
         'clock',
         'flags',
         'gen_character_set#host',
-        'gen_version_def#host',
         'hash',
-        'japanese_util',
         'singleton',
         'absl.gyp:absl_status',
         'absl.gyp:absl_strings',
@@ -168,6 +164,30 @@
       'sources': [
         'japanese_util.cc',
         'japanese_util_rule.cc',
+      ],
+    },
+    {
+      'target_name': 'number_util',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        'number_util.cc',
+      ],
+      'dependencies': [
+        'japanese_util',
+      ],
+    },
+    {
+      'target_name': 'version',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        '<(gen_out_dir)/version_def.h',
+        'version.cc',
+      ],
+      'dependencies': [
+        'gen_version_def#host',
+        'number_util',
       ],
     },
     {
@@ -403,6 +423,7 @@
       ],
       'dependencies': [
         'base',
+        'base.gyp:version',
       ],
       'conditions': [
         ['OS=="win" and branding=="GoogleJapaneseInput"', {
