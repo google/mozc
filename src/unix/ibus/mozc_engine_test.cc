@@ -41,7 +41,7 @@ namespace ibus {
 
 class LaunchToolTest : public testing::Test {
  public:
-  LaunchToolTest() { g_type_init(); }
+  LaunchToolTest() = default;
 
  protected:
   virtual void SetUp() {
