@@ -213,7 +213,7 @@ bool IsUpdated(const commands::RendererCommand &prev_command,
 
 int GetItemWidth(const QTableWidgetItem &item) {
   QFontMetrics metrics(item.font());
-  return metrics.width(item.text()) + kMarginWidth;
+  return metrics.boundingRect(item.text()).width() + kMarginWidth;
 }
 
 int GetItemHeight(const QTableWidgetItem &item) {
