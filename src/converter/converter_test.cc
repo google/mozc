@@ -1067,7 +1067,7 @@ TEST_F(ConverterTest, StartPartialSuggestion) {
   EXPECT_EQ("わたしは", segments.segment(0).candidate(0).content_key);
 }
 
-TEST_F(ConverterTest, StartPartialPrediction_mobile) {
+TEST_F(ConverterTest, StartPartialPredictionMobile) {
   std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
@@ -1078,7 +1078,7 @@ TEST_F(ConverterTest, StartPartialPrediction_mobile) {
   EXPECT_EQ("わたしは", segments.segment(0).candidate(0).content_key);
 }
 
-TEST_F(ConverterTest, StartPartialSuggestion_mobile) {
+TEST_F(ConverterTest, StartPartialSuggestionMobile) {
   std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
   ConverterInterface *converter = engine->GetConverter();
   CHECK(converter);
@@ -1123,7 +1123,7 @@ TEST_F(ConverterTest, MaybeSetConsumedKeySizeToSegment) {
             segment.meta_candidate(1).consumed_key_size);
 }
 
-TEST_F(ConverterTest, Predict_SetKey) {
+TEST_F(ConverterTest, PredictSetKey) {
   constexpr char kPredictionKey[] = "prediction key";
   constexpr char kPredictionKey2[] = "prediction key2";
   // Tests whether SetKey method is called or not.
@@ -1321,7 +1321,7 @@ TEST_F(ConverterTest, SuppressionDictionaryForRewriter) {
   }
 }
 
-TEST_F(ConverterTest, EmptyConvertReverse_Issue8661091) {
+TEST_F(ConverterTest, EmptyConvertReverseIssue8661091) {
   // This is a test case against b/8661091.
   std::unique_ptr<EngineInterface> engine =
       MockDataEngineFactory::Create().value();
@@ -1635,7 +1635,7 @@ TEST_F(ConverterTest, UserEntryShouldBePromoted) {
   }
 }
 
-TEST_F(ConverterTest, UserEntryShouldBePromoted_MobilePrediction) {
+TEST_F(ConverterTest, UserEntryShouldBePromotedMobilePrediction) {
   using user_dictionary::UserDictionary;
   std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
@@ -1694,7 +1694,7 @@ TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized) {
   }
 }
 
-TEST_F(ConverterTest, SuppressionEntryShouldBePrioritized_Prediction) {
+TEST_F(ConverterTest, SuppressionEntryShouldBePrioritizedPrediction) {
   using user_dictionary::UserDictionary;
   std::vector<UserDefinedEntry> user_defined_entries;
   // "哀" is not in the test dictionary
@@ -1742,7 +1742,7 @@ TEST_F(ConverterTest, AbbreviationShouldBeIndependent) {
   }
 }
 
-TEST_F(ConverterTest, AbbreviationShouldBeIndependent_Prediction) {
+TEST_F(ConverterTest, AbbreviationShouldBeIndependentPrediction) {
   using user_dictionary::UserDictionary;
   std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(
@@ -1789,7 +1789,7 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent) {
   }
 }
 
-TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependent_Prediction) {
+TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
   using user_dictionary::UserDictionary;
   std::vector<UserDefinedEntry> user_defined_entries;
   user_defined_entries.push_back(

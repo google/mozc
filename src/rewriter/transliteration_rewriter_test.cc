@@ -778,7 +778,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 

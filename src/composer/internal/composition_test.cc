@@ -547,7 +547,7 @@ TEST_F(CompositionTest, DeleteAt) {
   EXPECT_EQ("akykittatty", GetDeletedString(Transliterators::RAW_STRING, -1));
 }
 
-TEST_F(CompositionTest, DeleteAt_InvisibleCharacter) {
+TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
   CharChunkList::iterator it;
   CharChunk* chunk;
 
@@ -860,7 +860,7 @@ TEST_F(CompositionTest, InsertKeyAndPreeditAt) {
   EXPECT_EQ("mr@h!", comp_ascii_str);
 }
 
-TEST_F(CompositionTest, InsertKey_ForN) {
+TEST_F(CompositionTest, InsertKeyForN) {
   Table table;
   table.AddRule("a", "[A]", "");
   table.AddRule("n", "[N]", "");
@@ -883,7 +883,7 @@ TEST_F(CompositionTest, InsertKey_ForN) {
   EXPECT_EQ("ny[NYA]", comp_str);
 }
 
-TEST_F(CompositionTest, GetStringWithDisplayMode_ForKana) {
+TEST_F(CompositionTest, GetStringWithDisplayModeForKana) {
   Table table;
   // Empty table is OK.
   composition_->SetTable(&table);
@@ -1213,7 +1213,7 @@ TEST_F(CompositionTest, Issue2990253) {
   }
 }
 
-TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
+TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText1) {
   // http://b/2990358
   // Test for mainly Composition::InsertAt()
 
@@ -1249,7 +1249,7 @@ TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_1) {
   }
 }
 
-TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText_2) {
+TEST_F(CompositionTest, InsertionIntoPreeditMakesInvalidText2) {
   // http://b/2990358
   // Test for mainly Composition::InsertKeyAndPreeditAt()
 
@@ -1760,7 +1760,7 @@ TEST_F(CompositionTest, NoTransliteration) {
   EXPECT_EQ("０1ッカっさった", GetString(*composition_));
 }
 
-TEST_F(CompositionTest, NoTransliteration_Issue3497962) {
+TEST_F(CompositionTest, NoTransliterationIssue3497962) {
   table_->AddRuleWithAttributes("2", "", "a", NEW_CHUNK | NO_TRANSLITERATION);
   table_->AddRuleWithAttributes("a2", "", "b", NO_TABLE_ATTRIBUTE);
   table_->AddRuleWithAttributes("b2", "", "c", NO_TABLE_ATTRIBUTE);

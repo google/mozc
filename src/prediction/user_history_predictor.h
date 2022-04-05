@@ -224,7 +224,7 @@ class UserHistoryPredictor : public PredictorInterface {
   friend class UserHistoryPredictorSyncer;
   friend class UserHistoryPredictorTest;
 
-  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion);
+  FRIEND_TEST(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion);
   FRIEND_TEST(UserHistoryPredictorTest, GetMatchTypeTest);
   FRIEND_TEST(UserHistoryPredictorTest, Uint32ToStringTest);
   FRIEND_TEST(UserHistoryPredictorTest, GetScore);
@@ -248,18 +248,18 @@ class UserHistoryPredictor : public PredictorInterface {
   FRIEND_TEST(UserHistoryPredictorTest, GetInputKeyFromSegmentsKana);
   FRIEND_TEST(UserHistoryPredictorTest, EraseNextEntries);
   FRIEND_TEST(UserHistoryPredictorTest, RemoveNgramChain);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Unigram);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteWhole);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteFirst);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteSecond);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteWhole);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirst);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecond);
-  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteThird);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryUnigram);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond);
+  FRIEND_TEST(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird);
   FRIEND_TEST(UserHistoryPredictorTest,
-              ClearHistoryEntry_Trigram_DeleteFirstBigram);
+              ClearHistoryEntryTrigramDeleteFirstBigram);
   FRIEND_TEST(UserHistoryPredictorTest,
-              ClearHistoryEntry_Trigram_DeleteSecondBigram);
+              ClearHistoryEntryTrigramDeleteSecondBigram);
   FRIEND_TEST(UserHistoryPredictorTest, 62DayOldEntriesAreDeletedAtSync);
 
   enum MatchType {

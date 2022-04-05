@@ -1115,7 +1115,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
 INSTANTIATE_TEST_SUITE_P(TriggerConditionsForPlatforms, TriggerConditionsTest,
                          ::testing::Values(DESKTOP, MOBILE));
 
-TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
+TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
@@ -1297,7 +1297,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
+TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
@@ -1641,7 +1641,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
+TEST_F(DictionaryPredictorTest, AggregateZeroQueryPredictionLatinInputMode) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =

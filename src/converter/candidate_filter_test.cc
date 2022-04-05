@@ -841,7 +841,7 @@ TEST_P(CandidateFilterTestWithParam,
       filter->FilterCandidate(*request_, c2->key, c2, nodes1, nodes2, type));
 }
 
-TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
+TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterConversion) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::CONVERSION, suggestion filter is not applied.
@@ -867,7 +867,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Conversion) {
   }
 }
 
-TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
+TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestion) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::SUGGESTION, suggestion filter is applied regardless of its
@@ -976,7 +976,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion) {
   }
 }
 
-TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
+TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterSuggestionMobile) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(false));
 
   // For Mobile Segments::SUGGESTION, suggestion filter is NOT applied for
@@ -1009,7 +1009,7 @@ TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Suggestion_Mobile) {
   }
 }
 
-TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilter_Prediction) {
+TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterPrediction) {
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
 
   // For Segments::PREDICTION, suggestion filter is applied only when its

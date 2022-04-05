@@ -195,7 +195,7 @@ TEST_F(EngineBuilderTest, AsyncBuildWithInstall) {
   }
 }
 
-TEST_F(EngineBuilderTest, FailureCase_DataBroken) {
+TEST_F(EngineBuilderTest, FailureCaseDataBroken) {
   // Test the case where input file is invalid.
   request_.set_engine_type(EngineReloadRequest::MOBILE);
   request_.set_file_path(
@@ -211,7 +211,7 @@ TEST_F(EngineBuilderTest, FailureCase_DataBroken) {
   ASSERT_EQ(EngineReloadResponse::DATA_BROKEN, response_.status());
 }
 
-TEST_F(EngineBuilderTest, FailureCase_FileDoesNotExist) {
+TEST_F(EngineBuilderTest, FailureCaseFileDoesNotExist) {
   // Test the case where input file doesn't exist.
   request_.set_engine_type(EngineReloadRequest::MOBILE);
   request_.set_file_path("file_does_not_exist");

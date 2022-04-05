@@ -110,7 +110,7 @@ TEST_F(VersionRewriterTest, MobileEnvironmentTest) {
 }
 
 
-TEST_F(VersionRewriterTest, RewriteTest_Version) {
+TEST_F(VersionRewriterTest, RewriteTestVersion) {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   static constexpr char kVersionPrefixExpected[] = "GoogleJapaneseInput-";
   static constexpr char kVersionPrefixUnexpected[] = "Mozc-";

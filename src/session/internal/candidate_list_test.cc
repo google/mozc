@@ -286,7 +286,7 @@ TEST_F(CandidateListTest, FocusedId) {
   EXPECT_EQ(0, empty_list.focused_id());
 }
 
-TEST_F(CandidateListTest, set_page_size) {
+TEST_F(CandidateListTest, SetPageSize) {
   EXPECT_EQ(9, main_list_->page_size());
   // Move to the 10th item.
   EXPECT_TRUE(main_list_->MoveToId(7));

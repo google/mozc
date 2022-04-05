@@ -586,7 +586,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest) {
 // We did not support such Segments which has multiple segments and
 // has type != CONVERSION.
 // To support such Segments, this test case is created separately.
-TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTest_suggestion) {
+TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTestSuggestion) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   // Register input histories via Finish method.
@@ -915,7 +915,7 @@ TEST_F(UserHistoryPredictorTest, UserHistoryPredictorTrailingPunctuation) {
   EXPECT_EQ("私の名前は中野です。", segments.segment(0).candidate(1).value);
 }
 
-TEST_F(UserHistoryPredictorTest, TrailingPunctuation_Mobile) {
+TEST_F(UserHistoryPredictorTest, TrailingPunctuationMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
   Segments segments;
@@ -1335,7 +1335,7 @@ TEST_F(UserHistoryPredictorTest, MultiSegmentsSingleInput) {
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
-TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
+TEST_F(UserHistoryPredictorTest, Regression2843371Case1) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   Segments segments;
@@ -1382,7 +1382,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case1) {
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
-TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
+TEST_F(UserHistoryPredictorTest, Regression2843371Case2) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   Segments segments;
@@ -1437,7 +1437,7 @@ TEST_F(UserHistoryPredictorTest, Regression2843371_Case2) {
               Segment::Candidate::USER_HISTORY_PREDICTOR);
 }
 
-TEST_F(UserHistoryPredictorTest, Regression2843371_Case3) {
+TEST_F(UserHistoryPredictorTest, Regression2843371Case3) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   Segments segments;
@@ -3090,7 +3090,7 @@ TEST_F(UserHistoryPredictorTest, RemoveNgramChain) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Unigram) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryUnigram) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for unigram history.
@@ -3118,7 +3118,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Unigram) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteWhole) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteWhole) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
@@ -3161,7 +3161,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteWhole) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteFirst) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteFirst) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
@@ -3202,7 +3202,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteFirst) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "Input"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteSecond) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryBigramDeleteSecond) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for bigram history.  This case tests the deletion
@@ -3241,7 +3241,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Bigram_DeleteSecond) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "japan", "JapaneseInput"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteWhole) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteWhole) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3302,7 +3302,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteWhole) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirst) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirst) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3355,7 +3355,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirst) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecond) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecond) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3408,7 +3408,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecond) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteThird) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteThird) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3461,7 +3461,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteThird) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "inpu", "InputMethod"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirstBigram) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteFirstBigram) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3516,7 +3516,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteFirstBigram) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecondBigram) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryTrigramDeleteSecondBigram) {
   ScopedClockMock clock(1, 0);
 
   // Tests ClearHistoryEntry() for trigram history.  This case tests the
@@ -3569,7 +3569,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Trigram_DeleteSecondBigram) {
   EXPECT_TRUE(IsSuggestedAndPredicted(predictor, "meth", "Method"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario1) {
   // Tests a common scenario: First, a user accidentally inputs an incomplete
   // romaji sequence and the predictor learns it.  Then, the user deletes it.
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
@@ -3595,7 +3595,7 @@ TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario1) {
   EXPECT_FALSE(IsPredicted(predictor, "ぐーぐ", "グーグr"));
 }
 
-TEST_F(UserHistoryPredictorTest, ClearHistoryEntry_Scenario2) {
+TEST_F(UserHistoryPredictorTest, ClearHistoryEntryScenario2) {
   // Tests a common scenario: First, a user inputs a sentence ending with a
   // symbol and it's learned by the predictor.  Then, the user deletes the
   // history containing the symbol.
@@ -3703,7 +3703,7 @@ TEST_F(UserHistoryPredictorTest, ContentWordLearningFromInnerSegmentBoundary) {
   EXPECT_TRUE(FindCandidateByValue("行きたい", segments));
 }
 
-TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
+TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
   Segments segments;
@@ -3742,7 +3742,7 @@ TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Mobile) {
   segments.Clear();
 }
 
-TEST_F(UserHistoryPredictorTest, JoinedSegmentsTest_Desktop) {
+TEST_F(UserHistoryPredictorTest, JoinedSegmentsTestDesktop) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
 
   Segments segments;
@@ -3815,7 +3815,7 @@ TEST_F(UserHistoryPredictorTest, UsageStats) {
   EXPECT_COUNT_STATS("CommitUserHistoryPredictorZeroQuery", 1);
 }
 
-TEST_F(UserHistoryPredictorTest, PunctuationLink_Mobile) {
+TEST_F(UserHistoryPredictorTest, PunctuationLinkMobile) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
   Segments segments;
@@ -3925,7 +3925,7 @@ TEST_F(UserHistoryPredictorTest, PunctuationLink_Mobile) {
   }
 }
 
-TEST_F(UserHistoryPredictorTest, PunctuationLink_Desktop) {
+TEST_F(UserHistoryPredictorTest, PunctuationLinkDesktop) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictorWithClearedHistory();
   Segments segments;
   {

@@ -250,11 +250,11 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, AggregateSuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction);
   FRIEND_TEST(DictionaryPredictorTest,
-              AggregateZeroQueryPrediction_LatinInputMode);
+              AggregateZeroQueryPredictionLatinInputMode);
   FRIEND_TEST(DictionaryPredictorTest,
               AggregateUnigramCandidateForMixedConversion);
   FRIEND_TEST(DictionaryPredictorTest,
-              AggregateUnigramCandidateForMixedConversion_EnglishWords);
+              AggregateUnigramCandidateForMixedConversionEnglishWords);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
@@ -272,8 +272,8 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, SetDebugDescription);
   FRIEND_TEST(DictionaryPredictorTest, GetZeroQueryCandidates);
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditions);
-  FRIEND_TEST(DictionaryPredictorTest, TriggerConditions_Mobile);
-  FRIEND_TEST(DictionaryPredictorTest, TriggerConditions_LatinInputMode);
+  FRIEND_TEST(DictionaryPredictorTest, TriggerConditionsMobile);
+  FRIEND_TEST(DictionaryPredictorTest, TriggerConditionsLatinInputMode);
   FRIEND_TEST(DictionaryPredictorTest, GetLMCost);
   FRIEND_TEST(TriggerConditionsTest, TriggerConditions);
 

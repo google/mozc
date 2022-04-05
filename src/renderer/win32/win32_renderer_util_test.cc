@@ -3147,7 +3147,7 @@ TEST_F(Win32RendererUtilTest, SuggestWindowNeverHidesVerticalPreedit) {
   EXPECT_EQ(CRect(1978, 927, 2034, 1062), candidate_layout.exclude_region());
 }
 
-TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
+TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFontIssue2935480) {
   constexpr int kCursorOffsetY = 0;
   HWND hwnd = nullptr;
   LayoutManager layout_mgr(CreateDefaultGUIFontEmulator(),
@@ -3181,7 +3181,7 @@ TEST_F(Win32RendererUtilTest, RemoveUnderlineFromFont_Issue2935480) {
 // Some applications such as MIEFS use CompositionForm::RECT as a bit flag.
 // We should consider the case where two or more style bits are specified
 // at the same time.
-TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlag_Issue3200425) {
+TEST_F(Win32RendererUtilTest, CompositionFormRECTAsBitFlagIssue3200425) {
   constexpr uint32 kStyleBit = CompositionForm::RECT | CompositionForm::POINT;
 
   constexpr int kCursorOffsetX = 0;
@@ -3415,7 +3415,7 @@ TEST_F(Win32RendererUtilTest, EvernoteEditorComposition) {
 // Crescent Eve 0.82a / Apr 24 2010.
 // Crescent Eve sets larger composition form area than its client area.
 // DPI virtualization API may fail in this case.  See b/3239031.
-TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
+TEST_F(Win32RendererUtilTest, CrescentEveCompositionIssue3239031) {
   const wchar_t kClassName[] = L"CrescentEditer";
   const UINT kClassStyle = CS_DBLCLKS | CS_BYTEALIGNCLIENT;
   static_assert(kClassStyle == 0x00001008, "Check actual value");
@@ -3510,7 +3510,7 @@ TEST_F(Win32RendererUtilTest, CrescentEveComposition_Issue3239031) {
 // The composition window and candidate window must be shown even when the
 // client sets Composition/CandidateForm outside of the top-level window.
 // Note that LogicalToPhysicalPoint API may return FALSE in this situation.
-TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
+TEST_F(Win32RendererUtilTest, MSInfo32CompositionIssue3433099) {
   constexpr double kScaleFactor = 1.0;
 
   WindowPositionEmulator *window_emulator = nullptr;
@@ -3652,7 +3652,7 @@ TEST_F(Win32RendererUtilTest, MSInfo32Composition_Issue3433099) {
 // Check if LayoutManager can handle preedits which contains surrogate pair.
 // See b/4159275 for details.
 TEST_F(Win32RendererUtilTest,
-       CheckSurrogatePairInHorizontalComposition_Issue4159275) {
+       CheckSurrogatePairInHorizontalCompositionIssue4159275) {
   constexpr int kCursorOffsetX = 150;
 
   HWND hwnd = nullptr;
@@ -3708,7 +3708,7 @@ TEST_F(Win32RendererUtilTest,
 // Check if LayoutManager can handle preedits which contains surrogate pair.
 // See b/4159275 for details.
 TEST_F(Win32RendererUtilTest,
-       CheckSurrogatePairInVerticalComposition_Issue4159275) {
+       CheckSurrogatePairInVerticalCompositionIssue4159275) {
   constexpr int kCursorOffsetY = 175;
 
   HWND hwnd = nullptr;
@@ -3789,7 +3789,7 @@ TEST_F(Win32RendererUtilTest, GetWritingDirectionTest) {
 }
 
 // Hidemaru 8.01a True-Inline
-TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
+TEST_F(Win32RendererUtilTest, Hidemaru_HorizontalSuggest) {
   const wchar_t kClassName[] = L"HM32CLIENT";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -3825,7 +3825,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Suggest) {
 }
 
 // Hidemaru 8.01a True-Inline
-TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
+TEST_F(Win32RendererUtilTest, Hidemaru_HorizontalConvert) {
   const wchar_t kClassName[] = L"HM32CLIENT";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -3862,7 +3862,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Horizontal_Convert) {
 }
 
 // Hidemaru 8.01a True-Inline
-TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
+TEST_F(Win32RendererUtilTest, HidemaruVerticalSuggest) {
   const wchar_t kClassName[] = L"HM32CLIENT";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -3899,7 +3899,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Suggest) {
 }
 
 // Hidemaru 8.01a True-Inline
-TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
+TEST_F(Win32RendererUtilTest, HidemaruVerticalConvert) {
   const wchar_t kClassName[] = L"HM32CLIENT";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -3937,7 +3937,7 @@ TEST_F(Win32RendererUtilTest, Hidemaru_Vertical_Convert) {
 }
 
 // Open Office Writer 3.01
-TEST_F(Win32RendererUtilTest, OOo_Suggest) {
+TEST_F(Win32RendererUtilTest, OOoSuggest) {
   const wchar_t kClassName[] = L"SALFRAME";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -3970,7 +3970,7 @@ TEST_F(Win32RendererUtilTest, OOo_Suggest) {
 }
 
 // Open Office Writer 3.01
-TEST_F(Win32RendererUtilTest, OOo_Convert) {
+TEST_F(Win32RendererUtilTest, OOoConvert) {
   const wchar_t kClassName[] = L"SALFRAME";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4007,7 +4007,7 @@ TEST_F(Win32RendererUtilTest, OOo_Convert) {
 }
 
 // Pidgin 2.6.1
-TEST_F(Win32RendererUtilTest, Pidgin_Indicator) {
+TEST_F(Win32RendererUtilTest, PidginIndicator) {
   const wchar_t kClassName[] = L"gdkWindowToplevel";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4045,7 +4045,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Indicator) {
 }
 
 // Pidgin 2.6.1
-TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
+TEST_F(Win32RendererUtilTest, PidginSuggest) {
   const wchar_t kClassName[] = L"gdkWindowToplevel";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4081,7 +4081,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Suggest) {
 }
 
 // Pidgin 2.6.1
-TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
+TEST_F(Win32RendererUtilTest, PidginConvert) {
   const wchar_t kClassName[] = L"gdkWindowToplevel";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4118,7 +4118,7 @@ TEST_F(Win32RendererUtilTest, Pidgin_Convert) {
 }
 
 // V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
-TEST_F(Win32RendererUtilTest, V2C_Indicator) {
+TEST_F(Win32RendererUtilTest, V2CIndicator) {
   const wchar_t kClassName[] = L"SunAwtFrame";
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
@@ -4148,7 +4148,7 @@ TEST_F(Win32RendererUtilTest, V2C_Indicator) {
 }
 
 // V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
-TEST_F(Win32RendererUtilTest, V2C_Suggest) {
+TEST_F(Win32RendererUtilTest, V2CSuggest) {
   const wchar_t kClassName[] = L"SunAwtFrame";
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
@@ -4179,7 +4179,7 @@ TEST_F(Win32RendererUtilTest, V2C_Suggest) {
 }
 
 // V2C 2.1.6 on JRE 1.6.0.21 (32-bit)
-TEST_F(Win32RendererUtilTest, V2C_Convert) {
+TEST_F(Win32RendererUtilTest, V2CConvert) {
   const wchar_t kClassName[] = L"SunAwtFrame";
   const CRect kWindowRect(977, 446, 2042, 1052);
   const CPoint kClientOffset(8, 8);
@@ -4215,7 +4215,7 @@ TEST_F(Win32RendererUtilTest, V2C_Convert) {
 }
 
 // Qt 4.6.3
-TEST_F(Win32RendererUtilTest, Qt_Suggest) {
+TEST_F(Win32RendererUtilTest, QtSuggest) {
   const wchar_t kClassName[] = L"QWidget";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4252,7 +4252,7 @@ TEST_F(Win32RendererUtilTest, Qt_Suggest) {
 }
 
 // Qt 4.6.3
-TEST_F(Win32RendererUtilTest, Qt_Convert) {
+TEST_F(Win32RendererUtilTest, QtConvert) {
   const wchar_t kClassName[] = L"QWidget";
   const CRect kWindowRect(0, 20, 2016, 1050);
   const CPoint kClientOffset(8, 42);
@@ -4290,7 +4290,7 @@ TEST_F(Win32RendererUtilTest, Qt_Convert) {
 }
 
 // Wordpad x86 on Vista SP1
-TEST_F(Win32RendererUtilTest, Wordpad_Vista_Indicator) {
+TEST_F(Win32RendererUtilTest, WordpadVistaIndicator) {
   const wchar_t kClassName[] = L"RICHEDIT50W";
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
@@ -4328,7 +4328,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Indicator) {
 }
 
 // Wordpad x86 on Vista SP1
-TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
+TEST_F(Win32RendererUtilTest, WordpadVistaSuggest) {
   const wchar_t kClassName[] = L"RICHEDIT50W";
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
@@ -4361,7 +4361,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Suggest) {
 }
 
 // Wordpad x86 on Vista SP1
-TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
+TEST_F(Win32RendererUtilTest, WordpadVistaConvert) {
   const wchar_t kClassName[] = L"RICHEDIT50W";
   const CRect kWindowRect(617, 573, 1319, 881);
   const CPoint kClientOffset(2, 22);
@@ -4398,7 +4398,7 @@ TEST_F(Win32RendererUtilTest, Wordpad_Vista_Convert) {
 }
 
 // MS Word 2010 x64, True Inline, Horizontal
-TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
+TEST_F(Win32RendererUtilTest, MSWord2010HorizontalSuggest) {
   const wchar_t kClassName[] = L"_WwG";
   const CRect kWindowRect(434, 288, 1275, 841);
   const CPoint kClientOffset(0, 0);
@@ -4435,7 +4435,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Suggest) {
 }
 
 // MS Word 2010 x64, True Inline, Horizontal
-TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
+TEST_F(Win32RendererUtilTest, MSWord2010HorizontalConvert) {
   const wchar_t kClassName[] = L"_WwG";
   const CRect kWindowRect(434, 288, 1275, 841);
   const CPoint kClientOffset(0, 0);
@@ -4473,7 +4473,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Horizontal_Convert) {
 }
 
 // MS Word 2010 x64, True Inline, Vertical
-TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
+TEST_F(Win32RendererUtilTest, MSWord2010VerticalSuggest) {
   const wchar_t kClassName[] = L"_WwG";
   const CRect kWindowRect(434, 288, 1275, 824);
   const CPoint kClientOffset(0, 0);
@@ -4511,7 +4511,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Suggest) {
 }
 
 // MS Word 2010 x64, True Inline, Vertical
-TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
+TEST_F(Win32RendererUtilTest, MSWord2010VerticalConvert) {
   const wchar_t kClassName[] = L"_WwG";
   const CRect kWindowRect(434, 288, 1275, 824);
   const CPoint kClientOffset(0, 0);
@@ -4550,7 +4550,7 @@ TEST_F(Win32RendererUtilTest, MSWord2010_Vertical_Convert) {
 }
 
 // Firefox 3.6.10 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
+TEST_F(Win32RendererUtilTest, FirefoxTextareaSuggest) {
   const wchar_t kClassName[] = L"MozillaWindowClass";
   const CRect kWindowRect(198, 329, 1043, 1133);
   const CPoint kClientOffset(0, 0);
@@ -4582,7 +4582,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Suggest) {
 }
 
 // Firefox 3.6.10 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
+TEST_F(Win32RendererUtilTest, FirefoxTextareaConvert) {
   const wchar_t kClassName[] = L"MozillaWindowClass";
   const CRect kWindowRect(198, 329, 1043, 1133);
   const CPoint kClientOffset(0, 0);
@@ -4615,7 +4615,7 @@ TEST_F(Win32RendererUtilTest, Firefox_textarea_Convert) {
 }
 
 // Chrome 6.0.472.63 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
+TEST_F(Win32RendererUtilTest, ChromeTextareaSuggest) {
   const wchar_t kClassName[] = L"Chrome_RenderWidgetHostHWND";
   const CRect kWindowRect(153, 190, 891, 906);
   const CPoint kClientOffset(0, 0);
@@ -4648,7 +4648,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Suggest) {
 }
 
 // Chrome 6.0.472.63 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
+TEST_F(Win32RendererUtilTest, ChromeTextareaConvert) {
   const wchar_t kClassName[] = L"Chrome_RenderWidgetHostHWND";
   const CRect kWindowRect(153, 190, 891, 906);
   const CPoint kClientOffset(0, 0);
@@ -4682,7 +4682,7 @@ TEST_F(Win32RendererUtilTest, Chrome_textarea_Convert) {
 }
 
 // Internet Explorer 8.0.6001.18943 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, IE8_textarea_Suggest) {
+TEST_F(Win32RendererUtilTest, IE8TextareaSuggest) {
   const wchar_t kClassName[] = L"Internet Explorer_Server";
   const CRect kWindowRect(304, 349, 1360, 1067);
   const CPoint kClientOffset(0, 0);
@@ -4711,7 +4711,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Suggest) {
 }
 
 // Internet Explorer 8.0.6001.18943 on Vista SP1 / textarea
-TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
+TEST_F(Win32RendererUtilTest, IE8TextareaConvert) {
   const wchar_t kClassName[] = L"Internet Explorer_Server";
   const CRect kWindowRect(304, 349, 1360, 1067);
   const CPoint kClientOffset(0, 0);
@@ -4742,7 +4742,7 @@ TEST_F(Win32RendererUtilTest, IE8_textarea_Convert) {
 
 // Fudemame 21.  See b/3067011.
 // It provides no positional information for suggestion. See b/3067011.
-TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
+TEST_F(Win32RendererUtilTest, Fudemame21Suggest) {
   const wchar_t kClassName[] = L"MrnDirectEdit4";
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(0, 0);
@@ -4768,7 +4768,7 @@ TEST_F(Win32RendererUtilTest, Fudemame21_Suggest) {
 }
 
 // Fudemame 21.  See b/3067011.
-TEST_F(Win32RendererUtilTest, Fudemame19_Convert) {
+TEST_F(Win32RendererUtilTest, Fudemame19Convert) {
   const wchar_t kClassName[] = L"MrnDirectEdit4";
   const CRect kWindowRect(507, 588, 1024, 698);
   const CPoint kClientOffset(0, 0);
@@ -4798,7 +4798,7 @@ TEST_F(Win32RendererUtilTest, Fudemame19_Convert) {
 }
 
 // Opera 10.63 (build 3516) / Textarea
-TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
+TEST_F(Win32RendererUtilTest, Opera10Suggest) {
   const wchar_t kClassName[] = L"OperaWindowClass";
   const UINT kClassStyle = CS_DBLCLKS;
   constexpr DWORD kWindowStyle =
@@ -4837,7 +4837,7 @@ TEST_F(Win32RendererUtilTest, Opera10_Suggest) {
 }
 
 // Opera 10.63 (build 3516) / Textarea
-TEST_F(Win32RendererUtilTest, Opera10_Convert) {
+TEST_F(Win32RendererUtilTest, Opera10Convert) {
   const wchar_t kClassName[] = L"OperaWindowClass";
   const UINT kClassStyle = CS_DBLCLKS;
   constexpr DWORD kWindowStyle =
@@ -4979,7 +4979,7 @@ TEST_F(Win32RendererUtilTest, Meadow3) {
 }
 
 // Firefox 47.0a1 (2016-02-28)
-TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Suggest) {
+TEST_F(Win32RendererUtilTest, FirefoxExcludeRectSuggest) {
   const wchar_t kClassName[] = L"MozillaWindowClass";
   const UINT kClassStyle = CS_DBLCLKS;
   constexpr DWORD kWindowStyle =
@@ -5019,7 +5019,7 @@ TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Suggest) {
 }
 
 // Firefox 47.0a1 (2016-02-28)
-TEST_F(Win32RendererUtilTest, Firefox_ExcludeRect_Convert) {
+TEST_F(Win32RendererUtilTest, FirefoxExcludeRectConvert) {
   const wchar_t kClassName[] = L"MozillaWindowClass";
   const UINT kClassStyle = CS_DBLCLKS;
   constexpr DWORD kWindowStyle =

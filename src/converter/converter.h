@@ -115,7 +115,7 @@ class ConverterImpl : public ConverterInterface {
   FRIEND_TEST(ConverterTest, DefaultPredictor);
   FRIEND_TEST(ConverterTest, MaybeSetConsumedKeySizeToSegment);
   FRIEND_TEST(ConverterTest, GetLastConnectivePart);
-  FRIEND_TEST(ConverterTest, Predict_SetKey);
+  FRIEND_TEST(ConverterTest, PredictSetKey);
 
   // Complete Left id/Right id if they are not defined.
   // Some users don't push conversion button but directly

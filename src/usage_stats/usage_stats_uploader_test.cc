@@ -85,7 +85,7 @@ TEST_F(UsageStatsUploaderTest, SendTest) {
       storage::Registry::Lookup("usage_stats.mozc_version", &recorded_version));
 }
 
-TEST_F(UsageStatsUploaderTest, SendTest_DeleteExistingClientId) {
+TEST_F(UsageStatsUploaderTest, SendTestDeleteExistingClientId) {
   const std::string store_value = "some_value";
   storage::Registry::Insert("usage_stats.client_id", store_value);
   std::string client_id;

@@ -1105,7 +1105,7 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
+TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
   // http://b/2517514
   // ConvertToHalfWidth converts punctuations differently w/ or w/o kana.
   SessionConverter converter(convertermock_.get(), request_.get(),
@@ -1431,7 +1431,7 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
   EXPECT_TRUE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
+TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());
   Segments segments;
