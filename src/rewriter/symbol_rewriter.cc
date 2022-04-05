@@ -34,6 +34,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/japanese_util.h"
@@ -44,6 +45,7 @@
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "request/conversion_request.h"
@@ -117,22 +119,23 @@ bool SymbolRewriter::IsSymbol(const std::string &key) {
 
 // static function
 void SymbolRewriter::ExpandSpace(Segment *segment) {
+  auto insert_candidate = [segment](int base, absl::string_view value) {
+    auto c = std::make_unique<Segment::Candidate>(segment->candidate(base));
+    c->value = std::string(value);
+    c->content_value = std::string(value);
+    // Boundary is invalidated and unnecessary for space.
+    c->inner_segment_boundary.clear();
+    segment->insert_candidate(base + 1, std::move(c));
+  };
+
+  constexpr absl::string_view kHalfWidthSpace = " ";  // U+0020
+  constexpr absl::string_view kFullWidthSpace = "　";  // U+3000
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
-    if (segment->candidate(i).value == " ") {
-      Segment::Candidate *c = segment->insert_candidate(i + 1);
-      *c = segment->candidate(i);
-      c->value = "　";          // Full-width space
-      c->content_value = "　";  // Full-width space
-      // Boundary is invalidated and unnecessary for space.
-      c->inner_segment_boundary.clear();
+    if (segment->candidate(i).value == kHalfWidthSpace) {
+      insert_candidate(i, kFullWidthSpace);
       return;
-    } else if (segment->candidate(i).value == "　") {  // Full-width space
-      Segment::Candidate *c = segment->insert_candidate(i + 1);
-      *c = segment->candidate(i);
-      c->value = " ";
-      c->content_value = " ";
-      // Boundary is invalidated and unnecessary for space.
-      c->inner_segment_boundary.clear();
+    } else if (segment->candidate(i).value == kFullWidthSpace) {
+      insert_candidate(i, kHalfWidthSpace);
       return;
     }
   }
@@ -201,14 +204,11 @@ void SymbolRewriter::InsertCandidates(
     }
   }
 
-  const size_t range_size = range.second - range.first;
-  size_t inserted_count = 0;
-  bool finish_first_part = false;
   const Segment::Candidate &base_candidate = segment->candidate(0);
-  for (auto iter = range.first; iter != range.second; ++iter) {
-    Segment::Candidate *candidate = segment->insert_candidate(offset);
-    DCHECK(candidate);
-
+  auto create_candidate = [&base_candidate, &candidate_key, context_sensitive](
+                              const SerializedDictionary::const_iterator &iter)
+      -> std::unique_ptr<Segment::Candidate> {
+    auto candidate = std::make_unique<Segment::Candidate>();
     candidate->Init();
     candidate->lid = iter.lid();
     candidate->rid = iter.rid();
@@ -232,21 +232,42 @@ void SymbolRewriter::InsertCandidates(
 
     candidate->description = GetDescription(
         candidate->value, iter.description(), iter.additional_description());
-    ++offset;
-    ++inserted_count;
+    return candidate;
+  };
 
-    // Insert to latter position
-    // If number of rest symbols is small, insert current position.
-    const auto next = iter + 1;
-    if (next != range.second && !finish_first_part &&
-        inserted_count >= kMaxInsertToMedium &&
-        range_size - inserted_count >= 5 &&
-        // Do not divide symbols which seem to be in the same group.
-        !InSameSymbolGroup(iter, next)) {
-      offset = segment->candidates_size();
-      finish_first_part = true;
+  const size_t range_size = range.second - range.first;
+  std::vector<std::unique_ptr<Segment::Candidate>> candidates;
+  candidates.reserve(range_size);
+  SerializedDictionary::const_iterator iter = range.first;
+  for (; iter != range.second; ++iter) {
+    candidates.emplace_back(create_candidate(iter));
+
+    if (const int inserted_count = candidates.size();
+        inserted_count < kMaxInsertToMedium ||
+        // If number of rest symbols is small, insert current position.
+        range_size - inserted_count < 5) {
+      continue;
     }
+
+    // Do not divide symbols which seem to be in the same group.
+    if (const auto next = iter + 1;
+        next != range.second && InSameSymbolGroup(iter, next)) {
+      continue;
+    }
+
+    break;
   }
+  segment->insert_candidates(offset, std::move(candidates));
+  if (iter == range.second) {
+    return;
+  }
+
+  // Insert to latter position
+  candidates.clear();
+  for (; iter != range.second; ++iter) {
+    candidates.emplace_back(create_candidate(iter));
+  }
+  segment->insert_candidates(segment->candidates_size(), std::move(candidates));
 }
 
 // static
