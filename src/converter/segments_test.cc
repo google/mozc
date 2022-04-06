@@ -46,13 +46,6 @@ namespace mozc {
 TEST(SegmentsTest, BasicTest) {
   Segments segments;
 
-  // flags
-  segments.set_request_type(Segments::CONVERSION);
-  EXPECT_EQ(Segments::CONVERSION, segments.request_type());
-
-  segments.set_request_type(Segments::SUGGESTION);
-  EXPECT_EQ(Segments::SUGGESTION, segments.request_type());
-
   EXPECT_EQ(0, segments.segments_size());
 
   constexpr int kSegmentsSize = 5;
@@ -356,7 +349,6 @@ TEST(SegmentsTest, CopyTest) {
 
   src.set_max_history_segments_size(1);
   src.set_resized(true);
-  src.set_request_type(Segments::PREDICTION);
 
   constexpr int kSegmentsSize = 3;
   constexpr int kCandidatesSize = 2;
@@ -375,7 +367,6 @@ TEST(SegmentsTest, CopyTest) {
   Segments dest = src;
   EXPECT_EQ(src.max_history_segments_size(), dest.max_history_segments_size());
   EXPECT_EQ(src.resized(), dest.resized());
-  EXPECT_EQ(src.request_type(), dest.request_type());
 
   EXPECT_EQ(kSegmentsSize, dest.segments_size());
   EXPECT_EQ(kCandidatesSize, dest.segment(0).candidates_size());

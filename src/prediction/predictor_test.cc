@@ -178,10 +178,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobileSuggestion) {
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -192,10 +192,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialSuggestion) {
       std::make_unique<CheckCandSizeUserHistoryPredictor>(-1, -1));
   Segments segments;
   {
-    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -205,10 +205,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
       std::make_unique<CheckCandSizeUserHistoryPredictor>(3, 4));
   Segments segments;
   {
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -223,10 +223,10 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
                                              &suppression_dictionary, true));
   Segments segments;
   {
-    segments.set_request_type(Segments::PARTIAL_PREDICTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -244,10 +244,10 @@ TEST_F(MobilePredictorTest, CallPredictForRequestMobile) {
                                                      std::move(predictor2));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -276,10 +276,10 @@ TEST_F(PredictorTest, AllPredictorsReturnTrue) {
                                          std::make_unique<NullPredictor>(true));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -289,10 +289,10 @@ TEST_F(PredictorTest, MixedReturnValue) {
       std::make_unique<NullPredictor>(false));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -302,10 +302,10 @@ TEST_F(PredictorTest, AllPredictorsReturnFalse) {
       std::make_unique<NullPredictor>(false));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -318,10 +318,10 @@ TEST_F(PredictorTest, CallPredictorsForSuggestion) {
                                                           suggestions_size));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -333,10 +333,10 @@ TEST_F(PredictorTest, CallPredictorsForPrediction) {
                                                           kPredictionSize));
   Segments segments;
   {
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -354,10 +354,10 @@ TEST_F(PredictorTest, CallPredictForRequest) {
                                                       std::move(predictor2));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(predictor->PredictForRequest(*convreq_, &segments));
 }
 
@@ -370,10 +370,10 @@ TEST_F(PredictorTest, DisableAllSuggestion) {
                                                       std::move(predictor2));
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     CHECK(segment);
   }
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
 
   config_->set_presentation_mode(true);
   EXPECT_FALSE(predictor->PredictForRequest(*convreq_, &segments));

@@ -302,10 +302,11 @@ ImmutableConverterImpl::ImmutableConverterImpl(
   DCHECK(suggestion_filter_);
 }
 
-void ImmutableConverterImpl::ExpandCandidates(
-    const ConversionRequest &request, const std::string &original_key,
-    NBestGenerator *nbest, Segment *segment, Segments::RequestType request_type,
-    size_t expand_size) const {
+void ImmutableConverterImpl::ExpandCandidates(const ConversionRequest &request,
+                                              const std::string &original_key,
+                                              NBestGenerator *nbest,
+                                              Segment *segment,
+                                              size_t expand_size) const {
   DCHECK(nbest);
   DCHECK(segment);
   CHECK_GT(expand_size, 0);
@@ -317,7 +318,7 @@ void ImmutableConverterImpl::ExpandCandidates(
 
     // if NBestGenerator::Next() returns nullptr,
     // no more entries are generated.
-    if (!nbest->Next(request, original_key, candidate, request_type)) {
+    if (!nbest->Next(request, original_key, candidate)) {
       segment->pop_back_candidate();
       break;
     }
@@ -1392,11 +1393,11 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
   NormalizeHistorySegments(segments);
 
   const bool is_reverse =
-      (segments->request_type() == Segments::REVERSE_CONVERSION);
+      (request.request_type() == ConversionRequest::REVERSE_CONVERSION);
 
   const bool is_prediction =
-      (segments->request_type() == Segments::SUGGESTION ||
-       segments->request_type() == Segments::PREDICTION);
+      (request.request_type() == ConversionRequest::SUGGESTION ||
+       request.request_type() == ConversionRequest::PREDICTION);
 
   // In suggestion mode, ImmutableConverter will not accept multiple-segments.
   // The result always consists of one segment.
@@ -1483,7 +1484,7 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
   ApplyPrefixSuffixPenalty(conversion_key, lattice);
 
   // Re-segment personal-names, numbers ...etc
-  if (segments->request_type() == Segments::CONVERSION) {
+  if (request.request_type() == ConversionRequest::CONVERSION) {
     Resegment(*segments, history_key, conversion_key, lattice);
   }
 
@@ -1494,7 +1495,7 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
     const Segments &segments, const ConversionRequest &request,
     Lattice *lattice) const {
   const bool is_reverse =
-      (segments.request_type() == Segments::REVERSE_CONVERSION);
+      (request.request_type() == ConversionRequest::REVERSE_CONVERSION);
   const size_t history_segments_size = segments.history_segments_size();
   const std::string &key = lattice->key();
 
@@ -1560,8 +1561,8 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
     // and insert "卓也" as a new word node with a modified cost
     if (s + 1 == history_segments_size) {
       const bool is_prediction =
-          (segments.request_type() == Segments::SUGGESTION ||
-           segments.request_type() == Segments::PREDICTION);
+          (request.request_type() == ConversionRequest::SUGGESTION ||
+           request.request_type() == ConversionRequest::PREDICTION);
       const Node *node = Lookup(segments_pos, key.size(), request, is_reverse,
                                 is_prediction, lattice);
       for (const Node *compound_node = node; compound_node != nullptr;
@@ -1641,7 +1642,8 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
     const Segments &segments, const ConversionRequest &request,
     const std::string &history_key, Lattice *lattice) const {
   const std::string &key = lattice->key();
-  const bool is_conversion = (segments.request_type() == Segments::CONVERSION);
+  const bool is_conversion =
+      (request.request_type() == ConversionRequest::CONVERSION);
   // Do not use KeyCorrector if user changes the boundary.
   // http://b/issue?id=2804996
   std::unique_ptr<KeyCorrector> key_corrector;
@@ -1655,9 +1657,10 @@ void ImmutableConverterImpl::MakeLatticeNodesForConversionSegments(
   }
 
   const bool is_reverse =
-      (segments.request_type() == Segments::REVERSE_CONVERSION);
-  const bool is_prediction = (segments.request_type() == Segments::SUGGESTION ||
-                              segments.request_type() == Segments::PREDICTION);
+      (request.request_type() == ConversionRequest::REVERSE_CONVERSION);
+  const bool is_prediction =
+      (request.request_type() == ConversionRequest::SUGGESTION ||
+       request.request_type() == ConversionRequest::PREDICTION);
   for (size_t pos = history_key.size(); pos < key.size(); ++pos) {
     if (lattice->end_nodes(pos) != nullptr) {
       Node *rnode =
@@ -1806,8 +1809,9 @@ void ImmutableConverterImpl::InsertFirstSegmentToCandidates(
 }
 
 bool ImmutableConverterImpl::IsSegmentEndNode(
-    const Segments &segments, const Node *node,
-    const std::vector<uint16_t> &group, bool is_single_segment) const {
+    const ConversionRequest &request, const Segments &segments,
+    const Node *node, const std::vector<uint16_t> &group,
+    bool is_single_segment) const {
   DCHECK(node->next);
   if (node->next->node_type == Node::EOS_NODE) {
     return true;
@@ -1815,7 +1819,7 @@ bool ImmutableConverterImpl::IsSegmentEndNode(
 
   // In reverse conversion, group consecutive white spaces into one segment.
   // For example, "ほん むりょう" -> "ほん", " ", "むりょう".
-  if (segments.request_type() == Segments::REVERSE_CONVERSION) {
+  if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     const bool this_node_is_ws = ContainsWhiteSpacesOnly(node->key);
     const bool next_node_is_ws = ContainsWhiteSpacesOnly(node->next->key);
     if (this_node_is_ws) {
@@ -1906,7 +1910,7 @@ void ImmutableConverterImpl::InsertCandidates(
       begin_pos = node->begin_pos;
     }
 
-    if (!IsSegmentEndNode(*segments, node, group, is_single_segment)) {
+    if (!IsSegmentEndNode(request, *segments, node, group, is_single_segment)) {
       continue;
     }
 
@@ -1925,7 +1929,7 @@ void ImmutableConverterImpl::InsertCandidates(
     nbest_generator.Reset(prev, node->next, mode);
 
     ExpandCandidates(request, original_key, &nbest_generator, segment,
-                     segments->request_type(), expand_size);
+                     expand_size);
 
     if (type == MULTI_SEGMENTS || type == SINGLE_SEGMENT) {
       InsertDummyCandidates(segment, expand_size);
@@ -1952,11 +1956,11 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     return false;
   }
 
-  const Segments::RequestType type = segments->request_type();
-  const bool is_prediction =
-      (type == Segments::PREDICTION || type == Segments::PARTIAL_PREDICTION);
-  const bool is_suggestion =
-      (type == Segments::SUGGESTION || type == Segments::PARTIAL_SUGGESTION);
+  const ConversionRequest::RequestType type = request.request_type();
+  const bool is_prediction = (type == ConversionRequest::PREDICTION ||
+                              type == ConversionRequest::PARTIAL_PREDICTION);
+  const bool is_suggestion = (type == ConversionRequest::SUGGESTION ||
+                              type == ConversionRequest::PARTIAL_SUGGESTION);
   const FilterType filter_type =
       request.request().mixed_conversion() ? MOBILE : DESKTOP;
 
@@ -2007,14 +2011,14 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
     }
   };
 
-  auto do_conversion = [this, &request, &lattice, &group, &segments, &type,
+  auto do_conversion = [this, &request, &lattice, &group, &segments,
                         &filter_type]() {
     DCHECK(!request.create_partial_candidates());
     // Currently, we assume that REVERSE_CONVERSION only
     // requires 1 result.
     // TODO(taku): support to set the size on REVESER_CONVERSION mode.
     const size_t max_candidates_size =
-        ((type == Segments::REVERSE_CONVERSION)
+        ((request.request_type() == ConversionRequest::REVERSE_CONVERSION)
              ? 1
              : request.max_conversion_candidates_size());
 
@@ -2056,8 +2060,8 @@ void ImmutableConverterImpl::MakeGroup(const Segments &segments,
 bool ImmutableConverterImpl::ConvertForRequest(const ConversionRequest &request,
                                                Segments *segments) const {
   const bool is_prediction =
-      (segments->request_type() == Segments::PREDICTION ||
-       segments->request_type() == Segments::SUGGESTION);
+      (request.request_type() == ConversionRequest::PREDICTION ||
+       request.request_type() == ConversionRequest::SUGGESTION);
 
   Lattice *lattice = GetLattice(segments, is_prediction);
 

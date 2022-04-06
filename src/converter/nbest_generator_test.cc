@@ -150,20 +150,21 @@ class MockDataAndImmutableConverter {
 
 class NBestGeneratorTest : public ::testing::Test {
  protected:
-  void GatherCandidates(size_t size, Segments::RequestType request_type,
+  void GatherCandidates(size_t size, const ConversionRequest &request,
                         NBestGenerator *nbest, Segment *segment) const {
     while (segment->candidates_size() < size) {
       Segment::Candidate *candidate = segment->push_back_candidate();
       candidate->Init();
 
-      if (!nbest->Next(request_, segment->key(), candidate, request_type)) {
+      if (!nbest->Next(request, segment->key(), candidate)) {
         segment->pop_back_candidate();
         break;
       }
     }
   }
 
-  const Node *GetEndNode(const ImmutableConverterImpl &converter,
+  const Node *GetEndNode(const ConversionRequest &request,
+                         const ImmutableConverterImpl &converter,
                          const Segments &segments, const Node &begin_node,
                          const std::vector<uint16_t> &group,
                          bool is_single_segment) {
@@ -171,15 +172,13 @@ class NBestGeneratorTest : public ::testing::Test {
     for (Node *node = begin_node.next; node->next != nullptr;
          node = node->next) {
       end_node = node->next;
-      if (converter.IsSegmentEndNode(segments, node, group,
+      if (converter.IsSegmentEndNode(request, segments, node, group,
                                      is_single_segment)) {
         break;
       }
     }
     return end_node;
   }
-
-  const ConversionRequest request_;
 };
 
 TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
@@ -187,7 +186,6 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
-  segments.set_request_type(Segments::CONVERSION);
   {
     Segment *segment = segments.add_segment();
     segment->set_segment_type(Segment::FIXED_BOUNDARY);
@@ -200,7 +198,8 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 
   Lattice lattice;
   lattice.SetKey("しんこうする");
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -212,14 +211,12 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
 
   constexpr bool kSingleSegment = false;  // For 'normal' conversion
   const Node *begin_node = lattice.bos_nodes();
-  const Node *end_node =
-      GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
-
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
-                     &result_segment);
+    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     // The top result is treated exceptionally and has no boundary check
     // in NBestGenerator.
     // The best route is calculated in ImmutalbeConverter with boundary check.
@@ -232,8 +229,7 @@ TEST_F(NBestGeneratorTest, MultiSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_MID);
     Segment result_segment;
-    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
-                     &result_segment);
+    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     ASSERT_EQ(3, result_segment.candidates_size());
     EXPECT_EQ("進行", result_segment.candidate(0).value);
     EXPECT_EQ("信仰", result_segment.candidate(1).value);
@@ -246,7 +242,6 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
-  segments.set_request_type(Segments::CONVERSION);
   std::string kText = "わたしのなまえはなかのです";
   {
     Segment *segment = segments.add_segment();
@@ -256,7 +251,8 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 
   Lattice lattice;
   lattice.SetKey(kText);
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::CONVERSION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -268,14 +264,12 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
 
   constexpr bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
-  const Node *end_node =
-      GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
-
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::STRICT);
     Segment result_segment;
-    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
-                     &result_segment);
+    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     // Top result should be inserted, but other candidates will be cut
     // due to boundary check.
     ASSERT_EQ(1, result_segment.candidates_size());
@@ -284,8 +278,7 @@ TEST_F(NBestGeneratorTest, SingleSegmentConnectionTest) {
   {
     nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
     Segment result_segment;
-    GatherCandidates(10, Segments::CONVERSION, nbest_generator.get(),
-                     &result_segment);
+    GatherCandidates(10, request, nbest_generator.get(), &result_segment);
     // We can get several candidates.
     ASSERT_LT(1, result_segment.candidates_size());
     EXPECT_EQ("私の名前は中ノです", result_segment.candidate(0).value);
@@ -297,7 +290,6 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   const std::string kInput = "とうきょうかなごやにいきたい";
   {
     Segment *segment = segments.add_segment();
@@ -307,7 +299,8 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
 
   Lattice lattice;
   lattice.SetKey(kInput);
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::PREDICTION);
   converter->MakeLattice(request, &segments, &lattice);
 
   std::vector<uint16_t> group;
@@ -319,13 +312,12 @@ TEST_F(NBestGeneratorTest, InnerSegmentBoundary) {
 
   constexpr bool kSingleSegment = true;  // For realtime conversion
   const Node *begin_node = lattice.bos_nodes();
-  const Node *end_node =
-      GetEndNode(*converter, segments, *begin_node, group, kSingleSegment);
+  const Node *end_node = GetEndNode(request, *converter, segments, *begin_node,
+                                    group, kSingleSegment);
 
   nbest_generator->Reset(begin_node, end_node, NBestGenerator::ONLY_EDGE);
   Segment result_segment;
-  GatherCandidates(10, Segments::PREDICTION, nbest_generator.get(),
-                   &result_segment);
+  GatherCandidates(10, request, nbest_generator.get(), &result_segment);
   ASSERT_LE(1, result_segment.candidates_size());
 
   const Segment::Candidate &top_cand = result_segment.candidate(0);

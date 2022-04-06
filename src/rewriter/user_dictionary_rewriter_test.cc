@@ -48,7 +48,6 @@ namespace mozc {
 namespace {
 void AddCandidate(const std::string &value, bool is_user_dictionary,
                   Segments *segments) {
-  segments->set_request_type(Segments::CONVERSION);
   Segment *seg = nullptr;
   if (segments->segments_size() == 0) {
     seg = segments->push_back_segment();

@@ -42,13 +42,25 @@ ConversionRequest::ConversionRequest()
 ConversionRequest::ConversionRequest(const composer::Composer *c,
                                      const commands::Request *request,
                                      const config::Config *config)
-    : composer_(c), request_(request), config_(config) {}
+    : request_type_(ConversionRequest::CONVERSION),
+      composer_(c),
+      request_(request),
+      config_(config) {}
 
 ConversionRequest::ConversionRequest(const ConversionRequest &x) = default;
 ConversionRequest &ConversionRequest::operator=(const ConversionRequest &x) =
     default;
 
 ConversionRequest::~ConversionRequest() = default;
+
+ConversionRequest::RequestType ConversionRequest::request_type() const {
+  return request_type_;
+}
+
+void ConversionRequest::set_request_type(
+    ConversionRequest::RequestType request_type) {
+  request_type_ = request_type;
+}
 
 bool ConversionRequest::has_composer() const { return composer_ != nullptr; }
 
@@ -163,6 +175,14 @@ size_t ConversionRequest::max_dictionary_prediction_candidates_size() const {
 void ConversionRequest::set_max_dictionary_prediction_candidates_size(
     size_t value) {
   max_dictionary_prediction_candidates_size_ = value;
+}
+
+bool ConversionRequest::should_call_set_key_in_prediction() const {
+  return should_call_set_key_in_prediction_;
+}
+
+void ConversionRequest::set_should_call_set_key_in_prediction(bool value) {
+  should_call_set_key_in_prediction_ = value;
 }
 
 }  // namespace mozc

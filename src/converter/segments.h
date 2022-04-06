@@ -368,15 +368,6 @@ class Segment final {
 //  segment(i + history_segments_size()) == conversion_segment(i)
 class Segments final {
  public:
-  enum RequestType {
-    CONVERSION,          // normal conversion
-    REVERSE_CONVERSION,  // reverse conversion
-    PREDICTION,          // show prediction with user tab key
-    SUGGESTION,          // show prediction automatically
-    PARTIAL_PREDICTION,  // show prediction using the text before cursor
-    PARTIAL_SUGGESTION,  // show suggestion using the text before cursor
-  };
-
   // Client of segments can remember any string which can be used
   // to revert the last Finish operation.
   // "id" can be used for identifying the purpose of the key;
@@ -399,9 +390,6 @@ class Segments final {
   Segments &operator=(const Segments &x);
 
   ~Segments();
-
-  RequestType request_type() const;
-  void set_request_type(RequestType request_type);
 
   // getter
   const Segment &segment(size_t i) const;
@@ -461,7 +449,6 @@ class Segments final {
   size_t max_history_segments_size_;
   bool resized_;
 
-  RequestType request_type_;
   ObjectPool<Segment> pool_;
   std::deque<Segment *> segments_;
   std::vector<RevertEntry> revert_entries_;

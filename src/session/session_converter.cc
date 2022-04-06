@@ -119,6 +119,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
       candidate_list_(new CandidateList(true)),
       request_(request),
       state_(COMPOSITION),
+      request_type_(ConversionRequest::CONVERSION),
       client_revision_(0),
       candidate_list_visible_(false) {
   conversion_preferences_.use_history = true;
@@ -152,10 +153,9 @@ bool SessionConverter::ConvertWithPreferences(
     const ConversionPreferences &preferences) {
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION));
 
-  segments_->set_request_type(Segments::CONVERSION);
-
   ConversionRequest conversion_request(&composer, request_, config_);
   SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+  SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
 
   if (!converter_->StartConversionForRequest(conversion_request,
                                              segments_.get())) {
@@ -177,6 +177,8 @@ bool SessionConverter::GetReadingText(const std::string &source_text,
   DCHECK(reading);
   reading->clear();
   Segments reverse_segments;
+  // TODO(team): Replace with StartReverseConversionForRequest()
+  // once it is implemented.
   if (!converter_->StartReverseConversion(&reverse_segments, source_text)) {
     return false;
   }
@@ -432,6 +434,7 @@ bool SessionConverter::SuggestWithPreferences(
         request_->auto_partial_suggestion());
     conversion_request.set_use_actual_converter_for_realtime_conversion(
         absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+    SetRequestType(ConversionRequest::SUGGESTION, &conversion_request);
     if (!converter_->StartSuggestionForRequest(conversion_request,
                                                segments_.get())) {
       // TODO(komatsu): Because suggestion is a prefix search, once
@@ -450,6 +453,7 @@ bool SessionConverter::SuggestWithPreferences(
     // implementation reason. If the flag is true, all the composition
     // characters will be used in the below process, which conflicts
     // with *partial* prediction.
+    SetRequestType(ConversionRequest::PARTIAL_SUGGESTION, &conversion_request);
     if (!converter_->StartPartialSuggestionForRequest(conversion_request,
                                                       segments_.get())) {
       VLOG(1) << "StartPartialSuggestionForRequest() returns no suggestions.";
@@ -492,8 +496,8 @@ bool SessionConverter::PredictWithPreferences(
 
   // Initialize the segments for prediction
   ConversionRequest conversion_request(&composer, request_, config_);
-  segments_->set_request_type(Segments::PREDICTION);
   SetConversionPreferences(preferences, segments_.get(), &conversion_request);
+  SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
@@ -508,6 +512,7 @@ bool SessionConverter::PredictWithPreferences(
   if (predict_expand || predict_first) {
     conversion_request.set_use_actual_converter_for_realtime_conversion(
         absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+    SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
@@ -571,6 +576,9 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   // We do not need "segments_->clear_conversion_segments()".
   // Without this statement we can add additional candidates into
   // existing segments.
+  DCHECK(request_type_ != ConversionRequest::PREDICTION &&
+         request_type_ != ConversionRequest::PARTIAL_PREDICTION);
+  conversion_request.set_should_call_set_key_in_prediction(true);
 
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
@@ -582,12 +590,14 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
     // This is abuse of StartPrediction().
     // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
     //    to Converter class.
+    SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
     }
   } else {
     // c.f. SuggestWithPreferences for ConversionRequest flags.
+    SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
     if (!converter_->StartPartialPredictionForRequest(conversion_request,
                                                       segments_.get())) {
       VLOG(1) << "StartPartialPredictionForRequest() returns no suggestions.";
@@ -598,12 +608,13 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
   }
   // Overwrite the request type to SUGGESTION.
   // Without this logic, a candidate gets focused that is unexpected behavior.
-  segments_->set_request_type(Segments::SUGGESTION);
+  request_type_ = ConversionRequest::SUGGESTION;
 
   // Merge suggestions and predictions.
   PrependCandidates(previous_suggestions_, preedit, segments_.get());
 
   segment_index_ = 0;
+
   // Call AppendCandidateList instead of UpdateCandidateList because
   // we want to keep existing candidates.
   // As a result, ExpandSuggestionWithPreferences adds expanded suggestion
@@ -833,11 +844,17 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   const std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(preedit, result_.get());
 
+  // TODO(toshiyuki): Move ConverterUtil::InitSegmentsFromString()
+  // into here, because this is the only usage of the method.
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
                                         segments_.get());
 
   CommitUsageStats(SessionConverterInterface::COMPOSITION, context);
   ConversionRequest conversion_request(&composer, request_, config_);
+  // the request mode is CONVERSION, as the user experience
+  // is similar to conversion. UserHistryPredictor distinguishes
+  // CONVERSION from SUGGESTION now.
+  SetRequestType(ConversionRequest::CONVERSION, &conversion_request);
   converter_->FinishConversion(conversion_request, segments_.get());
   ResetState();
 }
@@ -1358,9 +1375,9 @@ void SessionConverter::AppendCandidateList() {
   }
 
   const bool focused =
-      (segments_->request_type() != Segments::SUGGESTION &&
-       segments_->request_type() != Segments::PARTIAL_SUGGESTION &&
-       segments_->request_type() != Segments::PARTIAL_PREDICTION);
+      (request_type_ != ConversionRequest::SUGGESTION &&
+       request_type_ != ConversionRequest::PARTIAL_SUGGESTION &&
+       request_type_ != ConversionRequest::PARTIAL_PREDICTION);
   candidate_list_->set_focused(focused);
 
   if (segment.meta_candidates_size() == 0) {
@@ -1476,25 +1493,25 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
   }
 
   // Store category
-  switch (segments_->request_type()) {
-    case Segments::CONVERSION:
+  switch (request_type_) {
+    case ConversionRequest::CONVERSION:
       candidates->set_category(commands::CONVERSION);
       break;
-    case Segments::PREDICTION:
+    case ConversionRequest::PREDICTION:
       candidates->set_category(commands::PREDICTION);
       break;
-    case Segments::SUGGESTION:
+    case ConversionRequest::SUGGESTION:
       candidates->set_category(commands::SUGGESTION);
       break;
-    case Segments::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_PREDICTION:
       // Not PREDICTION because we do not want to get focused candidate.
       candidates->set_category(commands::SUGGESTION);
       break;
-    case Segments::PARTIAL_SUGGESTION:
+    case ConversionRequest::PARTIAL_SUGGESTION:
       candidates->set_category(commands::SUGGESTION);
       break;
     default:
-      LOG(WARNING) << "Unknown request type: " << segments_->request_type();
+      LOG(WARNING) << "Unknown request type: " << request_type_;
       candidates->set_category(commands::CONVERSION);
       break;
   }
@@ -1528,25 +1545,25 @@ void SessionConverter::FillAllCandidateWords(
     commands::CandidateList *candidates) const {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
   commands::Category category;
-  switch (segments_->request_type()) {
-    case Segments::CONVERSION:
+  switch (request_type_) {
+    case ConversionRequest::CONVERSION:
       category = commands::CONVERSION;
       break;
-    case Segments::PREDICTION:
+    case ConversionRequest::PREDICTION:
       category = commands::PREDICTION;
       break;
-    case Segments::SUGGESTION:
+    case ConversionRequest::SUGGESTION:
       category = commands::SUGGESTION;
       break;
-    case Segments::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_PREDICTION:
       // Not PREDICTION because we do not want to get focused candidate.
       category = commands::SUGGESTION;
       break;
-    case Segments::PARTIAL_SUGGESTION:
+    case ConversionRequest::PARTIAL_SUGGESTION:
       category = commands::SUGGESTION;
       break;
     default:
-      LOG(WARNING) << "Unknown request type: " << segments_->request_type();
+      LOG(WARNING) << "Unknown request type: " << request_type_;
       category = commands::CONVERSION;
       break;
   }
@@ -1730,6 +1747,14 @@ void SessionConverter::CommitUsageStatsWithSegmentsSize(
 
   const std::vector<int>::iterator it = selected_candidate_indices_.begin();
   selected_candidate_indices_.erase(it, it + commit_segments_size);
+}
+
+// Sets request type and update the session_converter's state
+void SessionConverter::SetRequestType(
+    ConversionRequest::RequestType request_type,
+    ConversionRequest *conversion_request) {
+  request_type_ = request_type;
+  conversion_request->set_request_type(request_type);
 }
 
 }  // namespace session

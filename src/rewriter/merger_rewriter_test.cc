@@ -115,7 +115,6 @@ TEST_F(MergerRewriterTest, Rewrite) {
   Segments segments;
   const ConversionRequest request;
 
-  segments.set_request_type(Segments::CONVERSION);
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "a", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "b", false));
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "c", false));
@@ -140,9 +139,9 @@ TEST_F(MergerRewriterTest, RewriteSuggestion) {
   std::string call_result;
   MergerRewriter merger;
   Segments segments;
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::SUGGESTION);
 
-  segments.set_request_type(Segments::SUGGESTION);
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", true, RewriterInterface::SUGGESTION));
 
@@ -175,9 +174,9 @@ TEST_F(MergerRewriterTest, RewriteSuggestionWithMixedConversion) {
   commands_request.set_mixed_conversion(true);
   ConversionRequest request;
   request.set_request(&commands_request);
+  request.set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_TRUE(request.request().mixed_conversion());
 
-  segments.set_request_type(Segments::SUGGESTION);
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", true, RewriterInterface::SUGGESTION));
 
@@ -204,7 +203,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   std::string call_result;
   MergerRewriter merger;
   Segments segments;
-  const ConversionRequest request;
+  ConversionRequest request;
   merger.AddRewriter(std::make_unique<TestRewriter>(
       &call_result, "a", false, RewriterInterface::CONVERSION));
   merger.AddRewriter(std::make_unique<TestRewriter>(
@@ -217,7 +216,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
   merger.AddRewriter(std::make_unique<TestRewriter>(&call_result, "e", false,
                                                     RewriterInterface::ALL));
 
-  segments.set_request_type(Segments::CONVERSION);
+  request.set_request_type(ConversionRequest::CONVERSION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "a.Rewrite();"
@@ -226,7 +225,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
       call_result);
   call_result.clear();
 
-  segments.set_request_type(Segments::PREDICTION);
+  request.set_request_type(ConversionRequest::PREDICTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "c.Rewrite();"
@@ -235,7 +234,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
       call_result);
   call_result.clear();
 
-  segments.set_request_type(Segments::SUGGESTION);
+  request.set_request_type(ConversionRequest::SUGGESTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "b.Rewrite();"
@@ -243,7 +242,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
       call_result);
   call_result.clear();
 
-  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "b.Rewrite();"
@@ -251,7 +250,7 @@ TEST_F(MergerRewriterTest, RewriteCheckTest) {
       call_result);
   call_result.clear();
 
-  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  request.set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   EXPECT_FALSE(merger.Rewrite(request, &segments));
   EXPECT_EQ(
       "c.Rewrite();"

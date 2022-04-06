@@ -97,7 +97,7 @@ void BasePredictor::Finish(const ConversionRequest &request,
   dictionary_predictor_->Finish(request, segments);
 
   if (segments->conversion_segments_size() < 1 ||
-      segments->request_type() == Segments::CONVERSION) {
+      request.request_type() == ConversionRequest::CONVERSION) {
     return;
   }
   Segment *segment = segments->mutable_conversion_segment(0);
@@ -155,17 +155,17 @@ DefaultPredictor::~DefaultPredictor() = default;
 
 bool DefaultPredictor::PredictForRequest(const ConversionRequest &request,
                                          Segments *segments) const {
-  DCHECK(segments->request_type() == Segments::PREDICTION ||
-         segments->request_type() == Segments::SUGGESTION ||
-         segments->request_type() == Segments::PARTIAL_PREDICTION ||
-         segments->request_type() == Segments::PARTIAL_SUGGESTION);
+  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
+         request.request_type() == ConversionRequest::SUGGESTION ||
+         request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
+         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
 
   if (request.config().presentation_mode()) {
     return false;
   }
 
   int size = kPredictionSize;
-  if (segments->request_type() == Segments::SUGGESTION) {
+  if (request.request_type() == ConversionRequest::SUGGESTION) {
     size = std::min(9, std::max<int>(1, request.config().suggestions_size()));
   }
 
@@ -213,23 +213,23 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
     const ConversionRequest &request, const Segments &segments) {
   ConversionRequest ret = request;
   size_t history_prediction_size = GetHistoryPredictionSizeFromRequest(request);
-  switch (segments.request_type()) {
-    case Segments::SUGGESTION: {
+  switch (request.request_type()) {
+    case ConversionRequest::SUGGESTION: {
       ret.set_max_user_history_prediction_candidates_size(
           history_prediction_size);
       ret.set_max_user_history_prediction_candidates_size_for_zero_query(4);
       ret.set_max_dictionary_prediction_candidates_size(20);
       break;
     }
-    case Segments::PARTIAL_SUGGESTION: {
+    case ConversionRequest::PARTIAL_SUGGESTION: {
       ret.set_max_dictionary_prediction_candidates_size(20);
       break;
     }
-    case Segments::PARTIAL_PREDICTION: {
+    case ConversionRequest::PARTIAL_PREDICTION: {
       ret.set_max_dictionary_prediction_candidates_size(kMobilePredictionSize);
       break;
     }
-    case Segments::PREDICTION: {
+    case ConversionRequest::PREDICTION: {
       ret.set_max_user_history_prediction_candidates_size(
           history_prediction_size);
       ret.set_max_user_history_prediction_candidates_size_for_zero_query(4);
@@ -244,10 +244,10 @@ ConversionRequest MobilePredictor::GetRequestForPredict(
 
 bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
                                         Segments *segments) const {
-  DCHECK(segments->request_type() == Segments::PREDICTION ||
-         segments->request_type() == Segments::SUGGESTION ||
-         segments->request_type() == Segments::PARTIAL_PREDICTION ||
-         segments->request_type() == Segments::PARTIAL_SUGGESTION);
+  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
+         request.request_type() == ConversionRequest::SUGGESTION ||
+         request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
+         request.request_type() == ConversionRequest::PARTIAL_SUGGESTION);
 
   if (request.config().presentation_mode()) {
     return false;
@@ -260,8 +260,8 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
       GetRequestForPredict(request, *segments);
 
   // TODO(taku,toshiyuki): Must rewrite the logic.
-  switch (segments->request_type()) {
-    case Segments::SUGGESTION: {
+  switch (request.request_type()) {
+    case ConversionRequest::SUGGESTION: {
       // Suggestion is triggered at every character insertion.
       // So here we should use slow predictors.
       result |= user_history_predictor_->PredictForRequest(request_for_predict,
@@ -270,19 +270,19 @@ bool MobilePredictor::PredictForRequest(const ConversionRequest &request,
                                                          segments);
       break;
     }
-    case Segments::PARTIAL_SUGGESTION: {
+    case ConversionRequest::PARTIAL_SUGGESTION: {
       // PARTIAL SUGGESTION can be triggered in a similar manner to that of
       // SUGGESTION. We don't call slow predictors by the same reason.
       result |= dictionary_predictor_->PredictForRequest(request_for_predict,
                                                          segments);
       break;
     }
-    case Segments::PARTIAL_PREDICTION: {
+    case ConversionRequest::PARTIAL_PREDICTION: {
       result |= dictionary_predictor_->PredictForRequest(request_for_predict,
                                                          segments);
       break;
     }
-    case Segments::PREDICTION: {
+    case ConversionRequest::PREDICTION: {
       result |= user_history_predictor_->PredictForRequest(request_for_predict,
                                                            segments);
       result |= dictionary_predictor_->PredictForRequest(request_for_predict,

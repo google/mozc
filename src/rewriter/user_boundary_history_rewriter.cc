@@ -117,7 +117,7 @@ UserBoundaryHistoryRewriter::~UserBoundaryHistoryRewriter() {}
 
 void UserBoundaryHistoryRewriter::Finish(const ConversionRequest &request,
                                          Segments *segments) {
-  if (segments->request_type() != Segments::CONVERSION) {
+  if (request.request_type() != ConversionRequest::CONVERSION) {
     return;
   }
 

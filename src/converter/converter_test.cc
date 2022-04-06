@@ -907,11 +907,11 @@ TEST_F(ConverterTest, CompletePosIds) {
   ConverterImpl *converter = converter_and_data->converter.get();
   for (size_t i = 0; i < std::size(kTestKeys); ++i) {
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *seg = segments.add_segment();
     seg->set_key(kTestKeys[i]);
     seg->set_segment_type(Segment::FREE);
     ConversionRequest request;
+    request.set_request_type(ConversionRequest::PREDICTION);
     request.set_max_conversion_candidates_size(20);
     CHECK(converter_and_data->immutable_converter->ConvertForRequest(
         request, &segments));
@@ -1016,7 +1016,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
     composer.InsertCharacter("shi");
 
     Segments segments;
-    const ConversionRequest request(&composer, &client_request, &config);
+    ConversionRequest request(&composer, &client_request, &config);
+    request.set_request_type(ConversionRequest::SUGGESTION);
     EXPECT_TRUE(converter->StartSuggestionForRequest(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1032,7 +1033,8 @@ TEST_F(ConverterTest, StartSuggestionForRequest) {
     composer.InsertCharacter("si");
 
     Segments segments;
-    const ConversionRequest request(&composer, &client_request, &config);
+    ConversionRequest request(&composer, &client_request, &config);
+    request.set_request_type(ConversionRequest::SUGGESTION);
     EXPECT_TRUE(converter->StartSuggestionForRequest(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
     ASSERT_TRUE(segments.segment(0).meta_candidates_size() >=
@@ -1128,31 +1130,14 @@ TEST_F(ConverterTest, PredictSetKey) {
   constexpr char kPredictionKey2[] = "prediction key2";
   // Tests whether SetKey method is called or not.
   struct TestData {
-    const Segments::RequestType request_type;
+    const bool should_call_set_key_in_prediction;
     const char *key;
     const bool expect_reset;
   };
   const TestData test_data_list[] = {
-      {Segments::CONVERSION, nullptr, true},
-      {Segments::CONVERSION, kPredictionKey, true},
-      {Segments::CONVERSION, kPredictionKey2, true},
-      {Segments::REVERSE_CONVERSION, nullptr, true},
-      {Segments::REVERSE_CONVERSION, kPredictionKey, true},
-      {Segments::REVERSE_CONVERSION, kPredictionKey2, true},
-      {Segments::PREDICTION, nullptr, true},
-      {Segments::PREDICTION, kPredictionKey2, true},
-      {Segments::SUGGESTION, nullptr, true},
-      {Segments::SUGGESTION, kPredictionKey2, true},
-      {Segments::PARTIAL_PREDICTION, nullptr, true},
-      {Segments::PARTIAL_PREDICTION, kPredictionKey2, true},
-      {Segments::PARTIAL_SUGGESTION, nullptr, true},
-      {Segments::PARTIAL_SUGGESTION, kPredictionKey2, true},
-      // If we are predicting, and one or more segment exists,
-      // and the segments's key equals to the input key, then do not reset.
-      {Segments::PREDICTION, kPredictionKey, false},
-      {Segments::SUGGESTION, kPredictionKey, true},
-      {Segments::PARTIAL_PREDICTION, kPredictionKey, false},
-      {Segments::PARTIAL_SUGGESTION, kPredictionKey, true},
+      {true, nullptr, true},          {true, kPredictionKey, true},
+      {true, kPredictionKey2, true},  {false, nullptr, true},
+      {false, kPredictionKey, false}, {false, kPredictionKey2, true},
   };
 
   std::unique_ptr<ConverterAndData> converter_and_data(
@@ -1165,7 +1150,6 @@ TEST_F(ConverterTest, PredictSetKey) {
   for (size_t i = 0; i < std::size(test_data_list); ++i) {
     const TestData &test_data = test_data_list[i];
     Segments segments;
-    segments.set_request_type(test_data.request_type);
 
     if (test_data.key) {
       Segment *seg = segments.add_segment();
@@ -1174,9 +1158,11 @@ TEST_F(ConverterTest, PredictSetKey) {
       // The segment has a candidate.
       seg->add_candidate();
     }
-    const ConversionRequest request;
-    converter->Predict(request, kPredictionKey, Segments::PREDICTION,
-                       &segments);
+    ConversionRequest request;
+    request.set_request_type(ConversionRequest::PREDICTION);
+    request.set_should_call_set_key_in_prediction(
+        test_data.should_call_set_key_in_prediction);
+    converter->Predict(request, kPredictionKey, &segments);
 
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(kPredictionKey, segments.conversion_segment(0).key());

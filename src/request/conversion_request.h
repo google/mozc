@@ -59,6 +59,15 @@ class Config;
 // detailed context information such as commands::Context.
 class ConversionRequest {
  public:
+  enum RequestType {
+    CONVERSION,          // normal conversion
+    REVERSE_CONVERSION,  // reverse conversion
+    PREDICTION,          // show prediction with user tab key
+    SUGGESTION,          // show prediction automatically
+    PARTIAL_PREDICTION,  // show prediction using the text before cursor
+    PARTIAL_SUGGESTION,  // show suggestion using the text before cursor
+  };
+
   enum ComposerKeySelection {
     // Use Composer::GetQueryForConversion() to generate conversion key. This
     // option uses the exact composition which user sees, e.g., "とうk".
@@ -85,6 +94,9 @@ class ConversionRequest {
   ConversionRequest &operator=(const ConversionRequest &x);
 
   ~ConversionRequest();
+
+  RequestType request_type() const;
+  void set_request_type(RequestType request_type);
 
   bool has_composer() const;
   const composer::Composer &composer() const;
@@ -128,7 +140,12 @@ class ConversionRequest {
   size_t max_dictionary_prediction_candidates_size() const;
   void set_max_dictionary_prediction_candidates_size(size_t value);
 
+  bool should_call_set_key_in_prediction() const;
+  void set_should_call_set_key_in_prediction(bool value);
+
  private:
+  RequestType request_type_ = CONVERSION;
+
   // Required fields
   // Input composer to generate a key for conversion, suggestion, etc.
   const composer::Composer *composer_;
@@ -167,6 +184,9 @@ class ConversionRequest {
   // This is used for supporting CONVERT_WITHOUT_HISTORY command.
   // Please refer to session/internal/keymap_interface.h
   bool enable_user_history_for_conversion_ = true;
+
+  // If true, set conversion key to output segments in prediction.
+  bool should_call_set_key_in_prediction_ = false;
 
   // TODO(noriyukit): Moves all the members of Segments that are irrelevant to
   // this structure, e.g., Segments::request_type_.

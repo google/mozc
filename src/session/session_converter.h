@@ -365,6 +365,9 @@ class SessionConverter : public SessionConverterInterface {
       SessionConverterInterface::State commit_state,
       const commands::Context &context, size_t commit_segments_size);
 
+  void SetRequestType(ConversionRequest::RequestType request_type,
+                      ConversionRequest *conversion_request);
+
   const ConverterInterface *converter_;
   std::unique_ptr<Segments> segments_;
   size_t segment_index_;
@@ -380,6 +383,11 @@ class SessionConverter : public SessionConverterInterface {
   const config::Config *config_;
 
   SessionConverterInterface::State state_;
+
+  // Remembers request type to manage state.
+  // TODO(team): Check whether we can switch behaviors using state_
+  // instead of request_type_.
+  ConversionRequest::RequestType request_type_;
 
   // Default conversion preferences.
   ConversionPreferences conversion_preferences_;

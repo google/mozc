@@ -58,13 +58,13 @@ bool IsComposerApplicable(const ConversionRequest &request,
   }
 
   std::string conversion_query;
-  if (segments->request_type() == Segments::PREDICTION ||
-      segments->request_type() == Segments::SUGGESTION) {
+  if (request.request_type() == ConversionRequest::PREDICTION ||
+      request.request_type() == ConversionRequest::SUGGESTION) {
     request.composer().GetQueryForPrediction(&conversion_query);
   } else {
     request.composer().GetQueryForConversion(&conversion_query);
-    if (segments->request_type() == Segments::PARTIAL_PREDICTION ||
-        segments->request_type() == Segments::PARTIAL_SUGGESTION) {
+    if (request.request_type() == ConversionRequest::PARTIAL_PREDICTION ||
+        request.request_type() == ConversionRequest::PARTIAL_SUGGESTION) {
       Util::Utf8SubString(conversion_query, 0, request.composer().GetCursor(),
                           &conversion_query);
     }

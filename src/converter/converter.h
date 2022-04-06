@@ -160,7 +160,9 @@ class ConverterImpl : public ConverterInterface {
                              uint16_t *id) const;
 
   bool Predict(const ConversionRequest &request, const std::string &key,
-               const Segments::RequestType request_type,
+               Segments *segments) const;
+
+  bool Convert(const ConversionRequest &request, const std::string &key,
                Segments *segments) const;
 
   const dictionary::PosMatcher *pos_matcher_;
