@@ -38,7 +38,7 @@
     </message>
     <message>
         <location filename="find_dialog.ui" line="68"/>
-        <source>Cacnel</source>
+        <source>Cancel</source>
         <translation></translation>
     </message>
 </context>
