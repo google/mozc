@@ -26,6 +26,7 @@ jobs:
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
           echo "$PWD/depot_tools" >> $GITHUB_PATH
+          python3 -m pip install six
           cd gyp
           git apply ../../gyp/gyp.patch
 
