@@ -30,6 +30,7 @@
 #include "session/internal/key_event_transformer.h"
 
 #include <cstdint>
+#include <string>
 
 #include "base/port.h"
 #include "base/singleton.h"

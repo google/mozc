@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "base/config_file_stream.h"
