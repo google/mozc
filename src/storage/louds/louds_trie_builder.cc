@@ -30,6 +30,7 @@
 #include "storage/louds/louds_trie_builder.h"
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #include "base/logging.h"

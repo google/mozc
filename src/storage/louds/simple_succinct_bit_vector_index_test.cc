@@ -30,6 +30,7 @@
 #include "storage/louds/simple_succinct_bit_vector_index.h"
 
 #include <cstdint>
+#include <string>
 
 #include "testing/base/public/gunit.h"
 

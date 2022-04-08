@@ -29,6 +29,8 @@
 
 #include "storage/louds/bit_vector_based_array_builder.h"
 
+#include <string>
+
 #include "base/logging.h"
 #include "storage/louds/bit_stream.h"
 
