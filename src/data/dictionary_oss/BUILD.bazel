@@ -118,5 +118,6 @@ evaluation(
     engine_type = "desktop",
     test_files = [
         "//data/test/quality_regression_test:oss.tsv",
+        "//data/test/quality_regression_test:regression.tsv",
     ],
 )
