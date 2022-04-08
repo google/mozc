@@ -228,3 +228,4 @@ OK:	さそおう	誘おう	Conversion Expected	誘おう	2.26.4695
 OK:	これいがいにも	これ以外にも	Conversion Expected	これ以外にも	2.26.4695
 OK:	てきしているものは	適しているものは	Conversion Expected	適しているものは	2.26.4695
 OK:	いかなければ	行かなければ	Conversion Expected	行かなければ	2.26.4695
+FAILED:	すき	好き	Conversion Expected 12	隙	2.26.4695
