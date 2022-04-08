@@ -84,17 +84,19 @@ def quality_regression_tests(name, srcs, **kwargs):
         tests = ["%s@%s" % (name, src.rsplit(":", 1)[1]) for src in srcs],
     )
 
-def evaluation(name, outs, data_file, data_type, engine_type, test_file, base_file):
+def evaluation(name, outs, data_file, data_type, engine_type, test_files, base_file):
     evaluation_name = name + "_result"
     evaluation_out = evaluation_name + ".tsv"
+    test_file_locations = ["$(location %s)" % file for file in test_files]
+
     native.genrule(
         name = evaluation_name,
-        srcs = [data_file, test_file],
+        srcs = [data_file] + test_files,
         outs = [evaluation_out],
         # TODO(b/130248329): Remove LANG when Python 3.7 or later becomes the default.
         cmd = ("LANG=en_US.UTF8 " +
                "$(location //converter:quality_regression_main) " +
-               "--test_file=$(location %s) " % test_file +
+               "--test_files='%s' " % ",".join(test_file_locations) +
                "--data_file=$(location %s) " % data_file +
                "--data_type=%s --engine_type=%s > $@" % (data_type, engine_type)),
         exec_tools = ["//converter:quality_regression_main"],
