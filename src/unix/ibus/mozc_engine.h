@@ -54,9 +54,7 @@ class LaunchToolTest;
 class MessageTranslatorInterface;
 class PreeditHandlerInterface;
 class PropertyHandlerInterface;
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
 class SelectionMonitorInterface;
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
 // Implements EngineInterface and handles signals from IBus daemon.
 // This class mainly does the two things:
@@ -131,9 +129,7 @@ class MozcEngine : public EngineInterface {
   uint64 last_sync_time_;
   std::unique_ptr<KeyEventHandler> key_event_handler_;
   std::unique_ptr<client::ClientInterface> client_;
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
   std::unique_ptr<PropertyHandlerInterface> property_handler_;
   std::unique_ptr<PreeditHandlerInterface> preedit_handler_;

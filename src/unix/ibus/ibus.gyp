@@ -285,6 +285,51 @@
         }],
       ],
     },
+    {
+      # Meta target to set up build environment for ibus. Required 'cflags'
+      # and 'link_settings' will be automatically injected into any target
+      # which directly or indirectly depends on this target.
+      'target_name': 'xcb_build_environment',
+      'type': 'none',
+      'variables': {
+        'target_libs': [
+          'xcb',
+          'xcb-xfixes',
+        ],
+      },
+      'all_dependent_settings': {
+        'cflags': [
+          '<!@(pkg-config --cflags <@(target_libs))',
+        ],
+        'link_settings': {
+          'libraries': [
+            '<!@(pkg-config --libs-only-l <@(target_libs))',
+          ],
+          'ldflags': [
+            '<!@(pkg-config --libs-only-L <@(target_libs))',
+          ],
+        },
+        'conditions': [
+          ['enable_x11_selection_monitor==1', {
+            'defines': [
+              'MOZC_ENABLE_X11_SELECTION_MONITOR=1'
+            ],
+          }],
+        ],
+      },
+    },
+    {
+      'target_name': 'selection_monitor',
+      'type': 'static_library',
+      'sources': [
+        'selection_monitor.cc',
+      ],
+      'dependencies': [
+        '../../base/absl.gyp:absl_synchronization',
+        '../../base/base.gyp:base',
+        'xcb_build_environment',
+      ],
+    },
   ],
   'conditions': [
     ['enable_gtk_renderer==1', {
@@ -310,51 +355,6 @@
           'dependencies': [
             'gtk_candidate_window_handler',
             '../../testing/testing.gyp:gtest_main',
-          ],
-        },
-      ],
-    }],
-    ['enable_x11_selection_monitor==1', {
-      'targets': [
-        {
-          # Meta target to set up build environment for ibus. Required 'cflags'
-          # and 'link_settings' will be automatically injected into any target
-          # which directly or indirectly depends on this target.
-          'target_name': 'xcb_build_environment',
-          'type': 'none',
-          'variables': {
-            'target_libs': [
-              'xcb',
-              'xcb-xfixes',
-            ],
-          },
-          'all_dependent_settings': {
-            'cflags': [
-              '<!@(pkg-config --cflags <@(target_libs))',
-            ],
-            'link_settings': {
-              'libraries': [
-                '<!@(pkg-config --libs-only-l <@(target_libs))',
-              ],
-              'ldflags': [
-                '<!@(pkg-config --libs-only-L <@(target_libs))',
-              ],
-            },
-            'defines': [
-              'MOZC_ENABLE_X11_SELECTION_MONITOR=1'
-            ],
-          },
-        },
-        {
-          'target_name': 'selection_monitor',
-          'type': 'static_library',
-          'sources': [
-            'selection_monitor.cc',
-          ],
-          'dependencies': [
-            '../../base/absl.gyp:absl_synchronization',
-            '../../base/base.gyp:base',
-            'xcb_build_environment',
           ],
         },
       ],
