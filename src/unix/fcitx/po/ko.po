@@ -4,15 +4,16 @@
 #
 # Translators:
 # Bon Keun Seo <scobyseo@gmail.com>, 2017
-# JungHee Lee <daemul72@gmail.com>, 2020
-# JungHee Lee <daemul72@gmail.com>, 2020,2022
+# Junghee Lee <daemul72@gmail.com>, 2020
+# Junghee Lee <daemul72@gmail.com>, 2022
+# Junghee Lee <daemul72@gmail.com>, 2020,2022
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-03-01 20:27+0000\n"
-"PO-Revision-Date: 2022-03-01 14:57+0000\n"
-"Last-Translator: JungHee Lee <daemul72@gmail.com>\n"
+"POT-Creation-Date: 2022-04-10 20:28+0000\n"
+"PO-Revision-Date: 2012-03-06 06:51+0000\n"
+"Last-Translator: Junghee Lee <daemul72@gmail.com>, 2022\n"
 "Language-Team: Korean (http://www.transifex.com/fcitx/fcitx/language/ko/)\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -22,7 +23,7 @@ msgstr ""
 
 #: ../eim.cc:187
 msgid "Press Escape to go back"
-msgstr "돌아가려면 ESC를 누르세요"
+msgstr "돌아가려면 Esc 키를 눌러 취소합니다"
 
 #: ../fcitx_mozc.cc:68
 msgid "Direct"
@@ -34,7 +35,7 @@ msgstr "히라가나"
 
 #: ../fcitx_mozc.cc:78
 msgid "Full Katakana"
-msgstr "전각 가타가나"
+msgstr "전각 가타카나"
 
 #: ../fcitx_mozc.cc:83
 msgid "Half ASCII"
@@ -46,7 +47,7 @@ msgstr "전각 아스키"
 
 #: ../fcitx_mozc.cc:93
 msgid "Half Katakana"
-msgstr "반각 가타가나"
+msgstr "반각 가타카나"
 
 #: ../fcitx_mozc.cc:409 ../fcitx_mozc.cc:410 ../fcitx_mozc.cc:472
 msgid "Composition Mode"
@@ -78,4 +79,4 @@ msgstr "Mozc에 대해"
 
 #: ../mozc_response_parser.cc:365
 msgid "Press Ctrl+Alt+H to show usages."
-msgstr "사용법을 보려면 Ctrl+Alt+H를 누르십시오."
+msgstr "사용법을 보려면 Ctrl+Alt+H를 누릅니다."
