@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-04-09 20:24+0000\n"
+"POT-Creation-Date: 2022-04-10 20:24+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
 "Last-Translator: Junghee Lee <daemul72@gmail.com>, 2022\n"
 "Language-Team: Korean (https://www.transifex.com/fcitx/teams/12005/ko/)\n"
@@ -51,7 +51,7 @@ msgstr "어법 확장 (세로 후보 목록 필요)"
 
 #: mozc_engine.h:73
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
-msgstr ""
+msgstr "사전편집 시작 부분에 포함된 사전편집 커서 수정"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:53 mozc_engine.cc:82
@@ -61,7 +61,7 @@ msgstr "전각 아스키"
 #. Katakana letter A.
 #: mozc_engine.h:52 mozc_engine.cc:66
 msgid "Full Katakana"
-msgstr "전각 가타가나"
+msgstr "전각 가타카나"
 
 #: mozc_engine.h:52 mozc_engine.cc:74
 msgid "Half ASCII"
@@ -70,7 +70,7 @@ msgstr "반각 아스키"
 #. Half width Katakana letter A.
 #: mozc_engine.h:53 mozc_engine.cc:89
 msgid "Half Katakana"
-msgstr "반각 가타가나"
+msgstr "반각 가타카나"
 
 #. Hiragana letter A in UTF-8.
 #: mozc_engine.h:51 mozc_engine.cc:59
@@ -95,11 +95,11 @@ msgstr "Mozc 기반 일본어 입력기"
 
 #: mozc_engine.cc:143 mozc_engine.cc:144
 msgid "Mozc Settings"
-msgstr ""
+msgstr "Mozc 설정"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
-msgstr "Fcitx 5 용 Mozc"
+msgstr "Fcitx5용 Mozc"
 
 #: mozc_engine.h:48
 msgid "On Focus"
@@ -114,7 +114,7 @@ msgstr "%s 키를 눌러 사용법을 표시합니다."
 
 #: mozc_state.cc:405
 msgid "Press Escape to go back"
-msgstr "돌아가려면 Esc 키를 누르십시오."
+msgstr "돌아가려면 Esc 키를 눌러 취소합니다"
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
