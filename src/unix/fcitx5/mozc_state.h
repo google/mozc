@@ -79,7 +79,8 @@ class MozcState : public InputContextProperty {
   // currently being displayed.
   void SetAuxString(const std::string &str);
   // Sets a current composition mode (e.g., Hankaku Katakana).
-  void SetCompositionMode(mozc::commands::CompositionMode mode);
+  void SetCompositionMode(mozc::commands::CompositionMode mode,
+                          bool updateUI = true);
 
   void SendCompositionMode(mozc::commands::CompositionMode mode);
 

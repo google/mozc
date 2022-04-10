@@ -71,7 +71,7 @@ MozcState::MozcState(InputContext* ic, mozc::client::ClientInterface* client,
   if (TrySendCompositionMode(*engine_->config().initialMode, &raw_response,
                              &error)) {
     if (raw_response.has_mode()) {
-      SetCompositionMode(raw_response.mode());
+      SetCompositionMode(raw_response.mode(), /*updateUI=*/false);
     }
   }
 }
@@ -317,10 +317,13 @@ void MozcState::SetPreeditInfo(Text preedit_info) {
 
 void MozcState::SetAuxString(const std::string& str) { aux_ = str; }
 
-void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode) {
+void MozcState::SetCompositionMode(mozc::commands::CompositionMode mode,
+                                   bool updateUI) {
   composition_mode_ = mode;
   DCHECK(composition_mode_ < mozc::commands::NUM_OF_COMPOSITIONS);
-  engine_->compositionModeUpdated(ic_);
+  if (updateUI) {
+    engine_->compositionModeUpdated(ic_);
+  }
 }
 
 void MozcState::SendCompositionMode(mozc::commands::CompositionMode mode) {
