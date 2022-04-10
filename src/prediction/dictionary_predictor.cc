@@ -397,7 +397,7 @@ DictionaryPredictor::~DictionaryPredictor() {}
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
-  if (segments->request_type() == Segments::REVERSE_CONVERSION) {
+  if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // Do nothing for REVERSE_CONVERSION.
     return;
   }
@@ -457,7 +457,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   if (segments == nullptr) {
     return false;
   }
-  if (segments->request_type() == Segments::CONVERSION) {
+  if (request.request_type() == ConversionRequest::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return false;
   }
@@ -491,7 +491,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   }
 
   // Normal prediction.
-  SetPredictionCost(*segments, &results);
+  SetPredictionCost(request.request_type(), *segments, &results);
   if (!IsEnableNewSpatialScoring(request)) {
     ApplyPenaltyForKeyExpansion(*segments, &results);
   }
@@ -523,7 +523,8 @@ DictionaryPredictor::UnigramConfig DictionaryPredictor::GetUnigramConfig(
     // For SUGGESTION request in Desktop, We don't look up English words when
     // key length is one.
     const size_t min_key_len_for_latin_input =
-        (is_mixed_conversion || segments.request_type() == Segments::PREDICTION)
+        (is_mixed_conversion ||
+         request.request_type() == ConversionRequest::PREDICTION)
             ? 1
             : 2;
     return {&DictionaryPredictor::AggregateUnigramCandidateForLatinInput,
@@ -540,7 +541,7 @@ DictionaryPredictor::UnigramConfig DictionaryPredictor::GetUnigramConfig(
 
   // Normal prediction.
   const size_t min_unigram_key_len =
-      (segments.request_type() == Segments::PREDICTION) ? 1 : 3;
+      (request.request_type() == ConversionRequest::PREDICTION) ? 1 : 3;
   return {&DictionaryPredictor::AggregateUnigramCandidate, min_unigram_key_len};
 }
 
@@ -562,7 +563,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
   // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
   // i.e. can we return NO_PREDICTION here for both of SUGGESTION and
   // PREDICTION?
-  if (segments->request_type() == Segments::SUGGESTION) {
+  if (request.request_type() == ConversionRequest::SUGGESTION) {
     if (!request.config().use_dictionary_suggest()) {
       VLOG(2) << "no_dictionary_suggest";
       return NO_PREDICTION;
@@ -579,8 +580,8 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
     selected_types |= REALTIME;
   }
   // In partial suggestion or prediction, only realtime candidates are used.
-  if (segments->request_type() == Segments::PARTIAL_SUGGESTION ||
-      segments->request_type() == Segments::PARTIAL_PREDICTION) {
+  if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
+      request.request_type() == ConversionRequest::PARTIAL_PREDICTION) {
     return selected_types;
   }
 
@@ -1053,7 +1054,8 @@ bool DictionaryPredictor::GetHistoryKeyAndValue(const Segments &segments,
 }
 
 void DictionaryPredictor::SetPredictionCost(
-    const Segments &segments, std::vector<Result> *results) const {
+    ConversionRequest::RequestType request_type, const Segments &segments,
+    std::vector<Result> *results) const {
   DCHECK(results);
 
   int rid = 0;  // 0 (BOS) is default
@@ -1069,7 +1071,7 @@ void DictionaryPredictor::SetPredictionCost(
   std::string history_key, history_value;
   GetHistoryKeyAndValue(segments, &history_key, &history_value);
   const std::string bigram_key = history_key + input_key;
-  const bool is_suggestion = (segments.request_type() == Segments::SUGGESTION);
+  const bool is_suggestion = (request_type == ConversionRequest::SUGGESTION);
 
   // use the same scoring function for both unigram/bigram.
   // Bigram will be boosted because we pass the previous
@@ -1398,11 +1400,11 @@ bool DictionaryPredictor::IsAggressiveSuggestion(
 size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
     const ConversionRequest &request, const Segments &segments,
     bool mixed_conversion) const {
-  const Segments::RequestType request_type = segments.request_type();
-  DCHECK(request_type == Segments::PREDICTION ||
-         request_type == Segments::SUGGESTION ||
-         request_type == Segments::PARTIAL_PREDICTION ||
-         request_type == Segments::PARTIAL_SUGGESTION);
+  const ConversionRequest::RequestType request_type = request.request_type();
+  DCHECK(request_type == ConversionRequest::PREDICTION ||
+         request_type == ConversionRequest::SUGGESTION ||
+         request_type == ConversionRequest::PARTIAL_PREDICTION ||
+         request_type == ConversionRequest::PARTIAL_SUGGESTION);
   if (segments.conversion_segments_size() == 0) {
     return 0;
   }
@@ -1412,20 +1414,20 @@ size_t DictionaryPredictor::GetRealtimeCandidateMaxSize(
   const size_t default_size = GetDefaultSizeForRealtimeCandidates(is_long_key);
   size_t size = 0;
   switch (request_type) {
-    case Segments::PREDICTION:
+    case ConversionRequest::PREDICTION:
       size = mixed_conversion ? max_size : default_size;
       break;
-    case Segments::SUGGESTION:
+    case ConversionRequest::SUGGESTION:
       // Fewer candidatats are needed basically.
       // But on mixed_conversion mode we should behave like as conversion mode.
       size = mixed_conversion ? default_size : 1;
       break;
-    case Segments::PARTIAL_PREDICTION:
+    case ConversionRequest::PARTIAL_PREDICTION:
       // This is kind of prediction so richer result than PARTIAL_SUGGESTION
       // is needed.
       size = max_size;
       break;
-    case Segments::PARTIAL_SUGGESTION:
+    case ConversionRequest::PARTIAL_SUGGESTION:
       // PARTIAL_SUGGESTION works like as conversion mode so returning
       // some candidates is needed.
       size = default_size;
@@ -1451,6 +1453,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
   // This method emulates usual converter's behavior so here disable
   // partial candidates.
   tmp_request.set_create_partial_candidates(false);
+  tmp_request.set_request_type(ConversionRequest::CONVERSION);
   if (!converter_->StartConversionForRequest(tmp_request, &tmp_segments)) {
     return false;
   }
@@ -1566,10 +1569,10 @@ void DictionaryPredictor::AggregateRealtimeConversion(
 }
 
 size_t DictionaryPredictor::GetCandidateCutoffThreshold(
-    const Segments &segments) const {
-  DCHECK(segments.request_type() == Segments::PREDICTION ||
-         segments.request_type() == Segments::SUGGESTION);
-  if (segments.request_type() == Segments::PREDICTION) {
+    ConversionRequest::RequestType request_type) const {
+  DCHECK(request_type == ConversionRequest::PREDICTION ||
+         request_type == ConversionRequest::SUGGESTION);
+  if (request_type == ConversionRequest::PREDICTION) {
     // If PREDICTION, many candidates are needed than SUGGESTION.
     return kPredictionMaxResultsSize;
   }
@@ -1582,10 +1585,11 @@ DictionaryPredictor::AggregateUnigramCandidate(
     std::vector<Result> *results) const {
   DCHECK(results);
   DCHECK(dictionary_);
-  DCHECK(segments.request_type() == Segments::PREDICTION ||
-         segments.request_type() == Segments::SUGGESTION);
+  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
+         request.request_type() == ConversionRequest::SUGGESTION);
 
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   GetPredictiveResults(*dictionary_, "", request, segments, UNIGRAM,
                        cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
@@ -1606,8 +1610,8 @@ DictionaryPredictor::PredictionType
 DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
-  DCHECK(segments.request_type() == Segments::PREDICTION ||
-         segments.request_type() == Segments::SUGGESTION);
+  DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
+         request.request_type() == ConversionRequest::SUGGESTION);
   AggregateUnigramCandidateForMixedConversion(*dictionary_, request, segments,
                                               unknown_id_, results);
   return UNIGRAM;
@@ -1720,7 +1724,8 @@ void DictionaryPredictor::AddBigramResultsFromHistory(
     return;
   }
 
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   GetPredictiveResultsForBigram(*dictionary_, history_key, history_value,
                                 request, segments, BIGRAM, cutoff_threshold,
@@ -2182,7 +2187,8 @@ void DictionaryPredictor::AggregateEnglishPrediction(
   DCHECK(results);
   DCHECK(dictionary_);
 
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
   const std::string &input_key = segments.conversion_segment(0).key();
   GetPredictiveResultsForEnglishKey(*dictionary_, request, input_key, ENGLISH,
@@ -2205,7 +2211,8 @@ void DictionaryPredictor::AggregateEnglishPredictionUsingRawInput(
     return;
   }
 
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
   const size_t prev_results_size = results->size();
 
   std::string input_key;
@@ -2231,7 +2238,8 @@ void DictionaryPredictor::AggregateTypeCorrectingPrediction(
     return;
   }
 
-  const size_t cutoff_threshold = GetCandidateCutoffThreshold(segments);
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
 
   // Currently, history key is never utilized.
   const std::string kEmptyHistoryKey = "";
@@ -2254,7 +2262,7 @@ bool DictionaryPredictor::ShouldAggregateRealTimeConversionResults(
     return false;
   }
 
-  return (segments.request_type() == Segments::PARTIAL_SUGGESTION ||
+  return (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
           request.config().use_realtime_conversion() ||
           IsMixedConversionEnabled(request.request()));
 }

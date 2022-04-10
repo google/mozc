@@ -37,10 +37,6 @@ void ConverterUtil::InitSegmentsFromString(const std::string &key,
                                            const std::string &preedit,
                                            Segments *segments) {
   segments->clear_conversion_segments();
-  // the request mode is CONVERSION, as the user experience
-  // is similar to conversion. UserHistryPredictor distinguishes
-  // CONVERSION from SUGGESTION now.
-  segments->set_request_type(Segments::CONVERSION);
   Segment *segment = segments->add_segment();
   segment->Clear();
   segment->set_key(key);

@@ -469,14 +469,12 @@ std::string Segment::DebugString() const {
 Segments::Segments()
     : max_history_segments_size_(0),
       resized_(false),
-      request_type_(Segments::CONVERSION),
       pool_(32),
       cached_lattice_(new Lattice()) {}
 
 Segments::Segments(const Segments &x)
     : max_history_segments_size_(x.max_history_segments_size_),
       resized_(x.resized_),
-      request_type_(x.request_type_),
       pool_(32),
       revert_entries_(x.revert_entries_),
       cached_lattice_(new Lattice()) {
@@ -494,7 +492,6 @@ Segments &Segments::operator=(const Segments &x) {
 
   max_history_segments_size_ = x.max_history_segments_size_;
   resized_ = x.resized_;
-  request_type_ = x.request_type_;
   // Deep-copy segments.
   for (const Segment *segment : x.segments_) {
     *add_segment() = *segment;
@@ -506,12 +503,6 @@ Segments &Segments::operator=(const Segments &x) {
 }
 
 Segments::~Segments() = default;
-
-Segments::RequestType Segments::request_type() const { return request_type_; }
-
-void Segments::set_request_type(Segments::RequestType request_type) {
-  request_type_ = request_type;
-}
 
 const Segment &Segments::segment(size_t i) const { return *segments_[i]; }
 

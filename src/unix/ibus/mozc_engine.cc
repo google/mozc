@@ -57,6 +57,7 @@
 #include "unix/ibus/path_util.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
+#include "unix/ibus/selection_monitor.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
 
@@ -65,9 +66,6 @@
 #include "unix/ibus/gtk_candidate_window_handler.h"
 #endif  // ENABLE_GTK_RENDERER
 
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
-#include "unix/ibus/selection_monitor.h"
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
 #ifdef ENABLE_GTK_RENDERER
 ABSL_FLAG(bool, use_mozc_renderer, true,
@@ -164,9 +162,7 @@ struct SurroundingTextInfo {
 };
 
 bool GetSurroundingText(IBusEngine *engine,
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
                         SelectionMonitorInterface *selection_monitor,
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
                         SurroundingTextInfo *info) {
   if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
     VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
@@ -272,11 +268,9 @@ MozcEngine::MozcEngine()
 #endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (selection_monitor_ != nullptr) {
     selection_monitor_->StartMonitoring();
   }
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
 
   ibus_config_.Initialize();
   property_handler_ = std::make_unique<PropertyHandler>(
@@ -398,9 +392,7 @@ gboolean MozcEngine::ProcessKeyEvent(IBusEngine *engine, guint keyval,
   commands::Context context;
   SurroundingTextInfo surrounding_text_info;
   if (GetSurroundingText(engine,
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
                          selection_monitor_.get(),
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
                          &surrounding_text_info)) {
     context.set_preceding_text(surrounding_text_info.preceding_text);
     context.set_following_text(surrounding_text_info.following_text);
@@ -628,9 +620,7 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
       if (!GetSurroundingText(engine,
-#ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
                               selection_monitor_.get(),
-#endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
                               &surrounding_text_info)) {
         return false;
       }

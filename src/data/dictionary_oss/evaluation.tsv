@@ -195,3 +195,37 @@ OK:	ふいふい	回回	Conversion Expected 9	回回	2.26.4596
 OK:	れいわがんねん	令和元年	Conversion Expected	令和元年	2.26.4596
 OK:	ほんじ	本寺	Conversion Expected 2	翻字	2.26.4610
 OK:	やくたたず	役立たず	Conversion Expected	役立たず	2.26.4666
+OK:	むびゅう	無謬	Conversion Expected	無謬	2.26.4695
+OK:	むびゅうせい	無謬性	Conversion Expected	無謬性	2.26.4695
+OK:	ごびゅう	誤謬	Conversion Expected	誤謬	2.26.4680
+OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
+OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
+OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
+OK:	はなしていた	話していた	Conversion Expected	話していた	2.26.4695
+OK:	はなしています	話しています	Conversion Expected	話しています	2.26.4695
+OK:	でましたら	出ましたら	Conversion Expected	出ましたら	2.26.4695
+OK:	あきのことである	秋のことである	Conversion Expected	秋のことである	2.26.4695
+OK:	むしろふろでて	むしろ風呂出て	Conversion Expected	むしろ風呂出て	2.26.4695
+FAILED:	おだい	お代	Conversion Expected	お題	2.26.4695
+OK:	あおいそらに	青い空に	Conversion Expected	青い空に	2.26.4695
+OK:	なんどか	何度か	Conversion Expected	何度か	2.26.4695
+OK:	ごたんとうしゃ	ご担当者	Conversion Expected	ご担当者	2.26.4695
+OK:	しょうがいぐらんどすらむ	生涯グランドスラム	Conversion Expected	生涯グランドスラム	2.26.4695
+OK:	しょうじき	正直	Conversion Expected	正直	2.26.4695
+OK:	かいます	買います	Conversion Expected	買います	2.26.4695
+OK:	みておくれ	見ておくれ	Conversion Expected	見ておくれ	2.26.4695
+FAILED:	たちきえ	たち消え	Conversion Expected	立ち消え	2.26.4695
+OK:	たちぎえ	立ち消え	Conversion Expected	立ち消え	2.26.4695
+OK:	みつけしだい	見つけ次第	Conversion Expected	見つけ次第	2.26.4695
+OK:	かってに	勝手に	Conversion Expected	勝手に	2.26.4695
+OK:	くまもととながの	熊本と長野	Conversion Expected	熊本と長野	2.26.4695
+OK:	わかいんだから	若いんだから	Conversion Expected	若いんだから	2.26.4695
+OK:	しんでない	死んでない	Conversion Expected	死んでない	2.26.4695
+OK:	ごじゆうに	ご自由に	Conversion Expected	ご自由に	2.26.4695
+OK:	きょうごうせい	競合性	Conversion Expected	競合性	2.26.4695
+OK:	どうがん	童顔	Conversion Expected	童顔	2.26.4695
+OK:	さそおう	誘おう	Conversion Expected	誘おう	2.26.4695
+OK:	これいがいにも	これ以外にも	Conversion Expected	これ以外にも	2.26.4695
+OK:	てきしているものは	適しているものは	Conversion Expected	適しているものは	2.26.4695
+OK:	いかなければ	行かなければ	Conversion Expected	行かなければ	2.26.4695
+FAILED:	すき	好き	Conversion Expected 12	隙	2.26.4695

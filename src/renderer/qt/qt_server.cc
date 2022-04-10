@@ -87,13 +87,7 @@ QtServer::QtServer()
 #endif  // MOZC_NO_LOGGING
 }
 
-QtServer::~QtServer() {}
-
-namespace {
-bool cond_func(bool *cond_var) {
-  return *cond_var;
-}
-}  // namespace
+QtServer::~QtServer() = default;
 
 void QtServer::AsyncExecCommand(const std::string &command) {
   emit EmitUpdated(command);

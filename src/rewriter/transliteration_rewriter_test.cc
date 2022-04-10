@@ -209,13 +209,13 @@ TEST_F(TransliterationRewriterTest, KeyOfT13nFromComposerTest) {
   InsertASCIISequence("ssh", &composer);
 
   Segments segments;
-  segments.set_request_type(Segments::SUGGESTION);
   Segment *segment = segments.add_segment();
   CHECK(segment);
 
   commands::Request input;
   input.set_mixed_conversion(true);
   ConversionRequest request(&composer, &input, &default_config());
+  request.set_request_type(ConversionRequest::SUGGESTION);
   {
     // Although the segment key is "っ" as a partical string of the full
     // composition, the transliteration key should be "っsh" as the
@@ -778,7 +778,7 @@ TEST_F(TransliterationRewriterTest, MobileT13nTestWithGodan) {
   }
 }
 
-TEST_F(TransliterationRewriterTest, MobileT13nTest_ValidateGodanT13nTable) {
+TEST_F(TransliterationRewriterTest, MobileT13nTestValidateGodanT13nTable) {
   std::unique_ptr<TransliterationRewriter> t13n_rewriter(
       CreateTransliterationRewriter());
 
@@ -874,10 +874,10 @@ TEST_F(TransliterationRewriterTest, T13nOnSuggestion) {
     EXPECT_EQ(kXtsu, query);
 
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kXtsu);
     ConversionRequest request(&composer, &client_request, &default_config());
+    request.set_request_type(ConversionRequest::SUGGESTION);
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);
@@ -908,10 +908,10 @@ TEST_F(TransliterationRewriterTest, T13nOnPartialSuggestion) {
     composer.MoveCursorTo(1);  // "っ|sh"
 
     Segments segments;
-    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kXtsu);
     ConversionRequest request(&composer, &client_request, &default_config());
+    request.set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
     EXPECT_TRUE(t13n_rewriter->Rewrite(request, &segments));
 
     const Segment &seg = segments.conversion_segment(0);

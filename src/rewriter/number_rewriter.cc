@@ -470,7 +470,7 @@ bool NumberRewriter::Rewrite(const ConversionRequest &request,
   // Showing radix candidates is annoying for a user.
   const bool exec_radix_conversion =
       (segments->conversion_segments_size() == 1 &&
-       segments->request_type() == Segments::CONVERSION);
+       request.request_type() == ConversionRequest::CONVERSION);
 
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     Segment *seg = segments->mutable_conversion_segment(i);

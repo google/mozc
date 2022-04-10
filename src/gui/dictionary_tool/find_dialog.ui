@@ -96,7 +96,7 @@
      <item row="2" column="3">
       <widget class="QPushButton" name="CancelpushButton">
        <property name="text">
-        <string>Cacnel</string>
+        <string>Cancel</string>
        </property>
       </widget>
      </item>

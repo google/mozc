@@ -186,17 +186,17 @@ TEST_F(NumberRewriterTest, BasicTest) {
 TEST_F(NumberRewriterTest, RequestType) {
   class TestData {
    public:
-    Segments::RequestType request_type_;
+    ConversionRequest::RequestType request_type_;
     int expected_candidate_number_;
-    TestData(Segments::RequestType request_type, int expected_number)
+    TestData(ConversionRequest::RequestType request_type, int expected_number)
         : request_type_(request_type),
           expected_candidate_number_(expected_number) {}
   };
   TestData test_data_list[] = {
-      TestData(Segments::CONVERSION, 11),  // 11 comes from BasicTest
-      TestData(Segments::REVERSE_CONVERSION, 8),
-      TestData(Segments::PREDICTION, 8),
-      TestData(Segments::SUGGESTION, 8),
+      TestData(ConversionRequest::CONVERSION, 11),  // 11 comes from BasicTest
+      TestData(ConversionRequest::REVERSE_CONVERSION, 8),
+      TestData(ConversionRequest::PREDICTION, 8),
+      TestData(ConversionRequest::SUGGESTION, 8),
   };
 
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
@@ -204,7 +204,6 @@ TEST_F(NumberRewriterTest, RequestType) {
   for (size_t i = 0; i < std::size(test_data_list); ++i) {
     TestData &test_data = test_data_list[i];
     Segments segments;
-    segments.set_request_type(test_data.request_type_);
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
@@ -212,7 +211,9 @@ TEST_F(NumberRewriterTest, RequestType) {
     candidate->rid = pos_matcher_.GetNumberId();
     candidate->value = "012";
     candidate->content_value = "012";
-    EXPECT_TRUE(number_rewriter->Rewrite(default_request_, &segments));
+    ConversionRequest request;
+    request.set_request_type(test_data.request_type_);
+    EXPECT_TRUE(number_rewriter->Rewrite(request, &segments));
     EXPECT_EQ(test_data.expected_candidate_number_, seg->candidates_size());
   }
 }

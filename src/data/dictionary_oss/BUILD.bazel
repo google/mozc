@@ -116,5 +116,8 @@ evaluation(
     data_file = "//data_manager/oss:mozc_dataset_for_oss",
     data_type = "oss",
     engine_type = "desktop",
-    test_file = "//data/test/quality_regression_test:oss.tsv",
+    test_files = [
+        "//data/test/quality_regression_test:oss.tsv",
+        "//data/test/quality_regression_test:regression.tsv",
+    ],
 )

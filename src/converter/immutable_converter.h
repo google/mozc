@@ -98,8 +98,7 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   void ExpandCandidates(const ConversionRequest &request,
                         const std::string &original_key, NBestGenerator *nbest,
-                        Segment *segment, Segments::RequestType request_type,
-                        size_t expand_size) const;
+                        Segment *segment, size_t expand_size) const;
   void InsertDummyCandidates(Segment *segment, size_t expand_size) const;
   Node *Lookup(const int begin_pos, const int end_pos,
                const ConversionRequest &request, bool is_reverse,
@@ -161,7 +160,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
 
   // Helper function for InsertCandidates().
   // Returns true if |node| is valid node for segment end.
-  bool IsSegmentEndNode(const Segments &segments, const Node *node,
+  bool IsSegmentEndNode(const ConversionRequest &request,
+                        const Segments &segments, const Node *node,
                         const std::vector<uint16_t> &group,
                         bool is_single_segment) const;
 

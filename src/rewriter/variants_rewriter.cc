@@ -484,7 +484,7 @@ bool VariantsRewriter::GenerateAlternatives(
 void VariantsRewriter::Finish(const ConversionRequest &request,
                               Segments *segments) {
   if (!request.request().mixed_conversion() &&
-      segments->request_type() != Segments::CONVERSION) {
+      request.request_type() != ConversionRequest::CONVERSION) {
     return;
   }
 
@@ -551,7 +551,7 @@ bool VariantsRewriter::Rewrite(const ConversionRequest &request,
   RewriteType type;
   if (request.request().mixed_conversion()) {  // For mobile.
     type = EXPAND_VARIANT;
-  } else if (segments->request_type() == Segments::SUGGESTION) {
+  } else if (request.request_type() == ConversionRequest::SUGGESTION) {
     type = SELECT_VARIANT;
   } else {
     type = EXPAND_VARIANT;

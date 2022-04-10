@@ -305,17 +305,9 @@ ACTION_P4(LookupPrefixOneToken, key, value, lid, rid) {
   arg2->OnToken(key, key, token);
 }
 
-void MakeSegmentsForSuggestion(const std::string &key, Segments *segments) {
+void InitSegmentsWithKey(const std::string &key, Segments *segments) {
   segments->Clear();
-  segments->set_request_type(Segments::SUGGESTION);
-  Segment *seg = segments->add_segment();
-  seg->set_key(key);
-  seg->set_segment_type(Segment::FREE);
-}
 
-void MakeSegmentsForPrediction(const std::string &key, Segments *segments) {
-  segments->Clear();
-  segments->set_request_type(Segments::PREDICTION);
   Segment *seg = segments->add_segment();
   seg->set_key(key);
   seg->set_segment_type(Segment::FREE);
@@ -337,7 +329,7 @@ void SetUpInputForSuggestion(const std::string &key,
                              composer::Composer *composer, Segments *segments) {
   composer->Reset();
   composer->SetPreeditTextForTestOnly(key);
-  MakeSegmentsForSuggestion(key, segments);
+  InitSegmentsWithKey(key, segments);
 }
 
 void SetUpInputForSuggestionWithHistory(const std::string &key,
@@ -373,9 +365,11 @@ class DictionaryPredictorTest : public ::testing::Test {
     convreq_for_suggestion_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
     convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(10);
+    convreq_for_suggestion_->set_request_type(ConversionRequest::SUGGESTION);
     convreq_for_prediction_ = std::make_unique<ConversionRequest>(
         composer_.get(), request_.get(), config_.get());
     convreq_for_prediction_->set_max_dictionary_prediction_candidates_size(50);
+    convreq_for_prediction_->set_request_type(ConversionRequest::PREDICTION);
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
@@ -553,7 +547,6 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     {
       Segments segments;
-      segments.set_request_type(Segments::PREDICTION);
       request_->set_kana_modifier_insensitive_conversion(use_expansion);
       InsertInputSequence("gu-g", composer_.get());
       Segment *segment = segments.add_segment();
@@ -590,7 +583,7 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     {
       Segments segments;
-      segments.set_request_type(Segments::PREDICTION);
+
       // History segment's key and value should be in the dictionary
       Segment *segment = segments.add_segment();
       CHECK(segment);
@@ -643,7 +636,6 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     {
       Segments segments;
-      segments.set_request_type(Segments::PREDICTION);
       Segment *segment = segments.add_segment();
       CHECK(segment);
 
@@ -701,7 +693,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     InsertInputSequence(key, composer_.get());
 
     Segments segments;
-    MakeSegmentsForPrediction(key, &segments);
+    InitSegmentsWithKey(key, &segments);
 
     std::vector<TestableDictionaryPredictor::Result> results;
     predictor->AggregateEnglishPrediction(*convreq_for_prediction_, segments,
@@ -738,7 +730,7 @@ class DictionaryPredictorTest : public ::testing::Test {
                                            composer_.get());
 
     Segments segments;
-    MakeSegmentsForPrediction(key, &segments);
+    InitSegmentsWithKey(key, &segments);
 
     std::vector<TestableDictionaryPredictor::Result> results;
     predictor->AggregateTypeCorrectingPrediction(*convreq_for_prediction_,
@@ -830,10 +822,11 @@ TEST_F(DictionaryPredictorTest, PartialSuggestion) {
   request_->set_mixed_conversion(true);
 
   segments.Clear();
-  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
   Segment *seg = segments.add_segment();
   seg->set_key("ぐーぐるあ");
   seg->set_segment_type(Segment::FREE);
+  convreq_for_suggestion_->set_request_type(
+      ConversionRequest::PARTIAL_SUGGESTION);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_suggestion_, &segments));
 }
@@ -842,7 +835,7 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
   Segments segments;
   config_->set_use_dictionary_suggest(true);
 
-  MakeSegmentsForSuggestion("あ", &segments);
+  InitSegmentsWithKey("あ", &segments);
 
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
@@ -862,7 +855,7 @@ TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
   request_->set_zero_query_suggestion(true);
 
   // current query is empty
-  MakeSegmentsForSuggestion("", &segments);
+  InitSegmentsWithKey("", &segments);
 
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
@@ -880,7 +873,7 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
   Segments segments;
   config_->set_use_dictionary_suggest(true);
 
-  MakeSegmentsForSuggestion("だい", &segments);
+  InitSegmentsWithKey("だい", &segments);
 
   // history is "きょうと/京都"
   PrependHistorySegments("きょうと", "京都", &segments);
@@ -928,7 +921,6 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        &segments, &results));
 
-    segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        &segments, &results));
@@ -944,7 +936,6 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, &segments, &results));
 
-      segments.set_request_type(Segments::PREDICTION);
       EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_prediction_, &segments, &results));
@@ -956,7 +947,6 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, &segments, &results));
 
-      segments.set_request_type(Segments::PREDICTION);
       EXPECT_EQ(DictionaryPredictor::UNIGRAM,
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_prediction_, &segments, &results));
@@ -1115,7 +1105,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
 INSTANTIATE_TEST_SUITE_P(TriggerConditionsForPlatforms, TriggerConditionsTest,
                          ::testing::Values(DESKTOP, MOBILE));
 
-TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
+TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
@@ -1138,7 +1128,6 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        &segments, &results));
 
-    segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        &segments, &results));
@@ -1154,7 +1143,6 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        &segments, &results));
 
-    segments.set_request_type(Segments::PREDICTION);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        &segments, &results));
@@ -1297,7 +1285,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_Mobile) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
+TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
@@ -1315,6 +1303,10 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
       {MOBILE, transliteration::FULL_ASCII},
   };
 
+  ConversionRequest request_for_suggestion = *convreq_for_suggestion_;
+  ConversionRequest request_for_partial_suggestion = *convreq_for_suggestion_;
+  request_for_partial_suggestion.set_request_type(
+      ConversionRequest::PARTIAL_SUGGESTION);
   for (size_t i = 0; i < std::size(kTestCases); ++i) {
     config::ConfigHandler::GetDefaultConfig(config_.get());
     // Resets to default value.
@@ -1340,27 +1332,26 @@ TEST_F(DictionaryPredictorTest, TriggerConditions_LatinInputMode) {
     // Input mode is Latin(HALF_ASCII or FULL_ASCII) => ENGLISH
     config_->set_use_realtime_conversion(false);
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::ENGLISH, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+              predictor->AggregatePredictionForRequest(request_for_suggestion,
                                                        &segments, &results));
 
     config_->set_use_realtime_conversion(true);
     EXPECT_EQ(DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+              predictor->AggregatePredictionForRequest(request_for_suggestion,
                                                        &segments, &results));
 
     // When dictionary suggest is turned off, English prediction should be
     // disabled.
     config_->set_use_dictionary_suggest(false);
     EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+              predictor->AggregatePredictionForRequest(request_for_suggestion,
                                                        &segments, &results));
 
     // Has realtime results for PARTIAL_SUGGESTION request.
     config_->set_use_dictionary_suggest(true);
-    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     EXPECT_EQ(DictionaryPredictor::REALTIME,
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+              predictor->AggregatePredictionForRequest(
+                  request_for_partial_suggestion, &segments, &results));
   }
 }
 
@@ -1422,7 +1413,6 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
     // Test prediction from input あ.
     InsertInputSequence(kHiraganaA, composer_.get());
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kHiraganaA);
 
@@ -1454,7 +1444,6 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
     composer_->Reset();
     InsertInputSequence(kHiraganaAA, composer_.get());
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kHiraganaAA);
 
@@ -1491,7 +1480,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
   {
     Segments segments;
 
-    MakeSegmentsForSuggestion("あ", &segments);
+    InitSegmentsWithKey("あ", &segments);
 
     // history is "グーグル"
     constexpr char kHistoryKey[] = "ぐーぐる";
@@ -1528,7 +1517,7 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
   {
     Segments segments;
 
-    MakeSegmentsForSuggestion("あ", &segments);
+    InitSegmentsWithKey("あ", &segments);
 
     constexpr char kHistoryKey[] = "てす";
     constexpr char kHistoryValue[] = "テス";
@@ -1555,7 +1544,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
     Segments segments;
 
     // Zero query
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     // history is "グーグル"
     constexpr char kHistoryKey[] = "ぐーぐる";
@@ -1605,7 +1594,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
     Segments segments;
 
     // Zero query
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     PrependHistorySegments(kHistory, kHistory, &segments);
 
@@ -1641,7 +1630,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
   }
 }
 
-TEST_F(DictionaryPredictorTest, AggregateZeroQueryPrediction_LatinInputMode) {
+TEST_F(DictionaryPredictorTest, AggregateZeroQueryPredictionLatinInputMode) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
   const DictionaryPredictor *predictor =
@@ -1749,47 +1738,47 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
   convreq_->set_max_dictionary_prediction_candidates_size(kMaxSize);
 
   // non-partial, non-mixed-conversion
-  segments.set_request_type(Segments::PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   const size_t prediction_no_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, false);
   EXPECT_GE(kMaxSize, prediction_no_mixed);
 
-  segments.set_request_type(Segments::SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   const size_t suggestion_no_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, false);
   EXPECT_GE(kMaxSize, suggestion_no_mixed);
   EXPECT_LE(suggestion_no_mixed, prediction_no_mixed);
 
   // non-partial, mixed-conversion
-  segments.set_request_type(Segments::PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   const size_t prediction_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, prediction_mixed);
 
-  segments.set_request_type(Segments::SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   const size_t suggestion_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, suggestion_mixed);
 
   // partial, non-mixed-conversion
-  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   const size_t partial_prediction_no_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, false);
   EXPECT_GE(kMaxSize, partial_prediction_no_mixed);
 
-  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   const size_t partial_suggestion_no_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, false);
   EXPECT_GE(kMaxSize, partial_suggestion_no_mixed);
   EXPECT_LE(partial_suggestion_no_mixed, partial_prediction_no_mixed);
 
   // partial, mixed-conversion
-  segments.set_request_type(Segments::PARTIAL_PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PARTIAL_PREDICTION);
   const size_t partial_prediction_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, partial_prediction_mixed);
 
-  segments.set_request_type(Segments::PARTIAL_SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::PARTIAL_SUGGESTION);
   const size_t partial_suggestion_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, partial_suggestion_mixed);
@@ -1814,25 +1803,25 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
 
   // for short key, try to provide many results as possible
   segment->set_key("short");
-  segments.set_request_type(Segments::SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   const size_t short_suggestion_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, short_suggestion_mixed);
 
-  segments.set_request_type(Segments::PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   const size_t short_prediction_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, short_prediction_mixed);
 
   // for long key, provide few results
   segment->set_key("long_request_key");
-  segments.set_request_type(Segments::SUGGESTION);
+  convreq_->set_request_type(ConversionRequest::SUGGESTION);
   const size_t long_suggestion_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, long_suggestion_mixed);
   EXPECT_GT(short_suggestion_mixed, long_suggestion_mixed);
 
-  segments.set_request_type(Segments::PREDICTION);
+  convreq_->set_request_type(ConversionRequest::PREDICTION);
   const size_t long_prediction_mixed =
       predictor->GetRealtimeCandidateMaxSize(*convreq_, segments, true);
   EXPECT_GE(kMaxSize, long_prediction_mixed);
@@ -1890,7 +1879,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   {
     Segments segments;
 
-    MakeSegmentsForSuggestion(kKey, &segments);
+    InitSegmentsWithKey(kKey, &segments);
 
     std::vector<TestableDictionaryPredictor::Result> results;
     convreq_->set_use_actual_converter_for_realtime_conversion(false);
@@ -1908,7 +1897,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   {
     Segments segments;
 
-    MakeSegmentsForSuggestion(kKey, &segments);
+    InitSegmentsWithKey(kKey, &segments);
 
     std::vector<TestableDictionaryPredictor::Result> results;
     convreq_for_suggestion_->set_use_actual_converter_for_realtime_conversion(
@@ -2006,11 +1995,11 @@ TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
       data_and_predictor->dictionary_predictor();
   Segments segments;
 
-  segments.set_request_type(Segments::PREDICTION);
-  const size_t prediction = predictor->GetCandidateCutoffThreshold(segments);
+  const size_t prediction =
+      predictor->GetCandidateCutoffThreshold(ConversionRequest::PREDICTION);
 
-  segments.set_request_type(Segments::SUGGESTION);
-  const size_t suggestion = predictor->GetCandidateCutoffThreshold(segments);
+  const size_t suggestion =
+      predictor->GetCandidateCutoffThreshold(ConversionRequest::SUGGESTION);
   EXPECT_LE(suggestion, prediction);
 }
 
@@ -2065,7 +2054,7 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQuerySuffixPrediction) {
   Segments segments;
 
   // Zero query
-  MakeSegmentsForSuggestion("", &segments);
+  InitSegmentsWithKey("", &segments);
 
   // history is "グーグル"
   constexpr char kHistoryKey[] = "ぐーぐる";
@@ -2186,7 +2175,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
   Segments segments;
 
   {
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     constexpr char kHistoryKey[] = "12";
     constexpr char kHistoryValue[] = "12";
@@ -2217,7 +2206,7 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
   }
 
   {
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     constexpr char kHistoryKey[] = "66050713";  // A random number
     constexpr char kHistoryValue[] = "66050713";
@@ -2267,7 +2256,7 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
 
   for (size_t i = 0; i < std::size(kTestCases); ++i) {
     Segments segments;
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     const TestCase &test_case = kTestCases[i];
     PrependHistorySegments(test_case.history_key, test_case.history_value,
@@ -2312,7 +2301,7 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
 
   for (size_t i = 0; i < std::size(kTestCases); ++i) {
     Segments segments;
-    MakeSegmentsForSuggestion("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     const TestCase &test_case = kTestCases[i];
     PrependHistorySegments(test_case.history_key, test_case.history_value,
@@ -2342,7 +2331,7 @@ TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
-  MakeSegmentsForSuggestion("test", &segments);
+  InitSegmentsWithKey("test", &segments);
 
   std::string key, value;
   EXPECT_FALSE(predictor->GetHistoryKeyAndValue(segments, &key, &value));
@@ -2429,7 +2418,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
     converter->SetStartConversionForRequest(&segments, true);
   }
 
-  MakeSegmentsForSuggestion(kKey, &segments);
+  InitSegmentsWithKey(kKey, &segments);
 
   std::vector<DictionaryPredictor::Result> results;
 
@@ -2663,7 +2652,6 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   InsertInputSequence("ak", composer_.get());
   Segment *segment = segments.add_segment();
   CHECK(segment);
@@ -2729,7 +2717,6 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   InsertInputSequence("あし", composer_.get());
 
   Segment *segment = segments.add_segment();
@@ -2824,7 +2811,6 @@ TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   Segment *segment = segments.add_segment();
   CHECK(segment);
   segment->set_key("てすと");
@@ -2889,7 +2875,6 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
   const char *kAikaKanji = "愛佳";
 
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   Segment *segment = segments.add_segment();
   ASSERT_NE(nullptr, segment);
   segment->set_key(kAikaHiragana);
@@ -2972,7 +2957,7 @@ TEST_F(DictionaryPredictorTest, SuggestSpellingCorrection) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  MakeSegmentsForPrediction("あぼがど", &segments);
+  InitSegmentsWithKey("あぼがど", &segments);
 
   predictor->PredictForRequest(*convreq_for_prediction_, &segments);
 
@@ -2992,7 +2977,7 @@ TEST_F(DictionaryPredictorTest, DoNotSuggestSpellingCorrectionBeforeMismatch) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  MakeSegmentsForPrediction("あぼが", &segments);
+  InitSegmentsWithKey("あぼが", &segments);
 
   predictor->PredictForRequest(*convreq_for_prediction_, &segments);
 
@@ -3047,7 +3032,7 @@ TEST_F(DictionaryPredictorTest, MobileZeroQuerySuggestion) {
       data_and_predictor->dictionary_predictor();
 
   Segments segments;
-  MakeSegmentsForPrediction("", &segments);
+  InitSegmentsWithKey("", &segments);
 
   PrependHistorySegments("だいがく", "大学", &segments);
 
@@ -3098,7 +3083,7 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
     const TestCase &test_case = kTestcases[i];
 
     Segments segments;
-    MakeSegmentsForPrediction("", &segments);
+    InitSegmentsWithKey("", &segments);
 
     Segment *seg = segments.push_front_segment();
     seg->set_segment_type(Segment::HISTORY);
@@ -3129,7 +3114,6 @@ TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
 
   {
     segments.Clear();
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *seg = segments.add_segment();
     seg->set_key("ゆーざー");
     seg->set_segment_type(Segment::FREE);
@@ -3152,7 +3136,6 @@ TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
 
   {
     segments.Clear();
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *seg = segments.add_segment();
     seg->set_key("ゆーざーの");
     seg->set_segment_type(Segment::FREE);
@@ -3246,7 +3229,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
   std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
-  MakeSegmentsForSuggestion("test", &segments);
+  InitSegmentsWithKey("test", &segments);
 
   // Enables debug mode.
   config_->set_verbose_level(1);
@@ -3284,7 +3267,7 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
           segmenter.get(), &pos_matcher, suggestion_filter.get()));
   Segments segments;
   constexpr char kKey[] = "わたしのなまえはなかのです";
-  MakeSegmentsForSuggestion(kKey, &segments);
+  InitSegmentsWithKey(kKey, &segments);
 
   std::vector<TestableDictionaryPredictor::Result> results;
   predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
@@ -3327,7 +3310,7 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
   std::shuffle(results.begin(), results.end(), urbg);
 
   Segments segments;
-  MakeSegmentsForSuggestion("test", &segments);
+  InitSegmentsWithKey("test", &segments);
   convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(
       kTestSize);
 
@@ -3371,7 +3354,7 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
                std::mt19937(std::random_device()()));
 
   Segments segments;
-  MakeSegmentsForSuggestion("test", &segments);
+  InitSegmentsWithKey("test", &segments);
   convreq_for_suggestion_->set_max_dictionary_prediction_candidates_size(
       kLowCostCandidateSize + 1);
 
@@ -3402,7 +3385,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
   // Note: The suggestion filter entry "フィルター" for test is not
   // appropriate here, as Katakana entry will be added by realtime conversion.
   // Here, we want to confirm the behavior including unigram prediction.
-  MakeSegmentsForSuggestion("ふぃるたーたいしょう", &segments);
+  InitSegmentsWithKey("ふぃるたーたいしょう", &segments);
 
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_suggestion_, &segments));
@@ -3416,7 +3399,7 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
             segments.conversion_segment(0).candidate(0).value);
 
   // Should not be there for non-exact suggestion.
-  MakeSegmentsForSuggestion("ふぃるたーたいし", &segments);
+  InitSegmentsWithKey("ふぃるたーたいし", &segments);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_suggestion_, &segments));
   EXPECT_FALSE(
@@ -3433,7 +3416,7 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
   // Note: The suggestion filter entry "フィルター" for test is not
   // appropriate here, as Katakana entry will be added by realtime conversion.
   // Here, we want to confirm the behavior including unigram prediction.
-  MakeSegmentsForSuggestion("ふぃるたーたいしょう", &segments);
+  InitSegmentsWithKey("ふぃるたーたいしょう", &segments);
 
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_suggestion_, &segments));

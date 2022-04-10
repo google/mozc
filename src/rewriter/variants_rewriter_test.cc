@@ -607,10 +607,9 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  const ConversionRequest request;
+  ConversionRequest request;
   {
     Segments segments;
-    segments.set_request_type(Segments::CONVERSION);
     {
       Segment *segment = segments.push_back_segment();
       segment->set_key("abc");
@@ -634,7 +633,6 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
   {
     character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
-    segments.set_request_type(Segments::CONVERSION);
     {
       Segment *segment = segments.push_back_segment();
       segment->set_key("abc");
@@ -657,7 +655,6 @@ TEST_F(VariantsRewriterTest, RewriteForConversion) {
   }
   {
     Segments segments;
-    segments.set_request_type(Segments::CONVERSION);
     {
       Segment *segment = segments.push_back_segment();
       segment->set_key("~");
@@ -687,10 +684,10 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::PREDICTION);
   {
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -705,7 +702,6 @@ TEST_F(VariantsRewriterTest, RewriteForPrediction) {
   {
     character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -727,9 +723,9 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
   request.set_mixed_conversion(true);  // Request mixed conversion.
   ConversionRequest conv_request;
   conv_request.set_request(&request);
+  conv_request.set_request_type(ConversionRequest::SUGGESTION);
   {
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(conv_request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -742,7 +738,6 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
   {
     character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(conv_request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -758,7 +753,6 @@ TEST_F(VariantsRewriterTest, RewriteForMixedConversion) {
     character_form_manager->SetCharacterForm("0", Config::HALF_WIDTH);
 
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
 
     Segment *segment = segments.push_back_segment();
     segment->set_key("さんえん");
@@ -811,9 +805,9 @@ TEST_F(VariantsRewriterTest, RewriteForPartialSuggestion) {
   request.set_mixed_conversion(true);  // Request mixed conversion.
   ConversionRequest conv_request;
   conv_request.set_request(&request);
+  conv_request.set_request_type(ConversionRequest::SUGGESTION);
   {
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
 
     Segment *segment = segments.push_back_segment();
     segment->set_key("3えん");
@@ -847,10 +841,10 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
   CharacterFormManager *character_form_manager =
       CharacterFormManager::GetCharacterFormManager();
   std::unique_ptr<VariantsRewriter> rewriter(CreateVariantsRewriter());
-  const ConversionRequest request;
+  ConversionRequest request;
+  request.set_request_type(ConversionRequest::SUGGESTION);
   {
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -864,7 +858,6 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
   {
     character_form_manager->SetCharacterForm("abc", Config::HALF_WIDTH);
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
     InitSegmentsForAlphabetRewrite("abc", &segments);
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
     EXPECT_EQ(1, segments.segments_size());
@@ -878,7 +871,6 @@ TEST_F(VariantsRewriterTest, RewriteForSuggestion) {
   {
     // Test for candidate with inner segment boundary.
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
 
     Segment *segment = segments.push_back_segment();
     segment->set_key("まじ!");
@@ -930,7 +922,6 @@ TEST_F(VariantsRewriterTest, Finish) {
   const ConversionRequest request;
 
   Segments segments;
-  segments.set_request_type(Segments::CONVERSION);
 
   Segment *segment = segments.push_back_segment();
   segment->set_key("いちにさん");

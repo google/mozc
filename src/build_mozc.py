@@ -410,6 +410,8 @@ def GypMain(options, unused_args):
 
   # Set the generator name.
   os.environ['GYP_GENERATORS'] = 'ninja'
+  # Disable path normalization that breaks arguments like --name=../../path
+  os.environ['GYP_MSVS_DISABLE_PATH_NORMALIZATION'] = '1'
 
   # Get and show the list of .gyp file names.
   gyp_file_names = GetGypFileNames(options)

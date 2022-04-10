@@ -713,7 +713,6 @@ class SessionTest : public ::testing::Test {
     {
       // Set up a mock conversion result.
       Segments segments;
-      segments.set_request_type(Segments::CONVERSION);
       Segment *segment;
       segment = segments.add_segment();
       segment->set_key("google");
@@ -726,7 +725,6 @@ class SessionTest : public ::testing::Test {
     {
       // Set up a mock suggestion result.
       Segments segments;
-      segments.set_request_type(Segments::SUGGESTION);
       Segment *segment;
       segment = segments.add_segment();
       segment->set_key("");
@@ -2403,7 +2401,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   }
 }
 
-TEST_F(SessionTest, ClearUndoContextByKeyEvent_Issue5529702) {
+TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
 
@@ -2580,7 +2578,7 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   }
 }
 
-TEST_F(SessionTest, UndoOrRewind_undo) {
+TEST_F(SessionTest, UndoOrRewindUndo) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
 
@@ -2633,13 +2631,12 @@ TEST_F(SessionTest, UndoOrRewind_undo) {
   EXPECT_FALSE(command.output().has_deletion_range());
 }
 
-TEST_F(SessionTest, UndoOrRewind_rewind) {
+TEST_F(SessionTest, UndoOrRewindRewind) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments.add_segment();
     AddCandidate("e", "e", segment);
@@ -2668,7 +2665,6 @@ TEST_F(SessionTest, StopKeyToggling) {
 
   Segments segments;
   {
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments.add_segment();
     AddCandidate("dummy", "Dummy", segment);
@@ -2739,7 +2735,7 @@ TEST_F(SessionTest, CommitRawText) {
   }
 }
 
-TEST_F(SessionTest, CommitRawText_KanaInput) {
+TEST_F(SessionTest, CommitRawTextKanaInput) {
   Segments segments;
   Segment *segment;
   Segment::Candidate *candidate;
@@ -2790,7 +2786,7 @@ TEST_F(SessionTest, CommitRawText_KanaInput) {
   EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
 }
 
-TEST_F(SessionTest, ConvertNextPage_PrevPage) {
+TEST_F(SessionTest, ConvertNextPagePrevPage) {
   commands::Command command;
   Session session(engine_.get());
 
@@ -3165,7 +3161,7 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
   }
 }
 
-TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndo_Issue5369632) {
+TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   // This is a unittest against http://b/5369632.
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
@@ -3482,7 +3478,7 @@ TEST_F(SessionTest, Shortcut) {
   }
 }
 
-TEST_F(SessionTest, ShortcutWithCapsLock_Issue5655743) {
+TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
 
@@ -3903,7 +3899,6 @@ TEST_F(SessionTest, StatusOutput) {
 TEST_F(SessionTest, Suggest) {
   Segments segments_m;
   {
-    segments_m.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_m.add_segment();
     segment->set_key("M");
@@ -3913,7 +3908,6 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -3923,7 +3917,6 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_moz;
   {
-    segments_moz.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_moz.add_segment();
     segment->set_key("MOZ");
@@ -3997,7 +3990,6 @@ TEST_F(SessionTest, Suggest) {
 
   Segments segments_m_conv;
   {
-    segments_m_conv.set_request_type(Segments::CONVERSION);
     Segment *segment;
     segment = segments_m_conv.add_segment();
     segment->set_key("M");
@@ -4027,7 +4019,6 @@ TEST_F(SessionTest, ExpandSuggestion) {
   // Prepare suggestion candidates.
   Segments segments_m;
   {
-    segments_m.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_m.add_segment();
     segment->set_key("M");
@@ -4043,7 +4034,6 @@ TEST_F(SessionTest, ExpandSuggestion) {
   // Prepare expanded suggestion candidates.
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -4098,13 +4088,12 @@ TEST_F(SessionTest, ExpandSuggestionConversionMode) {
   // so SetStartPredictionForRequest() is not called.
 }
 
-TEST_F(SessionTest, CommitCandidate_TypingCorrection) {
+TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
   Segments segments_jueri;
-  segments_jueri.set_request_type(Segments::PARTIAL_SUGGESTION);
   Segment *segment;
   segment = segments_jueri.add_segment();
   constexpr char kJueri[] = "じゅえり";
@@ -4149,7 +4138,6 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 
   Segments segments_wata;
   {
-    segments_wata.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment;
     segment = segments_wata.add_segment();
     constexpr char kWata[] = "わた";
@@ -4164,7 +4152,6 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 
   Segments segments_watashino;
   {
-    segments_watashino.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_watashino.add_segment();
     constexpr char kWatashino[] = "わたしの";
@@ -4181,7 +4168,6 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 
   Segments segments_shino;
   {
-    segments_shino.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_shino.add_segment();
     constexpr char kShino[] = "しの";
@@ -5641,7 +5627,6 @@ TEST_F(SessionTest, Issue2223755) {
     {  // Initialize GetConverterMock() to generate t13n candidates.
       Segments segments;
       Segment *segment;
-      segments.set_request_type(Segments::CONVERSION);
       segment = segments.add_segment();
       segment->set_key("あ い");
       Segment::Candidate *candidate;
@@ -6663,7 +6648,7 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   EXPECT_SINGLE_SEGMENT("ssh", command);
 }
 
-TEST_F(SessionTest, KeitaiInput_toggle) {
+TEST_F(SessionTest, KeitaiInputToggle) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   Session session(engine_.get());
@@ -6794,7 +6779,7 @@ TEST_F(SessionTest, KeitaiInput_toggle) {
   EXPECT_EQ(13, command.output().preedit().cursor());
 }
 
-TEST_F(SessionTest, KeitaiInput_flick) {
+TEST_F(SessionTest, KeitaiInputFlick) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
   commands::Command command;
@@ -7005,13 +6990,12 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   EXPECT_RESULT("猫のしっぽを抜いた", command);
 }
 
-TEST_F(SessionTest, CommitCandidate_suggestion) {
+TEST_F(SessionTest, CommitCandidateSuggestion) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -7067,13 +7051,12 @@ void FindCandidateIDs(const commands::Candidates &candidates,
   }
 }
 
-TEST_F(SessionTest, CommitCandidate_T13N) {
+TEST_F(SessionTest, CommitCandidateT13N) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   {
     Segments segments;
-    segments.set_request_type(Segments::SUGGESTION);
 
     Segment *segment;
     segment = segments.add_segment();
@@ -7091,7 +7074,6 @@ TEST_F(SessionTest, CommitCandidate_T13N) {
 
   {
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
 
     Segment *segment;
     segment = segments.add_segment();
@@ -7211,7 +7193,7 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
   EXPECT_FALSE(command.output().has_result());
 }
 
-TEST_F(SessionTest, SecondEscapeFromConvertReverse_Issue5687022) {
+TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   // This is a unittest against http://b/5687022
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
@@ -7370,7 +7352,6 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
 
   // Set up a mock suggestion result.
   Segments segments;
-  segments.set_request_type(Segments::SUGGESTION);
   Segment *segment;
   segment = segments.add_segment();
   segment->set_key("");
@@ -7457,7 +7438,6 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     {
       // Set up a mock conversion result.
       Segments segments;
-      segments.set_request_type(Segments::SUGGESTION);
       Segment *segment;
       segment = segments.add_segment();
       segment->set_key("");
@@ -7471,7 +7451,6 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     {
       // Set up a mock suggestion result.
       Segments segments;
-      segments.set_request_type(Segments::SUGGESTION);
       Segment *segment;
       segment = segments.add_segment();
       segment->set_key("");
@@ -8385,7 +8364,6 @@ TEST_F(SessionTest, EditCancel) {
 
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -8462,7 +8440,6 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -8586,7 +8563,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
 }
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
-TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
+TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   config::Config config;
   {
     const std::string custom_keymap_table =
@@ -8599,7 +8576,6 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
   }
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -8698,7 +8674,7 @@ TEST_F(SessionTest, CancelInPasswordMode_Issue5955618) {
 }
 
 // TODO(matsuzakit): Update the expected result when b/5955618 is fixed.
-TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
+TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   config::Config config;
   {
     const std::string custom_keymap_table =
@@ -8711,7 +8687,6 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordMode_Issue5955618) {
   }
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -8835,7 +8810,6 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
 
   Segments segments_mo;
   {
-    segments_mo.set_request_type(Segments::SUGGESTION);
     Segment *segment;
     segment = segments_mo.add_segment();
     segment->set_key("MO");
@@ -8862,7 +8836,6 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
 
   Segments segments_a_conv;
   {
-    segments_a_conv.set_request_type(Segments::CONVERSION);
     Segment *segment;
     segment = segments_a_conv.add_segment();
     segment->set_key("あ");
@@ -8946,7 +8919,7 @@ TEST_F(SessionTest, DeleteHistory) {
   EXPECT_PREEDIT("でｌ", command);
 }
 
-TEST_F(SessionTest, SendKeyWithKeyString_Direct) {
+TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
   Session session(engine_.get());
   InitSessionToDirect(&session);
 

@@ -79,6 +79,8 @@ class QualityRegressionUtil {
   // Pase |filename| and save the all test items into |outputs|.
   static absl::Status ParseFile(const std::string &filename,
                                 std::vector<TestItem> *outputs);
+  static absl::Status ParseFiles(const std::vector<std::string> &filename,
+                                 std::vector<TestItem> *outputs);
 
   absl::StatusOr<bool> ConvertAndTest(const TestItem &item,
                                       std::string *actual_value);

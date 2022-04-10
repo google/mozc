@@ -96,7 +96,7 @@ class NBestGenerator {
   // Iterator:
   // Can obtain N-best results by calling Next() in sequence.
   bool Next(const ConversionRequest &request, const std::string &original_key,
-            Segment::Candidate *candidate, Segments::RequestType request_type);
+            Segment::Candidate *candidate);
 
  private:
   enum BoundaryCheckResult {
@@ -135,8 +135,7 @@ class NBestGenerator {
 
   int InsertTopResult(const ConversionRequest &request,
                       const std::string &original_key,
-                      Segment::Candidate *candidate,
-                      Segments::RequestType request_type);
+                      Segment::Candidate *candidate);
 
   void MakeCandidate(Segment::Candidate *candidate, int32_t cost,
                      int32_t structure_cost, int32_t wcost,

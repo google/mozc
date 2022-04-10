@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "base/config_file_stream.h"
@@ -625,7 +626,7 @@ TEST_F(KeyMapTest, CapsLock) {
   EXPECT_EQ(ConversionState::INSERT_CHARACTER, conv_command);
 }
 
-TEST_F(KeyMapTest, ShortcutKeysWithCapsLock_Issue5627459) {
+TEST_F(KeyMapTest, ShortcutKeysWithCapsLockIssue5627459) {
   // MSIME
   KeyMapManager *manager =
       KeyMapFactory::GetKeyMapManager(config::Config::MSIME);
@@ -645,7 +646,7 @@ TEST_F(KeyMapTest, ShortcutKeysWithCapsLock_Issue5627459) {
 }
 
 // InputModeX is not supported on MacOSX.
-TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOs_Issue13947207) {
+TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
   if (!isInputModeXCommandSupported()) {
     return;
   }

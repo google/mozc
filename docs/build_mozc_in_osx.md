@@ -11,6 +11,16 @@ cd ~/work
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
 
+### Apply a patch to GYP
+
+The upstream GYP may or may not work on macOS for Mozc.
+You probably need to apply the following patch to GYP.
+
+```
+cd src\third_party\gyp
+git apply ..\..\gyp\gyp.patch
+```
+
 ## System Requirements
 
 Only 64-bit macOS 10.9 and later versions are supported.
@@ -36,6 +46,12 @@ Make sure the path to python3.
 /usr/bin/python3
 ```
 
+# Install python3 dependencies
+
+```
+python3 -m pip install six
+```
+
 ### Build Qt
 
 Qt is required for GUI tools. The following is an example of build configuration.
@@ -51,16 +67,6 @@ make
 -----
 
 ## Build with GYP (stable)
-
-### Apply a patch to GYP
-
-The upstream GYP may or may not work on macOS for Mozc.
-You probably need to apply the following patch to GYP.
-
-```
-cd src\third_party\gyp
-git apply ..\..\gyp\gyp.patch
-```
 
 ### Build main converter and composition UI.
 

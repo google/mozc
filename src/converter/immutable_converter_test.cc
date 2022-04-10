@@ -182,8 +182,8 @@ TEST(ImmutableConverterTest, KeepKeyForPrediction) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   ConversionRequest request;
+  request.set_request_type(ConversionRequest::PREDICTION);
   request.set_max_conversion_candidates_size(10);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "よろしくおねがいしま";
@@ -314,8 +314,8 @@ TEST(ImmutableConverterTest, AddPredictiveNodes) {
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   {
-    EXPECT_EQ(segments.request_type(), Segments::CONVERSION);
-    const ConversionRequest request;
+    ConversionRequest request;
+    request.set_request_type(ConversionRequest::CONVERSION);
     converter->MakeLatticeNodesForPredictiveNodes(segments, request, &lattice);
     EXPECT_TRUE(dictionary->received_target_query());
   }
@@ -325,11 +325,11 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
   ConversionRequest request;
+  request.set_request_type(ConversionRequest::PREDICTION);
   request.set_max_conversion_candidates_size(1);
   EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(request,
                                                                     &segments));
@@ -371,7 +371,6 @@ TEST(ImmutableConverterTest, NoInnerSegmenBoundaryForConversion) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  segments.set_request_type(Segments::CONVERSION);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
   segment->set_key(kRequestKey);
@@ -390,7 +389,6 @@ TEST(ImmutableConverterTest, NotConnectedTest) {
   ImmutableConverterImpl *converter = data_and_converter->GetConverter();
 
   Segments segments;
-  segments.set_request_type(Segments::CONVERSION);
 
   Segment *segment = segments.add_segment();
   segment->set_segment_type(Segment::FIXED_BOUNDARY);
@@ -445,7 +443,6 @@ TEST(ImmutableConverterTest, HistoryKeyLengthIsVeryLong) {
   }
 
   // Set up a conversion segment.
-  segments.set_request_type(Segments::CONVERSION);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "あ";
   segment->set_key(kRequestKey);
@@ -466,8 +463,8 @@ bool AutoPartialSuggestionTestHelper(const ConversionRequest &request) {
   std::unique_ptr<MockDataAndImmutableConverter> data_and_converter(
       new MockDataAndImmutableConverter);
   Segments segments;
-  segments.set_request_type(Segments::PREDICTION);
   ConversionRequest conversion_request = request;
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
   conversion_request.set_max_conversion_candidates_size(10);
   Segment *segment = segments.add_segment();
   const std::string kRequestKey = "わたしのなまえはなかのです";
@@ -519,6 +516,7 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionDefault) {
 TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   const commands::Request request;
   ConversionRequest conversion_request;
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
   conversion_request.set_request(&request);
   conversion_request.set_create_partial_candidates(true);
   conversion_request.set_max_conversion_candidates_size(10);
@@ -532,7 +530,6 @@ TEST(ImmutableConverterTest, AutoPartialSuggestionForSingleSegment) {
   };
   for (size_t testcase = 0; testcase < std::size(kRequestKeys); ++testcase) {
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key(kRequestKeys[testcase]);
     EXPECT_TRUE(data_and_converter->GetConverter()->ConvertForRequest(

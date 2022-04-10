@@ -106,13 +106,13 @@ class LanguageAwareRewriterTest : public ::testing::Test {
     composer.GetStringForPreedit(composition);
 
     // Perform the rewrite command.
-    segments->set_request_type(Segments::SUGGESTION);
     if (segments->conversion_segments_size() == 0) {
       segments->add_segment();
     }
     Segment *segment = segments->mutable_conversion_segment(0);
     segment->set_key(*composition);
     ConversionRequest request(&composer, &client_request, &default_config);
+    request.set_request_type(ConversionRequest::SUGGESTION);
 
     return rewriter->Rewrite(request, segments);
   }
@@ -304,10 +304,10 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     EXPECT_EQ(kPyTeyoN, composition);
 
     // Perform the rewrite command.
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     segment->set_key(composition);
     ConversionRequest request(&composer, &client_request, &default_config);
+    request.set_request_type(ConversionRequest::SUGGESTION);
 
     EXPECT_TRUE(rewriter->Rewrite(request, &segments));
 

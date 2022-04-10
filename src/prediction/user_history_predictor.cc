@@ -1131,6 +1131,7 @@ bool UserHistoryPredictor::LookupEntry(RequestType request_type,
 
 bool UserHistoryPredictor::Predict(Segments *segments) const {
   ConversionRequest default_request;
+  default_request.set_request_type(ConversionRequest::PREDICTION);
   return PredictForRequest(default_request, segments);
 }
 
@@ -1189,13 +1190,13 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
     return false;
   }
 
-  if (segments.request_type() == Segments::CONVERSION) {
+  if (request.request_type() == ConversionRequest::CONVERSION) {
     VLOG(2) << "request type is CONVERSION";
     return false;
   }
 
   if (!request.config().use_history_suggest() &&
-      segments.request_type() == Segments::SUGGESTION) {
+      request.request_type() == ConversionRequest::SUGGESTION) {
     VLOG(2) << "no history suggest";
     return false;
   }
@@ -1322,7 +1323,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
       updated_ = true;  // We found an entry to be deleted at next save.
       continue;
     }
-    if (segments.request_type() == Segments::SUGGESTION &&
+    if (request.request_type() == ConversionRequest::SUGGESTION &&
         trial++ >= kMaxSuggestionTrial) {
       VLOG(2) << "too many trials";
       break;
@@ -1394,9 +1395,9 @@ bool UserHistoryPredictor::InsertCandidates(RequestType request_type,
       break;
     }
     bool is_valid_candidate = false;
-    if (segments->request_type() == Segments::PREDICTION) {
+    if (request.request_type() == ConversionRequest::PREDICTION) {
       is_valid_candidate = true;
-    } else if (segments->request_type() == Segments::SUGGESTION) {
+    } else if (request.request_type() == ConversionRequest::SUGGESTION) {
       // The top result of suggestion should be a VALID suggestion candidate.
       // i.e., SuggestionTrigerFunc should return true for the first
       // candidate.
@@ -1682,7 +1683,7 @@ void UserHistoryPredictor::MaybeRecordUsageStats(
 
 void UserHistoryPredictor::Finish(const ConversionRequest &request,
                                   Segments *segments) {
-  if (segments->request_type() == Segments::REVERSE_CONVERSION) {
+  if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // Do nothing for REVERSE_CONVERSION.
     return;
   }
@@ -1714,7 +1715,8 @@ void UserHistoryPredictor::Finish(const ConversionRequest &request,
   const RequestType request_type = request.request().zero_query_suggestion()
                                        ? ZERO_QUERY_SUGGESTION
                                        : DEFAULT;
-  const bool is_suggestion = segments->request_type() != Segments::CONVERSION;
+  const bool is_suggestion =
+      request.request_type() != ConversionRequest::CONVERSION;
   const uint64_t last_access_time = Clock::GetTime();
 
   // If user inputs a punctuation just after some long sentence,
@@ -1924,13 +1926,13 @@ void UserHistoryPredictor::InsertHistory(RequestType request_type,
         LearningSegmentFingerprint(history_segment));
     if (history_entry) {
       NextEntry next_entry;
-      if (segments->request_type() == Segments::CONVERSION) {
+      if (!is_suggestion_selected) {
         next_entry.set_entry_fp(LearningSegmentFingerprint(conversion_segment));
         InsertNextEntry(next_entry, history_entry);
       }
 
       // Entire user input or SUGGESTION
-      if (segments->request_type() != Segments::CONVERSION ||
+      if (is_suggestion_selected ||
           learning_segments.conversion_segments_size() > 1) {
         next_entry.set_entry_fp(Fingerprint(all_key, all_value));
         InsertNextEntry(next_entry, history_entry);

@@ -70,8 +70,7 @@ class CandidateFilter {
                              const std::string &original_key,
                              const Segment::Candidate *candidate,
                              const std::vector<const Node *> &top_nodes,
-                             const std::vector<const Node *> &nodes,
-                             Segments::RequestType request_type);
+                             const std::vector<const Node *> &nodes);
 
   // Resets the internal state.
   void Reset();
@@ -81,8 +80,7 @@ class CandidateFilter {
                                      const std::string &original_key,
                                      const Segment::Candidate *candidate,
                                      const std::vector<const Node *> &top_nodes,
-                                     const std::vector<const Node *> &nodes,
-                                     Segments::RequestType request_type);
+                                     const std::vector<const Node *> &nodes);
 
   const dictionary::SuppressionDictionary *suppression_dictionary_;
   const dictionary::PosMatcher *pos_matcher_;

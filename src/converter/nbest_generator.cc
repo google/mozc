@@ -272,8 +272,7 @@ void NBestGenerator::MakeCandidate(
 
 bool NBestGenerator::Next(const ConversionRequest &request,
                           const std::string &original_key,
-                          Segment::Candidate *candidate,
-                          Segments::RequestType request_type) {
+                          Segment::Candidate *candidate) {
   DCHECK(begin_node_);
   DCHECK(end_node_);
 
@@ -313,7 +312,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
   if (!viterbi_result_checked_) {
     // Use CandidateFilter so that filter is initialized with the
     // Viterbi-best path.
-    switch (InsertTopResult(request, original_key, candidate, request_type)) {
+    switch (InsertTopResult(request, original_key, candidate)) {
       case CandidateFilter::GOOD_CANDIDATE:
         return true;
       case CandidateFilter::STOP_ENUMERATION:
@@ -355,7 +354,7 @@ bool NBestGenerator::Next(const ConversionRequest &request,
 
       MakeCandidate(candidate, top->gx, top->structure_gx, top->w_gx, nodes_);
       const int filter_result = filter_->FilterCandidate(
-          request, original_key, candidate, top_nodes_, nodes_, request_type);
+          request, original_key, candidate, top_nodes_, nodes_);
       nodes_.clear();
 
       switch (filter_result) {
@@ -559,8 +558,7 @@ NBestGenerator::BoundaryCheckResult NBestGenerator::CheckStrict(
 
 int NBestGenerator::InsertTopResult(const ConversionRequest &request,
                                     const std::string &original_key,
-                                    Segment::Candidate *candidate,
-                                    Segments::RequestType request_type) {
+                                    Segment::Candidate *candidate) {
   nodes_.clear();
   int total_wcost = 0;
   for (const Node *node = begin_node_->next; node != end_node_;
@@ -584,13 +582,13 @@ int NBestGenerator::InsertTopResult(const ConversionRequest &request,
 
   MakeCandidate(candidate, cost, structure_cost, wcost, nodes_);
 
-  if (request_type == Segments::SUGGESTION) {
+  if (request.request_type() == ConversionRequest::SUGGESTION) {
     candidate->attributes |= Segment::Candidate::REALTIME_CONVERSION;
   }
 
   viterbi_result_checked_ = true;
   const int result = filter_->FilterCandidate(request, original_key, candidate,
-                                              top_nodes_, nodes_, request_type);
+                                              top_nodes_, nodes_);
   nodes_.clear();
   return result;
 }

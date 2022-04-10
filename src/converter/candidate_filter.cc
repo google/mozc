@@ -229,15 +229,15 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     const ConversionRequest &request, const std::string &original_key,
     const Segment::Candidate *candidate,
     const std::vector<const Node *> &top_nodes,
-    const std::vector<const Node *> &nodes,
-    Segments::RequestType request_type) {
+    const std::vector<const Node *> &nodes) {
   DCHECK(candidate);
+  const ConversionRequest::RequestType request_type = request.request_type();
   const bool is_strict_mode = IsStrictModeEnabled(request);
 
   // Filtering by the suggestion filter, which is applied only for the
   // PREDICTION and SUGGESTION modes.
   switch (request_type) {
-    case Segments::PREDICTION:
+    case ConversionRequest::PREDICTION:
       // In the PREDICTION mode, the suggestion filter is not applied and the
       // same filtering rule as the CONVERSION mode is used because the
       // PREDICTION is triggered by user action (hitting tab keys), i.e.,
@@ -250,7 +250,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
         break;
       }
       ABSL_FALLTHROUGH_INTENDED;
-    case Segments::SUGGESTION:
+    case ConversionRequest::SUGGESTION:
       // For mobile, most users will use suggestion/prediction only and do not
       // trigger conversion explicitly.
       // So we don't apply the suggestion filter if the user input key
@@ -551,9 +551,8 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     const ConversionRequest &request, const std::string &original_key,
     const Segment::Candidate *candidate,
     const std::vector<const Node *> &top_nodes,
-    const std::vector<const Node *> &nodes,
-    Segments::RequestType request_type) {
-  if (request_type == Segments::REVERSE_CONVERSION) {
+    const std::vector<const Node *> &nodes) {
+  if (request.request_type() == ConversionRequest::REVERSE_CONVERSION) {
     // In reverse conversion, only remove duplicates because the filtering
     // criteria of FilterCandidateInternal() are completely designed for
     // (forward) conversion.
@@ -561,7 +560,7 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidate(
     return inserted ? GOOD_CANDIDATE : BAD_CANDIDATE;
   } else {
     const ResultType result = FilterCandidateInternal(
-        request, original_key, candidate, top_nodes, nodes, request_type);
+        request, original_key, candidate, top_nodes, nodes);
     if (result != GOOD_CANDIDATE) {
       return result;
     }

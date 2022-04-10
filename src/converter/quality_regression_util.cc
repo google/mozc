@@ -188,11 +188,11 @@ QualityRegressionUtil::QualityRegressionUtil(ConverterInterface *converter)
 
 QualityRegressionUtil::~QualityRegressionUtil() {}
 
-// static
-absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
-                                              std::vector<TestItem> *outputs) {
+namespace {
+absl::Status ParseFileInternal(
+    const std::string &filename,
+    std::vector<QualityRegressionUtil::TestItem> *outputs) {
   // TODO(taku): support an XML file of Mozcsu.
-  outputs->clear();
   InputFileStream ifs(filename.c_str());
   if (!ifs.good()) {
     return absl::UnavailableError(absl::StrCat("Failed to read: ", filename));
@@ -202,12 +202,33 @@ absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
     if (line.empty() || line.c_str()[0] == '#') {
       continue;
     }
-    TestItem item;
+    QualityRegressionUtil::TestItem item;
     if (!item.ParseFromTSV(line).ok()) {
       return absl::InvalidArgumentError(
           absl::StrCat("Failed to parse: ", line));
     }
     outputs->push_back(item);
+  }
+  return absl::OkStatus();
+}
+}  // namespace
+
+// static
+absl::Status QualityRegressionUtil::ParseFile(const std::string &filename,
+                                              std::vector<TestItem> *outputs) {
+  outputs->clear();
+  return ParseFileInternal(filename, outputs);
+}
+
+// static
+absl::Status QualityRegressionUtil::ParseFiles(
+    const std::vector<std::string> &filenames, std::vector<TestItem> *outputs) {
+  outputs->clear();
+  for (const std::string &filename : filenames) {
+    const absl::Status result = ParseFileInternal(filename, outputs);
+    if (!result.ok()) {
+      return result;
+    }
   }
   return absl::OkStatus();
 }

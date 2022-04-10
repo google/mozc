@@ -58,22 +58,22 @@ class MergerRewriter : public RewriterInterface {
     if (segments == nullptr) {
       return false;
     }
-    switch (segments->request_type()) {
-      case Segments::CONVERSION:
+    switch (request.request_type()) {
+      case ConversionRequest::CONVERSION:
         return ((rewriter.capability(request) &
                  RewriterInterface::CONVERSION) != 0);
 
-      case Segments::PREDICTION:
-      case Segments::PARTIAL_PREDICTION:
+      case ConversionRequest::PREDICTION:
+      case ConversionRequest::PARTIAL_PREDICTION:
         return ((rewriter.capability(request) &
                  RewriterInterface::PREDICTION) != 0);
 
-      case Segments::SUGGESTION:
-      case Segments::PARTIAL_SUGGESTION:
+      case ConversionRequest::SUGGESTION:
+      case ConversionRequest::PARTIAL_SUGGESTION:
         return ((rewriter.capability(request) &
                  RewriterInterface::SUGGESTION) != 0);
 
-      case Segments::REVERSE_CONVERSION:
+      case ConversionRequest::REVERSE_CONVERSION:
       default:
         return false;
     }
@@ -92,7 +92,7 @@ class MergerRewriter : public RewriterInterface {
       }
     }
 
-    if (segments->request_type() == Segments::SUGGESTION &&
+    if (request.request_type() == ConversionRequest::SUGGESTION &&
         segments->conversion_segments_size() == 1 &&
         !request.request().mixed_conversion()) {
       const size_t max_suggestions = request.config().suggestions_size();

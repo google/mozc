@@ -567,7 +567,7 @@ TEST_F(KeyEventHandlerTest, CustomActivationKeyTest) {
 }
 
 // A user can assign CTRL+\ to enable IME.  See b/3033135 for details.
-TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_102) {
+TEST_F(KeyEventHandlerTest, Issue3033135VkOem102) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
@@ -644,7 +644,7 @@ TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_102) {
 }
 
 // A user can assign CTRL+\ to enable IME.  See b/3033135 for details.
-TEST_F(KeyEventHandlerTest, Issue3033135_VK_OEM_5) {
+TEST_F(KeyEventHandlerTest, Issue3033135VkOem5) {
   // We might want to allow users to use their preferred key combinations
   // to open/close IME.
 
@@ -1495,7 +1495,7 @@ TEST_F(KeyEventHandlerTest, HandleCtrlShiftBackspace) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
+TEST_F(KeyEventHandlerTest, Issue2903247KeyUpShouldNotBeEaten) {
   // In general, key up event should not be eaten by the IME.
   // See b/2903247 for details.
 
@@ -1553,7 +1553,7 @@ TEST_F(KeyEventHandlerTest, Issue2903247_KeyUpShouldNotBeEaten) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
+TEST_F(KeyEventHandlerTest, ProtocolAnomalyModiferKeyMayBeSentOnKeyUp) {
   // Currently, the Mozc server expects the client to send key-up events in
   // some special cases.  See comments in ImeCore::ImeProcessKey for details.
   // Unfortunately, current implementation does not take some tricky key
@@ -1669,7 +1669,7 @@ TEST_F(KeyEventHandlerTest, ProtocolAnomaly_ModiferKeyMayBeSentOnKeyUp) {
 }
 
 TEST_F(KeyEventHandlerTest,
-       ProtocolAnomaly_ModifierShiftShouldBeRemovedForPrintableChar) {
+       ProtocolAnomalyModifierShiftShouldBeRemovedForPrintableChar) {
   // Currently, the Mozc server expects the client remove Shift modifier if
   // the key generates any printable character.
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
@@ -1746,7 +1746,7 @@ TEST_F(KeyEventHandlerTest,
 }
 
 TEST_F(KeyEventHandlerTest,
-       ProtocolAnomaly_ModifierKeysShouldBeRemovedAsForSomeSpecialKeys) {
+       ProtocolAnomalyModifierKeysShouldBeRemovedAsForSomeSpecialKeys) {
   // Currently, the Mozc server expects the client remove all modifiers as for
   // some special keys such as VK_DBE_KATAKANA.
 
@@ -1833,7 +1833,7 @@ TEST_F(KeyEventHandlerTest,
 }
 
 TEST_F(KeyEventHandlerTest,
-       ProtocolAnomaly_KeyCodeIsFullWidthHiraganaWhenKanaLockIsEnabled) {
+       ProtocolAnomalyKeyCodeIsFullWidthHiraganaWhenKanaLockIsEnabled) {
   // Currently, the Mozc client is required to do extra work for Kana-Input.
   // The client should set |key_code()| as if Kana-lock was disabled.
   // TODO(yukawa): File this issue as a protocol bug so that we can improve
@@ -2062,8 +2062,7 @@ TEST_F(KeyEventHandlerTest,
   }
 }
 
-TEST_F(KeyEventHandlerTest,
-       Issue2801503_ModeChangeWhenIMEIsGoingToBeTurnedOff) {
+TEST_F(KeyEventHandlerTest, Issue2801503ModeChangeWhenIMEIsGoingToBeTurnedOff) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;
@@ -2121,7 +2120,7 @@ TEST_F(KeyEventHandlerTest,
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
+TEST_F(KeyEventHandlerTest, Issue3029665KanaLockedWo) {
   constexpr bool kKanaLocked = true;
 
   Output mock_output;
@@ -2193,7 +2192,7 @@ TEST_F(KeyEventHandlerTest, Issue3029665_KanaLocked_WO) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue3109571_ShiftHenkanShouldBeValid) {
+TEST_F(KeyEventHandlerTest, Issue3109571ShiftHenkanShouldBeValid) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;
@@ -2256,7 +2255,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571_ShiftHenkanShouldBeValid) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue3109571_ShiftMuhenkanShouldBeValid) {
+TEST_F(KeyEventHandlerTest, Issue3109571ShiftMuhenkanShouldBeValid) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;
@@ -2319,7 +2318,7 @@ TEST_F(KeyEventHandlerTest, Issue3109571_ShiftMuhenkanShouldBeValid) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue7098463_HideSuggestWindow) {
+TEST_F(KeyEventHandlerTest, Issue7098463HideSuggestWindow) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;
@@ -2653,7 +2652,7 @@ TEST(SimpleImeKeyEventHandlerTest, ToggleInputStyleByRomanKey) {
   }
 }
 
-TEST_F(KeyEventHandlerTest, Issue3504241_VKPacketAsRawInput) {
+TEST_F(KeyEventHandlerTest, Issue3504241VkPacketAsRawInput) {
   // To fix b/3504241, VK_PACKET must be supported.
 
   constexpr bool kKanaLocked = false;
@@ -2792,7 +2791,7 @@ TEST_F(KeyEventHandlerTest, CapsLock) {
 // In IMM32 mode, the OS handles VK_KANJI to activate IME. So we must not send
 // it to the server. Otherwise, IME On/Off flipping happens twice and a user
 // cannot activate IME by VK_KANJI.
-TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
+TEST_F(KeyEventHandlerTest, KanjiKeyIssue7970379) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;
@@ -2841,7 +2840,7 @@ TEST_F(KeyEventHandlerTest, KanjiKey_Issue7970379) {
 }
 
 // Temporal alphanumeric mode will be stored into |visible_conversion_mode|.
-TEST_F(KeyEventHandlerTest, Issue8524269_ComebackMode) {
+TEST_F(KeyEventHandlerTest, Issue8524269ComebackMode) {
   constexpr bool kKanaLocked = false;
 
   Output mock_output;

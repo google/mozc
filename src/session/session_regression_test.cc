@@ -468,7 +468,7 @@ TEST_F(SessionRegressionTest, AutoConversionTest) {
   }
 }
 
-TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
+TEST_F(SessionRegressionTest, TransliterationIssue2330463) {
   {
     ResetSession();
     commands::Command command;
@@ -500,7 +500,7 @@ TEST_F(SessionRegressionTest, Transliteration_Issue2330463) {
   }
 }
 
-TEST_F(SessionRegressionTest, Transliteration_Issue6209563) {
+TEST_F(SessionRegressionTest, TransliterationIssue6209563) {
   {  // Romaji mode
     ResetSession();
     commands::Command command;

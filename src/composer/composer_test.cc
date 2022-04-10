@@ -279,7 +279,7 @@ TEST_F(ComposerTest, OutputMode) {
   EXPECT_EQ("ａｉｕあいう", output);
 }
 
-TEST_F(ComposerTest, OutputMode_2) {
+TEST_F(ComposerTest, OutputMode2) {
   // This behaviour is based on Kotoeri
 
   table_->AddRule("a", "あ", "");
@@ -646,7 +646,7 @@ TEST_F(ComposerTest, GetQueriesForPredictionMobile) {
   }
 }
 
-TEST_F(ComposerTest, GetStringFunctions_ForN) {
+TEST_F(ComposerTest, GetStringFunctionsForN) {
   table_->AddRule("a", "[A]", "");
   table_->AddRule("n", "[N]", "");
   table_->AddRule("nn", "[N]", "");
@@ -682,7 +682,7 @@ TEST_F(ComposerTest, GetStringFunctions_ForN) {
   EXPECT_EQ("ny[NYA][N][KA]", prediction2);
 }
 
-TEST_F(ComposerTest, GetStringFunctions_InputFieldType) {
+TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
   const struct TestData {
     const commands::Context::InputFieldType field_type;
     const bool ascii_expected;
@@ -1100,7 +1100,7 @@ TEST_F(ComposerTest, ApplyTemporaryInputMode) {
   }
 }
 
-TEST_F(ComposerTest, FullWidthCharRules_b31444698) {
+TEST_F(ComposerTest, FullWidthCharRulesb31444698) {
   // Construct the following romaji table:
   //
   // 1<tab><tab>{?}あ<tab>NewChunk NoTransliteration
@@ -2157,7 +2157,7 @@ TEST_F(ComposerTest, Isue2555503) {
   EXPECT_EQ(transliteration::FULL_KATAKANA, composer_->GetInputMode());
 }
 
-TEST_F(ComposerTest, Issue2819580_1) {
+TEST_F(ComposerTest, Issue2819580Case1) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
   table_->AddRule("n", "ん", "");
@@ -2173,7 +2173,7 @@ TEST_F(ComposerTest, Issue2819580_1) {
   EXPECT_EQ("んy", result);
 }
 
-TEST_F(ComposerTest, Issue2819580_2) {
+TEST_F(ComposerTest, Issue2819580Case2) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
   table_->AddRule("po", "ぽ", "");
@@ -2192,7 +2192,7 @@ TEST_F(ComposerTest, Issue2819580_2) {
   EXPECT_EQ("ぽんy", result);
 }
 
-TEST_F(ComposerTest, Issue2819580_3) {
+TEST_F(ComposerTest, Issue2819580Case3) {
   // This is a unittest against http://b/2819580.
   // 'y' after 'n' disappears.
   table_->AddRule("n", "ん", "");
@@ -2209,7 +2209,7 @@ TEST_F(ComposerTest, Issue2819580_3) {
   EXPECT_EQ("zんy", result);
 }
 
-TEST_F(ComposerTest, Issue2797991_1) {
+TEST_F(ComposerTest, Issue2797991Case1) {
   // This is a unittest against http://b/2797991.
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
@@ -2227,7 +2227,7 @@ TEST_F(ComposerTest, Issue2797991_1) {
   EXPECT_EQ("C:\\Wi", result);
 }
 
-TEST_F(ComposerTest, Issue2797991_2) {
+TEST_F(ComposerTest, Issue2797991Case2) {
   // This is a unittest against http://b/2797991.
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
@@ -2244,7 +2244,7 @@ TEST_F(ComposerTest, Issue2797991_2) {
   EXPECT_EQ("C:Wi", result);
 }
 
-TEST_F(ComposerTest, Issue2797991_3) {
+TEST_F(ComposerTest, Issue2797991Case3) {
   // This is a unittest against http://b/2797991.
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい
@@ -2262,7 +2262,7 @@ TEST_F(ComposerTest, Issue2797991_3) {
   EXPECT_EQ("C:\\Wiい", result);
 }
 
-TEST_F(ComposerTest, Issue2797991_4) {
+TEST_F(ComposerTest, Issue2797991Case4) {
   // This is a unittest against http://b/2797991.
   // Half-width alphanumeric mode quits after [CAPITAL LETTER]:[CAPITAL LETTER]
   // e.g. C:\Wi -> C:\Wい

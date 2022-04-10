@@ -6,6 +6,8 @@ Docker containers are available to build Mozc binaries for Android JNI library a
 ## System Requirements
 Currently, only Ubuntu 20.04 is tested to host the Docker container to build Mozc.
 
+* [Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu20.04/Dockerfile) for Ubuntu 20.04
+
 ## Set up Ubuntu 20.04 Docker container
 
 ```

@@ -31,10 +31,9 @@ jobs:
         working-directory: .\src\third_party
         run: |
           git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          cd gyp
-          git apply ..\..\gyp\gyp.patch
           cd ..\abseil-cpp
           git apply ..\..\base\absl.patch
+          python3 -m pip install six
 
       - name: build
         shell: cmd

@@ -478,7 +478,7 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
 
 // Tests the interaction with EngineBuilderInterface for successful Engine
 // reload event.
-TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
+TEST_F(SessionHandlerTest, EngineReloadSuccessfulScenario) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -502,7 +502,7 @@ TEST_F(SessionHandlerTest, EngineReload_SuccessfulScenario) {
 
 // Tests the interaction with EngineBuilderInterface in the situation where
 // async data load is already running.
-TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
+TEST_F(SessionHandlerTest, EngineReloadAlreadyRunning) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -525,7 +525,7 @@ TEST_F(SessionHandlerTest, EngineReload_AlreadyRunning) {
 
 // Tests the interaction with EngineBuilderInterface in the situation where
 // requested data is broken.
-TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
+TEST_F(SessionHandlerTest, EngineReloadInvalidData) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));
@@ -543,7 +543,7 @@ TEST_F(SessionHandlerTest, EngineReload_InvalidData) {
 
 // Tests the interaction with EngineBuilderInterface in the situation where
 // sessions exist in create session event.
-TEST_F(SessionHandlerTest, EngineReload_SessionExists) {
+TEST_F(SessionHandlerTest, EngineReloadSessionExists) {
   MockEngineBuilder *engine_builder = new MockEngineBuilder();
   SessionHandler handler(std::make_unique<EngineStub>(),
                          std::unique_ptr<MockEngineBuilder>(engine_builder));

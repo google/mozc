@@ -479,7 +479,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive) {
   EXPECT_TRUE(callback.AreAllFound());
 }
 
-TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
+TEST_F(SystemDictionaryTest, LookupPredictiveKanaModifierInsensitiveLookup) {
   Token tokens[] = {
       {"がっこう", "学校", 0, 0, 0, Token::NONE},
       {"かっこう", "格好", 0, 0, 0, Token::NONE},
@@ -506,7 +506,7 @@ TEST_F(SystemDictionaryTest, LookupPredictive_KanaModifierInsensitiveLookup) {
   EXPECT_TOKENS_EQ_UNORDERED(source_tokens, callback.tokens());
 }
 
-TEST_F(SystemDictionaryTest, LookupPredictive_CutOffEmulatingBFS) {
+TEST_F(SystemDictionaryTest, LookupPredictiveCutOffEmulatingBFS) {
   Token tokens[] = {
       {"あい", "ai", 0, 0, 0, Token::NONE},
       {"あいうえお", "aiueo", 0, 0, 0, Token::NONE},

@@ -159,7 +159,10 @@ class SessionConverterTest : public ::testing::Test {
     converter.GetConversion(index, size, conversion);
   }
 
-  static void AppendCandidateList(SessionConverter *converter) {
+  static void AppendCandidateList(ConversionRequest::RequestType request_type,
+                                  SessionConverter *converter) {
+    ConversionRequest unused_request;
+    converter->SetRequestType(request_type, &unused_request);
     converter->AppendCandidateList();
   }
 
@@ -1105,7 +1108,7 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth) {
   }
 }
 
-TEST_F(SessionConverterTest, ConvertToHalfWidth_2) {
+TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
   // http://b/2517514
   // ConvertToHalfWidth converts punctuations differently w/ or w/o kana.
   SessionConverter converter(convertermock_.get(), request_.get(),
@@ -1431,7 +1434,7 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegments) {
   EXPECT_TRUE(converter.IsActive());
 }
 
-TEST_F(SessionConverterTest, CommitHeadToFocusedSegments_atLastSegment) {
+TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());
   Segments segments;
@@ -1495,7 +1498,6 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1573,7 +1575,6 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1651,7 +1652,6 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   const std::string kChars_Hakimonowo = "はきものを";
 
   {  // Initialize mock segments for partial suggestion
-    segments1.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment = segments1.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Kokode);
@@ -1666,7 +1666,6 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   // Suggestion that matches to the same key by its prefix.
   // Should not be used by partial suggestion.
   {
-    suggestion_segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = suggestion_segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Kokode);
@@ -1678,7 +1677,6 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   }
 
   {  // Initialize mock segments for suggestion
-    segments2.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments2.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Hakimonowo);
@@ -1767,7 +1765,6 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1814,7 +1811,6 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 
   segments.Clear();
   {  // Initialize mock segments for prediction
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1908,7 +1904,6 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
 
   segments.Clear();
   {  // Initialize mock segments for prediction
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1958,7 +1953,6 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -1989,7 +1983,6 @@ TEST_F(SessionConverterTest, SuppressSuggestion) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -2036,7 +2029,6 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
 
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kPredictionKey);
@@ -2059,7 +2051,6 @@ TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
   segments.Clear();
   {
     // Initialize mock segments for partial prediction for expanding suggestion.
-    segments.set_request_type(Segments::PARTIAL_PREDICTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kPredictionKey);
@@ -2135,7 +2126,6 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
 
   Segments segments;
   {  // Initialize mock segments for suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kKey);
@@ -2166,7 +2156,6 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
 
   segments.Clear();
   {  // Initialize mock segments for prediction (== expanding suggestion)
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kKey);
@@ -2219,7 +2208,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     FillT13Ns(&segments, composer_.get());
 
     SetSegments(segments, &converter);
-    AppendCandidateList(&converter);
+    AppendCandidateList(ConversionRequest::CONVERSION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     // 3 == hiragana cand, katakana cand and sub candidate list.
     EXPECT_EQ(3, candidate_list.size());
@@ -2249,7 +2238,7 @@ TEST_F(SessionConverterTest, AppendCandidateList) {
     meta_candidates->at(0).content_key = segment->key();
 
     SetSegments(segments, &converter);
-    AppendCandidateList(&converter);
+    AppendCandidateList(ConversionRequest::CONVERSION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     // 4 == hiragana cand, katakana cand, hiragana cand2
     // and sub candidate list.
@@ -2283,9 +2272,8 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   {
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
-    segments.set_request_type(Segments::SUGGESTION);
     SetSegments(segments, &converter);
-    AppendCandidateList(&converter);
+    AppendCandidateList(ConversionRequest::SUGGESTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
@@ -2294,9 +2282,8 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   {
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
-    segments.set_request_type(Segments::PARTIAL_SUGGESTION);
     SetSegments(segments, &converter);
-    AppendCandidateList(&converter);
+    AppendCandidateList(ConversionRequest::PARTIAL_SUGGESTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
@@ -2305,9 +2292,8 @@ TEST_F(SessionConverterTest, AppendCandidateListForRequestTypes) {
   {
     SetAiueo(&segments);
     FillT13Ns(&segments, composer_.get());
-    segments.set_request_type(Segments::PARTIAL_PREDICTION);
     SetSegments(segments, &converter);
-    AppendCandidateList(&converter);
+    AppendCandidateList(ConversionRequest::PARTIAL_PREDICTION, &converter);
     const CandidateList &candidate_list = GetCandidateList(converter);
     EXPECT_FALSE(candidate_list.focused());
   }
@@ -2596,7 +2582,6 @@ TEST_F(SessionConverterTest, Issue1948334) {
                              config_.get());
   Segments segments;
   {  // Initialize mock segments for the first suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -2616,7 +2601,6 @@ TEST_F(SessionConverterTest, Issue1948334) {
 
   segments.Clear();
   {  // Initialize mock segments for the second suggestion
-    segments.set_request_type(Segments::SUGGESTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key("もず");
@@ -2665,7 +2649,6 @@ TEST_F(SessionConverterTest, Issue1960362) {
 
   Segments segments;
   {
-    segments.set_request_type(Segments::CONVERSION);
     Segment *segment;
     Segment::Candidate *candidate;
 
@@ -2684,7 +2667,6 @@ TEST_F(SessionConverterTest, Issue1960362) {
 
   Segments resized_segments;
   {
-    resized_segments.set_request_type(Segments::CONVERSION);
     Segment *segment = resized_segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key("ZYUt");
@@ -2719,7 +2701,6 @@ TEST_F(SessionConverterTest, Issue1978201) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   {  // Initialize mock segments for prediction
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Mo);
@@ -2867,7 +2848,6 @@ TEST_F(SessionConverterTest, Issue2040116) {
   {
     // Initialize no predict result.
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
     convertermock_->SetStartPredictionForRequest(&segments, false);
@@ -2879,7 +2859,6 @@ TEST_F(SessionConverterTest, Issue2040116) {
   {
     // Initialize a suggest result triggered by "G".
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
     Segment::Candidate *candidate;
@@ -2907,7 +2886,6 @@ TEST_F(SessionConverterTest, Issue2040116) {
     // Initialize no predict result triggered by "G".  It's possible
     // by Google Suggest.
     Segments segments;
-    segments.set_request_type(Segments::PREDICTION);
     Segment *segment = segments.add_segment();
     segment->set_key("G");
     convertermock_->SetStartPredictionForRequest(&segments, false);
@@ -2968,7 +2946,6 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
 
   // Set up a mock suggestion result.
   Segments segments;
-  segments.set_request_type(Segments::SUGGESTION);
   Segment *segment;
   segment = segments.add_segment();
   segment->set_key("");

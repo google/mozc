@@ -223,7 +223,7 @@ TEST_F(SymbolRewriterTest, InsertAfterSingleKanjiAndT13n) {
   }
 }
 
-TEST_F(SymbolRewriterTest, InsertSymbolsPosition_MobileSymbolKey) {
+TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileSymbolKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
   commands::RequestForUnitTest::FillMobileRequest(&command_request);
@@ -247,7 +247,7 @@ TEST_F(SymbolRewriterTest, InsertSymbolsPosition_MobileSymbolKey) {
   }
 }
 
-TEST_F(SymbolRewriterTest, InsertSymbolsPosition_MobileAlphabetKey) {
+TEST_F(SymbolRewriterTest, InsertSymbolsPositionMobileAlphabetKey) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   commands::Request command_request;
   commands::RequestForUnitTest::FillMobileRequest(&command_request);

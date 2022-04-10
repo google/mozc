@@ -38,7 +38,7 @@
 #include "engine/eval_engine_factory.h"
 #include "absl/flags/flag.h"
 
-ABSL_FLAG(std::string, test_file, "", "regression test file");
+ABSL_FLAG(std::vector<std::string>, test_files, {}, "regression test files");
 ABSL_FLAG(std::string, data_file, "", "engine data file");
 ABSL_FLAG(std::string, data_type, "", "engine data type");
 ABSL_FLAG(std::string, engine_type, "desktop", "engine type");
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
   QualityRegressionUtil util((*create_result)->GetConverter());
 
   std::vector<QualityRegressionUtil::TestItem> items;
-  const absl::Status parse_result =
-      QualityRegressionUtil::ParseFile(absl::GetFlag(FLAGS_test_file), &items);
+  const absl::Status parse_result = QualityRegressionUtil::ParseFiles(
+      absl::GetFlag(FLAGS_test_files), &items);
   if (!parse_result.ok()) {
     LOG(ERROR) << parse_result;
     return static_cast<int>(parse_result.code());
