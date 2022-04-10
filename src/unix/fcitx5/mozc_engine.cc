@@ -266,8 +266,7 @@ void MozcEngine::compositionModeUpdated(InputContext *ic) {
   for (const auto &modeAction : modeActions_) {
     modeAction->update(ic);
   }
-  instance_->userInterfaceManager().update(UserInterfaceComponent::StatusArea,
-                                           ic);
+  ic->updateUserInterface(UserInterfaceComponent::StatusArea);
 }
 
 AddonInstance *MozcEngine::clipboardAddon() { return clipboard(); }
