@@ -773,6 +773,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	ß	s S ss SS ごうじ えすつぇっと	エスツェット 合字
 アルファベット	ẞ	s S ss SS ごうじ えすつぇっと	エスツェット大文字 合字
 記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER		U+02AC
+記号	¤	つうか たんい こくさいつうかきごう	通貨記号	国際通貨記号	OTHER		U+00A4
 記号	₠	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう	通貨記号	エキュー	OTHER		U+20A0
 記号	₡	つうか たんい ころん ころんきごう	通貨記号	コロン	OTHER		U+20A1
 記号	₢	つうか たんい くるぜいろ くるぜいろきごう	通貨記号	クルゼイロ	OTHER		U+20A2
@@ -785,7 +786,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	₩	つうか たんい うぉん うぉんきごう	通貨記号	ウォン	OTHER		U+20A9
 記号	₪	つうか たんい しんしぇける しんしぇけるきごう	通貨記号	新シェケル	OTHER		U+20AA
 記号	₫	つうか たんい どん どんきごう	通貨記号	ドン	OTHER		U+20AB
-			通貨記号				# € U+20AC defined at above
+# € U+20AC defined at above
 記号	₭	つうか たんい きーぷ きーぷきごう	通貨記号	キープ	OTHER		U+20AD
 記号	₮	つうか たんい どぐろぐ とぅぐるぐ とぅぐるく とぅぐりく どぐろぐきごう とぅぐるぐきごう とぅぐるくきごう とぅぐりくきごう	通貨記号	トゥグルグ	OTHER		U+20AE
 記号	₯	つうか たんい どらくま どらくまきごう	通貨記号	ドラクマ	OTHER		U+20AF
@@ -795,6 +796,16 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	₳	つうか たんい あうすとらる あうすとらるきごう	通貨記号	アウストラル	OTHER		U+20B3
 記号	₴	つうか たんい ぐりぶな ふりヴにゃ ふりぶにゃ ぐりぶなきごう ふりヴにゃきごう ふりぶにゃきごう	通貨記号	フリヴニャ	OTHER		U+20B4
 記号	₵	つうか たんい せでぃ せでぃきごう	通貨記号	セディ	OTHER		U+20B5
+記号	₶	つうか たんい りーぶる とぅーるりーぶる	通貨記号	トゥール・リーブル	OTHER		U+20B6
+記号	₷	つうか たんい すぺすみろ	通貨記号	スペスミロ	OTHER		U+20B7
+記号	₸	つうか たんい てんげ	通貨記号	テンゲ	OTHER		U+20B8
+記号	₹	つうか たんい るぴー いんどるぴー	通貨記号	インド・ルピー	OTHER		U+20B9
+記号	₺	つうか たんい りら とるこりら	通貨記号	トルコ・リラ	OTHER		U+20BA
+記号	₻	つうか たんい まるく のるうぇーまるく	通貨記号	ノルウェー・マルク	OTHER		U+20BB
+記号	₼	つうか たんい まなと あぜるばいじゃんまなと	通貨記号	マナト	OTHER		U+20BC
+記号	₽	つうか たんい るーぶる ろしあるーぶる	通貨記号	ロシア・ルーブル	OTHER		U+20BD
+記号	₾	つうか たんい らり じょーじあらり	通貨記号	ジョージア・ラリ	OTHER		U+20BE
+記号	₿	つうか たんい びっとこいん	通貨記号	ビットコイン	OTHER		U+20BF
 
 記号	㌀	あぱーと			OTHER		U+2300
 記号	㌁	あるふぁ			OTHER		U+3301
