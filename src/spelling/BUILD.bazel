@@ -45,6 +45,7 @@ cc_library_mozc(
         "//base:file_util",
         "//base:port",
         "//base:thread",
+        "//base:util",
         "//engine:engine_builder",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",
