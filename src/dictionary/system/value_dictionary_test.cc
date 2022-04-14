@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_test_util.h"

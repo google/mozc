@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <sstream>
+#include <string>
 
 #include "base/logging.h"
 #include "base/port.h"

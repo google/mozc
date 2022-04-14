@@ -35,6 +35,8 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+#include <string>
+#include <utility>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"
