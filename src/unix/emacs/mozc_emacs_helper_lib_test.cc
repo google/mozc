@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <string>
 
 #include "base/protobuf/message.h"
 #include "base/util.h"
