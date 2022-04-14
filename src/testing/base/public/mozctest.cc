@@ -29,6 +29,9 @@
 
 #include "testing/base/public/mozctest.h"
 
+#include <string>
+#include <utility>
+
 #include "base/file_util.h"
 #include "base/logging.h"
 #include "base/status.h"
