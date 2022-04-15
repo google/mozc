@@ -39,6 +39,7 @@
 #include "config/config_handler.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 #include "absl/strings/string_view.h"
 
@@ -444,6 +445,44 @@ TEST_F(TypingCorrectorTest, Copy) {
   TypingCorrector corrector3(nullptr, 1000, 1000);
   corrector3 = corrector;
   ExpectTypingCorrectorEqual(corrector, corrector3);
+}
+
+TEST_F(TypingCorrectorTest, SupportNonAscii) {
+  Config config;
+  ConfigHandler::GetDefaultConfig(&config);
+  config.set_use_typing_correction(true);
+  commands::Request request;
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request.set_special_romanji_table(commands::Request::FLICK_TO_HIRAGANA);
+
+  Table table;
+  testing::MockDataManager data_manager;
+  table.InitializeWithRequestAndConfig(request, config, data_manager);
+
+  TypingCorrector corrector(&table, 30, 30);
+  corrector.SetConfig(&config_);
+
+  EXPECT_TRUE(corrector.IsAvailable());
+
+  ProbableKeyEvents events;
+  const struct ProbableKeyData {
+    const std::string str;
+    const double prob;
+  } key_data[] = {
+      {"め", 0.98},
+      {"む", 0.15},
+      {"も", 0.01},
+  };
+  for (size_t i = 0; i < std::size(key_data); ++i) {
+    ProbableKeyEvent *event = events.Add();
+    event->set_key_code(Util::Utf8ToUcs4(key_data[i].str));
+    event->set_probability(key_data[i].prob);
+  }
+  corrector.InsertCharacter("め", events);
+  std::vector<TypeCorrectedQuery> queries;
+  // No model cost should be looked up.
+  corrector.GetQueriesForPrediction(&queries);
+  EXPECT_EQ(queries.size(), 0);
 }
 
 }  // namespace composer
