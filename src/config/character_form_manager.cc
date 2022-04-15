@@ -374,9 +374,12 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
 
   std::string buf;
   while (begin < end) {
-    // TODO(team): Replace by iterator.
     size_t mblen = 0;
     const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+    if (mblen == 0) {  // Invalid Utf8 string
+      ++begin;
+      continue;
+    }
     const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetCharacterForm()
     Config::CharacterForm form = prev_form;

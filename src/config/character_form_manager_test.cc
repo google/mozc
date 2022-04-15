@@ -592,5 +592,16 @@ TEST_F(CharacterFormManagerTest, GetFormTypesFromStringPair) {
   EXPECT_EQ(f2, CharacterFormManager::FULL_WIDTH);
 }
 
+TEST_F(CharacterFormManagerTest, InvalidStringTest) {
+  CharacterFormManager *manager =
+      CharacterFormManager::GetCharacterFormManager();
+
+  std::string output;
+  // "る<invalid>る"
+  manager->ConvertConversionString("\xE3\x82\x8B\x88\xE3\x82\x8B", &output);
+
+  EXPECT_EQ("るる", output);
+}
+
 }  // namespace config
 }  // namespace mozc
