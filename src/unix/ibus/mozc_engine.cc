@@ -242,10 +242,14 @@ CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
     return nullptr;
   }
+
+#ifndef ENABLE_QT_RENDERER
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
     // mozc_renderer is not supported on wayland session.
     return nullptr;
   }
+#endif  // !ENABLE_QT_RENDERER
+
   auto *handler = new GtkCandidateWindowHandler(renderer_client);
   handler->RegisterGSettingsObserver();
   return handler;

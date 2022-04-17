@@ -42,7 +42,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	―	- ー － ― だっしゅ きごう	ダッシュ		GENERAL	ホリゾンタルバー
 記号	‐	- ー － ― はいふん	ハイフン		GENERAL	ハイフン
 記号	／	すらっしゅ しゃせん ・ / きごう ななめ	スラッシュ		GENERAL
-記号	＼	ばっくすらっしゅ ぎゃくしゃせん ・ / \ きごう しゃせん すらっしゅ ななめ	バックスラッシュ		GENERAL
+記号	＼	ばっくすらっしゅ ぎゃくしゃせん ・ / ／ \ ＼ ¥ ￥ きごう しゃせん すらっしゅ ななめ	バックスラッシュ		GENERAL
+記号	\	ばっくすらっしゅ ぎゃくしゃせん ・ / ／ \ ＼ ¥ ￥ きごう しゃせん すらっしゅ ななめ	バックスラッシュ		GENERAL
 記号	〜	にょろ なみ から ー - ~ きごう より	波ダッシュ		GENERAL
 記号	∥	| || たてぼう たてせん きごう	縦線		SYMBOL
 記号	‖	| || たてぼう たてせん きごう	縦線		SYMBOL
@@ -115,8 +116,8 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	′	’ ふん たんい きごう	分		SYMBOL	PRIME
 記号	″	” びょう たんい きごう	秒		SYMBOL	DOUBLE PRIME
 記号	℃	ど たんい C	単位		OTHER
-記号	￥	えん つうか \ ¥ たんい	通貨記号	円	GENERAL OTHER
-記号	¥	えん つうか たんい	通貨記号	円	GENERAL OTHER		U+00A5
+記号	￥	えん つうか \ ¥ ＼ たんい	通貨記号	円	GENERAL OTHER
+記号	¥	えん つうか \ ￥ ＼ たんい	通貨記号	円	GENERAL OTHER		U+00A5
 記号	＄	どる だらー だら つうか $ たんい	通貨記号	ドル	GENERAL OTHER
 記号	¢	せんと  つうか たんい	通貨記号	セント	OTHER
 記号	£	ぽんど  つうか たんい	通貨記号	ポンド	OTHER
@@ -773,6 +774,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 アルファベット	ß	s S ss SS ごうじ えすつぇっと	エスツェット 合字
 アルファベット	ẞ	s S ss SS ごうじ えすつぇっと	エスツェット大文字 合字
 記号	ʬ	ww ばいらびあるぱーかっしぶ			OTHER		U+02AC
+記号	¤	つうか たんい こくさいつうかきごう	通貨記号	国際通貨記号	OTHER		U+00A4
 記号	₠	つうか たんい おうしゅうつうかたんい えきゅー　きゅうゆーろ　えきゅーきごう　きゅうゆーろきごう	通貨記号	エキュー	OTHER		U+20A0
 記号	₡	つうか たんい ころん ころんきごう	通貨記号	コロン	OTHER		U+20A1
 記号	₢	つうか たんい くるぜいろ くるぜいろきごう	通貨記号	クルゼイロ	OTHER		U+20A2
@@ -785,7 +787,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	₩	つうか たんい うぉん うぉんきごう	通貨記号	ウォン	OTHER		U+20A9
 記号	₪	つうか たんい しんしぇける しんしぇけるきごう	通貨記号	新シェケル	OTHER		U+20AA
 記号	₫	つうか たんい どん どんきごう	通貨記号	ドン	OTHER		U+20AB
-			通貨記号				# € U+20AC defined at above
+# € U+20AC defined at above
 記号	₭	つうか たんい きーぷ きーぷきごう	通貨記号	キープ	OTHER		U+20AD
 記号	₮	つうか たんい どぐろぐ とぅぐるぐ とぅぐるく とぅぐりく どぐろぐきごう とぅぐるぐきごう とぅぐるくきごう とぅぐりくきごう	通貨記号	トゥグルグ	OTHER		U+20AE
 記号	₯	つうか たんい どらくま どらくまきごう	通貨記号	ドラクマ	OTHER		U+20AF
@@ -795,6 +797,16 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	₳	つうか たんい あうすとらる あうすとらるきごう	通貨記号	アウストラル	OTHER		U+20B3
 記号	₴	つうか たんい ぐりぶな ふりヴにゃ ふりぶにゃ ぐりぶなきごう ふりヴにゃきごう ふりぶにゃきごう	通貨記号	フリヴニャ	OTHER		U+20B4
 記号	₵	つうか たんい せでぃ せでぃきごう	通貨記号	セディ	OTHER		U+20B5
+記号	₶	つうか たんい りーぶる とぅーるりーぶる	通貨記号	トゥール・リーブル	OTHER		U+20B6
+記号	₷	つうか たんい すぺすみろ	通貨記号	スペスミロ	OTHER		U+20B7
+記号	₸	つうか たんい てんげ	通貨記号	テンゲ	OTHER		U+20B8
+記号	₹	つうか たんい るぴー いんどるぴー	通貨記号	インド・ルピー	OTHER		U+20B9
+記号	₺	つうか たんい りら とるこりら	通貨記号	トルコ・リラ	OTHER		U+20BA
+記号	₻	つうか たんい まるく のるうぇーまるく	通貨記号	ノルウェー・マルク	OTHER		U+20BB
+記号	₼	つうか たんい まなと あぜるばいじゃんまなと	通貨記号	マナト	OTHER		U+20BC
+記号	₽	つうか たんい るーぶる ろしあるーぶる	通貨記号	ロシア・ルーブル	OTHER		U+20BD
+記号	₾	つうか たんい らり じょーじあらり	通貨記号	ジョージア・ラリ	OTHER		U+20BE
+記号	₿	つうか たんい びっとこいん	通貨記号	ビットコイン	OTHER		U+20BF
 
 記号	㌀	あぱーと			OTHER		U+2300
 記号	㌁	あるふぁ			OTHER		U+3301
@@ -1025,42 +1037,42 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	㋼	まるうぃ まるゐ	丸ヰ
 記号	㋽	まるうぇ まるゑ	丸ヱ
 記号	㋾	まるを	丸ヲ
-記号	⁰	うわつき うえつき	上付き文字	0	SYMBOL		U+2070
-記号	¹	うわつき うえつき	上付き文字	1	SYMBOL		U+00B9
-記号	²	うわつき うえつき	上付き文字	2	SYMBOL		U+00B2
-記号	³	うわつき うえつき	上付き文字	3	SYMBOL		U+00B3
-記号	⁴	うわつき うえつき	上付き文字	4	SYMBOL		U+2074
-記号	⁵	うわつき うえつき	上付き文字	5	SYMBOL		U+2075
-記号	⁶	うわつき うえつき	上付き文字	6	SYMBOL		U+2076
-記号	⁷	うわつき うえつき	上付き文字	7	SYMBOL		U+2077
-記号	⁸	うわつき うえつき	上付き文字	8	SYMBOL		U+2078
-記号	⁹	うわつき うえつき	上付き文字	9	SYMBOL		U+2079
-記号	⁺	うわつき うえつき	上付き文字	+	SYMBOL		U+207A
-記号	⁻	うわつき うえつき	上付き文字	-	SYMBOL		U+207B
-記号	⁼	うわつき うえつき	上付き文字	=	SYMBOL		U+207C
-記号	⁽	うわつき うえつき	上付き文字	始め丸括弧	SYMBOL		U+207D
-記号	⁾	うわつき うえつき	上付き文字	終わり丸括弧	SYMBOL		U+207E
-記号	ⁿ	うわつき うえつき	上付き文字	n	SYMBOL		U+207F
-記号	₀	したつき	下付き文字	0	SYMBOL		U+2080
-記号	₁	したつき	下付き文字	1	SYMBOL		U+2081
-記号	₂	したつき	下付き文字	2	SYMBOL		U+2082
-記号	₃	したつき	下付き文字	3	SYMBOL		U+2083
-記号	₄	したつき	下付き文字	4	SYMBOL		U+2084
-記号	₅	したつき	下付き文字	5	SYMBOL		U+2085
-記号	₆	したつき	下付き文字	6	SYMBOL		U+2086
-記号	₇	したつき	下付き文字	7	SYMBOL		U+2087
-記号	₈	したつき	下付き文字	8	SYMBOL		U+2088
-記号	₉	したつき	下付き文字	9	SYMBOL		U+2089
-記号	₊	したつき	下付き文字	+	SYMBOL		U+208A
-記号	₋	したつき	下付き文字	-	SYMBOL		U+208B
-記号	₌	したつき	下付き文字	=	SYMBOL		U+208C
-記号	₍	したつき	下付き文字	始め丸括弧	SYMBOL		U+208D
-記号	₎	したつき	下付き文字	終わり丸括弧	SYMBOL		U+208E
-記号	ₐ	したつき	下付き文字	a	SYMBOL		U+2090
-記号	ₑ	したつき	下付き文字	e	SYMBOL		U+2091
-記号	ₒ	したつき	下付き文字	o	SYMBOL		U+2092
-記号	ₓ	したつき	下付き文字	x	SYMBOL		U+2093
-記号	ₔ	したつき	下付き文字	ə	SYMBOL		U+2094
+記号	⁰	うわつき うえつき 0	上付き文字	0	SYMBOL		U+2070
+記号	¹	うわつき うえつき 1	上付き文字	1	SYMBOL		U+00B9
+記号	²	うわつき うえつき 2	上付き文字	2	SYMBOL		U+00B2
+記号	³	うわつき うえつき 3	上付き文字	3	SYMBOL		U+00B3
+記号	⁴	うわつき うえつき 4	上付き文字	4	SYMBOL		U+2074
+記号	⁵	うわつき うえつき 5	上付き文字	5	SYMBOL		U+2075
+記号	⁶	うわつき うえつき 6	上付き文字	6	SYMBOL		U+2076
+記号	⁷	うわつき うえつき 7	上付き文字	7	SYMBOL		U+2077
+記号	⁸	うわつき うえつき 8	上付き文字	8	SYMBOL		U+2078
+記号	⁹	うわつき うえつき 9	上付き文字	9	SYMBOL		U+2079
+記号	⁺	うわつき うえつき +	上付き文字	+	SYMBOL		U+207A
+記号	⁻	うわつき うえつき -	上付き文字	-	SYMBOL		U+207B
+記号	⁼	うわつき うえつき =	上付き文字	=	SYMBOL		U+207C
+記号	⁽	うわつき うえつき (	上付き文字	始め丸括弧	SYMBOL		U+207D
+記号	⁾	うわつき うえつき )	上付き文字	終わり丸括弧	SYMBOL		U+207E
+記号	ⁿ	うわつき うえつき n	上付き文字	n	SYMBOL		U+207F
+記号	₀	したつき 0	下付き文字	0	SYMBOL		U+2080
+記号	₁	したつき 1	下付き文字	1	SYMBOL		U+2081
+記号	₂	したつき 2	下付き文字	2	SYMBOL		U+2082
+記号	₃	したつき 3	下付き文字	3	SYMBOL		U+2083
+記号	₄	したつき 4	下付き文字	4	SYMBOL		U+2084
+記号	₅	したつき 5	下付き文字	5	SYMBOL		U+2085
+記号	₆	したつき 6	下付き文字	6	SYMBOL		U+2086
+記号	₇	したつき 7	下付き文字	7	SYMBOL		U+2087
+記号	₈	したつき 8	下付き文字	8	SYMBOL		U+2088
+記号	₉	したつき 9	下付き文字	9	SYMBOL		U+2089
+記号	₊	したつき +	下付き文字	+	SYMBOL		U+208A
+記号	₋	したつき -	下付き文字	-	SYMBOL		U+208B
+記号	₌	したつき =	下付き文字	=	SYMBOL		U+208C
+記号	₍	したつき (	下付き文字	始め丸括弧	SYMBOL		U+208D
+記号	₎	したつき )	下付き文字	終わり丸括弧	SYMBOL		U+208E
+記号	ₐ	したつき a	下付き文字	a	SYMBOL		U+2090
+記号	ₑ	したつき e	下付き文字	e	SYMBOL		U+2091
+記号	ₒ	したつき o	下付き文字	o	SYMBOL		U+2092
+記号	ₓ	したつき x	下付き文字	x	SYMBOL		U+2093
+記号	ₔ	したつき e	下付き文字	ə	SYMBOL		U+2094
 記号	✁	きごう はさみ	はさみ			UPPER BLADE SCISSORS (U+2701)	U+2701
 記号	✂	きごう はさみ	はさみ			BLACK SCISSORS (U+2702)	U+2702
 記号	✃	きごう はさみ	はさみ			LOWER BLADE SCISSORS (U+2703)	U+2703
@@ -1503,3 +1515,24 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	髙	はしごだか	高の異体字				U+9AD9
 記号	﨑	たつさき	崎の異体字				U+FA11
 記号	𠮷	つちよし	吉の異体字				U+20BB7
+# Ainu characters
+記号	ㇰ	あいぬ く	アイヌ語カナ
+記号	ㇱ	あいぬ し	アイヌ語カナ
+記号	ㇲ	あいぬ す	アイヌ語カナ
+記号	ㇳ	あいぬ と	アイヌ語カナ
+記号	ㇴ	あいぬ ぬ	アイヌ語カナ
+記号	ㇵ	あいぬ は	アイヌ語カナ
+記号	ㇶ	あいぬ ひ	アイヌ語カナ
+記号	ㇷ	あいぬ ふ	アイヌ語カナ
+記号	ㇸ	あいぬ へ	アイヌ語カナ
+記号	ㇹ	あいぬ ほ	アイヌ語カナ
+記号	ㇺ	あいぬ む	アイヌ語カナ
+記号	ㇻ	あいぬ ら	アイヌ語カナ
+記号	ㇼ	あいぬ り	アイヌ語カナ
+記号	ㇽ	あいぬ る	アイヌ語カナ
+記号	ㇾ	あいぬ れ	アイヌ語カナ
+記号	ㇿ	あいぬ ろ	アイヌ語カナ
+記号	ㇷ゚	あいぬ ぷ	アイヌ語カナ
+記号	セ゚	あいぬ せ	アイヌ語カナ
+記号	ツ゚	あいぬ つ	アイヌ語カナ
+記号	ト゚	あいぬ と	アイヌ語カナ

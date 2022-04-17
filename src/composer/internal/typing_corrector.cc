@@ -109,7 +109,8 @@ void TypingCorrector::InsertCharacter(
   for (size_t i = 0; i < top_n_.size(); ++i) {
     for (size_t j = 0; j < probable_key_events.size(); ++j) {
       const ProbableKeyEvent &event = probable_key_events.Get(j);
-      const std::string key_as_string(1, event.key_code());
+      std::string key_as_string;
+      Util::Ucs4ToUtf8(event.key_code(), &key_as_string);
       const int new_cost = top_n_[i].second + Cost(event.probability()) +
                            LookupModelCost(top_n_[i].first, key_as_string,
                                            *table_->typing_model());

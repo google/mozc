@@ -1,12 +1,12 @@
 [submodule "src/third_party/breakpad"]
 	path = src/third_party/breakpad
-	url = https://github.com/google/breakpad.git
+	url = https://chromium.googlesource.com/breakpad/breakpad
 [submodule "src/third_party/gtest"]
 	path = src/third_party/gtest
 	url = https://github.com/google/googletest.git
 [submodule "src/third_party/gyp"]
 	path = src/third_party/gyp
-	url = https://github.com/chromium/gyp.git
+	url = https://chromium.googlesource.com/external/gyp
 [submodule "src/third_party/japanese_usage_dictionary"]
 	path = src/third_party/japanese_usage_dictionary
 	url = https://github.com/hiroyuki-komatsu/japanese-usage-dictionary.git

@@ -29,6 +29,8 @@
 
 #include "composer/table.h"
 
+#include <string>
+
 #include "base/file_util.h"
 #include "base/port.h"
 #include "base/system_util.h"
