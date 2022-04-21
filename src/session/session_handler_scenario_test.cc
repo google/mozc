@@ -135,6 +135,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "revert.txt",
     DATA_DIR "segment_focus.txt",
     DATA_DIR "segment_width.txt",
+    DATA_DIR "suggest_after_zero_query.txt",
     DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
     DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario.txt",
@@ -310,7 +311,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     const CandidateWord &cand = handler.GetCandidateByValue(args[1]);
     const bool has_cand = !cand.value().empty();
     EXPECT_TRUE(has_cand) << args[1] + " is not found\n"
-                        << output.candidates().Utf8DebugString();
+                          << output.candidates().Utf8DebugString();
     if (has_cand) {
       EXPECT_EQ(args[2], cand.annotation().description())
           << cand.Utf8DebugString();

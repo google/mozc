@@ -208,10 +208,12 @@ void NormalizeHistorySegments(Segments *segments) {
 
     std::string key;
     Segment::Candidate *c = segment->mutable_candidate(0);
+    const std::string &history_key =
+        (c->key.size() > segment->key().size()) ? c->key : segment->key();
     const std::string value = c->value;
     const std::string content_value = c->content_value;
     const std::string content_key = c->content_key;
-    japanese_util::FullWidthAsciiToHalfWidthAscii(segment->key(), &key);
+    japanese_util::FullWidthAsciiToHalfWidthAscii(history_key, &key);
     japanese_util::FullWidthAsciiToHalfWidthAscii(value, &c->value);
     japanese_util::FullWidthAsciiToHalfWidthAscii(content_value,
                                                   &c->content_value);
