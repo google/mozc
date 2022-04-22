@@ -79,6 +79,7 @@
           'revert.txt',
           'segment_focus.txt',
           'segment_width.txt',
+          'suggest_after_zero_query.txt',
           'twelvekeys_switch_inputmode_scenario.txt',
           'twelvekeys_toggle_flick_alphabet_scenario.txt',
           'twelvekeys_toggle_hiragana_preedit_scenario.txt',
