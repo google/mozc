@@ -853,6 +853,11 @@ message CheckSpellingRequest {
   // score(suggestion) - score(original) >= score_threshold.
   // Used to control the precision/recall trade-off.
   optional float score_threshold = 2;
+
+  // Disables to add the special per-candidate bias-score stored in the model
+  // file. This flat should be enabled in experiment. We can make the behavior
+  // more aggressive.
+  optional bool disable_model_bias = 3;
 }
 
 // Spellchecker response.

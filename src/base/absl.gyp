@@ -43,6 +43,7 @@
         '<(absl_srcdir)/base/internal/raw_logging.cc',
         '<(absl_srcdir)/base/internal/spinlock.cc',
         '<(absl_srcdir)/base/internal/spinlock_wait.cc',
+        '<(absl_srcdir)/base/internal/strerror.cc',
         '<(absl_srcdir)/base/internal/sysinfo.cc',
         '<(absl_srcdir)/base/internal/thread_identity.cc',
         '<(absl_srcdir)/base/internal/throw_delegate.cc',

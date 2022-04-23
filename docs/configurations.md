@@ -102,7 +102,7 @@ active_on_launch: False
 ### Activate Mozc on launch
 
 `active_on_launch` represents the default input. If it's True, Hiragana input is
-the default mode.
+the default mode. `active_on_launch` is supported by 2.26.4317 or later.
 
 Sample configuration:
 
