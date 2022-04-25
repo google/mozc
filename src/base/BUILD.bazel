@@ -133,6 +133,7 @@ cc_library_mozc(
             "@com_google_absl//absl/flags:parse",
         ],
         default = ["//base"],
+        linux = ["//base"],
     ),
 )
 
@@ -151,6 +152,13 @@ cc_library_mozc(
             "@com_google_absl//absl/flags:parse",
         ],
         default = ["//base"],
+        linux = ["//base"],
+        oss = [
+            ":file_util",
+            ":logging",
+            ":system_util",
+            "@com_google_absl//absl/flags:parse",
+        ],
     ),
 )
 
@@ -162,7 +170,6 @@ cc_library_mozc(
             "//base:base",
             "//base:port",
         ],
-        linux = ["@com_google_absl//absl/base:core_headers"],
         oss = ["@com_google_absl//absl/base:core_headers"],
     ),
 )
@@ -199,15 +206,18 @@ cc_library_mozc(
         default = [
             "//base",
             "//base:logging_extensions",
-            "@com_google_absl//absl/synchronization",
         ],
         linux = [
+            "//base",
+            "//base:logging_extensions",
+        ],
+        oss = [
             ":clock",
             ":const",
             ":singleton",
             "@com_google_absl//absl/strings",
         ],
-        oss = [
+        oss_linux = [
             ":clock",
             ":const",
             ":singleton",
@@ -222,6 +232,7 @@ cc_library_mozc(
     ) + [
         ":port",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/synchronization",
     ],
 )
 

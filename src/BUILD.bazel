@@ -128,6 +128,11 @@ filegroup(
     name = "package",
     srcs = select_mozc(
         default = [],
+        linux = [
+            "//gui/tool:mozc_tool",
+            "//renderer:mozc_renderer",
+            "//server:mozc_server",
+        ],
         macos = [
             "//mac:activate_pane",
             "//mac:dev_confirm_pane",
