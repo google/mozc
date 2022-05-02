@@ -153,6 +153,7 @@ cc_library_mozc(
         ],
         default = ["//base"],
         linux = ["//base"],
+        macos = ["//base"],
         oss = [
             ":file_util",
             ":logging",
@@ -177,7 +178,7 @@ cc_library_mozc(
 cc_library_mozc(
     name = "const",
     hdrs = ["const.h"],
-    visibility = ["//visibility:private"],
+    visibility = ["//mac:__pkg__"],
 )
 
 cc_library_mozc(

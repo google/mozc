@@ -149,6 +149,7 @@ objc_library_mozc(
     tags = ["manual"],
     deps = [
         ":common",
+        "//base:const",
         "//base:logging",
         "@com_google_absl//absl/base",
     ],
@@ -272,6 +273,7 @@ objc_library_mozc(
     tags = ["manual"],
     deps = [
         "//base:init_mozc",
+        "//base:mac_util",
         "//base:url",
         "//base:version",
     ],

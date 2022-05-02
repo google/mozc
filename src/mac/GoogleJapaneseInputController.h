@@ -33,6 +33,8 @@
 #include <string>
 
 // For mozc::commands::CompositionMode
+#include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "protocol/renderer_command.pb.h"
 
 @class NSMenu;
