@@ -1,7 +1,23 @@
+diff --git a/pylib/gyp/__init__.py b/pylib/gyp/__init__.py
+index e038151b..9093c4ee 100755
+--- a/pylib/gyp/__init__.py
++++ b/pylib/gyp/__init__.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ # Copyright (c) 2012 Google Inc. All rights reserved.
+ # Use of this source code is governed by a BSD-style license that can be
 diff --git a/pylib/gyp/mac_tool.py b/pylib/gyp/mac_tool.py
-index 64d21063..8483c8f2 100755
+index 64d21063..3b878ddf 100755
 --- a/pylib/gyp/mac_tool.py
 +++ b/pylib/gyp/mac_tool.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ # Copyright (c) 2012 Google Inc. All rights reserved.
+ # Use of this source code is governed by a BSD-style license that can be
+ # found in the LICENSE file.
 @@ -136,12 +136,12 @@ class MacTool(object):
      #     CFPropertyListCreateFromXMLData(): Old-style plist parser: missing
      #     semicolon in dictionary.
@@ -17,6 +33,24 @@ index 64d21063..8483c8f2 100755
 +    # _, error = CoreFoundation.CFPropertyListCreateFromXMLData(None, d, 0, None)
 +    # if error:
 +    #   return
-
+ 
      fp = open(dest, 'wb')
      fp.write(s.decode(input_code).encode('UTF-16'))
+@@ -169,15 +169,12 @@ class MacTool(object):
+   def ExecCopyInfoPlist(self, source, dest, convert_to_binary, *keys):
+     """Copies the |source| Info.plist to the destination directory |dest|."""
+     # Read the source Info.plist into memory.
+-    fd = open(source, 'r')
+-    lines = fd.read()
+-    fd.close()
++    plist = plistlib.readPlist(source)
+ 
+     # Insert synthesized key/value pairs (e.g. BuildMachineOSBuild).
+-    plist = plistlib.readPlistFromString(lines)
+     if keys:
+       plist.update(json.loads(keys[0]))
+-    lines = plistlib.writePlistToString(plist)
++    lines = plistlib.writePlistToBytes(plist).decode('utf-8')
+ 
+     # Go through all the environment variables and replace them as variables in
+     # the file.
