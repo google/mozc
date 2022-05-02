@@ -837,6 +837,7 @@ objc_library_mozc(
     name = "mac_process",
     srcs = select_mozc(macos = ["mac_process.mm"]),
     hdrs = select_mozc(macos = ["mac_process.h"]),
+    sdk_frameworks = ["Cocoa"],
     deps = [
         ":mac_util",
         ":util",
