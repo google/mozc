@@ -52,10 +52,10 @@ namespace mozc {
 // This template class takes two template parameters, Delimiter and Option.
 //
 // Delimiter:
-//   - SingleDelimiter: Input is splitted by only one character.  If your
+//   - SingleDelimiter: Input is split by only one character.  If your
 //         delimiter is a single character, use this parameter because algorithm
 //         is optimized for this common case.
-//   - MultiDelimiter: Input is splitted by any of the specified characters.
+//   - MultiDelimiter: Input is split by any of the specified characters.
 //
 // Option:
 //   - SkipEmpty (default): empty pieces are ignored:
@@ -505,8 +505,6 @@ class SplitIterator<Delimiter, AllowEmpty> {
 
   DISALLOW_COPY_AND_ASSIGN(SplitIterator);
 };
-
-
 }  // namespace mozc
 
 #endif  // MOZC_BASE_UTIL_H_
