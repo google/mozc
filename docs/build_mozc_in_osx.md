@@ -11,16 +11,6 @@ cd ~/work
 git clone https://github.com/google/mozc.git -b master --single-branch --recursive
 ```
 
-### Apply a patch to GYP
-
-The upstream GYP may or may not work on macOS for Mozc.
-You probably need to apply the following patch to GYP.
-
-```
-cd src\third_party\gyp
-git apply ..\..\gyp\gyp.patch
-```
-
 ## System Requirements
 
 Only 64-bit macOS 10.9 and later versions are supported.
@@ -30,7 +20,8 @@ Only 64-bit macOS 10.9 and later versions are supported.
 Building on Mac requires the following software.
 
   * Xcode
-  * [Ninja](https://github.com/ninja-build/ninja)
+  * [Ninja](https://github.com/ninja-build/ninja) for GYP build
+  * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
   * [Qt 5](https://download.qt.io/official_releases/qt/) for GUI
   * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
 
@@ -44,12 +35,6 @@ Make sure the path to python3.
 ```
 % whereis python3
 /usr/bin/python3
-```
-
-# Install python3 dependencies
-
-```
-python3 -m pip install six
 ```
 
 ### Build Qt
@@ -67,6 +52,22 @@ make
 -----
 
 ## Build with GYP (stable)
+
+### Install python3 dependencies
+
+```
+python3 -m pip install six
+```
+
+### Apply a patch to GYP
+
+The upstream GYP may or may not work on macOS for Mozc.
+You probably need to apply the following patch to GYP.
+
+```
+cd src\third_party\gyp
+git apply ..\..\gyp\gyp.patch
+```
 
 ### Build main converter and composition UI.
 
@@ -139,16 +140,6 @@ sudo cp mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist 
 
 Bazel build is experimental. Built binaries may have some problems.
 This is only for development and testing at this moment.
-
-### Software Requirements
-
-Building on Mac with Bazel requires the following software.
-
-  * Xcode
-  * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html)
-  * [Qt 5](https://download.qt.io/official_releases/qt/)
-  * [Packages](http://s.sudre.free.fr/Software/Packages/about.html)
-
 
 ### Edit src/config.bzl
 
