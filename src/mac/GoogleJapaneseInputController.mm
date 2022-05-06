@@ -172,7 +172,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 
 #pragma mark object init/dealloc
 // Initializer designated in IMKInputController. see:
-// http://developer.apple.com/documentation/Cocoa/Reference/IMKInputController_Class/
+// https://developer.apple.com/documentation/inputmethodkit/imkinputcontroller?language=objc
 
 - (id)initWithServer:(IMKServer *)server delegate:(id)delegate client:(id)inputClient {
   self = [super initWithServer:server delegate:delegate client:inputClient];
@@ -303,7 +303,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 // Currently it just ignores the following methods:
 //   Modes, showPreferences, valueForTag
 // They are described at
-// http://developer.apple.com/documentation/Cocoa/Reference/IMKStateSetting_Protocol/
+// https://developer.apple.com/documentation/inputmethodkit/imkstatesetting?language=objc
 
 - (void)activateServer:(id)sender {
   [super activateServer:sender];
@@ -567,7 +567,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
     return;
   }
 
-  DLOG(INFO) << output->DebugString();
+  DLOG(INFO) << output->Utf8DebugString();
   if (output->has_url()) {
     NSString *url = [NSString stringWithUTF8String:output->url().c_str()];
     [self openLink:[NSURL URLWithString:url]];
@@ -663,7 +663,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 //   candidates
 //
 // The meaning of these methods are described at:
-// http://developer.apple.com/documentation/Cocoa/Reference/IMKServerInput_Additions/
+// https://developer.apple.com/documentation/inputmethodkit/imkserverinput?language=objc
 
 - (id)originalString:(id)sender {
   return originalString_;
@@ -671,7 +671,7 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 
 - (void)updateComposedString:(const Preedit *)preedit {
   // If the last and the current composed string length is 0,
-  // we don't call updateComposition.
+  // we don't update the composition.
   if (([composedString_ length] == 0) && ((preedit == nullptr || preedit->segment_size() == 0))) {
     return;
   }
@@ -699,8 +699,10 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
     replacementRange_ = NSMakeRange(NSNotFound, 0);
   }
 
-  // Make composed string visible to the client applications.
-  [self updateComposition];
+  // Update the composed string of the client applications.
+  [[self client] setMarkedText:composedString_
+                selectionRange:[self selectionRange]
+              replacementRange:replacementRange_];
 }
 
 - (void)commitComposition:(id)sender {
@@ -837,7 +839,9 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 
 - (BOOL)handleEvent:(NSEvent *)event client:(id)sender {
   if ([event type] == NSEventTypeCursorUpdate) {
-    [self updateComposition];
+    [[self client] setMarkedText:composedString_
+                  selectionRange:[self selectionRange]
+                replacementRange:replacementRange_];
     return NO;
   }
   if ([event type] != NSEventTypeKeyDown && [event type] != NSEventTypeFlagsChanged) {
