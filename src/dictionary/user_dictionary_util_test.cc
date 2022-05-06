@@ -195,6 +195,11 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
             UserDictionaryUtil::ValidateEntry(entry));
 
   entry = base_entry;
+  entry.set_key("あ\xE3\x84う");  // Invalid UTF-8. "い" is "E3 81 84".
+  EXPECT_EQ(UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER,
+            UserDictionaryUtil::ValidateEntry(entry));
+
+  entry = base_entry;
   entry.clear_value();
   EXPECT_EQ(UserDictionaryCommandStatus::WORD_EMPTY,
             UserDictionaryUtil::ValidateEntry(entry));
@@ -210,6 +215,11 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
             UserDictionaryUtil::ValidateEntry(entry));
 
   entry = base_entry;
+  entry.set_value("あ\x81\x84う");  // Invalid UTF-8. "い" is "E3 81 84".
+  EXPECT_EQ(UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER,
+            UserDictionaryUtil::ValidateEntry(entry));
+
+  entry = base_entry;
   entry.clear_comment();
   EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
             UserDictionaryUtil::ValidateEntry(entry));
@@ -221,6 +231,11 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
 
   entry = base_entry;
   entry.set_comment("a\nb");
+  EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER,
+            UserDictionaryUtil::ValidateEntry(entry));
+
+  entry = base_entry;
+  entry.set_comment("あ\xE3う");  // Invalid UTF-8. "い" is "E3 81 84".
   EXPECT_EQ(UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER,
             UserDictionaryUtil::ValidateEntry(entry));
 
