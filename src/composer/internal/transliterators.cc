@@ -29,6 +29,8 @@
 
 #include "composer/internal/transliterators.h"
 
+#include <string>
+
 #include "base/japanese_util.h"
 #include "base/logging.h"
 #include "base/singleton.h"

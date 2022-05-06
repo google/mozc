@@ -30,6 +30,7 @@
 // Mocked Session Server runner used just for testing.
 #include <cstdint>
 #include <cstdio>
+#include <string>
 
 #include "base/init_mozc.h"
 #include "protocol/commands.pb.h"

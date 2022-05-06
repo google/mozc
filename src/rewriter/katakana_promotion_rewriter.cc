@@ -29,6 +29,9 @@
 
 #include "rewriter/katakana_promotion_rewriter.h"
 
+#include <algorithm>
+#include <string>
+
 #include "base/util.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"

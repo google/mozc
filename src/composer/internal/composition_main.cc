@@ -29,6 +29,7 @@
 
 #include <iostream>  // NOLINT
 #include <sstream>
+#include <string>
 
 #include "base/init_mozc.h"
 #include "composer/internal/composition.h"

@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "engine/engine_interface.h"
 #include "engine/user_data_manager_interface.h"

@@ -29,6 +29,8 @@
 
 #include "rewriter/rewriter_util.h"
 
+#include <string>
+
 #include "converter/segments.h"
 #include "testing/base/public/gunit.h"
 #include "absl/strings/str_format.h"

@@ -31,6 +31,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"

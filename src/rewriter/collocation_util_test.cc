@@ -29,6 +29,8 @@
 
 #include "rewriter/collocation_util.h"
 
+#include <string>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

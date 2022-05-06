@@ -30,6 +30,7 @@
 #include "composer/internal/char_chunk.h"
 
 #include <memory>
+#include <string>
 
 #include "composer/internal/composition_input.h"
 #include "composer/internal/transliterators.h"
