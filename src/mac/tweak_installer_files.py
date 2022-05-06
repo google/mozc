@@ -128,7 +128,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
     shutil.rmtree(top_dir)
 
   # The zip file should contain the 'installer' directory.
-  util.RunOrDie(['unzip', args.input, '-d', work_dir, '-q'])
+  util.RunOrDie(['unzip', '-q', args.input, '-d', work_dir])
   TweakQtApps(top_dir)
 
   # Create a zip file with the zip command.
@@ -137,7 +137,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
     os.remove(args.output)
   orig_dir = os.getcwd()
   os.chdir(work_dir)
-  cmd = ['zip', '-ry', os.path.join(orig_dir, args.output), 'installer', '-q']
+  cmd = ['zip', '-q', '-ry', os.path.join(orig_dir, args.output), 'installer']
   util.RunOrDie(cmd)
   os.chdir(orig_dir)
 

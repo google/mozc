@@ -134,6 +134,11 @@ cc_library_mozc(
         ],
         default = ["//base"],
         linux = ["//base"],
+        oss_linux = [
+            ":file_util",
+            ":logging",
+            "@com_google_absl//absl/flags:parse",
+        ],
     ),
 )
 

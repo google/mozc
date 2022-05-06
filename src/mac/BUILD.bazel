@@ -374,6 +374,7 @@ genrule(
     outs = ["tweaked_installer.zip"],
     cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
     exec_tools = [":tweak_installer_files"],
+    tags = ["manual"],
 )
 
 py_binary_mozc(

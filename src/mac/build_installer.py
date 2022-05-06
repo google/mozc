@@ -99,7 +99,7 @@ def main():
 
   with tempfile.TemporaryDirectory() as tmp_dir:
     # Use the unzip command to extract symbolic links properly.
-    util.RunOrDie(['unzip', args.input, '-d', tmp_dir, '-q'])
+    util.RunOrDie(['unzip', '-q', args.input, '-d', tmp_dir])
     TweakPkgproj(args, os.path.join(tmp_dir, 'installer'))
     BuildInstaller(args, tmp_dir)
 
