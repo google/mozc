@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <utility>
 
 #include "base/init_mozc.h"
 #include "base/port.h"

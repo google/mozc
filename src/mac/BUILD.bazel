@@ -149,6 +149,7 @@ objc_library_mozc(
     tags = ["manual"],
     deps = [
         ":common",
+        "//base:const",
         "//base:logging",
         "@com_google_absl//absl/base",
     ],
@@ -272,6 +273,7 @@ objc_library_mozc(
     tags = ["manual"],
     deps = [
         "//base:init_mozc",
+        "//base:mac_util",
         "//base:url",
         "//base:version",
     ],
@@ -332,7 +334,7 @@ py_binary_mozc(
 )
 
 genrule(
-    name = "zip_installer_files",
+    name = "zipped_installer_files",
     srcs = [
         ":tweak_preflight",
         ":tweak_postflight",
@@ -361,6 +363,21 @@ genrule(
 )
 
 py_binary_mozc(
+    name = "tweak_installer_files",
+    srcs = ["tweak_installer_files.py"],
+    deps = ["//build_tools:util"],
+)
+
+genrule(
+    name = "tweaked_installer_files",
+    srcs = [":zipped_installer_files"],
+    outs = ["tweaked_installer.zip"],
+    cmd = "$(location :tweak_installer_files) --input $(SRCS) --output $@",
+    exec_tools = [":tweak_installer_files"],
+    tags = ["manual"],
+)
+
+py_binary_mozc(
     name = "build_installer",
     srcs = ["build_installer.py"],
     deps = ["//build_tools:util"],
@@ -371,7 +388,7 @@ AUTO_UPDATER_DIR = "Releases/Keystone"  # Placeholder
 
 genrule(
     name = "installer_oss_macos",
-    srcs = [":zip_installer_files"] + select_mozc(
+    srcs = [":tweaked_installer_files"] + select_mozc(
         oss_macos = [
             "installer/Mozc_template.pkgproj",
             "installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist",
@@ -379,7 +396,7 @@ genrule(
         ],
     ),
     outs = ["Mozc.pkg"],
-    cmd = ("$(location :build_installer) --input $(location :zip_installer_files) --output $@" +
+    cmd = ("$(location :build_installer) --input $(location :tweaked_installer_files) --output $@" +
            " --pkgproj_command $(location //build_tools:tweak_pkgproj)" +
            " --pkgproj_input $(location installer/Mozc_template.pkgproj)" +
            " --pkgproj_output installer.pkgproj" +

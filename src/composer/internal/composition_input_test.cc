@@ -29,6 +29,8 @@
 
 #include "composer/internal/composition_input.h"
 
+#include <utility>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

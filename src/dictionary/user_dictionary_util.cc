@@ -80,6 +80,9 @@ namespace {
 #define INRANGE(w, a, b) ((w) >= (a) && (w) <= (b))
 
 bool InternalValidateNormalizedReading(const std::string &reading) {
+  if (!Util::IsValidUtf8(reading)) {
+    return false;
+  }
   for (ConstChar32Iterator iter(reading); !iter.Done(); iter.Next()) {
     const char32 c = iter.Get();
     if (!INRANGE(c, 0x0021, 0x007E) &&  // Basic Latin (Ascii)
@@ -142,7 +145,8 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     VLOG(1) << "Too long value.";
     return UserDictionaryCommandStatus::WORD_TOO_LONG;
   }
-  if (word.find_first_of(kInvalidChars) != std::string::npos) {
+  if (word.find_first_of(kInvalidChars) != std::string::npos ||
+      !Util::IsValidUtf8(word)) {
     VLOG(1) << "Invalid character in value.";
     return UserDictionaryCommandStatus::WORD_CONTAINS_INVALID_CHARACTER;
   }
@@ -153,7 +157,8 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     VLOG(1) << "Too long comment.";
     return UserDictionaryCommandStatus::COMMENT_TOO_LONG;
   }
-  if (comment.find_first_of(kInvalidChars) != std::string::npos) {
+  if (comment.find_first_of(kInvalidChars) != std::string::npos ||
+      !Util::IsValidUtf8(comment)) {
     VLOG(1) << "Invalid character in comment.";
     return UserDictionaryCommandStatus::COMMENT_CONTAINS_INVALID_CHARACTER;
   }

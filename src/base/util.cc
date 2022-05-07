@@ -407,7 +407,7 @@ void Util::StripWhiteSpaces(const std::string &input, std::string *output) {
 namespace {
 
 // Table of UTF-8 character lengths, based on first byte
-const unsigned char kUTF8LenTbl[256] = {
+const unsigned char kUtf8LenTbl[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -420,13 +420,13 @@ const unsigned char kUTF8LenTbl[256] = {
     2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
-bool IsUTF8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
+bool IsUtf8TrailingByte(uint8_t c) { return (c & 0xc0) == 0x80; }
 
 }  // namespace
 
 // Return length of a single UTF-8 source character
 size_t Util::OneCharLen(const char *src) {
-  return kUTF8LenTbl[*reinterpret_cast<const uint8_t *>(src)];
+  return kUtf8LenTbl[*reinterpret_cast<const uint8_t *>(src)];
 }
 
 size_t Util::CharsLen(const char *src, size_t size) {
@@ -466,82 +466,80 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
   *first_char32 = 0;
   *rest = absl::string_view();
 
-  while (true) {
-    if (s.empty()) {
-      return false;
-    }
-
-    char32 result = 0;
-    size_t len = 0;
-    char32 min_value = 0;
-    char32 max_value = 0xffffffff;
-    {
-      const uint8_t leading_byte = static_cast<uint8_t>(s[0]);
-      if (leading_byte < 0x80) {
-        *first_char32 = leading_byte;
-        *rest = absl::ClippedSubstr(s, 1);
-        return true;
-      }
-
-      if (IsUTF8TrailingByte(leading_byte)) {
-        // UTF-8 sequence should not start trailing bytes.
-        return false;
-      }
-
-      if ((leading_byte & 0xe0) == 0xc0) {
-        len = 2;
-        min_value = 0x0080;
-        max_value = 0x07ff;
-        result = (leading_byte & 0x1f);
-      } else if ((leading_byte & 0xf0) == 0xe0) {
-        len = 3;
-        min_value = 0x0800;
-        max_value = 0xffff;
-        result = (leading_byte & 0x0f);
-      } else if ((leading_byte & 0xf8) == 0xf0) {
-        len = 4;
-        min_value = 0x010000;
-        max_value = 0x1fffff;
-        result = (leading_byte & 0x07);
-        // Below is out of UCS4 but acceptable in 32-bit.
-      } else if ((leading_byte & 0xfc) == 0xf8) {
-        len = 5;
-        min_value = 0x0200000;
-        max_value = 0x3ffffff;
-        result = (leading_byte & 0x03);
-      } else if ((leading_byte & 0xfe) == 0xfc) {
-        len = 6;
-        min_value = 0x4000000;
-        max_value = 0x7fffffff;
-        result = (leading_byte & 0x01);
-      } else {
-        // Currently 0xFE and 0xFF are treated as invalid.
-        return false;
-      }
-    }
-
-    if (s.size() < len) {
-      // Data length is too short.
-      return false;
-    }
-
-    for (size_t i = 1; i < len; ++i) {
-      const uint8_t c = static_cast<uint8_t>(s[i]);
-      if (!IsUTF8TrailingByte(c)) {
-        // Trailing bytes not found.
-        return false;
-      }
-      result <<= 6;
-      result += (c & 0x3f);
-    }
-    if ((result < min_value) || (max_value < result)) {
-      // redundant UTF-8 sequence found.
-      return false;
-    }
-    *first_char32 = result;
-    *rest = absl::ClippedSubstr(s, len);
-    return true;
+  if (s.empty()) {
+    return false;
   }
+
+  char32 result = 0;
+  size_t len = 0;
+  char32 min_value = 0;
+  char32 max_value = 0xffffffff;
+  {
+    const uint8_t leading_byte = static_cast<uint8_t>(s[0]);
+    if (leading_byte < 0x80) {
+      *first_char32 = leading_byte;
+      *rest = absl::ClippedSubstr(s, 1);
+      return true;
+    }
+
+    if (IsUtf8TrailingByte(leading_byte)) {
+      // UTF-8 sequence should not start trailing bytes.
+      return false;
+    }
+
+    if ((leading_byte & 0xe0) == 0xc0) {
+      len = 2;
+      min_value = 0x0080;
+      max_value = 0x07ff;
+      result = (leading_byte & 0x1f);
+    } else if ((leading_byte & 0xf0) == 0xe0) {
+      len = 3;
+      min_value = 0x0800;
+      max_value = 0xffff;
+      result = (leading_byte & 0x0f);
+    } else if ((leading_byte & 0xf8) == 0xf0) {
+      len = 4;
+      min_value = 0x010000;
+      max_value = 0x1fffff;
+      result = (leading_byte & 0x07);
+      // Below is out of UCS4 but acceptable in 32-bit.
+    } else if ((leading_byte & 0xfc) == 0xf8) {
+      len = 5;
+      min_value = 0x0200000;
+      max_value = 0x3ffffff;
+      result = (leading_byte & 0x03);
+    } else if ((leading_byte & 0xfe) == 0xfc) {
+      len = 6;
+      min_value = 0x4000000;
+      max_value = 0x7fffffff;
+      result = (leading_byte & 0x01);
+    } else {
+      // Currently 0xFE and 0xFF are treated as invalid.
+      return false;
+    }
+  }
+
+  if (s.size() < len) {
+    // Data length is too short.
+    return false;
+  }
+
+  for (size_t i = 1; i < len; ++i) {
+    const uint8_t c = static_cast<uint8_t>(s[i]);
+    if (!IsUtf8TrailingByte(c)) {
+      // Trailing bytes not found.
+      return false;
+    }
+    result <<= 6;
+    result += (c & 0x3f);
+  }
+  if ((result < min_value) || (max_value < result)) {
+    // redundant UTF-8 sequence found.
+    return false;
+  }
+  *first_char32 = result;
+  *rest = absl::ClippedSubstr(s, len);
+  return true;
 }
 
 bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
@@ -562,7 +560,7 @@ bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
     return false;
   }
   absl::string_view::const_reverse_iterator it = s.rbegin();
-  for (; (it != s.rend()) && IsUTF8TrailingByte(*it); ++it) {
+  for (; (it != s.rend()) && IsUtf8TrailingByte(*it); ++it) {
   }
   if (it == s.rend()) {
     return false;
@@ -736,15 +734,15 @@ void Util::Utf8SubString(absl::string_view src, size_t start, size_t length,
 }
 
 void Util::StripUtf8Bom(std::string *line) {
-  static constexpr char kUTF8BOM[] = "\xef\xbb\xbf";
-  *line = std::string(absl::StripPrefix(*line, kUTF8BOM));
+  static constexpr char kUtf8Bom[] = "\xef\xbb\xbf";
+  *line = std::string(absl::StripPrefix(*line, kUtf8Bom));
 }
 
 bool Util::IsUtf16Bom(const std::string &line) {
-  static constexpr char kUTF16LEBOM[] = "\xff\xfe";
-  static constexpr char kUTF16BEBOM[] = "\xfe\xff";
+  static constexpr char kUtf16LeBom[] = "\xff\xfe";
+  static constexpr char kUtf16BeBom[] = "\xfe\xff";
   if (line.size() >= 2 &&
-      (line.substr(0, 2) == kUTF16LEBOM || line.substr(0, 2) == kUTF16BEBOM)) {
+      (line.substr(0, 2) == kUtf16LeBom || line.substr(0, 2) == kUtf16BeBom)) {
     return true;
   }
   return false;

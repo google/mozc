@@ -237,6 +237,7 @@ void LogStreamImpl::Write(LogSeverity severity, const std::string &log) {
     // triggered |LOG(ERROR)|.
     if (real_log_stream_) {
       *real_log_stream_ << log;
+      real_log_stream_->flush();
     }
 #endif  // OS_ANDROID
   }

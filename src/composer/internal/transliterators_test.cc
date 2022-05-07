@@ -29,6 +29,8 @@
 
 #include "composer/internal/transliterators.h"
 
+#include <string>
+
 #include "testing/base/public/gunit.h"
 
 namespace mozc {

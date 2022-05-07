@@ -29,6 +29,8 @@
 
 #include "rewriter/rewriter_util.h"
 
+#include <algorithm>
+
 namespace mozc {
 
 // Candidates from user history: "h"

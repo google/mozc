@@ -32,6 +32,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include "protocol/candidates.pb.h"
 #include "protocol/renderer_command.pb.h"
 
 namespace mozc {

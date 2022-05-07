@@ -31,6 +31,8 @@
 
 #include <iterator>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/util.h"

@@ -100,7 +100,7 @@ def main():
     os.remove(dmg_path)
   process = subprocess.Popen(["/usr/bin/hdiutil", "create",
                               "-srcfolder", temp_dir,
-                              "-format", "UDBZ", "-volname", options.volname,
+                              "-volname", options.volname,
                               dmg_path])
   process.wait()
 

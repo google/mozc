@@ -36,6 +36,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "base/codegen_bytearray_stream.h"

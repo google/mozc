@@ -30,6 +30,7 @@
 #include "session/key_info_util.h"
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #include "composer/key_parser.h"

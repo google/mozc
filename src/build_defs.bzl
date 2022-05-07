@@ -27,9 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# cc_(library|binary|test) wrappers to add :macro dependency.
-# :macro defines attributes for each platforms so required macros are defined by
-# depending on it.
+"""
+cc_(library|binary|test) wrappers to add :macro dependency.
+:macro defines attributes for each platforms so required macros are defined by
+depending on it.
+"""
 
 load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
@@ -176,7 +178,7 @@ def objc_library_mozc(
     native.cc_library(
         name = proto_deps_name,
         deps = proto_deps,
-        copts = copts + ["-funsigned-char"],
+        copts = copts + ["-funsigned-char", "-std=c++17"],
     )
     native.objc_library(
         name = name,
@@ -226,6 +228,7 @@ def macos_application_mozc(name, bundle_name, infoplists, strings = [], bundle_i
       infoplists: infoplists are tweaked and applied to macos_application.
       strings: strings are tweaked and applied to macos_application.
       bundle_id: bundle_id for macos_application.
+      tags: tags for macos_application.
       **kwargs: other arguments for macos_application.
     """
     macos_application(
@@ -253,6 +256,7 @@ def macos_bundle_mozc(name, bundle_name, infoplists, strings = [], bundle_id = N
       infoplists: infoplists are tweaked and applied to macos_bundle.
       strings: strings are tweaked and applied to macos_bundle.
       bundle_id: bundle_id for macos_bundle.
+      tags: tags for macos_bundle.
       **kwargs: other arguments for macos_bundle.
     """
     macos_bundle(

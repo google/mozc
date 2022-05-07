@@ -30,6 +30,8 @@
 #ifndef MOZC_COMPOSER_INTERNAL_TRANSLITERATORS_H_
 #define MOZC_COMPOSER_INTERNAL_TRANSLITERATORS_H_
 
+#include <string>
+
 #include "composer/internal/transliterator_interface.h"
 
 namespace mozc {

@@ -57,14 +57,6 @@ def ParseArguments():
   return parser.parse_args()
 
 
-def CopyFiles(input_files, out_dir):
-  for src in input_files:
-    if src.endswith('.zip'):
-      util.ExtractZip(src, out_dir)
-    else:
-      shutil.copyfile(src, os.path.join(out_dir, os.path.basename(src)))
-
-
 def TweakPkgproj(args, src_dir):
   """Creates a .pkgproj file by filling the arguments."""
   commands = [args.pkgproj_command,
@@ -106,7 +98,8 @@ def main():
   args = ParseArguments()
 
   with tempfile.TemporaryDirectory() as tmp_dir:
-    util.ExtractZip(args.input, tmp_dir)
+    # Use the unzip command to extract symbolic links properly.
+    util.RunOrDie(['unzip', '-q', args.input, '-d', tmp_dir])
     TweakPkgproj(args, os.path.join(tmp_dir, 'installer'))
     BuildInstaller(args, tmp_dir)
 
