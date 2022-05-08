@@ -43,14 +43,14 @@ index 64d21063..3b878ddf 100755
 -    fd = open(source, 'r')
 -    lines = fd.read()
 -    fd.close()
-+    plist = plistlib.readPlist(source)
++    plist = plistlib.load(source)
  
      # Insert synthesized key/value pairs (e.g. BuildMachineOSBuild).
 -    plist = plistlib.readPlistFromString(lines)
      if keys:
        plist.update(json.loads(keys[0]))
 -    lines = plistlib.writePlistToString(plist)
-+    lines = plistlib.writePlistToBytes(plist).decode('utf-8')
++    lines = plistlib.dumps(plist).decode('utf-8')
  
      # Go through all the environment variables and replace them as variables in
      # the file.
