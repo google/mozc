@@ -178,14 +178,14 @@ def objc_library_mozc(
     native.cc_library(
         name = proto_deps_name,
         deps = proto_deps,
-        copts = copts + ["-funsigned-char", "-std=c++17"],
+        copts = copts + ["-funsigned-char"],
     )
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
         deps = deps + ["//:macro", proto_deps_name],
-        copts = copts + ["-funsigned-char"],
+        copts = copts + ["-funsigned-char", "-std=c++17"],
         sdk_frameworks = sdk_frameworks,
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
         # This is a workaround to exclude objc_library rules from Linux build
