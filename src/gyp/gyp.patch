@@ -9,7 +9,7 @@ index e038151b..9093c4ee 100755
  # Copyright (c) 2012 Google Inc. All rights reserved.
  # Use of this source code is governed by a BSD-style license that can be
 diff --git a/pylib/gyp/mac_tool.py b/pylib/gyp/mac_tool.py
-index 64d21063..3b878ddf 100755
+index 64d21063..c6833157 100755
 --- a/pylib/gyp/mac_tool.py
 +++ b/pylib/gyp/mac_tool.py
 @@ -1,4 +1,4 @@
@@ -36,14 +36,15 @@ index 64d21063..3b878ddf 100755
  
      fp = open(dest, 'wb')
      fp.write(s.decode(input_code).encode('UTF-16'))
-@@ -169,15 +169,12 @@ class MacTool(object):
+@@ -169,15 +169,13 @@ class MacTool(object):
    def ExecCopyInfoPlist(self, source, dest, convert_to_binary, *keys):
      """Copies the |source| Info.plist to the destination directory |dest|."""
      # Read the source Info.plist into memory.
 -    fd = open(source, 'r')
 -    lines = fd.read()
 -    fd.close()
-+    plist = plistlib.load(source)
++    with open(source, 'rb') as fp:
++      plist = plistlib.load(fp)
  
      # Insert synthesized key/value pairs (e.g. BuildMachineOSBuild).
 -    plist = plistlib.readPlistFromString(lines)
