@@ -95,7 +95,7 @@ std::string GetTestTmpdir() {
 #else  // OS_WIN
 
 // Get absolute path to this executable. Corresponds to argv[0] plus
-// directory information. E.g like "/spam/eggs/foo_unittest".
+// directory information. E.g. like "/spam/eggs/foo_unittest".
 std::string GetProgramPath() {
   const std::string& program_invocation_name =
       absl::GetFlag(FLAGS_program_invocation_name);
@@ -122,8 +122,10 @@ std::string GetTestSrcdir() {
   // TestSrcdir is not supported in Android.
   // FIXME(komatsu): We should implement "genrule" and "exports_files"
   // in build.py to install the data files into srcdir.
-  CHECK_EQ(access(srcdir.c_str(), R_OK | X_OK), 0)
-      << "Access failure: " << srcdir;
+  if (access(srcdir.c_str(), R_OK | X_OK) != 0) {
+    LOG(ERROR)  << "Failed to access the default srcdir: " << srcdir << "\n"
+                << "Set TEST_SRCDIR env var to specify the directory.";
+  }
 #endif  // !defined(OS_ANDROID)
   return srcdir;
 }
@@ -137,8 +139,10 @@ std::string GetTestTmpdir() {
     tmpdir = GetProgramPath() + ".tmp";
   }
 
-  if (access(tmpdir.c_str(), R_OK | X_OK) != 0) {
-    CHECK_OK(FileUtil::CreateDirectory(tmpdir));
+  if (access(tmpdir.c_str(), R_OK | X_OK) != 0 &&
+      !FileUtil::CreateDirectory(tmpdir).ok()) {
+    LOG(ERROR)  << "Failed to create the default tmpdir: " << tmpdir << "\n"
+                << "Set TEST_TMPDIR env var to specify the directory.";
   }
   return tmpdir;
 }
