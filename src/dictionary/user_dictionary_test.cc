@@ -78,7 +78,10 @@ constexpr char kUserDictionary0[] =
     "stand\tstand\tverb\n"
     "smile\tsmile\tverb\n"
     "smog\tsmog\tnoun\n"
-    // invalid characters "水雲" in reading
+    // invalid characters "あ\x81\x84う" in reading. "い" is "E3 81 84".
+    "あ\x81\x84う\tvalue\tnoun\n"
+
+    // This is also a valid entry. Key can contain any valid characters.
     "水雲\tvalue\tnoun\n"
 
     // Empty key
@@ -400,7 +403,13 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
 
   // Invalid input values should be just ignored.
   TestLookupPredictiveHelper(nullptr, 0, "", *dic);
-  TestLookupPredictiveHelper(nullptr, 0, "水雲", *dic);
+  TestLookupPredictiveHelper(nullptr, 0, "あ\x81\x84う", *dic);
+
+  // Kanji is also a valid key chararcter.
+  const Entry kExpected2[] = {
+      {"水雲", "value", 100, 100},
+  };
+  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "水雲", *dic);
 
   // Make a change to the dictionary file and load it again.
   {
@@ -410,12 +419,12 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
   }
 
   // A normal lookup again.
-  const Entry kExpected2[] = {
+  const Entry kExpected3[] = {
       {"end", "end", 200, 200},
       {"ended", "ended", 210, 210},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected2, std::size(kExpected2), "end", *dic);
+  TestLookupPredictiveHelper(kExpected3, std::size(kExpected3), "end", *dic);
 
   // Entries in the dictionary before reloading cannot be looked up.
   TestLookupPredictiveHelper(nullptr, 0, "start", *dic);
@@ -453,7 +462,13 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
 
   // Invalid input values should be just ignored.
   TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
-  TestLookupPrefixHelper(nullptr, 0, "水雲", strlen("水雲"), *dic);
+  TestLookupPrefixHelper(nullptr, 0, "あ\x81\x84う", 8, *dic);
+
+  // Kanji is also a valid key chararcter.
+  const Entry kExpected2[] = {
+      {"水雲", "value", 100, 100},
+  };
+  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "水雲", 6, *dic);
 
   // Make a change to the dictionary file and load it again.
   {
@@ -463,11 +478,11 @@ TEST_F(UserDictionaryTest, TestLookupPrefix) {
   }
 
   // A normal lookup.
-  const Entry kExpected2[] = {
+  const Entry kExpected3[] = {
       {"end", "end", 200, 200},
       {"ending", "ending", 220, 220},
   };
-  TestLookupPrefixHelper(kExpected2, std::size(kExpected2), "ending", 6, *dic);
+  TestLookupPrefixHelper(kExpected3, std::size(kExpected3), "ending", 6, *dic);
 
   // Lookup for entries which are gone should returns empty result.
   TestLookupPrefixHelper(nullptr, 0, "started", 7, *dic);
@@ -499,8 +514,14 @@ TEST_F(UserDictionaryTest, TestLookupExact) {
   TestLookupExactHelper(kExpected1, std::size(kExpected1), "starting", 8, *dic);
 
   // Invalid input values should be just ignored.
-  TestLookupPrefixHelper(nullptr, 0, "", 0, *dic);
-  TestLookupPrefixHelper(nullptr, 0, "水雲", strlen("水雲"), *dic);
+  TestLookupExactHelper(nullptr, 0, "", 0, *dic);
+  TestLookupExactHelper(nullptr, 0, "あ\x81\x84う", 8, *dic);
+
+  // Kanji is also a valid key chararcter.
+  const Entry kExpected2[] = {
+      {"水雲", "value", 100, 100},
+  };
+  TestLookupExactHelper(kExpected2, std::size(kExpected2), "水雲", 6, *dic);
 }
 
 TEST_F(UserDictionaryTest, TestLookupExactWithSuggestionOnlyWords) {

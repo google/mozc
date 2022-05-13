@@ -200,6 +200,11 @@ TEST(UserDictionaryUtilTest, ValidateEntry) {
             UserDictionaryUtil::ValidateEntry(entry));
 
   entry = base_entry;
+  entry.set_key("ふ頭");  // Non-Hiragana chararcters are also acceptable.
+  EXPECT_EQ(UserDictionaryCommandStatus::USER_DICTIONARY_COMMAND_SUCCESS,
+            UserDictionaryUtil::ValidateEntry(entry));
+
+  entry = base_entry;
   entry.clear_value();
   EXPECT_EQ(UserDictionaryCommandStatus::WORD_EMPTY,
             UserDictionaryUtil::ValidateEntry(entry));

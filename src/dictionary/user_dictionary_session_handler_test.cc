@@ -927,9 +927,12 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataFailure) {
 TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   const uint64_t session_id = CreateSession();
 
+  // kDictionaryData contains 4 entries.
   std::string data = kDictionaryData;
-  data.append("☻\tEMOTICON\t名詞\n");  // Invalid symbol reading.
-  data.append("読み\tYOMI\t名詞\n");   // Invalid Kanji reading.
+  // Adding 3 entries, but the last one is invalid. So the total should be 6.
+  data.append("☻\tEMOTICON\t名詞\n");  // Symbol reading (valid).
+  data.append("読み\tYOMI\t名詞\n");   // Kanji reading (valid).
+  data.append("あ\x81\x84う\tINVALID\t名詞\n");   // Invalid UTF-8 string.
 
   // Import data to a new dictionary.
   Clear();
@@ -944,7 +947,7 @@ TEST_F(UserDictionarySessionHandlerTest, ImportDataIgnoringInvalidEntries) {
   const uint64_t dictionary_id = status_->dictionary_id();
 
   // Make sure the size of the data.
-  ASSERT_EQ(4, GetUserDictionaryEntrySize(session_id, dictionary_id));
+  ASSERT_EQ(6, GetUserDictionaryEntrySize(session_id, dictionary_id));
 
   DeleteSession(session_id);
 }

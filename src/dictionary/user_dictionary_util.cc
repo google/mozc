@@ -131,7 +131,8 @@ UserDictionaryCommandStatus::Status UserDictionaryUtil::ValidateEntry(
     VLOG(1) << "Too long key.";
     return UserDictionaryCommandStatus::READING_TOO_LONG;
   }
-  if (!IsValidReading(reading)) {
+  if (reading.find_first_of(kInvalidChars) != std::string::npos ||
+      !Util::IsValidUtf8(reading)) {
     VLOG(1) << "Invalid reading";
     return UserDictionaryCommandStatus::READING_CONTAINS_INVALID_CHARACTER;
   }
