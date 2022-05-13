@@ -742,6 +742,17 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
 }
 
 - (void)delayedUpdateCandidates {
+  if (!candidateController_) {
+    return;
+  }
+
+  // If there is no candidate, the candidate window is closed.
+  if (rendererCommand_->output().candidates().candidate_size() == 0) {
+    rendererCommand_->set_visible(false);
+    candidateController_->ExecCommand(*rendererCommand_);
+    return;
+  }
+
   // The candidate window position is not recalculated if the
   // candidate already appears on the screen.  Therefore, if a user
   // moves client application window by mouse, candidate window won't
@@ -750,41 +761,44 @@ bool IsBannedApplication(const std::set<std::string> *bundleIdSet, const std::st
   //    cursor position correctly.  The candidate window moves
   //    frequently with those application, which irritates users.
   //  - Kotoeri does this too.
-  if ((!rendererCommand_->visible()) &&
-      (rendererCommand_->output().candidates().candidate_size() > 0)) {
-    NSRect preeditRect = NSZeroRect;
-    const int32 position = rendererCommand_->output().candidates().position();
-    // Some applications throws error when we call attributesForCharacterIndex.
-    DLOG(INFO) << "attributesForCharacterIndex: " << position;
-    @try {
-      [[self client] attributesForCharacterIndex:position lineHeightRectangle:&preeditRect];
-    } @catch (NSException *exception) {
-      LOG(ERROR) << "Exception from [" << *clientBundle_ << "] " << [[exception name] UTF8String]
-                 << "," << [[exception reason] UTF8String];
-    }
-    DLOG(INFO) << "  preeditRect: ((" << preeditRect.origin.x << ", " << preeditRect.origin.y
-               << "), (" << preeditRect.size.width << ", " << preeditRect.size.height << "))";
-    NSScreen *baseScreen = nil;
-    NSRect baseFrame = NSZeroRect;
-    for (baseScreen in [NSScreen screens]) {
-      baseFrame = [baseScreen frame];
-      if (baseFrame.origin.x == 0 && baseFrame.origin.y == 0) {
-        break;
-      }
-    }
-    int baseHeight = baseFrame.size.height;
-    rendererCommand_->mutable_preedit_rectangle()->set_left(preeditRect.origin.x);
-    rendererCommand_->mutable_preedit_rectangle()->set_top(baseHeight - preeditRect.origin.y -
-                                                           preeditRect.size.height);
-    rendererCommand_->mutable_preedit_rectangle()->set_right(preeditRect.origin.x +
-                                                             preeditRect.size.width);
-    rendererCommand_->mutable_preedit_rectangle()->set_bottom(baseHeight - preeditRect.origin.y);
+  if (rendererCommand_->visible()) {
+    // Call ExecCommand anyway to update other information like candidate words.
+    candidateController_->ExecCommand(*rendererCommand_);
+    return;
   }
 
-  rendererCommand_->set_visible(rendererCommand_->output().candidates().candidate_size() > 0);
-  if (candidateController_) {
-    candidateController_->ExecCommand(*rendererCommand_);
+  rendererCommand_->set_visible(true);
+
+  NSRect preeditRect = NSZeroRect;
+  const int32 position = rendererCommand_->output().candidates().position();
+  // Some applications throws error when we call attributesForCharacterIndex.
+  DLOG(INFO) << "attributesForCharacterIndex: " << position;
+  @try {
+    NSDictionary *clientData = [[self client] attributesForCharacterIndex:position
+                                                      lineHeightRectangle:&preeditRect];
+
+    // IMKBaseline: Left-bottom of the composition.
+    NSPoint baseline = [clientData[@"IMKBaseline"] pointValue];
+    // IMKTextOrientation: 0: vertical writing, 1: horizontal writing.
+    // IMKLineHeight: Height of the composition (in horizontal writing).
+    // NSFont: Font information of the composition.
+    // IMKLineAscent: Not sure. A float number. (e.g. 9.240234)
+
+    const int right_offset = preeditRect.size.width;
+    const int top_offset = -preeditRect.size.height;
+
+    RendererCommand::Rectangle *rect = rendererCommand_->mutable_preedit_rectangle();
+    rect->set_left(baseline.x);
+    rect->set_right(baseline.x + right_offset);
+    rect->set_top(baseline.y + top_offset);
+    rect->set_bottom(baseline.y);
+
+  } @catch (NSException *exception) {
+    LOG(ERROR) << "Exception from [" << *clientBundle_ << "] " << [[exception name] UTF8String]
+               << "," << [[exception reason] UTF8String];
   }
+
+  candidateController_->ExecCommand(*rendererCommand_);
 }
 
 - (void)updateCandidates:(const Output *)output {

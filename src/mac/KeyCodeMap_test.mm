@@ -144,7 +144,7 @@ static const TestCase kKanaTypingTestCases[] = {
 // Test for romaji typing
 TEST_F(KeyCodeMapTest, NormaKeyEvent) {
   KeyEvent event;
-  for (int i = 0; i < arraysize(kKeyEventTestCases); ++i) {
+  for (int i = 0; i < std::size(kKeyEventTestCases); ++i) {
     const TestCase &testCase = kKeyEventTestCases[i];
     event.Clear();
     EXPECT_TRUE(CreateKeyEventFromTestCase(testCase, &event));
@@ -156,7 +156,7 @@ TEST_F(KeyCodeMapTest, NormaKeyEvent) {
 TEST_F(KeyCodeMapTest, KanaEvent) {
   KanaMode();
   KeyEvent event;
-  for (int i = 0; i < arraysize(kKanaTypingTestCases); ++i) {
+  for (int i = 0; i < std::size(kKanaTypingTestCases); ++i) {
     const TestCase &testCase = kKanaTypingTestCases[i];
     event.Clear();
     EXPECT_TRUE(CreateKeyEventFromTestCase(testCase, &event));

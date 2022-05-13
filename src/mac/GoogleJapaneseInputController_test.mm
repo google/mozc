@@ -87,6 +87,7 @@
 }
 @property(readwrite, weak) NSString *bundleIdentifier;
 @property(readwrite, assign) NSRect expectedCursor;
+@property(readwrite, assign) NSDictionary *expectedAttributes;
 @property(readwrite, assign) NSRange expectedRange;
 @property(readonly) std::string selectedMode;
 @property(readonly) NSString *insertedText;
@@ -96,6 +97,7 @@
 @implementation MockClient
 @synthesize bundleIdentifier;
 @synthesize expectedCursor;
+@synthesize expectedAttributes;
 @synthesize expectedRange;
 @synthesize selectedMode = selectedMode_;
 @synthesize insertedText = insertedText_;
@@ -122,7 +124,7 @@
 - (NSDictionary *)attributesForCharacterIndex:(int)index lineHeightRectangle:(NSRect *)rect {
   counters_["attributesForCharacterIndex:lineHeightRectangle:"]++;
   *rect = expectedCursor;
-  return nil;
+  return expectedAttributes;
 }
 
 - (NSRange)selectedRange {
@@ -152,7 +154,7 @@
   return [attributedString_ attributedSubstringFromRange:range];
 }
 
-// a dummy method which is necessary internally
+// a placeholder method which is necessary internally
 - (void)setMarkedText:(id)string
        selectionRange:(NSRange)selectionRange
      replacementRange:(NSRange)replacementRange {
@@ -170,22 +172,6 @@
 }
 @end
 
-@interface MockScreen : NSScreen
-+ (NSRect)mockScreen;
-@end
-
-@implementation MockScreen
-// a dummy frame of 1024x768.  This method is used to share size of
-// screen among the implementation and test case.
-+ (NSRect)mockScreen {
-  return NSMakeRect(0, 0, 1024, 768);
-}
-
-- (NSRect)frame {
-  return [MockScreen mockScreen];
-}
-@end
-
 namespace {
 const NSTimeInterval kDoubleTapInterval = 0.5;
 int openURL_count = 0;
@@ -194,9 +180,6 @@ BOOL openURL_test(id self, SEL selector, NSURL *url) {
   return true;
 }
 
-NSArray *dummy_screens(id self, SEL selector) {
-  return [NSArray arrayWithObject:[[MockScreen alloc] init]];
-}
 }  // namespace
 
 class MockRenderer : public mozc::renderer::RendererInterface {
@@ -241,10 +224,6 @@ class GoogleJapaneseInputControllerTest : public testing::Test {
     Method method = class_getInstanceMethod([NSWorkspace class], @selector(openURL:));
     method_setImplementation(method, reinterpret_cast<IMP>(openURL_test));
     openURL_count = 0;
-
-    // setup NSScreen
-    method = class_getClassMethod([NSScreen class], @selector(screens));
-    method_setImplementation(method, reinterpret_cast<IMP>(dummy_screens));
 
     [GoogleJapaneseInputController initializeConstants];
     SetUpController();
@@ -358,7 +337,7 @@ NSTimeInterval GetDoubleTapInterval() {
 BOOL SendKeyEvent(unsigned short keyCode, GoogleJapaneseInputController *controller,
                   MockClient *client) {
   // tap Kana-key
-  NSEvent *kanaKeyEvent = [NSEvent keyEventWithType:NSKeyDown
+  NSEvent *kanaKeyEvent = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                            location:NSZeroPoint
                                       modifierFlags:0
                                           timestamp:0
@@ -435,10 +414,11 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   mozc::commands::Candidates::Candidate *candidate = candidates->add_candidate();
   candidate->set_index(0);
   candidate->set_value("abc");
-  NSRect screen_rect = [MockScreen mockScreen];
 
   // setup the cursor position
   mock_client_.expectedCursor = NSMakeRect(50, 50, 1, 10);
+  mock_client_.expectedAttributes =
+      @{@"IMKBaseline" : [NSValue valueWithPoint:NSMakePoint(50, 718)]};
   [controller_ updateCandidates:&output];
   // Run the runloop so "delayedUpdateCandidates" can be called
   [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
@@ -449,9 +429,9 @@ TEST_F(GoogleJapaneseInputControllerTest, UpdateCandidates) {
   const mozc::commands::RendererCommand::Rectangle &preedit_rectangle =
       rendererCommand->preedit_rectangle();
   EXPECT_EQ(50, preedit_rectangle.left());
-  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 60, preedit_rectangle.top());
+  EXPECT_EQ(708, preedit_rectangle.top());
   EXPECT_EQ(51, preedit_rectangle.right());
-  EXPECT_EQ(screen_rect.origin.y + screen_rect.size.height - 50, preedit_rectangle.bottom());
+  EXPECT_EQ(718, preedit_rectangle.bottom());
 
   // reshow the candidate window again -- but cursor position has changed.
   mock_client_.expectedCursor = NSMakeRect(60, 50, 1, 10);
