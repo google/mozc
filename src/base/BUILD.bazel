@@ -183,7 +183,10 @@ cc_library_mozc(
 cc_library_mozc(
     name = "const",
     hdrs = ["const.h"],
-    visibility = ["//mac:__pkg__"],
+    visibility = [
+        "//mac:__pkg__",
+        "//renderer:__pkg__",
+    ],
 )
 
 cc_library_mozc(
@@ -845,6 +848,8 @@ objc_library_mozc(
     hdrs = select_mozc(macos = ["mac_process.h"]),
     sdk_frameworks = ["Cocoa"],
     deps = [
+        ":const",
+        ":logging",
         ":mac_util",
         ":util",
     ],

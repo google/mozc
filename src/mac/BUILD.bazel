@@ -95,6 +95,7 @@ objc_library_mozc(
     deps = [
         ":imk_controller",
         ":imk_server",
+        "//base:const",
         "//base:crash_report_handler",
         "//base:init_mozc",
         "//base:logging",
