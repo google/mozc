@@ -9,7 +9,7 @@ index e038151b..9093c4ee 100755
  # Copyright (c) 2012 Google Inc. All rights reserved.
  # Use of this source code is governed by a BSD-style license that can be
 diff --git a/pylib/gyp/mac_tool.py b/pylib/gyp/mac_tool.py
-index 64d21063..c6833157 100755
+index 64d21063..1f09aaf0 100755
 --- a/pylib/gyp/mac_tool.py
 +++ b/pylib/gyp/mac_tool.py
 @@ -1,4 +1,4 @@
@@ -55,3 +55,52 @@ index 64d21063..c6833157 100755
  
      # Go through all the environment variables and replace them as variables in
      # the file.
+@@ -225,7 +223,8 @@ class MacTool(object):
+ 
+   def _WritePkgInfo(self, info_plist):
+     """This writes the PkgInfo file from the data stored in Info.plist."""
+-    plist = plistlib.readPlist(info_plist)
++    with open(info_plist, 'rb') as fp:
++      plist = plistlib.load(fp)
+     if not plist:
+       return
+ 
+@@ -411,7 +410,9 @@ class MacTool(object):
+     for path in inputs:
+       plist = self._LoadPlistMaybeBinary(path)
+       self._MergePlist(merged_plist, plist)
+-    plistlib.writePlist(merged_plist, output)
++
++    with open(output, 'wb') as fp:
++      plistlib.dump(merged_plist, fp)
+ 
+   def ExecCodeSignBundle(self, key, entitlements, provisioning, path, preserve):
+     """Code sign a bundle.
+@@ -560,13 +561,15 @@ class MacTool(object):
+       # First, try to read the file using plistlib that only supports XML,
+       # and if an exception is raised, convert a temporary copy to XML and
+       # load that copy.
+-      return plistlib.readPlist(plist_path)
++      with open(plist_path, 'rb') as fp:
++        return plistlib.load(fp)
+     except:
+       pass
+     with tempfile.NamedTemporaryFile() as temp:
+       shutil.copy2(plist_path, temp.name)
+       subprocess.check_call(['plutil', '-convert', 'xml1', temp.name])
+-      return plistlib.readPlist(temp.name)
++      with open(temp.name, 'rb') as fp:
++        return plistlib.load(fp)
+ 
+   def _GetSubstitutions(self, bundle_identifier, app_identifier_prefix):
+     """Constructs a dictionary of variable substitutions for Entitlements.plist.
+@@ -626,7 +629,8 @@ class MacTool(object):
+       for key in overrides:
+         if key not in data:
+           data[key] = overrides[key]
+-    plistlib.writePlist(data, target_path)
++    with open(target_path, 'wb') as fp:
++      plistlib.dump(data, fp)
+     return target_path
+ 
+   def _ExpandVariables(self, data, substitutions):
