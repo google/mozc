@@ -79,6 +79,7 @@
   __weak NSString *bundleIdentifier;
   NSRect expectedCursor;
   NSRange expectedRange;
+  NSDictionary *expectedAttributes;
   std::string selectedMode_;
   NSString *insertedText_;
   NSString *overriddenLayout_;
@@ -87,7 +88,7 @@
 }
 @property(readwrite, weak) NSString *bundleIdentifier;
 @property(readwrite, assign) NSRect expectedCursor;
-@property(readwrite, assign) NSDictionary *expectedAttributes;
+@property(readwrite) NSDictionary *expectedAttributes;
 @property(readwrite, assign) NSRange expectedRange;
 @property(readonly) std::string selectedMode;
 @property(readonly) NSString *insertedText;
