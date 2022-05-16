@@ -102,6 +102,7 @@ objc_library_mozc(
         "//base:run_level",
         "//client",
         "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -130,9 +131,11 @@ objc_library_mozc(
         ":common",
         ":imk_server",
         ":keycode_map",
+        "//base:const",
         "//base:logging",
         "//base:mac_process",
         "//base:mac_util",
+        "//base:process",
         "//base:util",
         "//client",
         "//ipc",
