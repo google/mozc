@@ -115,7 +115,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", **kwargs):
+def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
     To use this rule, corresponding py_library_mozc needs to be defined to
@@ -126,7 +126,7 @@ def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", **k
         srcs = srcs,
         python_version = python_version,
         srcs_version = srcs_version,
-        test_lib = True,
+        test_lib = test_lib,
         # This main specifier is required because, without it, py_binary expects
         # that the file name of source containing main() is name.py.
         main = srcs[0],
@@ -383,7 +383,7 @@ def select_mozc(
       ios: value for iOS build.
       chromiumos: value for ChromeOS build.
       linux: value for Linux build.
-      macos: value for Linux build.
+      macos: value for macOS build.
       oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
       oss_macos: value for OSS macOS build.

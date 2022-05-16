@@ -134,6 +134,7 @@ cc_library_mozc(
         ],
         default = ["//base"],
         linux = ["//base"],
+        macos = ["//base"],
         oss_linux = [
             ":file_util",
             ":logging",

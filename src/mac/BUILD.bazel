@@ -192,6 +192,7 @@ objc_test_mozc(
 py_binary_mozc(
     name = "generate_mapping",
     srcs = ["generate_mapping.py"],
+    test_lib = False,
 )
 
 genrule(
@@ -347,6 +348,7 @@ genrule(
 py_binary_mozc(
     name = "zip_files",
     srcs = ["zip_files.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 
@@ -382,6 +384,7 @@ genrule(
 py_binary_mozc(
     name = "tweak_installer_files",
     srcs = ["tweak_installer_files.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 
@@ -397,6 +400,7 @@ genrule(
 py_binary_mozc(
     name = "build_installer",
     srcs = ["build_installer.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 
