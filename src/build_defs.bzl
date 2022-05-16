@@ -37,6 +37,7 @@ load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
+load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
 def cc_library_mozc(deps = [], copts = [], **kwargs):
@@ -195,6 +196,74 @@ def objc_library_mozc(
         # https://github.com/bazelbuild/bazel/issues/12897
         tags = tags + ["manual"],
         **kwargs
+    )
+
+def _run_test_impl(ctx):
+    """Rule to run executables (e.g. apple_binary) as test."""
+
+    # Relative path from the executable to the build root.
+    base_dir = "/".join([".."] * ctx.outputs.executable.path.count("/"))
+
+    # ":" is noop for avoiding empty commands.
+    sandboxed_commands = [":"]
+    commands = [":"]
+    for test in ctx.files.tests:
+        sandboxed_commands.append("{short_path} || err=1".format(short_path = test.short_path))
+        commands.append("{base_dir}/{path} || err=1".format(base_dir = base_dir, path = test.path))
+
+    # The directory path to the executable is different between 'blaze test' and 'blaze build'.
+    # If this is called by 'blaze test', TEST_WORKSPACE is filled.
+    script = """
+err=0
+if [ \"${{TEST_WORKSPACE}}\" != \"\" ]; then
+  {sandboxed_commands}
+else
+  cd `dirname ${{0}}`
+  {commands}
+fi
+exit $err
+""".format(sandboxed_commands = "\n".join(sandboxed_commands), commands = "\n".join(commands))
+
+    # Write the file to be executed by run_mozc_test.
+    ctx.actions.write(
+        output = ctx.outputs.executable,
+        content = script,
+    )
+
+    return [DefaultInfo(runfiles = ctx.runfiles(files = ctx.files.tests))]
+
+_run_test = rule(
+    implementation = _run_test_impl,
+    attrs = {
+        "tests": attr.label_list(
+            mandatory = True,
+            allow_files = True,
+        ),
+    },
+    test = True,
+)
+
+def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = []):
+    objc_library_mozc(
+        name = name + "_lib",
+        testonly = 1,
+        srcs = srcs,
+        deps = deps,
+        alwayslink = 1,
+    )
+
+    apple_binary(
+        name = name + "_bin",
+        testonly = 1,
+        minimum_os_version = "10.10",
+        platform_type = "macos",
+        sdk_frameworks = sdk_frameworks,
+        deps = [name + "_lib"],
+    )
+
+    _run_test(
+        name = name,
+        tests = select_mozc(macos = [name + "_bin"]),
     )
 
 def _tweak_infoplists(name, infoplists):

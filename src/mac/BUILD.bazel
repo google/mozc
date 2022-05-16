@@ -32,6 +32,7 @@ load(
     "macos_application_mozc",
     "macos_bundle_mozc",
     "objc_library_mozc",
+    "objc_test_mozc",
     "py_binary_mozc",
     "select_mozc",
 )
@@ -173,6 +174,18 @@ objc_library_mozc(
     deps = [
         "//base:logging",
         "@com_google_absl//absl/base",
+    ],
+)
+
+objc_test_mozc(
+    name = "keycode_map_test",
+    srcs = ["KeyCodeMap_test.mm"],
+    sdk_frameworks = [
+        "AppKit",
+    ],
+    deps = [
+        ":keycode_map",
+        "//testing:gunit_main",
     ],
 )
 
