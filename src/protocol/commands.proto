@@ -675,6 +675,9 @@ message Request {
     // Use special table for Notouch (to half-width ascii).
     NOTOUCH_TO_HALFWIDTHASCII = 41;
 
+    // Use special table for Notouch (to half-width ascii).
+    FIFTY_KEYS_TO_HIRAGANA = 46;
+
     // Obsolete items.
     reserved 12, 15, 32, 21, 18;
     reserved "TWELVE_KEYS_TO_NUMBER";
