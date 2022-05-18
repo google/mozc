@@ -263,9 +263,6 @@ class SessionConverter : public SessionConverterInterface {
   // Currently, converter_ is not copied.
   SessionConverter *Clone() const override;
 
-  // Fills protocol buffers with all flatten candidate words.
-  void FillAllCandidateWords(commands::CandidateList *candidates) const;
-
   void set_selection_shortcut(
       config::Config::SelectionShortcut selection_shortcut) override {
     selection_shortcut_ = selection_shortcut;
@@ -353,6 +350,10 @@ class SessionConverter : public SessionConverterInterface {
   void FillResult(commands::Result *result) const;
   void FillCandidates(commands::Candidates *candidates) const;
 
+  // Fills protocol buffers with all flatten candidate words.
+  void FillAllCandidateWords(commands::CandidateList *candidates) const;
+  void FillIncognitoCandidateWords(commands::CandidateList *candidates) const;
+
   bool IsEmptySegment(const Segment &segment) const;
 
   // Handles selected_indices for usage stats.
@@ -368,8 +369,13 @@ class SessionConverter : public SessionConverterInterface {
   void SetRequestType(ConversionRequest::RequestType request_type,
                       ConversionRequest *conversion_request);
 
+  // Creates a config for incognito mode from the current config.
+  const config::Config CreateIncognitoConfig();
+
   const ConverterInterface *converter_;
   std::unique_ptr<Segments> segments_;
+
+  std::unique_ptr<Segments> incognito_segments_;
   size_t segment_index_;
 
   // Previous suggestions to be merged with the current predictions.

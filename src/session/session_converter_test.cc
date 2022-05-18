@@ -1948,6 +1948,50 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
   }
 }
 
+TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kChars_Mo);
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Mozukusu;
+    candidate->content_key = kChars_Mozukusu;
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+  }
+  composer_->InsertCharacterPreedit(kChars_Mo);
+
+  {
+    request_->set_fill_incognito_candidate_words(false);
+    SessionConverter converter(convertermock_.get(), request_.get(),
+                               config_.get());
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    EXPECT_TRUE(converter.Suggest(*composer_));
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_FALSE(output.has_incognito_candidate_words());
+  }
+
+  {
+    request_->set_fill_incognito_candidate_words(true);
+    SessionConverter converter(convertermock_.get(), request_.get(),
+                               config_.get());
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    EXPECT_TRUE(converter.Suggest(*composer_));
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_TRUE(output.has_incognito_candidate_words());
+  }
+}
+
 TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());

@@ -834,6 +834,9 @@ message Request {
   // Experimentally changes the decoder's behavior.
   // This flag is usually populated through the phenotype flags.
   optional DecoderExperimentParams decoder_experiment_params = 17;
+
+  // Fills incognito_candidate_words filed of output.
+  optional bool fill_incognito_candidate_words = 18 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -1253,6 +1256,10 @@ message Output {
 
   // Spellchecker response.
   optional CheckSpellingResponse check_spelling_response = 24;
+
+  // Candidate words stored in 1D array. The field should be filled without
+  // using any personal data.
+  optional CandidateList incognito_candidate_words = 25;
 }
 
 message Command {
