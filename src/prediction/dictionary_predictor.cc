@@ -107,6 +107,12 @@ bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
       .enable_new_spatial_scoring();
 }
 
+bool ShouldEnrichPartialCandidates(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enrich_partial_candidates();
+}
+
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const std::string &reference, const std::string &target) {
   return absl::StartsWith(target, reference);
@@ -203,6 +209,35 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
   ret.set_max_conversion_candidates_size(current_candidates_size +
                                          realtime_candidates_size);
   return ret;
+}
+
+int CalculatePrefixPenalty(
+    const ConversionRequest &request, const std::string &input_key,
+    const std::string &candidate_key,
+    const ImmutableConverterInterface *immutable_converter,
+    absl::flat_hash_map<int, int> *cache) {
+  const size_t key_len = Util::CharsLen(candidate_key);
+  if (const auto it = cache->find(key_len); it != cache->end()) {
+    return it->second;
+  }
+
+  // Use the conversion result's cost for the remaining input key
+  // as the penalty of the prefix candidate.
+  // For example, if the input key is "きょうの" and the target prefix candidate
+  // is "木:き", the penalty will be the cost of the conversion result for
+  // "ょうの".
+  int penalty = 0;
+  Segments tmp_segments;
+  Segment *segment = tmp_segments.add_segment();
+  segment->set_key(Util::Utf8SubString(input_key, key_len));
+  ConversionRequest req = request;
+  req.set_max_conversion_candidates_size(1);
+  if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
+      segment->candidates_size() > 0) {
+    penalty = segment->candidate(0).cost;
+  }
+  (*cache)[key_len] = penalty;
+  return penalty;
 }
 }  // namespace
 
@@ -341,6 +376,55 @@ class DictionaryPredictor::PredictiveBigramLookupCallback
   absl::string_view history_value_;
 };
 
+class DictionaryPredictor::PrefixLookupCallback
+    : public DictionaryInterface::Callback {
+ public:
+  PrefixLookupCallback(size_t limit, int kanji_number_id, int unknown_id,
+                       std::vector<DictionaryPredictor::Result> *results)
+      : limit_(limit),
+        kanji_number_id_(kanji_number_id),
+        unknown_id_(unknown_id),
+        results_(results) {}
+
+  PrefixLookupCallback(const PrefixLookupCallback &) = delete;
+  PrefixLookupCallback &operator=(const PrefixLookupCallback &) = delete;
+
+  ResultType OnToken(absl::string_view key, absl::string_view actual_key,
+                     const Token &token) override {
+    if ((token.attributes & Token::USER_DICTIONARY) != 0 &&
+        token.lid == unknown_id_) {
+      // No suggest-only words as prefix candidates
+      return TRAVERSE_CONTINUE;
+    }
+    // Avoid noisy script type nodes.
+    if (token.lid == kanji_number_id_ && token.rid == kanji_number_id_) {
+      // Kanji number entry can be looked up with the special reading and will
+      // be expanded for the number variants, so we want to suppress them here.
+      // For example, for the input "ろっぽんぎ", "六" can be looked up for
+      // the prefix reading "ろ" or "ろっ", and then be expanded with "6", "Ⅵ",
+      // etc.
+      return TRAVERSE_CONTINUE;
+    }
+    const Util::ScriptType script_type = Util::GetScriptType(token.value);
+    if (script_type == Util::NUMBER || script_type == Util::ALPHABET ||
+        script_type == Util::EMOJI) {
+      return TRAVERSE_CONTINUE;
+    }
+    Result result;
+    result.InitializeByTokenAndTypes(token, PREFIX);
+    result.candidate_attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    result.consumed_key_size = Util::CharsLen(key);
+    results_->emplace_back(result);
+    return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
+  }
+
+ private:
+  const size_t limit_;
+  const int kanji_number_id_;
+  const int unknown_id_;
+  std::vector<DictionaryPredictor::Result> *results_;
+};
+
 // Comparator for sorting prediction candidates.
 // If we have words A and AB, for example "六本木" and "六本木ヒルズ",
 // assume that cost(A) < cost(AB).
@@ -377,6 +461,7 @@ DictionaryPredictor::DictionaryPredictor(
       suggestion_filter_(suggestion_filter),
       counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
+      kanji_number_id_(pos_matcher->GetKanjiNumberId()),
       unknown_id_(pos_matcher->GetUnknownId()),
       predictor_name_("DictionaryPredictor") {
   absl::string_view zero_query_token_array_data;
@@ -477,7 +562,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   }
 
   if (is_mixed_conversion) {
-    SetPredictionCostForMixedConversion(*segments, &results);
+    SetPredictionCostForMixedConversion(request, *segments, &results);
     if (!IsEnableNewSpatialScoring(request)) {
       ApplyPenaltyForKeyExpansion(*segments, &results);
     }
@@ -616,6 +701,11 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
     selected_types |= TYPING_CORRECTION;
   }
 
+  if (ShouldEnrichPartialCandidates(request)) {
+    AggregatePrefixCandidates(request, *segments, results);
+    selected_types |= PREFIX;
+  }
+
   return selected_types;
 }
 
@@ -649,6 +739,9 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   std::set<std::string> seen;
 
   int added_suffix = 0;
+  int added_unigram = 0;
+  int added_realtime = 0;
+  int added_tc = 0;
   bool cursor_at_tail =
       request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
@@ -810,11 +903,30 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       continue;
     }
 
-    if (result.types == SUFFIX && added_suffix++ >= 20) {
+    if ((result.types & SUFFIX) && added_suffix++ >= 20) {
       // TODO(toshiyuki): Need refactoring for controlling suffix
       // prediction number after we will fix the appropriate number.
       MOZC_ADD_DEBUG_CANDIDATE(result, "Added suffix >= 20");
       continue;
+    }
+
+    if (ShouldEnrichPartialCandidates(request)) {
+      // Suppress long candidates to show more candidates in the candidate
+      // view.
+      if ((result.types & UNIGRAM) && (added_unigram++ >= 3 || added >= 10)) {
+        MOZC_ADD_DEBUG_CANDIDATE(result, "Added unigram >= 3 || added >= 10");
+        continue;
+      }
+      if ((result.types & REALTIME) && (added_realtime++ >= 3 || added >= 5)) {
+        MOZC_ADD_DEBUG_CANDIDATE(result, "Added realtime >= 3 || added >= 5");
+        continue;
+      }
+      if ((result.types & TYPING_CORRECTION) &&
+          (added_tc++ >= 3 || added >= 10)) {
+        MOZC_ADD_DEBUG_CANDIDATE(result,
+                                 "Added typing correction >= 3 || added >= 10");
+        continue;
+      }
     }
 
     Segment::Candidate *candidate = segment->push_back_candidate();
@@ -1163,7 +1275,8 @@ void DictionaryPredictor::SetPredictionCost(
 }
 
 void DictionaryPredictor::SetPredictionCostForMixedConversion(
-    const Segments &segments, std::vector<Result> *results) const {
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
   DCHECK(results);
 
   // ranking for mobile
@@ -1183,8 +1296,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     }
   }
 
-  const size_t input_key_len =
-      Util::CharsLen(segments.conversion_segment(0).key());
+  const std::string &input_key = segments.conversion_segment(0).key();
+  absl::flat_hash_map<int, int> prefix_penalty_cache;
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
@@ -1205,14 +1318,31 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     // Because for mobile, suggestion is the main candidates and
     // users expect the candidates for the input key on the candidates.
     if (result.types & (UNIGRAM | TYPING_CORRECTION)) {
+      const size_t input_key_len = Util::CharsLen(input_key);
       const size_t key_len = Util::CharsLen(result.key);
       if (key_len > input_key_len) {
-        // Cost penalty means that exact candidates are evaluated
-        // 50 times bigger in frequency.
-        // Note that the cost is calculated by cost = -500 * log(prob)
-        // 1956 = 500 * log(50)
-        constexpr int kNotExactPenalty = 1956;
-        cost += kNotExactPenalty;
+        if (ShouldEnrichPartialCandidates(request)) {
+          // Skip to add additional penalty for TYPING_CORRECTION because
+          // query cost is already added for them.
+          // (DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection)
+          //
+          // Without this handling, a lot of TYPING_CORRECTION candidates
+          // can be appended at the end of the candidate list.
+          if (result.types & UNIGRAM) {
+            const size_t predicted_key_len = key_len - input_key_len;
+            // -500 * log(prob)
+            // See also: mozc/converter/candidate_filter.cc
+            const int predictive_penalty = 500 * log(50 * predicted_key_len);
+            cost += predictive_penalty;
+          }
+        } else {
+          // Cost penalty means that exact candidates are evaluated
+          // 50 times bigger in frequency.
+          // Note that the cost is calculated by cost = -500 * log(prob)
+          // 1956 = 500 * log(50)
+          constexpr int kNotExactPenalty = 1956;
+          cost += kNotExactPenalty;
+        }
         MOZC_WORD_LOG(result,
                       absl::StrCat("Unigram | Typing correction: ", cost));
       }
@@ -1250,6 +1380,14 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       cost = std::min(cost - kUserDictionaryPromotionFactor,
                       kUserDictionaryCostUpperLimit);
       MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
+    }
+
+    if (result.candidate_attributes ==
+        Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
+      cost +=
+          CalculatePrefixPenalty(request, input_key, result.key,
+                                 immutable_converter_, &prefix_penalty_cache);
+      MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost));
     }
 
     // Note that the cost is defined as -500 * log(prob).
@@ -2249,6 +2387,41 @@ void DictionaryPredictor::AggregateTypeCorrectingPrediction(
   if (results->size() - prev_results_size >= cutoff_threshold) {
     results->resize(prev_results_size);
     return;
+  }
+}
+
+void DictionaryPredictor::AggregatePrefixCandidates(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  DCHECK(results);
+  DCHECK(dictionary_);
+  const size_t prev_results_size = results->size();
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
+  if (prev_results_size > cutoff_threshold) {
+    return;
+  }
+
+  std::string input_key;
+  if (request.has_composer()) {
+    request.composer().GetQueryForPrediction(&input_key);
+  } else {
+    input_key = segments.conversion_segment(0).key();
+  }
+
+  const size_t input_key_len = Util::CharsLen(input_key);
+  if (input_key_len <= 1) {
+    return;
+  }
+  // Excludes exact match nodes.
+  Util::Utf8SubString(input_key, 0, input_key_len - 1, &input_key);
+
+  PrefixLookupCallback callback(cutoff_threshold, kanji_number_id_, unknown_id_,
+                                results);
+  dictionary_->LookupPrefix(input_key, request, &callback);
+  const size_t prefix_results_size = results->size() - prev_results_size;
+  if (prefix_results_size >= cutoff_threshold) {
+    results->resize(prev_results_size);
   }
 }
 

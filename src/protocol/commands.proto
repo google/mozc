@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 7
+// Next ID: 8
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -591,6 +591,11 @@ message DecoderExperimentParams {
   // `key_length` >= spatial_cost_penalty_min_char_length.
   // Otherwise, use the default penalty 1700.
   optional int32 spatial_cost_penalty_min_char_length = 6 [default = 0];
+
+  // If true, increase the number of partial candidates.
+  // Prefix lookup results will be included to the result of
+  // the dictionary predictor.
+  optional bool enrich_partial_candidates = 7 [default = false];
 }
 
 // Clients' request to the server.

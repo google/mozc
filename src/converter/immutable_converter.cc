@@ -80,6 +80,12 @@ constexpr int kMaxCost = 32767;
 constexpr int kMinCost = -32767;
 constexpr int kDefaultNumberCost = 3000;
 
+bool ShouldEnrichPartialCandidates(const ConversionRequest &request) {
+  return request.request()
+      .decoder_experiment_params()
+      .enrich_partial_candidates();
+}
+
 class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
  public:
   KeyCorrectedNodeListBuilder(size_t pos, absl::string_view original_lookup_key,
@@ -1468,8 +1474,9 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
     dictionary_->ClearReverseLookupCache();
   }
 
-  // Predictive real time conversion
-  if (is_prediction) {
+  // Nodes look up for real time conversion
+  // If "enrich_partial_candidates" is true, stop adding predictive nodes here.
+  if (is_prediction && !ShouldEnrichPartialCandidates(request)) {
     MakeLatticeNodesForPredictiveNodes(*segments, request, lattice);
   }
 
