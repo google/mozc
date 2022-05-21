@@ -29,6 +29,7 @@
 
 load(
     "//:build_defs.bzl",
+    "cc_binary_mozc",
     "cc_library_mozc",
     "cc_test_mozc",
 )
@@ -51,6 +52,21 @@ cc_library_mozc(
         "//protocol:engine_builder_cc_proto",
     ],
     alwayslink = 1,
+)
+
+cc_binary_mozc(
+    name = "spellchecker_service_main",
+    srcs = ["spellchecker_service_main.cc"],
+    deps = [
+        ":spellchecker_service",
+        "//engine:engine_builder",
+        "//protocol:commands_cc_proto",
+        "//protocol:engine_builder_cc_proto",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
 )
 
 cc_test_mozc(
