@@ -13,29 +13,18 @@ git clone https://github.com/google/mozc.git -b master --single-branch --recursi
 
 ## System Requirements
 
-Only 64-bit macOS 10.9 and later versions are supported.
+64-bit macOS 10.14 and later versions are supported.
 
 ## Software Requirements
 
 Building on Mac requires the following software.
 
   * Xcode
-  * [Ninja](https://github.com/ninja-build/ninja) for GYP build
   * [Bazel](https://docs.bazel.build/versions/master/install-os-x.html) for Bazel build
   * [Qt 5](https://download.qt.io/official_releases/qt/) for GUI
   * [Packages](http://s.sudre.free.fr/Software/Packages/about.html) for installer
 
 If you don't need to run gui tools like about dialog, config dialog, or dictionary tool, you can omit installing Qt.  Candidate window still shows without Qt.  See below for the detailed information.
-
-### Path to Python3
-
-You might need to use the preinstalled Python3 (i.e. /usr/bin/python3).
-Make sure the path to python3.
-
-```
-% whereis python3
-/usr/bin/python3
-```
 
 ### Build Qt
 
@@ -48,10 +37,61 @@ cd ~/myqt
 make
 ```
 
+-----
+
+## Bazel build
+
+### Edit src/config.bzl
+
+Modify variables in `src/config.bzl` to fit your environment.
+Note: `~` does not represent the home directry.
+The exact path should be specified (e.g. `QT_BASE_PATH = "/Users/mozc/myqt"`).
+
+### Build installer
+
+```
+cd ~/work/mozc/src
+bazel build package --config macos -c opt
+open bazel-bin/mac/Mozc.pkg
+```
+
+### Unittests
+
+```
+bazel test ... --config oss_macos -c dbg -- -net/... -third_party/...
+```
+
+See [build Mozc in Docker](build_mozc_in_docker.md#unittests) for details.
 
 -----
 
-## Build with GYP (stable)
+## Build with GYP (maintenance mode)
+
+GYP build is under maintenance mode. Bazel build is recommended.
+
+While the existing targets are supported by both GYP and Bazel as much as possible,
+new targets will be supported by Bazel only.
+
+Targets only for Bazel:
+
+* AUX dictionary (//data/dictionary_oss:aux_dictionary)
+* Zip code conversion (//server:mozc_server)
+
+### Software Requirements
+
+For GYP build, Ninja is also required.
+
+  * [Ninja](https://github.com/ninja-build/ninja) for GYP build
+
+### Path to Python3
+
+You might need to use the preinstalled Python3 (i.e. /usr/bin/python3).
+Make sure the path to python3.
+
+```
+% whereis python3
+/usr/bin/python3
+```
 
 ### Install python3 dependencies
 
@@ -132,25 +172,4 @@ Without building an installer .pkg file, you can just place the created Mozc.app
 sudo cp -r out_mac/Release/Mozc.app /Library/Input\ Methods/
 sudo cp mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Converter.plist /Library/LaunchAgents
 sudo cp mac/installer/LaunchAgents/org.mozc.inputmethod.Japanese.Renderer.plist /Library/LaunchAgents
-```
-
------
-
-## Bazel build (experimental)
-
-Bazel build is experimental. Built binaries may have some problems.
-This is only for development and testing at this moment.
-
-### Edit src/config.bzl
-
-Modify varibles in `src/config.bzl` to fit your environment.
-Note: `~` does not represent the home directry.
-The exact path should be specified (e.g. `QT_BASE_PATH = "/Users/mozc/myqt"`).
-
-### Build installer
-
-```
-cd ~/work/mozc/src
-bazel build package --config macos -c opt
-open bazel-bin/mac/Mozc.pkg
 ```
