@@ -27,25 +27,44 @@ cc_library(
 )
 
 cc_library(
-    name = "qt_mac",
-    hdrs = glob(
-        include = [
-            "include/QtCore/**",
-            "include/QtGui/**",
-            "include/QtWidgets/**",
-            "src/corelib/**",
-            "src/gui/**",
-            "src/widgets/**",
-        ],
-        exclude = [
-            "**/.obj/**",
-        ],
-    ),
+    name = "qt_mac_core",
+    hdrs = glob(["lib/QtCore.framework/Headers/*"]),
     includes = [
-      "include",
-      "include/QtCore",
-      "include/QtGui",
-      "include/QtWidgets",
+      "lib/QtCore.framework/Headers/QtCore",
+      "lib/QtCore.framework/Headers",
+    ],
+    include_prefix = "QtCore",
+    strip_include_prefix = "lib/QtCore.framework/Headers",
+)
+
+cc_library(
+    name = "qt_mac_gui",
+    hdrs = glob(["lib/QtGui.framework/Headers/*"]),
+    includes = [
+      "lib/QtGui.framework/Headers/QtCore",
+      "lib/QtGui.framework/Headers",
+    ],
+    include_prefix = "QtGui",
+    strip_include_prefix = "lib/QtGui.framework/Headers",
+)
+
+cc_library(
+    name = "qt_mac_widgets",
+    hdrs = glob(["lib/QtWidgets.framework/Headers/*"]),
+    includes = [
+      "lib/QtWidgets.framework/Headers",
+      "lib/QtWidgets.framework/Headers/Widgets",
+    ],
+    include_prefix = "QtWidgets/",
+    strip_include_prefix = "lib/QtWidgets.framework/Headers",
+)
+
+cc_library(
+    name = "qt_mac",
+    deps = [
+      ":qt_mac_core",
+      ":qt_mac_gui",
+      ":qt_mac_widgets",
     ],
 )
 
