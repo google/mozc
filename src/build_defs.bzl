@@ -243,13 +243,14 @@ _run_test = rule(
     test = True,
 )
 
-def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = []):
+def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
     objc_library_mozc(
         name = name + "_lib",
         testonly = 1,
         srcs = srcs,
         deps = deps,
         alwayslink = 1,
+        **kwargs
     )
 
     apple_binary(
@@ -259,6 +260,7 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = []):
         platform_type = "macos",
         sdk_frameworks = sdk_frameworks,
         deps = [name + "_lib"],
+        tags = ["manual"],
     )
 
     _run_test(

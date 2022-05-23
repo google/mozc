@@ -146,6 +146,23 @@ objc_library_mozc(
     ],
 )
 
+objc_test_mozc(
+    name = "imk_controller_test",
+    srcs = ["GoogleJapaneseInputController_test.mm"],
+    proto_deps = ["//protocol:candidates_cc_proto"],
+    sdk_frameworks = ["InputMethodKit"],
+    deps = [
+        ":imk_controller",
+        ":keycode_map",
+        "//base:logging",
+        "//base:mac_util",
+        "//base:util",
+        "//client:client_mock",
+        "//renderer:renderer_interface",
+        "//testing:gunit_main",
+    ],
+)
+
 objc_library_mozc(
     name = "imk_server",
     srcs = ["GoogleJapaneseInputServer.mm"],
@@ -157,6 +174,17 @@ objc_library_mozc(
         "//base:const",
         "//base:logging",
         "@com_google_absl//absl/base",
+    ],
+)
+
+objc_test_mozc(
+    name = "imk_server_test",
+    srcs = ["GoogleJapaneseInputServer_test.mm"],
+    proto_deps = ["//protocol:commands_cc_proto"],
+    sdk_frameworks = ["InputMethodKit"],
+    deps = [
+        ":imk_server",
+        "//testing:gunit_main",
     ],
 )
 

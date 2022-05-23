@@ -40,6 +40,7 @@
 #include "base/mac_util.h"
 #include "base/util.h"
 #include "client/client_mock.h"
+#include "protocol/candidates.pb.h"
 #include "renderer/renderer_interface.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
