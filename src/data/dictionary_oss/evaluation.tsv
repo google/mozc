@@ -199,6 +199,8 @@ OK:	むびゅう	無謬	Conversion Expected	無謬	2.26.4695
 OK:	むびゅうせい	無謬性	Conversion Expected	無謬性	2.26.4695
 OK:	ごびゅう	誤謬	Conversion Expected	誤謬	2.26.4680
 OK:	しんせん	新鮮	Conversion Expected 9	深圳	2.28.4702
+OK:	ふたつ	２つ	Conversion Expected 9	不達	2.28.4730
+OK:	からだき	空焚き	Conversion Expected 2	空焚き	2.28.4730
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
