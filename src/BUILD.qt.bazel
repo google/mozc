@@ -26,12 +26,16 @@ cc_library(
     ],
 )
 
+# Qt header files (e.g. qchar.h) are in lib/QtCore.framework/Headers/,
+# and included as "qchar.h" and <QtCore/qchar.h>.
+# The combination of includes, include_prefix and strip_include_prefix below
+# addresses this requirement.
 cc_library(
     name = "qt_mac_core",
     hdrs = glob(["lib/QtCore.framework/Headers/*"]),
     includes = [
-      "lib/QtCore.framework/Headers/QtCore",
       "lib/QtCore.framework/Headers",
+      "lib/QtCore.framework/Headers/QtCore",
     ],
     include_prefix = "QtCore",
     strip_include_prefix = "lib/QtCore.framework/Headers",
@@ -41,8 +45,8 @@ cc_library(
     name = "qt_mac_gui",
     hdrs = glob(["lib/QtGui.framework/Headers/*"]),
     includes = [
-      "lib/QtGui.framework/Headers/QtCore",
       "lib/QtGui.framework/Headers",
+      "lib/QtGui.framework/Headers/QtGui",
     ],
     include_prefix = "QtGui",
     strip_include_prefix = "lib/QtGui.framework/Headers",
@@ -53,9 +57,9 @@ cc_library(
     hdrs = glob(["lib/QtWidgets.framework/Headers/*"]),
     includes = [
       "lib/QtWidgets.framework/Headers",
-      "lib/QtWidgets.framework/Headers/Widgets",
+      "lib/QtWidgets.framework/Headers/QtWidgets",
     ],
-    include_prefix = "QtWidgets/",
+    include_prefix = "QtWidgets",
     strip_include_prefix = "lib/QtWidgets.framework/Headers",
 )
 
