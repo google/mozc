@@ -24,14 +24,25 @@ jobs:
       - name: setup
         working-directory: ./src/third_party
         run: |
-          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          echo "$PWD/depot_tools" >> $GITHUB_PATH
-          python3 -m pip install six
-          cd gyp
-          git apply ../../gyp/gyp.patch
+          # Install Packages for the packagesbuild command.
+          wget http://s.sudre.free.fr/Software/files/Packages.dmg
+          hdiutil attach Packages.dmg
+          sudo installer -pkg /Volumes/Packages\ 1.2.10/Install\ Packages.pkg -target /
+          # Install Qt
+          wget https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5152/qt.qt5.5152.clang_64/5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
+          tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
+          # Modify config.bzl
+          # QT_BASE_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
+          # QT_BIN_PATH = QT_BASE_PATH + "/bin"
+          sed -i '' -e 's@^QT_BASE_PATH = .*$@QT_BASE_PATH = "'$PWD'/5.15.2/clang_64"@g' ../config.bzl
+          sed -i '' -e 's@^QT_BIN_PATH = .*$@QT_BIN_PATH = QT_BASE_PATH + "/bin"@g' ../config.bzl
 
       - name: build
         working-directory: ./src
         run: |
-          python3 ./build_mozc.py gyp --noqt
-          python3 ./build_mozc.py build mac/mac.gyp:GoogleJapaneseInput
+          bazel build --config oss_macos package
+
+      - name: tests
+        working-directory: ./src
+        run: |
+          bazel test --config oss_macos base/... mac/...
