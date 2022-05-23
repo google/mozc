@@ -436,6 +436,8 @@ bool SessionConverter::SuggestWithPreferences(
   // Initialize the conversion request and segments for suggestion.
   SetConversionPreferences(preferences, segments_.get(), &conversion_request);
 
+  segments_->clear_conversion_segments();
+
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
       !request_->mixed_conversion()) {
