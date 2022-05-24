@@ -97,6 +97,9 @@ class DictionaryPredictor : public PredictorInterface {
     ENGLISH = 16,
     // add prediciton to type corrected keys
     TYPING_CORRECTION = 32,
+    // prefix candidates
+    // "今日", "教" for the input, "きょうは"
+    PREFIX = 64,
 
     // Suggests from |converter_|. The difference from REALTIME is that it uses
     // the full converter with rewriter, history, etc.
@@ -174,6 +177,7 @@ class DictionaryPredictor : public PredictorInterface {
   static Result MakeEmptyResult() { return Result(); }
 
   class PredictiveLookupCallback;
+  class PrefixLookupCallback;
   class PredictiveBigramLookupCallback;
   class ResultWCostLess;
   class ResultCostLess;
@@ -201,6 +205,10 @@ class DictionaryPredictor : public PredictorInterface {
   void AggregateEnglishPrediction(const ConversionRequest &request,
                                   const Segments &segments,
                                   std::vector<Result> *results) const;
+
+  void AggregatePrefixCandidates(const ConversionRequest &request,
+                                 const Segments &segments,
+                                 std::vector<Result> *results) const;
 
   // Note that this look up is done with raw input string rather than query
   // string from composer.  This is helpful to implement language aware input.
@@ -255,6 +263,7 @@ class DictionaryPredictor : public PredictorInterface {
               AggregateUnigramCandidateForMixedConversion);
   FRIEND_TEST(DictionaryPredictorTest,
               AggregateUnigramCandidateForMixedConversionEnglishWords);
+  FRIEND_TEST(DictionaryPredictorTest, EnrichPartialCandidates);
   FRIEND_TEST(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers);
   FRIEND_TEST(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion);
   FRIEND_TEST(DictionaryPredictorTest, TriggerZeroQuerySuggestion);
@@ -432,7 +441,8 @@ class DictionaryPredictor : public PredictorInterface {
   // Scoring function for mixed conversion.
   // In the mixed conversion we basically use the pure language model-based
   // scoring function. This algorithm is mainly used for mobile.
-  void SetPredictionCostForMixedConversion(const Segments &segments,
+  void SetPredictionCostForMixedConversion(const ConversionRequest &request,
+                                           const Segments &segments,
                                            std::vector<Result> *results) const;
 
   // Returns true if the suggestion is classified
@@ -497,6 +507,7 @@ class DictionaryPredictor : public PredictorInterface {
   const SuggestionFilter *suggestion_filter_;
   const uint16_t counter_suffix_word_id_;
   const uint16_t general_symbol_id_;
+  const uint16_t kanji_number_id_;
   const uint16_t unknown_id_;
   const std::string predictor_name_;
   ZeroQueryDict zero_query_dict_;

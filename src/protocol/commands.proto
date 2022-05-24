@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 7
+// Next ID: 8
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -591,6 +591,11 @@ message DecoderExperimentParams {
   // `key_length` >= spatial_cost_penalty_min_char_length.
   // Otherwise, use the default penalty 1700.
   optional int32 spatial_cost_penalty_min_char_length = 6 [default = 0];
+
+  // If true, increase the number of partial candidates.
+  // Prefix lookup results will be included to the result of
+  // the dictionary predictor.
+  optional bool enrich_partial_candidates = 7 [default = false];
 }
 
 // Clients' request to the server.
@@ -674,6 +679,9 @@ message Request {
 
     // Use special table for Notouch (to half-width ascii).
     NOTOUCH_TO_HALFWIDTHASCII = 41;
+
+    // Use special table for Notouch (to half-width ascii).
+    FIFTY_KEYS_TO_HIRAGANA = 46;
 
     // Obsolete items.
     reserved 12, 15, 32, 21, 18;
@@ -831,6 +839,9 @@ message Request {
   // Experimentally changes the decoder's behavior.
   // This flag is usually populated through the phenotype flags.
   optional DecoderExperimentParams decoder_experiment_params = 17;
+
+  // Fills incognito_candidate_words filed of output.
+  optional bool fill_incognito_candidate_words = 18 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -1250,6 +1261,10 @@ message Output {
 
   // Spellchecker response.
   optional CheckSpellingResponse check_spelling_response = 24;
+
+  // Candidate words stored in 1D array. The field should be filled without
+  // using any personal data.
+  optional CandidateList incognito_candidate_words = 25;
 }
 
 message Command {

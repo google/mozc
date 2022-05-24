@@ -2839,7 +2839,8 @@ TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
   result->SetTypesAndTokenAttributes(TestableDictionaryPredictor::UNIGRAM,
                                      Token::NONE);
 
-  predictor->SetPredictionCostForMixedConversion(segments, &results);
+  predictor->SetPredictionCostForMixedConversion(*convreq_for_prediction_,
+                                                 segments, &results);
 
   EXPECT_EQ(3, results.size());
   EXPECT_EQ("てすと", results[0].value);
@@ -2887,7 +2888,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
-    predictor->SetPredictionCostForMixedConversion(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(*convreq_for_prediction_,
+                                                   segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2903,7 +2905,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::USER_DICTIONARY, &results);
 
-    predictor->SetPredictionCostForMixedConversion(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(*convreq_for_prediction_,
+                                                   segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2921,7 +2924,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
     ASSERT_EQ(1, results.size());
     results[0].lid = data_and_predictor->pos_matcher().GetGeneralSymbolId();
     results[0].rid = results[0].lid;
-    predictor->SetPredictionCostForMixedConversion(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(*convreq_for_prediction_,
+                                                   segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -2936,7 +2940,8 @@ TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
         kAikaHiragana, kAikaKanji, kOriginalWordCost,
         TestableDictionaryPredictor::UNIGRAM, Token::NONE, &results);
 
-    predictor->SetPredictionCostForMixedConversion(segments, &results);
+    predictor->SetPredictionCostForMixedConversion(*convreq_for_prediction_,
+                                                   segments, &results);
 
     EXPECT_EQ(1, results.size());
     EXPECT_EQ(kAikaKanji, results[0].value);
@@ -3404,6 +3409,38 @@ TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
       predictor->PredictForRequest(*convreq_for_suggestion_, &segments));
   EXPECT_FALSE(
       FindCandidateByValue(segments.conversion_segment(0), "フィルター対象"));
+}
+
+TEST_F(DictionaryPredictorTest, EnrichPartialCandidates) {
+  testing::MockDataManager data_manager;
+
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor());
+  data_and_predictor->Init(
+      CreateSystemDictionaryFromDataManager(data_manager).value().release(),
+      CreateSuffixDictionaryFromDataManager(data_manager));
+
+  const TestableDictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("わたしのな", composer_.get(), &segments);
+
+  std::vector<DictionaryPredictor::Result> results;
+  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      false);
+  EXPECT_FALSE(predictor->AggregatePredictionForRequest(
+                   *convreq_for_prediction_, &segments, &results) &
+               DictionaryPredictor::PREFIX);
+
+  results.clear();
+  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  EXPECT_TRUE(predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
+                                                       &segments, &results) &
+              DictionaryPredictor::PREFIX);
 }
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {

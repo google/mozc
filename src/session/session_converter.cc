@@ -104,6 +104,14 @@ const char *GetCandidateShortcuts(
   return shortcut;
 }
 
+// Creates ConversionRequest to fill incognito candidate words.
+const ConversionRequest CreateIncognitoConversionRequest(
+    const ConversionRequest &base_request, const Config &incognito_config) {
+  ConversionRequest request = base_request;
+  request.set_config(&incognito_config);
+  return request;
+}
+
 }  // namespace
 
 const size_t SessionConverter::kConsumedAllCharacters =
@@ -114,6 +122,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
     : SessionConverterInterface(),
       converter_(converter),
       segments_(new Segments),
+      incognito_segments_(new Segments),
       segment_index_(0),
       result_(new commands::Result),
       candidate_list_(new CandidateList(true)),
@@ -427,6 +436,8 @@ bool SessionConverter::SuggestWithPreferences(
   // Initialize the conversion request and segments for suggestion.
   SetConversionPreferences(preferences, segments_.get(), &conversion_request);
 
+  segments_->clear_conversion_segments();
+
   const size_t cursor = composer.GetCursor();
   if (cursor == composer.GetLength() || cursor == 0 ||
       !request_->mixed_conversion()) {
@@ -445,6 +456,16 @@ bool SessionConverter::SuggestWithPreferences(
       converter_->CancelConversion(segments_.get());
       return false;
     }
+
+    if (request_->fill_incognito_candidate_words()) {
+      const Config incognito_config = CreateIncognitoConfig();
+      const ConversionRequest incognito_conversion_request =
+          CreateIncognitoConversionRequest(conversion_request,
+                                           incognito_config);
+      incognito_segments_->Clear();
+      converter_->StartSuggestionForRequest(incognito_conversion_request,
+                                            incognito_segments_.get());
+    }
   } else {
     // create_partial_candidates is false because auto partial suggestion
     // should be activated only when the cursor is at the tail or head from
@@ -460,6 +481,16 @@ bool SessionConverter::SuggestWithPreferences(
       // Clear segments and keep the context
       converter_->CancelConversion(segments_.get());
       return false;
+    }
+
+    if (request_->fill_incognito_candidate_words()) {
+      const Config incognito_config = CreateIncognitoConfig();
+      const ConversionRequest incognito_conversion_request =
+          CreateIncognitoConversionRequest(conversion_request,
+                                           incognito_config);
+      incognito_segments_->Clear();
+      converter_->StartPartialSuggestionForRequest(incognito_conversion_request,
+                                                   incognito_segments_.get());
     }
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());
@@ -1156,6 +1187,9 @@ void SessionConverter::FillOutput(const composer::Composer &composer,
   // All candidate words
   if (CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     FillAllCandidateWords(output->mutable_all_candidate_words());
+    if (request_->fill_incognito_candidate_words()) {
+      FillIncognitoCandidateWords(output->mutable_incognito_candidate_words());
+    }
   }
 
   // For debug. Removed candidate words through the conversion process.
@@ -1187,6 +1221,7 @@ SessionConverter *SessionConverter::Clone() const {
   // singleton. However, we should refactor such bad design; see also the
   // comment right above.
   *session_converter->segments_ = *segments_;
+  *session_converter->incognito_segments_ = *incognito_segments_;
   session_converter->segment_index_ = segment_index_;
   session_converter->previous_suggestions_ = previous_suggestions_;
   session_converter->conversion_preferences_ = conversion_preferences();
@@ -1215,6 +1250,7 @@ void SessionConverter::ResetState() {
   candidate_list_visible_ = false;
   candidate_list_->Clear();
   selected_candidate_indices_.clear();
+  incognito_segments_->Clear();
 }
 
 void SessionConverter::SegmentFocus() {
@@ -1573,6 +1609,22 @@ void SessionConverter::FillAllCandidateWords(
                                        candidates);
 }
 
+void SessionConverter::FillIncognitoCandidateWords(
+    commands::CandidateList *candidates) const {
+  const Segment &segment =
+      incognito_segments_->conversion_segment(segment_index_);
+  for (size_t i = 0; i < segment.candidates_size(); ++i) {
+    commands::CandidateWord *candidate_word_proto =
+        candidates->add_candidates();
+    const Segment::Candidate cand = segment.candidate(i);
+
+    candidate_word_proto->set_id(i);
+    candidate_word_proto->set_index(i);
+    candidate_word_proto->set_key(cand.key);
+    candidate_word_proto->set_value(cand.value);
+  }
+}
+
 void SessionConverter::SetRequest(const commands::Request *request) {
   request_ = request;
   candidate_list_->set_page_size(request->candidate_page_size());
@@ -1755,6 +1807,12 @@ void SessionConverter::SetRequestType(
     ConversionRequest *conversion_request) {
   request_type_ = request_type;
   conversion_request->set_request_type(request_type);
+}
+
+const Config SessionConverter::CreateIncognitoConfig() {
+  Config ret = *config_;
+  ret.set_incognito_mode(true);
+  return ret;
 }
 
 }  // namespace session

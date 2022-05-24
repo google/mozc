@@ -32,6 +32,7 @@ load(
     "macos_application_mozc",
     "macos_bundle_mozc",
     "objc_library_mozc",
+    "objc_test_mozc",
     "py_binary_mozc",
     "select_mozc",
 )
@@ -102,6 +103,7 @@ objc_library_mozc(
         "//base:run_level",
         "//client",
         "//config:stats_config_util",
+        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -130,15 +132,34 @@ objc_library_mozc(
         ":common",
         ":imk_server",
         ":keycode_map",
+        "//base:const",
         "//base:logging",
         "//base:mac_process",
         "//base:mac_util",
+        "//base:process",
         "//base:util",
         "//client",
         "//ipc",
         "//renderer:renderer_client",
         "//session:ime_switch_util",
         "@com_google_absl//absl/base",
+    ],
+)
+
+objc_test_mozc(
+    name = "imk_controller_test",
+    srcs = ["GoogleJapaneseInputController_test.mm"],
+    proto_deps = ["//protocol:candidates_cc_proto"],
+    sdk_frameworks = ["InputMethodKit"],
+    deps = [
+        ":imk_controller",
+        ":keycode_map",
+        "//base:logging",
+        "//base:mac_util",
+        "//base:util",
+        "//client:client_mock",
+        "//renderer:renderer_interface",
+        "//testing:gunit_main",
     ],
 )
 
@@ -153,6 +174,17 @@ objc_library_mozc(
         "//base:const",
         "//base:logging",
         "@com_google_absl//absl/base",
+    ],
+)
+
+objc_test_mozc(
+    name = "imk_server_test",
+    srcs = ["GoogleJapaneseInputServer_test.mm"],
+    proto_deps = ["//protocol:commands_cc_proto"],
+    sdk_frameworks = ["InputMethodKit"],
+    deps = [
+        ":imk_server",
+        "//testing:gunit_main",
     ],
 )
 
@@ -173,9 +205,22 @@ objc_library_mozc(
     ],
 )
 
+objc_test_mozc(
+    name = "keycode_map_test",
+    srcs = ["KeyCodeMap_test.mm"],
+    sdk_frameworks = [
+        "AppKit",
+    ],
+    deps = [
+        ":keycode_map",
+        "//testing:gunit_main",
+    ],
+)
+
 py_binary_mozc(
     name = "generate_mapping",
     srcs = ["generate_mapping.py"],
+    test_lib = False,
 )
 
 genrule(
@@ -331,6 +376,7 @@ genrule(
 py_binary_mozc(
     name = "zip_files",
     srcs = ["zip_files.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 
@@ -366,6 +412,7 @@ genrule(
 py_binary_mozc(
     name = "tweak_installer_files",
     srcs = ["tweak_installer_files.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 
@@ -381,6 +428,7 @@ genrule(
 py_binary_mozc(
     name = "build_installer",
     srcs = ["build_installer.py"],
+    test_lib = False,
     deps = ["//build_tools:util"],
 )
 

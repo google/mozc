@@ -33,6 +33,7 @@
 
 #include <cstdint>
 #include <cstring>  // memcpy
+#include <string>
 
 #include "base/version.h"
 #include "ipc/ipc.h"

@@ -44,6 +44,6 @@ QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
 QT_BIN_PATH = "/usr/bin/"
 
 ## For macOS
-## QT_BASE_PATH should be a directory compiled with -developer_build option.
-# QT_BASE_PATH = "/tmp/qt"
+# This path is the default path of Qt 5.15.2 installed by "make install".
+# QT_BASE_PATH = "/usr/local/Qt-5.15.2"
 # QT_BIN_PATH = QT_BASE_PATH + "/bin/"

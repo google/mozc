@@ -33,6 +33,7 @@ load(
     "cc_library_mozc",
     "cc_test_mozc",
     "objc_library_mozc",
+    "objc_test_mozc",
     "py_binary_mozc",
     "py_library_mozc",
     "select_mozc",
@@ -134,6 +135,7 @@ cc_library_mozc(
         ],
         default = ["//base"],
         linux = ["//base"],
+        macos = ["//base"],
         oss_linux = [
             ":file_util",
             ":logging",
@@ -1399,6 +1401,15 @@ objc_library_mozc(
         ":port",
         ":singleton",
         "@com_google_absl//absl/strings",
+    ],
+)
+
+objc_test_mozc(
+    name = "mac_util_test",
+    srcs = ["mac_util_test.mm"],
+    deps = [
+        ":mac_util",
+        "//testing:gunit_main",
     ],
 )
 

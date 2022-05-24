@@ -1493,6 +1493,91 @@ TEST_F(SessionConverterTest, CommitPreedit) {
   EXPECT_COUNT_STATS("CommitFromComposition", 1);
 }
 
+TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  {
+    // Initialize mock segments for suggestion
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("てすと");
+    candidate = segment->add_candidate();
+    candidate->value = "テスト";
+    candidate->key = "てすと";
+    candidate->content_key = "てすと";
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+  }
+  composer_->InsertCharacterPreedit("てすと");
+
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  Segments input_segments;
+  ConversionRequest input_request;
+  convertermock_->GetStartSuggestionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(0, input_segments.conversion_segments_size());
+
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  convertermock_->GetStartSuggestionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(0, input_segments.conversion_segments_size());
+}
+
+TEST_F(SessionConverterTest, ClearSegmentsBeforePredict) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  {
+    // Initialize mock segments for prediction
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("てすと");
+    candidate = segment->add_candidate();
+    candidate->value = "テスト";
+    candidate->key = "てすと";
+    candidate->content_key = "てすと";
+    convertermock_->SetStartPredictionForRequest(&segments, true);
+  }
+  composer_->InsertCharacterPreedit("てすと");
+
+  EXPECT_TRUE(converter.Predict(*composer_));
+  Segments input_segments;
+  ConversionRequest input_request;
+  convertermock_->GetStartPredictionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(0, input_segments.conversion_segments_size());
+
+  EXPECT_TRUE(converter.Predict(*composer_));
+  convertermock_->GetStartPredictionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(0, input_segments.conversion_segments_size());
+}
+
+TEST_F(SessionConverterTest, DoNotClearSegmentsBeforeExpandSuggestion) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  {
+    // Initialize mock segments for suggestion and prediction
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key("てすと");
+    candidate = segment->add_candidate();
+    candidate->value = "テスト";
+    candidate->key = "てすと";
+    candidate->content_key = "てすと";
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    convertermock_->SetStartPredictionForRequest(&segments, true);
+  }
+  composer_->InsertCharacterPreedit("てすと");
+
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  Segments input_segments;
+  ConversionRequest input_request;
+  convertermock_->GetStartPredictionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(0, input_segments.conversion_segments_size());
+
+  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
+  convertermock_->GetStartPredictionForRequest(&input_segments, &input_request);
+  EXPECT_EQ(1, input_segments.conversion_segments_size());
+}
+
 TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());
@@ -1945,6 +2030,50 @@ TEST_F(SessionConverterTest, SuggestAndPredict) {
     EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
     EXPECT_EQ("モンドリアン", candidates.candidate(2).value());
     EXPECT_TRUE(candidates.has_focused_index());
+  }
+}
+
+TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kChars_Mo);
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Mozukusu;
+    candidate->content_key = kChars_Mozukusu;
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+  }
+  composer_->InsertCharacterPreedit(kChars_Mo);
+
+  {
+    request_->set_fill_incognito_candidate_words(false);
+    SessionConverter converter(convertermock_.get(), request_.get(),
+                               config_.get());
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    EXPECT_TRUE(converter.Suggest(*composer_));
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_FALSE(output.has_incognito_candidate_words());
+  }
+
+  {
+    request_->set_fill_incognito_candidate_words(true);
+    SessionConverter converter(convertermock_.get(), request_.get(),
+                               config_.get());
+    convertermock_->SetStartSuggestionForRequest(&segments, true);
+    EXPECT_TRUE(converter.Suggest(*composer_));
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+    EXPECT_TRUE(output.has_incognito_candidate_words());
   }
 }
 

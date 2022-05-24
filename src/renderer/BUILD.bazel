@@ -452,17 +452,6 @@ cc_library_mozc(
     ),
 )
 
-# Because proto_library cannot be in deps of objc_library,
-# cc_library as a wrapper is necessary as a workaround.
-cc_library_mozc(
-    name = "proto_wrapper",
-    deps = [
-        "//protocol:commands_cc_proto",
-        "//protocol:config_cc_proto",
-        "//protocol:renderer_cc_proto",
-    ],
-)
-
 objc_library_mozc(
     name = "mozc_renderer_lib_macos",
     srcs = select_mozc(macos = [
@@ -487,6 +476,12 @@ objc_library_mozc(
         "mac/RendererBaseWindow.h",
         "mac/mac_view_util.h",
     ]),
+    proto_deps = [
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//protocol:renderer_cc_proto",
+    ],
     sdk_frameworks = [
         "Carbon",
         "Foundation",
@@ -494,9 +489,12 @@ objc_library_mozc(
     deps = select_mozc(macos = [
         "//base:base",
         "//base:const",
+        "//base:coordinates",
         "//base:crash_report_handler",
         "//base:logging",
+        "//base:mac_util",
         "//base:port",
+        "//base:util",
         "//client:client",
         "//client:client_interface",
         "//config:stats_config_util",
@@ -504,7 +502,6 @@ objc_library_mozc(
         "//mac:common",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/synchronization",
-        ":proto_wrapper",
         ":renderer_interface",
         ":renderer_server",
         ":renderer_style_handler",

@@ -37,6 +37,7 @@ load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
 load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
 load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
+load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
 
 def cc_library_mozc(deps = [], copts = [], **kwargs):
@@ -114,7 +115,7 @@ register_extension_info(
     label_regex_for_dep = "{extension_name}",
 )
 
-def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", **kwargs):
+def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", test_lib = True, **kwargs):
     """py_binary wrapper generating import-modified python script for iOS.
 
     To use this rule, corresponding py_library_mozc needs to be defined to
@@ -125,7 +126,7 @@ def py_binary_mozc(name, srcs, python_version = "PY3", srcs_version = "PY3", **k
         srcs = srcs,
         python_version = python_version,
         srcs_version = srcs_version,
-        test_lib = True,
+        test_lib = test_lib,
         # This main specifier is required because, without it, py_binary expects
         # that the file name of source containing main() is name.py.
         main = srcs[0],
@@ -166,9 +167,10 @@ def objc_library_mozc(
         name,
         srcs = [],
         hdrs = [],
+        textual_hdrs = [],
         deps = [],
-        copts = [],
         proto_deps = [],
+        copts = [],
         sdk_frameworks = [],
         tags = [],
         **kwargs):
@@ -184,6 +186,7 @@ def objc_library_mozc(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
+        textual_hdrs = textual_hdrs + proto_deps,
         deps = deps + ["//:macro", proto_deps_name],
         copts = copts + ["-funsigned-char", "-std=c++17"],
         sdk_frameworks = sdk_frameworks,
@@ -193,6 +196,76 @@ def objc_library_mozc(
         # https://github.com/bazelbuild/bazel/issues/12897
         tags = tags + ["manual"],
         **kwargs
+    )
+
+def _run_test_impl(ctx):
+    """Rule to run executables (e.g. apple_binary) as test."""
+
+    # Relative path from the executable to the build root.
+    base_dir = "/".join([".."] * ctx.outputs.executable.path.count("/"))
+
+    # ":" is noop for avoiding empty commands.
+    sandboxed_commands = [":"]
+    commands = [":"]
+    for test in ctx.files.tests:
+        sandboxed_commands.append("{short_path} || err=1".format(short_path = test.short_path))
+        commands.append("{base_dir}/{path} || err=1".format(base_dir = base_dir, path = test.path))
+
+    # The directory path to the executable is different between 'blaze test' and 'blaze build'.
+    # If this is called by 'blaze test', TEST_WORKSPACE is filled.
+    script = """
+err=0
+if [ \"${{TEST_WORKSPACE}}\" != \"\" ]; then
+  {sandboxed_commands}
+else
+  cd `dirname ${{0}}`
+  {commands}
+fi
+exit $err
+""".format(sandboxed_commands = "\n".join(sandboxed_commands), commands = "\n".join(commands))
+
+    # Write the file to be executed by run_mozc_test.
+    ctx.actions.write(
+        output = ctx.outputs.executable,
+        content = script,
+    )
+
+    return [DefaultInfo(runfiles = ctx.runfiles(files = ctx.files.tests))]
+
+_run_test = rule(
+    implementation = _run_test_impl,
+    attrs = {
+        "tests": attr.label_list(
+            mandatory = True,
+            allow_files = True,
+        ),
+    },
+    test = True,
+)
+
+def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
+    objc_library_mozc(
+        name = name + "_lib",
+        testonly = 1,
+        srcs = srcs,
+        deps = deps,
+        alwayslink = 1,
+        **kwargs
+    )
+
+    apple_binary(
+        name = name + "_bin",
+        testonly = 1,
+        minimum_os_version = "10.10",
+        platform_type = "macos",
+        sdk_frameworks = sdk_frameworks,
+        deps = [name + "_lib"],
+        tags = ["manual"],
+    )
+
+    _run_test(
+        name = name,
+        tests = select_mozc(macos = [name + "_bin"]),
     )
 
 def _tweak_infoplists(name, infoplists):
@@ -312,7 +385,7 @@ def select_mozc(
       ios: value for iOS build.
       chromiumos: value for ChromeOS build.
       linux: value for Linux build.
-      macos: value for Linux build.
+      macos: value for macOS build.
       oss_android: value for OSS Android build.
       oss_linux: value for OSS Linux build.
       oss_macos: value for OSS macOS build.

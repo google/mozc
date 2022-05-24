@@ -97,6 +97,9 @@ std::unique_ptr<const TypingModel> TypingModel::CreateTypingModel(
     case mozc::commands::Request::GODAN_TO_HIRAGANA:
       key = "typing_model_godan-hiragana.tsv";
       break;
+    case mozc::commands::Request::FIFTY_KEYS_TO_HIRAGANA:
+      key = "typing_model_50keys-hiragana.tsv";
+      break;
     default:
       return nullptr;
   }
