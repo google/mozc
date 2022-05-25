@@ -103,7 +103,7 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
-            oss = paths.join(QT_BIN_PATH + "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss = paths.join(QT_BIN_PATH, "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:rcc"],
