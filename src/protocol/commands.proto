@@ -842,6 +842,12 @@ message Request {
 
   // Fills incognito_candidate_words filed of output.
   optional bool fill_incognito_candidate_words = 18 [default = false];
+
+  // Use prediction operation for suggestion.
+  // Effective only with mixed_conversion (therefore for mobile purposes).
+  // With this, the client doesn't need to execute EXPAND_SUGGESTION to get more
+  // candidates. Instead, all the candidates will be returned at once.
+  optional bool one_phase_suggestion = 19 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.

@@ -42,6 +42,7 @@ load(
     "QT_BIN_PATH",
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
+load("@bazel_skylib//lib:paths.bzl", "paths")
 
 def cc_qt_library_mozc(name, deps = [], **kwargs):
     cc_library_mozc(
@@ -72,7 +73,7 @@ def qt_moc_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
-            oss = QT_BIN_PATH + "moc -p $$(dirname $<) -o $@ $(SRCS)",
+            oss = paths.join(QT_BIN_PATH, "moc") + " -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:moc"],
@@ -87,7 +88,7 @@ def qt_uic_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
-            oss = QT_BIN_PATH + "uic -o $@ $(SRCS)",
+            oss = paths.join(QT_BIN_PATH, "uic") + " -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:uic"],
@@ -102,7 +103,7 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
-            oss = QT_BIN_PATH + "rcc -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss = paths.join(QT_BIN_PATH + "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:rcc"],
