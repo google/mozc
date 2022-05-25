@@ -30,8 +30,6 @@
 
 """Utilities to handle pos related stuff for source code generation."""
 
-from __future__ import absolute_import
-
 import codecs
 import collections
 import logging

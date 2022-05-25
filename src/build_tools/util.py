@@ -30,9 +30,6 @@
 
 """Utilitis for build_mozc script."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 import multiprocessing
 import os

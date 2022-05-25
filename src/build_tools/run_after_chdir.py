@@ -37,9 +37,6 @@
 The example above is to run ls command in / directory.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import subprocess
 import sys

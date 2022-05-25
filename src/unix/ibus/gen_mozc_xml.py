@@ -34,8 +34,6 @@ We don't support --xml command line option in the ibus-engines-mozc command
 since it could make start-up time of ibus-daemon slow when XML cache of the
 daemon in ~/.cache/ibus/bus/ is not ready or is expired.
 """
-
-from __future__ import print_function
 __author__ = "yusukes"
 
 import optparse

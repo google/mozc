@@ -33,9 +33,6 @@
 Exapmle:
 /home/komatsu/bin/update_codesign.py --target /path/to/target
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
 import optparse
 import os
 import subprocess

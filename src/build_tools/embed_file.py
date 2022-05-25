@@ -29,9 +29,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Generate a C++ array definition for file embedding."""
-
-from __future__ import absolute_import
-from __future__ import print_function
 import binascii
 import optparse
 import os

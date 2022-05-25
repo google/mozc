@@ -30,9 +30,6 @@
 
 """Utility to generate User POS binary data."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import optparse
 import struct
 

@@ -29,9 +29,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Generate a binary image of SerializedStringArray."""
-
-from __future__ import absolute_import
-from __future__ import print_function
 import io
 import struct
 

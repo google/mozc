@@ -33,8 +33,6 @@
 postbuilds_win.py --targetpath=my_binary.exe
 """
 
-from __future__ import print_function
-
 __author__ = "yukawa"
 
 import optparse

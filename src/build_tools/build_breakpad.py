@@ -33,9 +33,6 @@
 ././tools/build_breakpad.py
   --bpdir ./third_party/breakpad --outdir /tmp/breakpad
 """
-
-from __future__ import absolute_import
-from __future__ import print_function
 import optparse
 import os
 import subprocess

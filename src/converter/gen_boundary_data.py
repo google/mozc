@@ -55,9 +55,6 @@ suffix penalty of POS ID N (2 bytes)
 See converter/segmenter.cc for how it's used.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import codecs
 import optparse
 import re

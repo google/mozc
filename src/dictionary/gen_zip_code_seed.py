@@ -50,8 +50,6 @@ r"""Zip code dictionary generator.
  "札幌市中央区役所","北海道","札幌市中央区",
  "南三条西","１１丁目","0608612","060  ","札幌",0,0,0
 """
-
-from __future__ import print_function
 __author__ = "toshiyuki"
 
 import optparse

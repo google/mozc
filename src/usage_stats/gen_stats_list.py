@@ -30,8 +30,6 @@
 
 """Generates usage stats name list."""
 
-from __future__ import print_function
-
 __author__ = "toshiyuki"
 
 import codecs

@@ -37,8 +37,6 @@ Typical usage:
   % python build_mozc.py build base/base.gyp:base
 """
 
-from __future__ import print_function
-
 import glob
 import logging
 import optparse

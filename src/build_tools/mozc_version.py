@@ -50,8 +50,6 @@ The syntax of template is written in the template file.
 #   file path and we should remove all the module methods instead to
 #   simplify the design. Currently I'd keep this design to reduce
 #   client side's change.
-
-from __future__ import absolute_import
 import datetime
 import logging
 import optparse

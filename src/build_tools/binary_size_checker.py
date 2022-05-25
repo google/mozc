@@ -34,9 +34,6 @@ Usage:
   % python binary_size_checker.py --target_directory=out_linux/Debug
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import logging
 import optparse
 import os

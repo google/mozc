@@ -35,9 +35,6 @@ This script provides more features than 'copies' rule of GYP.
 2. Is able to copy directories recursively.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import optparse
 import os
 import shutil
