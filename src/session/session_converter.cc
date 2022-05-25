@@ -439,34 +439,32 @@ bool SessionConverter::SuggestWithPreferences(
   segments_->clear_conversion_segments();
 
   const size_t cursor = composer.GetCursor();
-  if (cursor == composer.GetLength() || cursor == 0 ||
-      !request_->mixed_conversion()) {
-    conversion_request.set_create_partial_candidates(
-        request_->auto_partial_suggestion());
-    conversion_request.set_use_actual_converter_for_realtime_conversion(
-        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
-    SetRequestType(ConversionRequest::SUGGESTION, &conversion_request);
-    if (!converter_->StartSuggestionForRequest(conversion_request,
-                                               segments_.get())) {
-      // TODO(komatsu): Because suggestion is a prefix search, once
-      // StartSuggestion returns false, this GetSuggestion always
-      // returns false.  Refactor it.
-      VLOG(1) << "StartSuggestionForRequest() returns no suggestions.";
-      // Clear segments and keep the context
-      converter_->CancelConversion(segments_.get());
-      return false;
-    }
 
-    if (request_->fill_incognito_candidate_words()) {
-      const Config incognito_config = CreateIncognitoConfig();
-      const ConversionRequest incognito_conversion_request =
-          CreateIncognitoConversionRequest(conversion_request,
-                                           incognito_config);
-      incognito_segments_->Clear();
-      converter_->StartSuggestionForRequest(incognito_conversion_request,
-                                            incognito_segments_.get());
+  // We have four (2x2) conditions for
+  // (use_prediction_candidate, use_partial_composition):
+  // - (false, false): Original suggestion behavior on desktop.
+  // - (false, true): Mobile suggestion, using partial composition text.
+  //                  Will be deprecated once one_phase_suggestion turns on
+  //                  by default.
+  // - (true, false): Mobile suggestion with richer candidates through
+  //                  prediction API.
+  // - (true, true): Mobile suggestion with richer candidates through
+  //                  prediction API, using partial composition text.
+  bool use_prediction_candidate =
+      (request_->mixed_conversion() && request_->one_phase_suggestion());
+  bool use_partial_composition = (cursor != composer.GetLength() &&
+                                  cursor != 0 && request_->mixed_conversion());
+  // Setup request based on the above two flags.
+  if (use_partial_composition) {
+    if (use_prediction_candidate) {
+      SetRequestType(ConversionRequest::PARTIAL_PREDICTION,
+                     &conversion_request);
+    } else {
+      SetRequestType(ConversionRequest::PARTIAL_SUGGESTION,
+                     &conversion_request);
     }
   } else {
+    // For *partial* suggestion,
     // create_partial_candidates is false because auto partial suggestion
     // should be activated only when the cursor is at the tail or head from
     // the view point of UX.
@@ -474,23 +472,56 @@ bool SessionConverter::SuggestWithPreferences(
     // implementation reason. If the flag is true, all the composition
     // characters will be used in the below process, which conflicts
     // with *partial* prediction.
-    SetRequestType(ConversionRequest::PARTIAL_SUGGESTION, &conversion_request);
-    if (!converter_->StartPartialSuggestionForRequest(conversion_request,
-                                                      segments_.get())) {
-      VLOG(1) << "StartPartialSuggestionForRequest() returns no suggestions.";
-      // Clear segments and keep the context
-      converter_->CancelConversion(segments_.get());
-      return false;
+    conversion_request.set_create_partial_candidates(
+        request_->auto_partial_suggestion());
+    conversion_request.set_use_actual_converter_for_realtime_conversion(
+        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+    if (use_prediction_candidate) {
+      SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
+    } else {
+      SetRequestType(ConversionRequest::SUGGESTION, &conversion_request);
     }
-
-    if (request_->fill_incognito_candidate_words()) {
-      const Config incognito_config = CreateIncognitoConfig();
-      const ConversionRequest incognito_conversion_request =
-          CreateIncognitoConversionRequest(conversion_request,
-                                           incognito_config);
-      incognito_segments_->Clear();
+  }
+  // Start actual suggestion/prediction.
+  bool result;
+  if (use_partial_composition) {
+    if (use_prediction_candidate) {
+      result = converter_->StartPartialPredictionForRequest(conversion_request,
+                                                            segments_.get());
+    } else {
+      result = converter_->StartPartialSuggestionForRequest(conversion_request,
+                                                            segments_.get());
+    }
+  } else {
+    if (use_prediction_candidate) {
+      result = converter_->StartPredictionForRequest(conversion_request,
+                                                     segments_.get());
+    } else {
+      result = converter_->StartSuggestionForRequest(conversion_request,
+                                                     segments_.get());
+    }
+  }
+  if (!result) {
+    VLOG(1) << "Start(Partial?)(Suggestion|Prediction)ForRequest() returns no "
+               "suggestions.";
+    // Clear segments and keep the context
+    converter_->CancelConversion(segments_.get());
+    return false;
+  }
+  // Fill incognito candidates if required.
+  // The candidates are always from suggestion API
+  // as richer results are not needed.
+  if (request_->fill_incognito_candidate_words()) {
+    const Config incognito_config = CreateIncognitoConfig();
+    const ConversionRequest incognito_conversion_request =
+        CreateIncognitoConversionRequest(conversion_request, incognito_config);
+    incognito_segments_->Clear();
+    if (use_partial_composition) {
       converter_->StartPartialSuggestionForRequest(incognito_conversion_request,
                                                    incognito_segments_.get());
+    } else {
+      converter_->StartSuggestionForRequest(incognito_conversion_request,
+                                            incognito_segments_.get());
     }
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());

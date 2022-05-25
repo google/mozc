@@ -2077,6 +2077,51 @@ TEST_F(SessionConverterTest, SuggestFillIncognitoCandidateWords) {
   }
 }
 
+TEST_F(SessionConverterTest, OnePhaseSuggestion) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  request_->set_mixed_conversion(true);
+  request_->set_one_phase_suggestion(true);
+  Segments segments;
+  {  // Initialize mock segments for suggestion (internally prediction)
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kChars_Mo);
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Mozuku;
+    candidate->content_key = kChars_Mozuku;
+    candidate = segment->add_candidate();
+    candidate->value = kChars_Momonga;
+    candidate->content_key = kChars_Momonga;
+    candidate = segment->add_candidate();
+    candidate->value = "モンドリアン";
+    candidate->content_key = "もんどりあん";
+  }
+  composer_->InsertCharacterPreedit(kChars_Mo);
+
+  // Suggestion (internally prediction)
+  // Use "prediction" mock as this suggestion uses prediction internally.
+  convertermock_->SetStartPredictionForRequest(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(3, candidates.size());
+    EXPECT_EQ(kChars_Mozuku, candidates.candidate(0).value());
+    EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
+    EXPECT_EQ("モンドリアン", candidates.candidate(2).value());
+    EXPECT_TRUE(candidates.has_focused_index());
+  }
+}
+
 TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());
