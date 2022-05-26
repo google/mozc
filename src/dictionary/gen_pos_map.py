@@ -30,8 +30,6 @@
 
 """A script to generate a C++ header file for the POS conversion map.
 """
-
-from __future__ import absolute_import
 import codecs
 import optparse
 

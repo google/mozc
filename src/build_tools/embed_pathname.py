@@ -37,9 +37,6 @@ Example:
       const char kMozcDataDir[] = "d:\\data\\mozc";
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import optparse
 import os
 import sys

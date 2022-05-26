@@ -30,9 +30,6 @@
 
 """Script to generate config_file_stream_data.h."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import optparse
 import os.path
 import sys

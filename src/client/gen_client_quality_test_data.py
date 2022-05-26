@@ -30,8 +30,6 @@
 
 """Generate a C++ include file for testing data from TSV files."""
 
-from __future__ import print_function
-
 import codecs
 import logging
 import sys

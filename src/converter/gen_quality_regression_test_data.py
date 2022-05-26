@@ -30,9 +30,6 @@
 
 """A tool to embedded tsv file into test binary for quality regression test."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import codecs
 import sys
 import xml.dom.minidom

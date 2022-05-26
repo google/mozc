@@ -36,8 +36,6 @@
 See mozc_version.py for the detailed information for version.txt.
 """
 
-from __future__ import absolute_import
-
 import logging
 import optparse
 

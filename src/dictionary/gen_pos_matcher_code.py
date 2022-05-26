@@ -87,8 +87,6 @@ return true if id is in one of the ranges).  See the following figure:
 |                                           |
 """
 
-from __future__ import absolute_import
-
 import codecs
 import optparse
 import struct

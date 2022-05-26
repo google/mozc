@@ -38,9 +38,6 @@ This is essentially identical to 'echo foo > out.txt' but the script
 can be used in platforms without a Unix shell (i.e. windows).
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import subprocess
 import sys
 

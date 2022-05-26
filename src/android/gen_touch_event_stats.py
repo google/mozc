@@ -36,10 +36,6 @@ python android/gen_touch_event_stat.py --output_dir android/assets \
 --collected_keyboards android/collected_keyboards.csv
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from collections import defaultdict
 import csv
 import optparse

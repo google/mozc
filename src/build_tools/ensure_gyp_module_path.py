@@ -35,9 +35,6 @@ Example:
     --expected=/home/foobar/work/mozc/src/third_party/gyp/pylib/gyp
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import optparse
 import os
 import sys

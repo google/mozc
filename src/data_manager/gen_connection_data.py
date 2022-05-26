@@ -30,9 +30,6 @@
 
 """Generator script for connection data."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import codecs
 import io
 import logging

@@ -30,8 +30,6 @@
 
 """Utilities to generate source codes."""
 
-from __future__ import absolute_import
-
 import struct
 
 __author__ = "hidehiko"

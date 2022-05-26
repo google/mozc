@@ -30,9 +30,6 @@
 
 """A tool to generate segmenter-code from human-readable rule file."""
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 import codecs
 import re
 import sys
