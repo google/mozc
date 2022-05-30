@@ -1511,13 +1511,9 @@ TEST_F(UserSegmentHistoryRewriterTest, AnnotationAfterLearning) {
     candidate->content_key = "abc";
     rewriter->Rewrite(request_, &segments);
     EXPECT_EQ("abc", segments.segment(0).candidate(0).content_value);
-    // "[半] アルファベット"
-    auto expectation = std::string(VariantsRewriter::kHalfWidth);
-    const absl::string_view alphabet = VariantsRewriter::kAlphabet;
-    if (!alphabet.empty()) {
-      expectation.append(1, ' ').append(alphabet.data(), alphabet.size());
-    }
-    EXPECT_EQ(expectation, segments.segment(0).candidate(0).description);
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet,
+              segments.segment(0).candidate(0).description);
     rewriter->Finish(request_, &segments);
   }
 }
