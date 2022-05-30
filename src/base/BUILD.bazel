@@ -781,9 +781,6 @@ cc_library_mozc(
             "MOZC_SERVER_DIR=\\\"" + LINUX_MOZC_SERVER_DIR + "\\\"",
         ],
     ),
-    visibility = [
-        "//:__subpackages__",
-    ],
     deps = [
         ":const",
         ":environ",
@@ -1365,7 +1362,6 @@ cc_test_mozc(
 cc_library_mozc(
     name = "coordinates",
     hdrs = ["coordinates.h"],
-    visibility = ["//:__subpackages__"],
 )
 
 cc_library_mozc(

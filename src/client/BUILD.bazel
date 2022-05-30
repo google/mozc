@@ -36,7 +36,9 @@ load(
     "select_mozc",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 cc_library_mozc(
     name = "client_interface",

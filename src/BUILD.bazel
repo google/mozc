@@ -33,6 +33,10 @@
 load("//:build_defs.bzl", "select_mozc")
 load("//tools/build_defs:stubs.bzl", "bzl_library")
 
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
 package_group(
     name = "mozc",
     packages = ["//..."],
@@ -100,7 +104,6 @@ cc_library(
             "OS_WASM",
         ],
     ),
-    visibility = ["//:__subpackages__"],
 )
 
 bzl_library(
