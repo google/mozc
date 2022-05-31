@@ -101,6 +101,9 @@ def main():
   process = subprocess.Popen(["/usr/bin/hdiutil", "create",
                               "-srcfolder", temp_dir,
                               "-volname", options.volname,
+                              # "SPUD" and "HFS+"" are required for KeyStone.
+                              # "GPTSPUD" and "APFS" are default values.
+                              "-layout", "SPUD", "-fs", "HFS+",
                               dmg_path])
   process.wait()
 
