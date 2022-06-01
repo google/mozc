@@ -104,9 +104,15 @@ bazel build package --config oss_android
 
 ## Build Mozc for Linux Desktop with GYP (maintenance mode):
 
+⚠️ The GYP build will stop supporting the IBus build.
+* https://github.com/google/mozc/issues/567
+
+To keep using the GYP build at this moment,
+please add the --use_gyp_for_ibus_build flag to build_mozc.py.
+
 ```
 python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package
+python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build
 ```
 
 `package` is an alias to build:

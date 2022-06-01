@@ -280,18 +280,48 @@ def ExpandMetaTarget(options, meta_target_name):
   return dependencies + targets
 
 
+def CheckIbusBuild(options, targets):
+  """Check if targets contains ibus builds without the command flag."""
+
+  if options.use_gyp_for_ibus_build:
+    return
+
+  has_ibus_build = False
+  for target in targets:
+    if 'ibus' in target:
+      has_ibus_build = True
+      break
+  if not has_ibus_build:
+    return
+
+  message = [
+      'The GYP build will stop supporting IBus client and renderer.',
+      'https://github.com/google/mozc/issues/567',
+      '',
+      'The Bazel build is the alternative.',
+      'https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md',
+      '',
+      'To keep using the GYP build at this moment,',
+      'please add the --use_gyp_for_ibus_build flag to build_mozc.py.',
+  ]
+  PrintErrorAndExit('\n'.join(message))
+
+
 def ParseBuildOptions(args):
   """Parses command line options for the build command."""
   parser = optparse.OptionParser(usage='Usage: %prog build [options]')
   AddCommonOptions(parser)
   parser.add_option('--configuration', '-c', dest='configuration',
                     default='Debug', help='specify the build configuration.')
+  parser.add_option('--use_gyp_for_ibus_build', action='store_true')
 
   (options, args) = parser.parse_args(args)
 
   targets = []
   for arg in args:
     targets.extend(ExpandMetaTarget(options, arg))
+
+  CheckIbusBuild(options, targets)
   return (options, targets)
 
 

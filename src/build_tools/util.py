@@ -140,9 +140,7 @@ def MakeFileWritableRecursively(path):
 
 def PrintErrorAndExit(error_message):
   """Prints the error message and exists."""
-  logging.critical('\n==========\n')
-  logging.critical(error_message)
-  logging.critical('\n==========\n')
+  logging.critical('\n==========\n%s\n==========', error_message)
   sys.exit(1)
 
 
