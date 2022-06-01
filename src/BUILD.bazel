@@ -136,6 +136,8 @@ filegroup(
             "//gui/tool:mozc_tool",
             "//renderer:mozc_renderer",
             "//server:mozc_server",
+            "//unix/emacs:mozc_emacs_helper",
+            "//unix:icons",
         ],
         macos = [
             "//mac:activate_pane",
@@ -146,11 +148,11 @@ filegroup(
         oss_android = ["//android/jni:mozc_lib"],
         oss_linux = [
             "//gui/tool:mozc_tool",
+            "//renderer:mozc_renderer",
+            "//server:mozc_server",
             "//unix/emacs:mozc_emacs_helper",
             "//unix/ibus:ibus_mozc",
             "//unix:icons",
-            "//renderer:mozc_renderer",
-            "//server:mozc_server",
         ],
         oss_macos = ["//mac:installer_oss_macos"],
     ),
