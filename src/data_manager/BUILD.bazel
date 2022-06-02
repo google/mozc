@@ -74,7 +74,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "data_manager_test_base",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "data_manager_test_base.cc",
     ],

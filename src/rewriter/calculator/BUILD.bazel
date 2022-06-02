@@ -57,7 +57,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "calculator_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["calculator_mock.cc"],
     hdrs = ["calculator_mock.h"],
     deps = [

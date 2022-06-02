@@ -130,7 +130,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "usage_stats_testing_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["usage_stats_testing_util.cc"],
     hdrs = ["usage_stats_testing_util.h"],
     deps = [

@@ -138,7 +138,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "ipc_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["ipc_mock.cc"],
     hdrs = ["ipc_mock.h"],
     deps = [

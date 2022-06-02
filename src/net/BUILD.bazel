@@ -99,21 +99,21 @@ cc_library_mozc(
 
 cc_proto_library(
     name = "json_util_test_cc_proto",
-    testonly = 1,
+    testonly = True,
     visibility = ["//visibility:private"],
     deps = [":json_util_test_proto"],
 )
 
 proto_library(
     name = "json_util_test_proto",
-    testonly = 1,
+    testonly = True,
     srcs = ["json_util_test.proto"],
     visibility = ["//visibility:private"],
 )
 
 cc_proto_library(
     name = "json_util_test_proto_cc_proto",
-    testonly = 1,
+    testonly = True,
     visibility = ["//visibility:private"],
     deps = [":json_util_test_proto"],
 )

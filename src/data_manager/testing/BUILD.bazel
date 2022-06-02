@@ -44,7 +44,7 @@ MOZC_DATASET_MAGIC_NUMBER = "\\x4D\\x4F\\x43\\x4B"
 
 cc_library_mozc(
     name = "mock_data_manager",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "mock_data_manager.cc",
         ":mozc_dataset_for_testing@header",

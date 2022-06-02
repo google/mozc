@@ -70,7 +70,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "gunit_main_internal",
-    testonly = 1,
+    testonly = True,
     srcs = ["base/internal/gtest_main.cc"],
     visibility = ["//visibility:private"],
     deps = [
@@ -87,7 +87,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "gunit_main",
-    testonly = 1,
+    testonly = True,
     hdrs = [
         "base/public/gmock.h",
         "base/public/googletest.h",
@@ -112,7 +112,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "testing_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["base/public/testing_util.cc"],
     hdrs = ["base/public/testing_util.h"],
     deps = [
@@ -128,7 +128,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "gunit",
-    testonly = 1,
+    testonly = True,
     srcs = [],
     hdrs = [
         "base/public/gmock.h",
@@ -142,7 +142,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "googletest",
-    testonly = 1,
+    testonly = True,
     srcs = select_mozc(
         client = ["base/internal/googletest.cc"],
         default = [],
@@ -166,7 +166,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "mozctest",
-    testonly = 1,
+    testonly = True,
     srcs = ["base/public/mozctest.cc"],
     hdrs = ["base/public/mozctest.h"],
     visibility = [

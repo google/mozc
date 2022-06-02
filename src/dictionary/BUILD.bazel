@@ -684,7 +684,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "dictionary_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["dictionary_mock.cc"],
     hdrs = ["dictionary_mock.h"],
     visibility = ["//:__subpackages__"],
@@ -754,7 +754,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "dictionary_test_util",
-    testonly = 1,
+    testonly = True,
     srcs = ["dictionary_test_util.cc"],
     hdrs = ["dictionary_test_util.h"],
     visibility = [

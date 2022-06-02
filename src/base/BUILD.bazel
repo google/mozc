@@ -621,7 +621,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "clock_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["clock_mock.cc"],
     hdrs = [
         "clock.h",  # For ClockInterface
@@ -1209,7 +1209,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "scheduler_stub",
-    testonly = 1,
+    testonly = True,
     srcs = ["scheduler_stub.cc"],
     hdrs = ["scheduler_stub.h"],
     visibility = ["//:__subpackages__"],

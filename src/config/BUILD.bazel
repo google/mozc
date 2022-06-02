@@ -118,7 +118,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "stats_config_util_mock",
-    testonly = 1,
+    testonly = True,
     hdrs = ["stats_config_util_mock.h"],
     deps = [":stats_config_util"],
 )
