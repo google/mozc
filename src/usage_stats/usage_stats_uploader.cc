@@ -29,6 +29,7 @@
 
 #include "usage_stats/usage_stats_uploader.h"
 
+#include <string>
 #include <utility>
 #include <vector>
 

@@ -32,6 +32,7 @@
 #include "composer/composer.h"
 
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 
 #include "base/clock.h"

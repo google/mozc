@@ -29,6 +29,8 @@
 
 #include "prediction/suggestion_filter.h"
 
+#include <string>
+
 #include "base/hash.h"
 #include "base/logging.h"
 #include "base/util.h"

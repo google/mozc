@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <iterator>
 #include <ostream>
+#include <string>
 
 #include "base/hash.h"
 #include "base/logging.h"

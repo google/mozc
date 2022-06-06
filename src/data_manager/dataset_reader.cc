@@ -30,6 +30,7 @@
 #include "data_manager/dataset_reader.h"
 
 #include <cstdint>
+#include <string>
 
 #include "base/logging.h"
 #include "base/port.h"

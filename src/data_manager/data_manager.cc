@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <string>
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"

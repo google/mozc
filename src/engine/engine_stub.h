@@ -30,6 +30,8 @@
 #ifndef MOZC_ENGINE_ENGINE_STUB_H_
 #define MOZC_ENGINE_ENGINE_STUB_H_
 
+#include <string>
+
 #include "engine/engine_interface.h"
 
 namespace mozc {
