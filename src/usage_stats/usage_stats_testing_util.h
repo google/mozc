@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 #include "base/port.h"
 #include "testing/base/public/gunit.h"

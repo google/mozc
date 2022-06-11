@@ -33,6 +33,8 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/port.h"

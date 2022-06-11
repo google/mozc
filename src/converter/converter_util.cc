@@ -29,6 +29,8 @@
 
 #include "converter/converter_util.h"
 
+#include <string>
+
 #include "converter/segments.h"
 
 namespace mozc {

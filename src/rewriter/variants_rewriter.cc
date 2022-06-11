@@ -165,14 +165,26 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
       case Util::KATAKANA:
         // character_form_message = "カタカナ";
         character_form_message = kKatakana;
+        // don't need to proactively set full, because katakana is mostly used
+        // in full form.
+        description_type &= ~FULL_HALF_WIDTH;
+        description_type |= HALF_WIDTH;
         break;
       case Util::NUMBER:
         // character_form_message = "数字";
         character_form_message = kNumber;
+        // don't need to proactively set half, because number is mostly used in
+        // half form.
+        description_type &= ~FULL_HALF_WIDTH;
+        description_type |= FULL_WIDTH;
         break;
       case Util::ALPHABET:
         // character_form_message = "アルファベット";
         character_form_message = kAlphabet;
+        // don't need to proactively set half, because alphabet is mostly used
+        // in half form.
+        description_type &= ~FULL_HALF_WIDTH;
+        description_type |= FULL_WIDTH;
         break;
       case Util::KANJI:
       case Util::EMOJI:
@@ -201,9 +213,9 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
   }
 
   std::string description;
+  const Util::FormType form = Util::GetFormType(candidate->value);
   // full/half char description
   if (description_type & FULL_HALF_WIDTH) {
-    const Util::FormType form = Util::GetFormType(candidate->value);
     switch (form) {
       case Util::FULL_WIDTH:
         // description = "[全]";
@@ -216,10 +228,10 @@ void VariantsRewriter::SetDescription(const PosMatcher &pos_matcher,
       default:
         break;
     }
-  } else if (description_type & FULL_WIDTH) {
+  } else if (description_type & FULL_WIDTH && form == Util::FULL_WIDTH) {
     // description = "[全]";
     description = std::string(kFullWidth);
-  } else if (description_type & HALF_WIDTH) {
+  } else if (description_type & HALF_WIDTH && form == Util::HALF_WIDTH) {
     // description = "[半]";
     description = std::string(kHalfWidth);
   }

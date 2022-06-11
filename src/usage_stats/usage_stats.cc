@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <numeric>
+#include <string>
 
 #include "base/logging.h"
 #include "config/stats_config_util.h"

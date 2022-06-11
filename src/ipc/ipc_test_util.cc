@@ -31,6 +31,8 @@
 
 #include "ipc/ipc_test_util.h"
 
+#include <string>
+
 #include "base/logging.h"
 
 namespace mozc {

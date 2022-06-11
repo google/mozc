@@ -594,7 +594,7 @@ cc_test_mozc(
 
 cc_binary_mozc(
     name = "converter_main",
-    testonly = 1,
+    testonly = True,
     srcs = ["converter_main.cc"],
     data = [
         "//data/dictionary_oss:id.def",
@@ -705,7 +705,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "converter_mock",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "converter_mock.cc",
     ],
@@ -791,7 +791,7 @@ py_binary_mozc(
 
 cc_library_mozc(
     name = "quality_regression_test_lib",
-    testonly = 1,
+    testonly = True,
     srcs = ["quality_regression_test_lib.cc"],
     hdrs = ["quality_regression_test_lib.h"],
     deps = [

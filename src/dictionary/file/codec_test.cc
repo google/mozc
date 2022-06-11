@@ -30,6 +30,7 @@
 #include "dictionary/file/codec.h"
 
 #include <memory>
+#include <string>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"

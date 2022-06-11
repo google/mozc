@@ -190,7 +190,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "renderer_mock",
-    testonly = 1,
+    testonly = True,
     hdrs = ["renderer_mock.h"],
     deps = [
         ":renderer_interface",

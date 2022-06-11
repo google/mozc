@@ -150,7 +150,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "mock_converter_engine",
-    testonly = 1,
+    testonly = True,
     srcs = ["mock_converter_engine.cc"],
     hdrs = ["mock_converter_engine.h"],
     visibility = ["//session:__subpackages__"],
@@ -167,7 +167,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "engine_stub",
-    testonly = 1,
+    testonly = True,
     hdrs = ["engine_stub.h"],
     visibility = ["//session:__subpackages__"],
     deps = [":engine_interface"],
@@ -268,7 +268,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "mock_data_engine_factory",
-    testonly = 1,
+    testonly = True,
     srcs = ["mock_data_engine_factory.cc"],
     hdrs = ["mock_data_engine_factory.h"],
     visibility = [

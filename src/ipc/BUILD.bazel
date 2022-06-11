@@ -37,7 +37,9 @@ load(
     "select_mozc",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 cc_library_mozc(
     name = "ipc",
@@ -136,7 +138,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "ipc_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["ipc_mock.cc"],
     hdrs = ["ipc_mock.h"],
     deps = [

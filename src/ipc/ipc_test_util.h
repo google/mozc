@@ -32,6 +32,8 @@
 #ifndef MOZC_IPC_IPC_TEST_UTIL_H_
 #define MOZC_IPC_IPC_TEST_UTIL_H_
 
+#include <string>
+
 #include "ipc/ipc.h"
 
 namespace mozc {

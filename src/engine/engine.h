@@ -31,6 +31,7 @@
 #define MOZC_ENGINE_ENGINE_H_
 
 #include <memory>
+#include <string>
 
 #include "base/port.h"
 #include "converter/connector.h"

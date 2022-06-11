@@ -358,7 +358,7 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "session_handler_test_util",
-    testonly = 1,
+    testonly = True,
     srcs = [
         "common.h",
         "session_handler.h",
@@ -484,7 +484,7 @@ cc_library_mozc(
     # TODO(team): Ideally this target is testonly but evaluation/ shares
     # this target to change the request object in a scoped way. We can
     # again make this testonly after removing the global request object.
-    # testonly = 1
+    # testonly = True
 )
 
 cc_test_mozc(

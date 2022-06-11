@@ -30,6 +30,7 @@
 #include "dictionary/suppression_dictionary.h"
 
 #include <atomic>
+#include <string>
 #include <thread>  // NOLINT for portability
 
 #include "base/logging.h"

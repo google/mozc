@@ -33,6 +33,10 @@
 load("//:build_defs.bzl", "select_mozc")
 load("//tools/build_defs:stubs.bzl", "bzl_library")
 
+package(default_visibility = [
+    "//:__subpackages__",
+])
+
 package_group(
     name = "mozc",
     packages = ["//..."],
@@ -100,7 +104,6 @@ cc_library(
             "OS_WASM",
         ],
     ),
-    visibility = ["//:__subpackages__"],
 )
 
 bzl_library(
@@ -133,6 +136,8 @@ filegroup(
             "//gui/tool:mozc_tool",
             "//renderer:mozc_renderer",
             "//server:mozc_server",
+            "//unix/emacs:mozc_emacs_helper",
+            "//unix:icons",
         ],
         macos = [
             "//mac:activate_pane",
@@ -143,11 +148,11 @@ filegroup(
         oss_android = ["//android/jni:mozc_lib"],
         oss_linux = [
             "//gui/tool:mozc_tool",
+            "//renderer:mozc_renderer",
+            "//server:mozc_server",
             "//unix/emacs:mozc_emacs_helper",
             "//unix/ibus:ibus_mozc",
             "//unix:icons",
-            "//renderer:mozc_renderer",
-            "//server:mozc_server",
         ],
         oss_macos = ["//mac:installer_oss_macos"],
     ),

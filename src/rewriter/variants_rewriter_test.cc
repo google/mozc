@@ -294,9 +294,63 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "halfascii";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[半] アルファベット"
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "ＦｕｌｌＡＳＣＩＩ";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "fullascii";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    // "[全] アルファベット"
     EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kAlphabet),
+        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kAlphabet),
+        candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "コギトエルゴスム";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "こぎとえるごすむ";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    // "カタカナ"
+    EXPECT_EQ(VariantsRewriter::kKatakana, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "ｺｷﾞﾄｴﾙｺﾞｽﾑ";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "こぎとえるごすむ";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    // "[半] カタカナ"
+    EXPECT_EQ(
+        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kKatakana),
+        candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "123";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "123";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    // "数字"
+    EXPECT_EQ(VariantsRewriter::kNumber, candidate.description);
+  }
+  {
+    Segment::Candidate candidate;
+    candidate.Init();
+    candidate.value = "１２３";
+    candidate.content_value = candidate.value;
+    candidate.content_key = "123";
+    VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
+    // "[全] 数字"
+    EXPECT_EQ(
+        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kNumber),
         candidate.description);
   }
   // containing symbols
@@ -307,10 +361,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "half ascii";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[半] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -319,10 +371,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "half!ascii!";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[半] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -331,10 +381,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "しーでぃーろむ";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[半] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -343,10 +391,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForCandidate) {
     candidate.content_value = candidate.value;
     candidate.content_key = "こぎとえるごすむ";
     VariantsRewriter::SetDescriptionForCandidate(pos_matcher_, &candidate);
-    // "[全] カタカナ"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kFullWidth, VariantsRewriter::kKatakana),
-        candidate.description);
+    // "カタカナ"
+    EXPECT_EQ(VariantsRewriter::kKatakana, candidate.description);
   }
   {
     Segment::Candidate candidate;
@@ -466,10 +512,8 @@ TEST_F(VariantsRewriterTest, SetDescriptionForTransliteration) {
     candidate.content_key = "halfascii";
     VariantsRewriter::SetDescriptionForTransliteration(pos_matcher_,
                                                        &candidate);
-    // "[半] アルファベット"
-    EXPECT_EQ(
-        AppendString(VariantsRewriter::kHalfWidth, VariantsRewriter::kAlphabet),
-        candidate.description);
+    // "アルファベット"
+    EXPECT_EQ(VariantsRewriter::kAlphabet, candidate.description);
   }
   {
     Segment::Candidate candidate;

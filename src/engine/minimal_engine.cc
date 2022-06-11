@@ -30,6 +30,7 @@
 #include "engine/minimal_engine.h"
 
 #include <cstdint>
+#include <string>
 
 #include "composer/composer.h"
 #include "converter/converter_interface.h"

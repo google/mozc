@@ -46,6 +46,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #include "base/file_util.h"
 #include "base/logging.h"

@@ -36,7 +36,9 @@ load(
     "select_mozc",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 cc_library_mozc(
     name = "client_interface",
@@ -108,7 +110,7 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "client_mock",
-    testonly = 1,
+    testonly = True,
     srcs = ["client_mock.cc"],
     hdrs = ["client_mock.h"],
     deps = [

@@ -31,6 +31,7 @@
 #define MOZC_DICTIONARY_DICTIONARY_IMPL_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "dictionary/dictionary_interface.h"

@@ -27,7 +27,7 @@
 1F602	😂	FE334	>E72A	E412	EB64	わらい えがお かお すまいる うれしなき なみだ わらう	FACE WITH TEARS OF JOY	顔		表情（泣き笑い）	泣き笑い	SMILEY_PEOPLE-002
 1F603	😃	FE330	E6F0	E057	E471	わーい かお すまいる えがお	SMILING FACE WITH OPEN MOUTH	顔	わーい（嬉しい顔）	表情（笑顔）	顔１（うれしいカオ）	SMILEY_PEOPLE-003
 1F604	😄	FE338	>E6F0	E415	>E471	わーい かお すまいる えがお	SMILING FACE WITH OPEN MOUTH AND SMILING EYES	顔		表情（嬉しい）		SMILEY_PEOPLE-004
-1F605	😅	FE331	E722	>E415+E331	>E471+E5B1	わーい かお すまいる ひやあせ ひやあせえがお えがお	SMILING FACE WITH OPEN MOUTH AND COLD SWEAT	顔	冷や汗			SMILEY_PEOPLE-005
+1F605	😅	FE331	E722	>E415+E331	>E471+E5B1	わーい かお すまいる ひやあせ ひやあせえがお えがお あせ	SMILING FACE WITH OPEN MOUTH AND COLD SWEAT	顔	冷や汗			SMILEY_PEOPLE-005
 1F606	😆	FE332	E72A	>E40A	>EAC5	きゃー うれしい えがお かお すまいる まんぞく	SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES	顔	うれしい顔			SMILEY_PEOPLE-006
 1F609	😉	FE347	E729	E405	E5C3	うぃんく ういんく かお	WINKING FACE	顔	ウィンク	表情（ウィンク）	ウインク	SMILEY_PEOPLE-007
 1F60A	😊	FE335	>E6F0	E056	EACD	にこにこ えがお かお すまいる ほほえみ めをほそめる ほほをあからめる	SMILING FACE WITH SMILING EYES	顔		表情（にこにこ）	にこにこ	SMILEY_PEOPLE-008
@@ -616,7 +616,7 @@
 1F32A	🌪					てんき とっぷう たつまき		絵文字				TRAVEL_PLACES-188
 1F32B	🌫					てんき きり		絵文字				TRAVEL_PLACES-189
 1F32C	🌬					かお かおのあるかぜ かぜ		絵文字				TRAVEL_PLACES-190
-1F300	🌀	FE005	E643	E443	E469	たいふう うずまき うず めまい もやもや さいくろん はりけーん	CYCLONE	台風	台風	台風（うずまき）	台風	TRAVEL_PLACES-191
+1F300	🌀	FE005	E643	E443	E469	たいふう うずまき うず めまい もやもや さいくろん はりけーん くるくる ぐるぐる	CYCLONE	台風	台風	台風（うずまき）	台風	TRAVEL_PLACES-191
 1F308	🌈	FE00D		E44C	EAF2	にじ れいんぼー	RAINBOW	虹		虹	虹	TRAVEL_PLACES-192
 1F302	🌂	FE007	E645	E43C	EAE8	あめ かさ てんき もちもの とじたかさ	CLOSED UMBRELLA	傘	小雨	とじ傘	傘	TRAVEL_PLACES-193
 2602	☂					かさ てんき もちもの あめ		絵文字				TRAVEL_PLACES-194

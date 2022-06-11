@@ -1,5 +1,6 @@
-# Hack: no rule except for consuming {!} is defined here. We just want
+# Hack: no rule except for consuming {!} and {<} are defined here. We just want
 # to pass through the input characters to the composition text for
 # qwerty mobile layout.  Without this file, some hard-coded rules in
 # table.cc would be applied.
-{!}
+{!}		
+{<}		

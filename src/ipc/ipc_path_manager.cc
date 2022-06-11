@@ -57,6 +57,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <string>
 
 #include "base/const.h"
 #include "base/file_stream.h"

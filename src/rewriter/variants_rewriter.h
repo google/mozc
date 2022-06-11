@@ -92,8 +92,10 @@ class VariantsRewriter : public RewriterInterface {
     // This flag must be used together with FULL_HALF_WIDTH.
     // If WITH_UNKNOWN is specified, assign FULL/HALF width annotation
     // more aggressively.
-    HALF_WIDTH = 4,       // always set half width description.
-    FULL_WIDTH = 8,       // always set full width description.
+    HALF_WIDTH = 4,       // set half width description if applicable.
+                          // otherwise, no width description is set.
+    FULL_WIDTH = 8,       // set full width description if applicable.
+                          // otherwise, no width description is set.
     CHARACTER_FORM = 16,  // Hiragana/Katakana..etc
     DEPRECATED_PLATFORM_DEPENDENT_CHARACTER = 32,  // Deprecated. "機種依存文字"
     ZIPCODE = 64,
