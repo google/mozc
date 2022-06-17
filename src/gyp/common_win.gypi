@@ -333,7 +333,11 @@
         'ExceptionHandling': '2',              # /EHs
         'SuppressStartupBanner': 'true',       # /nologo
         'WarningLevel': '3',                   # /W3
-        'OmitFramePointers': 'false',          # /Oy-
+        # As discussed in the Release_Base block, /Oy- should be added to make
+        # debugging easy. However, we obsereved an unexpected behavior of
+        # base/win_api_test_helper_test with the /Oy- option.
+        # We disable this flag until a solution is introduced.
+        # 'OmitFramePointers': 'false',        # /Oy-
         'AdditionalOptions': [
           '/Zc:strictStrings',
           '/utf-8',
