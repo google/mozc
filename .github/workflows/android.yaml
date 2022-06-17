@@ -21,6 +21,15 @@ jobs:
         with:
           submodules: 'recursive'
 
+      - name: setup
+        run: |
+          # Change the default Android NDK version.
+          # https://github.com/actions/virtual-environments/issues/5595
+          ANDROID_ROOT=/usr/local/lib/android
+          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/21.4.7075529 $ANDROID_NDK_ROOT
+
       - name: build
         working-directory: ./src
         run: |
