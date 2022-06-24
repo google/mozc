@@ -103,7 +103,7 @@ genrule(
     ],
     outs = ["aux_dictionary.txt"],
     cmd = ("$(location //dictionary:gen_aux_dictionary) " +
-           "--output $@ " +
+           "--strict --output $@ " +
            "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     exec_tools = ["//dictionary:gen_aux_dictionary"],
