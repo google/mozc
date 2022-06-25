@@ -110,6 +110,16 @@ static const auto *kQtKeyModifierNonRequiredTable =
         {Qt::Key_Hiragana_Katakana, "Hiragana"},
         {Qt::Key_Eisu_toggle, "Eisu"},
         {Qt::Key_Zenkaku_Hankaku, "Hankaku/Zenkaku"},
+#ifdef OS_LINUX
+        // On Linux (X / Wayland), Hangul and Hanja are identical with
+        // ImeOn and ImeOff.
+        // https://github.com/google/mozc/issues/552
+        //
+        // Hangul == Lang1 (USB HID) / ImeOn (Windows) / Kana (macOS)
+        {Qt::Key_Hangul, "ON"},
+        // Hanja == Lang2 (USB HID) / ImeOff (Windows) / Eisu (macOS)
+        {Qt::Key_Hangul_Hanja, "OFF"},
+#endif  // OS_LINUX
     });
 
 #ifdef OS_WIN
