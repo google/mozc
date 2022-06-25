@@ -38,6 +38,9 @@ namespace {
 constexpr DWORD kFakeWindowsVersion = 0x12345678;
 DWORD WINAPI GetVersionHook() { return kFakeWindowsVersion; }
 
+// Suppress optimizations to avoid a test failure with some environments.
+// See b/236203361 for details.
+#pragma optimize("", off)
 TEST(WinAPITestHelperTest, BasicTest) {
   std::vector<WinAPITestHelper::HookRequest> requests;
   requests.push_back(DEFINE_HOOK("kernel32.dll", GetVersion, GetVersionHook));
@@ -51,6 +54,7 @@ TEST(WinAPITestHelperTest, BasicTest) {
 
   EXPECT_NE(GetVersion(), kFakeWindowsVersion);
 }
+#pragma optimize("", on)
 
 }  // namespace
 }  // namespace mozc

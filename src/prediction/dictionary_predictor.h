@@ -186,7 +186,7 @@ class DictionaryPredictor : public PredictorInterface {
   // and algorithms.
   void AggregateRealtimeConversion(const ConversionRequest &request,
                                    size_t realtime_candidates_size,
-                                   Segments *segments,
+                                   const Segments &segments,
                                    std::vector<Result> *results) const;
 
   void AggregateBigramPrediction(const ConversionRequest &request,
@@ -302,17 +302,17 @@ class DictionaryPredictor : public PredictorInterface {
   // Returns the bitfield that indicates what prediction subroutines
   // were used.  NO_PREDICTION means that no prediction was made.
   PredictionTypes AggregatePredictionForRequest(
-      const ConversionRequest &request, Segments *segments,
+      const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 
   PredictionTypes AggregatePrediction(const ConversionRequest &request,
                                       size_t realtime_max_size,
                                       const UnigramConfig &unigram_config,
-                                      Segments *segments,
+                                      const Segments &segments,
                                       std::vector<Result> *results) const;
 
   PredictionTypes AggregatePredictionForZeroQuery(
-      const ConversionRequest &request, Segments *segments,
+      const ConversionRequest &request, const Segments &segments,
       std::vector<Result> *results) const;
 
   bool AggregateNumberZeroQueryPrediction(const ConversionRequest &request,

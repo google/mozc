@@ -145,6 +145,8 @@ class ImmutableConverterMock : public ImmutableConverterInterface {
     candidate->PushBackInnerSegmentBoundary(15, 12, 9, 6);
   }
 
+  void SetConvertForRequest(const Segments &segments) { segments_ = segments; }
+
   bool ConvertForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
     *segments = segments_;
@@ -919,11 +921,11 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Short keys.
@@ -934,22 +936,22 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       composer_->SetInputMode(transliteration::HIRAGANA);
       EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_suggestion_, &segments, &results));
+                    *convreq_for_suggestion_, segments, &results));
 
       EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_prediction_, &segments, &results));
+                    *convreq_for_prediction_, segments, &results));
     } else {
       // Unigram is not triggered for SUGGESTION if key length is short.
       SetUpInputForSuggestion("てす", composer_.get(), &segments);
       composer_->SetInputMode(transliteration::HIRAGANA);
       EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_suggestion_, &segments, &results));
+                    *convreq_for_suggestion_, segments, &results));
 
       EXPECT_EQ(DictionaryPredictor::UNIGRAM,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_prediction_, &segments, &results));
+                    *convreq_for_prediction_, segments, &results));
     }
   }
 
@@ -959,7 +961,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // History is short => UNIGRAM
@@ -969,7 +971,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Both history and current segment are long => UNIGRAM or BIGRAM
@@ -981,7 +983,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
                   DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
                   is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Current segment is short
@@ -994,7 +996,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
                     DictionaryPredictor::REALTIME,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_suggestion_, &segments, &results));
+                    *convreq_for_suggestion_, segments, &results));
     } else {
       // No UNIGRAM.
       SetUpInputForSuggestionWithHistory("A", "てすとだよ", "abc",
@@ -1002,7 +1004,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       composer_->SetInputMode(transliteration::HIRAGANA);
       EXPECT_EQ(DictionaryPredictor::BIGRAM,
                 predictor->AggregatePredictionForRequest(
-                    *convreq_for_suggestion_, &segments, &results));
+                    *convreq_for_suggestion_, segments, &results));
     }
   }
 
@@ -1011,7 +1013,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     SetUpInputForSuggestion("ｐはよう", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
     const auto ret = predictor->AggregatePredictionForRequest(
-        *convreq_for_suggestion_, &segments, &results);
+        *convreq_for_suggestion_, segments, &results);
     EXPECT_EQ(0, DictionaryPredictor::TYPING_CORRECTION & ret);
   }
 
@@ -1038,21 +1040,21 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       request_->set_language_aware_input(
           commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
       auto type = predictor->AggregatePredictionForRequest(
-          *convreq_for_suggestion_, &segments, &results);
+          *convreq_for_suggestion_, segments, &results);
       EXPECT_EQ(0, DictionaryPredictor::ENGLISH & type);
 
       // Language aware input is off: No English prediction.
       request_->set_language_aware_input(
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is on: English prediction is included.
       request_->set_language_aware_input(
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(DictionaryPredictor::ENGLISH,
                 type & DictionaryPredictor::ENGLISH);
     }
@@ -1077,21 +1079,21 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       request_->set_language_aware_input(
           commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
       auto type = predictor->AggregatePredictionForRequest(
-          *convreq_for_suggestion_, &segments, &results);
+          *convreq_for_suggestion_, segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is off.
       request_->set_language_aware_input(
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is on.
       request_->set_language_aware_input(
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
     }
 
@@ -1126,11 +1128,11 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Short keys. In mobile, we trigger suggestion and prediction even for short
@@ -1141,11 +1143,11 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Zipcode-like keys.
@@ -1154,7 +1156,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // History is short => UNIGRAM
@@ -1164,7 +1166,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     composer_->SetInputMode(transliteration::HIRAGANA);
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Both history and current segment are long => UNIGRAM or BIGRAM
@@ -1175,7 +1177,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
                   DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // No matter if the current segment is short.
@@ -1186,7 +1188,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
                   DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       &segments, &results));
+                                                       segments, &results));
   }
 
   // Typing correction shouldn't be appended.
@@ -1194,7 +1196,7 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestion("ｐはよう", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
     const auto ret = predictor->AggregatePredictionForRequest(
-        *convreq_for_suggestion_, &segments, &results);
+        *convreq_for_suggestion_, segments, &results);
     EXPECT_EQ(0, DictionaryPredictor::TYPING_CORRECTION & ret);
   }
 
@@ -1221,21 +1223,21 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
       request_->set_language_aware_input(
           commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
       auto type = predictor->AggregatePredictionForRequest(
-          *convreq_for_suggestion_, &segments, &results);
+          *convreq_for_suggestion_, segments, &results);
       EXPECT_EQ(0, DictionaryPredictor::ENGLISH & type);
 
       // Language aware input is off: No English prediction.
       request_->set_language_aware_input(
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is on: English prediction is included.
       request_->set_language_aware_input(
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(DictionaryPredictor::ENGLISH,
                 type & DictionaryPredictor::ENGLISH);
     }
@@ -1260,21 +1262,21 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
       request_->set_language_aware_input(
           commands::Request::DEFAULT_LANGUAGE_AWARE_BEHAVIOR);
       auto type = predictor->AggregatePredictionForRequest(
-          *convreq_for_suggestion_, &segments, &results);
+          *convreq_for_suggestion_, segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is off.
       request_->set_language_aware_input(
           commands::Request::NO_LANGUAGE_AWARE_INPUT);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
 
       // Language aware input is on.
       request_->set_language_aware_input(
           commands::Request::LANGUAGE_AWARE_SUGGESTION);
       type = predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                      &segments, &results);
+                                                      segments, &results);
       EXPECT_EQ(0, type & DictionaryPredictor::ENGLISH);
     }
 
@@ -1333,25 +1335,25 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
     config_->set_use_realtime_conversion(false);
     EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::ENGLISH, is_mobile),
               predictor->AggregatePredictionForRequest(request_for_suggestion,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     config_->set_use_realtime_conversion(true);
     EXPECT_EQ(DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(request_for_suggestion,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     // When dictionary suggest is turned off, English prediction should be
     // disabled.
     config_->set_use_dictionary_suggest(false);
     EXPECT_EQ(DictionaryPredictor::NO_PREDICTION,
               predictor->AggregatePredictionForRequest(request_for_suggestion,
-                                                       &segments, &results));
+                                                       segments, &results));
 
     // Has realtime results for PARTIAL_SUGGESTION request.
     config_->set_use_dictionary_suggest(true);
     EXPECT_EQ(DictionaryPredictor::REALTIME,
               predictor->AggregatePredictionForRequest(
-                  request_for_partial_suggestion, &segments, &results));
+                  request_for_partial_suggestion, segments, &results));
   }
 }
 
@@ -1885,7 +1887,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
     convreq_->set_use_actual_converter_for_realtime_conversion(false);
 
     predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
-                                           &segments, &results);
+                                           segments, &results);
     ASSERT_EQ(1, results.size());
     EXPECT_EQ(TestableDictionaryPredictor::REALTIME, results[0].types);
     EXPECT_EQ(kKey, results[0].key);
@@ -1904,7 +1906,7 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
         true);
 
     predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
-                                           &segments, &results);
+                                           segments, &results);
 
     // When |request.use_actual_converter_for_realtime_conversion| is true, the
     // extra label REALTIME_TOP is expected to be added.
@@ -2423,8 +2425,8 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   std::vector<DictionaryPredictor::Result> results;
 
   convreq_->set_use_actual_converter_for_realtime_conversion(false);
-  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
-                                         &segments, &results);
+  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10, segments,
+                                         &results);
   ASSERT_EQ(2, results.size());
 
   EXPECT_EQ(DictionaryPredictor::REALTIME, results[0].types);
@@ -2470,7 +2472,7 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   constexpr char kKeyWithDe[] = "かぷりちょうざで";
   constexpr char kExpectedSuggestionValueWithDe[] = "カプリチョーザで";
   SetUpInputForSuggestion(kKeyWithDe, composer_.get(), &segments);
-  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 1, &segments,
+  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 1, segments,
                                          &results);
   EXPECT_EQ(1, results.size());
   EXPECT_EQ(results[0].types, DictionaryPredictor::REALTIME);
@@ -3275,8 +3277,8 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   InitSegmentsWithKey(kKey, &segments);
 
   std::vector<TestableDictionaryPredictor::Result> results;
-  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10,
-                                         &segments, &results);
+  predictor->AggregateRealtimeConversion(*convreq_for_suggestion_, 10, segments,
+                                         &results);
 
   // mock results
   EXPECT_EQ(1, results.size());
@@ -3432,14 +3434,14 @@ TEST_F(DictionaryPredictorTest, EnrichPartialCandidates) {
   request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
       false);
   EXPECT_FALSE(predictor->AggregatePredictionForRequest(
-                   *convreq_for_prediction_, &segments, &results) &
+                   *convreq_for_prediction_, segments, &results) &
                DictionaryPredictor::PREFIX);
 
   results.clear();
   request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
       true);
   EXPECT_TRUE(predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       &segments, &results) &
+                                                       segments, &results) &
               DictionaryPredictor::PREFIX);
 }
 
@@ -3723,6 +3725,121 @@ TEST_F(DictionaryPredictorTest, UsageStats) {
       &segments);
   predictor->Finish(*convreq_, &segments);
   EXPECT_COUNT_STATS("CommitDictionaryPredictorZeroQueryTypeSuffix", 1);
+}
+
+// b/235917071
+TEST_F(DictionaryPredictorTest, DoNotModifyHistorySegment) {
+  testing::MockDataManager data_manager;
+  const DictionaryMock dictionary;
+  ConverterMock converter;
+  ImmutableConverterMock immutable_converter;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
+      CreateSuffixDictionaryFromDataManager(data_manager));
+  std::unique_ptr<const Connector> connector =
+      Connector::CreateFromDataManager(data_manager).value();
+  std::unique_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
+      CreateSuggestionFilter(data_manager));
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+
+  {
+    // Set up mock immutable converter.
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "key_can_be_modified";
+    candidate->value = "history_value";
+
+    segment = segments.add_segment();
+    candidate = segment->add_candidate();
+    candidate->value = "conversion_result";
+    immutable_converter.SetConvertForRequest(segments);
+  }
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
+      new TestableDictionaryPredictor(
+          data_manager, &converter, &immutable_converter, &dictionary,
+          suffix_dictionary.get(), connector.get(), segmenter.get(),
+          &pos_matcher, suggestion_filter.get()));
+
+  Segments segments;
+  config_->set_use_dictionary_suggest(true);
+  config_->set_use_realtime_conversion(true);
+  request_->set_mixed_conversion(true);
+
+  Segment *seg = segments.add_segment();
+  seg->set_segment_type(Segment::HISTORY);
+  Segment::Candidate *candidate = seg->add_candidate();
+  candidate->key = "103";
+  candidate->value = "103";
+  seg = segments.add_segment();
+  seg->set_key("てすと");
+
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_EQ(1, segments.history_segments_size());
+  EXPECT_EQ(1, segments.history_segment(0).candidates_size());
+  EXPECT_EQ("103", segments.history_segment(0).candidate(0).key);
+  EXPECT_EQ("103", segments.history_segment(0).candidate(0).value);
+}
+
+TEST_F(DictionaryPredictorTest, SetCostForRaltimeTopCandidate) {
+  testing::MockDataManager data_manager;
+  const DictionaryMock dictionary;
+  ConverterMock converter;
+  ImmutableConverterMock immutable_converter;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
+      CreateSuffixDictionaryFromDataManager(data_manager));
+  std::unique_ptr<const Connector> connector =
+      Connector::CreateFromDataManager(data_manager).value();
+  std::unique_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
+      CreateSuggestionFilter(data_manager));
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+
+  {
+    // Set up mock converter (for REALTIME_TOP).
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "あいう";
+    candidate->value = "会いう";
+    candidate->wcost = 100;
+    candidate->cost = 300;
+    converter.SetStartConversionForRequest(&segments, true);
+  }
+  {
+    // Set up mock immutable converter (for REALTIME).
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "あいうえ";
+    candidate->value = "会いうえ";
+    candidate->wcost = 1000;
+    candidate->cost = 3000;
+    immutable_converter.SetConvertForRequest(segments);
+  }
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
+      new TestableDictionaryPredictor(
+          data_manager, &converter, &immutable_converter, &dictionary,
+          suffix_dictionary.get(), connector.get(), segmenter.get(),
+          &pos_matcher, suggestion_filter.get()));
+
+  Segments segments;
+  request_->set_mixed_conversion(false);
+  convreq_for_suggestion_->set_use_actual_converter_for_realtime_conversion(
+      true);
+
+  Segment *seg = segments.add_segment();
+  seg->set_key("あいう");
+
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_suggestion_, &segments));
+  EXPECT_EQ(1, segments.segments_size());
+  EXPECT_EQ(2, segments.segment(0).candidates_size());
+  EXPECT_EQ("会いう", segments.segment(0).candidate(0).value);
 }
 
 }  // namespace mozc

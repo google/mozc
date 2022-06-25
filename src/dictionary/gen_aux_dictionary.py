@@ -42,6 +42,7 @@ gen_aux_dictionary.py --output aux_dictionary.txt
 """
 
 import argparse
+import sys
 
 
 class Dictionary():
@@ -77,7 +78,7 @@ class Dictionary():
 
   def GetDataList(self, key, value):
     data_key = '\t'.join([key, value])
-    return self.data[data_key]
+    return self.data.get(data_key)
 
 
 class AuxDictionary():
@@ -87,14 +88,23 @@ class AuxDictionary():
     self.dictionary = dictionary
     self.aux_list = []
 
-  def Parse(self, aux_tsv):
+  def Parse(self, aux_tsv, strict=False):
     """Parses the file and update aux_list."""
     for line in open(aux_tsv, encoding='utf-8'):
       if line.startswith('#'):
         continue
       key, value, base_key, base_value, cost_offset = line.rstrip().split('\t')
-      for data in self.dictionary.GetDataList(base_key, base_value):
-        base_lid, base_rid, base_cost = data
+      data_list = self.dictionary.GetDataList(base_key, base_value)
+      if not data_list:
+        message = '%s and %s are not in the dictionary' % (base_key, base_value)
+        if strict:
+          print('Error: ' + message, file=sys.stderr)
+          sys.exit(1)
+        else:
+          print('Warning: ' + message, file=sys.stderr)
+          continue
+
+      for base_lid, base_rid, base_cost in data_list:
         if self.dictionary.Exists(key, value, base_lid, base_rid):
           # Not overwrite the existing entry.
           continue
@@ -112,13 +122,14 @@ def main():
   parser.add_argument('--aux_tsv')
   parser.add_argument('--dictionary_txts', nargs='+')
   parser.add_argument('--output')
+  parser.add_argument('--strict', action='store_true')
   args = parser.parse_args()
 
   dictionary = Dictionary()
   dictionary.Parse(args.dictionary_txts)
 
   aux = AuxDictionary(dictionary)
-  aux.Parse(args.aux_tsv)
+  aux.Parse(args.aux_tsv, strict=args.strict)
   aux.WriteFile(args.output)
 
 

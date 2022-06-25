@@ -203,11 +203,9 @@ size_t GetDefaultSizeForRealtimeCandidates(bool is_long_key) {
 }
 
 ConversionRequest GetConversionRequestForRealtimeCandidates(
-    const ConversionRequest &request, size_t realtime_candidates_size,
-    size_t current_candidates_size) {
+    const ConversionRequest &request, size_t realtime_candidates_size) {
   ConversionRequest ret = request;
-  ret.set_max_conversion_candidates_size(current_candidates_size +
-                                         realtime_candidates_size);
+  ret.set_max_conversion_candidates_size(realtime_candidates_size);
   return ret;
 }
 
@@ -556,7 +554,7 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
   // conversion, meaning that results may include the candidates whose
   // key is exactly the same as the composition.  This mode is used in mobile.
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
-  AggregatePredictionForRequest(request, segments, &results);
+  AggregatePredictionForRequest(request, *segments, &results);
   if (results.empty()) {
     return false;
   }
@@ -589,13 +587,13 @@ bool DictionaryPredictor::PredictForRequest(const ConversionRequest &request,
 
 DictionaryPredictor::PredictionTypes
 DictionaryPredictor::AggregatePredictionForRequest(
-    const ConversionRequest &request, Segments *segments,
+    const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   const bool is_mixed_conversion = IsMixedConversionEnabled(request.request());
   // In mixed conversion mode, the number of real time candidates is increased.
   const size_t realtime_max_size =
-      GetRealtimeCandidateMaxSize(request, *segments, is_mixed_conversion);
-  const auto &unigram_config = GetUnigramConfig(request, *segments);
+      GetRealtimeCandidateMaxSize(request, segments, is_mixed_conversion);
+  const auto &unigram_config = GetUnigramConfig(request, segments);
 
   return AggregatePrediction(request, realtime_max_size, unigram_config,
                              segments, results);
@@ -632,17 +630,16 @@ DictionaryPredictor::UnigramConfig DictionaryPredictor::GetUnigramConfig(
 
 DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
     const ConversionRequest &request, size_t realtime_max_size,
-    const UnigramConfig &unigram_config, Segments *segments,
+    const UnigramConfig &unigram_config, const Segments &segments,
     std::vector<Result> *results) const {
-  DCHECK(segments);
   DCHECK(results);
 
   // Zero query prediction.
-  if (segments->conversion_segment(0).key().empty()) {
+  if (segments.conversion_segment(0).key().empty()) {
     return AggregatePredictionForZeroQuery(request, segments, results);
   }
 
-  const std::string &key = segments->conversion_segment(0).key();
+  const std::string &key = segments.conversion_segment(0).key();
   const size_t key_len = Util::CharsLen(key);
 
   // TODO(toshiyuki): Check if we can remove this SUGGESTION check.
@@ -660,7 +657,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
   }
 
   PredictionTypes selected_types = NO_PREDICTION;
-  if (ShouldAggregateRealTimeConversionResults(request, *segments)) {
+  if (ShouldAggregateRealTimeConversionResults(request, segments)) {
     AggregateRealtimeConversion(request, realtime_max_size, segments, results);
     selected_types |= REALTIME;
   }
@@ -674,14 +671,14 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
   const size_t min_unigram_key_len = unigram_config.min_key_len;
   if (key_len >= min_unigram_key_len) {
     const auto &unigram_fn = unigram_config.unigram_fn;
-    PredictionType type = (this->*unigram_fn)(request, *segments, results);
+    PredictionType type = (this->*unigram_fn)(request, segments, results);
     selected_types |= type;
   }
 
   // Add bigram candidates.
   constexpr int kMinHistoryKeyLen = 3;
-  if (HasHistoryKeyLongerThanOrEqualTo(*segments, kMinHistoryKeyLen)) {
-    AggregateBigramPrediction(request, *segments,
+  if (HasHistoryKeyLongerThanOrEqualTo(segments, kMinHistoryKeyLen)) {
+    AggregateBigramPrediction(request, segments,
                               Segment::Candidate::SOURCE_INFO_NONE, results);
     selected_types |= BIGRAM;
   }
@@ -689,7 +686,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
   // Add english candidates.
   if (IsLanguageAwareInputEnabled(request) && IsQwertyMobileTable(request) &&
       key_len >= min_unigram_key_len) {
-    AggregateEnglishPredictionUsingRawInput(request, *segments, results);
+    AggregateEnglishPredictionUsingRawInput(request, segments, results);
     selected_types |= ENGLISH;
   }
 
@@ -697,12 +694,12 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
   constexpr int kMinTypingCorrectionKeyLen = 3;
   if (IsTypingCorrectionEnabled(request) &&
       key_len >= kMinTypingCorrectionKeyLen) {
-    AggregateTypeCorrectingPrediction(request, *segments, results);
+    AggregateTypeCorrectingPrediction(request, segments, results);
     selected_types |= TYPING_CORRECTION;
   }
 
   if (ShouldEnrichPartialCandidates(request)) {
-    AggregatePrefixCandidates(request, *segments, results);
+    AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
   }
 
@@ -940,9 +937,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
 DictionaryPredictor::PredictionTypes
 DictionaryPredictor::AggregatePredictionForZeroQuery(
-    const ConversionRequest &request, Segments *segments,
+    const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
-  DCHECK(segments);
   DCHECK(results);
 
   if (!request.request().zero_query_suggestion()) {
@@ -952,15 +948,15 @@ DictionaryPredictor::AggregatePredictionForZeroQuery(
 
   PredictionTypes selected_types = NO_PREDICTION;
   constexpr int kMinHistoryKeyLenForZeroQuery = 2;
-  if (HasHistoryKeyLongerThanOrEqualTo(*segments,
+  if (HasHistoryKeyLongerThanOrEqualTo(segments,
                                        kMinHistoryKeyLenForZeroQuery)) {
     AggregateBigramPrediction(
-        request, *segments,
+        request, segments,
         Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_BIGRAM, results);
     selected_types |= BIGRAM;
   }
-  if (segments->history_segments_size() > 0) {
-    AggregateZeroQuerySuffixPrediction(request, *segments, results);
+  if (segments.history_segments_size() > 0) {
+    AggregateZeroQuerySuffixPrediction(request, segments, results);
     selected_types |= SUFFIX;
   }
   return selected_types;
@@ -1036,7 +1032,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   }
 
   if (!(result.types & REALTIME)) {
-    // Relatime conversion already adds perfix/suffix penalties to the result.
+    // Relatime conversion already adds prefix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
     // ambiguous on zero-query suggestion.
     lm_cost += segmenter_->GetSuffixPenalty(result.rid);
@@ -1169,7 +1165,6 @@ void DictionaryPredictor::SetPredictionCost(
     ConversionRequest::RequestType request_type, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-
   int rid = 0;  // 0 (BOS) is default
   if (segments.history_segments_size() > 0) {
     const Segment &history_segment =
@@ -1204,7 +1199,6 @@ void DictionaryPredictor::SetPredictionCost(
     // minimum cost for REALTIME. Just remember the pointer of result.
     if (result.types & REALTIME_TOP) {
       realtime_top_result = &results->at(i);
-      continue;
     }
 
     const int cost = GetLMCost(result, rid);
@@ -1619,7 +1613,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
     const Segment &segment = tmp_segments.conversion_segment(i);
     const Segment::Candidate &candidate = segment.candidate(0);
     result->value.append(candidate.value);
-    result->wcost += candidate.cost;
+    result->wcost += candidate.wcost;
 
     uint32_t encoded_lengths;
     if (inner_segment_boundary_success &&
@@ -1641,21 +1635,14 @@ bool DictionaryPredictor::PushBackTopConversionResult(
 
 void DictionaryPredictor::AggregateRealtimeConversion(
     const ConversionRequest &request, size_t realtime_candidates_size,
-    Segments *segments, std::vector<Result> *results) const {
+    const Segments &segments, std::vector<Result> *results) const {
   DCHECK(converter_);
   DCHECK(immutable_converter_);
-  DCHECK(segments);
   DCHECK(results);
-
-  // TODO(noriyukit): Currently, |segments| is abused as a temporary output from
-  // the immutable converter. Therefore, the first segment needs to be mutable.
-  // Fix this bad abuse.
-  Segment *segment = segments->mutable_conversion_segment(0);
-  DCHECK(!segment->key().empty());
 
   // First insert a top conversion result.
   if (request.use_actual_converter_for_realtime_conversion()) {
-    if (!PushBackTopConversionResult(request, *segments, results)) {
+    if (!PushBackTopConversionResult(request, segments, results)) {
       LOG(WARNING) << "Realtime conversion with converter failed";
     }
   }
@@ -1663,32 +1650,23 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   if (realtime_candidates_size == 0) {
     return;
   }
-  // In what follows, add results from immutable converter.
-  // TODO(noriyukit): The |immutable_converter_| used below can be replaced by
-  // |converter_| in principle.  There's a problem of ranking when we get
-  // multiple segments, i.e., how to concatenate candidates in each segment.
-  // Currently, immutable converter handles such ranking in prediction mode to
-  // generate single segment results. So we want to share that code.
-
-  // Preserve the current candidates_size to restore segments at the end of this
-  // method.
-  const size_t prev_candidates_size = segment->candidates_size();
 
   const ConversionRequest request_for_realtime =
-      GetConversionRequestForRealtimeCandidates(
-          request, realtime_candidates_size, prev_candidates_size);
+      GetConversionRequestForRealtimeCandidates(request,
+                                                realtime_candidates_size);
+  Segments tmp_segments = segments;
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
-                                               segments) ||
-      prev_candidates_size >= segment->candidates_size()) {
+                                               &tmp_segments) ||
+      tmp_segments.conversion_segments_size() == 0 ||
+      tmp_segments.conversion_segment(0).candidates_size() == 0) {
     LOG(WARNING) << "Convert failed";
     return;
   }
 
-  // A little tricky treatment:
-  // Since ImmutableConverter::Convert creates a set of new candidates,
-  // copy them into the array of Results.
-  for (size_t i = prev_candidates_size; i < segment->candidates_size(); ++i) {
-    const Segment::Candidate &candidate = segment->candidate(i);
+  // Copy candidates into the array of Results.
+  const Segment segment = tmp_segments.conversion_segment(0);
+  for (size_t i = 0; i < segment.candidates_size(); ++i) {
+    const Segment::Candidate &candidate = segment.candidate(i);
     results->push_back(Result());
     Result *result = &results->back();
     result->key = candidate.key;
@@ -1701,9 +1679,6 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     result->candidate_attributes |= candidate.attributes;
     result->consumed_key_size = candidate.consumed_key_size;
   }
-  // Remove candidates created by ImmutableConverter.
-  segment->erase_candidates(prev_candidates_size,
-                            segment->candidates_size() - prev_candidates_size);
 }
 
 size_t DictionaryPredictor::GetCandidateCutoffThreshold(
