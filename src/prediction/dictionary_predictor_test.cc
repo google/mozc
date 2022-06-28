@@ -1400,6 +1400,7 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
   mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "aaa",
                                 Token::USER_DICTIONARY);
 
+  constexpr int kZipcodeId = 100;
   constexpr int kUnknownId = 100;
   mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaAA, "bbb", 0, kUnknownId,
                                 kUnknownId, Token::USER_DICTIONARY);
@@ -1420,7 +1421,8 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
 
     std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
-        mock_dict, *convreq_for_prediction_, segments, kUnknownId, &results);
+        mock_dict, *convreq_for_prediction_, segments, kZipcodeId, kUnknownId,
+        &results);
 
     // Check if "aaa" is not filtered.
     auto iter =
@@ -1451,7 +1453,8 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
 
     std::vector<DictionaryPredictor::Result> results;
     DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
-        mock_dict, *convreq_for_prediction_, segments, kUnknownId, &results);
+        mock_dict, *convreq_for_prediction_, segments, kZipcodeId, kUnknownId,
+        &results);
 
     // Check if "aaa" is not found as its key is あ.
     auto iter =
@@ -3842,4 +3845,63 @@ TEST_F(DictionaryPredictorTest, SetCostForRaltimeTopCandidate) {
   EXPECT_EQ("会いう", segments.segment(0).candidate(0).value);
 }
 
+TEST_F(DictionaryPredictorTest, DoNotAggregateZipcodeEntries) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  const PosMatcher &pos_matcher = data_and_predictor->pos_matcher();
+  DictionaryMock *mock = data_and_predictor->mutable_dictionary();
+  mock->AddLookupPredictive("101", "101-0001", "東京都千代田", 100 /* cost */,
+                            pos_matcher.GetZipcodeId(),
+                            pos_matcher.GetZipcodeId(), Token::NONE);
+  Segments segments;
+
+  SetUpInputForSuggestion("101", composer_.get(), &segments);
+
+  std::vector<DictionaryPredictor::Result> results;
+
+  predictor->AggregatePredictionForRequest(*convreq_for_prediction_, segments,
+                                           &results);
+  EXPECT_FALSE(FindResultByValue(results, "東京都千代田"));
+}
+
+TEST_F(DictionaryPredictorTest,
+       DoNotFilterExactUnigramForEnrichPartialCandidates) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  DictionaryMock *mock = data_and_predictor->mutable_dictionary();
+  // Exact entries
+  for (int i = 0; i < 30; ++i) {
+    mock->AddLookupPredictive("てすと", "てすと", absl::StrCat(i, "テストE"),
+                              5000 + i, 0, 0, Token::NONE);
+  }
+  // Predictive entries
+  for (int i = 0; i < 30; ++i) {
+    mock->AddLookupPredictive("てすと", "てすとて", absl::StrCat(i, "テストP"),
+                              100 + i, 0, 0, Token::NONE);
+  }
+
+  Segments segments;
+  SetUpInputForSuggestion("てすと", composer_.get(), &segments);
+
+  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  int exact_count = 0;
+  for (int i = 0; i < segments.segment(0).candidates_size(); ++i) {
+    const auto candidate = segments.segment(0).candidate(i);
+    if (absl::StrContains(candidate.value, "テストE")) {
+      exact_count++;
+    }
+  }
+  EXPECT_EQ(30, exact_count);
+}
 }  // namespace mozc
