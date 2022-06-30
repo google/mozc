@@ -845,12 +845,12 @@ objc_library_mozc(
     name = "mac_process",
     srcs = select_mozc(macos = ["mac_process.mm"]),
     hdrs = select_mozc(macos = ["mac_process.h"]),
-    sdk_frameworks = ["Cocoa"],
     deps = [
         ":const",
         ":logging",
         ":mac_util",
         ":util",
+        "//third_party/apple_frameworks:Cocoa",
     ],
 )
 
@@ -1385,17 +1385,15 @@ objc_library_mozc(
         "scoped_cftyperef.h",
     ],
     hdrs = ["mac_util.h"],
-    sdk_frameworks = [
-        "CoreGraphics",
-        "CoreServices",
-        "IOKit",
-    ],
     visibility = ["//:__subpackages__"],
     deps = [
         ":const",
         ":logging",
         ":port",
         ":singleton",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreServices",
+        "//third_party/apple_frameworks:IOKit",
         "@com_google_absl//absl/strings",
     ],
 )

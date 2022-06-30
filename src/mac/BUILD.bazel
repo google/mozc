@@ -91,7 +91,6 @@ objc_library_mozc(
 objc_library_mozc(
     name = "mozc_macos_main_lib",
     srcs = ["main.mm"],
-    sdk_frameworks = ["InputMethodKit"],
     tags = ["manual"],
     deps = [
         ":imk_controller",
@@ -103,6 +102,7 @@ objc_library_mozc(
         "//base:run_level",
         "//client",
         "//config:stats_config_util",
+        "//third_party/apple_frameworks:InputMethodKit",
         "@com_google_absl//absl/flags:flag",
     ],
 )
@@ -150,7 +150,6 @@ objc_test_mozc(
     name = "imk_controller_test",
     srcs = ["GoogleJapaneseInputController_test.mm"],
     proto_deps = ["//protocol:candidates_cc_proto"],
-    sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_controller",
         ":keycode_map",
@@ -160,6 +159,7 @@ objc_test_mozc(
         "//client:client_mock",
         "//renderer:renderer_interface",
         "//testing:gunit_main",
+        "//third_party/apple_frameworks:InputMethodKit",
     ],
 )
 
@@ -181,10 +181,10 @@ objc_test_mozc(
     name = "imk_server_test",
     srcs = ["GoogleJapaneseInputServer_test.mm"],
     proto_deps = ["//protocol:commands_cc_proto"],
-    sdk_frameworks = ["InputMethodKit"],
     deps = [
         ":imk_server",
         "//testing:gunit_main",
+        "//third_party/apple_frameworks:InputMethodKit",
     ],
 )
 
@@ -208,12 +208,10 @@ objc_library_mozc(
 objc_test_mozc(
     name = "keycode_map_test",
     srcs = ["KeyCodeMap_test.mm"],
-    sdk_frameworks = [
-        "AppKit",
-    ],
     deps = [
         ":keycode_map",
         "//testing:gunit_main",
+        "//third_party/apple_frameworks:AppKit",
     ],
 )
 
@@ -256,11 +254,11 @@ objc_library_mozc(
     srcs = ["ActivatePane/ActivatePane.mm"],
     hdrs = ["ActivatePane/ActivatePane.h"],
     data = ["ActivatePane/ActivatePane.xib"],
-    sdk_frameworks = [
-        "Carbon",
-        "InstallerPlugins",
-    ],
     tags = ["manual"],
+    deps = [
+        "//third_party/apple_frameworks:Carbon",
+        "//third_party/apple_frameworks:InstallerPlugins",
+    ],
 )
 
 macos_bundle_mozc(
@@ -279,11 +277,11 @@ objc_library_mozc(
     srcs = ["DevConfirmPane/DevConfirmPane.mm"],
     hdrs = ["DevConfirmPane/DevConfirmPane.h"],
     data = ["DevConfirmPane/DevConfirmPane.xib"],
-    sdk_frameworks = [
-        "Carbon",
-        "InstallerPlugins",
-    ],
     tags = ["manual"],
+    deps = [
+        "//third_party/apple_frameworks:Carbon",
+        "//third_party/apple_frameworks:InstallerPlugins",
+    ],
 )
 
 macos_bundle_mozc(
@@ -312,16 +310,14 @@ objc_library_mozc(
         "Uninstaller/English.lproj/Dialogs.xib",
         "Uninstaller/Japanese.lproj/Dialogs.xib",
     ],
-    sdk_frameworks = [
-        "Carbon",
-        "Security",
-    ],
     tags = ["manual"],
     deps = [
         "//base:init_mozc",
         "//base:mac_util",
         "//base:url",
         "//base:version",
+        "//third_party/apple_frameworks:Carbon",
+        "//third_party/apple_frameworks:Security",
     ],
 )
 
