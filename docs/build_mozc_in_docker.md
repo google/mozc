@@ -85,6 +85,15 @@ environment, you might need to modify the following files.
 * src/config.bzl - configuration of install paths, etc.
 * src/.bazelrc - compiler flags, etc.
 
+Tips: the following command makes the specified file untracked by Git.
+```
+git update-index --assume-unchanged src/config.bzl
+```
+
+This command reverts the above change.
+```
+git update-index --no-assume-unchanged src/config.bzl
+```
 
 ## Build Mozc library for Android:
 

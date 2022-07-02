@@ -27,6 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Tips: the following git command makes git assume this file unchanged.
+# % git update-index --assume-unchanged config.bzl
+#
+# The following command reverts it.
+# % git update-index --no-assume-unchanged config.bzl
+
 BRANDING = "Mozc"
 
 LINUX_MOZC_BROWSER_COMMAND = "/usr/bin/xdg-open"
