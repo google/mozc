@@ -74,7 +74,13 @@ new_local_repository(
     path = "third_party/japanese_usage_dictionary",
 )
 
-# Qt
+# Qt for Linux
+pkg_config_repository(
+  name = "qt_linux",
+  packages = ["Qt5Core", "Qt5Gui", "Qt5Widgets"],
+)
+
+# Qt for macOS
 new_local_repository(
     name = "io_qt",
     build_file = "BUILD.qt.bazel",

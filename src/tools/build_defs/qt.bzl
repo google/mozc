@@ -49,7 +49,7 @@ def cc_qt_library_mozc(name, deps = [], **kwargs):
         name = name,
         deps = deps + select_mozc(
             default = ["//third_party/qt:qt_native"],
-            oss_linux = ["@io_qt//:qt"],
+            oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@io_qt//:qt_mac"],
         ),
         **kwargs
@@ -60,7 +60,7 @@ def cc_qt_binary_mozc(name, deps = [], **kwargs):
         name = name,
         deps = deps + select_mozc(
             default = ["//third_party/qt:qt_native"],
-            oss_linux = ["@io_qt//:qt"],
+            oss_linux = ["@qt_linux//:qt_linux"],
             oss_macos = ["@io_qt//:qt_mac"],
         ),
         **kwargs
@@ -73,11 +73,13 @@ def qt_moc_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
-            oss = paths.join(QT_BIN_PATH, "moc") + " -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_macos = paths.join(QT_BIN_PATH, "moc") + " -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:moc"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/moc"],
+            oss_macos = [],
         ),
     )
 
@@ -88,11 +90,13 @@ def qt_uic_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
-            oss = paths.join(QT_BIN_PATH, "uic") + " -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:bin/uic) -o $@ $(SRCS)",
+            oss_macos = paths.join(QT_BIN_PATH, "uic") + " -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:uic"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/uic"],
+            oss_macos = [],
         ),
     )
 
@@ -103,11 +107,13 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
-            oss = paths.join(QT_BIN_PATH, "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_linux = "$(location @qt_linux//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_macos = paths.join(QT_BIN_PATH, "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:rcc"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/rcc"],
+            oss_macos = [],
         ),
     )
 

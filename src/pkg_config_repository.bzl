@@ -74,6 +74,10 @@ cc_library(
 )
 """
 
+EXPORTS_FILES_TEMPLATE = """
+exports_files(glob(["bin/*"]))
+"""
+
 def _exec_pkg_config(repo_ctx, flag):
     binary = repo_ctx.which("pkg-config")
     result = repo_ctx.execute([binary, flag] + repo_ctx.attr.packages)
@@ -86,6 +90,8 @@ def _make_strlist(list):
 
 def _symlinks(repo_ctx, paths):
     for path in paths:
+        if repo_ctx.path(path).exists:
+            continue
         repo_ctx.symlink("/" + path, path)
 
 def _pkg_config_repository_impl(repo_ctx):
@@ -99,7 +105,15 @@ def _pkg_config_repository_impl(repo_ctx):
         "includes": _make_strlist(includes),
         "linkopts": _make_strlist(_exec_pkg_config(repo_ctx, "--libs-only-l")),
     }
-    repo_ctx.file("BUILD.bazel", BUILD_TEMPLATE.format(**data))
+    build_file_data = BUILD_TEMPLATE.format(**data)
+
+    # host_bins
+    host_bins = _exec_pkg_config(repo_ctx, "--variable=host_bins")
+    if len(host_bins) == 1:
+        repo_ctx.symlink(host_bins[0], "bin")
+        build_file_data += EXPORTS_FILES_TEMPLATE
+
+    repo_ctx.file("BUILD.bazel", build_file_data)
 
 pkg_config_repository = repository_rule(
     implementation = _pkg_config_repository_impl,
