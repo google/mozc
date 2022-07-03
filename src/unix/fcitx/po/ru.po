@@ -3,15 +3,16 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Dmitry <dmitrydmitry761@gmail.com>, 2022
 # TotalCaesar659 <x24cm5b8c54q6szxw@yandex.ru>, 2016
 # TotalCaesar659 <x24cm5b8c54q6szxw@yandex.ru>, 2016
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-06-02 20:29+0000\n"
+"POT-Creation-Date: 2022-07-03 19:07+0000\n"
 "PO-Revision-Date: 2012-03-06 06:51+0000\n"
-"Last-Translator: TotalCaesar659 <x24cm5b8c54q6szxw@yandex.ru>, 2016\n"
+"Last-Translator: Dmitry <dmitrydmitry761@gmail.com>, 2022\n"
 "Language-Team: Russian (http://www.transifex.com/fcitx/fcitx/language/ru/)\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -75,7 +76,7 @@ msgstr "Добавить слово"
 
 #: ../fcitx_mozc.cc:494
 msgid "About Mozc"
-msgstr "О "
+msgstr "О Mozc"
 
 #: ../mozc_response_parser.cc:365
 msgid "Press Ctrl+Alt+H to show usages."
