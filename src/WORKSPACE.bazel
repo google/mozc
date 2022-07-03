@@ -8,12 +8,15 @@ load(
 )
 load("//:config.bzl", "QT_BASE_PATH")
 
-# This rule refers to $ANDROID_SDK_HOME.
-android_sdk_repository(name = "androidsdk")
-
-# Android NDK version should be r11c+ for Abseil.
+# Android NDK setup
 # This rule refers to $ANDROID_NDK_HOME.
-android_ndk_repository(name = "androidndk")
+# If native.android_ndk_repository is called directly,
+# Android NDK should be available in the build environment.
+# https://github.com/bazelbuild/bazel/issues/14260
+load("//:android_repository.bzl", "android_repository")
+android_repository(name = "android_repository")
+load("@android_repository//:setup.bzl", "android_ndk_setup")
+android_ndk_setup()
 
 local_repository(
     name = "com_google_absl",
