@@ -53,20 +53,18 @@ new_local_repository(
     path = "third_party/gtest",
 )
 
+load("//:pkg_config_repository.bzl", "pkg_config_repository")
+
 # Gtk2
-new_local_repository(
-    name = "gtk2",
-    build_file = "BUILD.gtk2.bazel",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
+pkg_config_repository(
+  name = "gtk2",
+  packages = ["glib-2.0", "gobject-2.0", "gthread-2.0", "gtk+-2.0", "gdk-2.0"],
 )
 
 # iBus
-new_local_repository(
-    name = "ibus",
-    build_file = "BUILD.ibus.bazel",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
+pkg_config_repository(
+  name = "ibus",
+  packages = ["glib-2.0", "gobject-2.0", "ibus-1.0"],
 )
 
 # Japanese Usage Dictionary
