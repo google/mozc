@@ -27,6 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Tips: the following git command makes git assume this file unchanged.
+# % git update-index --assume-unchanged config.bzl
+#
+# The following command reverts it.
+# % git update-index --no-assume-unchanged config.bzl
+
 BRANDING = "Mozc"
 
 LINUX_MOZC_BROWSER_COMMAND = "/usr/bin/xdg-open"
@@ -39,11 +45,10 @@ IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
 MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
 MACOS_MIN_OS_VER = "10.12"
 
-## Qt paths
-QT_BASE_PATH = "/usr/include/x86_64-linux-gnu/qt5"  # For Debian
-QT_BIN_PATH = "/usr/bin/"
-
-## For macOS
-# This path is the default path of Qt 5.15.2 installed by "make install".
-# QT_BASE_PATH = "/usr/local/Qt-5.15.2"
-# QT_BIN_PATH = QT_BASE_PATH + "/bin/"
+## Qt path for macOS
+# The paths are the default paths of Qt 5.15.2 installed by "make install".
+#
+# If MOZC_QT_PATH env var is specified, it is used for MACOS_QT_PATH instead.
+#
+# For Linux, Qt paths are managed by pkg_config_repository in WORKSPACE.bazel.
+MACOS_QT_PATH = "/usr/local/Qt-5.15.2"

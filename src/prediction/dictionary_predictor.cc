@@ -246,7 +246,7 @@ class DictionaryPredictor::PredictiveLookupCallback
                            size_t limit, size_t original_key_len,
                            const std::set<std::string> *subsequent_chars,
                            Segment::Candidate::SourceInfo source_info,
-                           int unknown_id,
+                           int zip_code_id, int unknown_id,
                            absl::string_view non_expanded_original_key,
                            const SpatialCostParams &spatial_cost_params,
                            std::vector<DictionaryPredictor::Result> *results)
@@ -256,6 +256,7 @@ class DictionaryPredictor::PredictiveLookupCallback
         original_key_len_(original_key_len),
         subsequent_chars_(subsequent_chars),
         source_info_(source_info),
+        zip_code_id_(zip_code_id),
         unknown_id_(unknown_id),
         non_expanded_original_key_(non_expanded_original_key),
         spatial_cost_params_(spatial_cost_params),
@@ -308,8 +309,11 @@ class DictionaryPredictor::PredictiveLookupCallback
     // exactly match |key|.  Otherwise, unigram suggestion can be annoying.  For
     // example, suppose a user registers their email address as める.  Then,
     // we don't want to show the email address from め but exactly from める.
-    if ((token.attributes & Token::USER_DICTIONARY) != 0 &&
-        token.lid == unknown_id_) {
+    //
+    // We also want to show ZIP_CODE entries only for the exact input key.
+    if (((token.attributes & Token::USER_DICTIONARY) != 0 &&
+         token.lid == unknown_id_) ||
+        token.lid == zip_code_id_) {
       const auto orig_key = absl::ClippedSubstr(key, 0, original_key_len_);
       if (token.key != orig_key) {
         return TRAVERSE_CONTINUE;
@@ -329,6 +333,7 @@ class DictionaryPredictor::PredictiveLookupCallback
   const size_t original_key_len_;
   const std::set<std::string> *subsequent_chars_;
   const Segment::Candidate::SourceInfo source_info_;
+  const int zip_code_id_;
   const int unknown_id_;
   absl::string_view non_expanded_original_key_;
   const SpatialCostParams spatial_cost_params_;
@@ -342,14 +347,14 @@ class DictionaryPredictor::PredictiveBigramLookupCallback
       DictionaryPredictor::PredictionTypes types, size_t limit,
       size_t original_key_len, const std::set<std::string> *subsequent_chars,
       absl::string_view history_value,
-      Segment::Candidate::SourceInfo source_info, int unknown_id,
-      absl::string_view non_expanded_original_key,
+      Segment::Candidate::SourceInfo source_info, int zip_code_id,
+      int unknown_id, absl::string_view non_expanded_original_key,
       const SpatialCostParams spatial_cost_params,
       std::vector<DictionaryPredictor::Result> *results)
       : PredictiveLookupCallback(types, limit, original_key_len,
-                                 subsequent_chars, source_info, unknown_id,
-                                 non_expanded_original_key, spatial_cost_params,
-                                 results),
+                                 subsequent_chars, source_info, zip_code_id,
+                                 unknown_id, non_expanded_original_key,
+                                 spatial_cost_params, results),
         history_value_(history_value) {}
 
   PredictiveBigramLookupCallback(const PredictiveBigramLookupCallback &) =
@@ -411,6 +416,9 @@ class DictionaryPredictor::PrefixLookupCallback
     Result result;
     result.InitializeByTokenAndTypes(token, PREFIX);
     result.candidate_attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+    if (key != actual_key) {
+      result.candidate_attributes |= Segment::Candidate::TYPING_CORRECTION;
+    }
     result.consumed_key_size = Util::CharsLen(key);
     results_->emplace_back(result);
     return (results_->size() < limit_) ? TRAVERSE_CONTINUE : TRAVERSE_DONE;
@@ -460,6 +468,7 @@ DictionaryPredictor::DictionaryPredictor(
       counter_suffix_word_id_(pos_matcher->GetCounterSuffixWordId()),
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       kanji_number_id_(pos_matcher->GetKanjiNumberId()),
+      zip_code_id_(pos_matcher->GetZipcodeId()),
       unknown_id_(pos_matcher->GetUnknownId()),
       predictor_name_("DictionaryPredictor") {
   absl::string_view zero_query_token_array_data;
@@ -735,10 +744,11 @@ bool DictionaryPredictor::AddPredictionToCandidates(
   int added = 0;
   std::set<std::string> seen;
 
-  int added_suffix = 0;
-  int added_unigram = 0;
-  int added_realtime = 0;
-  int added_tc = 0;
+  int suffix_count = 0;
+  int predictive_count = 0;
+  int realtime_count = 0;
+  int prefix_tc_count = 0;
+  int tc_count = 0;
   bool cursor_at_tail =
       request.has_composer() &&
       request.composer().GetCursor() == request.composer().GetLength();
@@ -900,7 +910,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       continue;
     }
 
-    if ((result.types & SUFFIX) && added_suffix++ >= 20) {
+    if ((result.types & SUFFIX) && suffix_count++ >= 20) {
       // TODO(toshiyuki): Need refactoring for controlling suffix
       // prediction number after we will fix the appropriate number.
       MOZC_ADD_DEBUG_CANDIDATE(result, "Added suffix >= 20");
@@ -908,20 +918,32 @@ bool DictionaryPredictor::AddPredictionToCandidates(
     }
 
     if (ShouldEnrichPartialCandidates(request)) {
-      // Suppress long candidates to show more candidates in the candidate
-      // view.
-      if ((result.types & UNIGRAM) && (added_unigram++ >= 3 || added >= 10)) {
-        MOZC_ADD_DEBUG_CANDIDATE(result, "Added unigram >= 3 || added >= 10");
+      // Suppress long candidates to show more candidates in the candidate view.
+      if (input_key_len > 0 &&  // Do not filter for zero query
+          (input_key_len < Util::CharsLen(result.key)) &&
+          (predictive_count++ >= 3 || added >= 10)) {
+        MOZC_ADD_DEBUG_CANDIDATE(
+            result, absl::StrCat("Added predictive (",
+                                 GetPredictionTypeDebugString(result.types),
+                                 ") >= 3 || added >= 10"));
         continue;
       }
-      if ((result.types & REALTIME) && (added_realtime++ >= 3 || added >= 5)) {
+      if ((result.types & REALTIME) && (realtime_count++ >= 3 || added >= 5)) {
         MOZC_ADD_DEBUG_CANDIDATE(result, "Added realtime >= 3 || added >= 5");
         continue;
       }
       if ((result.types & TYPING_CORRECTION) &&
-          (added_tc++ >= 3 || added >= 10)) {
+          (tc_count++ >= 3 || added >= 10)) {
         MOZC_ADD_DEBUG_CANDIDATE(result,
                                  "Added typing correction >= 3 || added >= 10");
+        continue;
+      }
+      if ((result.types & PREFIX) &&
+          (result.candidate_attributes &
+           Segment::Candidate::TYPING_CORRECTION) &&
+          (prefix_tc_count++ >= 3 || added >= 10)) {
+        MOZC_ADD_DEBUG_CANDIDATE(
+            result, "Added prefix typing correction >= 3 || added >= 10");
         continue;
       }
     }
@@ -983,6 +1005,16 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
                                               std::string *description) {
+  std::string debug_desc = GetPredictionTypeDebugString(types);
+  // Note that description for TYPING_CORRECTION is omitted
+  // because it is appended by SetDescription.
+  if (!debug_desc.empty()) {
+    Util::AppendStringWithDelimiter(" ", debug_desc, description);
+  }
+}
+
+std::string DictionaryPredictor::GetPredictionTypeDebugString(
+    PredictionTypes types) {
   std::string debug_desc;
   if (types & UNIGRAM) {
     debug_desc.append(1, 'U');
@@ -1001,11 +1033,7 @@ void DictionaryPredictor::SetDebugDescription(PredictionTypes types,
   if (types & ENGLISH) {
     debug_desc.append(1, 'E');
   }
-  // Note that description for TYPING_CORRECTION is omitted
-  // because it is appended by SetDescription.
-  if (!debug_desc.empty()) {
-    Util::AppendStringWithDelimiter(" ", debug_desc, description);
-  }
+  return debug_desc;
 }
 
 // Returns cost for |result| when it's transitioned from |rid|.  Suffix penalty
@@ -1376,7 +1404,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       MOZC_WORD_LOG(result, absl::StrCat("User dictionary: ", cost));
     }
 
-    if (result.candidate_attributes ==
+    if (result.candidate_attributes &
         Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       cost +=
           CalculatePrefixPenalty(request, input_key, result.key,
@@ -1706,7 +1734,7 @@ DictionaryPredictor::AggregateUnigramCandidate(
   const size_t prev_results_size = results->size();
   GetPredictiveResults(*dictionary_, "", request, segments, UNIGRAM,
                        cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
-                       unknown_id_, results);
+                       zip_code_id_, unknown_id_, results);
   const size_t unigram_results_size = results->size() - prev_results_size;
 
   // If size reaches max_results_size (== cutoff_threshold).
@@ -1725,22 +1753,22 @@ DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     std::vector<Result> *results) const {
   DCHECK(request.request_type() == ConversionRequest::PREDICTION ||
          request.request_type() == ConversionRequest::SUGGESTION);
-  AggregateUnigramCandidateForMixedConversion(*dictionary_, request, segments,
-                                              unknown_id_, results);
+  AggregateUnigramCandidateForMixedConversion(
+      *dictionary_, request, segments, zip_code_id_, unknown_id_, results);
   return UNIGRAM;
 }
 
 void DictionaryPredictor::AggregateUnigramCandidateForMixedConversion(
     const dictionary::DictionaryInterface &dictionary,
-    const ConversionRequest &request, const Segments &segments, int unknown_id,
-    std::vector<Result> *results) {
+    const ConversionRequest &request, const Segments &segments, int zip_code_id,
+    int unknown_id, std::vector<Result> *results) {
   const size_t cutoff_threshold = kPredictionMaxResultsSize;
 
   std::vector<Result> raw_result;
   // No history key
   GetPredictiveResults(dictionary, "", request, segments, UNIGRAM,
                        cutoff_threshold, Segment::Candidate::SOURCE_INFO_NONE,
-                       unknown_id, &raw_result);
+                       zip_code_id, unknown_id, &raw_result);
 
   // Hereafter, we split "Needed Results" and "(maybe) Unneeded Results."
   // The algorithm is:
@@ -1965,14 +1993,14 @@ void DictionaryPredictor::GetPredictiveResults(
     const DictionaryInterface &dictionary, const std::string &history_key,
     const ConversionRequest &request, const Segments &segments,
     PredictionTypes types, size_t lookup_limit,
-    Segment::Candidate::SourceInfo source_info, int unknown_id_,
+    Segment::Candidate::SourceInfo source_info, int zip_code_id, int unknown_id,
     std::vector<Result> *results) {
   if (!request.has_composer()) {
     std::string input_key = history_key;
     input_key.append(segments.conversion_segment(0).key());
-    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, unknown_id_, "",
-                                      GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(
+        types, lookup_limit, input_key.size(), nullptr, source_info,
+        zip_code_id, unknown_id, "", GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -1988,9 +2016,9 @@ void DictionaryPredictor::GetPredictiveResults(
   std::string input_key;
   if (expanded.empty()) {
     input_key.assign(history_key).append(base);
-    PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, unknown_id_, "",
-                                      GetSpatialCostParams(request), results);
+    PredictiveLookupCallback callback(
+        types, lookup_limit, input_key.size(), nullptr, source_info,
+        zip_code_id, unknown_id, "", GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -2009,8 +2037,8 @@ void DictionaryPredictor::GetPredictiveResults(
   for (const std::string &expanded_char : expanded) {
     input_key.assign(history_key).append(base).append(expanded_char);
     PredictiveLookupCallback callback(types, lookup_limit, input_key.size(),
-                                      nullptr, source_info, unknown_id_,
-                                      non_expanded_original_key,
+                                      nullptr, source_info, zip_code_id,
+                                      unknown_id, non_expanded_original_key,
                                       GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
@@ -2027,7 +2055,8 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
     input_key.append(segments.conversion_segment(0).key());
     PredictiveBigramLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr, history_value,
-        source_info, unknown_id_, "", GetSpatialCostParams(request), results);
+        source_info, zip_code_id_, unknown_id_, "",
+        GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
     return;
   }
@@ -2049,8 +2078,8 @@ void DictionaryPredictor::GetPredictiveResultsForBigram(
   PredictiveBigramLookupCallback callback(
       types, lookup_limit, input_key.size(),
       expanded.empty() ? nullptr : &expanded, history_value, source_info,
-      unknown_id_, non_expanded_original_key, GetSpatialCostParams(request),
-      results);
+      zip_code_id_, unknown_id_, non_expanded_original_key,
+      GetSpatialCostParams(request), results);
   dictionary.LookupPredictive(input_key, request, &callback);
 }
 
@@ -2066,7 +2095,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      unknown_id_, "",
+                                      zip_code_id_, unknown_id_, "",
                                       GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
@@ -2079,7 +2108,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     Util::LowerString(&key);
     PredictiveLookupCallback callback(types, lookup_limit, key.size(), nullptr,
                                       Segment::Candidate::SOURCE_INFO_NONE,
-                                      unknown_id_, "",
+                                      zip_code_id_, unknown_id_, "",
                                       GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(key, request, &callback);
     for (size_t i = prev_results_size; i < results->size(); ++i) {
@@ -2089,7 +2118,7 @@ void DictionaryPredictor::GetPredictiveResultsForEnglishKey(
     // For other cases (lower and as-is), just look up directly.
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(), nullptr,
-        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
+        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_, "",
         GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
   }
@@ -2122,7 +2151,7 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
     PredictiveLookupCallback callback(
         types, lookup_limit, input_key.size(),
         query.expanded.empty() ? nullptr : &query.expanded,
-        Segment::Candidate::SOURCE_INFO_NONE, unknown_id_, "",
+        Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_, unknown_id_, "",
         GetSpatialCostParams(request), results);
     dictionary.LookupPredictive(input_key, request, &callback);
 
@@ -2263,8 +2292,8 @@ void DictionaryPredictor::AggregateSuffixPrediction(
   const std::string kEmptyHistoryKey = "";
   GetPredictiveResults(*suffix_dictionary_, kEmptyHistoryKey, request, segments,
                        SUFFIX, cutoff_threshold,
-                       Segment::Candidate::SOURCE_INFO_NONE, unknown_id_,
-                       results);
+                       Segment::Candidate::SOURCE_INFO_NONE, zip_code_id_,
+                       unknown_id_, results);
 }
 
 void DictionaryPredictor::AggregateZeroQuerySuffixPrediction(
@@ -2290,8 +2319,8 @@ void DictionaryPredictor::AggregateZeroQuerySuffixPrediction(
   GetPredictiveResults(
       *suffix_dictionary_, kEmptyHistoryKey, request, segments, SUFFIX,
       cutoff_threshold,
-      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX, unknown_id_,
-      results);
+      Segment::Candidate::DICTIONARY_PREDICTOR_ZERO_QUERY_SUFFIX, zip_code_id_,
+      unknown_id_, results);
 }
 
 void DictionaryPredictor::AggregateEnglishPrediction(

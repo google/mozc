@@ -27,32 +27,38 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MAJOR = 2
+"""Repository rule for Android build system.
 
-MINOR = 28
+If ANDROID_NDK_HOME env variable is set, android_ndk_repository is called.
+Otherwise do nothing.
 
-# BUILD number used for the OSS version.
-BUILD_OSS = 4780
+## Usage example in WORKSPACE.bazel
+```
+load("//:android_repository.bzl", "android_repository")
+android_repository(name = "android_repository")
+load("@android_repository//:setup.bzl", "android_ndk_setup")
+android_ndk_setup()
+```
 
-# Number to be increased. This value may be replaced by other tools.
-BUILD = BUILD_OSS
+## Reference
+* https://github.com/google/mozc/issues/544
+* https://github.com/bazelbuild/bazel/issues/14260
+"""
 
-# Represent the platform and release channel.
-REVISION = 100
+NDK_SETUP_TEMPLATE = """
+def android_ndk_setup():
+    {rule}
+"""
 
-REVISION_MACOS = REVISION + 1
+def _android_repository_impl(repository_ctx):
+    if repository_ctx.os.environ.get("ANDROID_NDK_HOME"):
+        rule = "native.android_ndk_repository(name=\"androidndk\")"
+    else:
+        rule = "pass"
+    repository_ctx.file("BUILD.bazel", "")
+    repository_ctx.file("setup.bzl", NDK_SETUP_TEMPLATE.format(rule = rule))
 
-# This version represents the version of Mozc IME engine (converter, predictor,
-# etc.).  This version info is included both in the Mozc server and in the Mozc
-# data set file so that the Mozc server can accept only the compatible version
-# of data set file.  The engine version must be incremented when:
-#  * POS matcher definition and/or conversion models were changed,
-#  * New data are added to the data set file, and/or
-#  * Any changes that loose data compatibility are made.
-ENGINE_VERSION = 24
-
-# This version is used to manage the data version and is included only in the
-# data set file.  DATA_VERSION can be incremented without updating
-# ENGINE_VERSION as long as it's compatible with the engine.
-# This version should be reset to 0 when ENGINE_VERSION is incremented.
-DATA_VERSION = 11
+android_repository = repository_rule(
+    implementation = _android_repository_impl,
+    environ = ["ANDROID_NDK_HOME"],
+)

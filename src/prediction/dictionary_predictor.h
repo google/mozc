@@ -235,7 +235,7 @@ class DictionaryPredictor : public PredictorInterface {
   static void AggregateUnigramCandidateForMixedConversion(
       const dictionary::DictionaryInterface &dictionary,
       const ConversionRequest &request, const Segments &segments,
-      int unknown_id, std::vector<Result> *results);
+      int zip_code_id, int unknown_id, std::vector<Result> *results);
 
   void ApplyPenaltyForKeyExpansion(const Segments &segments,
                                    std::vector<Result> *results) const;
@@ -284,6 +284,7 @@ class DictionaryPredictor : public PredictorInterface {
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditionsMobile);
   FRIEND_TEST(DictionaryPredictorTest, TriggerConditionsLatinInputMode);
   FRIEND_TEST(DictionaryPredictorTest, GetLMCost);
+  FRIEND_TEST(DictionaryPredictorTest, DoNotAggregateZipcodeEntries);
   FRIEND_TEST(TriggerConditionsTest, TriggerConditions);
 
   typedef std::pair<std::string, ZeroQueryType> ZeroQueryResult;
@@ -342,8 +343,8 @@ class DictionaryPredictor : public PredictorInterface {
       const dictionary::DictionaryInterface &dictionary,
       const std::string &history_key, const ConversionRequest &request,
       const Segments &segments, PredictionTypes types, size_t lookup_limit,
-      Segment::Candidate::SourceInfo source_info, int unknown_id,
-      std::vector<Result> *results);
+      Segment::Candidate::SourceInfo source_info, int zip_code_id,
+      int unknown_id, std::vector<Result> *results);
 
   void GetPredictiveResultsForBigram(
       const dictionary::DictionaryInterface &dictionary,
@@ -498,6 +499,8 @@ class DictionaryPredictor : public PredictorInterface {
   static void SetDebugDescription(PredictionTypes types,
                                   std::string *description);
 
+  static std::string GetPredictionTypeDebugString(PredictionTypes types);
+
   const ConverterInterface *converter_;
   const ImmutableConverterInterface *immutable_converter_;
   const dictionary::DictionaryInterface *dictionary_;
@@ -508,6 +511,7 @@ class DictionaryPredictor : public PredictorInterface {
   const uint16_t counter_suffix_word_id_;
   const uint16_t general_symbol_id_;
   const uint16_t kanji_number_id_;
+  const uint16_t zip_code_id_;
   const uint16_t unknown_id_;
   const std::string predictor_name_;
   ZeroQueryDict zero_query_dict_;

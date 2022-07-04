@@ -6,14 +6,17 @@ load(
     "http_archive",
     "http_file",
 )
-load("//:config.bzl", "QT_BASE_PATH")
+load("//:config.bzl", "MACOS_QT_PATH")
 
-# This rule refers to $ANDROID_SDK_HOME.
-android_sdk_repository(name = "androidsdk")
-
-# Android NDK version should be r11c+ for Abseil.
+# Android NDK setup
 # This rule refers to $ANDROID_NDK_HOME.
-android_ndk_repository(name = "androidndk")
+# If native.android_ndk_repository is called directly,
+# Android NDK should be available in the build environment.
+# https://github.com/bazelbuild/bazel/issues/14260
+load("//:android_repository.bzl", "android_repository")
+android_repository(name = "android_repository")
+load("@android_repository//:setup.bzl", "android_ndk_setup")
+android_ndk_setup()
 
 local_repository(
     name = "com_google_absl",
@@ -50,20 +53,18 @@ new_local_repository(
     path = "third_party/gtest",
 )
 
+load("//:pkg_config_repository.bzl", "pkg_config_repository")
+
 # Gtk2
-new_local_repository(
-    name = "gtk2",
-    build_file = "BUILD.gtk2.bazel",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
+pkg_config_repository(
+  name = "gtk2",
+  packages = ["glib-2.0", "gobject-2.0", "gthread-2.0", "gtk+-2.0", "gdk-2.0"],
 )
 
 # iBus
-new_local_repository(
-    name = "ibus",
-    build_file = "BUILD.ibus.bazel",
-    # This path should be updated per the environment.
-    path = "/usr",  # For Debian
+pkg_config_repository(
+  name = "ibus",
+  packages = ["glib-2.0", "gobject-2.0", "ibus-1.0"],
 )
 
 # Fcitx
@@ -89,12 +90,17 @@ new_local_repository(
     path = "third_party/japanese_usage_dictionary",
 )
 
-# Qt
-new_local_repository(
-    name = "io_qt",
-    build_file = "BUILD.qt.bazel",
-    # This path should be updated per the environment.
-    path = QT_BASE_PATH,
+# Qt for Linux
+pkg_config_repository(
+  name = "qt_linux",
+  packages = ["Qt5Core", "Qt5Gui", "Qt5Widgets"],
+)
+
+# Qt for macOS
+load("//:qt_mac_repository.bzl", "qt_mac_repository")
+qt_mac_repository(
+  name = "qt_mac",
+  default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
 )
 
 # Python

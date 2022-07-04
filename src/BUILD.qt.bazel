@@ -4,28 +4,6 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
-# The default settings are for the supported Docker environment (Ubuntu 20.04).
-
-cc_library(
-    name = "qt",
-    hdrs = glob([
-        "QtCore/**",
-        "QtGui/**",
-        "QtWidgets/**",
-    ]),
-    includes = [
-      ".",
-      "QtCore",
-      "QtGui",
-      "QtWidgets",
-    ],
-    linkopts = [
-        "-lQt5Core",
-        "-lQt5Gui",
-        "-lQt5Widgets",
-    ],
-)
-
 # Qt header files (e.g. qchar.h) are in lib/QtCore.framework/Headers/,
 # and included as "qchar.h" and <QtCore/qchar.h>.
 # The combination of includes, include_prefix and strip_include_prefix below
@@ -124,3 +102,5 @@ filegroup(
     name = "libqcocoa",
     srcs = ["plugins/platforms/libqcocoa.dylib"],
 )
+
+exports_files(glob(["bin/*"]))

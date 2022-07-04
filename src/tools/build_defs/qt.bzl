@@ -39,18 +39,16 @@ load(
     "//:config.bzl",
     "MACOS_BUNDLE_ID_PREFIX",
     "MACOS_MIN_OS_VER",
-    "QT_BIN_PATH",
 )
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application")
-load("@bazel_skylib//lib:paths.bzl", "paths")
 
 def cc_qt_library_mozc(name, deps = [], **kwargs):
     cc_library_mozc(
         name = name,
         deps = deps + select_mozc(
             default = ["//third_party/qt:qt_native"],
-            oss_linux = ["@io_qt//:qt"],
-            oss_macos = ["@io_qt//:qt_mac"],
+            oss_linux = ["@qt_linux//:qt_linux"],
+            oss_macos = ["@qt_mac//:qt_mac"],
         ),
         **kwargs
     )
@@ -60,8 +58,8 @@ def cc_qt_binary_mozc(name, deps = [], **kwargs):
         name = name,
         deps = deps + select_mozc(
             default = ["//third_party/qt:qt_native"],
-            oss_linux = ["@io_qt//:qt"],
-            oss_macos = ["@io_qt//:qt_mac"],
+            oss_linux = ["@qt_linux//:qt_linux"],
+            oss_macos = ["@qt_mac//:qt_mac"],
         ),
         **kwargs
     )
@@ -73,11 +71,13 @@ def qt_moc_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:moc) -p $$(dirname $<) -o $@ $(SRCS)",
-            oss = paths.join(QT_BIN_PATH, "moc") + " -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
+            oss_macos = "$(location @qt_mac//:bin/moc) -p $$(dirname $<) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:moc"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/moc"],
+            oss_macos = ["@qt_mac//:bin/moc"],
         ),
     )
 
@@ -88,11 +88,13 @@ def qt_uic_mozc(name, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:uic) -o $@ $(SRCS)",
-            oss = paths.join(QT_BIN_PATH, "uic") + " -o $@ $(SRCS)",
+            oss_linux = "$(location @qt_linux//:bin/uic) -o $@ $(SRCS)",
+            oss_macos = "$(location @qt_mac//:bin/uic) -o $@ $(SRCS)",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:uic"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/uic"],
+            oss_macos = ["@qt_mac//:bin/uic"],
         ),
     )
 
@@ -103,11 +105,13 @@ def qt_rcc_mozc(name, qrc_name, qrc_file, srcs, outs):
         outs = outs,
         cmd = select_mozc(
             default = "$(location //third_party/qt:rcc) -o $@ -name " + qrc_name + " " + qrc_file,
-            oss = paths.join(QT_BIN_PATH, "rcc") + " -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_linux = "$(location @qt_linux//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
+            oss_macos = "$(location @qt_mac//:bin/rcc) -o $@ -name " + qrc_name + " $(location " + qrc_file + ")",
         ),
         tools = select_mozc(
             default = ["//third_party/qt:rcc"],
-            oss = [],
+            oss_linux = ["@qt_linux//:bin/rcc"],
+            oss_macos = ["@qt_mac//:bin/rcc"],
         ),
     )
 
@@ -117,7 +121,7 @@ def macos_qt_application_mozc(name, bundle_name, deps):
         tags = ["manual"],
         additional_contents = select_mozc(
             default = {},
-            oss = {"@io_qt//:libqcocoa": "Resources"},
+            oss = {"@qt_mac//:libqcocoa": "Resources"},
         ),
         app_icons = ["//data/images/mac:product_icon.icns"],
         bundle_id = MACOS_BUNDLE_ID_PREFIX + ".Tool." + bundle_name,
@@ -132,10 +136,10 @@ def macos_qt_application_mozc(name, bundle_name, deps):
         deps = deps + select_mozc(
             default = [],
             oss = [
-                "@io_qt//:QtCore_mac",
-                "@io_qt//:QtGui_mac",
-                "@io_qt//:QtPrintSupport_mac",
-                "@io_qt//:QtWidgets_mac",
+                "@qt_mac//:QtCore_mac",
+                "@qt_mac//:QtGui_mac",
+                "@qt_mac//:QtPrintSupport_mac",
+                "@qt_mac//:QtWidgets_mac",
             ],
         ),
     )

@@ -76,15 +76,24 @@ bazel test base:util_test --config oss_linux --test_arg=--logtostderr --test_out
 
 ### Build Mozc on other Linux environment
 
+Note: This section is not about our officially supported build process.
+
 To build Mozc on other Linux environment rather than the supported Docker
 environment, you might need to modify the following files.
 
-* src/WORKSPACE - build dependencies.
-* src/BUILD.ibus - build rules and include headers and libraries for IBus.
-* src/BUILD.qt - build rules and include headers and libraries  for Qt.
 * src/config.bzl - configuration of install paths, etc.
 * src/.bazelrc - compiler flags, etc.
+* src/WORKSPACE.bazel - build dependencies.
 
+Tips: the following command makes the specified file untracked by Git.
+```
+git update-index --assume-unchanged src/config.bzl
+```
+
+This command reverts the above change.
+```
+git update-index --no-assume-unchanged src/config.bzl
+```
 
 ## Build Mozc library for Android:
 

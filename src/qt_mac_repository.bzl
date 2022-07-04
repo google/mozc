@@ -27,32 +27,24 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MAJOR = 2
+"""Repository rule for Qt for macOS."""
 
-MINOR = 28
+def _qt_mac_repository_impl(repo_ctx):
+    is_mac = repo_ctx.os.name.lower().startswith("mac")
+    if not is_mac:
+        repo_ctx.file("BUILD.bazel", "")
+        return
 
-# BUILD number used for the OSS version.
-BUILD_OSS = 4780
+    qt_path = repo_ctx.path(repo_ctx.os.environ.get("MOZC_QT_PATH", repo_ctx.attr.default_path))
+    repo_ctx.symlink(qt_path.get_child("bin"), "bin")
+    repo_ctx.symlink(qt_path.get_child("lib"), "lib")
+    repo_ctx.symlink(qt_path.get_child("plugins"), "plugins")
+    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("@//:BUILD.qt.bazel")))
 
-# Number to be increased. This value may be replaced by other tools.
-BUILD = BUILD_OSS
-
-# Represent the platform and release channel.
-REVISION = 100
-
-REVISION_MACOS = REVISION + 1
-
-# This version represents the version of Mozc IME engine (converter, predictor,
-# etc.).  This version info is included both in the Mozc server and in the Mozc
-# data set file so that the Mozc server can accept only the compatible version
-# of data set file.  The engine version must be incremented when:
-#  * POS matcher definition and/or conversion models were changed,
-#  * New data are added to the data set file, and/or
-#  * Any changes that loose data compatibility are made.
-ENGINE_VERSION = 24
-
-# This version is used to manage the data version and is included only in the
-# data set file.  DATA_VERSION can be incremented without updating
-# ENGINE_VERSION as long as it's compatible with the engine.
-# This version should be reset to 0 when ENGINE_VERSION is incremented.
-DATA_VERSION = 11
+qt_mac_repository = repository_rule(
+    implementation = _qt_mac_repository_impl,
+    environ = ["MOZC_QT_PATH"],
+    attrs = {
+        "default_path": attr.string(),
+    },
+)
