@@ -98,9 +98,12 @@
   },
   'target_defaults': {
     'variables': {
-      # See http://msdn.microsoft.com/en-us/library/aa652360(VS.71).aspx
+      # https://docs.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.vcprojectengine.vcclcompilertool.optimization?view=visualstudiosdk-2017
+      # https://docs.microsoft.com/en-us/dotnet/api/microsoft.visualstudio.vcprojectengine.optimizeoption?view=visualstudiosdk-2017
+      # https://docs.microsoft.com/en-us/cpp/build/reference/o1-o2-minimize-size-maximize-speed?view=msvc-150
       'win_optimization_debug%': '0',    # 0 = /Od
-      'win_optimization_release%': '2',  # 2 = /Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy
+      'win_optimization_release%': '2',  # 2 = /O2 (maximize speed)
+                                         #   = /Og /Oi /Ot /Oy /Ob2 /GF /Gy
       'win_optimization_custom%': '4',   # 4 = None but prevents vcbuild from
                                          # inheriting default optimization.
       # See http://msdn.microsoft.com/en-us/library/aa652367(VS.71).aspx
