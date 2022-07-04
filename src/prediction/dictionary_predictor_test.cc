@@ -201,9 +201,8 @@ class MockDataAndPredictor {
   // Initializes predictor with given dictionary and suffix_dictionary.  When
   // nullptr is passed to the first argument |dictionary|, the default
   // DictionaryMock is used. For the second, the default is MockDataManager's
-  // suffix dictionary. Note that |dictionary| is owned by this class but
-  // |suffix_dictionary| is NOT owned because the current design assumes that
-  // suffix dictionary is singleton.
+  // suffix dictionary. Note that |dictionary| and |suffix_dictionary| are
+  // owned by this class.
   void Init(const DictionaryInterface *dictionary = nullptr,
             const DictionaryInterface *suffix_dictionary = nullptr) {
     pos_matcher_.Set(data_manager_.GetPosMatcherData());
@@ -3903,5 +3902,33 @@ TEST_F(DictionaryPredictorTest,
     }
   }
   EXPECT_EQ(30, exact_count);
+}
+
+TEST_F(DictionaryPredictorTest,
+       DoNotFilterZeroQueryCandidatesForEnrichPartialCandidates) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor);
+  DictionaryMock *suffix_mock = new DictionaryMock;
+  data_and_predictor->Init(nullptr, suffix_mock);
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  // Predictive entries for zero query
+  for (int i = 0; i < 10; ++i) {
+    suffix_mock->AddLookupPredictive("", "てすと", absl::StrCat(i, "テストS"),
+                                     100 + i, 0, 0, Token::NONE);
+  }
+
+  Segments segments;
+  SetUpInputForSuggestionWithHistory("", "わたし", "私", composer_.get(),
+                                     &segments);
+
+  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  composer_->SetInputMode(transliteration::HIRAGANA);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_EQ(10, segments.conversion_segment(0).candidates_size());
 }
 }  // namespace mozc

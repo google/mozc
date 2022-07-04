@@ -919,7 +919,8 @@ bool DictionaryPredictor::AddPredictionToCandidates(
 
     if (ShouldEnrichPartialCandidates(request)) {
       // Suppress long candidates to show more candidates in the candidate view.
-      if ((input_key_len < Util::CharsLen(result.key)) &&
+      if (input_key_len > 0 &&  // Do not filter for zero query
+          (input_key_len < Util::CharsLen(result.key)) &&
           (predictive_count++ >= 3 || added >= 10)) {
         MOZC_ADD_DEBUG_CANDIDATE(
             result, absl::StrCat("Added predictive (",
