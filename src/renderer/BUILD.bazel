@@ -482,6 +482,10 @@ objc_library_mozc(
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
     ],
+    sdk_frameworks = [
+        "Carbon",
+        "Foundation",
+    ],
     deps = select_mozc(macos = [
         "//base:base",
         "//base:const",
@@ -503,8 +507,5 @@ objc_library_mozc(
         ":renderer_style_handler",
         ":table_layout",
         ":window_util",
-    ]) + [
-        "//third_party/apple_frameworks:Carbon",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    ]),
 )
