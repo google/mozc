@@ -45,7 +45,17 @@ make
 
 Modify variables in `src/config.bzl` to fit your environment.
 Note: `~` does not represent the home directry.
-The exact path should be specified (e.g. `QT_BASE_PATH = "/Users/mozc/myqt"`).
+The exact path should be specified (e.g. `MACOS_QT_PATH = "/Users/mozc/myqt"`).
+
+Tips: the following command makes the specified file untracked by Git.
+```
+git update-index --assume-unchanged src/config.bzl
+```
+
+This command reverts the above change.
+```
+git update-index --no-assume-unchanged src/config.bzl
+```
 
 ### Build installer
 

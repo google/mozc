@@ -33,16 +33,13 @@ jobs:
           wget https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5152/qt.qt5.5152.clang_64/5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
           tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
           #
-          # Modify config.bzl
-          # QT_BASE_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
-          # QT_BIN_PATH = QT_BASE_PATH + "/bin"
-          sed -i '' -e 's@^QT_BASE_PATH = .*$@QT_BASE_PATH = "'$PWD'/5.15.2/clang_64"@g' ../config.bzl
-          sed -i '' -e 's@^QT_BIN_PATH = .*$@QT_BIN_PATH = QT_BASE_PATH + "/bin"@g' ../config.bzl
+          # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
+          MOZC_QT_PATH=${PWD}/5.15.2/clang_64
           #
           # Change the default Android NDK version
           # https://github.com/actions/virtual-environments/issues/5595
-          ANDROID_HOME=$HOME/Library/Android/sdk
-          ln -sfn $ANDROID_HOME/ndk/21.4.7075529 $ANDROID_HOME/ndk-bundle
+          ANDROID_HOME=${HOME}/Library/Android/sdk
+          ln -sfn ${ANDROID_HOME}/ndk/21.4.7075529 ${ANDROID_HOME}/ndk-bundle
 
       - name: build
         working-directory: ./src

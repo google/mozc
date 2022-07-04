@@ -27,28 +27,24 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Tips: the following git command makes git assume this file unchanged.
-# % git update-index --assume-unchanged config.bzl
-#
-# The following command reverts it.
-# % git update-index --no-assume-unchanged config.bzl
+"""Repository rule for Qt for macOS."""
 
-BRANDING = "Mozc"
+def _qt_mac_repository_impl(repo_ctx):
+    is_mac = repo_ctx.os.name.lower().startswith("mac")
+    if not is_mac:
+        repo_ctx.file("BUILD.bazel", "")
+        return
 
-LINUX_MOZC_BROWSER_COMMAND = "/usr/bin/xdg-open"
-LINUX_MOZC_SERVER_DIR = "/usr/lib/mozc"
-LINUX_MOZC_DOCUMENT_DIR = LINUX_MOZC_SERVER_DIR + "/documents"
-IBUS_MOZC_INSTALL_DIR = "/usr/share/ibus-mozc"
-IBUS_MOZC_ICON_PATH = IBUS_MOZC_INSTALL_DIR + "/product_icon.png"
-IBUS_MOZC_PATH = "/usr/lib/ibus-mozc/ibus-engine-mozc"
+    qt_path = repo_ctx.path(repo_ctx.os.environ.get("MOZC_QT_PATH", repo_ctx.attr.default_path))
+    repo_ctx.symlink(qt_path.get_child("bin"), "bin")
+    repo_ctx.symlink(qt_path.get_child("lib"), "lib")
+    repo_ctx.symlink(qt_path.get_child("plugins"), "plugins")
+    repo_ctx.template("BUILD.bazel", repo_ctx.path(Label("@//:BUILD.qt.bazel")))
 
-MACOS_BUNDLE_ID_PREFIX = "org.mozc.inputmethod.Japanese"
-MACOS_MIN_OS_VER = "10.12"
-
-## Qt path for macOS
-# The paths are the default paths of Qt 5.15.2 installed by "make install".
-#
-# If MOZC_QT_PATH env var is specified, it is used for MACOS_QT_PATH instead.
-#
-# For Linux, Qt paths are managed by pkg_config_repository in WORKSPACE.bazel.
-MACOS_QT_PATH = "/usr/local/Qt-5.15.2"
+qt_mac_repository = repository_rule(
+    implementation = _qt_mac_repository_impl,
+    environ = ["MOZC_QT_PATH"],
+    attrs = {
+        "default_path": attr.string(),
+    },
+)

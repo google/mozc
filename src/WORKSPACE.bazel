@@ -6,7 +6,7 @@ load(
     "http_archive",
     "http_file",
 )
-load("//:config.bzl", "QT_BASE_PATH")
+load("//:config.bzl", "MACOS_QT_PATH")
 
 # Android NDK setup
 # This rule refers to $ANDROID_NDK_HOME.
@@ -81,11 +81,10 @@ pkg_config_repository(
 )
 
 # Qt for macOS
-new_local_repository(
-    name = "io_qt",
-    build_file = "BUILD.qt.bazel",
-    # This path should be updated per the environment.
-    path = QT_BASE_PATH,
+load("//:qt_mac_repository.bzl", "qt_mac_repository")
+qt_mac_repository(
+  name = "qt_mac",
+  default_path = MACOS_QT_PATH,  # can be replaced with MOZC_QT_PATH envvar.
 )
 
 # Python

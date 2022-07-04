@@ -102,3 +102,5 @@ filegroup(
     name = "libqcocoa",
     srcs = ["plugins/platforms/libqcocoa.dylib"],
 )
+
+exports_files(glob(["bin/*"]))
