@@ -182,14 +182,18 @@ def objc_library_mozc(
         deps = proto_deps,
         copts = copts + ["-funsigned-char"],
     )
+    sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
     native.objc_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
         textual_hdrs = textual_hdrs + proto_deps,
-        deps = deps + ["//:macro", proto_deps_name],
+        deps = deps + [
+            "//:macro",
+            proto_deps_name,
+        ] + select_mozc(macos = sdk_frameworks_deps),
         copts = copts + ["-funsigned-char", "-std=c++17"],
-        sdk_frameworks = sdk_frameworks,
+        sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
         # This is a workaround to exclude objc_library rules from Linux build
         # because target_compatible_with doesn't work as expected.
@@ -253,13 +257,14 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
         **kwargs
     )
 
+    sdk_frameworks_deps = ["//third_party/apple_frameworks:" + name for name in sdk_frameworks]
     apple_binary(
         name = name + "_bin",
         testonly = 1,
         minimum_os_version = "10.10",
         platform_type = "macos",
-        sdk_frameworks = sdk_frameworks,
-        deps = [name + "_lib"],
+        sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
+        deps = [name + "_lib"] + select_mozc(macos = sdk_frameworks_deps),
         tags = ["manual"],
     )
 
