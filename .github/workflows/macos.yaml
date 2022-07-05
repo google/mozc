@@ -34,7 +34,7 @@ jobs:
           tar xf 5.15.2-0-202011130601qtbase-MacOS-MacOS_10_13-Clang-MacOS-MacOS_10_13-X86_64.7z
           #
           # MOZC_QT_PATH = "/(github_path)/mozc/src/third_party/5.15.2/clang_64"
-          MOZC_QT_PATH=${PWD}/5.15.2/clang_64
+          echo "MOZC_QT_PATH=${PWD}/5.15.2/clang_64" >> $GITHUB_ENV
           #
           # Change the default Android NDK version
           # https://github.com/actions/virtual-environments/issues/5595
