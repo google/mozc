@@ -30,6 +30,7 @@
 #include "composer/key_event_util.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 
 #include "base/util.h"

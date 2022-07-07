@@ -30,8 +30,10 @@
 #include "data_manager/serialized_dictionary.h"
 
 #include <cstdint>
+#include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "base/port.h"
 #include "base/serialized_string_array.h"

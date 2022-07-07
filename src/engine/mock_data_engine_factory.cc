@@ -29,6 +29,8 @@
 
 #include "engine/mock_data_engine_factory.h"
 
+#include <memory>
+
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
 

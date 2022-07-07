@@ -33,6 +33,7 @@
 #define MOZC_COMPOSER_TABLE_H_
 
 #include <cstdint>
+#include <istream>
 #include <map>
 #include <memory>
 #include <set>

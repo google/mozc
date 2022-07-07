@@ -32,8 +32,10 @@
 #include "composer/composer.h"
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "base/clock.h"
 #include "base/japanese_util.h"

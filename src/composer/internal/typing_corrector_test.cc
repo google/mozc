@@ -29,6 +29,9 @@
 
 #include "composer/internal/typing_corrector.h"
 
+#include <iterator>
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
 

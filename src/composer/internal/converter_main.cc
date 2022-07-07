@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>  // NOLINT
+#include <ostream>
 #include <string>
 
 #include "base/init_mozc.h"

@@ -30,6 +30,7 @@
 #include "composer/key_parser.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <utility>
 

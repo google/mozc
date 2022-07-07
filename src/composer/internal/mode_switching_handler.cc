@@ -34,6 +34,7 @@
 
 #include <cctype>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/singleton.h"

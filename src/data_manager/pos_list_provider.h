@@ -31,6 +31,7 @@
 #define MOZC_DATA_MANAGER_POS_LIST_PROVIDER_H_
 
 #include <string>
+#include <vector>
 
 #include "dictionary/user_pos_interface.h"
 

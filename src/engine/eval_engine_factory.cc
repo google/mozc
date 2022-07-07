@@ -29,6 +29,7 @@
 
 #include "engine/eval_engine_factory.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 
