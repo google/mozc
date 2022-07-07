@@ -57,6 +57,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <ios>
 #include <iterator>
 #include <map>
 #include <memory>

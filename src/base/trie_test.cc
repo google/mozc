@@ -29,7 +29,9 @@
 
 #include "base/trie.h"
 
+#include <iterator>
 #include <string>
+#include <vector>
 
 #include "testing/base/public/gunit.h"
 

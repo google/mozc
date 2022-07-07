@@ -33,6 +33,7 @@
 #ifndef MOZC_BASE_MULTIFILE_H_
 #define MOZC_BASE_MULTIFILE_H_
 
+#include <ios>
 #include <memory>
 #include <string>
 #include <vector>

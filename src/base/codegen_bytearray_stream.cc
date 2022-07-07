@@ -30,6 +30,7 @@
 #include "base/codegen_bytearray_stream.h"
 
 #include <algorithm>
+#include <ios>
 #include <memory>
 #include <ostream>
 #include <streambuf>

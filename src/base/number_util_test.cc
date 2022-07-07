@@ -30,8 +30,10 @@
 #include "base/number_util.h"
 
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "testing/base/public/googletest.h"

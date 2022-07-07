@@ -30,6 +30,7 @@
 #include "base/mmap.h"
 
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <string>
 

@@ -29,6 +29,7 @@
 
 #include "base/file_util.h"
 
+#include <ios>
 #include <iterator>
 
 #ifdef OS_WIN
@@ -42,6 +43,8 @@
 
 #include <filesystem>
 #include <string>
+#include <system_error>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/logging.h"

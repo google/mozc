@@ -34,6 +34,8 @@
 #include <locale>
 #endif  // OS_WIN
 
+#include <fstream>
+#include <ios>
 #include <string>
 
 namespace mozc {

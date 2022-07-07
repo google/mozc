@@ -38,6 +38,7 @@
 #include "base/codegen_bytearray_stream.h"
 
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <string>
 
