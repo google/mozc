@@ -40,6 +40,8 @@
 #endif  // OS_WIN
 
 #include <memory>
+#include <ostream>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"

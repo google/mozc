@@ -31,6 +31,7 @@
 
 #include "session/internal/keymap.h"
 
+#include <istream>
 #include <memory>
 #include <sstream>
 #include <string>

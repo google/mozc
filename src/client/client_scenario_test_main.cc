@@ -34,6 +34,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <istream>
 #include <memory>
 #include <string>
 #include <vector>

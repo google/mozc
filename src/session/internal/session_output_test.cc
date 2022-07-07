@@ -30,6 +30,7 @@
 #include "session/internal/session_output.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 
 #include "base/port.h"

@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/number_util.h"

@@ -28,9 +28,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstdint>
+#include <ios>
 #include <iostream>  // NOLINT
 #include <map>
 #include <numeric>  // accumulate
+#include <ostream>
 #include <string>
 #include <vector>
 

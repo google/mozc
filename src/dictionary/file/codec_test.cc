@@ -29,8 +29,11 @@
 
 #include "dictionary/file/codec.h"
 
+#include <ios>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"

@@ -34,6 +34,7 @@
 
 #include <cstdint>
 #include <iosfwd>
+#include <ostream>
 #include <string>
 #include <vector>
 
