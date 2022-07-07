@@ -30,6 +30,7 @@
 #include "composer/internal/composition.h"
 
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <string>

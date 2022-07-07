@@ -29,7 +29,9 @@
 
 #include "composer/table.h"
 
+#include <iterator>
 #include <string>
+#include <vector>
 
 #include "base/file_util.h"
 #include "base/port.h"

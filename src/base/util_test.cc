@@ -33,10 +33,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"

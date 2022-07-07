@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "composer/composer.h"
 #include "converter/converter_interface.h"

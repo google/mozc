@@ -34,6 +34,9 @@
 #endif  // OS_WIN
 
 #include <cstring>
+#include <ios>
+#include <istream>
+#include <iterator>
 #include <map>
 #include <sstream>
 #include <string>

@@ -30,6 +30,8 @@
 #ifndef MOZC_ENGINE_EVAL_ENGINE_FACTORY_H_
 #define MOZC_ENGINE_EVAL_ENGINE_FACTORY_H_
 
+#include <memory>
+
 #include "engine/engine.h"
 #include "absl/strings/string_view.h"
 

@@ -29,6 +29,7 @@
 
 #include "composer/internal/char_chunk.h"
 
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>

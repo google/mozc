@@ -29,6 +29,7 @@
 
 #include "client/client_mock.h"
 
+#include <map>
 #include <string>
 
 #include "base/logging.h"

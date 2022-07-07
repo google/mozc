@@ -31,7 +31,9 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <string>
+#include <vector>
 
 #include "base/protobuf/message.h"
 #include "base/util.h"

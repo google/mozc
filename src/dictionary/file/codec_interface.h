@@ -31,6 +31,7 @@
 #define MOZC_DICTIONARY_FILE_CODEC_INTERFACE_H_
 
 #include <iosfwd>
+#include <ostream>
 #include <string>
 #include <vector>
 

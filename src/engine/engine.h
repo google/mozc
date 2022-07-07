@@ -32,6 +32,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "converter/connector.h"

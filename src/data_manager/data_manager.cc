@@ -34,6 +34,8 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"

@@ -30,7 +30,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "base/init_mozc.h"
 #include "base/logging.h"

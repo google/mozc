@@ -31,6 +31,7 @@
 #define MOZC_ENGINE_ENGINE_STUB_H_
 
 #include <string>
+#include <vector>
 
 #include "engine/engine_interface.h"
 

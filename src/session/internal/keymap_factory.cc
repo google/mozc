@@ -30,6 +30,7 @@
 #include "session/internal/keymap_factory.h"
 
 #include <map>
+#include <utility>
 
 #include "base/freelist.h"
 #include "base/port.h"

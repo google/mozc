@@ -29,6 +29,7 @@
 
 #include "base/japanese_util.h"
 
+#include <iterator>
 #include <string>
 
 #include "testing/base/public/gunit.h"

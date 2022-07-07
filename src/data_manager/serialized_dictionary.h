@@ -34,8 +34,10 @@
 #include <istream>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/port.h"
 #include "base/serialized_string_array.h"

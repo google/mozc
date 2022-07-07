@@ -30,6 +30,7 @@
 #include "data_manager/pos_list_provider.h"
 
 #include <string>
+#include <vector>
 
 #include "base/embedded_file.h"
 #include "base/logging.h"

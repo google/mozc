@@ -29,6 +29,7 @@
 
 #include "base/multifile.h"
 
+#include <ostream>
 #include <string>
 #include <vector>
 

@@ -36,6 +36,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"

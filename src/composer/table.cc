@@ -38,6 +38,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"

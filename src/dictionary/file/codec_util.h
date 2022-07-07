@@ -32,6 +32,7 @@
 
 #include <cstdint>
 #include <iosfwd>
+#include <ostream>
 
 #include "base/port.h"
 

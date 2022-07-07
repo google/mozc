@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #endif  // OS_WIN
 
+#include <ios>
 #include <string>
 #include <vector>
 

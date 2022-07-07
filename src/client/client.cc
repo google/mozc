@@ -40,8 +40,11 @@
 #endif  // OS_WIN
 
 #include <cstddef>
+#include <ios>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <vector>
 
 #include "base/const.h"
 #include "base/file_stream.h"

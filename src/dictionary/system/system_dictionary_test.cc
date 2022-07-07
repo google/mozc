@@ -32,8 +32,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <iterator>
 #include <limits>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>

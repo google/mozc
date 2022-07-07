@@ -29,7 +29,9 @@
 
 #include "base/multifile.h"
 
+#include <ios>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "base/logging.h"

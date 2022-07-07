@@ -31,6 +31,8 @@
 
 #include "unix/emacs/client_pool.h"
 
+#include <memory>
+
 namespace mozc {
 namespace emacs {
 

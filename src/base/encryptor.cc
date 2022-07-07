@@ -43,6 +43,7 @@
 #include <string.h>
 #endif  // platforms (OS_WIN, __APPLE__, ...)
 
+#include <iterator>
 #include <memory>
 #include <string>
 

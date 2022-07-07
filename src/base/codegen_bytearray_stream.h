@@ -43,6 +43,7 @@
 #define MOZC_BASE_CODEGEN_BYTEARRAY_STREAM_H_
 
 #include <algorithm>
+#include <ios>
 #include <memory>
 #include <ostream>
 #include <streambuf>

@@ -31,6 +31,7 @@
 #define MOZC_BASE_FILE_STREAM_H_
 
 #include <fstream>
+#include <ios>
 #include <string>
 
 namespace mozc {

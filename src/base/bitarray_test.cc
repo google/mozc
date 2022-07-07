@@ -29,6 +29,7 @@
 
 #include "base/bitarray.h"
 
+#include <iterator>
 #include <vector>
 
 #include "base/util.h"

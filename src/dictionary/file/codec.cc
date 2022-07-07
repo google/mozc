@@ -33,6 +33,7 @@
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "base/hash.h"
 #include "base/logging.h"

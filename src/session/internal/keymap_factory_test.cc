@@ -29,6 +29,7 @@
 
 #include "session/internal/keymap_factory.h"
 
+#include <iterator>
 #include <map>
 
 #include "composer/key_parser.h"

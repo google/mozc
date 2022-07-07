@@ -29,6 +29,7 @@
 
 #include "data_manager/dataset_writer.h"
 
+#include <ostream>
 #include <string>
 
 #include "base/file_util.h"

@@ -29,7 +29,9 @@
 
 #include "dictionary/file/dictionary_file_builder.h"
 
+#include <ios>
 #include <string>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/logging.h"

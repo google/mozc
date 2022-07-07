@@ -191,7 +191,10 @@ def objc_library_mozc(
         deps = deps + [
             "//:macro",
             proto_deps_name,
-        ] + select_mozc(macos = sdk_frameworks_deps),
+        ] + select_mozc(
+            macos = sdk_frameworks_deps,
+            oss_macos = [],
+        ),
         copts = copts + ["-funsigned-char", "-std=c++17"],
         sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
         # The 'manual' tag excludes this from the targets of 'all' and '...'.
@@ -264,7 +267,10 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
         minimum_os_version = "10.10",
         platform_type = "macos",
         sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
-        deps = [name + "_lib"] + select_mozc(macos = sdk_frameworks_deps),
+        deps = [name + "_lib"] + select_mozc(
+            macos = sdk_frameworks_deps,
+            oss_macos = [],
+        ),
         tags = ["manual"],
     )
 

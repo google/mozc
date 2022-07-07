@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <iostream>  // NOLINT
 #include <iterator>
+#include <ostream>
 #include <string>
 #include <vector>
 

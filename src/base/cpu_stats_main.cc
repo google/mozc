@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "base/cpu_stats.h"

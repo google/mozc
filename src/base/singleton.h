@@ -31,6 +31,7 @@
 #define MOZC_BASE_SINGLETON_H_
 
 #include <optional>
+#include <utility>
 
 #include "absl/base/call_once.h"
 

@@ -30,6 +30,7 @@
 #include "composer/internal/typing_model.h"
 
 #include <cstdint>
+#include <iterator>
 
 #include "testing/base/public/gunit.h"
 

@@ -29,6 +29,7 @@
 
 #include "composer/internal/converter.h"
 
+#include <iterator>
 #include <string>
 
 #include "composer/table.h"
