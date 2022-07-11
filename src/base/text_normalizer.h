@@ -56,6 +56,11 @@ class TextNormalizer {
     return NormalizeTextWithFlag(input, kDefault);
   }
 
+  // Normalizes Japanese CJK compatibility ideographs to SVS characters.
+  // Returns false and keeps output as is, if no character is normalized.
+  static bool NormalizeTextToSvs(absl::string_view input, std::string *output);
+  static std::string NormalizeTextToSvs(absl::string_view input);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(TextNormalizer);
 };
