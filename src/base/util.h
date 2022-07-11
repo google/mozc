@@ -176,6 +176,11 @@ class Util {
     return CharsLen(str.data(), str.size());
   }
 
+  // Splits `str` to codepoints.
+  static std::vector<char32> Utf8ToCodepoints(absl::string_view str);
+  // Converts `codepoints` to UTF8 string.
+  static std::string CodepointsToUtf8(const std::vector<char32> &codepoints);
+
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
   static char32 Utf8ToUcs4(const char *begin, const char *end, size_t *mblen);
@@ -280,7 +285,7 @@ class Util {
   // in full width and half-width-katakana area
   static bool IsFullWidthSymbolInHalfWidthKatakana(const std::string &input);
 
-  // Returns true if all chars are defiend in half-width-katakana area.
+  // Returns true if all chars are defined in half-width-katakana area.
   static bool IsHalfWidthKatakanaSymbol(const std::string &input);
 
   // Returns true if one or more Kana-symbol characters are in the input.

@@ -466,6 +466,23 @@ size_t Util::CharsLen(const char *src, size_t size) {
   return length;
 }
 
+std::vector<char32> Util::Utf8ToCodepoints(absl::string_view str) {
+  std::vector<char32> codepoints;
+  char32 codepoint;
+  while (Util::SplitFirstChar32(str, &codepoint, &str)) {
+    codepoints.push_back(codepoint);
+  }
+  return codepoints;
+}
+
+std::string Util::CodepointsToUtf8(const std::vector<char32> &codepoints) {
+  std::string output;
+  for (const char32 codepoint : codepoints) {
+    Ucs4ToUtf8Append(codepoint, &output);
+  }
+  return output;
+}
+
 char32 Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
   absl::string_view s(begin, end - begin);
   absl::string_view rest;
