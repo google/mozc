@@ -116,6 +116,14 @@ class Util {
   static void SplitStringToUtf8Chars(absl::string_view str,
                                      std::vector<std::string> *output);
 
+  // Split `str` to graphemes.
+  // A grapheme may contain multiple characters such as modifiers and variation
+  // squesnces (e.g. 神︀ = U+795E,U+FE00 [SVS]).
+  // Note, this function does not support full requirements of the grapheme
+  // specifications defined by Unicode.
+  static void SplitStringToUtf8Graphemes(absl::string_view str,
+                                         std::vector<std::string> *graphemes);
+
   static void SplitCSV(const std::string &input,
                        std::vector<std::string> *output);
 

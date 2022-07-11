@@ -195,7 +195,7 @@ bool LookupKanjiList(absl::string_view single_kanji_token_array,
     return false;
   }
   const absl::string_view values = single_kanji_string_array[iter[1]];
-  Util::SplitStringToUtf8Chars(values, kanji_list);
+  Util::SplitStringToUtf8Graphemes(values, kanji_list);
   return true;
 }
 

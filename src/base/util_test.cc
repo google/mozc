@@ -49,6 +49,7 @@
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
 
@@ -375,6 +376,67 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
 
     for (size_t i = 0; i < output.size(); ++i) {
       EXPECT_EQ(kInputs[i], output[i]);
+    }
+  }
+}
+
+TEST(UtilTest, SplitStringToUtf8Graphemes) {
+  {
+    std::vector<std::string> output;
+    Util::SplitStringToUtf8Chars("", &output);
+    EXPECT_EQ(0, output.size());
+  }
+
+  {  // Single codepoint characters.
+    const std::string kInputs[] = {
+        "a", "あ", "亜", "\n", "a",
+    };
+    std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
+    }
+  }
+
+  {  // Multiple codepoint characters
+    const std::string kInputs[] = {
+        "神",  // U+795E
+        "神︀",  // U+795E,U+FE00  - 2 codepoints [SVS]
+        "神󠄀",  // U+795E,U+E0100 - 2 codepoints [IVS]
+        "あ゙",  // U+3042,U+3099  - 2 codepoints [Dakuten]
+        "か゚",  // U+304B,U+309A  - 2 codepoints [Handakuten]
+    };
+    std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
+    }
+  }
+
+  {  // Invalid codepoint characters
+    const std::string kInputs[] = {
+        u8"\uFE00",  // Extend only [SVS]
+        u8"神\uFE00\U000E0100",  // Multiple extends [SVS, IVS]
+    };
+    std::string joined_string;
+    for (int i = 0; i < std::size(kInputs); ++i) {
+      joined_string += kInputs[i];
+    }
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
     }
   }
 }
