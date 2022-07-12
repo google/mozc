@@ -27,9 +27,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Scan code reference: http://cs/android/frameworks/base/data/keyboards/Generic.kl
+
 type OVERLAY
 
 map key 41 ZENKAKU_HANKAKU
+
+# The following definitions exist in Generic.kl, but their keycode is not set on runtime.
+# Not sure why, but redefine them here.
+map key 89 RO
+map key 92 HENKAN
+map key 93 KATAKANA_HIRAGANA
+map key 94 MUHENKAN
+map key 124 YEN
 
 key 1 {
   label: '1'
