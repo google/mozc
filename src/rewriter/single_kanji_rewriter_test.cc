@@ -77,10 +77,10 @@ class SingleKanjiRewriterTest : public ::testing::Test {
 
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->Init();
-    candidate->key = key;
-    candidate->content_key = key;
-    candidate->value = value;
-    candidate->content_value = value;
+    candidate->key.assign(key.data(), key.size());
+    candidate->content_key.assign(key.data(), key.size());
+    candidate->value.assign(value.data(), value.size());
+    candidate->content_value.assign(value.data(), value.size());
   }
 
   static bool Contains(const Segments &segments, absl::string_view word) {
