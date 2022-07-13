@@ -67,6 +67,9 @@ class KeyMap : public KeyMapInterface<typename T::Commands> {
   KeyToCommandMap keymap_;
 };
 
+// A manager of key mapping rule for a SessionKeymap.
+// When running as a decoder, an instance is always tied to an effectively
+// immutable `SessionKeymap`, which is set by `Initialize()` method.
 class KeyMapManager {
  public:
   KeyMapManager();
@@ -75,17 +78,10 @@ class KeyMapManager {
   bool Initialize(config::Config::SessionKeymap keymap);
 
   // Reloads the key map by using given configuration.
+  // `keymap_` is effectively immutable
+  // so `config.session_keymap` must be identical to it.
+  // Right now `config.custom_keymap_table` is the only reloaded content.
   bool ReloadConfig(const config::Config &config);
-
-  bool LoadFile(const char *filename);
-  bool LoadStream(std::istream *ifs);
-  bool LoadStreamWithErrors(std::istream *ifs,
-                            std::vector<std::string> *errors);
-
-  // Add a command bound with state and key_event.
-  bool AddCommand(const std::string &state_name,
-                  const std::string &key_event_name,
-                  const std::string &command_name);
 
   bool GetCommandDirect(const commands::KeyEvent &key_event,
                         DirectInputState::Commands *command) const;
@@ -139,9 +135,24 @@ class KeyMapManager {
 
  private:
   friend class KeyMapTest;
+  FRIEND_TEST(KeyMapTest, AddRule);
+  FRIEND_TEST(KeyMapTest, DefaultKeyBindings);
+  FRIEND_TEST(KeyMapTest, LoadStreamWithErrors);
+  FRIEND_TEST(KeyMapTest, AddCommand);
+  FRIEND_TEST(KeyMapTest, ZeroQuerySuggestion);
 
   void Reset();
   void InitCommandData();
+
+  bool LoadFile(const char *filename);
+  bool LoadStream(std::istream *ifs);
+  bool LoadStreamWithErrors(std::istream *ifs,
+                            std::vector<std::string> *errors);
+
+  // Add a command bound with state and key_event.
+  bool AddCommand(const std::string &state_name,
+                  const std::string &key_event_name,
+                  const std::string &command_name);
 
   bool ParseCommandDirect(const std::string &command_string,
                           DirectInputState::Commands *command) const;
@@ -162,6 +173,8 @@ class KeyMapManager {
 
   static const bool kInputModeXCommandSupported;
 
+  // The SessionKeymap tied with this instance.
+  // Effectively immutable. Once set by `Initialize()`, never changes.
   config::Config::SessionKeymap keymap_;
   std::map<std::string, DirectInputState::Commands> command_direct_map_;
   std::map<std::string, PrecompositionState::Commands>
