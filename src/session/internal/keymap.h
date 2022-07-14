@@ -41,6 +41,7 @@
 #include "composer/key_event_util.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap_interface.h"
+#include "testing/base/public/gunit_prod.h"
 #include "absl/container/btree_set.h"
 
 namespace mozc {
