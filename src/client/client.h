@@ -95,6 +95,11 @@ class Client : public ClientInterface {
  public:
   Client();
   ~Client() override;
+
+  // Initializes `request_` with the flag.
+  // This function should be called before EnsureSession.
+  void InitRequestForSvsJapanese(bool use_svs);
+
   void SetIPCClientFactory(IPCClientFactoryInterface *client_factory) override;
 
   // set ServerLauncher.
@@ -243,6 +248,7 @@ class Client : public ClientInterface {
   std::unique_ptr<ServerLauncherInterface> server_launcher_;
   std::unique_ptr<char[]> result_;
   std::unique_ptr<config::Config> preferences_;
+  std::unique_ptr<commands::Request> request_;
   int timeout_;
   ServerStatus server_status_;
   uint32_t server_protocol_version_;

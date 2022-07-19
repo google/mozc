@@ -660,6 +660,36 @@ TEST_F(ClientTest, TranslateProtoBufToMozcToolArgTest) {
   EXPECT_EQ("word_register_dialog", mode);
 }
 
+TEST_F(ClientTest, InitRequestForSvsJapaneseTest) {
+  const int mock_id = 1;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  client_->InitRequestForSvsJapanese(true);
+  EXPECT_TRUE(client_->EnsureSession());
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_TRUE(input.has_request());
+  EXPECT_TRUE(
+      input.request().decoder_experiment_params().variation_character_types() &
+      commands::DecoderExperimentParams::SVS_JAPANESE);
+}
+
+TEST_F(ClientTest, NoInitRequestForSvsJapaneseTest) {
+  const int mock_id = 1;
+  EXPECT_TRUE(SetupConnection(mock_id));
+
+  client_->InitRequestForSvsJapanese(false);
+  EXPECT_TRUE(client_->EnsureSession());
+
+  commands::Input input;
+  GetGeneratedInput(&input);
+  EXPECT_TRUE(input.has_request());
+  EXPECT_FALSE(
+      input.request().decoder_experiment_params().variation_character_types() &
+      commands::DecoderExperimentParams::SVS_JAPANESE);
+}
+
 class SessionPlaybackTestServerLauncher : public ServerLauncherInterface {
  public:
   explicit SessionPlaybackTestServerLauncher(IPCClientFactoryMock *factory)
