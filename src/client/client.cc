@@ -775,7 +775,7 @@ bool Client::CheckVersionOrRestartServerInternal(const commands::Input &input,
       server_status_ = SERVER_UNKNOWN;
       if (!EnsureConnection()) {
         server_status_ = SERVER_VERSION_MISMATCH;
-        LOG(ERROR) << "Ensure Connecion failed";
+        LOG(ERROR) << "Ensure Connection failed";
         return false;
       }
 

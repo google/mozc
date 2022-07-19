@@ -111,7 +111,7 @@ class ClientInterface {
   virtual bool EnsureSession() = 0;
 
   // Checks protocol/product version.
-  // If a  new version is avaialable, restart the server.
+  // If a  new version is available, restart the server.
   // return true the server is available.
   // return false some error happened during the server restart.
   // This method calls EnsureConnection automatically.
@@ -164,7 +164,7 @@ class ClientInterface {
   // Shutdonw server
   virtual bool Shutdown() = 0;
 
-  // Sync server data, e.g, (prediction data) into disk
+  // Sync server data, e.g., (prediction data) into disk
   virtual bool SyncData() = 0;
 
   // Reload server data, e.g., (user dictionary, prediction data)
@@ -173,7 +173,7 @@ class ClientInterface {
   // Cleanup un-used sessions
   virtual bool Cleanup() = 0;
 
-  // Resets internal state (changs the state to be SERVER_UNKNOWN)
+  // Resets internal state (changes the state to be SERVER_UNKNOWN)
   virtual void Reset() = 0;
 
   // Returns true if server is alive.
