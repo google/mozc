@@ -645,5 +645,9 @@ absl::Status SessionHandlerInterpreter::Eval(
   return absl::Status();
 }
 
+void SessionHandlerInterpreter::SetRequest(const commands::Request &request) {
+  *request_ = request;
+}
+
 }  // namespace session
 }  // namespace mozc

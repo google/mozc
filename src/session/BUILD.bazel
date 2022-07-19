@@ -893,7 +893,7 @@ cc_test_mozc(
     ],
     requires_full_emulation = False,
     deps = [
-        ":session_handler",
+        ":request_test_util",
         ":session_handler_test_util",
         ":session_handler_tool",
         "//base:config_file_stream",

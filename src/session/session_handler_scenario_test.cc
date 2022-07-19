@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "base/config_file_stream.h"
@@ -46,6 +47,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "session/request_test_util.h"
 #include "session/session_handler_test_util.h"
 #include "session/session_handler_tool.h"
 #include "storage/registry.h"
@@ -68,8 +70,7 @@ using ::mozc::session::SessionHandlerInterpreter;
 using ::mozc::session::testing::SessionHandlerTestBase;
 using ::testing::WithParamInterface;
 
-class SessionHandlerScenarioTest : public SessionHandlerTestBase,
-                                   public WithParamInterface<const char *> {
+class SessionHandlerScenarioTestBase : public SessionHandlerTestBase {
  protected:
   void SetUp() override {
     // Note that singleton Config instance is backed up and restored
@@ -88,6 +89,9 @@ class SessionHandlerScenarioTest : public SessionHandlerTestBase,
 
   std::unique_ptr<SessionHandlerInterpreter> handler_;
 };
+
+class SessionHandlerScenarioTest : public SessionHandlerScenarioTestBase,
+                                   public WithParamInterface<const char *> {};
 
 // Tests should be passed.
 const char *kScenarioFileList[] = {
@@ -335,7 +339,13 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     ASSERT_EQ(2, args.size());
     EXPECT_NOT_IN_ALL_CANDIDATE_WORDS(args[1], output);
   } else if (command == "EXPECT_HAS_CANDIDATES") {
-    ASSERT_TRUE(output.has_candidates());
+    if (args.size() == 2 && !args[1].empty()) {
+      ASSERT_TRUE(output.has_candidates());
+      ASSERT_GT(output.candidates().size(), NumberUtil::SimpleAtoi(args[1]))
+          << output.Utf8DebugString();
+    } else {
+      ASSERT_TRUE(output.has_candidates());
+    }
   } else if (command == "EXPECT_NO_CANDIDATES") {
     ASSERT_FALSE(output.has_candidates());
   } else if (command == "EXPECT_SEGMENTS_SIZE") {
@@ -394,6 +404,70 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
   InputFileStream input_stream(scenario_path->c_str());
 
+  std::string line_text;
+  int line_number = 0;
+  while (std::getline(input_stream, line_text)) {
+    ++line_number;
+    SCOPED_TRACE(absl::StrFormat("Scenario: %s [%s:%d]", line_text.c_str(),
+                                 scenario_path->c_str(), line_number));
+    ParseLine(*handler_, line_text);
+  }
+}
+
+class SessionHandlerScenarioTestForRequest
+    : public SessionHandlerScenarioTestBase,
+      public WithParamInterface<std::tuple<const char *, commands::Request>> {};
+
+const char *kScenariosForExperimentParams[] = {
+#define DATA_DIR "data/test/session/scenario/"
+    DATA_DIR "mobile_zero_query.txt",
+    DATA_DIR "mobile_preedit.txt",
+#undef DATA_DIR
+};
+
+commands::Request GetMobileRequest() {
+  commands::Request request = commands::Request::default_instance();
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request.set_one_phase_suggestion(true);
+  return request;
+}
+
+
+// Makes sure that the results are not changed by experiment params.
+INSTANTIATE_TEST_SUITE_P(
+    TestForExperimentParams, SessionHandlerScenarioTestForRequest,
+    ::testing::Combine(::testing::ValuesIn(kScenariosForExperimentParams),
+                       ::testing::Values(
+                           GetMobileRequest(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_strict_candidate_filter(true);
+                             return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_new_spatial_scoring(true);
+                             return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enrich_partial_candidates(true);
+                             return request;
+                           }())));
+
+TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
+  // Open the scenario file.
+  const absl::StatusOr<std::string> scenario_path =
+      mozc::testing::GetSourceFile({std::get<0>(GetParam())});
+  ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
+
+  handler_->SetRequest(std::get<1>(GetParam()));
+
+  LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
+  InputFileStream input_stream(scenario_path->c_str());
   std::string line_text;
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {
