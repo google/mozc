@@ -30,9 +30,9 @@
 #ifndef MOZC_SESSION_INTERNAL_KEYMAP_FACTORY_H_
 #define MOZC_SESSION_INTERNAL_KEYMAP_FACTORY_H_
 
-#include <map>
+#include <memory>
+#include <vector>
 
-#include "base/freelist.h"
 #include "protocol/config.pb.h"
 
 namespace mozc {
@@ -42,9 +42,6 @@ class KeyMapManager;
 
 class KeyMapFactory {
  public:
-  using KeyMapManagerMap =
-      std::map<config::Config::SessionKeymap, KeyMapManager *>;
-
   KeyMapFactory() = delete;
   ~KeyMapFactory() = delete;
 
@@ -58,9 +55,8 @@ class KeyMapFactory {
 
  private:
   friend class TestKeyMapFactoryProxy;
-
-  static KeyMapManagerMap *GetKeyMaps();
-  static ObjectPool<KeyMapManager> *GetPool();
+  using KeyMapManagerList = std::vector<std::unique_ptr<KeyMapManager>>;
+  static KeyMapManagerList &GetKeyMaps();
 };
 
 }  // namespace keymap

@@ -93,7 +93,6 @@ cc_library_mozc(
     deps = [
         ":keymap",
         "//base",
-        "//base:freelist",
         "//base:port",
         "//config:config_handler",
         "//protocol:config_cc_proto",

@@ -29,10 +29,11 @@
 
 #include "session/internal/keymap_factory.h"
 
-#include <map>
+#include <algorithm>
+#include <memory>
 #include <utility>
+#include <vector>
 
-#include "base/freelist.h"
 #include "base/port.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -47,39 +48,39 @@ using config::Config;
 
 KeyMapManager *KeyMapFactory::GetKeyMapManager(
     const Config::SessionKeymap keymap) {
-  auto *keymaps = GetKeyMaps();
-  KeyMapManagerMap::iterator iter = keymaps->find(keymap);
+  KeyMapManagerList& keymaps = GetKeyMaps();
+  KeyMapManagerList::iterator iter =
+      std::find_if(keymaps.begin(), keymaps.end(),
+                   [&keymap](std::unique_ptr<KeyMapManager> const& m) {
+                     return m->GetKeymap() == keymap;
+                   });
 
-  if (iter != keymaps->end()) {
-    return iter->second;
+  if (iter != keymaps.end()) {
+    return iter->get();
   }
 
   // create new instance
-  static ObjectPool<KeyMapManager> *pool = new ObjectPool<KeyMapManager>(6);
-  KeyMapManager *manager = pool->Alloc();
-  keymaps->insert(std::make_pair(keymap, manager));
-  manager->Initialize(keymap);
-  return manager;
+  return keymaps.emplace_back(new KeyMapManager(keymap)).get();
 }
 
 void KeyMapFactory::ReloadConfig(const Config &config) {
-  auto *keymaps = GetKeyMaps();
-  KeyMapManagerMap::iterator iter = keymaps->find(Config::CUSTOM);
-  if (iter == keymaps->end()) {
+  KeyMapManagerList& keymaps = GetKeyMaps();
+  // TODO(matsuzakit): Special handling for CUSTOM will soon be removed.
+  KeyMapManagerList::iterator iter =
+      std::find_if(keymaps.begin(), keymaps.end(),
+                   [](std::unique_ptr<KeyMapManager> const& m) {
+                     return m->GetKeymap() == Config::CUSTOM;
+                   });
+  if (iter == keymaps.end()) {
     return;
   }
 
-  iter->second->ReloadConfig(config);
+  (*iter)->ReloadConfig(config);
 }
 
-KeyMapFactory::KeyMapManagerMap *KeyMapFactory::GetKeyMaps() {
-  static auto *keymaps = new KeyMapFactory::KeyMapManagerMap();
-  return keymaps;
-}
-
-ObjectPool<KeyMapManager> *KeyMapFactory::GetPool() {
-  static auto *pool = new ObjectPool<KeyMapManager>(6);
-  return pool;
+KeyMapFactory::KeyMapManagerList& KeyMapFactory::GetKeyMaps() {
+  static KeyMapManagerList* keymaps = new KeyMapFactory::KeyMapManagerList();
+  return *keymaps;
 }
 
 }  // namespace keymap

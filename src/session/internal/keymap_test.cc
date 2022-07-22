@@ -540,21 +540,19 @@ TEST_F(KeyMapTest, Reconvert) {
 }
 
 TEST_F(KeyMapTest, Initialize) {
-  KeyMapManager manager;
   config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
   ConversionState::Commands conv_command;
 
   {  // ATOK
-    keymap_setting = config::Config::ATOK;
-    manager.Initialize(keymap_setting);
+    KeyMapManager manager(config::Config::ATOK);
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_WIDTH_EXPAND, conv_command);
   }
   {  // MSIME
+    KeyMapManager manager(config::Config::MSIME);
     keymap_setting = config::Config::MSIME;
-    manager.Initialize(keymap_setting);
     KeyParser::ParseKey("Right", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::SEGMENT_FOCUS_RIGHT, conv_command);
@@ -652,21 +650,17 @@ TEST_F(KeyMapTest, InputModeChangeIsNotEnabledOnChromeOsIssue13947207) {
     return;
   }
 
-  KeyMapManager manager;
-  config::Config::SessionKeymap keymap_setting;
   commands::KeyEvent key_event;
   ConversionState::Commands conv_command;
 
   {  // MSIME
-    keymap_setting = config::Config::MSIME;
-    manager.Initialize(keymap_setting);
+    KeyMapManager manager(config::Config::MSIME);
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_TRUE(manager.GetCommandConversion(key_event, &conv_command));
     EXPECT_EQ(ConversionState::INPUT_MODE_HIRAGANA, conv_command);
   }
   {  // CHROMEOS
-    keymap_setting = config::Config::CHROMEOS;
-    manager.Initialize(keymap_setting);
+    KeyMapManager manager(config::Config::CHROMEOS);
     KeyParser::ParseKey("Hiragana", &key_event);
     EXPECT_FALSE(manager.GetCommandConversion(key_event, &conv_command));
   }

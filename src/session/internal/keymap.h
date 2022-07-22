@@ -69,18 +69,20 @@ class KeyMap : public KeyMapInterface<typename T::Commands> {
 };
 
 // A manager of key mapping rule for a SessionKeymap.
-// When running as a decoder, an instance is always tied to an effectively
-// immutable `SessionKeymap`, which is set by `Initialize()` method.
+// When running as a decoder, an instance is always tied to
+// an immutable `SessionKeymap`, which is set by the constructors.
 class KeyMapManager {
  public:
+  // Default ctor for GUI config editor. keymap is NONE.
   KeyMapManager();
+  // Decoder should explicitly set the keymap.
+  explicit KeyMapManager(config::Config::SessionKeymap keymap);
   ~KeyMapManager();
 
-  bool Initialize(config::Config::SessionKeymap keymap);
+  config::Config::SessionKeymap GetKeymap() const { return keymap_; }
 
   // Reloads the key map by using given configuration.
-  // `keymap_` is effectively immutable
-  // so `config.session_keymap` must be identical to it.
+  // `keymap_` is immutable so `config.session_keymap` must be identical to it.
   // Right now `config.custom_keymap_table` is the only reloaded content.
   bool ReloadConfig(const config::Config &config);
 
@@ -144,6 +146,7 @@ class KeyMapManager {
 
   void Reset();
   void InitCommandData();
+  bool Initialize();
 
   bool LoadFile(const char *filename);
   bool LoadStream(std::istream *ifs);
@@ -174,9 +177,8 @@ class KeyMapManager {
 
   static const bool kInputModeXCommandSupported;
 
-  // The SessionKeymap tied with this instance.
-  // Effectively immutable. Once set by `Initialize()`, never changes.
-  config::Config::SessionKeymap keymap_;
+  // The SessionKeymap which this instance represents.
+  const config::Config::SessionKeymap keymap_;
   std::map<std::string, DirectInputState::Commands> command_direct_map_;
   std::map<std::string, PrecompositionState::Commands>
       command_precomposition_map_;
