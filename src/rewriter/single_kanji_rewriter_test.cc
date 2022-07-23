@@ -45,6 +45,7 @@
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -68,6 +69,29 @@ class SingleKanjiRewriterTest : public ::testing::Test {
   }
 
   const PosMatcher &pos_matcher() { return pos_matcher_; }
+
+  static void InitSegments(absl::string_view key, absl::string_view value,
+                    Segments *segments) {
+    Segment *segment = segments->add_segment();
+    segment->set_key(key);
+
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->Init();
+    candidate->key.assign(key.data(), key.size());
+    candidate->content_key.assign(key.data(), key.size());
+    candidate->value.assign(value.data(), value.size());
+    candidate->content_value.assign(value.data(), value.size());
+  }
+
+  static bool Contains(const Segments &segments, absl::string_view word) {
+    const Segment &segment = segments.segment(0);
+    for (int i = 0; i < segment.candidates_size(); ++i) {
+      if (segment.candidate(i).value == word) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   const ConversionRequest default_request_;
 
@@ -228,4 +252,39 @@ TEST_F(SingleKanjiRewriterTest, AddDescriptionTest) {
   EXPECT_EQ("亜の旧字体", segment->candidate(0).description);
 }
 
+TEST_F(SingleKanjiRewriterTest, NoVariationTest) {
+  SingleKanjiRewriter rewriter(*data_manager_);
+
+  Segments segments;
+  InitSegments("かみ", "神", &segments);  // U+795E
+
+  ConversionRequest svs_convreq;
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_variation_character_types(
+      commands::DecoderExperimentParams::NO_VARIATION);
+  svs_convreq.set_request(&request);
+
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
+  EXPECT_FALSE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
+  EXPECT_TRUE(Contains(segments, "\uFA19"));  // 神 CJK compat ideograph.
+}
+
+TEST_F(SingleKanjiRewriterTest, SvsVariationTest) {
+  SingleKanjiRewriter rewriter(*data_manager_);
+
+  Segments segments;
+  InitSegments("かみ", "神", &segments);  // U+795E
+
+  ConversionRequest svs_convreq;
+  commands::Request request;
+  request.mutable_decoder_experiment_params()->set_variation_character_types(
+      commands::DecoderExperimentParams::SVS_JAPANESE);
+  svs_convreq.set_request(&request);
+
+  EXPECT_EQ(1, segments.segment(0).candidates_size());
+  EXPECT_TRUE(rewriter.Rewrite(svs_convreq, &segments));
+  EXPECT_TRUE(Contains(segments, "\u795E\uFE00"));  // 神︀ SVS character.
+  EXPECT_FALSE(Contains(segments, "\uFA19"));  // 神 CJK compat ideograph.
+}
 }  // namespace mozc

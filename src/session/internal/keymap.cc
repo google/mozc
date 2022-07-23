@@ -71,8 +71,12 @@ const bool KeyMapManager::kInputModeXCommandSupported = false;
 const bool KeyMapManager::kInputModeXCommandSupported = true;
 #endif  // __APPLE__
 
-KeyMapManager::KeyMapManager() : keymap_(config::Config::NONE) {
+KeyMapManager::KeyMapManager() : KeyMapManager(config::Config::NONE) {}
+
+KeyMapManager::KeyMapManager(const config::Config::SessionKeymap keymap)
+    : keymap_(keymap) {
   InitCommandData();
+  Initialize();
 }
 
 KeyMapManager::~KeyMapManager() {}
@@ -87,13 +91,13 @@ void KeyMapManager::Reset() {
   keymap_prediction_.Clear();
 }
 
-bool KeyMapManager::Initialize(const config::Config::SessionKeymap keymap) {
-  keymap_ = keymap;
+// TODO(matsuzakit): Will clean up soon.
+bool KeyMapManager::Initialize() {
   // Clear the previous keymaps.
   Reset();
 
-  const char *keymap_file = GetKeyMapFileName(keymap);
-  if (keymap != config::Config::CUSTOM && keymap_file != nullptr &&
+  const char *keymap_file = GetKeyMapFileName(keymap_);
+  if (keymap_ != config::Config::CUSTOM && keymap_file != nullptr &&
       LoadFile(keymap_file)) {
     return true;
   }

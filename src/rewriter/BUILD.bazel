@@ -1023,6 +1023,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//base:serialized_string_array",
+        "//base:text_normalizer",
         "//base:util",
         "//config:config_handler",
         "//converter:segments",
@@ -1085,6 +1086,7 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

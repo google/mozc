@@ -73,7 +73,7 @@ filegroup(
     name = "dictionary_data",
     srcs = [
         ":aux_dictionary",
-        ":base_dictionary_data",
+        ":filtered_dictionary",
     ],
 )
 
@@ -107,6 +107,19 @@ genrule(
            "--aux_tsv $(location //data/oss:aux_dictionary.tsv) " +
            "--dictionary_txts $(locations :base_dictionary_data)"),
     exec_tools = ["//dictionary:gen_aux_dictionary"],
+)
+
+genrule(
+    name = "filtered_dictionary",
+    srcs = [
+        ":base_dictionary_data",
+        "//data/oss:dictionary_filter.tsv",
+    ],
+    outs = ["dictionary.txt"],
+    cmd = ("$(location //dictionary:gen_filtered_dictionary) --output $@ " +
+           "--filter_tsv $(location //data/oss:dictionary_filter.tsv) " +
+           "--dictionary_txts $(locations :base_dictionary_data)"),
+    exec_tools = ["//dictionary:gen_filtered_dictionary"],
 )
 
 evaluation(

@@ -85,4 +85,41 @@ TEST(TextNormalizerTest, NormalizeText) {
   EXPECT_EQ("¥298", output);
 }
 
+TEST(TextNormalizerTest, NormalizeTextToSvs) {
+  std::string output;
+  EXPECT_FALSE(TextNormalizer::NormalizeTextToSvs("", &output));
+  EXPECT_TRUE(output.empty());
+  EXPECT_TRUE(TextNormalizer::NormalizeTextToSvs("").empty());
+
+  std::string input = "abcあいう";
+  EXPECT_FALSE(TextNormalizer::NormalizeTextToSvs(input, &output));
+  EXPECT_TRUE(output.empty());
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs(input), input);
+
+  input = "\uFA10";  // 塚 U+FA10, CJK compatibility character.
+  std::string expected = "\u585A\uFE00";  // 塚︀ U+585A,U+FE00 SVS character.
+  EXPECT_TRUE(TextNormalizer::NormalizeTextToSvs(input, &output));
+  EXPECT_EQ(output, expected);
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs(input), expected);
+
+  input = "abc\uFA10あいう";
+  expected = "abc\u585A\uFE00あいう";
+  EXPECT_TRUE(TextNormalizer::NormalizeTextToSvs(input, &output));
+  EXPECT_EQ(output, expected);
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs(input), expected);
+
+  // 欄 in KS X 1001
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uF91D"), "\u6B04\uFE00");
+  // 𤋮 in ARIB. The output is more than 16bits.
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uFA6C"), "\U000242EE\uFE00");
+  // 艹 uses FE01 for SVS extends
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uFA5E"), "\u8279\uFE01");
+  // 﨑 is a CJK compat ideograph, but not normalized.
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uFA11"), "\uFA11");
+  // 舘 has the largetst codepoint.
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uFA6D"), "\u8218\uFE00");
+  // Next codeponit of 舘.
+  EXPECT_EQ(TextNormalizer::NormalizeTextToSvs("\uFA6E"), "\uFA6E");
+}
+
 }  // namespace mozc

@@ -122,7 +122,7 @@ cc_test_mozc(
     data = [
         ":mozc_dataset_for_oss@connection_single_column",
         ":mozc_dataset_for_oss@typing_models",
-        "//data/dictionary_oss:dictionary_data",
+        "//data/dictionary_oss:base_dictionary_data",
         "//data/dictionary_oss:suggestion_filter.txt",
     ],
     requires_full_emulation = False,

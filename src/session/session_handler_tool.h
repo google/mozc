@@ -107,15 +107,15 @@ class SessionHandlerInterpreter {
   void SyncDataToStorage();
   void ClearUserPrediction();
   void ClearUsageStats();
-  const commands::Output& LastOutput() const;
-  const commands::CandidateWord& GetCandidateByValue(
+  const commands::Output &LastOutput() const;
+  const commands::CandidateWord &GetCandidateByValue(
       const absl::string_view value);
   bool GetCandidateIdByValue(const absl::string_view value, uint32_t *id);
   std::vector<std::string> Parse(const std::string &line);
   absl::Status Eval(const std::vector<std::string> &args);
+  void SetRequest(const commands::Request &request);
 
  private:
-  // std::unique_ptr<EngineInterface> engine_;
   std::unique_ptr<SessionHandlerTool> client_;
   std::unique_ptr<config::Config> config_;
   std::unique_ptr<commands::Output> last_output_;

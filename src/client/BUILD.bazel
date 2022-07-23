@@ -59,6 +59,10 @@ cc_library_mozc(
     hdrs = [
         "client.h",
     ],
+    local_defines = select_mozc(
+        linux = ["MOZC_USE_SVS_JAPANESE"],
+        oss = ["MOZC_USE_SVS_JAPANESE"],
+    ),
     deps = [
         ":client_interface",
         "//base",

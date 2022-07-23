@@ -46,11 +46,15 @@
 #include "base/logging.h"
 #include "base/number_util.h"
 #include "base/port.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 
 namespace mozc {
+
+using ::testing::ElementsAreArray;
 
 TEST(UtilTest, AppendStringWithDelimiter) {
   std::string result;
@@ -379,6 +383,67 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
   }
 }
 
+TEST(UtilTest, SplitStringToUtf8Graphemes) {
+  {
+    std::vector<std::string> output;
+    Util::SplitStringToUtf8Chars("", &output);
+    EXPECT_EQ(0, output.size());
+  }
+
+  {  // Single codepoint characters.
+    const std::string kInputs[] = {
+        "a", "あ", "亜", "\n", "a",
+    };
+    std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
+    }
+  }
+
+  {  // Multiple codepoint characters
+    const std::string kInputs[] = {
+        "神",  // U+795E
+        "神︀",  // U+795E,U+FE00  - 2 codepoints [SVS]
+        "神󠄀",  // U+795E,U+E0100 - 2 codepoints [IVS]
+        "あ゙",  // U+3042,U+3099  - 2 codepoints [Dakuten]
+        "か゚",  // U+304B,U+309A  - 2 codepoints [Handakuten]
+    };
+    std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
+    }
+  }
+
+  {  // Invalid codepoint characters
+    const std::string kInputs[] = {
+        u8"\uFE00",  // Extend only [SVS]
+        u8"神\uFE00\U000E0100",  // Multiple extends [SVS, IVS]
+    };
+    std::string joined_string;
+    for (int i = 0; i < std::size(kInputs); ++i) {
+      joined_string += kInputs[i];
+    }
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_EQ(std::size(kInputs), graphemes.size());
+
+    for (size_t i = 0; i < graphemes.size(); ++i) {
+      EXPECT_EQ(kInputs[i], graphemes[i]);
+    }
+  }
+}
+
 TEST(UtilTest, SplitCSV) {
   std::vector<std::string> answer_vector;
 
@@ -521,6 +586,56 @@ TEST(UtilTest, IsUpperOrCapitalizedAscii) {
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("HeLlO"));
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("symbol!"));
   EXPECT_FALSE(Util::IsUpperOrCapitalizedAscii("Ｈｅｌｌｏ"));
+}
+
+TEST(UtilTest, Utf8ToCodepoints) {
+  {
+    const std::vector<char32> codepoints = Util::Utf8ToCodepoints("");
+    EXPECT_TRUE(codepoints.empty());
+  }
+
+  {  // Single codepoint characters.
+    std::string str =  "aあ亜\na";
+    std::vector<int> expected = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
+
+    std::vector<char32> codepoints = Util::Utf8ToCodepoints(str);
+    EXPECT_THAT(codepoints, ElementsAreArray(expected));
+  }
+
+  {  // Multiple codepoint characters
+    std::string str = (
+        "神"  // U+795E
+        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+    );
+    std::vector<int> expected = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099 };
+
+    std::vector<char32> codepoints = Util::Utf8ToCodepoints(str);
+    EXPECT_THAT(codepoints, ElementsAreArray(expected));
+  }
+}
+
+TEST(UtilTest, CodepointsToUtf8) {
+  {
+    const std::string output = Util::CodepointsToUtf8({});
+    EXPECT_TRUE(output.empty());
+  }
+
+  {  // Single codepoint characters.
+    std::string expected =  "aあ亜\na";
+    std::vector<char32> cps = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061 };
+    EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
+  }
+
+  {  // Multiple codepoint characters
+    std::string expected = (
+        "神"  // U+795E
+        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+    );
+    std::vector<char32> cps = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099 };
+    EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
+  }
 }
 
 void VerifyUtf8ToUcs4(const std::string &text, char32 expected_ucs4,

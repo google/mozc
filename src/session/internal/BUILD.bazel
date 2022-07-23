@@ -68,7 +68,6 @@ cc_library_mozc(
     ],
     deps = [
         ":keymap_interface",
-        "//base",
         "//base:config_file_stream",
         "//base:file_stream",
         "//base:logging",
@@ -79,6 +78,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
+        "//testing:gunit_prod",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
     ],
@@ -93,7 +93,6 @@ cc_library_mozc(
     deps = [
         ":keymap",
         "//base",
-        "//base:freelist",
         "//base:port",
         "//config:config_handler",
         "//protocol:config_cc_proto",

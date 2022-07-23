@@ -116,6 +116,14 @@ class Util {
   static void SplitStringToUtf8Chars(absl::string_view str,
                                      std::vector<std::string> *output);
 
+  // Split `str` to graphemes.
+  // A grapheme may contain multiple characters such as modifiers and variation
+  // squesnces (e.g. 神︀ = U+795E,U+FE00 [SVS]).
+  // Note, this function does not support full requirements of the grapheme
+  // specifications defined by Unicode.
+  static void SplitStringToUtf8Graphemes(absl::string_view str,
+                                         std::vector<std::string> *graphemes);
+
   static void SplitCSV(const std::string &input,
                        std::vector<std::string> *output);
 
@@ -167,6 +175,11 @@ class Util {
   static size_t CharsLen(absl::string_view str) {
     return CharsLen(str.data(), str.size());
   }
+
+  // Splits `str` to codepoints.
+  static std::vector<char32> Utf8ToCodepoints(absl::string_view str);
+  // Converts `codepoints` to UTF8 string.
+  static std::string CodepointsToUtf8(const std::vector<char32> &codepoints);
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
@@ -272,7 +285,7 @@ class Util {
   // in full width and half-width-katakana area
   static bool IsFullWidthSymbolInHalfWidthKatakana(const std::string &input);
 
-  // Returns true if all chars are defiend in half-width-katakana area.
+  // Returns true if all chars are defined in half-width-katakana area.
   static bool IsHalfWidthKatakanaSymbol(const std::string &input);
 
   // Returns true if one or more Kana-symbol characters are in the input.

@@ -199,6 +199,31 @@ void Util::SplitStringToUtf8Chars(absl::string_view str,
   DCHECK_EQ(begin, end);
 }
 
+// Grapheme is user-perceived character. It may contain multiple codepoints
+// such as modifiers and variation squesnces (e.g. 神︀ = U+795E,U+FE00 [SVS]).
+// Note, this function does not support full requirements of the grapheme
+// specifications defined by Unicode.
+// * https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries
+void Util::SplitStringToUtf8Graphemes(absl::string_view str,
+                                      std::vector<std::string> *graphemes) {
+  Util::SplitStringToUtf8Chars(str, graphemes);
+  if (graphemes->size() <= 1) {
+    return;
+  }
+  for (auto it = graphemes->begin() + 1; it != graphemes->end();) {
+    const char32 codepoint = Util::Utf8ToUcs4(*it);
+    const bool is_dakuten = (codepoint == 0x3099 || codepoint == 0x309A);
+    const bool is_svs = (0xFE00 <= codepoint && codepoint <= 0xFE0F);
+    const bool is_ivs = (0xE0100 <= codepoint && codepoint <= 0xE01EF);
+    if (is_dakuten || is_svs || is_ivs) {
+      (it - 1)->append(*it);
+      it = graphemes->erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 void Util::SplitCSV(const std::string &input,
                     std::vector<std::string> *output) {
   std::unique_ptr<char[]> tmp(new char[input.size() + 1]);
@@ -439,6 +464,23 @@ size_t Util::CharsLen(const char *src, size_t size) {
     begin += OneCharLen(begin);
   }
   return length;
+}
+
+std::vector<char32> Util::Utf8ToCodepoints(absl::string_view str) {
+  std::vector<char32> codepoints;
+  char32 codepoint;
+  while (Util::SplitFirstChar32(str, &codepoint, &str)) {
+    codepoints.push_back(codepoint);
+  }
+  return codepoints;
+}
+
+std::string Util::CodepointsToUtf8(const std::vector<char32> &codepoints) {
+  std::string output;
+  for (const char32 codepoint : codepoints) {
+    Ucs4ToUtf8Append(codepoint, &output);
+  }
+  return output;
 }
 
 char32 Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {

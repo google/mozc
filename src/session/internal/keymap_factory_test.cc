@@ -45,15 +45,7 @@ namespace keymap {
 
 class TestKeyMapFactoryProxy {
  public:
-  static void Clear() {
-    KeyMapFactory::KeyMapManagerMap &keymaps = *KeyMapFactory::GetKeyMaps();
-    for (KeyMapFactory::KeyMapManagerMap::iterator iter = keymaps.begin();
-         iter != keymaps.end(); ++iter) {
-      KeyMapFactory::GetPool()->Release(iter->second);
-    }
-
-    keymaps.clear();
-  }
+  static void Clear() { KeyMapFactory::GetKeyMaps().clear(); }
 };
 
 namespace {

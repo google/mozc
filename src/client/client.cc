@@ -103,11 +103,29 @@ Client::Client()
       server_process_id_(0),
       last_mode_(commands::DIRECT) {
   client_factory_ = IPCClientFactory::GetIPCClientFactory();
+
+#ifdef MOZC_USE_SVS_JAPANESE
+  InitRequestForSvsJapanese(true);
+#endif  // MOZC_USE_SVS_JAPANESE
 }
 
 Client::~Client() {
   set_timeout(kDeleteSessionOnDestructorTimeout);
   DeleteSession();
+}
+
+void Client::InitRequestForSvsJapanese(bool use_svs) {
+  request_ = std::make_unique<commands::Request>();
+
+  commands::DecoderExperimentParams params;
+  uint32 variation_types = params.variation_character_types();
+  if (use_svs) {
+    variation_types |= commands::DecoderExperimentParams::SVS_JAPANESE;
+  } else {
+    variation_types &= ~commands::DecoderExperimentParams::SVS_JAPANESE;
+  }
+  request_->mutable_decoder_experiment_params()
+      ->set_variation_character_types(variation_types);
 }
 
 void Client::SetIPCClientFactory(IPCClientFactoryInterface *client_factory) {
@@ -178,18 +196,29 @@ bool Client::EnsureSession() {
     return false;
   }
 
-  if (server_status_ == SERVER_INVALID_SESSION) {
-    if (CreateSession()) {
-      server_status_ = SERVER_OK;
-      return true;
-    } else {
-      LOG(ERROR) << "CreateSession failed";
-      // call EnsureConnection to display error message
-      EnsureConnection();
-      return false;
-    }
+  if (server_status_ == SERVER_OK) {
+    return true;
+  }
+  DCHECK_EQ(server_status_, SERVER_INVALID_SESSION);
+
+  if (!CreateSession()) {
+    LOG(ERROR) << "CreateSession failed";
+    // call EnsureConnection to display error message
+    EnsureConnection();
+    return false;
   }
 
+  // Call SET_REQUEST if request_ is not nullptr.
+  if (request_) {
+    commands::Input input;
+    input.set_id(id_);
+    input.set_type(commands::Input::SET_REQUEST);
+    *input.mutable_request() = *request_;
+    commands::Output output;
+    Call(input, &output);
+  }
+
+  server_status_ = SERVER_OK;
   return true;
 }
 
@@ -775,7 +804,7 @@ bool Client::CheckVersionOrRestartServerInternal(const commands::Input &input,
       server_status_ = SERVER_UNKNOWN;
       if (!EnsureConnection()) {
         server_status_ = SERVER_VERSION_MISMATCH;
-        LOG(ERROR) << "Ensure Connecion failed";
+        LOG(ERROR) << "Ensure Connection failed";
         return false;
       }
 

@@ -1,11 +1,13 @@
-# AUX dictionary
+# data/oss
 
-AUX dictionary is a mechanism to add word entries to data/dictionary_oss/dictionary0x.txt
+## aux_dictionary.tsv
+
+AUX dictionary is a mechanism to add word entries to `data/dictionary_oss/dictionary0x.txt`
 without running the internal training pipeline.
 
 Pull requests under this directory are acceptable.
 
-## Format of aux dictionary
+### Format of aux_dictionary.tsv
 
 | key      | value    | base_key | base_value | cost_offset |
 | :------: | :------: | :------: | :--------: |:-----------:|
@@ -16,3 +18,17 @@ Pull requests under this directory are acceptable.
 * base_key and base_value (i.e. カピバラ) are fields of the reference word already in the dictionary.
 * cost_offset is the difference from the base cost. (i.e. -1 makes the new word prioritized than the base word).
 * other fields of the new word (e.g. lid, rid , cost) are copied from the reference word.
+
+## dictionary_filter.tsv
+
+The entries in this file are used to filter out the entries in the dictionary.
+
+### Format of dictionary_filter.tsv
+
+| key      | value    |
+| :------: | :------: |
+| あるぱか | 或るパカ |
+
+* `key` and `value` are the regexp patterns of words to be removed.
+* Each line is extended to the following regexp pattern:
+  + `'^{key}\t\\d+\t\\d+\t\\d+\t{value}(\t.*)?\n$'`

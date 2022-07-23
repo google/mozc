@@ -516,7 +516,7 @@ message Context {
   optional string following_text = 2;
 
   // If this is true, suggestion feature is disabled regardless the
-  // congiguration.  If this is false, suggestion feature is followed
+  // configuration.  If this is false, suggestion feature is followed
   // by the user's configuration.  If you want to omit interim
   // suggestions during the key typing, you might want to use
   // request_suggestion.
@@ -573,7 +573,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 8
+// Next ID: 9
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -596,6 +596,17 @@ message DecoderExperimentParams {
   // Prefix lookup results will be included to the result of
   // the dictionary predictor.
   optional bool enrich_partial_candidates = 7 [default = false];
+
+  enum VariationCharacterType {
+    NO_VARIATION = 0;
+    // Standardized variation sequences for Japanese.
+    // https://unicode.org/Public/UNIDATA/StandardizedVariants.txt
+    // It specifies to use SVS characters instead of CJK compatibility
+    // ideographs for Japanese.
+    SVS_JAPANESE = 1;
+  }
+  // Bitmap of enabled variation character types.
+  optional uint32 variation_character_types = 8 [default = 0];
 }
 
 // Clients' request to the server.

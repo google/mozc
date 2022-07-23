@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/text_normalizer.h"
 #include "base/util.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
@@ -176,7 +177,7 @@ class Uint32ArrayIterator
 // stored in |single_kanji_string_array| at its index.
 bool LookupKanjiList(absl::string_view single_kanji_token_array,
                      const SerializedStringArray &single_kanji_string_array,
-                     const std::string &key,
+                     const std::string &key, const bool use_svs,
                      std::vector<std::string> *kanji_list) {
   DCHECK(kanji_list);
   const uint32_t *token_array =
@@ -195,7 +196,15 @@ bool LookupKanjiList(absl::string_view single_kanji_token_array,
     return false;
   }
   const absl::string_view values = single_kanji_string_array[iter[1]];
-  Util::SplitStringToUtf8Chars(values, kanji_list);
+  if (use_svs) {
+    std::string svs_values;
+    if (TextNormalizer::NormalizeTextToSvs(values, &svs_values)) {
+      Util::SplitStringToUtf8Graphemes(svs_values, kanji_list);
+      return true;
+    }
+  }
+
+  Util::SplitStringToUtf8Graphemes(values, kanji_list);
   return true;
 }
 
@@ -407,6 +416,10 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
   bool modified = false;
   const size_t segments_size = segments->conversion_segments_size();
   const bool is_single_segment = (segments_size == 1);
+  const bool use_svs = (request.request()
+                            .decoder_experiment_params()
+                            .variation_character_types() &
+                        commands::DecoderExperimentParams::SVS_JAPANESE);
   for (size_t i = 0; i < segments_size; ++i) {
     AddDescriptionForExsistingCandidates(
         variant_token_array_, variant_string_array_, variant_type_array_,
@@ -415,7 +428,7 @@ bool SingleKanjiRewriter::Rewrite(const ConversionRequest &request,
     const std::string &key = segments->conversion_segment(i).key();
     std::vector<std::string> kanji_list;
     if (!LookupKanjiList(single_kanji_token_array_, single_kanji_string_array_,
-                         key, &kanji_list)) {
+                         key, use_svs, &kanji_list)) {
       continue;
     }
     InsertCandidate(variant_token_array_, variant_string_array_,
