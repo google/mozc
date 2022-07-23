@@ -234,6 +234,12 @@ py_binary_mozc(
     visibility = ["//:__subpackages__"],
 )
 
+py_binary_mozc(
+    name = "gen_filtered_dictionary",
+    srcs = ["gen_filtered_dictionary.py"],
+    visibility = ["//:__subpackages__"],
+)
+
 cc_library_mozc(
     name = "pos_group",
     hdrs = ["pos_group.h"],
