@@ -30,6 +30,8 @@
 #ifndef MOZC_UNIX_IBUS_PROPERTY_HANDLER_INTERFACE_H_
 #define MOZC_UNIX_IBUS_PROPERTY_HANDLER_INTERFACE_H_
 
+#include <ibus.h>
+
 #include "base/port.h"
 // TODO(nona): remove this header.
 #include "protocol/commands.pb.h"  // For CompositionMode

@@ -36,6 +36,7 @@
 
 #include "base/port.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
 #include "unix/ibus/ibus_config.h"

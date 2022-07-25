@@ -46,6 +46,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "client/client.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/ime_switch_util.h"

@@ -97,7 +97,11 @@ cc_library_mozc(
     deps = [
         ":ibus_utils",
         ":ibus_mozc_metadata",
+        "//base",
+        "//base:file_util",
+        "//base:logging",
         "//base:port",
+        "//base:system_util",
         "//client:client",
         "//protocol:commands_cc_proto",
     ] + select_mozc(linux = ["@ibus//:ibus"]),
@@ -187,6 +191,7 @@ cc_library_mozc(
         "//base:system_util",
         "//base:util",
         "//client",
+        "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//renderer:renderer_client",
@@ -290,6 +295,10 @@ cc_library_mozc(
     ),
     deps = [
         "//base:coordinates",
+        "//base:logging",
+        "//base:port",
+        "//protocol:candidates_cc_proto",
+        "//protocol:commands_cc_proto",
         "//protocol:renderer_cc_proto",
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
@@ -320,6 +329,10 @@ cc_library_mozc(
     ),
     deps = [
         "//base",
+        "//base:logging",
+        "//base:port",
+        "//base:thread",
+        "//base:util",
         "@com_google_absl//absl/synchronization",
     ],
 )

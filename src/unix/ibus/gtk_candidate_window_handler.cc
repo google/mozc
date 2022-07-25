@@ -33,6 +33,8 @@
 #include <unistd.h>
 
 #include "base/logging.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"

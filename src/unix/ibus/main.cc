@@ -31,6 +31,8 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <iostream>
+#include <string>
 
 #include "base/init_mozc.h"
 #include "base/logging.h"
