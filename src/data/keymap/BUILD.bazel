@@ -27,10 +27,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-exports_files([
-    "atok.tsv",
-    "ms-ime.tsv",
-    "kotoeri.tsv",
-    "mobile.tsv",
-    "chromeos.tsv",
-])
+package(default_visibility = ["//:__subpackages__"])
+
+filegroup(
+    name = "keymap_files",
+    srcs = [
+        "atok.tsv",
+        "chromeos.tsv",
+        "kotoeri.tsv",
+        "mobile.tsv",
+        "ms-ime.tsv",
+    ],
+)

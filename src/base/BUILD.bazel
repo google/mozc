@@ -942,11 +942,7 @@ py_binary_mozc(
 genrule(
     name = "config_file_stream_data",
     srcs = [
-        "//data/keymap:atok.tsv",
-        "//data/keymap:chromeos.tsv",
-        "//data/keymap:kotoeri.tsv",
-        "//data/keymap:mobile.tsv",
-        "//data/keymap:ms-ime.tsv",
+        "//data/keymap:keymap_files",
         "//data/preedit:composition_table",
     ],
     outs = ["config_file_stream_data.inc"],
