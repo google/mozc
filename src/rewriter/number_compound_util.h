@@ -58,11 +58,11 @@ enum NumberScriptType {
 };
 
 // Splits a string to number and counter suffix if possible.  For example, input
-// "一階" can be splitted as "一" + "階".  At the same time, script type of
+// "一階" can be split as "一" + "階".  At the same time, script type of
 // number can be obtained.  A sorted array of counter suffix needs to be
 // provided, which can be obtained using data manager; see
 // data_manager/data_manager_interface.h.  Returns false if the input cannot be
-// splitted.
+// split.
 bool SplitStringIntoNumberAndCounterSuffix(
     const SerializedStringArray &suffix_array, absl::string_view input,
     absl::string_view *number, absl::string_view *counter_suffix,
