@@ -8002,31 +8002,6 @@ TEST_F(SessionTest, DedupAfterUndo) {
   }
 }
 
-TEST_F(SessionTest, TemporaryKeyMapChange) {
-  config::Config config(config::ConfigHandler::DefaultConfig());
-  config.set_session_keymap(config::Config::ATOK);
-
-  // Session created with keymap ATOK
-  Session session(engine_.get());
-  session.SetConfig(&config);
-  InitSessionToPrecomposition(&session);
-  EXPECT_EQ(config::Config::ATOK, session.context().keymap());
-
-  // TestSendKey with keymap MOBLE
-  commands::Command command;
-  SetSendKeyCommand("G", &command);
-  command.mutable_input()->mutable_config()->set_session_keymap(
-      config::Config::MOBILE);
-  session.TestSendKey(&command);
-  EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(config::Config::MOBILE, session.context().keymap());
-
-  // TestSendKey without keymap
-  TestSendKey("G", &session, &command);
-  EXPECT_TRUE(command.output().consumed());
-  EXPECT_EQ(config::Config::ATOK, session.context().keymap());
-}
-
 TEST_F(SessionTest, MoveCursor) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
