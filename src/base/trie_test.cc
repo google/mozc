@@ -96,6 +96,41 @@ TEST(TrieTest, Trie) {
   }
 }
 
+TEST(TrieTest, LongestMatch) {
+  Trie<std::string> trie;
+  trie.AddEntry("abc", "[ABC]");
+  trie.AddEntry("abd", "[ABD]");
+  trie.AddEntry("a", "[A]");
+
+  std::string value;
+  size_t key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("abc", &value, &key_length));
+  EXPECT_EQ("[ABC]", value);
+  EXPECT_EQ(3, key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("abcd", &value, &key_length));
+  EXPECT_EQ("[ABC]", value);
+  EXPECT_EQ(3, key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("abe", &value, &key_length));
+  EXPECT_EQ("[A]", value);
+  EXPECT_EQ(1, key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("ac", &value, &key_length));
+  EXPECT_EQ("[A]", value);
+  EXPECT_EQ(1, key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_FALSE(trie.LongestMatch("xyz", &value, &key_length));
+}
+
 TEST(TrieTest, LookUpPrefix) {
   Trie<std::string> trie;
   trie.AddEntry("abc", "[ABC]");
@@ -208,6 +243,41 @@ TEST(TrieTest, UTF8LookUpPrefix) {
     const std::string query = "も";
     EXPECT_FALSE(trie.LookUpPrefix(query, &value, &key_length, &has_subtrie));
   }
+}
+
+TEST(TrieTest, UTF8LongestMatch) {
+  Trie<std::string> trie;
+  trie.AddEntry("あいう", "アイウ");
+  trie.AddEntry("あいえ", "アイエ");
+  trie.AddEntry("あ", "ア");
+
+  std::string value;
+  size_t key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("あいう", &value, &key_length));
+  EXPECT_EQ("アイウ", value);
+  EXPECT_EQ(strlen("あいう"), key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("あいうえ", &value, &key_length));
+  EXPECT_EQ("アイウ", value);
+  EXPECT_EQ(strlen("あいう"), key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("あい", &value, &key_length));
+  EXPECT_EQ("ア", value);
+  EXPECT_EQ(strlen("あ"), key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_TRUE(trie.LongestMatch("あお", &value, &key_length));
+  EXPECT_EQ("ア", value);
+  EXPECT_EQ(strlen("あ"), key_length);
+
+  value.clear();
+  key_length = 0;
+  EXPECT_FALSE(trie.LongestMatch("お", &value, &key_length));
 }
 
 bool HasData(const std::vector<std::string> &values, const std::string &value) {
