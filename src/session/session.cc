@@ -944,14 +944,6 @@ bool Session::SendKeyConversionState(commands::Command *command) {
 void Session::UpdatePreferences(commands::Command *command) {
   DCHECK(command);
   const config::Config &config = command->input().config();
-  if (config.has_session_keymap()) {
-    // Set temporary keymap.
-    context_->set_keymap(config.session_keymap());
-  } else {
-    // Reset keymap.
-    context_->set_keymap(context_->GetConfig().session_keymap());
-  }
-
   if (command->input().has_capability()) {
     *context_->mutable_client_capability() = command->input().capability();
   }

@@ -31,9 +31,12 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 
 #include "base/logging.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
+#include "protocol/config.pb.h"
 #include "unix/ibus/mozc_engine_property.h"
 
 namespace mozc {

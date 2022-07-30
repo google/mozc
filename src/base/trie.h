@@ -130,6 +130,41 @@ class Trie final {
     return found;
   }
 
+  // If key's prefix matches to trie with data, return true and set data
+  // For example, if a trie has data for 'abc', 'abd', and 'a';
+  //  - Return true for the key, 'abc'
+  //  -- Matches in exact
+  //  - Return true for the key, 'abcd'
+  //  -- Matches in prefix
+  //  - Return TRUE for the key, 'abe'
+  //  -- Matches in prefix by 'a'.
+  //  - Return true for the key, 'ac'
+  //  -- Matches in prefix by 'a', and 'a' have data
+  bool LongestMatch(absl::string_view key, T *data, size_t *key_length) const {
+    const FindResult res = FindSubTrie(key);
+    if (res.trie == nullptr) {
+      *key_length = 0;
+      if (data_.has_value()) {
+        *data = *data_;
+        return true;
+      }
+      return false;
+    }
+
+    bool found = false;
+    if (data_.has_value()) {
+      *data = *data_;
+      found = true;
+    }
+
+    if (res.trie->LongestMatch(res.rest, data, key_length)) {
+      const size_t first_char_len = key.size() - res.rest.size();
+      *key_length += first_char_len;
+      return true;
+    }
+    return found;
+  }
+
   // Return all result starts with key
   // For example, if a trie has data for 'abc', 'abd', and 'a';
   //  - Return 'abc', 'abd', 'a', for the key 'a'

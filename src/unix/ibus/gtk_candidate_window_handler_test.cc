@@ -32,6 +32,8 @@
 #include <unistd.h>  // for getpid()
 
 #include "base/coordinates.h"
+#include "protocol/commands.pb.h"
+#include "protocol/candidates.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_mock.h"
 #include "testing/base/public/gmock.h"

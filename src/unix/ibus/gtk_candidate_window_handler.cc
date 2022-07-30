@@ -32,7 +32,12 @@
 #include <gio/gio.h>
 #include <unistd.h>
 
+#include <memory>
+#include <string>
+
 #include "base/logging.h"
+#include "protocol/candidates.pb.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"
@@ -231,7 +236,7 @@ void GtkCandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
 }
 
 void GtkCandidateWindowHandler::RegisterGSettingsObserver() {
-  settings_observer_.reset(new GSettingsObserver(this));
+  settings_observer_ = std::make_unique<GSettingsObserver>(this);
 }
 
 std::string GtkCandidateWindowHandler::GetFontDescription() const {

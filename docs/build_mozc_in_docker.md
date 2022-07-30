@@ -145,6 +145,8 @@ Bazel only.
 
 Targets only for Bazel:
 * AUX dictionary (//data/dictionary_oss:aux_dictionary)
+* Filtered dictionary (//data/dictionary_oss:filtered_dictionary)
+* SVS character input instead of CJK compatibility ideographs (//rewriter:single_kanji_rewriter)
 * Zip code conversion (//server:mozc_server)
 * Qt-based candidate window (//renderer:mozc_renderer)
 * Build rules for icons (//unix/icons)
