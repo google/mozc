@@ -212,17 +212,17 @@ bool SessionHandler::StartWatchDog() {
 }
 
 void SessionHandler::SetConfig(const config::Config &config) {
-  *config_ = config;
+  auto new_config = std::make_unique<config::Config>(config);
   const auto *data_manager = engine_->GetDataManager();
   const composer::Table *table =
       data_manager != nullptr
-          ? table_manager_->GetTable(*request_, *config_, *data_manager)
+          ? table_manager_->GetTable(*request_, *new_config, *data_manager)
           : nullptr;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != nullptr; element = element->next) {
     if (element->value != nullptr) {
-      element->value->SetConfig(config_.get());
+      element->value->SetConfig(new_config.get());
       element->value->SetRequest(request_.get());
       if (table != nullptr) {
         element->value->SetTable(table);
@@ -230,6 +230,9 @@ void SessionHandler::SetConfig(const config::Config &config) {
     }
   }
   config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
+  // Now no references to the current config should exist.
+  // We can destroy it here.
+  config_ = std::move(new_config);
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {

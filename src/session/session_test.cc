@@ -9275,5 +9275,20 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
   }
 }
 
+TEST_F(SessionTest, SetConfig) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config.set_session_keymap(config::Config::CUSTOM);
+  Session session(engine_.get());
+  session.PushUndoContext();
+  session.SetConfig(&config);
+
+  EXPECT_EQ(&session.context_->GetConfig(),
+            &config);
+  // Both previous and current context should have the same config.
+  EXPECT_EQ(&session.context_->GetConfig(),
+            &session.prev_context_->GetConfig());
+}
+
 }  // namespace session
 }  // namespace mozc

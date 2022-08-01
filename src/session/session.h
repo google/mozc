@@ -277,6 +277,7 @@ class Session : public SessionInterface {
   FRIEND_TEST(SessionTest, OutputInitialComposition);
   FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
   FRIEND_TEST(SessionTest, RequestUndo);
+  FRIEND_TEST(SessionTest, SetConfig);
 
   // Underlying conversion engine for this session. Please note that:
   //   i) Session doesn't own the pointer.
