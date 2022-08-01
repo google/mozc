@@ -55,6 +55,7 @@
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "rewriter/single_kanji_rewriter.h"
+#include "rewriter/small_letter_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "rewriter/unicode_rewriter.h"
@@ -106,6 +107,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<VariantsRewriter>(pos_matcher_));
   AddRewriter(std::make_unique<ZipcodeRewriter>(&pos_matcher_));
   AddRewriter(std::make_unique<DiceRewriter>());
+  AddRewriter(std::make_unique<SmallLetterRewriter>(parent_converter));
 
   if (absl::GetFlag(FLAGS_use_history_rewriter)) {
     AddRewriter(

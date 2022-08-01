@@ -336,6 +336,36 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "small_letter_rewriter",
+    srcs = ["small_letter_rewriter.cc"],
+    hdrs = ["small_letter_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//composer",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//request:conversion_request",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "small_letter_rewriter_test",
+    size = "small",
+    srcs = ["small_letter_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":small_letter_rewriter",
+        "//base:system_util",
+        "//engine:mock_data_engine_factory",
+        "//protocol:commands_cc_proto",
+        "//protocol:config_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
     name = "transliteration_rewriter",
     srcs = [
         "transliteration_rewriter.cc",
@@ -1489,6 +1519,7 @@ cc_library_mozc(
         ":remove_redundant_candidate_rewriter",
         ":rewriter_interface",
         ":single_kanji_rewriter",
+        ":small_letter_rewriter",
         ":symbol_rewriter",
         ":transliteration_rewriter",
         ":unicode_rewriter",
