@@ -656,16 +656,15 @@ bool SessionConverter::ExpandSuggestionWithPreferences(
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
+      converter_->CancelConversion(segments_.get());
     }
   } else {
     // c.f. SuggestWithPreferences for ConversionRequest flags.
     SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
     if (!converter_->StartPartialPredictionForRequest(conversion_request,
                                                       segments_.get())) {
-      VLOG(1) << "StartPartialPredictionForRequest() returns no suggestions.";
-      // Clear segments and keep the context
+      LOG(WARNING) << "StartPartialPredictionForRequest() failed";
       converter_->CancelConversion(segments_.get());
-      return false;
     }
   }
   // Overwrite the request type to SUGGESTION.
@@ -1549,6 +1548,13 @@ void SessionConverter::FillCandidates(commands::Candidates *candidates) const {
 #ifdef CHANNEL_DEV
   CHECK_LT(0, segments_->conversion_segments_size());
 #endif  // CHANNEL_DEV
+  if (segment_index_ >= segments_->conversion_segments_size()) {
+    LOG(WARNING) << "Invalid segment_index_: " << segment_index_
+                 << ", segments_size: "
+                 << segments_->conversion_segments_size();
+    return;
+  }
+
   const Segment &segment = segments_->conversion_segment(segment_index_);
   SessionOutput::FillCandidates(segment, *candidate_list_, position,
                                 candidates);
@@ -1635,6 +1641,12 @@ void SessionConverter::FillAllCandidateWords(
       break;
   }
 
+  if (segment_index_ >= segments_->conversion_segments_size()) {
+    LOG(WARNING) << "Invalid segment_index_: " << segment_index_
+                 << ", segments_size: "
+                 << segments_->conversion_segments_size();
+    return;
+  }
   const Segment &segment = segments_->conversion_segment(segment_index_);
   SessionOutput::FillAllCandidateWords(segment, *candidate_list_, category,
                                        candidates);

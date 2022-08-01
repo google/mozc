@@ -4050,6 +4050,127 @@ TEST_F(SessionTest, ExpandSuggestion) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 }
 
+TEST_F(SessionTest, ExpandSuggestionNoMoreCandidates) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+
+  // Prepare suggestion candidates.
+  Segments segments_m;
+  {
+    Segment *segment;
+    segment = segments_m.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
+
+  SendKey("M", &session, &command);
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  Segments empty_segments;
+  GetConverterMock()->SetStartPredictionForRequest(&empty_segments, false);
+
+  command.Clear();
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+}
+
+TEST_F(SessionTest, ExpandSuggestionForPartial) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  EXPECT_EQ("も", command.output().preedit().segment(0).value());
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
+
+  EXPECT_EQ(2, command.output().preedit().cursor());
+  // Prepare suggestion candidates.
+  Segments segments_mo;
+  {
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("も");
+    segment->add_candidate()->value = "も";
+    segment->add_candidate()->value = "モ";
+  }
+  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
+
+  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+  EXPECT_EQ(1, command.output().preedit().cursor());
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  command.Clear();
+
+  {
+    Segment *segment = segments_mo.mutable_segment(0);
+    segment->add_candidate()->value = "模";
+    segment->add_candidate()->value = "藻";
+  }
+  GetConverterMock()->SetStartPartialPredictionForRequest(&segments_mo, true);
+
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(4, command.output().candidates().candidate_size());
+}
+
+TEST_F(SessionTest, ExpandSuggestionForPartialNoMoreCandidates) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  EXPECT_EQ("も", command.output().preedit().segment(0).value());
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
+
+  EXPECT_EQ(2, command.output().preedit().cursor());
+  // Prepare suggestion candidates.
+  Segments segments_mo;
+  {
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("も");
+    segment->add_candidate()->value = "も";
+    segment->add_candidate()->value = "モ";
+  }
+  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
+
+  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+  EXPECT_EQ(1, command.output().preedit().cursor());
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  command.Clear();
+
+  Segments empty_segments;
+  GetConverterMock()->SetStartPartialPredictionForRequest(&empty_segments,
+                                                          false);
+
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+}
+
 TEST_F(SessionTest, ExpandSuggestionDirectMode) {
   // On direct mode, ExpandSuggestion() should do nothing.
   Session session(engine_.get());

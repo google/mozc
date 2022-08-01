@@ -2370,6 +2370,135 @@ TEST_F(SessionConverterTest, ExpandSuggestion) {
   }
 }
 
+TEST_F(SessionConverterTest, ExpandSuggestionNoMoreCandidates) {
+  RequestForUnitTest::FillMobileRequest(request_.get());
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+
+  const char *kSuggestionValues[] = {
+      "S0",
+      "S1",
+      "S2",
+  };
+  constexpr char kKey[] = "key";
+
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kKey);
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
+      candidate = segment->add_candidate();
+      candidate->value = kSuggestionValues[i];
+      candidate->content_key = kKey;
+    }
+  }
+  composer_->InsertCharacterPreedit(kKey);
+
+  // Suggestion
+  convertermock_->SetStartSuggestionForRequest(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+  }
+
+  segments.Clear();
+  {  // Initialize mock segments for prediction (== expanding suggestion)
+    Segment *segment = segments.add_segment();
+    segment->set_key(kKey);
+  }
+  // Expand suggestion candidate
+  convertermock_->SetStartPredictionForRequest(&segments, false);
+  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
+    size_t i;
+    for (i = 0; i < std::size(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+  }
+}
+
+TEST_F(SessionConverterTest, ExpandSuggestionForPartialNoMoreCandidates) {
+  RequestForUnitTest::FillMobileRequest(request_.get());
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+
+  const char *kSuggestionValues[] = {
+      "S0",
+      "S1",
+      "S2",
+  };
+  constexpr char kKey[] = "key";
+
+  Segments segments;
+  {  // Initialize mock segments for suggestion
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kKey);
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
+      candidate = segment->add_candidate();
+      candidate->value = kSuggestionValues[i];
+      candidate->content_key = kKey;
+    }
+  }
+  composer_->InsertCharacterPreedit("keys");
+  composer_->MoveCursorLeft();  // key|s
+
+  // Suggestion
+  convertermock_->SetStartPartialSuggestionForRequest(&segments, true);
+  EXPECT_TRUE(converter.Suggest(*composer_));
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
+    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+  }
+
+  segments.Clear();
+  // Expand suggestion candidate
+  convertermock_->SetStartPartialPredictionForRequest(&segments, false);
+  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+  {  // Check the candidate list
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(commands::SUGGESTION, candidates.category());
+    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
+    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
+    size_t i;
+    for (i = 0; i < std::size(kSuggestionValues); ++i) {
+      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
+    }
+  }
+}
+
 TEST_F(SessionConverterTest, AppendCandidateList) {
   SessionConverter converter(convertermock_.get(), request_.get(),
                              config_.get());
