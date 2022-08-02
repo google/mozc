@@ -2283,6 +2283,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 
   commands::Command command;
   Segments segments;
+  config::Config config;
 
   {  // Create segments
     InsertCharacterChars("aiueo", &session, &command);
@@ -2367,7 +2368,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("aiueo", command);
 
-    config::Config config;
     config.set_session_keymap(config::Config::MSIME);
     session.SetConfig(&config);
 
