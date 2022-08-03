@@ -928,7 +928,12 @@ bool DictionaryPredictor::AddPredictionToCandidates(
                                  ") >= 3 || added >= 10"));
         continue;
       }
-      if ((result.types & REALTIME) && (realtime_count++ >= 3 || added >= 5)) {
+      if ((result.types & REALTIME) &&
+          // Do not remove one-segment realtime candidates
+          // example:
+          // "勝った" for the reading, "かった".
+          result.inner_segment_boundary.size() != 1 &&
+          (realtime_count++ >= 3 || added >= 5)) {
         MOZC_ADD_DEBUG_CANDIDATE(result, "Added realtime >= 3 || added >= 5");
         continue;
       }
