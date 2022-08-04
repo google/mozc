@@ -2118,7 +2118,7 @@ TEST_F(SessionConverterTest, OnePhaseSuggestion) {
     EXPECT_EQ(kChars_Mozuku, candidates.candidate(0).value());
     EXPECT_EQ(kChars_Momonga, candidates.candidate(1).value());
     EXPECT_EQ("モンドリアン", candidates.candidate(2).value());
-    EXPECT_TRUE(candidates.has_focused_index());
+    EXPECT_FALSE(candidates.has_focused_index());
   }
 }
 

@@ -530,6 +530,10 @@ bool SessionConverter::SuggestWithPreferences(
   // prediction/suggestions later
   previous_suggestions_ = segments_->conversion_segment(0);
 
+  // Overwrite the request type to SUGGESTION.
+  // Without this logic, a candidate gets focused that is unexpected behavior.
+  request_type_ = ConversionRequest::SUGGESTION;
+
   // TODO(komatsu): the next line can be deleted.
   segment_index_ = 0;
   state_ = SUGGESTION;
