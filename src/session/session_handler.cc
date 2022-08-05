@@ -459,8 +459,7 @@ void SessionHandler::MaybeUpdateStoredConfig(commands::Command *command) {
     return;
   }
 
-  *config_ = command->output().config();
-  config::ConfigHandler::SetConfig(*config_);
+  config::ConfigHandler::SetConfig(command->output().config());
   Reload(command);
 }
 
