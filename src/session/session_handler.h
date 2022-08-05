@@ -154,8 +154,8 @@ class SessionHandler : public SessionHandlerInterface {
   std::unique_ptr<user_dictionary::UserDictionarySessionHandler>
       user_dictionary_session_handler_;
   std::unique_ptr<composer::TableManager> table_manager_;
-  std::unique_ptr<commands::Request> request_;
-  std::unique_ptr<config::Config> config_;
+  std::unique_ptr<const commands::Request> request_;
+  std::unique_ptr<const config::Config> config_;
 
   DISALLOW_COPY_AND_ASSIGN(SessionHandler);
 };

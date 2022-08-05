@@ -1123,7 +1123,7 @@ void Session::SetTable(const composer::Table *table) {
   context_->mutable_composer()->SetTable(table);
 }
 
-void Session::SetConfig(config::Config *config) {
+void Session::SetConfig(const config::Config *config) {
   context_->SetConfig(config);
   if (prev_context_) {
     // Previous countext doesn't need to keep the previous config because

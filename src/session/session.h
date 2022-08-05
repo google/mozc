@@ -244,7 +244,7 @@ class Session : public SessionInterface {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  void SetConfig(mozc::config::Config *config) override;
+  void SetConfig(const mozc::config::Config *config) override;
 
   void SetRequest(const mozc::commands::Request *request) override;
 
