@@ -168,11 +168,7 @@ void SessionHandler::Init(
       absl::GetFlag(FLAGS_watch_dog_interval));
 #endif  // MOZC_DISABLE_SESSION_WATCHDOG
 
-  {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    config_ = std::make_unique<config::Config>(config);
-  }
+  config_ = config::ConfigHandler::GetConfig();
 
   // allow [2..128] sessions
   max_session_size_ =

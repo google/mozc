@@ -86,8 +86,10 @@ class ConfigHandlerImpl {
   }
   virtual ~ConfigHandlerImpl() {}
   bool GetConfig(Config *config) const;
+  std::unique_ptr<config::Config> GetConfig() const;
   const Config &DefaultConfig() const;
   bool GetStoredConfig(Config *config) const;
+  std::unique_ptr<config::Config> GetStoredConfig() const;
   bool SetConfig(const Config &config);
   void SetImposedConfig(const Config &config);
   bool Reload();
@@ -121,6 +123,12 @@ bool ConfigHandlerImpl::GetConfig(Config *config) const {
   return true;
 }
 
+// return current Config as a unique_ptr.
+std::unique_ptr<config::Config> ConfigHandlerImpl::GetConfig() const {
+  absl::MutexLock lock(&mutex_);
+  return std::make_unique<config::Config>(merged_config_);
+}
+
 const Config &ConfigHandlerImpl::DefaultConfig() const {
   return default_config_;
 }
@@ -130,6 +138,12 @@ bool ConfigHandlerImpl::GetStoredConfig(Config *config) const {
   absl::MutexLock lock(&mutex_);
   *config = stored_config_;
   return true;
+}
+
+// return stored Config as a unique_ptr.
+std::unique_ptr<config::Config> ConfigHandlerImpl::GetStoredConfig() const {
+  absl::MutexLock lock(&mutex_);
+  return std::make_unique<config::Config>(stored_config_);
 }
 
 // set config and rewrite internal data
@@ -252,9 +266,17 @@ bool ConfigHandler::GetConfig(Config *config) {
   return GetConfigHandlerImpl()->GetConfig(config);
 }
 
+std::unique_ptr<config::Config> ConfigHandler::GetConfig() {
+  return GetConfigHandlerImpl()->GetConfig();
+}
+
 // Returns Stored Config
 bool ConfigHandler::GetStoredConfig(Config *config) {
   return GetConfigHandlerImpl()->GetStoredConfig(config);
+}
+
+std::unique_ptr<config::Config> ConfigHandler::GetStoredConfig() {
+  return GetConfigHandlerImpl()->GetStoredConfig();
 }
 
 bool ConfigHandler::SetConfig(const Config &config) {

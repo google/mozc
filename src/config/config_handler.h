@@ -32,6 +32,7 @@
 #ifndef MOZC_CONFIG_CONFIG_HANDLER_H_
 #define MOZC_CONFIG_CONFIG_HANDLER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/port.h"
@@ -48,11 +49,21 @@ enum {
 class ConfigHandler {
  public:
   // Returns current config.
+  // This method returns a *copied* Config instance
+  // so use this with caution, especially when custom_keymap_table exists
+  // the copy operation against typically 5KB string always happens.
   static bool GetConfig(Config *config);
+
+  // Returns current Config as a unique_ptr.
+  // The same performance note as GetConfig(Config*) applies.
+  static std::unique_ptr<config::Config> GetConfig();
 
   // Returns stored config.
   // If imposed config is not set, the result is the same as GetConfig().
   static bool GetStoredConfig(Config *config);
+
+  // Returns stored Config as a unique_ptr.
+  static std::unique_ptr<config::Config> GetStoredConfig();
 
   // Sets config.
   static bool SetConfig(const Config &config);
