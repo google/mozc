@@ -372,3 +372,29 @@ py_binary_mozc(
         "//build_tools:code_generator_util",
     ],
 )
+
+cc_library_mozc(
+    name = "number_decoder",
+    srcs = ["number_decoder.cc"],
+    hdrs = [
+        "number_decoder.h",
+    ],
+    deps = [
+        "//base:number_util",
+        "//base:trie",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "number_decoder_test",
+    srcs = ["number_decoder_test.cc"],
+    deps = [
+        ":number_decoder",
+        "//testing:gunit_main",
+        "//testing:mozctest",
+        "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
+    ],
+)
