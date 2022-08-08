@@ -1656,8 +1656,11 @@ TEST(UtilTest, IsAcceptableCharacterAsCandidate) {
   EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate('\r'));
 
   // Bidirectional text controls
-  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200E));
-  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200F));
+  // See: https://en.wikipedia.org/wiki/Bidirectional_text
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200E));  // LRM
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200F));  // RLM
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x2069));  // PDI
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x061C));  // ALM
 
   // For normal letters, it should be false
   EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'あ'));

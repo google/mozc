@@ -1442,9 +1442,10 @@ bool Util::IsAcceptableCharacterAsCandidate(char32 letter) {
   }
 
   // Bidirectional text control are not acceptable.
-  // See: http://en.wikipedia.org/wiki/Unicode_control_characters
-  if (letter == 0x200E || letter == 0x200F ||
-      (0x202A <= letter && letter <= 0x202E)) {
+  // See: https://en.wikipedia.org/wiki/Bidirectional_text
+  if (letter == 0x061C || letter == 0x200E || letter == 0x200F ||
+      (0x202A <= letter && letter <= 0x202E) ||
+      (0x2066 <= letter && letter <= 0x2069)) {
     return false;
   }
   return true;
