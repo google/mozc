@@ -7244,6 +7244,19 @@ TEST_F(SessionTest, RequestConvertReverse) {
             command.output().callback().session_command().type());
 }
 
+TEST_F(SessionTest, ConvertReverseFails) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+  constexpr char kKanjiContainsNewline[] = "改行\n禁止";
+  commands::Command command;
+  SetupCommandForReverseConversion(kKanjiContainsNewline,
+                                   command.mutable_input());
+
+  EXPECT_TRUE(session.SendCommand(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_candidates());
+}
+
 TEST_F(SessionTest, ConvertReverse) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);

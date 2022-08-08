@@ -31,6 +31,7 @@
 
 #include <cctype>
 #include <cstdint>
+#include <limits>
 #include <string>
 
 #include "base/logging.h"
@@ -79,27 +80,6 @@ bool UCS4ExpressionToInteger(const std::string &input, uint32_t *ucs4) {
   DCHECK(ucs4);
   const std::string hexcode(input, 2, input.npos);
   return NumberUtil::SafeHexStrToUInt32(hexcode, ucs4);
-}
-
-// Checks if given ucs4 value is acceptable or not.
-bool IsAcceptableUnicode(const uint32_t ucs4) {
-  // Unicode character should be less than 0x10FFFF.
-  if (ucs4 > 0x10FFFF) {
-    return false;
-  }
-
-  // Control characters are not acceptable.  0x7F is DEL.
-  if (ucs4 < 0x20 || (0x7F <= ucs4 && ucs4 <= 0x9F)) {
-    return false;
-  }
-
-  // Bidirectional text control are not acceptable.
-  // See: http://en.wikipedia.org/wiki/Unicode_control_characters
-  if (ucs4 == 0x200E || ucs4 == 0x200F || (0x202A <= ucs4 && ucs4 <= 0x202E)) {
-    return false;
-  }
-
-  return true;
 }
 
 void AddCandidate(const std::string &key, const std::string &value, int index,
@@ -174,7 +154,8 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     return false;
   }
 
-  if (!IsAcceptableUnicode(ucs4)) {
+  if (ucs4 > std::numeric_limits<char32>::max() ||
+      !Util::IsAcceptableCharacterAsCandidate(static_cast<char32>(ucs4))) {
     return false;
   }
 

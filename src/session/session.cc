@@ -1164,7 +1164,22 @@ bool Session::ConvertReverse(commands::Command *command) {
       context_->state() != ImeContext::DIRECT) {
     return DoNothing(command);
   }
+
   const std::string &composition = command->input().command().text();
+
+  // Validate before requesting reverse conversion
+  if (!Util::IsValidUtf8(composition)) {
+    DLOG(INFO) << "Input is not valid text as utf8";
+    return DoNothing(command);
+  }
+  for (ConstChar32Iterator iter(composition); !iter.Done(); iter.Next()) {
+    if (!Util::IsAcceptableCharacterAsCandidate(iter.Get())) {
+      DLOG(INFO)
+          << "Input contains characters not suitable for reverse conversion";
+      return DoNothing(command);
+    }
+  }
+
   std::string reading;
   if (!context_->mutable_converter()->GetReadingText(composition, &reading)) {
     LOG(ERROR) << "Failed to get reading text";

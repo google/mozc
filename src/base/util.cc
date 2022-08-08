@@ -1430,6 +1430,26 @@ bool Util::IsLittleEndian() {
   return u.c[0] == 0x78U;
 }
 
+bool Util::IsAcceptableCharacterAsCandidate(char32 letter) {
+  // Unicode does not have code point larger than 0x10FFFF.
+  if (letter > 0x10FFFF) {
+    return false;
+  }
+
+  // Control characters are not acceptable.  0x7F is DEL.
+  if (letter < 0x20 || (0x7F <= letter && letter <= 0x9F)) {
+    return false;
+  }
+
+  // Bidirectional text control are not acceptable.
+  // See: http://en.wikipedia.org/wiki/Unicode_control_characters
+  if (letter == 0x200E || letter == 0x200F ||
+      (0x202A <= letter && letter <= 0x202E)) {
+    return false;
+  }
+  return true;
+}
+
 absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
   switch (error_number) {
     case 0:
