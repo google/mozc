@@ -1443,6 +1443,9 @@ bool Util::IsAcceptableCharacterAsCandidate(char32 letter) {
 
   // Bidirectional text control are not acceptable.
   // See: https://en.wikipedia.org/wiki/Bidirectional_text
+  // Note: Bidirectional text controls can be allowed, as it can be contained in
+  // some emoticons. If they are found not to be harmful for the system, this
+  // section of validation can be abolished.
   if (letter == 0x061C || letter == 0x200E || letter == 0x200F ||
       (0x202A <= letter && letter <= 0x202E) ||
       (0x2066 <= letter && letter <= 0x2069)) {
