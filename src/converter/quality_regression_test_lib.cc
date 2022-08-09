@@ -63,8 +63,13 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
   absl::btree_map<std::string, std::vector<std::pair<float, std::string>>>
       results, disabled_results;
 
-  int num_executed_cases = 0, num_disabled_cases = 0;
+  int num_executed_cases = 0;
+  int num_disabled_cases = 0;
+  int num_skipped_cases = 0;
   for (size_t i = 0; kTestData[i].line; ++i) {
+    if (i % 1000 == 0) {
+      LOG(INFO) << "Testing: " << i << " " << kTestData[i].line;
+    }
     const std::string &tsv_line = kTestData[i].line;
     QualityRegressionUtil::TestItem item;
     if (!item.ParseFromTSV(tsv_line).ok()) {
@@ -72,6 +77,7 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
           absl::StrFormat("Failed to parse test item: %s", tsv_line));
     }
     if (!(item.platform & platform)) {
+      num_skipped_cases++;
       continue;
     }
     std::string actual_value;
@@ -106,7 +112,8 @@ absl::Status QualityRegressionTest::RunTestForPlatform(
   ExamineResults(true, platform, &results);
   ExamineResults(false, platform, &disabled_results);
 
-  const int total_cases = num_executed_cases + num_disabled_cases;
+  const int total_cases =
+      num_executed_cases + num_disabled_cases + num_skipped_cases;
   LOG(INFO) << "Tested " << num_executed_cases << " / " << total_cases
             << " entries.";
   return absl::OkStatus();
