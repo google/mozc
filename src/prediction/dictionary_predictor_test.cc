@@ -3931,4 +3931,101 @@ TEST_F(DictionaryPredictorTest,
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_EQ(10, segments.conversion_segment(0).candidates_size());
 }
+
+TEST_F(DictionaryPredictorTest,
+       DoNotFilterOneSegmentRealtimeCandidatesForEnrichPartialCandidates) {
+  testing::MockDataManager data_manager;
+  const DictionaryMock dictionary;
+  ConverterMock converter;
+  ImmutableConverterMock immutable_converter;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
+      CreateSuffixDictionaryFromDataManager(data_manager));
+  std::unique_ptr<const Connector> connector =
+      Connector::CreateFromDataManager(data_manager).value();
+  std::unique_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
+      CreateSuggestionFilter(data_manager));
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+
+  {
+    // Set up mock converter (for REALTIME_TOP).
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "かった";
+    candidate->value = "買った";
+    candidate->cost = 300;
+    candidate->PushBackInnerSegmentBoundary(9, 9, 9, 9);
+    converter.SetStartConversionForRequest(&segments, true);
+  }
+  {
+    // Set up mock immutable converter (for REALTIME).
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "かった";
+    candidate->value = "飼った";
+    candidate->wcost = 1000;
+    candidate->PushBackInnerSegmentBoundary(9, 9, 9, 9);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かつた";
+    candidate->value = "勝田";
+    candidate->wcost = 1001;
+    candidate->PushBackInnerSegmentBoundary(9, 6, 9, 6);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かつた";
+    candidate->value = "勝太";
+    candidate->wcost = 1002;
+    candidate->PushBackInnerSegmentBoundary(9, 6, 9, 6);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かつた";
+    candidate->value = "鹿田";
+    candidate->wcost = 1003;
+    candidate->PushBackInnerSegmentBoundary(9, 6, 9, 6);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かつた";
+    candidate->value = "かつた";
+    candidate->wcost = 1004;
+    candidate->PushBackInnerSegmentBoundary(9, 9, 9, 9);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かった";
+    candidate->value = "刈った";
+    candidate->wcost = 1005;
+    candidate->PushBackInnerSegmentBoundary(9, 9, 9, 9);
+
+    candidate = segment->add_candidate();
+    candidate->key = "かった";
+    candidate->value = "勝った";
+    candidate->wcost = 1006;
+    candidate->PushBackInnerSegmentBoundary(9, 9, 9, 9);
+
+    immutable_converter.SetConvertForRequest(segments);
+  }
+
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
+      new TestableDictionaryPredictor(
+          data_manager, &converter, &immutable_converter, &dictionary,
+          suffix_dictionary.get(), connector.get(), segmenter.get(),
+          &pos_matcher, suggestion_filter.get()));
+
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("かつた", composer_.get(), &segments);
+
+  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  convreq_for_prediction_->set_use_actual_converter_for_realtime_conversion(
+      true);
+  composer_->SetInputMode(transliteration::HIRAGANA);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
+}
 }  // namespace mozc

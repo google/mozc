@@ -65,6 +65,7 @@
         'rewriter.cc',
         'rewriter_util.cc',
         'single_kanji_rewriter.cc',
+        'small_letter_rewriter.cc',
         'symbol_rewriter.cc',
         'transliteration_rewriter.cc',
         'unicode_rewriter.cc',

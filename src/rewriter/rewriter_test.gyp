@@ -58,6 +58,7 @@
         'number_rewriter_test.cc',
         'remove_redundant_candidate_rewriter_test.cc',
         'rewriter_test.cc',
+        'small_letter_rewriter_test.cc',
         'symbol_rewriter_test.cc',
         'unicode_rewriter_test.cc',
         'usage_rewriter_test.cc',

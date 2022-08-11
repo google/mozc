@@ -2283,6 +2283,7 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 
   commands::Command command;
   Segments segments;
+  config::Config config;
 
   {  // Create segments
     InsertCharacterChars("aiueo", &session, &command);
@@ -2367,7 +2368,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("aiueo", command);
 
-    config::Config config;
     config.set_session_keymap(config::Config::MSIME);
     session.SetConfig(&config);
 
@@ -4048,6 +4048,127 @@ TEST_F(SessionTest, ExpandSuggestion) {
   // 3 == MOCHA, MOZUKU and MOZUKUSU (duplicate MOZUKU is not counted).
   EXPECT_EQ(3, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+}
+
+TEST_F(SessionTest, ExpandSuggestionNoMoreCandidates) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+  commands::Command command;
+
+  // Prepare suggestion candidates.
+  Segments segments_m;
+  {
+    Segment *segment;
+    segment = segments_m.add_segment();
+    segment->set_key("M");
+    segment->add_candidate()->value = "MOCHA";
+    segment->add_candidate()->value = "MOZUKU";
+  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
+
+  SendKey("M", &session, &command);
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  Segments empty_segments;
+  GetConverterMock()->SetStartPredictionForRequest(&empty_segments, false);
+
+  command.Clear();
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
+}
+
+TEST_F(SessionTest, ExpandSuggestionForPartial) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  EXPECT_EQ("も", command.output().preedit().segment(0).value());
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
+
+  EXPECT_EQ(2, command.output().preedit().cursor());
+  // Prepare suggestion candidates.
+  Segments segments_mo;
+  {
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("も");
+    segment->add_candidate()->value = "も";
+    segment->add_candidate()->value = "モ";
+  }
+  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
+
+  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+  EXPECT_EQ(1, command.output().preedit().cursor());
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  command.Clear();
+
+  {
+    Segment *segment = segments_mo.mutable_segment(0);
+    segment->add_candidate()->value = "模";
+    segment->add_candidate()->value = "藻";
+  }
+  GetConverterMock()->SetStartPartialPredictionForRequest(&segments_mo, true);
+
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(4, command.output().candidates().candidate_size());
+}
+
+TEST_F(SessionTest, ExpandSuggestionForPartialNoMoreCandidates) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session, *mobile_request_);
+  commands::Command command;
+
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  SendKey("7", &session, &command);
+  EXPECT_EQ("も", command.output().preedit().segment(0).value());
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  SendKey("3", &session, &command);
+  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
+
+  EXPECT_EQ(2, command.output().preedit().cursor());
+  // Prepare suggestion candidates.
+  Segments segments_mo;
+  {
+    Segment *segment;
+    segment = segments_mo.add_segment();
+    segment->set_key("も");
+    segment->add_candidate()->value = "も";
+    segment->add_candidate()->value = "モ";
+  }
+  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
+
+  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
+  EXPECT_EQ(1, command.output().preedit().cursor());
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
+
+  command.Clear();
+
+  Segments empty_segments;
+  GetConverterMock()->SetStartPartialPredictionForRequest(&empty_segments,
+                                                          false);
+
+  EXPECT_TRUE(session.ExpandSuggestion(&command));
+  ASSERT_TRUE(command.output().has_candidates());
+  EXPECT_EQ(2, command.output().candidates().candidate_size());
 }
 
 TEST_F(SessionTest, ExpandSuggestionDirectMode) {
@@ -7123,6 +7244,19 @@ TEST_F(SessionTest, RequestConvertReverse) {
             command.output().callback().session_command().type());
 }
 
+TEST_F(SessionTest, ConvertReverseFails) {
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
+  constexpr char kKanjiContainsNewline[] = "改行\n禁止";
+  commands::Command command;
+  SetupCommandForReverseConversion(kKanjiContainsNewline,
+                                   command.mutable_input());
+
+  EXPECT_TRUE(session.SendCommand(&command));
+  EXPECT_TRUE(command.output().consumed());
+  EXPECT_FALSE(command.output().has_candidates());
+}
+
 TEST_F(SessionTest, ConvertReverse) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session);
@@ -9152,6 +9286,21 @@ TEST_F(SessionTest, DeleteCandidateFromHistory) {
     EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
     EXPECT_EQ("アイウエオ", udm_mock->GetLastClearedValue());  // ID == 1
   }
+}
+
+TEST_F(SessionTest, SetConfig) {
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  config.set_session_keymap(config::Config::CUSTOM);
+  Session session(engine_.get());
+  session.PushUndoContext();
+  session.SetConfig(&config);
+
+  EXPECT_EQ(&session.context_->GetConfig(),
+            &config);
+  // Both previous and current context should have the same config.
+  EXPECT_EQ(&session.context_->GetConfig(),
+            &session.prev_context_->GetConfig());
 }
 
 }  // namespace session

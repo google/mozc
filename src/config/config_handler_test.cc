@@ -117,9 +117,12 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
   EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  std::unique_ptr<config::Config> output2 = ConfigHandler::GetConfig();
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
+  output2->mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
+  EXPECT_EQ(input.DebugString(), output2->DebugString());
 
   ConfigHandler::GetDefaultConfig(&input);
   input.set_incognito_mode(false);
@@ -130,10 +133,13 @@ TEST_F(ConfigHandlerTest, SetConfig) {
   EXPECT_TRUE(ConfigHandler::SetConfig(input));
   output.Clear();
   EXPECT_TRUE(ConfigHandler::GetConfig(&output));
+  output2 = ConfigHandler::GetConfig();
 
   input.mutable_general_config()->set_last_modified_time(0);
   output.mutable_general_config()->set_last_modified_time(0);
+  output2->mutable_general_config()->set_last_modified_time(0);
   EXPECT_EQ(input.DebugString(), output.DebugString());
+  EXPECT_EQ(input.DebugString(), output2->DebugString());
 
 #if defined(OS_ANDROID) && defined(CHANNEL_DEV)
   input.Clear();

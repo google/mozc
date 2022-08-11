@@ -244,7 +244,7 @@ class Session : public SessionInterface {
 
   bool ReportBug(mozc::commands::Command *command);
 
-  void SetConfig(mozc::config::Config *config) override;
+  void SetConfig(const mozc::config::Config *config) override;
 
   void SetRequest(const mozc::commands::Request *request) override;
 
@@ -277,6 +277,7 @@ class Session : public SessionInterface {
   FRIEND_TEST(SessionTest, OutputInitialComposition);
   FRIEND_TEST(SessionTest, IsFullWidthInsertSpace);
   FRIEND_TEST(SessionTest, RequestUndo);
+  FRIEND_TEST(SessionTest, SetConfig);
 
   // Underlying conversion engine for this session. Please note that:
   //   i) Session doesn't own the pointer.

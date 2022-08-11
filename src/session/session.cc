@@ -1123,7 +1123,16 @@ void Session::SetTable(const composer::Table *table) {
   context_->mutable_composer()->SetTable(table);
 }
 
-void Session::SetConfig(config::Config *config) { context_->SetConfig(config); }
+void Session::SetConfig(const config::Config *config) {
+  context_->SetConfig(config);
+  if (prev_context_) {
+    // Previous countext doesn't need to keep the previous config because
+    // our expectation of undo feature doesn't include undoing config change.
+    // Moreover, the config which prev_context_ has is about to be destroyed
+    // so keeping the reference to it is dangerous.
+    prev_context_->SetConfig(config);
+  }
+}
 
 void Session::SetRequest(const commands::Request *request) {
   ClearUndoContext();
@@ -1155,7 +1164,22 @@ bool Session::ConvertReverse(commands::Command *command) {
       context_->state() != ImeContext::DIRECT) {
     return DoNothing(command);
   }
+
   const std::string &composition = command->input().command().text();
+
+  // Validate before requesting reverse conversion
+  if (!Util::IsValidUtf8(composition)) {
+    DLOG(INFO) << "Input is not valid text as utf8";
+    return DoNothing(command);
+  }
+  for (ConstChar32Iterator iter(composition); !iter.Done(); iter.Next()) {
+    if (!Util::IsAcceptableCharacterAsCandidate(iter.Get())) {
+      DLOG(INFO)
+          << "Input contains characters not suitable for reverse conversion";
+      return DoNothing(command);
+    }
+  }
+
   std::string reading;
   if (!context_->mutable_converter()->GetReadingText(composition, &reading)) {
     LOG(ERROR) << "Failed to get reading text";

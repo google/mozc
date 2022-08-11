@@ -1649,6 +1649,30 @@ TEST(UtilTest, IsValidUtf8) {
   EXPECT_FALSE(Util::IsValidUtf8("\xF0\x80\x80\xAF"));
 }
 
+TEST(UtilTest, IsAcceptableCharacterAsCandidate) {
+  // Control Characters
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate('\n'));
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate('\t'));
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate('\r'));
+
+  // Bidirectional text controls
+  // See: https://en.wikipedia.org/wiki/Bidirectional_text
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200E));  // LRM
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x200F));  // RLM
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x2069));  // PDI
+  EXPECT_FALSE(Util::IsAcceptableCharacterAsCandidate(0x061C));  // ALM
+
+  // For normal letters, it should be false
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'あ'));
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'↘'));
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'永'));
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'⊿'));
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(u'a'));
+  EXPECT_TRUE(
+      Util::IsAcceptableCharacterAsCandidate(0x1B001));  // hentaigana ye
+  EXPECT_TRUE(Util::IsAcceptableCharacterAsCandidate(0x1F600));  // emoji
+}
+
 TEST(UtilTest, SerializeAndDeserializeUint64) {
   struct {
     const char *str;

@@ -398,6 +398,11 @@ class Util {
   // Converts `errno` to absl::Status.
   static absl::Status ErrnoToCanonicalStatus(int error_number,
                                              absl::string_view message);
+
+  // Checks whether the letter is ucs 4 is appropriate target to be shown as
+  // candidate. This function is based on mozc internal logics, rather than
+  // orthodox classification logics.
+  static bool IsAcceptableCharacterAsCandidate(char32 letter);
 };
 
 // Const iterator implementation to traverse on a (utf8) string as a char32

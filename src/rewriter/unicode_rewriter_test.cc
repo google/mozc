@@ -190,6 +190,9 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
   }
 
   // Invalid style input
+  InitSegments("U+123456789ABCDEF0", "U+123456789ABCDEF0", &segments);
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+
   InitSegments("U+1234567", "U+12345678", &segments);
   EXPECT_FALSE(rewriter.Rewrite(request, &segments));
 

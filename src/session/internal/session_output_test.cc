@@ -839,7 +839,7 @@ TEST(SessionOutputTest, FillPreeditResult) {
   EXPECT_EQ("ABC", result.value());
 }
 
-TEST(SessionOutputTest, FillAllCandidateWords_NonForcused) {
+TEST(SessionOutputTest, FillAllCandidateWords_NonFocused) {
   // Test against b/3059255
   // Even when no candidate was focused, all_candidate_words had focused_index.
 
@@ -878,6 +878,23 @@ TEST(SessionOutputTest, FillAllCandidateWords_NonForcused) {
     // If a candidate is forcused, true is expected.
     EXPECT_TRUE(candidates_proto.has_focused_index());
   }
+}
+
+TEST(SessionOutputTest, FillRemovedCandidateWords) {
+  commands::CandidateList candidates_proto;
+
+  // Initialize Segment
+  Segment segment;
+  const char *kNormalKey = "key";
+  segment.set_key(kNormalKey);
+
+  Segment::Candidate candidate;
+  candidate.content_key = "key";
+  candidate.value = "value";
+  segment.removed_candidates_for_debug_.push_back(candidate);
+
+  // Exexcute FillAllCandidateWords
+  SessionOutput::FillRemovedCandidates(segment, &candidates_proto);
 }
 
 }  // namespace session

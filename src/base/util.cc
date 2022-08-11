@@ -1430,6 +1430,30 @@ bool Util::IsLittleEndian() {
   return u.c[0] == 0x78U;
 }
 
+bool Util::IsAcceptableCharacterAsCandidate(char32 letter) {
+  // Unicode does not have code point larger than 0x10FFFF.
+  if (letter > 0x10FFFF) {
+    return false;
+  }
+
+  // Control characters are not acceptable.  0x7F is DEL.
+  if (letter < 0x20 || (0x7F <= letter && letter <= 0x9F)) {
+    return false;
+  }
+
+  // Bidirectional text control are not acceptable.
+  // See: https://en.wikipedia.org/wiki/Bidirectional_text
+  // Note: Bidirectional text controls can be allowed, as it can be contained in
+  // some emoticons. If they are found not to be harmful for the system, this
+  // section of validation can be abolished.
+  if (letter == 0x061C || letter == 0x200E || letter == 0x200F ||
+      (0x202A <= letter && letter <= 0x202E) ||
+      (0x2066 <= letter && letter <= 0x2069)) {
+    return false;
+  }
+  return true;
+}
+
 absl::StatusCode Util::ErrnoToCanonicalCode(int error_number) {
   switch (error_number) {
     case 0:

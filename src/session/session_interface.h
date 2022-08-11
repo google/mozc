@@ -63,7 +63,7 @@ class SessionInterface {
   // Perform the SEND_COMMAND command defined commands.proto.
   virtual bool SendCommand(commands::Command *command) = 0;
 
-  virtual void SetConfig(config::Config *config) = 0;
+  virtual void SetConfig(const config::Config *config) = 0;
 
   // Set Request. Currently, this is especial for session::Session.
   virtual void SetRequest(const commands::Request *request) {}
