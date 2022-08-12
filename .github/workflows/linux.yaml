@@ -26,12 +26,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libibus-1.0-dev qtbase5-dev libgtk2.0-dev libxcb-xfixes0-dev
           #
-          # Change the default Android NDK version.
-          # https://github.com/actions/virtual-environments/issues/5595
-          ANDROID_ROOT=/usr/local/lib/android
-          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-          ln -sfn $ANDROID_SDK_ROOT/ndk/21.4.7075529 $ANDROID_NDK_ROOT
+          # Unset the Android NDK setting to skip the unnecessary configuration.
+          echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
 
       - name: build
         working-directory: ./src
