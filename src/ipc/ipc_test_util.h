@@ -51,7 +51,7 @@ class TestMachPortManager : public mozc::MachPortManagerInterface {
  private:
   mach_port_t port_;
 };
-#endif
+#endif  // __APPLE__
 
 // An IPCClientFactory which holds an onmemory port instead of actual
 // connections.  It is only available for Mac.  Otherwise it is same
@@ -61,18 +61,18 @@ class IPCClientFactoryOnMemory : public IPCClientFactoryInterface {
   IPCClientFactoryOnMemory() {}
 
   IPCClientInterface *NewClient(const std::string &name,
-                                const std::string &port_name) override;
+                                const std::string &path_name) override;
 
   IPCClientInterface *NewClient(const std::string &name) override;
 
 #ifdef __APPLE__
   // Returns MachPortManager to share the mach port between client and server.
   MachPortManagerInterface *OnMemoryPortManager() { return &mach_manager_; }
-#endif
+#endif  // __APPLE__
  private:
 #ifdef __APPLE__
   TestMachPortManager mach_manager_;
-#endif
+#endif  // __APPLE__
   DISALLOW_COPY_AND_ASSIGN(IPCClientFactoryOnMemory);
 };
 }  // namespace mozc

@@ -33,7 +33,7 @@
 #include <cstdint>
 #ifdef __APPLE__
 #include <mach/mach.h>  // for mach_port_t
-#endif                  // OS_OS_MACOSX
+#endif                  // __APPLE__
 
 #include <memory>
 #include <string>
@@ -145,7 +145,7 @@ class IPCClient : public IPCClientInterface {
   // When timeout (in msec) is set -1, 'Call' waits forever.
   // Note that on Linux and Windows, Call() closes the socket_. This means you
   // cannot call the Call() function more than once.
-  bool Call(const char *request, size_t request_size, char *response,
+  bool Call(const char *request, size_t input_length, char *response,
             size_t *response_size,
             int32_t timeout) override;  // msec
 
@@ -159,7 +159,7 @@ class IPCClient : public IPCClientInterface {
   void SetMachPortManager(MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
   }
-#endif
+#endif  // __APPLE__
 
  private:
   void Init(const std::string &name, const std::string &server_path);
@@ -171,9 +171,9 @@ class IPCClient : public IPCClientInterface {
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;
-#else
+#else   // OS_WIN
   int socket_;
-#endif
+#endif  // OS_WIN
   bool connected_;
   IPCPathManager *ipc_path_manager_;
   IPCErrorType last_ipc_error_;
@@ -261,7 +261,7 @@ class IPCServer {
   void SetMachPortManager(MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
   }
-#endif
+#endif  // __APPLE__
 
  private:
   char request_[IPC_REQUESTSIZE];
@@ -276,10 +276,10 @@ class IPCServer {
 #elif defined(__APPLE__)
   std::string name_;
   MachPortManagerInterface *mach_port_manager_;
-#else
+#else   // OS_WIN
   int socket_;
   std::string server_address_;
-#endif
+#endif  // OS_WIN
 
   int timeout_;
 };

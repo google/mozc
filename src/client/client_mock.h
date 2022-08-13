@@ -49,13 +49,13 @@ class ClientMock : public client::ClientInterface {
   bool EnsureConnection() override;
   bool EnsureSession() override;
   bool CheckVersionOrRestartServer() override;
-  bool SendKeyWithContext(const commands::KeyEvent &key,
+  bool SendKeyWithContext(const commands::KeyEvent &argument,
                           const commands::Context &context,
                           commands::Output *output) override;
-  bool TestSendKeyWithContext(const commands::KeyEvent &key,
+  bool TestSendKeyWithContext(const commands::KeyEvent &argument,
                               const commands::Context &context,
                               commands::Output *output) override;
-  bool SendCommandWithContext(const commands::SessionCommand &command,
+  bool SendCommandWithContext(const commands::SessionCommand &argument,
                               const commands::Context &context,
                               commands::Output *output) override;
   bool GetConfig(config::Config *config) override;

@@ -77,7 +77,7 @@ class IPCPathManager {
   bool LoadPathName();
 
   // Get a pathanem from the heap. If pathanme is empty, returns false.
-  bool GetPathName(std::string *path_name) const;
+  bool GetPathName(std::string *ipc_name) const;
 
   // return protocol version.
   // return 0 if protocol version is not defined.

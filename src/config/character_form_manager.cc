@@ -62,15 +62,14 @@ class CharacterFormManagerImpl {
   CharacterFormManagerImpl();
   virtual ~CharacterFormManagerImpl();
 
-  Config::CharacterForm GetCharacterForm(const std::string &key) const;
+  Config::CharacterForm GetCharacterForm(const std::string &str) const;
 
-  void SetCharacterForm(const std::string &key, Config::CharacterForm form);
-  void GuessAndSetCharacterForm(const std::string &key);
+  void SetCharacterForm(const std::string &str, Config::CharacterForm form);
+  void GuessAndSetCharacterForm(const std::string &str);
 
-  void ConvertString(const std::string &input, std::string *output) const;
+  void ConvertString(const std::string &str, std::string *output) const;
 
-  bool ConvertStringWithAlternative(const std::string &input,
-                                    std::string *output,
+  bool ConvertStringWithAlternative(const std::string &str, std::string *output,
                                     std::string *alternative_output) const;
 
   // clear setting
