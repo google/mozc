@@ -106,11 +106,13 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
       {"^123", "¹²³"},
       {"^4", "⁴"},
       {"^56789", "⁵⁶⁷⁸⁹"},
+      {"^2+(3-1)=", "²⁺⁽³⁻¹⁾⁼"},
 
       // Subscript
       {"_123", "₁₂₃"},
       {"_4", "₄"},
       {"_56789", "₅₆₇₈₉"},
+      {"_2+(3-1)=", "₂₊₍₃₋₁₎₌"},
   };
 
   const char *kMozcUnsupportedInput[] = {
@@ -124,23 +126,18 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
       "_y",
       "_b",
       "_2y",
-
-      // Symbol superscript/subscript
-      "^+",
-      "_-",
   };
 
-  // Allowed cases
-  for (size_t i = 0; i < std::size(kInputOutputData); ++i) {
-    InitSegments(kInputOutputData[i].input, kInputOutputData[i].input,
-                 &segments);
+  // Test behavior for each test cases in kInpuOutputData.
+  for (const InputOutputData &item : kInputOutputData) {
+    InitSegments(item.input, item.input, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-    EXPECT_TRUE(ContainCandidate(segments, kInputOutputData[i].output));
+    EXPECT_TRUE(ContainCandidate(segments, item.output));
   }
 
   // Mozc does not accept some superscript/subscript supported in Unicode
-  for (size_t i = 0; i < std::size(kMozcUnsupportedInput); ++i) {
-    InitSegments(kMozcUnsupportedInput[i], kMozcUnsupportedInput[i], &segments);
+  for (const char* &item : kMozcUnsupportedInput) {
+    InitSegments(item, item, &segments);
     EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   }
 
