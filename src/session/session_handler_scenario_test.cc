@@ -432,7 +432,6 @@ commands::Request GetMobileRequest() {
   return request;
 }
 
-
 // Makes sure that the results are not changed by experiment params.
 INSTANTIATE_TEST_SUITE_P(
     TestForExperimentParams, SessionHandlerScenarioTestForRequest,
@@ -455,6 +454,12 @@ INSTANTIATE_TEST_SUITE_P(
                              auto request = GetMobileRequest();
                              request.mutable_decoder_experiment_params()
                                  ->set_enrich_partial_candidates(true);
+                             return request;
+                           }(),
+                           []() {
+                             auto request = GetMobileRequest();
+                             request.mutable_decoder_experiment_params()
+                                 ->set_enable_number_decoder(true);
                              return request;
                            }())));
 
