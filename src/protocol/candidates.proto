@@ -50,6 +50,10 @@ message Annotation {
   optional string shortcut = 4;
   // Set to true if this candidate can be deleted from history.
   optional bool deletable = 5 [default = false];
+  // Description of the candidate for A11y support.
+  // One of the example usage of this field is android:contentDescription in
+  // Android.
+  optional string a11y_description = 6;
 }
 
 // Additional information to a candidate word.  This message is

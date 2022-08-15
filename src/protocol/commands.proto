@@ -859,6 +859,10 @@ message Request {
   // With this, the client doesn't need to execute EXPAND_SUGGESTION to get more
   // candidates. Instead, all the candidates will be returned at once.
   optional bool one_phase_suggestion = 19 [default = false];
+
+  // Enables a11y support for candidates.
+  // If this field is set to true, a11y description is set to each candidate.
+  optional bool enable_a11y_description = 20 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
