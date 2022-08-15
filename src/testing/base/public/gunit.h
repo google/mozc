@@ -31,5 +31,6 @@
 #define MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
 
 #include <gtest/gtest.h>
+#include "testing/base/public/googletest.h"
 
 #endif  // MOZC_TESTING_BASE_PUBLIC_GUNIT_H_
