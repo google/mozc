@@ -23,12 +23,15 @@ jobs:
 
       - name: setup
         run: |
-          # Change the default Android NDK version.
-          # https://github.com/actions/virtual-environments/issues/5595
-          ANDROID_ROOT=/usr/local/lib/android
-          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-          ln -sfn $ANDROID_SDK_ROOT/ndk/21.4.7075529 $ANDROID_NDK_ROOT
+          # Android NDK
+          # Bazel has not yet supported Android NDK 22 or later.
+          # https://github.com/bazelbuild/bazel/issues/12889
+          # Install Android NDK 21.
+          # https://github.com/actions/runner-images/issues/5930
+          ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
+          echo "y" | $SDKMANAGER "ndk;21.4.7075529"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.4.7075529" >> $GITHUB_ENV
 
       - name: build
         working-directory: ./src
