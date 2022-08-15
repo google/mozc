@@ -534,6 +534,40 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
     return CandidateFilter::BAD_CANDIDATE;
   }
 
+  // Filters multiple number nodes.
+  // "2|十三重"
+  // "4|重|5|号室"
+  // Note that we do not want to filter
+  // "1|0|円"
+  // "5|万" for the key, "5まん"
+  if (nodes.size() >= 2) {
+    int number_nodes = 0;
+    uint16_t prev_lid = 0;
+    for (const auto &node : nodes) {
+      absl::string_view value = node->value;
+      size_t mblen = 0;
+      if (Util::IsScriptType(node->key, Util::NUMBER)) {
+        continue;
+      }
+      const Util::ScriptType first_value_script_type = Util::GetScriptType(
+          node->value.data(), node->value.data() + node->value.size(), &mblen);
+      if (first_value_script_type == Util::NUMBER && prev_lid != node->lid) {
+        ++number_nodes;
+      } else if (first_value_script_type == Util::KANJI) {
+        const auto first_kanji = value.substr(0, mblen);
+        std::string converted;
+        NumberUtil::KanjiNumberToArabicNumber(first_kanji, &converted);
+        if (first_kanji != converted && prev_lid != node->lid) {
+          ++number_nodes;
+        }
+      }
+      prev_lid = node->lid;
+    }
+    if (number_nodes >= 2) {
+      return CandidateFilter::BAD_CANDIDATE;
+    }
+  }
+
   if (is_strict_mode) {
     // Filter candidates:
     // 1) which have the different Pos structure with the top candidate, and
