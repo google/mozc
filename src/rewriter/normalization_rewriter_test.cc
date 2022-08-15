@@ -30,6 +30,7 @@
 #include "rewriter/normalization_rewriter.h"
 
 #include <string>
+#include <vector>
 
 #include "base/system_util.h"
 #include "converter/segments.h"
@@ -52,6 +53,18 @@ void AddSegment(const std::string &key, const std::string &value,
   candidate->content_value = value;
 }
 
+void AddSegment(const std::string &key, const std::vector<std::string> &values,
+                Segments *segments) {
+  Segment *seg = segments->add_segment();
+  seg->set_key(key);
+  for (const std::string &value : values) {
+    Segment::Candidate *candidate = seg->add_candidate();
+    candidate->content_key = key;
+    candidate->value = value;
+    candidate->content_value = value;
+  }
+}
+
 class NormalizationRewriterTest : public ::testing::Test {
  protected:
   NormalizationRewriterTest() = default;
@@ -61,6 +74,28 @@ class NormalizationRewriterTest : public ::testing::Test {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 };
+
+TEST_F(NormalizationRewriterTest, RemoveTest) {
+  NormalizationRewriter normalization_rewriter;
+  Segments segments;
+  const ConversionRequest request;
+
+  segments.Clear();
+  AddSegment("a", {"a\t1", "a\n2", "a\n\r3"}, &segments);
+
+  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+}
+
+TEST_F(NormalizationRewriterTest, NoRemoveTest) {
+  NormalizationRewriter normalization_rewriter;
+  Segments segments;
+  AddSegment("a", {"aa1", "a.a", "a-a"}, &segments);
+
+  const ConversionRequest request;
+  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+}
 
 TEST_F(NormalizationRewriterTest, NormalizationTest) {
   NormalizationRewriter normalization_rewriter;

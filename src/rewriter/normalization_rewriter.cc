@@ -42,6 +42,17 @@
 namespace mozc {
 namespace {
 
+bool CheckCodePointsAcceptable(const std::string value) {
+  for (ConstChar32Iterator iter(value); !iter.Done(); iter.Next()) {
+    if (!Util::IsAcceptableCharacterAsCandidate(iter.Get())) {
+      // remove candidate here
+      return false;
+      break;
+    }
+  }
+  return true;
+}
+
 bool NormalizeCandidate(Segment::Candidate *candidate,
                         TextNormalizer::Flag flag) {
   DCHECK(candidate);
@@ -90,10 +101,20 @@ bool NormalizationRewriter::Rewrite(const ConversionRequest &request,
     }
 
     // Regular candidate.
-    for (size_t j = 0; j < segment->candidates_size(); ++j) {
-      Segment::Candidate *candidate = segment->mutable_candidate(j);
+    const size_t candidates_size = segment->candidates_size();
+    for (size_t j = 0; j < candidates_size; ++j) {
+      const size_t reversed_j = candidates_size - j - 1;
+      Segment::Candidate *candidate = segment->mutable_candidate(reversed_j);
       DCHECK(candidate);
+
+      // Character Normalization
       modified |= NormalizeCandidate(candidate, flag_);
+
+      // Check acceptability of code points as a candidate.
+      if (!CheckCodePointsAcceptable(candidate->value)) {
+        segment->erase_candidate(reversed_j);
+        modified = true;
+      }
     }
   }
 
