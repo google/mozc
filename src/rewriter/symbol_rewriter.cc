@@ -109,7 +109,7 @@ const std::string SymbolRewriter::GetDescription(
 // static function
 bool SymbolRewriter::IsSymbol(const std::string &key) {
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32 ucs4 = iter.Get();
+    const char32_t ucs4 = iter.Get();
     if (ucs4 >= 0x3041 && ucs4 <= 0x309F) {  // hiragana
       return false;
     }

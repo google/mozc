@@ -51,7 +51,7 @@ namespace {
 //
 // As Unicode has became the defact default encoding.  We have reduced
 // the number of characters to be normalized.
-inline char32 NormalizeCharForWindows(char32 c) {
+inline char32_t NormalizeCharForWindows(char32_t c) {
   switch (c) {
     case 0x301C:      // WAVE DASH
       return 0xFF5E;  // FULLWIDTH TILDE
@@ -65,7 +65,7 @@ inline char32 NormalizeCharForWindows(char32 c) {
   }
 }
 
-std::pair<int, int> ConvertJaCjkCompatToSvs(char32 cjk_compat_char) {
+std::pair<int, int> ConvertJaCjkCompatToSvs(char32_t cjk_compat_char) {
   constexpr const std::pair<int, int> no_value = {0, 0};
 
   // value (2N):   codepoint of CJK compatibility character.
@@ -200,17 +200,17 @@ std::string TextNormalizer::NormalizeTextWithFlag(absl::string_view input,
 
 bool TextNormalizer::NormalizeTextToSvs(absl::string_view input,
                                         std::string *output) {
-  std::vector<char32> codepoints = Util::Utf8ToCodepoints(input);
-  std::vector<char32> normalized;
+  std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(input);
+  std::vector<char32_t> normalized;
   bool modified = false;
-  for (const char32 cp : codepoints) {
+  for (const char32_t cp : codepoints) {
     const std::pair<int, int> svs = ConvertJaCjkCompatToSvs(cp);
     if (svs.first == 0) {
       normalized.push_back(cp);
     } else {
       modified = true;
-      normalized.push_back(static_cast<char32>(svs.first));
-      normalized.push_back(static_cast<char32>(svs.second));
+      normalized.push_back(static_cast<char32_t>(svs.first));
+      normalized.push_back(static_cast<char32_t>(svs.second));
     }
   }
   if (!modified) {

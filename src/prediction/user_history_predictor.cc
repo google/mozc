@@ -744,7 +744,7 @@ bool UserHistoryPredictor::MaybeRomanMisspelledKey(const std::string &key) {
   int num_hiragana = 0;
   int num_unknown = 0;
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     const Util::ScriptType type = Util::GetScriptType(w);
     if (type == Util::HIRAGANA || w == 0x30FC) {  // "ー".
       ++num_hiragana;

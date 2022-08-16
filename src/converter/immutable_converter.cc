@@ -805,7 +805,7 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
                                                          Lattice *lattice,
                                                          Node *nodes) const {
   size_t mblen = 0;
-  const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+  const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
 
   const Util::ScriptType first_script_type = Util::GetScriptType(ucs4);
   const Util::FormType first_form_type = Util::GetFormType(ucs4);
@@ -844,7 +844,7 @@ Node *ImmutableConverterImpl::AddCharacterTypeBasedNodes(const char *begin,
   int num_char = 1;
   const char *p = begin + mblen;
   while (p < end) {
-    const char32 next_ucs4 = Util::Utf8ToUcs4(p, end, &mblen);
+    const char32_t next_ucs4 = Util::Utf8ToUcs4(p, end, &mblen);
     if (first_script_type != Util::GetScriptType(next_ucs4) ||
         first_form_type != Util::GetFormType(next_ucs4)) {
       break;

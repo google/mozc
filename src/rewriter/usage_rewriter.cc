@@ -111,7 +111,7 @@ std::string UsageRewriter::GetKanjiPrefixAndOneHiragana(
   bool has_kanji = false;
   bool has_hiragana = false;
   for (ConstChar32Iterator iter(word); !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     const Util::ScriptType s = Util::GetScriptType(w);
     if (pos == 0 && s != Util::KANJI) {
       return "";

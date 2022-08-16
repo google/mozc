@@ -935,12 +935,12 @@ cc_binary_mozc(
     srcs = ["gen_symbol_rewriter_dictionary_main.cc"],
     deps = [
         ":dictionary_generator",
-        "//base",
         "//base:file_stream",
         "//base:file_util",
         "//base:init_mozc_buildtool",
         "//base:japanese_util",
         "//base:logging",
+        "//base:number_util",
         "//base:status",
         "//base:util",
         "//data_manager",

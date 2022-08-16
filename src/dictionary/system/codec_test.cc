@@ -48,7 +48,7 @@ namespace mozc {
 namespace dictionary {
 namespace {
 
-::testing::AssertionResult MakeAssertResult(bool success, char32 c,
+::testing::AssertionResult MakeAssertResult(bool success, char32_t c,
                                             const char *message) {
   if (success) {
     return ::testing::AssertionSuccess();
@@ -57,7 +57,7 @@ namespace {
          << message << " c = " << absl::StrFormat("U+%05X", c);
 }
 
-::testing::AssertionResult IsExpectedEncodedSize(char32 c,
+::testing::AssertionResult IsExpectedEncodedSize(char32_t c,
                                                  const std::string &encoded) {
   const std::string::size_type size = encoded.size();
   if (c == 0x00) {
@@ -390,8 +390,8 @@ TEST_F(SystemDictionaryCodecTest, KeyCodecSymbolTest) {
 TEST_F(SystemDictionaryCodecTest, ValueCodecTest) {
   std::unique_ptr<SystemDictionaryCodec> codec(new SystemDictionaryCodec);
   // TODO(toshiyuki): Use 0x10ffff instead when UCS4 is supported.
-  constexpr char32 kMaxUniChar = 0x10ffff;
-  for (char32 c = 0x01; c <= kMaxUniChar; ++c) {
+  constexpr char32_t kMaxUniChar = 0x10ffff;
+  for (char32_t c = 0x01; c <= kMaxUniChar; ++c) {
     std::string original;
     Util::Ucs4ToUtf8(c, &original);
     std::string encoded;
@@ -790,11 +790,11 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   {  // Value
     std::string original;
     {
-      char32 a_ucs4 = '!';
+      char32_t a_ucs4 = '!';
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 10000; ++i) {
         // U+4E00-9FFF CJK Unified Ideographs
-        const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(0x9f00));
+        const char32_t c = a_ucs4 + static_cast<uint16_t>(Util::Random(0x9f00));
         Util::Ucs4ToUtf8Append(c, &original);
       }
     }
@@ -807,10 +807,10 @@ TEST_F(SystemDictionaryCodecTest, CodecTest) {
   {  // Key
     std::string original;
     {
-      char32 a_ucs4 = 0x3041;  // "ぁ"
+      char32_t a_ucs4 = 0x3041;  // "ぁ"
       Util::SetRandomSeed(0);
       for (size_t i = 0; i < 1000; ++i) {
-        const char32 c = a_ucs4 + static_cast<uint16_t>(Util::Random(1000));
+        const char32_t c = a_ucs4 + static_cast<uint16_t>(Util::Random(1000));
         Util::Ucs4ToUtf8Append(c, &original);
       }
     }

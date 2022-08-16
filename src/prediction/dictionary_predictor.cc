@@ -2481,7 +2481,7 @@ bool DictionaryPredictor::IsZipCodeRequest(const std::string &key) {
   }
 
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32 c = iter.Get();
+    const char32_t c = iter.Get();
     if (!('0' <= c && c <= '9') && (c != '-')) {
       return false;
     }

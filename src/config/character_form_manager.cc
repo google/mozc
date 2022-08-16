@@ -212,7 +212,7 @@ uint16_t GetNormalizedCharacter(const std::string &str) {
         // normalize it to half width
         std::string tmp;
         japanese_util::HalfWidthToFullWidth(str, &tmp);
-        char32 ucs4 = 0;
+        char32_t ucs4 = 0;
         if (Util::SplitFirstChar32(tmp, &ucs4, nullptr) && ucs4 <= 0xffff) {
           ucs2 = static_cast<uint16_t>(ucs4);
         } else {
@@ -374,7 +374,7 @@ bool CharacterFormManagerImpl::TryConvertStringWithPreference(
   std::string buf;
   while (begin < end) {
     size_t mblen = 0;
-    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
     if (mblen == 0) {  // Invalid Utf8 string
       ++begin;
       continue;
@@ -431,7 +431,7 @@ void CharacterFormManagerImpl::ConvertStringAlternative(
   std::string buf;
   while (begin < end) {
     size_t mblen = 0;
-    const char32 ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t ucs4 = Util::Utf8ToUcs4(begin, end, &mblen);
     const Util::ScriptType type = Util::GetScriptType(ucs4);
     // Cache previous ScriptType to reduce to call GetFormType()
     Util::FormType form = prev_form;
@@ -697,9 +697,9 @@ void CharacterFormManager::SetDefaultRule() {
 namespace {
 // Almost the same as Utf8ToUcs4, but skip halfwidth
 // voice/semi-voice sound mark as they are treated as one character.
-char32 SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
-                                   size_t *mblen) {
-  char32 c = 0;
+char32_t SkipHalfWidthVoiceSoundMark(const char *begin, const char *end,
+                                     size_t *mblen) {
+  char32_t c = 0;
   *mblen = 0;
   while (begin < end) {
     size_t tmp_mblen = 0;
@@ -740,8 +740,8 @@ bool CharacterFormManager::GetFormTypesFromStringPair(const std::string &input1,
   while (begin1 < end1 && begin2 < end2) {
     size_t mblen1 = 0;
     size_t mblen2 = 0;
-    const char32 c1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
-    const char32 c2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
+    const char32_t c1 = SkipHalfWidthVoiceSoundMark(begin1, end1, &mblen1);
+    const char32_t c2 = SkipHalfWidthVoiceSoundMark(begin2, end2, &mblen2);
     CHECK_GT(mblen1, 0);
     CHECK_GT(mblen2, 0);
     begin1 += mblen1;

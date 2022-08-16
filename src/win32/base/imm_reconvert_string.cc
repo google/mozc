@@ -68,7 +68,7 @@ bool IsControlCode(wchar_t c) {
 }
 
 // TODO(yukawa): Move this to util.cc.
-char32 SurrogatePairToUcs4(wchar_t high, wchar_t low) {
+char32_t SurrogatePairToUcs4(wchar_t high, wchar_t low) {
   return (((high - 0xD800) & 0x3FF) << 10) + ((low - 0xDC00) & 0x3FF) + 0x10000;
 }
 }  // namespace
@@ -390,7 +390,7 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
       IS_SURROGATE_PAIR(*preceding_text.rbegin(), *following_text.begin())) {
     ++involved_following_len;
     ++involved_preceding_len;
-    const char32 unichar =
+    const char32_t unichar =
         SurrogatePairToUcs4(*preceding_text.rbegin(), *following_text.begin());
     script_type = Util::GetScriptType(unichar);
   }
@@ -400,14 +400,14 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
     if (script_type == Util::UNKNOWN_SCRIPT) {
       break;
     }
-    char32 unichar = following_text[involved_following_len];
+    char32_t unichar = following_text[involved_following_len];
     size_t num_wchar = 1;
     // Check if this |unichar| is the high part of a surrogate-pair.
     if (IS_HIGH_SURROGATE(unichar) &&
         (involved_following_len + 1 < following_text.size()) &&
         IS_LOW_SURROGATE(following_text[involved_following_len + 1])) {
-      const char32 high_surrogate = unichar;
-      const char32 low_surrogate = following_text[involved_following_len + 1];
+      const char32_t high_surrogate = unichar;
+      const char32_t low_surrogate = following_text[involved_following_len + 1];
       unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
       num_wchar = 2;
     }
@@ -433,14 +433,14 @@ bool ReconvertString::EnsureCompositionIsNotEmpty(
       break;
     }
     const size_t index = preceding_text.size() - involved_preceding_len - 1;
-    char32 unichar = preceding_text[index];
+    char32_t unichar = preceding_text[index];
     size_t num_wchar = 1;
     // Check if this |unichar| is the low part of a surrogate-pair.
     if (IS_LOW_SURROGATE(unichar) &&
         (involved_preceding_len + 1 < preceding_text.size()) &&
         IS_HIGH_SURROGATE(preceding_text[index - 1])) {
-      const char32 high_surrogate = preceding_text[index - 1];
-      const char32 low_surrogate = unichar;
+      const char32_t high_surrogate = preceding_text[index - 1];
+      const char32_t low_surrogate = unichar;
       unichar = SurrogatePairToUcs4(high_surrogate, low_surrogate);
       num_wchar = 2;
     }

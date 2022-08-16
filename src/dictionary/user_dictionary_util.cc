@@ -84,7 +84,7 @@ bool InternalValidateNormalizedReading(const std::string &reading) {
     return false;
   }
   for (ConstChar32Iterator iter(reading); !iter.Done(); iter.Next()) {
-    const char32 c = iter.Get();
+    const char32_t c = iter.Get();
     if (!INRANGE(c, 0x0021, 0x007E) &&  // Basic Latin (Ascii)
         !INRANGE(c, 0x3041, 0x3096) &&  // Hiragana
         !INRANGE(c, 0x309B, 0x309C) &&  // KATAKANA-HIRAGANA VOICED/SEMI-VOICED

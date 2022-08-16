@@ -50,7 +50,7 @@ class CollocationUtil {
                                   bool remove_number, std::string *output);
 
   // Returns true if given char is number including kanji.
-  static bool IsNumber(char32 c);
+  static bool IsNumber(char32_t c);
 
  private:
   // Removes characters for normalizing.

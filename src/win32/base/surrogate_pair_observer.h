@@ -58,9 +58,10 @@ class SurrogatePairObserver {
   };
 
   struct ClientAction {
-    ClientAction(ClientActionType type, char32 ucs4) : type(type), ucs4(ucs4) {}
+    ClientAction(ClientActionType type, char32_t ucs4)
+        : type(type), ucs4(ucs4) {}
     const ClientActionType type;
-    const char32 ucs4;
+    const char32_t ucs4;
   };
 
   SurrogatePairObserver();

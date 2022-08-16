@@ -126,7 +126,7 @@ bool UnicodeRewriter::RewriteToUnicodeCharFormat(
 
   const std::string &source_char = request.composer().source_text();
   size_t mblen = 0;
-  const char32 ucs4 = Util::Utf8ToUcs4(
+  const char32_t ucs4 = Util::Utf8ToUcs4(
       source_char.data(), source_char.data() + source_char.size(), &mblen);
   const std::string value = absl::StrFormat("U+%04X", ucs4);
 
@@ -154,8 +154,7 @@ bool UnicodeRewriter::RewriteFromUnicodeCharFormat(
     return false;
   }
 
-  if (ucs4 > std::numeric_limits<char32>::max() ||
-      !Util::IsAcceptableCharacterAsCandidate(static_cast<char32>(ucs4))) {
+  if (!Util::IsAcceptableCharacterAsCandidate(ucs4)) {
     return false;
   }
 
