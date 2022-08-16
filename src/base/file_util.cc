@@ -29,6 +29,7 @@
 
 #include "base/file_util.h"
 
+#include <cstring>
 #include <ios>
 #include <iterator>
 
