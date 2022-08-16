@@ -441,12 +441,6 @@ INSTANTIATE_TEST_SUITE_P(
                            []() {
                              auto request = GetMobileRequest();
                              request.mutable_decoder_experiment_params()
-                                 ->set_enable_strict_candidate_filter(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
                                  ->set_enable_new_spatial_scoring(true);
                              return request;
                            }(),

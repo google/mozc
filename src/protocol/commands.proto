@@ -581,7 +581,8 @@ message DecoderExperimentParams {
   reserved 1;
 
   optional int32 mobile_history_prediction_size = 2;
-  optional bool enable_strict_candidate_filter = 3;
+
+  reserved 3;  // Deprecated enable_strict_candidate_filter
 
   // whether to use new spatial scoring function.
   // TODO(taku): This flag will be deleted after the migration.

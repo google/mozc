@@ -173,12 +173,28 @@ bool IsSuffixNode(const dictionary::PosMatcher &pos_matcher, const Node &node) {
          pos_matcher.IsSuffixWord(node.rid);
 }
 
-// Returns true if the node structure is content_word + suffix_word.
+bool IsFunctionalNode(const dictionary::PosMatcher &pos_matcher,
+                      const Node &node) {
+  return pos_matcher.IsFunctional(node.lid) &&
+         pos_matcher.IsFunctional(node.rid);
+}
+
+// Returns true if the node structure is
+// content_word + suffix_word*N + (suffix_word|functional_word).
 // Example: "行き+ます", "山+が", etc.
 bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
                             const std::vector<const Node *> &nodes) {
-  return nodes.size() == 2 && !IsSuffixNode(pos_matcher, *nodes[0]) &&
-         IsSuffixNode(pos_matcher, *nodes[1]);
+  DCHECK_GT(nodes.size(), 1);
+  if (IsSuffixNode(pos_matcher, *nodes[0])) {
+    return false;
+  }
+  for (size_t i = 1; i < nodes.size() - 1; ++i) {
+    if (!IsSuffixNode(pos_matcher, *nodes[i])) {
+      return false;
+    }
+  }
+  return IsSuffixNode(pos_matcher, *nodes.back()) ||
+         IsFunctionalNode(pos_matcher, *nodes.back());
 }
 
 // Returns true if |lnodes| and |rnodes| have the same Pos structure.
@@ -196,9 +212,7 @@ bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
 }
 
 bool IsStrictModeEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_strict_candidate_filter();
+  return request.request().mixed_conversion();
 }
 
 }  // namespace

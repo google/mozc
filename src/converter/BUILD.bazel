@@ -269,6 +269,7 @@ cc_test_mozc(
         "//prediction:suggestion_filter",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/strings:str_format",
     ],
