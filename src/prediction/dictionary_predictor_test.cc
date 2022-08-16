@@ -320,10 +320,10 @@ void PrependHistorySegments(absl::string_view key, absl::string_view value,
   seg->set_segment_type(Segment::HISTORY);
   seg->set_key(key);
   Segment::Candidate *c = seg->add_candidate();
-  c->key = key;
-  c->content_key = key;
-  c->value = value;
-  c->content_value = value;
+  c->key.assign(key.data(), key.size());
+  c->content_key = c->key;
+  c->value.assign(value.data(), value.size());
+  c->content_value = c->value;
 }
 
 void SetUpInputForSuggestion(absl::string_view key,
