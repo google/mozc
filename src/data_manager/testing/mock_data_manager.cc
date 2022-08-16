@@ -29,6 +29,8 @@
 
 #include "data_manager/testing/mock_data_manager.h"
 
+#include <iterator>
+
 #include "base/embedded_file.h"
 #include "base/logging.h"
 #include "absl/strings/string_view.h"
