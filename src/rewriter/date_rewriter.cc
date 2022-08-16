@@ -40,6 +40,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <iterator>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>

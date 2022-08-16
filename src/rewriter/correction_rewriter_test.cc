@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "base/serialized_string_array.h"

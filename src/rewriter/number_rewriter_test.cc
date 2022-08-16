@@ -30,6 +30,7 @@
 #include "rewriter/number_rewriter.h"
 
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <string>
 

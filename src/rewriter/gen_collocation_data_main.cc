@@ -37,7 +37,9 @@
 // ./gen_collocation_data_main.cc --collocation_data=collocation.txt
 // > embedded_collocation_data.h
 
+#include <ios>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 

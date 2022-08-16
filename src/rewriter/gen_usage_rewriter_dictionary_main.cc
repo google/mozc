@@ -94,10 +94,12 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ios>
 #include <iostream>
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"

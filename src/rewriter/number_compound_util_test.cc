@@ -30,6 +30,7 @@
 #include "rewriter/number_compound_util.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 
 #include "base/port.h"

@@ -30,6 +30,7 @@
 #include "rewriter/version_rewriter.h"
 
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <string>

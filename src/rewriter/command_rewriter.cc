@@ -30,6 +30,7 @@
 #include "rewriter/command_rewriter.h"
 
 #include <algorithm>
+#include <iterator>
 #include <string>
 #include <vector>
 
