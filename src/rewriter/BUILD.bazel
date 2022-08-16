@@ -1043,6 +1043,37 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "single_hentaigana_rewriter",
+    srcs = ["single_hentaigana_rewriter.cc"],
+    hdrs = ["single_hentaigana_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//composer",
+        "//converter:converter_interface",
+        "//converter:segments",
+        "//request:conversion_request",
+    ],
+    alwayslink = 1,
+)
+
+cc_test_mozc(
+    name = "single_hentaigana_rewriter_test",
+    size = "small",
+    srcs = ["single_hentaigana_rewriter_test.cc"],
+    deps = [
+        ":single_hentaigana_rewriter",
+        "//base:system_util",
+        "//converter:segments",
+        "//engine:mock_data_engine_factory",
+        "//protocol:commands_cc_proto",
+        "//request:conversion_request",
+        "//testing:googletest",
+        "//testing:gunit",
+        "//testing/base/public:gunit_main",
+    ],
+)
+
+cc_library_mozc(
     name = "single_kanji_rewriter",
     srcs = ["single_kanji_rewriter.cc"],
     hdrs = ["single_kanji_rewriter.h"],
@@ -1518,6 +1549,7 @@ cc_library_mozc(
         ":number_rewriter",
         ":remove_redundant_candidate_rewriter",
         ":rewriter_interface",
+        ":single_hentaigana_rewriter",
         ":single_kanji_rewriter",
         ":small_letter_rewriter",
         ":symbol_rewriter",

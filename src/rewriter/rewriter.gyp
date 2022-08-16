@@ -64,6 +64,7 @@
         'remove_redundant_candidate_rewriter.cc',
         'rewriter.cc',
         'rewriter_util.cc',
+        'single_hentaigana_rewriter.cc',
         'single_kanji_rewriter.cc',
         'small_letter_rewriter.cc',
         'symbol_rewriter.cc',
