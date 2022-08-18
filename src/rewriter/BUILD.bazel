@@ -1067,9 +1067,7 @@ cc_test_mozc(
         "//engine:mock_data_engine_factory",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
-        "//testing:googletest",
-        "//testing:gunit",
-        "//testing/base/public:gunit_main",
+        "//testing:gunit_main",
     ],
 )
 
