@@ -46,7 +46,7 @@ void CollocationUtil::GetNormalizedScript(const absl::string_view str,
   Util::StringReplace(temp2, "～", "〜", true, output);
 }
 
-bool CollocationUtil::IsNumber(char32 c) {
+bool CollocationUtil::IsNumber(char32_t c) {
   if (Util::GetScriptType(c) == Util::NUMBER) {
     return true;
   }
@@ -79,7 +79,7 @@ void CollocationUtil::RemoveExtraCharacters(const absl::string_view input,
                                             bool remove_number,
                                             std::string *output) {
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     if (((Util::GetScriptType(w) != Util::UNKNOWN_SCRIPT) &&
          (!remove_number || !IsNumber(w))) ||
         w == 0x3005 ||                 // "々"

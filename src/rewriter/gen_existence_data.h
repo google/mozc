@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_GEN_EXISTENCE_DATA_H_
 
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 

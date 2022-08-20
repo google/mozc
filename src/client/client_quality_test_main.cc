@@ -93,7 +93,7 @@ bool GenerateKeySequenceFrom(const std::string& hiragana_sentence,
   japanese_util::FullWidthToHalfWidth(tmp, &input);
 
   for (ConstChar32Iterator iter(input); !iter.Done(); iter.Next()) {
-    const char32 ucs4 = iter.Get();
+    const char32_t ucs4 = iter.Get();
 
     // TODO(noriyukit) Improve key sequence generation; currently, a few ucs4
     // codes, like FF5E and 300E, cannot be handled.

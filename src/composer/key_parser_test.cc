@@ -52,7 +52,7 @@ TEST(KeyParserTest, KeyCode) {
   EXPECT_EQ('A', key_event.key_code());
 
   // "あ" (not half width)
-  constexpr char32 kHiraganaA = 0x3042;
+  constexpr char32_t kHiraganaA = 0x3042;
   key_event.Clear();
   EXPECT_TRUE(KeyParser::ParseKey("あ", &key_event));
   EXPECT_EQ(kHiraganaA, key_event.key_code());

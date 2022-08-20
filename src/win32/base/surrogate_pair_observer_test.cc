@@ -66,7 +66,7 @@ TEST(ImeSurrogatePairObserverTest, BasicSurrogatePairTest) {
   // "𠮟"
   const wchar_t kHighSurrogate = static_cast<wchar_t>(0xD842);
   const wchar_t kLowSurrogate = static_cast<wchar_t>(0xDF9F);
-  const char32 kUcs4 = 0x20B9F;
+  const char32_t kUcs4 = 0x20B9F;
 
   const VirtualKey vk_high = VirtualKey::FromCombinedVirtualKey(
       (static_cast<DWORD>(kHighSurrogate) << 16) | VK_PACKET);
@@ -116,7 +116,7 @@ TEST(ImeSurrogatePairObserverTest, BasicSurrogatePairTestWithKeyUp) {
   // "𠮟"
   const wchar_t kHighSurrogate = static_cast<wchar_t>(0xD842);
   const wchar_t kLowSurrogate = static_cast<wchar_t>(0xDF9F);
-  const char32 kUcs4 = 0x20B9F;
+  const char32_t kUcs4 = 0x20B9F;
 
   const VirtualKey vk_high = VirtualKey::FromCombinedVirtualKey(
       (static_cast<DWORD>(kHighSurrogate) << 16) | VK_PACKET);
@@ -202,7 +202,7 @@ TEST(ImeSurrogatePairObserverTest, IrregularOrderSurrogatePairTest) {
   // "𠮟"
   const wchar_t kHighSurrogate = static_cast<wchar_t>(0xD842);
   const wchar_t kLowSurrogate = static_cast<wchar_t>(0xDF9F);
-  const char32 kUcs4 = 0x20B9F;
+  const char32_t kUcs4 = 0x20B9F;
 
   const VirtualKey vk_high = VirtualKey::FromCombinedVirtualKey(
       (static_cast<DWORD>(kHighSurrogate) << 16) | VK_PACKET);

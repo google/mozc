@@ -140,6 +140,7 @@ cc_library_mozc(
     ],
     hdrs = ["dictionary_predictor.h"],
     deps = [
+        ":number_decoder",
         ":predictor_interface",
         ":suggestion_filter",
         ":zero_query_dict",

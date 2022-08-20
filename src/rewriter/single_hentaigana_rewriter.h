@@ -27,39 +27,32 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Util class for collocation
-
-#ifndef MOZC_REWRITER_COLLOCATION_UTIL_H_
-#define MOZC_REWRITER_COLLOCATION_UTIL_H_
-
-#include <string>
-
-#include "base/port.h"
-#include "absl/strings/string_view.h"
+#ifndef MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_
+#define MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_
+#include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class CollocationUtil {
- public:
-  // Gets normalized script
-  // Removes or rewrites some symbols.
-  // for example:
-  // "一個" -> "個" (removes 'number' if |remove_number| is true)
-  // "%％" -> "%%" (full width '%' to half width)
-  static void GetNormalizedScript(const absl::string_view str,
-                                  bool remove_number, std::string *output);
+class ConverterInterface;
+class ConversionRequest;
+class Segments;
 
-  // Returns true if given char is number including kanji.
-  static bool IsNumber(char32_t c);
+class SingleHentaiganaRewriter : public RewriterInterface {
+ public:
+  explicit SingleHentaiganaRewriter(const ConverterInterface *parent_converter);
+  ~SingleHentaiganaRewriter() override;
+
+  int capability(const ConversionRequest &request) const override;
+
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
+  void SetEnabled(const bool enabled);
 
  private:
-  // Removes characters for normalizing.
-  static void RemoveExtraCharacters(const absl::string_view input,
-                                    bool remove_number, std::string *output);
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(CollocationUtil);
+  bool enabled_ = false;
+  const ConverterInterface *parent_converter_;
 };
 
 }  // namespace mozc
 
-#endif  // MOZC_REWRITER_COLLOCATION_UTIL_H_
+#endif  // MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_

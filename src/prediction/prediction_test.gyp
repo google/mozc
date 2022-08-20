@@ -38,11 +38,13 @@
       'type': 'executable',
       'sources': [
         'dictionary_predictor_test.cc',
+        'number_decoder_test.cc',
         'user_history_predictor_test.cc',
         'predictor_test.cc',
         'zero_query_dict_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_random',
         '../base/absl.gyp:absl_strings',
         '../base/base_test.gyp:clock_mock',
         '../composer/composer.gyp:composer',

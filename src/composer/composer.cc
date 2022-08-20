@@ -1072,7 +1072,7 @@ bool Composer::TransformCharactersForNumbers(std::string *query) {
   bool has_symbols = false;
   bool has_alphanumerics = false;
   for (ConstChar32Iterator iter(*query); !iter.Done(); iter.Next()) {
-    const char32 one_char = iter.Get();
+    const char32_t one_char = iter.Get();
     switch (one_char) {
       case 0x30FC:  // "ー"
         has_symbols = true;

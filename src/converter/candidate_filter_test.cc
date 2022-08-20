@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "converter/candidate_filter.h"
-
 #include <climits>
 #include <cstdint>
 #include <memory>
@@ -38,6 +36,7 @@
 #include "base/freelist.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "converter/candidate_filter.h"
 #include "converter/node.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
@@ -46,6 +45,7 @@
 #include "prediction/suggestion_filter.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/gunit.h"
 #include "absl/strings/str_format.h"
 
@@ -649,13 +649,12 @@ TEST_P(CandidateFilterTestWithParam, DoNotFilterExchangeableCandidates) {
 }
 
 TEST_P(CandidateFilterTestWithParam,
-       DoNotFilterExchangeableCandidates_StrictMode) {
+       DoNotFilterExchangeableCandidatesInStrictMode) {
   ConversionRequest::RequestType type = GetParam();
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
-  req.mutable_decoder_experiment_params()->set_enable_strict_candidate_filter(
-      true);
+  commands::RequestForUnitTest::FillMobileRequest(&req);
   request_->set_request(&req);
   request_->set_request_type(type);
 
@@ -723,13 +722,86 @@ TEST_P(CandidateFilterTestWithParam,
             filter->FilterCandidate(*request_, c2->key, c2, top_nodes, nodes));
 }
 
+TEST_P(CandidateFilterTestWithParam,
+       DoNotFilterTypicalCandidatesForStrictMode) {
+  ConversionRequest::RequestType type = GetParam();
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::vector<const Node *> top_nodes, nodes;
+  commands::Request req;
+  commands::RequestForUnitTest::FillMobileRequest(&req);
+  request_->set_request(&req);
+  request_->set_request_type(type);
+
+  {
+    Node *n1 = NewNode();
+    n1->key = "かけ";
+    n1->value = "賭け";
+    n1->lid = pos_matcher().GetWeakCompoundVerbSuffixId();  // "動詞,自立"
+    n1->rid = pos_matcher().GetWeakCompoundVerbSuffixId();
+    top_nodes.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "ないよう";
+    n2->value = "内容";
+    n2->lid = pos_matcher().GetUnknownId();
+    n2->rid = pos_matcher().GetUnknownId();
+    top_nodes.push_back(n2);
+  }
+
+  Segment::Candidate *c1 = NewCandidate();
+  c1->key = "かけないよう";
+  c1->value = "賭け内容";
+  c1->content_key = "かけ";
+  c1->content_value = "賭け";
+  c1->cost = 6000;
+  c1->structure_cost = 1000;
+
+  // Good top candidate
+  ASSERT_EQ(
+      CandidateFilter::GOOD_CANDIDATE,
+      filter->FilterCandidate(*request_, c1->key, c1, top_nodes, top_nodes));
+
+  {
+    Node *n1 = NewNode();
+    n1->key = "かけ";
+    n1->value = "賭け";
+    n1->lid = pos_matcher().GetWeakCompoundVerbSuffixId();  // "動詞,自立"
+    n1->rid = pos_matcher().GetWeakCompoundVerbSuffixId();
+    nodes.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "ない";
+    n2->value = "ない";
+    n2->lid = pos_matcher().GetSuffixWordId();  // "助動詞"
+    n2->rid = pos_matcher().GetSuffixWordId();
+    nodes.push_back(n2);
+
+    Node *n3 = NewNode();
+    n3->key = "よう";
+    n3->value = "よう";
+    n3->lid = pos_matcher().GetFunctionalId();  // "動詞,非自立"
+    n3->rid = pos_matcher().GetFunctionalId();
+    nodes.push_back(n3);
+  }
+
+  Segment::Candidate *c2 = NewCandidate();
+  c2->key = "かけないよう";
+  c2->value = "賭けないよう";
+  c2->content_key = "かけ";
+  c2->content_value = "賭け";
+  c2->cost = 6000;
+  c2->structure_cost = 1000;
+
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter->FilterCandidate(*request_, c2->key, c2, top_nodes, nodes));
+}
+
 TEST_P(CandidateFilterTestWithParam, FilterCandidatesForStrictMode) {
   ConversionRequest::RequestType type = GetParam();
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   std::vector<const Node *> top_nodes, nodes;
   commands::Request req;
-  req.mutable_decoder_experiment_params()->set_enable_strict_candidate_filter(
-      true);
+  commands::RequestForUnitTest::FillMobileRequest(&req);
   request_->set_request(&req);
   request_->set_request_type(type);
 
@@ -788,7 +860,7 @@ TEST_P(CandidateFilterTestWithParam, FilterCandidatesForStrictMode) {
 }
 
 TEST_P(CandidateFilterTestWithParam,
-       DoNotFilterExchangeableCandidates_NoisyNonContentWord) {
+       DoNotFilterExchangeableCandidatesNoisyNonContentWord) {
   ConversionRequest::RequestType type = GetParam();
   std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
   std::vector<const Node *> nodes1;
@@ -847,6 +919,103 @@ TEST_P(CandidateFilterTestWithParam,
             filter->FilterCandidate(*request_, c1->key, c1, nodes1, nodes1));
   EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
             filter->FilterCandidate(*request_, c2->key, c2, nodes1, nodes2));
+}
+
+TEST_P(CandidateFilterTestWithParam, FilterMultipleNumberNodesWord) {
+  ConversionRequest::RequestType type = GetParam();
+  std::unique_ptr<CandidateFilter> filter(CreateCandidateFilter(true));
+  std::vector<const Node *> nodes1;
+  request_->set_request_type(type);
+
+  {
+    Node *n1 = NewNode();
+    n1->key = "に";
+    n1->value = "2";
+    n1->lid = pos_matcher().GetNumberId();
+    n1->rid = pos_matcher().GetNumberId();
+    nodes1.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "じゅうさんじゅう";
+    n2->value = "十三重";
+    n2->lid = pos_matcher().GetUnknownId();
+    n2->rid = pos_matcher().GetUnknownId();
+    nodes1.push_back(n2);
+  }
+
+  Segment::Candidate *c1 = NewCandidate();
+  c1->key = "にじゅうさんじゅう";
+  c1->value = "2十三重";
+  c1->content_key = "に";
+  c1->content_value = "2";
+  c1->cost = 6000;
+  c1->structure_cost = 500;
+
+  EXPECT_EQ(CandidateFilter::BAD_CANDIDATE,
+            filter->FilterCandidate(*request_, c1->key, c1, nodes1, nodes1));
+
+  std::vector<const Node *> nodes2;
+  {
+    Node *n1 = NewNode();
+    n1->key = "にじゅうさんじゅう";
+    n1->value = "二重三重";
+    n1->lid = pos_matcher().GetUnknownId();
+    n1->rid = pos_matcher().GetUnknownId();
+    nodes2.push_back(n1);
+  }
+
+  Segment::Candidate *c2 = NewCandidate();
+  c2->key = "にじゅうさんじゅう";
+  c2->value = "二重三重";
+  c2->content_key = "にじゅうさんじゅう";
+  c2->content_value = "二重三重";
+  c2->cost = 6000;
+  c2->structure_cost = 5000;
+
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter->FilterCandidate(*request_, c2->key, c2, nodes1, nodes2));
+
+  std::vector<const Node *> nodes3;
+  {
+    Node *n1 = NewNode();
+    n1->key = "1";
+    n1->value = "1";
+    n1->lid = pos_matcher().GetNumberId();
+    n1->rid = pos_matcher().GetNumberId();
+    nodes3.push_back(n1);
+
+    Node *n2 = NewNode();
+    n2->key = "0";
+    n2->value = "0";
+    n2->lid = pos_matcher().GetNumberId();
+    n2->rid = pos_matcher().GetNumberId();
+    nodes3.push_back(n2);
+
+    Node *n3 = NewNode();
+    n3->key = "まん";
+    n3->value = "万";
+    n3->lid = pos_matcher().GetKanjiNumberId();
+    n3->rid = pos_matcher().GetKanjiNumberId();
+    nodes3.push_back(n3);
+
+    Node *n4 = NewNode();
+    n4->key = "えん";
+    n4->value = "円";
+    n4->lid = pos_matcher().GetUnknownId();
+    n4->rid = pos_matcher().GetUnknownId();
+    nodes3.push_back(n4);
+  }
+
+  Segment::Candidate *c3 = NewCandidate();
+  c3->key = "10まんえん";
+  c3->value = "10万円";
+  c3->content_key = "10";
+  c3->content_value = "10";
+  c3->cost = 6000;
+  c3->structure_cost = 500;
+
+  EXPECT_EQ(CandidateFilter::GOOD_CANDIDATE,
+            filter->FilterCandidate(*request_, c3->key, c3, nodes1, nodes3));
 }
 
 TEST_F(CandidateFilterTest, CapabilityOfSuggestionFilterConversion) {

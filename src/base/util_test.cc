@@ -590,7 +590,7 @@ TEST(UtilTest, IsUpperOrCapitalizedAscii) {
 
 TEST(UtilTest, Utf8ToCodepoints) {
   {
-    const std::vector<char32> codepoints = Util::Utf8ToCodepoints("");
+    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints("");
     EXPECT_TRUE(codepoints.empty());
   }
 
@@ -598,7 +598,7 @@ TEST(UtilTest, Utf8ToCodepoints) {
     std::string str =  "aあ亜\na";
     std::vector<int> expected = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
 
-    std::vector<char32> codepoints = Util::Utf8ToCodepoints(str);
+    std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
     EXPECT_THAT(codepoints, ElementsAreArray(expected));
   }
 
@@ -610,7 +610,7 @@ TEST(UtilTest, Utf8ToCodepoints) {
     );
     std::vector<int> expected = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099 };
 
-    std::vector<char32> codepoints = Util::Utf8ToCodepoints(str);
+    std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
     EXPECT_THAT(codepoints, ElementsAreArray(expected));
   }
 }
@@ -623,7 +623,7 @@ TEST(UtilTest, CodepointsToUtf8) {
 
   {  // Single codepoint characters.
     std::string expected =  "aあ亜\na";
-    std::vector<char32> cps = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061 };
+    std::vector<char32_t> cps = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
     EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
   }
 
@@ -633,17 +633,17 @@ TEST(UtilTest, CodepointsToUtf8) {
         "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
         "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
     );
-    std::vector<char32> cps = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099 };
+    std::vector<char32_t> cps = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099};
     EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
   }
 }
 
-void VerifyUtf8ToUcs4(const std::string &text, char32 expected_ucs4,
+void VerifyUtf8ToUcs4(const std::string &text, char32_t expected_ucs4,
                       size_t expected_len) {
   const char *begin = text.data();
   const char *end = begin + text.size();
   size_t mblen = 0;
-  char32 result = Util::Utf8ToUcs4(begin, end, &mblen);
+  char32_t result = Util::Utf8ToUcs4(begin, end, &mblen);
   EXPECT_EQ(expected_ucs4, result) << text << " " << expected_ucs4;
   EXPECT_EQ(expected_len, mblen) << text << " " << expected_len;
 }
@@ -1334,7 +1334,7 @@ TEST(UtilTest, RandomSeedTest) {
 
 TEST(UtilTest, SplitFirstChar32) {
   absl::string_view rest;
-  char32 c = 0;
+  char32_t c = 0;
 
   rest = absl::string_view();
   c = 0;
@@ -1481,7 +1481,7 @@ TEST(UtilTest, SplitFirstChar32) {
 
 TEST(UtilTest, SplitLastChar32) {
   absl::string_view rest;
-  char32 c = 0;
+  char32_t c = 0;
 
   rest = absl::string_view();
   c = 0;

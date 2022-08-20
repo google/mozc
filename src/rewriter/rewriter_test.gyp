@@ -94,6 +94,27 @@
       },
     },
     {
+      'target_name': 'single_hentaigana_rewriter_test',
+      'type': 'executable',
+      'sources': [
+        'single_hentaigana_rewriter_test.cc',
+      ],
+      'dependencies': [
+        '../base/absl.gyp:absl_strings',
+        '../base/base.gyp:base',
+        '../converter/converter_base.gyp:segments',
+        '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
+        '../protocol/protocol.gyp:commands_proto',
+        '../request/request.gyp:conversion_request',
+        '../session/session_base.gyp:request_test_util',
+        '../testing/testing.gyp:gtest_main',
+        'rewriter.gyp:rewriter',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
+    {
       'target_name': 'single_kanji_rewriter_test',
       'type': 'executable',
       'sources': [

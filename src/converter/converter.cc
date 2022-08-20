@@ -172,10 +172,10 @@ bool ExtractLastTokenWithScriptType(const std::string &text,
     }
   }
 
-  std::vector<char32> reverse_last_token;
+  std::vector<char32_t> reverse_last_token;
   Util::ScriptType last_script_type_found = Util::GetScriptType(iter.Get());
   for (; !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     if ((w == ' ') || (Util::GetScriptType(w) != last_script_type_found)) {
       break;
     }
@@ -185,7 +185,7 @@ bool ExtractLastTokenWithScriptType(const std::string &text,
   *last_script_type = last_script_type_found;
   // TODO(yukawa): Replace reverse_iterator with const_reverse_iterator when
   //     build failure on Android is fixed.
-  for (std::vector<char32>::reverse_iterator it = reverse_last_token.rbegin();
+  for (std::vector<char32_t>::reverse_iterator it = reverse_last_token.rbegin();
        it != reverse_last_token.rend(); ++it) {
     Util::Ucs4ToUtf8Append(*it, last_token);
   }

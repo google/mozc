@@ -96,7 +96,8 @@ LPARAM LParamKeyInfo::lparam() const { return lparam_; }
 VirtualKey::VirtualKey()
     : virtual_key_(0), wide_char_(L'\0'), unicode_char_(L'\0') {}
 
-VirtualKey::VirtualKey(BYTE virtual_key, wchar_t wide_char, char32 unicode_char)
+VirtualKey::VirtualKey(BYTE virtual_key, wchar_t wide_char,
+                       char32_t unicode_char)
     : virtual_key_(virtual_key),
       wide_char_(wide_char),
       unicode_char_(unicode_char) {}
@@ -108,7 +109,7 @@ VirtualKey VirtualKey::FromVirtualKey(BYTE virtual_key) {
 VirtualKey VirtualKey::FromCombinedVirtualKey(UINT combined_virtual_key) {
   const BYTE vk = ParseVirtualKey(combined_virtual_key);
   const wchar_t wchar = ParseWideChar(combined_virtual_key);
-  char32 unicode_char = 0;
+  char32_t unicode_char = 0;
   if (!IS_HIGH_SURROGATE(wchar) && !IS_LOW_SURROGATE(wchar)) {
     unicode_char = wchar;
   }
@@ -116,7 +117,7 @@ VirtualKey VirtualKey::FromCombinedVirtualKey(UINT combined_virtual_key) {
   return VirtualKey(vk, wchar, unicode_char);
 }
 
-VirtualKey VirtualKey::FromUnicode(char32 unicode_char) {
+VirtualKey VirtualKey::FromUnicode(char32_t unicode_char) {
   wchar_t wchar = L'\0';
   if (unicode_char <= 0xffff) {
     wchar = static_cast<wchar_t>(unicode_char);
@@ -126,7 +127,7 @@ VirtualKey VirtualKey::FromUnicode(char32 unicode_char) {
 
 wchar_t VirtualKey::wide_char() const { return wide_char_; }
 
-char32 VirtualKey::unicode_char() const { return unicode_char_; }
+char32_t VirtualKey::unicode_char() const { return unicode_char_; }
 
 BYTE VirtualKey::virtual_key() const { return virtual_key_; }
 

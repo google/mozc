@@ -91,15 +91,15 @@ class VirtualKey {
   static VirtualKey FromCombinedVirtualKey(UINT combined_virtual_key);
   // Construct an instance from a given ucs4 character.
   // In this case, |virtual_key_| will be set to VK_PACKET.
-  static VirtualKey FromUnicode(char32 unicode);
+  static VirtualKey FromUnicode(char32_t unicode);
 
   wchar_t wide_char() const;
-  char32 unicode_char() const;
+  char32_t unicode_char() const;
   BYTE virtual_key() const;
 
  private:
-  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32 unicode_char);
-  char32 unicode_char_;
+  VirtualKey(BYTE virtual_key, wchar_t wide_char, char32_t unicode_char);
+  char32_t unicode_char_;
   wchar_t wide_char_;
   BYTE virtual_key_;
 };

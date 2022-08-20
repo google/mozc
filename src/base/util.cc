@@ -85,7 +85,7 @@ ConstChar32Iterator::ConstChar32Iterator(absl::string_view utf8_string)
   Next();
 }
 
-char32 ConstChar32Iterator::Get() const {
+char32_t ConstChar32Iterator::Get() const {
   DCHECK(!done_);
   return current_;
 }
@@ -104,7 +104,7 @@ ConstChar32ReverseIterator::ConstChar32ReverseIterator(
   Next();
 }
 
-char32 ConstChar32ReverseIterator::Get() const {
+char32_t ConstChar32ReverseIterator::Get() const {
   DCHECK(!done_);
   return current_;
 }
@@ -211,7 +211,7 @@ void Util::SplitStringToUtf8Graphemes(absl::string_view str,
     return;
   }
   for (auto it = graphemes->begin() + 1; it != graphemes->end();) {
-    const char32 codepoint = Util::Utf8ToUcs4(*it);
+    const char32_t codepoint = Util::Utf8ToUcs4(*it);
     const bool is_dakuten = (codepoint == 0x3099 || codepoint == 0x309A);
     const bool is_svs = (0xFE00 <= codepoint && codepoint <= 0xFE0F);
     const bool is_ivs = (0xE0100 <= codepoint && codepoint <= 0xE01EF);
@@ -317,7 +317,7 @@ void Util::LowerString(std::string *str) {
   std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    char32 ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
+    char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
     if (mblen == 0) {
       break;
     }
@@ -345,7 +345,7 @@ void Util::UpperString(std::string *str) {
   std::string utf8;
   size_t pos = 0;
   while (pos < str->size()) {
-    char32 ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
+    char32_t ucs4 = Utf8ToUcs4(begin + pos, begin + str->size(), &mblen);
     // ('a' <= ucs4 && ucs4 <= 'z') || ('ａ' <= ucs4 && ucs4 <= 'ｚ')
     if ((0x0061 <= ucs4 && ucs4 <= 0x007A) ||
         (0xFF41 <= ucs4 && ucs4 <= 0xFF5A)) {
@@ -466,27 +466,27 @@ size_t Util::CharsLen(const char *src, size_t size) {
   return length;
 }
 
-std::vector<char32> Util::Utf8ToCodepoints(absl::string_view str) {
-  std::vector<char32> codepoints;
-  char32 codepoint;
+std::vector<char32_t> Util::Utf8ToCodepoints(absl::string_view str) {
+  std::vector<char32_t> codepoints;
+  char32_t codepoint;
   while (Util::SplitFirstChar32(str, &codepoint, &str)) {
     codepoints.push_back(codepoint);
   }
   return codepoints;
 }
 
-std::string Util::CodepointsToUtf8(const std::vector<char32> &codepoints) {
+std::string Util::CodepointsToUtf8(const std::vector<char32_t> &codepoints) {
   std::string output;
-  for (const char32 codepoint : codepoints) {
+  for (const char32_t codepoint : codepoints) {
     Ucs4ToUtf8Append(codepoint, &output);
   }
   return output;
 }
 
-char32 Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
+char32_t Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
   absl::string_view s(begin, end - begin);
   absl::string_view rest;
-  char32 c = 0;
+  char32_t c = 0;
   if (!Util::SplitFirstChar32(s, &c, &rest)) {
     *mblen = 0;
     return 0;
@@ -495,9 +495,9 @@ char32 Util::Utf8ToUcs4(const char *begin, const char *end, size_t *mblen) {
   return c;
 }
 
-bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
+bool Util::SplitFirstChar32(absl::string_view s, char32_t *first_char32,
                             absl::string_view *rest) {
-  char32 dummy_char32 = 0;
+  char32_t dummy_char32 = 0;
   if (first_char32 == nullptr) {
     first_char32 = &dummy_char32;
   }
@@ -513,10 +513,10 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
     return false;
   }
 
-  char32 result = 0;
+  char32_t result = 0;
   size_t len = 0;
-  char32 min_value = 0;
-  char32 max_value = 0xffffffff;
+  char32_t min_value = 0;
+  char32_t max_value = 0xffffffff;
   {
     const uint8_t leading_byte = static_cast<uint8_t>(s[0]);
     if (leading_byte < 0x80) {
@@ -586,12 +586,12 @@ bool Util::SplitFirstChar32(absl::string_view s, char32 *first_char32,
 }
 
 bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
-                           char32 *last_char32) {
+                           char32_t *last_char32) {
   absl::string_view dummy_rest;
   if (rest == nullptr) {
     rest = &dummy_rest;
   }
-  char32 dummy_char32 = 0;
+  char32_t dummy_char32 = 0;
   if (last_char32 == nullptr) {
     last_char32 = &dummy_char32;
   }
@@ -624,7 +624,7 @@ bool Util::SplitLastChar32(absl::string_view s, absl::string_view *rest,
 }
 
 bool Util::IsValidUtf8(absl::string_view s) {
-  char32 first;
+  char32_t first;
   absl::string_view rest;
   while (!s.empty()) {
     if (!SplitFirstChar32(s, &first, &rest)) {
@@ -635,17 +635,17 @@ bool Util::IsValidUtf8(absl::string_view s) {
   return true;
 }
 
-void Util::Ucs4ToUtf8(char32 c, std::string *output) {
+void Util::Ucs4ToUtf8(char32_t c, std::string *output) {
   output->clear();
   Ucs4ToUtf8Append(c, output);
 }
 
-void Util::Ucs4ToUtf8Append(char32 c, std::string *output) {
+void Util::Ucs4ToUtf8Append(char32_t c, std::string *output) {
   char buf[7];
   output->append(buf, Ucs4ToUtf8(c, buf));
 }
 
-size_t Util::Ucs4ToUtf8(char32 c, char *output) {
+size_t Util::Ucs4ToUtf8(char32_t c, char *output) {
   if (c == 0) {
     // Do nothing if |c| is NUL. Previous implementation of Ucs4ToUtf8Append
     // worked like this.
@@ -795,8 +795,8 @@ namespace {
 // http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
 static constexpr char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
 static constexpr char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
-static constexpr char32 kUcs4MinGooglePuaEmoji = 0xFE000;
-static constexpr char32 kUcs4MaxGooglePuaEmoji = 0xFEEA0;
+static constexpr char32_t kUcs4MinGooglePuaEmoji = 0xFE000;
+static constexpr char32_t kUcs4MaxGooglePuaEmoji = 0xFEEA0;
 }  // namespace
 
 bool Util::IsAndroidPuaEmoji(absl::string_view s) {
@@ -1127,7 +1127,7 @@ bool Util::Unescape(absl::string_view input, std::string *output) {
 // script type
 // TODO(yukawa, team): Make a mechanism to keep this classifier up-to-date
 //   based on the original data from Unicode.org.
-Util::ScriptType Util::GetScriptType(char32 w) {
+Util::ScriptType Util::GetScriptType(char32_t w) {
   if (INRANGE(w, 0x0030, 0x0039) ||  // ascii number
       INRANGE(w, 0xFF10, 0xFF19)) {  // full width number
     return NUMBER;
@@ -1187,7 +1187,7 @@ Util::ScriptType Util::GetScriptType(char32 w) {
   return UNKNOWN_SCRIPT;
 }
 
-Util::FormType Util::GetFormType(char32 w) {
+Util::FormType Util::GetFormType(char32_t w) {
   // 'Unicode Standard Annex #11: EAST ASIAN WIDTH'
   // http://www.unicode.org/reports/tr11/
 
@@ -1233,7 +1233,7 @@ Util::FormType Util::GetFormType(char32 w) {
 // return script type of first character in str
 Util::ScriptType Util::GetScriptType(const char *begin, const char *end,
                                      size_t *mblen) {
-  const char32 w = Utf8ToUcs4(begin, end, mblen);
+  const char32_t w = Utf8ToUcs4(begin, end, mblen);
   return GetScriptType(w);
 }
 
@@ -1244,7 +1244,7 @@ Util::ScriptType GetScriptTypeInternal(absl::string_view str,
   Util::ScriptType result = Util::SCRIPT_TYPE_SIZE;
 
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     Util::ScriptType type = Util::GetScriptType(w);
     if ((w == 0x30FC || w == 0x30FB || (w >= 0x3099 && w <= 0x309C)) &&
         // PROLONGEDSOUND MARK|MIDLE_DOT|VOICED_SOUND_MARKS
@@ -1301,7 +1301,7 @@ Util::ScriptType Util::GetScriptTypeWithoutSymbols(const std::string &str) {
 // return true if all script_type in str is "type"
 bool Util::IsScriptType(absl::string_view str, Util::ScriptType type) {
   for (ConstChar32Iterator iter(str); !iter.Done(); iter.Next()) {
-    const char32 w = iter.Get();
+    const char32_t w = iter.Get();
     // Exception: 30FC (PROLONGEDSOUND MARK is categorized as HIRAGANA as well)
     if (type != GetScriptType(w) && (w != 0x30FC || type != HIRAGANA)) {
       return false;
@@ -1350,7 +1350,7 @@ namespace {
 // constexpr uint64_t kJisX0208BitmapIndex
 #include "base/character_set.inc"
 
-bool IsJisX0208Char(char32 ucs4) {
+bool IsJisX0208Char(char32_t ucs4) {
   if (ucs4 <= 0x7F) {
     return true;  // ASCII
   }
@@ -1430,7 +1430,7 @@ bool Util::IsLittleEndian() {
   return u.c[0] == 0x78U;
 }
 
-bool Util::IsAcceptableCharacterAsCandidate(char32 letter) {
+bool Util::IsAcceptableCharacterAsCandidate(char32_t letter) {
   // Unicode does not have code point larger than 0x10FFFF.
   if (letter > 0x10FFFF) {
     return false;

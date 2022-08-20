@@ -299,24 +299,6 @@ message KeyEvent {
   optional int64 timestamp_msec = 10;
 }
 
-message GenericStorageEntry {
-  enum StorageType {
-    SYMBOL_HISTORY = 0;
-    EMOTICON_HISTORY = 1;
-    EMOJI_HISTORY = 2;
-  }
-  optional StorageType type = 1;
-  optional string key = 2;
-  // The type must be bytes instead of string
-  // because value might have U+0000 character as a terminator.
-  // In this case, characters after the terminator are undefined.
-  // Such byte stream cannot be treaed by Java's String class, which
-  // is used for PB's string type.
-  // Instead, PB's bytes type is converted into ByteString in Java,
-  // which can treat C language style string described above.
-  repeated bytes value = 3;
-}
-
 message SessionCommand {
   enum CommandType {
     // Do nothing.
@@ -573,7 +555,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 9
+// Next ID: 10
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -581,7 +563,8 @@ message DecoderExperimentParams {
   reserved 1;
 
   optional int32 mobile_history_prediction_size = 2;
-  optional bool enable_strict_candidate_filter = 3;
+
+  reserved 3;  // Deprecated enable_strict_candidate_filter
 
   // whether to use new spatial scoring function.
   // TODO(taku): This flag will be deleted after the migration.
@@ -607,6 +590,9 @@ message DecoderExperimentParams {
   }
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
+
+  // Enable number decoder for prediction.
+  optional bool enable_number_decoder = 9 [default = false];
 }
 
 // Clients' request to the server.
@@ -859,6 +845,10 @@ message Request {
   // With this, the client doesn't need to execute EXPAND_SUGGESTION to get more
   // candidates. Instead, all the candidates will be returned at once.
   optional bool one_phase_suggestion = 19 [default = false];
+
+  // Enables a11y support for candidates.
+  // If this field is set to true, a11y description is set to each candidate.
+  optional bool enable_a11y_description = 20 [default = false];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.
@@ -1038,10 +1028,7 @@ message Input {
   // Client request
   optional Request request = 9;
 
-  // If the command is INSERT_TO_STORAGE, all the fields must be filled.
-  // If READ_ALL_FROM_STORAGE, key and value fields are ignored.
-  optional GenericStorageEntry storage_entry = 10;
-
+  reserved 10;  // Deprecated storage_entry
   reserved 11;  // Deprecated auth_code
 
   enum TouchAction {
@@ -1263,9 +1250,7 @@ message Output {
   }
   optional Callback callback = 18;
 
-  // Used when the command is READ_ALL_FROM_STORAGE.
-  optional GenericStorageEntry storage_entry = 19;
-
+  reserved 19;  // Deprecated storage_entry
   reserved 20;  // Deprecated cloud_sync_status
 
   optional mozc.user_dictionary.UserDictionaryCommandStatus

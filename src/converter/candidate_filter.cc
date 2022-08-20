@@ -173,12 +173,28 @@ bool IsSuffixNode(const dictionary::PosMatcher &pos_matcher, const Node &node) {
          pos_matcher.IsSuffixWord(node.rid);
 }
 
-// Returns true if the node structure is content_word + suffix_word.
+bool IsFunctionalNode(const dictionary::PosMatcher &pos_matcher,
+                      const Node &node) {
+  return pos_matcher.IsFunctional(node.lid) &&
+         pos_matcher.IsFunctional(node.rid);
+}
+
+// Returns true if the node structure is
+// content_word + suffix_word*N + (suffix_word|functional_word).
 // Example: "行き+ます", "山+が", etc.
 bool IsTypicalNodeStructure(const dictionary::PosMatcher &pos_matcher,
                             const std::vector<const Node *> &nodes) {
-  return nodes.size() == 2 && !IsSuffixNode(pos_matcher, *nodes[0]) &&
-         IsSuffixNode(pos_matcher, *nodes[1]);
+  DCHECK_GT(nodes.size(), 1);
+  if (IsSuffixNode(pos_matcher, *nodes[0])) {
+    return false;
+  }
+  for (size_t i = 1; i < nodes.size() - 1; ++i) {
+    if (!IsSuffixNode(pos_matcher, *nodes[i])) {
+      return false;
+    }
+  }
+  return IsSuffixNode(pos_matcher, *nodes.back()) ||
+         IsFunctionalNode(pos_matcher, *nodes.back());
 }
 
 // Returns true if |lnodes| and |rnodes| have the same Pos structure.
@@ -196,9 +212,7 @@ bool IsSameNodeStructure(const std::vector<const Node *> &lnodes,
 }
 
 bool IsStrictModeEnabled(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enable_strict_candidate_filter();
+  return request.request().mixed_conversion();
 }
 
 }  // namespace
@@ -532,6 +546,40 @@ CandidateFilter::ResultType CandidateFilter::FilterCandidateInternal(
             << candidate->content_value << " " << candidate->structure_cost
             << " " << candidate->cost;
     return CandidateFilter::BAD_CANDIDATE;
+  }
+
+  // Filters multiple number nodes.
+  // "2|十三重"
+  // "4|重|5|号室"
+  // Note that we do not want to filter
+  // "1|0|円"
+  // "5|万" for the key, "5まん"
+  if (nodes.size() >= 2) {
+    int number_nodes = 0;
+    uint16_t prev_lid = 0;
+    for (const auto &node : nodes) {
+      absl::string_view value = node->value;
+      size_t mblen = 0;
+      if (Util::IsScriptType(node->key, Util::NUMBER)) {
+        continue;
+      }
+      const Util::ScriptType first_value_script_type = Util::GetScriptType(
+          node->value.data(), node->value.data() + node->value.size(), &mblen);
+      if (first_value_script_type == Util::NUMBER && prev_lid != node->lid) {
+        ++number_nodes;
+      } else if (first_value_script_type == Util::KANJI) {
+        const auto first_kanji = value.substr(0, mblen);
+        std::string converted;
+        NumberUtil::KanjiNumberToArabicNumber(first_kanji, &converted);
+        if (first_kanji != converted && prev_lid != node->lid) {
+          ++number_nodes;
+        }
+      }
+      prev_lid = node->lid;
+    }
+    if (number_nodes >= 2) {
+      return CandidateFilter::BAD_CANDIDATE;
+    }
   }
 
   if (is_strict_mode) {

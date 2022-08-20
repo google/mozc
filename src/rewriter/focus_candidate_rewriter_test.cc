@@ -29,6 +29,7 @@
 
 #include "rewriter/focus_candidate_rewriter.h"
 
+#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>

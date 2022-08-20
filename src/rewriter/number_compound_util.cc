@@ -48,7 +48,7 @@ bool SplitStringIntoNumberAndCounterSuffix(
   *script_type = NONE;
   absl::string_view s = input, rest = input;
   while (!s.empty()) {
-    char32 c;
+    char32_t c;
     if (!Util::SplitFirstChar32(s, &c, &rest)) {
       return false;
     }

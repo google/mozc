@@ -30,6 +30,7 @@
 #include "rewriter/transliteration_rewriter.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <type_traits>
 #include <vector>

@@ -54,6 +54,7 @@
 #include "converter/segments.h"
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/number_decoder.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_dict.h"
@@ -209,34 +210,6 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
   return ret;
 }
 
-int CalculatePrefixPenalty(
-    const ConversionRequest &request, const std::string &input_key,
-    const std::string &candidate_key,
-    const ImmutableConverterInterface *immutable_converter,
-    absl::flat_hash_map<int, int> *cache) {
-  const size_t key_len = Util::CharsLen(candidate_key);
-  if (const auto it = cache->find(key_len); it != cache->end()) {
-    return it->second;
-  }
-
-  // Use the conversion result's cost for the remaining input key
-  // as the penalty of the prefix candidate.
-  // For example, if the input key is "きょうの" and the target prefix candidate
-  // is "木:き", the penalty will be the cost of the conversion result for
-  // "ょうの".
-  int penalty = 0;
-  Segments tmp_segments;
-  Segment *segment = tmp_segments.add_segment();
-  segment->set_key(Util::Utf8SubString(input_key, key_len));
-  ConversionRequest req = request;
-  req.set_max_conversion_candidates_size(1);
-  if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
-      segment->candidates_size() > 0) {
-    penalty = segment->candidate(0).cost;
-  }
-  (*cache)[key_len] = penalty;
-  return penalty;
-}
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback
@@ -469,6 +442,7 @@ DictionaryPredictor::DictionaryPredictor(
       general_symbol_id_(pos_matcher->GetGeneralSymbolId()),
       kanji_number_id_(pos_matcher->GetKanjiNumberId()),
       zip_code_id_(pos_matcher->GetZipcodeId()),
+      number_id_(pos_matcher->GetNumberId()),
       unknown_id_(pos_matcher->GetUnknownId()),
       predictor_name_("DictionaryPredictor") {
   absl::string_view zero_query_token_array_data;
@@ -682,6 +656,10 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
     const auto &unigram_fn = unigram_config.unigram_fn;
     PredictionType type = (this->*unigram_fn)(request, segments, results);
     selected_types |= type;
+  }
+
+  if (key_len > 0 && AggregateNumberCandidates(request, segments, results)) {
+    selected_types |= NUMBER;
   }
 
   // Add bigram candidates.
@@ -1324,7 +1302,8 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
   }
 
   const std::string &input_key = segments.conversion_segment(0).key();
-  absl::flat_hash_map<int, int> prefix_penalty_cache;
+
+  absl::flat_hash_map<PrefixPenaltyKey, int32_t> prefix_penalty_cache;
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
@@ -1412,7 +1391,7 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
     if (result.candidate_attributes &
         Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
       cost +=
-          CalculatePrefixPenalty(request, input_key, result.key,
+          CalculatePrefixPenalty(request, input_key, result,
                                  immutable_converter_, &prefix_penalty_cache);
       MOZC_WORD_LOG(result, absl::StrCat("Prefix: ", cost));
     }
@@ -2399,6 +2378,53 @@ void DictionaryPredictor::AggregateTypeCorrectingPrediction(
   }
 }
 
+bool DictionaryPredictor::AggregateNumberCandidates(
+    const ConversionRequest &request, const Segments &segments,
+    std::vector<Result> *results) const {
+  DCHECK(results);
+  if (!request.request().decoder_experiment_params().enable_number_decoder()) {
+    return false;
+  }
+
+  const size_t prev_results_size = results->size();
+  const size_t cutoff_threshold =
+      GetCandidateCutoffThreshold(request.request_type());
+  if (prev_results_size > cutoff_threshold) {
+    return false;
+  }
+
+  std::string input_key;
+  if (request.has_composer()) {
+    request.composer().GetQueryForPrediction(&input_key);
+  } else {
+    input_key = segments.conversion_segment(0).key();
+  }
+
+  // NumberDecoder decoder;
+  std::vector<NumberDecoder::Result> decode_results;
+  if (!number_decoder_.Decode(input_key, &decode_results)) {
+    return false;
+  }
+
+  for (const auto &r : decode_results) {
+    Result result;
+    const bool is_arabic = Util::GetScriptType(r.candidate) == Util::NUMBER;
+    result.types = PredictionType::NUMBER;
+    result.key = input_key.substr(0, r.consumed_key_byte_len);
+    result.value = r.candidate;
+    // Heuristic small cost: 1000 ~= 500 * log(10)
+    result.wcost = 1000;
+    result.lid = is_arabic ? number_id_ : kanji_number_id_;
+    result.rid = is_arabic ? number_id_ : kanji_number_id_;
+    if (r.consumed_key_byte_len < input_key.size()) {
+      result.candidate_attributes |= Segment::Candidate::PARTIALLY_KEY_CONSUMED;
+      result.consumed_key_size = Util::CharsLen(result.key);
+    }
+    results->emplace_back(result);
+  }
+  return true;
+}
+
 void DictionaryPredictor::AggregatePrefixCandidates(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
@@ -2455,12 +2481,55 @@ bool DictionaryPredictor::IsZipCodeRequest(const std::string &key) {
   }
 
   for (ConstChar32Iterator iter(key); !iter.Done(); iter.Next()) {
-    const char32 c = iter.Get();
+    const char32_t c = iter.Get();
     if (!('0' <= c && c <= '9') && (c != '-')) {
       return false;
     }
   }
   return true;
+}
+
+int DictionaryPredictor::CalculatePrefixPenalty(
+    const ConversionRequest &request, const std::string &input_key,
+    const DictionaryPredictor::Result &result,
+    const ImmutableConverterInterface *immutable_converter,
+    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) {
+  const std::string &candidate_key = result.key;
+  const uint16_t result_rid = result.rid;
+  const size_t key_len = Util::CharsLen(candidate_key);
+  const PrefixPenaltyKey cache_key = std::make_pair(result_rid, key_len);
+  if (const auto it = cache->find(cache_key); it != cache->end()) {
+    return it->second;
+  }
+
+  // Use the conversion result's cost for the remaining input key
+  // as the penalty of the prefix candidate.
+  // For example, if the input key is "きょうの" and the target prefix candidate
+  // is "木:き", the penalty will be the cost of the conversion result for
+  // "ょうの".
+  int penalty = 0;
+  Segments tmp_segments;
+  Segment *segment = tmp_segments.add_segment();
+  // history
+  segment->set_segment_type(Segment::HISTORY);
+  segment->set_key(candidate_key);
+  Segment::Candidate *c = segment->add_candidate();
+  c->key = candidate_key;
+  c->content_key = candidate_key;
+  c->value = result.value;
+  c->content_value = result.value;
+  c->rid = result.rid;
+  // conversion segment
+  segment = tmp_segments.add_segment();
+  segment->set_key(Util::Utf8SubString(input_key, key_len));
+  ConversionRequest req = request;
+  req.set_max_conversion_candidates_size(1);
+  if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
+      segment->candidates_size() > 0) {
+    penalty = segment->candidate(0).cost;
+  }
+  (*cache)[cache_key] = penalty;
+  return penalty;
 }
 
 }  // namespace mozc

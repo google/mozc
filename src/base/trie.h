@@ -198,11 +198,11 @@ class Trie final {
   }
 
  private:
-  using SubTrie = absl::flat_hash_map<char32, std::unique_ptr<Trie<T>>>;
+  using SubTrie = absl::flat_hash_map<char32_t, std::unique_ptr<Trie<T>>>;
 
   struct FindResult {
     Trie<T> *trie = nullptr;
-    char32 first_char = 0;
+    char32_t first_char = 0;
     absl::string_view rest;
   };
 

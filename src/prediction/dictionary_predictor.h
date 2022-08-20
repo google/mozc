@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/util.h"
@@ -45,6 +46,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "dictionary/pos_matcher.h"
+#include "prediction/number_decoder.h"
 #include "prediction/predictor_interface.h"
 #include "prediction/suggestion_filter.h"
 #include "prediction/zero_query_dict.h"
@@ -100,6 +102,8 @@ class DictionaryPredictor : public PredictorInterface {
     // prefix candidates
     // "今日", "教" for the input, "きょうは"
     PREFIX = 64,
+
+    NUMBER = 128,
 
     // Suggests from |converter_|. The difference from REALTIME is that it uses
     // the full converter with rewriter, history, etc.
@@ -171,6 +175,9 @@ class DictionaryPredictor : public PredictorInterface {
     size_t min_key_len;
   };
 
+  // pair: <rid, key_length>
+  using PrefixPenaltyKey = std::pair<uint16_t, int16_t>;
+
   // On MSVS2008/2010, Constructors of TestableDictionaryPredictor::Result
   // causes a compile error even if you change the access right of it to public.
   // You can use TestableDictionaryPredictor::MakeEmptyResult() instead.
@@ -207,6 +214,10 @@ class DictionaryPredictor : public PredictorInterface {
                                   std::vector<Result> *results) const;
 
   void AggregatePrefixCandidates(const ConversionRequest &request,
+                                 const Segments &segments,
+                                 std::vector<Result> *results) const;
+
+  bool AggregateNumberCandidates(const ConversionRequest &request,
                                  const Segments &segments,
                                  std::vector<Result> *results) const;
 
@@ -501,6 +512,12 @@ class DictionaryPredictor : public PredictorInterface {
 
   static std::string GetPredictionTypeDebugString(PredictionTypes types);
 
+  static int CalculatePrefixPenalty(
+      const ConversionRequest &request, const std::string &input_key,
+      const Result &result,
+      const ImmutableConverterInterface *immutable_converter,
+      absl::flat_hash_map<PrefixPenaltyKey, int> *cache);
+
   const ConverterInterface *converter_;
   const ImmutableConverterInterface *immutable_converter_;
   const dictionary::DictionaryInterface *dictionary_;
@@ -512,10 +529,12 @@ class DictionaryPredictor : public PredictorInterface {
   const uint16_t general_symbol_id_;
   const uint16_t kanji_number_id_;
   const uint16_t zip_code_id_;
+  const uint16_t number_id_;
   const uint16_t unknown_id_;
   const std::string predictor_name_;
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
+  NumberDecoder number_decoder_;
 
   DISALLOW_COPY_AND_ASSIGN(DictionaryPredictor);
 };

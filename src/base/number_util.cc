@@ -35,6 +35,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iterator>
 #include <limits>
@@ -129,7 +130,7 @@ int NumberUtil::SimpleAtoi(absl::string_view str) {
 namespace {
 
 // TODO(hidehiko): Refactoring with GetScriptType in Util class.
-inline bool IsArabicDecimalChar32(char32 ucs4) {
+inline bool IsArabicDecimalChar32(char32_t ucs4) {
   // Halfwidth digit.
   if (kAsciiZero <= ucs4 && ucs4 <= kAsciiNine) {
     return true;
@@ -1032,7 +1033,7 @@ bool NormalizeNumbersInternal(absl::string_view input, bool trim_leading_zeros,
 
   while (begin < end) {
     size_t mblen = 0;
-    const char32 wchar = Util::Utf8ToUcs4(begin, end, &mblen);
+    const char32_t wchar = Util::Utf8ToUcs4(begin, end, &mblen);
     kanji_char.assign(begin, mblen);
 
     std::string tmp;

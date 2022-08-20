@@ -31,6 +31,7 @@
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 #include "base/system_util.h"
 #include "converter/segments.h"

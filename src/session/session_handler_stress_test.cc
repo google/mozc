@@ -36,6 +36,7 @@
 
 #include "base/file_util.h"
 #include "base/port.h"
+#include "base/util.h"
 #include "engine/engine_factory.h"
 #include "protocol/commands.pb.h"
 #include "session/random_keyevents_generator.h"
@@ -76,6 +77,8 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
       static_cast<uint32_t>(absl::GetFlag(FLAGS_random_seed));
   LOG(INFO) << "Random seed: " << random_seed;
   session::RandomKeyEventsGenerator::InitSeed(random_seed);
+  Util::SetRandomSeed(
+      static_cast<uint32_t>(absl::GetFlag(FLAGS_random_seed)));
   while (keyevents_size < kMaxEventSize) {
     keys.clear();
     session::RandomKeyEventsGenerator::GenerateSequence(&keys);

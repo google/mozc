@@ -151,6 +151,28 @@
       ],
     },
     {
+      'target_name': 'absl_random',
+      'type': 'static_library',
+      'toolsets': ['host', 'target'],
+      'sources': [
+        '<(absl_srcdir)/random/discrete_distribution.cc',
+        '<(absl_srcdir)/random/gaussian_distribution.cc',
+        '<(absl_srcdir)/random/internal/chi_square.cc',
+        '<(absl_srcdir)/random/internal/pool_urbg.cc',
+        '<(absl_srcdir)/random/internal/randen.cc',
+        '<(absl_srcdir)/random/internal/randen_detect.cc',
+        '<(absl_srcdir)/random/internal/randen_hwaes.cc',
+        '<(absl_srcdir)/random/internal/randen_round_keys.cc',
+        '<(absl_srcdir)/random/internal/randen_slow.cc',
+        '<(absl_srcdir)/random/internal/seed_material.cc',
+        '<(absl_srcdir)/random/seed_gen_exception.cc',
+        '<(absl_srcdir)/random/seed_sequences.cc',
+      ],
+      'dependencies': [
+        'absl_base',
+      ],
+    },
+    {
       'target_name': 'absl_strings_internal',
       'type': 'static_library',
       'toolsets': ['host', 'target'],

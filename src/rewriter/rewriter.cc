@@ -54,6 +54,7 @@
 #include "rewriter/number_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
+#include "rewriter/single_hentaigana_rewriter.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/small_letter_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
@@ -98,6 +99,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<EnglishVariantsRewriter>());
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
   AddRewriter(std::make_unique<CollocationRewriter>(data_manager));
+  AddRewriter(std::make_unique<SingleHentaiganaRewriter>(parent_converter));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
   AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));

@@ -306,7 +306,7 @@ ACTION_P4(LookupPrefixOneToken, key, value, lid, rid) {
   arg2->OnToken(key, key, token);
 }
 
-void InitSegmentsWithKey(const std::string &key, Segments *segments) {
+void InitSegmentsWithKey(absl::string_view key, Segments *segments) {
   segments->Clear();
 
   Segment *seg = segments->add_segment();
@@ -314,28 +314,28 @@ void InitSegmentsWithKey(const std::string &key, Segments *segments) {
   seg->set_segment_type(Segment::FREE);
 }
 
-void PrependHistorySegments(const std::string &key, const std::string &value,
+void PrependHistorySegments(absl::string_view key, absl::string_view value,
                             Segments *segments) {
   Segment *seg = segments->push_front_segment();
   seg->set_segment_type(Segment::HISTORY);
   seg->set_key(key);
   Segment::Candidate *c = seg->add_candidate();
-  c->key = key;
-  c->content_key = key;
-  c->value = value;
-  c->content_value = value;
+  c->key.assign(key.data(), key.size());
+  c->content_key = c->key;
+  c->value.assign(value.data(), value.size());
+  c->content_value = c->value;
 }
 
-void SetUpInputForSuggestion(const std::string &key,
+void SetUpInputForSuggestion(absl::string_view key,
                              composer::Composer *composer, Segments *segments) {
   composer->Reset();
-  composer->SetPreeditTextForTestOnly(key);
+  composer->SetPreeditTextForTestOnly(std::string(key));
   InitSegmentsWithKey(key, segments);
 }
 
-void SetUpInputForSuggestionWithHistory(const std::string &key,
-                                        const std::string &hist_key,
-                                        const std::string &hist_value,
+void SetUpInputForSuggestionWithHistory(absl::string_view key,
+                                        absl::string_view hist_key,
+                                        absl::string_view hist_value,
                                         composer::Composer *composer,
                                         Segments *segments) {
   SetUpInputForSuggestion(key, composer, segments);
@@ -477,7 +477,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     return ret;
   }
 
-  void GenerateKeyEvents(const std::string &text,
+  void GenerateKeyEvents(absl::string_view text,
                          std::vector<commands::KeyEvent> *keys) {
     keys->clear();
 
@@ -487,8 +487,8 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     while (begin < end) {
       commands::KeyEvent key;
-      const char32 w = Util::Utf8ToUcs4(begin, end, &mblen);
-      if (0 <= w && w <= 0x7F) {  // IsAscii
+      const char32_t w = Util::Utf8ToUcs4(begin, end, &mblen);
+      if (w <= 0x7F) {  // IsAscii, w is unsigned.
         key.set_key_code(*begin);
       } else {
         key.set_key_code('?');
@@ -499,7 +499,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  void InsertInputSequence(const std::string &text,
+  void InsertInputSequence(absl::string_view text,
                            composer::Composer *composer) {
     std::vector<commands::KeyEvent> keys;
     GenerateKeyEvents(text, &keys);
@@ -510,7 +510,7 @@ class DictionaryPredictorTest : public ::testing::Test {
   }
 
   void InsertInputSequenceForProbableKeyEvent(
-      const std::string &text, const uint32_t *corrected_key_codes,
+      absl::string_view text, const uint32_t *corrected_key_codes,
       composer::Composer *composer) {
     std::vector<commands::KeyEvent> keys;
     GenerateKeyEvents(text, &keys);
@@ -657,7 +657,7 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  bool FindCandidateByValue(const Segment &segment, const std::string &value) {
+  bool FindCandidateByValue(const Segment &segment, absl::string_view value) {
     for (size_t i = 0; i < segment.candidates_size(); ++i) {
       const Segment::Candidate &c = segment.candidate(i);
       if (c.value == value) {
@@ -667,9 +667,20 @@ class DictionaryPredictorTest : public ::testing::Test {
     return false;
   }
 
+  bool FindCandidateByKeyValue(const Segment &segment, absl::string_view key,
+                               absl::string_view value) {
+    for (size_t i = 0; i < segment.candidates_size(); ++i) {
+      const Segment::Candidate &c = segment.candidate(i);
+      if (c.key == key && c.value == value) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool FindResultByValue(
       const std::vector<TestableDictionaryPredictor::Result> &results,
-      const std::string &value) {
+      const absl::string_view value) {
     for (const auto &result : results) {
       if (result.value == value && !result.removed) {
         return true;
@@ -4027,5 +4038,24 @@ TEST_F(DictionaryPredictorTest,
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_GE(segments.conversion_segment(0).candidates_size(), 8);
+}
+
+TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      CreateDictionaryPredictorWithMockData());
+  const DictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("よんじゅうごかい", composer_.get(), &segments);
+
+  request_->mutable_decoder_experiment_params()->set_enable_number_decoder(
+      true);
+
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
+                                      "よんじゅうご", "45"));
 }
 }  // namespace mozc

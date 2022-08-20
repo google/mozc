@@ -2656,8 +2656,8 @@ void InitSegmentsFromInputSequence(const std::string &text,
 
   while (begin < end) {
     commands::KeyEvent key;
-    const char32 w = Util::Utf8ToUcs4(begin, end, &mblen);
-    if (0 <= w && w <= 0x7F) {  // IsAscii
+    const char32_t w = Util::Utf8ToUcs4(begin, end, &mblen);
+    if (w <= 0x7F) {  // IsAscii, w is unsigned.
       key.set_key_code(*begin);
     } else {
       key.set_key_code('?');

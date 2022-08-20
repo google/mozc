@@ -40,7 +40,9 @@
 // --suppression_data=collocation_suppression.txt
 // > embedded_collocation_suppression_data.h
 
+#include <ios>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 

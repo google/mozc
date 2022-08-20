@@ -31,6 +31,7 @@
 #define MOZC_REWRITER_COLLOCATION_REWRITER_H_
 
 #include <cstdint>
+#include <memory>
 
 #include "base/port.h"
 #include "converter/segments.h"

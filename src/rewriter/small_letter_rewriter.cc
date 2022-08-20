@@ -45,88 +45,42 @@ namespace {
 // based on array will not work in the future. In order to avoid that,
 // std::map is chosen.
 const std::map<char, std::string> *kSuperscriptTable =
-    new std::map<char, std::string>({{
-                                         '0',
-                                         "⁰",
-                                     },
-                                     {
-                                         '1',
-                                         "¹",
-                                     },
-                                     {
-                                         '2',
-                                         "²",
-                                     },
-                                     {
-                                         '3',
-                                         "³",
-                                     },
-                                     {
-                                         '4',
-                                         "⁴",
-                                     },
-                                     {
-                                         '5',
-                                         "⁵",
-                                     },
-                                     {
-                                         '6',
-                                         "⁶",
-                                     },
-                                     {
-                                         '7',
-                                         "⁷",
-                                     },
-                                     {
-                                         '8',
-                                         "⁸",
-                                     },
-                                     {
-                                         '9',
-                                         "⁹",
-                                     }});
+    new std::map<char, std::string>({
+        {'0', "⁰"},
+        {'1', "¹"},
+        {'2', "²"},
+        {'3', "³"},
+        {'4', "⁴"},
+        {'5', "⁵"},
+        {'6', "⁶"},
+        {'7', "⁷"},
+        {'8', "⁸"},
+        {'9', "⁹"},
+        {'+', "⁺"},
+        {'-', "⁻"},
+        {'=', "⁼"},
+        {'(', "⁽"},
+        {')', "⁾"},
+    });
 
 const std::map<char, std::string> *kSubscriptTable =
-    new std::map<char, std::string>({{
-                                         '0',
-                                         "₀",
-                                     },
-                                     {
-                                         '1',
-                                         "₁",
-                                     },
-                                     {
-                                         '2',
-                                         "₂",
-                                     },
-                                     {
-                                         '3',
-                                         "₃",
-                                     },
-                                     {
-                                         '4',
-                                         "₄",
-                                     },
-                                     {
-                                         '5',
-                                         "₅",
-                                     },
-                                     {
-                                         '6',
-                                         "₆",
-                                     },
-                                     {
-                                         '7',
-                                         "₇",
-                                     },
-                                     {
-                                         '8',
-                                         "₈",
-                                     },
-                                     {
-                                         '9',
-                                         "₉",
-                                     }});
+    new std::map<char, std::string>({
+        {'0', "₀"},
+        {'1', "₁"},
+        {'2', "₂"},
+        {'3', "₃"},
+        {'4', "₄"},
+        {'5', "₅"},
+        {'6', "₆"},
+        {'7', "₇"},
+        {'8', "₈"},
+        {'9', "₉"},
+        {'+', "₊"},
+        {'-', "₋"},
+        {'=', "₌"},
+        {'(', "₍"},
+        {')', "₎"},
+    });
 
 // Converts given input into superscript sequence
 bool ExpressionsToSuperscript(const std::string &input, std::string *value) {

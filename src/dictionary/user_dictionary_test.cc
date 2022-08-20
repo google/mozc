@@ -184,7 +184,7 @@ std::string GenRandomAlphabet(int size) {
   std::string result;
   const size_t len = Util::Random(size) + 1;
   for (int i = 0; i < len; ++i) {
-    const char32 l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
+    const char32_t l = Util::Random(static_cast<int>('z' - 'a')) + 'a';
     Util::Ucs4ToUtf8Append(l, &result);
   }
   return result;

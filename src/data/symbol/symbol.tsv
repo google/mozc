@@ -148,6 +148,12 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	▶	さんかく ずけい みぎ みぎさんかく >	右向黒三角		SYMBOL
 記号	◁	さんかく ずけい ひだり ひだりさんかく <	左向三角		SYMBOL
 記号	◀	さんかく ずけい ひだり ひだりさんかく <	左向黒三角		SYMBOL
+記号	⬠	ごかく ずけい	五角		SYMBOL		U+2B20
+記号	⬟	ごかく ずけい	黒五角		SYMBOL		U+2B1F
+記号	⬭	だえん ちょうえん ずけい	横長楕円		SYMBOL		U+2B2D
+記号	⬬	だえん ちょうえん ずけい	横長黒楕円		SYMBOL		U+2B2C
+記号	⬯	だえん ちょうえん ずけい	縦長楕円		SYMBOL		U+2B2F
+記号	⬮	だえん ちょうえん ずけい	縦長黒楕円		SYMBOL		U+2B2E
 記号	﹅	ごま けんてん ぼうてん わきてん	圏点	ゴマ	SYMBOL		U+FE45
 記号	﹆	しろごま けんてん ぼうてん わきてん	圏点	白ゴマ	SYMBOL		U+FE46
 記号	※	こめ * こめじるし きごう ほし	米印		SYMBOL

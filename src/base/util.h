@@ -177,36 +177,36 @@ class Util {
   }
 
   // Splits `str` to codepoints.
-  static std::vector<char32> Utf8ToCodepoints(absl::string_view str);
+  static std::vector<char32_t> Utf8ToCodepoints(absl::string_view str);
   // Converts `codepoints` to UTF8 string.
-  static std::string CodepointsToUtf8(const std::vector<char32> &codepoints);
+  static std::string CodepointsToUtf8(const std::vector<char32_t> &codepoints);
 
   // Converts the first character of UTF8 string starting at |begin| to UCS4.
   // The read byte length is stored to |mblen|.
-  static char32 Utf8ToUcs4(const char *begin, const char *end, size_t *mblen);
-  static char32 Utf8ToUcs4(absl::string_view s) {
+  static char32_t Utf8ToUcs4(const char *begin, const char *end, size_t *mblen);
+  static char32_t Utf8ToUcs4(absl::string_view s) {
     size_t mblen = 0;
     return Utf8ToUcs4(s.data(), s.data() + s.size(), &mblen);
   }
 
   // Converts a UCS4 code point to UTF8 string.
-  static void Ucs4ToUtf8(char32 c, std::string *output);
+  static void Ucs4ToUtf8(char32_t c, std::string *output);
 
   // Converts a UCS4 code point to UTF8 string and appends it to |output|, i.e.,
   // |output| is not cleared.
-  static void Ucs4ToUtf8Append(char32 c, std::string *output);
+  static void Ucs4ToUtf8Append(char32_t c, std::string *output);
 
   // Converts a UCS4 code point to UTF8 and stores it to char array.  The result
   // is terminated by '\0'.  Returns the byte length of converted UTF8 string.
   // REQUIRES: The output buffer must be longer than 7 bytes.
-  static size_t Ucs4ToUtf8(char32 c, char *output);
+  static size_t Ucs4ToUtf8(char32_t c, char *output);
 
   // Returns true if |s| is split into |first_char32| + |rest|.
   // You can pass nullptr to |first_char32| and/or |rest| to ignore the matched
   // value.
   // Returns false if an invalid UTF-8 sequence is prefixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.
-  static bool SplitFirstChar32(absl::string_view s, char32 *first_char32,
+  static bool SplitFirstChar32(absl::string_view s, char32_t *first_char32,
                                absl::string_view *rest);
 
   // Returns true if |s| is split into |rest| + |last_char32|.
@@ -215,7 +215,7 @@ class Util {
   // Returns false if an invalid UTF-8 sequence is suffixed. That is, |rest| may
   // contain any invalid sequence even when this method returns true.
   static bool SplitLastChar32(absl::string_view s, absl::string_view *rest,
-                              char32 *last_char32);
+                              char32_t *last_char32);
 
   // Returns true if |s| is a valid UTF8.
   static bool IsValidUtf8(absl::string_view s);
@@ -331,12 +331,12 @@ class Util {
   };
 
   // return script type of w
-  static ScriptType GetScriptType(char32 w);
+  static ScriptType GetScriptType(char32_t w);
 
   // return script type of first character in [begin, end)
   // This function finds the first UTF-8 chars and returns its script type.
   // The length of the character will be returned in *mblen.
-  // This function calls GetScriptType(char32) internally.
+  // This function calls GetScriptType(char32_t) internally.
   static ScriptType GetScriptType(const char *begin, const char *end,
                                   size_t *mblen);
 
@@ -370,7 +370,7 @@ class Util {
 
   // return Form type of single character.
   // This function never returns UNKNOWN_FORM.
-  static FormType GetFormType(char32 w);
+  static FormType GetFormType(char32_t w);
 
   // return FormType of string.
   // return UNKNOWN_FORM if |str| contains both HALF_WIDTH and FULL_WIDTH.
@@ -402,7 +402,7 @@ class Util {
   // Checks whether the letter is ucs 4 is appropriate target to be shown as
   // candidate. This function is based on mozc internal logics, rather than
   // orthodox classification logics.
-  static bool IsAcceptableCharacterAsCandidate(char32 letter);
+  static bool IsAcceptableCharacterAsCandidate(char32_t letter);
 };
 
 // Const iterator implementation to traverse on a (utf8) string as a char32
@@ -411,43 +411,43 @@ class Util {
 // Example usage:
 //   string utf8;
 //   for (ConstChar32Iterator iter(utf8); !iter.Done(); iter.Next()) {
-//     char32 c = iter.Get();
+//     char32_t c = iter.Get();
 //     ...
 //   }
 class ConstChar32Iterator {
  public:
   explicit ConstChar32Iterator(absl::string_view utf8_string);
-  char32 Get() const;
+  char32_t Get() const;
   void Next();
   bool Done() const;
 
  private:
   absl::string_view utf8_string_;
-  char32 current_;
+  char32_t current_;
   bool done_;
 
   DISALLOW_COPY_AND_ASSIGN(ConstChar32Iterator);
 };
 
 // Const reverse iterator implementation to traverse on a (utf8) string as a
-// char32 string.
+// char32_t string.
 //
 // Example usage:
 //   string utf8;
 //   for (ConstChar32ReverseIterator iter(utf8); !iter.Done(); iter.Next()) {
-//     char32 c = iter.Get();
+//     char32_t c = iter.Get();
 //     ...
 //   }
 class ConstChar32ReverseIterator {
  public:
   explicit ConstChar32ReverseIterator(absl::string_view utf8_string);
-  char32 Get() const;
+  char32_t Get() const;
   void Next();
   bool Done() const;
 
  private:
   absl::string_view utf8_string_;
-  char32 current_;
+  char32_t current_;
   bool done_;
 
   DISALLOW_COPY_AND_ASSIGN(ConstChar32ReverseIterator);

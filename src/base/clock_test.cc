@@ -30,6 +30,7 @@
 #include "base/clock.h"
 
 #include <cstdint>
+#include <ctime>
 
 #include "base/clock_mock.h"
 #include "testing/base/public/gunit.h"

@@ -95,7 +95,7 @@ bool HasCharacterFormDescription(const std::string &value) {
   Util::FormType prev = Util::UNKNOWN_FORM;
 
   for (ConstChar32Iterator iter(value); !iter.Done(); iter.Next()) {
-    const char32 ucs4 = iter.Get();
+    const char32_t ucs4 = iter.Get();
     const Util::FormType type = Util::GetFormType(ucs4);
     if (prev != Util::UNKNOWN_FORM && prev != type) {
       return false;

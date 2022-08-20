@@ -159,9 +159,7 @@ cc_library_mozc(
         "session_interface.h",
     ],
     hdrs = ["session.h"],
-    visibility = [
-        "//:__subpackages__",
-    ],
+    visibility = ["//:__subpackages__"],
     deps = [
         ":session_converter",
         ":session_usage_stats_util",
@@ -817,6 +815,7 @@ cc_test_mozc(
         ":session_handler_tool",
         "//base:file_util",
         "//base:port",
+        "//base:util",
         "//engine:engine_factory",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
