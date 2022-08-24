@@ -111,7 +111,7 @@ void GSettingsChangedCallback(GSettings *settings, const gchar *key,
       LOG(ERROR) << "Cannot get panel:use_custom_font configuration.";
     }
   } else if (g_strcmp0(key, kIBusPanelCustomFont) == 0) {
-    GVariantUniquePtr use_custom_font_value = MakeGVariantUniquePtr(
+    GVariantUniquePtr custom_font_value = MakeGVariantUniquePtr(
         g_settings_get_value(settings, kIBusPanelCustomFont));
     std::string font_description;
     if (GetString(custom_font_value, &font_description)) {
