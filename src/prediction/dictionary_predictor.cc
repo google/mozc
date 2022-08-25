@@ -1043,7 +1043,7 @@ int DictionaryPredictor::GetLMCost(const Result &result, int rid) const {
   }
 
   if (!(result.types & REALTIME)) {
-    // Relatime conversion already adds prefix/suffix penalties to the result.
+    // Realtime conversion already adds prefix/suffix penalties to the result.
     // Note that we don't add prefix penalty the role of "bunsetsu" is
     // ambiguous on zero-query suggestion.
     lm_cost += segmenter_->GetSuffixPenalty(result.rid);
@@ -1307,6 +1307,23 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
+    if (request.request()
+            .decoder_experiment_params()
+            .cancel_segment_model_penalty_for_prediction()) {
+      // The result of GetLMCost() includes segment suffix penalty for all
+      // types of result.
+      // In particular, realtime candidates include both of prefix and suffix
+      // penalties.
+      // In this experiment, we assume that the user's input unit
+      // is not always 'Bunsetsu', so we cancel the penalty for the
+      // segment suffix.
+      cost -= segmenter_->GetSuffixPenalty(result.rid);
+      if (result.types & REALTIME) {
+        // immutable_converter adds prefix / suffix penalties for
+        // realtime candidates.
+        cost -= segmenter_->GetPrefixPenalty(result.lid);
+      }
+    }
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
 
     // Demote filtered word here, because they are not filtered for exact match.
@@ -1683,6 +1700,9 @@ void DictionaryPredictor::AggregateRealtimeConversion(
     Result *result = &results->back();
     result->key = candidate.key;
     result->value = candidate.value;
+    // TODO(toshiyuki): Fix the cost.
+    // This should be |candidate.wcost + candidate.structure_cost|.
+    // |wcost| does not include transition cost between internal nodes.
     result->wcost = candidate.wcost;
     result->lid = candidate.lid;
     result->rid = candidate.rid;
