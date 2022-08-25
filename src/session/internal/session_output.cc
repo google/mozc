@@ -69,6 +69,10 @@ bool FillAnnotation(const Segment::Candidate &candidate_value,
     annotation->set_description(candidate_value.description);
     is_modified = true;
   }
+  if (!candidate_value.a11y_description.empty()) {
+    annotation->set_a11y_description(candidate_value.a11y_description);
+    is_modified = true;
+  }
   if (candidate_value.attributes &
       Segment::Candidate::USER_HISTORY_PREDICTION) {
     annotation->set_deletable(true);

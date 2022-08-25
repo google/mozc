@@ -38,6 +38,7 @@
       'target_name': 'rewriter_test',
       'type': 'executable',
       'sources': [
+        'a11y_description_rewriter_test.cc',
         'calculator_rewriter_test.cc',
         'collocation_rewriter_test.cc',
         'collocation_util_test.cc',

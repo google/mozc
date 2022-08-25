@@ -1546,12 +1546,40 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "a11y_description_rewriter",
+    srcs = ["a11y_description_rewriter.cc"],
+    hdrs = ["a11y_description_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base:util",
+        "//data_manager:data_manager_interface",
+        "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+    ],
+)
+
+cc_test_mozc(
+    name = "a11y_description_rewriter_test",
+    size = "small",
+    srcs = ["a11y_description_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":a11y_description_rewriter",
+        "//data_manager/testing:mock_data_manager",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
     name = "rewriter",
     srcs = [
         "rewriter.cc",
     ],
     hdrs = ["rewriter.h"],
     deps = [
+        ":a11y_description_rewriter",
         ":calculator_rewriter",
         ":collocation_rewriter",
         ":command_rewriter",

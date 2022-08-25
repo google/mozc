@@ -44,6 +44,7 @@
         '<(gen_out_dir)/single_hentaigana_rewriter_data.inc',
         '<(gen_out_dir)/single_kanji_rewriter_data.h',
         '<(gen_out_dir)/symbol_rewriter_data.h',
+        'a11y_description_rewriter.cc',
         'calculator_rewriter.cc',
         'collocation_rewriter.cc',
         'collocation_util.cc',
