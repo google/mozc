@@ -65,7 +65,6 @@ cc_library_mozc(
     deps = [
         ":predictor_interface",
         ":user_history_predictor_cc_proto",
-        "//base",
         "//base:clock",
         "//base:config_file_stream",
         "//base:freelist",
@@ -76,7 +75,6 @@ cc_library_mozc(
         "//base:trie",
         "//base:util",
         "//composer",
-        "//config:config_handler",
         "//converter:segments",
         "//dictionary:dictionary_interface",
         "//dictionary:pos_matcher_lib",
@@ -104,7 +102,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":user_history_predictor",
-        "//base",
         "//base:clock_mock",
         "//base:encryptor",
         "//base:file_util",

@@ -469,9 +469,15 @@ bool UserHistoryPredictor::Load() {
 
 bool UserHistoryPredictor::Load(const UserHistoryStorage &history) {
   dic_->Clear();
-  for (size_t i = 0; i < history.GetProto().entries_size(); ++i) {
-    dic_->Insert(EntryFingerprint(history.GetProto().entries(i)),
-                 history.GetProto().entries(i));
+  for (const Entry &entry : history.GetProto().entries()) {
+    // Workaround for b/116826494: Some garbled characters are suggested
+    // from user history. This fiters such entries.
+    if (!Util::IsValidUtf8(entry.value())) {
+      LOG(ERROR) << "Invalid UTF8 found in user history: "
+                 << entry.Utf8DebugString();
+      continue;
+    }
+    dic_->Insert(EntryFingerprint(entry), entry);
   }
 
   VLOG(1) << "Loaded user history, size=" << history.GetProto().entries_size();
@@ -1538,14 +1544,6 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
         return false;
       }
     }
-  }
-
-  // Workaround for b/116826494: Some garbled characters are suggested
-  // from user history. This fiters such entries.
-  if (!Util::IsValidUtf8(entry.value())) {
-    LOG(ERROR) << "Invalid UTF8 found in user history: "
-               << entry.Utf8DebugString();
-    return false;
   }
 
   return true;
