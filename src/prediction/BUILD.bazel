@@ -365,7 +365,6 @@ py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
     deps = [
-        ":gen_zero_query_data_lib",
         ":gen_zero_query_util",
         "//build_tools:code_generator_util",
     ],
