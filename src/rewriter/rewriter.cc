@@ -46,12 +46,12 @@
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
+#include "rewriter/environmental_filter_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/katakana_promotion_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
-#include "rewriter/normalization_rewriter.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
@@ -134,7 +134,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
       std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(std::make_unique<KatakanaPromotionRewriter>());
-  AddRewriter(std::make_unique<NormalizationRewriter>());
+  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>());
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
 }

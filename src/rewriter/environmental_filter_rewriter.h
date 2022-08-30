@@ -27,8 +27,28 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_REWRITER_NORMALIZATION_REWRITER_H_
-#define MOZC_REWRITER_NORMALIZATION_REWRITER_H_
+// This rewriter is used for environment specific filtering.
+// There are roughly three major roles of this rewriter.
+//
+// 1. Normalization
+// There were characters which should be rewriten in some platforms. For
+// example, in Windows environment, U+FF0D is preferred than U+2212 for the
+// glyph of 'full-width minus', due to historical reason. This rewriter rewrites
+// candidate containing U+2212 if the environment is Windows.
+//
+// 2. Validation
+// This rewriter checks validity as UTF-8 string for each candidate. If
+// unacceptable candidates were to be found, this rewriter removes such
+// candidates.
+//
+// 3. Unavailable glyph removal
+// There are some glyphs that can be in candidates but not always available
+// among environments. For example, newer emojis tend to be unavailable in old
+// OSes. In order to prevend such glyphs appearing as candidates, this rewriter
+// removes candidates containing unavailable glyphs. Information about font
+// availability in environments are sent by clients.
+#ifndef MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
+#define MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
 
 #include "base/text_normalizer.h"
 #include "rewriter/rewriter_interface.h"
@@ -38,10 +58,10 @@ namespace mozc {
 class ConversionRequest;
 class Segments;
 
-class NormalizationRewriter : public RewriterInterface {
+class EnvironmentalFilterRewriter : public RewriterInterface {
  public:
-  NormalizationRewriter() = default;
-  ~NormalizationRewriter() override = default;
+  EnvironmentalFilterRewriter() = default;
+  ~EnvironmentalFilterRewriter() override = default;
 
   int capability(const ConversionRequest &request) const override;
 
@@ -54,4 +74,4 @@ class NormalizationRewriter : public RewriterInterface {
   TextNormalizer::Flag flag_ = TextNormalizer::kDefault;
 };
 }  // namespace mozc
-#endif  // MOZC_REWRITER_NORMALIZATION_REWRITER_H_
+#endif  // MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_

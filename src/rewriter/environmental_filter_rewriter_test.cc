@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/normalization_rewriter.h"
+#include "rewriter/environmental_filter_rewriter.h"
 
 #include <string>
 #include <vector>
@@ -65,51 +65,51 @@ void AddSegment(const std::string &key, const std::vector<std::string> &values,
   }
 }
 
-class NormalizationRewriterTest : public ::testing::Test {
+class EnvironmentalFilterRewriterTest : public ::testing::Test {
  protected:
-  NormalizationRewriterTest() = default;
-  ~NormalizationRewriterTest() override = default;
+  EnvironmentalFilterRewriterTest() = default;
+  ~EnvironmentalFilterRewriterTest() override = default;
 
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
   }
 };
 
-TEST_F(NormalizationRewriterTest, RemoveTest) {
-  NormalizationRewriter normalization_rewriter;
+TEST_F(EnvironmentalFilterRewriterTest, RemoveTest) {
+  EnvironmentalFilterRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
 
   segments.Clear();
   AddSegment("a", {"a\t1", "a\n2", "a\n\r3"}, &segments);
 
-  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
 }
 
-TEST_F(NormalizationRewriterTest, NoRemoveTest) {
-  NormalizationRewriter normalization_rewriter;
+TEST_F(EnvironmentalFilterRewriterTest, NoRemoveTest) {
+  EnvironmentalFilterRewriter rewriter;
   Segments segments;
   AddSegment("a", {"aa1", "a.a", "a-a"}, &segments);
 
   const ConversionRequest request;
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
 }
 
-TEST_F(NormalizationRewriterTest, NormalizationTest) {
-  NormalizationRewriter normalization_rewriter;
+TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
+  EnvironmentalFilterRewriter rewriter;
   Segments segments;
   const ConversionRequest request;
 
   segments.Clear();
   AddSegment("test", "test", &segments);
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ("test", segments.segment(0).candidate(0).value);
 
   segments.Clear();
   AddSegment("きょうと", "京都", &segments);
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ("京都", segments.segment(0).candidate(0).value);
 
   // Wave dash (U+301C) per platform
@@ -118,12 +118,12 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   constexpr char description[] = "[全]波ダッシュ";
   segments.mutable_segment(0)->mutable_candidate(0)->description = description;
 #ifdef OS_WIN
-  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // U+FF5E
   EXPECT_EQ("～", segments.segment(0).candidate(0).value);
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
 #else  // OS_WIN
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
   EXPECT_EQ(description, segments.segment(0).candidate(0).description);
@@ -134,8 +134,8 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->description = description;
 
-  normalization_rewriter.SetNormalizationFlag(TextNormalizer::kAll);
-  EXPECT_TRUE(normalization_rewriter.Rewrite(request, &segments));
+  rewriter.SetNormalizationFlag(TextNormalizer::kAll);
+  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   // U+FF5E
   EXPECT_EQ("～", segments.segment(0).candidate(0).value);
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
@@ -145,8 +145,8 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->description = description;
 
-  normalization_rewriter.SetNormalizationFlag(TextNormalizer::kNone);
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  rewriter.SetNormalizationFlag(TextNormalizer::kNone);
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
   EXPECT_EQ(description, segments.segment(0).candidate(0).description);
@@ -157,7 +157,7 @@ TEST_F(NormalizationRewriterTest, NormalizationTest) {
   AddSegment("なみ", "〜", &segments);
   segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
       Segment::Candidate::USER_DICTIONARY;
-  EXPECT_FALSE(normalization_rewriter.Rewrite(request, &segments));
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
 }

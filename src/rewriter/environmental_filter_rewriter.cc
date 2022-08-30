@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/normalization_rewriter.h"
+#include "rewriter/environmental_filter_rewriter.h"
 
 #include <string>
 #include <utility>
@@ -79,12 +79,13 @@ bool NormalizeCandidate(Segment::Candidate *candidate,
 }
 }  // namespace
 
-int NormalizationRewriter::capability(const ConversionRequest &request) const {
+int EnvironmentalFilterRewriter::capability(
+    const ConversionRequest &request) const {
   return RewriterInterface::ALL;
 }
 
-bool NormalizationRewriter::Rewrite(const ConversionRequest &request,
-                                    Segments *segments) const {
+bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
+                                          Segments *segments) const {
   DCHECK(segments);
 
   bool modified = false;
