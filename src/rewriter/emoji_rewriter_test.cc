@@ -142,11 +142,6 @@ const EmojiData kTestEmojiList[] = {
     {"X", "RABIT", 0xFE003, "usagi", "", "softbank", ""},
     {"X", "DRAGON", 0xFE004, "ryu", "", "", "kddi"},
 
-    // No unicode available.
-    {"X", "", 0xFE011, "", "docomo", "", ""},
-    {"X", "", 0xFE012, "", "", "softbank", ""},
-    {"X", "", 0xFE013, "", "", "", "kddi"},
-
     // Multiple carriers available.
     {"X", "", 0xFE021, "", "docomo", "softbank", ""},
     {"X", "", 0xFE022, "", "docomo", "", "kddi"},
