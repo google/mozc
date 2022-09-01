@@ -109,35 +109,25 @@ int SingleHentaiganaRewriter::capability(
   return RewriterInterface::CONVERSION;
 }
 
-void SingleHentaiganaRewriter::SetEnabled(const bool enabled) {
-  // TODO(b/242276533): Replace this with better mechanism later. Right now this
-  // rewriter is always disabled intentionally except for tests.
-  enabled_ = enabled;
-}
-
 bool SingleHentaiganaRewriter::Rewrite(const ConversionRequest &request,
                                        Segments *segments) const {
-  // If hentaigana rewriter is not requested to use, do nothing.
-  if (!enabled_) {
-    return false;
-  }
-
   std::string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
-  }
-
-  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
-    return false;
   }
 
   // Ensure table has entry for key.
   if (kHentaiganaTable->find(key) == kHentaiganaTable->end()) {
     return false;
   }
+
   const std::vector<Pair> &pairs = kHentaiganaTable->at(key);
   // Ensure pairs is not empty
   if (pairs.empty()) {
+    return false;
+  }
+
+  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
     return false;
   }
 

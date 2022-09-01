@@ -34,6 +34,7 @@
 
 #include "base/system_util.h"
 #include "converter/segments.h"
+#include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
@@ -41,6 +42,9 @@
 
 namespace mozc {
 namespace {
+constexpr char kKanaSupplement_6_0[] = "\U0001B001";
+constexpr char kKanaSupplement_10_0[] = "\U0001B002";
+constexpr char kKanaExtendedA_14_0[] = "\U0001B122";
 
 void AddSegment(const std::string &key, const std::string &value,
                 Segments *segments) {
@@ -95,6 +99,107 @@ TEST_F(EnvironmentalFilterRewriterTest, NoRemoveTest) {
   const ConversionRequest request;
   EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+}
+
+TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
+  {
+    EnvironmentalFilterRewriter rewriter;
+    commands::Request request;
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // All should not be allowed.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+  }
+
+  {
+    EnvironmentalFilterRewriter rewriter;
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::EMPTY);
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // All should not be allowed.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+  }
+
+  {
+    EnvironmentalFilterRewriter rewriter;
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_SUPPLEMENT_6_0);
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // Only first one should be allowed.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
+  }
+
+  {
+    EnvironmentalFilterRewriter rewriter;
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_SUPPLEMENT_6_0);
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0);
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // First and second one should be allowed.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+
+    EXPECT_TRUE(rewriter.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(2, segments.conversion_segment(0).candidates_size());
+  }
+
+  {
+    EnvironmentalFilterRewriter rewriter;
+    commands::Request request;
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_SUPPLEMENT_6_0);
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0);
+    request.add_additional_renderable_character_groups(
+        commands::Request::KANA_EXTENDED_A_14_0);
+    ConversionRequest conversion_request;
+    conversion_request.set_request(&request);
+
+    Segments segments;
+    segments.Clear();
+    // All should be allowed.
+    AddSegment("a",
+               {kKanaSupplement_6_0, kKanaSupplement_10_0, kKanaExtendedA_14_0},
+               &segments);
+
+    EXPECT_FALSE(rewriter.Rewrite(conversion_request, &segments));
+    EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
+  }
 }
 
 TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {

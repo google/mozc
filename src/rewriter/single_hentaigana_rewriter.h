@@ -46,10 +46,8 @@ class SingleHentaiganaRewriter : public RewriterInterface {
 
   bool Rewrite(const ConversionRequest &request,
                Segments *segments) const override;
-  void SetEnabled(const bool enabled);
 
  private:
-  bool enabled_ = false;
   const ConverterInterface *parent_converter_;
 };
 

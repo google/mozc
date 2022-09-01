@@ -84,7 +84,6 @@ class SingleHentaiganaRewriterTest : public ::testing::Test {
 
 TEST_F(SingleHentaiganaRewriterTest, RewriteTest) {
   SingleHentaiganaRewriter rewriter(engine_->GetConverter());
-  rewriter.SetEnabled(true);
   commands::Request request;
   ConversionRequest default_request;
   default_request.set_request(&request);
@@ -104,30 +103,4 @@ TEST_F(SingleHentaiganaRewriterTest, RewriteTest) {
     EXPECT_TRUE(ContainCandidate(segments, "\U0001B121", "変体仮名"));
   }
 }
-
-TEST_F(SingleHentaiganaRewriterTest, NoRewriteTest) {
-  SingleHentaiganaRewriter rewriter(engine_->GetConverter());
-  rewriter.SetEnabled(false);
-
-  commands::Request request;
-  ConversionRequest default_request;
-  default_request.set_request(&request);
-  {
-    Segments segments;
-    AddSegment("あ", {"あ"}, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(default_request, &segments));
-    EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
-    EXPECT_FALSE(ContainCandidate(segments, "\U0001B002", "安の変体仮名"));
-    EXPECT_FALSE(ContainCandidate(segments, "\U0001B003", "愛の変体仮名"));
-  }
-  {
-    Segments segments;
-    AddSegment("いぇ", {"いぇ"}, &segments);
-    EXPECT_FALSE(rewriter.Rewrite(default_request, &segments));
-    EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
-    EXPECT_FALSE(ContainCandidate(segments, "\U0001B001", "江の変体仮名"));
-    EXPECT_FALSE(ContainCandidate(segments, "\U0001B121", "変体仮名"));
-  }
-}
-
 }  // namespace mozc
