@@ -2183,6 +2183,9 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
   if (range.first == range.second) {
     return false;
   }
+
+  const bool is_key_one_char_and_not_kanji =
+      Util::CharsLen(key) == 1 && !Util::ContainsScriptType(key, Util::KANJI);
   for (; range.first != range.second; ++range.first) {
     const auto &entry = range.first;
     if (entry.type() != ZERO_QUERY_EMOJI) {
@@ -2190,6 +2193,13 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
           std::make_pair(std::string(entry.value()), entry.type()));
       continue;
     }
+
+    // Emoji should not be suggested for single Hiragana / Katakana input,
+    // because they tend to be too much aggressive.
+    if (is_key_one_char_and_not_kanji) {
+      continue;
+    }
+
     if (available_emoji_carrier & Request::UNICODE_EMOJI &&
         entry.emoji_type() & EMOJI_UNICODE) {
       results->push_back(
