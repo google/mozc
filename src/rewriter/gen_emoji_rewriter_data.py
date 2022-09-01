@@ -34,14 +34,15 @@ Usage:
   python gen_emoji_rewriter_data.py --input=input.tsv --output=output.h
 
 File format:
-  Each line in the input file has 6 columns separated by TAB characters,
-  and this generator requires the 2nd-6th columns.
+  Each line in the input file has 7 columns separated by TAB characters,
+  and this generator requires the 2nd-7th columns.
   We expect that each column has
   2nd) an emoji character, in binary format
   3rd) readings separated by commans
   4th) description for the Unicode 6.0 emoji
   5th) primary description in Japanese
   6th) descriptions from carriers
+  7th) unicode version
 
   Detailed format is described in the default input file
   "mozc/data/emoji/emoji_data.tsv".
@@ -60,6 +61,13 @@ from build_tools import serialized_string_array_builder
 
 
 _FULLWIDTH_RE = re.compile(u'[！-～]')   # U+FF01 - U+FF5E
+_VERSION_ALL = [
+    'E0.6', 'E0.7', 'E1.0', 'E2.0', 'E3.0', 'E4.0', 'E5.0', 'E11.0', 'E12.0',
+    'E12.1', 'E13.0', 'E13.1', 'E14.0'
+]
+# Dict for converting version string into enum index.
+VERSION_TO_INDEX = {v: i for i, v in enumerate(_VERSION_ALL)}
+# EmojiVersion enum must be fixed accordingly.
 
 
 def NormalizeString(string):
@@ -83,7 +91,7 @@ def ReadEmojiTsv(stream):
 
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
-    if len(columns) != 6:
+    if len(columns) != 7:
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
@@ -98,19 +106,10 @@ def ReadEmojiTsv(stream):
     # [3]: Name defined in Unicode.  It is ignored in current implementation.
     utf8_description = columns[4] if columns[4] else ''
     # [5]: Descriptions. It is ignored in current implementation.
-
-    # TODO(b/243865472): Although these data are already removed from
-    # emoji_data.tsv, these variables are kept as they were. Cleanup is
-    # required.
-    android_pua = 0
-    docomo_description = ''
-    softbank_description = ''
-    kddi_description = ''
+    unicode_version = columns[6] if columns[6] else ''
 
     index = len(emoji_data_list)
-    emoji_data_list.append((emoji, android_pua, utf8_description,
-                            docomo_description, softbank_description,
-                            kddi_description))
+    emoji_data_list.append((emoji, utf8_description, unicode_version))
 
     # \xe3\x80\x80 is a full-width space
     for reading in re.split(r'(?: |\xe3\x80\x80)+', readings.strip()):
@@ -128,13 +127,10 @@ def OutputData(emoji_data_list, token_dict,
   strings = {}
   for reading, _ in sorted_token_dict:
     strings[reading] = 0
-  for (emoji, android_pua, utf8_description, docomo_description,
-       softbank_description, kddi_description) in emoji_data_list:
+  for (emoji, utf8_description, unicode_version) in emoji_data_list:
     strings[emoji] = 0
     strings[utf8_description] = 0
-    strings[docomo_description] = 0
-    strings[softbank_description] = 0
-    strings[kddi_description] = 0
+
   sorted_strings = sorted(strings.keys())
   for index, s in enumerate(sorted_strings):
     strings[s] = index
@@ -143,15 +139,17 @@ def OutputData(emoji_data_list, token_dict,
     for reading, value_list in sorted_token_dict:
       reading_index = strings[reading]
       for value_index in value_list:
-        (emoji, android_pua, utf8_description, docomo_description,
-         softbank_description, kddi_description) = emoji_data_list[value_index]
+        (emoji, utf8_description,
+         unicode_version) = emoji_data_list[value_index]
+        # Here, f.write should be called exactly 7 times, in order to preserve
+        # data format.
         f.write(struct.pack('<I', reading_index))
         f.write(struct.pack('<I', strings[emoji]))
-        f.write(struct.pack('<I', android_pua))
+        f.write(struct.pack('<I', VERSION_TO_INDEX[unicode_version]))
         f.write(struct.pack('<I', strings[utf8_description]))
-        f.write(struct.pack('<I', strings[docomo_description]))
-        f.write(struct.pack('<I', strings[softbank_description]))
-        f.write(struct.pack('<I', strings[kddi_description]))
+        f.write(struct.pack('<I', strings['']))
+        f.write(struct.pack('<I', strings['']))
+        f.write(struct.pack('<I', strings['']))
 
   serialized_string_array_builder.SerializeToFile(sorted_strings,
                                                   string_array_file)

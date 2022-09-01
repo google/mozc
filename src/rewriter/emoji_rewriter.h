@@ -72,6 +72,27 @@ class EmojiRewriter : public RewriterInterface {
  public:
   static constexpr size_t kEmojiDataByteLength = 28;
 
+  // Emoji Version Data, in Unicode.
+  // Emoji Version information is available at:
+  // https://unicode.org/Public/emoji/.
+  // LINT.IfChange
+  enum EmojiVersion : uint32_t {
+    E0_6,
+    E0_7,
+    E1_0,
+    E2_0,
+    E3_0,
+    E4_0,
+    E5_0,
+    E11_0,
+    E12_0,
+    E12_1,
+    E13_0,
+    E13_1,
+    E14_0,
+  };
+  // LINT.ThenChange(//rewriter/gen_emoji_rewriter_data.py)
+
   // Emoji data token is 28 bytes data of the following format:
   //
   // +-------------------------------------+
@@ -79,15 +100,15 @@ class EmojiRewriter : public RewriterInterface {
   // +-------------------------------------+
   // | UTF8 emoji index (4 byte)           |
   // +-------------------------------------+
-  // | Android PUA code (4 byte)           |
+  // | Unicode Emoji version (4 byte)      |
   // +-------------------------------------+
   // | UTF8 description index (4 byte)     |
   // +-------------------------------------+
-  // | Docomo description index (4 byte)   |
+  // | Unused field (4 byte)               |
   // +-------------------------------------+
-  // | Softbank description index (4 byte) |
+  // | Unused field (4 byte)               |
   // +-------------------------------------+
-  // | KDDI description index (4 byte)     |
+  // | Unused field (4 byte)               |
   // +-------------------------------------+
   //
   // Here, index is the position in the string array at which the corresponding
@@ -107,20 +128,11 @@ class EmojiRewriter : public RewriterInterface {
     uint32_t emoji_index() const {
       return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
     }
-    uint32_t android_pua() const {
+    uint32_t unicode_version_index() const {
       return *reinterpret_cast<const uint32_t *>(ptr_ + 8);
     }
     uint32_t description_utf8_index() const {
       return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
-    }
-    uint32_t description_docomo_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 16);
-    }
-    uint32_t description_softbank_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 20);
-    }
-    uint32_t description_kddi_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 24);
     }
 
     // Returns key index as token array is searched by key.

@@ -118,35 +118,31 @@ void ChooseEmojiCandidate(Segments *segments) {
 struct EmojiData {
   const char *key;
   const char *unicode;
-  const uint32_t android_pua;
+  const EmojiRewriter::EmojiVersion unicode_version;
   const char *description_unicode;
-  const char *description_docomo;
-  const char *description_softbank;
-  const char *description_kddi;
+  const char *unused_field_0;
+  const char *unused_field_1;
+  const char *unused_field_2;
 };
 
 // Elements must be sorted lexicographically by key (first string).
 const EmojiData kTestEmojiList[] = {
     // An actual emoji character
-    {"Emoji", "🐭", 0, "nezumi picture", "", "", ""},
+    {"Emoji", "🐭", EmojiRewriter::EmojiVersion::E0_6, "nezumi picture", "", "",
+     ""},
 
     // Meta candidates.
-    {"Inu", "DOG", 0, "inu", "", "", ""},
-    {"Neko", "CAT", 0, "neko", "", "", ""},
-    {"Nezumi", "MOUSE", 0, "nezumi", "", "", ""},
-    {"Nezumi", "RAT", 0, "nezumi", "", "", ""},
+    {"Inu", "DOG", EmojiRewriter::EmojiVersion::E0_6, "inu", "", "", ""},
+    {"Neko", "CAT", EmojiRewriter::EmojiVersion::E0_6, "neko", "", "", ""},
+    {"Nezumi", "MOUSE", EmojiRewriter::EmojiVersion::E0_6, "nezumi", "", "",
+     ""},
+    {"Nezumi", "RAT", EmojiRewriter::EmojiVersion::E0_6, "nezumi", "", "", ""},
 
     // Test data for carrier.
-    {"X", "COW", 0xFE001, "ushi", "", "", ""},
-    {"X", "TIGER", 0xFE002, "tora", "docomo", "", ""},
-    {"X", "RABIT", 0xFE003, "usagi", "", "softbank", ""},
-    {"X", "DRAGON", 0xFE004, "ryu", "", "", "kddi"},
-
-    // Multiple carriers available.
-    {"X", "", 0xFE021, "", "docomo", "softbank", ""},
-    {"X", "", 0xFE022, "", "docomo", "", "kddi"},
-    {"X", "", 0xFE023, "", "", "softbank", "kddi"},
-    {"X", "", 0xFE024, "", "docomo", "softbank", "kddi"},
+    {"X", "COW", EmojiRewriter::EmojiVersion::E0_6, "ushi", "", "", ""},
+    {"X", "TIGER", EmojiRewriter::EmojiVersion::E0_6, "tora", "", "", ""},
+    {"X", "RABIT", EmojiRewriter::EmojiVersion::E0_6, "usagi", "", "", ""},
+    {"X", "DRAGON", EmojiRewriter::EmojiVersion::E0_6, "ryu", "", "", ""},
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test
@@ -160,9 +156,9 @@ class TestDataManager : public testing::MockDataManager {
       string_index[data.key] = 0;
       string_index[data.unicode] = 0;
       string_index[data.description_unicode] = 0;
-      string_index[data.description_docomo] = 0;
-      string_index[data.description_softbank] = 0;
-      string_index[data.description_kddi] = 0;
+      string_index[data.unused_field_0] = 0;
+      string_index[data.unused_field_1] = 0;
+      string_index[data.unused_field_2] = 0;
     }
 
     // Set index.
@@ -177,11 +173,11 @@ class TestDataManager : public testing::MockDataManager {
     for (const EmojiData &data : kTestEmojiList) {
       token_array_.push_back(string_index[data.key]);
       token_array_.push_back(string_index[data.unicode]);
-      token_array_.push_back(data.android_pua);
+      token_array_.push_back(data.unicode_version);
       token_array_.push_back(string_index[data.description_unicode]);
-      token_array_.push_back(string_index[data.description_docomo]);
-      token_array_.push_back(string_index[data.description_softbank]);
-      token_array_.push_back(string_index[data.description_kddi]);
+      token_array_.push_back(string_index[data.unused_field_0]);
+      token_array_.push_back(string_index[data.unused_field_1]);
+      token_array_.push_back(string_index[data.unused_field_2]);
     }
 
     // Create string array.

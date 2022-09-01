@@ -994,7 +994,6 @@ cc_library_mozc(
     deps = [
         ":rewriter_interface",
         ":rewriter_util",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:serialized_string_array",
@@ -1020,11 +1019,9 @@ cc_test_mozc(
     deps = [
         ":emoji_rewriter",
         ":variants_rewriter",
-        "//base",
         "//base:logging",
         "//base:serialized_string_array",
         "//base:util",
-        "//config:character_form_manager",
         "//config:config_handler",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
@@ -1032,7 +1029,6 @@ cc_test_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "//storage:registry",
         "//testing:gunit_main",
         "//testing:mozctest",
         "//usage_stats",

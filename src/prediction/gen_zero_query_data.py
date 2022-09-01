@@ -74,12 +74,12 @@ def ReadEmojiTsv(stream):
   zero_query_dict = collections.defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
-    if len(columns) != 6:
+    if len(columns) != 7:
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
     # Emoji code point.
-    codepoints, emoji, readings, _, japanese_name, descriptions = columns
+    codepoints, emoji, readings, _, japanese_name, descriptions, _ = columns
 
     if not codepoints:
       continue
