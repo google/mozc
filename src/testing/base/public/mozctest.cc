@@ -29,8 +29,10 @@
 
 #include "testing/base/public/mozctest.h"
 
+#include <cstdlib>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/file_util.h"
 #include "base/logging.h"
