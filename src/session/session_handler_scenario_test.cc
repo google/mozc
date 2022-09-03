@@ -435,27 +435,34 @@ commands::Request GetMobileRequest() {
 // Makes sure that the results are not changed by experiment params.
 INSTANTIATE_TEST_SUITE_P(
     TestForExperimentParams, SessionHandlerScenarioTestForRequest,
-    ::testing::Combine(::testing::ValuesIn(kScenariosForExperimentParams),
-                       ::testing::Values(
-                           GetMobileRequest(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_new_spatial_scoring(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enrich_partial_candidates(true);
-                             return request;
-                           }(),
-                           []() {
-                             auto request = GetMobileRequest();
-                             request.mutable_decoder_experiment_params()
-                                 ->set_enable_number_decoder(true);
-                             return request;
-                           }())));
+    ::testing::Combine(
+        ::testing::ValuesIn(kScenariosForExperimentParams),
+        ::testing::Values(
+            GetMobileRequest(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_new_spatial_scoring(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enrich_partial_candidates(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_number_decoder(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              request.mutable_decoder_experiment_params()
+                  ->set_cancel_segment_model_penalty_for_prediction(true);
+              return request;
+            }())));
 
 TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   // Open the scenario file.

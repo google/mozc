@@ -82,6 +82,34 @@
       ],
     },
     {
+      'target_name': 'gen_single_hentaigana_rewriter_data',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_single_hentaigana_rewriter_data',
+          'variables': {
+            'generator': 'gen_single_hentaigana_rewriter_data.py',
+            'input_file': '../data/hentaigana/hentaigana.tsv',
+            'output_file': '<(gen_out_dir)/single_hentaigana_rewriter_data.inc',
+          },
+          'inputs': [
+            '<(generator)',
+            '<(input_file)',
+          ],
+          'outputs': [
+            '<(output_file)',
+          ],
+          'action': [
+            '<(python)',
+            '<(generator)',
+            '--input=<(input_file)',
+            '--output=<(output_file)',
+          ]
+        },
+      ],
+    },
+    {
       'target_name': 'gen_existence_data',
       'type': 'static_library',
       'toolsets': ['host'],

@@ -294,7 +294,7 @@ bool SessionHandler::GetStoredConfig(commands::Command *command) {
 
   // Ensure the onmemory config is same as the locally stored one
   // because the local data could be changed by sync.
-  SetConfig(command->output().config());
+  SetConfig(*config::ConfigHandler::GetConfig());
 
   return true;
 }

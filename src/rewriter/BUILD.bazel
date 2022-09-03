@@ -1042,10 +1042,33 @@ cc_test_mozc(
     ],
 )
 
+py_library_mozc(
+    name = "gen_single_hentaigana_rewriter_data_lib",
+    srcs = ["gen_single_hentaigana_rewriter_data.py"],
+)
+
+py_binary_mozc(
+    name = "gen_single_hentaigana_rewriter_data",
+    srcs = ["gen_single_hentaigana_rewriter_data.py"],
+)
+
+genrule(
+    name = "single_hentaigana_rewriter_data",
+    srcs = ["//data/hentaigana:hentaigana.tsv"],
+    outs = ["single_hentaigana_rewriter_data.inc"],
+    cmd = "$(location :gen_single_hentaigana_rewriter_data) " +
+          "--input $(location //data/hentaigana:hentaigana.tsv) " +
+          "--output $@",
+    exec_tools = [":gen_single_hentaigana_rewriter_data"],
+)
+
 cc_library_mozc(
     name = "single_hentaigana_rewriter",
     srcs = ["single_hentaigana_rewriter.cc"],
     hdrs = ["single_hentaigana_rewriter.h"],
+    textual_hdrs = [
+        ":single_hentaigana_rewriter_data",
+    ],
     deps = [
         ":rewriter_interface",
         "//composer",
@@ -1523,12 +1546,40 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "a11y_description_rewriter",
+    srcs = ["a11y_description_rewriter.cc"],
+    hdrs = ["a11y_description_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base:util",
+        "//data_manager:data_manager_interface",
+        "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+    ],
+)
+
+cc_test_mozc(
+    name = "a11y_description_rewriter_test",
+    size = "small",
+    srcs = ["a11y_description_rewriter_test.cc"],
+    requires_full_emulation = False,
+    deps = [
+        ":a11y_description_rewriter",
+        "//data_manager/testing:mock_data_manager",
+        "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
     name = "rewriter",
     srcs = [
         "rewriter.cc",
     ],
     hdrs = ["rewriter.h"],
     deps = [
+        ":a11y_description_rewriter",
         ":calculator_rewriter",
         ":collocation_rewriter",
         ":command_rewriter",

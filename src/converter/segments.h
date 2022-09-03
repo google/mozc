@@ -149,6 +149,8 @@ class Segment final {
     std::string suffix;
     // Description including description type and message
     std::string description;
+    // Description for A11y support (e.g. "あ。ヒラガナ あ")
+    std::string a11y_description;
 
     // Usage ID
     int32_t usage_id = 0;

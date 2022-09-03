@@ -52,19 +52,26 @@ const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
 const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
 const gchar kIBusPanelCustomFont[] = "custom-font";
 
-bool GetString(GVariant *value, std::string *out_string) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_STRING) {
+using GVariantUniquePtr = std::unique_ptr<GVariant, void (*)(GVariant *)>;
+
+GVariantUniquePtr MakeGVariantUniquePtr(GVariant *variant) {
+  return GVariantUniquePtr(variant, &g_variant_unref);
+}
+
+bool GetString(const GVariantUniquePtr &value, std::string *out_string) {
+  if (g_variant_classify(value.get()) != G_VARIANT_CLASS_STRING) {
     return false;
   }
-  *out_string = static_cast<const char *>(g_variant_get_string(value, nullptr));
+  *out_string =
+      static_cast<const char *>(g_variant_get_string(value.get(), nullptr));
   return true;
 }
 
-bool GetBoolean(GVariant *value, bool *out_boolean) {
-  if (g_variant_classify(value) != G_VARIANT_CLASS_BOOLEAN) {
+bool GetBoolean(const GVariantUniquePtr &value, bool *out_boolean) {
+  if (g_variant_classify(value.get()) != G_VARIANT_CLASS_BOOLEAN) {
     return false;
   }
-  *out_boolean = (g_variant_get_boolean(value) != FALSE);
+  *out_boolean = (g_variant_get_boolean(value.get()) != FALSE);
   return true;
 }
 
@@ -95,8 +102,8 @@ void GSettingsChangedCallback(GSettings *settings, const gchar *key,
   GtkCandidateWindowHandler *handler =
       reinterpret_cast<GtkCandidateWindowHandler *>(user_data);
   if (g_strcmp0(key, kIBusPanelUseCustomFont) == 0) {
-    GVariant *use_custom_font_value =
-        g_settings_get_value(settings, kIBusPanelUseCustomFont);
+    GVariantUniquePtr use_custom_font_value = MakeGVariantUniquePtr(
+        g_settings_get_value(settings, kIBusPanelUseCustomFont));
     bool use_custom_font = false;
     if (GetBoolean(use_custom_font_value, &use_custom_font)) {
       handler->OnIBusUseCustomFontDescriptionChanged(use_custom_font);
@@ -104,8 +111,8 @@ void GSettingsChangedCallback(GSettings *settings, const gchar *key,
       LOG(ERROR) << "Cannot get panel:use_custom_font configuration.";
     }
   } else if (g_strcmp0(key, kIBusPanelCustomFont) == 0) {
-    GVariant *custom_font_value =
-        g_settings_get_value(settings, kIBusPanelCustomFont);
+    GVariantUniquePtr custom_font_value = MakeGVariantUniquePtr(
+        g_settings_get_value(settings, kIBusPanelCustomFont));
     std::string font_description;
     if (GetString(custom_font_value, &font_description)) {
       handler->OnIBusCustomFontDescriptionChanged(font_description);

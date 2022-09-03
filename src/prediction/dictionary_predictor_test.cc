@@ -4058,4 +4058,58 @@ TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
                                       "よんじゅうご", "45"));
 }
+
+TEST_F(DictionaryPredictorTest, CancelSegmentModelPenalty) {
+  testing::MockDataManager data_manager;
+  const DictionaryMock dictionary;
+  ConverterMock converter;
+  ImmutableConverterMock immutable_converter;
+  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
+      CreateSuffixDictionaryFromDataManager(data_manager));
+  std::unique_ptr<const Connector> connector =
+      Connector::CreateFromDataManager(data_manager).value();
+  std::unique_ptr<const Segmenter> segmenter(
+      Segmenter::CreateFromDataManager(data_manager));
+  std::unique_ptr<const SuggestionFilter> suggestion_filter(
+      CreateSuggestionFilter(data_manager));
+  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
+
+  {
+    // Set up mock immutable converter (for REALTIME).
+    Segments segments;
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "ちょう";
+    candidate->value = "超";
+    candidate->wcost = 100;
+    candidate->lid = pos_matcher.GetNounPrefixId();
+    candidate->rid = pos_matcher.GetNounPrefixId();
+    // Segment model penalty is added to the wcost in converter.
+    candidate->wcost += segmenter->GetPrefixPenalty(candidate->rid);
+    candidate->wcost += segmenter->GetSuffixPenalty(candidate->lid);
+
+    immutable_converter.SetConvertForRequest(segments);
+  }
+
+  std::unique_ptr<TestableDictionaryPredictor> predictor(
+      new TestableDictionaryPredictor(
+          data_manager, &converter, &immutable_converter, &dictionary,
+          suffix_dictionary.get(), connector.get(), segmenter.get(),
+          &pos_matcher, suggestion_filter.get()));
+
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  Segments segments;
+  SetUpInputForSuggestion("ちょう", composer_.get(), &segments);
+
+  request_->mutable_decoder_experiment_params()
+      ->set_cancel_segment_model_penalty_for_prediction(true);
+  composer_->SetInputMode(transliteration::HIRAGANA);
+  EXPECT_TRUE(
+      predictor->PredictForRequest(*convreq_for_prediction_, &segments));
+  const auto &c = segments.conversion_segment(0).candidate(0);
+  // Only transition cost (to the empty history) and the original wcost
+  // should be used for the candidate cost.
+  EXPECT_EQ(connector->GetTransitionCost(0, c.lid) + 100, c.cost);
+}
 }  // namespace mozc

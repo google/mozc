@@ -79,9 +79,9 @@ cc_library_mozc(
         "//base",
         "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
-        client = [
-            "//base:init_mozc",
-        ],
+        client = ["//base:init_mozc"],
+        linux = [],
+        oss = ["//base:init_mozc"],
     ),
 )
 
@@ -99,7 +99,11 @@ cc_library_mozc(
         "@com_google_absl//absl/flags:flag",
     ] + select_mozc(
         default = ["//testing/base/public:gunit_main"],
-        linux = [":gunit_main_internal"],
+        linux = ["//testing/base/public:gunit_main"],
+        macos = [
+            ":gunit_main_internal",
+            "@gtest//:gtest",
+        ],
         oss = [":gunit_main_internal"],
         wasm = [":gunit_main_internal"],
     ),
@@ -145,7 +149,8 @@ cc_library_mozc(
     testonly = True,
     srcs = select_mozc(
         client = ["base/internal/googletest.cc"],
-        default = [],
+        linux = [],
+        oss = ["base/internal/googletest.cc"],
     ),
     hdrs = [
         "base/public/googletest.h",
@@ -161,6 +166,16 @@ cc_library_mozc(
             "//base:util",
         ],
         default = ["@gtest//:gtest"],
+        linux = ["@gtest//:gtest"],
+        oss = [
+            ":mozc_data_dir_header",
+            "//base",
+            "//base:status",
+            "//base:logging",
+            "//base:file_util",
+            "@com_google_absl//absl/flags:flag",
+            "//base:util",
+        ],
     ),
 )
 

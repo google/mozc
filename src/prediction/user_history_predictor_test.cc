@@ -168,6 +168,15 @@ class UserHistoryPredictorTest : public ::testing::Test {
     return e;
   }
 
+  static size_t EntrySize(const UserHistoryPredictor &predictor) {
+    return predictor.dic_->Size();
+  }
+
+  static bool LoadStorage(UserHistoryPredictor *predictor,
+                          const UserHistoryStorage &history) {
+    return predictor->Load(history);
+  }
+
   static bool IsConnected(const UserHistoryPredictor::Entry &prev,
                           const UserHistoryPredictor::Entry &next) {
     const uint32_t fp =
@@ -1877,27 +1886,6 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
   EXPECT_TRUE(
       predictor->IsValidEntryIgnoringRemovedField(entry, Request::KDDI_EMOJI));
 
-  // Invalid UTF8.
-  entry.Clear();
-  entry.set_key("key");
-  for (const char *value : {
-           "\xC2\xC2 ",
-           "\xE0\xE0\xE0 ",
-           "\xF0\xF0\xF0\xF0 ",
-           "\xFF ",
-           "\xFE ",
-           "\xC0\xAF",
-           "\xE0\x80\xAF",
-           // Real-world examples from b/116826494.
-           "\xEF",
-           "\xBC\x91\xE5",
-       }) {
-    entry.set_value(value);
-    EXPECT_FALSE(predictor->IsValidEntry(entry, 0)) << entry.Utf8DebugString();
-    EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0))
-        << entry.Utf8DebugString();
-  }
-
   SuppressionDictionary *d = GetSuppressionDictionary();
   DCHECK(d);
   d->Lock();
@@ -2297,6 +2285,52 @@ TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingOldEntries) {
       EXPECT_TRUE(absl::StartsWith(entry.value(), "new_"));
     }
     EXPECT_OK(FileUtil::Unlink(filename));
+  }
+}
+
+TEST_F(UserHistoryPredictorTest, UserHistoryStorageContainingInvalidEntries) {
+  // This test checks invalid entries are not loaded into dic_.
+  ScopedClockMock clock(1, 0);
+
+  // Create a history proto containing invalid entries (timestamp = 1).
+  user_history_predictor::UserHistory history;
+
+  // Invalid UTF8.
+  for (const char *value : {
+           "\xC2\xC2 ",
+           "\xE0\xE0\xE0 ",
+           "\xF0\xF0\xF0\xF0 ",
+           "\xFF ",
+           "\xFE ",
+           "\xC0\xAF",
+           "\xE0\x80\xAF",
+           // Real-world examples from b/116826494.
+           "\xEF",
+           "\xBC\x91\xE5",
+       }) {
+    auto *entry = history.add_entries();
+    entry->set_key("key");
+    entry->set_value(value);
+  }
+
+  // Test Load().
+  {
+    const std::string filename =
+        FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), "testload");
+    // Write directly to the file to keep invalid entries for testing.
+    storage::EncryptedStringStorage file_storage(filename);
+    ASSERT_TRUE(file_storage.Save(history.SerializeAsString()));
+    FileUnlinker unlinker(filename);
+
+    UserHistoryStorage storage(filename);
+    ASSERT_TRUE(storage.Load());
+
+    UserHistoryPredictor *predictor = GetUserHistoryPredictor();
+    EXPECT_TRUE(LoadStorage(predictor, storage));
+
+    // Only the valid entries are loaded.
+    EXPECT_EQ(9, storage.GetProto().entries_size());
+    EXPECT_EQ(0, EntrySize(*predictor));
   }
 }
 
