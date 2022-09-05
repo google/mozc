@@ -210,6 +210,15 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
   return ret;
 }
 
+Segments GetSegmentsForRealtimeCandidatesGeneration(
+    const Segments &original_segments) {
+  Segments segments = original_segments;
+  // Other predictors (i.e. user_history_predictor) can add candidates
+  // before this predictor.
+  segments.mutable_conversion_segment(0)->clear_candidates();
+  return segments;
+}
+
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback
@@ -1605,7 +1614,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
     std::vector<Result> *results) const {
   DCHECK_EQ(1, segments.conversion_segments_size());
 
-  Segments tmp_segments = segments;
+  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
   ConversionRequest tmp_request = request;
   tmp_request.set_max_conversion_candidates_size(20);
   tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
@@ -1683,7 +1692,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   const ConversionRequest request_for_realtime =
       GetConversionRequestForRealtimeCandidates(request,
                                                 realtime_candidates_size);
-  Segments tmp_segments = segments;
+  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
                                                &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||

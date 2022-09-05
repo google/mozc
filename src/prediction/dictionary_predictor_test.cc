@@ -1896,6 +1896,10 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
 
     InitSegmentsWithKey(kKey, &segments);
 
+    // User history predictor can add candidates before dictionary predictor
+    segments.mutable_conversion_segment(0)->add_candidate()->value = "history1";
+    segments.mutable_conversion_segment(0)->add_candidate()->value = "history2";
+
     std::vector<TestableDictionaryPredictor::Result> results;
     convreq_->set_use_actual_converter_for_realtime_conversion(false);
 
@@ -1913,6 +1917,10 @@ TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
     Segments segments;
 
     InitSegmentsWithKey(kKey, &segments);
+
+    // User history predictor can add candidates before dictionary predictor
+    segments.mutable_conversion_segment(0)->add_candidate()->value = "history1";
+    segments.mutable_conversion_segment(0)->add_candidate()->value = "history2";
 
     std::vector<TestableDictionaryPredictor::Result> results;
     convreq_for_suggestion_->set_use_actual_converter_for_realtime_conversion(
