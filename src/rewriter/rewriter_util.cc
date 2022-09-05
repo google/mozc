@@ -41,10 +41,10 @@ namespace mozc {
 //
 // The output candidates would be:
 // [o, o, R, R, o, o, o, o, ...]
-// [h, o, R, R, o, o, o, o, ...]
-// [h, h, R, R, o, o, o, o, ...]
-// [h, h, h, R, R, o, o, o, ...]
-// [h, h, h, h, R, R, o, o, ...]
+// [h, o, o, R, R, o, o, o, ...]
+// [h, h, o, o, R, R, o, o, ...]
+// [h, h, h, o, o, R, R, o, ...]
+// [h, h, h, h, o, o, R, R  ...]
 // For the number of history candidates.
 size_t RewriterUtil::CalculateInsertPosition(const Segment &segment,
                                              size_t offset) {
@@ -59,7 +59,7 @@ size_t RewriterUtil::CalculateInsertPosition(const Segment &segment,
       break;
     }
   }
-  return std::min(std::max(offset, existing_history_candidates_num),
+  return std::min(offset + existing_history_candidates_num,
                   segment.candidates_size());
 }
 

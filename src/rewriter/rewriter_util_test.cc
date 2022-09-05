@@ -59,11 +59,9 @@ TEST(RewriterUtilTest, CalculateInsertPositionTest_UserHistory) {
   }
 
   EXPECT_EQ(3, RewriterUtil::CalculateInsertPosition(segment, 0));
-  EXPECT_EQ(3, RewriterUtil::CalculateInsertPosition(segment, 1));
-  EXPECT_EQ(3, RewriterUtil::CalculateInsertPosition(segment, 2));
-  EXPECT_EQ(3, RewriterUtil::CalculateInsertPosition(segment, 3));
-  EXPECT_EQ(4, RewriterUtil::CalculateInsertPosition(segment, 4));
-  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 5));
+  EXPECT_EQ(4, RewriterUtil::CalculateInsertPosition(segment, 1));
+  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 2));
+  EXPECT_EQ(5, RewriterUtil::CalculateInsertPosition(segment, 3));
 }
 
 TEST(RewriterUtilTest, CalculateInsertPositionTest_NoUserHistory) {

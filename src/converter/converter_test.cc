@@ -76,12 +76,14 @@
 #include "request/conversion_request.h"
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
+#include "session/request_test_util.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
 #include "transliteration/transliteration.h"
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -1798,6 +1800,57 @@ TEST_F(ConverterTest, SuggestionOnlyShouldBeIndependentPrediction) {
                                         segments.conversion_segment(0)));
     }
   }
+}
+
+TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
+  std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
+  ConverterInterface *converter = engine->GetConverter();
+  CHECK(converter);
+  commands::Request request;
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  composer::Table table;
+  composer::Composer composer(&table, &request, &config);
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  ConversionRequest conversion_request(&composer, &request, &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+
+  Segments segments;
+  composer.SetPreeditTextForTestOnly("あい");
+
+  const std::string top_candidate = "合い";
+  absl::flat_hash_set<std::string> seen;
+  seen.insert(top_candidate);
+
+  // Remember user history 3 times.
+  for (int i = 0; i < 3; ++i) {
+    segments.Clear();
+    EXPECT_TRUE(
+        converter->StartPredictionForRequest(conversion_request, &segments));
+    const Segment &segment = segments.conversion_segment(0);
+    for (int index = 0; index < segment.candidates_size(); ++index) {
+      const bool inserted = seen.insert(segment.candidate(index).value).second;
+      if (inserted) {
+        converter->CommitSegmentValue(&segments, 0, index);
+        break;
+      }
+    }
+    converter->FinishConversion(conversion_request, &segments);
+  }
+
+  segments.Clear();
+  EXPECT_TRUE(
+      converter->StartPredictionForRequest(conversion_request, &segments));
+
+  int default_candidate_index = -1;
+  for (int i = 0; i < segments.conversion_segment(0).candidates_size(); ++i) {
+    if (segments.conversion_segment(0).candidate(i).value == top_candidate) {
+      default_candidate_index = i;
+      break;
+    }
+  }
+  ASSERT_NE(-1, default_candidate_index);
+  EXPECT_LE(default_candidate_index, 3);
 }
 
 }  // namespace mozc
