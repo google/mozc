@@ -182,7 +182,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
 
   // The label of |prop_composition_mode_| is shown in the language panel.
   // Note that the property name "InputMode" is hard-coded in the Gnome shell.
-  // Do not change the name. Othewise the Gnome shell fails to recognize that
+  // Do not change the name. Otherwise the Gnome shell fails to recognize that
   // this property indicates Mozc's input mode.
   // See /usr/share/gnome-shell/js/ui/status/keyboard.js for details.
   prop_composition_mode_ = ibus_property_new(
