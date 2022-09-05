@@ -1359,6 +1359,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:text_normalizer",
         "//base:util",
+        "//base/protobuf",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",

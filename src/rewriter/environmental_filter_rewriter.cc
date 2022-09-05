@@ -38,6 +38,7 @@
 #include <vector>
 
 #include "base/logging.h"
+#include "base/protobuf/protobuf.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
@@ -70,7 +71,7 @@ bool FindCodepointsInClosedRange(const std::vector<char32_t> &codepoints,
 }
 
 std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
-    const proto2::RepeatedField<int> &additional_groups) {
+    const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
   constexpr std::array<AdditionalRenderableCharacterGroup, 3> kAllCases = {
