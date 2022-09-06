@@ -443,8 +443,12 @@ int main(int argc, char **argv) {
             << "\nid.def: " << absl::GetFlag(FLAGS_id_def) << std::endl;
 
   absl::StatusOr<std::unique_ptr<mozc::DataManager>> data_manager =
-      mozc::DataManager::CreateFromFile(absl::GetFlag(FLAGS_engine_data_path),
-                                        absl::GetFlag(FLAGS_magic));
+      absl::GetFlag(FLAGS_magic).empty()
+          ? mozc::DataManager::CreateFromFile(
+                absl::GetFlag(FLAGS_engine_data_path))
+          : mozc::DataManager::CreateFromFile(
+                absl::GetFlag(FLAGS_engine_data_path),
+                absl::GetFlag(FLAGS_magic));
   CHECK_OK(data_manager);
 
   mozc::commands::Request request;
