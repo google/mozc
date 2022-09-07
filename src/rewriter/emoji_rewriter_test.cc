@@ -118,7 +118,7 @@ void ChooseEmojiCandidate(Segments *segments) {
 struct EmojiData {
   const char *key;
   const char *unicode;
-  const EmojiRewriter::EmojiVersion unicode_version;
+  const EmojiVersion unicode_version;
   const char *description_unicode;
   const char *unused_field_0;
   const char *unused_field_1;
@@ -128,21 +128,19 @@ struct EmojiData {
 // Elements must be sorted lexicographically by key (first string).
 const EmojiData kTestEmojiList[] = {
     // An actual emoji character
-    {"Emoji", "🐭", EmojiRewriter::EmojiVersion::E0_6, "nezumi picture", "", "",
-     ""},
+    {"Emoji", "🐭", EmojiVersion::E0_6, "nezumi picture", "", "", ""},
 
     // Meta candidates.
-    {"Inu", "DOG", EmojiRewriter::EmojiVersion::E0_6, "inu", "", "", ""},
-    {"Neko", "CAT", EmojiRewriter::EmojiVersion::E0_6, "neko", "", "", ""},
-    {"Nezumi", "MOUSE", EmojiRewriter::EmojiVersion::E0_6, "nezumi", "", "",
-     ""},
-    {"Nezumi", "RAT", EmojiRewriter::EmojiVersion::E0_6, "nezumi", "", "", ""},
+    {"Inu", "DOG", EmojiVersion::E0_6, "inu", "", "", ""},
+    {"Neko", "CAT", EmojiVersion::E0_6, "neko", "", "", ""},
+    {"Nezumi", "MOUSE", EmojiVersion::E0_6, "nezumi", "", "", ""},
+    {"Nezumi", "RAT", EmojiVersion::E0_6, "nezumi", "", "", ""},
 
     // Test data for carrier.
-    {"X", "COW", EmojiRewriter::EmojiVersion::E0_6, "ushi", "", "", ""},
-    {"X", "TIGER", EmojiRewriter::EmojiVersion::E0_6, "tora", "", "", ""},
-    {"X", "RABIT", EmojiRewriter::EmojiVersion::E0_6, "usagi", "", "", ""},
-    {"X", "DRAGON", EmojiRewriter::EmojiVersion::E0_6, "ryu", "", "", ""},
+    {"X", "COW", EmojiVersion::E0_6, "ushi", "", "", ""},
+    {"X", "TIGER", EmojiVersion::E0_6, "tora", "", "", ""},
+    {"X", "RABIT", EmojiVersion::E0_6, "usagi", "", "", ""},
+    {"X", "DRAGON", EmojiVersion::E0_6, "ryu", "", "", ""},
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test

@@ -134,7 +134,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
       std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(std::make_unique<KatakanaPromotionRewriter>());
-  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>());
+  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(*data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
 }

@@ -98,8 +98,7 @@ int GetEmojiCost(const Segment &segment) {
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
-void GatherAllEmojiData(EmojiRewriter::EmojiDataIterator begin,
-                        EmojiRewriter::EmojiDataIterator end,
+void GatherAllEmojiData(EmojiDataIterator begin, EmojiDataIterator end,
                         const SerializedStringArray &string_array,
                         EmojiEntryList *utf8_emoji_list) {
   for (; begin != end; ++begin) {
@@ -204,8 +203,8 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
   return absl::StrContains(candidate.description, kEmoji);
 }
 
-std::pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
-EmojiRewriter::LookUpToken(absl::string_view key) const {
+std::pair<EmojiDataIterator, EmojiDataIterator> EmojiRewriter::LookUpToken(
+    absl::string_view key) const {
   // Search string array for key.
   auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
   if (iter == string_array_.end() || *iter != key) {

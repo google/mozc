@@ -294,3 +294,12 @@ bzl_library(
     parse_tests = False,
     visibility = ["//visibility:private"],
 )
+
+cc_library_mozc(
+    name = "emoji_data",
+    hdrs = ["emoji_data.h"],
+    deps = [
+        "//base:port",
+        "//base:serialized_string_array",
+    ],
+)

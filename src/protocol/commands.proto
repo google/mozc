@@ -888,6 +888,17 @@ message Request {
     // It contains four archaic hiraganas/katakanas (U+1B11F ~ U+1B122) since
     // Unicode 14.0.
     KANA_EXTENDED_A_14_0 = 4;
+
+    // Additional Emoji
+    // Emoji in enum can be removed and become default several years passed
+    // after the introduction. Emoji 12.1, released October 2019
+    EMOJI_12_1 = 5;
+    // Emoji 13.0, released March 2020
+    EMOJI_13_0 = 6;
+    // Emoji 13.1, released September 2020
+    EMOJI_13_1 = 7;
+    // Emoji 14.0, released September 2021
+    EMOJI_14_0 = 8;
   }
 
   // Characters in the union of this list of groups can be contained in

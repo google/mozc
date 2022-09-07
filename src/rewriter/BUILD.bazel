@@ -997,6 +997,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//converter:segments",
         "//data_manager:data_manager_interface",
+        "//data_manager:emoji_data",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -1353,12 +1354,16 @@ cc_library_mozc(
     deps = [
         ":rewriter_interface",
         "//base:logging",
+        "//base:serialized_string_array",
         "//base:text_normalizer",
         "//base:util",
         "//base/protobuf",
         "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//data_manager:emoji_data",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1368,13 +1373,19 @@ cc_test_mozc(
     srcs = ["environmental_filter_rewriter_test.cc"],
     requires_full_emulation = False,
     deps = [
+        ":emoji_rewriter",
         ":environmental_filter_rewriter",
         "//base:system_util",
+        "//base:util",
         "//converter:segments",
+        "//data_manager:emoji_data",
+        "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 

@@ -33,17 +33,22 @@
 #include <array>
 #include <cstddef>
 #include <iterator>
+#include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/protobuf/protobuf.h"
+#include "base/serialized_string_array.h"
 #include "base/text_normalizer.h"
 #include "base/util.h"
 #include "converter/segments.h"
+#include "data_manager/emoji_data.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 using AdditionalRenderableCharacterGroup =
@@ -74,10 +79,14 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
     const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
-  constexpr std::array<AdditionalRenderableCharacterGroup, 3> kAllCases = {
+  constexpr std::array<AdditionalRenderableCharacterGroup, 7> kAllCases = {
       commands::Request::KANA_SUPPLEMENT_6_0,
       commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0,
       commands::Request::KANA_EXTENDED_A_14_0,
+      commands::Request::EMOJI_12_1,
+      commands::Request::EMOJI_13_0,
+      commands::Request::EMOJI_13_1,
+      commands::Request::EMOJI_14_0,
   };
 
   std::vector<AdditionalRenderableCharacterGroup> result;
@@ -116,11 +125,142 @@ bool NormalizeCandidate(Segment::Candidate *candidate,
 
   return true;
 }
+
+EmojiDataIterator begin(const absl::string_view token_array_data) {
+  return EmojiDataIterator(token_array_data.data());
+}
+
+EmojiDataIterator end(const absl::string_view token_array_data) {
+  return EmojiDataIterator(token_array_data.data() + token_array_data.size());
+}
+
+std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
+    const std::vector<EmojiVersion> &target_versions,
+    const std::pair<EmojiDataIterator, EmojiDataIterator> &range,
+    const SerializedStringArray &string_array) {
+  std::map<EmojiVersion, std::vector<std::vector<char32_t>>> results;
+  for (const EmojiVersion target_version : target_versions) {
+    results[target_version] = {};
+  }
+  for (auto iter = range.first; iter != range.second; ++iter) {
+    const EmojiVersion version =
+        static_cast<EmojiVersion>(iter.unicode_version_index());
+    if (results.find(version) == results.end()) {
+      continue;
+    }
+    const absl::string_view utf8_emoji = string_array[iter.emoji_index()];
+    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(utf8_emoji);
+    results[version].push_back(std::move(codepoints));
+  }
+  return results;
+}
+
 }  // namespace
+
+void CharacterGroupFinder::Initialize(
+    const std::vector<std::vector<char32_t>> &target_codepoints) {
+  std::vector<char32_t> single_codepoints;
+
+  for (const auto &codepoints : target_codepoints) {
+    if (codepoints.size() == 1) {
+      single_codepoints.push_back(codepoints[0]);
+    } else {
+      multiple_codepoints_.push_back(codepoints);
+    }
+  }
+
+  // sort and summarize them into range;
+  std::sort(single_codepoints.begin(), single_codepoints.end());
+  std::pair<char32_t, char32_t> last_item = {
+      0, 0};  // initialize with null character
+  for (const char32_t codepoint : single_codepoints) {
+    if (last_item.second == 0) {
+      last_item = std::make_pair(codepoint, codepoint);
+      continue;
+    }
+    if (last_item.second + 1 == codepoint) {
+      last_item.second += 1;
+      continue;
+    }
+    single_codepoint_ranges_.push_back(last_item);
+    last_item = std::make_pair(codepoint, codepoint);
+  }
+  if (last_item.second != 0) {
+    single_codepoint_ranges_.push_back(last_item);
+  }
+}
+
+// Current implementation is brute-force search.
+// It is possible to use Rabin-Karp search or other possibly faster algorithm.
+bool CharacterGroupFinder::FindMatch(
+    const std::vector<char32_t> &target) const {
+  std::vector<std::pair<int, int>> indices =
+      {};  // position, target index in multiple_codepoints
+  const size_t multiple_codepoints_size = multiple_codepoints_.size();
+  for (const char32_t codepoint : target) {
+    // Single codepoint check
+    for (const auto [left, right] : single_codepoint_ranges_) {
+      if (left <= codepoint && codepoint <= right) {
+        return true;
+      }
+    }
+    // Multiple codepoints check
+    const size_t size = indices.size();
+    for (int i = 0; i < size; ++i) {
+      const int j = size - i - 1;
+      const int position = indices[j].first;
+      if (multiple_codepoints_[indices[j].second][position] == codepoint) {
+        if (position == multiple_codepoints_[indices[j].second].size() - 1) {
+          // found
+          return true;
+        } else {
+          // go next
+          indices[j].first += 1;
+          continue;
+        }
+      } else {
+        // different
+        indices.erase(indices.begin() + j);
+      }
+    }
+    for (size_t i = 0; i < multiple_codepoints_size; ++i) {
+      if (multiple_codepoints_[i][0] == codepoint) {
+        indices.push_back({1, i});
+      }
+    }
+  }
+  return false;
+}
 
 int EnvironmentalFilterRewriter::capability(
     const ConversionRequest &request) const {
   return RewriterInterface::ALL;
+}
+
+EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
+    const DataManagerInterface &data_manager) {
+  absl::string_view token_array_data;
+  absl::string_view string_array_data;
+
+  // TODO(mozc-team):
+  // Currently, this rewriter uses data from emoji_data.tsv, which is for Emoji
+  // conversion, as a source of Emoji version information. However,
+  // emoji_data.tsv lacks some Emoji, including Emoji with skin-tones and
+  // family/couple Emojis. As a future work, the data source should be refined.
+  data_manager.GetEmojiRewriterData(&token_array_data, &string_array_data);
+  SerializedStringArray string_array;
+  string_array.Set(string_array_data);
+  std::pair<EmojiDataIterator, EmojiDataIterator> range =
+      std::make_pair(begin(token_array_data), end(token_array_data));
+  const std::map<EmojiVersion, std::vector<std::vector<char32_t>>>
+      version_to_targets =
+          ExtractTargetEmojis({EmojiVersion::E12_1, EmojiVersion::E13_0,
+                               EmojiVersion::E13_1, EmojiVersion::E14_0},
+                              range, string_array);
+  finder_e12_1_.Initialize(version_to_targets.at(EmojiVersion::E12_1));
+  finder_e13_0_.Initialize(version_to_targets.at(EmojiVersion::E13_0));
+  finder_e13_1_.Initialize(version_to_targets.at(EmojiVersion::E13_1));
+  finder_e14_0_.Initialize(version_to_targets.at(EmojiVersion::E14_0));
 }
 
 bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
@@ -198,6 +338,18 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
           case commands::Request::KANA_EXTENDED_A_14_0:
             found_nonrenderable =
                 FindCodepointsInClosedRange(codepoints, 0x1B11F, 0x1B122);
+            break;
+          case commands::Request::EMOJI_12_1:
+            found_nonrenderable = finder_e12_1_.FindMatch(codepoints);
+            break;
+          case commands::Request::EMOJI_13_0:
+            found_nonrenderable = finder_e13_0_.FindMatch(codepoints);
+            break;
+          case commands::Request::EMOJI_13_1:
+            found_nonrenderable = finder_e13_1_.FindMatch(codepoints);
+            break;
+          case commands::Request::EMOJI_14_0:
+            found_nonrenderable = finder_e14_0_.FindMatch(codepoints);
             break;
         }
         if (found_nonrenderable) {
