@@ -94,7 +94,8 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
 bool NormalizeCandidate(Segment::Candidate *candidate,
                         TextNormalizer::Flag flag) {
   DCHECK(candidate);
-  if (candidate->attributes & Segment::Candidate::USER_DICTIONARY) {
+  if (candidate->attributes & (Segment::Candidate::NO_MODIFICATION |
+                               Segment::Candidate::USER_DICTIONARY)) {
     return false;
   }
 

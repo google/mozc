@@ -99,8 +99,12 @@ void AddCandidate(const std::string &key, const std::string &value, int index,
   candidate->value = value;
   candidate->content_value = value;
   candidate->description = "Unicode 変換 (" + key + ")";
+  // NO_MODIFICATION is required here, in order to escape
+  // EnvironmentalFilterRewriter. Otherwise, some candidates from
+  // UnicodeRewriter will be removed because they are unrenderable.
   candidate->attributes |= (Segment::Candidate::NO_LEARNING |
-                            Segment::Candidate::NO_VARIANTS_EXPANSION);
+                            Segment::Candidate::NO_VARIANTS_EXPANSION |
+                            Segment::Candidate::NO_MODIFICATION);
 }
 }  // namespace
 

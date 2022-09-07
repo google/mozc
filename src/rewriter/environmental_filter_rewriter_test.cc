@@ -265,6 +265,16 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   EXPECT_FALSE(rewriter.Rewrite(request, &segments));
   // U+301C
   EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
+
+  // not normalized.
+  segments.Clear();
+  // U+301C
+  AddSegment("なみ", "〜", &segments);
+  segments.mutable_segment(0)->mutable_candidate(0)->attributes |=
+      Segment::Candidate::NO_MODIFICATION;
+  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  // U+301C
+  EXPECT_EQ("〜", segments.segment(0).candidate(0).value);
 }
 
 }  // namespace

@@ -1118,6 +1118,7 @@ void DictionaryPredictor::Result::SetTypesAndTokenAttributes(
   }
   if (token_attr & Token::USER_DICTIONARY) {
     candidate_attributes |= (Segment::Candidate::USER_DICTIONARY |
+                             Segment::Candidate::NO_MODIFICATION |
                              Segment::Candidate::NO_VARIANTS_EXPANSION);
   }
 }

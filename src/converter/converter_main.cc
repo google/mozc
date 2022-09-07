@@ -150,6 +150,7 @@ std::string CandidateAttributesToString(uint32_t attrs) {
   ADD_STR(TYPING_CORRECTION);
   ADD_STR(AUTO_PARTIAL_SUGGESTION);
   ADD_STR(USER_HISTORY_PREDICTION);
+  ADD_STR(NO_MODIFICATION);
 
 #undef ADD_STR
   return absl::StrJoin(v, " | ");

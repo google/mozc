@@ -820,7 +820,6 @@ cc_library_mozc(
     hdrs = ["unicode_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base",
         "//base:logging",
         "//base:number_util",
         "//base:util",
@@ -828,7 +827,6 @@ cc_library_mozc(
         "//converter:converter_interface",
         "//converter:segments",
         "//request:conversion_request",
-        "//testing:gunit_prod",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -843,7 +841,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":unicode_rewriter",
-        "//base",
         "//base:port",
         "//base:system_util",
         "//base:util",
@@ -857,7 +854,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
