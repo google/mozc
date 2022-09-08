@@ -412,7 +412,7 @@ TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {
   constexpr char description[] = "[全]波ダッシュ";
   segments.mutable_segment(0)->mutable_candidate(0)->description = description;
 #ifdef OS_WIN
-  EXPECT_TRUE(rewriter.Rewrite(request, &segments));
+  EXPECT_TRUE(rewriter_->Rewrite(request, &segments));
   // U+FF5E
   EXPECT_EQ("～", segments.segment(0).candidate(0).value);
   EXPECT_TRUE(segments.segment(0).candidate(0).description.empty());
