@@ -549,7 +549,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":symbol_rewriter",
-        "//base",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -563,7 +562,6 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1032,58 +1030,6 @@ cc_test_mozc(
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-py_library_mozc(
-    name = "gen_single_hentaigana_rewriter_data_lib",
-    srcs = ["gen_single_hentaigana_rewriter_data.py"],
-)
-
-py_binary_mozc(
-    name = "gen_single_hentaigana_rewriter_data",
-    srcs = ["gen_single_hentaigana_rewriter_data.py"],
-)
-
-genrule(
-    name = "single_hentaigana_rewriter_data",
-    srcs = ["//data/hentaigana:hentaigana.tsv"],
-    outs = ["single_hentaigana_rewriter_data.inc"],
-    cmd = "$(location :gen_single_hentaigana_rewriter_data) " +
-          "--input $(location //data/hentaigana:hentaigana.tsv) " +
-          "--output $@",
-    exec_tools = [":gen_single_hentaigana_rewriter_data"],
-)
-
-cc_library_mozc(
-    name = "single_hentaigana_rewriter",
-    srcs = ["single_hentaigana_rewriter.cc"],
-    hdrs = ["single_hentaigana_rewriter.h"],
-    textual_hdrs = [
-        ":single_hentaigana_rewriter_data",
-    ],
-    deps = [
-        ":rewriter_interface",
-        "//composer",
-        "//converter:converter_interface",
-        "//converter:segments",
-        "//request:conversion_request",
-    ],
-    alwayslink = 1,
-)
-
-cc_test_mozc(
-    name = "single_hentaigana_rewriter_test",
-    size = "small",
-    srcs = ["single_hentaigana_rewriter_test.cc"],
-    deps = [
-        ":single_hentaigana_rewriter",
-        "//base:system_util",
-        "//converter:segments",
-        "//engine:mock_data_engine_factory",
-        "//protocol:commands_cc_proto",
-        "//request:conversion_request",
-        "//testing:gunit_main",
     ],
 )
 
@@ -1600,7 +1546,6 @@ cc_library_mozc(
         ":number_rewriter",
         ":remove_redundant_candidate_rewriter",
         ":rewriter_interface",
-        ":single_hentaigana_rewriter",
         ":single_kanji_rewriter",
         ":small_letter_rewriter",
         ":symbol_rewriter",
