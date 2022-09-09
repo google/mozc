@@ -1546,7 +1546,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 # Hentaigana is disabled by default, using EnvironmentalFilterRewriter.
 # If the client can render Hentaigana, then add Hentaigana related code blocks
 # into Request.additional_renderable_character_groups.
-記号	𛀀	へんたいがな え		変体仮名
+記号	𛀀	へんたいがな え	変体仮名
 記号	𛀁	へんたいがな いぇ	江の変体仮名
 記号	𛀁	へんたいがな え	江の変体仮名
 記号	𛀂	へんたいがな あ	安の変体仮名
@@ -1857,7 +1857,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	𛄞	へんたいがな む	无の変体仮名
 記号	𛄞	へんたいがな も	无の変体仮名
 記号	𛄟	へんたいがな う	汙の変体仮名
-記号	𛄠	へんたいがな い		変体仮名
-記号	𛄡	へんたいがな いぇ		変体仮名
-記号	𛄡	へんたいがな え		変体仮名
+記号	𛄠	へんたいがな い	変体仮名
+記号	𛄡	へんたいがな いぇ	変体仮名
+記号	𛄡	へんたいがな え	変体仮名
 記号	𛄢	へんたいがな う	汙の変体仮名
