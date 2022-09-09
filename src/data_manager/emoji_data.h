@@ -55,6 +55,7 @@ enum EmojiVersion : uint32_t {
   E13_0,
   E13_1,
   E14_0,
+  E15_0,
 };
 // LINT.ThenChange(//rewriter/gen_emoji_rewriter_data.py)
 

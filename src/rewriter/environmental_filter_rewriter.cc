@@ -79,7 +79,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
     const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
-  constexpr std::array<AdditionalRenderableCharacterGroup, 7> kAllCases = {
+  constexpr std::array<AdditionalRenderableCharacterGroup, 8> kAllCases = {
       commands::Request::KANA_SUPPLEMENT_6_0,
       commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0,
       commands::Request::KANA_EXTENDED_A_14_0,
@@ -87,6 +87,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
       commands::Request::EMOJI_13_0,
       commands::Request::EMOJI_13_1,
       commands::Request::EMOJI_14_0,
+      commands::Request::EMOJI_15_0,
   };
 
   std::vector<AdditionalRenderableCharacterGroup> result;
@@ -233,14 +234,15 @@ EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
   std::pair<EmojiDataIterator, EmojiDataIterator> range =
       std::make_pair(begin(token_array_data), end(token_array_data));
   const std::map<EmojiVersion, std::vector<std::vector<char32_t>>>
-      version_to_targets =
-          ExtractTargetEmojis({EmojiVersion::E12_1, EmojiVersion::E13_0,
-                               EmojiVersion::E13_1, EmojiVersion::E14_0},
-                              range, string_array);
+      version_to_targets = ExtractTargetEmojis(
+          {EmojiVersion::E12_1, EmojiVersion::E13_0, EmojiVersion::E13_1,
+           EmojiVersion::E14_0, EmojiVersion::E15_0},
+          range, string_array);
   finder_e12_1_.Initialize(version_to_targets.at(EmojiVersion::E12_1));
   finder_e13_0_.Initialize(version_to_targets.at(EmojiVersion::E13_0));
   finder_e13_1_.Initialize(version_to_targets.at(EmojiVersion::E13_1));
   finder_e14_0_.Initialize(version_to_targets.at(EmojiVersion::E14_0));
+  finder_e15_0_.Initialize(version_to_targets.at(EmojiVersion::E15_0));
 }
 
 bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
@@ -330,6 +332,9 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
             break;
           case commands::Request::EMOJI_14_0:
             found_nonrenderable = finder_e14_0_.FindMatch(codepoints);
+            break;
+          case commands::Request::EMOJI_15_0:
+            found_nonrenderable = finder_e15_0_.FindMatch(codepoints);
             break;
         }
         if (found_nonrenderable) {
