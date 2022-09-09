@@ -197,7 +197,7 @@ bool CharacterGroupFinder::FindMatch(
     const std::vector<char32_t> &target) const {
   for (const char32_t codepoint : target) {
     // Single codepoint check
-    for (const auto [left, right] : single_codepoint_ranges_) {
+    for (const auto &[left, right] : single_codepoint_ranges_) {
       if (left <= codepoint && codepoint <= right) {
         return true;
       }
