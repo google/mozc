@@ -194,9 +194,6 @@ void CharacterGroupFinder::Initialize(
 // It is possible to use Rabin-Karp search or other possibly faster algorithm.
 bool CharacterGroupFinder::FindMatch(
     const std::vector<char32_t> &target) const {
-  std::vector<std::pair<int, int>> indices =
-      {};  // position, target index in multiple_codepoints
-  const size_t multiple_codepoints_size = multiple_codepoints_.size();
   for (const char32_t codepoint : target) {
     // Single codepoint check
     for (const auto [left, right] : single_codepoint_ranges_) {
@@ -204,29 +201,12 @@ bool CharacterGroupFinder::FindMatch(
         return true;
       }
     }
-    // Multiple codepoints check
-    const size_t size = indices.size();
-    for (int i = 0; i < size; ++i) {
-      const int j = size - i - 1;
-      const int position = indices[j].first;
-      if (multiple_codepoints_[indices[j].second][position] == codepoint) {
-        if (position == multiple_codepoints_[indices[j].second].size() - 1) {
-          // found
-          return true;
-        } else {
-          // go next
-          indices[j].first += 1;
-          continue;
-        }
-      } else {
-        // different
-        indices.erase(indices.begin() + j);
-      }
-    }
-    for (size_t i = 0; i < multiple_codepoints_size; ++i) {
-      if (multiple_codepoints_[i][0] == codepoint) {
-        indices.push_back({1, i});
-      }
+  }
+  // Multiple codepoints check
+  for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
+    if (target.end() != std::search(target.begin(), target.end(),
+                                    codepoints.begin(), codepoints.end())) {
+      return true;
     }
   }
   return false;
