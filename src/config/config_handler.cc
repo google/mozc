@@ -32,6 +32,7 @@
 #include "config/config_handler.h"
 
 #include <algorithm>
+#include <istream>
 #include <memory>
 #include <string>
 
