@@ -386,6 +386,16 @@ class ConverterTest : public ::testing::Test {
     return false;
   }
 
+  int GetCandidateIndexByValue(absl::string_view value,
+                               const Segment &segment) const {
+    for (size_t i = 0; i < segment.candidates_size(); ++i) {
+      if (segment.candidate(i).value == value) {
+        return i;
+      }
+    }
+    return -1;  // not found
+  }
+
   const commands::Request &default_request() const { return default_request_; }
 
   static SuggestionFilter *CreateSuggestionFilter(
@@ -1851,6 +1861,36 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
   }
   ASSERT_NE(-1, default_candidate_index);
   EXPECT_LE(default_candidate_index, 3);
+}
+
+TEST_F(ConverterTest,
+       DoNotPromotePrefixOfSingleEntryForEnrichPartialCandidates) {
+  std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
+  ConverterInterface *converter = engine->GetConverter();
+  CHECK(converter);
+  commands::Request request;
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  composer::Table table;
+  composer::Composer composer(&table, &request, &config);
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  ConversionRequest conversion_request(&composer, &request, &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+
+  Segments segments;
+  composer.SetPreeditTextForTestOnly("おつかれ");
+
+  EXPECT_TRUE(
+      converter->StartPredictionForRequest(conversion_request, &segments));
+
+  int o_index = GetCandidateIndexByValue("お", segments.conversion_segment(0));
+  int otsukare_index =
+      GetCandidateIndexByValue("お疲れ", segments.conversion_segment(0));
+  EXPECT_NE(o_index, -1);
+  EXPECT_NE(otsukare_index, -1);
+  EXPECT_LT(otsukare_index, o_index);
 }
 
 }  // namespace mozc

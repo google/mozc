@@ -512,11 +512,11 @@ class DictionaryPredictor : public PredictorInterface {
 
   static std::string GetPredictionTypeDebugString(PredictionTypes types);
 
-  static int CalculatePrefixPenalty(
+  int CalculatePrefixPenalty(
       const ConversionRequest &request, const std::string &input_key,
       const Result &result,
       const ImmutableConverterInterface *immutable_converter,
-      absl::flat_hash_map<PrefixPenaltyKey, int> *cache);
+      absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const;
 
   const ConverterInterface *converter_;
   const ImmutableConverterInterface *immutable_converter_;

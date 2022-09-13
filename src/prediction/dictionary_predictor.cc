@@ -2533,7 +2533,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     const ConversionRequest &request, const std::string &input_key,
     const DictionaryPredictor::Result &result,
     const ImmutableConverterInterface *immutable_converter,
-    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) {
+    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
   const std::string &candidate_key = result.key;
   const uint16_t result_rid = result.rid;
   const size_t key_len = Util::CharsLen(candidate_key);
@@ -2550,23 +2550,14 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   int penalty = 0;
   Segments tmp_segments;
   Segment *segment = tmp_segments.add_segment();
-  // history
-  segment->set_segment_type(Segment::HISTORY);
-  segment->set_key(candidate_key);
-  Segment::Candidate *c = segment->add_candidate();
-  c->key = candidate_key;
-  c->content_key = candidate_key;
-  c->value = result.value;
-  c->content_value = result.value;
-  c->rid = result.rid;
-  // conversion segment
-  segment = tmp_segments.add_segment();
   segment->set_key(Util::Utf8SubString(input_key, key_len));
   ConversionRequest req = request;
   req.set_max_conversion_candidates_size(1);
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
       segment->candidates_size() > 0) {
-    penalty = segment->candidate(0).cost;
+    const Segment::Candidate &top_candidate = segment->candidate(0);
+    penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
+               top_candidate.cost);
   }
   (*cache)[cache_key] = penalty;
   return penalty;
