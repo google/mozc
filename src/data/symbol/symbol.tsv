@@ -1870,6 +1870,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	ぇ゙	え ぇ だくてん	濁点付き仮名
 記号	お゙	お だくてん	濁点付き仮名
 記号	ぉ゙	お ぉ だくてん	濁点付き仮名
+記号	っ゙	づ っ だくてん	濁点付き仮名
 記号	な゙	な だくてん	濁点付き仮名
 記号	に゙	に だくてん	濁点付き仮名
 記号	ぬ゙	ぬ だくてん	濁点付き仮名
@@ -1905,6 +1906,7 @@ POS	CHAR	Reading (space separated)	description	additional description	category	m
 記号	ェ゙	え ぇ だくてん	濁点付き仮名
 記号	オ゙	お だくてん	濁点付き仮名
 記号	ォ゙	お ぉ だくてん	濁点付き仮名
+記号	ッ゙	づ っ だくてん	濁点付き仮名
 記号	ナ゙	な だくてん	濁点付き仮名
 記号	ニ゙	に だくてん	濁点付き仮名
 記号	ヌ゙	ぬ だくてん	濁点付き仮名
