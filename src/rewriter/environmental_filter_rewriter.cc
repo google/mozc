@@ -336,6 +336,10 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
           case commands::Request::EMOJI_15_0:
             found_nonrenderable = finder_e15_0_.FindMatch(codepoints);
             break;
+          case commands::Request::EGYPTIAN_HIEROGLYPH_5_2:
+            found_nonrenderable =
+                FindCodepointsInClosedRange(codepoints, 0x13000, 0x1342E);
+            break;
         }
         if (found_nonrenderable) {
           segment->erase_candidate(reversed_j);
