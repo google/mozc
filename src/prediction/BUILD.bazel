@@ -298,7 +298,6 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":zero_query_dict",
-        "//base",
         "//base:port",
         "//base:serialized_string_array",
         "//testing:gunit_main",
@@ -341,10 +340,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
-    deps = [
-        ":gen_zero_query_number_data_lib",
-        ":gen_zero_query_util",
-    ],
+    deps = [":gen_zero_query_util"],
 )
 
 py_library_mozc(

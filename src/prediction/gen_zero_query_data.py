@@ -84,11 +84,6 @@ def ReadEmojiTsv(stream):
     if not codepoints:
       continue
 
-    # TODO(b/243865472): Although this item is already removed from
-    # emoji_data.tsv, these variables are kept as they were. Cleanup is
-    # required.
-    android_pua = 0
-
     reading_list = []
     for reading in re.split(RE_SPLIT, NormalizeString(readings)):
       if not reading:
@@ -105,12 +100,11 @@ def ReadEmojiTsv(stream):
       if not description:
         continue
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI, emoji,
-                              util.EMOJI_TYPE_UNICODE, android_pua))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI, emoji))
 
   # Sort emoji for each reading.
   for key in zero_query_dict.keys():
-    zero_query_dict[key].sort(key=lambda e: (e.value, e.emoji_android_pua))
+    zero_query_dict[key].sort(key=lambda e: e.value)
 
   return zero_query_dict
 
@@ -132,8 +126,7 @@ def ReadZeroQueryRuleData(input_stream):
 
     for value in values:
       zero_query_dict[key].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              value, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, value))
   return zero_query_dict
 
 
@@ -153,8 +146,7 @@ def ReadEmoticonTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON,
-                              emoticon, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON, emoticon))
 
   return zero_query_dict
 
@@ -186,21 +178,18 @@ def ReadSymbolTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
 
     if len(columns) >= 4 and columns[3]:
       # description: "天気", etc.
       description = columns[3]
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
     if len(columns) >= 5 and columns[4]:
       # additional_description: "傘", etc.
       additional_description = columns[4]
       zero_query_dict[additional_description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
 
   return zero_query_dict
 

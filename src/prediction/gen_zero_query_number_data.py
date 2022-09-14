@@ -54,8 +54,7 @@ def ReadZeroQueryNumberData(input_stream):
 
     for value in values:
       zero_query_dict[key].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NUMBER_SUFFIX,
-                              value, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NUMBER_SUFFIX, value))
   return zero_query_dict
 
 

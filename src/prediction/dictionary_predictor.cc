@@ -2210,22 +2210,10 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
       continue;
     }
 
-    if (available_emoji_carrier & Request::UNICODE_EMOJI &&
-        entry.emoji_type() & EMOJI_UNICODE) {
+    if (available_emoji_carrier & Request::UNICODE_EMOJI) {
       results->push_back(
           std::make_pair(std::string(entry.value()), entry.type()));
       continue;
-    }
-
-    if ((available_emoji_carrier & Request::DOCOMO_EMOJI &&
-         entry.emoji_type() & EMOJI_DOCOMO) ||
-        (available_emoji_carrier & Request::SOFTBANK_EMOJI &&
-         entry.emoji_type() & EMOJI_SOFTBANK) ||
-        (available_emoji_carrier & Request::KDDI_EMOJI &&
-         entry.emoji_type() & EMOJI_KDDI)) {
-      std::string android_pua;
-      Util::Ucs4ToUtf8(entry.emoji_android_pua(), &android_pua);
-      results->push_back(std::make_pair(android_pua, entry.type()));
     }
   }
   return !results->empty();

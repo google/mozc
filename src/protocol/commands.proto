@@ -748,6 +748,10 @@ message Request {
   // Note: This feature can be enabled only for mobile due to UX design.
   optional bool auto_partial_suggestion = 10 [default = false];
 
+  // TODO(b/243865472): Remove these EmojiCarrierType. Mozc has already removed
+  // support for carrier-wise Emoji handling. Now, this proto is kept only for
+  // avoiding build error of clients using this type. Later, this proto will be
+  // obsolete.
   // Nowadays, four kinds of emoji characters are used in Japan.
   // - Unicode: Unicode based emoji (since Unicode 6.0).
   // - Docomo: Docomo's carrier emoji.

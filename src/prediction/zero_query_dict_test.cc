@@ -42,25 +42,26 @@ namespace mozc {
 namespace {
 
 constexpr char kTestTokenArray[] =
-    // {"あ", "", ZERO_QUERY_EMOJI, EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04}
+    // The last two items must be 0x00, because they are now unused field.
+    // {"あ", "", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x04\x00\x00\x00"
     "\x00\x00\x00\x00"
     "\x03\x00"
-    "\x06\x00"
-    "\x04\xeb\x0f\x00"
-    // {"あ", "❕", ZERO_QUERY_EMOJI, EMOJI_UNICODE, 0xfeb0b},
+    "\x00\x00"
+    "\x00\x00\x00\x00"
+    // {"あ", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00},
     "\x04\x00\x00\x00"
     "\x02\x00\x00\x00"
     "\x03\x00"
-    "\x01\x00"
-    "\x0b\xeb\x0f\x00"
-    // {"あ", "❣", ZERO_QUERY_NONE, EMOJI_NONE, 0x00},
+    "\x00\x00"
+    "\x00\x00\x00\x00"
+    // {"あ", "❣", ZERO_QUERY_NONE, 0x00, 0x00},
     "\x04\x00\x00\x00"
     "\x03\x00\x00\x00"
     "\x00\x00"
     "\x00\x00"
     "\x00\x00\x00\x00"
-    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, EMOJI_NONE, 0x00}
+    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, 0x00, 0x00}
     "\x05\x00\x00\x00"
     "\x01\x00\x00\x00"
     "\x02\x00"
@@ -91,8 +92,6 @@ void ExpectIterPointsToElem0(ZeroQueryDict::iterator iter) {
   EXPECT_EQ(4, iter.key_index());    // Index to "あ"
   EXPECT_EQ(0, iter.value_index());  // Index to ""
   EXPECT_EQ(ZERO_QUERY_EMOJI, iter.type());
-  EXPECT_EQ(EMOJI_DOCOMO | EMOJI_SOFTBANK, iter.emoji_type());
-  EXPECT_EQ(0xfeb04, iter.emoji_android_pua());
   EXPECT_EQ("あ", iter.key());
   EXPECT_EQ("", iter.value());
   EXPECT_EQ(4, *iter);    // Index to "あ"
@@ -106,8 +105,6 @@ void ExpectIterPointsToElem1(ZeroQueryDict::iterator iter) {
   EXPECT_EQ(4, iter.key_index());    // Index to "あ"
   EXPECT_EQ(2, iter.value_index());  // Index to "❕"
   EXPECT_EQ(ZERO_QUERY_EMOJI, iter.type());
-  EXPECT_EQ(EMOJI_UNICODE, iter.emoji_type());
-  EXPECT_EQ(0xfeb0b, iter.emoji_android_pua());
   EXPECT_EQ("あ", iter.key());
   EXPECT_EQ("❕", iter.value());
   EXPECT_EQ(4, *iter);    // Index to "あ"
@@ -120,8 +117,6 @@ void ExpectIterPointsToElem2(ZeroQueryDict::iterator iter) {
   EXPECT_EQ(4, iter.key_index());    // Index to "あ"
   EXPECT_EQ(3, iter.value_index());  // Index to "❣"
   EXPECT_EQ(ZERO_QUERY_NONE, iter.type());
-  EXPECT_EQ(EMOJI_NONE, iter.emoji_type());
-  EXPECT_EQ(0x00, iter.emoji_android_pua());
   EXPECT_EQ("あ", iter.key());
   EXPECT_EQ("❣", iter.value());
   EXPECT_EQ(4, *iter);    // Index to "あ"
@@ -133,8 +128,6 @@ void ExpectIterPointsToElem3(ZeroQueryDict::iterator iter) {
   EXPECT_EQ(5, iter.key_index());    // Index to "ああ"
   EXPECT_EQ(1, iter.value_index());  // Index to "( •̀ㅁ•́;)"
   EXPECT_EQ(ZERO_QUERY_EMOTICON, iter.type());
-  EXPECT_EQ(EMOJI_NONE, iter.emoji_type());
-  EXPECT_EQ(0x00, iter.emoji_android_pua());
   EXPECT_EQ("ああ", iter.key());
   EXPECT_EQ("( •̀ㅁ•́;)", iter.value());
   EXPECT_EQ(5, iter[0]);  // Index to "ああ"

@@ -33,10 +33,8 @@
 For output format, see zero_query_dict.h.
 """
 
-import os
 import struct
 
-from build_tools import code_generator_util as cgu
 from build_tools import serialized_string_array_builder
 
 
@@ -45,22 +43,12 @@ ZERO_QUERY_TYPE_NUMBER_SUFFIX = 1
 ZERO_QUERY_TYPE_EMOTICON = 2
 ZERO_QUERY_TYPE_EMOJI = 3
 
-# bit fields
-# These are standing for command::Request::EmojiCarrierType
-EMOJI_TYPE_NONE = 0
-EMOJI_TYPE_UNICODE = 1
-EMOJI_TYPE_DOCOMO = 2
-EMOJI_TYPE_SOFTBANK = 4
-EMOJI_TYPE_KDDI = 8
-
 
 class ZeroQueryEntry(object):
 
-  def __init__(self, entry_type, value, emoji_type, emoji_android_pua):
+  def __init__(self, entry_type, value):
     self.entry_type = entry_type
     self.value = value
-    self.emoji_type = emoji_type
-    self.emoji_android_pua = emoji_android_pua
 
 
 def WriteZeroQueryData(zero_query_dict, output_token_array,
@@ -81,8 +69,8 @@ def WriteZeroQueryData(zero_query_dict, output_token_array,
         f.write(struct.pack('<I', string_index[key]))
         f.write(struct.pack('<I', string_index[entry.value]))
         f.write(struct.pack('<H', entry.entry_type))
-        f.write(struct.pack('<H', entry.emoji_type))
-        f.write(struct.pack('<I', entry.emoji_android_pua))
+        f.write(struct.pack('<H', 0))  # Set 0 for unused field.
+        f.write(struct.pack('<I', 0))  # Set 0 for unused field.
 
   serialized_string_array_builder.SerializeToFile(sorted_strings,
                                                   output_string_array)

@@ -3486,41 +3486,36 @@ TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
 
 namespace {
 constexpr char kTestTokenArray[] =
-    // {"あ", "❕", ZERO_QUERY_EMOJI, EMOJI_UNICODE, 0xfeb0b}
+    // The last two items must be 0x00, because they are now unused field.
+    // {"あ", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x04\x00\x00\x00"
     "\x02\x00\x00\x00"
     "\x03\x00"
-    "\x01\x00"
-    "\x0b\xeb\x0f\x00"
-    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, EMOJI_NONE, 0x00}
+    "\x00\x00"
+    "\x00\x00\x00\x00"
+    // {"ああ", "( •̀ㅁ•́;)", ZERO_QUERY_EMOTICON, 0x00, 0x00}
     "\x05\x00\x00\x00"
     "\x01\x00\x00\x00"
     "\x02\x00"
     "\x00\x00"
     "\x00\x00\x00\x00"
-    // {"あい", "", ZERO_QUERY_EMOJI, EMOJI_DOCOMO | EMOJI_SOFTBANK, 0xfeb04}
-    "\x06\x00\x00\x00"
-    "\x00\x00\x00\x00"
-    "\x03\x00"
-    "\x06\x00"
-    "\x04\xeb\x0f\x00"
-    // {"あい", "❕", ZERO_QUERY_EMOJI, EMOJI_UNICODE, 0xfeb0b}
+    // {"あい", "❕", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x06\x00\x00\x00"
     "\x02\x00\x00\x00"
     "\x03\x00"
-    "\x01\x00"
-    "\x0b\xeb\x0f\x00"
-    // {"あい", "❣", ZERO_QUERY_NONE, EMOJI_NONE, 0x00}
+    "\x00\x00"
+    "\x00\x00\x00\x00"
+    // {"あい", "❣", ZERO_QUERY_NONE, 0x00, 0x00}
     "\x06\x00\x00\x00"
     "\x03\x00\x00\x00"
     "\x00\x00"
     "\x00\x00"
     "\x00\x00\x00\x00"
-    // {"猫", "❣", ZERO_QUERY_EMOJI, EMOJI_UNICODE, 0x00}
+    // {"猫", "❣", ZERO_QUERY_EMOJI, 0x00, 0x00}
     "\x07\x00\x00\x00"
     "\x08\x00\x00\x00"
     "\x03\x00"
-    "\x01\x00"
+    "\x00\x00"
     "\x00\x00\x00\x00";
 
 const char *kTestStrings[] = {"",     "( •̀ㅁ•́;)", "❕",  "❣", "あ",
@@ -3634,30 +3629,7 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
   }
   {
     TestEntry entry;
-    entry.available_emoji_carrier = commands::Request::DOCOMO_EMOJI;
-    entry.key = "あい";
-    entry.expected_result = true;
-    std::string candidate;
-    Util::Ucs4ToUtf8(0xfeb04, &candidate);  // exclamation
-    entry.expected_candidates.push_back(candidate);
-    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
-
-    entry.expected_candidates.push_back("❣");
-    entry.expected_types.push_back(ZERO_QUERY_NONE);
-    test_entries.push_back(entry);
-  }
-  {
-    TestEntry entry;
-    entry.available_emoji_carrier = commands::Request::KDDI_EMOJI;
-    entry.key = "あい";
-    entry.expected_result = true;
-    entry.expected_candidates.push_back("❣");
-    entry.expected_types.push_back(ZERO_QUERY_NONE);
-    test_entries.push_back(entry);
-  }
-  {
-    TestEntry entry;
-    entry.available_emoji_carrier = commands::Request::KDDI_EMOJI;
+    entry.available_emoji_carrier = commands::Request::UNICODE_EMOJI;
     entry.key = "あ";
     entry.expected_candidates.clear();
     entry.expected_result = false;
@@ -3665,15 +3637,9 @@ TEST_F(DictionaryPredictorTest, GetZeroQueryCandidates) {
   }
   {
     TestEntry entry;
-    entry.available_emoji_carrier =
-        (commands::Request::DOCOMO_EMOJI | commands::Request::SOFTBANK_EMOJI |
-         commands::Request::UNICODE_EMOJI);
+    entry.available_emoji_carrier = commands::Request::UNICODE_EMOJI;
     entry.key = "あい";
     entry.expected_result = true;
-    std::string candidate;
-    Util::Ucs4ToUtf8(0xfeb04, &candidate);  // exclamation
-    entry.expected_candidates.push_back(candidate);
-    entry.expected_types.push_back(ZERO_QUERY_EMOJI);
 
     entry.expected_candidates.push_back("❕");
     entry.expected_types.push_back(ZERO_QUERY_EMOJI);
