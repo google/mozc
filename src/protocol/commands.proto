@@ -748,33 +748,9 @@ message Request {
   // Note: This feature can be enabled only for mobile due to UX design.
   optional bool auto_partial_suggestion = 10 [default = false];
 
-  // TODO(b/243865472): Remove these EmojiCarrierType. Mozc has already removed
-  // support for carrier-wise Emoji handling. Now, this proto is kept only for
-  // avoiding build error of clients using this type. Later, this proto will be
-  // obsolete.
-  // Nowadays, four kinds of emoji characters are used in Japan.
-  // - Unicode: Unicode based emoji (since Unicode 6.0).
-  // - Docomo: Docomo's carrier emoji.
-  // - Softbank: Softbank's carrier emoji.
-  // - Kddi: Kddi's carrier emoji.
-  // Note that especially latter three kinds are used on Mobile phones.
-  // So, it is necessary to control what kinds of emoji can be used or not
-  // based on client's (or connected application's) information.
-  // For example, on Android;
-  // - Unicode emoji characters are available only on Android 4.1 or later
-  //   only.
-  // - JP mobile carriers' emoji characters depend on the devices. Also,
-  //   we need to check the text field's attribute for them.
-  // The following bit set tells the emoji availability to EmojiRewriter.
-  enum EmojiCarrierType {
-    UNICODE_EMOJI = 1;
-    DOCOMO_EMOJI = 2;
-    SOFTBANK_EMOJI = 4;
-    KDDI_EMOJI = 8;
-  }
-
-  // By default, UNICODE emoji is available.
-  optional int32 available_emoji_carrier = 11 [default = 1];
+  // Setting zero to available_emoji_carrier for disabling Emoji conversion is
+  // obsolete. Instead, use emoji_rewriter_capability and set zero there.
+  reserved 11;  // Deprecated available_emoji_carrier status.
 
   // For emoji rewriter, it is necessary to control when the rewriter runs
   // based on the clients. The following bit set is sync'ed to

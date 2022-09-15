@@ -135,8 +135,6 @@ const EmojiData kTestEmojiList[] = {
     {"Neko", "CAT", EmojiVersion::E0_6, "neko", "", "", ""},
     {"Nezumi", "MOUSE", EmojiVersion::E0_6, "nezumi", "", "", ""},
     {"Nezumi", "RAT", EmojiVersion::E0_6, "nezumi", "", "", ""},
-
-    // Test data for carrier.
     {"X", "COW", EmojiVersion::E0_6, "ushi", "", "", ""},
     {"X", "TIGER", EmojiVersion::E0_6, "tora", "", "", ""},
     {"X", "RABIT", EmojiVersion::E0_6, "usagi", "", "", ""},
@@ -275,90 +273,6 @@ TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
   SetSegment(kEmoji, "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
   EXPECT_EQ(9, CountEmojiCandidates(segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionEmpty) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(0);  // Disable emoji rewriting.
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(0, CountEmojiCandidates(segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-// TODO(b/135127317): Delete carrier related tests once we delete PUA emoji
-// related codes.
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionDocomo) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::DOCOMO_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionSoftbank) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::SOFTBANK_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionKddi) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::KDDI_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-// The combination of unicode and android carrier dependent emoji.
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionDocomoUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::DOCOMO_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionSoftbankUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::SOFTBANK_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionKddiUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::KDDI_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
 }
 
 TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {

@@ -2183,9 +2183,6 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
 bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
     const ConversionRequest &request, const std::string &key,
     const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results) {
-  const int32_t available_emoji_carrier =
-      request.request().available_emoji_carrier();
-
   DCHECK(results);
   results->clear();
 
@@ -2210,11 +2207,8 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
       continue;
     }
 
-    if (available_emoji_carrier & Request::UNICODE_EMOJI) {
-      results->push_back(
-          std::make_pair(std::string(entry.value()), entry.type()));
-      continue;
-    }
+    results->push_back(
+        std::make_pair(std::string(entry.value()), entry.type()));
   }
   return !results->empty();
 }
