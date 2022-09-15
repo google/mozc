@@ -52,10 +52,6 @@ class SmallLetterRewriter : public RewriterInterface {
                Segments *segments) const override;
 
  private:
-  bool RewriteToSuperscript(const ConversionRequest &request,
-                            Segments *segments) const;
-  bool RewriteToSubscript(const ConversionRequest &request,
-                          Segments *segments) const;
   const ConverterInterface *parent_converter_;
 };
 }  // namespace mozc

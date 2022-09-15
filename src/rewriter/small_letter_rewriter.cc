@@ -31,12 +31,13 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "composer/composer.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
-#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace {
@@ -44,8 +45,8 @@ namespace {
 // mapping can be extended for other letters like '+' or 'a', implementation
 // based on array will not work in the future. In order to avoid that,
 // std::map is chosen.
-const std::map<char, std::string> *kSuperscriptTable =
-    new std::map<char, std::string>({
+const std::map<char, absl::string_view> *kSuperscriptTable =
+    new std::map<char, absl::string_view>({
         {'0', "⁰"},
         {'1', "¹"},
         {'2', "²"},
@@ -63,8 +64,8 @@ const std::map<char, std::string> *kSuperscriptTable =
         {')', "⁾"},
     });
 
-const std::map<char, std::string> *kSubscriptTable =
-    new std::map<char, std::string>({
+const std::map<char, absl::string_view> *kSubscriptTable =
+    new std::map<char, absl::string_view>({
         {'0', "₀"},
         {'1', "₁"},
         {'2', "₂"},
@@ -82,40 +83,114 @@ const std::map<char, std::string> *kSubscriptTable =
         {')', "₎"},
     });
 
-// Converts given input into superscript sequence
-bool ExpressionsToSuperscript(const std::string &input, std::string *value) {
+enum ParserState : char {
+  DEFAULT,
+  SUPERSCRIPT_ALL,
+  SUBSCRIPT_ALL,
+  SUPERSCRIPT_DIGIT,
+  SUBSCRIPT_DIGIT
+};
+
+// Converts given input into sequence containing subscripts and superscripts and
+// store it in value. The return value becomes true, if value contains a
+// transformed input. Otherwise it returns false and value should not be used.
+// These are examples of conversion.
+//  * x^2 -> x²
+//  * CH_3 -> CH₃
+//  * C_6H_12O_6 -> C₆H₁₂O₆
+//  * O^2^- -> O²⁻
+//  * x^^2_3 -> x^^2₃
+// This function allows conversion of digits sequence. For example, _123 will be
+// converted into ₁₂₃. Other symbols requires prefix as `^+` or `_(` for each
+// occurrence. `^()` does not mean ⁽⁾ but means ⁽).
+bool ConvertExpressions(const std::string &input, std::string *value) {
   // Check preconditions
-  if (input.size() < 2 || !absl::StartsWith(input, "^")) {
+  if (input.empty()) {
     return false;
   }
 
-  for (size_t i = 1; i < input.size(); ++i) {
-    // Check whether the table has entry for i-th letter or not
-    if (kSuperscriptTable->find(input.at(i)) != kSuperscriptTable->end()) {
-      value->append(kSuperscriptTable->at(input.at(i)));
-    } else {
-      return false;
+  ParserState state = DEFAULT;
+
+  // The interest of this loop is only ASCII characters, and they never appear
+  // in two-or-more-byte characters. Therefore, here simply char is used instead
+  // of char32_t with Util::Utf8ToCodepoints.
+  for (const char c : input) {
+    switch (state) {
+      case DEFAULT:
+        if (c == '^') {
+          state = SUPERSCRIPT_ALL;
+        } else if (c == '_') {
+          state = SUBSCRIPT_ALL;
+        } else {
+          value->push_back(c);
+        }
+        break;
+      case SUPERSCRIPT_ALL:
+        if (isdigit(c)) {
+          value->append(kSuperscriptTable->at(c).data(),
+                        kSuperscriptTable->at(c).size());
+          state = SUPERSCRIPT_DIGIT;
+        } else if (kSuperscriptTable->find(c) != kSuperscriptTable->end()) {
+          value->append(kSuperscriptTable->at(c).data(),
+                        kSuperscriptTable->at(c).size());
+          state = DEFAULT;
+        } else {
+          value->push_back('^');
+          value->push_back(c);
+          state = DEFAULT;
+        }
+        break;
+      case SUBSCRIPT_ALL:
+        if (isdigit(c)) {
+          value->append(kSubscriptTable->at(c).data(),
+                        kSubscriptTable->at(c).size());
+          state = SUBSCRIPT_DIGIT;
+        } else if (kSubscriptTable->find(c) != kSubscriptTable->end()) {
+          value->append(kSubscriptTable->at(c).data(),
+                        kSubscriptTable->at(c).size());
+          state = DEFAULT;
+        } else {
+          value->push_back('_');
+          value->push_back(c);
+          state = DEFAULT;
+        }
+        break;
+      case SUPERSCRIPT_DIGIT:
+        if (isdigit(c)) {
+          value->append(kSuperscriptTable->at(c).data(),
+                        kSuperscriptTable->at(c).size());
+        } else if (c == '^') {
+          state = SUPERSCRIPT_ALL;
+        } else if (c == '_') {
+          state = SUBSCRIPT_ALL;
+        } else {
+          value->push_back(c);
+          state = DEFAULT;
+        }
+        break;
+      case SUBSCRIPT_DIGIT:
+        if (isdigit(c)) {
+          value->append(kSubscriptTable->at(c).data(),
+                        kSubscriptTable->at(c).size());
+        } else if (c == '^') {
+          state = SUPERSCRIPT_ALL;
+        } else if (c == '_') {
+          state = SUBSCRIPT_ALL;
+        } else {
+          value->push_back(c);
+          state = DEFAULT;
+        }
+        break;
     }
   }
-  return true;
-}
-
-// Converts given input into subscript sequence
-bool ExpressionsToSubscript(const std::string &input, std::string *value) {
-  // Check preconditions
-  if (input.size() < 2 || !absl::StartsWith(input, "_")) {
-    return false;
+  if (state == SUPERSCRIPT_ALL) {
+    value->push_back('^');
+  } else if (state == SUBSCRIPT_ALL) {
+    value->push_back('_');
   }
 
-  for (size_t i = 1; i < input.size(); ++i) {
-    // Check whether the table has entry for i-th letter or not
-    if (kSubscriptTable->find(input.at(i)) != kSubscriptTable->end()) {
-      value->append(kSubscriptTable->at(input.at(i)));
-    } else {
-      return false;
-    }
-  }
-  return true;
+  // If not has conversion, it should not be added as candidate.
+  return input != *value;
 }
 
 bool EnsureSingleSegment(const ConversionRequest &request, Segments *segments,
@@ -144,7 +219,7 @@ void AddCandidate(const std::string &key, const std::string &description,
                   const std::string &value, int index, Segment *segment) {
   DCHECK(segment);
 
-  if (index > segment->candidates_size()) {
+  if (index < 0 || index > segment->candidates_size()) {
     index = segment->candidates_size();
   }
 
@@ -163,56 +238,6 @@ void AddCandidate(const std::string &key, const std::string &description,
 
 }  // namespace
 
-bool SmallLetterRewriter::RewriteToSuperscript(const ConversionRequest &request,
-                                               Segments *segments) const {
-  std::string key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    key += segments->conversion_segment(i).key();
-  }
-
-  std::string value;
-  if (!ExpressionsToSuperscript(key, &value)) {
-    return false;
-  }
-
-  if (value.empty()) {
-    return false;
-  }
-
-  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
-    return false;
-  }
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, "上付き文字", value, 0, segment);
-  return true;
-}
-
-bool SmallLetterRewriter::RewriteToSubscript(const ConversionRequest &request,
-                                             Segments *segments) const {
-  std::string key;
-  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    key += segments->conversion_segment(i).key();
-  }
-
-  std::string value;
-  if (!ExpressionsToSubscript(key, &value)) {
-    return false;
-  }
-
-  if (value.empty()) {
-    return false;
-  }
-
-  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
-    return false;
-  }
-
-  Segment *segment = segments->mutable_conversion_segment(0);
-  AddCandidate(key, "下付き文字", value, 0, segment);
-  return true;
-}
-
 SmallLetterRewriter::SmallLetterRewriter(
     const ConverterInterface *parent_converter)
     : parent_converter_(parent_converter) {
@@ -230,17 +255,30 @@ int SmallLetterRewriter::capability(const ConversionRequest &request) const {
 
 bool SmallLetterRewriter::Rewrite(const ConversionRequest &request,
                                   Segments *segments) const {
-  // "^012" -> "⁰¹²"
-  if (RewriteToSuperscript(request, segments)) {
-    return true;
+  std::string key;
+  for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
+    key += segments->conversion_segment(i).key();
   }
 
-  // "_012" -> "₀₁₂"
-  if (RewriteToSubscript(request, segments)) {
-    return true;
+  std::string value;
+  if (!ConvertExpressions(key, &value)) {
+    return false;
   }
 
-  return false;
+  if (value.empty()) {
+    return false;
+  }
+
+  if (!EnsureSingleSegment(request, segments, parent_converter_, key)) {
+    return false;
+  }
+
+  Segment *segment = segments->mutable_conversion_segment(0);
+
+  // Candidates from this function should not be on high position. -1 will
+  // overwritten with the last index of candidates.
+  AddCandidate(key, "上下付き文字", value, -1, segment);
+  return true;
 }
 
 }  // namespace mozc
