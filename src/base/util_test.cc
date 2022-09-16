@@ -866,28 +866,6 @@ TEST(UtilTest, IsUtf16Bom) {
   EXPECT_FALSE(Util::IsUtf16Bom("\xff\xff"));
 }
 
-TEST(UtilTest, IsAndroidPuaEmoji) {
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji(""));
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji("A"));
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji("a"));
-
-  std::string str;
-  Util::Ucs4ToUtf8(0xFDFFF, &str);
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
-  Util::Ucs4ToUtf8(0xFE000, &str);
-  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::Ucs4ToUtf8(0xFE800, &str);
-  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::Ucs4ToUtf8(0xFEEA0, &str);
-  EXPECT_TRUE(Util::IsAndroidPuaEmoji(str));
-  Util::Ucs4ToUtf8(0xFEEA1, &str);
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
-
-  // If it has two ucs4 chars (or more), just expect false.
-  Util::Ucs4ToUtf8(0xFE000, &str);
-  Util::Ucs4ToUtf8Append(0xFE000, &str);
-  EXPECT_FALSE(Util::IsAndroidPuaEmoji(str));
-}
 
 TEST(UtilTest, BracketTest) {
   static const struct BracketType {
@@ -1153,8 +1131,10 @@ TEST(UtilTest, ScriptType) {
   // U+1F466, BOY/smile emoji
   EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xF0\x9F\x91\xA6"));
   // U+FE003, Snow-man Android PUA emoji
-  EXPECT_TRUE(Util::IsAndroidPuaEmoji("\xf3\xbe\x80\x83"));
-  EXPECT_EQ(Util::EMOJI, Util::GetScriptType("\xf3\xbe\x80\x83"));
+  // Historically, Android PUA Emoji was treated as EMOJI. However, because Mozc
+  // does not support Android PUA Emoji, GetScriptType for Android PUA Emoji
+  // just returns UNKNOWN_SCRIPT now.
+  EXPECT_EQ(Util::UNKNOWN_SCRIPT, Util::GetScriptType("\xf3\xbe\x80\x83"));
 }
 
 TEST(UtilTest, ScriptTypeWithoutSymbols) {

@@ -505,7 +505,6 @@ cc_test_mozc(
     ],
     requires_full_emulation = False,
     deps = [
-        ":compiler_specific",
         ":file_stream",
         ":file_util",
         ":logging",

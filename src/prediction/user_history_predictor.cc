@@ -123,6 +123,15 @@ bool IsEmojiEntry(const UserHistoryPredictor::Entry &entry) {
           absl::StrContains(entry.description(), kEmojiDescription));
 }
 
+// http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
+constexpr char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
+constexpr char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
+
+bool IsAndroidPuaEmoji(absl::string_view s) {
+  return (s.size() == 4 && kUtf8MinGooglePuaEmoji <= s &&
+          s <= kUtf8MaxGooglePuaEmoji);
+}
+
 bool IsPunctuation(absl::string_view value) {
   return (value == "。" || value == "." || value == "、" || value == "," ||
           value == "？" || value == "?" || value == "！" || value == "!" ||
@@ -1528,7 +1537,7 @@ bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
     return false;
   }
 
-  if (IsEmojiEntry(entry) && Util::IsAndroidPuaEmoji(entry.value())) {
+  if (IsEmojiEntry(entry) && IsAndroidPuaEmoji(entry.value())) {
     return false;
   }
 
