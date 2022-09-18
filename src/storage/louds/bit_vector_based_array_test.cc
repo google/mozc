@@ -30,6 +30,7 @@
 #include "storage/louds/bit_vector_based_array.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 
 #include "base/port.h"

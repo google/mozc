@@ -118,40 +118,27 @@ void ChooseEmojiCandidate(Segments *segments) {
 struct EmojiData {
   const char *key;
   const char *unicode;
-  const uint32_t android_pua;
+  const EmojiVersion unicode_version;
   const char *description_unicode;
-  const char *description_docomo;
-  const char *description_softbank;
-  const char *description_kddi;
+  const char *unused_field_0;
+  const char *unused_field_1;
+  const char *unused_field_2;
 };
 
 // Elements must be sorted lexicographically by key (first string).
 const EmojiData kTestEmojiList[] = {
     // An actual emoji character
-    {"Emoji", "🐭", 0, "nezumi picture", "", "", ""},
+    {"Emoji", "🐭", EmojiVersion::E0_6, "nezumi picture", "", "", ""},
 
     // Meta candidates.
-    {"Inu", "DOG", 0, "inu", "", "", ""},
-    {"Neko", "CAT", 0, "neko", "", "", ""},
-    {"Nezumi", "MOUSE", 0, "nezumi", "", "", ""},
-    {"Nezumi", "RAT", 0, "nezumi", "", "", ""},
-
-    // Test data for carrier.
-    {"X", "COW", 0xFE001, "ushi", "", "", ""},
-    {"X", "TIGER", 0xFE002, "tora", "docomo", "", ""},
-    {"X", "RABIT", 0xFE003, "usagi", "", "softbank", ""},
-    {"X", "DRAGON", 0xFE004, "ryu", "", "", "kddi"},
-
-    // No unicode available.
-    {"X", "", 0xFE011, "", "docomo", "", ""},
-    {"X", "", 0xFE012, "", "", "softbank", ""},
-    {"X", "", 0xFE013, "", "", "", "kddi"},
-
-    // Multiple carriers available.
-    {"X", "", 0xFE021, "", "docomo", "softbank", ""},
-    {"X", "", 0xFE022, "", "docomo", "", "kddi"},
-    {"X", "", 0xFE023, "", "", "softbank", "kddi"},
-    {"X", "", 0xFE024, "", "docomo", "softbank", "kddi"},
+    {"Inu", "DOG", EmojiVersion::E0_6, "inu", "", "", ""},
+    {"Neko", "CAT", EmojiVersion::E0_6, "neko", "", "", ""},
+    {"Nezumi", "MOUSE", EmojiVersion::E0_6, "nezumi", "", "", ""},
+    {"Nezumi", "RAT", EmojiVersion::E0_6, "nezumi", "", "", ""},
+    {"X", "COW", EmojiVersion::E0_6, "ushi", "", "", ""},
+    {"X", "TIGER", EmojiVersion::E0_6, "tora", "", "", ""},
+    {"X", "RABIT", EmojiVersion::E0_6, "usagi", "", "", ""},
+    {"X", "DRAGON", EmojiVersion::E0_6, "ryu", "", "", ""},
 };
 
 // This data manager overrides GetEmojiRewriterData() to return the above test
@@ -165,9 +152,9 @@ class TestDataManager : public testing::MockDataManager {
       string_index[data.key] = 0;
       string_index[data.unicode] = 0;
       string_index[data.description_unicode] = 0;
-      string_index[data.description_docomo] = 0;
-      string_index[data.description_softbank] = 0;
-      string_index[data.description_kddi] = 0;
+      string_index[data.unused_field_0] = 0;
+      string_index[data.unused_field_1] = 0;
+      string_index[data.unused_field_2] = 0;
     }
 
     // Set index.
@@ -182,11 +169,11 @@ class TestDataManager : public testing::MockDataManager {
     for (const EmojiData &data : kTestEmojiList) {
       token_array_.push_back(string_index[data.key]);
       token_array_.push_back(string_index[data.unicode]);
-      token_array_.push_back(data.android_pua);
+      token_array_.push_back(data.unicode_version);
       token_array_.push_back(string_index[data.description_unicode]);
-      token_array_.push_back(string_index[data.description_docomo]);
-      token_array_.push_back(string_index[data.description_softbank]);
-      token_array_.push_back(string_index[data.description_kddi]);
+      token_array_.push_back(string_index[data.unused_field_0]);
+      token_array_.push_back(string_index[data.unused_field_1]);
+      token_array_.push_back(string_index[data.unused_field_2]);
     }
 
     // Create string array.
@@ -286,90 +273,6 @@ TEST_F(EmojiRewriterTest, ConvertedSegmentsHasEmoji) {
   SetSegment(kEmoji, "test", &segments);
   EXPECT_TRUE(rewriter_->Rewrite(convreq_, &segments));
   EXPECT_EQ(9, CountEmojiCandidates(segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionEmpty) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(0);  // Disable emoji rewriting.
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(0, CountEmojiCandidates(segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-// TODO(b/135127317): Delete carrier related tests once we delete PUA emoji
-// related codes.
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionDocomo) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::DOCOMO_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionSoftbank) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::SOFTBANK_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionKddi) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::KDDI_EMOJI);
-  ASSERT_FALSE(rewriter_->Rewrite(convreq_, &segments));
-}
-
-// The combination of unicode and android carrier dependent emoji.
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionDocomoUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::DOCOMO_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionSoftbankUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::SOFTBANK_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
-}
-
-TEST_F(EmojiRewriterTest, CarrierEmojiSelectionKddiUnicode) {
-  Segments segments;
-  SetSegment("X", "test", &segments);
-  request_.set_available_emoji_carrier(Request::KDDI_EMOJI |
-                                       Request::UNICODE_EMOJI);
-  ASSERT_TRUE(rewriter_->Rewrite(convreq_, &segments));
-  ASSERT_EQ(4, CountEmojiCandidates(segments));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "COW"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "TIGER"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "RABIT"));
-  EXPECT_TRUE(HasExpectedCandidate(segments, "DRAGON"));
 }
 
 TEST_F(EmojiRewriterTest, NoConversionWithDisabledSettings) {

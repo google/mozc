@@ -38,6 +38,7 @@
 #include "base/serialized_string_array.h"
 #include "converter/segments.h"
 #include "data_manager/data_manager_interface.h"
+#include "data_manager/emoji_data.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/strings/string_view.h"
 
@@ -71,150 +72,8 @@ class ConversionRequest;
 class EmojiRewriter : public RewriterInterface {
  public:
   static constexpr size_t kEmojiDataByteLength = 28;
-
-  // Emoji data token is 28 bytes data of the following format:
-  //
-  // +-------------------------------------+
-  // | Key index (4 byte)                  |
-  // +-------------------------------------+
-  // | UTF8 emoji index (4 byte)           |
-  // +-------------------------------------+
-  // | Android PUA code (4 byte)           |
-  // +-------------------------------------+
-  // | UTF8 description index (4 byte)     |
-  // +-------------------------------------+
-  // | Docomo description index (4 byte)   |
-  // +-------------------------------------+
-  // | Softbank description index (4 byte) |
-  // +-------------------------------------+
-  // | KDDI description index (4 byte)     |
-  // +-------------------------------------+
-  //
-  // Here, index is the position in the string array at which the corresponding
-  // string value is stored.  Tokens are sorted in order of key so that it can
-  // be search by binary search.
-  //
-  // The following iterator class can be used to iterate over token array.
-  class EmojiDataIterator
-      : public std::iterator<std::random_access_iterator_tag, uint32_t> {
-   public:
-    EmojiDataIterator() : ptr_(nullptr) {}
-    explicit EmojiDataIterator(const char *ptr) : ptr_(ptr) {}
-
-    uint32_t key_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_);
-    }
-    uint32_t emoji_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 4);
-    }
-    uint32_t android_pua() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 8);
-    }
-    uint32_t description_utf8_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
-    }
-    uint32_t description_docomo_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 16);
-    }
-    uint32_t description_softbank_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 20);
-    }
-    uint32_t description_kddi_index() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 24);
-    }
-
-    // Returns key index as token array is searched by key.
-    uint32_t operator*() const { return key_index(); }
-
-    void swap(EmojiDataIterator &x) {
-      using std::swap;
-      swap(ptr_, x.ptr_);
-    }
-    friend void swap(EmojiDataIterator &x, EmojiDataIterator &y) {
-      return x.swap(y);
-    }
-
-    EmojiDataIterator &operator++() {
-      ptr_ += kEmojiDataByteLength;
-      return *this;
-    }
-
-    EmojiDataIterator operator++(int) {
-      const char *tmp = ptr_;
-      ptr_ += kEmojiDataByteLength;
-      return EmojiDataIterator(tmp);
-    }
-
-    EmojiDataIterator &operator--() {
-      ptr_ -= kEmojiDataByteLength;
-      return *this;
-    }
-
-    EmojiDataIterator operator--(int) {
-      const char *tmp = ptr_;
-      ptr_ -= kEmojiDataByteLength;
-      return EmojiDataIterator(tmp);
-    }
-
-    EmojiDataIterator &operator+=(ptrdiff_t n) {
-      ptr_ += n * kEmojiDataByteLength;
-      return *this;
-    }
-
-    EmojiDataIterator &operator-=(ptrdiff_t n) {
-      ptr_ -= n * kEmojiDataByteLength;
-      return *this;
-    }
-
-    friend EmojiDataIterator operator+(EmojiDataIterator x, ptrdiff_t n) {
-      return x += n;
-    }
-
-    friend EmojiDataIterator operator+(ptrdiff_t n, EmojiDataIterator x) {
-      return x += n;
-    }
-
-    friend EmojiDataIterator operator-(EmojiDataIterator x, ptrdiff_t n) {
-      return x -= n;
-    }
-
-    friend ptrdiff_t operator-(EmojiDataIterator x, EmojiDataIterator y) {
-      return (x.ptr_ - y.ptr_) / kEmojiDataByteLength;
-    }
-
-    friend bool operator==(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ == y.ptr_;
-    }
-
-    friend bool operator!=(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ != y.ptr_;
-    }
-
-    friend bool operator<(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ < y.ptr_;
-    }
-
-    friend bool operator<=(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ <= y.ptr_;
-    }
-
-    friend bool operator>(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ > y.ptr_;
-    }
-
-    friend bool operator>=(EmojiDataIterator x, EmojiDataIterator y) {
-      return x.ptr_ >= y.ptr_;
-    }
-
-   private:
-    const char *ptr_ = nullptr;
-  };
-
   using IteratorRange = std::pair<EmojiDataIterator, EmojiDataIterator>;
 
-  // This class does not take an ownership of |emoji_data_list|, |token_list|
-  // and |value_list|.  If NULL pointer is passed to it, Mozc process
-  // terminates with an error.
   explicit EmojiRewriter(const DataManagerInterface &data_manager);
   ~EmojiRewriter() override;
 

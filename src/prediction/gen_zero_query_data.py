@@ -30,10 +30,10 @@
 
 """Generates zero query data file."""
 
+import argparse
 import codecs
 import collections
 import logging
-import optparse
 import re
 import sys
 import unicodedata
@@ -44,30 +44,6 @@ from prediction import gen_zero_query_util as util
 # \xe3\x80\x80 is the UTF-8 sequence of full-width space.
 # The last whitespace is full-width space. (U+3000).
 RE_SPLIT = r'(?: |\xe3\x80\x80|　)+'
-
-
-def ParseCodePoint(s):
-  """Parses the pua string representation.
-
-  The format of the input is either:
-  - empty string
-  - hexadecimal integer.
-  - hexadecimal integer leading '>'.
-
-  We're not interested in empty string nor '>'-leading codes, so returns None
-  for them.
-  Note that '>'-leading code means it is "secondary" code point to represent
-  the glyph (in other words, it has alternative (primary) code point, which
-  doesn't lead '>' and that's why we'll ignore it).
-
-  Args:
-    s: a string indicating pua string representation.
-  Returns:
-    A integer indicating parsed pua.
-  """
-  if not s or s[0] == '>':
-    return 0
-  return int(s, 16)
 
 
 def NormalizeString(string):
@@ -98,29 +74,14 @@ def ReadEmojiTsv(stream):
   zero_query_dict = collections.defaultdict(list)
   stream = code_generator_util.SkipLineComment(stream)
   for columns in code_generator_util.ParseColumnStream(stream, delimiter='\t'):
-    if len(columns) != 13:
+    if len(columns) != 7:
       logging.critical('format error: %s', '\t'.join(columns))
       sys.exit(1)
 
-    code_points = columns[0].split(' ')
-
     # Emoji code point.
-    emoji = columns[1]
+    codepoints, emoji, readings, _, japanese_name, descriptions, _ = columns
 
-    android_pua = ParseCodePoint(columns[2])
-    readings = columns[6]
-    japanese_name = columns[8]
-    docomo_description = columns[9]
-    softbank_description = columns[10]
-    kddi_description = columns[11]
-
-    if not android_pua or len(code_points) > 1:
-      # Skip some emoji, which is not supported on old devices.
-      # - Unicode 6.1 or later emoji which doesn't have PUA code point.
-      # - Composite emoji which has multiple code point.
-      # NOTE: Some Unicode 6.0 emoji don't have PUA, and it is also omitted.
-      # TODO(hsumita): Check the availability of such emoji and enable it.
-      logging.info('Skip %s', ' '.join(code_points))
+    if not codepoints:
       continue
 
     reading_list = []
@@ -130,30 +91,20 @@ def ReadEmojiTsv(stream):
       reading_list.append(reading)
 
     reading_list.extend(GetReadingsFromDescription(japanese_name))
-    reading_list.extend(GetReadingsFromDescription(docomo_description))
-    reading_list.extend(GetReadingsFromDescription(softbank_description))
-    reading_list.extend(GetReadingsFromDescription(kddi_description))
-
-    emoji_type = util.EMOJI_TYPE_NONE
-    if emoji:
-      emoji_type |= util.EMOJI_TYPE_UNICODE
-    if docomo_description:
-      emoji_type |= util.EMOJI_TYPE_DOCOMO
-    if softbank_description:
-      emoji_type |= util.EMOJI_TYPE_SOFTBANK
-    if kddi_description:
-      emoji_type |= util.EMOJI_TYPE_KDDI
+    for description in re.split(RE_SPLIT, NormalizeString(descriptions)):
+      if not description:
+        continue
+      reading_list.extend(GetReadingsFromDescription(description))
 
     for description in set(reading_list):
       if not description:
         continue
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI,
-                              emoji, emoji_type, android_pua))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOJI, emoji))
 
   # Sort emoji for each reading.
   for key in zero_query_dict.keys():
-    zero_query_dict[key].sort(key=lambda e: (e.value, e.emoji_android_pua))
+    zero_query_dict[key].sort(key=lambda e: e.value)
 
   return zero_query_dict
 
@@ -175,8 +126,7 @@ def ReadZeroQueryRuleData(input_stream):
 
     for value in values:
       zero_query_dict[key].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              value, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, value))
   return zero_query_dict
 
 
@@ -196,8 +146,7 @@ def ReadEmoticonTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON,
-                              emoticon, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_EMOTICON, emoticon))
 
   return zero_query_dict
 
@@ -229,21 +178,18 @@ def ReadSymbolTsv(stream):
       if not reading:
         continue
       zero_query_dict[reading].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
 
     if len(columns) >= 4 and columns[3]:
       # description: "天気", etc.
       description = columns[3]
       zero_query_dict[description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
     if len(columns) >= 5 and columns[4]:
       # additional_description: "傘", etc.
       additional_description = columns[4]
       zero_query_dict[additional_description].append(
-          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE,
-                              symbol, util.EMOJI_TYPE_NONE, 0))
+          util.ZeroQueryEntry(util.ZERO_QUERY_TYPE_NONE, symbol))
 
   return zero_query_dict
 
@@ -287,20 +233,25 @@ def MergeZeroQueryData(rule_dict, symbol_dict, emoji_dict, emoticon_dict):
   return merged
 
 
-def ParseOptions():
+def ParseOptions() -> argparse.Namespace:
   """Parse command line flags."""
-  parser = optparse.OptionParser()
-  parser.add_option('--input_rule', dest='input_rule', help='rule file')
-  parser.add_option(
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--input_rule', dest='input_rule', help='rule file')
+  parser.add_argument(
       '--input_symbol', dest='input_symbol', help='symbol data file')
-  parser.add_option('--input_emoji', dest='input_emoji', help='emoji data file')
-  parser.add_option(
+  parser.add_argument(
+      '--input_emoji', dest='input_emoji', help='emoji data file')
+  parser.add_argument(
       '--input_emoticon', dest='input_emoticon', help='emoticon data file')
-  parser.add_option('--output_token_array', dest='output_token_array',
-                    help='output token array file')
-  parser.add_option('--output_string_array', dest='output_string_array',
-                    help='output string array file')
-  return parser.parse_args()[0]
+  parser.add_argument(
+      '--output_token_array',
+      dest='output_token_array',
+      help='output token array file')
+  parser.add_argument(
+      '--output_string_array',
+      dest='output_string_array',
+      help='output string array file')
+  return parser.parse_args()
 
 
 def OpenFile(filename):

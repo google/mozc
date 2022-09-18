@@ -46,16 +46,15 @@
 #include "rewriter/emoji_rewriter.h"
 #include "rewriter/emoticon_rewriter.h"
 #include "rewriter/english_variants_rewriter.h"
+#include "rewriter/environmental_filter_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/katakana_promotion_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
-#include "rewriter/normalization_rewriter.h"
 #include "rewriter/number_rewriter.h"
 #include "rewriter/remove_redundant_candidate_rewriter.h"
 #include "rewriter/rewriter_interface.h"
-#include "rewriter/single_hentaigana_rewriter.h"
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/small_letter_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
@@ -100,7 +99,6 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<EnglishVariantsRewriter>());
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
   AddRewriter(std::make_unique<CollocationRewriter>(data_manager));
-  AddRewriter(std::make_unique<SingleHentaiganaRewriter>(parent_converter));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
   AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
@@ -134,7 +132,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
       std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
   AddRewriter(std::make_unique<KatakanaPromotionRewriter>());
-  AddRewriter(std::make_unique<NormalizationRewriter>());
+  AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(*data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));
 }

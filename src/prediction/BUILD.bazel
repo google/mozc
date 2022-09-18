@@ -141,14 +141,11 @@ cc_library_mozc(
         ":predictor_interface",
         ":suggestion_filter",
         ":zero_query_dict",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:number_util",
         "//base:util",
         "//composer",
-        "//composer/internal:typing_corrector",
-        "//config:config_handler",
         "//converter:connector",
         "//converter:converter_interface",
         "//converter:immutable_converter_interface",
@@ -183,7 +180,6 @@ cc_test_mozc(
         ":dictionary_predictor",
         ":suggestion_filter",
         ":zero_query_dict",
-        "//base",
         "//base:logging",
         "//base:port",
         "//base:serialized_string_array",
@@ -210,7 +206,6 @@ cc_test_mozc(
         "//dictionary:suffix_dictionary",
         "//dictionary:suppression_dictionary",
         "//dictionary/system:system_dictionary",
-        "//dictionary/system:value_dictionary",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -303,7 +298,6 @@ cc_test_mozc(
     visibility = ["//visibility:private"],
     deps = [
         ":zero_query_dict",
-        "//base",
         "//base:port",
         "//base:serialized_string_array",
         "//testing:gunit_main",
@@ -346,10 +340,7 @@ py_library_mozc(
 py_binary_mozc(
     name = "gen_zero_query_number_data",
     srcs = ["gen_zero_query_number_data.py"],
-    deps = [
-        ":gen_zero_query_number_data_lib",
-        ":gen_zero_query_util",
-    ],
+    deps = [":gen_zero_query_util"],
 )
 
 py_library_mozc(
@@ -365,7 +356,6 @@ py_binary_mozc(
     name = "gen_zero_query_data",
     srcs = ["gen_zero_query_data.py"],
     deps = [
-        ":gen_zero_query_data_lib",
         ":gen_zero_query_util",
         "//build_tools:code_generator_util",
     ],

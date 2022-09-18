@@ -106,26 +106,56 @@ TEST_F(SmallLetterRewriterTest, ScriptConversionTest) {
       {"^123", "¹²³"},
       {"^4", "⁴"},
       {"^56789", "⁵⁶⁷⁸⁹"},
-      {"^2+(3-1)=", "²⁺⁽³⁻¹⁾⁼"},
+      {"^2^+^(^3^-^1^)^=", "²⁺⁽³⁻¹⁾⁼"},
 
       // Subscript
       {"_123", "₁₂₃"},
       {"_4", "₄"},
       {"_56789", "₅₆₇₈₉"},
-      {"_2+(3-1)=", "₂₊₍₃₋₁₎₌"},
+      {"_2_+_(_3_-_1_)_=", "₂₊₍₃₋₁₎₌"},
+
+      // Math Formula
+      {"x^2+y^2=z^2", "x²+y²=z²"},
+
+      // Chemical Forumula
+      {"Na_2CO_3", "Na₂CO₃"},
+      {"C_6H_12O_6", "C₆H₁₂O₆"},
+      {"(NH_4)_2CO_3", "(NH₄)₂CO₃"},
+      {"2Na_2CO_3", "2Na₂CO₃"},
+      {"2H_2O", "2H₂O"},
+      {"O^2^-", "O²⁻"},
+
+      // Others
+      {"O^2-", "O²-"},
+      {"O^X_2", "O^X₂"},
+      {"_2O^", "₂O^"},
+      {"あ^2", "あ²"},
   };
 
   const char *kMozcUnsupportedInput[] = {
-      // Roman alhapet superscript/subscript
+      // Roman alphabet superscript
       "^n",
       "^x",
       "^a",
-      "^2x",
-
+      // Roman alphabet subscript
       "_m",
       "_y",
       "_b",
-      "_2y",
+
+      // Multibyte characters
+      "_あ",
+      "_⏰",
+
+      // Formula without explicit prefix is not supported
+      "H2O",
+      "Na+",
+      "NH4+",
+      "C2O42-",
+      "AKB48",
+
+      // Others
+      "あ^あ",
+      "x^^x",
   };
 
   // Test behavior for each test cases in kInpuOutputData.
@@ -166,7 +196,7 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
   AddSegment("6", "6", &segments);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
   EXPECT_EQ(1, segments.conversion_segments_size());
-  EXPECT_EQ("¹²³⁴⁵⁶", segments.conversion_segment(0).candidate(0).value);
+  EXPECT_EQ("¹²³⁴⁵⁶", segments.conversion_segment(0).candidate(2).value);
 
   // If the segments is already resized, returns false.
   InitSegments("^123", "^123", &segments);
@@ -182,7 +212,7 @@ TEST_F(SmallLetterRewriterTest, MultipleSegment) {
   segments.set_resized(true);
   segments.mutable_segment(0)->set_segment_type(Segment::HISTORY);
   EXPECT_TRUE(rewriter.Rewrite(request, &segments));
-  EXPECT_EQ("¹²³", segments.conversion_segment(0).candidate(0).value);
+  EXPECT_EQ("¹²³", segments.conversion_segment(0).candidate(1).value);
 }
 
 }  // namespace mozc

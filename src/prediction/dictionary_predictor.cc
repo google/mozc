@@ -210,6 +210,15 @@ ConversionRequest GetConversionRequestForRealtimeCandidates(
   return ret;
 }
 
+Segments GetSegmentsForRealtimeCandidatesGeneration(
+    const Segments &original_segments) {
+  Segments segments = original_segments;
+  // Other predictors (i.e. user_history_predictor) can add candidates
+  // before this predictor.
+  segments.mutable_conversion_segment(0)->clear_candidates();
+  return segments;
+}
+
 }  // namespace
 
 class DictionaryPredictor::PredictiveLookupCallback
@@ -1109,6 +1118,7 @@ void DictionaryPredictor::Result::SetTypesAndTokenAttributes(
   }
   if (token_attr & Token::USER_DICTIONARY) {
     candidate_attributes |= (Segment::Candidate::USER_DICTIONARY |
+                             Segment::Candidate::NO_MODIFICATION |
                              Segment::Candidate::NO_VARIANTS_EXPANSION);
   }
 }
@@ -1605,7 +1615,7 @@ bool DictionaryPredictor::PushBackTopConversionResult(
     std::vector<Result> *results) const {
   DCHECK_EQ(1, segments.conversion_segments_size());
 
-  Segments tmp_segments = segments;
+  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
   ConversionRequest tmp_request = request;
   tmp_request.set_max_conversion_candidates_size(20);
   tmp_request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
@@ -1683,7 +1693,7 @@ void DictionaryPredictor::AggregateRealtimeConversion(
   const ConversionRequest request_for_realtime =
       GetConversionRequestForRealtimeCandidates(request,
                                                 realtime_candidates_size);
-  Segments tmp_segments = segments;
+  Segments tmp_segments = GetSegmentsForRealtimeCandidatesGeneration(segments);
   if (!immutable_converter_->ConvertForRequest(request_for_realtime,
                                                &tmp_segments) ||
       tmp_segments.conversion_segments_size() == 0 ||
@@ -2173,9 +2183,6 @@ void DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection(
 bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
     const ConversionRequest &request, const std::string &key,
     const ZeroQueryDict &dict, std::vector<ZeroQueryResult> *results) {
-  const int32_t available_emoji_carrier =
-      request.request().available_emoji_carrier();
-
   DCHECK(results);
   results->clear();
 
@@ -2183,6 +2190,9 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
   if (range.first == range.second) {
     return false;
   }
+
+  const bool is_key_one_char_and_not_kanji =
+      Util::CharsLen(key) == 1 && !Util::ContainsScriptType(key, Util::KANJI);
   for (; range.first != range.second; ++range.first) {
     const auto &entry = range.first;
     if (entry.type() != ZERO_QUERY_EMOJI) {
@@ -2190,23 +2200,15 @@ bool DictionaryPredictor::GetZeroQueryCandidatesForKey(
           std::make_pair(std::string(entry.value()), entry.type()));
       continue;
     }
-    if (available_emoji_carrier & Request::UNICODE_EMOJI &&
-        entry.emoji_type() & EMOJI_UNICODE) {
-      results->push_back(
-          std::make_pair(std::string(entry.value()), entry.type()));
+
+    // Emoji should not be suggested for single Hiragana / Katakana input,
+    // because they tend to be too much aggressive.
+    if (is_key_one_char_and_not_kanji) {
       continue;
     }
 
-    if ((available_emoji_carrier & Request::DOCOMO_EMOJI &&
-         entry.emoji_type() & EMOJI_DOCOMO) ||
-        (available_emoji_carrier & Request::SOFTBANK_EMOJI &&
-         entry.emoji_type() & EMOJI_SOFTBANK) ||
-        (available_emoji_carrier & Request::KDDI_EMOJI &&
-         entry.emoji_type() & EMOJI_KDDI)) {
-      std::string android_pua;
-      Util::Ucs4ToUtf8(entry.emoji_android_pua(), &android_pua);
-      results->push_back(std::make_pair(android_pua, entry.type()));
-    }
+    results->push_back(
+        std::make_pair(std::string(entry.value()), entry.type()));
   }
   return !results->empty();
 }
@@ -2513,7 +2515,7 @@ int DictionaryPredictor::CalculatePrefixPenalty(
     const ConversionRequest &request, const std::string &input_key,
     const DictionaryPredictor::Result &result,
     const ImmutableConverterInterface *immutable_converter,
-    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) {
+    absl::flat_hash_map<PrefixPenaltyKey, int> *cache) const {
   const std::string &candidate_key = result.key;
   const uint16_t result_rid = result.rid;
   const size_t key_len = Util::CharsLen(candidate_key);
@@ -2530,23 +2532,14 @@ int DictionaryPredictor::CalculatePrefixPenalty(
   int penalty = 0;
   Segments tmp_segments;
   Segment *segment = tmp_segments.add_segment();
-  // history
-  segment->set_segment_type(Segment::HISTORY);
-  segment->set_key(candidate_key);
-  Segment::Candidate *c = segment->add_candidate();
-  c->key = candidate_key;
-  c->content_key = candidate_key;
-  c->value = result.value;
-  c->content_value = result.value;
-  c->rid = result.rid;
-  // conversion segment
-  segment = tmp_segments.add_segment();
   segment->set_key(Util::Utf8SubString(input_key, key_len));
   ConversionRequest req = request;
   req.set_max_conversion_candidates_size(1);
   if (immutable_converter->ConvertForRequest(req, &tmp_segments) &&
       segment->candidates_size() > 0) {
-    penalty = segment->candidate(0).cost;
+    const Segment::Candidate &top_candidate = segment->candidate(0);
+    penalty = (connector_->GetTransitionCost(result_rid, top_candidate.lid) +
+               top_candidate.cost);
   }
   (*cache)[cache_key] = penalty;
   return penalty;

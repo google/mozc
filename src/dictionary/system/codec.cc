@@ -253,7 +253,7 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
                                         std::string *dst) const {
   DCHECK(dst);
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32_t) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
     const uint32_t c = iter.Get();
     if (c >= 0x3041 && c < 0x3095) {
@@ -278,7 +278,7 @@ void SystemDictionaryCodec::EncodeValue(const absl::string_view src,
       dst->push_back(h);
       dst->push_back(c & 255);
     } else if (0x10000 <= c && c <= 0x10ffff) {
-      // charaters encoded into 2-4bytes.
+      // characters encoded into 2-4bytes.
       int left = ((c >> 16) & 255);
       const int middle = ((c >> 8) & 255);
       const int right = (c & 255);
@@ -490,7 +490,7 @@ namespace {
 // U+0020 - U+003F are left intact to represent numbers and hyphen in 1 byte.
 void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32_t) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
     uint32_t code = iter.Get();
     int32_t offset = 0;
@@ -517,7 +517,7 @@ void EncodeDecodeKeyImpl(const absl::string_view src, std::string *dst) {
 size_t GetEncodedDecodedKeyLengthImpl(const absl::string_view src) {
   size_t size = src.size();
   for (ConstChar32Iterator iter(src); !iter.Done(); iter.Next()) {
-    static_assert(sizeof(uint32_t) == sizeof(char32),
+    static_assert(sizeof(uint32_t) == sizeof(char32_t),
                   "char32 must be 32-bit integer size.");
     uint32_t code = iter.Get();
     if ((code >= 0x3041 && code <= 0x3095) ||

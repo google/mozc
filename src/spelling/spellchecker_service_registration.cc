@@ -27,32 +27,3 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_
-#define MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_
-#include "rewriter/rewriter_interface.h"
-
-namespace mozc {
-
-class ConverterInterface;
-class ConversionRequest;
-class Segments;
-
-class SingleHentaiganaRewriter : public RewriterInterface {
- public:
-  explicit SingleHentaiganaRewriter(const ConverterInterface *parent_converter);
-  ~SingleHentaiganaRewriter() override;
-
-  int capability(const ConversionRequest &request) const override;
-
-  bool Rewrite(const ConversionRequest &request,
-               Segments *segments) const override;
-  void SetEnabled(const bool enabled);
-
- private:
-  bool enabled_ = false;
-  const ConverterInterface *parent_converter_;
-};
-
-}  // namespace mozc
-
-#endif  // MOZC_REWRITER_SINGLE_HENTAIGANA_REWRITER_H_

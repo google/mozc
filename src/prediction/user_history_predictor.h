@@ -333,10 +333,9 @@ class UserHistoryPredictor : public PredictorInterface {
 
   // Returns true if entry is DEFAULT_ENTRY, satisfies certain conditions, and
   // doesn't have removed flag.
-  bool IsValidEntry(const Entry &entry, uint32_t available_emoji_carrier) const;
+  bool IsValidEntry(const Entry &entry) const;
   // The same as IsValidEntry except that removed field is ignored.
-  bool IsValidEntryIgnoringRemovedField(const Entry &entry,
-                                        uint32_t available_emoji_carrier) const;
+  bool IsValidEntryIgnoringRemovedField(const Entry &entry) const;
 
   // Returns "tweaked" score of result_entry.
   // the score is basically determined by "last_access_time", (a.k.a,
@@ -396,8 +395,7 @@ class UserHistoryPredictor : public PredictorInterface {
       uint64_t *left_most_last_access_time, std::string *result_key,
       std::string *result_value) const;
 
-  const Entry *LookupPrevEntry(const Segments &segments,
-                               uint32_t available_emoji_carrier) const;
+  const Entry *LookupPrevEntry(const Segments &segments) const;
 
   // Adds an entry to a priority queue.
   Entry *AddEntry(const Entry &entry, EntryPriorityQueue *results) const;

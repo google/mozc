@@ -252,10 +252,6 @@ class Util {
   // return true the line starts with UTF16-LE/UTF16-BE BOM.
   static bool IsUtf16Bom(const std::string &line);
 
-  // Returns true if the given |s| has only one ucs4 character, and it is
-  // in the range of Android Emoji PUA.
-  static bool IsAndroidPuaEmoji(absl::string_view s);
-
   // Chop the return characters (i.e. '\n' and '\r') at the end of the
   // given line.
   static bool ChopReturns(std::string *line);

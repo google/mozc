@@ -57,15 +57,6 @@ enum ZeroQueryType {
   ZERO_QUERY_SUFFIX,
 };
 
-// bit fields
-enum ZeroQueryEmojiType {
-  EMOJI_NONE = 0,
-  EMOJI_UNICODE = 1,
-  EMOJI_DOCOMO = 2,
-  EMOJI_SOFTBANK = 4,
-  EMOJI_KDDI = 8,
-};
-
 // Zero query dictionary is a multimap from string to a list of zero query
 // entries, where each entry can be looked up by equal_range() method.  The data
 // is serialized to two binary data: token array and string array.  Token array
@@ -76,8 +67,8 @@ enum ZeroQueryEmojiType {
 //   uint32 key_index:          4 bytes
 //   uint32 value_index:        4 bytes
 //   ZeroQueryType type:        2 bytes
-//   uint16 emoji_type:         2 bytes
-//   uint32 emoji_android_pua:  4 bytes
+//   uint16 unused_field:       2 bytes
+//   uint32 unused_field:       4 bytes
 // }
 //
 // The token array is sorted in ascending order of key_index for binary search.
@@ -116,14 +107,6 @@ class ZeroQueryDict {
     ZeroQueryType type() const {
       const uint16_t val = *reinterpret_cast<const uint16_t *>(ptr_ + 8);
       return static_cast<ZeroQueryType>(val);
-    }
-
-    uint16_t emoji_type() const {
-      return *reinterpret_cast<const uint16_t *>(ptr_ + 10);
-    }
-
-    uint32_t emoji_android_pua() const {
-      return *reinterpret_cast<const uint32_t *>(ptr_ + 12);
     }
 
     absl::string_view key() const { return (*string_array_)[key_index()]; }

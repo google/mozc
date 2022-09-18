@@ -123,6 +123,15 @@ bool IsEmojiEntry(const UserHistoryPredictor::Entry &entry) {
           absl::StrContains(entry.description(), kEmojiDescription));
 }
 
+// http://unicode.org/~scherer/emoji4unicode/snapshot/full.html
+constexpr char kUtf8MinGooglePuaEmoji[] = "\xf3\xbe\x80\x80";
+constexpr char kUtf8MaxGooglePuaEmoji[] = "\xf3\xbe\xba\xa0";
+
+bool IsAndroidPuaEmoji(absl::string_view s) {
+  return (s.size() == 4 && kUtf8MinGooglePuaEmoji <= s &&
+          s <= kUtf8MaxGooglePuaEmoji);
+}
+
 bool IsPunctuation(absl::string_view value) {
   return (value == "。" || value == "." || value == "、" || value == "," ||
           value == "？" || value == "?" || value == "！" || value == "!" ||
@@ -1153,7 +1162,7 @@ bool UserHistoryPredictor::PredictForRequest(const ConversionRequest &request,
   const size_t input_key_len =
       Util::CharsLen(segments->conversion_segment(0).key());
   const Entry *prev_entry =
-      LookupPrevEntry(*segments, request.request().available_emoji_carrier());
+      LookupPrevEntry(*segments);
   if (input_key_len == 0 && prev_entry == nullptr) {
     VLOG(1) << "If input_key_len is 0, prev_entry must be set";
     return false;
@@ -1233,7 +1242,7 @@ bool UserHistoryPredictor::ShouldPredict(RequestType request_type,
 }
 
 const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
-    const Segments &segments, uint32_t available_emoji_carrier) const {
+    const Segments &segments) const {
   const size_t history_segments_size = segments.history_segments_size();
   const Entry *prev_entry = nullptr;
   // When there are non-zero history segments, lookup an entry
@@ -1272,7 +1281,7 @@ const UserHistoryPredictor::Entry *UserHistoryPredictor::LookupPrevEntry(
       // entry->value() is a SUFFIX of prev_value.
       // length of entry->value() must be >= 2, as single-length
       // match would be noisy.
-      if (IsValidEntry(*entry, available_emoji_carrier) &&
+      if (IsValidEntry(*entry) &&
           entry != prev_entry && entry->next_entries_size() > 0 &&
           Util::CharsLen(entry->value()) >= 2 &&
           (entry->value() == prev_value ||
@@ -1321,8 +1330,7 @@ void UserHistoryPredictor::GetResultsFromHistoryDictionary(
   const uint64_t now = Clock::GetTime();
   int trial = 0;
   for (const DicElement *elm = dic_->Head(); elm != nullptr; elm = elm->next) {
-    if (!IsValidEntryIgnoringRemovedField(
-            elm->value, request.request().available_emoji_carrier())) {
+    if (!IsValidEntryIgnoringRemovedField(elm->value)) {
       continue;
     }
     if (elm->value.last_access_time() + k62DaysInSec < now) {
@@ -1514,36 +1522,23 @@ void UserHistoryPredictor::InsertNextEntry(const NextEntry &next_entry,
   *target_next_entry = next_entry;
 }
 
-bool UserHistoryPredictor::IsValidEntry(
-    const Entry &entry, uint32_t available_emoji_carrier) const {
+bool UserHistoryPredictor::IsValidEntry(const Entry &entry) const {
   if (entry.removed() ||
-      !IsValidEntryIgnoringRemovedField(entry, available_emoji_carrier)) {
+      !IsValidEntryIgnoringRemovedField(entry)) {
     return false;
   }
   return true;
 }
 
 bool UserHistoryPredictor::IsValidEntryIgnoringRemovedField(
-    const Entry &entry, uint32_t available_emoji_carrier) const {
+    const Entry &entry) const {
   if (entry.entry_type() != Entry::DEFAULT_ENTRY ||
       suppression_dictionary_->SuppressEntry(entry.key(), entry.value())) {
     return false;
   }
 
-  if (IsEmojiEntry(entry)) {
-    if (Util::IsAndroidPuaEmoji(entry.value())) {
-      // Android carrier dependent emoji.
-      constexpr uint32_t kAndroidCarrier =
-          Request::DOCOMO_EMOJI | Request::SOFTBANK_EMOJI | Request::KDDI_EMOJI;
-      if (!(available_emoji_carrier & kAndroidCarrier)) {
-        return false;
-      }
-    } else {
-      // Unicode 6.0 emoji.
-      if (!(available_emoji_carrier & Request::UNICODE_EMOJI)) {
-        return false;
-      }
-    }
+  if (IsEmojiEntry(entry) && IsAndroidPuaEmoji(entry.value())) {
+    return false;
   }
 
   return true;

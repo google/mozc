@@ -98,8 +98,7 @@ int GetEmojiCost(const Segment &segment) {
   return segment.candidates_size() == 0 ? 0 : segment.candidate(0).cost;
 }
 
-void GatherAllEmojiData(EmojiRewriter::EmojiDataIterator begin,
-                        EmojiRewriter::EmojiDataIterator end,
+void GatherAllEmojiData(EmojiDataIterator begin, EmojiDataIterator end,
                         const SerializedStringArray &string_array,
                         EmojiEntryList *utf8_emoji_list) {
   for (; begin != end; ++begin) {
@@ -166,13 +165,6 @@ bool EmojiRewriter::Rewrite(const ConversionRequest &request,
     return false;
   }
 
-  // TODO(b/135127317): Remove this protobuf field.
-  int32_t available_emoji_carrier = request.request().available_emoji_carrier();
-  if (!(available_emoji_carrier & Request::UNICODE_EMOJI)) {
-    VLOG(2) << "No available emoji carrier.";
-    return false;
-  }
-
   CHECK(segments != nullptr);
   return RewriteCandidates(segments);
 }
@@ -204,8 +196,8 @@ bool EmojiRewriter::IsEmojiCandidate(const Segment::Candidate &candidate) {
   return absl::StrContains(candidate.description, kEmoji);
 }
 
-std::pair<EmojiRewriter::EmojiDataIterator, EmojiRewriter::EmojiDataIterator>
-EmojiRewriter::LookUpToken(absl::string_view key) const {
+std::pair<EmojiDataIterator, EmojiDataIterator> EmojiRewriter::LookUpToken(
+    absl::string_view key) const {
   // Search string array for key.
   auto iter = std::lower_bound(string_array_.begin(), string_array_.end(), key);
   if (iter == string_array_.end() || *iter != key) {

@@ -96,8 +96,6 @@ typedef std::uint16_t uint16;
 typedef std::uint32_t uint32;
 typedef std::uint64_t uint64;
 
-typedef signed int char32;
-
 #endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 #ifndef arraysize

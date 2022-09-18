@@ -39,6 +39,8 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
+licenses(["notice"])
+
 qt_moc_mozc(
     name = "moc_qt_ipc_thread",
     srcs = ["qt_ipc_thread.h"],

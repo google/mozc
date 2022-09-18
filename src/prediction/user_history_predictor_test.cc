@@ -1819,72 +1819,49 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   UserHistoryPredictor::Entry entry;
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
 
   entry.set_key("key");
   entry.set_value("value");
 
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(false);
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_ALL_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_entry_type(UserHistoryPredictor::Entry::CLEAN_UNUSED_EVENT);
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_removed(true);
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.Clear();
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.Clear();
   entry.set_key("key");
   entry.set_value("value");
   entry.set_description("絵文字");
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntry(entry, 0));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
-  // An android pua emoji example. (Note: 0xFE000 is in the region).
+  // An android pua emoji. It is obsolete and should return false.
   Util::Ucs4ToUtf8(0xFE000, entry.mutable_value());
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntry(entry, 0));
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::DOCOMO_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::SOFTBANK_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::KDDI_EMOJI));
-
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry, 0));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::DOCOMO_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::SOFTBANK_EMOJI));
-  EXPECT_TRUE(
-      predictor->IsValidEntryIgnoringRemovedField(entry, Request::KDDI_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   SuppressionDictionary *d = GetSuppressionDictionary();
   DCHECK(d);
@@ -1894,15 +1871,13 @@ TEST_F(UserHistoryPredictorTest, IsValidEntry) {
 
   entry.set_key("key");
   entry.set_value("value");
-  EXPECT_TRUE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_TRUE(predictor->IsValidEntry(entry));
+  EXPECT_TRUE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   entry.set_key("foo");
   entry.set_value("bar");
-  EXPECT_FALSE(predictor->IsValidEntry(entry, Request::UNICODE_EMOJI));
-  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(
-      entry, Request::UNICODE_EMOJI));
+  EXPECT_FALSE(predictor->IsValidEntry(entry));
+  EXPECT_FALSE(predictor->IsValidEntryIgnoringRemovedField(entry));
 
   d->Lock();
   d->Clear();

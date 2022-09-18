@@ -748,29 +748,9 @@ message Request {
   // Note: This feature can be enabled only for mobile due to UX design.
   optional bool auto_partial_suggestion = 10 [default = false];
 
-  // Nowadays, four kinds of emoji characters are used in Japan.
-  // - Unicode: Unicode based emoji (since Unicode 6.0).
-  // - Docomo: Docomo's carrier emoji.
-  // - Softbank: Softbank's carrier emoji.
-  // - Kddi: Kddi's carrier emoji.
-  // Note that especially latter three kinds are used on Mobile phones.
-  // So, it is necessary to control what kinds of emoji can be used or not
-  // based on client's (or connected application's) information.
-  // For example, on Android;
-  // - Unicode emoji characters are available only on Android 4.1 or later
-  //   only.
-  // - JP mobile carriers' emoji characters depend on the devices. Also,
-  //   we need to check the text field's attribute for them.
-  // The following bit set tells the emoji availability to EmojiRewriter.
-  enum EmojiCarrierType {
-    UNICODE_EMOJI = 1;
-    DOCOMO_EMOJI = 2;
-    SOFTBANK_EMOJI = 4;
-    KDDI_EMOJI = 8;
-  }
-
-  // By default, UNICODE emoji is available.
-  optional int32 available_emoji_carrier = 11 [default = 1];
+  // Setting zero to available_emoji_carrier for disabling Emoji conversion is
+  // obsolete. Instead, use emoji_rewriter_capability and set zero there.
+  reserved 11;  // Deprecated available_emoji_carrier status.
 
   // For emoji rewriter, it is necessary to control when the rewriter runs
   // based on the clients. The following bit set is sync'ed to
@@ -854,6 +834,65 @@ message Request {
   // Enables a11y support for candidates.
   // If this field is set to true, a11y description is set to each candidate.
   optional bool enable_a11y_description = 20 [default = false];
+
+  // Additional Character Group represents certain group of characters, that can
+  // be additionaly requested from the client side, based on font-availability
+  // information.
+  //
+  // This enum is not intended to be used for user preference. 'Additional'
+  // cases can change as time advances. For example, when KANA_SUPPLEMENT_6_0
+  // becomes enough available among environments, this option becomes default
+  // and the case will be removed.
+  //
+  // WARNING: Although cases are mutually exclusive now, they are not
+  // necessarily mutually exclusive. However, the current implementation in
+  // NormalizationRewriter assumes they are mutually exclusive.
+  enum AdditionalRenderableCharacterGroup {
+    // Do not use this case. This case is reserved for future usage.
+    // Because 0th element in enum is used as default value, in order to prevend
+    // having unexpected additional group, this case represents empty set of
+    // characters.
+    EMPTY = 0;
+    // This case is reserved for future usage.
+    reserved 1;
+
+    // Additional Hiragana, Katakana, and Hentaigana.
+    //
+    // It only contains KATAKANA / HIRAGANA LETTER ARCHAIC YE (U+1B000 and
+    // U+1B001) since Unicode 6.0. Some fonts including M+ fonts only support
+    // this letter.
+    KANA_SUPPLEMENT_6_0 = 2;
+    // It contains 285 Hentaigana characters supported in KANA_SUPPLEMENT and
+    // KANA_EXTENDED_A (U+1B002 ~ U+1B11E) since Unicode 10.0.
+    KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0 = 3;
+    // It contains four archaic hiraganas/katakanas (U+1B11F ~ U+1B122) since
+    // Unicode 14.0.
+    KANA_EXTENDED_A_14_0 = 4;
+
+    // Additional Emoji
+    // Emoji in enum can be removed and become default several years passed
+    // after the introduction. Emoji 12.1, released October 2019
+    EMOJI_12_1 = 5;
+    // Emoji 13.0, released March 2020
+    EMOJI_13_0 = 6;
+    // Emoji 13.1, released September 2020
+    EMOJI_13_1 = 7;
+    // Emoji 14.0, released September 2021
+    EMOJI_14_0 = 8;
+    // Emoji 15.0, released September 2022
+    EMOJI_15_0 = 9;
+
+    // Additional Hieroglyphs (U+13000 ~ U+1342E)
+    // Unicode 5.2, released October 2009
+    EGYPTIAN_HIEROGLYPH_5_2 = 10;
+  }
+
+  // Characters in the union of this list of groups can be contained in
+  // candidates.
+  // This feature is distinct from user preference. Do not make these option
+  // user selectable.
+  repeated AdditionalRenderableCharacterGroup
+      additional_renderable_character_groups = 21 [packed = true];
 }
 
 // Note there is another ApplicationInfo inside RendererCommand.

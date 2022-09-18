@@ -27,40 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/rewriter_util.h"
+#ifndef MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
+#define MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_
 
-#include <algorithm>
-
-namespace mozc {
-
-// Candidates from user history: "h"
-// Other existing candidates : "o"
-// Inserting candidates from the rewriter: "R"
-// The number of inserting "R": 2
-// offset: 2
-//
-// The output candidates would be:
-// [o, o, R, R, o, o, o, o, ...]
-// [h, o, o, R, R, o, o, o, ...]
-// [h, h, o, o, R, R, o, o, ...]
-// [h, h, h, o, o, R, R, o, ...]
-// [h, h, h, h, o, o, R, R  ...]
-// For the number of history candidates.
-size_t RewriterUtil::CalculateInsertPosition(const Segment &segment,
-                                             size_t offset) {
-  size_t existing_history_candidates_num = 0;
-  for (int i = 0; i < segment.candidates_size(); ++i) {
-    // Assume that the user history prediction candidates are inserted
-    // sequentially from top.
-    if (segment.candidate(i).attributes &
-        Segment::Candidate::USER_HISTORY_PREDICTION) {
-      ++existing_history_candidates_num;
-    } else if (existing_history_candidates_num > 0) {
-      break;
-    }
-  }
-  return std::min(offset + existing_history_candidates_num,
-                  segment.candidates_size());
-}
-
-}  // namespace mozc
+#endif  // MOZC_SPELLING_SPELLCHECKER_SERVICE_INTERFACE_H_

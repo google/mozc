@@ -175,6 +175,8 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     InitSegments(ucs4, ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(ascii, segments.segment(0).candidate(0).value.at(0));
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::NO_MODIFICATION);
   }
 
   // Mozc accepts Japanese characters
@@ -182,6 +184,8 @@ TEST_F(UnicodeRewriterTest, UnicodeConversionTest) {
     InitSegments(kUcs4Utf8Data[i].ucs4, kUcs4Utf8Data[i].ucs4, &segments);
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_TRUE(ContainCandidate(segments, kUcs4Utf8Data[i].utf8));
+    EXPECT_TRUE(segments.segment(0).candidate(0).attributes &
+                Segment::Candidate::NO_MODIFICATION);
   }
 
   // Mozc does not accept other characters

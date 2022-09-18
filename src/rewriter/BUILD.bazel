@@ -549,7 +549,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":symbol_rewriter",
-        "//base",
         "//base:logging",
         "//base:system_util",
         "//base:util",
@@ -563,7 +562,6 @@ cc_test_mozc(
         "//session:request_test_util",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -820,7 +818,6 @@ cc_library_mozc(
     hdrs = ["unicode_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base",
         "//base:logging",
         "//base:number_util",
         "//base:util",
@@ -828,7 +825,6 @@ cc_library_mozc(
         "//converter:converter_interface",
         "//converter:segments",
         "//request:conversion_request",
-        "//testing:gunit_prod",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -843,7 +839,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":unicode_rewriter",
-        "//base",
         "//base:port",
         "//base:system_util",
         "//base:util",
@@ -857,7 +852,6 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -994,7 +988,6 @@ cc_library_mozc(
     deps = [
         ":rewriter_interface",
         ":rewriter_util",
-        "//base",
         "//base:japanese_util",
         "//base:logging",
         "//base:serialized_string_array",
@@ -1002,6 +995,7 @@ cc_library_mozc(
         "//config:config_handler",
         "//converter:segments",
         "//data_manager:data_manager_interface",
+        "//data_manager:emoji_data",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
@@ -1020,11 +1014,9 @@ cc_test_mozc(
     deps = [
         ":emoji_rewriter",
         ":variants_rewriter",
-        "//base",
         "//base:logging",
         "//base:serialized_string_array",
         "//base:util",
-        "//config:character_form_manager",
         "//config:config_handler",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
@@ -1032,65 +1024,12 @@ cc_test_mozc(
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//request:conversion_request",
-        "//storage:registry",
         "//testing:gunit_main",
         "//testing:mozctest",
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/strings",
-    ],
-)
-
-py_library_mozc(
-    name = "gen_single_hentaigana_rewriter_data_lib",
-    srcs = ["gen_single_hentaigana_rewriter_data.py"],
-)
-
-py_binary_mozc(
-    name = "gen_single_hentaigana_rewriter_data",
-    srcs = ["gen_single_hentaigana_rewriter_data.py"],
-)
-
-genrule(
-    name = "single_hentaigana_rewriter_data",
-    srcs = ["//data/hentaigana:hentaigana.tsv"],
-    outs = ["single_hentaigana_rewriter_data.inc"],
-    cmd = "$(location :gen_single_hentaigana_rewriter_data) " +
-          "--input $(location //data/hentaigana:hentaigana.tsv) " +
-          "--output $@",
-    exec_tools = [":gen_single_hentaigana_rewriter_data"],
-)
-
-cc_library_mozc(
-    name = "single_hentaigana_rewriter",
-    srcs = ["single_hentaigana_rewriter.cc"],
-    hdrs = ["single_hentaigana_rewriter.h"],
-    textual_hdrs = [
-        ":single_hentaigana_rewriter_data",
-    ],
-    deps = [
-        ":rewriter_interface",
-        "//composer",
-        "//converter:converter_interface",
-        "//converter:segments",
-        "//request:conversion_request",
-    ],
-    alwayslink = 1,
-)
-
-cc_test_mozc(
-    name = "single_hentaigana_rewriter_test",
-    size = "small",
-    srcs = ["single_hentaigana_rewriter_test.cc"],
-    deps = [
-        ":single_hentaigana_rewriter",
-        "//base:system_util",
-        "//converter:segments",
-        "//engine:mock_data_engine_factory",
-        "//protocol:commands_cc_proto",
-        "//request:conversion_request",
-        "//testing:gunit_main",
     ],
 )
 
@@ -1355,33 +1294,42 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "normalization_rewriter",
-    srcs = ["normalization_rewriter.cc"],
-    hdrs = ["normalization_rewriter.h"],
+    name = "environmental_filter_rewriter",
+    srcs = ["environmental_filter_rewriter.cc"],
+    hdrs = ["environmental_filter_rewriter.h"],
     deps = [
         ":rewriter_interface",
-        "//base",
         "//base:logging",
+        "//base:serialized_string_array",
         "//base:text_normalizer",
         "//base:util",
+        "//base/protobuf",
         "//converter:segments",
+        "//data_manager:data_manager_interface",
+        "//data_manager:emoji_data",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "@com_google_absl//absl/strings",
     ],
 )
 
 cc_test_mozc(
-    name = "normalization_rewriter_test",
+    name = "environmental_filter_rewriter_test",
     size = "small",
-    srcs = ["normalization_rewriter_test.cc"],
+    srcs = ["environmental_filter_rewriter_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":normalization_rewriter",
-        "//base",
+        ":emoji_rewriter",
+        ":environmental_filter_rewriter",
         "//base:system_util",
+        "//base:util",
         "//converter:segments",
+        "//data_manager:emoji_data",
+        "//data_manager/testing:mock_data_manager",
+        "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_main",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
     ],
@@ -1589,16 +1537,15 @@ cc_library_mozc(
         ":emoji_rewriter",
         ":emoticon_rewriter",
         ":english_variants_rewriter",
+        ":environmental_filter_rewriter",
         ":focus_candidate_rewriter",
         ":fortune_rewriter",
         ":katakana_promotion_rewriter",
         ":language_aware_rewriter",
         ":merger_rewriter",
-        ":normalization_rewriter",
         ":number_rewriter",
         ":remove_redundant_candidate_rewriter",
         ":rewriter_interface",
-        ":single_hentaigana_rewriter",
         ":single_kanji_rewriter",
         ":small_letter_rewriter",
         ":symbol_rewriter",

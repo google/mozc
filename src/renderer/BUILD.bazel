@@ -42,7 +42,9 @@ load(
     "MACOS_BUNDLE_ID_PREFIX",
 )
 
-package(default_visibility = ["//:__subpackages__"])
+package(default_visibility = [
+    "//:__subpackages__",
+])
 
 cc_library_mozc(
     name = "renderer_client",

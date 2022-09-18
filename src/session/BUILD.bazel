@@ -307,13 +307,13 @@ cc_library_mozc(
     hdrs = ["session_handler.h"],
     deps = select_mozc(
         android = [
-            "//spelling:spellchecker_service",
+            "//spelling:spellchecker_service_interface",
         ],
         client = [],
         default = [
             ":session_watch_dog",
             "//base:process",
-            "//spelling:spellchecker_service",
+            "//spelling:spellchecker_service_interface",
         ],
         linux = [
             ":session_watch_dog",
@@ -365,10 +365,12 @@ cc_library_mozc(
     hdrs = ["session_handler_test_util.h"],
     deps = select_mozc(
         android = [
-            "//spelling:spellchecker_service",
+            "//spelling:spellchecker_service_interface",
+            "//spelling:spellchecker_service_registration",
         ],
         default = [
-            "//spelling:spellchecker_service",
+            "//spelling:spellchecker_service_interface",
+            "//spelling:spellchecker_service_registration",
         ],
     ) + [
         ":session",

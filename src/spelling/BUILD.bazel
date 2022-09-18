@@ -39,10 +39,38 @@ package(default_visibility = [
 ])
 
 cc_library_mozc(
+    name = "spellchecker_service_interface",
+    srcs = ["spellchecker_service_factory.cc"],
+    hdrs = ["spellchecker_service_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+cc_library_mozc(
+    name = "spellchecker_service_registration",
+    srcs = ["spellchecker_service_registration.cc"],
+    hdrs = ["spellchecker_service_interface.h"],
+    visibility = [
+        "//:__subpackages__",
+    ],
+    deps = [
+        ":spellchecker_service",
+        ":spellchecker_service_interface",
+        "//protocol:commands_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library_mozc(
     name = "spellchecker_service",
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
     deps = [
+        ":spellchecker_service_interface",
         "//base:file_util",
         "//base:port",
         "//base:thread",
@@ -58,7 +86,8 @@ cc_binary_mozc(
     name = "spellchecker_service_main",
     srcs = ["spellchecker_service_main.cc"],
     deps = [
-        ":spellchecker_service",
+        ":spellchecker_service_interface",
+        ":spellchecker_service_registration",
         "//engine:engine_builder",
         "//protocol:commands_cc_proto",
         "//protocol:engine_builder_cc_proto",

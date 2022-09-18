@@ -81,7 +81,10 @@ cc_library_mozc(
         "//base:base",
         "//base:port",
         "//protocol:commands_cc_proto",
-    ] + select_mozc(linux = ["@ibus//:ibus"]),
+    ] + select_mozc(
+        linux = ["//third_party/ibus"],
+        oss_linux = ["@ibus//:ibus"],
+    ),
 )
 
 cc_library_mozc(
@@ -104,7 +107,10 @@ cc_library_mozc(
         "//base:system_util",
         "//client:client",
         "//protocol:commands_cc_proto",
-    ] + select_mozc(linux = ["@ibus//:ibus"]),
+    ] + select_mozc(
+        linux = ["//third_party/ibus"],
+        oss_linux = ["@ibus//:ibus"],
+    ),
 )
 
 cc_library_mozc(
@@ -245,6 +251,10 @@ cc_binary_mozc(
         ":gen_mozc_xml",
         "//unix:icons",
     ],
+    defines = select_mozc(
+        linux = ["MOZC_NO_LOGGING"],
+        oss_linux = [],
+    ),
     deps = [
         ":ibus_config",
         ":ibus_mozc_lib",
@@ -297,6 +307,7 @@ cc_library_mozc(
             "ibus_header.h",
         ],
     ),
+    copts = select_mozc(linux = ["-Ithird_party/glib"]),
     deps = [
         "//base:coordinates",
         "//base:logging",
@@ -307,7 +318,13 @@ cc_library_mozc(
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
         "//renderer:unix_const",
-    ] + select_mozc(linux = ["@ibus//:ibus"]),
+    ] + select_mozc(
+        linux = [
+            "//third_party/ibus",
+            "//third_party/glib/gio",
+        ],
+        oss_linux = ["@ibus//:ibus"],
+    ),
 )
 
 cc_test_mozc(
@@ -330,7 +347,7 @@ cc_library_mozc(
     hdrs = select_mozc(linux = ["selection_monitor.h"]),
     defines = ["MOZC_ENABLE_X11_SELECTION_MONITOR"],
     linkopts = select_mozc(
-        linux = [
+        oss_linux = [
             "-lxcb",
             "-lxcb-xfixes",
         ],
@@ -342,5 +359,12 @@ cc_library_mozc(
         "//base:thread",
         "//base:util",
         "@com_google_absl//absl/synchronization",
-    ],
+    ] + select_mozc(
+        linux = [
+            "//third_party/libxcb",
+            "//third_party/libxcb:includes",
+            "//third_party/libxcb:libxcb-xfixes",
+        ],
+        oss_linux = [],
+    ),
 )

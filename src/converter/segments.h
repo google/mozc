@@ -56,6 +56,7 @@ class Segment final {
   };
 
   struct Candidate {
+    // LINT.IfChange
     enum Attribute {
       DEFAULT_ATTRIBUTE = 0,
       // this was the best candidate before learning
@@ -107,7 +108,10 @@ class Segment final {
       USER_HISTORY_PREDICTION = 1 << 14,
       // Contains suffix dictionary.
       SUFFIX_DICTIONARY = 1 << 15,
+      // Disables modification and removal in rewriters.
+      NO_MODIFICATION = 1 << 16,
     };
+    // LINT.ThenChange(//converter/converter_main.cc)
 
     enum Command {
       DEFAULT_COMMAND = 0,

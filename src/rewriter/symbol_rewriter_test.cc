@@ -176,6 +176,31 @@ TEST_F(SymbolRewriterTest, TriggerRewriteEachTest) {
   }
 }
 
+TEST_F(SymbolRewriterTest, HentaiganaSymbolTest) {
+  SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
+  const ConversionRequest request;
+  {
+    Segments segments;
+    AddSegment("あ", {"あ"}, &segments);
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(
+        HasCandidateAndDescription(segments, 0, "\U0001B002", "安の変体仮名"));
+    EXPECT_TRUE(
+        HasCandidateAndDescription(segments, 0, "\U0001B003", "愛の変体仮名"));
+    EXPECT_FALSE(
+        HasCandidateAndDescription(segments, 0, "\U0001B007", "伊の変体仮名"));
+  }
+  {
+    Segments segments;
+    AddSegment("いぇ", {"いぇ"}, &segments);
+    EXPECT_TRUE(symbol_rewriter.Rewrite(request, &segments));
+    EXPECT_TRUE(
+        HasCandidateAndDescription(segments, 0, "\U0001B001", "江の変体仮名"));
+    EXPECT_TRUE(
+        HasCandidateAndDescription(segments, 0, "\U0001B121", "変体仮名"));
+  }
+}
+
 TEST_F(SymbolRewriterTest, TriggerRewriteDescriptionTest) {
   SymbolRewriter symbol_rewriter(converter_, data_manager_.get());
   const ConversionRequest request;
