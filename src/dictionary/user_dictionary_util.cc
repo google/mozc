@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <string>
 
 #include "base/config_file_stream.h"

@@ -34,6 +34,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/port.h"
 #include "protocol/user_dictionary_storage.pb.h"

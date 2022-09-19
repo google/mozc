@@ -31,10 +31,14 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <limits>
+#include <memory>
+#include <ostream>
 #include <sstream>  // For DebugString()
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"

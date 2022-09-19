@@ -30,6 +30,8 @@
 #include "dictionary/user_dictionary_storage.h"
 
 #include <cstdint>
+#include <ios>
+#include <iterator>
 #include <string>
 #include <vector>
 

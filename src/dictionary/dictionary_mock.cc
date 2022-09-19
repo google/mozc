@@ -33,6 +33,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/util.h"

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <sstream>

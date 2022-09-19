@@ -30,8 +30,10 @@
 #include "converter/converter_mock.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "converter/segments.h"
 #include "request/conversion_request.h"

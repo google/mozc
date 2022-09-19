@@ -35,8 +35,11 @@
 #include "converter/gen_segmenter_bitarray.h"
 
 #include <cstdint>
+#include <ios>
 #include <map>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/bitarray.h"

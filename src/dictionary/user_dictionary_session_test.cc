@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #ifndef OS_WIN
 #include <sys/stat.h>

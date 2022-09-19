@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 #include <utility>

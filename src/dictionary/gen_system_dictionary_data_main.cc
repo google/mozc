@@ -34,7 +34,9 @@
 //  --output="output.h"
 //  --make_header
 
+#include <ios>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 

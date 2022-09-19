@@ -36,6 +36,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/compiler_specific.h"
 #include "base/file_util.h"
