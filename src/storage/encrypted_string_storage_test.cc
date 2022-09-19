@@ -29,6 +29,7 @@
 
 #include "storage/encrypted_string_storage.h"
 
+#include <ios>
 #include <iostream>
 #include <memory>
 #include <string>

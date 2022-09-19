@@ -30,6 +30,7 @@
 #include "session/random_keyevents_generator.h"
 
 #include <cstdint>
+#include <iterator>
 #include <string>
 #include <vector>
 

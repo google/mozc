@@ -33,6 +33,7 @@
 #include <QMessageBox>
 #include <QtGui>
 #include <cctype>
+#include <istream>
 #include <memory>
 #include <sstream>
 #include <string>

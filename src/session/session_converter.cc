@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"

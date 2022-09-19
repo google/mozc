@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <set>
 #include <string>
 #include <utility>

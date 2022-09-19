@@ -31,6 +31,7 @@
 #define MOZC_GUI_CONFIG_DIALOG_KEYMAP_EDITOR_H_
 
 #include <QWidget>
+#include <istream>
 #include <map>
 #include <memory>
 #include <set>

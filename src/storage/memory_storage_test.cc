@@ -29,6 +29,7 @@
 
 #include "storage/memory_storage.h"
 
+#include <iterator>
 #include <map>
 #include <memory>
 #include <string>

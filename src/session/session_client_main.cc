@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "base/file_stream.h"

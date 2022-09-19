@@ -31,6 +31,8 @@
 
 #include "session/session_observer_handler.h"
 
+#include <vector>
+
 #include "session/session_observer_interface.h"
 
 namespace mozc {
