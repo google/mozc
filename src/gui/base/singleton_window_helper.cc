@@ -37,6 +37,7 @@
 #include <unistd.h>
 #endif  // OS_WIN
 
+#include <ios>
 #include <memory>
 #include <string>
 

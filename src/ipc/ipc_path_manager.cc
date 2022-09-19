@@ -55,9 +55,11 @@
 #endif  // OS_WIN
 
 #include <cstdlib>
+#include <ios>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/const.h"
 #include "base/file_stream.h"

@@ -29,8 +29,10 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ios>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/codegen_bytearray_stream.h"
 #include "base/file_stream.h"

@@ -30,6 +30,7 @@
 #include "rewriter/calculator/calculator_mock.h"
 
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 

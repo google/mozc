@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/clock.h"
 #include "base/port.h"

@@ -30,9 +30,11 @@
 #include "prediction/user_history_predictor.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "base/clock_mock.h"
 #include "base/file_util.h"

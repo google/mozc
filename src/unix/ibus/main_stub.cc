@@ -28,6 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
+#include <ostream>
 
 #include "base/init_mozc.h"
 #include "unix/ibus/ibus_config.h"

@@ -30,6 +30,8 @@
 #include "spelling/spellchecker_service.h"
 
 #include <fstream>
+#include <ios>
+#include <memory>
 #include <string>
 #include <utility>
 
