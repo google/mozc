@@ -555,7 +555,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 11
+// Next ID: 12
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -598,6 +598,10 @@ message DecoderExperimentParams {
   // prediction candidate cost.
   optional bool cancel_segment_model_penalty_for_prediction = 10
       [default = false];
+
+  // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
+  // letters.
+  optional bool enable_environmental_filter_rewriter = 11 [default = true];
 }
 
 // Clients' request to the server.
