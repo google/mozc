@@ -144,8 +144,13 @@ std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
     results[target_version] = {};
   }
   for (auto iter = range.first; iter != range.second; ++iter) {
+    const uint32_t unicode_version_index = iter.unicode_version_index();
+    // unicode_version_index will not be negative.
+    if (unicode_version_index > EMOJI_MAX_VERSION) {
+      continue;
+    }
     const EmojiVersion version =
-        static_cast<EmojiVersion>(iter.unicode_version_index());
+        static_cast<EmojiVersion>(unicode_version_index);
     if (results.find(version) == results.end()) {
       continue;
     }
