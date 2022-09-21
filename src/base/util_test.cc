@@ -368,18 +368,11 @@ TEST(UtilTest, SplitStringToUtf8Chars) {
     const std::string kInputs[] = {
         "a", "あ", "亜", "\n", "a",
     };
-    std::string joined_string;
-    for (int i = 0; i < std::size(kInputs); ++i) {
-      joined_string += kInputs[i];
-    }
+    const std::string joined_string = absl::StrJoin(kInputs, "");
 
     std::vector<std::string> output;
     Util::SplitStringToUtf8Chars(joined_string, &output);
-    EXPECT_EQ(std::size(kInputs), output.size());
-
-    for (size_t i = 0; i < output.size(); ++i) {
-      EXPECT_EQ(kInputs[i], output[i]);
-    }
+    EXPECT_THAT(output, ElementsAreArray(kInputs));
   }
 }
 
@@ -394,15 +387,11 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
     const std::string kInputs[] = {
         "a", "あ", "亜", "\n", "a",
     };
-    std::string joined_string = absl::StrJoin(kInputs, "");
+    const std::string joined_string = absl::StrJoin(kInputs, "");
 
     std::vector<std::string> graphemes;
     Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
-    EXPECT_EQ(std::size(kInputs), graphemes.size());
-
-    for (size_t i = 0; i < graphemes.size(); ++i) {
-      EXPECT_EQ(kInputs[i], graphemes[i]);
-    }
+    EXPECT_THAT(graphemes, ElementsAreArray(kInputs));
   }
 
   {  // Multiple codepoint characters
@@ -413,34 +402,66 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
         "あ゙",  // U+3042,U+3099  - 2 codepoints [Dakuten]
         "か゚",  // U+304B,U+309A  - 2 codepoints [Handakuten]
     };
-    std::string joined_string = absl::StrJoin(kInputs, "");
+    const std::string joined_string = absl::StrJoin(kInputs, "");
 
     std::vector<std::string> graphemes;
     Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
-    EXPECT_EQ(std::size(kInputs), graphemes.size());
+    EXPECT_THAT(graphemes, ElementsAreArray(kInputs));
+  }
 
-    for (size_t i = 0; i < graphemes.size(); ++i) {
-      EXPECT_EQ(kInputs[i], graphemes[i]);
-    }
+  {  // Multiple codepoint emojis
+    const std::string kInputs[] = {
+        u8"🛳\uFE0E",  // U+1F6F3,U+FE0E - text presentation sequence
+        u8"🛳\uFE0F",  // U+1F6F3,U+FE0F - emoji presentation sequence
+        "✌🏿",         // U+261D,U+1F3FF - emoji modifier sequence
+        "🇯🇵",         // U+1F1EF,U+1F1F5 - emoji flag sequence
+        "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // U+1F3F4,U+E0067,U+E0062,U+E0065,U+E006E,U+E0067
+                                         // - emoji tag sequence
+        "#️⃣",  // U+0023,U+FE0F,U+20E3 - emoji keycap sequennce
+        "👨‍👩‍👧‍👦",  // U+1F468,U+200D,U+1F469,U+200D,U+1F467,U+200D,U+1F466
+                                      // - emoji zwj sequence
+    };
+    const std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_THAT(graphemes, ElementsAreArray(kInputs));
+  }
+
+  // Multiple emoji flag sequences
+  {
+    const std::string kInputs[] = {
+        "🇧🇸",  // U+1F1E7,U+1F1F8 - Bahamas (Country code: BS)
+        "🇸🇧",  // U+1F1F8,U+1F1E7 - Solomon Islands (Country code: SB)
+    };
+    const std::string joined_string = absl::StrJoin(kInputs, "");
+
+    std::vector<std::string> graphemes;
+    Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
+    EXPECT_THAT(graphemes, ElementsAreArray(kInputs));
   }
 
   {  // Invalid codepoint characters
     const std::string kInputs[] = {
-        u8"\uFE00",  // Extend only [SVS]
+        u8"\uFE00",              // Extend only [SVS]
         u8"神\uFE00\U000E0100",  // Multiple extends [SVS, IVS]
+        u8"🛳\uFE0E\uFE0E",  // Multiple extends [text_presentation_selector,
+                            // text_presentation_selector]
+        u8"🛳\uFE0F\uFE0F",  // Multiple extends [emoji_presentation_selector,
+                            // emoji_presentation_selector]
+        u8"✌🏿\U0001F3FF",   // Multiple extends [emoji_modifier,
+                            // emoji_modifier]
+        u8"🏴󠁧󠁢󠁥󠁮󠁧󠁿\U000E0067",  // Multiple extends
+                                                     // [tag_end,
+                                                     // tag_end]
+        u8"\U0001F468\u200D\U0001F469\u200D\u200D\U0001F467\u200D"
+        u8"\U0001F466"  // Successive ZWJ between "👨‍👩‍👧‍👦"
     };
-    std::string joined_string;
-    for (int i = 0; i < std::size(kInputs); ++i) {
-      joined_string += kInputs[i];
-    }
+    const std::string joined_string = absl::StrJoin(kInputs, "");
 
     std::vector<std::string> graphemes;
     Util::SplitStringToUtf8Graphemes(joined_string, &graphemes);
-    EXPECT_EQ(std::size(kInputs), graphemes.size());
-
-    for (size_t i = 0; i < graphemes.size(); ++i) {
-      EXPECT_EQ(kInputs[i], graphemes[i]);
-    }
+    EXPECT_THAT(graphemes, ElementsAreArray(kInputs));
   }
 }
 
