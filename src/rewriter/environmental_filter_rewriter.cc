@@ -79,7 +79,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
     const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
-  constexpr std::array<AdditionalRenderableCharacterGroup, 8> kAllCases = {
+  constexpr std::array<AdditionalRenderableCharacterGroup, 9> kAllCases = {
       commands::Request::KANA_SUPPLEMENT_6_0,
       commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0,
       commands::Request::KANA_EXTENDED_A_14_0,
@@ -88,6 +88,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
       commands::Request::EMOJI_13_1,
       commands::Request::EMOJI_14_0,
       commands::Request::EMOJI_15_0,
+      commands::Request::IVS_CHARACTER,
   };
 
   std::vector<AdditionalRenderableCharacterGroup> result;
@@ -350,6 +351,10 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
           case commands::Request::EGYPTIAN_HIEROGLYPH_5_2:
             found_nonrenderable =
                 FindCodepointsInClosedRange(codepoints, 0x13000, 0x1342E);
+            break;
+          case commands::Request::IVS_CHARACTER:
+            found_nonrenderable =
+                FindCodepointsInClosedRange(codepoints, 0xE0100, 0xE010E);
             break;
         }
         if (found_nonrenderable) {
