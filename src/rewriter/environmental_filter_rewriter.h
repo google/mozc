@@ -50,7 +50,9 @@
 #ifndef MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
 #define MOZC_REWRITER_ENVIRONMENTAL_FILTER_REWRITER_H_
 
+#include <cstdint>
 #include <memory>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -76,11 +78,20 @@ class CharacterGroupFinder {
 
  private:
   // Closed range of single codepoints, like {{U+1F000, U+1F100}, {U+1F202,
-  // U+1F202}}
-  std::vector<std::pair<char32_t, char32_t>> single_codepoint_ranges_;
-  // Vector of Emoji which requires multiple codepoints, like {{U+1Fxxx, U+200D,
-  // U+1Fyyy}, {U+1Fzzz, U+200D, U+1Fwww}}.
+  // U+1F202}}. For implementation reason, they are split into two.
+  std::vector<char32_t> sorted_single_codepoint_lefts_;
+  std::vector<char32_t> sorted_single_codepoint_rights_;
+  char32_t min_single_codepoint_ = 0;
+  // First: Vector of Emoji which requires multiple codepoints, like {{U+1Fxxx,
+  // U+200D, U+1Fyyy}, {U+1Fzzz, U+200D, U+1Fwww}}.
+  // Second: rolling hash of the given codepoints.
   std::vector<std::vector<char32_t>> multiple_codepoints_;
+  std::vector<int64_t> multiple_codepoints_hashes_;
+  // This is max length of multiple codepoints.
+  size_t max_length_ = 0;
+  // Intersction of multiple_codepoints_. For example, for emoji, it is very
+  // likely to have ZWJ (U+200D) in common.
+  std::set<char32_t> multiple_codepoints_intersection_;
 };
 
 class EnvironmentalFilterRewriter : public RewriterInterface {

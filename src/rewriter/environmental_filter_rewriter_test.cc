@@ -218,6 +218,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
         {U'😋'},
         Util::Utf8ToCodepoints("🇺🇸"),
         Util::Utf8ToCodepoints("🫱🏻"),
+        Util::Utf8ToCodepoints("❤️‍🔥"),
         Util::Utf8ToCodepoints("👬🏿"),
     });
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは❤です")));
@@ -231,6 +232,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
     EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは🫱です")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬🏿です")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬🏿最初です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("❤️‍🔥")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("最後です👬🏿")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬👬🏿")));
     EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬です")));
