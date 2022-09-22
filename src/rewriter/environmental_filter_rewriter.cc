@@ -121,7 +121,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
     const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
-  constexpr std::array<AdditionalRenderableCharacterGroup, 9> kAllCases = {
+  constexpr std::array<AdditionalRenderableCharacterGroup, 10> kAllCases = {
       commands::Request::KANA_SUPPLEMENT_6_0,
       commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0,
       commands::Request::KANA_EXTENDED_A_14_0,
@@ -130,6 +130,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
       commands::Request::EMOJI_13_1,
       commands::Request::EMOJI_14_0,
       commands::Request::EMOJI_15_0,
+      commands::Request::EGYPTIAN_HIEROGLYPH_5_2,
       commands::Request::IVS_CHARACTER,
   };
 
