@@ -49,6 +49,7 @@
 #include "rewriter/environmental_filter_rewriter.h"
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
+#include "rewriter/ivs_variants_rewriter.h"
 #include "rewriter/katakana_promotion_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
@@ -100,6 +101,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(std::make_unique<NumberRewriter>(data_manager));
   AddRewriter(std::make_unique<CollocationRewriter>(data_manager));
   AddRewriter(std::make_unique<SingleKanjiRewriter>(*data_manager));
+  AddRewriter(std::make_unique<IvsVariantsRewriter>());
   AddRewriter(std::make_unique<EmojiRewriter>(*data_manager));
   AddRewriter(EmoticonRewriter::CreateFromDataManager(*data_manager));
   AddRewriter(std::make_unique<CalculatorRewriter>(parent_converter));

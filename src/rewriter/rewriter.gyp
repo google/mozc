@@ -58,6 +58,7 @@
         'environmental_filter_rewriter.cc',
         'focus_candidate_rewriter.cc',
         'fortune_rewriter.cc',
+        'ivs_variants_rewriter.cc',
         'katakana_promotion_rewriter.cc',
         'language_aware_rewriter.cc',
         'number_compound_util.cc',
