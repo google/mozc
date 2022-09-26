@@ -36,6 +36,7 @@
 #include <utility>
 
 #include "base/file_util.h"
+#include "base/util.h"
 #include "data_manager/data_manager.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gmock.h"
