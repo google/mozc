@@ -63,29 +63,32 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
     EXPECT_EQ("かつらぎし", seg->candidate(1).content_key);
     EXPECT_EQ("葛\U000E0100城市", seg->candidate(1).value);
     EXPECT_EQ("葛\U000E0100城市", seg->candidate(1).content_value);
+    EXPECT_EQ("IVS異体字 正式字体", seg->candidate(1).description);
   }
-  // value == content_value
+  // value != content_value
+  // No deciated description.
   {
     Segment *seg = segments.push_back_segment();
     Segment::Candidate *candidate = seg->add_candidate();
     candidate->Init();
-    candidate->key = "かつらぎしの";
-    candidate->content_key = "かつらぎし";
-    candidate->value = "葛城市の";
-    candidate->content_value = "葛城市";
+    candidate->key = "ぎおんの";
+    candidate->content_key = "ぎおん";
+    candidate->value = "祇園の";
+    candidate->content_value = "祇園";
 
     EXPECT_TRUE(rewriter.Rewrite(request, &segments));
     EXPECT_EQ(2, seg->candidates_size());
     // The original candidate comes first.
-    EXPECT_EQ("かつらぎしの", seg->candidate(0).key);
-    EXPECT_EQ("かつらぎし", seg->candidate(0).content_key);
-    EXPECT_EQ("葛城市の", seg->candidate(0).value);
-    EXPECT_EQ("葛城市", seg->candidate(0).content_value);
+    EXPECT_EQ("ぎおんの", seg->candidate(0).key);
+    EXPECT_EQ("ぎおん", seg->candidate(0).content_key);
+    EXPECT_EQ("祇園の", seg->candidate(0).value);
+    EXPECT_EQ("祇園", seg->candidate(0).content_value);
     // Then an IVS candidate comes next.
-    EXPECT_EQ("かつらぎしの", seg->candidate(1).key);
-    EXPECT_EQ("かつらぎし", seg->candidate(1).content_key);
-    EXPECT_EQ("葛\U000E0100城市の", seg->candidate(1).value);
-    EXPECT_EQ("葛\U000E0100城市", seg->candidate(1).content_value);
+    EXPECT_EQ("ぎおんの", seg->candidate(1).key);
+    EXPECT_EQ("ぎおん", seg->candidate(1).content_key);
+    EXPECT_EQ("祇\U000E0100園の", seg->candidate(1).value);
+    EXPECT_EQ("祇\U000E0100園", seg->candidate(1).content_value);
+    EXPECT_EQ("IVS異体字", seg->candidate(1).description);
   }
 }
 

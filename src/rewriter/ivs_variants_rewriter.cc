@@ -40,11 +40,12 @@
 
 namespace mozc {
 namespace {
-// {"reading", "base surface"}, "IVS surface"},  // human readable IVS surface
+// {"reading", "base surface"}, {"IVS surface", "additional description"}},
 const auto *kIvsExpansionTable =
-    new std::map<std::pair<std::string, std::string>, std::string>{
-        {{"かつらぎし", "葛城市"}, "葛\U000E0100城市"},  // 葛󠄀城市
-        {{"ぎおん", "祇園"}, "祇\U000E0100園"}           // 祇󠄀園
+    new std::map<std::pair<std::string, std::string>,
+                 std::pair<std::string, std::string>>{
+        {{"かつらぎし", "葛城市"}, {"葛\U000E0100城市", "正式字体"}},  // 葛󠄀城市
+        {{"ぎおん", "祇園"}, {"祇\U000E0100園", ""}}  // 祇󠄀園
         // TODO(b/246668402): Add other IVS words here.
     };
 
@@ -69,9 +70,12 @@ bool ExpandIvsVariantsWithSegment(Segment *seg) {
     const absl::string_view non_content_value(
         original_candidate.value.data() +
         original_candidate.content_value.size());
-    new_candidate->value = absl::StrCat(it->second, non_content_value);
-    new_candidate->content_value = it->second;
-    new_candidate->description = kIvsVariantDescription;
+    new_candidate->value = absl::StrCat(it->second.first, non_content_value);
+    new_candidate->content_value = it->second.first;
+    new_candidate->description =
+        it->second.second.empty()
+            ? kIvsVariantDescription
+            : absl::StrCat(kIvsVariantDescription, " ", it->second.second);
     seg->insert_candidate(i + 1, std::move(new_candidate));
   }
   return modified;
