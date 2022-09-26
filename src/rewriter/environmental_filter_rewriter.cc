@@ -58,36 +58,41 @@ using AdditionalRenderableCharacterGroup =
     commands::Request::AdditionalRenderableCharacterGroup;
 
 namespace {
+// Returns (base ** multiplier) % modulo.
+constexpr int64_t Power(int64_t base, int multiplier, int64_t modulo) {
+  if (multiplier <= 0) {
+    return 1;
+  }
+  return (Power(base, multiplier - 1, modulo) * base) % modulo;
+}
+
 // Calculates Rolling Hash for given String.
 // ref: https://en.wikipedia.org/wiki/Rolling_hash
 class RollingHasher {
  public:
-  // These are constants necessary to calculate hash.
-  // kM is modulo, and kB is base.
-  // These values are choosed considering
-  // 1. kM * kB < 2**63
-  // 2. kM is as large as possible
-  // 3. kB is coprime with kM　and large.
-  static constexpr int64_t kM = 2147483647;
-  static constexpr int64_t kB = 2147483634;
-
+  // kBase and kModulo are choosed considering
+  // 1. kModulo * kBase < 2**63
+  // 2. kModulo is as large as possible
+  // 3. kBase is coprime with kModulo and large.
+  static constexpr int64_t kBase = 2147483634;
+  static constexpr int64_t kModulo = 2147483647;
   static constexpr int64_t kPowers[16]{
-      1,
-      kB,
-      (kPowers[1] * kB) % kM,
-      (kPowers[2] * kB) % kM,
-      (kPowers[3] * kB) % kM,
-      (kPowers[4] * kB) % kM,
-      (kPowers[5] * kB) % kM,
-      (kPowers[6] * kB) % kM,
-      (kPowers[7] * kB) % kM,
-      (kPowers[8] * kB) % kM,
-      (kPowers[9] * kB) % kM,
-      (kPowers[10] * kB) % kM,
-      (kPowers[11] * kB) % kM,
-      (kPowers[12] * kB) % kM,
-      (kPowers[13] * kB) % kM,
-      (kPowers[14] * kB) % kM,
+      Power(kBase, 0, kModulo),
+      Power(kBase, 1, kModulo),
+      Power(kBase, 2, kModulo),
+      Power(kBase, 3, kModulo),
+      Power(kBase, 4, kModulo),
+      Power(kBase, 5, kModulo),
+      Power(kBase, 6, kModulo),
+      Power(kBase, 7, kModulo),
+      Power(kBase, 8, kModulo),
+      Power(kBase, 9, kModulo),
+      Power(kBase, 10, kModulo),
+      Power(kBase, 11, kModulo),
+      Power(kBase, 12, kModulo),
+      Power(kBase, 13, kModulo),
+      Power(kBase, 14, kModulo),
+      Power(kBase, 15, kModulo),
   };
   void append(const char32_t value);
   void reserve(const size_t size);
@@ -281,16 +286,16 @@ inline int64_t RollingHasher::hash_between(const int l, const int r) {
   // Enforce modulo to be non-negative.
   // This function is optimized. Intended implementation is
   // return (hashes_[r] - kPowers[r - l] * hashes_[l]) % kM;
-  const int64_t d = hashes_[r] - (kPowers[r - l] * hashes_[l]) % kM;
+  const int64_t d = hashes_[r] - (kPowers[r - l] * hashes_[l]) % kModulo;
   if (d >= 0) {
     return d;
   } else {
-    return d + kM;
+    return d + kModulo;
   }
 }
 
 inline void RollingHasher::append(const char32_t value) {
-  hashes_.push_back((hashes_.back() * kB + value) % kM);
+  hashes_.push_back((hashes_.back() * kBase + value) % kModulo);
 }
 
 inline void RollingHasher::reserve(const size_t size) { hashes_.reserve(size); }
