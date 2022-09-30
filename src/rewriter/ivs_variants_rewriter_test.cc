@@ -88,7 +88,7 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
     EXPECT_EQ("ぎおん", seg->candidate(1).content_key);
     EXPECT_EQ("祇\U000E0100園の", seg->candidate(1).value);
     EXPECT_EQ("祇\U000E0100園", seg->candidate(1).content_value);
-    EXPECT_EQ("環境依存(IVS)", seg->candidate(1).description);
+    EXPECT_EQ("環境依存(IVS) 礻", seg->candidate(1).description);
   }
 }
 
