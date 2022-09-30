@@ -49,7 +49,7 @@ const auto *kIvsExpansionTable =
         // TODO(b/246668402): Add other IVS words here.
     };
 
-constexpr char kIvsVariantDescription[] = "IVS異体字";
+constexpr char kIvsVariantDescription[] = "環境依存(IVS)";
 
 bool ExpandIvsVariantsWithSegment(Segment *seg) {
   CHECK(seg);

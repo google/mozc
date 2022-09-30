@@ -63,7 +63,7 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
     EXPECT_EQ("かつらぎし", seg->candidate(1).content_key);
     EXPECT_EQ("葛\U000E0100城市", seg->candidate(1).value);
     EXPECT_EQ("葛\U000E0100城市", seg->candidate(1).content_value);
-    EXPECT_EQ("IVS異体字 正式字体", seg->candidate(1).description);
+    EXPECT_EQ("環境依存(IVS) 正式字体", seg->candidate(1).description);
   }
   // value != content_value
   // No deciated description.
@@ -88,7 +88,7 @@ TEST_F(IvsVariantsRewriterTest, ExpandIvsVariantsWithSegment_singleCandidate) {
     EXPECT_EQ("ぎおん", seg->candidate(1).content_key);
     EXPECT_EQ("祇\U000E0100園の", seg->candidate(1).value);
     EXPECT_EQ("祇\U000E0100園", seg->candidate(1).content_value);
-    EXPECT_EQ("IVS異体字", seg->candidate(1).description);
+    EXPECT_EQ("環境依存(IVS)", seg->candidate(1).description);
   }
 }
 
