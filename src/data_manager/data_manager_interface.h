@@ -114,6 +114,11 @@ class DataManagerInterface {
       absl::string_view *noun_prefix_token_array_data,
       absl::string_view *noun_prefix_string_array_data) const = 0;
 
+  // Gets A11yDescriptionRewriter data.
+  virtual void GetA11yDescriptionRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const = 0;
+
 #ifndef NO_USAGE_REWRITER
   // Gets the usage rewriter data.
   virtual void GetUsageRewriterData(

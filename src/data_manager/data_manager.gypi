@@ -122,6 +122,7 @@
         'gen_separate_emoji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_single_kanji_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_zero_query_data_for_<(dataset_tag)#host',
+        'gen_separate_a11y_description_rewriter_data_for_<(dataset_tag)#host',
         'gen_separate_version_data_for_<(dataset_tag)#host',
         'gen_typing_model_for_<(dataset_tag)#host',
       ],
@@ -168,6 +169,8 @@
             'zero_query_string_array': '<(gen_out_dir)/zero_query_string.data',
             'zero_query_number_token_array': '<(gen_out_dir)/zero_query_number_token.data',
             'zero_query_number_string_array': '<(gen_out_dir)/zero_query_number_string.data',
+            'a11y_description_token': '<(gen_out_dir)/a11y_description_token.data',
+            'a11y_description_string': '<(gen_out_dir)/a11y_description_string.data',
             'version': '<(gen_out_dir)/version.data',
           },
           'inputs': [
@@ -209,6 +212,8 @@
             '<(zero_query_string_array)',
             '<(zero_query_number_token_array)',
             '<(zero_query_number_string_array)',
+            '<(a11y_description_token)',
+            '<(a11y_description_string)',
             '<(version)',
           ],
           'outputs': [
@@ -256,6 +261,8 @@
             'zero_query_string_array:32:<(gen_out_dir)/zero_query_string.data',
             'zero_query_number_token_array:32:<(gen_out_dir)/zero_query_number_token.data',
             'zero_query_number_string_array:32:<(gen_out_dir)/zero_query_number_string.data',
+            'a11y_description_token:32:<(gen_out_dir)/a11y_description_token.data',
+            'a11y_description_string:32:<(gen_out_dir)/a11y_description_string.data',
             'version:32:<(gen_out_dir)/version.data',
           ],
           'conditions': [
@@ -987,6 +994,37 @@
             '--output_token_array=<(gen_out_dir)/zero_query_number_token.data',
             '--output_string_array=<(gen_out_dir)/zero_query_number_string.data',
           ],
+        },
+      ],
+    },
+    {
+      'target_name': 'gen_separate_a11y_description_rewriter_data_for_<(dataset_tag)',
+      'type': 'none',
+      'toolsets': ['host'],
+      'actions': [
+        {
+          'action_name': 'gen_separate_a11y_description_rewriter_data_for_<(dataset_tag)',
+          'variables': {
+            'generator': '<(mozc_dir)/rewriter/gen_a11y_description_rewriter_data.py',
+            'input_files': [
+              '<(mozc_dir)/data/a11y_description/a11y_description_data.tsv',
+            ],
+          },
+          'inputs': [
+            '<(generator)',
+            '<@(input_files)',
+          ],
+          'outputs': [
+            '<(gen_out_dir)/a11y_description_token.data',
+            '<(gen_out_dir)/a11y_description_string.data',
+          ],
+          'action': [
+            '<(python)', '<(generator)',
+            '--input=<(mozc_dir)/data/a11y_description/a11y_description_data.tsv',
+            '--output_token_array=<(gen_out_dir)/a11y_description_token.data',
+            '--output_string_array=<(gen_out_dir)/a11y_description_string.data',
+          ],
+          'message': '[<(dataset_tag)] Generating a11y description data',
         },
       ],
     },

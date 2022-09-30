@@ -33,6 +33,8 @@
 # where xxx is listed below:
 #   - No suffix (i.e., "name" is target name): Main binary file of the data
 #   - header: Embedded file (to be included in C++) of the data set file
+#   - a11y_description: [Optional] Accessibility description data. Available only if
+#           a11y_description_src is provided.
 #   - collocation: Collocation data
 #   - collocation_suppression: Collocation suppression data
 #   - connection: Connection matrix data
@@ -63,6 +65,7 @@
 def mozc_dataset(
         name,
         outs,
+        a11y_description_src,
         boundary_def,
         cforms,
         collocation_src,
@@ -117,6 +120,7 @@ def mozc_dataset(
         ":" + name + "@single_kanji_noun_prefix",
         ":" + name + "@zero_query",
         ":" + name + "@zero_query_number",
+        ":" + name + "@a11y_description",
         ":" + name + "@version",
     ]
     arguments = (
@@ -159,12 +163,15 @@ def mozc_dataset(
         "zero_query_string_array:32:$(@D)/zero_query_string.data " +
         "zero_query_number_token_array:32:$(@D)/zero_query_number_token.data " +
         "zero_query_number_string_array:32:$(@D)/zero_query_number_string.data " +
+        "a11y_description_token:32:$(@D)/a11y_description_token.data " +
+        "a11y_description_string:32:$(@D)/a11y_description_string.data " +
         "version:32:$(location :" + name + "@version) "
     )
     for model_file in typing_models:
         filename = Label(model_file).name
         sources.append(":" + name + "@" + filename)
         arguments += "%s:32:$(@D)/%s " % (filename, filename + ".data")
+
     if usage_dict:
         sources.append(":" + name + "@usage")
         arguments += (
@@ -616,6 +623,24 @@ def mozc_dataset(
             "--output_string_array=$(location :zero_query_number_string.data)"
         ),
         exec_tools = ["//prediction:gen_zero_query_number_data"],
+    )
+
+    native.genrule(
+        name = name + "@a11y_description",
+        srcs = [
+            a11y_description_src,
+        ],
+        outs = [
+            "a11y_description_token.data",
+            "a11y_description_string.data",
+        ],
+        cmd = (
+            "$(location //rewriter:gen_a11y_description_rewriter_data) " +
+            "--input=$(location " + a11y_description_src + ") " +
+            "--output_token_array=$(location :a11y_description_token.data) " +
+            "--output_string_array=$(location :a11y_description_string.data) "
+        ),
+        exec_tools = ["//rewriter:gen_a11y_description_rewriter_data"],
     )
 
     native.genrule(

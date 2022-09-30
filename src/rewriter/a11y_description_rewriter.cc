@@ -29,10 +29,13 @@
 
 #include "rewriter/a11y_description_rewriter.h"
 
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/util.h"
+#include "data_manager/serialized_dictionary.h"
 #include "protocol/commands.pb.h"
 
 namespace mozc {
@@ -147,7 +150,7 @@ std::string A11yDescriptionRewriter::GetKanaCharacterLabel(
 }
 
 A11yDescriptionRewriter::A11yDescriptionRewriter(
-    const DataManagerInterface * /*data_manager*/)
+    const DataManagerInterface *data_manager)
     : small_letter_set_(
           {// Small hiragana
            U'ぁ', U'ぃ', U'ぅ', U'ぇ', U'ぉ', U'ゃ', U'ゅ', U'ょ', U'っ', U'ゎ',
@@ -165,15 +168,15 @@ A11yDescriptionRewriter::A11yDescriptionRewriter(
           {U'ｭ', U'ﾕ'},
           {U'ｮ', U'ﾖ'},
           {U'ｯ', U'ﾂ'},
-      }),
-      // TODO(yukiokamoto): We currently hardcoded a few Kanji conversion rules
-      // here for unit tests.
-      // We'll change this part to actually load the necessary Kanji conversion
-      // rules from mozc_data.
-      description_map_({
-          {U'亜', "アネッタイ ノ ア"},
-          {U'胃', "イブクロ ノ イ"},
-      }) {}
+      }) {
+  absl::string_view token_array_data, string_array_data;
+  data_manager->GetA11yDescriptionRewriterData(&token_array_data,
+                                               &string_array_data);
+  description_map_ = (token_array_data.empty() || string_array_data.empty())
+                         ? nullptr
+                         : std::make_unique<SerializedDictionary>(
+                               token_array_data, string_array_data);
+}
 
 void A11yDescriptionRewriter::AddA11yDescription(
     Segment::Candidate *candidate) const {
@@ -182,32 +185,40 @@ void A11yDescriptionRewriter::AddA11yDescription(
   absl::StrAppend(&buf, content_value);
   CharacterType previous_type = INITIAL_STATE;
   CharacterType current_type = INITIAL_STATE;
-  for (const char32_t codepoint : Util::Utf8ToCodepoints(content_value)) {
-    previous_type = current_type;
-    current_type = GetCharacterType(codepoint);
-    if (current_type == OTHERS) {
-      if (const auto it = description_map_.find(codepoint);
-          it != description_map_.end()) {
-        // Add a punctuation for better Talkback result.
-        absl::StrAppend(&buf, "。", it->second);
+  std::vector<std::string> graphemes;
+  Util::SplitStringToUtf8Graphemes(content_value, &graphemes);
+  for (const std::string &grapheme : graphemes) {
+    const std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(grapheme);
+    for (const char32_t codepoint : codepoints) {
+      previous_type = current_type;
+      current_type = GetCharacterType(codepoint);
+      if (current_type == OTHERS) {
+        std::string key;
+        Util::Ucs4ToUtf8(codepoint, &key);
+        const SerializedDictionary::IterRange range =
+            description_map_->equal_range(key);
+        if (range.first != range.second) {
+          // Add a punctuation for better Talkback result.
+          absl::StrAppend(&buf, "。", range.first.value());
+        }
+        continue;
       }
-      continue;
+      if ((current_type == PROLONGED_SOUND_MARK ||
+           current_type == HIRAGANA_SMALL_LETTER ||
+           current_type == KATAKANA_SMALL_LETTER) &&
+          (previous_type == HIRAGANA || previous_type == KATAKANA)) {
+        current_type = previous_type;
+      }
+      absl::StrAppend(
+          &buf, GetKanaCharacterLabel(codepoint, current_type, previous_type));
     }
-    if ((current_type == PROLONGED_SOUND_MARK ||
-         current_type == HIRAGANA_SMALL_LETTER ||
-         current_type == KATAKANA_SMALL_LETTER) &&
-        (previous_type == HIRAGANA || previous_type == KATAKANA)) {
-      current_type = previous_type;
-    }
-    absl::StrAppend(
-        &buf, GetKanaCharacterLabel(codepoint, current_type, previous_type));
   }
   candidate->a11y_description = std::move(buf);
 }
 
 int A11yDescriptionRewriter::capability(
     const ConversionRequest &request) const {
-  if (request.request().enable_a11y_description()) {
+  if (description_map_ && request.request().enable_a11y_description()) {
     return RewriterInterface::ALL;
   }
   return RewriterInterface::NOT_AVAILABLE;

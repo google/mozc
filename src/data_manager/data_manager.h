@@ -141,6 +141,9 @@ class DataManager : public DataManagerInterface {
       absl::string_view *variant_string_array_data,
       absl::string_view *noun_prefix_token_array_data,
       absl::string_view *noun_prefix_string_array_data) const override;
+  void GetA11yDescriptionRewriterData(
+      absl::string_view *token_array_data,
+      absl::string_view *string_array_data) const override;
   void GetZeroQueryData(
       absl::string_view *zero_query_token_array_data,
       absl::string_view *zero_query_string_array_data,
@@ -198,6 +201,8 @@ class DataManager : public DataManagerInterface {
   absl::string_view single_kanji_variant_string_array_data_;
   absl::string_view single_kanji_noun_prefix_token_array_data_;
   absl::string_view single_kanji_noun_prefix_string_array_data_;
+  absl::string_view a11y_description_token_array_data_;
+  absl::string_view a11y_description_string_array_data_;
   absl::string_view zero_query_token_array_data_;
   absl::string_view zero_query_string_array_data_;
   absl::string_view zero_query_number_token_array_data_;
