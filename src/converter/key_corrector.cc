@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <string>
 
 #include "base/logging.h"

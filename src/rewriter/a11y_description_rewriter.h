@@ -30,9 +30,11 @@
 #ifndef MOZC_REWRITER_A11Y_DESCRIPTION_REWRITER_H_
 #define MOZC_REWRITER_A11Y_DESCRIPTION_REWRITER_H_
 
+#include <memory>
 #include <string>
 
 #include "data_manager/data_manager_interface.h"
+#include "data_manager/serialized_dictionary.h"
 #include "rewriter/rewriter_interface.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
@@ -78,7 +80,7 @@ class A11yDescriptionRewriter : public RewriterInterface {
   const absl::flat_hash_set<char32_t> small_letter_set_;
   const absl::flat_hash_map<char32_t, char32_t>
       half_width_small_katakana_to_large_katakana_;
-  const absl::flat_hash_map<char32_t, std::string> description_map_;
+  std::unique_ptr<SerializedDictionary> description_map_;
 };
 
 }  // namespace mozc

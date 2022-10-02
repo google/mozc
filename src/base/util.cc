@@ -210,18 +210,79 @@ void Util::SplitStringToUtf8Graphemes(absl::string_view str,
   if (graphemes->size() <= 1) {
     return;
   }
-  for (auto it = graphemes->begin() + 1; it != graphemes->end();) {
-    const char32_t codepoint = Util::Utf8ToUcs4(*it);
+
+  // Use U+0000 (NUL) to represent a codepoint which doesn't appear in any
+  // grapheme clusters since it's always used standalone.
+  constexpr char32_t kStandaloneCodepoint = 0x0000;
+  char32_t prev = kStandaloneCodepoint;
+  std::vector<std::string> new_graphemes;
+  new_graphemes.reserve(graphemes->capacity());
+
+  for (std::string &grapheme : *graphemes) {
+    const char32_t codepoint = Util::Utf8ToUcs4(grapheme);
     const bool is_dakuten = (codepoint == 0x3099 || codepoint == 0x309A);
     const bool is_svs = (0xFE00 <= codepoint && codepoint <= 0xFE0F);
     const bool is_ivs = (0xE0100 <= codepoint && codepoint <= 0xE01EF);
-    if (is_dakuten || is_svs || is_ivs) {
-      (it - 1)->append(*it);
-      it = graphemes->erase(it);
-    } else {
-      ++it;
+
+    // ED-8a. text presentation sequence
+    // * https://www.unicode.org/reports/tr51/#def_text_presentation_sequence
+    const bool is_text_presentation_sequence =
+        (codepoint == 0xFE0E);  // VARIATION SELECTOR-15 (VS15)
+
+    // ED-9a. emoji presentation sequence
+    // * https://www.unicode.org/reports/tr51/#def_emoji_presentation_sequence
+    const bool is_emoji_presentation_sequence =
+        (codepoint == 0xFE0F);  // VARIATION SELECTOR-16 (VS16)
+
+    // ED-13. emoji modifier sequence
+    // * https://www.unicode.org/reports/tr51/#def_emoji_modifier_sequence
+    const bool is_emoji_modifier_sequence =
+        (codepoint >= 0x1F3FB && codepoint <= 0x1F3FF);  // \p{Emoji_Modifie}
+
+    // ED-14. emoji flag sequence
+    // * https://www.unicode.org/reports/tr51/#def_emoji_flag_sequence
+    const bool is_emoji_flag_sequence =
+        ((prev >= 0x1F1E6 && prev <= 0x1F1FF) &&
+         (codepoint >= 0x1F1E6 &&
+          codepoint <= 0x1F1FF));  // \p{Regional_Indicator}
+
+    // ED-14.a. emoji tag sequence (ETS)
+    // * https://www.unicode.org/reports/tr51/#def_emoji_tag_sequence
+    const bool is_emoji_tag_sequence =
+        ((codepoint >= 0xE0020 && codepoint <= 0xE007E) ||  // tag_spec
+         (codepoint == 0xE007F));                           // tag_end
+
+    // ED-14.c. emoji keycap sequence
+    // * https://www.unicode.org/reports/tr51/#def_emoji_keycap_sequence
+    const bool is_emoji_keycap_sequence =
+        (prev == 0xFE0F && codepoint == 0x20E3);
+
+    // ED-16. emoji zwj sequence
+    // * https://www.unicode.org/reports/tr51/#def_emoji_zwj_sequence
+    const bool is_emoji_zwj_sequence =
+        (codepoint == 0x200D || prev == 0x200D);  // ZERO WIDTH JOINER (ZWJ)
+
+    if (is_emoji_flag_sequence && !new_graphemes.empty()) {
+      absl::StrAppend(&new_graphemes.back(), grapheme);
+      // Reset prev with noop value in case that regional indicator codepoints
+      // continues more than 2.
+      prev = kStandaloneCodepoint;
+      continue;
     }
+
+    if ((is_dakuten || is_svs || is_ivs || is_text_presentation_sequence ||
+         is_emoji_presentation_sequence || is_emoji_modifier_sequence ||
+         is_emoji_tag_sequence || is_emoji_keycap_sequence ||
+         is_emoji_zwj_sequence) &&
+        !new_graphemes.empty()) {
+      absl::StrAppend(&new_graphemes.back(), grapheme);
+    } else {
+      new_graphemes.push_back(std::move(grapheme));
+    }
+    prev = codepoint;
   }
+
+  *graphemes = std::move(new_graphemes);
 }
 
 void Util::SplitCSV(const std::string &input,

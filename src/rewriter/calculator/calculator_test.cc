@@ -30,6 +30,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <ostream>
 #include <string>
 
 #include "base/file_util.h"

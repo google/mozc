@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
+#include <ostream>
 #include <string>
 
 #include "base/init_mozc.h"

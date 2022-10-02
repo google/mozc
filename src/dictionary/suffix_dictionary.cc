@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/serialized_string_array.h"

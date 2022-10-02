@@ -42,10 +42,14 @@
 #include <QtGui>
 #include <algorithm>  // for unique
 #include <cctype>
+#include <istream>
+#include <iterator>
+#include <map>
 #include <memory>
 #include <set>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/config_file_stream.h"

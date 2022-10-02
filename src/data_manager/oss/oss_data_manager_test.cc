@@ -30,6 +30,7 @@
 #include "data_manager/oss/oss_data_manager.h"
 
 #include <string>
+#include <utility>
 
 #include "data_manager/data_manager_test_base.h"
 #include "testing/base/public/gunit.h"

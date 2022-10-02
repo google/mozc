@@ -30,6 +30,7 @@
 #include "converter/converter.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
@@ -1891,6 +1892,44 @@ TEST_F(ConverterTest,
   EXPECT_NE(o_index, -1);
   EXPECT_NE(otsukare_index, -1);
   EXPECT_LT(otsukare_index, o_index);
+}
+
+TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
+  std::unique_ptr<EngineInterface> engine = CreateEngineWithMobilePredictor();
+  ConverterInterface *converter = engine->GetConverter();
+  CHECK(converter);
+  commands::Request request;
+  config::Config config;
+  config::ConfigHandler::GetDefaultConfig(&config);
+  composer::Table table;
+  composer::Composer composer(&table, &request, &config);
+  commands::RequestForUnitTest::FillMobileRequest(&request);
+  request.mutable_decoder_experiment_params()->set_enrich_partial_candidates(
+      true);
+  const dictionary::PosMatcher pos_matcher(
+      engine->GetDataManager()->GetPosMatcherData());
+  ConversionRequest conversion_request(&composer, &request, &config);
+  conversion_request.set_request_type(ConversionRequest::PREDICTION);
+
+  Segments segments;
+  // History segment.
+  {
+    Segment *segment = segments.add_segment();
+    segment->set_key("に");
+    segment->set_segment_type(Segment::HISTORY);
+    Segment::Candidate *candidate = segment->add_candidate();
+    candidate->key = "に";
+    candidate->value = "に";
+    // Hack: Get POS for "助詞".
+    // The POS group of the test dictionary entries, "に" and "にて" should be
+    // the same to trigger overlapping lookup.
+    candidate->lid = pos_matcher.GetAcceptableParticleAtBeginOfSegmentId();
+  }
+  composer.SetPreeditTextForTestOnly("てはい");
+
+  EXPECT_TRUE(
+      converter->StartPredictionForRequest(conversion_request, &segments));
+  EXPECT_FALSE(FindCandidateByValue("て廃", segments.conversion_segment(0)));
 }
 
 }  // namespace mozc

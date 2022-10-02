@@ -30,6 +30,7 @@
 #include "dictionary/dictionary_impl.h"
 
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>

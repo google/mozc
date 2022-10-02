@@ -106,6 +106,7 @@ cc_test_mozc(
         ":spellchecker_service",
         "//base",
         "//base:file_util",
+        "//base:util",
         "//data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",

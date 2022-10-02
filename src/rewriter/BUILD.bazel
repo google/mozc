@@ -1501,9 +1501,29 @@ cc_library_mozc(
         ":rewriter_interface",
         "//base:util",
         "//data_manager:data_manager_interface",
+        "//data_manager:serialized_dictionary",
         "//protocol:commands_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+    ],
+)
+
+py_library_mozc(
+    name = "gen_a11y_description_rewriter_data_lib",
+    srcs = ["gen_a11y_description_rewriter_data.py"],
+    deps = [
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
+    ],
+)
+
+py_binary_mozc(
+    name = "gen_a11y_description_rewriter_data",
+    srcs = ["gen_a11y_description_rewriter_data.py"],
+    deps = [
+        ":gen_a11y_description_rewriter_data_lib",
+        "//build_tools:code_generator_util",
+        "//build_tools:serialized_string_array_builder",
     ],
 )
 
@@ -1514,6 +1534,7 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":a11y_description_rewriter",
+        "//data_manager",
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",
         "//testing:gunit_main",
@@ -1540,6 +1561,7 @@ cc_library_mozc(
         ":environmental_filter_rewriter",
         ":focus_candidate_rewriter",
         ":fortune_rewriter",
+        ":ivs_variants_rewriter",
         ":katakana_promotion_rewriter",
         ":language_aware_rewriter",
         ":merger_rewriter",
@@ -1719,5 +1741,26 @@ cc_test_mozc(
         "//testing:gunit_main",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library_mozc(
+    name = "ivs_variants_rewriter",
+    srcs = ["ivs_variants_rewriter.cc"],
+    hdrs = ["ivs_variants_rewriter.h"],
+    deps = [
+        ":rewriter_interface",
+        "//base:util",
+        "//converter:segments",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test_mozc(
+    name = "ivs_variants_rewriter_test",
+    srcs = ["ivs_variants_rewriter_test.cc"],
+    deps = [
+        ":ivs_variants_rewriter",
+        "//testing:gunit_main",
     ],
 )

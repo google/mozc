@@ -33,6 +33,7 @@
 #include <cctype>
 #include <climits>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -1568,10 +1569,16 @@ bool ImmutableConverterImpl::MakeLatticeNodesForHistorySegments(
     // Example: history "おいかわ(及川)", conversion: "たくや"
     // Here, try to find "おいかわたくや(及川卓也)" from dictionary
     // and insert "卓也" as a new word node with a modified cost
-    if (s + 1 == history_segments_size) {
-      const bool is_prediction =
-          (request.request_type() == ConversionRequest::SUGGESTION ||
-           request.request_type() == ConversionRequest::PREDICTION);
+    //
+    // Note: The overlapping lookup is disabled for prediction, because it can
+    // produce noisy realtime candidates such as "て配" for the history "に",
+    // which comes from "にて" + "配".
+    // The bigram-like lookup ("卓也" from "及川") is covered in
+    // dictionary_predictor.
+    const bool is_prediction =
+        (request.request_type() == ConversionRequest::SUGGESTION ||
+         request.request_type() == ConversionRequest::PREDICTION);
+    if (!is_prediction && s + 1 == history_segments_size) {
       const Node *node = Lookup(segments_pos, key.size(), request, is_reverse,
                                 is_prediction, lattice);
       for (const Node *compound_node = node; compound_node != nullptr;

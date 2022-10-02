@@ -30,6 +30,7 @@
 #include "session/session.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>

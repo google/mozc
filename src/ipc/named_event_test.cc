@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/clock.h"
 #include "base/port.h"
@@ -176,7 +177,7 @@ TEST_F(NamedEventTest, NamedEventPathLengthTest) {
 #ifndef OS_WIN
   const std::string name_path = NamedEventUtil::GetEventPath(kName);
   // length should be less than 14 not includeing terminating null.
-  EXPECT_EQ(13, strlen(name_path.c_str()));
+  EXPECT_EQ(13, name_path.length());
 #endif  // OS_WIN
 }
 

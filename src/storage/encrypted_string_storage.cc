@@ -34,6 +34,7 @@
 #endif  // OS_WIN
 
 #include <cstring>
+#include <ios>
 #include <string>
 
 #include "base/encryptor.h"

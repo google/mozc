@@ -29,6 +29,7 @@
 
 #include "dictionary/dictionary_impl.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 

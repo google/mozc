@@ -34,7 +34,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <ios>
 #include <iterator>
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>

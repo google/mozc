@@ -159,12 +159,29 @@
         'test_size': 'small',
       },
     },
+    {
+      'target_name': 'ivs_variants_rewriter_test',
+      'type': 'executable',
+      'sources': [
+        'ivs_variants_rewriter_test.cc',
+      ],
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:mozctest',
+        'rewriter.gyp:rewriter',
+      ],
+      'variables': {
+        'test_size': 'small',
+      },
+    },
     # Test cases meta target: this target is referred from gyp/tests.gyp
     {
       'target_name': 'rewriter_all_test',
       'type': 'none',
       'dependencies': [
         'calculator/calculator.gyp:calculator_all_test',
+        'ivs_variants_rewriter_test',
         'language_aware_rewriter_test',
         'rewriter_test',
         'single_kanji_rewriter_test',

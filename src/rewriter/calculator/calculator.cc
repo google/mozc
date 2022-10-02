@@ -43,6 +43,7 @@
 #include <cmath>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/japanese_util.h"

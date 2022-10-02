@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "base/logging.h"
 #include "base/port.h"

@@ -42,6 +42,7 @@
 #include <QObject>
 #include <QStyleFactory>
 #include <QtGui>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>

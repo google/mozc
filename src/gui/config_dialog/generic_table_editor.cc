@@ -36,6 +36,7 @@
 #include <QtGui>
 #include <algorithm>  // for unique
 #include <cctype>
+#include <istream>
 #include <set>
 #include <sstream>
 #include <string>

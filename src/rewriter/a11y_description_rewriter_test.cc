@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 
+#include "data_manager/data_manager.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
@@ -50,16 +51,34 @@ void AddCandidateWithValue(const std::string &value, Segment *segment) {
 
 class A11yDescriptionRewriterTest : public ::testing::Test {
  protected:
-  A11yDescriptionRewriterTest() : rewriter_(&mock_data_manager_) {}
+  A11yDescriptionRewriterTest()
+      : rewriter_(&mock_data_manager_),
+        rewriter_without_data_(&dummy_data_manager_) {}
 
   const RewriterInterface *GetRewriter() { return &rewriter_; }
+  const RewriterInterface *GetRewriterWithoutData() {
+    return &rewriter_without_data_;
+  }
 
  private:
   testing::MockDataManager mock_data_manager_;
+  DataManager dummy_data_manager_;
   A11yDescriptionRewriter rewriter_;
+  A11yDescriptionRewriter rewriter_without_data_;
 };
 
-TEST_F(A11yDescriptionRewriterTest, Capability) {
+TEST_F(A11yDescriptionRewriterTest, WithoutData) {
+  ConversionRequest a11y_conv_request;
+  commands::Request a11y_request;
+
+  a11y_request.set_enable_a11y_description(true);
+  a11y_conv_request.set_request(&a11y_request);
+
+  EXPECT_EQ(GetRewriterWithoutData()->capability(a11y_conv_request),
+            RewriterInterface::NOT_AVAILABLE);
+}
+
+TEST_F(A11yDescriptionRewriterTest, FeatureDisabled) {
   ConversionRequest a11y_conv_request, non_a11y_conv_request;
   commands::Request a11y_request;
 

@@ -34,6 +34,7 @@
 #include <climits>  // INT_MAX
 #include <cmath>
 #include <cstdint>
+#include <iterator>
 #include <list>
 #include <map>
 #include <set>

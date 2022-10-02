@@ -555,7 +555,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 11
+// Next ID: 12
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -598,6 +598,10 @@ message DecoderExperimentParams {
   // prediction candidate cost.
   optional bool cancel_segment_model_penalty_for_prediction = 10
       [default = false];
+
+  // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
+  // letters.
+  optional bool enable_environmental_filter_rewriter = 11 [default = true];
 }
 
 // Clients' request to the server.
@@ -885,6 +889,9 @@ message Request {
     // Additional Hieroglyphs (U+13000 ~ U+1342E)
     // Unicode 5.2, released October 2009
     EGYPTIAN_HIEROGLYPH_5_2 = 10;
+
+    // IVS characters in Adobe-Japan1 (U+E0100 ~ U+E010E)
+    IVS_CHARACTER = 11;
   }
 
   // Characters in the union of this list of groups can be contained in

@@ -50,8 +50,10 @@
 
 #include <algorithm>
 #include <functional>
+#include <ios>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/file_stream.h"

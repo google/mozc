@@ -218,6 +218,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
         {U'😋'},
         Util::Utf8ToCodepoints("🇺🇸"),
         Util::Utf8ToCodepoints("🫱🏻"),
+        Util::Utf8ToCodepoints("❤️‍🔥"),
         Util::Utf8ToCodepoints("👬🏿"),
     });
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは❤です")));
@@ -231,6 +232,7 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
     EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは🫱です")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬🏿です")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬🏿最初です")));
+    EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("❤️‍🔥")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("最後です👬🏿")));
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("👬👬🏿")));
     EXPECT_FALSE(finder.FindMatch(Util::Utf8ToCodepoints("これは👬です")));
@@ -390,6 +392,19 @@ TEST_F(EnvironmentalFilterRewriterTest, CandidateFilterTest) {
     EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
     EXPECT_EQ(3, segments.conversion_segment(0).candidates_size());
   }
+}
+
+TEST_F(EnvironmentalFilterRewriterTest, FlagTest) {
+  commands::Request request;
+  request.mutable_decoder_experiment_params()
+      ->set_enable_environmental_filter_rewriter(false);
+  ConversionRequest conversion_request;
+  conversion_request.set_request(&request);
+
+  Segments segments;
+  segments.Clear();
+  AddSegment("test", "test", &segments);
+  EXPECT_FALSE(rewriter_->Rewrite(conversion_request, &segments));
 }
 
 TEST_F(EnvironmentalFilterRewriterTest, NormalizationTest) {

@@ -27,31 +27,35 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
-#include <ostream>
+#ifndef MOZC_REWRITER_IVS_VARIANTS_REWRITER_H_
+#define MOZC_REWRITER_IVS_VARIANTS_REWRITER_H_
 
-#include "base/init_mozc.h"
-#include "unix/ibus/ibus_config.h"
-#include "absl/flags/flag.h"
+#include "converter/segments.h"
+#include "rewriter/rewriter_interface.h"
 
-ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
+namespace mozc {
 
-namespace {
-void OutputXml() {
-  mozc::IbusConfig ibus_config;
-  ibus_config.Initialize();
-  std::cout << ibus_config.GetEnginesXml() << std::endl;
-}
-}  // namespace
+class ConversionRequest;
+class Segments;
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-  if (absl::GetFlag(FLAGS_xml)) {
-    OutputXml();
-    return 0;
-  }
+// A rewriter to expand an IVS variant candidate.
+// For example, "葛\U000E0100城市" (an IVS variant candidate) is added right
+// after "葛城市" candidate.
+// This addition is done by exact match against content_key and content_value.
+// Therefore "葛城市は" (content_key=かつらぎし, content_value=葛城市)
+// candidate has its IVS variant, but "葛城市立図書館"
+// (content_key=かつらぎしりつとしょかん, content_value=葛城市立図書館) doesn't.
+class IvsVariantsRewriter : public RewriterInterface {
+ public:
+  IvsVariantsRewriter() = default;
+  ~IvsVariantsRewriter() override = default;
 
-  // This is a stub used by platforms which do not support iBus
-  // (i.e. non Linux environments).
-  return 1;
-}
+  int capability(const ConversionRequest &request) const override;
+
+  bool Rewrite(const ConversionRequest &request,
+               Segments *segments) const override;
+};
+
+}  // namespace mozc
+
+#endif  // MOZC_REWRITER_IVS_VARIANTS_REWRITER_H_

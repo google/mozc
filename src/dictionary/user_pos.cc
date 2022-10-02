@@ -34,6 +34,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "base/logging.h"
 #include "absl/strings/match.h"

@@ -27,36 +27,4 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'targets': [
-    {
-      'target_name': 'jsoncpp',
-      'type': 'static_library',
-      'variables': {
-        'jsoncpp_root': '<(third_party_dir)/jsoncpp/current',
-        'jsoncpp_srcs': [
-          '<(jsoncpp_root)/src/lib_json/json_reader.cpp',
-          '<(jsoncpp_root)/src/lib_json/json_value.cpp',
-          '<(jsoncpp_root)/src/lib_json/json_writer.cpp',
-        ],
-        'jsoncpp_include_dirs': ['<(jsoncpp_root)/include'],
-        'jsoncpp_additional_macros': ['JSON_USE_EXCEPTION=0'],
-      },
-      'defines': [
-        '<@(jsoncpp_additional_macros)',
-      ],
-      'sources': [
-        '<@(jsoncpp_srcs)',
-        'jsoncpp.h',
-      ],
-      'include_dirs': [
-        '<@(jsoncpp_include_dirs)',
-      ],
-      'all_dependent_settings': {
-        'defines': [
-          '<@(jsoncpp_additional_macros)',
-        ],
-      },
-    },
-  ],
-}
+exports_files(["a11y_description_data.tsv"])

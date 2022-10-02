@@ -36,9 +36,11 @@
 #endif  // OS_WIN
 
 #include <cstring>
+#include <ios>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "base/file_stream.h"
 #include "base/file_util.h"

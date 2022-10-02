@@ -31,6 +31,7 @@
 #define MOZC_GUI_CONFIG_DIALOG_ROMAN_TABLE_EDITOR_H_
 
 #include <QWidget>
+#include <istream>
 #include <memory>
 #include <string>
 

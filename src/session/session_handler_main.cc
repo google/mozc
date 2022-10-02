@@ -54,8 +54,11 @@ SHOW_LOG_BY_VALUE       ございました
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/file_stream.h"
 #include "base/init_mozc.h"

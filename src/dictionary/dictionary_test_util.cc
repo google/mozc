@@ -31,6 +31,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 
 #include "base/util.h"
 #include "dictionary/dictionary_token.h"

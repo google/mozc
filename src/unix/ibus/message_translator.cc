@@ -29,8 +29,10 @@
 
 #include "unix/ibus/message_translator.h"
 
+#include <iterator>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"

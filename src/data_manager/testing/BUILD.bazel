@@ -93,6 +93,7 @@ mozc_dataset(
         "mock_mozc_data.inc",
         "pos_list.h",
     ],
+    a11y_description_src = "//data/a11y_description:a11y_description_data.tsv",
     boundary_def = "//data/rules:boundary.def",
     cforms = "//data/rules:cforms.def",
     collocation_src = "//data/test/dictionary:collocation.txt",

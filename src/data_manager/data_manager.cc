@@ -340,6 +340,25 @@ DataManager::Status DataManager::InitFromReader(const DataSetReader &reader) {
     LOG(ERROR) << "Single Kanji data is broken";
     return Status::DATA_BROKEN;
   }
+  if (!reader.Get("a11y_description_token",
+                  &a11y_description_token_array_data_)) {
+    VLOG(2) << "A11y description dictionary's token array is not provided";
+    a11y_description_token_array_data_ = "";
+    // A11y description dictionary is optional, so don't return false here.
+  }
+  if (!reader.Get("a11y_description_string",
+                  &a11y_description_string_array_data_)) {
+    VLOG(2) << "A11y description dictionary's string array is not provided";
+    a11y_description_string_array_data_ = "";
+    // A11y description dictionary is optional, so don't return false here.
+  }
+  if (!(a11y_description_token_array_data_.empty() &&
+        a11y_description_string_array_data_.empty()) &&
+      !SerializedDictionary::VerifyData(a11y_description_token_array_data_,
+                                        a11y_description_string_array_data_)) {
+    LOG(ERROR) << "A11y description dictionary data is broken";
+    return Status::DATA_BROKEN;
+  }
   if (!reader.Get("zero_query_token_array", &zero_query_token_array_data_) ||
       !reader.Get("zero_query_string_array", &zero_query_string_array_data_) ||
       !reader.Get("zero_query_number_token_array",
@@ -553,6 +572,13 @@ void DataManager::GetSingleKanjiRewriterData(
   *variant_string_array_data = single_kanji_variant_string_array_data_;
   *noun_prefix_token_array_data = single_kanji_noun_prefix_token_array_data_;
   *noun_prefix_string_array_data = single_kanji_noun_prefix_string_array_data_;
+}
+
+void DataManager::GetA11yDescriptionRewriterData(
+    absl::string_view *token_array_data,
+    absl::string_view *string_array_data) const {
+  *token_array_data = a11y_description_token_array_data_;
+  *string_array_data = a11y_description_string_array_data_;
 }
 
 void DataManager::GetCounterSuffixSortedArray(const char **array,

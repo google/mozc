@@ -31,6 +31,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ios>
+#include <ostream>
 #include <string>
 #include <vector>
 

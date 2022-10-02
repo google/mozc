@@ -30,6 +30,7 @@
 #include "converter/quality_regression_util.h"
 
 #include <cstdint>
+#include <iterator>
 #include <sstream>  // NOLINT
 #include <string>
 #include <utility>

@@ -30,6 +30,7 @@
 #include "net/json_util.h"
 
 #include <cstdint>
+#include <iterator>
 #include <limits>
 #include <string>
 #include <vector>

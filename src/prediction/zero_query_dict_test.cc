@@ -31,6 +31,7 @@
 
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <vector>
 
 #include "base/port.h"

@@ -29,6 +29,8 @@
 
 #include "unix/ibus/mozc_engine_property.h"
 
+#include <iterator>
+
 #include "base/port.h"
 #include "protocol/commands.pb.h"
 

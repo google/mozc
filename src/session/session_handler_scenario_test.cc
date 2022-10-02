@@ -32,6 +32,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include "base/config_file_stream.h"
 #include "base/file_stream.h"
@@ -461,6 +462,13 @@ INSTANTIATE_TEST_SUITE_P(
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
                   ->set_cancel_segment_model_penalty_for_prediction(true);
+              return request;
+            }(),
+            []() {
+              auto request = GetMobileRequest();
+              // set false, beccause default is true.
+              request.mutable_decoder_experiment_params()
+                  ->set_enable_environmental_filter_rewriter(false);
               return request;
             }())));
 

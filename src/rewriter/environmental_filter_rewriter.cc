@@ -32,9 +32,12 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <iterator>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -55,6 +58,50 @@ using AdditionalRenderableCharacterGroup =
     commands::Request::AdditionalRenderableCharacterGroup;
 
 namespace {
+// Returns (base ** multiplier) % modulo.
+constexpr int64_t Power(int64_t base, int multiplier, int64_t modulo) {
+  if (multiplier <= 0) {
+    return 1;
+  }
+  return (Power(base, multiplier - 1, modulo) * base) % modulo;
+}
+
+// Calculates Rolling Hash for given String.
+// ref: https://en.wikipedia.org/wiki/Rolling_hash
+class RollingHasher {
+ public:
+  // kBase and kModulo are choosed considering
+  // 1. kModulo * kBase < 2**63
+  // 2. kModulo is as large as possible
+  // 3. kBase is coprime with kModulo and large.
+  static constexpr int64_t kBase = 2147483634;
+  static constexpr int64_t kModulo = 2147483647;
+  static constexpr int64_t kPowers[16]{
+      Power(kBase, 0, kModulo),
+      Power(kBase, 1, kModulo),
+      Power(kBase, 2, kModulo),
+      Power(kBase, 3, kModulo),
+      Power(kBase, 4, kModulo),
+      Power(kBase, 5, kModulo),
+      Power(kBase, 6, kModulo),
+      Power(kBase, 7, kModulo),
+      Power(kBase, 8, kModulo),
+      Power(kBase, 9, kModulo),
+      Power(kBase, 10, kModulo),
+      Power(kBase, 11, kModulo),
+      Power(kBase, 12, kModulo),
+      Power(kBase, 13, kModulo),
+      Power(kBase, 14, kModulo),
+      Power(kBase, 15, kModulo),
+  };
+  void append(const char32_t value);
+  void reserve(const size_t size);
+  // Calculates hash for [l, r) partial string for target.
+  int64_t hash_between(const int l, const int r);
+
+ private:
+  std::vector<int64_t> hashes_ = {0};
+};
 
 bool CheckCodepointsAcceptable(const std::vector<char32_t> &codepoints) {
   for (const char32_t c : codepoints) {
@@ -79,7 +126,7 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
     const ::mozc::protobuf::RepeatedField<int> &additional_groups) {
   // WARNING: Though it is named k'All'Cases, 'Empty' is intentionally omitted
   // here. All other cases should be added.
-  constexpr std::array<AdditionalRenderableCharacterGroup, 8> kAllCases = {
+  constexpr std::array<AdditionalRenderableCharacterGroup, 10> kAllCases = {
       commands::Request::KANA_SUPPLEMENT_6_0,
       commands::Request::KANA_SUPPLEMENT_AND_KANA_EXTENDED_A_10_0,
       commands::Request::KANA_EXTENDED_A_14_0,
@@ -88,6 +135,8 @@ std::vector<AdditionalRenderableCharacterGroup> GetNonrenderableGroups(
       commands::Request::EMOJI_13_1,
       commands::Request::EMOJI_14_0,
       commands::Request::EMOJI_15_0,
+      commands::Request::EGYPTIAN_HIEROGLYPH_5_2,
+      commands::Request::IVS_CHARACTER,
   };
 
   std::vector<AdditionalRenderableCharacterGroup> result;
@@ -144,8 +193,13 @@ std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
     results[target_version] = {};
   }
   for (auto iter = range.first; iter != range.second; ++iter) {
+    const uint32_t unicode_version_index = iter.unicode_version_index();
+    // unicode_version_index will not be negative.
+    if (unicode_version_index > EMOJI_MAX_VERSION) {
+      continue;
+    }
     const EmojiVersion version =
-        static_cast<EmojiVersion>(iter.unicode_version_index());
+        static_cast<EmojiVersion>(unicode_version_index);
     if (results.find(version) == results.end()) {
       continue;
     }
@@ -161,53 +215,143 @@ std::map<EmojiVersion, std::vector<std::vector<char32_t>>> ExtractTargetEmojis(
 void CharacterGroupFinder::Initialize(
     const std::vector<std::vector<char32_t>> &target_codepoints) {
   std::vector<char32_t> single_codepoints;
-
   for (const auto &codepoints : target_codepoints) {
-    if (codepoints.size() == 1) {
+    const size_t size = codepoints.size();
+    if (size == 1) {
       single_codepoints.push_back(codepoints[0]);
     } else {
-      multiple_codepoints_.push_back(codepoints);
+      max_length_ = std::max(max_length_, size);
+      RollingHasher hasher = RollingHasher();
+      hasher.reserve(size);
+      for (const char32_t codepoint : codepoints) {
+        hasher.append(codepoint);
+      }
+      multiple_codepoints_.push_back(std::move(codepoints));
+      multiple_codepoints_hashes_.push_back(hasher.hash_between(0, size));
     }
+  }
+
+  std::sort(multiple_codepoints_hashes_.begin(),
+            multiple_codepoints_hashes_.end());
+
+  // Create intersection of multiple_codepoints_ to use early return key in
+  // search algorithm.
+  if (!multiple_codepoints_.empty()) {
+    std::set<char32_t> intersection(multiple_codepoints_[0].begin(),
+                                    multiple_codepoints_[0].end());
+    for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
+      std::set<char32_t> new_intersection;
+      std::set<char32_t> cp_set(codepoints.begin(), codepoints.end());
+      std::set_intersection(
+          cp_set.begin(), cp_set.end(), intersection.begin(),
+          intersection.end(),
+          std::inserter(new_intersection, new_intersection.end()));
+      intersection = std::move(new_intersection);
+    }
+    multiple_codepoints_intersection_ = std::move(intersection);
   }
 
   // sort and summarize them into range;
   std::sort(single_codepoints.begin(), single_codepoints.end());
-  std::pair<char32_t, char32_t> last_item = {
-      0, 0};  // initialize with null character
-  for (const char32_t codepoint : single_codepoints) {
-    if (last_item.second == 0) {
-      last_item = std::make_pair(codepoint, codepoint);
-      continue;
-    }
-    if (last_item.second + 1 == codepoint) {
-      last_item.second += 1;
-      continue;
-    }
-    single_codepoint_ranges_.push_back(last_item);
-    last_item = std::make_pair(codepoint, codepoint);
+  if (!single_codepoints.empty()) {
+    min_single_codepoint_ = single_codepoints[0];
   }
-  if (last_item.second != 0) {
-    single_codepoint_ranges_.push_back(last_item);
+  char32_t last_left = 0;
+  char32_t last_right = 0;
+  for (const char32_t codepoint : single_codepoints) {
+    if (last_right == 0) {
+      last_left = codepoint;
+      last_right = codepoint;
+      continue;
+    }
+    if (last_right + 1 == codepoint) {
+      last_right += 1;
+      continue;
+    }
+    sorted_single_codepoint_lefts_.push_back(last_left);
+    sorted_single_codepoint_rights_.push_back(last_right);
+    last_left = codepoint;
+    last_right = codepoint;
+  }
+  if (last_right != 0) {
+    sorted_single_codepoint_lefts_.push_back(last_left);
+    sorted_single_codepoint_rights_.push_back(last_right);
   }
 }
 
-// Current implementation is brute-force search.
-// It is possible to use Rabin-Karp search or other possibly faster algorithm.
+inline int64_t RollingHasher::hash_between(const int l, const int r) {
+  DCHECK_LT(l, r);
+  // Because kPowers is only prepared for up to length = 15, check it required.
+  DCHECK_LT(r - l, 16);
+  // Enforce modulo to be non-negative.
+  // This function is optimized. Intended implementation is
+  // return (hashes_[r] - kPowers[r - l] * hashes_[l]) % kM;
+  const int64_t d = hashes_[r] - (kPowers[r - l] * hashes_[l]) % kModulo;
+  if (d >= 0) {
+    return d;
+  } else {
+    return d + kModulo;
+  }
+}
+
+inline void RollingHasher::append(const char32_t value) {
+  hashes_.push_back((hashes_.back() * kBase + value) % kModulo);
+}
+
+inline void RollingHasher::reserve(const size_t size) { hashes_.reserve(size); }
+
 bool CharacterGroupFinder::FindMatch(
     const std::vector<char32_t> &target) const {
   for (const char32_t codepoint : target) {
     // Single codepoint check
-    for (const auto &[left, right] : single_codepoint_ranges_) {
-      if (left <= codepoint && codepoint <= right) {
-        return true;
-      }
+    // If codepoint is smaller than min value, continue before executing binary
+    // search.
+    if (codepoint < min_single_codepoint_) {
+      continue;
+    }
+    const auto position =
+        std::upper_bound(sorted_single_codepoint_lefts_.begin(),
+                         sorted_single_codepoint_lefts_.end(), codepoint);
+    const auto index_upper =
+        std::distance(sorted_single_codepoint_lefts_.begin(), position);
+    if (index_upper != 0 &&
+        codepoint <= sorted_single_codepoint_rights_[index_upper - 1]) {
+      return true;
     }
   }
-  // Multiple codepoints check
-  for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
-    if (target.end() != std::search(target.begin(), target.end(),
-                                    codepoints.begin(), codepoints.end())) {
-      return true;
+
+  // If target does not contain any intersection of multiple_codepoints_, return
+  // false here.
+  for (const char32_t codepoint : multiple_codepoints_intersection_) {
+    if (std::find(target.begin(), target.end(), codepoint) == target.end()) {
+      return false;
+    }
+  }
+
+  // Multiple Codepoint Check.
+  RollingHasher hasher = RollingHasher();
+  hasher.reserve(target.size());
+  for (int right = 0; right < target.size(); ++right) {
+    hasher.append(target[right]);
+    for (int left = right - 1; left >= 0; --left) {
+      if (right - left > max_length_) {
+        break;
+      }
+      // Example:
+      //  For codepoints {0x0, 0x1, 0x2, 0x3, 0x4} and left = 1 and right = 3,
+      //  `hash` is hash for {0x1, 0x2}
+      const int64_t hash = hasher.hash_between(left, right + 1);
+      if (std::binary_search(multiple_codepoints_hashes_.begin(),
+                             multiple_codepoints_hashes_.end(), hash)) {
+        // As hash can collide in some unfortunate case, double-check here.
+        const auto begin = target.begin() + left;
+        const auto end = target.begin() + right + 1;
+        for (const std::vector<char32_t> &codepoints : multiple_codepoints_) {
+          if (std::equal(begin, end, codepoints.begin(), codepoints.end())) {
+            return true;
+          }
+        }
+      }
     }
   }
   return false;
@@ -247,6 +391,12 @@ EnvironmentalFilterRewriter::EnvironmentalFilterRewriter(
 
 bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
                                           Segments *segments) const {
+  if (!request.request()
+           .decoder_experiment_params()
+           .enable_environmental_filter_rewriter()) {
+    return false;
+  }
+
   DCHECK(segments);
   const std::vector<AdditionalRenderableCharacterGroup> nonrenderable_groups =
       GetNonrenderableGroups(
@@ -339,6 +489,10 @@ bool EnvironmentalFilterRewriter::Rewrite(const ConversionRequest &request,
           case commands::Request::EGYPTIAN_HIEROGLYPH_5_2:
             found_nonrenderable =
                 FindCodepointsInClosedRange(codepoints, 0x13000, 0x1342E);
+            break;
+          case commands::Request::IVS_CHARACTER:
+            found_nonrenderable =
+                FindCodepointsInClosedRange(codepoints, 0xE0100, 0xE010E);
             break;
         }
         if (found_nonrenderable) {

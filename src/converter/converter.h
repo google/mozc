@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "converter/converter_interface.h"
 #include "dictionary/pos_matcher.h"

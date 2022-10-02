@@ -36,6 +36,7 @@
 #include "session/session_converter.h"
 
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <string>

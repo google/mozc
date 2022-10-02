@@ -46,6 +46,8 @@
 #include <QMessageBox>
 #include <algorithm>
 #include <cstdlib>
+#include <istream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>

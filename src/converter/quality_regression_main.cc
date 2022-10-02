@@ -29,6 +29,7 @@
 
 #include <iostream>  // NOLINT
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 

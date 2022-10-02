@@ -31,6 +31,7 @@
 #define MOZC_GUI_CONFIG_DIALOG_GENERIC_TABLE_EDITOR_H_
 
 #include <QWidget>
+#include <istream>
 #include <string>
 
 #include "gui/config_dialog/ui_generic_table_editor.h"
