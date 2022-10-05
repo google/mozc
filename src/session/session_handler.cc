@@ -212,27 +212,35 @@ bool SessionHandler::StartWatchDog() {
 }
 
 void SessionHandler::SetConfig(const config::Config &config) {
+  UpdateSessions(config, *request_);
+}
+
+void SessionHandler::UpdateSessions(const config::Config &config,
+                                    const commands::Request &request) {
   auto new_config = std::make_unique<config::Config>(config);
+  auto new_request = std::make_unique<commands::Request>(request);
   const auto *data_manager = engine_->GetDataManager();
   const composer::Table *table =
       data_manager != nullptr
-          ? table_manager_->GetTable(*request_, *new_config, *data_manager)
+          ? table_manager_->GetTable(*new_request, *new_config, *data_manager)
           : nullptr;
   for (SessionElement *element =
            const_cast<SessionElement *>(session_map_->Head());
        element != nullptr; element = element->next) {
     if (element->value != nullptr) {
       element->value->SetConfig(new_config.get());
-      element->value->SetRequest(request_.get());
+      element->value->SetRequest(new_request.get());
       if (table != nullptr) {
         element->value->SetTable(table);
       }
     }
   }
-  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(config);
-  // Now no references to the current config should exist.
-  // We can destroy it here.
+  config::CharacterFormManager::GetCharacterFormManager()->ReloadConfig(
+      *new_config);
+  // Now no references to the current config/request should exist.
+  // We can destroy them here.
   config_ = std::move(new_config);
+  request_ = std::move(new_request);
 }
 
 bool SessionHandler::SyncData(commands::Command *command) {
@@ -251,11 +259,7 @@ bool SessionHandler::Shutdown(commands::Command *command) {
 
 bool SessionHandler::Reload(commands::Command *command) {
   VLOG(1) << "Reloading server";
-  {
-    config::Config config;
-    config::ConfigHandler::GetConfig(&config);
-    SetConfig(config);
-  }
+  UpdateSessions(*config::ConfigHandler::GetConfig(), *request_);
   engine_->Reload();
   return true;
 }
@@ -334,11 +338,7 @@ bool SessionHandler::SetRequest(commands::Command *command) {
     LOG(WARNING) << "request is empty";
     return false;
   }
-
-  request_ = std::make_unique<commands::Request>(command->input().request());
-
-  Reload(command);
-
+  UpdateSessions(*config_, command->input().request());
   return true;
 }
 
