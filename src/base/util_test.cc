@@ -411,10 +411,10 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
 
   {  // Multiple codepoint emojis
     const std::string kInputs[] = {
-        u8"🛳\uFE0E",  // U+1F6F3,U+FE0E - text presentation sequence
-        u8"🛳\uFE0F",  // U+1F6F3,U+FE0F - emoji presentation sequence
-        "✌🏿",         // U+261D,U+1F3FF - emoji modifier sequence
-        "🇯🇵",         // U+1F1EF,U+1F1F5 - emoji flag sequence
+        "🛳\uFE0E",  // U+1F6F3,U+FE0E - text presentation sequence
+        "🛳\uFE0F",  // U+1F6F3,U+FE0F - emoji presentation sequence
+        "✌🏿",       // U+261D,U+1F3FF - emoji modifier sequence
+        "🇯🇵",       // U+1F1EF,U+1F1F5 - emoji flag sequence
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // U+1F3F4,U+E0067,U+E0062,U+E0065,U+E006E,U+E0067
                                          // - emoji tag sequence
         "#️⃣",  // U+0023,U+FE0F,U+20E3 - emoji keycap sequennce
@@ -443,19 +443,19 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
 
   {  // Invalid codepoint characters
     const std::string kInputs[] = {
-        u8"\uFE00",              // Extend only [SVS]
-        u8"神\uFE00\U000E0100",  // Multiple extends [SVS, IVS]
-        u8"🛳\uFE0E\uFE0E",  // Multiple extends [text_presentation_selector,
-                            // text_presentation_selector]
-        u8"🛳\uFE0F\uFE0F",  // Multiple extends [emoji_presentation_selector,
-                            // emoji_presentation_selector]
-        u8"✌🏿\U0001F3FF",   // Multiple extends [emoji_modifier,
-                            // emoji_modifier]
-        u8"🏴󠁧󠁢󠁥󠁮󠁧󠁿\U000E0067",  // Multiple extends
-                                                     // [tag_end,
-                                                     // tag_end]
-        u8"\U0001F468\u200D\U0001F469\u200D\u200D\U0001F467\u200D"
-        u8"\U0001F466"  // Successive ZWJ between "👨‍👩‍👧‍👦"
+        "\uFE00",              // Extend only [SVS]
+        "神\uFE00\U000E0100",  // Multiple extends [SVS, IVS]
+        "🛳\uFE0E\uFE0E",       // Multiple extends [text_presentation_selector,
+                               // text_presentation_selector]
+        "🛳\uFE0F\uFE0F",       // Multiple extends [emoji_presentation_selector,
+                               // emoji_presentation_selector]
+        "✌🏿\U0001F3FF",        // Multiple extends [emoji_modifier,
+                               // emoji_modifier]
+        "🏴󠁧󠁢󠁥󠁮󠁧󠁿\U000E0067",  // Multiple extends
+                                                   // [tag_end,
+                                                   // tag_end]
+        "\U0001F468\u200D\U0001F469\u200D\u200D\U0001F467\u200D"
+        "\U0001F466"  // Successive ZWJ between "👨‍👩‍👧‍👦"
     };
     const std::string joined_string = absl::StrJoin(kInputs, "");
 
@@ -1240,8 +1240,8 @@ TEST(UtilTest, IsAscii) {
 }
 
 TEST(UtilTest, IsJisX0208) {
-  EXPECT_TRUE(Util::IsJisX0208(u8"\u007F"));
-  EXPECT_FALSE(Util::IsJisX0208(u8"\u0080"));
+  EXPECT_TRUE(Util::IsJisX0208("\u007F"));
+  EXPECT_FALSE(Util::IsJisX0208("\u0080"));
 
   EXPECT_TRUE(Util::IsJisX0208("あいうえお"));
   EXPECT_TRUE(Util::IsJisX0208("abc"));
@@ -1253,10 +1253,10 @@ TEST(UtilTest, IsJisX0208) {
 
   // boundary edges
   EXPECT_TRUE(Util::IsJisX0208("ﾟ"));  // U+FF9F, the last char of JIS X 0208
-  EXPECT_TRUE(Util::IsJisX0208(u8"\uFF9F"));   // U+FF9F
-  EXPECT_FALSE(Util::IsJisX0208(u8"\uFFA0"));  // U+FF9F + 1
-  EXPECT_FALSE(Util::IsJisX0208(u8"\uFFFF"));
-  EXPECT_FALSE(Util::IsJisX0208(u8"\U00010000"));
+  EXPECT_TRUE(Util::IsJisX0208("\uFF9F"));   // U+FF9F
+  EXPECT_FALSE(Util::IsJisX0208("\uFFA0"));  // U+FF9F + 1
+  EXPECT_FALSE(Util::IsJisX0208("\uFFFF"));
+  EXPECT_FALSE(Util::IsJisX0208("\U00010000"));
 
   // JIS X 0213
   EXPECT_FALSE(Util::IsJisX0208("Ⅰ"));
