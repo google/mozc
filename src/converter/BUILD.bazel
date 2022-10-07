@@ -334,6 +334,7 @@ cc_library_mozc(
     deps = [
         "//base:logging",
         "//request:conversion_request",
+        "@com_google_absl//absl/base:core_headers",
     ],
 )
 
@@ -373,6 +374,7 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//request:conversion_request",
         "//testing:gunit_prod",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -423,6 +425,7 @@ cc_library_mozc(
         ":segments",
         "//base:port",
         "//request:conversion_request",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -470,6 +473,7 @@ cc_library_mozc(
         "//testing:gunit_prod",
         "//transliteration",
         "//usage_stats",
+        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
     ],
 )

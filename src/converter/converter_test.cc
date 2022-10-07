@@ -1176,7 +1176,18 @@ TEST_F(ConverterTest, PredictSetKey) {
     request.set_request_type(ConversionRequest::PREDICTION);
     request.set_should_call_set_key_in_prediction(
         test_data.should_call_set_key_in_prediction);
-    converter->Predict(request, kPredictionKey, &segments);
+    if (!converter->Predict(request, kPredictionKey, &segments)) {
+      LOG(WARNING)
+          << "StubPredictor does nothing, so it can return the input segments "
+             "as is. However, this input segments can be invalid in terms of "
+             "IsValidSegments() defined in converter.cc. This test should be "
+             "more meaningful. "
+          << "should_call_set_key_in_prediction: "
+          << test_data.should_call_set_key_in_prediction
+          << ", key: " << test_data.key
+          << ", expect_reset: " << test_data.expect_reset
+          << ", segments: " << segments.DebugString();
+    }
 
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(kPredictionKey, segments.conversion_segment(0).key());

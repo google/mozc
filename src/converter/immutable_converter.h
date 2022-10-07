@@ -43,6 +43,7 @@
 #include "dictionary/pos_group.h"
 #include "dictionary/pos_matcher.h"
 #include "dictionary/suppression_dictionary.h"
+#include "absl/base/attributes.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
 
@@ -67,8 +68,8 @@ class ImmutableConverterImpl : public ImmutableConverterInterface {
       const SuggestionFilter *suggestion_filter);
   ~ImmutableConverterImpl() override = default;
 
-  bool ConvertForRequest(const ConversionRequest &request,
-                         Segments *segments) const override;
+  ABSL_MUST_USE_RESULT bool ConvertForRequest(
+      const ConversionRequest &request, Segments *segments) const override;
 
  private:
   FRIEND_TEST(ImmutableConverterTest, AddPredictiveNodes);

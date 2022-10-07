@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "converter/segments.h"
 #include "request/conversion_request.h"
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -158,18 +159,17 @@ class ConverterInterface {
 
   // Resize segment_index-th segment by offset_length.
   // offset_length can be negative.
-  virtual bool ResizeSegment(Segments *segments,
-                             const ConversionRequest &request,
-                             size_t segment_index, int offset_length) const = 0;
+  ABSL_MUST_USE_RESULT virtual bool ResizeSegment(
+      Segments *segments, const ConversionRequest &request,
+      size_t segment_index, int offset_length) const = 0;
 
   // Resize [start_segment_index, start_segment_index + segment_size]
   // segments with the new size in new_size_array.
   // size of new_size_array is specified in 'array_size'
-  virtual bool ResizeSegment(Segments *segments,
-                             const ConversionRequest &request,
-                             size_t start_segment_index, size_t segments_size,
-                             const uint8_t *new_size_array,
-                             size_t array_size) const = 0;
+  ABSL_MUST_USE_RESULT virtual bool ResizeSegment(
+      Segments *segments, const ConversionRequest &request,
+      size_t start_segment_index, size_t segments_size,
+      const uint8_t *new_size_array, size_t array_size) const = 0;
 
  protected:
   ConverterInterface() {}

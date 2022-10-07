@@ -35,6 +35,7 @@
 
 #include "prediction/predictor_interface.h"
 #include "request/conversion_request.h"
+#include "absl/base/attributes.h"
 
 namespace mozc {
 
@@ -91,8 +92,8 @@ class DefaultPredictor : public BasePredictor {
                    std::unique_ptr<PredictorInterface> user_history_predictor);
   ~DefaultPredictor() override;
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override;
+  ABSL_MUST_USE_RESULT bool PredictForRequest(
+      const ConversionRequest &request, Segments *segments) const override;
 
   const std::string &GetPredictorName() const override {
     return predictor_name_;
@@ -112,8 +113,8 @@ class MobilePredictor : public BasePredictor {
                   std::unique_ptr<PredictorInterface> user_history_predictor);
   ~MobilePredictor() override;
 
-  bool PredictForRequest(const ConversionRequest &request,
-                         Segments *segments) const override;
+  ABSL_MUST_USE_RESULT bool PredictForRequest(
+      const ConversionRequest &request, Segments *segments) const override;
 
   const std::string &GetPredictorName() const override {
     return predictor_name_;

@@ -357,8 +357,16 @@ bool SessionConverter::SwitchKanaType(const composer::Composer &composer) {
       std::string composition;
       GetPreedit(0, segments_->conversion_segments_size(), &composition);
       const ConversionRequest conversion_request(&composer, request_, config_);
-      converter_->ResizeSegment(segments_.get(), conversion_request, 0,
-                                Util::CharsLen(composition));
+      // TODO(noriyukit): What happens if ResizeSegment fails? Handle the
+      // error correctly.
+      if (!converter_->ResizeSegment(segments_.get(), conversion_request, 0,
+                                     Util::CharsLen(composition))) {
+        LOG(WARNING)
+            << "ResizeSegment failed but keep executing code to keep the "
+               "original "
+               "behavior. Check if this is OK or not. segments: "
+            << segments_->DebugString();
+      }
       UpdateCandidateList();
     }
 
