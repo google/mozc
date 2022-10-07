@@ -337,5 +337,35 @@ TEST_F(CollocationRewriterTest, DoNotPromoteHighCostCandidate) {
   EXPECT_NE("猫を飼いたい", GetTopValue(segments)) << segments.DebugString();
 }
 
+TEST_F(CollocationRewriterTest, ImmuneToInvalidSegments) {
+  const uint16_t kUnkId = pos_matcher_.GetUnknownId();
+  const CandidateData kNekowoCands[] = {
+      {"ねこを", "ねこ", "猫", "猫を", 0, kUnkId, kUnkId},
+  };
+  const CandidateData kKaitaiCands[] = {
+      {"かいたい", "かいたい", "飼いたい", "飼いたい", 0, kUnkId, kUnkId},
+  };
+  const SegmentData kSegmentData[] = {
+      {"ねこを", kNekowoCands, std::size(kNekowoCands)},
+      {"かいたい", kKaitaiCands, std::size(kKaitaiCands)},
+  };
+  const SegmentsData kSegments = {kSegmentData, std::size(kSegmentData)};
+
+  {
+    Segments segments;
+    MakeSegments(kSegments, &segments);
+    // If there's a fixed segment, rewrite fails.
+    segments.mutable_segment(0)->set_segment_type(Segment::FIXED_VALUE);
+    EXPECT_FALSE(Rewrite(&segments));
+  }
+  {
+    Segments segments;
+    MakeSegments(kSegments, &segments);
+    // If there's a segment with no candidates, rewrite fails.
+    segments.mutable_segment(0)->clear_candidates();
+    EXPECT_FALSE(Rewrite(&segments));
+  }
+}
+
 }  // namespace
 }  // namespace mozc
