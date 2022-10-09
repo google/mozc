@@ -461,7 +461,10 @@ TEST_F(ConverterMockTest, GetResizeSegment1) {
   SetSegments(&input, "ResizeSegment1");
   const std::string input_str = input.DebugString();
   const ConversionRequest default_request;
-  converter->ResizeSegment(&input, default_request, input_idx, input_offset);
+  // TODO(noriyukit): Since converter->SetResizeSegment1 is not called, this
+  // method returns false. Verify if this is the correct expectation.
+  ASSERT_FALSE(converter->ResizeSegment(&input, default_request, input_idx,
+                                        input_offset));
 
   Segments last_segment;
   size_t last_idx;
@@ -483,8 +486,11 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
   SetSegments(&input, "ResizeSegment2");
   const std::string input_str = input.DebugString();
   const ConversionRequest default_request;
-  converter->ResizeSegment(&input, default_request, input_idx, input_size,
-                           input_array, std::size(input_array));
+  // TODO(noriyukit): Since converter->SetResizeSegment1 is not called, this
+  // method returns false. Verify if this is the correct expectation.
+  ASSERT_FALSE(converter->ResizeSegment(&input, default_request, input_idx,
+                                        input_size, input_array,
+                                        std::size(input_array)));
 
   Segments last_segment;
   size_t last_idx, last_size;

@@ -1124,14 +1124,8 @@ void Session::SetTable(const composer::Table *table) {
 }
 
 void Session::SetConfig(const config::Config *config) {
+  ClearUndoContext();
   context_->SetConfig(config);
-  if (prev_context_) {
-    // Previous countext doesn't need to keep the previous config because
-    // our expectation of undo feature doesn't include undoing config change.
-    // Moreover, the config which prev_context_ has is about to be destroyed
-    // so keeping the reference to it is dangerous.
-    prev_context_->SetConfig(config);
-  }
 }
 
 void Session::SetRequest(const commands::Request *request) {

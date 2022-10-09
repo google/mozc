@@ -2369,9 +2369,6 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("aiueo", command);
 
-    config.set_session_keymap(config::Config::MSIME);
-    session.SetConfig(&config);
-
     command.Clear();
     session.Undo(&command);
     EXPECT_FALSE(command.output().has_result());
@@ -9299,9 +9296,8 @@ TEST_F(SessionTest, SetConfig) {
 
   EXPECT_EQ(&session.context_->GetConfig(),
             &config);
-  // Both previous and current context should have the same config.
-  EXPECT_EQ(&session.context_->GetConfig(),
-            &session.prev_context_->GetConfig());
+  // SetConfig() resets undo context.
+  EXPECT_FALSE(session.prev_context_);
 }
 
 }  // namespace session

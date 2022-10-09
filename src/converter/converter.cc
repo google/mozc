@@ -320,7 +320,13 @@ bool ConverterImpl::StartConversion(Segments *segments,
 bool ConverterImpl::Convert(const ConversionRequest &request,
                             const std::string &key, Segments *segments) const {
   SetKey(segments, key);
-  immutable_converter_->ConvertForRequest(request, segments);
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+    // Conversion can fail for keys like "12". Even in such cases, rewriters
+    // (e.g., number and variant rewriters) can populate some candidates.
+    // Therefore, this is not an error.
+    VLOG(1) << "ConvertForRequest failed for key: "
+            << segments->segment(0).key();
+  }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
   return IsValidSegments(request, *segments);
@@ -403,7 +409,13 @@ bool ConverterImpl::Predict(const ConversionRequest &request,
   DCHECK_EQ(1, segments->conversion_segments_size());
   DCHECK_EQ(key, segments->conversion_segment(0).key());
 
-  predictor_->PredictForRequest(request, segments);
+  if (!predictor_->PredictForRequest(request, segments)) {
+    // Prediction can fail for keys like "12". Even in such cases, rewriters
+    // (e.g., number and variant rewriters) can populate some candidates.
+    // Therefore, this is not an error.
+    VLOG(1) << "PredictForRequest failed for key: "
+            << segments->segment(0).key();
+  }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
   if (request.request_type() == ConversionRequest::PARTIAL_SUGGESTION ||
@@ -785,7 +797,13 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  immutable_converter_->ConvertForRequest(request, segments);
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+    // Conversion can fail for keys like "12". Even in such cases, rewriters
+    // (e.g., number and variant rewriters) can populate some candidates.
+    // Therefore, this is not an error.
+    VLOG(1) << "ConvertForRequest failed for key: "
+            << segments->segment(0).key();
+  }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
   return true;
@@ -847,7 +865,13 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
 
   segments->set_resized(true);
 
-  immutable_converter_->ConvertForRequest(request, segments);
+  if (!immutable_converter_->ConvertForRequest(request, segments)) {
+    // Conversion can fail for keys like "12". Even in such cases, rewriters
+    // (e.g., number and variant rewriters) can populate some candidates.
+    // Therefore, this is not an error.
+    VLOG(1) << "ConvertForRequest failed for key: "
+            << segments->segment(0).key();
+  }
   RewriteAndSuppressCandidates(request, segments);
   TrimCandidates(request, segments);
   return true;

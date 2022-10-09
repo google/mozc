@@ -204,3 +204,24 @@ oss_issue574	からだき	空焚き	Conversion Expected 2
 oss_issue578	ししゅう	歯周	Conversion Expected 9
 oss_issue583	あかつきにふねをいだす	暁に船を出だす	Conversion Expected
 oss_issue583	さいのうをみいだす	才能を見出だす	Conversion Expected 2
+oss_issue588	きそう	寄贈	Conversion Expected 9
+oss_issue589	なぞめいてて	謎めいてて	Conversion Expected
+oss_issue590	しょくじをしたにもかかわらず	食事をした	Conversion Match
+oss_issue592	ひらぶんでおくる	平文で送る	Conversion Expected
+oss_issue593	ごかんそう	ご感想	Conversion Expected
+oss_issue598	うっぷんばらし	鬱憤晴らし	Conversion Expected 2
+oss_issue599	こういしつ	更衣室	Conversion Expected
+oss_issue600	にようそにんしょう	二要素認証	Conversion Expected
+oss_issue600	たようそにんしょう	多要素認証	Conversion Expected
+oss_issue601	ぎんこうこうざのかいせつ	銀行口座の開設	Conversion Expected
+oss_issue602	きんとれ	筋トレ	Conversion Expected
+oss_issue603	おくぶたえ	奥二重	Conversion Expected
+oss_issue604	にほんじゅう	日本中	Conversion Expected
+oss_issue604	にっぽんじゅう	日本中	Conversion Expected
+oss_issue605	かにかまれる	蚊に	Conversion Match
+oss_issue608	じってんぽ	実店舗	Conversion Match
+oss_issue609	うらめん	裏面	Conversion Match
+oss_issue610	にだんかいうせつ	二段階右折	Conversion Expected
+oss_issue610	にだんかいにんしょう	二段階認証	Conversion Expected
+oss_issue615	ひともうけ	一儲け	Conversion Expected
+oss_issue616	ひゃっきん	百均	Conversion Expected

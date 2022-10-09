@@ -40,6 +40,7 @@
 #include "dictionary/suppression_dictionary.h"
 //  for FRIEND_TEST()
 #include "testing/base/public/gunit_prod.h"
+#include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -104,12 +105,16 @@ class ConverterImpl : public ConverterInterface {
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;
-  bool ResizeSegment(Segments *segments, const ConversionRequest &request,
-                     size_t segment_index, int offset_length) const override;
-  bool ResizeSegment(Segments *segments, const ConversionRequest &request,
-                     size_t start_segment_index, size_t segments_size,
-                     const uint8_t *new_size_array,
-                     size_t array_size) const override;
+  ABSL_MUST_USE_RESULT bool ResizeSegment(Segments *segments,
+                                          const ConversionRequest &request,
+                                          size_t segment_index,
+                                          int offset_length) const override;
+  ABSL_MUST_USE_RESULT bool ResizeSegment(Segments *segments,
+                                          const ConversionRequest &request,
+                                          size_t start_segment_index,
+                                          size_t segments_size,
+                                          const uint8_t *new_size_array,
+                                          size_t array_size) const override;
 
  private:
   FRIEND_TEST(ConverterTest, CompletePosIds);
@@ -160,11 +165,13 @@ class ConverterImpl : public ConverterInterface {
                              std::string *key, std::string *value,
                              uint16_t *id) const;
 
-  bool Predict(const ConversionRequest &request, const std::string &key,
-               Segments *segments) const;
+  ABSL_MUST_USE_RESULT bool Predict(const ConversionRequest &request,
+                                    const std::string &key,
+                                    Segments *segments) const;
 
-  bool Convert(const ConversionRequest &request, const std::string &key,
-               Segments *segments) const;
+  ABSL_MUST_USE_RESULT bool Convert(const ConversionRequest &request,
+                                    const std::string &key,
+                                    Segments *segments) const;
 
   const dictionary::PosMatcher *pos_matcher_;
   const dictionary::SuppressionDictionary *suppression_dictionary_;

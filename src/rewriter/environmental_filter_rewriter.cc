@@ -76,7 +76,8 @@ class RollingHasher {
   // 3. kBase is coprime with kModulo and large.
   static constexpr int64_t kBase = 2147483634;
   static constexpr int64_t kModulo = 2147483647;
-  static constexpr int64_t kPowers[16]{
+  static constexpr int kMaxLength = 15;
+  static constexpr int64_t kPowers[kMaxLength + 1]{
       Power(kBase, 0, kModulo),
       Power(kBase, 1, kModulo),
       Power(kBase, 2, kModulo),
@@ -94,14 +95,34 @@ class RollingHasher {
       Power(kBase, 14, kModulo),
       Power(kBase, 15, kModulo),
   };
-  void append(const char32_t value);
-  void reserve(const size_t size);
+  void append(const char32_t value) {
+    hashes_.push_back((hashes_.back() * kBase + value) % kModulo);
+  }
+  void reserve(const size_t size) { hashes_.reserve(size); }
   // Calculates hash for [l, r) partial string for target.
-  int64_t hash_between(const int l, const int r);
+  int64_t hash_between(int l, int r);
 
  private:
   std::vector<int64_t> hashes_ = {0};
 };
+
+inline int64_t RollingHasher::hash_between(int l, int r) {
+  DCHECK_LT(l, r);
+  // Because kPowers is only prepared for up to kMaxLength, check it required.
+  if (r - l > kMaxLength) {
+    DLOG(ERROR) << "The hash length is more than the max: " << kMaxLength;
+    l = r - kMaxLength;
+  }
+  // Enforce modulo to be non-negative.
+  // This function is optimized. Intended implementation is
+  // return (hashes_[r] - kPowers[r - l] * hashes_[l]) % kModulo;
+  const int64_t d = hashes_[r] - (kPowers[r - l] * hashes_[l]) % kModulo;
+  if (d >= 0) {
+    return d;
+  } else {
+    return d + kModulo;
+  }
+}
 
 bool CheckCodepointsAcceptable(const std::vector<char32_t> &codepoints) {
   for (const char32_t c : codepoints) {
@@ -278,27 +299,6 @@ void CharacterGroupFinder::Initialize(
     sorted_single_codepoint_rights_.push_back(last_right);
   }
 }
-
-inline int64_t RollingHasher::hash_between(const int l, const int r) {
-  DCHECK_LT(l, r);
-  // Because kPowers is only prepared for up to length = 15, check it required.
-  DCHECK_LT(r - l, 16);
-  // Enforce modulo to be non-negative.
-  // This function is optimized. Intended implementation is
-  // return (hashes_[r] - kPowers[r - l] * hashes_[l]) % kM;
-  const int64_t d = hashes_[r] - (kPowers[r - l] * hashes_[l]) % kModulo;
-  if (d >= 0) {
-    return d;
-  } else {
-    return d + kModulo;
-  }
-}
-
-inline void RollingHasher::append(const char32_t value) {
-  hashes_.push_back((hashes_.back() * kBase + value) % kModulo);
-}
-
-inline void RollingHasher::reserve(const size_t size) { hashes_.reserve(size); }
 
 bool CharacterGroupFinder::FindMatch(
     const std::vector<char32_t> &target) const {

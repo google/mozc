@@ -242,6 +242,13 @@ TEST_F(EnvironmentalFilterRewriterTest, CharacterGroupFinderTest) {
     // flags.
     EXPECT_TRUE(finder.FindMatch(Util::Utf8ToCodepoints("🇦🇺🇸🇪")));
   }
+  {
+    // Test with more than 16 chars.
+    CharacterGroupFinder finder;
+    finder.Initialize({Util::Utf8ToCodepoints("01234567890abcdefghij")});
+    EXPECT_FALSE(
+        finder.FindMatch(Util::Utf8ToCodepoints("01234567890abcdefghXYZ")));
+  }
 }
 
 // This test aims to check the ability using EnvironmentalFilterRewriter to

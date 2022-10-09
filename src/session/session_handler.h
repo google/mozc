@@ -105,8 +105,10 @@ class SessionHandler : public SessionHandlerInterface {
   void Init(std::unique_ptr<EngineInterface> engine,
             std::unique_ptr<EngineBuilderInterface> engine_builder);
 
-  // Sets config to all the modules managed by this handler.  This does not
-  // affect the stored config in the local storage.
+  // Updates all the sessions by UpdateSessions() with given |config|.
+  // Stored or imporsed configs are not updated.
+  // Intented to be called with the value from ConfigHandler::GetConfig()
+  // (except for testing code).
   void SetConfig(const config::Config &config);
   // Updates the stored config, if the |command| contains the config.
   void MaybeUpdateStoredConfig(commands::Command *command);
@@ -121,11 +123,20 @@ class SessionHandler : public SessionHandlerInterface {
   bool ClearUserPrediction(commands::Command *command);
   bool ClearUnusedUserPrediction(commands::Command *command);
   bool Shutdown(commands::Command *command);
+  // Reloads all the sessions.
+  // Before that, UpdateSessions() is called to update them.
   bool Reload(commands::Command *command);
   bool GetStoredConfig(commands::Command *command);
   bool SetStoredConfig(commands::Command *command);
   bool SetImposedConfig(commands::Command *command);
+  // Updates all the sessions by UpdateSessions() with given |request|.
   bool SetRequest(commands::Command *command);
+  // Sets the given config, request, and delivertive information
+  // to all the sessions.
+  // Then updates config_ and request_.
+  // This method doesn't reload the sessions.
+  void UpdateSessions(const config::Config &config,
+                      const commands::Request &request);
 
   bool Cleanup(commands::Command *command);
   bool SendUserDictionaryCommand(commands::Command *command);

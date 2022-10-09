@@ -30,6 +30,8 @@
 #ifndef MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 #define MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_
 
+#include "absl/base/attributes.h"
+
 namespace mozc {
 
 class ConversionRequest;
@@ -45,18 +47,19 @@ class ImmutableConverterInterface {
   //   const ConversionRequest request;
   //   ConvertForRequest(request, segments);
   // TODO(hidehiko): Deprecate this method and use ConvertForRequest.
-  virtual bool Convert(Segments *segments) const;
+  ABSL_MUST_USE_RESULT virtual bool Convert(Segments *segments) const;
 
   // This method should be pure-virtual method in theory.
   // However, to keep the backward compatibility until the deprecation of
   // Conversion method, we provide the default implementation.
   // Please see the .cc file.
-  virtual bool ConvertForRequest(const ConversionRequest &request,
-                                 Segments *segments) const;
+  ABSL_MUST_USE_RESULT virtual bool ConvertForRequest(
+      const ConversionRequest &request, Segments *segments) const;
 
  protected:
   ImmutableConverterInterface() {}
 };
+
 }  // namespace mozc
 
 #endif  // MOZC_CONVERTER_IMMUTABLE_CONVERTER_INTERFACE_H_

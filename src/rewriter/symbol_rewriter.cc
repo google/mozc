@@ -128,7 +128,7 @@ void SymbolRewriter::ExpandSpace(Segment *segment) {
     segment->insert_candidate(base + 1, std::move(c));
   };
 
-  constexpr absl::string_view kHalfWidthSpace = " ";  // U+0020
+  constexpr absl::string_view kHalfWidthSpace = " ";   // U+0020
   constexpr absl::string_view kFullWidthSpace = "　";  // U+3000
   for (size_t i = 0; i < segment->candidates_size(); ++i) {
     if (segment->candidate(i).value == kHalfWidthSpace) {
@@ -338,7 +338,15 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
         Util::CharsLen(segments->conversion_segment(0).key());
     const int diff = static_cast<int>(all_length - first_length);
     if (diff > 0) {
-      parent_converter_->ResizeSegment(segments, request, 0, diff);
+      // TODO(noriyukit): What happens if ResizeSegment fails? Handle the
+      // error correctly.
+      if (!parent_converter_->ResizeSegment(segments, request, 0, diff)) {
+        LOG(WARNING)
+            << "ResizeSegment failed but keep executing code as if it's "
+               "successful to keep the original behavior. This may cause "
+               "errors in the subsequent logic: segment_index=0, offset_length="
+            << diff << ", segments:" << segments->DebugString();
+      }
     }
   } else {
     InsertCandidates(GetOffset(request, key), range,

@@ -264,7 +264,7 @@ def objc_test_mozc(name, srcs = [], deps = [], sdk_frameworks = [], **kwargs):
     apple_binary(
         name = name + "_bin",
         testonly = 1,
-        minimum_os_version = "10.10",
+        minimum_os_version = "10.13",
         platform_type = "macos",
         sdk_frameworks = select_mozc(oss_macos = sdk_frameworks),
         deps = [name + "_lib"] + select_mozc(

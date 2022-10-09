@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "absl/base/attributes.h"
+
 namespace mozc {
 
 class ConversionRequest;
@@ -47,8 +49,8 @@ class PredictorInterface {
   // SUGGESTION: automatic suggestions
   // PREDICTION: invoked only when user pushes "tab" key.
   // less aggressive than SUGGESTION mode.
-  virtual bool PredictForRequest(const ConversionRequest &request,
-                                 Segments *segments) const = 0;
+  ABSL_MUST_USE_RESULT virtual bool PredictForRequest(
+      const ConversionRequest &request, Segments *segments) const = 0;
 
   // Hook(s) for all mutable operations.
   virtual void Finish(const ConversionRequest &request, Segments *segments) {}
