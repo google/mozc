@@ -2219,7 +2219,10 @@ bool Session::UndoOrRewind(commands::Command *command) {
     return Undo(command);
   }
 
-  return DoNothing(command);
+  // Mozc decoder doesn't do anything for UNDO_OR_REWIND.
+  // Echo back the event to the client to give it a chance to delegate
+  // undo operation to the app.
+  return EchoBack(command);
 }
 
 bool Session::SendComposerCommand(
