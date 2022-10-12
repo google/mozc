@@ -686,8 +686,11 @@ message Request {
     // Use special table for Notouch (to half-width ascii).
     NOTOUCH_TO_HALFWIDTHASCII = 41;
 
-    // Use special table for Notouch (to half-width ascii).
+    // Use special table for 50keys keyboard.
     FIFTY_KEYS_TO_HIRAGANA = 46;
+
+    // Use special table for 12keys tablet keyboard.
+    TWELVE_KEYS_TABLET = 47;
 
     // Obsolete items.
     reserved 12, 15, 32, 21, 18;
