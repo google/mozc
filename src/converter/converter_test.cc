@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -90,18 +91,26 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryImpl;
-using dictionary::DictionaryInterface;
-using dictionary::DictionaryMock;
-using dictionary::PosGroup;
-using dictionary::PosMatcher;
-using dictionary::SuffixDictionary;
-using dictionary::SuppressionDictionary;
-using dictionary::SystemDictionary;
-using dictionary::Token;
-using dictionary::UserDictionaryStub;
-using dictionary::ValueDictionary;
-using usage_stats::UsageStats;
+using ::mozc::dictionary::DictionaryImpl;
+using ::mozc::dictionary::DictionaryInterface;
+using ::mozc::dictionary::DictionaryMock;
+using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::dictionary::SuffixDictionary;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::SystemDictionary;
+using ::mozc::dictionary::Token;
+using ::mozc::dictionary::UserDictionaryStub;
+using ::mozc::dictionary::ValueDictionary;
+using ::mozc::usage_stats::UsageStats;
+
+void PushBackCandidate(Segment *segment, absl::string_view text) {
+  Segment::Candidate *cand = segment->push_back_candidate();
+  cand->key = std::string(text);
+  cand->content_key = cand->key;
+  cand->value = cand->key;
+  cand->content_value = cand->key;
+}
 
 class StubPredictor : public PredictorInterface {
  public:
@@ -109,6 +118,14 @@ class StubPredictor : public PredictorInterface {
 
   bool PredictForRequest(const ConversionRequest &request,
                          Segments *segments) const override {
+    if (segments->conversion_segments_size() == 0) {
+      return false;
+    }
+    Segment *seg = segments->mutable_conversion_segment(0);
+    if (seg->key().empty()) {
+      return false;
+    }
+    PushBackCandidate(seg, seg->key());
     return true;
   }
 
@@ -1144,55 +1161,59 @@ TEST_F(ConverterTest, PredictSetKey) {
   constexpr char kPredictionKey2[] = "prediction key2";
   // Tests whether SetKey method is called or not.
   struct TestData {
-    const bool should_call_set_key_in_prediction;
-    const char *key;
-    const bool expect_reset;
+    // Input conditions.
+    const bool should_call_set_key_in_prediction;  // Member of Request.
+    const std::optional<absl::string_view> key;    // Input key presence.
+
+    const bool expect_set_key_is_called;
   };
   const TestData test_data_list[] = {
-      {true, nullptr, true},          {true, kPredictionKey, true},
-      {true, kPredictionKey2, true},  {false, nullptr, true},
-      {false, kPredictionKey, false}, {false, kPredictionKey2, true},
+      {true, std::nullopt, true},
+      {true, kPredictionKey, true},
+      {true, kPredictionKey2, true},
+      {false, std::nullopt, true},
+      {false, kPredictionKey2, true},
+      // This is the only case where SetKey() is not called; because SetKey is
+      // not requested in Request and Segments' key is already present.
+      {false, kPredictionKey, false},
   };
 
   std::unique_ptr<ConverterAndData> converter_and_data(
       CreateStubbedConverterAndData());
   ConverterImpl *converter = converter_and_data->converter.get();
   ASSERT_NE(nullptr, converter);
-
   // Note that TearDown method will reset above stubs.
 
-  for (size_t i = 0; i < std::size(test_data_list); ++i) {
-    const TestData &test_data = test_data_list[i];
+  for (const TestData &test_data : test_data_list) {
     Segments segments;
-
+    int orig_candidates_size = 0;
     if (test_data.key) {
       Segment *seg = segments.add_segment();
-      seg->Clear();
-      seg->set_key(test_data.key);
-      // The segment has a candidate.
-      seg->add_candidate();
+      seg->set_key(*test_data.key);
+      PushBackCandidate(seg, *test_data.key);
+      orig_candidates_size = seg->candidates_size();
     }
+
     ConversionRequest request;
     request.set_request_type(ConversionRequest::PREDICTION);
     request.set_should_call_set_key_in_prediction(
         test_data.should_call_set_key_in_prediction);
-    if (!converter->Predict(request, kPredictionKey, &segments)) {
-      LOG(WARNING)
-          << "StubPredictor does nothing, so it can return the input segments "
-             "as is. However, this input segments can be invalid in terms of "
-             "IsValidSegments() defined in converter.cc. This test should be "
-             "more meaningful. "
-          << "should_call_set_key_in_prediction: "
-          << test_data.should_call_set_key_in_prediction
-          << ", key: " << test_data.key
-          << ", expect_reset: " << test_data.expect_reset
-          << ", segments: " << segments.DebugString();
-    }
 
-    EXPECT_EQ(1, segments.conversion_segments_size());
+    ASSERT_TRUE(converter->Predict(request, kPredictionKey, &segments));
+
+    ASSERT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(kPredictionKey, segments.conversion_segment(0).key());
-    EXPECT_EQ(test_data.expect_reset ? 0 : 1,
-              segments.conversion_segment(0).candidates_size());
+    if (test_data.expect_set_key_is_called) {
+      // If SetKey is called, the segment has only one candidate populated by
+      // StubPredictor.
+      EXPECT_EQ(1, segments.conversion_segment(0).candidates_size());
+    } else {
+      // If SetKey is not called, the segment has been added one candidate by
+      // StubPredictor.
+      const int expected_candidates_size = orig_candidates_size + 1;
+      EXPECT_EQ(expected_candidates_size,
+                segments.conversion_segment(0).candidates_size());
+    }
   }
 }
 
