@@ -116,9 +116,6 @@ absl::StatusOr<uint32_t> GetPlatformFromString(absl::string_view str) {
   if (str == "mobile") {
     return QualityRegressionUtil::MOBILE;
   }
-  if (str == "mobile_ambiguous") {
-    return QualityRegressionUtil::MOBILE_AMBIGUOUS;
-  }
   return absl::InvalidArgumentError(
       absl::StrCat("Unknown platform name: ", str));
 }
@@ -353,9 +350,6 @@ std::string QualityRegressionUtil::GetPlatformString(
   }
   if (platform_bitfiled & MOBILE) {
     v.push_back("MOBILE");
-  }
-  if (platform_bitfiled & MOBILE_AMBIGUOUS) {
-    v.push_back("MOBILE_AMBIGUOUS");
   }
   if (v.empty()) {
     v.push_back("UNKNOWN");
