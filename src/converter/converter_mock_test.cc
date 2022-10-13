@@ -229,8 +229,8 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
   GetMock()->SetResizeSegment2(&expect, true);
   uint8_t size_array[] = {1, 2, 3};
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->ResizeSegment(&output, default_request, 1, 5,
-                                       size_array, std::size(size_array)));
+  EXPECT_TRUE(
+      converter->ResizeSegment(&output, default_request, 1, 5, size_array));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 TEST_F(ConverterMockTest, GetStartConversion) {
@@ -489,8 +489,7 @@ TEST_F(ConverterMockTest, GetResizeSegment2) {
   // TODO(noriyukit): Since converter->SetResizeSegment1 is not called, this
   // method returns false. Verify if this is the correct expectation.
   ASSERT_FALSE(converter->ResizeSegment(&input, default_request, input_idx,
-                                        input_size, input_array,
-                                        std::size(input_array)));
+                                        input_size, input_array));
 
   Segments last_segment;
   size_t last_idx, last_size;

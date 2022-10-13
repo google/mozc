@@ -39,6 +39,7 @@
 #include "request/conversion_request.h"
 #include "absl/base/attributes.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 
@@ -48,8 +49,11 @@ class Composer;
 
 class ConverterInterface {
  public:
+  ConverterInterface(const ConverterInterface &) = delete;
+  ConverterInterface &operator=(const ConverterInterface &) = delete;
+
   // Allow deletion through the interface.
-  virtual ~ConverterInterface() {}
+  virtual ~ConverterInterface() = default;
 
   // Starts conversion for given request.
   virtual bool StartConversionForRequest(const ConversionRequest &request,
@@ -165,17 +169,13 @@ class ConverterInterface {
 
   // Resize [start_segment_index, start_segment_index + segment_size]
   // segments with the new size in new_size_array.
-  // size of new_size_array is specified in 'array_size'
   ABSL_MUST_USE_RESULT virtual bool ResizeSegment(
       Segments *segments, const ConversionRequest &request,
       size_t start_segment_index, size_t segments_size,
-      const uint8_t *new_size_array, size_t array_size) const = 0;
+      absl::Span<const uint8_t> new_size_array) const = 0;
 
  protected:
-  ConverterInterface() {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ConverterInterface);
+  ConverterInterface() = default;
 };
 
 }  // namespace mozc

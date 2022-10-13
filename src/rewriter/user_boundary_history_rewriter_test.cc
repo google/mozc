@@ -52,7 +52,6 @@ namespace mozc {
 namespace {
 
 using ::testing::_;
-using ::testing::Args;
 using ::testing::DoAll;
 using ::testing::ElementsAre;
 using ::testing::Ref;
@@ -149,8 +148,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
     Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _, _))
-        .With(Args<4, 5>(ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
+                                         /*segments_size=*/1,
+                                         ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
     EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }
@@ -181,8 +180,8 @@ TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
     Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FREE);
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/0,
-                                         /*segments_size=*/2, _, _))
-        .With(Args<4, 5>(ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
+                                         /*segments_size=*/2,
+                                         ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
         .WillOnce(Return(true));
     EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }
@@ -394,11 +393,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
     Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(Return(false));
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(Return(false));
     EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
   }
@@ -408,11 +407,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
         MakeSegments({"たん", "ぽぽ", "わたげ"}, Segment::FREE);
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(Return(false));
     EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }
@@ -422,11 +421,11 @@ TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
         MakeSegments({"たんぽぽ", "わた", "げ"}, Segment::FREE);
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/0,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(Return(false));
     EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
                                          /*start_segment_index=*/1,
-                                         /*segments_size=*/1, _, _))
+                                         /*segments_size=*/1, _))
         .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
     EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }

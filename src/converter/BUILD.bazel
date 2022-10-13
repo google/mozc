@@ -427,6 +427,7 @@ cc_library_mozc(
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 

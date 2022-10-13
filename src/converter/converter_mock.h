@@ -156,8 +156,7 @@ class ConverterMock : public ConverterInterface {
                      size_t segment_index, int offset_length) const override;
   bool ResizeSegment(Segments *segments, const ConversionRequest &request,
                      size_t start_segment_index, size_t segments_size,
-                     const uint8_t *new_size_array,
-                     size_t array_size) const override;
+                     absl::Span<const uint8_t> new_size_array) const override;
 
  private:
   struct ConverterOutput {
@@ -298,7 +297,7 @@ class MockConverter final : public ConverterInterface {
   MOCK_METHOD(bool, ResizeSegment,
               (Segments * segments, const ConversionRequest &request,
                size_t start_segment_index, size_t segments_size,
-               const uint8_t *new_size_array, size_t array_size),
+               absl::Span<const uint8_t> new_size_array),
               (const, override));
 };
 

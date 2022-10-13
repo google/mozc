@@ -343,7 +343,7 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
       }
       return converter.ResizeSegment(
           segments, *conversion_request, NumberUtil::SimpleAtoi(fields[1]),
-          NumberUtil::SimpleAtoi(fields[2]), &new_arrays[0], new_arrays.size());
+          NumberUtil::SimpleAtoi(fields[2]), new_arrays);
     }
   } else if (func == "disableuserhistory") {
     config->set_history_learning_level(config::Config::NO_HISTORY);

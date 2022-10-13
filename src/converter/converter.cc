@@ -809,12 +809,10 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   return true;
 }
 
-bool ConverterImpl::ResizeSegment(Segments *segments,
-                                  const ConversionRequest &request,
-                                  size_t start_segment_index,
-                                  size_t segments_size,
-                                  const uint8_t *new_size_array,
-                                  size_t array_size) const {
+bool ConverterImpl::ResizeSegment(
+    Segments *segments, const ConversionRequest &request,
+    size_t start_segment_index, size_t segments_size,
+    absl::Span<const uint8_t> new_size_array) const {
   if (request.request_type() != ConversionRequest::CONVERSION) {
     return false;
   }
@@ -825,7 +823,7 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   if (start_segment_index == kErrorIndex ||
       end_segment_index <= start_segment_index ||
       end_segment_index > segments->segments_size() ||
-      array_size > kMaxArraySize) {
+      new_size_array.size() > kMaxArraySize) {
     return false;
   }
 
@@ -841,13 +839,13 @@ bool ConverterImpl::ResizeSegment(Segments *segments,
   size_t consumed = 0;
   const size_t key_len = Util::CharsLen(key);
   std::vector<std::string> new_keys;
-  new_keys.reserve(array_size + 1);
+  new_keys.reserve(new_size_array.size() + 1);
 
-  for (size_t i = 0; i < array_size; ++i) {
-    if (new_size_array[i] != 0 && consumed < key_len) {
+  for (size_t new_size : new_size_array) {
+    if (new_size != 0 && consumed < key_len) {
       new_keys.push_back(
-          std::string(Util::Utf8SubString(key, consumed, new_size_array[i])));
-      consumed += new_size_array[i];
+          std::string(Util::Utf8SubString(key, consumed, new_size)));
+      consumed += new_size;
     }
   }
   if (consumed < key_len) {

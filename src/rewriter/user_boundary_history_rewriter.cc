@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -268,7 +269,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
-    memset(length_array, 0, sizeof(length_array));
+    std::fill(std::begin(length_array), std::end(length_array), 0);
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
@@ -296,7 +297,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
                     << static_cast<int>(length_array[7]) << "]";
             if (parent_converter_->ResizeSegment(segments, request,
                                                  i - history_segments_size,
-                                                 j + 1, length_array, 8)) {
+                                                 j + 1, length_array)) {
               result = true;
             } else {
               LOG(WARNING) << "ResizeSegment failed for key: " << key;
