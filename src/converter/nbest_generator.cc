@@ -187,8 +187,8 @@ void NBestGenerator::MakeCandidate(
     const Node *node = nodes[i];
     DCHECK(node != nullptr);
     if (!is_functional && !pos_matcher_->IsFunctional(node->lid)) {
-      candidate->content_value += node->value;
       candidate->content_key += node->key;
+      candidate->content_value += node->value;
     } else {
       is_functional = true;
     }
@@ -217,9 +217,9 @@ void NBestGenerator::MakeCandidate(
     }
   }
 
-  if (candidate->content_value.empty() || candidate->content_key.empty()) {
-    candidate->content_value = candidate->value;
+  if (candidate->content_key.empty() || candidate->content_value.empty()) {
     candidate->content_key = candidate->key;
+    candidate->content_value = candidate->value;
   }
 
   candidate->inner_segment_boundary.clear();
@@ -239,6 +239,11 @@ void NBestGenerator::MakeCandidate(
       const Node *rnode = nodes[i];
       constexpr bool kMultipleSegments = false;
       if (segmenter_->IsBoundary(*lnode, *rnode, kMultipleSegments)) {
+        // Keep the consistency with the above logic for candidate->content_*.
+        if (content_key_len == 0 || content_value_len == 0) {
+          content_key_len = key_len;
+          content_value_len = value_len;
+        }
         candidate->PushBackInnerSegmentBoundary(
             key_len, value_len, content_key_len, content_value_len);
         key_len = 0;
@@ -264,6 +269,12 @@ void NBestGenerator::MakeCandidate(
         content_key_len += rnode->key.size();
         content_value_len += rnode->value.size();
       }
+    }
+
+    // Keep the consistency with the above logic for candidate->content_*.
+    if (content_key_len == 0 || content_value_len == 0) {
+      content_key_len = key_len;
+      content_value_len = value_len;
     }
     candidate->PushBackInnerSegmentBoundary(key_len, value_len, content_key_len,
                                             content_value_len);
