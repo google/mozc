@@ -555,6 +555,7 @@ cc_test_mozc(
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
+        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//engine:engine_interface",

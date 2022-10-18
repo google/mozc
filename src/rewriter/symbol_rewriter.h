@@ -63,6 +63,7 @@ class SymbolRewriter : public RewriterInterface {
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteEachTest);
   FRIEND_TEST(SymbolRewriterTest, TriggerRewriteDescriptionTest);
   FRIEND_TEST(SymbolRewriterTest, SplitDescriptionTest);
+  FRIEND_TEST(SymbolRewriterTest, ResizeSegmentFailureIsNotFatal);
 
   // Some characters may have different description for full/half width forms.
   // Here we just change the description in this function.

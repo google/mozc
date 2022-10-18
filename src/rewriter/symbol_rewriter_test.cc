@@ -36,6 +36,7 @@
 #include "base/system_util.h"
 #include "base/util.h"
 #include "config/config_handler.h"
+#include "converter/converter_mock.h"
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine_interface.h"
@@ -43,13 +44,18 @@
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
 
 namespace mozc {
-
 namespace {
+
+using ::testing::_;
+using ::testing::Ref;
+using ::testing::Return;
+
 void AddSegment(const std::string &key, const std::string &value,
                 Segments *segments) {
   Segment *seg = segments->push_back_segment();
@@ -93,6 +99,7 @@ bool HasCandidate(const Segments &segments, int index,
                   const std::string &value) {
   return HasCandidateAndDescription(segments, index, value, "");
 }
+
 }  // namespace
 
 class SymbolRewriterTest : public ::testing::Test {
@@ -371,6 +378,20 @@ TEST_F(SymbolRewriterTest, ExpandSpace) {
   EXPECT_EQ(" ", cand1.content_key);
   EXPECT_EQ(kFullWidthSpace, cand1.content_value);
   EXPECT_TRUE(cand1.inner_segment_boundary.empty());
+}
+
+TEST_F(SymbolRewriterTest, ResizeSegmentFailureIsNotFatal) {
+  const MockConverter converter;
+  const SymbolRewriter rewriter(&converter, data_manager_.get());
+
+  Segments segments;
+  const ConversionRequest request;
+  AddSegment("ー", "test", &segments);
+  AddSegment(">", "test", &segments);
+  EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request), 0, _))
+      .WillOnce(Return(false));
+
+  EXPECT_FALSE(rewriter.RewriteEntireCandidate(request, &segments));
 }
 
 }  // namespace mozc
