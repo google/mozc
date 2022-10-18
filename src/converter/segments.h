@@ -266,6 +266,17 @@ class Segment final {
     // value.substr(content_value.size(), value.size() - content_value.size());
     absl::string_view functional_value() const;
 
+    // Returns whether the inner_segment_boundary member is consistent with
+    // key and value.
+    // Note: content_key and content_value are not checked here.
+    // We cannot compose candidate's content_key and content_value directly
+    // from the inner segments in the current implementation.
+    // Example:
+    // value: 車のほうがあとだ
+    // content_value: 車のほうがあとだ
+    // inner_segments:
+    // <くるまのほうが, 車のほうが, くるま, 車>
+    // <あとだ, あとだ, あとだ, あとだ>
     bool IsValid() const;
     std::string DebugString() const;
   };

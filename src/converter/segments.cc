@@ -95,23 +95,14 @@ bool Segment::Candidate::IsValid() const {
   if (inner_segment_boundary.empty()) {
     return true;
   }
-  // The sums of the lengths of key, value, content key and content value
-  // components must coincide with those of key, value, content_key and
-  // content_value, respectively.
+  // The sums of the lengths of key, value components must coincide with those
+  // of key, value, respectively.
   size_t sum_key_len = 0, sum_value_len = 0;
-  size_t sum_content_key_len = 0, sum_content_value_len = 0;
   for (InnerSegmentIterator iter(this); !iter.Done(); iter.Next()) {
     sum_key_len += iter.GetKey().size();
     sum_value_len += iter.GetValue().size();
-    sum_content_key_len += iter.GetContentKey().size();
-    sum_content_value_len += iter.GetContentValue().size();
   }
-  if (sum_key_len != key.size() || sum_value_len != value.size() ||
-      sum_content_key_len != content_key.size() ||
-      sum_content_value_len != content_value.size()) {
-    return false;
-  }
-  return true;
+  return sum_key_len == key.size() && sum_value_len == value.size();
 }
 
 bool Segment::Candidate::EncodeLengths(size_t key_len, size_t value_len,

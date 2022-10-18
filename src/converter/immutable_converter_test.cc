@@ -339,6 +339,7 @@ TEST(ImmutableConverterTest, InnerSegmenBoundaryForPrediction) {
 
   // Result will be, "私の|名前は|中ノです" with mock dictionary.
   const Segment::Candidate &cand = segments.segment(0).candidate(0);
+  EXPECT_TRUE(cand.IsValid());
   std::vector<absl::string_view> keys, values, content_keys, content_values;
   for (Segment::Candidate::InnerSegmentIterator iter(&cand); !iter.Done();
        iter.Next()) {
