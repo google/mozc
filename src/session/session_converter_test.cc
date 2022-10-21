@@ -57,6 +57,7 @@
 #include "session/internal/candidate_list.h"
 #include "session/internal/keymap.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/testing_util.h"
@@ -64,6 +65,7 @@
 #include "usage_stats/usage_stats.h"
 #include "usage_stats/usage_stats_testing_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace session {
@@ -72,12 +74,27 @@ using ::mozc::commands::Context;
 using ::mozc::commands::Request;
 using ::mozc::commands::RequestForUnitTest;
 using ::mozc::config::Config;
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::Return;
+using ::testing::SetArgPointee;
 
 static constexpr char kChars_Aiueo[] = "あいうえお";
 static constexpr char kChars_Mo[] = "も";
 static constexpr char kChars_Mozuku[] = "もずく";
 static constexpr char kChars_Mozukusu[] = "もずくす";
 static constexpr char kChars_Momonga[] = "ももんが";
+
+void AddSegmentWithSingleCandidate(Segments *segments, absl::string_view key,
+                                   absl::string_view value) {
+  Segment *seg = segments->add_segment();
+  seg->set_key(key);
+  Segment::Candidate *cand = seg->add_candidate();
+  cand->key.assign(key.data(), key.size());
+  cand->content_key = cand->key;
+  cand->value.assign(value.data(), value.size());
+  cand->content_value = cand->value;
+}
 
 class SessionConverterTest : public ::testing::Test {
  protected:
@@ -1146,165 +1163,187 @@ TEST_F(SessionConverterTest, ConvertToHalfWidth2) {
   }
 }
 
-TEST_F(SessionConverterTest, SwitchKanaType) {
-  {  // From composition mode.
-    SessionConverter converter(convertermock_.get(), request_.get(),
-                               config_.get());
-    composer_->InsertCharacterKeyAndPreedit("a", "あ");
-    composer_->InsertCharacterKeyAndPreedit("b", "ｂ");
-    composer_->InsertCharacterKeyAndPreedit("c", "ｃ");
+TEST_F(SessionConverterTest, SwitchKanaTypeFromCompositionMode) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  composer_->InsertCharacterKeyAndPreedit("a", "あ");
+  composer_->InsertCharacterKeyAndPreedit("b", "ｂ");
+  composer_->InsertCharacterKeyAndPreedit("c", "ｃ");
 
-    Segments segments;
-    {  // Initialize segments.
-      Segment *segment = segments.add_segment();
-      segment->set_key("あｂｃ");
-      segment->add_candidate()->value = "あべし";
-    }
-    FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionForRequest(&segments, true);
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    std::vector<int> expected_indices;
-    expected_indices.push_back(0);
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  Segments segments;
+  {  // Initialize segments.
+    Segment *segment = segments.add_segment();
+    segment->set_key("あｂｃ");
+    segment->add_candidate()->value = "あべし";
+  }
+  FillT13Ns(&segments, composer_.get());
+  convertermock_->SetStartConversionForRequest(&segments, true);
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  std::vector<int> expected_indices;
+  expected_indices.push_back(0);
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
-    {  // Make sure the output
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
+  {  // Make sure the output
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
 
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("アｂｃ", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("ｱbc", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("あｂｃ", conversion.segment(0).value());
-    }
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("アｂｃ", conversion.segment(0).value());
   }
 
-  {  // From conversion mode
-    SessionConverter converter(convertermock_.get(), request_.get(),
-                               config_.get());
-    composer_->EditErase();
-    composer_->InsertCharacterKeyAndPreedit("ka", "か");
-    composer_->InsertCharacterKeyAndPreedit("n", "ん");
-    composer_->InsertCharacterKeyAndPreedit("ji", "じ");
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
 
-    Segments segments;
-    {  // Initialize segments.
-      Segment *segment = segments.add_segment();
-      segment->set_key("かんじ");
-      segment->add_candidate()->value = "漢字";
-    }
-    FillT13Ns(&segments, composer_.get());
-    convertermock_->SetStartConversionForRequest(&segments, true);
-    EXPECT_TRUE(converter.Convert(*composer_));
-    std::vector<int> expected_indices;
-    expected_indices.push_back(0);
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-
-    {  // Make sure the output
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("漢字", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("かんじ", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("カンジ", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("ｶﾝｼﾞ", conversion.segment(0).value());
-    }
-
-    EXPECT_TRUE(converter.SwitchKanaType(*composer_));
-    EXPECT_FALSE(IsCandidateListVisible(converter));
-    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
-    {
-      commands::Output output;
-      converter.FillOutput(*composer_, &output);
-      EXPECT_FALSE(output.has_result());
-      EXPECT_TRUE(output.has_preedit());
-      EXPECT_FALSE(output.has_candidates());
-
-      const commands::Preedit &conversion = output.preedit();
-      EXPECT_EQ(1, conversion.segment_size());
-      EXPECT_EQ("かんじ", conversion.segment(0).value());
-    }
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("ｱbc", conversion.segment(0).value());
   }
+
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("あｂｃ", conversion.segment(0).value());
+  }
+}
+
+TEST_F(SessionConverterTest, SwitchKanaTypeFromConversionMode) {
+  SessionConverter converter(convertermock_.get(), request_.get(),
+                             config_.get());
+  composer_->EditErase();
+  composer_->InsertCharacterKeyAndPreedit("ka", "か");
+  composer_->InsertCharacterKeyAndPreedit("n", "ん");
+  composer_->InsertCharacterKeyAndPreedit("ji", "じ");
+
+  Segments segments;
+  {  // Initialize segments.
+    Segment *segment = segments.add_segment();
+    segment->set_key("かんじ");
+    segment->add_candidate()->value = "漢字";
+  }
+  FillT13Ns(&segments, composer_.get());
+  convertermock_->SetStartConversionForRequest(&segments, true);
+  EXPECT_TRUE(converter.Convert(*composer_));
+  std::vector<int> expected_indices;
+  expected_indices.push_back(0);
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+
+  {  // Make sure the output
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("漢字", conversion.segment(0).value());
+  }
+
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("かんじ", conversion.segment(0).value());
+  }
+
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("カンジ", conversion.segment(0).value());
+  }
+
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("ｶﾝｼﾞ", conversion.segment(0).value());
+  }
+
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  {
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Preedit &conversion = output.preedit();
+    EXPECT_EQ(1, conversion.segment_size());
+    EXPECT_EQ("かんじ", conversion.segment(0).value());
+  }
+}
+
+TEST_F(SessionConverterTest, ResizeSegmentFailedInSwitchKanaType) {
+  const MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+
+  // ResizeSegment() is called when the conversion result has multiple segments.
+  // Let the underlying converter return the result with two segments.
+  Segments segments;
+  AddSegmentWithSingleCandidate(&segments, "かな", "カナ");
+  AddSegmentWithSingleCandidate(&segments, "たいぷ", "タイプ");
+  EXPECT_CALL(mock_converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+
+  // Suppose that ResizeSegment() fails for "かな|たいぷ" (UTF8-length is 5).
+  EXPECT_CALL(mock_converter, ResizeSegment(_, _, 0, 5))
+      .WillOnce(Return(false));
+
+  // FocusSegmentValue() is called in the last step.
+  EXPECT_CALL(mock_converter, FocusSegmentValue(_, 0, 0))
+      .WillOnce(Return(true));
+
+  // Calling SwitchKanaType() with the above set up doesn't crash.
+  EXPECT_TRUE(converter.SwitchKanaType(*composer_));
 }
 
 TEST_F(SessionConverterTest, CommitFirstSegment) {
