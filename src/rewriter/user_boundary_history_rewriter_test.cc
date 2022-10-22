@@ -45,58 +45,65 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
+#include "absl/types/span.h"
 
 namespace mozc {
 namespace {
-void SetBoundedSegments(Segments *segments, bool fixed) {
-  Segment *segment = segments->add_segment();
-  segment->set_key("たん");
-  if (fixed) {
-    segment->set_segment_type(Segment::FIXED_VALUE);
-  }
-  Segment::Candidate *candidate = segment->add_candidate();
-  candidate->value = "たん";
-  candidate->content_value = "たん";
 
-  segment = segments->add_segment();
-  segment->set_key("ぽぽ");
-  if (fixed) {
-    segment->set_segment_type(Segment::FIXED_VALUE);
-  }
-  candidate = segment->add_candidate();
-  candidate->value = "ぽぽ";
-  candidate->content_value = "ぽぽ";
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::ElementsAre;
+using ::testing::Ref;
+using ::testing::Return;
+using ::testing::SetArgPointee;
+
+// Creates a simple candidate whose key and value are set to `text`.
+Segment::Candidate MakeCandidate(absl::string_view text) {
+  Segment::Candidate cand;
+  cand.Init();
+  cand.key = std::string(text);
+  cand.content_key = cand.key;
+  cand.value = cand.key;
+  cand.content_value = cand.key;
+  return cand;
 }
 
-void SetSegments(Segments *segments, bool fixed) {
-  Segment *segment = segments->add_segment();
-  segment->set_key("たんぽぽ");
-  if (fixed) {
-    segment->set_segment_type(Segment::FIXED_VALUE);
-  }
-  Segment::Candidate *candidate = segment->add_candidate();
-  candidate->value = "たんぽぽ";
-  candidate->content_value = "たんぽぽ";
+// Creates a segment that contains a single candidate created by
+// MakeCandidate().
+Segment MakeSegment(absl::string_view text, Segment::SegmentType type) {
+  Segment segment;
+  segment.set_key(text);
+  segment.set_segment_type(type);
+  *segment.add_candidate() = MakeCandidate(text);
+  return segment;
 }
-}  // namespace
+
+// Creates a simple segments.
+Segments MakeSegments(absl::Span<const absl::string_view> segments_texts,
+                      Segment::SegmentType type) {
+  Segments segments;
+  for (absl::string_view text : segments_texts) {
+    *segments.add_segment() = MakeSegment(text, type);
+  }
+  return segments;
+}
 
 class UserBoundaryHistoryRewriterTest : public ::testing::Test {
  protected:
-  UserBoundaryHistoryRewriterTest() { request_.set_config(&config_); }
-
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
     config::ConfigHandler::GetDefaultConfig(&config_);
+    request_.set_config(&config_);
   }
 
   void TearDown() override {
-    UserBoundaryHistoryRewriter rewriter(&mock_);
-    // clear history
+    MockConverter converter;
+    UserBoundaryHistoryRewriter rewriter(&converter);
+    // Clear history
     rewriter.Clear();
     config::ConfigHandler::GetDefaultConfig(&config_);
   }
-
-  ConverterMock &mock() { return mock_; }
 
   void SetIncognito(bool incognito) { config_.set_incognito_mode(incognito); }
 
@@ -106,304 +113,323 @@ class UserBoundaryHistoryRewriterTest : public ::testing::Test {
 
   ConversionRequest request_;
   config::Config config_;
-
- private:
-  ConverterMock mock_;
-
-  DISALLOW_COPY_AND_ASSIGN(UserBoundaryHistoryRewriterTest);
 };
 
 TEST_F(UserBoundaryHistoryRewriterTest, CreateFile) {
-  UserBoundaryHistoryRewriter rewriter(&mock());
+  MockConverter converter;
+  const UserBoundaryHistoryRewriter rewriter(&converter);
   const std::string history_file =
       absl::GetFlag(FLAGS_test_tmpdir) + "/boundary.db";
   EXPECT_OK(FileUtil::FileExists(history_file));
 }
 
-// "たんぽぽ" -> "たん|ぽぽ"
-TEST_F(UserBoundaryHistoryRewriterTest, Rewrite1) {
+// Test if the rewriter can learn the splitting poisition at which user
+// explicitly resized segments.
+TEST_F(UserBoundaryHistoryRewriterTest, SplitSegmentByHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-
-  EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
-  const std::string segments_str = segments.DebugString();
-
-  // "たんぽぽ" -> "たん|ぽぽ"
-  // make length of segment 0 from 4 to 2|2
-  Segments input_seg;
-  size_t input_start, input_size;
-  uint8_t *input_array;
-  size_t input_array_size;
-  mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
-                           &input_array_size);
-  const std::string input_seg_str = input_seg.DebugString();
-  EXPECT_EQ(segments_str, input_seg_str);
-  EXPECT_EQ(0, input_start);
-  EXPECT_EQ(1, input_size);
-  uint8_t resize_array[8];
-  memset(resize_array, 0, sizeof(resize_array));
-  resize_array[0] = static_cast<uint8_t>(2);
-  resize_array[1] = static_cast<uint8_t>(2);
-  EXPECT_LT(2, input_array_size);
-  for (int i = 0; i < input_array_size; ++i) {
-    EXPECT_EQ(resize_array[i], input_array[i]);
-    if (input_array[i] == 0) {
-      break;
-    }
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // Suppose that a user splits the segment ["たんぽぽ"] into
+    // ["たん", "ぽぽ"]. Let the rewriter learn this split.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    // This field needs to be set to indicate that user resized this segments.
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // Verify if ["たんぽぽ"] is split into ["たん", "ぽぽ"]. Since the actual
+    // split is handled by the underlying converter, we verify that
+    // ResizeSegment() is called with the length array [2, 2, 0, 0, 0, 0, 0, 0].
+    // TODO(noriyukit): The current implementation always sets the length array
+    // size to 8 with padded zeros. Better to set the actual length.
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/0,
+                                         /*segments_size=*/1,
+                                         ElementsAre(2, 2, 0, 0, 0, 0, 0, 0)))
+        .WillOnce(Return(true));
+    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }
 }
 
-// "たん|ぽぽ" -> "たんぽぽ"
-TEST_F(UserBoundaryHistoryRewriterTest, Rewrite2) {
+// Test if the rewriter can learn the joining key for which user explicitly
+// resized segments.
+TEST_F(UserBoundaryHistoryRewriterTest, JoinSegmentsByHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments segments;
-  SetSegments(&segments, true);
-  segments.set_resized(true);
 
-  rewriter.Finish(request_, &segments);
-  const std::string segments_str = segments.DebugString();
-
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, false);
-
-  EXPECT_TRUE(rewriter.Rewrite(request_, &bounded_segments));
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  // "たん|ぽぽ" -> "たんぽぽ"
-  // make length of segment 0 from 2 to 4
-  Segments input_seg;
-  size_t input_start, input_size;
-  uint8_t *input_array;
-  size_t input_array_size;
-  mock().GetResizeSegment2(&input_seg, &input_start, &input_size, &input_array,
-                           &input_array_size);
-  const std::string input_seg_str = input_seg.DebugString();
-  EXPECT_EQ(bounded_segments_str, input_seg_str);
-  EXPECT_EQ(0, input_start);
-  EXPECT_EQ(2, input_size);
-  uint8_t resize_array[8];
-  memset(resize_array, 0, sizeof(resize_array));
-  resize_array[0] = static_cast<uint8_t>(4);
-  EXPECT_LT(1, input_array_size);
-  for (int i = 0; i < input_array_size; ++i) {
-    EXPECT_EQ(resize_array[i], input_array[i]);
-    if (input_array[i] == 0) {
-      break;
-    }
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // Suppose that a user joins the segment ["たん", "ぽぽ"] to
+    // ["たんぽぽ"]. Let the rewriter learn this.
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FIXED_VALUE);
+    // This field needs to be set to indicate that user resized this segments.
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // Verify if ["たん", "ぽぽ"] is joined to ["たんぽぽ"]. Since the actual
+    // split is handled by the underlying converter, we verify that
+    // ResizeSegment() is called with the length array [4, 0, 0, 0, 0, 0, 0, 0].
+    // TODO(noriyukit): The current implementation always sets the length array
+    // size to 8 with padded zeros. Better to set the actual length.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FREE);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/0,
+                                         /*segments_size=*/2,
+                                         ElementsAre(4, 0, 0, 0, 0, 0, 0, 0)))
+        .WillOnce(Return(true));
+    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
   }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenIncognito) {
-  SetIncognito(true);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  const std::string segments_str = segments.DebugString();
-
-  SetIncognito(false);  // no_incognito when rewrite
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History should not be learned during incognito mode.
+    SetIncognito(true);
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // Turn off the incognito mode. ResizeSegment() should not be called.
+    SetIncognito(false);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenReadOnly) {
   SetIncognito(false);
-  SetLearningLevel(config::Config::READ_ONLY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  const std::string segments_str = segments.DebugString();
-
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History should not be learned in read only mode.
+    SetLearningLevel(config::Config::READ_ONLY);
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // Enable learning again. ResizeSegment() should not be called.
+    SetLearningLevel(config::Config::DEFAULT_HISTORY);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenDisableUserHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
+
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
   ConversionRequest request(request_);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
-  request.set_enable_user_history_for_conversion(false);
-
-  rewriter.Finish(request, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  request.set_enable_user_history_for_conversion(true);
-  const std::string segments_str = segments.DebugString();
-
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  {
+    // History should not be learned when user history is disabled.
+    request.set_enable_user_history_for_conversion(false);
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request, &segments);
+  }
+  {
+    // Enable learning again. ResizeSegment() should not be called.
+    request.set_enable_user_history_for_conversion(true);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoInsertWhenNotResized) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(false);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  const std::string segments_str = segments.DebugString();
-
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History should not be learned when sements is not resized.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(false);  // Not resized!
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // ResizeSegment() should not be called.
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteAfterClear) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-
-  // clear history
-  rewriter.Clear();
-
-  const std::string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History IS learned.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // ResizeSegment() should not be called after clearing the history.
+    rewriter.Clear();
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenIncognito) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-
-  const std::string segments_str = segments.DebugString();
-  SetIncognito(true);
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History IS learned.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // ResizeSegment() should not be called in incognito mode even after the
+    // rewriter learned the history.
+    SetIncognito(true);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenNoHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-
-  const std::string segments_str = segments.DebugString();
-  SetLearningLevel(config::Config::NO_HISTORY);
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History IS learned.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // ResizeSegment() should not be called when history is disabled in config
+    // even after the rewriter learned the history.
+    SetLearningLevel(config::Config::NO_HISTORY);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenDisabledUserHistory) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
+
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
   ConversionRequest request(request_);
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
-  request.set_enable_user_history_for_conversion(true);
-
-  rewriter.Finish(request, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  request.set_enable_user_history_for_conversion(false);
-
-  const std::string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(request, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  {
+    // History IS learned.
+    request.set_enable_user_history_for_conversion(true);
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request, &segments);
+  }
+  {
+    // ResizeSegment() should not be called when history is disabled in request
+    // even after the rewriter learned the history.
+    request.set_enable_user_history_for_conversion(false);
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    EXPECT_FALSE(rewriter.Rewrite(request, &segments));
+  }
 }
 
 TEST_F(UserBoundaryHistoryRewriterTest, NoRewriteWhenAlreadyResized) {
   SetIncognito(false);
   SetLearningLevel(config::Config::DEFAULT_HISTORY);
-  UserBoundaryHistoryRewriter rewriter(&mock());
-  Segments bounded_segments;
-  SetBoundedSegments(&bounded_segments, true);
-  bounded_segments.set_resized(true);
 
-  rewriter.Finish(request_, &bounded_segments);
-  const std::string bounded_segments_str = bounded_segments.DebugString();
-
-  Segments segments;
-  SetSegments(&segments, false);
-  segments.set_resized(true);
-
-  const std::string segments_str = segments.DebugString();
-  EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
-
-  const std::string segments_rewritten_str = segments.DebugString();
-  EXPECT_EQ(segments_str, segments_rewritten_str);
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    // History IS learned.
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    // ResizeSegment() should not be called when the input segment is already
+    // resized by the user.
+    Segments segments = MakeSegments({"たんぽぽ"}, Segment::FREE);
+    segments.set_resized(true);
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
 }
+
+TEST_F(UserBoundaryHistoryRewriterTest, FailureOfSplitIsNotFatal) {
+  SetIncognito(false);
+  SetLearningLevel(config::Config::DEFAULT_HISTORY);
+
+  MockConverter converter;
+  UserBoundaryHistoryRewriter rewriter(&converter);
+  {
+    Segments segments = MakeSegments({"たん", "ぽぽ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+
+    segments = MakeSegments({"わた", "げ"}, Segment::FIXED_VALUE);
+    segments.set_resized(true);
+    rewriter.Finish(request_, &segments);
+  }
+  {
+    Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/0,
+                                         /*segments_size=*/1, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/1,
+                                         /*segments_size=*/1, _))
+        .WillOnce(Return(false));
+    EXPECT_FALSE(rewriter.Rewrite(request_, &segments));
+  }
+  {
+    Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
+    const Segments resized =
+        MakeSegments({"たん", "ぽぽ", "わたげ"}, Segment::FREE);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/0,
+                                         /*segments_size=*/1, _))
+        .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/1,
+                                         /*segments_size=*/1, _))
+        .WillOnce(Return(false));
+    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+  }
+  {
+    Segments segments = MakeSegments({"たんぽぽ", "わたげ"}, Segment::FREE);
+    const Segments resized =
+        MakeSegments({"たんぽぽ", "わた", "げ"}, Segment::FREE);
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/0,
+                                         /*segments_size=*/1, _))
+        .WillOnce(Return(false));
+    EXPECT_CALL(converter, ResizeSegment(&segments, Ref(request_),
+                                         /*start_segment_index=*/1,
+                                         /*segments_size=*/1, _))
+        .WillOnce(DoAll(SetArgPointee<0>(resized), Return(true)));
+    EXPECT_TRUE(rewriter.Rewrite(request_, &segments));
+  }
+}
+
+}  // namespace
 }  // namespace mozc

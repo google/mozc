@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <deque>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -268,7 +269,7 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
     constexpr size_t kMaxKeysSize = 5;
     const size_t keys_size = std::min(kMaxKeysSize, keys.size());
     std::string key;
-    memset(length_array, 0, sizeof(length_array));
+    std::fill(std::begin(length_array), std::end(length_array), 0);
     for (size_t k = 0; k < keys_size; ++k) {
       key += keys[k].first;
       length_array[k] = static_cast<uint8_t>(keys[k].second);
@@ -284,30 +285,24 @@ bool UserBoundaryHistoryRewriter::ResizeOrInsert(
             value->ToUCharArray(length_array);
             const int old_segments_size =
                 static_cast<int>(target_segments_size);
-            VLOG(2) << "ResizeSegment key: " << key << " "
-                    << i - history_segments_size << " " << j + 1 << " "
-                    << static_cast<int>(length_array[0]) << " "
+            VLOG(2) << "ResizeSegment key: " << key << " segments: ["
+                    << i - history_segments_size << ", " << j + 1
+                    << ") resize: [" << static_cast<int>(length_array[0]) << " "
                     << static_cast<int>(length_array[1]) << " "
                     << static_cast<int>(length_array[2]) << " "
                     << static_cast<int>(length_array[3]) << " "
                     << static_cast<int>(length_array[4]) << " "
                     << static_cast<int>(length_array[5]) << " "
                     << static_cast<int>(length_array[6]) << " "
-                    << static_cast<int>(length_array[7]);
-            // TODO(noriyukit): What happens if ResizeSegment fails? Handle the
-            // error correctly.
-            if (!parent_converter_->ResizeSegment(segments, request,
-                                                  i - history_segments_size,
-                                                  j + 1, length_array, 8)) {
-              LOG(WARNING)
-                  << "ResizeSegment failed but keep executing code as if it's "
-                     "successful to keep the original behavior. This may cause "
-                     "errors in the subsequent logic. start_segment_index="
-                  << i - history_segments_size << ", segments_size=" << j + 1
-                  << ", segments: " << segments->DebugString();
+                    << static_cast<int>(length_array[7]) << "]";
+            if (parent_converter_->ResizeSegment(segments, request,
+                                                 i - history_segments_size,
+                                                 j + 1, length_array)) {
+              result = true;
+            } else {
+              LOG(WARNING) << "ResizeSegment failed for key: " << key;
             }
             i += (j + target_segments_size - old_segments_size);
-            result = true;
             break;
           }
         }

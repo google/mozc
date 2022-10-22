@@ -222,6 +222,8 @@ cc_test_mozc(
         "//request:conversion_request",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -553,6 +555,7 @@ cc_test_mozc(
         "//base:system_util",
         "//base:util",
         "//config:config_handler",
+        "//converter:converter_mock",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//engine:engine_interface",

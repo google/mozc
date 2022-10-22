@@ -343,7 +343,7 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
       }
       return converter.ResizeSegment(
           segments, *conversion_request, NumberUtil::SimpleAtoi(fields[1]),
-          NumberUtil::SimpleAtoi(fields[2]), &new_arrays[0], new_arrays.size());
+          NumberUtil::SimpleAtoi(fields[2]), new_arrays);
     }
   } else if (func == "disableuserhistory") {
     config->set_history_learning_level(config::Config::NO_HISTORY);
@@ -453,6 +453,7 @@ int main(int argc, char **argv) {
                 absl::GetFlag(FLAGS_magic));
   CHECK_OK(data_manager);
 
+  mozc::config::Config config = mozc::config::ConfigHandler::DefaultConfig();
   mozc::commands::Request request;
   std::unique_ptr<mozc::EngineInterface> engine;
   if (absl::GetFlag(FLAGS_engine_type) == "desktop") {
@@ -461,6 +462,7 @@ int main(int argc, char **argv) {
   } else if (absl::GetFlag(FLAGS_engine_type) == "mobile") {
     engine = mozc::Engine::CreateMobileEngine(*std::move(data_manager)).value();
     mozc::commands::RequestForUnitTest::FillMobileRequest(&request);
+    config.set_use_kana_modifier_insensitive_conversion(true);
   } else {
     LOG(FATAL) << "Invalid type: --engine_type="
                << absl::GetFlag(FLAGS_engine_type);
@@ -478,8 +480,6 @@ int main(int argc, char **argv) {
   mozc::Segments segments;
   std::string line;
 
-  mozc::config::Config config;
-  mozc::config::ConfigHandler::GetDefaultConfig(&config);
   mozc::ConversionRequest conversion_request =
       mozc::ConversionRequest(nullptr, &request, &config);
   conversion_request.set_max_conversion_candidates_size(

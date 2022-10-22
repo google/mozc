@@ -610,18 +610,16 @@ bool ConverterMock::ResizeSegment(Segments *segments,
   }
 }
 
-bool ConverterMock::ResizeSegment(Segments *segments,
-                                  const ConversionRequest &request,
-                                  size_t start_segment_index,
-                                  size_t segments_size,
-                                  const uint8_t *new_size_array,
-                                  size_t array_size) const {
+bool ConverterMock::ResizeSegment(
+    Segments *segments, const ConversionRequest &request,
+    size_t start_segment_index, size_t segments_size,
+    absl::Span<const uint8_t> new_size_array) const {
   VLOG(2) << "mock function: ResizeSegmnet";
   resizesegment2_input_.segments = *segments;
   resizesegment2_input_.start_segment_index = start_segment_index;
   resizesegment2_input_.segments_size = segments_size;
-  std::vector<uint8_t> size_array(new_size_array, new_size_array + array_size);
-  resizesegment2_input_.new_size_array = size_array;
+  resizesegment2_input_.new_size_array.assign(new_size_array.begin(),
+                                              new_size_array.end());
 
   if (!resizesegment2_output_.initialized) {
     return false;

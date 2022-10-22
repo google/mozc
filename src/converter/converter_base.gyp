@@ -145,6 +145,7 @@
         '../base/base.gyp:base',
         '../protocol/protocol.gyp:commands_proto',
         '../request/request.gyp:conversion_request',
+        '../testing/testing.gyp:testing',
         'segments',
       ],
     },

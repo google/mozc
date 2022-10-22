@@ -427,6 +427,7 @@ cc_library_mozc(
         "//request:conversion_request",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -723,6 +724,7 @@ cc_library_mozc(
         "//base:logging",
         "//base:port",
         "//request:conversion_request",
+        "//testing:gunit",
     ],
 )
 
@@ -814,8 +816,8 @@ cc_library_mozc(
 )
 
 bzl_library(
-    name = "quality_regression_test_bzl",
-    srcs = ["quality_regression_test.bzl"],
+    name = "evalution_bzl",
+    srcs = ["evaluation.bzl"],
     parse_tests = False,
     visibility = ["//visibility:private"],
     deps = ["//:build_defs_bzl"],

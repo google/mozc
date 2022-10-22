@@ -125,6 +125,7 @@ cc_test_mozc(
         "//usage_stats",
         "//usage_stats:usage_stats_testing_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 

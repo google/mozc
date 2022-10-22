@@ -200,8 +200,7 @@ class MinimalConverter : public ConverterInterface {
 
   bool ResizeSegment(Segments *segments, const ConversionRequest &request,
                      size_t start_segment_index, size_t segments_size,
-                     const uint8_t *new_size_array,
-                     size_t array_size) const override {
+                     absl::Span<const uint8_t> new_size_array) const override {
     return true;
   }
 };

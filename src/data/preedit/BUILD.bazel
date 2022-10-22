@@ -33,6 +33,7 @@ filegroup(
         "12keys-halfwidthascii.tsv",
         "12keys-hiragana.tsv",
         "12keys-hiragana_intuitive.tsv",
+        "12keys-tablet.tsv",
         "50keys-hiragana.tsv",
         "flick-halfwidthascii.tsv",
         "flick-halfwidthascii_ios.tsv",

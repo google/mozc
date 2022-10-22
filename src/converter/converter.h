@@ -51,7 +51,7 @@ class PredictorInterface;
 class RewriterInterface;
 class Segments;
 
-class ConverterImpl : public ConverterInterface {
+class ConverterImpl final : public ConverterInterface {
  public:
   ConverterImpl();
   ~ConverterImpl() override;
@@ -109,12 +109,10 @@ class ConverterImpl : public ConverterInterface {
                                           const ConversionRequest &request,
                                           size_t segment_index,
                                           int offset_length) const override;
-  ABSL_MUST_USE_RESULT bool ResizeSegment(Segments *segments,
-                                          const ConversionRequest &request,
-                                          size_t start_segment_index,
-                                          size_t segments_size,
-                                          const uint8_t *new_size_array,
-                                          size_t array_size) const override;
+  ABSL_MUST_USE_RESULT bool ResizeSegment(
+      Segments *segments, const ConversionRequest &request,
+      size_t start_segment_index, size_t segments_size,
+      absl::Span<const uint8_t> new_size_array) const override;
 
  private:
   FRIEND_TEST(ConverterTest, CompletePosIds);

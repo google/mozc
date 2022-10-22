@@ -99,6 +99,7 @@ constexpr char kNotouchHalfwidthasciiTableFile[] =
     "system://qwerty_mobile-halfwidthascii.tsv";
 constexpr char k50KeysHiraganaTableFile[] =
     "system://50keys-hiragana.tsv";
+constexpr char k12KeysTabletTableFile[] = "system://12keys-tablet.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
 constexpr char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
@@ -206,6 +207,9 @@ bool Table::InitializeWithRequestAndConfig(
         break;
       case mozc::commands::Request::FIFTY_KEYS_TO_HIRAGANA:
         table_file_name = k50KeysHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TABLET:
+        table_file_name = k12KeysTabletTableFile;
         break;
       default:
         table_file_name = nullptr;

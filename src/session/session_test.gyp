@@ -138,6 +138,7 @@
         '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../testing/testing.gyp:gtest_main',
+        '../testing/testing.gyp:testing',
         '../testing/testing.gyp:testing_util',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',

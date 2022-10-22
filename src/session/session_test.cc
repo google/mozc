@@ -2615,7 +2615,7 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
     }
   }
   // Try UndoOrRewind twice.
-  // Second trial should not return deletation_range.
+  // Second trial should not consume the event. Echoback is expected.
   commands::Command command;
   command.Clear();
   session.UndoOrRewind(&command);
@@ -2625,8 +2625,9 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
   command.Clear();
   session.UndoOrRewind(&command);
   EXPECT_FALSE(command.output().has_result());
-  EXPECT_PREEDIT("あいうえお", command);
+  EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_deletion_range());
+  EXPECT_FALSE(command.output().consumed());
 }
 
 TEST_F(SessionTest, UndoOrRewindRewind) {
@@ -8015,14 +8016,14 @@ TEST_F(SessionTest, UndoKeyAction) {
     EXPECT_PREEDIT("あいうえお", command);
     EXPECT_TRUE(command.output().consumed());
 
-    // Undo twice - do nothing and keep the previous status.
+    // Undo twice - do nothing and don't cosume the input.
     command.Clear();
     SetSendCommandCommand(commands::SessionCommand::UNDO_OR_REWIND, &command);
     session.SendCommand(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_FALSE(command.output().has_deletion_range());
-    EXPECT_PREEDIT("あいうえお", command);
-    EXPECT_TRUE(command.output().consumed());
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_FALSE(command.output().consumed());
   }
 
   // Do not UNDO even if UNDO stack is not empty if it is in COMPOSITE state.

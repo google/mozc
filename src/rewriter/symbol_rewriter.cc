@@ -316,6 +316,10 @@ bool SymbolRewriter::RewriteEachCandidate(const ConversionRequest &request,
 
 bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
                                             Segments *segments) const {
+  if (segments->conversion_segments_size() == 0) {
+    return false;
+  }
+
   std::string key;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
     key += segments->conversion_segment(i).key();
@@ -326,34 +330,29 @@ bool SymbolRewriter::RewriteEntireCandidate(const ConversionRequest &request,
     return false;
   }
 
-  if (segments->conversion_segments_size() > 1) {
-    if (segments->resized()) {
-      // the given segments are resized by user
-      // so don't modify anymore
-      return false;
-    }
-    // need to resize
-    const size_t all_length = Util::CharsLen(key);
-    const size_t first_length =
-        Util::CharsLen(segments->conversion_segment(0).key());
-    const int diff = static_cast<int>(all_length - first_length);
-    if (diff > 0) {
-      // TODO(noriyukit): What happens if ResizeSegment fails? Handle the
-      // error correctly.
-      if (!parent_converter_->ResizeSegment(segments, request, 0, diff)) {
-        LOG(WARNING)
-            << "ResizeSegment failed but keep executing code as if it's "
-               "successful to keep the original behavior. This may cause "
-               "errors in the subsequent logic: segment_index=0, offset_length="
-            << diff << ", segments:" << segments->DebugString();
-      }
-    }
-  } else {
+  if (segments->conversion_segments_size() == 1) {
     InsertCandidates(GetOffset(request, key), range,
                      false,  // not context sensitive
                      segments->mutable_conversion_segment(0));
+    return true;
   }
 
+  if (segments->resized()) {
+    // The given segments are resized by user so don't modify anymore.
+    return false;
+  }
+  const size_t all_length = Util::CharsLen(key);
+  const size_t first_length =
+      Util::CharsLen(segments->conversion_segment(0).key());
+  const int diff = static_cast<int>(all_length - first_length);
+  if (diff <= 0) {
+    return false;
+  }
+  if (!parent_converter_->ResizeSegment(segments, request, 0, diff)) {
+    LOG(WARNING) << "ResizeSegment failed: diff = " << diff
+                 << ", segments = " << segments->DebugString();
+    return false;
+  }
   return true;
 }
 

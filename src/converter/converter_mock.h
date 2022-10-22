@@ -37,8 +37,12 @@
 #include "base/port.h"
 #include "converter/converter_interface.h"
 #include "converter/segments.h"
+#include "testing/base/public/gmock.h"
 
 namespace mozc {
+
+// NOTE: New code should not use this class. Instead, use GMock-based
+// MockConverter defined below.
 class ConverterMock : public ConverterInterface {
  public:
   ConverterMock();
@@ -152,8 +156,7 @@ class ConverterMock : public ConverterInterface {
                      size_t segment_index, int offset_length) const override;
   bool ResizeSegment(Segments *segments, const ConversionRequest &request,
                      size_t start_segment_index, size_t segments_size,
-                     const uint8_t *new_size_array,
-                     size_t array_size) const override;
+                     absl::Span<const uint8_t> new_size_array) const override;
 
  private:
   struct ConverterOutput {
@@ -226,6 +229,76 @@ class ConverterMock : public ConverterInterface {
   ConverterOutput submitsegments_output_;
   ConverterOutput resizesegment1_output_;
   ConverterOutput resizesegment2_output_;
+};
+
+class MockConverter final : public ConverterInterface {
+ public:
+  MockConverter() = default;
+  ~MockConverter() override = default;
+
+  MOCK_METHOD(bool, StartConversionForRequest,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartConversion,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, StartReverseConversion,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, StartPredictionForRequest,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartPrediction,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, StartSuggestionForRequest,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartSuggestion,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, StartPartialPredictionForRequest,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartPartialPrediction,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, StartPartialSuggestionForRequest,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, StartPartialSuggestion,
+              (Segments * segments, const std::string &key), (const, override));
+  MOCK_METHOD(bool, FinishConversion,
+              (const ConversionRequest &request, Segments *segments),
+              (const, override));
+  MOCK_METHOD(bool, CancelConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(bool, ResetConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(bool, RevertConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(bool, ReconstructHistory,
+              (Segments * segments, const std::string &preceding_text),
+              (const, override));
+  MOCK_METHOD(bool, GetCandidates,
+              (Segments * segments, size_t segment_index,
+               size_t candidate_size),
+              (const, override));
+  MOCK_METHOD(bool, CommitSegmentValue,
+              (Segments * segments, size_t segment_index, int candidate_index),
+              (const, override));
+  MOCK_METHOD(bool, CommitPartialSuggestionSegmentValue,
+              (Segments * segments, size_t segment_index, int candidate_index,
+               absl::string_view current_segment_key,
+               absl::string_view new_segment_key),
+              (const, override));
+  MOCK_METHOD(bool, FocusSegmentValue,
+              (Segments * segments, size_t segment_index, int candidate_index),
+              (const, override));
+  MOCK_METHOD(bool, CommitSegments,
+              (Segments * segments, const std::vector<size_t> &candidate_index),
+              (const, override));
+  MOCK_METHOD(bool, ResizeSegment,
+              (Segments * segments, const ConversionRequest &request,
+               size_t segment_index, int offset_length),
+              (const, override));
+  MOCK_METHOD(bool, ResizeSegment,
+              (Segments * segments, const ConversionRequest &request,
+               size_t start_segment_index, size_t segments_size,
+               absl::Span<const uint8_t> new_size_array),
+              (const, override));
 };
 
 }  // namespace mozc
