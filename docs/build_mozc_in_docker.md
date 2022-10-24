@@ -8,16 +8,50 @@ Currently, only Ubuntu 20.04 is tested to host the Docker container to build Moz
 
 * [Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu20.04/Dockerfile) for Ubuntu 20.04
 
-## Set up Ubuntu 20.04 Docker container
+## Build in Docker
+
+### Set up Ubuntu 20.04 Docker container
 
 ```
 curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu20.04/Dockerfile
-sudo docker build --rm -t $USER/mozc_ubuntu20.04 .
-sudo docker run --interactive --tty --rm $USER/mozc_ubuntu20.04
+docker build --rm -tag mozc_ubuntu20.04 .
+docker create --interactive --tty --name mozc_build mozc_ubuntu20.04
 ```
 
-### Hint
-Don't forget to rebuild Docker container when Dockerfile is updated.
+You may need to execute `docker` with `sudo` (e.g. `sudo docker build ...`).
+
+Notes
+* `mozc_ubuntu20.04` is a Docker image name (customizable).
+* `mozc_build` is a Docker contaniner name (customizable).
+* Don't forget to rebuild Docker container when Dockerfile is updated.
+
+
+### Build Mozc in Docker container
+
+```
+docker start mozc_build
+docker exec mozc_build bazel build package --config oss_linux -c opt
+```
+
+Notes
+* You might want to execute `docker stop` after `docker exec`.
+* `mozc_build` is the Docker contaniner name created in the above section.
+
+
+### Copy Mozc binaries from Docker container to host
+
+```
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/server/mozc_server .
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/ibus/ibus_mozc .
+...
+```
+
+See [Install paths](#install-paths) below for more information about
+the build and install paths.
+
+Notes
+* You might want to execute `docker stop` after copying.
+* `mozc_build` is the Docker contaniner name created in the above section.
 
 -----
 
@@ -26,6 +60,9 @@ Don't forget to rebuild Docker container when Dockerfile is updated.
 ```
 bazel build package --config oss_linux -c opt
 ```
+
+Note: You might want to execute `docker start --interactive mozc_build`
+to enter the docker container before the above command.
 
 `package` is an alias to build:
 * //server:mozc_server
