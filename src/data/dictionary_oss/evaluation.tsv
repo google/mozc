@@ -204,9 +204,13 @@ OK:	からだき	空焚き	Conversion Expected 2	空焚き	2.28.4730
 OK:	ししゅう	刺繍	Conversion Expected 9	歯周	2.28.4750
 OK:	あかつきにふねをいだす	暁に船を出だす	Conversion Expected	暁に船を出だす	2.28.4770
 OK:	さいのうをみいだす	才能を見出す	Conversion Expected 2	才能を見出だす	2.28.4770
+FAILED:	いっぴょう	一瓢	Conversion Expected 2	一票	2.28.4880
 OK:	きそう	競う	Conversion Expected 9	寄贈	2.28.4880
 FAILED:	なぞめいてて	謎めいて手	Conversion Expected	謎めいてて	2.28.4830
 FAILED:	しょくじをしたにもかかわらず	食事を下にも関わらず	Conversion Match	食事をした	2.28.4830
+FAILED:	さんぜんえん	産前園	Conversion Expected 2	三千円	2.28.4880
+FAILED:	はっせんえん	ハッ千円	Conversion Expected 2	八千円	2.28.4880
+FAILED:	きゅうせんえん	旧千円	Conversion Expected 2	九千円	2.28.4880
 OK:	ひらぶんでおくる	平文で送る	Conversion Expected	平文で送る	2.28.4880
 FAILED:	ごかんそう	ご乾燥	Conversion Expected	ご感想	2.28.4830
 OK:	うっぷんばらし	鬱憤晴らし	Conversion Expected 2	鬱憤晴らし	2.28.4880
@@ -225,6 +229,7 @@ OK:	にだんかいうせつ	二段階右折	Conversion Expected	二段階右折
 OK:	にだんかいにんしょう	二段階認証	Conversion Expected	二段階認証	2.28.4830
 OK:	ひともうけ	一儲け	Conversion Expected	一儲け	2.28.4880
 OK:	ひゃっきん	百均	Conversion Expected	百均	2.28.4880
+FAILED:	すげかえれば	すげ変えれば	Conversion Expected 2	挿げ替えれば	2.28.4880
 OK:	たしました	足しました	Conversion Expected	足しました	2.26.4695
 OK:	こじんよう	個人用	Conversion Expected	個人用	2.26.4695
 OK:	からめて	絡めて	Conversion Expected	絡めて	2.26.4695
