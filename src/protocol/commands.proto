@@ -692,6 +692,9 @@ message Request {
     // Use special table for 12keys tablet keyboard.
     TWELVE_KEYS_TABLET = 47;
 
+    // Use special table for 12keys tablet keyboard.
+    TWELVE_KEYS_TABLET_FLICK = 48;
+
     // Obsolete items.
     reserved 12, 15, 32, 21, 18;
     reserved "TWELVE_KEYS_TO_NUMBER";
