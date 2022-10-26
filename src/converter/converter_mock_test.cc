@@ -233,6 +233,7 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
       converter->ResizeSegment(&output, default_request, 1, 5, size_array));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
+
 TEST_F(ConverterMockTest, GetStartConversion) {
   ConverterInterface *converter = GetMock();
 
@@ -240,7 +241,8 @@ TEST_F(ConverterMockTest, GetStartConversion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartConversion");
   const std::string input_str = input.DebugString();
-  converter->StartConversion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartConversion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;

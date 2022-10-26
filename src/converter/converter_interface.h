@@ -62,6 +62,7 @@ class ConverterInterface {
 
   // Start conversion with key.
   // key is a request written in Hiragana sequence
+  ABSL_MUST_USE_RESULT
   virtual bool StartConversion(Segments *segments,
                                const std::string &key) const = 0;
 
