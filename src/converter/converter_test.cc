@@ -79,6 +79,7 @@
 #include "rewriter/rewriter.h"
 #include "rewriter/rewriter_interface.h"
 #include "session/request_test_util.h"
+#include "testing/base/public/gmock.h"
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "testing/base/public/mozctest.h"
@@ -1308,7 +1309,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     composer.InsertCharacterPreedit("わたしh");
     ConversionRequest request(&composer, &default_request(), &config);
     request.set_composer_key_selection(ConversionRequest::CONVERSION_KEY);
-    converter->StartConversionForRequest(request, &segments);
+    ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));
     EXPECT_EQ(2, segments.conversion_segments_size());
     EXPECT_EQ("私", segments.conversion_segment(0).candidate(0).value);
     EXPECT_EQ("h", segments.conversion_segment(1).candidate(0).value);
@@ -1319,7 +1320,7 @@ TEST_F(ConverterTest, ComposerKeySelection) {
     composer.InsertCharacterPreedit("わたしh");
     ConversionRequest request(&composer, &default_request(), &config);
     request.set_composer_key_selection(ConversionRequest::PREDICTION_KEY);
-    converter->StartConversionForRequest(request, &segments);
+    ASSERT_TRUE(converter->StartConversionForRequest(request, &segments));
     EXPECT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ("私", segments.conversion_segment(0).candidate(0).value);
   }

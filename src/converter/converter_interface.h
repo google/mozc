@@ -56,6 +56,7 @@ class ConverterInterface {
   virtual ~ConverterInterface() = default;
 
   // Starts conversion for given request.
+  ABSL_MUST_USE_RESULT
   virtual bool StartConversionForRequest(const ConversionRequest &request,
                                          Segments *segments) const = 0;
 

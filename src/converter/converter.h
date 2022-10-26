@@ -63,6 +63,7 @@ class ConverterImpl final : public ConverterInterface {
             std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);
 
+  ABSL_MUST_USE_RESULT
   bool StartConversionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
   bool StartConversion(Segments *segments,

@@ -50,6 +50,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -253,7 +254,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conversion_request(&composer, request_.get(),
                                          config_.get());
-    converter_->StartConversionForRequest(conversion_request, segments_.get());
+    if (!converter_->StartConversionForRequest(conversion_request,
+                                               segments_.get())) {
+      return absl::UnknownError(absl::StrCat(
+          "StartConversionForRequest failed: ", item.OutputAsTSV()));
+    }
   } else if (command == kReverseConversionExpect ||
              command == kReverseConversionNotExpect) {
     converter_->StartReverseConversion(segments_.get(), key);
