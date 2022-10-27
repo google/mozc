@@ -260,7 +260,8 @@ TEST_F(ConverterMockTest, GetStartReverseConversion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartReverseConversion");
   const std::string input_str = input.DebugString();
-  converter->StartReverseConversion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartReverseConversion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;

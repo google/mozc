@@ -67,6 +67,7 @@ class ConverterInterface {
                                const std::string &key) const = 0;
 
   // Start reverse conversion with key.
+  ABSL_MUST_USE_RESULT
   virtual bool StartReverseConversion(Segments *segments,
                                       const std::string &key) const = 0;
 

@@ -69,6 +69,7 @@ class ConverterImpl final : public ConverterInterface {
   ABSL_MUST_USE_RESULT
   bool StartConversion(Segments *segments,
                        const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartReverseConversion(Segments *segments,
                               const std::string &key) const override;
   bool StartPredictionForRequest(const ConversionRequest &request,

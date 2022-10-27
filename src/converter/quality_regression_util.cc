@@ -261,7 +261,9 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     }
   } else if (command == kReverseConversionExpect ||
              command == kReverseConversionNotExpect) {
-    converter_->StartReverseConversion(segments_.get(), key);
+    if (!converter_->StartReverseConversion(segments_.get(), key)) {
+      return absl::UnknownError("StartReverseConversion failed");
+    }
   } else if (command == kPredictionExpect || command == kPredictionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
