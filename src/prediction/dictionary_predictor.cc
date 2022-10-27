@@ -302,6 +302,10 @@ class DictionaryPredictor::PredictiveLookupCallback
         return TRAVERSE_CONTINUE;
       }
     }
+    if (IsNoisyNumberToken(key, token)) {
+      return TRAVERSE_CONTINUE;
+    }
+
     results_->push_back(Result());
     results_->back().InitializeByTokenAndTypes(token, types_);
     results_->back().wcost += penalty_;
@@ -321,6 +325,27 @@ class DictionaryPredictor::PredictiveLookupCallback
   absl::string_view non_expanded_original_key_;
   const SpatialCostParams spatial_cost_params_;
   std::vector<DictionaryPredictor::Result> *results_;
+
+ private:
+  // When the key is number, number token will be noisy if
+  // - the value predicts number ("12時" for the key, "1")
+  // - the value contains long suffix ("101匹わんちゃん" for the key, "101")
+  bool IsNoisyNumberToken(absl::string_view key, const Token &token) const {
+    const auto orig_key = absl::ClippedSubstr(key, 0, original_key_len_);
+    if (!absl::StartsWith(token.value, orig_key) ||
+        !NumberUtil::IsArabicNumber(orig_key)) {
+      return false;
+    }
+    absl::string_view suffix(token.value.data() + orig_key.size(),
+                             token.value.size() - orig_key.size());
+    if (suffix.empty()) {
+      return false;
+    }
+    if (Util::GetFirstScriptType(suffix) == Util::NUMBER) {
+      return true;
+    }
+    return Util::CharsLen(suffix) >= 3;
+  }
 };
 
 class DictionaryPredictor::PredictiveBigramLookupCallback
