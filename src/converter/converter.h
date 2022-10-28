@@ -78,8 +78,10 @@ class ConverterImpl final : public ConverterInterface {
   ABSL_MUST_USE_RESULT
   bool StartPrediction(Segments *segments,
                        const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartSuggestionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartSuggestion(Segments *segments,
                        const std::string &key) const override;
   bool StartPartialPredictionForRequest(const ConversionRequest &request,

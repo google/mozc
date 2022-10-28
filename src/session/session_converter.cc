@@ -521,12 +521,17 @@ bool SessionConverter::SuggestWithPreferences(
         CreateIncognitoConversionRequest(conversion_request, incognito_config);
     incognito_segments_->Clear();
     if (use_partial_composition) {
-      converter_->StartPartialSuggestionForRequest(incognito_conversion_request,
-                                                   incognito_segments_.get());
+      result = converter_->StartPartialSuggestionForRequest(
+          incognito_conversion_request, incognito_segments_.get());
     } else {
-      converter_->StartSuggestionForRequest(incognito_conversion_request,
-                                            incognito_segments_.get());
+      result = converter_->StartSuggestionForRequest(
+          incognito_conversion_request, incognito_segments_.get());
     }
+  }
+  if (!result) {
+    VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
+               "returned no suggestions.";
+    // TODO(noriyukit): Check if fall through here is ok.
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());
 

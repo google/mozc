@@ -82,10 +82,12 @@ class ConverterInterface {
                                const std::string &key) const = 0;
 
   // Starts suggestion for given request.
+  ABSL_MUST_USE_RESULT
   virtual bool StartSuggestionForRequest(const ConversionRequest &request,
                                          Segments *segments) const = 0;
 
   // Start suggestion with key (request_type = SUGGESTION)
+  ABSL_MUST_USE_RESULT
   virtual bool StartSuggestion(Segments *segments,
                                const std::string &key) const = 0;
 

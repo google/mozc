@@ -298,7 +298,8 @@ TEST_F(ConverterMockTest, GetStartSuggestion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartSuggestion");
   const std::string input_str = input.DebugString();
-  converter->StartSuggestion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartSuggestion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
