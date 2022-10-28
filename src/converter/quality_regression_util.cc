@@ -269,8 +269,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conversion_request(&composer, request_.get(),
                                          config_.get());
-    converter_->StartPredictionForRequest(conversion_request, segments_.get());
-
+    if (!converter_->StartPredictionForRequest(conversion_request,
+                                               segments_.get())) {
+      return absl::UnknownError(absl::StrCat(
+          "StartPredictionForRequest failed: ", item.OutputAsTSV()));
+    }
   } else if (command == kSuggestionExpect || command == kSuggestionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
@@ -296,8 +299,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       composer::Composer composer(&table, &request, config_.get());
       ConversionRequest conversion_request(&composer, &request, config_.get());
       conversion_request.set_max_conversion_candidates_size(10);
-      converter_->StartPredictionForRequest(conversion_request,
-                                            segments_.get());
+      if (!converter_->StartPredictionForRequest(conversion_request,
+                                                 segments_.get())) {
+        return absl::UnknownError(absl::StrCat(
+            "StartPredictionForRequest failed: ", item.OutputAsTSV()));
+      }
       segments_->clear_history_segments();
     }
   } else {
