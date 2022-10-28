@@ -92,18 +92,22 @@ class ConverterInterface {
                                const std::string &key) const = 0;
 
   // Starts partial prediction for given request.
+  ABSL_MUST_USE_RESULT
   virtual bool StartPartialPredictionForRequest(
       const ConversionRequest &request, Segments *segments) const = 0;
 
   // Start prediction with key (request_type = PARTIAL_PREDICTION)
+  ABSL_MUST_USE_RESULT
   virtual bool StartPartialPrediction(Segments *segments,
                                       const std::string &key) const = 0;
 
   // Starts partial suggestion for given request.
+  ABSL_MUST_USE_RESULT
   virtual bool StartPartialSuggestionForRequest(
       const ConversionRequest &request, Segments *segments) const = 0;
 
   // Start suggestion with key (request_type = PARTIAL_SUGGESTION)
+  ABSL_MUST_USE_RESULT
   virtual bool StartPartialSuggestion(Segments *segments,
                                       const std::string &key) const = 0;
 

@@ -317,7 +317,8 @@ TEST_F(ConverterMockTest, GetStartPartialPrediction) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPartialPrediction");
   const std::string input_str = input.DebugString();
-  converter->StartPartialPrediction(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPartialPrediction(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -335,7 +336,8 @@ TEST_F(ConverterMockTest, GetStartPartialSuggestion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPartialSuggestion");
   const std::string input_str = input.DebugString();
-  converter->StartPartialSuggestion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPartialSuggestion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
