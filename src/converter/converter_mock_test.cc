@@ -279,7 +279,8 @@ TEST_F(ConverterMockTest, GetStartPrediction) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPrediction");
   const std::string input_str = input.DebugString();
-  converter->StartPrediction(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPrediction(&input, input_key));
 
   Segments last_segment;
   std::string last_key;

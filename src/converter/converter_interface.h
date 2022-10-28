@@ -77,6 +77,7 @@ class ConverterInterface {
                                          Segments *segments) const = 0;
 
   // Start prediction with key (request_type = PREDICTION)
+  ABSL_MUST_USE_RESULT
   virtual bool StartPrediction(Segments *segments,
                                const std::string &key) const = 0;
 
