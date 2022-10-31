@@ -126,6 +126,7 @@ class ConverterInterface {
   virtual void RevertConversion(Segments *segments) const = 0;
 
   // Reconstruct history segments from given preceding text.
+  ABSL_MUST_USE_RESULT
   virtual bool ReconstructHistory(Segments *segments,
                                   const std::string &preceding_text) const = 0;
 

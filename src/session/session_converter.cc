@@ -1749,7 +1749,11 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
 
   // Here we reconstruct history segments from |preceding_text| regardless
   // of revision mismatch. If it fails the history segments is cleared anyway.
-  converter_->ReconstructHistory(segments_.get(), preceding_text);
+  if (!converter_->ReconstructHistory(segments_.get(), preceding_text)) {
+    LOG(WARNING) << "ReconstructHistory failed. preceding_text: "
+                 << preceding_text
+                 << ", segments: " << segments_->DebugString();
+  }
 }
 
 void SessionConverter::UpdateSelectedCandidateIndex() {

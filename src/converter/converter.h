@@ -102,6 +102,8 @@ class ConverterImpl final : public ConverterInterface {
   void CancelConversion(Segments *segments) const override;
   void ResetConversion(Segments *segments) const override;
   void RevertConversion(Segments *segments) const override;
+
+  ABSL_MUST_USE_RESULT
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override;
 
