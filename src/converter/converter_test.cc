@@ -493,7 +493,7 @@ std::string ContextAwareConvert(const std::string &first_key,
   EXPECT_EQ(first_value, converted) << first_value;
   // TODO(team): Use StartConversionForRequest instead of StartConversion.
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->FinishConversion(default_request, &segments));
+  converter->FinishConversion(default_request, &segments);
   EXPECT_TRUE(converter->StartConversion(&segments, second_key));
   EXPECT_EQ(segment_num + 1, segments.segments_size());
 
@@ -994,7 +994,7 @@ TEST_F(ConverterTest, Regression3046266) {
 
   // TODO(team): Use StartConversionForRequest instead of StartConversion.
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->FinishConversion(default_request, &segments));
+  converter->FinishConversion(default_request, &segments);
 
   EXPECT_TRUE(converter->StartConversion(&segments, kKey2));
   EXPECT_EQ(1, segments.conversion_segments_size());

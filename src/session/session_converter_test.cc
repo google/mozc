@@ -1664,7 +1664,7 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   }
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(std::make_unique<Segments>().get(), true);
+  convertermock_->SetFinishConversion(std::make_unique<Segments>().get());
 
   size_t committed_key_size = 0;
   converter.CommitSuggestionByIndex(1, *composer_, Context::default_instance(),
@@ -1724,7 +1724,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
   EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
 
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(std::make_unique<Segments>().get(), true);
+  convertermock_->SetFinishConversion(std::make_unique<Segments>().get());
 
   constexpr int kCandidateIndex = 1;
   size_t committed_key_size = 0;
@@ -2851,7 +2851,7 @@ TEST_F(SessionConverterTest, GetAndSetSegments) {
     Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = kHistoryInput[i];
   }
-  convertermock_->SetFinishConversion(&segments, true);
+  convertermock_->SetFinishConversion(&segments);
   converter.CommitPreedit(*composer_, Context::default_instance());
 
   Segments src;
@@ -3097,7 +3097,7 @@ TEST_F(SessionConverterTest, Issue1981020) {
   const std::string wave_dash_301c = "〜〜〜〜";
   composer_->InsertCharacterPreedit(wave_dash_301c);
   Segments segments;
-  convertermock_->SetFinishConversion(&segments, true);
+  convertermock_->SetFinishConversion(&segments);
   converter.CommitPreedit(*composer_, Context::default_instance());
   convertermock_->GetFinishConversion(&segments);
 
@@ -3318,13 +3318,13 @@ TEST_F(SessionConverterTest, ZeroQuerySuggestion) {
 // since History segments are almost hidden from
 namespace {
 
+// TODO(noriyukit): Replace this class by MockConverter.
 class ConverterMockForReset : public ConverterMock {
  public:
   ConverterMockForReset() : reset_conversion_called_(false) {}
 
-  bool ResetConversion(Segments *segments) const override {
+  void ResetConversion(Segments *segments) const override {
     reset_conversion_called_ = true;
-    return true;
   }
 
   bool reset_conversion_called() const { return reset_conversion_called_; }
@@ -3335,13 +3335,13 @@ class ConverterMockForReset : public ConverterMock {
   mutable bool reset_conversion_called_;
 };
 
+// TODO(noriyukit): Replace this class by MockConverter.
 class ConverterMockForRevert : public ConverterMock {
  public:
   ConverterMockForRevert() : revert_conversion_called_(false) {}
 
-  bool RevertConversion(Segments *segments) const override {
+  void RevertConversion(Segments *segments) const override {
     revert_conversion_called_ = true;
-    return true;
   }
 
   bool revert_conversion_called() const { return revert_conversion_called_; }

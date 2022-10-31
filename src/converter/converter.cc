@@ -520,7 +520,7 @@ bool ConverterImpl::StartPartialPredictionForRequest(
   return Predict(request, conversion_key, segments);
 }
 
-bool ConverterImpl::FinishConversion(const ConversionRequest &request,
+void ConverterImpl::FinishConversion(const ConversionRequest &request,
                                      Segments *segments) const {
   CommitUsageStats(segments, segments->history_segments_size(),
                    segments->conversion_segments_size());
@@ -559,27 +559,22 @@ bool ConverterImpl::FinishConversion(const ConversionRequest &request,
     DCHECK(seg);
     seg->set_segment_type(Segment::HISTORY);
   }
-
-  return true;
 }
 
-bool ConverterImpl::CancelConversion(Segments *segments) const {
+void ConverterImpl::CancelConversion(Segments *segments) const {
   segments->clear_conversion_segments();
-  return true;
 }
 
-bool ConverterImpl::ResetConversion(Segments *segments) const {
+void ConverterImpl::ResetConversion(Segments *segments) const {
   segments->Clear();
-  return true;
 }
 
-bool ConverterImpl::RevertConversion(Segments *segments) const {
+void ConverterImpl::RevertConversion(Segments *segments) const {
   if (segments->revert_entries_size() == 0) {
-    return true;
+    return;
   }
   predictor_->Revert(segments);
   segments->clear_revert_entries();
-  return true;
 }
 
 bool ConverterImpl::ReconstructHistory(

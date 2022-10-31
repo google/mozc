@@ -97,11 +97,11 @@ class ConverterImpl final : public ConverterInterface {
   bool StartPartialSuggestion(Segments *segments,
                               const std::string &key) const override;
 
-  bool FinishConversion(const ConversionRequest &request,
+  void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;
-  bool CancelConversion(Segments *segments) const override;
-  bool ResetConversion(Segments *segments) const override;
-  bool RevertConversion(Segments *segments) const override;
+  void CancelConversion(Segments *segments) const override;
+  void ResetConversion(Segments *segments) const override;
+  void RevertConversion(Segments *segments) const override;
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override;
 

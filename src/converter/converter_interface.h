@@ -113,17 +113,17 @@ class ConverterInterface {
 
   // Finish conversion.
   // Segments are cleared. Context is not cleared
-  virtual bool FinishConversion(const ConversionRequest &request,
+  virtual void FinishConversion(const ConversionRequest &request,
                                 Segments *segments) const = 0;
 
   // Clear segments and keep the context
-  virtual bool CancelConversion(Segments *segments) const = 0;
+  virtual void CancelConversion(Segments *segments) const = 0;
 
   // Reset segments and context
-  virtual bool ResetConversion(Segments *segments) const = 0;
+  virtual void ResetConversion(Segments *segments) const = 0;
 
   // Revert last Finish operation
-  virtual bool RevertConversion(Segments *segments) const = 0;
+  virtual void RevertConversion(Segments *segments) const = 0;
 
   // Reconstruct history segments from given preceding text.
   virtual bool ReconstructHistory(Segments *segments,

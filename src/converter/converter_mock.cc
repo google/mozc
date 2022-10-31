@@ -115,28 +115,24 @@ void ConverterMock::SetStartPartialSuggestion(Segments *segments, bool result) {
   startpartialsuggestion_output_.return_value = result;
 }
 
-void ConverterMock::SetFinishConversion(Segments *segments, bool result) {
+void ConverterMock::SetFinishConversion(Segments *segments) {
   finishconversion_output_.initialized = true;
   finishconversion_output_.segments = *segments;
-  finishconversion_output_.return_value = result;
 }
 
-void ConverterMock::SetCancelConversion(Segments *segments, bool result) {
+void ConverterMock::SetCancelConversion(Segments *segments) {
   cancelconversion_output_.initialized = true;
   cancelconversion_output_.segments = *segments;
-  cancelconversion_output_.return_value = result;
 }
 
-void ConverterMock::SetResetConversion(Segments *segments, bool result) {
+void ConverterMock::SetResetConversion(Segments *segments) {
   resetconversion_output_.initialized = true;
   resetconversion_output_.segments = *segments;
-  resetconversion_output_.return_value = result;
 }
 
-void ConverterMock::SetRevertConversion(Segments *segments, bool result) {
+void ConverterMock::SetRevertConversion(Segments *segments) {
   revertconversion_output_.initialized = true;
   revertconversion_output_.segments = *segments;
-  revertconversion_output_.return_value = result;
 }
 
 void ConverterMock::SetReconstructHistory(Segments *segments, bool result) {
@@ -466,52 +462,40 @@ bool ConverterMock::StartPartialSuggestion(Segments *segments,
   }
 }
 
-bool ConverterMock::FinishConversion(const ConversionRequest &request,
+void ConverterMock::FinishConversion(const ConversionRequest &request,
                                      Segments *segments) const {
   VLOG(2) << "mock function: FinishConversion";
   finishconversion_input_.segments = *segments;
 
-  if (!finishconversion_output_.initialized) {
-    return false;
-  } else {
+  if (finishconversion_output_.initialized) {
     *segments = finishconversion_output_.segments;
-    return finishconversion_output_.return_value;
   }
 }
 
-bool ConverterMock::CancelConversion(Segments *segments) const {
+void ConverterMock::CancelConversion(Segments *segments) const {
   VLOG(2) << "mock function: CancelConversion";
   cancelconversion_input_.segments = *segments;
 
-  if (!cancelconversion_output_.initialized) {
-    return false;
-  } else {
+  if (cancelconversion_output_.initialized) {
     *segments = cancelconversion_output_.segments;
-    return cancelconversion_output_.return_value;
   }
 }
 
-bool ConverterMock::ResetConversion(Segments *segments) const {
+void ConverterMock::ResetConversion(Segments *segments) const {
   VLOG(2) << "mock function: ResetConversion";
   resetconversion_input_.segments = *segments;
 
-  if (!resetconversion_output_.initialized) {
-    return false;
-  } else {
+  if (resetconversion_output_.initialized) {
     *segments = resetconversion_output_.segments;
-    return resetconversion_output_.return_value;
   }
 }
 
-bool ConverterMock::RevertConversion(Segments *segments) const {
+void ConverterMock::RevertConversion(Segments *segments) const {
   VLOG(2) << "mock function: RevertConversion";
   revertconversion_input_.segments = *segments;
 
-  if (!revertconversion_output_.initialized) {
-    return false;
-  } else {
+  if (revertconversion_output_.initialized) {
     *segments = revertconversion_output_.segments;
-    return revertconversion_output_.return_value;
   }
 }
 

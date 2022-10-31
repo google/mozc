@@ -152,9 +152,9 @@ TEST_F(ConverterMockTest, SetFinishConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "FinishConversion");
-  GetMock()->SetFinishConversion(&expect, true);
+  GetMock()->SetFinishConversion(&expect);
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->FinishConversion(default_request, &output));
+  converter->FinishConversion(default_request, &output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -163,8 +163,8 @@ TEST_F(ConverterMockTest, SetCancelConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "CancelConversion");
-  GetMock()->SetCancelConversion(&expect, true);
-  EXPECT_TRUE(converter->CancelConversion(&output));
+  GetMock()->SetCancelConversion(&expect);
+  converter->CancelConversion(&output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -173,8 +173,8 @@ TEST_F(ConverterMockTest, SetResetConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "ResetConversion");
-  GetMock()->SetResetConversion(&expect, true);
-  EXPECT_TRUE(converter->ResetConversion(&output));
+  GetMock()->SetResetConversion(&expect);
+  converter->ResetConversion(&output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
