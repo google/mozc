@@ -50,7 +50,6 @@
 #include "rewriter/focus_candidate_rewriter.h"
 #include "rewriter/fortune_rewriter.h"
 #include "rewriter/ivs_variants_rewriter.h"
-#include "rewriter/katakana_promotion_rewriter.h"
 #include "rewriter/language_aware_rewriter.h"
 #include "rewriter/merger_rewriter.h"
 #include "rewriter/number_rewriter.h"
@@ -59,6 +58,7 @@
 #include "rewriter/single_kanji_rewriter.h"
 #include "rewriter/small_letter_rewriter.h"
 #include "rewriter/symbol_rewriter.h"
+#include "rewriter/t13n_promotion_rewriter.h"
 #include "rewriter/transliteration_rewriter.h"
 #include "rewriter/unicode_rewriter.h"
 #include "rewriter/user_boundary_history_rewriter.h"
@@ -133,7 +133,7 @@ RewriterImpl::RewriterImpl(const ConverterInterface *parent_converter,
   AddRewriter(
       std::make_unique<VersionRewriter>(data_manager->GetDataVersion()));
   AddRewriter(CorrectionRewriter::CreateCorrectionRewriter(data_manager));
-  AddRewriter(std::make_unique<KatakanaPromotionRewriter>());
+  AddRewriter(std::make_unique<T13nPromotionRewriter>());
   AddRewriter(std::make_unique<EnvironmentalFilterRewriter>(*data_manager));
   AddRewriter(std::make_unique<RemoveRedundantCandidateRewriter>());
   AddRewriter(std::make_unique<A11yDescriptionRewriter>(data_manager));

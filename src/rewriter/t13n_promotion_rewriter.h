@@ -27,25 +27,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Rewriter to promote katakana transliterated candidate for mobile devices.
-// For mobile, we do not provide the shortcut to input katakana transliterated
-// candidate.
-// If the katakana candidate is not ranked high, users need to scroll candidate
-// page and find katakana.
-// This rewriter promotes katakana candidate so that users can find katakana
+// Rewriter to promote transliteration(T13N) candidates for mobile devices.
+// For mobile, we do not provide the shortcut to input T13N candidates.
+// This rewriter promotes T13N candidate so that users can find them
 // at first glance.
 
-#ifndef MOZC_REWRITER_KATAKANA_PROMOTION_REWRITER_H_
-#define MOZC_REWRITER_KATAKANA_PROMOTION_REWRITER_H_
+#ifndef MOZC_REWRITER_T13N_PROMOTION_REWRITER_H_
+#define MOZC_REWRITER_T13N_PROMOTION_REWRITER_H_
 
 #include "rewriter/rewriter_interface.h"
 
 namespace mozc {
 
-class KatakanaPromotionRewriter : public RewriterInterface {
+class T13nPromotionRewriter : public RewriterInterface {
  public:
-  KatakanaPromotionRewriter();
-  ~KatakanaPromotionRewriter() override;
+  T13nPromotionRewriter();
+  ~T13nPromotionRewriter() override;
 
   int capability(const ConversionRequest &request) const override;
   bool Rewrite(const ConversionRequest &request,
@@ -54,4 +51,4 @@ class KatakanaPromotionRewriter : public RewriterInterface {
 
 }  // namespace mozc
 
-#endif  // MOZC_REWRITER_KATAKANA_PROMOTION_REWRITER_H_
+#endif  // MOZC_REWRITER_T13N_PROMOTION_REWRITER_H_
