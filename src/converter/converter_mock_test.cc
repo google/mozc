@@ -423,7 +423,8 @@ TEST_F(ConverterMockTest, GetFocusSegmentValue) {
   int input_cidx = 5;
   SetSegments(&input, "FocueSegmentValue");
   const std::string input_str = input.DebugString();
-  converter->FocusSegmentValue(&input, input_idx, input_cidx);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->FocusSegmentValue(&input, input_idx, input_cidx));
 
   Segments last_segment;
   size_t last_idx;

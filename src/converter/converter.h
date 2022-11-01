@@ -113,6 +113,7 @@ class ConverterImpl final : public ConverterInterface {
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
       absl::string_view new_segment_key) const override;
+  ABSL_MUST_USE_RESULT
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
   bool CommitSegments(

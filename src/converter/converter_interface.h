@@ -155,12 +155,14 @@ class ConverterInterface {
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
       absl::string_view new_segment_key) const = 0;
+
   // Focus the candidate.
   // This method is mainly called when user puts SPACE key
   // and changes the focused candidate.
   // In this method, Converter will find bracketing matching.
   // e.g., when user selects "「",  corresponding closing bracket "」"
   // is chosen in the preedit.
+  ABSL_MUST_USE_RESULT
   virtual bool FocusSegmentValue(Segments *segments, size_t segment_index,
                                  int candidate_index) const = 0;
 

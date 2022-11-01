@@ -1298,8 +1298,11 @@ void SessionConverter::ResetState() {
 
 void SessionConverter::SegmentFocus() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  converter_->FocusSegmentValue(segments_.get(), segment_index_,
-                                GetCandidateIndexForConverter(segment_index_));
+  if (!converter_->FocusSegmentValue(
+          segments_.get(), segment_index_,
+          GetCandidateIndexForConverter(segment_index_))) {
+    LOG(ERROR) << "FocusSegmentValue failed";
+  }
 }
 
 void SessionConverter::SegmentFix() {
