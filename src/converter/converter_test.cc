@@ -644,7 +644,7 @@ TEST_F(ConverterTest, CommitSegments) {
     // Commit 1st segment.
     std::vector<size_t> index_list;
     index_list.push_back(0);
-    converter->CommitSegments(&segments, index_list);
+    ASSERT_TRUE(converter->CommitSegments(&segments, index_list));
 
     EXPECT_EQ(2, segments.history_segments_size());
     EXPECT_EQ(1, segments.conversion_segments_size());
@@ -666,7 +666,7 @@ TEST_F(ConverterTest, CommitSegments) {
     std::vector<size_t> index_list;
     index_list.push_back(0);
     index_list.push_back(0);
-    converter->CommitSegments(&segments, index_list);
+    ASSERT_TRUE(converter->CommitSegments(&segments, index_list));
 
     EXPECT_EQ(3, segments.history_segments_size());
     EXPECT_EQ(0, segments.conversion_segments_size());
@@ -1875,7 +1875,7 @@ TEST_F(ConverterTest, RewriterShouldRespectDefaultCandidates) {
     for (int index = 0; index < segment.candidates_size(); ++index) {
       const bool inserted = seen.insert(segment.candidate(index).value).second;
       if (inserted) {
-        converter->CommitSegmentValue(&segments, 0, index);
+        ASSERT_TRUE(converter->CommitSegmentValue(&segments, 0, index));
         break;
       }
     }

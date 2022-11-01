@@ -1619,8 +1619,8 @@ TEST_F(SessionConverterTest, DoNotClearSegmentsBeforeExpandSuggestion) {
 }
 
 TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
-  SessionConverter converter(convertermock_.get(), request_.get(),
-                             config_.get());
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
   Segments segments;
   {  // Initialize mock segments for suggestion
     Segment *segment = segments.add_segment();
@@ -1638,10 +1638,10 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   composer_->InsertCharacterPreedit(kChars_Mo);
 
   // Suggestion
-  convertermock_->SetStartSuggestionForRequest(&segments, true);
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  std::vector<int> expected_indices;
-  expected_indices.push_back(0);
+  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  ASSERT_TRUE(converter.Suggest(*composer_));
+  std::vector<int> expected_indices = {0};
   EXPECT_TRUE(IsCandidateListVisible(converter));
   EXPECT_TRUE(converter.IsActive());
 
@@ -1663,8 +1663,11 @@ TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
   }
 
+  EXPECT_CALL(mock_converter, CommitSegmentValue(_, 0, 1))
+      .WillOnce(Return(true));
   // FinishConversion is expected to return empty Segments.
-  convertermock_->SetFinishConversion(std::make_unique<Segments>().get());
+  EXPECT_CALL(mock_converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(Segments()));
 
   size_t committed_key_size = 0;
   converter.CommitSuggestionByIndex(1, *composer_, Context::default_instance(),

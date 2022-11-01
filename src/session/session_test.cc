@@ -4238,6 +4238,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_EQ("クエリ", command.output().candidates().candidate(0).value());
 
   // commit partial suggestion
+  GetConverterMock()->SetCommitSegmentValue(&segments_jueri, true);
   Segments empty_segments;
   GetConverterMock()->SetFinishConversion(&empty_segments);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
@@ -4322,6 +4323,8 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   EXPECT_EQ("綿", command.output().candidates().candidate(0).value());
 
   // commit partial suggestion
+  GetConverterMock()->SetCommitPartialSuggestionSegmentValue(&segments_wata,
+                                                             true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
   GetConverterMock()->SetStartSuggestionForRequest(&segments_shino, true);
@@ -7131,6 +7134,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
+  GetConverterMock()->SetCommitSegmentValue(&segments_mo, true);
   GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
@@ -7173,38 +7177,19 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session, *mobile_request_);
 
-  {
-    Segments segments;
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("tok");
+  AddCandidate("tok", "tok", segment);
+  AddMetaCandidate("tok", "tok", segment);
+  AddMetaCandidate("tok", "TOK", segment);
+  AddMetaCandidate("tok", "Tok", segment);
+  EXPECT_EQ("tok", segment->candidate(-1).value);
+  EXPECT_EQ("TOK", segment->candidate(-2).value);
+  EXPECT_EQ("Tok", segment->candidate(-3).value);
 
-    Segment *segment;
-    segment = segments.add_segment();
-    segment->set_key("tok");
-    AddCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "TOK", segment);
-    AddMetaCandidate("tok", "Tok", segment);
-    EXPECT_EQ("tok", segment->candidate(-1).value);
-    EXPECT_EQ("TOK", segment->candidate(-2).value);
-    EXPECT_EQ("Tok", segment->candidate(-3).value);
-
-    GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
-  }
-
-  {
-    Segments segments;
-
-    Segment *segment;
-    segment = segments.add_segment();
-    segment->set_key("tok");
-    AddCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "TOK", segment);
-    AddMetaCandidate("tok", "Tok", segment);
-    EXPECT_EQ("tok", segment->candidate(-1).value);
-    EXPECT_EQ("TOK", segment->candidate(-2).value);
-    EXPECT_EQ("Tok", segment->candidate(-3).value);
-    GetConverterMock()->SetStartPredictionForRequest(&segments, true);
-  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
   commands::Command command;
   SendKey("k", &session, &command);
@@ -7215,6 +7200,7 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else   // OS_WIN, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
+  GetConverterMock()->SetCommitSegmentValue(&segments, true);
   GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);

@@ -139,6 +139,7 @@ class ConverterInterface {
   }
 
   // Commit candidate
+  ABSL_MUST_USE_RESULT
   virtual bool CommitSegmentValue(Segments *segments, size_t segment_index,
                                   int candidate_index) const = 0;
   // Commit candidate for partial suggestion.
@@ -151,6 +152,7 @@ class ConverterInterface {
   //   After calling this method, the segments will contain following segments.
   //   - {key_ : "いれた",  segment_type_ : SUBMITTED}
   //   - {key_ : "てのおちゃ", segment_type_ : FREE}
+  ABSL_MUST_USE_RESULT
   virtual bool CommitPartialSuggestionSegmentValue(
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
@@ -172,6 +174,7 @@ class ConverterInterface {
   // |candidate_index| is a vector containing candidate index.
   // candidate_index[0] corresponds to the index of the candidate of
   // 1st segment.
+  ABSL_MUST_USE_RESULT
   virtual bool CommitSegments(
       Segments *segments, const std::vector<size_t> &candidate_index) const = 0;
 

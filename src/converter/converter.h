@@ -107,8 +107,10 @@ class ConverterImpl final : public ConverterInterface {
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override;
 
+  ABSL_MUST_USE_RESULT
   bool CommitSegmentValue(Segments *segments, size_t segment_index,
                           int candidate_index) const override;
+  ABSL_MUST_USE_RESULT
   bool CommitPartialSuggestionSegmentValue(
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
@@ -116,6 +118,7 @@ class ConverterImpl final : public ConverterInterface {
   ABSL_MUST_USE_RESULT
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
+  ABSL_MUST_USE_RESULT
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;

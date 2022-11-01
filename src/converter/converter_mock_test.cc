@@ -402,7 +402,8 @@ TEST_F(ConverterMockTest, GetCommitSegmentValue) {
   int input_cidx = 5;
   SetSegments(&input, "CommitSegmentValue");
   const std::string input_str = input.DebugString();
-  converter->CommitSegmentValue(&input, input_idx, input_cidx);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->CommitSegmentValue(&input, input_idx, input_cidx));
 
   Segments last_segment;
   size_t last_idx;
@@ -448,7 +449,8 @@ TEST_F(ConverterMockTest, GetCommitSegments) {
   std::vector<size_t> index_list;
   index_list.push_back(input_idx1);
   index_list.push_back(input_idx2);
-  converter->CommitSegments(&input, index_list);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->CommitSegments(&input, index_list));
 
   Segments last_segment;
   std::vector<size_t> last_idx;

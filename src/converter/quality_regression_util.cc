@@ -298,7 +298,10 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
         return absl::UnknownError(absl::StrCat(
             "StartSuggestionForRequest failed: ", item.OutputAsTSV()));
       }
-      converter_->CommitSegmentValue(segments_.get(), 0, 0);
+      if (!converter_->CommitSegmentValue(segments_.get(), 0, 0)) {
+        return absl::UnknownError(
+            absl::StrCat("CommitSegmentValue failed: ", item.OutputAsTSV()));
+      }
       converter_->FinishConversion(conversion_request, segments_.get());
     }
     {
