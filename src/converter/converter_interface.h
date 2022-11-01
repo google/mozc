@@ -130,14 +130,6 @@ class ConverterInterface {
   virtual bool ReconstructHistory(Segments *segments,
                                   const std::string &preceding_text) const = 0;
 
-  // Expand the bunsetsu-segment at "segment_index" by candidate_size
-  // DEPRECATED: This method doesn't take any effect.
-  // TODO(taku): remove this method.
-  virtual bool GetCandidates(Segments *segments, size_t segment_index,
-                             size_t candidate_size) const {
-    return true;
-  }
-
   // Commit candidate
   ABSL_MUST_USE_RESULT
   virtual bool CommitSegmentValue(Segments *segments, size_t segment_index,

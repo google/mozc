@@ -272,10 +272,6 @@ class MockConverter final : public ConverterInterface {
   MOCK_METHOD(bool, ReconstructHistory,
               (Segments * segments, const std::string &preceding_text),
               (const, override));
-  MOCK_METHOD(bool, GetCandidates,
-              (Segments * segments, size_t segment_index,
-               size_t candidate_size),
-              (const, override));
   MOCK_METHOD(bool, CommitSegmentValue,
               (Segments * segments, size_t segment_index, int candidate_index),
               (const, override));
