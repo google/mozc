@@ -152,9 +152,9 @@ TEST_F(ConverterMockTest, SetFinishConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "FinishConversion");
-  GetMock()->SetFinishConversion(&expect, true);
+  GetMock()->SetFinishConversion(&expect);
   const ConversionRequest default_request;
-  EXPECT_TRUE(converter->FinishConversion(default_request, &output));
+  converter->FinishConversion(default_request, &output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -163,8 +163,8 @@ TEST_F(ConverterMockTest, SetCancelConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "CancelConversion");
-  GetMock()->SetCancelConversion(&expect, true);
-  EXPECT_TRUE(converter->CancelConversion(&output));
+  GetMock()->SetCancelConversion(&expect);
+  converter->CancelConversion(&output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -173,8 +173,8 @@ TEST_F(ConverterMockTest, SetResetConversion) {
 
   Segments output, expect;
   SetSegments(&expect, "ResetConversion");
-  GetMock()->SetResetConversion(&expect, true);
-  EXPECT_TRUE(converter->ResetConversion(&output));
+  GetMock()->SetResetConversion(&expect);
+  converter->ResetConversion(&output);
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
 
@@ -233,6 +233,7 @@ TEST_F(ConverterMockTest, SetResizeSegment2) {
       converter->ResizeSegment(&output, default_request, 1, 5, size_array));
   EXPECT_EQ(expect.DebugString(), output.DebugString());
 }
+
 TEST_F(ConverterMockTest, GetStartConversion) {
   ConverterInterface *converter = GetMock();
 
@@ -240,7 +241,8 @@ TEST_F(ConverterMockTest, GetStartConversion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartConversion");
   const std::string input_str = input.DebugString();
-  converter->StartConversion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartConversion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -258,7 +260,8 @@ TEST_F(ConverterMockTest, GetStartReverseConversion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartReverseConversion");
   const std::string input_str = input.DebugString();
-  converter->StartReverseConversion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartReverseConversion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -276,7 +279,8 @@ TEST_F(ConverterMockTest, GetStartPrediction) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPrediction");
   const std::string input_str = input.DebugString();
-  converter->StartPrediction(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPrediction(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -294,7 +298,8 @@ TEST_F(ConverterMockTest, GetStartSuggestion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartSuggestion");
   const std::string input_str = input.DebugString();
-  converter->StartSuggestion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartSuggestion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -312,7 +317,8 @@ TEST_F(ConverterMockTest, GetStartPartialPrediction) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPartialPrediction");
   const std::string input_str = input.DebugString();
-  converter->StartPartialPrediction(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPartialPrediction(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -330,7 +336,8 @@ TEST_F(ConverterMockTest, GetStartPartialSuggestion) {
   const std::string input_key = "Key";
   SetSegments(&input, "StartPartialSuggestion");
   const std::string input_str = input.DebugString();
-  converter->StartPartialSuggestion(&input, input_key);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->StartPartialSuggestion(&input, input_key));
 
   Segments last_segment;
   std::string last_key;
@@ -395,7 +402,8 @@ TEST_F(ConverterMockTest, GetCommitSegmentValue) {
   int input_cidx = 5;
   SetSegments(&input, "CommitSegmentValue");
   const std::string input_str = input.DebugString();
-  converter->CommitSegmentValue(&input, input_idx, input_cidx);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->CommitSegmentValue(&input, input_idx, input_cidx));
 
   Segments last_segment;
   size_t last_idx;
@@ -416,7 +424,8 @@ TEST_F(ConverterMockTest, GetFocusSegmentValue) {
   int input_cidx = 5;
   SetSegments(&input, "FocueSegmentValue");
   const std::string input_str = input.DebugString();
-  converter->FocusSegmentValue(&input, input_idx, input_cidx);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->FocusSegmentValue(&input, input_idx, input_cidx));
 
   Segments last_segment;
   size_t last_idx;
@@ -440,7 +449,8 @@ TEST_F(ConverterMockTest, GetCommitSegments) {
   std::vector<size_t> index_list;
   index_list.push_back(input_idx1);
   index_list.push_back(input_idx2);
-  converter->CommitSegments(&input, index_list);
+  // TODO(noriyukit): This should be successful.
+  ASSERT_FALSE(converter->CommitSegments(&input, index_list));
 
   Segments last_segment;
   std::vector<size_t> last_idx;

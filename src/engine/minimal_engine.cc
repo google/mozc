@@ -154,16 +154,14 @@ class MinimalConverter : public ConverterInterface {
     return false;
   }
 
-  bool FinishConversion(const ConversionRequest &request,
-                        Segments *segments) const override {
-    return true;
-  }
+  void FinishConversion(const ConversionRequest &request,
+                        Segments *segments) const override {}
 
-  bool CancelConversion(Segments *segments) const override { return true; }
+  void CancelConversion(Segments *segments) const override {}
 
-  bool ResetConversion(Segments *segments) const override { return true; }
+  void ResetConversion(Segments *segments) const override {}
 
-  bool RevertConversion(Segments *segments) const override { return true; }
+  void RevertConversion(Segments *segments) const override {}
 
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override {

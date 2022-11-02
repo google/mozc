@@ -521,12 +521,17 @@ bool SessionConverter::SuggestWithPreferences(
         CreateIncognitoConversionRequest(conversion_request, incognito_config);
     incognito_segments_->Clear();
     if (use_partial_composition) {
-      converter_->StartPartialSuggestionForRequest(incognito_conversion_request,
-                                                   incognito_segments_.get());
+      result = converter_->StartPartialSuggestionForRequest(
+          incognito_conversion_request, incognito_segments_.get());
     } else {
-      converter_->StartSuggestionForRequest(incognito_conversion_request,
-                                            incognito_segments_.get());
+      result = converter_->StartSuggestionForRequest(
+          incognito_conversion_request, incognito_segments_.get());
     }
+  }
+  if (!result) {
+    VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
+               "returned no suggestions.";
+    // TODO(noriyukit): Check if fall through here is ok.
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());
 
@@ -754,8 +759,10 @@ void SessionConverter::Commit(const composer::Composer &composer,
   }
 
   for (size_t i = 0; i < segments_->conversion_segments_size(); ++i) {
-    converter_->CommitSegmentValue(segments_.get(), i,
-                                   GetCandidateIndexForConverter(i));
+    if (!converter_->CommitSegmentValue(segments_.get(), i,
+                                        GetCandidateIndexForConverter(i))) {
+      LOG(WARNING) << "Failed to commit segment " << i;
+    }
   }
   CommitUsageStats(state_, context);
   ConversionRequest conversion_request(&composer, request_, config_);
@@ -787,11 +794,14 @@ bool SessionConverter::CommitSuggestionInternal(
   if (request_->zero_query_suggestion() &&
       *consumed_key_size < composer.GetLength()) {
     // A candidate was chosen from partial suggestion.
-    converter_->CommitPartialSuggestionSegmentValue(
-        segments_.get(), 0, GetCandidateIndexForConverter(0),
-        Util::Utf8SubString(preedit, 0, *consumed_key_size),
-        Util::Utf8SubString(preedit, *consumed_key_size,
-                            preedit_length - *consumed_key_size));
+    if (!converter_->CommitPartialSuggestionSegmentValue(
+            segments_.get(), 0, GetCandidateIndexForConverter(0),
+            Util::Utf8SubString(preedit, 0, *consumed_key_size),
+            Util::Utf8SubString(preedit, *consumed_key_size,
+                                preedit_length - *consumed_key_size))) {
+      LOG(WARNING) << "CommitPartialSuggestionSegmentValue failed";
+      return false;
+    }
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
     InitializeSelectedCandidateIndices();
     // One or more segments must exist because new segment is inserted
@@ -799,8 +809,11 @@ bool SessionConverter::CommitSuggestionInternal(
     DCHECK_GT(segments_->conversion_segments_size(), 0);
   } else {
     // Not partial suggestion so let's reset the state.
-    converter_->CommitSegmentValue(segments_.get(), 0,
-                                   GetCandidateIndexForConverter(0));
+    if (!converter_->CommitSegmentValue(segments_.get(), 0,
+                                        GetCandidateIndexForConverter(0))) {
+      LOG(WARNING) << "CommitSegmentValue failed";
+      return false;
+    }
     CommitUsageStats(SessionConverterInterface::SUGGESTION, context);
     ConversionRequest conversion_request(&composer, request_, config_);
     converter_->FinishConversion(conversion_request, segments_.get());
@@ -891,7 +904,9 @@ void SessionConverter::CommitSegmentsInternal(
     // Collect candidate's id for each segment.
     candidate_ids.push_back(GetCandidateIndexForConverter(i));
   }
-  converter_->CommitSegments(segments_.get(), candidate_ids);
+  if (!converter_->CommitSegments(segments_.get(), candidate_ids)) {
+    LOG(WARNING) << "CommitSegments failed";
+  }
 
   // Commit the [0, segments_to_commit - 1] conversion segment.
   CommitUsageStatsWithSegmentsSize(state_, context, segments_to_commit);
@@ -1293,14 +1308,20 @@ void SessionConverter::ResetState() {
 
 void SessionConverter::SegmentFocus() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  converter_->FocusSegmentValue(segments_.get(), segment_index_,
-                                GetCandidateIndexForConverter(segment_index_));
+  if (!converter_->FocusSegmentValue(
+          segments_.get(), segment_index_,
+          GetCandidateIndexForConverter(segment_index_))) {
+    LOG(ERROR) << "FocusSegmentValue failed";
+  }
 }
 
 void SessionConverter::SegmentFix() {
   DCHECK(CheckState(SUGGESTION | PREDICTION | CONVERSION));
-  converter_->CommitSegmentValue(segments_.get(), segment_index_,
-                                 GetCandidateIndexForConverter(segment_index_));
+  if (!converter_->CommitSegmentValue(
+          segments_.get(), segment_index_,
+          GetCandidateIndexForConverter(segment_index_))) {
+    LOG(WARNING) << "CommitSegmentValue failed";
+  }
 }
 
 void SessionConverter::GetPreedit(const size_t index, const size_t size,
@@ -1744,7 +1765,11 @@ void SessionConverter::OnStartComposition(const commands::Context &context) {
 
   // Here we reconstruct history segments from |preceding_text| regardless
   // of revision mismatch. If it fails the history segments is cleared anyway.
-  converter_->ReconstructHistory(segments_.get(), preceding_text);
+  if (!converter_->ReconstructHistory(segments_.get(), preceding_text)) {
+    LOG(WARNING) << "ReconstructHistory failed. preceding_text: "
+                 << preceding_text
+                 << ", segments: " << segments_->DebugString();
+  }
 }
 
 void SessionConverter::UpdateSelectedCandidateIndex() {

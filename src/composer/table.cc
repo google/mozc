@@ -99,7 +99,14 @@ constexpr char kNotouchHalfwidthasciiTableFile[] =
     "system://qwerty_mobile-halfwidthascii.tsv";
 constexpr char k50KeysHiraganaTableFile[] =
     "system://50keys-hiragana.tsv";
-constexpr char k12KeysTabletTableFile[] = "system://12keys-tablet.tsv";
+constexpr char k12KeysTabletHiraganaTableFile[] =
+    "system://12keys-tablet-hiragana.tsv";
+constexpr char k12KeysTabletHalfwidthasciiTableFile[] =
+    "system://12keys-tablet-halfwidthascii.tsv";
+constexpr char k12KeysTabletFlickHiraganaTableFile[] =
+    "system://12keys-tablet-flick-hiragana.tsv";
+constexpr char k12KeysTabletFlickHalfwidthasciiTableFile[] =
+    "system://12keys-tablet-flick-halfwidthascii.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
 constexpr char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
@@ -209,7 +216,16 @@ bool Table::InitializeWithRequestAndConfig(
         table_file_name = k50KeysHiraganaTableFile;
         break;
       case mozc::commands::Request::TWELVE_KEYS_TABLET:
-        table_file_name = k12KeysTabletTableFile;
+        table_file_name = k12KeysTabletHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TABLET_TO_HALFWIDTHASCII:
+        table_file_name = k12KeysTabletHalfwidthasciiTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TABLET_FLICK:
+        table_file_name = k12KeysTabletFlickHiraganaTableFile;
+        break;
+      case mozc::commands::Request::TWELVE_KEYS_TABLET_FLICK_TO_HALFWIDTHASCII:
+        table_file_name = k12KeysTabletFlickHalfwidthasciiTableFile;
         break;
       default:
         table_file_name = nullptr;

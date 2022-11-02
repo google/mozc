@@ -618,6 +618,7 @@ message Request {
 
   reserved 3;  // Deprecated combine_all_segments
 
+  // Next ID: 51
   enum SpecialRomanjiTable {
     // Do not use special table.
     // Romanji table is selected based on Config.
@@ -689,8 +690,11 @@ message Request {
     // Use special table for 50keys keyboard.
     FIFTY_KEYS_TO_HIRAGANA = 46;
 
-    // Use special table for 12keys tablet keyboard.
+    // Use special table for Android 12keys tablet keyboard.
     TWELVE_KEYS_TABLET = 47;
+    TWELVE_KEYS_TABLET_FLICK = 48;
+    TWELVE_KEYS_TABLET_TO_HALFWIDTHASCII = 49;
+    TWELVE_KEYS_TABLET_FLICK_TO_HALFWIDTHASCII = 50;
 
     // Obsolete items.
     reserved 12, 15, 32, 21, 18;

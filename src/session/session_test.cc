@@ -381,9 +381,8 @@ class ConverterMockForReset : public ConverterMock {
  public:
   ConverterMockForReset() : reset_conversion_called_(false) {}
 
-  bool ResetConversion(Segments *segments) const override {
+  void ResetConversion(Segments *segments) const override {
     reset_conversion_called_ = true;
-    return true;
   }
 
   bool reset_conversion_called() const { return reset_conversion_called_; }
@@ -436,13 +435,13 @@ class MockConverterEngineForReset : public EngineInterface {
   std::unique_ptr<ConverterMockForReset> converter_mock_;
 };
 
+// TODO(noriyukit): Replace this by MockConverter.
 class ConverterMockForRevert : public ConverterMock {
  public:
   ConverterMockForRevert() : revert_conversion_called_(false) {}
 
-  bool RevertConversion(Segments *segments) const override {
+  void RevertConversion(Segments *segments) const override {
     revert_conversion_called_ = true;
-    return true;
   }
 
   bool revert_conversion_called() const { return revert_conversion_called_; }
@@ -2227,7 +2226,7 @@ TEST_F(SessionTest, UndoForComposition) {
     EXPECT_EQ("あい", GetComposition(command));
 
     command.Clear();
-    GetConverterMock()->SetFinishConversion(&empty_segments, true);
+    GetConverterMock()->SetFinishConversion(&empty_segments);
     session.CommitFirstSuggestion(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("あいうえお", command);
@@ -4239,8 +4238,9 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_EQ("クエリ", command.output().candidates().candidate(0).value());
 
   // commit partial suggestion
+  GetConverterMock()->SetCommitSegmentValue(&segments_jueri, true);
   Segments empty_segments;
-  GetConverterMock()->SetFinishConversion(&empty_segments, true);
+  GetConverterMock()->SetFinishConversion(&empty_segments);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
   GetConverterMock()->SetStartSuggestionForRequest(&segments_jueri, true);
@@ -4323,6 +4323,8 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   EXPECT_EQ("綿", command.output().candidates().candidate(0).value());
 
   // commit partial suggestion
+  GetConverterMock()->SetCommitPartialSuggestionSegmentValue(&segments_wata,
+                                                             true);
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
   GetConverterMock()->SetStartSuggestionForRequest(&segments_shino, true);
@@ -5442,7 +5444,7 @@ TEST_F(SessionTest, Issue2029466) {
   // <ctrl-N>
   segments.Clear();
   // FinishConversion is expected to return empty Segments.
-  GetConverterMock()->SetFinishConversion(&segments, true);
+  GetConverterMock()->SetFinishConversion(&segments);
   command.Clear();
   EXPECT_TRUE(session.CommitSegment(&command));
 
@@ -7132,8 +7134,8 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
-  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
-                                          true);
+  GetConverterMock()->SetCommitSegmentValue(&segments_mo, true);
+  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
   session.SendCommand(&command);
@@ -7175,38 +7177,19 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   Session session(engine_.get());
   InitSessionToPrecomposition(&session, *mobile_request_);
 
-  {
-    Segments segments;
+  Segments segments;
+  Segment *segment = segments.add_segment();
+  segment->set_key("tok");
+  AddCandidate("tok", "tok", segment);
+  AddMetaCandidate("tok", "tok", segment);
+  AddMetaCandidate("tok", "TOK", segment);
+  AddMetaCandidate("tok", "Tok", segment);
+  EXPECT_EQ("tok", segment->candidate(-1).value);
+  EXPECT_EQ("TOK", segment->candidate(-2).value);
+  EXPECT_EQ("Tok", segment->candidate(-3).value);
 
-    Segment *segment;
-    segment = segments.add_segment();
-    segment->set_key("tok");
-    AddCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "TOK", segment);
-    AddMetaCandidate("tok", "Tok", segment);
-    EXPECT_EQ("tok", segment->candidate(-1).value);
-    EXPECT_EQ("TOK", segment->candidate(-2).value);
-    EXPECT_EQ("Tok", segment->candidate(-3).value);
-
-    GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
-  }
-
-  {
-    Segments segments;
-
-    Segment *segment;
-    segment = segments.add_segment();
-    segment->set_key("tok");
-    AddCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "tok", segment);
-    AddMetaCandidate("tok", "TOK", segment);
-    AddMetaCandidate("tok", "Tok", segment);
-    EXPECT_EQ("tok", segment->candidate(-1).value);
-    EXPECT_EQ("TOK", segment->candidate(-2).value);
-    EXPECT_EQ("Tok", segment->candidate(-3).value);
-    GetConverterMock()->SetStartPredictionForRequest(&segments, true);
-  }
+  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
   commands::Command command;
   SendKey("k", &session, &command);
@@ -7217,8 +7200,8 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else   // OS_WIN, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
-  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
-                                          true);
+  GetConverterMock()->SetCommitSegmentValue(&segments, true);
+  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
   session.SendCommand(&command);
@@ -7594,7 +7577,7 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
 
     command.Clear();
     Segments empty_segments;
-    GetConverterMock()->SetFinishConversion(&empty_segments, true);
+    GetConverterMock()->SetFinishConversion(&empty_segments);
     session.CommitFirstSuggestion(&command);
     EXPECT_EQ("google", command.output().result().value());
     EXPECT_EQ("", GetComposition(command));
@@ -7645,8 +7628,7 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get(),
-                                            true);
+    GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
@@ -9295,8 +9277,7 @@ TEST_F(SessionTest, SetConfig) {
   session.PushUndoContext();
   session.SetConfig(&config);
 
-  EXPECT_EQ(&session.context_->GetConfig(),
-            &config);
+  EXPECT_EQ(&session.context_->GetConfig(), &config);
   // SetConfig() resets undo context.
   EXPECT_FALSE(session.prev_context_);
 }

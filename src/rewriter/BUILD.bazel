@@ -1223,39 +1223,40 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "katakana_promotion_rewriter",
-    srcs = ["katakana_promotion_rewriter.cc"],
-    hdrs = ["katakana_promotion_rewriter.h"],
+    name = "t13n_promotion_rewriter",
+    srcs = ["t13n_promotion_rewriter.cc"],
+    hdrs = ["t13n_promotion_rewriter.h"],
     deps = [
         ":rewriter_interface",
         ":rewriter_util",
-        "//base",
         "//base:util",
+        "//composer",
         "//converter:segments",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
         "//transliteration",
+        "@com_google_absl//absl/container:flat_hash_set",
     ],
     alwayslink = 1,
 )
 
 cc_test_mozc(
-    name = "katakana_promotion_rewriter_test",
+    name = "t13n_promotion_rewriter_test",
     size = "small",
-    srcs = ["katakana_promotion_rewriter_test.cc"],
+    srcs = ["t13n_promotion_rewriter_test.cc"],
     requires_full_emulation = False,
     deps = [
-        ":katakana_promotion_rewriter",
+        ":t13n_promotion_rewriter",
         ":transliteration_rewriter",
-        "//base",
+        "//composer",
         "//converter:segments",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher_lib",
         "//protocol:commands_cc_proto",
         "//request:conversion_request",
+        "//session:request_test_util",
         "//testing:gunit_main",
         "//testing:mozctest",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -1565,7 +1566,6 @@ cc_library_mozc(
         ":focus_candidate_rewriter",
         ":fortune_rewriter",
         ":ivs_variants_rewriter",
-        ":katakana_promotion_rewriter",
         ":language_aware_rewriter",
         ":merger_rewriter",
         ":number_rewriter",
@@ -1574,6 +1574,7 @@ cc_library_mozc(
         ":single_kanji_rewriter",
         ":small_letter_rewriter",
         ":symbol_rewriter",
+        ":t13n_promotion_rewriter",
         ":transliteration_rewriter",
         ":unicode_rewriter",
         ":usage_rewriter",

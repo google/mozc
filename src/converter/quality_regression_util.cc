@@ -50,6 +50,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -253,23 +254,36 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conversion_request(&composer, request_.get(),
                                          config_.get());
-    converter_->StartConversionForRequest(conversion_request, segments_.get());
+    if (!converter_->StartConversionForRequest(conversion_request,
+                                               segments_.get())) {
+      return absl::UnknownError(absl::StrCat(
+          "StartConversionForRequest failed: ", item.OutputAsTSV()));
+    }
   } else if (command == kReverseConversionExpect ||
              command == kReverseConversionNotExpect) {
-    converter_->StartReverseConversion(segments_.get(), key);
+    if (!converter_->StartReverseConversion(segments_.get(), key)) {
+      return absl::UnknownError("StartReverseConversion failed");
+    }
   } else if (command == kPredictionExpect || command == kPredictionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conversion_request(&composer, request_.get(),
                                          config_.get());
-    converter_->StartPredictionForRequest(conversion_request, segments_.get());
-
+    if (!converter_->StartPredictionForRequest(conversion_request,
+                                               segments_.get())) {
+      return absl::UnknownError(absl::StrCat(
+          "StartPredictionForRequest failed: ", item.OutputAsTSV()));
+    }
   } else if (command == kSuggestionExpect || command == kSuggestionNotExpect) {
     composer::Composer composer(&table, request_.get(), config_.get());
     composer.SetPreeditTextForTestOnly(key);
     ConversionRequest conversion_request(&composer, request_.get(),
                                          config_.get());
-    converter_->StartSuggestionForRequest(conversion_request, segments_.get());
+    if (!converter_->StartSuggestionForRequest(conversion_request,
+                                               segments_.get())) {
+      return absl::UnknownError(absl::StrCat(
+          "StartSuggestionForRequest failed: ", item.OutputAsTSV()));
+    }
   } else if (command == kZeroQueryExpect || command == kZeroQueryNotExpect) {
     commands::Request request = *request_;
     request.set_zero_query_suggestion(true);
@@ -279,9 +293,15 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       composer.SetPreeditTextForTestOnly(key);
       ConversionRequest conversion_request(&composer, &request, config_.get());
       conversion_request.set_max_conversion_candidates_size(10);
-      converter_->StartSuggestionForRequest(conversion_request,
-                                            segments_.get());
-      converter_->CommitSegmentValue(segments_.get(), 0, 0);
+      if (!converter_->StartSuggestionForRequest(conversion_request,
+                                                 segments_.get())) {
+        return absl::UnknownError(absl::StrCat(
+            "StartSuggestionForRequest failed: ", item.OutputAsTSV()));
+      }
+      if (!converter_->CommitSegmentValue(segments_.get(), 0, 0)) {
+        return absl::UnknownError(
+            absl::StrCat("CommitSegmentValue failed: ", item.OutputAsTSV()));
+      }
       converter_->FinishConversion(conversion_request, segments_.get());
     }
     {
@@ -289,8 +309,11 @@ absl::StatusOr<bool> QualityRegressionUtil::ConvertAndTest(
       composer::Composer composer(&table, &request, config_.get());
       ConversionRequest conversion_request(&composer, &request, config_.get());
       conversion_request.set_max_conversion_candidates_size(10);
-      converter_->StartPredictionForRequest(conversion_request,
-                                            segments_.get());
+      if (!converter_->StartPredictionForRequest(conversion_request,
+                                                 segments_.get())) {
+        return absl::UnknownError(absl::StrCat(
+            "StartPredictionForRequest failed: ", item.OutputAsTSV()));
+      }
       segments_->clear_history_segments();
     }
   } else {

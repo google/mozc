@@ -27,21 +27,75 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "rewriter/katakana_promotion_rewriter.h"
+#include "rewriter/t13n_promotion_rewriter.h"
 
 #include <algorithm>
 #include <string>
 
 #include "base/util.h"
+#include "composer/composer.h"
 #include "converter/segments.h"
 #include "protocol/commands.pb.h"
 #include "request/conversion_request.h"
 #include "rewriter/rewriter_util.h"
 #include "transliteration/transliteration.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace mozc {
 
 namespace {
+
+// The insertion offset for T13N candidates.
+// Only one of Latin T13n candidates (width, case variants for Latin character
+// keys) and katakana T13n candidates (Katakana variants for other keys) will
+// be promoted.
+constexpr size_t kLatinT13nOffset = 3;
+constexpr size_t kKatakanaT13nOffset = 5;
+
+bool IsLatinInputMode(const ConversionRequest &request) {
+  return (request.has_composer() &&
+          (request.composer().GetInputMode() == transliteration::HALF_ASCII ||
+           request.composer().GetInputMode() == transliteration::FULL_ASCII));
+}
+
+bool MaybeInsertLatinT13n(Segment *segment) {
+  if (segment->meta_candidates_size() <=
+      transliteration::FULL_ASCII_CAPITALIZED) {
+    return false;
+  }
+
+  const size_t insert_pos =
+      RewriterUtil::CalculateInsertPosition(*segment, kLatinT13nOffset);
+
+  absl::flat_hash_set<absl::string_view> seen;
+  for (size_t i = 0; i < insert_pos; ++i) {
+    seen.insert(segment->candidate(i).value);
+  }
+
+  static constexpr transliteration::TransliterationType kLatinT13nTypes[] = {
+      transliteration::HALF_ASCII,
+      transliteration::FULL_ASCII,
+      transliteration::HALF_ASCII_UPPER,
+      transliteration::FULL_ASCII_UPPER,
+      transliteration::HALF_ASCII_LOWER,
+      transliteration::FULL_ASCII_LOWER,
+      transliteration::HALF_ASCII_CAPITALIZED,
+      transliteration::FULL_ASCII_CAPITALIZED,
+  };
+
+  size_t pos = insert_pos;
+  for (const auto t13n_type : kLatinT13nTypes) {
+    const Segment::Candidate &t13n_candidate =
+        segment->meta_candidate(t13n_type);
+    auto [it, inserted] = seen.insert(t13n_candidate.value);
+    if (!inserted) {
+      continue;
+    }
+    *(segment->insert_candidate(pos)) = t13n_candidate;
+    ++pos;
+  }
+  return pos != insert_pos;
+}
 
 bool MaybePromoteKatakana(Segment *segment) {
   if (segment->meta_candidates_size() <= transliteration::FULL_KATAKANA) {
@@ -55,9 +109,8 @@ bool MaybePromoteKatakana(Segment *segment) {
     return false;
   }
 
-  constexpr size_t kMaxRankForKatakana = 5;
   for (size_t i = 0;
-       i < std::min(segment->candidates_size(), kMaxRankForKatakana); ++i) {
+       i < std::min(segment->candidates_size(), kKatakanaT13nOffset); ++i) {
     if (segment->candidate(i).value == katakana_value) {
       // No need to promote or insert.
       return false;
@@ -65,7 +118,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   Segment::Candidate insert_candidate = katakana_candidate;
-  size_t index = kMaxRankForKatakana;
+  size_t index = kKatakanaT13nOffset;
   for (; index < segment->candidates_size(); ++index) {
     if (segment->candidate(index).value == katakana_value) {
       break;
@@ -73,7 +126,7 @@ bool MaybePromoteKatakana(Segment *segment) {
   }
 
   const size_t insert_pos =
-      RewriterUtil::CalculateInsertPosition(*segment, kMaxRankForKatakana);
+      RewriterUtil::CalculateInsertPosition(*segment, kKatakanaT13nOffset);
   if (index < segment->candidates_size()) {
     const Segment::Candidate insert_candidate = segment->candidate(index);
     *(segment->insert_candidate(insert_pos)) = insert_candidate;
@@ -84,27 +137,33 @@ bool MaybePromoteKatakana(Segment *segment) {
   return true;
 }
 
+bool MaybePromoteT13n(const ConversionRequest &request, Segment *segment) {
+  if (IsLatinInputMode(request) || Util::IsAscii(segment->key())) {
+    return MaybeInsertLatinT13n(segment);
+  }
+  return MaybePromoteKatakana(segment);
+}
+
 }  // namespace
 
-KatakanaPromotionRewriter::KatakanaPromotionRewriter() = default;
+T13nPromotionRewriter::T13nPromotionRewriter() = default;
 
-KatakanaPromotionRewriter::~KatakanaPromotionRewriter() = default;
+T13nPromotionRewriter::~T13nPromotionRewriter() = default;
 
-int KatakanaPromotionRewriter::capability(
-    const ConversionRequest &request) const {
-  if (request.request().mixed_conversion()) {
+int T13nPromotionRewriter::capability(const ConversionRequest &request) const {
+  if (request.request().mixed_conversion()) {  // For mobile
     return RewriterInterface::ALL;
   } else {
-    // Desktop version has a keybind to select katakana.
     return RewriterInterface::NOT_AVAILABLE;
   }
 }
 
-bool KatakanaPromotionRewriter::Rewrite(const ConversionRequest &request,
-                                        Segments *segments) const {
+bool T13nPromotionRewriter::Rewrite(const ConversionRequest &request,
+                                    Segments *segments) const {
   bool modified = false;
   for (size_t i = 0; i < segments->conversion_segments_size(); ++i) {
-    modified |= MaybePromoteKatakana(segments->mutable_conversion_segment(i));
+    modified |=
+        MaybePromoteT13n(request, segments->mutable_conversion_segment(i));
   }
   return modified;
 }

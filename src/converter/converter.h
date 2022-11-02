@@ -63,45 +63,62 @@ class ConverterImpl final : public ConverterInterface {
             std::unique_ptr<RewriterInterface> rewriter,
             ImmutableConverterInterface *immutable_converter);
 
+  ABSL_MUST_USE_RESULT
   bool StartConversionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartConversion(Segments *segments,
                        const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartReverseConversion(Segments *segments,
                               const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPredictionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPrediction(Segments *segments,
                        const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartSuggestionForRequest(const ConversionRequest &request,
                                  Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartSuggestion(Segments *segments,
                        const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPartialPredictionForRequest(const ConversionRequest &request,
                                         Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPartialPrediction(Segments *segments,
                               const std::string &key) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPartialSuggestionForRequest(const ConversionRequest &request,
                                         Segments *segments) const override;
+  ABSL_MUST_USE_RESULT
   bool StartPartialSuggestion(Segments *segments,
                               const std::string &key) const override;
 
-  bool FinishConversion(const ConversionRequest &request,
+  void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;
-  bool CancelConversion(Segments *segments) const override;
-  bool ResetConversion(Segments *segments) const override;
-  bool RevertConversion(Segments *segments) const override;
+  void CancelConversion(Segments *segments) const override;
+  void ResetConversion(Segments *segments) const override;
+  void RevertConversion(Segments *segments) const override;
+
+  ABSL_MUST_USE_RESULT
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override;
 
+  ABSL_MUST_USE_RESULT
   bool CommitSegmentValue(Segments *segments, size_t segment_index,
                           int candidate_index) const override;
+  ABSL_MUST_USE_RESULT
   bool CommitPartialSuggestionSegmentValue(
       Segments *segments, size_t segment_index, int candidate_index,
       absl::string_view current_segment_key,
       absl::string_view new_segment_key) const override;
+  ABSL_MUST_USE_RESULT
   bool FocusSegmentValue(Segments *segments, size_t segment_index,
                          int candidate_index) const override;
+  ABSL_MUST_USE_RESULT
   bool CommitSegments(
       Segments *segments,
       const std::vector<size_t> &candidate_index) const override;

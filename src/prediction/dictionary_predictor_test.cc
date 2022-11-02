@@ -3543,8 +3543,7 @@ struct TestEntry {
         "expected_result: %d\n"
         "expected_candidates: %s\n"
         "expected_types: %s",
-        key.c_str(), expected_result,
-        candidates.c_str(), types.c_str());
+        key.c_str(), expected_result, candidates.c_str(), types.c_str());
   }
 };
 
@@ -4070,5 +4069,29 @@ TEST_F(DictionaryPredictorTest, CancelSegmentModelPenalty) {
   // Only transition cost (to the empty history) and the original wcost
   // should be used for the candidate cost.
   EXPECT_EQ(connector->GetTransitionCost(0, c.lid) + 100, c.cost);
+}
+
+TEST_F(DictionaryPredictorTest, DoNotPredictNoisyNumberEntries) {
+  testing::MockDataManager data_manager;
+
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
+      new MockDataAndPredictor());
+  data_and_predictor->Init(
+      CreateSystemDictionaryFromDataManager(data_manager).value().release(),
+      CreateSuffixDictionaryFromDataManager(data_manager));
+
+  const TestableDictionaryPredictor *predictor =
+      data_and_predictor->dictionary_predictor();
+
+  Segments segments;
+  composer_->SetInputMode(transliteration::HALF_ASCII);
+  SetUpInputForSuggestion("1", composer_.get(), &segments);
+  commands::RequestForUnitTest::FillMobileRequest(request_.get());
+
+  predictor->PredictForRequest(*convreq_for_prediction_, &segments);
+
+  // These words are in test dictionary, but should not be looked up here.
+  EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "1時過ぎ"));
+  EXPECT_FALSE(FindCandidateByValue(segments.conversion_segment(0), "19時"));
 }
 }  // namespace mozc

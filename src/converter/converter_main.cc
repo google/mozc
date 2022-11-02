@@ -302,11 +302,14 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
       return converter.StartSuggestionForRequest(*conversion_request, segments);
     }
   } else if (func == "finishconversion" || func == "finish") {
-    return converter.FinishConversion(*conversion_request, segments);
+    converter.FinishConversion(*conversion_request, segments);
+    return true;
   } else if (func == "resetconversion" || func == "reset") {
-    return converter.ResetConversion(segments);
+    converter.ResetConversion(segments);
+    return true;
   } else if (func == "cancelconversion" || func == "cancel") {
-    return converter.CancelConversion(segments);
+    converter.CancelConversion(segments);
+    return true;
   } else if (func == "commitsegmentvalue" || func == "commit" || func == "c") {
     CHECK_FIELDS_LENGTH(3);
     return converter.CommitSegmentValue(segments,
@@ -319,7 +322,8 @@ bool ExecCommand(const ConverterInterface &converter, const std::string &line,
         if (!(converter.CommitSegmentValue(segments, i, 0))) return false;
       }
     }
-    return converter.FinishConversion(*conversion_request, segments);
+    converter.FinishConversion(*conversion_request, segments);
+    return true;
   } else if (func == "focussegmentvalue" || func == "focus") {
     CHECK_FIELDS_LENGTH(3);
     return converter.FocusSegmentValue(segments,

@@ -60,10 +60,10 @@ class ConverterMock : public ConverterInterface {
   void SetStartPartialPrediction(Segments *segments, bool result);
   void SetStartPartialSuggestionForRequest(Segments *segments, bool result);
   void SetStartPartialSuggestion(Segments *segments, bool result);
-  void SetFinishConversion(Segments *segments, bool result);
-  void SetCancelConversion(Segments *segments, bool result);
-  void SetResetConversion(Segments *segments, bool result);
-  void SetRevertConversion(Segments *segments, bool result);
+  void SetFinishConversion(Segments *segments);
+  void SetCancelConversion(Segments *segments);
+  void SetResetConversion(Segments *segments);
+  void SetRevertConversion(Segments *segments);
   void SetReconstructHistory(Segments *segments, bool result);
   void SetCommitSegmentValue(Segments *segments, bool result);
   void SetCommitPartialSuggestionSegmentValue(Segments *segments, bool result);
@@ -134,11 +134,11 @@ class ConverterMock : public ConverterInterface {
                                         Segments *segments) const override;
   bool StartPartialSuggestion(Segments *segments,
                               const std::string &key) const override;
-  bool FinishConversion(const ConversionRequest &request,
+  void FinishConversion(const ConversionRequest &request,
                         Segments *segments) const override;
-  bool CancelConversion(Segments *segments) const override;
-  bool ResetConversion(Segments *segments) const override;
-  bool RevertConversion(Segments *segments) const override;
+  void CancelConversion(Segments *segments) const override;
+  void ResetConversion(Segments *segments) const override;
+  void RevertConversion(Segments *segments) const override;
   bool ReconstructHistory(Segments *segments,
                           const std::string &preceding_text) const override;
   bool CommitSegmentValue(Segments *segments, size_t segment_index,
@@ -263,18 +263,14 @@ class MockConverter final : public ConverterInterface {
               (const, override));
   MOCK_METHOD(bool, StartPartialSuggestion,
               (Segments * segments, const std::string &key), (const, override));
-  MOCK_METHOD(bool, FinishConversion,
+  MOCK_METHOD(void, FinishConversion,
               (const ConversionRequest &request, Segments *segments),
               (const, override));
-  MOCK_METHOD(bool, CancelConversion, (Segments * segments), (const, override));
-  MOCK_METHOD(bool, ResetConversion, (Segments * segments), (const, override));
-  MOCK_METHOD(bool, RevertConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(void, CancelConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(void, ResetConversion, (Segments * segments), (const, override));
+  MOCK_METHOD(void, RevertConversion, (Segments * segments), (const, override));
   MOCK_METHOD(bool, ReconstructHistory,
               (Segments * segments, const std::string &preceding_text),
-              (const, override));
-  MOCK_METHOD(bool, GetCandidates,
-              (Segments * segments, size_t segment_index,
-               size_t candidate_size),
               (const, override));
   MOCK_METHOD(bool, CommitSegmentValue,
               (Segments * segments, size_t segment_index, int candidate_index),
