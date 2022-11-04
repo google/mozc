@@ -691,16 +691,16 @@ message Request {
     FIFTY_KEYS_TO_HIRAGANA = 46;
 
     // Use special table for Android 12keys tablet keyboard.
-    TWELVE_KEYS_TABLET = 47;
-    TWELVE_KEYS_TABLET_FLICK = 48;
-    TWELVE_KEYS_TABLET_TO_HALFWIDTHASCII = 49;
-    TWELVE_KEYS_TABLET_FLICK_TO_HALFWIDTHASCII = 50;
 
     // Obsolete items.
-    reserved 12, 15, 32, 21, 18;
+    reserved 12, 15, 32, 21, 18, 47 to 50;
     reserved "TWELVE_KEYS_TO_NUMBER";
     reserved "GODAN_TO_NUMBER";
     reserved "QWERTY_MOBILE_TO_HIRAGANA_NUMBER";
+    reserved "TWELVE_KEYS_TABLET";
+    reserved "TWELVE_KEYS_TABLET_FLICK";
+    reserved "TWELVE_KEYS_TABLET_TO_HALFWIDTHASCII";
+    reserved "TWELVE_KEYS_TABLET_FLICK_TO_HALFWIDTHASCII";
   }
 
   // Use special Romanji table.
