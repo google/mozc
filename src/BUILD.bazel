@@ -137,6 +137,7 @@ filegroup(
             "//renderer:mozc_renderer",
             "//server:mozc_server",
             "//unix/emacs:mozc_emacs_helper",
+            "//unix/ibus:ibus_mozc",
             "//unix:icons",
         ],
         macos = [
