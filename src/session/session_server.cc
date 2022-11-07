@@ -118,7 +118,8 @@ bool SessionServer::Process(const char *request, size_t request_size,
   // TODO(taku) automatically increase the buffer.
   // Needs to fix IPCServer as well
   if (*response_size < output.size()) {
-    LOG(WARNING) << "response size < output.size";
+    LOG(WARNING) << "response size: " << *response_size
+                 << " < output.size:" << output.size();
     *response_size = 0;
     return true;
   }
