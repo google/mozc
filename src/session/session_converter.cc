@@ -527,11 +527,11 @@ bool SessionConverter::SuggestWithPreferences(
       result = converter_->StartSuggestionForRequest(
           incognito_conversion_request, incognito_segments_.get());
     }
-  }
-  if (!result) {
-    VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
-               "returned no suggestions.";
-    // TODO(noriyukit): Check if fall through here is ok.
+    if (!result) {
+      VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
+                 "returned no suggestions.";
+      // TODO(noriyukit): Check if fall through here is ok.
+    }
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());
 
