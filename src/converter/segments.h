@@ -350,6 +350,8 @@ class Segment final {
   std::vector<Candidate> removed_candidates_for_debug_;
 
  private:
+  void DeepCopyCandidates(const std::deque<Candidate *> &candidates);
+
   SegmentType segment_type_;
   // Note that |key_| is shorter than usual when partial suggestion is
   // performed.
