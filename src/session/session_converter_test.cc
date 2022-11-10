@@ -667,9 +667,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
   FillT13Ns(&segments, composer_.get());
   convertermock_->SetStartConversionForRequest(&segments, true);
   EXPECT_TRUE(converter.Convert(*composer_));
-  std::vector<int> expected_indices;
-  expected_indices.push_back(0);
-  expected_indices.push_back(0);
+  std::vector<int> expected_indices = {0, 0};
   {
     EXPECT_EQ(0, GetSegmentIndex(converter));
     EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
@@ -681,7 +679,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_FALSE(output.has_candidates());
 
     const commands::Preedit &conversion = output.preedit();
-    EXPECT_EQ(2, conversion.segment_size());
+    ASSERT_EQ(2, conversion.segment_size());
     EXPECT_EQ(commands::Preedit::Segment::HIGHLIGHT,
               conversion.segment(0).annotation());
     EXPECT_EQ(kKamabokono, conversion.segment(0).key());
@@ -718,7 +716,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
     EXPECT_TRUE(output.has_candidates());
 
     const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(0, candidates.position());
     EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
     EXPECT_EQ("カマボコの", candidates.candidate(1).value());
@@ -741,7 +739,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(0, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(5, candidates.position());
     EXPECT_EQ("陰謀", candidates.candidate(0).value());
     EXPECT_EQ("印房", candidates.candidate(1).value());
@@ -764,7 +762,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(0, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(0, candidates.position());
     EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
     EXPECT_EQ("カマボコの", candidates.candidate(1).value());
@@ -790,7 +788,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(0, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(5, candidates.position());
     EXPECT_EQ("陰謀", candidates.candidate(0).value());
     EXPECT_EQ("印房", candidates.candidate(1).value());
@@ -816,7 +814,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(0, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(0, candidates.position());
     EXPECT_EQ(kKamabokono, candidates.candidate(0).value());
     EXPECT_EQ("カマボコの", candidates.candidate(1).value());
@@ -839,7 +837,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(1, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(5, candidates.position());
     EXPECT_EQ("陰謀", candidates.candidate(0).value());
     EXPECT_EQ("印房", candidates.candidate(1).value());
@@ -883,7 +881,7 @@ TEST_F(SessionConverterTest, MultiSegmentsConversion) {
 
     const commands::Candidates &candidates = output.candidates();
     EXPECT_EQ(0, candidates.focused_index());
-    EXPECT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
+    ASSERT_EQ(3, candidates.size());  // two candidates + one t13n sub list.
     EXPECT_EQ(5, candidates.position());
     EXPECT_EQ("印房", candidates.candidate(0).value());
 

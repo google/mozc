@@ -1456,6 +1456,7 @@ void SessionConverter::AppendCandidateList() {
   // cannot be decided).
   const bool add_meta_candidates = (candidate_list_->size() == 0);
 
+  DCHECK_LT(segment_index_, segments_->conversion_segments_size());
   const Segment &segment = segments_->conversion_segment(segment_index_);
   for (size_t i = candidate_list_->next_available_id();
        i < segment.candidates_size(); ++i) {
