@@ -556,6 +556,8 @@ bool Composer::InsertCharacterKeyEvent(const commands::KeyEvent &key) {
     if (key.input_style() == commands::KeyEvent::AS_IS ||
         key.input_style() == commands::KeyEvent::DIRECT_INPUT) {
       composition_.SetInputMode(Transliterators::CONVERSION_STRING);
+      // Disable typing correction mainly for Android. b/258369101
+      typing_corrector_.Invalidate();
       ProcessCompositionInput(input);
       SetInputMode(comeback_input_mode_);
     } else {
