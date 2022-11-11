@@ -52,6 +52,7 @@ cc_library_mozc(
         "//base:mmap",
         "//base:port",
         "//base:util",
+        "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/strings",

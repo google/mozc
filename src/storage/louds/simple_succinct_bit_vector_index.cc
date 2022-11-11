@@ -36,6 +36,7 @@
 
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/base/internal/endian.h"
 
 namespace mozc {
 namespace storage {
@@ -83,7 +84,7 @@ class ZeroBitIndexIterator {
 #ifdef __GNUC__
 // TODO(hidehiko): Support XMM and 64-bits popcount for 64bits architectures.
 inline int BitCount1(uint32_t x) { return __builtin_popcount(x); }
-#else
+#else   // __GNUC__
 int BitCount1(uint32 x) {
   x = ((x & 0xaaaaaaaa) >> 1) + (x & 0x55555555);
   x = ((x & 0xcccccccc) >> 2) + (x & 0x33333333);
@@ -92,7 +93,7 @@ int BitCount1(uint32 x) {
   x = ((x >> 16) + x) & 0x3f;
   return x;
 }
-#endif
+#endif  // __GNUC__
 
 inline int BitCount0(uint32_t x) {
   // Flip all bits, and count 1-bits.
@@ -107,10 +108,10 @@ inline bool IsPowerOfTwo(int value) {
 }
 
 // Returns 1-bits in the data[0] ... data[length - 1].
-int Count1Bits(const uint32_t *data, int length) {
+int Count1Bits(const uint8_t *data, int length) {
   int num_bits = 0;
-  for (; length > 0; ++data, --length) {
-    num_bits += BitCount1(*data);
+  for (; length > 0; data += 4, --length) {
+    num_bits += BitCount1(absl::little_endian::Load32(data));
   }
   return num_bits;
 }
@@ -134,8 +135,7 @@ void InitIndex(const uint8_t *data, int length, int chunk_size,
   for (int remaining_num_words = length / 4; remaining_num_words > 0;
        data += chunk_size, remaining_num_words -= chunk_size / 4) {
     index->push_back(num_bits);
-    num_bits += Count1Bits(reinterpret_cast<const uint32_t *>(data),
-                           std::min(chunk_size / 4, remaining_num_words));
+    num_bits += Count1Bits(data, std::min(chunk_size / 4, remaining_num_words));
   }
   index->push_back(num_bits);
 
@@ -222,16 +222,14 @@ int SimpleSuccinctBitVectorIndex::Rank1(int n) const {
   int result = index_[n / (chunk_size_ * 8)];
 
   // Count 1-bits for remaining "words".
-  result += Count1Bits(
-      reinterpret_cast<const uint32_t *>(data_ + num_chunks * chunk_size_),
-      (n / 8 - num_chunks * chunk_size_) / 4);
+  result += Count1Bits(data_ + num_chunks * chunk_size_,
+                       (n / 8 - num_chunks * chunk_size_) / 4);
 
   // Count 1-bits for remaining "bits".
   if (n % 32 > 0) {
-    const int index = n / 32;
+    const int offset = 4 * (n / 32);
     const int shift = 32 - n % 32;
-    result +=
-        BitCount1(reinterpret_cast<const uint32_t *>(data_)[index] << shift);
+    result += BitCount1(absl::little_endian::Load32(data_ + offset) << shift);
   }
 
   return result;
@@ -260,19 +258,20 @@ int SimpleSuccinctBitVectorIndex::Select0(int n) const {
   n -= chunk_size_ * 8 * chunk_index - index_[chunk_index];
 
   // Linear search on remaining "words"
-  const uint32_t *ptr =
-      reinterpret_cast<const uint32_t *>(data_) + chunk_index * chunk_size_ / 4;
+  const int offset = (chunk_index * chunk_size_) & ~int{3};
+  const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = BitCount0(*ptr);
+    const int bit_count = BitCount0(absl::little_endian::Load32(ptr));
     if (bit_count >= n) {
       break;
     }
     n -= bit_count;
-    ++ptr;
+    ptr += 4;
   }
 
-  int index = (ptr - reinterpret_cast<const uint32_t *>(data_)) * 32;
-  for (uint32_t word = ~(*ptr); n > 0; word >>= 1, ++index) {
+  int index = (ptr - data_) * 8;
+  for (uint32_t word = ~absl::little_endian::Load32(ptr); n > 0;
+       word >>= 1, ++index) {
     n -= (word & 1);
   }
 
@@ -299,19 +298,20 @@ int SimpleSuccinctBitVectorIndex::Select1(int n) const {
   n -= index_[chunk_index];
 
   // Linear search on remaining "words"
-  const uint32_t *ptr =
-      reinterpret_cast<const uint32_t *>(data_) + chunk_index * chunk_size_ / 4;
+  const int offset = (chunk_index * chunk_size_) & ~int{3};
+  const uint8_t *ptr = data_ + offset;
   while (true) {
-    const int bit_count = BitCount1(*ptr);
+    const int bit_count = BitCount1(absl::little_endian::Load32(ptr));
     if (bit_count >= n) {
       break;
     }
     n -= bit_count;
-    ++ptr;
+    ptr += 4;
   }
 
-  int index = (ptr - reinterpret_cast<const uint32_t *>(data_)) * 32;
-  for (uint32_t word = *ptr; n > 0; word >>= 1, ++index) {
+  int index = (ptr - data_) * 8;
+  for (uint32_t word = absl::little_endian::Load32(ptr); n > 0;
+       word >>= 1, ++index) {
     n -= (word & 1);
   }
 
