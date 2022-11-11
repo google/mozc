@@ -44,6 +44,7 @@
         'key_corrector_test.cc',
         'lattice_test.cc',
         'nbest_generator_test.cc',
+        'segments_matchers_test.cc',
         'segments_test.cc',
       ],
       'dependencies': [

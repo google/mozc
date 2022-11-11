@@ -1,0 +1,179 @@
+// Copyright 2010-2021, Google Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+#ifndef MOZC_CONVERTER_SEGMENTS_MATCHERS_H_
+#define MOZC_CONVERTER_SEGMENTS_MATCHERS_H_
+
+#include <algorithm>
+
+#include "converter/segments.h"
+#include "testing/base/public/gmock.h"
+
+namespace mozc {
+
+// Checks if a candidate exactly matches the given candidate except for `log`
+// field. Note: this is more useful than defining operator==() in testing as it
+// can display which field is different.
+//
+// Usage:
+//   Segment::Candidate actual_candidate = ...;
+//   EXPECT_THAT(actual_candidate, EqualsCandidate(expected_candidate));
+MATCHER_P(EqualsCandidate, candidate, "") {
+#define COMPARE_FIELD(field)                                         \
+  if (arg.field != candidate.field) {                                \
+    *result_listener << "where the field '" #field "' is different"; \
+    return false;                                                    \
+  }
+  COMPARE_FIELD(key);
+  COMPARE_FIELD(value);
+  COMPARE_FIELD(content_key);
+  COMPARE_FIELD(content_value);
+  COMPARE_FIELD(consumed_key_size);
+  COMPARE_FIELD(prefix);
+  COMPARE_FIELD(suffix);
+  COMPARE_FIELD(description);
+  COMPARE_FIELD(a11y_description);
+  COMPARE_FIELD(usage_id);
+  COMPARE_FIELD(usage_title);
+  COMPARE_FIELD(usage_description);
+  COMPARE_FIELD(cost);
+  COMPARE_FIELD(wcost);
+  COMPARE_FIELD(structure_cost);
+  COMPARE_FIELD(lid);
+  COMPARE_FIELD(rid);
+  COMPARE_FIELD(attributes);
+  COMPARE_FIELD(source_info);
+  COMPARE_FIELD(style);
+  COMPARE_FIELD(command);
+  COMPARE_FIELD(inner_segment_boundary);
+#undef COMPARE_FIELD
+  return true;
+}
+
+// Checks if a segment exactly matches the given segment except for the
+// following two fields:
+//   * removed_candidates_for_debug_
+//   * pool_
+// Note: this is more useful than defining operator==() in testing as it can
+// display which field is different.
+//
+// Usage:
+//   Segment actual_segment = ...;
+//   EXPECT_THAT(actual_segment, EqualsSegment(expected_segment));
+MATCHER_P(EqualsSegment, segment, "") {
+#define COMPARE_PROPERTY(property)                                         \
+  if (arg.property() != segment.property()) {                              \
+    *result_listener << "where the property '" #property "' is different"; \
+    return false;                                                          \
+  }
+  COMPARE_PROPERTY(segment_type);
+  COMPARE_PROPERTY(key);
+#undef COMPARE_PROPERTY
+
+  // Compare candidates.
+  const size_t common_candidate_size =
+      std::min(arg.candidates_size(), segment.candidates_size());
+  for (int i = 0; i < common_candidate_size; ++i) {
+    if (!ExplainMatchResult(EqualsCandidate(segment.candidate(i)),
+                            arg.candidate(i), result_listener)) {
+      *result_listener << " for the " << i << "-th candidate";
+      return false;
+    }
+  }
+  if (arg.candidates_size() != segment.candidates_size()) {
+    *result_listener
+        << "where the actual has more or less candidates than the expected: "
+        << arg.candidates_size() << " vs " << segment.candidates_size();
+    return false;
+  }
+
+  // Compare meta candidates.
+  const size_t common_meta_candidate_size =
+      std::min(arg.meta_candidates_size(), segment.meta_candidates_size());
+  for (size_t i = 0; i < common_meta_candidate_size; ++i) {
+    if (!ExplainMatchResult(EqualsCandidate(segment.meta_candidate(i)),
+                            arg.meta_candidate(i), result_listener)) {
+      *result_listener << " for the " << i << "-th meta candidate";
+      return false;
+    }
+  }
+  if (arg.meta_candidates_size() != segment.meta_candidates_size()) {
+    *result_listener << "where the actual has more or less meta candidates "
+                        "than the expected: "
+                     << arg.meta_candidates_size() << " vs "
+                     << segment.meta_candidates_size();
+    return false;
+  }
+
+  return true;
+}
+
+// Checks if a segments exactly matches the given segments except for the
+// following three fields:
+//   * pool_
+//   * revert_entries_
+//   * cached_lattice_
+// Note: this is more useful than defining operator==() in testing as it can
+// display which field is different.
+//
+// Usage:
+//   Segments actual_segments = ...;
+//   EXPECT_THAT(actual_segments, EqualsSegments(expected_segments));
+MATCHER_P(EqualsSegments, segments, "") {
+#define COMPARE_PROPERTY(property)                                         \
+  if (arg.property() != segments.property()) {                             \
+    *result_listener << "where the property '" #property "' is different"; \
+    return false;                                                          \
+  }
+  COMPARE_PROPERTY(max_history_segments_size);
+  COMPARE_PROPERTY(resized);
+#undef COMPARE_PROPERTY
+
+  const size_t common_segments_size =
+      std::min(arg.segments_size(), segments.segments_size());
+  for (size_t i = 0; i < common_segments_size; ++i) {
+    if (!ExplainMatchResult(EqualsSegment(segments.segment(i)), arg.segment(i),
+                            result_listener)) {
+      *result_listener << " of the " << i << "-th segment";
+      return false;
+    }
+  }
+  if (arg.segments_size() != segments.segments_size()) {
+    *result_listener
+        << "where the actual has more or less segments than the expected: "
+        << arg.segments_size() << " vs " << segments.segments_size();
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace mozc
+
+#endif  // MOZC_CONVERTER_SEGMENTS_MATCHERS_H_

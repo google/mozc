@@ -113,6 +113,7 @@ cc_test_mozc(
         "//config:config_handler",
         "//converter:converter_mock",
         "//converter:segments",
+        "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
