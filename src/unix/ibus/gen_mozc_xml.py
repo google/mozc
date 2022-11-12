@@ -213,7 +213,6 @@ def main():
       # Make sure that the property key 'InputMode' matches to the property name
       # specified to |ibus_property_new| in unix/ibus/property_handler.cc
       'icon_prop_key': 'InputMode',
-      'symbol': '&#x3042;',
       'setup': setup_path + ' --mode=config_dialog',
   }
 
@@ -226,6 +225,25 @@ def main():
       'layout_variant': '',
       'layout_option': '',
       'rank': 80,
+      'symbol': '&#x3042;',
+  }, {
+      'name': 'mozc-on',
+      'longname': product_name + u':&#x3042',
+      'layout': 'default',
+      'layout_variant': '',
+      'layout_option': '',
+      'rank': 99,
+      'symbol': '&#x3042;',
+      'composition_mode': 'HIRAGANA',
+  }, {
+      'name': 'mozc-off',
+      'longname': product_name + ':A_',
+      'layout': 'default',
+      'layout_variant': '',
+      'layout_option': '',
+      'rank': 99,
+      'symbol': 'A',
+      'composition_mode': 'DIRECT',
   }]
 
   if options.output_cpp:

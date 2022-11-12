@@ -49,6 +49,7 @@
 #include "base/mmap.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/base/internal/endian.h"
 #include "absl/container/flat_hash_set.h"
 
 namespace mozc {
@@ -69,7 +70,7 @@ constexpr size_t kItemHeaderSize = 12;
 // * 4 bytes for fingerprint seed
 constexpr size_t kFileHeaderSize = 12;
 
-const uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
+constexpr uint64_t k62DaysInSec = 62 * 24 * 60 * 60;
 
 template <class T>
 inline void ReadValue(char **ptr, T *value) {
@@ -77,12 +78,10 @@ inline void ReadValue(char **ptr, T *value) {
   *ptr += sizeof(*value);
 }
 
-uint64_t GetFP(const char *ptr) {
-  return *reinterpret_cast<const uint64_t *>(ptr);
-}
+uint64_t GetFP(const char *ptr) { return absl::little_endian::Load64(ptr); }
 
 uint32_t GetTimeStamp(const char *ptr) {
-  return *reinterpret_cast<const uint32_t *>(ptr + 8);
+  return absl::little_endian::Load32(ptr + 8);
 }
 
 const char *GetValue(const char *ptr) { return ptr + kItemHeaderSize; }

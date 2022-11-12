@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -141,6 +142,7 @@ class Segment final {
       USER_HISTORY_PREDICTOR = 1 << 6,
     };
 
+    // LINT.IfChange
     std::string key;    // reading
     std::string value;  // surface form
     std::string content_key;
@@ -203,6 +205,7 @@ class Segment final {
 #ifndef NDEBUG
     std::string log;
 #endif  // NDEBUG
+    // LINT.ThenChange(//converter/segments_matchers.h)
 
     static bool EncodeLengths(size_t key_len, size_t value_len,
                               size_t content_key_len, size_t content_value_len,
@@ -279,6 +282,11 @@ class Segment final {
     // <あとだ, あとだ, あとだ, あとだ>
     bool IsValid() const;
     std::string DebugString() const;
+
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const Candidate &candidate) {
+      return os << candidate.DebugString();
+    }
   };
 
   Segment();
@@ -346,10 +354,17 @@ class Segment final {
 
   std::string DebugString() const;
 
+  friend std::ostream &operator<<(std::ostream &os, const Segment &segment) {
+    return os << segment.DebugString();
+  }
+
   // For debug. Candidate words removed through conversion process.
   std::vector<Candidate> removed_candidates_for_debug_;
 
  private:
+  void DeepCopyCandidates(const std::deque<Candidate *> &candidates);
+
+  // LINT.IfChange
   SegmentType segment_type_;
   // Note that |key_| is shorter than usual when partial suggestion is
   // performed.
@@ -362,6 +377,7 @@ class Segment final {
   std::deque<Candidate *> candidates_;
   std::vector<Candidate> meta_candidates_;
   std::vector<std::unique_ptr<Candidate>> pool_;
+  // LINT.ThenChange(//converter/segments_matchers.h)
 };
 
 // Segments is basically an array of Segment.
@@ -452,6 +468,10 @@ class Segments final {
   // Dump Segments structure
   std::string DebugString() const;
 
+  friend std::ostream &operator<<(std::ostream &os, const Segments &segments) {
+    return os << segments.DebugString();
+  }
+
   // Revert entries
   void clear_revert_entries();
   size_t revert_entries_size() const;
@@ -463,6 +483,7 @@ class Segments final {
   Lattice *mutable_cached_lattice();
 
  private:
+  // LINT.IfChange
   size_t max_history_segments_size_;
   bool resized_;
 
@@ -470,6 +491,7 @@ class Segments final {
   std::deque<Segment *> segments_;
   std::vector<RevertEntry> revert_entries_;
   std::unique_ptr<Lattice> cached_lattice_;
+  // LINT.ThenChange(//converter/segments_matchers.h)
 };
 
 }  // namespace mozc

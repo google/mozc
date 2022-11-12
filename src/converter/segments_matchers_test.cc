@@ -27,35 +27,60 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-syntax = "proto2";
+#include "converter/segments_matchers.h"
 
-package mozc.ibus;
+#include <string>
+#include <vector>
 
-message Config {
-  repeated Engine engines = 1;
-  // Whether IME is on (i.e. Hiragana mode) in the initial state.
-  optional bool active_on_launch = 2;
-}
+#include "testing/base/public/gmock.h"
+#include "testing/base/public/gunit.h"
 
-message Engine {
-  optional string name = 1;
-  optional string longname = 2;
-  optional string layout = 3;
-  optional string layout_variant = 4;
-  optional string layout_option = 5;
-  // Greater numbers are prioritized more.
-  optional int32 rank = 6 [default = 80];
-  optional string symbol = 7 [default = "あ"];
-  enum CompositionMode {
-    DIRECT = 0;
-    HIRAGANA = 1;
-    FULL_KATAKANA = 2;
-    HALF_ASCII = 3;
-    FULL_ASCII = 4;
-    HALF_KATAKANA = 5;
-    NONE = 100;
+namespace mozc {
+namespace {
+
+using ::testing::Not;
+
+Segment MakeSegment(const std::string &key,
+                    const std::vector<std::string> &values) {
+  Segment seg;
+  seg.set_key(key);
+  for (const std::string &val : values) {
+    Segment::Candidate *cand = seg.add_candidate();
+    cand->key = key;
+    cand->value = val;
   }
-  // Composition mode switched every time this engine is enabled.
-  // The value NONE does not change the composition mode.
-  optional CompositionMode composition_mode = 8 [default = NONE];
+  return seg;
 }
+
+TEST(SegmentsMatchersTest, EqualsCandidate) {
+  const Segment::Candidate x = {.key = "key_x", .value = "value_x"};
+  const Segment::Candidate y = {.key = "key_y", .value = "value_y"};
+  EXPECT_THAT(x, EqualsCandidate(x));
+  EXPECT_THAT(x, Not(EqualsCandidate(y)));
+
+  // Partially different.
+  const Segment::Candidate z = {.key = "key_x", .value = "value_z"};
+  EXPECT_THAT(x, Not(EqualsCandidate(z)));
+}
+
+TEST(SegmentsMatchersTest, EqualsSegment) {
+  const Segment x = MakeSegment("key", {"value"});
+  const Segment y = MakeSegment("key", {"value1", "value2"});
+  EXPECT_THAT(x, EqualsSegment(x));
+  EXPECT_THAT(x, Not(EqualsSegment(y)));
+}
+
+TEST(SegmentsMatchersTest, EqualsSegments) {
+  Segments x;
+  *x.add_segment() = MakeSegment("key1", {"value1", "value2"});
+
+  Segments y;
+  *y.add_segment() = MakeSegment("key1", {"value1_1", "value1_2"});
+  *y.add_segment() = MakeSegment("key2", {"value2_1", "value2_2", "value2_3"});
+
+  EXPECT_THAT(x, EqualsSegments(x));
+  EXPECT_THAT(x, Not(EqualsSegments(y)));
+}
+
+}  // namespace
+}  // namespace mozc

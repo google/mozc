@@ -2904,6 +2904,18 @@ TEST_F(TypingCorrectionTest, InvalidateAfterDeleteRange) {
   EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
 }
 
+TEST_F(TypingCorrectionTest, InvalidateAfterAsIsKeyEvent) {
+  table_->AddRule("a", "あ", "");
+  commands::KeyEvent key = GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f));
+  key.set_key_string("あ");
+  composer_->InsertCharacterKeyEvent(key);
+  EXPECT_FALSE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+
+  key.set_input_style(commands::KeyEvent::AS_IS);
+  composer_->InsertCharacterKeyEvent(key);
+  EXPECT_TRUE(IsTypingCorrectorClearedOrInvalidated(*composer_));
+}
+
 TEST_F(TypingCorrectionTest, ResetAfterEditErase) {
   composer_->InsertCharacterKeyEvent(
       GetKeyEvent("a", GetStubProbableKeyEvent('a', 0.9f)));

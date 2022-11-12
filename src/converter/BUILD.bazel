@@ -81,6 +81,26 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
+    name = "segments_matchers",
+    testonly = 1,
+    srcs = ["segments_matchers.h"],
+    hdrs = ["segments_matchers.h"],
+    deps = [
+        ":segments",
+        "//testing:gunit",
+    ],
+)
+
+cc_test_mozc(
+    name = "segments_matchers_test",
+    srcs = ["segments_matchers_test.cc"],
+    deps = [
+        ":segments_matchers",
+        "//testing:gunit_main",
+    ],
+)
+
+cc_library_mozc(
     name = "node",
     hdrs = ["node.h"],
     visibility = [

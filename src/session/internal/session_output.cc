@@ -85,20 +85,13 @@ void FillCandidateWord(const Segment::Candidate &segment_candidate,
                        const int id, const int index,
                        const std::string &base_key,
                        commands::CandidateWord *candidate_word_proto) {
-  // id
   candidate_word_proto->set_id(id);
-
-  // index
   candidate_word_proto->set_index(index);
-
-  // key
   if (base_key != segment_candidate.content_key) {
     candidate_word_proto->set_key(segment_candidate.content_key);
   }
-  // value
   candidate_word_proto->set_value(segment_candidate.value);
 
-  // annotations
   commands::Annotation annotation;
   if (FillAnnotation(segment_candidate, &annotation)) {
     *candidate_word_proto->mutable_annotation() = annotation;
@@ -144,10 +137,7 @@ void FillAllCandidateWordsInternal(
 
     commands::CandidateWord *candidate_word_proto =
         candidate_list_proto->add_candidates();
-    // id
     const int id = candidate.id();
-
-    // index
     const int index = candidate_list_proto->candidates_size() - 1;
 
     // check focused id
@@ -155,17 +145,27 @@ void FillAllCandidateWordsInternal(
       candidate_list_proto->set_focused_index(index);
     }
 
+    if (!segment.is_valid_index(id)) {
+      LOG(ERROR) << "Inconsistency between segment and candidate_list was "
+                    "observed. candidate index: "
+                 << id << " / " << candidate_list.size()
+                 << ", actual candidates size: " << segment.candidates_size();
+      return;
+    }
     const Segment::Candidate &segment_candidate = segment.candidate(id);
     FillCandidateWord(segment_candidate, id, index, segment.key(),
                       candidate_word_proto);
   }
 }
+
 }  // namespace
 
 // static
 void SessionOutput::FillCandidate(
     const Segment &segment, const Candidate &candidate,
     commands::Candidates_Candidate *candidate_proto) {
+  DCHECK(segment.is_valid_index(candidate.id()));
+
   if (candidate.IsSubcandidateList()) {
     candidate_proto->set_value(candidate.subcandidate_list().name());
     candidate_proto->set_id(candidate.subcandidate_list().focused_id());
@@ -205,10 +205,18 @@ void SessionOutput::FillCandidates(const Segment &segment,
 
   // Store candidates.
   for (size_t i = c_begin; i <= c_end; ++i) {
+    const Candidate &candidate = candidate_list.candidate(i);
+    if (!segment.is_valid_index(candidate.id())) {
+      LOG(ERROR) << "Inconsistency between segment and candidate_list was "
+                    "observed. candidate index: "
+                 << candidate.id() << " / " << candidate_list.size()
+                 << ", actual candidates size: " << segment.candidates_size();
+      return;
+    }
     commands::Candidates_Candidate *candidate_proto =
         candidates_proto->add_candidate();
     candidate_proto->set_index(i);
-    FillCandidate(segment, candidate_list.candidate(i), candidate_proto);
+    FillCandidate(segment, candidate, candidate_proto);
   }
 
   // Store subcandidates.

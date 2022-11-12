@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <deque>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -200,18 +201,15 @@ absl::string_view Segment::Candidate::InnerSegmentIterator::GetContentValue()
 }
 
 constexpr int kCandidatesPoolSize = 16;
+
 Segment::Segment() : segment_type_(FREE), pool_(kCandidatesPoolSize) {}
 
 Segment::Segment(const Segment &x)
     : removed_candidates_for_debug_(x.removed_candidates_for_debug_),
       segment_type_(x.segment_type_),
       key_(x.key_),
-      meta_candidates_(x.meta_candidates_),
-      pool_(x.pool_.size()) {
-  // Deep-copy candidates.
-  for (const Candidate *cand : x.candidates_) {
-    *add_candidate() = *cand;
-  }
+      meta_candidates_(x.meta_candidates_) {
+  DeepCopyCandidates(x.candidates_);
 }
 
 Segment &Segment::operator=(const Segment &x) {
@@ -219,11 +217,10 @@ Segment &Segment::operator=(const Segment &x) {
   segment_type_ = x.segment_type_;
   key_ = x.key_;
   meta_candidates_ = x.meta_candidates_;
-  // Deep-copy candidates.
+
   clear_candidates();
-  for (const Candidate *cand : x.candidates_) {
-    *add_candidate() = *cand;
-  }
+  DeepCopyCandidates(x.candidates_);
+
   return *this;
 }
 
@@ -442,6 +439,14 @@ void Segment::Clear() {
   key_.clear();
   meta_candidates_.clear();
   segment_type_ = FREE;
+}
+
+void Segment::DeepCopyCandidates(const std::deque<Candidate *> &candidates) {
+  DCHECK(pool_.empty());
+  pool_.reserve(candidates.size());
+  for (const Candidate *cand : candidates) {
+    *add_candidate() = *cand;
+  }
 }
 
 std::string Segment::DebugString() const {

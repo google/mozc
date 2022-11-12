@@ -527,11 +527,11 @@ bool SessionConverter::SuggestWithPreferences(
       result = converter_->StartSuggestionForRequest(
           incognito_conversion_request, incognito_segments_.get());
     }
-  }
-  if (!result) {
-    VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
-               "returned no suggestions.";
-    // TODO(noriyukit): Check if fall through here is ok.
+    if (!result) {
+      VLOG(1) << "Start(Partial?)SuggestionForRequest() for incognito request "
+                 "returned no suggestions.";
+      // TODO(noriyukit): Check if fall through here is ok.
+    }
   }
   DCHECK_EQ(1, segments_->conversion_segments_size());
 
@@ -1456,6 +1456,7 @@ void SessionConverter::AppendCandidateList() {
   // cannot be decided).
   const bool add_meta_candidates = (candidate_list_->size() == 0);
 
+  DCHECK_LT(segment_index_, segments_->conversion_segments_size());
   const Segment &segment = segments_->conversion_segment(segment_index_);
   for (size_t i = candidate_list_->next_available_id();
        i < segment.candidates_size(); ++i) {

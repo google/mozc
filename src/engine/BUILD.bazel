@@ -108,6 +108,7 @@ cc_library_mozc(
     visibility = [
         "//android/jni:__pkg__",
         "//converter:__pkg__",
+        "//evaluation/candidates_diff_checker:__pkg__",
         "//ios:__pkg__",
         "//session:__pkg__",
         "//wasm:__pkg__",

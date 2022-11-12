@@ -48,7 +48,7 @@ class Thread;
 
 enum {
   IPC_REQUESTSIZE = 16 * 8192,
-  IPC_RESPONSESIZE = 16 * 8192,
+  IPC_RESPONSESIZE = 16 * 16384,
 };
 
 // increment this value if protocol has changed.

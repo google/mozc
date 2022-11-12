@@ -319,6 +319,28 @@ void MozcEngine::Disable(IBusEngine *engine) {
   key_event_handler_->Clear();
 }
 
+namespace {
+commands::CompositionMode ConvertCompositionMode(
+    ibus::Engine::CompositionMode mode) {
+  switch (mode) {
+    case ibus::Engine::DIRECT:
+      return commands::DIRECT;
+    case ibus::Engine::HIRAGANA:
+      return commands::HIRAGANA;
+    case ibus::Engine::FULL_KATAKANA:
+      return commands::FULL_KATAKANA;
+    case ibus::Engine::HALF_ASCII:
+      return commands::HALF_ASCII;
+    case ibus::Engine::FULL_ASCII:
+      return commands::FULL_ASCII;
+    case ibus::Engine::HALF_KATAKANA:
+      return commands::HALF_KATAKANA;
+    default:
+      return commands::NUM_OF_COMPOSITIONS;
+  }
+}
+}  // namespace
+
 void MozcEngine::Enable(IBusEngine *engine) {
   // Launch mozc_server
   client_->EnsureConnection();
@@ -333,6 +355,26 @@ void MozcEngine::Enable(IBusEngine *engine) {
   // If engine wants to use surrounding text, we should call
   // ibus_engine_get_surrounding_text once when the engine enabled.
   ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
+
+  commands::CompositionMode mode = ConvertCompositionMode(
+      ibus_config_.GetCompositionMode(ibus_engine_get_name(engine)));
+
+  if (mode == commands::NUM_OF_COMPOSITIONS) {
+    // Do nothing.
+  } else {
+    commands::SessionCommand command;
+    if (mode == commands::DIRECT) {
+      command.set_type(commands::SessionCommand::TURN_OFF_IME);
+    } else {
+      command.set_type(commands::SessionCommand::TURN_ON_IME);
+      command.set_composition_mode(mode);
+    }
+    commands::Output output;
+    if (!client_->SendCommand(command, &output)) {
+      LOG(ERROR) << "SendCommand failed";
+    }
+    property_handler_->Update(engine, output);
+  }
 }
 
 void MozcEngine::FocusIn(IBusEngine *engine) {
