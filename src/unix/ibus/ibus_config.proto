@@ -43,5 +43,19 @@ message Engine {
   optional string layout = 3;
   optional string layout_variant = 4;
   optional string layout_option = 5;
+  // Greater numbers are prioritized more.
   optional int32 rank = 6 [default = 80];
+  optional string symbol = 7 [default = "あ"];
+  enum CompositionMode {
+    DIRECT = 0;
+    HIRAGANA = 1;
+    FULL_KATAKANA = 2;
+    HALF_ASCII = 3;
+    FULL_ASCII = 4;
+    HALF_KATAKANA = 5;
+    NONE = 100;
+  }
+  // Composition mode switched every time this engine is enabled.
+  // The value NONE does not change the composition mode.
+  optional CompositionMode composition_mode = 8 [default = NONE];
 }

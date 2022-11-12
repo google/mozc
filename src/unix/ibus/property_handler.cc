@@ -316,6 +316,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
     } else {
       ibus_property_set_state(prop, PROP_STATE_UNCHECKED);
     }
+    ibus_engine_update_property(engine, prop);
     // No need to call unref since ibus_prop_list_get does not add ref.
   }
 

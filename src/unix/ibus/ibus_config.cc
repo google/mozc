@@ -101,7 +101,7 @@ std::string CreateEnginesXml(const ibus::Config &config) {
         "  <icon>", kEngineIcon, "</icon>\n",
         "  <rank>", engine.rank(), "</rank>\n",
         "  <icon_prop_key>", kEngineIcon_prop_key, "</icon_prop_key>\n",
-        "  <symbol>", kEngineSymbol, "</symbol>\n",
+        "  <symbol>", EscapeXmlValue(engine.symbol()), "</symbol>\n",
         "  <setup>", kEngineSetup, "</setup>\n",
         "  <name>", EscapeXmlValue(engine.name()), "</name>\n",
         "  <longname>", EscapeXmlValue(engine.longname()), "</longname>\n",
@@ -143,6 +143,16 @@ const std::string &IbusConfig::GetLayout(const std::string &name) const {
     }
   }
   return default_layout_;
+}
+
+ibus::Engine::CompositionMode IbusConfig::GetCompositionMode(
+    const std::string &name) const {
+  for (const ibus::Engine &engine : config_.engines()) {
+    if (engine.name() == name) {
+      return engine.composition_mode();
+    }
+  }
+  return ibus::Engine::NONE;
 }
 
 bool IbusConfig::IsActiveOnLaunch() const {

@@ -52,6 +52,9 @@ class IbusConfig {
   const ibus::Config &GetConfig() const;
   bool IsActiveOnLaunch() const;
 
+  ibus::Engine::CompositionMode GetCompositionMode(
+      const std::string &name) const;
+
  private:
   std::string default_layout_;
   std::string engine_xml_;
