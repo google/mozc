@@ -63,8 +63,6 @@ class SessionServer : public IPCServer {
 
   bool Connected() const;
 
-  bool Process(const char *request, size_t request_size, char *response,
-               size_t *response_size) override;
   bool Process(const std::string &request, std::string *response) override;
 
  private:

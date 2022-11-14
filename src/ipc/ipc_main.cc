@@ -72,12 +72,6 @@ class EchoServer : public IPCServer {
  public:
   EchoServer(const std::string &path, int32 num_connections, int32 timeout)
       : IPCServer(path, num_connections, timeout) {}
-  virtual bool Process(const char *input_buffer, size_t input_length,
-                       char *output_buffer, size_t *output_length) {
-    ::memcpy(output_buffer, input_buffer, input_length);
-    *output_length = input_length;
-    return ::memcmp("kill", input_buffer, 4) != 0;
-  }
   bool Process(const std::string &input, std::string *output) override {
     output->assign(input);
     return (input != "kill");

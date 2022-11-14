@@ -48,8 +48,6 @@ class QtIpcServer : public IPCServer {
   QtIpcServer();
   ~QtIpcServer() override;
 
-  bool Process(const char *request, size_t request_size, char *response,
-               size_t *response_size) override;
   bool Process(const std::string &request, std::string *response) override;
 
   void SetCallback(Callback callback) { callback_ = std::move(callback); }

@@ -61,20 +61,6 @@ QtIpcServer::QtIpcServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut) {}
 QtIpcServer::~QtIpcServer() {}
 
-bool QtIpcServer::Process(const char *request, size_t request_size,
-                          char *response, size_t *response_size) {
-  std::string command_str = std::string(request, request_size);
-
-  // no need to set the result code.
-  *response_size = 1;
-  response[0] = '\0';
-
-  if (callback_) {
-    callback_(command_str);
-  }
-  return true;
-}
-
 bool QtIpcServer::Process(const std::string &request, std::string *response) {
   // no need to set the result code.
   response->clear();

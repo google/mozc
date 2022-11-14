@@ -105,16 +105,6 @@ class EchoServer : public mozc::IPCServer {
  public:
   EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
       : IPCServer(path, num_connections, timeout) {}
-  bool Process(const char *input_buffer, size_t input_length,
-               char *output_buffer, size_t *output_length) override {
-    if (::memcmp("kill", input_buffer, 4) == 0) {
-      *output_length = 0;
-      return false;
-    }
-    ::memcpy(output_buffer, input_buffer, input_length);
-    *output_length = input_length;
-    return true;
-  }
   bool Process(const std::string &input, std::string *output) override {
     if (input == "kill") {
       output->clear();

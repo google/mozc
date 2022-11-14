@@ -88,28 +88,6 @@ bool SessionServer::Connected() const {
           IPCServer::Connected());
 }
 
-bool SessionServer::Process(const char *request, size_t request_size,
-                            char *response, size_t *response_size) {
-  std::string input(request, request_size);
-  std::string output;
-  if (!Process(input, &output)) {
-    return false;
-  }
-
-  // TODO(taku) automatically increase the buffer.
-  // Needs to fix IPCServer as well
-  if (*response_size < output.size()) {
-    LOG(WARNING) << "response size: " << *response_size
-                 << " < output.size:" << output.size();
-    *response_size = 0;
-    return true;
-  }
-
-  output.copy(response, output.size());
-  *response_size = output.size();
-  return true;
-}
-
 bool SessionServer::Process(const std::string &request, std::string *response) {
   if (!session_handler_) {
     LOG(WARNING) << "handler is not available";

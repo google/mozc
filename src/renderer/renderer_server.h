@@ -59,8 +59,6 @@ class RendererServer : public IPCServer {
   // The return value is suppose to be used for the arg of exit().
   int StartServer();
 
-  bool Process(const char *request, size_t request_size, char *response,
-               size_t *response_size) override;
   bool Process(const std::string &request, std::string *response) override;
 
   // DEPRECATED: this functions is never called
