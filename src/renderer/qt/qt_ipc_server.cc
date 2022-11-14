@@ -75,5 +75,15 @@ bool QtIpcServer::Process(const char *request, size_t request_size,
   return true;
 }
 
+bool QtIpcServer::Process(const std::string &request, std::string *response) {
+  // no need to set the result code.
+  response->clear();
+
+  if (callback_) {
+    callback_(request);
+  }
+  return true;
+}
+
 }  // namespace renderer
 }  // namespace mozc

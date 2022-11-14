@@ -531,6 +531,8 @@ void IPCServer::Loop() {
   IPCErrorType last_ipc_error = IPC_NO_ERROR;
 
   int successive_connection_failure_count = 0;
+  std::string request;
+  std::string response;
   while (connected_) {
     OVERLAPPED overlapped;
     if (!InitOverlapped(&overlapped, pipe_event_.get())) {
@@ -580,22 +582,22 @@ void IPCServer::Loop() {
     if (RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), &request_[0],
                        &request_size, timeout_, kReadTypeData,
                        &last_ipc_error)) {
-      size_t response_size = sizeof(response_);
-      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
+      request.assign(&request_[0], request_size);
+      if (!Process(request, &response)) {
         connected_ = false;
       }
 
       // When Process() returns 0 result, force to call DisconnectNamedPipe()
       // instead of checking ACK message
-      if (response_size == 0) {
+      if (response.empty()) {
         LOG(WARNING) << "Process() return 0 result";
         ::DisconnectNamedPipe(pipe_handle_.get());
         continue;
       }
 
       // Send a response
-      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), &response_[0],
-                     response_size, timeout_, &last_ipc_error);
+      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), response.data(),
+                     response.size(), timeout_, &last_ipc_error);
     }
 
     // Special treatment for Windows per discussion with thatanaka:

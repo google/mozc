@@ -245,6 +245,27 @@ bool RendererServer::Process(const char *request, size_t request_size,
   return AsyncExecCommand(command_str);
 }
 
+bool RendererServer::Process(const std::string &request,
+                             std::string *response) {
+  // Here we just copy the serialized message in order
+  // to reply to the client ui as soon as possible.
+  // ParseFromString is executed in the main(another) thread.
+  //
+  // Since Process() and ExecCommand() are executed in
+  // different threads, we have to use heap to share the serialized message.
+  // If we use stack, this program will be crashed.
+  //
+  // The receiver of command_str takes the ownership of this string.
+  std::string *command_str = new std::string(request);
+
+  // No need to set the result code.
+  response->clear();
+
+  // Cannot call the method directly like renderer_interface_->ExecCommand()
+  // as it's not thread-safe.
+  return AsyncExecCommand(command_str);
+}
+
 bool RendererServer::ExecCommandInternal(
     const commands::RendererCommand &command) {
   if (renderer_interface_ == nullptr) {

@@ -90,29 +90,10 @@ bool SessionServer::Connected() const {
 
 bool SessionServer::Process(const char *request, size_t request_size,
                             char *response, size_t *response_size) {
-  if (!session_handler_) {
-    LOG(WARNING) << "handler is not available";
-    return false;  // shutdown the server if handler doesn't exist
-  }
-
-  commands::Command command;  // can define as a private member?
-  if (!command.mutable_input()->ParseFromArray(request, request_size)) {
-    LOG(WARNING) << "Invalid request";
-    *response_size = 0;
-    return true;
-  }
-
-  if (!session_handler_->EvalCommand(&command)) {
-    LOG(WARNING) << "EvalCommand() returned false. Exiting the loop.";
-    *response_size = 0;
-    return false;
-  }
-
+  std::string input(request, request_size);
   std::string output;
-  if (!command.output().SerializeToString(&output)) {
-    LOG(WARNING) << "SerializeToString() failed";
-    *response_size = 0;
-    return true;
+  if (!Process(input, &output)) {
+    return false;
   }
 
   // TODO(taku) automatically increase the buffer.
@@ -124,8 +105,35 @@ bool SessionServer::Process(const char *request, size_t request_size,
     return true;
   }
 
-  ::memcpy(response, output.data(), output.size());
+  output.copy(response, output.size());
   *response_size = output.size();
+  return true;
+}
+
+bool SessionServer::Process(const std::string &request, std::string *response) {
+  if (!session_handler_) {
+    LOG(WARNING) << "handler is not available";
+    return false;  // shutdown the server if handler doesn't exist
+  }
+
+  commands::Command command;  // can define as a private member?
+  if (!command.mutable_input()->ParseFromString(request)) {
+    LOG(WARNING) << "Invalid request";
+    response->clear();
+    return true;
+  }
+
+  if (!session_handler_->EvalCommand(&command)) {
+    LOG(WARNING) << "EvalCommand() returned false. Exiting the loop.";
+    response->clear();
+    return false;
+  }
+
+  if (!command.output().SerializeToString(response)) {
+    LOG(WARNING) << "SerializeToString() failed";
+    response->clear();
+    return true;
+  }
 
   // debug message
   VLOG(2) << command.DebugString();

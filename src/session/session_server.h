@@ -33,6 +33,7 @@
 #define MOZC_SESSION_SESSION_SERVER_H_
 
 #include <memory>
+#include <string>
 
 #include "base/port.h"
 #include "ipc/ipc.h"
@@ -64,6 +65,7 @@ class SessionServer : public IPCServer {
 
   bool Process(const char *request, size_t request_size, char *response,
                size_t *response_size) override;
+  bool Process(const std::string &request, std::string *response) override;
 
  private:
   std::unique_ptr<session::SessionUsageObserver> usage_observer_;

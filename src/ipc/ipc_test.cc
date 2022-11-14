@@ -52,9 +52,9 @@ static constexpr char kServerAddress[] = "test_echo_server";
 #ifdef OS_WIN
 // On windows, multiple-connections failed.
 static constexpr int kNumThreads = 1;
-#else
+#else  // OS_WIN
 static constexpr int kNumThreads = 5;
-#endif
+#endif  // OS_WIN
 static constexpr int kNumRequests = 2000;
 
 std::string GenRandomString(size_t size) {
@@ -73,7 +73,7 @@ class MultiConnections : public mozc::Thread {
   void SetMachPortManager(mozc::MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
   }
-#endif
+#endif  // __APPLE__
 
   void Run() override {
     char buf[8192];
@@ -82,7 +82,7 @@ class MultiConnections : public mozc::Thread {
       mozc::IPCClient con(kServerAddress, "");
 #ifdef __APPLE__
       con.SetMachPortManager(mach_port_manager_);
-#endif
+#endif  // __APPLE__
       ASSERT_TRUE(con.Connected());
       const int size = std::max(mozc::Util::Random(8000), 1);
       std::string input = "test";
@@ -98,7 +98,7 @@ class MultiConnections : public mozc::Thread {
  private:
 #ifdef __APPLE__
   mozc::MachPortManagerInterface *mach_port_manager_;
-#endif
+#endif  // __APPLE__
 };
 
 class EchoServer : public mozc::IPCServer {
@@ -115,6 +115,14 @@ class EchoServer : public mozc::IPCServer {
     *output_length = input_length;
     return true;
   }
+  bool Process(const std::string &input, std::string *output) override {
+    if (input == "kill") {
+      output->clear();
+      return false;
+    }
+    output->assign(input);
+    return true;
+  }
 };
 }  // namespace
 
@@ -122,12 +130,12 @@ TEST(IPCTest, IPCTest) {
   mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 #ifdef __APPLE__
   mozc::TestMachPortManager manager;
-#endif
+#endif  // __APPLE__
 
   EchoServer con(kServerAddress, 10, 1000);
 #ifdef __APPLE__
   con.SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
   con.LoopAndReturn();
 
   // mozc::Thread is not designed as value-semantics.
@@ -137,7 +145,7 @@ TEST(IPCTest, IPCTest) {
     cons[i] = new MultiConnections;
 #ifdef __APPLE__
     cons[i]->SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
     cons[i]->SetJoinable(true);
     cons[i]->Start("IPCTest");
   }
@@ -153,7 +161,7 @@ TEST(IPCTest, IPCTest) {
   size_t output_size = sizeof(output);
 #ifdef __APPLE__
   kill.SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
   // We don't care the return value of this Call() because the return
   // value for server finish can change based on the platform
   // implementations.

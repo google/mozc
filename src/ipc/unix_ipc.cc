@@ -437,6 +437,8 @@ void IPCServer::Loop() {
   bool error = false;
   IPCErrorType last_ipc_error = IPC_NO_ERROR;
   pid_t pid = 0;
+  std::string request;
+  std::string response;
   while (!error) {
     const int new_sock = ::accept(socket_, nullptr, nullptr);
     if (new_sock < 0) {
@@ -447,15 +449,15 @@ void IPCServer::Loop() {
       continue;
     }
     size_t request_size = sizeof(request_);
-    size_t response_size = sizeof(response_);
     if (RecvMessage(new_sock, &request_[0], &request_size, timeout_,
                     &last_ipc_error)) {
-      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
+      request.assign(&request_[0], request_size);
+      if (!Process(request, &response)) {
         LOG(WARNING) << "Process() failed";
         error = true;
       }
-      if (response_size > 0) {
-        SendMessage(new_sock, &response_[0], response_size, timeout_,
+      if (!response.empty()) {
+        SendMessage(new_sock, response.data(), response.size(), timeout_,
                     &last_ipc_error);
       }
     }

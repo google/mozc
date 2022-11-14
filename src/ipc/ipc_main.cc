@@ -78,6 +78,10 @@ class EchoServer : public IPCServer {
     *output_length = input_length;
     return ::memcmp("kill", input_buffer, 4) != 0;
   }
+  bool Process(const std::string &input, std::string *output) override {
+    output->assign(input);
+    return (input != "kill");
+  }
 };
 
 class EchoServerThread : public Thread {

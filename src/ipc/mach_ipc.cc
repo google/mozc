@@ -397,7 +397,8 @@ void IPCServer::Loop() {
   mach_msg_header_t *send_header, *receive_header;
   kern_return_t kr;
   bool finished = false;
-  char response[IPC_RESPONSESIZE];
+  std::string request;
+  std::string response;
   while (!finished) {
     // Receive request
     receive_header = &(receive_message.header);
@@ -420,9 +421,9 @@ void IPCServer::Loop() {
       continue;
     }
 
-    size_t response_size = IPC_RESPONSESIZE;
-    if (!Process(static_cast<char *>(receive_message.data.address),
-                 receive_message.data.size, response, &response_size)) {
+    request.assign(static_cast<char *>(receive_message.data.address),
+                   receive_message.data.size);
+    if (!Process(request, &response)) {
       LOG(INFO) << "Process() returns false.  Quit the wait loop.";
       finished = true;
     }
@@ -438,8 +439,8 @@ void IPCServer::Loop() {
     send_header->msgh_remote_port = receive_header->msgh_remote_port;
     send_header->msgh_id = receive_header->msgh_id;
     send_message.body.msgh_descriptor_count = 1;
-    send_message.data.address = response;
-    send_message.data.size = response_size;
+    send_message.data.address = response.data();
+    send_message.data.size = response.size();
     // Doesn't deallocate data immediately
     send_message.data.deallocate = false;
     send_message.data.copy = MACH_MSG_VIRTUAL_COPY;  // Copy on write

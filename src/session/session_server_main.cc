@@ -43,15 +43,13 @@ static constexpr int kMaxBufSize = 1024;
 namespace mozc {
 void SendCommand(SessionServer *server, const commands::Input &input,
                  commands::Output *output) {
-  char buf[kMaxBufSize];
-  size_t buf_len = kMaxBufSize;
-
   absl::PrintF("input command:\n%s\n", input.Utf8DebugString());
 
-  std::string input_str = input.SerializeAsString();
-  server->Process(input_str.c_str(), input_str.size(), buf, &buf_len);
+  const std::string input_str = input.SerializeAsString();
+  std::string output_str;
+  server->Process(input_str, &output_str);
 
-  output->ParseFromArray(buf, buf_len);
+  output->ParseFromString(output_str);
   absl::PrintF("output command:\n%s\n", output->Utf8DebugString());
 }
 }  // namespace mozc

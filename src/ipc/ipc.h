@@ -240,6 +240,7 @@ class IPCServer {
   // If 'Process' return false, server finishes select loop
   virtual bool Process(const char *request, size_t request_size, char *response,
                        size_t *response_size) = 0;
+  virtual bool Process(const std::string &request, std::string *response) = 0;
 
   // Start select loop. It goes into infinite loop.
   void Loop();
