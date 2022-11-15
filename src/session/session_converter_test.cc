@@ -3794,9 +3794,9 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
   constexpr char kValue[] = "1";
 
   // Set up the result which mock_converter.ReconstructHistory() returns.
-  const Segments mock_result = [kKey, kValue]() {
-    Segments segments;
-    Segment *segment = segments.add_segment();
+  Segments mock_result;
+  {
+    Segment *segment = mock_result.add_segment();
     segment->set_key(kKey);
     segment->set_segment_type(Segment::HISTORY);
     Segment::Candidate *candidate = segment->push_back_candidate();
@@ -3807,8 +3807,7 @@ TEST_F(SessionConverterTest, ReconstructHistoryByPrecedingText) {
     candidate->content_value = kValue;
     candidate->value = kValue;
     candidate->attributes = Segment::Candidate::NO_LEARNING;
-    return segments;
-  }();
+  }
 
   // With revision
   {

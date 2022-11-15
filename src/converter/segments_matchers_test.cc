@@ -40,6 +40,14 @@ namespace {
 
 using ::testing::Not;
 
+Segment::Candidate MakeCandidate(const std::string &key,
+                                 const std::string &value) {
+  Segment::Candidate cand;
+  cand.key = key;
+  cand.value = value;
+  return cand;
+}
+
 Segment MakeSegment(const std::string &key,
                     const std::vector<std::string> &values) {
   Segment seg;
@@ -53,13 +61,13 @@ Segment MakeSegment(const std::string &key,
 }
 
 TEST(SegmentsMatchersTest, EqualsCandidate) {
-  const Segment::Candidate x = {.key = "key_x", .value = "value_x"};
-  const Segment::Candidate y = {.key = "key_y", .value = "value_y"};
+  const Segment::Candidate x = MakeCandidate("key_x", "value_x");
+  const Segment::Candidate y = MakeCandidate("key_y", "value_y");
   EXPECT_THAT(x, EqualsCandidate(x));
   EXPECT_THAT(x, Not(EqualsCandidate(y)));
 
   // Partially different.
-  const Segment::Candidate z = {.key = "key_x", .value = "value_z"};
+  const Segment::Candidate z = MakeCandidate("key_x", "value_z");
   EXPECT_THAT(x, Not(EqualsCandidate(z)));
 }
 
