@@ -164,7 +164,6 @@ cc_test_mozc(
         "//composer:table",
         "//converter:converter_interface",
         "//converter:converter_mock",
-        "//engine:mock_converter_engine",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//session:session_converter",

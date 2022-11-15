@@ -38,7 +38,6 @@
 #include "composer/table.h"
 #include "converter/converter_interface.h"
 #include "converter/converter_mock.h"
-#include "engine/mock_converter_engine.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/keymap.h"
@@ -51,6 +50,11 @@
 
 namespace mozc {
 namespace session {
+
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::Return;
+using ::testing::SetArgPointee;
 
 TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
@@ -131,26 +135,25 @@ TEST(ImeContextTest, CopyContext) {
   const commands::Request request;
   const config::Config config;
 
-  std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine);
+  MockConverter converter;
 
   Segments segments;
   Segment *segment = segments.add_segment();
   segment->set_key("あん");
   Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "庵";
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
-  engine->mutable_converter_mock()->SetStartConversionForRequest(&segments,
-                                                                 true);
   {
     ImeContext source;
     source.set_composer(new composer::Composer(&table, &request, &config));
-    source.set_converter(
-        new SessionConverter(engine->GetConverter(), &request, &config));
+    source.set_converter(new SessionConverter(&converter, &request, &config));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer(&table, &request, &config));
     destination.set_converter(
-        new SessionConverter(engine->GetConverter(), &request, &config));
+        new SessionConverter(&converter, &request, &config));
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
@@ -174,13 +177,12 @@ TEST(ImeContextTest, CopyContext) {
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
     source.set_composer(new composer::Composer(&table, &request, &config));
-    source.set_converter(
-        new SessionConverter(engine->GetConverter(), &request, &config));
+    source.set_converter(new SessionConverter(&converter, &request, &config));
 
     ImeContext destination;
     destination.set_composer(new composer::Composer(&table, &request, &config));
     destination.set_converter(
-        new SessionConverter(engine->GetConverter(), &request, &config));
+        new SessionConverter(&converter, &request, &config));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");
