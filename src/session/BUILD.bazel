@@ -218,6 +218,7 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher_lib",
         "//engine",
+        "//engine:engine_mock",
         "//engine:mock_converter_engine",
         "//engine:mock_data_engine_factory",
         "//engine:user_data_manager_mock",

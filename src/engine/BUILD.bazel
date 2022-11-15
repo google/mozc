@@ -150,6 +150,16 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
+    name = "engine_mock",
+    testonly = 1,
+    hdrs = ["engine_mock.h"],
+    deps = [
+        ":engine_interface",
+        "//testing:gunit",
+    ],
+)
+
+cc_library_mozc(
     name = "mock_converter_engine",
     testonly = True,
     srcs = ["mock_converter_engine.cc"],
