@@ -377,10 +377,12 @@ genrule(
         "//data/unicode:JIS0208.TXT",
     ],
     outs = ["character_set.inc"],
-    cmd = ("$(location :gen_character_set)" +
-           " --jisx0201file=$(location //data/unicode:JIS0201.TXT)" +
-           " --jisx0208file=$(location //data/unicode:JIS0208.TXT)" +
-           " --output=$@"),
+    cmd = (
+        "$(location :gen_character_set)" +
+        " --jisx0201file=$(location //data/unicode:JIS0201.TXT)" +
+        " --jisx0208file=$(location //data/unicode:JIS0208.TXT)" +
+        " --output=$@"
+    ),
     exec_tools = [":gen_character_set"],
     visibility = ["//visibility:private"],
 )
@@ -522,6 +524,7 @@ cc_library_mozc(
     srcs = ["file_stream.cc"],
     hdrs = ["file_stream.h"],
     visibility = ["//:__subpackages__"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_binary_mozc(
@@ -768,12 +771,8 @@ cc_test_mozc(
 
 cc_library_mozc(
     name = "system_util",
-    srcs = ["system_util.cc"] + select_mozc(
-        android = ["android_util.cc"],
-    ),
-    hdrs = ["system_util.h"] + select_mozc(
-        android = ["android_util.h"],
-    ),
+    srcs = ["system_util.cc"] + select_mozc(android = ["android_util.cc"]),
+    hdrs = ["system_util.h"] + select_mozc(android = ["android_util.h"]),
     local_defines = select_mozc(
         linux = [
             "MOZC_DOCUMENT_DIR=\\\"" + LINUX_MOZC_DOCUMENT_DIR + "\\\"",
@@ -835,9 +834,7 @@ cc_library_mozc(
         ":util",
         ":win_util",
         "@com_google_absl//absl/strings",
-    ] + select_mozc(
-        macos = ["mac_process"],
-    ),
+    ] + select_mozc(macos = ["mac_process"]),
 )
 
 objc_library_mozc(
@@ -999,10 +996,12 @@ genrule(
         "//data/version:mozc_version_template.bzl",
     ],
     outs = ["mozc_version.txt"],
-    cmd = ("$(location //build_tools:mozc_version)" +
-           ' --template_path="$(location //data/version:mozc_version_template.bzl)"' +
-           ' --output="$(OUTS)"' +
-           " --target_platform=" + TARGET_PLATFORM),
+    cmd = (
+        "$(location //build_tools:mozc_version)" +
+        ' --template_path="$(location //data/version:mozc_version_template.bzl)"' +
+        ' --output="$(OUTS)"' +
+        " --target_platform=" + TARGET_PLATFORM
+    ),
     exec_tools = ["//build_tools:mozc_version"],
     visibility = ["//:__subpackages__"],
 )
@@ -1014,10 +1013,12 @@ genrule(
         "version_def_template.h",
     ],
     outs = ["version_def.h"],
-    cmd = ("$(location //build_tools:replace_version)" +
-           " --version_file=$(location mozc_version.txt) " +
-           " --input=$(location version_def_template.h) --output=$(OUTS)" +
-           " --branding=Mozc"),
+    cmd = (
+        "$(location //build_tools:replace_version)" +
+        " --version_file=$(location mozc_version.txt) " +
+        " --input=$(location version_def_template.h) --output=$(OUTS)" +
+        " --branding=Mozc"
+    ),
     exec_tools = ["//build_tools:replace_version"],
     visibility = ["//visibility:private"],
 )
@@ -1118,9 +1119,7 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/strings:str_format",
-    ] + select_mozc(
-        ios = [":mac_util"],
-    ),
+    ] + select_mozc(ios = [":mac_util"]),
 )
 
 cc_test_mozc(

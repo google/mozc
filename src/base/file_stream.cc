@@ -42,17 +42,18 @@ namespace mozc {
 namespace {
 
 #ifdef OS_WIN
-std::wstring ToPlatformString(const char* filename) {
+std::wstring ToPlatformString(absl::string_view filename) {
   // Since Windows uses UTF-16 for internationalized file names, we should
   // convert the encoding of the given |filename| from UTF-8 to UTF-16.
   // NOTE: To avoid circular dependency, |Util::Utf8ToWide| shouldn't be used
   // here.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf8_to_wide;
-  return utf8_to_wide.from_bytes(filename);
+  return utf8_to_wide.from_bytes(filename.data(),
+                                 filename.data() + filename.size());
 }
 #else   // OS_WIN
-std::string ToPlatformString(const char* filename) {
-  return std::string(filename);
+std::string ToPlatformString(absl::string_view filename) {
+  return std::string(filename.data(), filename.size());
 }
 #endif  // OS_WIN or not
 
@@ -60,23 +61,24 @@ std::string ToPlatformString(const char* filename) {
 
 InputFileStream::InputFileStream() {}
 
-InputFileStream::InputFileStream(const char* filename,
+InputFileStream::InputFileStream(absl::string_view filename,
                                  std::ios_base::openmode mode) {
   InputFileStream::open(filename, mode);
 }
 
-void InputFileStream::open(const char* filename, std::ios_base::openmode mode) {
+void InputFileStream::open(absl::string_view filename,
+                           std::ios_base::openmode mode) {
   std::ifstream::open(ToPlatformString(filename), mode);
 }
 
 OutputFileStream::OutputFileStream() {}
 
-OutputFileStream::OutputFileStream(const char* filename,
+OutputFileStream::OutputFileStream(absl::string_view filename,
                                    std::ios_base::openmode mode) {
   OutputFileStream::open(filename, mode);
 }
 
-void OutputFileStream::open(const char* filename,
+void OutputFileStream::open(absl::string_view filename,
                             std::ios_base::openmode mode) {
   std::ofstream::open(ToPlatformString(filename), mode);
 }
