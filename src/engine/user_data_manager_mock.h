@@ -27,42 +27,27 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// An implementation of UserDataManagerInterface for testing.
-
 #ifndef MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 #define MOZC_ENGINE_USER_DATA_MANAGER_MOCK_H_
 
-#include <map>
-#include <string>
-
-#include "base/port.h"
 #include "engine/user_data_manager_interface.h"
+#include "testing/base/public/gmock.h"
 
 namespace mozc {
 
-class UserDataManagerMock : public UserDataManagerInterface {
+class MockUserDataManager : public UserDataManagerInterface {
  public:
-  UserDataManagerMock();
-  ~UserDataManagerMock() override;
+  MockUserDataManager() = default;
+  ~MockUserDataManager() override = default;
 
-  bool Sync() override;
-  bool Reload() override;
-  bool ClearUserHistory() override;
-  bool ClearUserPrediction() override;
-  bool ClearUnusedUserPrediction() override;
-  bool ClearUserPredictionEntry(const std::string &key,
-                                const std::string &value) override;
-  bool Wait() override;
-
-  int GetFunctionCallCount(const std::string &name) const;
-  const std::string &GetLastClearedKey() const;
-  const std::string &GetLastClearedValue() const;
-
- private:
-  std::map<std::string, int> function_counters_;
-  std::string last_cleared_key_;
-  std::string last_cleared_value_;
-  DISALLOW_COPY_AND_ASSIGN(UserDataManagerMock);
+  MOCK_METHOD(bool, Sync, (), (override));
+  MOCK_METHOD(bool, Reload, (), (override));
+  MOCK_METHOD(bool, ClearUserHistory, (), (override));
+  MOCK_METHOD(bool, ClearUserPrediction, (), (override));
+  MOCK_METHOD(bool, ClearUnusedUserPrediction, (), (override));
+  MOCK_METHOD(bool, ClearUserPredictionEntry,
+              (const std::string &key, const std::string &value), (override));
+  MOCK_METHOD(bool, Wait, (), (override));
 };
 
 }  // namespace mozc

@@ -54,7 +54,10 @@ class MockConverterEngine : public EngineInterface {
   PredictorInterface *GetPredictor() const override;
   dictionary::SuppressionDictionary *GetSuppressionDictionary() override;
   bool Reload() override;
-  UserDataManagerMock *GetUserDataManager() override;
+
+  MockUserDataManager *GetUserDataManager() override {
+    return &mock_user_data_manager_;
+  }
 
   absl::string_view GetDataVersion() const override {
     return "mock converter engine";
@@ -66,12 +69,11 @@ class MockConverterEngine : public EngineInterface {
 
   std::vector<std::string> GetPosList() const override { return {}; }
 
-  void SetUserDataManager(UserDataManagerMock *manager);
   ConverterMock *mutable_converter_mock();
 
  private:
   std::unique_ptr<ConverterMock> converter_mock_;
-  std::unique_ptr<UserDataManagerMock> user_data_manager_mock_;
+  MockUserDataManager mock_user_data_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(MockConverterEngine);
 };

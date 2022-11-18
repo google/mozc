@@ -30,6 +30,7 @@
 #include "session/session.h"
 
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -80,6 +81,7 @@ using ::mozc::commands::Request;
 using ::mozc::usage_stats::UsageStats;
 using ::testing::_;
 using ::testing::DoAll;
+using ::testing::Mock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
@@ -475,6 +477,23 @@ class SessionTest : public ::testing::Test {
   }
 
   void InitSessionToConversionWithAiueo(Session *session) {
+    InitSessionToConversionWithAiueo(session, [this](Segments *segments) {
+      GetConverterMock()->SetStartConversionForRequest(segments, true);
+    });
+  }
+
+  void InitSessionToConversionWithAiueo(Session *session,
+                                        MockConverter *converter) {
+    InitSessionToConversionWithAiueo(session, [converter](Segments *segments) {
+      EXPECT_CALL(*converter, StartConversionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(*segments), Return(true)));
+    });
+    Mock::VerifyAndClearExpectations(converter);
+  }
+
+  void InitSessionToConversionWithAiueo(
+      Session *session,
+      std::function<void(Segments *segments)> init_mock_converter) {
     InitSessionToPrecomposition(session);
 
     commands::Command command;
@@ -484,7 +503,7 @@ class SessionTest : public ::testing::Test {
     SetComposer(session, &request);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    init_mock_converter(&segments);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -8905,6 +8924,9 @@ TEST_F(SessionTest, DeleteHistory) {
 
   // Do DeleteHistory command. After that, the session should be back in
   // composition state and preedit gets back to "でｌ" again.
+  EXPECT_CALL(*engine_->GetUserDataManager(),
+              ClearUserPredictionEntry("", "DeleteHistory"))
+      .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
   EXPECT_PREEDIT("でｌ", command);
@@ -9141,32 +9163,45 @@ TEST_F(SessionTest, MakeSureIMEOff) {
 }
 
 TEST_F(SessionTest, DeleteCandidateFromHistory) {
+  MockConverter converter;
+  MockUserDataManager user_data_manager;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  EXPECT_CALL(engine, GetUserDataManager())
+      .WillRepeatedly(Return(&user_data_manager));
+
   // InitSessionToConversionWithAiueo initializes candidates as follows:
   // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
-  {  // Delete focused candidate (i.e. without candidate ID).
-    Session session(engine_.get());
-    InitSessionToConversionWithAiueo(&session);
+  {
+    // A test case to delete focused candidate (i.e. without candidate ID).
+    Session session(&engine);
+    InitSessionToConversionWithAiueo(&session, &converter);
+
+    EXPECT_CALL(user_data_manager,
+                ClearUserPredictionEntry("あいうえお", "あいうえお"))
+        .WillOnce(Return(true));
+
     commands::Command command;
     session.DeleteCandidateFromHistory(&command);
 
-    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
-    EXPECT_EQ(1, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedValue());  // ID == 0
+    Mock::VerifyAndClearExpectations(&user_data_manager);
   }
-  {  // Delete candidate with ID.
-    Session session(engine_.get());
-    InitSessionToConversionWithAiueo(&session);
+  {
+    // A test case to delete candidate by ID.
+    Session session(&engine);
+    InitSessionToConversionWithAiueo(&session, &converter);
+
+    EXPECT_CALL(user_data_manager,
+                ClearUserPredictionEntry("あいうえお", "アイウエオ"))
+        .WillOnce(Return(true));
+
     commands::Command command;
     SetSendCommandCommand(
         commands::SessionCommand::DELETE_CANDIDATE_FROM_HISTORY, &command);
     command.mutable_input()->mutable_command()->set_id(1);
     session.DeleteCandidateFromHistory(&command);
 
-    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
-    EXPECT_EQ(2, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
-    EXPECT_EQ("アイウエオ", udm_mock->GetLastClearedValue());  // ID == 1
+    Mock::VerifyAndClearExpectations(&user_data_manager);
   }
 }
 

@@ -39,8 +39,7 @@ using mozc::dictionary::SuppressionDictionary;
 namespace mozc {
 
 MockConverterEngine::MockConverterEngine()
-    : converter_mock_(new ConverterMock),
-      user_data_manager_mock_(new UserDataManagerMock) {}
+    : converter_mock_(new ConverterMock) {}
 
 MockConverterEngine::~MockConverterEngine() {}
 
@@ -59,14 +58,6 @@ SuppressionDictionary *MockConverterEngine::GetSuppressionDictionary() {
 }
 
 bool MockConverterEngine::Reload() { return true; }
-
-UserDataManagerMock *MockConverterEngine::GetUserDataManager() {
-  return user_data_manager_mock_.get();
-}
-
-void MockConverterEngine::SetUserDataManager(UserDataManagerMock *manager) {
-  return user_data_manager_mock_.reset(manager);
-}
 
 ConverterMock *MockConverterEngine::mutable_converter_mock() {
   return converter_mock_.get();

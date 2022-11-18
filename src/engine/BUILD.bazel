@@ -297,15 +297,14 @@ cc_library_mozc(
 
 cc_library_mozc(
     name = "user_data_manager_mock",
-    srcs = ["user_data_manager_mock.cc"],
+    testonly = 1,
     hdrs = ["user_data_manager_mock.h"],
     visibility = [
         "//:__subpackages__",
     ],
     deps = [
         ":user_data_manager_interface",
-        "//base",
-        "//base:port",
+        "//testing:gunit",
     ],
 )
 
