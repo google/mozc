@@ -247,7 +247,7 @@ void GenericTableEditorDialog::Import() {
     return;
   }
 
-  InputFileStream ifs(filename.toStdString().c_str());
+  InputFileStream ifs(filename.toStdString());
   if (!LoadFromStream(&ifs)) {
     QMessageBox::warning(this, windowTitle(), tr("Import failed"));
     return;
@@ -267,7 +267,7 @@ void GenericTableEditorDialog::Export() {
     return;
   }
 
-  OutputFileStream ofs(filename.toStdString().c_str());
+  OutputFileStream ofs(filename.toStdString());
   if (!ofs) {
     QMessageBox::warning(this, windowTitle(), tr("Export failed"));
     return;
