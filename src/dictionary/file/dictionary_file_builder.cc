@@ -63,7 +63,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(const std::string &section_name,
   }
   added_.insert(section_name);
 
-  InputFileStream ifs(file_name.c_str(), std::ios::binary);
+  InputFileStream ifs(file_name, std::ios::binary);
   CHECK(ifs) << "Failed to read" << file_name;
 
   ifs.seekg(0, std::ios::end);
@@ -82,7 +82,7 @@ bool DictionaryFileBuilder::AddSectionFromFile(const std::string &section_name,
 void DictionaryFileBuilder::WriteImageToFile(
     const std::string &file_name) const {
   LOG(INFO) << "Start writing dictionary file to " << file_name;
-  OutputFileStream ofs(file_name.c_str(), std::ios::binary);
+  OutputFileStream ofs(file_name, std::ios::binary);
   file_codec_->WriteSections(sections_, &ofs);
   LOG(INFO) << "Generated";
 }
