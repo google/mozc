@@ -84,7 +84,7 @@ std::string GetDescription(
 }
 
 std::map<std::string, TokenList> ReadEmoticonTsv(const std::string &path) {
-  InputFileStream ifs(path.c_str());
+  InputFileStream ifs(path);
 
   std::string line;
   std::getline(ifs, line);  // Skip header

@@ -129,7 +129,7 @@ std::vector<const Token *> GetSortedTokens(
 }  // namespace
 
 bool DictionaryGenerator::Output(const std::string &filename) const {
-  mozc::OutputFileStream ofs(filename.c_str());
+  mozc::OutputFileStream ofs(filename);
   if (!ofs) {
     LOG(ERROR) << "Failed to open: " << filename;
     return false;
