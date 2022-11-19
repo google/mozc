@@ -192,7 +192,7 @@ absl::Status ParseFileInternal(
     const std::string &filename,
     std::vector<QualityRegressionUtil::TestItem> *outputs) {
   // TODO(taku): support an XML file of Mozcsu.
-  InputFileStream ifs(filename.c_str());
+  InputFileStream ifs(filename);
   if (!ifs.good()) {
     return absl::UnavailableError(absl::StrCat("Failed to read: ", filename));
   }

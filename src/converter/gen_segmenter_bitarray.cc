@@ -207,28 +207,28 @@ void SegmenterBitarrayGenerator::GenerateBitarray(
     mozc::converter::SegmenterDataSizeInfo pb;
     pb.set_compressed_lsize(kCompressedLSize);
     pb.set_compressed_rsize(kCompressedRSize);
-    mozc::OutputFileStream ofs(output_size_info.c_str(),
+    mozc::OutputFileStream ofs(output_size_info,
                                std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     CHECK(pb.SerializeToOstream(&ofs));
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_ltable.c_str(),
+    mozc::OutputFileStream ofs(output_ltable,
                                std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ltable.Output(&ofs);
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_rtable.c_str(),
+    mozc::OutputFileStream ofs(output_rtable,
                                std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     rtable.Output(&ofs);
     ofs.close();
   }
   {
-    mozc::OutputFileStream ofs(output_bitarray.c_str(),
+    mozc::OutputFileStream ofs(output_bitarray,
                                std::ios_base::out | std::ios_base::binary);
     CHECK(ofs);
     ofs.write(barray.array(), barray.array_size());
