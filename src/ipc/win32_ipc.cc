@@ -745,8 +745,8 @@ IPCClient::~IPCClient() {}
 
 bool IPCClient::Connected() const { return connected_; }
 
-bool IPCClient::Call(const char *request, size_t request_size, char *response,
-                     size_t *response_size, int32 timeout) {
+bool IPCClient::Call(const std::string &request, std::string *response,
+                     int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";
@@ -755,7 +755,7 @@ bool IPCClient::Call(const char *request, size_t request_size, char *response,
   }
 
   last_ipc_error_ = SendIpcMessage(pipe_handle_.get(), pipe_event_.get(),
-                                   request, request_size, timeout);
+                                   request, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendIpcMessage() failed";
     return false;
@@ -763,7 +763,7 @@ bool IPCClient::Call(const char *request, size_t request_size, char *response,
 
   last_ipc_error_ =
       RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), response,
-                     response_size, timeout, kReadTypeData);
+                     timeout, kReadTypeData);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "RecvIpcMessage() failed";
     return false;

@@ -73,11 +73,9 @@ inline void CallCommand(IPCClientInterface *client,
   command.SerializeToString(&buf);
 
   // basically, we don't need to get the result
-  char result[32];
-  size_t result_size = sizeof(result);
+  std::string result;
 
-  if (!client->Call(buf.data(), buf.size(), result, &result_size,
-                    kIPCTimeout)) {
+  if (!client->Call(buf, &result, kIPCTimeout)) {
     LOG(ERROR) << "Cannot send the request: ";
   }
 }

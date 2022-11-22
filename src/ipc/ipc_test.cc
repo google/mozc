@@ -76,7 +76,6 @@ class MultiConnections : public mozc::Thread {
 #endif  // __APPLE__
 
   void Run() override {
-    char buf[8192];
     mozc::Util::Sleep(2000);
     for (int i = 0; i < kNumRequests; ++i) {
       mozc::IPCClient con(kServerAddress, "");
@@ -87,9 +86,8 @@ class MultiConnections : public mozc::Thread {
       const int size = std::max(mozc::Util::Random(8000), 1);
       std::string input = "test";
       input += GenRandomString(size);
-      size_t length = sizeof(buf);
-      ASSERT_TRUE(con.Call(input.data(), input.size(), buf, &length, 1000));
-      std::string output(buf, length);
+      std::string output;
+      ASSERT_TRUE(con.Call(input, &output, 1000));
       EXPECT_EQ(input.size(), output.size());
       EXPECT_EQ(input, output);
     }
@@ -146,9 +144,8 @@ TEST(IPCTest, IPCTest) {
   }
 
   mozc::IPCClient kill(kServerAddress, "");
-  const char kill_cmd[32] = "kill";
-  char output[32];
-  size_t output_size = sizeof(output);
+  const std::string kill_cmd = "kill";
+  std::string output;
 #ifdef __APPLE__
   kill.SetMachPortManager(&manager);
 #endif  // __APPLE__
@@ -157,7 +154,7 @@ TEST(IPCTest, IPCTest) {
   // implementations.
   // TODO(mukai, team): determine the spec of return value for that
   // case and add EXPECT_(TRUE|FALSE) here.
-  kill.Call(kill_cmd, strlen(kill_cmd), output, &output_size, 1000);
+  kill.Call(kill_cmd, &output, 1000);
 
   con.Wait();
 }

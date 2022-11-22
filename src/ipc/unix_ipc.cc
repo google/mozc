@@ -313,10 +313,9 @@ IPCClient::~IPCClient() {
 }
 
 // RPC call
-bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
-                     size_t *response_size, int32_t timeout) {
-  last_ipc_error_ =
-      SendMessage(socket_, std::string(request_, input_length), timeout);
+bool IPCClient::Call(const std::string &request, std::string *response,
+                     int32_t timeout) {
+  last_ipc_error_ = SendMessage(socket_, request, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendMessage failed";
     return false;
@@ -330,18 +329,11 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
   // data. Will revisit later.
   ::shutdown(socket_, SHUT_WR);
 
-  std::string response;
-  last_ipc_error_ = RecvMessage(socket_, &response, timeout);
+  last_ipc_error_ = RecvMessage(socket_, response, timeout);
   if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "RecvMessage failed";
     return false;
   }
-  if (*response_size < response.size()) {
-    LOG(ERROR) << "response_size is smaller than the actual size.";
-    return false;
-  }
-  response.copy(response_, response.size());
-  *response_size = response.size();
   VLOG(1) << "Call succeeded";
   return true;
 }

@@ -73,8 +73,8 @@ class IPCClientInterface {
   virtual ~IPCClientInterface();
 
   virtual bool Connected() const = 0;
-  virtual bool Call(const char *request, size_t request_size, char *response,
-                    size_t *response_size, int32_t timeout) = 0;
+  virtual bool Call(const std::string &request, std::string *response,
+                    int32_t timeout) = 0;
 
   virtual uint32_t GetServerProtocolVersion() const = 0;
   virtual const std::string &GetServerProductVersion() const = 0;
@@ -104,13 +104,9 @@ class MachPortManagerInterface {
 // Usage:
 //  IPCClient con("name", "/foo/bar/server");
 //  string request = "foo";
-//  char result[32];
-//  uint32 size = sizeof(result);
+//  string result;
 //  CHECK(con.Connected());
-//  CHECK(con.Call(request.data(),
-//                 request.size(),
-//                 result, &size 1000);
-//                 // wait for 1000msec
+//  CHECK(con.Call(request, &result, 1000);  // wait for 1000msec
 class IPCClient : public IPCClientInterface {
  public:
   // connect to an IPC server named "name".
@@ -137,16 +133,14 @@ class IPCClient : public IPCClientInterface {
   uint32_t GetServerProcessId() const override;
 
   // Synchronous IPC call:
-  // Client request is encoded in 'request' whose size is request_size.
+  // Client request is encoded in 'request'.
   // Server response is stored in 'response'.
-  // Need to pass the maximum size of response before calling IPC.
   // Return true when IPC finishes successfully.
   // When Server doesn't send response within timeout, 'Call' returns false.
   // When timeout (in msec) is set -1, 'Call' waits forever.
   // Note that on Linux and Windows, Call() closes the socket_. This means you
   // cannot call the Call() function more than once.
-  bool Call(const char *request, size_t input_length, char *response,
-            size_t *response_size,
+  bool Call(const std::string &request, std::string *response,
             int32_t timeout) override;  // msec
 
   IPCErrorType GetLastIPCError() const override { return last_ipc_error_; }
