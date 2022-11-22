@@ -396,7 +396,6 @@ void IPCServer::Loop() {
   mach_msg_header_t *send_header, *receive_header;
   kern_return_t kr;
   bool finished = false;
-  std::string request;
   std::string response;
   while (!finished) {
     // Receive request
@@ -420,8 +419,8 @@ void IPCServer::Loop() {
       continue;
     }
 
-    request.assign(static_cast<char *>(receive_message.data.address),
-                   receive_message.data.size);
+    absl::string_view request(static_cast<char *>(receive_message.data.address),
+                              receive_message.data.size);
     if (!Process(request, &response)) {
       LOG(INFO) << "Process() returns false.  Quit the wait loop.";
       finished = true;

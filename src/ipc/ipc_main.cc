@@ -70,8 +70,8 @@ class EchoServer : public IPCServer {
  public:
   EchoServer(const std::string &path, int32 num_connections, int32 timeout)
       : IPCServer(path, num_connections, timeout) {}
-  bool Process(const std::string &input, std::string *output) override {
-    output->assign(input);
+  bool Process(absl::string_view input, std::string *output) override {
+    output->assign(input.data(), input.size());
     return (input != "kill");
   }
 };

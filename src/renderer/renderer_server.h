@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "ipc/ipc.h"
 #include "renderer/renderer_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -59,7 +60,7 @@ class RendererServer : public IPCServer {
   // The return value is suppose to be used for the arg of exit().
   int StartServer();
 
-  bool Process(const std::string &request, std::string *response) override;
+  bool Process(absl::string_view request, std::string *response) override;
 
   // DEPRECATED: this functions is never called
   virtual void AsyncHide() {}

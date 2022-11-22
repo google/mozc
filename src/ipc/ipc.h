@@ -40,6 +40,7 @@
 
 #include "base/port.h"
 #include "base/scoped_handle.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -205,8 +206,7 @@ class IPCClientFactory : public IPCClientFactoryInterface {
 // Usage:
 // class MyEchoServer: public IPCServer {
 //  public:
-//   virtual bool Process(const char *input, uint32 isize,
-//                        char *output, uint32 *osize) {
+//   virtual bool Process(absl::string_view request std::string *response) {
 //      implement a logic in Process
 //      return true;
 //   }
@@ -232,7 +232,7 @@ class IPCServer {
 
   // Implement a server algorithm in subclass.
   // If 'Process' return false, server finishes select loop
-  virtual bool Process(const std::string &request, std::string *response) = 0;
+  virtual bool Process(absl::string_view request, std::string *response) = 0;
 
   // Start select loop. It goes into infinite loop.
   void Loop();

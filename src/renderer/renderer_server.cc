@@ -223,8 +223,7 @@ int RendererServer::StartServer() {
   return StartMessageLoop();
 }
 
-bool RendererServer::Process(const std::string &request,
-                             std::string *response) {
+bool RendererServer::Process(absl::string_view request, std::string *response) {
   // Here we just copy the serialized message in order
   // to reply to the client ui as soon as possible.
   // ParseFromString is executed in the main(another) thread.
@@ -234,7 +233,7 @@ bool RendererServer::Process(const std::string &request,
   // If we use stack, this program will be crashed.
   //
   // The receiver of command_str takes the ownership of this string.
-  std::string *command_str = new std::string(request);
+  std::string *command_str = new std::string(request.data(), request.size());
 
   // No need to set the result code.
   response->clear();

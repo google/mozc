@@ -103,12 +103,12 @@ class EchoServer : public mozc::IPCServer {
  public:
   EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
       : IPCServer(path, num_connections, timeout) {}
-  bool Process(const std::string &input, std::string *output) override {
+  bool Process(absl::string_view input, std::string *output) override {
     if (input == "kill") {
       output->clear();
       return false;
     }
-    output->assign(input);
+    output->assign(input.data(), input.size());
     return true;
   }
 };

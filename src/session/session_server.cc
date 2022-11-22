@@ -88,14 +88,15 @@ bool SessionServer::Connected() const {
           IPCServer::Connected());
 }
 
-bool SessionServer::Process(const std::string &request, std::string *response) {
+bool SessionServer::Process(absl::string_view request, std::string *response) {
   if (!session_handler_) {
     LOG(WARNING) << "handler is not available";
     return false;  // shutdown the server if handler doesn't exist
   }
 
   commands::Command command;  // can define as a private member?
-  if (!command.mutable_input()->ParseFromString(request)) {
+  if (!command.mutable_input()->ParseFromArray(request.data(),
+                                               request.size())) {
     LOG(WARNING) << "Invalid request";
     response->clear();
     return true;

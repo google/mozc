@@ -37,6 +37,7 @@
 
 #include "base/port.h"
 #include "ipc/ipc.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 class EngineInterface;
@@ -63,7 +64,7 @@ class SessionServer : public IPCServer {
 
   bool Connected() const;
 
-  bool Process(const std::string &request, std::string *response) override;
+  bool Process(absl::string_view request, std::string *response) override;
 
  private:
   std::unique_ptr<session::SessionUsageObserver> usage_observer_;

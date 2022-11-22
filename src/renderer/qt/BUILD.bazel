@@ -102,6 +102,7 @@ cc_library_mozc(
         "//base:system_util",
         "//config:config_handler",
         "//ipc",
+        "@com_google_absl//absl/strings",
     ],
 )
 

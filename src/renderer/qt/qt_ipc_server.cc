@@ -37,6 +37,7 @@
 #include "base/system_util.h"
 #include "config/config_handler.h"
 #include "ipc/ipc.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -61,12 +62,13 @@ QtIpcServer::QtIpcServer()
     : IPCServer(GetServiceName(), kNumConnections, kIPCServerTimeOut) {}
 QtIpcServer::~QtIpcServer() {}
 
-bool QtIpcServer::Process(const std::string &request, std::string *response) {
+bool QtIpcServer::Process(absl::string_view request, std::string *response) {
   // no need to set the result code.
   response->clear();
 
   if (callback_) {
-    callback_(request);
+    // callback_ takes a std::string value.
+    callback_({request.data(), request.size()});
   }
   return true;
 }
