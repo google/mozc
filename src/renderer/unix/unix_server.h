@@ -34,6 +34,7 @@
 
 #include "renderer/renderer_server.h"
 #include "renderer/unix/gtk_wrapper_interface.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -56,7 +57,7 @@ class UnixServer : public RendererServer {
 
   void AsyncHide() override;
   void AsyncQuit() override;
-  bool AsyncExecCommand(std::string *proto_message) override;
+  bool AsyncExecCommand(absl::string_view proto_message) override;
   int StartMessageLoop() override;
 
   virtual bool Render();

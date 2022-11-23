@@ -37,6 +37,7 @@
 #include "base/logging.h"
 #include "protocol/renderer_command.pb.h"
 #include "renderer/unix/window_manager.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -94,19 +95,18 @@ bool UnixServer::Render() {
   return true;
 }
 
-bool UnixServer::AsyncExecCommand(std::string *proto_message) {
+bool UnixServer::AsyncExecCommand(absl::string_view proto_message) {
   {
     // Take the ownership of |proto_message|.
-    std::unique_ptr<std::string> proto_message_owner(proto_message);
     absl::MutexLock l(&mutex_);
-    if (message_ == *proto_message_owner.get()) {
+    if (message_ == proto_message) {
       // This is exactly the same to the previous message. Theoretically it is
       // safe to do nothing here.
       return true;
     }
     // Since mozc rendering protocol is state-less, we can always ignore the
     // previous content of |message_|.
-    message_.swap(*proto_message_owner.get());
+    message_.assign(proto_message.data(), proto_message.size());
   }
 
   const char dummy_data = 0;

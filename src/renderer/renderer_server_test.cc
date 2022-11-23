@@ -43,6 +43,7 @@
 #include "testing/base/public/googletest.h"
 #include "testing/base/public/gunit.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -84,10 +85,9 @@ class TestRendererServer : public RendererServer {
   int StartMessageLoop() override { return 0; }
 
   // Not async for testing
-  bool AsyncExecCommand(std::string *proto_message) override {
+  bool AsyncExecCommand(absl::string_view proto_message) override {
     commands::RendererCommand command;
-    command.ParseFromString(*proto_message);
-    delete proto_message;
+    command.ParseFromArray(proto_message.data(), proto_message.size());
     return ExecCommandInternal(command);
   }
 };
@@ -134,7 +134,7 @@ TEST_F(RendererServerTest, IPCTest) {
   server->SetRendererInterface(&renderer);
 #ifdef __APPLE__
   server->SetMachPortManager(on_memory_client_factory.OnMemoryPortManager());
-#endif
+#endif  // __APPLE__
   renderer.Reset();
 
   // listning event

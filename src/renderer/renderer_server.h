@@ -73,8 +73,7 @@ class RendererServer : public IPCServer {
   // protocol buffer received in Process method so that
   // IPC listener thread can reply to the client request as
   // early as possible.
-  // This function takes the owership of proto_message
-  virtual bool AsyncExecCommand(std::string *proto_message) = 0;
+  virtual bool AsyncExecCommand(absl::string_view proto_message) = 0;
 
  protected:
   // implement Message Loop function.
