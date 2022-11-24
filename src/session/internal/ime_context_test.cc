@@ -51,6 +51,7 @@
 namespace mozc {
 namespace session {
 
+using ::mozc::composer::Composer;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
@@ -58,17 +59,10 @@ using ::testing::SetArgPointee;
 
 TEST(ImeContextTest, DefaultValues) {
   ImeContext context;
-
   EXPECT_EQ(0, context.create_time());
   EXPECT_EQ(0, context.last_command_time());
-
-  // Don't access composer().
-  // Before using composer, set_composer() must be called with non-null-value.
-
   EXPECT_TRUE(nullptr == context.mutable_converter());
-
   EXPECT_EQ(ImeContext::NONE, context.state());
-
   EXPECT_PROTO_EQ(commands::Request::default_instance(), context.GetRequest());
 }
 
@@ -84,19 +78,11 @@ TEST(ImeContextTest, BasicTest) {
 
   const commands::Request request;
 
-  // The ownership of composer is moved to context.
-  composer::Composer *composer =
-      new composer::Composer(nullptr, &request, &config);
-  context.set_composer(composer);
-  EXPECT_EQ(composer, &context.composer());
-  EXPECT_EQ(composer, context.mutable_composer());
+  context.set_composer(std::make_unique<Composer>(nullptr, &request, &config));
 
-  std::unique_ptr<ConverterMock> converter_mock(new ConverterMock);
-  SessionConverter *converter =
-      new SessionConverter(converter_mock.get(), &request, &config);
-  context.set_converter(converter);
-  EXPECT_EQ(converter, &context.converter());
-  EXPECT_EQ(converter, context.mutable_converter());
+  MockConverter converter;
+  context.set_converter(
+      std::make_unique<SessionConverter>(&converter, &request, &config));
 
   context.set_state(ImeContext::COMPOSITION);
   EXPECT_EQ(ImeContext::COMPOSITION, context.state());
@@ -147,13 +133,15 @@ TEST(ImeContextTest, CopyContext) {
 
   {
     ImeContext source;
-    source.set_composer(new composer::Composer(&table, &request, &config));
-    source.set_converter(new SessionConverter(&converter, &request, &config));
+    source.set_composer(std::make_unique<Composer>(&table, &request, &config));
+    source.set_converter(
+        std::make_unique<SessionConverter>(&converter, &request, &config));
 
     ImeContext destination;
-    destination.set_composer(new composer::Composer(&table, &request, &config));
+    destination.set_composer(
+        std::make_unique<Composer>(&table, &request, &config));
     destination.set_converter(
-        new SessionConverter(&converter, &request, &config));
+        std::make_unique<SessionConverter>(&converter, &request, &config));
 
     source.set_state(ImeContext::COMPOSITION);
     source.mutable_composer()->InsertCharacter("a");
@@ -176,13 +164,15 @@ TEST(ImeContextTest, CopyContext) {
     ImeContext source;
     source.set_create_time(kCreateTime);
     source.set_last_command_time(kLastCommandTime);
-    source.set_composer(new composer::Composer(&table, &request, &config));
-    source.set_converter(new SessionConverter(&converter, &request, &config));
+    source.set_composer(std::make_unique<Composer>(&table, &request, &config));
+    source.set_converter(
+        std::make_unique<SessionConverter>(&converter, &request, &config));
 
     ImeContext destination;
-    destination.set_composer(new composer::Composer(&table, &request, &config));
+    destination.set_composer(
+        std::make_unique<Composer>(&table, &request, &config));
     destination.set_converter(
-        new SessionConverter(&converter, &request, &config));
+        std::make_unique<SessionConverter>(&converter, &request, &config));
 
     source.set_state(ImeContext::CONVERSION);
     source.mutable_composer()->InsertCharacter("a");
@@ -230,15 +220,12 @@ TEST(ImeContextTest, CustomKeymap) {
 
   // Set composer
   const commands::Request request;
-  composer::Composer *composer =
-      new composer::Composer(nullptr, &request, &config);
-  context.set_composer(composer);
+  context.set_composer(std::make_unique<Composer>(nullptr, &request, &config));
 
   // Set converter
-  std::unique_ptr<ConverterMock> converter_mock(new ConverterMock);
-  SessionConverter *converter =
-      new SessionConverter(converter_mock.get(), &request, &config);
-  context.set_converter(converter);
+  MockConverter converter;
+  context.set_converter(
+      std::make_unique<SessionConverter>(&converter, &request, &config));
 
   // Set config.
   context.SetConfig(&config);
