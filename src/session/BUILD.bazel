@@ -218,6 +218,7 @@ cc_test_mozc(
         "//data_manager/testing:mock_data_manager",
         "//dictionary:pos_matcher_lib",
         "//engine",
+        "//engine:engine_mock",
         "//engine:mock_converter_engine",
         "//engine:mock_data_engine_factory",
         "//engine:user_data_manager_mock",
@@ -422,8 +423,8 @@ cc_test_mozc(
         "//config:config_handler",
         "//converter:converter_mock",
         "//engine:engine_builder_interface",
+        "//engine:engine_mock",
         "//engine:engine_stub",
-        "//engine:mock_converter_engine",
         "//engine:mock_data_engine_factory",
         "//engine:user_data_manager_mock",
         "//protocol:commands_cc_proto",
@@ -454,6 +455,7 @@ cc_library_mozc(
         "//ipc:named_event",
         "//protocol:commands_cc_proto",
         "//usage_stats:usage_stats_uploader",
+        "@com_google_absl//absl/strings",
     ],
 )
 

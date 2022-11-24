@@ -52,9 +52,9 @@ static constexpr char kServerAddress[] = "test_echo_server";
 #ifdef OS_WIN
 // On windows, multiple-connections failed.
 static constexpr int kNumThreads = 1;
-#else
+#else  // OS_WIN
 static constexpr int kNumThreads = 5;
-#endif
+#endif  // OS_WIN
 static constexpr int kNumRequests = 2000;
 
 std::string GenRandomString(size_t size) {
@@ -73,23 +73,21 @@ class MultiConnections : public mozc::Thread {
   void SetMachPortManager(mozc::MachPortManagerInterface *manager) {
     mach_port_manager_ = manager;
   }
-#endif
+#endif  // __APPLE__
 
   void Run() override {
-    char buf[8192];
     mozc::Util::Sleep(2000);
     for (int i = 0; i < kNumRequests; ++i) {
       mozc::IPCClient con(kServerAddress, "");
 #ifdef __APPLE__
       con.SetMachPortManager(mach_port_manager_);
-#endif
+#endif  // __APPLE__
       ASSERT_TRUE(con.Connected());
       const int size = std::max(mozc::Util::Random(8000), 1);
       std::string input = "test";
       input += GenRandomString(size);
-      size_t length = sizeof(buf);
-      ASSERT_TRUE(con.Call(input.data(), input.size(), buf, &length, 1000));
-      std::string output(buf, length);
+      std::string output;
+      ASSERT_TRUE(con.Call(input, &output, 1000));
       EXPECT_EQ(input.size(), output.size());
       EXPECT_EQ(input, output);
     }
@@ -98,21 +96,19 @@ class MultiConnections : public mozc::Thread {
  private:
 #ifdef __APPLE__
   mozc::MachPortManagerInterface *mach_port_manager_;
-#endif
+#endif  // __APPLE__
 };
 
 class EchoServer : public mozc::IPCServer {
  public:
   EchoServer(const std::string &path, int32_t num_connections, int32_t timeout)
       : IPCServer(path, num_connections, timeout) {}
-  bool Process(const char *input_buffer, size_t input_length,
-               char *output_buffer, size_t *output_length) override {
-    if (::memcmp("kill", input_buffer, 4) == 0) {
-      *output_length = 0;
+  bool Process(absl::string_view input, std::string *output) override {
+    if (input == "kill") {
+      output->clear();
       return false;
     }
-    ::memcpy(output_buffer, input_buffer, input_length);
-    *output_length = input_length;
+    output->assign(input.data(), input.size());
     return true;
   }
 };
@@ -122,12 +118,12 @@ TEST(IPCTest, IPCTest) {
   mozc::SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
 #ifdef __APPLE__
   mozc::TestMachPortManager manager;
-#endif
+#endif  // __APPLE__
 
   EchoServer con(kServerAddress, 10, 1000);
 #ifdef __APPLE__
   con.SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
   con.LoopAndReturn();
 
   // mozc::Thread is not designed as value-semantics.
@@ -137,7 +133,7 @@ TEST(IPCTest, IPCTest) {
     cons[i] = new MultiConnections;
 #ifdef __APPLE__
     cons[i]->SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
     cons[i]->SetJoinable(true);
     cons[i]->Start("IPCTest");
   }
@@ -148,18 +144,17 @@ TEST(IPCTest, IPCTest) {
   }
 
   mozc::IPCClient kill(kServerAddress, "");
-  const char kill_cmd[32] = "kill";
-  char output[32];
-  size_t output_size = sizeof(output);
+  const std::string kill_cmd = "kill";
+  std::string output;
 #ifdef __APPLE__
   kill.SetMachPortManager(&manager);
-#endif
+#endif  // __APPLE__
   // We don't care the return value of this Call() because the return
   // value for server finish can change based on the platform
   // implementations.
   // TODO(mukai, team): determine the spec of return value for that
   // case and add EXPECT_(TRUE|FALSE) here.
-  kill.Call(kill_cmd, strlen(kill_cmd), output, &output_size, 1000);
+  kill.Call(kill_cmd, &output, 1000);
 
   con.Wait();
 }

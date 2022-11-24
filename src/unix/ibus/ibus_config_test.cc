@@ -27,65 +27,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "engine/user_data_manager_mock.h"
+#include "unix/ibus/ibus_config.h"
 
 #include <string>
 
+#include "testing/base/public/gunit.h"
+
 namespace mozc {
+namespace ibus {
 
-UserDataManagerMock::UserDataManagerMock() {}
+TEST(IbusConfigTest, LoadConfig) {
+  IbusConfig config;
+  const std::string config_data = R"(engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+}
+active_on_launch: False
+)";
+  EXPECT_TRUE(config.LoadConfig(config_data));
 
-UserDataManagerMock::~UserDataManagerMock() {}
-
-bool UserDataManagerMock::Sync() {
-  function_counters_["Sync"]++;
-  return true;
+  const std::string expected_xml = R"(<engines>
+<engine>
+  <description>Mozc (Japanese Input Method)</description>
+  <language>ja</language>
+  <icon>/usr/share/ibus-mozc/product_icon.png</icon>
+  <rank>80</rank>
+  <icon_prop_key>InputMode</icon_prop_key>
+  <symbol>あ</symbol>
+  <setup>/usr/lib/mozc/mozc_tool --mode=config_dialog</setup>
+  <name>mozc-jp</name>
+  <longname>Mozc</longname>
+  <layout>default</layout>
+  <layout_variant></layout_variant>
+  <layout_option></layout_option>
+</engine>
+</engines>
+)";
+  EXPECT_EQ(config.GetEnginesXml(), expected_xml);
 }
 
-bool UserDataManagerMock::Reload() {
-  function_counters_["Reload"]++;
-  return true;
-}
-
-bool UserDataManagerMock::ClearUserHistory() {
-  function_counters_["ClearUserHistory"]++;
-  return true;
-}
-
-bool UserDataManagerMock::ClearUserPrediction() {
-  function_counters_["ClearUserPrediction"]++;
-  return true;
-}
-
-bool UserDataManagerMock::ClearUnusedUserPrediction() {
-  function_counters_["ClearUnusedUserPrediction"]++;
-  return true;
-}
-
-bool UserDataManagerMock::ClearUserPredictionEntry(const std::string &key,
-                                                   const std::string &value) {
-  last_cleared_key_ = key;
-  last_cleared_value_ = value;
-  function_counters_["ClearUserPredictionEntry"]++;
-  return true;
-}
-
-bool UserDataManagerMock::Wait() {
-  function_counters_["Wait"]++;
-  return true;
-}
-
-int UserDataManagerMock::GetFunctionCallCount(const std::string &name) const {
-  auto iter = function_counters_.find(name);
-  return (iter == function_counters_.end()) ? 0 : iter->second;
-}
-
-const std::string &UserDataManagerMock::GetLastClearedKey() const {
-  return last_cleared_key_;
-}
-
-const std::string &UserDataManagerMock::GetLastClearedValue() const {
-  return last_cleared_value_;
-}
-
+}  // namespace ibus
 }  // namespace mozc

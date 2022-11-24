@@ -44,8 +44,8 @@
 #include "config/config_handler.h"
 #include "converter/converter_mock.h"
 #include "engine/engine_builder_interface.h"
+#include "engine/engine_mock.h"
 #include "engine/engine_stub.h"
-#include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/commands.pb.h"
@@ -65,10 +65,10 @@ ABSL_DECLARE_FLAG(int32_t, last_command_timeout);
 ABSL_DECLARE_FLAG(int32_t, last_create_session_timeout);
 
 namespace mozc {
-
-using mozc::session::testing::SessionHandlerTestBase;
-
 namespace {
+
+using ::mozc::session::testing::SessionHandlerTestBase;
+using ::testing::Return;
 
 // Used to test interaction between SessionHandler and EngineBuilder in engine
 // reload event.
@@ -457,13 +457,10 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
       commands::Input::CLEANUP,
   };
   for (size_t i = 0; i < std::size(command_types); ++i) {
-    std::unique_ptr<MockConverterEngine> engine(new MockConverterEngine());
-
-    // Set the mock user data manager to the converter mock created above. This
-    // user_data_manager_mock is owned by the converter mock inside the engine
-    // instance.
-    UserDataManagerMock *user_data_mgr_mock = new UserDataManagerMock();
-    engine->SetUserDataManager(user_data_mgr_mock);
+    MockUserDataManager mock_user_data_manager;
+    auto engine = std::make_unique<MockEngine>();
+    EXPECT_CALL(*engine, GetUserDataManager())
+        .WillRepeatedly(Return(&mock_user_data_manager));
 
     // Set up a session handler and a input command.
     SessionHandler handler(std::move(engine));
@@ -471,10 +468,8 @@ TEST_F(SessionHandlerTest, VerifySyncIsCalled) {
     command.mutable_input()->set_id(0);
     command.mutable_input()->set_type(command_types[i]);
 
-    // Check if Sync() is called after evaluating the command.
-    EXPECT_EQ(0, user_data_mgr_mock->GetFunctionCallCount("Sync"));
+    EXPECT_CALL(mock_user_data_manager, Sync()).WillOnce(Return(true));
     handler.EvalCommand(&command);
-    EXPECT_EQ(1, user_data_mgr_mock->GetFunctionCallCount("Sync"));
   }
 }
 

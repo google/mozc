@@ -238,6 +238,16 @@ cc_library_mozc(
     ],
 )
 
+cc_test_mozc(
+    name = "ibus_config_test",
+    size = "small",
+    srcs = ["ibus_config_test.cc"],
+    deps = [
+        ":ibus_config",
+        "//testing:gunit_main",
+    ],
+)
+
 cc_binary_mozc(
     name = "ibus_mozc",
     srcs = select_mozc(

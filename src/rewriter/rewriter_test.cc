@@ -48,8 +48,8 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryInterface;
-using dictionary::PosGroup;
+using ::mozc::dictionary::DictionaryInterface;
+using ::mozc::dictionary::PosGroup;
 
 size_t CommandCandidatesSize(const Segment &segment) {
   size_t result = 0;
@@ -68,18 +68,16 @@ class RewriterTest : public ::testing::Test {
  protected:
   void SetUp() override {
     SystemUtil::SetUserProfileDirectory(absl::GetFlag(FLAGS_test_tmpdir));
-    converter_mock_ = std::make_unique<ConverterMock>();
     const testing::MockDataManager data_manager;
     pos_group_ = std::make_unique<PosGroup>(data_manager.GetPosGroupData());
     const DictionaryInterface *kNullDictionary = nullptr;
-    rewriter_ =
-        std::make_unique<RewriterImpl>(converter_mock_.get(), &data_manager,
-                                       pos_group_.get(), kNullDictionary);
+    rewriter_ = std::make_unique<RewriterImpl>(
+        &mock_converter_, &data_manager, pos_group_.get(), kNullDictionary);
   }
 
   const RewriterInterface *GetRewriter() const { return rewriter_.get(); }
 
-  std::unique_ptr<ConverterMock> converter_mock_;
+  MockConverter mock_converter_;
   std::unique_ptr<const PosGroup> pos_group_;
   std::unique_ptr<RewriterImpl> rewriter_;
 };

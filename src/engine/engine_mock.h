@@ -27,54 +27,31 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Mocked Session Server runner used just for testing.
-#include <cstdint>
-#include <cstdio>
-#include <string>
+#ifndef MOZC_ENGINE_ENGINE_MOCK_H_
+#define MOZC_ENGINE_ENGINE_MOCK_H_
 
-#include "base/init_mozc.h"
-#include "protocol/commands.pb.h"
-#include "session/session_server.h"
-#include "absl/flags/flag.h"
-#include "absl/strings/str_format.h"
-
-static constexpr int kMaxBufSize = 1024;
+#include "engine/engine_interface.h"
+#include "testing/base/public/gmock.h"
 
 namespace mozc {
-void SendCommand(SessionServer *server, const commands::Input &input,
-                 commands::Output *output) {
-  absl::PrintF("input command:\n%s\n", input.Utf8DebugString());
 
-  const std::string input_str = input.SerializeAsString();
-  std::string output_str;
-  server->Process(input_str, &output_str);
+class MockEngine : public EngineInterface {
+ public:
+  MockEngine() = default;
+  ~MockEngine() override = default;
 
-  output->ParseFromString(output_str);
-  absl::PrintF("output command:\n%s\n", output->Utf8DebugString());
-}
+  MOCK_METHOD(ConverterInterface *, GetConverter, (), (const, override));
+  MOCK_METHOD(PredictorInterface *, GetPredictor, (), (const, override));
+  MOCK_METHOD(dictionary::SuppressionDictionary *, GetSuppressionDictionary, (),
+              (override));
+  MOCK_METHOD(bool, Reload, (), (override));
+  MOCK_METHOD(UserDataManagerInterface *, GetUserDataManager, (), (override));
+  MOCK_METHOD(absl::string_view, GetDataVersion, (), (const, override));
+  MOCK_METHOD(const DataManagerInterface *, GetDataManager, (),
+              (const, override));
+  MOCK_METHOD(std::vector<std::string>, GetPosList, (), (const, override));
+};
+
 }  // namespace mozc
 
-int main(int argc, char **argv) {
-  mozc::InitMozc(argv[0], &argc, &argv);
-
-  mozc::SessionServer server;
-  mozc::commands::Input input;
-  mozc::commands::Output output;
-
-  // create session
-  {
-    input.set_type(mozc::commands::Input::CREATE_SESSION);
-    mozc::SendCommand(&server, input, &output);
-  }
-
-  uint64_t id = output.id();
-  // send key
-  {
-    input.set_id(id);
-    input.set_type(mozc::commands::Input::SEND_KEY);
-    input.mutable_key()->set_special_key(mozc::commands::KeyEvent::SPACE);
-    mozc::SendCommand(&server, input, &output);
-  }
-
-  return 0;
-}
+#endif  // MOZC_ENGINE_ENGINE_MOCK_H_

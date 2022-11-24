@@ -41,38 +41,28 @@
 namespace mozc {
 namespace session {
 
-using commands::Request;
+using ::mozc::commands::Request;
 
 ImeContext::ImeContext()
-    : create_time_(0),
-      last_command_time_(0),
-      request_(&Request::default_instance()),
+    : request_(&Request::default_instance()),
       config_(&config::ConfigHandler::DefaultConfig()),
-      state_(NONE),
       keymap_(config::ConfigHandler::GetDefaultKeyMap()) {}
-ImeContext::~ImeContext() {}
+
+ImeContext::~ImeContext() = default;
 
 const composer::Composer &ImeContext::composer() const {
   DCHECK(composer_.get());
   return *composer_;
 }
+
 composer::Composer *ImeContext::mutable_composer() {
   DCHECK(composer_.get());
   return composer_.get();
 }
+
 void ImeContext::set_composer(composer::Composer *composer) {
   DCHECK(composer);
   composer_.reset(composer);
-}
-
-const SessionConverterInterface &ImeContext::converter() const {
-  return *converter_;
-}
-SessionConverterInterface *ImeContext::mutable_converter() {
-  return converter_.get();
-}
-void ImeContext::set_converter(SessionConverterInterface *converter) {
-  converter_.reset(converter);
 }
 
 void ImeContext::SetRequest(const commands::Request *request) {

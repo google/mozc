@@ -59,7 +59,7 @@ using mozc::storage::ExistenceFilter;
 
 void ReadHashList(const std::string &name, std::vector<uint64_t> *words) {
   std::string line;
-  mozc::InputFileStream input(name.c_str());
+  mozc::InputFileStream input(name);
   while (std::getline(input, line)) {
     if (line.empty() || line[0] == '#') {
       continue;
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
   filter->Write(&buf, &size);
 
   if (absl::GetFlag(FLAGS_header)) {
-    mozc::OutputFileStream ofs(absl::GetFlag(FLAGS_output).c_str());
+    mozc::OutputFileStream ofs(absl::GetFlag(FLAGS_output));
     mozc::CodeGenByteArrayOutputStream codegen_stream(
         &ofs, mozc::codegenstream::NOT_OWN_STREAM);
     codegen_stream.OpenVarDef(absl::GetFlag(FLAGS_name));
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
     codegen_stream.CloseVarDef();
   } else {
     mozc::OutputFileStream ofs(
-        absl::GetFlag(FLAGS_output).c_str(),
+        absl::GetFlag(FLAGS_output),
         std::ios::out | std::ios::trunc | std::ios::binary);
     ofs.write(buf, size);
   }

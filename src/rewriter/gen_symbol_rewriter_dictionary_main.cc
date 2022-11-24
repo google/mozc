@@ -79,7 +79,7 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
   sorting_map->clear();
   std::string line;
   int sorting_key = 0;
-  InputFileStream rule_ifs(rule_file.c_str());
+  InputFileStream rule_ifs(rule_file);
   CHECK(rule_ifs.good());
   while (!std::getline(rule_ifs, line).fail()) {
     if (line.empty() || line[0] == '#') {
@@ -89,7 +89,7 @@ void GetSortingMap(const std::string &auto_file, const std::string &rule_file,
     ++sorting_key;
   }
 
-  InputFileStream auto_ifs(auto_file.c_str());
+  InputFileStream auto_ifs(auto_file);
   CHECK(auto_ifs.good());
 
   while (!std::getline(auto_ifs, line).fail()) {
@@ -163,7 +163,7 @@ void MakeDictionary(const std::string &symbol_dictionary_file,
   absl::btree_map<std::string, uint16_t> sorting_map;
   GetSortingMap(sorting_map_file, ordering_rule_file, &sorting_map);
 
-  InputFileStream ifs(symbol_dictionary_file.c_str());
+  InputFileStream ifs(symbol_dictionary_file);
   CHECK(ifs.good());
 
   std::string line;

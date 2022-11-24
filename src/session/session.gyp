@@ -161,6 +161,7 @@
         'session_server.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../usage_stats/usage_stats_base.gyp:usage_stats_uploader',
         '../protocol/protocol.gyp:commands_proto',

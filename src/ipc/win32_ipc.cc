@@ -235,8 +235,8 @@ void SafeCancelIO(HANDLE device_handle, OVERLAPPED *overlapped) {
   ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), INFINITE);
 }
 
-bool WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event, DWORD timeout,
-                         OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+IPCErrorType WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event,
+                                 DWORD timeout, OVERLAPPED *overlapped) {
   const HANDLE events[] = {quit_event,
                            GetEventHandleFromOverlapped(overlapped)};
   const DWORD wait_result =
@@ -250,25 +250,22 @@ bool WaitForQuitOrIOImpl(HANDLE device_handle, HANDLE quit_event, DWORD timeout,
   }
   if (wait_result == WAIT_TIMEOUT) {
     LOG(WARNING) << "Timeout: " << timeout;
-    *last_ipc_error = IPC_TIMEOUT_ERROR;
-    return false;
+    return IPC_TIMEOUT_ERROR;
   }
   if (wait_result == WAIT_OBJECT_0) {
     // Should be quit immediately
-    *last_ipc_error = IPC_QUIT_EVENT_SIGNALED;
-    return false;
+    return IPC_QUIT_EVENT_SIGNALED;
   }
   if (wait_result != (WAIT_OBJECT_0 + 1)) {
     LOG(WARNING) << "Unknown result: " << wait_result
                  << ", Error: " << wait_error;
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+    return IPC_UNKNOWN_ERROR;
   }
-  return true;
+  return IPC_NO_ERROR;
 }
 
-bool WaitForIOImpl(HANDLE device_handle, DWORD timeout, OVERLAPPED *overlapped,
-                   IPCErrorType *last_ipc_error) {
+IPCErrorType WaitForIOImpl(HANDLE device_handle, DWORD timeout,
+                           OVERLAPPED *overlapped) {
   const DWORD wait_result =
       ::WaitForSingleObject(GetEventHandleFromOverlapped(overlapped), timeout);
   // Clear the I/O operation if still exists.
@@ -279,38 +276,34 @@ bool WaitForIOImpl(HANDLE device_handle, DWORD timeout, OVERLAPPED *overlapped,
   }
   if (wait_result == WAIT_TIMEOUT) {
     LOG(WARNING) << "Timeout: " << timeout;
-    *last_ipc_error = IPC_TIMEOUT_ERROR;
-    return false;
+    return IPC_TIMEOUT_ERROR;
   }
   if (wait_result != WAIT_OBJECT_0) {
     LOG(WARNING) << "Unknown result: " << wait_result;
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+    return IPC_UNKNOWN_ERROR;
   }
-  return true;
+  return IPC_NO_ERROR;
 }
 
-bool WaitForQuitOrIO(HANDLE device_handle, HANDLE quit_event, DWORD timeout,
-                     OVERLAPPED *overlapped, IPCErrorType *last_ipc_error) {
+IPCErrorType WaitForQuitOrIO(HANDLE device_handle, HANDLE quit_event,
+                             DWORD timeout, OVERLAPPED *overlapped) {
   if (quit_event != nullptr) {
-    return WaitForQuitOrIOImpl(device_handle, quit_event, timeout, overlapped,
-                               last_ipc_error);
+    return WaitForQuitOrIOImpl(device_handle, quit_event, timeout, overlapped);
   }
-  return WaitForIOImpl(device_handle, timeout, overlapped, last_ipc_error);
+  return WaitForIOImpl(device_handle, timeout, overlapped);
 }
 
 // To work around a bug of GetOverlappedResult in Vista
 // http://msdn.microsoft.com/en-us/library/dd371711.aspx
-bool SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
-                              DWORD timeout, OVERLAPPED *overlapped,
-                              DWORD *num_bytes_updated,
-                              IPCErrorType *last_ipc_error, bool wait_ack) {
+IPCErrorType SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
+                                      DWORD timeout, OVERLAPPED *overlapped,
+                                      DWORD *num_bytes_updated, bool wait_ack) {
   DCHECK(overlapped);
   DCHECK(num_bytes_updated);
-  DCHECK(last_ipc_error);
-  if (!WaitForQuitOrIO(device_handle, quit_event, timeout, overlapped,
-                       last_ipc_error)) {
-    return false;
+  const IPCErrorType result =
+      WaitForQuitOrIO(device_handle, quit_event, timeout, overlapped);
+  if (result != IPC_NO_ERROR) {
+    return result;
   }
 
   *num_bytes_updated = 0;
@@ -321,36 +314,32 @@ bool SafeWaitOverlappedResult(HANDLE device_handle, HANDLE quit_event,
     if (get_overlapped_error == ERROR_BROKEN_PIPE) {
       if (wait_ack) {
         // This is an expected behavior.
-        return true;
+        return IPC_NO_ERROR;
       }
       LOG(ERROR) << "GetOverlappedResult() failed: ERROR_BROKEN_PIPE";
     } else {
       LOG(ERROR) << "GetOverlappedResult() failed: " << get_overlapped_error;
     }
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+    return IPC_UNKNOWN_ERROR;
   }
-  return true;
+  return IPC_NO_ERROR;
 }
 
-bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
-                    const char *buf, size_t buf_length, int timeout,
-                    IPCErrorType *last_ipc_error) {
-  if (buf_length == 0) {
-    LOG(WARNING) << "buf length is 0";
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+IPCErrorType SendIpcMessage(HANDLE device_handle, HANDLE write_wait_handle,
+                            const std::string &msg, int timeout) {
+  if (msg.empty()) {
+    LOG(WARNING) << "msg is empty.";
+    return IPC_UNKNOWN_ERROR;
   }
 
   DWORD num_bytes_written = 0;
   OVERLAPPED overlapped;
   if (!InitOverlapped(&overlapped, write_wait_handle)) {
-    *last_ipc_error = IPC_WRITE_ERROR;
-    return false;
+    return IPC_WRITE_ERROR;
   }
 
   const bool write_file_result =
-      (::WriteFile(device_handle, buf, static_cast<DWORD>(buf_length),
+      (::WriteFile(device_handle, msg.data(), static_cast<DWORD>(msg.size()),
                    &num_bytes_written, &overlapped) != FALSE);
   const DWORD write_file_error = ::GetLastError();
   if (write_file_result) {
@@ -358,45 +347,43 @@ bool SendIPCMessage(HANDLE device_handle, HANDLE write_wait_handle,
   } else {
     if (write_file_error != ERROR_IO_PENDING) {
       LOG(ERROR) << "WriteFile() failed: " << write_file_error;
-      *last_ipc_error = IPC_WRITE_ERROR;
-      return false;
+      return IPC_WRITE_ERROR;
     }
-    if (!SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
-                                  &num_bytes_written, last_ipc_error,
-                                  kSendTypeData)) {
-      return false;
+    const IPCErrorType result =
+        SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
+                                 &num_bytes_written, kSendTypeData);
+    if (result != IPC_NO_ERROR) {
+      return result;
     }
   }
 
   // As we use message-type namedpipe, all the data should be written in one
   // shot. Otherwise, single message will be split into multiple packets.
-  if (num_bytes_written != buf_length) {
-    LOG(ERROR) << "Data truncated. buf_length: " << buf_length
+  if (num_bytes_written != msg.size()) {
+    LOG(ERROR) << "Data truncated. msg.size(): " << msg.size()
                << ", num_bytes_written: " << num_bytes_written;
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+    return IPC_UNKNOWN_ERROR;
   }
-  return true;
+  return IPC_NO_ERROR;
 }
 
-bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
-                    size_t *buf_length, int timeout, bool read_type_ack,
-                    IPCErrorType *last_ipc_error) {
-  if (*buf_length == 0) {
-    LOG(WARNING) << "buf length is 0";
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+IPCErrorType RecvIpcMessage(HANDLE device_handle, HANDLE read_wait_handle,
+                    std::string *msg, int timeout, bool read_type_ack) {
+  if (!msg) {
+    LOG(WARNING) << "msg is nullptr.";
+    return IPC_UNKNOWN_ERROR;
   }
 
   OVERLAPPED overlapped;
   if (!InitOverlapped(&overlapped, read_wait_handle)) {
-    *last_ipc_error = IPC_READ_ERROR;
-    return false;
+      msg->clear();
+    return IPC_READ_ERROR;
   }
 
+  msg->resize(IPC_RESPONSESIZE);
   DWORD num_bytes_read = 0;
   const bool read_file_result =
-      (::ReadFile(device_handle, buf, static_cast<DWORD>(*buf_length),
+      (::ReadFile(device_handle, msg->data(), static_cast<DWORD>(msg->size()),
                   &num_bytes_read, &overlapped) != FALSE);
   const DWORD read_file_error = ::GetLastError();
   if (read_file_result) {
@@ -405,28 +392,29 @@ bool RecvIPCMessage(HANDLE device_handle, HANDLE read_wait_handle, char *buf,
     if (read_type_ack && (read_file_error == ERROR_BROKEN_PIPE)) {
       // The client has already disconnected this pipe. This is an expected
       // behavior and do not treat as an error.
-      return true;
+      msg->clear();
+      return IPC_NO_ERROR;
     }
     if (read_file_error != ERROR_IO_PENDING) {
       LOG(ERROR) << "ReadFile() failed: " << read_file_error;
-      *last_ipc_error = IPC_READ_ERROR;
-      return false;
+      msg->clear();
+      return IPC_READ_ERROR;
     }
     // Actually this is an async operation. Let's wait for its completion.
-    if (!SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
-                                  &num_bytes_read, last_ipc_error,
-                                  read_type_ack)) {
-      return false;
+    const IPCErrorType result =
+        SafeWaitOverlappedResult(device_handle, nullptr, timeout, &overlapped,
+                                 &num_bytes_read, read_type_ack);
+    if (result != IPC_NO_ERROR) {
+      msg->clear();
+      return result;
     }
   }
 
   if (!read_type_ack && (num_bytes_read == 0)) {
     LOG(WARNING) << "Received 0 result.";
   }
-
-  *buf_length = num_bytes_read;
-
-  return true;
+  msg->resize(num_bytes_read);
+  return IPC_NO_ERROR;
 }
 
 HANDLE CreateManualResetEvent() {
@@ -528,9 +516,9 @@ void IPCServer::Terminate() {
 }
 
 void IPCServer::Loop() {
-  IPCErrorType last_ipc_error = IPC_NO_ERROR;
-
   int successive_connection_failure_count = 0;
+  std::string request;
+  std::string response;
   while (connected_) {
     OVERLAPPED overlapped;
     if (!InitOverlapped(&overlapped, pipe_event_.get())) {
@@ -550,15 +538,15 @@ void IPCServer::Loop() {
       } else if (connect_named_pipe_error == ERROR_IO_PENDING) {
         // Actually this is async operation.
         DWORD ignored = 0;
-        IPCErrorType ipc_error = IPC_NO_ERROR;
-        if (!SafeWaitOverlappedResult(pipe_handle_.get(), quit_event_.get(),
-                                      INFINITE, &overlapped, &ignored,
-                                      &ipc_error, kReadTypeData)) {
-          if (ipc_error == IPC_QUIT_EVENT_SIGNALED) {
-            VLOG(1) << "Received Conrol event from other thread";
-            connected_ = false;
-            return;
-          }
+        const IPCErrorType ipc_error = SafeWaitOverlappedResult(
+            pipe_handle_.get(), quit_event_.get(), INFINITE, &overlapped,
+            &ignored, kReadTypeData);
+        if (ipc_error == IPC_QUIT_EVENT_SIGNALED) {
+          VLOG(1) << "Received Control event from other thread";
+          connected_ = false;
+          return;
+        }
+        if (ipc_error != IPC_NO_ERROR) {
           ++successive_connection_failure_count;
           if (successive_connection_failure_count >=
               kMaxSuccessiveConnectionFailureCount) {
@@ -576,26 +564,25 @@ void IPCServer::Loop() {
 
     successive_connection_failure_count = 0;
     // Retrieve an incoming message.
-    size_t request_size = sizeof(request_);
-    if (RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), &request_[0],
-                       &request_size, timeout_, kReadTypeData,
-                       &last_ipc_error)) {
-      size_t response_size = sizeof(response_);
-      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
+    if (RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), &request,
+                       timeout_, kReadTypeData) == IPC_NO_ERROR) {
+      if (!Process(request, &response)) {
         connected_ = false;
       }
 
       // When Process() returns 0 result, force to call DisconnectNamedPipe()
       // instead of checking ACK message
-      if (response_size == 0) {
+      if (response.empty()) {
         LOG(WARNING) << "Process() return 0 result";
         ::DisconnectNamedPipe(pipe_handle_.get());
         continue;
       }
 
       // Send a response
-      SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), &response_[0],
-                     response_size, timeout_, &last_ipc_error);
+      if (SendIpcMessage(pipe_handle_.get(), pipe_event_.get(), response,
+                         timeout_) != IPC_NO_ERROR) {
+        LOG(WARNING) << "SendIpcMessage failed.";
+      }
     }
 
     // Special treatment for Windows per discussion with thatanaka:
@@ -609,12 +596,10 @@ void IPCServer::Loop() {
     // Wait ACK-like signal from client for 0.1 second. If we detect the pipe
     // disconnect event, so far so good. If we receive more data, we assume it
     // is an ACK signal (the IPC client of Mozc 1.5.x or earlier does this).
-    char ack_request[1] = {0};
-    size_t ack_request_size = 1;
+    std::string ack_request;
     static constexpr int kAckTimeout = 100;
-    if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), ack_request,
-                        &ack_request_size, kAckTimeout, kReadTypeACK,
-                        &last_ipc_error)) {
+    if (RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), &ack_request,
+                       kAckTimeout, kReadTypeACK) != IPC_NO_ERROR) {
       // This case happens when the client did not receive the server's response
       // within timeout. Anyway we will close the connection so that the server
       // will not be blocked.
@@ -760,8 +745,8 @@ IPCClient::~IPCClient() {}
 
 bool IPCClient::Connected() const { return connected_; }
 
-bool IPCClient::Call(const char *request, size_t request_size, char *response,
-                     size_t *response_size, int32 timeout) {
+bool IPCClient::Call(const std::string &request, std::string *response,
+                     int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   if (!connected_) {
     LOG(ERROR) << "IPCClient is not connected";
@@ -769,16 +754,18 @@ bool IPCClient::Call(const char *request, size_t request_size, char *response,
     return false;
   }
 
-  if (!SendIPCMessage(pipe_handle_.get(), pipe_event_.get(), request,
-                      request_size, timeout, &last_ipc_error_)) {
-    LOG(ERROR) << "SendIPCMessage() failed";
+  last_ipc_error_ = SendIpcMessage(pipe_handle_.get(), pipe_event_.get(),
+                                   request, timeout);
+  if (last_ipc_error_ != IPC_NO_ERROR) {
+    LOG(ERROR) << "SendIpcMessage() failed";
     return false;
   }
 
-  if (!RecvIPCMessage(pipe_handle_.get(), pipe_event_.get(), response,
-                      response_size, timeout, kReadTypeData,
-                      &last_ipc_error_)) {
-    LOG(ERROR) << "RecvIPCMessage() failed";
+  last_ipc_error_ =
+      RecvIpcMessage(pipe_handle_.get(), pipe_event_.get(), response,
+                     timeout, kReadTypeData);
+  if (last_ipc_error_ != IPC_NO_ERROR) {
+    LOG(ERROR) << "RecvIpcMessage() failed";
     return false;
   }
 

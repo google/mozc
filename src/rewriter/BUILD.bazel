@@ -802,6 +802,7 @@ cc_test_mozc(
         "//converter:converter_interface",
         "//converter:converter_mock",
         "//converter:segments",
+        "//converter:segments_matchers",
         "//engine:engine_interface",
         "//engine:mock_data_engine_factory",
         "//protocol:commands_cc_proto",

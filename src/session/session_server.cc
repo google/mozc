@@ -88,44 +88,31 @@ bool SessionServer::Connected() const {
           IPCServer::Connected());
 }
 
-bool SessionServer::Process(const char *request, size_t request_size,
-                            char *response, size_t *response_size) {
+bool SessionServer::Process(absl::string_view request, std::string *response) {
   if (!session_handler_) {
     LOG(WARNING) << "handler is not available";
     return false;  // shutdown the server if handler doesn't exist
   }
 
   commands::Command command;  // can define as a private member?
-  if (!command.mutable_input()->ParseFromArray(request, request_size)) {
+  if (!command.mutable_input()->ParseFromArray(request.data(),
+                                               request.size())) {
     LOG(WARNING) << "Invalid request";
-    *response_size = 0;
+    response->clear();
     return true;
   }
 
   if (!session_handler_->EvalCommand(&command)) {
     LOG(WARNING) << "EvalCommand() returned false. Exiting the loop.";
-    *response_size = 0;
+    response->clear();
     return false;
   }
 
-  std::string output;
-  if (!command.output().SerializeToString(&output)) {
+  if (!command.output().SerializeToString(response)) {
     LOG(WARNING) << "SerializeToString() failed";
-    *response_size = 0;
+    response->clear();
     return true;
   }
-
-  // TODO(taku) automatically increase the buffer.
-  // Needs to fix IPCServer as well
-  if (*response_size < output.size()) {
-    LOG(WARNING) << "response size: " << *response_size
-                 << " < output.size:" << output.size();
-    *response_size = 0;
-    return true;
-  }
-
-  ::memcpy(response, output.data(), output.size());
-  *response_size = output.size();
 
   // debug message
   VLOG(2) << command.DebugString();

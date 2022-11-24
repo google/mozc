@@ -130,7 +130,7 @@ TEST_F(CodecTest, FactoryTest) {
   std::vector<DictionaryFileSection> sections;
   {
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(sections, &ofs);
   }
   {
@@ -160,7 +160,7 @@ TEST_F(CodecTest, DefaultTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   std::string buf;  // sections will reference this buffer.
@@ -193,7 +193,7 @@ TEST_F(CodecTest, RandomizedCodecTest) {
     AddSection(codec, "Section 1", value1.data(), value1.size(),
                &write_sections);
     OutputFileStream ofs;
-    ofs.open(test_file_.c_str(), std::ios_base::out | std::ios_base::binary);
+    ofs.open(test_file_, std::ios_base::out | std::ios_base::binary);
     codec->WriteSections(write_sections, &ofs);
   }
   std::string buf;  // sections will reference this buffer.

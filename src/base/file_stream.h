@@ -34,6 +34,8 @@
 #include <ios>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace mozc {
 
 // Represents classes which encapsulates the std::ifstream class (or the
@@ -48,14 +50,14 @@ namespace mozc {
 class InputFileStream : public std::ifstream {
  public:
   InputFileStream();
-  explicit InputFileStream(const char* filename,
+  explicit InputFileStream(absl::string_view filename,
                            std::ios_base::openmode mode = std::ios_base::in);
 
   // Opens the specified file.
   // This function is a wrapper function for the ifstream::open() function
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ifstream::open() function.
-  void open(const char* filename,
+  void open(absl::string_view filename,
             std::ios_base::openmode mode = std::ios_base::in);
 
  private:
@@ -65,14 +67,14 @@ class InputFileStream : public std::ifstream {
 class OutputFileStream : public std::ofstream {
  public:
   OutputFileStream();
-  explicit OutputFileStream(const char* filename,
+  explicit OutputFileStream(absl::string_view filename,
                             std::ios_base::openmode mode = std::ios_base::out);
 
   // Opens the specified file.
   // This function is a wrapper function for the ofstream::open() function
   // to change the encoding of the specified file name from UTF-8 to its native
   // one before calling the ofstream::open() function.
-  void open(const char* filename,
+  void open(absl::string_view filename,
             std::ios_base::openmode mode = std::ios_base::out);
 
  private:

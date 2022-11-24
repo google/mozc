@@ -58,10 +58,8 @@ class MultiConnections : public Thread {
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
       std::string input = "testtesttesttest";
-      size_t length = sizeof(buf);
-      ::memset(buf, 0, length);
-      CHECK(con.Call(input.data(), input.size(), buf, &length, 1000));
-      std::string output(buf, length);
+      std::string output;
+      CHECK(con.Call(input, &output, 1000));
       CHECK_EQ(input.size(), output.size());
       CHECK_EQ(input, output);
     }
@@ -72,11 +70,9 @@ class EchoServer : public IPCServer {
  public:
   EchoServer(const std::string &path, int32 num_connections, int32 timeout)
       : IPCServer(path, num_connections, timeout) {}
-  virtual bool Process(const char *input_buffer, size_t input_length,
-                       char *output_buffer, size_t *output_length) {
-    ::memcpy(output_buffer, input_buffer, input_length);
-    *output_length = input_length;
-    return ::memcmp("kill", input_buffer, 4) != 0;
+  bool Process(absl::string_view input, std::string *output) override {
+    output->assign(input.data(), input.size());
+    return (input != "kill");
   }
 };
 
@@ -111,10 +107,9 @@ int main(int argc, char **argv) {
 
     mozc::IPCClient kill(FLAGS_server_address,
                          absl::GetFlag(FLAGS_server_path));
-    const char kill_cmd[32] = "kill";
-    char output[32];
-    size_t output_size = sizeof(output);
-    kill.Call(kill_cmd, strlen(kill_cmd), output, &output_size, 1000);
+    const std::string kill_cmd = "kill";
+    std::string output;
+    kill.Call(kill_cmd, &output, 1000);
     server_thread_main.Join();
 
     LOG(INFO) << "Done";
@@ -126,16 +121,15 @@ int main(int argc, char **argv) {
     con.Loop();
   } else if (absl::GetFlag(FLAGS_client)) {
     std::string line;
-    char response[8192];
+    std::string response;
     while (getline(cin, line)) {
       mozc::IPCClient con(FLAGS_server_address,
                           absl::GetFlag(FLAGS_server_path));
       CHECK(con.Connected());
       size_t response_size = sizeof(response);
-      CHECK(con.Call(line.data(), line.size(), response, &response_size, 1000));
+      CHECK(con.Call(line, &response, 1000));
       std::cout << "Request: " << line << std::endl;
-      std::cout << "Response: " << std::string(response, response_size)
-                << std::endl;
+      std::cout << "Response: " << response << std::endl;
     }
   } else {
     LOG(INFO) << "either --server or --client or --test must be set true";

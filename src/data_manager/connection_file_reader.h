@@ -35,6 +35,7 @@
 
 #include "base/file_stream.h"
 #include "base/port.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -46,7 +47,7 @@ namespace mozc {
 // }
 class ConnectionFileReader {
  public:
-  explicit ConnectionFileReader(const std::string &filename);
+  explicit ConnectionFileReader(absl::string_view filename);
   ~ConnectionFileReader();
 
   bool done() const { return done_; }

@@ -62,15 +62,13 @@ uint32_t IPCClientMock::GetServerProcessId() const {
   return server_process_id_;
 }
 
-bool IPCClientMock::Call(const char *request, const size_t request_size,
-                         char *response, size_t *response_size,
+bool IPCClientMock::Call(const std::string &request, std::string *response,
                          const int32_t timeout) {
-  caller_->SetGeneratedRequest(std::string(request, request_size));
+  caller_->SetGeneratedRequest(request);
   if (!connected_ || !result_) {
     return false;
   }
-  memcpy(response, response_.c_str(), response_.length());
-  *response_size = response_.length();
+  response->assign(response_);
   return true;
 }
 

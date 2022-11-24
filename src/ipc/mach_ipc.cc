@@ -211,8 +211,8 @@ void IPCClient::Init(const std::string &name,
   }
 }
 
-bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
-                     size_t *response_size, int32 timeout) {
+bool IPCClient::Call(const std::string &request, std::string *response,
+                     int32 timeout) {
   last_ipc_error_ = IPC_NO_ERROR;
   MachPortManagerInterface *manager = mach_port_manager_;
   if (manager == nullptr) {
@@ -252,8 +252,9 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
   send_header->msgh_reserved = 0;
   send_header->msgh_id = IPC_PROTOCOL_VERSION;
   send_message.body.msgh_descriptor_count = 1;
-  send_message.data.address = const_cast<char *>(request_);
-  send_message.data.size = input_length;
+  send_message.data.address =
+      static_cast<void *>(const_cast<char *>(request.data()));
+  send_message.data.size = request.size();
   send_message.data.deallocate = false;  // Doesn't deallocate data immediately
   send_message.data.copy = MACH_MSG_VIRTUAL_COPY;  // Copy on write
   send_message.data.type = MACH_MSG_OOL_DESCRIPTOR;
@@ -310,10 +311,8 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
 
     if (receive_header->msgh_id == IPC_PROTOCOL_VERSION) {
       last_ipc_error_ = IPC_NO_ERROR;
-      if (*response_size > receive_message.data.size) {
-        *response_size = receive_message.data.size;
-      }
-      ::memcpy(response_, receive_message.data.address, *response_size);
+      response->assign(static_cast<char *>(receive_message.data.address),
+                       receive_message.data.size);
       mach_port_destroy(mach_task_self(), client_port);
       vm_deallocate(mach_task_self(),
                     (vm_address_t)receive_message.data.address,
@@ -397,7 +396,7 @@ void IPCServer::Loop() {
   mach_msg_header_t *send_header, *receive_header;
   kern_return_t kr;
   bool finished = false;
-  char response[IPC_RESPONSESIZE];
+  std::string response;
   while (!finished) {
     // Receive request
     receive_header = &(receive_message.header);
@@ -420,9 +419,9 @@ void IPCServer::Loop() {
       continue;
     }
 
-    size_t response_size = IPC_RESPONSESIZE;
-    if (!Process(static_cast<char *>(receive_message.data.address),
-                 receive_message.data.size, response, &response_size)) {
+    absl::string_view request(static_cast<char *>(receive_message.data.address),
+                              receive_message.data.size);
+    if (!Process(request, &response)) {
       LOG(INFO) << "Process() returns false.  Quit the wait loop.";
       finished = true;
     }
@@ -438,8 +437,8 @@ void IPCServer::Loop() {
     send_header->msgh_remote_port = receive_header->msgh_remote_port;
     send_header->msgh_id = receive_header->msgh_id;
     send_message.body.msgh_descriptor_count = 1;
-    send_message.data.address = response;
-    send_message.data.size = response_size;
+    send_message.data.address = response.data();
+    send_message.data.size = response.size();
     // Doesn't deallocate data immediately
     send_message.data.deallocate = false;
     send_message.data.copy = MACH_MSG_VIRTUAL_COPY;  // Copy on write

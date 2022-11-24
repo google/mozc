@@ -38,6 +38,7 @@
 #include "base/port.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -69,7 +70,7 @@ class Win32Server : public RendererServer, public RendererInterface {
   bool ExecCommand(const commands::RendererCommand &command) override;
   void SetSendCommandInterface(
       client::SendCommandInterface *send_command_interface) override;
-  bool AsyncExecCommand(std::string *proto_message) override;
+  bool AsyncExecCommand(absl::string_view proto_message) override;
   int StartMessageLoop() override;
 
  private:

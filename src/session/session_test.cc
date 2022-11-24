@@ -30,6 +30,7 @@
 #include "session/session.h"
 
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -45,6 +46,7 @@
 #include "converter/segments.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
+#include "engine/engine_mock.h"
 #include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
@@ -77,6 +79,11 @@ namespace {
 
 using ::mozc::commands::Request;
 using ::mozc::usage_stats::UsageStats;
+using ::testing::_;
+using ::testing::DoAll;
+using ::testing::Mock;
+using ::testing::Return;
+using ::testing::SetArgPointee;
 
 void SetSendKeyCommandWithKeyString(const std::string &key_string,
                                     commands::Command *command) {
@@ -376,124 +383,6 @@ void SwitchInputMode(commands::CompositionMode mode, Session *session) {
   EXPECT_TRUE(session->SendCommand(&command));
 }
 
-// since History segments are almost hidden from
-class ConverterMockForReset : public ConverterMock {
- public:
-  ConverterMockForReset() : reset_conversion_called_(false) {}
-
-  void ResetConversion(Segments *segments) const override {
-    reset_conversion_called_ = true;
-  }
-
-  bool reset_conversion_called() const { return reset_conversion_called_; }
-
-  void Reset() { reset_conversion_called_ = false; }
-
- private:
-  mutable bool reset_conversion_called_;
-};
-
-class MockConverterEngineForReset : public EngineInterface {
- public:
-  MockConverterEngineForReset()
-      : converter_mock_(std::make_unique<ConverterMockForReset>()) {}
-  ~MockConverterEngineForReset() override = default;
-
-  ConverterInterface *GetConverter() const override {
-    return converter_mock_.get();
-  }
-
-  PredictorInterface *GetPredictor() const override { return nullptr; }
-
-  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return nullptr;
-  }
-
-  bool Reload() override { return true; }
-
-  UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
-
-  const DataManagerInterface *GetDataManager() const override {
-    return nullptr;
-  }
-
-  absl::string_view GetDataVersion() const override {
-    return absl::string_view();
-  }
-
-  std::vector<std::string> GetPosList() const override { return {}; }
-
-  const ConverterMockForReset &converter_mock() const {
-    return *converter_mock_;
-  }
-
-  ConverterMockForReset *mutable_converter_mock() {
-    return converter_mock_.get();
-  }
-
- private:
-  std::unique_ptr<ConverterMockForReset> converter_mock_;
-};
-
-// TODO(noriyukit): Replace this by MockConverter.
-class ConverterMockForRevert : public ConverterMock {
- public:
-  ConverterMockForRevert() : revert_conversion_called_(false) {}
-
-  void RevertConversion(Segments *segments) const override {
-    revert_conversion_called_ = true;
-  }
-
-  bool revert_conversion_called() const { return revert_conversion_called_; }
-
-  void Reset() { revert_conversion_called_ = false; }
-
- private:
-  mutable bool revert_conversion_called_;
-};
-
-class MockConverterEngineForRevert : public EngineInterface {
- public:
-  MockConverterEngineForRevert()
-      : converter_mock_(new ConverterMockForRevert) {}
-  ~MockConverterEngineForRevert() override = default;
-
-  ConverterInterface *GetConverter() const override {
-    return converter_mock_.get();
-  }
-
-  PredictorInterface *GetPredictor() const override { return nullptr; }
-
-  dictionary::SuppressionDictionary *GetSuppressionDictionary() override {
-    return nullptr;
-  }
-
-  bool Reload() override { return true; }
-
-  UserDataManagerInterface *GetUserDataManager() override { return nullptr; }
-
-  const DataManagerInterface *GetDataManager() const override {
-    return nullptr;
-  }
-
-  absl::string_view GetDataVersion() const override {
-    return absl::string_view();
-  }
-
-  std::vector<std::string> GetPosList() const override { return {}; }
-
-  const ConverterMockForRevert &converter_mock() const {
-    return *converter_mock_;
-  }
-
-  ConverterMockForRevert *mutable_converter_mock() {
-    return converter_mock_.get();
-  }
-
- private:
-  std::unique_ptr<ConverterMockForRevert> converter_mock_;
-};
-
 }  // namespace
 
 class SessionTest : public ::testing::Test {
@@ -588,6 +477,23 @@ class SessionTest : public ::testing::Test {
   }
 
   void InitSessionToConversionWithAiueo(Session *session) {
+    InitSessionToConversionWithAiueo(session, [this](Segments *segments) {
+      GetConverterMock()->SetStartConversionForRequest(segments, true);
+    });
+  }
+
+  void InitSessionToConversionWithAiueo(Session *session,
+                                        MockConverter *converter) {
+    InitSessionToConversionWithAiueo(session, [converter](Segments *segments) {
+      EXPECT_CALL(*converter, StartConversionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(*segments), Return(true)));
+    });
+    Mock::VerifyAndClearExpectations(converter);
+  }
+
+  void InitSessionToConversionWithAiueo(
+      Session *session,
+      std::function<void(Segments *segments)> init_mock_converter) {
     InitSessionToPrecomposition(session);
 
     commands::Command command;
@@ -597,7 +503,7 @@ class SessionTest : public ::testing::Test {
     SetComposer(session, &request);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    init_mock_converter(&segments);
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
@@ -854,61 +760,67 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  auto session = std::make_unique<Session>(engine_.get());
-  InitSessionToPrecomposition(session.get());
+  Session session(engine_.get());
+  InitSessionToPrecomposition(&session);
 
   commands::Command command;
   command.mutable_input()->set_type(commands::Input::SEND_COMMAND);
-  InsertCharacterChars("kanji", session.get(), &command);
+  InsertCharacterChars("kanji", &session, &command);
 
   // REVERT
-  SendCommand(commands::SessionCommand::REVERT, session.get(), &command);
+  SendCommand(commands::SessionCommand::REVERT, &session, &command);
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
 
   // SUBMIT
-  InsertCharacterChars("k", session.get(), &command);
-  SendCommand(commands::SessionCommand::SUBMIT, session.get(), &command);
+  InsertCharacterChars("k", &session, &command);
+  SendCommand(commands::SessionCommand::SUBMIT, &session, &command);
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT("ｋ", command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
 
   // SWITCH_INPUT_MODE
-  SendKey("a", session.get(), &command);
+  SendKey("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あ", command);
 
-  SwitchInputMode(commands::FULL_ASCII, session.get());
+  SwitchInputMode(commands::FULL_ASCII, &session);
 
-  SendKey("a", session.get(), &command);
+  SendKey("a", &session, &command);
   EXPECT_SINGLE_SEGMENT("あａ", command);
 
   // GET_STATUS
-  SendCommand(commands::SessionCommand::GET_STATUS, session.get(), &command);
+  SendCommand(commands::SessionCommand::GET_STATUS, &session, &command);
   // FULL_ASCII was set at the SWITCH_INPUT_MODE testcase.
-  SwitchInputMode(commands::FULL_ASCII, session.get());
+  SwitchInputMode(commands::FULL_ASCII, &session);
 
   // RESET_CONTEXT
   // test of reverting composition
-  InsertCharacterChars("kanji", session.get(), &command);
-  SendCommand(commands::SessionCommand::RESET_CONTEXT, session.get(), &command);
+  InsertCharacterChars("kanji", &session, &command);
+  SendCommand(commands::SessionCommand::RESET_CONTEXT, &session, &command);
   EXPECT_TRUE(command.output().consumed());
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
   // test of reseting the history segements
-  MockConverterEngineForReset engine;
-  session = std::make_unique<Session>(&engine);
-  InitSessionToPrecomposition(session.get());
-  SendCommand(commands::SessionCommand::RESET_CONTEXT, session.get(), &command);
-  EXPECT_FALSE(command.output().consumed());
-  EXPECT_TRUE(engine.converter_mock().reset_conversion_called());
+  {
+    MockEngine engine;
+    MockConverter converter;
+    EXPECT_CALL(engine, GetConverter()).WillOnce(Return(&converter));
+    // ResetConversion is called twice, first in IMEOff through
+    // InitSessionToPrecomposition() and then EchoBack() through
+    // SendCommand().
+    EXPECT_CALL(converter, ResetConversion(_)).Times(2);
+    Session session(&engine);
+    InitSessionToPrecomposition(&session);
+    SendCommand(commands::SessionCommand::RESET_CONTEXT, &session, &command);
+    EXPECT_FALSE(command.output().consumed());
+  }
 
   // USAGE_STATS_EVENT
-  SendCommand(commands::SessionCommand::USAGE_STATS_EVENT, session.get(),
-              &command);
+  SendCommand(commands::SessionCommand::USAGE_STATS_EVENT, &session, &command);
   EXPECT_TRUE(command.output().has_consumed());
   EXPECT_FALSE(command.output().consumed());
 }
@@ -6348,23 +6260,28 @@ TEST_F(SessionTest, PerformedCommand) {
 }
 
 TEST_F(SessionTest, ResetContext) {
-  MockConverterEngineForReset engine;
-  ConverterMockForReset *convertermock = engine.mutable_converter_mock();
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
+  EXPECT_CALL(converter, ResetConversion(_)).Times(2);
   session.ResetContext(&command);
   EXPECT_FALSE(command.output().consumed());
-  EXPECT_TRUE(convertermock->reset_conversion_called());
 
-  convertermock->Reset();
+  Segments segments;
+  segments.add_segment()->add_candidate();  // Stub candidate.
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(SendKey("A", &session, &command));
   command.Clear();
+
+  EXPECT_CALL(converter, ResetConversion(_));
   session.ResetContext(&command);
   EXPECT_TRUE(command.output().consumed());
-  EXPECT_TRUE(convertermock->reset_conversion_called());
 }
 
 TEST_F(SessionTest, ClearUndoOnResetContext) {
@@ -6417,45 +6334,45 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
 }
 
 TEST_F(SessionTest, IssueResetConversion) {
-  MockConverterEngineForReset engine;
-  ConverterMockForReset *convertermock = engine.mutable_converter_mock();
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
-  // any meaneangless key calls ResetConversion
-  EXPECT_FALSE(convertermock->reset_conversion_called());
+  // Any meaneangless key calls ResetConversion
+  EXPECT_CALL(converter, ResetConversion(_));
   EXPECT_TRUE(SendKey("enter", &session, &command));
-  EXPECT_TRUE(convertermock->reset_conversion_called());
 
-  convertermock->Reset();
-  EXPECT_FALSE(convertermock->reset_conversion_called());
+  EXPECT_CALL(converter, ResetConversion(_)).Times(2);
   EXPECT_TRUE(SendKey("space", &session, &command));
-  EXPECT_TRUE(convertermock->reset_conversion_called());
 }
 
 TEST_F(SessionTest, IssueRevert) {
-  MockConverterEngineForRevert engine;
-  ConverterMockForRevert *convertermock = engine.mutable_converter_mock();
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
-  // changes the state to PRECOMPOSITION
+  // Changes the state to PRECOMPOSITION
   session.IMEOn(&command);
 
+  EXPECT_CALL(converter, RevertConversion(_));
+  EXPECT_CALL(converter, ResetConversion(_));
   session.Revert(&command);
-
   EXPECT_FALSE(command.output().consumed());
-  EXPECT_TRUE(convertermock->revert_conversion_called());
 }
 
 // Undo command must call RervertConversion
 TEST_F(SessionTest, Issue3428520) {
-  MockConverterEngineForRevert engine;
-  ConverterMockForRevert *convertermock = engine.mutable_converter_mock();
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   Session session(&engine);
   InitSessionToPrecomposition(&session);
@@ -6467,30 +6384,33 @@ TEST_F(SessionTest, Issue3428520) {
 
   commands::Command command;
   Segments segments;
+  SetAiueo(&segments);
 
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
   InsertCharacterChars("aiueo", &session, &command);
   ConversionRequest request;
   SetComposer(&session, &request);
-  SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  convertermock->SetStartConversionForRequest(&segments, true);
 
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(Return(true));
   command.Clear();
   session.Convert(&command);
   EXPECT_FALSE(command.output().has_result());
   EXPECT_SINGLE_SEGMENT("あいうえお", command);
 
-  convertermock->SetCommitSegmentValue(&segments, true);
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _)).WillOnce(Return(true));
+  EXPECT_CALL(converter, FinishConversion(_, _));
   command.Clear();
   session.Commit(&command);
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_RESULT("あいうえお", command);
 
+  // RevertConversion must be called.
+  EXPECT_CALL(converter, RevertConversion(_));
   command.Clear();
   session.Undo(&command);
-
-  // After check the status of revert_conversion_called.
-  EXPECT_TRUE(convertermock->revert_conversion_called());
 }
 
 // Revert command must clear the undo context.
@@ -8504,16 +8424,16 @@ TEST_F(SessionTest, EditCancel) {
 }
 
 TEST_F(SessionTest, ImeOff) {
-  MockConverterEngineForReset engine;
-  ConverterMockForReset *convertermock = engine.mutable_converter_mock();
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  convertermock->Reset();
   Session session(&engine);
+
+  EXPECT_CALL(converter, ResetConversion(_));
   InitSessionToPrecomposition(&session);
   commands::Command command;
   session.IMEOff(&command);
-
-  EXPECT_TRUE(convertermock->reset_conversion_called());
 }
 
 TEST_F(SessionTest, EditCancelAndIMEOff) {
@@ -9004,6 +8924,9 @@ TEST_F(SessionTest, DeleteHistory) {
 
   // Do DeleteHistory command. After that, the session should be back in
   // composition state and preedit gets back to "でｌ" again.
+  EXPECT_CALL(*engine_->GetUserDataManager(),
+              ClearUserPredictionEntry("", "DeleteHistory"))
+      .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
   EXPECT_PREEDIT("でｌ", command);
@@ -9240,32 +9163,45 @@ TEST_F(SessionTest, MakeSureIMEOff) {
 }
 
 TEST_F(SessionTest, DeleteCandidateFromHistory) {
+  MockConverter converter;
+  MockUserDataManager user_data_manager;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  EXPECT_CALL(engine, GetUserDataManager())
+      .WillRepeatedly(Return(&user_data_manager));
+
   // InitSessionToConversionWithAiueo initializes candidates as follows:
   // 0:あいうえお, 1:アイウエオ, -3:aiueo, -4:AIUEO, ...
-  {  // Delete focused candidate (i.e. without candidate ID).
-    Session session(engine_.get());
-    InitSessionToConversionWithAiueo(&session);
+  {
+    // A test case to delete focused candidate (i.e. without candidate ID).
+    Session session(&engine);
+    InitSessionToConversionWithAiueo(&session, &converter);
+
+    EXPECT_CALL(user_data_manager,
+                ClearUserPredictionEntry("あいうえお", "あいうえお"))
+        .WillOnce(Return(true));
+
     commands::Command command;
     session.DeleteCandidateFromHistory(&command);
 
-    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
-    EXPECT_EQ(1, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedValue());  // ID == 0
+    Mock::VerifyAndClearExpectations(&user_data_manager);
   }
-  {  // Delete candidate with ID.
-    Session session(engine_.get());
-    InitSessionToConversionWithAiueo(&session);
+  {
+    // A test case to delete candidate by ID.
+    Session session(&engine);
+    InitSessionToConversionWithAiueo(&session, &converter);
+
+    EXPECT_CALL(user_data_manager,
+                ClearUserPredictionEntry("あいうえお", "アイウエオ"))
+        .WillOnce(Return(true));
+
     commands::Command command;
     SetSendCommandCommand(
         commands::SessionCommand::DELETE_CANDIDATE_FROM_HISTORY, &command);
     command.mutable_input()->mutable_command()->set_id(1);
     session.DeleteCandidateFromHistory(&command);
 
-    const UserDataManagerMock *udm_mock = engine_->GetUserDataManager();
-    EXPECT_EQ(2, udm_mock->GetFunctionCallCount("ClearUserPredictionEntry"));
-    EXPECT_EQ("あいうえお", udm_mock->GetLastClearedKey());
-    EXPECT_EQ("アイウエオ", udm_mock->GetLastClearedValue());  // ID == 1
+    Mock::VerifyAndClearExpectations(&user_data_manager);
   }
 }
 

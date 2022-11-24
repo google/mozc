@@ -53,6 +53,7 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 // By default, mozc_renderer quits when user-input continues to be
 // idle for 10min.
@@ -106,12 +107,11 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
       mozc::commands::RendererCommand command;
       command.set_type(mozc::commands::RendererCommand::UPDATE);
       command.set_visible(false);
-      std::string *buf = new std::string;
-      if (command.SerializeToString(buf)) {
-        renderer_server_->AsyncExecCommand(buf);
+      std::string proto_message;
+      if (command.SerializeToString(&proto_message)) {
+        renderer_server_->AsyncExecCommand(proto_message);
       } else {
         LOG(ERROR) << "SerializeToString failed";
-        delete buf;
       }
     }
   }
@@ -223,26 +223,13 @@ int RendererServer::StartServer() {
   return StartMessageLoop();
 }
 
-bool RendererServer::Process(const char *request, size_t request_size,
-                             char *response, size_t *response_size) {
-  // here we just copy the serialized message in order
-  // to reply to the client ui as soon as possible.
-  // ParseFromString is executed in the main(another) thread.
-  //
-  // Since Process() and ExecCommand() are executed in
-  // different threads, we have to use heap to share the serialized message.
-  // If we use stack, this program will be crashed.
-  //
-  // The receiver of command_str takes the ownership of this string.
-  std::string *command_str = new std::string(request, request_size);
-
-  // no need to set the result code.
-  *response_size = 1;
-  response[0] = '\0';
+bool RendererServer::Process(absl::string_view request, std::string *response) {
+  // No need to set the result code.
+  response->clear();
 
   // Cannot call the method directly like renderer_interface_->ExecCommand()
   // as it's not thread-safe.
-  return AsyncExecCommand(command_str);
+  return AsyncExecCommand(request);
 }
 
 bool RendererServer::ExecCommandInternal(

@@ -86,14 +86,14 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryInterface;
-using dictionary::DictionaryMock;
-using dictionary::PosGroup;
-using dictionary::PosMatcher;
-using dictionary::SuffixDictionary;
-using dictionary::SuppressionDictionary;
-using dictionary::SystemDictionary;
-using dictionary::Token;
+using ::mozc::dictionary::DictionaryInterface;
+using ::mozc::dictionary::DictionaryMock;
+using ::mozc::dictionary::PosGroup;
+using ::mozc::dictionary::PosMatcher;
+using ::mozc::dictionary::SuffixDictionary;
+using ::mozc::dictionary::SuppressionDictionary;
+using ::mozc::dictionary::SystemDictionary;
+using ::mozc::dictionary::Token;
 using ::testing::_;
 using ::testing::WithParamInterface;
 
@@ -234,9 +234,8 @@ class MockDataAndPredictor {
         dictionary_.get(), suffix_dictionary_.get(),
         suppression_dictionary_.get(), connector_.get(), segmenter_.get(),
         &pos_matcher_, pos_group_.get(), suggestion_filter_.get());
-    converter_ = std::make_unique<ConverterMock>();
     dictionary_predictor_ = std::make_unique<TestableDictionaryPredictor>(
-        data_manager_, converter_.get(), immutable_converter_.get(),
+        data_manager_, &converter_, immutable_converter_.get(),
         dictionary_.get(), suffix_dictionary_.get(), connector_.get(),
         segmenter_.get(), &pos_matcher_, suggestion_filter_.get());
   }
@@ -244,8 +243,6 @@ class MockDataAndPredictor {
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
   DictionaryMock *mutable_dictionary() { return dictionary_mock_; }
-
-  ConverterMock *mutable_converter_mock() { return converter_.get(); }
 
   const TestableDictionaryPredictor *dictionary_predictor() {
     return dictionary_predictor_.get();
@@ -266,7 +263,7 @@ class MockDataAndPredictor {
   DictionaryMock *dictionary_mock_;
   std::unique_ptr<const PosGroup> pos_group_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
-  std::unique_ptr<ConverterMock> converter_;
+  MockConverter converter_;
   std::unique_ptr<const SuggestionFilter> suggestion_filter_;
   std::unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
 };
@@ -816,15 +813,6 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
 TEST_F(DictionaryPredictorTest, PartialSuggestion) {
   std::unique_ptr<MockDataAndPredictor> data_and_predictor(
       CreateDictionaryPredictorWithMockData());
-  {
-    // Set up mock converter.
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = "Realtime top result";
-    ConverterMock *converter = data_and_predictor->mutable_converter_mock();
-    converter->SetStartConversionForRequest(&segments, true);
-  }
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2431,17 +2419,6 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
       "PCてすと",
   };
 
-  // Set up mock converter for realtime top result.
-  {
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key(kKey);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = kExpectedSuggestionValues[0];
-    ConverterMock *converter = data_and_predictor->mutable_converter_mock();
-    converter->SetStartConversionForRequest(&segments, true);
-  }
-
   InitSegmentsWithKey(kKey, &segments);
 
   std::vector<DictionaryPredictor::Result> results;
@@ -2469,17 +2446,6 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
       data_and_predictor->dictionary_predictor();
 
   constexpr char kCapriHiragana[] = "かぷりちょうざ";
-
-  // Set up mock converter for realtime top result.
-  {
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    segment->set_key(kCapriHiragana);
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->value = "Dummy";
-    ConverterMock *converter = data_and_predictor->mutable_converter_mock();
-    converter->SetStartConversionForRequest(&segments, true);
-  }
 
   std::vector<DictionaryPredictor::Result> results;
   SetUpInputForSuggestion(kCapriHiragana, composer_.get(), &segments);

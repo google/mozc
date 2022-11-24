@@ -230,7 +230,7 @@ TEST_F(UserDictionaryStorageTest, ExportTest) {
   std::string file_string;
   // Copy whole contents of the file into |file_string|.
   {
-    InputFileStream ifs(export_file.c_str());
+    InputFileStream ifs(export_file);
     CHECK(ifs);
     ifs.seekg(0, std::ios::end);
     file_string.resize(ifs.tellg());

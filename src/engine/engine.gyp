@@ -87,12 +87,12 @@
       'type': 'static_library',
       'sources': [
         'mock_converter_engine.cc',
-        'user_data_manager_mock.cc',
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
-        '../converter/converter_base.gyp:converter_mock'
+        '../converter/converter_base.gyp:converter_mock',
+        '../testing/testing.gyp:testing',
       ],
     },
     {

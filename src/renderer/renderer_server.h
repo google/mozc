@@ -37,6 +37,7 @@
 #include "base/port.h"
 #include "ipc/ipc.h"
 #include "renderer/renderer_interface.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -59,8 +60,7 @@ class RendererServer : public IPCServer {
   // The return value is suppose to be used for the arg of exit().
   int StartServer();
 
-  bool Process(const char *request, size_t request_size, char *response,
-               size_t *response_size) override;
+  bool Process(absl::string_view request, std::string *response) override;
 
   // DEPRECATED: this functions is never called
   virtual void AsyncHide() {}
@@ -73,8 +73,7 @@ class RendererServer : public IPCServer {
   // protocol buffer received in Process method so that
   // IPC listener thread can reply to the client request as
   // early as possible.
-  // This function takes the owership of proto_message
-  virtual bool AsyncExecCommand(std::string *proto_message) = 0;
+  virtual bool AsyncExecCommand(absl::string_view proto_message) = 0;
 
  protected:
   // implement Message Loop function.

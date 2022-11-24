@@ -82,7 +82,7 @@ absl::Status UserDictionaryStorage::Exists() const {
 }
 
 absl::Status UserDictionaryStorage::LoadInternal() {
-  InputFileStream ifs(file_name_.c_str(), std::ios::binary);
+  InputFileStream ifs(file_name_, std::ios::binary);
   if (!ifs) {
     absl::Status s = Exists();
     if (s.ok()) {
@@ -159,7 +159,7 @@ absl::Status UserDictionaryStorage::Save() {
   const std::string tmp_file_name = file_name_ + ".tmp";
   std::string size_error_msg;
   {
-    OutputFileStream ofs(tmp_file_name.c_str(),
+    OutputFileStream ofs(tmp_file_name,
                          std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs) {
       last_error_type_ = SYNC_FAILURE;
@@ -236,7 +236,7 @@ bool UserDictionaryStorage::ExportDictionary(uint64_t dic_id,
     return false;
   }
 
-  OutputFileStream ofs(file_name.c_str());
+  OutputFileStream ofs(file_name);
   if (!ofs) {
     last_error_type_ = EXPORT_FAILURE;
     LOG(ERROR) << "Cannot open export file: " << file_name;

@@ -96,12 +96,12 @@ constexpr int kDeleteSessionOnDestructorTimeout = 1000;  // 1 sec
 Client::Client()
     : id_(0),
       server_launcher_(new ServerLauncher),
-      result_(new char[kResultBufferSize]),
       timeout_(kDefaultTimeout),
       server_status_(SERVER_UNKNOWN),
       server_protocol_version_(0),
       server_process_id_(0),
       last_mode_(commands::DIRECT) {
+  response_.reserve(kResultBufferSize);
   client_factory_ = IPCClientFactory::GetIPCClientFactory();
 
 #ifdef MOZC_USE_SVS_JAPANESE
@@ -600,11 +600,10 @@ bool Client::PingServer() const {
 
   // Serialize
   std::string request;
+  std::string response;
   input.SerializeToString(&request);
 
-  size_t size = kResultBufferSize;
-  if (!client->Call(request.data(), request.size(), result_.get(), &size,
-                    timeout_)) {
+  if (!client->Call(request, &response, timeout_)) {
     LOG(ERROR) << "IPCClient::Call failed: " << client->GetLastIPCError();
     return false;
   }
@@ -695,9 +694,7 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
   // Drop DebugString() as it raises segmentation fault.
   // http://b/2126375
   // TODO(taku): Investigate the error in detail.
-  size_t size = kResultBufferSize;
-  if (!client->Call(request.data(), request.size(), result_.get(), &size,
-                    timeout_)) {
+  if (!client->Call(request, &response_, timeout_)) {
     LOG(ERROR) << "Call failure";
     //               << input.DebugString();
     if (client->GetLastIPCError() == IPC_TIMEOUT_ERROR) {
@@ -709,7 +706,7 @@ bool Client::Call(const commands::Input &input, commands::Output *output) {
     return false;
   }
 
-  if (!output->ParseFromArray(result_.get(), size)) {
+  if (!output->ParseFromString(response_)) {
     LOG(ERROR) << "Parse failure of the result of the request:";
     //               << input.DebugString();
     server_status_ = SERVER_BROKEN_MESSAGE;

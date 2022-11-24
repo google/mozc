@@ -95,7 +95,7 @@ class PosIdPrintUtil {
 
  private:
   PosIdPrintUtil()
-      : pos_id_(new InputFileStream(absl::GetFlag(FLAGS_id_def).c_str())),
+      : pos_id_(new InputFileStream(absl::GetFlag(FLAGS_id_def))),
         pos_id_printer_(new internal::PosIdPrinter(pos_id_.get())) {}
 
   std::string IdToStringInternal(int id) const {

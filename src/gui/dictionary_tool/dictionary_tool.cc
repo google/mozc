@@ -192,7 +192,7 @@ class MultiByteTextLineIterator
                             const std::string &filename, const QString &message,
                             QWidget *parent)
       : encoding_type_(encoding_type),
-        ifs_(new InputFileStream(filename.c_str())),
+        ifs_(new InputFileStream(filename)),
         first_line_(true) {
     const std::streampos begin = ifs_->tellg();
     ifs_->seekg(0, std::ios::end);

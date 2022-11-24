@@ -39,6 +39,7 @@
 #include "protocol/commands.pb.h"
 #include "renderer/mac/CandidateController.h"
 #include "renderer/mac/mac_server_send_command.h"
+#include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
 namespace mozc {
@@ -60,13 +61,12 @@ MacServer::MacServer(int argc, const char **argv) : argc_(argc), argv_(argv) {
   ::InstallEventHandler(GetApplicationEventTarget(), handler, arraysize(spec), spec, this, nullptr);
 }
 
-bool MacServer::AsyncExecCommand(std::string *proto_message) {
+bool MacServer::AsyncExecCommand(absl::string_view proto_message) {
   {
     absl::MutexLock l(&mutex_);
-    message_.swap(*proto_message);
+    message_.assign(proto_message.data(), proto_message.size());
     ::pthread_cond_signal(&event_);
   }
-  delete proto_message;
 
   EventRef event_ref = nullptr;
   ::CreateEvent(nullptr, kEventClassApplication, 0, 0, kEventAttributeNone, &event_ref);

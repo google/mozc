@@ -150,60 +150,56 @@ bool IsPeerValid(int socket, pid_t *pid) {
   return true;
 }
 
-bool SendMessage(int socket, const char *buf, size_t buf_length, int timeout,
-                 IPCErrorType *last_ipc_error) {
-  size_t buf_length_left = buf_length;
-  while (buf_length_left > 0) {
+IPCErrorType SendMessage(int socket, const std::string &msg, int timeout) {
+  int offset = 0;
+  while (msg.size() != offset) {
     if (IsWriteTimeout(socket, timeout)) {
       LOG(WARNING) << "Write timeout " << timeout;
-      *last_ipc_error = IPC_TIMEOUT_ERROR;
-      return false;
+      return IPC_TIMEOUT_ERROR;
     }
-    const ssize_t l = ::send(socket, buf, buf_length_left, MSG_NOSIGNAL);
+    const ssize_t l =
+        ::send(socket, msg.data() + offset, msg.size() - offset, MSG_NOSIGNAL);
     if (l < 0) {
       // An error occurs.
-      LOG(ERROR) << "an error occurred during sending \""
-                 << std::string(buf, buf_length_left)
+      LOG(ERROR) << "an error occurred during sending \"" << msg.substr(offset)
                  << "\": " << strerror(errno);
-      *last_ipc_error = IPC_WRITE_ERROR;
-      return false;
+      return IPC_WRITE_ERROR;
     }
-    buf += l;
-    buf_length_left -= l;
+    offset += l;
   }
-  VLOG(1) << buf_length << " bytes sent";
-  return true;
+  VLOG(1) << offset << " bytes sent";
+  return IPC_NO_ERROR;
 }
 
-bool RecvMessage(int socket, char *buf, size_t *buf_length, int timeout,
-                 IPCErrorType *last_ipc_error) {
-  if (*buf_length == 0) {
-    LOG(WARNING) << "buf_length is 0";
-    *last_ipc_error = IPC_UNKNOWN_ERROR;
-    return false;
+IPCErrorType RecvMessage(int socket, std::string *msg, int timeout) {
+  if (!msg) {
+    LOG(WARNING) << "msg is nullptr";
+    return IPC_UNKNOWN_ERROR;
   }
-  ssize_t buf_left = *buf_length;
+  msg->resize(IPC_RESPONSESIZE);
   ssize_t read_length = 0;
-  *buf_length = 0;
+  int offset = 0;
   do {
     if (IsReadTimeout(socket, timeout)) {
       LOG(WARNING) << "Read timeout " << timeout;
-      *last_ipc_error = IPC_TIMEOUT_ERROR;
-      return false;
+      msg->clear();
+      return IPC_TIMEOUT_ERROR;
     }
-    read_length = ::recv(socket, buf, buf_left, 0);
+    read_length = ::recv(socket, msg->data() + offset, msg->size() - offset,
+                         /* flags */ 0);
     if (read_length < 0) {
       LOG(ERROR) << "an error occurred during recv(): " << strerror(errno);
-      *buf_length = 0;
-      *last_ipc_error = IPC_READ_ERROR;
-      return false;
+      msg->clear();
+      return IPC_READ_ERROR;
     }
-    *buf_length += read_length;
-    buf += read_length;
-    buf_left -= read_length;
-  } while (read_length != 0 && buf_left > 0);
-  VLOG(1) << *buf_length << " bytes received";
-  return true;
+    offset += read_length;
+    if (msg->size() == offset) {
+      msg->resize(msg->size() * 2);
+    }
+  } while (read_length != 0);
+  VLOG(1) << offset << " bytes received";
+  msg->resize(offset);
+  return IPC_NO_ERROR;
 }
 
 void SetCloseOnExecFlag(int fd) {
@@ -317,11 +313,10 @@ IPCClient::~IPCClient() {
 }
 
 // RPC call
-bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
-                     size_t *response_size, int32_t timeout) {
-  last_ipc_error_ = IPC_NO_ERROR;
-  if (!SendMessage(socket_, request_, input_length, timeout,
-                   &last_ipc_error_)) {
+bool IPCClient::Call(const std::string &request, std::string *response,
+                     int32_t timeout) {
+  last_ipc_error_ = SendMessage(socket_, request, timeout);
+  if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "SendMessage failed";
     return false;
   }
@@ -334,8 +329,8 @@ bool IPCClient::Call(const char *request_, size_t input_length, char *response_,
   // data. Will revisit later.
   ::shutdown(socket_, SHUT_WR);
 
-  if (!RecvMessage(socket_, response_, response_size, timeout,
-                   &last_ipc_error_)) {
+  last_ipc_error_ = RecvMessage(socket_, response, timeout);
+  if (last_ipc_error_ != IPC_NO_ERROR) {
     LOG(ERROR) << "RecvMessage failed";
     return false;
   }
@@ -384,7 +379,7 @@ IPCServer::IPCServer(const std::string &name, int32_t num_connections,
   SetCloseOnExecFlag(socket_);
 
   addr.sun_family = AF_UNIX;
-  ::memcpy(addr.sun_path, server_address_.data(), server_address_.size());
+  server_address_.copy(addr.sun_path, server_address_.size());
   addr.sun_path[server_address_.size()] = '\0';
 
   int on = 1;
@@ -435,8 +430,9 @@ bool IPCServer::Connected() const { return connected_; }
 void IPCServer::Loop() {
   // The most portable and straightforward single-thread server
   bool error = false;
-  IPCErrorType last_ipc_error = IPC_NO_ERROR;
   pid_t pid = 0;
+  std::string request;
+  std::string response;
   while (!error) {
     const int new_sock = ::accept(socket_, nullptr, nullptr);
     if (new_sock < 0) {
@@ -446,20 +442,29 @@ void IPCServer::Loop() {
     if (!IsPeerValid(new_sock, &pid)) {
       continue;
     }
-    size_t request_size = sizeof(request_);
-    size_t response_size = sizeof(response_);
-    if (RecvMessage(new_sock, &request_[0], &request_size, timeout_,
-                    &last_ipc_error)) {
-      if (!Process(&request_[0], request_size, &response_[0], &response_size)) {
-        LOG(WARNING) << "Process() failed";
-        error = true;
-      }
-      if (response_size > 0) {
-        SendMessage(new_sock, &response_[0], response_size, timeout_,
-                    &last_ipc_error);
-      }
+
+    if (RecvMessage(new_sock, &request, timeout_) != IPC_NO_ERROR) {
+      LOG(WARNING) << "RecvMessage() failed";
+      ::close(new_sock);
+      continue;
     }
 
+    if (!Process(request, &response)) {
+      LOG(WARNING) << "Process() failed";
+      ::close(new_sock);
+      error = true;
+      continue;
+    }
+
+    if (response.empty()) {
+      LOG(WARNING) << "response is empty";
+      ::close(new_sock);
+      continue;
+    }
+
+    if (SendMessage(new_sock, response, timeout_) != IPC_NO_ERROR) {
+      LOG(WARNING) << "SendMessage() failed";
+    }
     ::close(new_sock);
   }
 

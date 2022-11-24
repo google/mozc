@@ -149,7 +149,7 @@ void LoadConjugation(
     const std::string &filename,
     absl::btree_map<std::string, std::vector<ConjugationType>> *output,
     std::map<std::string, ConjugationType> *baseform_map) {
-  InputFileStream ifs(filename.c_str());
+  InputFileStream ifs(filename);
   CHECK(ifs.good());
 
   std::string line;
@@ -177,7 +177,7 @@ void LoadConjugation(
 void LoadUsage(const std::string &filename,
                std::vector<UsageItem> *usage_entries,
                std::vector<std::string> *conjugation_list) {
-  InputFileStream ifs(filename.c_str());
+  InputFileStream ifs(filename);
 
   if (!ifs.good()) {
     LOG(WARNING) << "Can't open file:" << filename;
@@ -304,7 +304,7 @@ void Convert() {
   // Output base conjugation suffix data.
   {
     OutputFileStream ostream(
-        absl::GetFlag(FLAGS_output_base_conjugation_suffix).c_str(),
+        absl::GetFlag(FLAGS_output_base_conjugation_suffix),
         std::ios_base::out | std::ios_base::binary);
     for (const auto &conj : conjugation_list) {
       const uint32_t key_suffix_index =
@@ -319,9 +319,8 @@ void Convert() {
   // Output conjugation suffix data.
   std::vector<int> conjugation_index(conjugation_list.size() + 1);
   {
-    OutputFileStream ostream(
-        absl::GetFlag(FLAGS_output_conjugation_suffix).c_str(),
-        std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ostream(absl::GetFlag(FLAGS_output_conjugation_suffix),
+                             std::ios_base::out | std::ios_base::binary);
     int out_count = 0;
     for (size_t i = 0; i < conjugation_list.size(); ++i) {
       const std::vector<ConjugationType> &conjugations =
@@ -353,18 +352,16 @@ void Convert() {
 
   // Output conjugation suffix data index.
   {
-    OutputFileStream ostream(
-        absl::GetFlag(FLAGS_output_conjugation_index).c_str(),
-        std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ostream(absl::GetFlag(FLAGS_output_conjugation_index),
+                             std::ios_base::out | std::ios_base::binary);
     ostream.write(reinterpret_cast<const char *>(conjugation_index.data()),
                   4 * conjugation_index.size());
   }
 
   // Output usage data.
   {
-    OutputFileStream ostream(
-        absl::GetFlag(FLAGS_output_usage_item_array).c_str(),
-        std::ios_base::out | std::ios_base::binary);
+    OutputFileStream ostream(absl::GetFlag(FLAGS_output_usage_item_array),
+                             std::ios_base::out | std::ios_base::binary);
     int32_t usage_id = 0;
     for (const UsageItem &item : usage_entries) {
       const uint32_t key_index = Lookup(string_index, item.key);

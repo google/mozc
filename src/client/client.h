@@ -246,9 +246,9 @@ class Client : public ClientInterface {
   uint64_t id_;
   IPCClientFactoryInterface *client_factory_;
   std::unique_ptr<ServerLauncherInterface> server_launcher_;
-  std::unique_ptr<char[]> result_;
   std::unique_ptr<config::Config> preferences_;
   std::unique_ptr<commands::Request> request_;
+  std::string response_;
   int timeout_;
   ServerStatus server_status_;
   uint32_t server_protocol_version_;

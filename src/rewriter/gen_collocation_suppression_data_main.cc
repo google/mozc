@@ -70,7 +70,7 @@ void Convert() {
     const std::string kDummyStr = "__NO_DATA__";
     entries.push_back(kDummyStr + kSeparator + kDummyStr);
   } else {
-    InputFileStream ifs(absl::GetFlag(FLAGS_suppression_data).c_str());
+    InputFileStream ifs(absl::GetFlag(FLAGS_suppression_data));
     std::string line;
 
     while (!std::getline(ifs, line).fail()) {
@@ -87,10 +87,10 @@ void Convert() {
   std::ostream *ofs = &std::cout;
   if (!absl::GetFlag(FLAGS_output).empty()) {
     if (absl::GetFlag(FLAGS_binary_mode)) {
-      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output).c_str(),
+      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output),
                                  std::ios::out | std::ios::binary);
     } else {
-      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output).c_str());
+      ofs = new OutputFileStream(absl::GetFlag(FLAGS_output));
     }
   }
 

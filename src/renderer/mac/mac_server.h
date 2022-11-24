@@ -39,6 +39,7 @@
 #include "renderer/renderer_interface.h"
 #include "renderer/renderer_server.h"
 #include "absl/synchronization/mutex.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace renderer {
@@ -58,7 +59,7 @@ class MacServer : public RendererServer {
 
   ~MacServer() override = default;
 
-  bool AsyncExecCommand(std::string *proto_message) override;
+  bool AsyncExecCommand(absl::string_view proto_message) override;
   int StartMessageLoop() override;
 
   // This method is called when an asynchronous exec-command message

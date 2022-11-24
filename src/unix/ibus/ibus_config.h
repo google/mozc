@@ -47,6 +47,11 @@ class IbusConfig {
   IbusConfig& operator=(const IbusConfig&) = delete;
 
   bool Initialize();
+
+  // Loads textproto and updates instance variables.
+  // Returns false if failed to parse config_data.
+  bool LoadConfig(const std::string &config_data);
+
   const std::string &GetEnginesXml() const;
   const std::string &GetLayout(const std::string &name) const;
   const ibus::Config &GetConfig() const;

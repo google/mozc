@@ -84,8 +84,8 @@ class TestIPCClient : public IPCClientInterface {
   uint32_t GetServerProcessId() const override { return 0; }
 
   // just count up how many times Call is called.
-  bool Call(const char *request, size_t request_size, char *response,
-            size_t *response_size, int32_t timeout) override {
+  bool Call(const std::string &request, std::string *response,
+            int32_t timeout) override {
     g_counter++;
     return true;
   }

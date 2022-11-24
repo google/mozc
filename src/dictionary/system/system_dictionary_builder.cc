@@ -138,7 +138,7 @@ void SystemDictionaryBuilder::BuildFromTokensInternal(
 
 void SystemDictionaryBuilder::WriteToFile(
     const std::string &output_file) const {
-  OutputFileStream ofs(output_file.c_str(), std::ios::binary | std::ios::out);
+  OutputFileStream ofs(output_file, std::ios::binary | std::ios::out);
   WriteToStream(output_file, &ofs);
 }
 

@@ -35,25 +35,26 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 #include "base/port.h"
+#include "composer/composer.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "session/internal/key_event_transformer.h"
+#include "session/session_converter_interface.h"
 
 namespace mozc {
-
-namespace composer {
-class Composer;
-}  // namespace composer
-
 namespace session {
-class SessionConverterInterface;
 
-class ImeContext {
+class ImeContext final {
  public:
   ImeContext();
-  virtual ~ImeContext();
+
+  ImeContext(const ImeContext &) = delete;
+  ImeContext &operator=(const ImeContext &) = delete;
+
+  ~ImeContext();
 
   uint64_t create_time() const { return create_time_; }
   void set_create_time(uint64_t create_time) { create_time_ = create_time; }
@@ -68,10 +69,18 @@ class ImeContext {
   const composer::Composer &composer() const;
   composer::Composer *mutable_composer();
   void set_composer(composer::Composer *composer);
+  void set_composer(std::unique_ptr<composer::Composer> composer) {
+    composer_ = std::move(composer);
+  }
 
-  const SessionConverterInterface &converter() const;
-  SessionConverterInterface *mutable_converter();
-  void set_converter(SessionConverterInterface *converter);
+  const SessionConverterInterface &converter() const { return *converter_; }
+  SessionConverterInterface *mutable_converter() { return converter_.get(); }
+  void set_converter(SessionConverterInterface *converter) {
+    converter_.reset(converter);
+  }
+  void set_converter(std::unique_ptr<SessionConverterInterface> converter) {
+    converter_ = std::move(converter);
+  }
 
   const KeyEventTransformer &key_event_transformer() const {
     return key_event_transformer_;
@@ -131,33 +140,25 @@ class ImeContext {
   // session holding this instance is created and not the time when this
   // instance is created. We may want to move out |create_time_| from ImeContext
   // to Session, or somewhere more appropriate.
-  uint64_t create_time_;
-  uint64_t last_command_time_;
+  uint64_t create_time_ = 0;
+  uint64_t last_command_time_ = 0;
 
   std::unique_ptr<composer::Composer> composer_;
-
   std::unique_ptr<SessionConverterInterface> converter_;
-
   KeyEventTransformer key_event_transformer_;
 
   const commands::Request *request_;
   const config::Config *config_;
 
-  State state_;
-
+  State state_ = NONE;
   config::Config::SessionKeymap keymap_;
-
   commands::Capability client_capability_;
-
   commands::ApplicationInfo application_info_;
-
   commands::Context client_context_;
 
   // Storing the last output consisting of the last result and the
   // last performed command.
   commands::Output output_;
-
-  DISALLOW_COPY_AND_ASSIGN(ImeContext);
 };
 
 }  // namespace session

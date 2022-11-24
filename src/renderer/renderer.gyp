@@ -83,6 +83,7 @@
         'renderer_server.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
         '../client/client.gyp:client',
         '../config/config.gyp:config_handler',
@@ -114,6 +115,7 @@
         'renderer_server_test.cc',
       ],
       'dependencies': [
+        '../base/absl.gyp:absl_strings',
         '../ipc/ipc.gyp:ipc_test_util',
         '../testing/testing.gyp:gtest_main',
         'renderer_client',
@@ -405,6 +407,7 @@
             '<(gen_out_dir)/mozc_renderer_autogen.rc',
           ],
           'dependencies': [
+            '../base/absl.gyp:absl_strings',
             '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',
@@ -469,6 +472,7 @@
           ],
           'dependencies': [
             '../base/absl.gyp:absl_base',
+            '../base/absl.gyp:absl_strings',
             '../base/absl.gyp:absl_synchronization',
             '../base/base.gyp:base',
             '../base/base.gyp:crash_report_handler',

@@ -113,6 +113,7 @@ cc_library_mozc(
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -135,6 +136,7 @@ cc_test_mozc(
         "//protocol:renderer_cc_proto",
         "//testing:gunit_main",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -290,6 +292,7 @@ cc_library_mozc(
         "//ipc",
         "//protocol:config_cc_proto",
         "//protocol:renderer_cc_proto",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         ":renderer_server",
         ":renderer_style_handler",
@@ -503,6 +506,7 @@ objc_library_mozc(
         "//ipc:ipc",
         "//mac:common",
         "@com_google_absl//absl/base",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         ":renderer_interface",
         ":renderer_server",
