@@ -27,45 +27,48 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_UNIX_IBUS_IBUS_CONFIG_H_
-#define MOZC_UNIX_IBUS_IBUS_CONFIG_H_
+#include "unix/ibus/ibus_config.h"
 
-#include <map>
 #include <string>
 
-#include "unix/ibus/ibus_config.pb.h"
+#include "testing/base/public/gunit.h"
 
 namespace mozc {
+namespace ibus {
 
-class IbusConfig {
- public:
-  IbusConfig() : default_layout_("default") {}
-  virtual ~IbusConfig() = default;
+TEST(IbusConfigTest, LoadConfig) {
+  IbusConfig config;
+  const std::string config_data = R"(engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+}
+active_on_launch: False
+)";
+  EXPECT_TRUE(config.LoadConfig(config_data));
 
-  // Disallow implicit constructors.
-  IbusConfig(const IbusConfig&) = delete;
-  IbusConfig& operator=(const IbusConfig&) = delete;
+  const std::string expected_xml = R"(<engines>
+<engine>
+  <description>Mozc (Japanese Input Method)</description>
+  <language>ja</language>
+  <icon>/usr/share/ibus-mozc/product_icon.png</icon>
+  <rank>80</rank>
+  <icon_prop_key>InputMode</icon_prop_key>
+  <symbol>あ</symbol>
+  <setup>/usr/lib/mozc/mozc_tool --mode=config_dialog</setup>
+  <name>mozc-jp</name>
+  <longname>Mozc</longname>
+  <layout>default</layout>
+  <layout_variant></layout_variant>
+  <layout_option></layout_option>
+</engine>
+</engines>
+)";
+  EXPECT_EQ(config.GetEnginesXml(), expected_xml);
+}
 
-  bool Initialize();
-
-  // Loads textproto and updates instance variables.
-  // Returns false if failed to parse config_data.
-  bool LoadConfig(const std::string &config_data);
-
-  const std::string &GetEnginesXml() const;
-  const std::string &GetLayout(const std::string &name) const;
-  const ibus::Config &GetConfig() const;
-  bool IsActiveOnLaunch() const;
-
-  ibus::Engine::CompositionMode GetCompositionMode(
-      const std::string &name) const;
-
- private:
-  std::string default_layout_;
-  std::string engine_xml_;
-  ibus::Config config_;
-};
-
+}  // namespace ibus
 }  // namespace mozc
-
-#endif  // MOZC_UNIX_IBUS_IBUS_CONFIG_H_

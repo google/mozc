@@ -120,6 +120,10 @@ std::string CreateEnginesXml(const ibus::Config &config) {
 
 bool IbusConfig::Initialize() {
   const std::string config_data = UpdateConfigFile();
+  return LoadConfig(config_data);
+}
+
+bool IbusConfig::LoadConfig(const std::string &config_data) {
   const bool valid_user_config = ParseConfig(config_data, config_);
 
   engine_xml_ = CreateEnginesXml(config_);
