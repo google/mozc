@@ -374,9 +374,6 @@
         ],
       },
       'VCResourceCompilerTool': {
-        'PreprocessorDefinitions': [
-          'MOZC_RES_USE_TEMPLATE=1',
-        ],
         'AdditionalIncludeDirectories': [
           '<(SHARED_INTERMEDIATE_DIR)/',
           '<(DEPTH)/',
