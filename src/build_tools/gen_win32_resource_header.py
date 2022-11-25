@@ -95,8 +95,8 @@ def main():
 
   version = mozc_version.MozcVersion(options.version_file)
 
-  resource_data = open(options.main, encoding='utf-16le').read()
-  template_data = open(options.template, encoding='utf-16le').read()
+  resource_data = open(options.main, encoding='utf-8').read()
+  template_data = open(options.template, encoding='utf-8').read()
 
   bootstrapper_template = (
       '#define MOZC_RES_VERSION_NUMBER @MAJOR@,@MINOR@,@BUILD@,@REVISION@\n'
