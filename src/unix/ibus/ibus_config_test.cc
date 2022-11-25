@@ -70,5 +70,26 @@ active_on_launch: False
   EXPECT_EQ(config.GetEnginesXml(), expected_xml);
 }
 
+TEST(IbusConfigTest, NormalizeLayout) {
+  IbusConfig config;
+  const std::string config_data = R"(engines {
+  name : "mozc-jp"
+  longname : "Mozc"
+  layout : "nec_vndr/jp"
+  layout_variant : "Hello World!"
+  layout_option : "09AZaz!@#$%^&*()_+|;-"
+  rank : 80
+}
+active_on_launch: False
+)";
+  EXPECT_TRUE(config.LoadConfig(config_data));
+
+  const ibus::Config &config_proto = config.GetConfig();
+  EXPECT_EQ(config_proto.engines_size(), 1);
+  EXPECT_EQ(config_proto.engines(0).layout(), "nec_vndr/jp");
+  EXPECT_EQ(config_proto.engines(0).layout_variant(), "Hello_World_");
+  EXPECT_EQ(config_proto.engines(0).layout_option(), "09AZaz______________-");
+}
+
 }  // namespace ibus
 }  // namespace mozc
