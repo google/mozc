@@ -82,22 +82,22 @@
         }],
       ],
     },
+    {
+      'target_name': 'gen_mozc_ime_resource_header',
+      'variables': {
+        'gen_resource_proj_name': 'mozc_ime',
+        'gen_main_resource_path': 'win32/ime/GoogleIMEJa.rc',
+        'gen_output_resource_path':
+            '<(gen_out_dir)/GoogleIMEJa_autogen.rc',
+      },
+      'includes': [
+        '../../gyp/gen_win32_resource_header.gypi',
+      ],
+    },
   ],
   'conditions': [
     ['OS=="win"', {
       'targets': [
-        {
-          'target_name': 'gen_mozc_ime_resource_header',
-          'variables': {
-            'gen_resource_proj_name': 'mozc_ime',
-            'gen_main_resource_path': 'win32/ime/GoogleIMEJa.rc',
-            'gen_output_resource_path':
-                '<(gen_out_dir)/GoogleIMEJa_autogen.rc',
-          },
-          'includes': [
-            '../../gyp/gen_win32_resource_header.gypi',
-          ],
-        },
         {
           'target_name': 'ime_core',
           'type': 'static_library',
