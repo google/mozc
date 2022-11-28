@@ -139,8 +139,7 @@ bool EncryptedStringStorage::Save(const std::string &input) const {
   // make the file empty
   const std::string tmp_filename = filename_ + ".tmp";
   {
-    OutputFileStream ofs(tmp_filename.c_str(),
-                         std::ios::out | std::ios::binary);
+    OutputFileStream ofs(tmp_filename, std::ios::out | std::ios::binary);
     if (!ofs) {
       LOG(ERROR) << "failed to write: " << tmp_filename;
       return false;

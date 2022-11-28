@@ -111,7 +111,7 @@ TEST_F(EncryptedStringStorageTest, Encrypt) {
   const std::string original_data = "abcdefghijklmnopqrstuvwxyz";
   ASSERT_TRUE(storage_->Save(original_data));
 
-  InputFileStream ifs(filename_.c_str(), (std::ios::in | std::ios::binary));
+  InputFileStream ifs(filename_, (std::ios::in | std::ios::binary));
   constexpr size_t kBufSize = 128;
   char buf[kBufSize];
   // |ifs.readsome(buf, kBufSize)| returns 0 on Visual C++ because
