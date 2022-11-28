@@ -208,7 +208,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   absl::flat_hash_set<std::string> suggestion_filter_set;
 
   for (size_t i = 0; i < suggestion_filter_files_.size(); ++i) {
-    InputFileStream input(suggestion_filter_files_[i].c_str());
+    InputFileStream input(suggestion_filter_files_[i]);
     CHECK(input) << "cannot open: " << suggestion_filter_files_[i];
     std::string line;
     while (std::getline(input, line)) {
@@ -225,7 +225,7 @@ void DataManagerTestBase::SuggestionFilterTest_IsBadSuggestion() {
   size_t false_positives = 0;
   size_t num_words = 0;
   for (size_t i = 0; i < dictionary_files_.size(); ++i) {
-    InputFileStream input(dictionary_files_[i].c_str());
+    InputFileStream input(dictionary_files_[i]);
     CHECK(input) << "cannot open: " << dictionary_files_[i];
     std::string line;
     while (std::getline(input, line)) {
