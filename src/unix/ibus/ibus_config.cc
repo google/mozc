@@ -33,6 +33,7 @@
 #include <utility>
 
 #include "base/file_util.h"
+#include "base/logging.h"
 #include "base/protobuf/text_format.h"
 #include "base/system_util.h"
 #include "unix/ibus/main.h"
