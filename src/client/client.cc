@@ -235,7 +235,7 @@ void Client::DumpHistorySnapshot(const std::string &filename,
   const std::string snapshot_file =
       FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(), filename);
   // open with append mode
-  OutputFileStream output(snapshot_file.c_str(), std::ios::app);
+  OutputFileStream output(snapshot_file, std::ios::app);
 
   output << "---- Start history snapshot for " << label << std::endl;
   output << "Created at " << Logging::GetLogMessageHeader() << std::endl;
