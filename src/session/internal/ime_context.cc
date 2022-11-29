@@ -60,11 +60,6 @@ composer::Composer *ImeContext::mutable_composer() {
   return composer_.get();
 }
 
-void ImeContext::set_composer(composer::Composer *composer) {
-  DCHECK(composer);
-  composer_.reset(composer);
-}
-
 void ImeContext::SetRequest(const commands::Request *request) {
   request_ = request;
   converter_->SetRequest(request_);

@@ -214,10 +214,10 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(
-      new composer::Composer(&composer::Table::GetDefaultTable(),
-                             &context->GetRequest(), &context->GetConfig()));
-  context->set_converter(new SessionConverter(
+  context->set_composer(std::make_unique<composer::Composer>(
+      &composer::Table::GetDefaultTable(), &context->GetRequest(),
+      &context->GetConfig()));
+  context->set_converter(std::make_unique<SessionConverter>(
       engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
 #ifdef OS_WIN
   // On Windows session is started with direct mode.

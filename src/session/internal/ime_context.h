@@ -68,16 +68,12 @@ class ImeContext final {
   // |composer_| must be set non-null value.
   const composer::Composer &composer() const;
   composer::Composer *mutable_composer();
-  void set_composer(composer::Composer *composer);
   void set_composer(std::unique_ptr<composer::Composer> composer) {
     composer_ = std::move(composer);
   }
 
   const SessionConverterInterface &converter() const { return *converter_; }
   SessionConverterInterface *mutable_converter() { return converter_.get(); }
-  void set_converter(SessionConverterInterface *converter) {
-    converter_.reset(converter);
-  }
   void set_converter(std::unique_ptr<SessionConverterInterface> converter) {
     converter_ = std::move(converter);
   }
