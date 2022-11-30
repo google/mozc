@@ -627,6 +627,18 @@ class SessionTest : public ::testing::Test {
       EXPECT_CALL(*mock_converter, StartSuggestionForRequest(_, _))
           .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
+
+    {
+      // Set up a mock prediction result.
+      Segments segments;
+      Segment *segment;
+      segment = segments.add_segment();
+      segment->set_key("");
+      AddCandidate("search", "search", segment);
+      AddCandidate("input", "input", segment);
+      EXPECT_CALL(*mock_converter, StartPredictionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+    }
   }
 
   void SetupZeroQuerySuggestion(Session *session, commands::Request *request,
@@ -2715,7 +2727,7 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     AddCandidate("e", "e", segment);
     AddCandidate("e", "E", segment);
   }
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
@@ -4189,237 +4201,6 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 }
 
-TEST_F(SessionTest, ExpandSuggestion) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  Session session(&engine);
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  // Prepare suggestion candidates.
-  Segments segments_m;
-  {
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
-
-  SendKey("M", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  // Prepare expanded suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOZUKU";
-    segment->add_candidate()->value = "MOZUKUSU";
-  }
-  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
-
-  command.Clear();
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  // 3 == MOCHA, MOZUKU and MOZUKUSU (duplicate MOZUKU is not counted).
-  EXPECT_EQ(3, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
-}
-
-TEST_F(SessionTest, ExpandSuggestionNoMoreCandidates) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  Session session(&engine);
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  // Prepare suggestion candidates.
-  Segments segments_m;
-  {
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
-
-  SendKey("M", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  Segments empty_segments;
-  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(empty_segments), Return(false)));
-
-  command.Clear();
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
-}
-
-TEST_F(SessionTest, ExpandSuggestionForPartial) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  Session session(&engine);
-  InitSessionToPrecomposition(&session, *mobile_request_);
-  commands::Command command;
-
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  EXPECT_EQ("も", command.output().preedit().segment(0).value());
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
-
-  EXPECT_EQ(2, command.output().preedit().cursor());
-  // Prepare suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("も");
-    segment->add_candidate()->value = "も";
-    segment->add_candidate()->value = "モ";
-  }
-  EXPECT_CALL(converter, StartPartialSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
-
-  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ(1, command.output().preedit().cursor());
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  Mock::VerifyAndClearExpectations(&converter);
-  command.Clear();
-
-  {
-    Segment *segment = segments_mo.mutable_segment(0);
-    segment->add_candidate()->value = "模";
-    segment->add_candidate()->value = "藻";
-  }
-  EXPECT_CALL(converter, StartPartialPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(4, command.output().candidates().candidate_size());
-  Mock::VerifyAndClearExpectations(&converter);
-}
-
-TEST_F(SessionTest, ExpandSuggestionForPartialNoMoreCandidates) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  Session session(&engine);
-  InitSessionToPrecomposition(&session, *mobile_request_);
-  commands::Command command;
-
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  EXPECT_EQ("も", command.output().preedit().segment(0).value());
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
-
-  EXPECT_EQ(2, command.output().preedit().cursor());
-  // Prepare suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("も");
-    segment->add_candidate()->value = "も";
-    segment->add_candidate()->value = "モ";
-  }
-  EXPECT_CALL(converter, StartPartialSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
-
-  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ(1, command.output().preedit().cursor());
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  command.Clear();
-
-  Segments empty_segments;
-  EXPECT_CALL(converter, StartPartialPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(empty_segments), Return(false)));
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-}
-
-TEST_F(SessionTest, ExpandSuggestionDirectMode) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  // On direct mode, ExpandSuggestion() should do nothing.
-  Session session(&engine);
-  commands::Command command;
-
-  session.IMEOff(&command);
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_FALSE(command.output().has_candidates());
-
-  // This test expects that ConverterInterface.StartPrediction() is not called
-  // so SetStartPredictionForRequest() is not called.
-}
-
-TEST_F(SessionTest, ExpandSuggestionConversionMode) {
-  MockConverter converter;
-  MockEngine engine;
-  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
-
-  // On conversion mode, ExpandSuggestion() should do nothing.
-  Session session(&engine);
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  InsertCharacterChars("aiueo", &session, &command);
-  Segments segments;
-  ConversionRequest request;
-  SetComposer(&session, &request);
-  SetAiueo(&segments);
-  FillT13Ns(request, &segments);
-  EXPECT_CALL(converter, StartConversionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-
-  command.Clear();
-  session.Convert(&command);
-  command.Clear();
-  session.ConvertNext(&command);
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-
-  // This test expects that ConverterInterface.StartPrediction() is not called
-  // so SetStartPredictionForRequest() is not called.
-}
-
 TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   commands::Request request;
   request = *mobile_request_;
@@ -4444,7 +4225,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   InsertCharacterChars("jueri", &session, &command);
 
@@ -4454,7 +4235,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_EQ(1, command.output().candidates().candidate_size());
   EXPECT_EQ("クエリ", command.output().candidates().candidate(0).value());
 
-  // commit partial suggestion
+  // commit partial prediction
   EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_jueri), Return(true)));
   Segments empty_segments;
@@ -4462,7 +4243,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
       .WillOnce(SetArgPointee<1>(empty_segments));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
@@ -4470,7 +4251,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_F(SessionTest, MobilePartialSuggestion) {
+TEST_F(SessionTest, MobilePartialPrediction) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -4528,7 +4309,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(
           DoAll(SetArgPointee<1>(segments_watashino), Return(true)));
   InsertCharacterChars("watashino", &session, &command);
@@ -4537,7 +4318,7 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   EXPECT_EQ("私の", command.output().candidates().candidate(0).value());
 
   // partial suggestion for "わた|しの"
-  EXPECT_CALL(converter, StartPartialSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPartialPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_wata), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
@@ -4548,12 +4329,12 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("綿", command.output().candidates().candidate(0).value());
 
-  // commit partial suggestion
+  // commit partial prediction
   EXPECT_CALL(converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
       .WillOnce(DoAll(SetArgPointee<0>(segments_wata), Return(true)));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments_shino), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
@@ -7610,7 +7391,7 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   commands::Command command;
   SendKey("M", &session, &command);
   command.Clear();
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
@@ -7677,7 +7458,7 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_EQ("TOK", segment->candidate(-2).value);
   EXPECT_EQ("Tok", segment->candidate(-3).value);
 
-  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
       .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;

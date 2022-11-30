@@ -458,21 +458,6 @@ void SessionUsageObserver::LogTouchEvent(const commands::Input &input,
     last_touchevents_.clear();
   }
 
-  // When last_touchevents_ is not empty and any kind of commands are send
-  // except for EXPAND_SUGGESTION, save last_touchevents_ as touch_event.
-  // It is because EXPAND_SUGGESTION is automatically send from Java side codes.
-  if (!last_touchevents_.empty() &&
-      !((input.type() == commands::Input::SEND_COMMAND) &&
-        (input.has_command()) && (input.command().has_type()) &&
-        (input.command().type() ==
-         commands::SessionCommand::EXPAND_SUGGESTION))) {
-    for (size_t i = 0; i < last_touchevents_.size(); ++i) {
-      StoreTouchEventStats(last_touchevents_[i],
-                           &usage_cache_.touch_event[keyboard_name]);
-    }
-    last_touchevents_.clear();
-  }
-
   if (input.touch_events_size() > 0) {
     if (input.type() == commands::Input::SEND_KEY) {
       // When the input command contains TouchEvent and the type is SEND_KEY,

@@ -71,7 +71,6 @@ class SessionHandlerTool {
                              commands::Output *output);
   bool SelectCandidate(uint32_t id, commands::Output *output);
   bool SubmitCandidate(uint32_t id, commands::Output *output);
-  bool ExpandSuggestion(commands::Output *output);
 
   bool Reload();
   bool ResetContext();

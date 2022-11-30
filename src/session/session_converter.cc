@@ -447,26 +447,17 @@ bool SessionConverter::SuggestWithPreferences(
   // We have four (2x2) conditions for
   // (use_prediction_candidate, use_partial_composition):
   // - (false, false): Original suggestion behavior on desktop.
-  // - (false, true): Mobile suggestion, using partial composition text.
-  //                  Will be deprecated once one_phase_suggestion turns on
-  //                  by default.
+  // - (false, true): Never happens.
   // - (true, false): Mobile suggestion with richer candidates through
   //                  prediction API.
   // - (true, true): Mobile suggestion with richer candidates through
   //                  prediction API, using partial composition text.
-  bool use_prediction_candidate =
-      (request_->mixed_conversion() && request_->one_phase_suggestion());
+  bool use_prediction_candidate = request_->mixed_conversion();
   bool use_partial_composition = (cursor != composer.GetLength() &&
                                   cursor != 0 && request_->mixed_conversion());
   // Setup request based on the above two flags.
   if (use_partial_composition) {
-    if (use_prediction_candidate) {
-      SetRequestType(ConversionRequest::PARTIAL_PREDICTION,
-                     &conversion_request);
-    } else {
-      SetRequestType(ConversionRequest::PARTIAL_SUGGESTION,
-                     &conversion_request);
-    }
+    SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
   } else {
     // For *partial* suggestion,
     // create_partial_candidates is false because auto partial suggestion
@@ -489,13 +480,8 @@ bool SessionConverter::SuggestWithPreferences(
   // Start actual suggestion/prediction.
   bool result;
   if (use_partial_composition) {
-    if (use_prediction_candidate) {
-      result = converter_->StartPartialPredictionForRequest(conversion_request,
-                                                            segments_.get());
-    } else {
-      result = converter_->StartPartialSuggestionForRequest(conversion_request,
-                                                            segments_.get());
-    }
+    result = converter_->StartPartialPredictionForRequest(conversion_request,
+                                                          segments_.get());
   } else {
     if (use_prediction_candidate) {
       result = converter_->StartPredictionForRequest(conversion_request,
@@ -614,87 +600,6 @@ bool SessionConverter::PredictWithPreferences(
   candidate_list_visible_ = true;
   InitializeSelectedCandidateIndices();
 
-  return true;
-}
-
-bool SessionConverter::ExpandSuggestion(const composer::Composer &composer) {
-  return ExpandSuggestionWithPreferences(composer, conversion_preferences_);
-}
-
-bool SessionConverter::ExpandSuggestionWithPreferences(
-    const composer::Composer &composer,
-    const ConversionPreferences &preferences) {
-  DCHECK(CheckState(COMPOSITION | SUGGESTION | PREDICTION));
-  if (CheckState(COMPOSITION)) {
-    // Client can send EXPAND_SUGGESTION command when on composition mode.
-    // In such case we do nothing.
-    VLOG(1) << "ExpandSuggestion does nothing on composition mode.";
-    return false;
-  }
-
-  ResetResult();
-
-  // Expand suggestion.
-  // Current implementation is hacky.
-  // We want prediction candidates,
-  // but want to set candidates' category SUGGESTION.
-  // TODO(matsuzakit or yamaguchi): Refactor following lines,
-  //     after implementation of partial conversion.
-
-  // Initialize the segments for prediction.
-  ConversionRequest conversion_request(&composer, request_, config_);
-  SetConversionPreferences(preferences, segments_.get(), &conversion_request);
-
-  std::string preedit;
-  composer.GetQueryForPrediction(&preedit);
-
-  // We do not need "segments_->clear_conversion_segments()".
-  // Without this statement we can add additional candidates into
-  // existing segments.
-  DCHECK(request_type_ != ConversionRequest::PREDICTION &&
-         request_type_ != ConversionRequest::PARTIAL_PREDICTION);
-  conversion_request.set_should_call_set_key_in_prediction(true);
-
-  const size_t cursor = composer.GetCursor();
-  if (cursor == composer.GetLength() || cursor == 0 ||
-      !request_->mixed_conversion()) {
-    conversion_request.set_create_partial_candidates(
-        request_->auto_partial_suggestion());
-    conversion_request.set_use_actual_converter_for_realtime_conversion(
-        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
-    // This is abuse of StartPrediction().
-    // TODO(matsuzakit or yamaguchi): Add ExpandSuggestion method
-    //    to Converter class.
-    SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
-    if (!converter_->StartPredictionForRequest(conversion_request,
-                                               segments_.get())) {
-      LOG(WARNING) << "StartPredictionForRequest() failed";
-      converter_->CancelConversion(segments_.get());
-    }
-  } else {
-    // c.f. SuggestWithPreferences for ConversionRequest flags.
-    SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
-    if (!converter_->StartPartialPredictionForRequest(conversion_request,
-                                                      segments_.get())) {
-      LOG(WARNING) << "StartPartialPredictionForRequest() failed";
-      converter_->CancelConversion(segments_.get());
-    }
-  }
-  // Overwrite the request type to SUGGESTION.
-  // Without this logic, a candidate gets focused that is unexpected behavior.
-  request_type_ = ConversionRequest::SUGGESTION;
-
-  // Merge suggestions and predictions.
-  PrependCandidates(previous_suggestions_, preedit, segments_.get());
-
-  segment_index_ = 0;
-
-  // Call AppendCandidateList instead of UpdateCandidateList because
-  // we want to keep existing candidates.
-  // As a result, ExpandSuggestionWithPreferences adds expanded suggestion
-  // candidates at the tail of existing candidates.
-  AppendCandidateList();
-  candidate_list_visible_ = true;
   return true;
 }
 

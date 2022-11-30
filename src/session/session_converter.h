@@ -121,14 +121,6 @@ class SessionConverter : public SessionConverterInterface {
       const composer::Composer &composer,
       const ConversionPreferences &preferences) override;
 
-  // Sends a prediction request to the converter.
-  // The result is added at the tail of existing candidate list as "suggestion"
-  // candidates.
-  bool ExpandSuggestion(const composer::Composer &composer) override;
-  bool ExpandSuggestionWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) override;
-
   // Clears conversion segments, but keep the context.
   void Cancel() override;
 

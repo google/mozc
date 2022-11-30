@@ -385,14 +385,9 @@ message SessionCommand {
     // Works UNDO or rewind HIRAGANA characters based on the state.
     UNDO_OR_REWIND = 14;
 
-    // Expand suggestion candidates.
-    // Usual suggestion algorithm is not "rich" but "fast" because suggestion
-    // is executed every key event (On the other hand predicition is "rich"
-    // because prediction is executed only when a user types TAB key).
-    // This command expands suggestion candidate but IME state is
-    // kept as is (Note : PredictAndConvert key command does almost the same
-    // thing but it changes IME state to prediction).
-    EXPAND_SUGGESTION = 15;
+    // Obsolete command. Used only in old Android clients.
+    reserved 15;
+    reserved "EXPAND_SUGGESTION";
 
     // Obsolete command. Used only in old IBus client.
     reserved 16;
@@ -836,11 +831,7 @@ message Request {
   // Fills incognito_candidate_words filed of output.
   optional bool fill_incognito_candidate_words = 18 [default = false];
 
-  // Use prediction operation for suggestion.
-  // Effective only with mixed_conversion (therefore for mobile purposes).
-  // With this, the client doesn't need to execute EXPAND_SUGGESTION to get more
-  // candidates. Instead, all the candidates will be returned at once.
-  optional bool one_phase_suggestion = 19 [default = false];
+  reserved 19;  // deprecated one_phase_suggestion
 
   // Enables a11y support for candidates.
   // If this field is set to true, a11y description is set to each candidate.

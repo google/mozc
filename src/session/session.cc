@@ -337,9 +337,6 @@ bool Session::SendCommand(commands::Command *command) {
     case commands::SessionCommand::MOVE_CURSOR:
       result = MoveCursorTo(command);
       break;
-    case commands::SessionCommand::EXPAND_SUGGESTION:
-      result = ExpandSuggestion(command);
-      break;
     case commands::SessionCommand::SWITCH_INPUT_FIELD_TYPE:
       result = SwitchInputFieldType(command);
       break;
@@ -2633,18 +2630,6 @@ bool Session::PredictAndConvert(commands::Command *command) {
   } else {
     OutputComposition(command);
   }
-  return true;
-}
-
-bool Session::ExpandSuggestion(commands::Command *command) {
-  if (context_->state() == ImeContext::CONVERSION ||
-      context_->state() == ImeContext::DIRECT) {
-    return DoNothing(command);
-  }
-
-  command->mutable_output()->set_consumed(true);
-  context_->mutable_converter()->ExpandSuggestion(context_->composer());
-  Output(command);
   return true;
 }
 

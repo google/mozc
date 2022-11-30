@@ -439,7 +439,6 @@ const char *kScenariosForExperimentParams[] = {
 commands::Request GetMobileRequest() {
   commands::Request request = commands::Request::default_instance();
   commands::RequestForUnitTest::FillMobileRequest(&request);
-  request.set_one_phase_suggestion(true);
   return request;
 }
 
