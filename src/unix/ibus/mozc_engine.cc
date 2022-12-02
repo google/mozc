@@ -251,6 +251,12 @@ CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
   }
 #endif  // !ENABLE_QT_RENDERER
 
+  if (GetEnv("XDG_CURRENT_DESKTOP") == "GNOME") {
+    // In GNOME, ibus can use candidate panel provided by GNOME Shell, which
+    // works better than mozc_renderer.
+    return nullptr;
+  }
+
   auto *handler = new GtkCandidateWindowHandler(renderer_client);
   handler->RegisterGSettingsObserver();
   return handler;
