@@ -38,7 +38,6 @@
       'type': 'executable',
       'sources': [
         'candidate_filter_test.cc',
-        'converter_mock_test.cc',
         'converter_test.cc',
         'immutable_converter_test.cc',
         'key_corrector_test.cc',
@@ -71,7 +70,6 @@
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'converter.gyp:converter',
         'converter_base.gyp:connector',
-        'converter_base.gyp:converter_mock',
         'converter_base.gyp:segmenter',
         'converter_base.gyp:segments',
       ],

@@ -77,7 +77,6 @@
         '../base/base.gyp:serialized_string_array',
         '../base/base_test.gyp:clock_mock',
         '../converter/converter.gyp:converter',
-        '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary_base.gyp:user_pos',

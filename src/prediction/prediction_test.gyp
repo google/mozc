@@ -50,7 +50,6 @@
         '../composer/composer.gyp:composer',
         '../config/config.gyp:config_handler',
         '../converter/converter_base.gyp:connector',
-        '../converter/converter_base.gyp:converter_mock',
         '../converter/converter_base.gyp:immutable_converter',
         '../converter/converter_base.gyp:segmenter',
         '../converter/converter_base.gyp:segments',

@@ -136,20 +136,6 @@
       ],
     },
     {
-      'target_name': 'converter_mock',
-      'type': 'static_library',
-      'sources': [
-        'converter_mock.cc',
-      ],
-      'dependencies': [
-        '../base/base.gyp:base',
-        '../protocol/protocol.gyp:commands_proto',
-        '../request/request.gyp:conversion_request',
-        '../testing/testing.gyp:testing',
-        'segments',
-      ],
-    },
-    {
       'target_name': 'gen_segmenter_bitarray',
       'type': 'static_library',
       'toolsets': ['host'],
