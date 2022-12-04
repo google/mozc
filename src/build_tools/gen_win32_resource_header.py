@@ -55,6 +55,7 @@ def ParseOptions():
   parser.add_option('--version_file', dest='version_file')
   parser.add_option('--output', dest='output')
   parser.add_option('--main', dest='main')
+  parser.add_option('--template', dest='template')
 
   (options, unused_args) = parser.parse_args()
   return options
@@ -81,7 +82,10 @@ def main():
     logging.error('--output is not specified.')
     sys.exit(-1)
   if options.main is None:
-    logging.error('--input is not specified.')
+    logging.error('--main is not specified.')
+    sys.exit(-1)
+  if options.template is None:
+    logging.error('--template is not specified.')
     sys.exit(-1)
 
   build_details = GenerateBuildProfile()
@@ -90,22 +94,30 @@ def main():
     build_details = ('  (%s)' % build_details)
 
   version = mozc_version.MozcVersion(options.version_file)
+
+  resource_data = open(options.main, encoding='utf-8').read()
+  template_data = open(options.template, encoding='utf-8').read()
+
   bootstrapper_template = (
       '#define MOZC_RES_VERSION_NUMBER @MAJOR@,@MINOR@,@BUILD@,@REVISION@\n'
       '#define MOZC_RES_VERSION_STRING "@MAJOR@.@MINOR@.@BUILD@.@REVISION@"\n'
       '#define MOZC_RES_SPECIFIC_VERSION_STRING '
       '"@MAJOR@.@MINOR@.@BUILD@.@REVISION@%s"\n'
-      '#include "%s"\n') % (build_details, options.main)
+      '%s\n'
+      '%s\n') % (build_details, resource_data, template_data)
 
   version_definition = version.GetVersionInFormat(bootstrapper_template)
 
   old_content = ''
   if os.path.exists(options.output):
     # if the target file already exists, need to check the necessity of update.
-    old_content = open(options.output).read()
+    try:
+      old_content = open(options.output, encoding='utf-16le').read()
+    except UnicodeError:
+      old_content = ''
 
   if version_definition != old_content:
-    open(options.output, 'w').write(version_definition)
+    open(options.output, 'w', encoding='utf-16le').write(version_definition)
 
 if __name__ == '__main__':
   main()

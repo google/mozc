@@ -380,7 +380,7 @@ int main(int argc, char **argv) {
 
   std::ostream *ofs = &std::cout;
   if (!absl::GetFlag(FLAGS_log_path).empty()) {
-    ofs = new mozc::OutputFileStream(absl::GetFlag(FLAGS_log_path).c_str());
+    ofs = new mozc::OutputFileStream(absl::GetFlag(FLAGS_log_path));
   }
 
   // TODO(taku): generate histogram with ChartAPI

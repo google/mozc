@@ -733,33 +733,10 @@ cc_test_mozc(
 cc_library_mozc(
     name = "converter_mock",
     testonly = True,
-    srcs = [
-        "converter_mock.cc",
-    ],
     hdrs = ["converter_mock.h"],
     deps = [
         ":converter_interface",
-        ":segments",
-        "//base",
-        "//base:logging",
-        "//base:port",
-        "//request:conversion_request",
         "//testing:gunit",
-    ],
-)
-
-cc_test_mozc(
-    name = "converter_mock_test",
-    size = "small",
-    srcs = ["converter_mock_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":converter_mock",
-        ":segments",
-        "//base",
-        "//request:conversion_request",
-        "//testing:gunit_main",
-        "@com_google_absl//absl/strings",
     ],
 )
 

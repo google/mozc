@@ -67,7 +67,7 @@ namespace mozc {
 // Load Suikyo Format
 static void Compile(const std::string &files,
                     const std::string &header_filename) {
-  OutputFileStream ofs(header_filename.c_str());
+  OutputFileStream ofs(header_filename);
   CHECK(ofs.good());
 
   ofs << "#include \"base/japanese_util_rule.h\"\n"
@@ -92,7 +92,7 @@ static void Compile(const std::string &files,
   for (size_t i = 0; i < rules.size(); ++i) {
     const std::string &filename = rules[i].first;
     const std::string &name = rules[i].second;
-    InputFileStream ifs(filename.c_str());
+    InputFileStream ifs(filename);
     CHECK(ifs.good());
     std::string line, output;
     std::vector<std::pair<std::string, int>> dic;

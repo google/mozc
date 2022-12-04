@@ -47,7 +47,7 @@ namespace mozc {
 namespace {
 // Returns all data of the filename.
 std::string GetFileData(const std::string &filename) {
-  InputFileStream ifs(filename.c_str(), std::ios::binary);
+  InputFileStream ifs(filename, std::ios::binary);
   char c = '\0';
   std::string data;
   while (!ifs.get(c).fail()) {

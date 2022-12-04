@@ -214,10 +214,10 @@ Session::~Session() {}
 void Session::InitContext(ImeContext *context) const {
   context->set_create_time(Clock::GetTime());
   context->set_last_command_time(0);
-  context->set_composer(
-      new composer::Composer(&composer::Table::GetDefaultTable(),
-                             &context->GetRequest(), &context->GetConfig()));
-  context->set_converter(new SessionConverter(
+  context->set_composer(std::make_unique<composer::Composer>(
+      &composer::Table::GetDefaultTable(), &context->GetRequest(),
+      &context->GetConfig()));
+  context->set_converter(std::make_unique<SessionConverter>(
       engine_->GetConverter(), &context->GetRequest(), &context->GetConfig()));
 #ifdef OS_WIN
   // On Windows session is started with direct mode.
@@ -336,9 +336,6 @@ bool Session::SendCommand(commands::Command *command) {
       break;
     case commands::SessionCommand::MOVE_CURSOR:
       result = MoveCursorTo(command);
-      break;
-    case commands::SessionCommand::EXPAND_SUGGESTION:
-      result = ExpandSuggestion(command);
       break;
     case commands::SessionCommand::SWITCH_INPUT_FIELD_TYPE:
       result = SwitchInputFieldType(command);
@@ -2633,18 +2630,6 @@ bool Session::PredictAndConvert(commands::Command *command) {
   } else {
     OutputComposition(command);
   }
-  return true;
-}
-
-bool Session::ExpandSuggestion(commands::Command *command) {
-  if (context_->state() == ImeContext::CONVERSION ||
-      context_->state() == ImeContext::DIRECT) {
-    return DoNothing(command);
-  }
-
-  command->mutable_output()->set_consumed(true);
-  context_->mutable_converter()->ExpandSuggestion(context_->composer());
-  Output(command);
   return true;
 }
 

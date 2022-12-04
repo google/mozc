@@ -1618,28 +1618,6 @@ TEST_F(SessionConverterTest, PredictIsNotCalledInPredictionState) {
   EXPECT_TRUE(converter.Predict(*composer_));
 }
 
-TEST_F(SessionConverterTest, DoNotClearSegmentsBeforeExpandSuggestion) {
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  // Call Suggest() and sets the segments of converter to the following one.
-  Segments segments = GetSegmentsTest();
-  segments.set_max_history_segments_size(
-      converter.conversion_preferences().max_history_size);
-  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  composer_->InsertCharacterPreedit("てすと");
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-
-  // Then, call ExpandSuggestion(). It should be called with the above
-  // (uncleared) segments.
-  EXPECT_CALL(mock_converter,
-              StartPredictionForRequest(_, Pointee(EqualsSegments(segments))))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-}
-
 TEST_F(SessionConverterTest, CommitSuggestionByIndex) {
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
@@ -1788,7 +1766,7 @@ TEST_F(SessionConverterTest, CommitSuggestionById) {
                      1);
 }
 
-TEST_F(SessionConverterTest, PartialSuggestion) {
+TEST_F(SessionConverterTest, PartialPrediction) {
   RequestForUnitTest::FillMobileRequest(request_.get());
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
@@ -1797,7 +1775,7 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   const std::string kChars_Kokode = "ここで";
   const std::string kChars_Hakimonowo = "はきものを";
 
-  {  // Initialize mock segments for partial suggestion
+  {  // Initialize mock segments for partial prediction
     Segment *segment = segments1.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Kokode);
@@ -1810,7 +1788,7 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   }
 
   // Suggestion that matches to the same key by its prefix.
-  // Should not be used by partial suggestion.
+  // Should not be used by partial prediction.
   {
     Segment *segment = suggestion_segments.add_segment();
     Segment::Candidate *candidate;
@@ -1822,7 +1800,7 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
     candidate = segment->add_candidate();
   }
 
-  {  // Initialize mock segments for suggestion
+  {  // Initialize mock segments for prediction
     Segment *segment = segments2.add_segment();
     Segment::Candidate *candidate;
     segment->set_key(kChars_Hakimonowo);
@@ -1835,8 +1813,8 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   // "ここではきものを|"    ("|" is cursor position)
   composer_->InsertCharacterPreedit(kChars_Kokode + kChars_Hakimonowo);
   composer_->MoveCursorToEnd();
-  // Suggestion for "ここではきものを". Not partial suggestion.
-  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
+  // Prediction for "ここではきものを".
+  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(suggestion_segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -1848,8 +1826,8 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   // "|ここではきものを"    ("|" is cursor position)
   composer_->MoveCursorTo(0);
 
-  // Suggestion for "ここではきものを". Not partial suggestion.
-  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
+  // Prediction for "ここではきものを".
+  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(suggestion_segments), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -1860,8 +1838,8 @@ TEST_F(SessionConverterTest, PartialSuggestion) {
   // "ここで|はきものを"    ("|" is cursor position)
   composer_->MoveCursorTo(3);
 
-  // Partial Suggestion for "ここで"
-  EXPECT_CALL(mock_converter, StartPartialSuggestionForRequest(_, _))
+  // Partial prediction for "ここで"
+  EXPECT_CALL(mock_converter, StartPartialPredictionForRequest(_, _))
       .WillOnce(DoAll(SetArgPointee<1>(segments1), Return(true)));
   EXPECT_TRUE(converter.Suggest(*composer_));
   Mock::VerifyAndClearExpectations(&mock_converter);
@@ -2148,7 +2126,6 @@ TEST_F(SessionConverterTest, OnePhaseSuggestion) {
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
   request_->set_mixed_conversion(true);
-  request_->set_one_phase_suggestion(true);
   Segments segments;
   {  // Initialize mock segments for suggestion (internally prediction)
     Segment *segment = segments.add_segment();
@@ -2223,343 +2200,6 @@ TEST_F(SessionConverterTest, SuppressSuggestionOnPasswordField) {
   EXPECT_FALSE(converter.Suggest(*composer_));
   EXPECT_FALSE(IsCandidateListVisible(converter));
   EXPECT_FALSE(converter.IsActive());
-}
-
-TEST_F(SessionConverterTest, ExpandPartialSuggestion) {
-  RequestForUnitTest::FillMobileRequest(request_.get());
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  const char *kSuggestionValues[] = {
-      "S0",
-      "S1",
-      "S2",
-  };
-  const char *kPredictionValues[] = {
-      "P0",
-      "P1",
-      "P2",
-      // Duplicate entry. Any dupulication should not exist
-      // in the candidate list.
-      "S1",
-      "P3",
-  };
-  constexpr char kPredictionKey[] = "left";
-  constexpr char kSuffixKey[] = "right";
-  constexpr int kDupulicationIndex = 3;
-
-  Segments segments;
-  {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kPredictionKey);
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kSuggestionValues[i];
-      candidate->content_key = kPredictionKey;
-    }
-  }
-  composer_->InsertCharacterPreedit(std::string(kPredictionKey) +
-                                    std::string(kSuffixKey));
-  composer_->MoveCursorTo(Util::CharsLen(std::string(kPredictionKey)));
-
-  // Partial Suggestion
-  EXPECT_CALL(mock_converter, StartPartialSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-
-  segments.Clear();
-  {
-    // Initialize mock segments for partial prediction for expanding suggestion.
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kPredictionKey);
-    for (size_t i = 0; i < std::size(kPredictionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kPredictionValues[i];
-      candidate->content_key = kPredictionKey;
-    }
-  }
-  // Expand suggestion candidate (cursor == HEAD)
-  composer_->MoveCursorTo(0);
-  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-
-  // Expand suggestion candidate (cursor == TAIL)
-  composer_->MoveCursorTo(composer_->GetLength());
-  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    // -1 is for duplicate entry.
-    EXPECT_EQ(std::size(kSuggestionValues) + std::size(kPredictionValues) - 1,
-              candidates.size());
-    size_t i;
-    for (i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-
-    // -1 is for duplicate entry.
-    for (; i < candidates.size(); ++i) {
-      size_t index_in_prediction = i - std::size(kSuggestionValues);
-      if (index_in_prediction >= kDupulicationIndex) {
-        ++index_in_prediction;
-      }
-      EXPECT_EQ(kPredictionValues[index_in_prediction],
-                candidates.candidate(i).value());
-    }
-  }
-}
-
-TEST_F(SessionConverterTest, ExpandSuggestion) {
-  RequestForUnitTest::FillMobileRequest(request_.get());
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  const char *kSuggestionValues[] = {
-      "S0",
-      "S1",
-      "S2",
-  };
-  const char *kPredictionValues[] = {
-      "P0",
-      "P1",
-      "P2",
-      // Duplicate entry. Any dupulication should not exist
-      // in the candidate list.
-      "S1",
-      "P3",
-  };
-  constexpr char kKey[] = "key";
-  constexpr int kDupulicationIndex = 3;
-
-  Segments segments;
-  {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kKey);
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kSuggestionValues[i];
-      candidate->content_key = kKey;
-    }
-  }
-  composer_->InsertCharacterPreedit(kKey);
-
-  // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-  }
-
-  segments.Clear();
-  {  // Initialize mock segments for prediction (== expanding suggestion)
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kKey);
-    for (size_t i = 0; i < std::size(kPredictionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kPredictionValues[i];
-      candidate->content_key = kKey;
-    }
-  }
-  // Expand suggestion candidate
-  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    // -1 is for duplicate entry.
-    EXPECT_EQ(std::size(kSuggestionValues) + std::size(kPredictionValues) - 1,
-              candidates.size());
-    size_t i;
-    for (i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-
-    // -1 is for duplicate entry.
-    for (; i < candidates.size(); ++i) {
-      size_t index_in_prediction = i - std::size(kSuggestionValues);
-      if (index_in_prediction >= kDupulicationIndex) {
-        ++index_in_prediction;
-      }
-      EXPECT_EQ(kPredictionValues[index_in_prediction],
-                candidates.candidate(i).value());
-    }
-  }
-}
-
-TEST_F(SessionConverterTest, ExpandSuggestionNoMoreCandidates) {
-  RequestForUnitTest::FillMobileRequest(request_.get());
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  const char *kSuggestionValues[] = {
-      "S0",
-      "S1",
-      "S2",
-  };
-  constexpr char kKey[] = "key";
-
-  Segments segments;
-  {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kKey);
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kSuggestionValues[i];
-      candidate->content_key = kKey;
-    }
-  }
-  composer_->InsertCharacterPreedit(kKey);
-
-  // Suggestion
-  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-  }
-
-  segments.Clear();
-  {  // Initialize mock segments for prediction (== expanding suggestion)
-    Segment *segment = segments.add_segment();
-    segment->set_key(kKey);
-  }
-  // Try expanding suggestion candidates but there's no more candidates from
-  // prediction.
-  EXPECT_CALL(mock_converter, StartPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
-    size_t i;
-    for (i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-  }
-}
-
-TEST_F(SessionConverterTest, ExpandSuggestionForPartialNoMoreCandidates) {
-  RequestForUnitTest::FillMobileRequest(request_.get());
-  MockConverter mock_converter;
-  SessionConverter converter(&mock_converter, request_.get(), config_.get());
-
-  const char *kSuggestionValues[] = {
-      "S0",
-      "S1",
-      "S2",
-  };
-  constexpr char kKey[] = "key";
-
-  Segments segments;
-  {  // Initialize mock segments for suggestion
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate;
-    segment->set_key(kKey);
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      candidate = segment->add_candidate();
-      candidate->value = kSuggestionValues[i];
-      candidate->content_key = kKey;
-    }
-  }
-  composer_->InsertCharacterPreedit("keys");
-  composer_->MoveCursorLeft();  // key|s
-
-  // Suggestion
-  EXPECT_CALL(mock_converter, StartPartialSuggestionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
-  EXPECT_TRUE(converter.Suggest(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
-    for (size_t i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-  }
-
-  segments.Clear();
-  // Try expanding suggestion candidates but no more partial prediction results.
-  EXPECT_CALL(mock_converter, StartPartialPredictionForRequest(_, _))
-      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
-  EXPECT_TRUE(converter.ExpandSuggestion(*composer_));
-  Mock::VerifyAndClearExpectations(&mock_converter);
-  EXPECT_TRUE(IsCandidateListVisible(converter));
-  EXPECT_TRUE(converter.IsActive());
-  {  // Check the candidate list
-    commands::Output output;
-    converter.FillOutput(*composer_, &output);
-    const commands::Candidates &candidates = output.candidates();
-    EXPECT_EQ(commands::SUGGESTION, candidates.category());
-    EXPECT_EQ(commands::SUGGESTION, output.all_candidate_words().category());
-    EXPECT_EQ(std::size(kSuggestionValues), candidates.size());
-    size_t i;
-    for (i = 0; i < std::size(kSuggestionValues); ++i) {
-      EXPECT_EQ(kSuggestionValues[i], candidates.candidate(i).value());
-    }
-  }
 }
 
 TEST_F(SessionConverterTest, AppendCandidateList) {

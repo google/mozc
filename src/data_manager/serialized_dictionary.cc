@@ -190,7 +190,7 @@ std::pair<absl::string_view, absl::string_view> SerializedDictionary::Compile(
 void SerializedDictionary::CompileToFiles(
     const std::string &input, const std::string &output_token_array,
     const std::string &output_string_array) {
-  InputFileStream ifs(input.c_str());
+  InputFileStream ifs(input);
   CHECK(ifs.good());
   std::map<std::string, TokenList> dic;
   LoadTokens(&ifs, &dic);

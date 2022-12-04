@@ -429,12 +429,12 @@ absl::Status FileUtilImpl::CopyFile(const std::string &from,
   }
 #endif  // OS_WIN
 
-  InputFileStream ifs(from.c_str(), std::ios::binary);
+  InputFileStream ifs(from, std::ios::binary);
   if (!ifs) {
     return absl::UnknownError(absl::StrCat("Can't open input file ", from));
   }
 
-  OutputFileStream ofs(to.c_str(), std::ios::binary | std::ios::trunc);
+  OutputFileStream ofs(to, std::ios::binary | std::ios::trunc);
   if (!ofs) {
     return absl::UnknownError(absl::StrCat("Can't open output file ", to));
   }
@@ -688,7 +688,7 @@ absl::StatusOr<FileTimeStamp> FileUtilImpl::GetModificationTime(
 absl::Status FileUtil::GetContents(const std::string &filename,
                                    std::string *output,
                                    std::ios_base::openmode mode) {
-  InputFileStream ifs(filename.c_str(), mode | std::ios::ate);
+  InputFileStream ifs(filename, mode | std::ios::ate);
   if (ifs.fail()) {
     const int err = errno;
     return Util::ErrnoToCanonicalStatus(err,
@@ -734,7 +734,7 @@ absl::StatusOr<std::string> FileUtil::GetContents(
 absl::Status FileUtil::SetContents(const std::string &filename,
                                    absl::string_view content,
                                    std::ios_base::openmode mode) {
-  OutputFileStream ofs(filename.c_str(), mode);
+  OutputFileStream ofs(filename, mode);
   if (ofs.fail()) {
     const int err = errno;
     return Util::ErrnoToCanonicalStatus(err,

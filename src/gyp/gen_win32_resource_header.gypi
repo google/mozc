@@ -47,7 +47,8 @@
       'action': [
         '<(python)', '<(script_path)',
         '--version_file', '<(version_file_path)',
-        '--main', '<(gen_main_resource_path)',
+        '--main', '<(base_path)/<(gen_main_resource_path)',
+        '--template', '<(base_path)/build_tools/mozc_win32_resource_template.rc',
         '--output', '<(gen_output_resource_path)',
       ],
     },

@@ -30,7 +30,6 @@
 #include "session/session.h"
 
 #include <cstdint>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <string>
@@ -47,7 +46,6 @@
 #include "data_manager/testing/mock_data_manager.h"
 #include "engine/engine.h"
 #include "engine/engine_mock.h"
-#include "engine/mock_converter_engine.h"
 #include "engine/mock_data_engine_factory.h"
 #include "engine/user_data_manager_mock.h"
 #include "protocol/candidates.pb.h"
@@ -394,7 +392,6 @@ class SessionTest : public ::testing::Test {
     commands::RequestForUnitTest::FillMobileRequest(mobile_request_.get());
 
     mock_data_engine_ = MockDataEngineFactory::Create().value();
-    engine_ = std::make_unique<MockConverterEngine>();
 
     t13n_rewriter_ = std::make_unique<TransliterationRewriter>(
         dictionary::PosMatcher(mock_data_manager_.GetPosMatcherData()));
@@ -476,24 +473,8 @@ class SessionTest : public ::testing::Test {
     session->IMEOff(&command);
   }
 
-  void InitSessionToConversionWithAiueo(Session *session) {
-    InitSessionToConversionWithAiueo(session, [this](Segments *segments) {
-      GetConverterMock()->SetStartConversionForRequest(segments, true);
-    });
-  }
-
   void InitSessionToConversionWithAiueo(Session *session,
                                         MockConverter *converter) {
-    InitSessionToConversionWithAiueo(session, [converter](Segments *segments) {
-      EXPECT_CALL(*converter, StartConversionForRequest(_, _))
-          .WillRepeatedly(DoAll(SetArgPointee<1>(*segments), Return(true)));
-    });
-    Mock::VerifyAndClearExpectations(converter);
-  }
-
-  void InitSessionToConversionWithAiueo(
-      Session *session,
-      std::function<void(Segments *segments)> init_mock_converter) {
     InitSessionToPrecomposition(session);
 
     commands::Command command;
@@ -503,11 +484,13 @@ class SessionTest : public ::testing::Test {
     SetComposer(session, &request);
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
-    init_mock_converter(&segments);
+    EXPECT_CALL(*converter, StartConversionForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     EXPECT_TRUE(session->Convert(&command));
     EXPECT_EQ(ImeContext::CONVERSION, session->context().state());
+    Mock::VerifyAndClearExpectations(converter);
   }
 
   void InitSessionToPrecomposition(Session *session) {
@@ -573,7 +556,8 @@ class SessionTest : public ::testing::Test {
   }
 
   void SetupMockForReverseConversion(const std::string &kanji,
-                                     const std::string &hiragana) {
+                                     const std::string &hiragana,
+                                     MockConverter *converter) {
     // Set up Segments for reverse conversion.
     Segments reverse_segments;
     Segment *segment;
@@ -584,7 +568,8 @@ class SessionTest : public ::testing::Test {
     // For reverse conversion, key is the original kanji string.
     candidate->key = kanji;
     candidate->value = hiragana;
-    GetConverterMock()->SetStartReverseConversion(&reverse_segments, true);
+    EXPECT_CALL(*converter, StartReverseConversion(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(reverse_segments), Return(true)));
     // Set up Segments for forward conversion.
     Segments segments;
     segment = segments.add_segment();
@@ -592,7 +577,8 @@ class SessionTest : public ::testing::Test {
     candidate = segment->add_candidate();
     candidate->key = hiragana;
     candidate->value = kanji;
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(*converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
   void SetupCommandForReverseConversion(const std::string &text,
@@ -605,7 +591,8 @@ class SessionTest : public ::testing::Test {
   }
 
   void SetupZeroQuerySuggestionReady(bool enable, Session *session,
-                                     commands::Request *request) {
+                                     commands::Request *request,
+                                     MockConverter *mock_converter) {
     InitSessionToPrecomposition(session);
 
     // Enable zero query suggest.
@@ -623,7 +610,8 @@ class SessionTest : public ::testing::Test {
       segment = segments.add_segment();
       segment->set_key("google");
       segment->add_candidate()->value = "GOOGLE";
-      GetConverterMock()->SetStartConversionForRequest(&segments, true);
+      EXPECT_CALL(*mock_converter, StartConversionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
     command.Clear();
     session->Convert(&command);
@@ -636,18 +624,32 @@ class SessionTest : public ::testing::Test {
       segment->set_key("");
       AddCandidate("search", "search", segment);
       AddCandidate("input", "input", segment);
-      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+      EXPECT_CALL(*mock_converter, StartSuggestionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
+    }
+
+    {
+      // Set up a mock prediction result.
+      Segments segments;
+      Segment *segment;
+      segment = segments.add_segment();
+      segment->set_key("");
+      AddCandidate("search", "search", segment);
+      AddCandidate("input", "input", segment);
+      EXPECT_CALL(*mock_converter, StartPredictionForRequest(_, _))
+          .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
   }
 
   void SetupZeroQuerySuggestion(Session *session, commands::Request *request,
-                                commands::Command *command) {
-    SetupZeroQuerySuggestionReady(true, session, request);
+                                commands::Command *command,
+                                MockConverter *converter) {
+    SetupZeroQuerySuggestionReady(true, session, request, converter);
     command->Clear();
     session->Commit(command);
   }
 
-  void SetUndoContext(Session *session) {
+  void SetUndoContext(Session *session, MockConverter *converter) {
     commands::Command command;
     Segments segments;
 
@@ -664,23 +666,22 @@ class SessionTest : public ::testing::Test {
     }
 
     {  // Commit the composition to make an undo context.
-      GetConverterMock()->SetStartConversionForRequest(&segments, true);
+      EXPECT_CALL(*converter, StartConversionForRequest(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
       command.Clear();
       session->Convert(&command);
       EXPECT_FALSE(command.output().has_result());
       EXPECT_PREEDIT("あいうえお", command);
 
-      GetConverterMock()->SetCommitSegmentValue(&segments, true);
+      EXPECT_CALL(*converter, CommitSegmentValue(_, _, _))
+          .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
       command.Clear();
 
       session->Commit(&command);
       EXPECT_FALSE(command.output().has_preedit());
       EXPECT_RESULT("あいうえお", command);
+      Mock::VerifyAndClearExpectations(converter);
     }
-  }
-
-  ConverterMock *GetConverterMock() {
-    return engine_->mutable_converter_mock();
   }
 
   // IMPORTANT: Use std::unique_ptr and instantiate an object in SetUp() method
@@ -688,7 +689,6 @@ class SessionTest : public ::testing::Test {
   //    such as user profile dir or global config are set up for unit test.
   //    If you directly define a variable here without std::unique_ptr, its
   //    constructor will be called *BEFORE* SetUp() is called.
-  std::unique_ptr<MockConverterEngine> engine_;
   std::unique_ptr<Engine> mock_data_engine_;
   std::unique_ptr<TransliterationRewriter> t13n_rewriter_;
   std::unique_ptr<composer::Table> table_;
@@ -714,7 +714,11 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 
   // Make sure that the default roman table is initialized.
   {
-    Session session(engine_.get());
+    MockConverter converter;
+    MockEngine engine;
+    EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -725,7 +729,11 @@ TEST_F(SessionTest, TestOfTestForSetup) {
 }
 
 TEST_F(SessionTest, TestSendKey) {
-  Session session(engine_.get());
+  MockEngine engine;
+  MockConverter converter;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -760,7 +768,11 @@ TEST_F(SessionTest, TestSendKey) {
 }
 
 TEST_F(SessionTest, SendCommand) {
-  Session session(engine_.get());
+  MockEngine engine;
+  MockConverter converter;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -826,8 +838,12 @@ TEST_F(SessionTest, SendCommand) {
 }
 
 TEST_F(SessionTest, SwitchInputMode) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -849,7 +865,7 @@ TEST_F(SessionTest, SwitchInputMode) {
   {
     // Confirm that we can change the mode from DIRECT
     // to other modes directly (without IMEOn command).
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -878,8 +894,12 @@ TEST_F(SessionTest, SwitchInputMode) {
 }
 
 TEST_F(SessionTest, RevertComposition) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // Issue#2237323
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -889,7 +909,8 @@ TEST_F(SessionTest, RevertComposition) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -906,7 +927,11 @@ TEST_F(SessionTest, RevertComposition) {
 }
 
 TEST_F(SessionTest, InputMode) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(session.InputModeHalfASCII(&command));
@@ -926,7 +951,11 @@ TEST_F(SessionTest, InputMode) {
 }
 
 TEST_F(SessionTest, SelectCandidate) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -936,7 +965,8 @@ TEST_F(SessionTest, SelectCandidate) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -955,7 +985,11 @@ TEST_F(SessionTest, SelectCandidate) {
 }
 
 TEST_F(SessionTest, HighlightCandidate) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -965,7 +999,8 @@ TEST_F(SessionTest, HighlightCandidate) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -986,7 +1021,11 @@ TEST_F(SessionTest, HighlightCandidate) {
 }
 
 TEST_F(SessionTest, Conversion) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -996,7 +1035,8 @@ TEST_F(SessionTest, Conversion) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   EXPECT_SINGLE_SEGMENT_AND_KEY("あいうえお", "あいうえお", command);
 
@@ -1016,7 +1056,11 @@ TEST_F(SessionTest, Conversion) {
 }
 
 TEST_F(SessionTest, SegmentWidthShrink) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1026,7 +1070,8 @@ TEST_F(SessionTest, SegmentWidthShrink) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1039,7 +1084,11 @@ TEST_F(SessionTest, SegmentWidthShrink) {
 }
 
 TEST_F(SessionTest, ConvertPrev) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1049,7 +1098,8 @@ TEST_F(SessionTest, ConvertPrev) {
   SetComposer(&session, &request);
   SetAiueo(&segments);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1066,19 +1116,22 @@ TEST_F(SessionTest, ConvertPrev) {
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   ConversionRequest request;
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("watasinonamaehanakanodesu", &session, &command);
   // "わたしのなまえはなかのです[]"
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1100,7 +1153,8 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   candidate->value = "なかのです";
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1137,6 +1191,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_TRUE(command.output().has_result());
   // "私の名前はなかのです[]"
+  Mock::VerifyAndClearExpectations(&converter);
 
   InsertCharacterChars("a", &session, &command);
 
@@ -1150,7 +1205,8 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // "あ[]"
 
@@ -1165,30 +1221,34 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCommit) {
 }
 
 TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("ai", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("あい");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "愛";
   candidate = segment->add_candidate();
   candidate->value = "相";
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   // "あい[]"
 
   command.Clear();
   session.Convert(&command);
   // "[愛]"
+  Mock::VerifyAndClearExpectations(&converter);
 
   segments.Clear();
   segment = segments.add_segment();
@@ -1201,15 +1261,18 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "い";
   candidate = segment->add_candidate();
   candidate->value = "位";
-  GetConverterMock()->SetResizeSegment1(&segments, true);
+  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentWidthShrink(&command);
   // "[あ]い"
+  Mock::VerifyAndClearExpectations(&converter);
 
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
-  GetConverterMock()->SetCommitSegmentValue(&segments, true);
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentFocusRight(&command);
@@ -1222,6 +1285,7 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   command.Clear();
   session.ConvertCancel(&command);
   // "あい[]"
+  Mock::VerifyAndClearExpectations(&converter);
 
   segments.Clear();
   segment = segments.add_segment();
@@ -1232,7 +1296,8 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
   candidate->value = "相";
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1245,20 +1310,22 @@ TEST_F(SessionTest, ResetFocusedSegmentAfterCancel) {
 }
 
 TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // Issue#1271099
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("bariniryokouniitta", &session, &command);
   // "ばりにりょこうにいった[]"
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("ばりに");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "バリに";
   candidate = segment->add_candidate();
   candidate->value = "針に";
@@ -1276,7 +1343,8 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1291,7 +1359,8 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   segment = segments.mutable_segment(0);
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  GetConverterMock()->SetCommitSegmentValue(&segments, true);
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentFocusRight(&command);
@@ -1310,7 +1379,8 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
   candidate = segment->mutable_candidate(0);
   candidate->value = "った";
 
-  GetConverterMock()->SetResizeSegment1(&segments, true);
+  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentWidthExpand(&command);
@@ -1322,21 +1392,22 @@ TEST_F(SessionTest, KeepFixedCandidateAfterSegmentWidthExpand) {
 }
 
 TEST_F(SessionTest, CommitSegment) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   // Issue#1560608
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("watasinonamae", &session, &command);
   // "わたしのなまえ[]"
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "わたしの";
@@ -1351,7 +1422,8 @@ TEST_F(SessionTest, CommitSegment) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1372,7 +1444,8 @@ TEST_F(SessionTest, CommitSegment) {
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(2, 0);
 
-  GetConverterMock()->SetCommitSegments(&segments, true);
+  EXPECT_CALL(converter, CommitSegments(_, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.CommitSegment(&command);
@@ -1381,19 +1454,21 @@ TEST_F(SessionTest, CommitSegment) {
 }
 
 TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("watasinohaha", &session, &command);
   // "わたしのはは[]"
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   segment = segments.add_segment();
   segment->set_key("はは");
@@ -1403,7 +1478,8 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1415,7 +1491,8 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 
   segment->set_segment_type(Segment::FIXED_VALUE);
   segment->move_candidate(1, 0);
-  GetConverterMock()->SetCommitSegments(&segments, true);
+  EXPECT_CALL(converter, CommitSegments(_, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.CommitSegment(&command);
@@ -1428,7 +1505,8 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
   candidate = segment->add_candidate();
   candidate->value = "は";
   segments.pop_front_segment();
-  GetConverterMock()->SetResizeSegment1(&segments, true);
+  EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
 
   command.Clear();
   session.SegmentWidthShrink(&command);
@@ -1437,17 +1515,19 @@ TEST_F(SessionTest, CommitSegmentAt2ndSegment) {
 }
 
 TEST_F(SessionTest, Transliterations) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("jishin", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("じしん");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1455,7 +1535,8 @@ TEST_F(SessionTest, Transliterations) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -1481,18 +1562,19 @@ TEST_F(SessionTest, Transliterations) {
 }
 
 TEST_F(SessionTest, ConvertToTransliteration) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("jishin", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("じしん");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "自信";
   candidate = segment->add_candidate();
   candidate->value = "自身";
@@ -1500,7 +1582,8 @@ TEST_F(SessionTest, ConvertToTransliteration) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.ConvertToHalfASCII(&command);
@@ -1520,7 +1603,11 @@ TEST_F(SessionTest, ConvertToTransliteration) {
 }
 
 TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -1531,7 +1618,8 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Convert
   command.Clear();
@@ -1564,7 +1652,11 @@ TEST_F(SessionTest, ConvertToTransliterationWithMultipleSegments) {
 }
 
 TEST_F(SessionTest, ConvertToHalfWidth) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("abc", &session, &command);
@@ -1578,7 +1670,8 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.ConvertToHalfWidth(&command);
@@ -1594,18 +1687,19 @@ TEST_F(SessionTest, ConvertToHalfWidth) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("dvd", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -1613,7 +1707,8 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.ConvertToFullASCII(&command);
@@ -1633,23 +1728,24 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumeric) {
 }
 
 TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
-  commands::Command command;
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
 
   config::Config config;
   config.set_use_cascading_window(false);
   session.SetConfig(&config);
 
+  commands::Command command;
   InitSessionToPrecomposition(&session);
   InsertCharacterChars("dvd", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("ｄｖｄ");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "DVD";
   candidate = segment->add_candidate();
   candidate->value = "dvd";
@@ -1657,7 +1753,8 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.ConvertToFullASCII(&command);
@@ -1678,8 +1775,12 @@ TEST_F(SessionTest, ConvertConsonantsToFullAlphanumericWithoutCascadingWindow) {
 
 // Convert input string to Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, SwitchKanaType) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // From composition mode.
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -1694,7 +1795,8 @@ TEST_F(SessionTest, SwitchKanaType) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     session.SwitchKanaType(&command);
@@ -1711,10 +1813,12 @@ TEST_F(SessionTest, SwitchKanaType) {
     command.Clear();
     session.SwitchKanaType(&command);
     EXPECT_SINGLE_SEGMENT("アｂｃ", command);
+
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {  // From conversion mode.
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("kanji", &session, &command);
@@ -1729,7 +1833,8 @@ TEST_F(SessionTest, SwitchKanaType) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     session.Convert(&command);
@@ -1750,12 +1855,18 @@ TEST_F(SessionTest, SwitchKanaType) {
     command.Clear();
     session.SwitchKanaType(&command);
     EXPECT_SINGLE_SEGMENT("かんじ", command);
+
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
 // Rotate input mode among Hiragana, Katakana, and Half Katakana
 TEST_F(SessionTest, InputModeSwitchKanaType) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -1837,7 +1948,11 @@ TEST_F(SessionTest, InputModeSwitchKanaType) {
 }
 
 TEST_F(SessionTest, TranslateHalfWidth) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("abc", &session, &command);
@@ -1856,7 +1971,11 @@ TEST_F(SessionTest, TranslateHalfWidth) {
 }
 
 TEST_F(SessionTest, UpdatePreferences) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
@@ -1866,7 +1985,8 @@ TEST_F(SessionTest, UpdatePreferences) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SetSendKeyCommand("SPACE", &command);
   command.mutable_input()->mutable_config()->set_use_cascading_window(false);
@@ -1916,16 +2036,17 @@ TEST_F(SessionTest, UpdatePreferences) {
 }
 
 TEST_F(SessionTest, RomajiInput) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
   composer::Table table;
   table.AddRule("pa", "ぱ", "");
   table.AddRule("n", "ん", "");
   table.AddRule("na", "な", "");
   // This rule makes the "n" rule ambiguous.
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(&session);
 
@@ -1936,15 +2057,17 @@ TEST_F(SessionTest, RomajiInput) {
 
   command.Clear();
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("ぱん");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "パン";
 
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   session.ConvertToHiragana(&command);
   EXPECT_SINGLE_SEGMENT("ぱん", command);
@@ -1955,13 +2078,14 @@ TEST_F(SessionTest, RomajiInput) {
 }
 
 TEST_F(SessionTest, KanaInput) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
   composer::Table table;
   table.AddRule("す゛", "ず", "");
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(&session);
 
@@ -1988,15 +2112,17 @@ TEST_F(SessionTest, KanaInput) {
 
   EXPECT_EQ("もずく！", command.output().preedit().segment(0).value());
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("もずく!");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "もずく！";
 
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.ConvertToHalfASCII(&command);
@@ -2004,10 +2130,11 @@ TEST_F(SessionTest, KanaInput) {
 }
 
 TEST_F(SessionTest, ExceededComposition) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -2019,15 +2146,17 @@ TEST_F(SessionTest, ExceededComposition) {
   for (int i = 0; i < 500; ++i) {
     long_a += "あ";
   }
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key(long_a);
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = long_a;
 
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -2043,7 +2172,11 @@ TEST_F(SessionTest, ExceededComposition) {
 }
 
 TEST_F(SessionTest, OutputAllCandidateWords) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -2054,7 +2187,8 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   session.Convert(&command);
@@ -2113,12 +2247,16 @@ TEST_F(SessionTest, OutputAllCandidateWords) {
 }
 
 TEST_F(SessionTest, UndoForComposition) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Enable zero query suggest.
   commands::Request request;
-  SetupZeroQuerySuggestionReady(true, &session, &request);
+  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
   commands::Capability capability;
@@ -2131,14 +2269,16 @@ TEST_F(SessionTest, UndoForComposition) {
 
   {  // Undo for CommitFirstSuggestion
     SetAiueo(&segments);
-    GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     InsertCharacterChars("ai", &session, &command);
     ConversionRequest request;
     SetComposer(&session, &request);
     EXPECT_EQ("あい", GetComposition(command));
 
     command.Clear();
-    GetConverterMock()->SetFinishConversion(&empty_segments);
+    // EXPECT_CALL(converter, FinishConversion(_, _))
+    //    .WillOnce(SetArgPointee<1>(empty_segments));
     session.CommitFirstSuggestion(&command);
     EXPECT_FALSE(command.output().has_preedit());
     EXPECT_RESULT("あいうえお", command);
@@ -2157,7 +2297,11 @@ TEST_F(SessionTest, UndoForComposition) {
 }
 
 TEST_F(SessionTest, RequestUndo) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
 
   // It is OK not to check ImeContext::DIRECT because you cannot
   // assign any key event to Undo command in DIRECT mode.
@@ -2170,22 +2314,26 @@ TEST_F(SessionTest, RequestUndo) {
          "ignored. See b/5553298.";
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   session.context_->set_state(ImeContext::COMPOSITION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 
   InitSessionToPrecomposition(&session);
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   session.context_->set_state(ImeContext::CONVERSION);
   EXPECT_TRUE(TryUndoAndAssertSuccess(&session));
 }
 
 TEST_F(SessionTest, UndoForSingleSegment) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2212,13 +2360,15 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   }
 
   {  // Undo after commitment of composition
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2246,7 +2396,8 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("アイウエオ", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2274,7 +2425,8 @@ TEST_F(SessionTest, UndoForSingleSegment) {
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("aiueo", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2292,7 +2444,8 @@ TEST_F(SessionTest, UndoForSingleSegment) {
   {
     // If capability does not support DELETE_PRECEDIGN_TEXT, Undo is not
     // performed.
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2311,7 +2464,11 @@ TEST_F(SessionTest, UndoForSingleSegment) {
 }
 
 TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2319,7 +2476,7 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session.set_client_capability(capability);
 
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
 
   commands::Command command;
 
@@ -2346,7 +2503,11 @@ TEST_F(SessionTest, ClearUndoContextByKeyEventIssue5529702) {
 }
 
 TEST_F(SessionTest, UndoForMultipleSegments) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2388,14 +2549,16 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
   }
 
   {  // Undo for CommitCandidate
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
     session.CommitCandidate(&command);
@@ -2434,14 +2597,16 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
   }
   {  // Undo for CommitSegment
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillRepeatedly(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.ConvertNext(&command);
     EXPECT_EQ("cand1-2cand2-1cand3-1", GetComposition(command));
@@ -2488,7 +2653,11 @@ TEST_F(SessionTest, UndoForMultipleSegments) {
 }
 
 TEST_F(SessionTest, UndoOrRewindUndo) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2512,13 +2681,15 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
       candidate->value = "AIUEO";
     }
     {
-      GetConverterMock()->SetStartConversionForRequest(&segments, true);
+      EXPECT_CALL(converter, StartConversionForRequest(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
       command.Clear();
       session.Convert(&command);
       EXPECT_FALSE(command.output().has_result());
       EXPECT_PREEDIT("あいうえお", command);
 
-      GetConverterMock()->SetCommitSegmentValue(&segments, true);
+      EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+          .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
       command.Clear();
       session.Commit(&command);
       EXPECT_FALSE(command.output().has_preedit());
@@ -2542,7 +2713,11 @@ TEST_F(SessionTest, UndoOrRewindUndo) {
 }
 
 TEST_F(SessionTest, UndoOrRewindRewind) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
@@ -2552,7 +2727,8 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
     AddCandidate("e", "e", segment);
     AddCandidate("e", "E", segment);
   }
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   InsertCharacterChars("11111", &session, &command);
@@ -2570,7 +2746,11 @@ TEST_F(SessionTest, UndoOrRewindRewind) {
 }
 
 TEST_F(SessionTest, StopKeyToggling) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
@@ -2579,7 +2759,8 @@ TEST_F(SessionTest, StopKeyToggling) {
     segment = segments.add_segment();
     AddCandidate("dummy", "Dummy", segment);
   }
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   InsertCharacterChars("1", &session, &command);
@@ -2594,8 +2775,12 @@ TEST_F(SessionTest, StopKeyToggling) {
 }
 
 TEST_F(SessionTest, CommitRawText) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // From composition mode.
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -2613,9 +2798,10 @@ TEST_F(SessionTest, CommitRawText) {
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    Mock::VerifyAndClearExpectations(&converter);
   }
   {  // From conversion mode.
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     InsertCharacterChars("abc", &session, &command);
@@ -2631,7 +2817,8 @@ TEST_F(SessionTest, CommitRawText) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_PREEDIT("あべし", command);
@@ -2642,17 +2829,19 @@ TEST_F(SessionTest, CommitRawText) {
     session.SendCommand(&command);
     EXPECT_RESULT_AND_KEY("abc", "abc", command);
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
 TEST_F(SessionTest, CommitRawTextKanaInput) {
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
   composer::Table table;
   table.AddRule("す゛", "ず", "");
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.get_internal_composer_only_for_unittest()->SetTable(&table);
   InitSessionToPrecomposition(&session);
 
@@ -2679,16 +2868,6 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
 
   EXPECT_EQ("もずく！", command.output().preedit().segment(0).value());
 
-  segment = segments.add_segment();
-  segment->set_key("もずく!");
-  candidate = segment->add_candidate();
-  candidate->value = "もずく！";
-
-  ConversionRequest request;
-  SetComposer(&session, &request);
-  FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
-
   command.Clear();
   SetSendCommandCommand(commands::SessionCommand::COMMIT_RAW_TEXT, &command);
   session.SendCommand(&command);
@@ -2697,8 +2876,12 @@ TEST_F(SessionTest, CommitRawTextKanaInput) {
 }
 
 TEST_F(SessionTest, ConvertNextPagePrevPage) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   commands::Command command;
-  Session session(engine_.get());
 
   InitSessionToPrecomposition(&session);
 
@@ -2763,7 +2946,8 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
             absl::StrFormat("page%d-cand%d", page_index, cand_index);
       }
     }
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
   // Make sure the selected candidate changes as follows.
@@ -2801,8 +2985,11 @@ TEST_F(SessionTest, ConvertNextPagePrevPage) {
 
 TEST_F(SessionTest, NeedlessClearUndoContext) {
   // This is a unittest against http://b/3423910.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2819,13 +3006,15 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
     SetAiueo(&segments);
     FillT13Ns(request, &segments);
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillRepeatedly(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -2876,7 +3065,11 @@ TEST_F(SessionTest, NeedlessClearUndoContext) {
 }
 
 TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Prepare Numpad
@@ -2900,7 +3093,8 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
   FillT13Ns(request, &segments);
 
   // Convert
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   command.Clear();
   session.Convert(&command);
   EXPECT_FALSE(command.output().has_result());
@@ -2919,8 +3113,12 @@ TEST_F(SessionTest, ClearUndoContextAfterDirectInputAfterConversion) {
 }
 
 TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // This is a unittest against http://b/3423599.
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -2986,8 +3184,12 @@ TEST_F(SessionTest, TemporaryInputModeAfterUndo) {
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterUndo) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // This is a unittest against http://b/3437358.
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Capability capability;
@@ -3017,8 +3219,12 @@ TEST_F(SessionTest, DCHECKFailureAfterUndo) {
 }
 
 TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // This is a unittest against http://b/3423592.
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -3043,12 +3249,14 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ("あいうえお", GetComposition(command));
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.ConvertToHalfASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ("aiueo", GetComposition(command));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {  // ConvertToFullASCII
@@ -3062,12 +3270,14 @@ TEST_F(SessionTest, ConvertToFullOrHalfAlphanumericAfterUndo) {
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ("あいうえお", GetComposition(command));
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.ConvertToFullASCII(&command);
     EXPECT_FALSE(command.output().has_result());
     ASSERT_TRUE(command.output().has_preedit());
     EXPECT_EQ("ａｉｕｅｏ", GetComposition(command));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
@@ -3076,7 +3286,11 @@ TEST_F(SessionTest, ComposeVoicedSoundMarkAfterUndoIssue5369632) {
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -3108,10 +3322,15 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
   commands::Request request;
   commands::Command command;
 
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   {
     request.set_space_on_alphanumeric(commands::Request::COMMIT);
 
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3119,13 +3338,14 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
 
     SendKey("Space", &session, &command);
     EXPECT_RESULT("A ", command);
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_COMMITTING_COMPOSITION);
 
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3138,13 +3358,14 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     SendKey("a", &session, &command);
     EXPECT_RESULT("A ", command);
     EXPECT_EQ("あ", GetComposition(command));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
     request.set_space_on_alphanumeric(
         commands::Request::SPACE_OR_CONVERT_KEEPING_COMPOSITION);
 
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session, request);
 
     SendKey("A", &session, &command);
@@ -3157,23 +3378,26 @@ TEST_F(SessionTest, SpaceOnAlphanumeric) {
     SendKey("a", &session, &command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_EQ("A a", GetComposition(command));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
 TEST_F(SessionTest, Issue1805239) {
   // This is a unittest against http://b/1805239.
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("watasinonamae", &session, &command);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("わたしの");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "私の";
   candidate = segment->add_candidate();
   candidate->value = "渡しの";
@@ -3187,7 +3411,8 @@ TEST_F(SessionTest, Issue1805239) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
@@ -3215,17 +3440,19 @@ TEST_F(SessionTest, Issue1805239) {
 
 TEST_F(SessionTest, Issue1816861) {
   // This is a unittest against http://b/1816861
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   InsertCharacterChars("kamabokonoinbou", &session, &command);
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("かまぼこの");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "かまぼこの";
   candidate = segment->add_candidate();
   candidate->value = "カマボコの";
@@ -3239,7 +3466,8 @@ TEST_F(SessionTest, Issue1816861) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::SPACE, &session, &command);
   SendSpecialKey(commands::KeyEvent::RIGHT, &session, &command);
@@ -3265,15 +3493,19 @@ TEST_F(SessionTest, Issue1816861) {
   candidate = segment->add_candidate();
   candidate->value = "陰謀説";
 
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   SendSpecialKey(commands::KeyEvent::TAB, &session, &command);
 }
 
 TEST_F(SessionTest, T13NWithResegmentation) {
   // This is a unittest against http://b/3272827
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -3284,7 +3516,7 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     Segment *segment;
     segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    candidate = segment->add_candidate();
+    Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -3298,14 +3530,14 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   {
     Segments segments;
-    Segment *segment;
-    segment = segments.add_segment();
+    Segment *segment = segments.add_segment();
     segment->set_key("かまぼこの");
-    candidate = segment->add_candidate();
+    Segment::Candidate *candidate = segment->add_candidate();
     candidate->value = "かまぼこの";
     candidate = segment->add_candidate();
     candidate->value = "カマボコの";
@@ -3327,7 +3559,8 @@ TEST_F(SessionTest, T13NWithResegmentation) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetResizeSegment1(&segments, true);
+    EXPECT_CALL(converter, ResizeSegment(_, _, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   }
 
   // Start conversion
@@ -3360,7 +3593,11 @@ TEST_F(SessionTest, Shortcut) {
     config::Config config;
     config.set_selection_shortcut(shortcut);
 
-    Session session(engine_.get());
+    MockConverter converter;
+    MockEngine engine;
+    EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -3370,7 +3607,8 @@ TEST_F(SessionTest, Shortcut) {
     ConversionRequest request(&context.composer(), &context.GetRequest(),
                               &context.GetConfig());
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     commands::Command command;
     InsertCharacterChars("aiueo", &session, &command);
@@ -3392,7 +3630,11 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   config::Config config;
   config.set_selection_shortcut(config::Config::SHORTCUT_ASDFGHJKL);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -3401,7 +3643,8 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
@@ -3427,7 +3670,11 @@ TEST_F(SessionTest, ShortcutWithCapsLockIssue5655743) {
 }
 
 TEST_F(SessionTest, NumpadKey) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -3534,7 +3781,11 @@ TEST_F(SessionTest, KanaSymbols) {
   config.set_punctuation_method(config::Config::COMMA_PERIOD);
   config.set_symbol_method(config::Config::CORNER_BRACKET_SLASH);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -3563,8 +3814,12 @@ TEST_F(SessionTest, KanaSymbols) {
 }
 
 TEST_F(SessionTest, InsertCharacterWithShiftKey) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Basic behavior
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -3580,7 +3835,7 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
   }
 
   {  // Revert back to the previous input mode.
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
@@ -3600,8 +3855,12 @@ TEST_F(SessionTest, InsertCharacterWithShiftKey) {
 
 TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   // This is a unittest against http://b/2977131.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
@@ -3617,7 +3876,8 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.Convert(&command));
     EXPECT_FALSE(command.output().has_candidates());
@@ -3637,7 +3897,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
@@ -3650,7 +3910,8 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     Segment *segment = segments.add_segment();
     segment->set_key("NFL");
     segment->add_candidate()->value = "NFL";
-    GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.PredictAndConvert(&command));
     ASSERT_TRUE(command.output().has_candidates());
@@ -3671,7 +3932,7 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("N", &session, &command));
@@ -3687,7 +3948,8 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     EXPECT_TRUE(session.ConvertToHalfASCII(&command));
     EXPECT_FALSE(command.output().has_candidates());
@@ -3708,8 +3970,12 @@ TEST_F(SessionTest, ExitTemporaryAlphanumModeAfterCommittingSugesstion) {
 }
 
 TEST_F(SessionTest, StatusOutput) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Basic behavior
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));  // "あ"
@@ -3766,7 +4032,7 @@ TEST_F(SessionTest, StatusOutput) {
   }
 
   {  // Katakana mode + Shift key
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     session.InputModeFullKatakana(&command);
@@ -3833,33 +4099,41 @@ TEST_F(SessionTest, Suggest) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("M", &session, &command);
 
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // moz|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_moz, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_moz), Return(true)));
   SendKey("Z", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(1, command.output().candidates().candidate_size());
   EXPECT_EQ("MOZUKU", command.output().candidates().candidate(0).value());
 
   // mo|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("Backspace", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3867,7 +4141,8 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // mo|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToEnd(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3875,7 +4150,8 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // |mo
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorToBeginning(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3883,7 +4159,8 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|o
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorRight(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3891,7 +4168,8 @@ TEST_F(SessionTest, Suggest) {
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
   // m|
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.Delete(&command));
   ASSERT_TRUE(command.output().has_candidates());
@@ -3909,214 +4187,18 @@ TEST_F(SessionTest, Suggest) {
   ConversionRequest request_m_conv;
   SetComposer(&session, &request_m_conv);
   FillT13Ns(request_m_conv, &segments_m_conv);
-  GetConverterMock()->SetStartConversionForRequest(&segments_m_conv, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_m_conv), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.Convert(&command));
 
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_m), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.ConvertCancel(&command));
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
-}
-
-TEST_F(SessionTest, ExpandSuggestion) {
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  // Prepare suggestion candidates.
-  Segments segments_m;
-  {
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
-
-  SendKey("M", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  // Prepare expanded suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("MO");
-    segment->add_candidate()->value = "MOZUKU";
-    segment->add_candidate()->value = "MOZUKUSU";
-  }
-  GetConverterMock()->SetStartPredictionForRequest(&segments_mo, true);
-
-  command.Clear();
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  // 3 == MOCHA, MOZUKU and MOZUKUSU (duplicate MOZUKU is not counted).
-  EXPECT_EQ(3, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
-}
-
-TEST_F(SessionTest, ExpandSuggestionNoMoreCandidates) {
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  // Prepare suggestion candidates.
-  Segments segments_m;
-  {
-    Segment *segment;
-    segment = segments_m.add_segment();
-    segment->set_key("M");
-    segment->add_candidate()->value = "MOCHA";
-    segment->add_candidate()->value = "MOZUKU";
-  }
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_m, true);
-
-  SendKey("M", &session, &command);
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  Segments empty_segments;
-  GetConverterMock()->SetStartPredictionForRequest(&empty_segments, false);
-
-  command.Clear();
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-  EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
-}
-
-TEST_F(SessionTest, ExpandSuggestionForPartial) {
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session, *mobile_request_);
-  commands::Command command;
-
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  EXPECT_EQ("も", command.output().preedit().segment(0).value());
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
-
-  EXPECT_EQ(2, command.output().preedit().cursor());
-  // Prepare suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("も");
-    segment->add_candidate()->value = "も";
-    segment->add_candidate()->value = "モ";
-  }
-  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
-
-  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ(1, command.output().preedit().cursor());
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  command.Clear();
-
-  {
-    Segment *segment = segments_mo.mutable_segment(0);
-    segment->add_candidate()->value = "模";
-    segment->add_candidate()->value = "藻";
-  }
-  GetConverterMock()->SetStartPartialPredictionForRequest(&segments_mo, true);
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(4, command.output().candidates().candidate_size());
-}
-
-TEST_F(SessionTest, ExpandSuggestionForPartialNoMoreCandidates) {
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session, *mobile_request_);
-  commands::Command command;
-
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  SendKey("7", &session, &command);
-  EXPECT_EQ("も", command.output().preedit().segment(0).value());
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  SendKey("3", &session, &command);
-  EXPECT_EQ("もす", command.output().preedit().segment(0).value());
-
-  EXPECT_EQ(2, command.output().preedit().cursor());
-  // Prepare suggestion candidates.
-  Segments segments_mo;
-  {
-    Segment *segment;
-    segment = segments_mo.add_segment();
-    segment->set_key("も");
-    segment->add_candidate()->value = "も";
-    segment->add_candidate()->value = "モ";
-  }
-  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_mo, true);
-
-  SendSpecialKey(commands::KeyEvent::LEFT, &session, &command);
-  EXPECT_EQ(1, command.output().preedit().cursor());
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-
-  command.Clear();
-
-  Segments empty_segments;
-  GetConverterMock()->SetStartPartialPredictionForRequest(&empty_segments,
-                                                          false);
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_TRUE(command.output().has_candidates());
-  EXPECT_EQ(2, command.output().candidates().candidate_size());
-}
-
-TEST_F(SessionTest, ExpandSuggestionDirectMode) {
-  // On direct mode, ExpandSuggestion() should do nothing.
-  Session session(engine_.get());
-  commands::Command command;
-
-  session.IMEOff(&command);
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-  ASSERT_FALSE(command.output().has_candidates());
-
-  // This test expects that ConverterInterface.StartPrediction() is not called
-  // so SetStartPredictionForRequest() is not called.
-}
-
-TEST_F(SessionTest, ExpandSuggestionConversionMode) {
-  // On conversion mode, ExpandSuggestion() should do nothing.
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session);
-  commands::Command command;
-
-  InsertCharacterChars("aiueo", &session, &command);
-  Segments segments;
-  ConversionRequest request;
-  SetComposer(&session, &request);
-  SetAiueo(&segments);
-  FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
-
-  command.Clear();
-  session.Convert(&command);
-  command.Clear();
-  session.ConvertNext(&command);
-
-  EXPECT_TRUE(session.ExpandSuggestion(&command));
-
-  // This test expects that ConverterInterface.StartPrediction() is not called
-  // so SetStartPredictionForRequest() is not called.
 }
 
 TEST_F(SessionTest, CommitCandidateTypingCorrection) {
@@ -4125,8 +4207,7 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   request.set_special_romanji_table(Request::QWERTY_MOBILE_TO_HIRAGANA);
 
   Segments segments_jueri;
-  Segment *segment;
-  segment = segments_jueri.add_segment();
+  Segment *segment = segments_jueri.add_segment();
   constexpr char kJueri[] = "じゅえり";
   segment->set_key(kJueri);
   Segment::Candidate *candidate = segment->add_candidate();
@@ -4136,11 +4217,16 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
   candidate->consumed_key_size = Util::CharsLen(kJueri);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_jueri, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   InsertCharacterChars("jueri", &session, &command);
 
   ASSERT_TRUE(command.output().has_candidates());
@@ -4149,20 +4235,23 @@ TEST_F(SessionTest, CommitCandidateTypingCorrection) {
   EXPECT_EQ(1, command.output().candidates().candidate_size());
   EXPECT_EQ("クエリ", command.output().candidates().candidate(0).value());
 
-  // commit partial suggestion
-  GetConverterMock()->SetCommitSegmentValue(&segments_jueri, true);
+  // commit partial prediction
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments_jueri), Return(true)));
   Segments empty_segments;
-  GetConverterMock()->SetFinishConversion(&empty_segments);
+  EXPECT_CALL(converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(empty_segments));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_jueri, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_jueri), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT_AND_KEY("クエリ", "くえり", command);
   EXPECT_FALSE(command.output().has_preedit());
 }
 
-TEST_F(SessionTest, MobilePartialSuggestion) {
+TEST_F(SessionTest, MobilePartialPrediction) {
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -4212,19 +4301,25 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
     candidate = AddCandidate(kShino, "shino", segment);
   }
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, request);
 
   commands::Command command;
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_watashino, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillRepeatedly(
+          DoAll(SetArgPointee<1>(segments_watashino), Return(true)));
   InsertCharacterChars("watashino", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("私の", command.output().candidates().candidate(0).value());
 
   // partial suggestion for "わた|しの"
-  GetConverterMock()->SetStartPartialSuggestion(&segments_wata, false);
-  GetConverterMock()->SetStartPartialSuggestionForRequest(&segments_wata, true);
+  EXPECT_CALL(converter, StartPartialPredictionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments_wata), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.MoveCursorLeft(&command));
   command.Clear();
@@ -4234,12 +4329,13 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("綿", command.output().candidates().candidate(0).value());
 
-  // commit partial suggestion
-  GetConverterMock()->SetCommitPartialSuggestionSegmentValue(&segments_wata,
-                                                             true);
+  // commit partial prediction
+  EXPECT_CALL(converter, CommitPartialSuggestionSegmentValue(_, _, _, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments_wata), Return(true)));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(0);
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_shino, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_shino), Return(true)));
   session.SendCommand(&command);
   EXPECT_TRUE(command.output().consumed());
   EXPECT_RESULT_AND_KEY("綿", "わた", command);
@@ -4254,7 +4350,11 @@ TEST_F(SessionTest, MobilePartialSuggestion) {
 }
 
 TEST_F(SessionTest, ToggleAlphanumericMode) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4335,7 +4435,8 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     session.Convert(&command);
@@ -4355,7 +4456,11 @@ TEST_F(SessionTest, ToggleAlphanumericMode) {
 }
 
 TEST_F(SessionTest, InsertSpace) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4391,7 +4496,11 @@ TEST_F(SessionTest, InsertSpace) {
 }
 
 TEST_F(SessionTest, InsertSpaceToggled) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4428,7 +4537,11 @@ TEST_F(SessionTest, InsertSpaceToggled) {
 }
 
 TEST_F(SessionTest, InsertSpaceHalfWidth) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4454,7 +4567,8 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     EXPECT_TRUE(session.Convert(&command));
@@ -4467,7 +4581,11 @@ TEST_F(SessionTest, InsertSpaceHalfWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidth) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -4495,7 +4613,8 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
     command.Clear();
     EXPECT_TRUE(session.Convert(&command));
@@ -4509,6 +4628,10 @@ TEST_F(SessionTest, InsertSpaceFullWidth) {
 }
 
 TEST_F(SessionTest, InsertSpaceWithInputMode) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // First, test against http://b/6027559
   config::Config config;
   {
@@ -4520,7 +4643,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(custom_keymap_table);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4535,7 +4658,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4566,7 +4689,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_custom_keymap_table(custom_keymap_table);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4582,7 +4705,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_KATAKANA, command.output().mode());
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4616,7 +4739,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4633,7 +4756,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_EQ(commands::HALF_ASCII, command.output().mode());
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4668,7 +4791,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4681,7 +4804,7 @@ TEST_F(SessionTest, InsertSpaceWithInputMode) {
     EXPECT_FALSE(command.output().consumed());
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -4716,25 +4839,29 @@ TEST_F(SessionTest, InsertSpaceWithCustomKeyBinding) {
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
   // A plain space key event dispatched to InsertHalfSpace should be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key dispatched to InsertHalfSpace
   // should be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -4758,25 +4885,29 @@ TEST_F(SessionTest, InsertAlternateSpaceWithCustomKeyBinding) {
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
   // A plain space key event dispatched to InsertHalfSpace should be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key dispatched to InsertHalfSpace
   // should be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -4799,25 +4930,29 @@ TEST_F(SessionTest, InsertSpaceHalfWidthWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
   // A plain space key event assigned to InsertHalfSpace should be echoed back.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(SendKey("Space", &session, &command));
   EXPECT_FALSE(command.output().consumed());  // should not be consumed.
   EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
 
   // A space key event with any modifier key assigned to InsertHalfSpace should
   // be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -4840,14 +4975,18 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToDirect(&session);
 
   commands::Command command;
 
   // A plain space key event assigned to InsertFullSpace should be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -4861,7 +5000,7 @@ TEST_F(SessionTest, InsertSpaceFullWidthWithCustomKeyBinding) {
 
   // A space key event with any modifier key assigned to InsertFullSpace should
   // be consumed.
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
   EXPECT_TRUE(TestSendKey("Shift Space", &session, &command));
   EXPECT_TRUE(command.output().consumed());
   // It is OK not to check |TryUndoAndAssertDoNothing| here because this
@@ -4885,7 +5024,11 @@ TEST_F(SessionTest, InsertSpaceInDirectMode) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToDirect(&session);
 
@@ -4945,7 +5088,11 @@ TEST_F(SessionTest, InsertSpaceInCompositionMode) {
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   commands::Command command;
@@ -4992,11 +5139,15 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
   config.set_custom_keymap_table(custom_keymap_table);
   config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
 
   {
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl a", &session, &command));
@@ -5007,10 +5158,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ("あいうえお　", command.output().result().value());
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl b", &session, &command));
@@ -5021,10 +5173,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ("あいうえお ", command.output().result().value());
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl c", &session, &command));
@@ -5035,10 +5188,11 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ("あいうえお ", command.output().result().value());
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     commands::Command command;
 
     EXPECT_TRUE(TestSendKey("Ctrl d", &session, &command));
@@ -5049,11 +5203,16 @@ TEST_F(SessionTest, InsertSpaceInConversionMode) {
     ASSERT_TRUE(command.output().has_result());
     EXPECT_EQ("あいうえお　", command.output().result().value());
     EXPECT_TRUE(TryUndoAndAssertDoNothing(&session));
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
 TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5071,6 +5230,10 @@ TEST_F(SessionTest, InsertSpaceFullWidthOnHalfKanaInput) {
 }
 
 TEST_F(SessionTest, IsFullWidthInsertSpace) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   config::Config config;
   commands::Command command;
   const commands::Input empty_input;
@@ -5081,7 +5244,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -5113,7 +5276,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Set config to 'half' -- all mode has to emit half-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_HALF_WIDTH);
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -5147,7 +5310,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
     // Set config to 'FULL' -- all mode except for DIRECT emits
     // full-width space.
     config.set_space_character_form(config::Config::FUNDAMENTAL_FULL_WIDTH);
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -5183,7 +5346,7 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
   {
     // Default config -- follow to the current mode.
     config.set_space_character_form(config::Config::FUNDAMENTAL_INPUT_MODE);
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -5248,8 +5411,11 @@ TEST_F(SessionTest, IsFullWidthInsertSpace) {
 
 TEST_F(SessionTest, Issue1951385) {
   // This is a unittest against http://b/1951385
-  Segments segments;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5257,10 +5423,12 @@ TEST_F(SessionTest, Issue1951385) {
   ASSERT_EQ(500, exceeded_preedit.size());
   InsertCharacterChars(exceeded_preedit, &session, &command);
 
+  Segments segments;
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, false);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(false)));
 
   command.Clear();
   session.ConvertToFullASCII(&command);
@@ -5276,18 +5444,21 @@ TEST_F(SessionTest, Issue1951385) {
 }
 
 TEST_F(SessionTest, Issue1978201) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  InitSessionToPrecomposition(&session);
+
   // This is a unittest against http://b/1978201
   Segments segments;
-  Segment *segment;
-  segment = segments.add_segment();
+  Segment *segment = segments.add_segment();
   segment->set_key("いんぼう");
   segment->add_candidate()->value = "陰謀";
   segment->add_candidate()->value = "陰謀論";
   segment->add_candidate()->value = "陰謀説";
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
 
-  Session session(engine_.get());
-  InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(session.SegmentWidthShrink(&command));
 
@@ -5295,7 +5466,8 @@ TEST_F(SessionTest, Issue1978201) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   EXPECT_TRUE(session.Convert(&command));
 
   command.Clear();
@@ -5305,14 +5477,19 @@ TEST_F(SessionTest, Issue1978201) {
 }
 
 TEST_F(SessionTest, Issue1975771) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // This is a unittest against http://b/1975771
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Trigger suggest by pressing "a".
   Segments segments;
   SetAiueo(&segments);
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   commands::KeyEvent *key_event = command.mutable_input()->mutable_key();
@@ -5340,7 +5517,11 @@ TEST_F(SessionTest, Issue2029466) {
   // "a<tab><ctrl-N>a" raised an exception because CommitFirstSegment
   // did not check if the current status is in conversion or
   // precomposition.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -5349,14 +5530,16 @@ TEST_F(SessionTest, Issue2029466) {
   // <tab>
   Segments segments;
   SetAiueo(&segments);
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   command.Clear();
   EXPECT_TRUE(session.PredictAndConvert(&command));
 
   // <ctrl-N>
   segments.Clear();
   // FinishConversion is expected to return empty Segments.
-  GetConverterMock()->SetFinishConversion(&segments);
+  EXPECT_CALL(converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(segments));
   command.Clear();
   EXPECT_TRUE(session.CommitSegment(&command));
 
@@ -5370,7 +5553,11 @@ TEST_F(SessionTest, Issue2034943) {
   //
   // The composition should have been reset if CommitSegment submitted
   // the all segments (e.g. the size of segments is one).
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("mozu", &session, &command);
@@ -5385,7 +5572,8 @@ TEST_F(SessionTest, Issue2034943) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
   // Get conversion
   command.Clear();
@@ -5402,7 +5590,11 @@ TEST_F(SessionTest, Issue2034943) {
 
 TEST_F(SessionTest, Issue2026354) {
   // This is a unittest against http://b/2026354
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -5414,7 +5606,8 @@ TEST_F(SessionTest, Issue2026354) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   EXPECT_TRUE(session.Convert(&command));
@@ -5428,19 +5621,22 @@ TEST_F(SessionTest, Issue2026354) {
 
 TEST_F(SessionTest, Issue2066906) {
   // This is a unittest against http://b/2066906
-  Segments segments;
-  Segment *segment;
-  Segment::Candidate *candidate;
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
-  segment = segments.add_segment();
+  Segments segments;
+  Segment *segment = segments.add_segment();
   segment->set_key("a");
-  candidate = segment->add_candidate();
+  Segment::Candidate *candidate = segment->add_candidate();
   candidate->value = "abc";
   candidate = segment->add_candidate();
   candidate->value = "abcdef";
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Prediction with "a"
   commands::Command command;
@@ -5452,14 +5648,19 @@ TEST_F(SessionTest, Issue2066906) {
   EXPECT_TRUE(session.Commit(&command));
   EXPECT_RESULT("abc", command);
 
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   InsertCharacterChars("a", &session, &command);
   EXPECT_FALSE(command.output().has_result());
 }
 
 TEST_F(SessionTest, Issue2187132) {
   // This is a unittest against http://b/2187132
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5488,7 +5689,11 @@ TEST_F(SessionTest, Issue2190364) {
   config::Config config;
   config.set_preedit_method(config::Config::KANA);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -5508,7 +5713,11 @@ TEST_F(SessionTest, Issue2190364) {
 
 TEST_F(SessionTest, Issue1556649) {
   // This is a unittest against http://b/1556649
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("kudoudesu", &session, &command);
@@ -5529,9 +5738,13 @@ TEST_F(SessionTest, Issue1556649) {
 
 TEST_F(SessionTest, Issue1518994) {
   // This is a unittest against http://b/1518994.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   // - Can't input space in ascii mode.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -5545,7 +5758,7 @@ TEST_F(SessionTest, Issue1518994) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
     EXPECT_TRUE(SendKey("a", &session, &command));
@@ -5560,7 +5773,11 @@ TEST_F(SessionTest, Issue1518994) {
 TEST_F(SessionTest, Issue1571043) {
   // This is a unittest against http://b/1571043.
   // - Underline of composition is separated.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("aiu", &session, &command);
@@ -5578,7 +5795,11 @@ TEST_F(SessionTest, Issue2217250) {
   // This is a unittest against http://b/2217250.
   // Temporary direct input mode through a special sequence such as
   // www. continues even after committing them
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   InsertCharacterChars("www.", &session, &command);
@@ -5594,7 +5815,11 @@ TEST_F(SessionTest, Issue2223823) {
   // This is a unittest against http://b/2223823
   // Input mode does not recover like MS-IME by single shift key down
   // and up.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("G", &session, &command);
@@ -5609,7 +5834,11 @@ TEST_F(SessionTest, Issue2223823) {
 TEST_F(SessionTest, Issue2223762) {
   // This is a unittest against http://b/2223762.
   // - The first space in half-width alphanumeric mode is full-width.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5625,9 +5854,12 @@ TEST_F(SessionTest, Issue2223762) {
 TEST_F(SessionTest, Issue2223755) {
   // This is a unittest against http://b/2223755.
   // - F6 and F7 convert space to half-width.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   {  // DisplayAsFullKatakana
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5646,7 +5878,7 @@ TEST_F(SessionTest, Issue2223755) {
   }
 
   {  // ConvertToFullKatakana
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5658,7 +5890,7 @@ TEST_F(SessionTest, Issue2223755) {
 
     EXPECT_EQ("あ い", GetComposition(command));
 
-    {  // Initialize GetConverterMock() to generate t13n candidates.
+    {  // Initialize the mock converter to generate t13n candidates.
       Segments segments;
       Segment *segment;
       segment = segments.add_segment();
@@ -5669,7 +5901,8 @@ TEST_F(SessionTest, Issue2223755) {
       ConversionRequest request;
       SetComposer(&session, &request);
       FillT13Ns(request, &segments);
-      GetConverterMock()->SetStartConversionForRequest(&segments, true);
+      EXPECT_CALL(converter, StartConversionForRequest(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
     command.Clear();
@@ -5683,7 +5916,11 @@ TEST_F(SessionTest, Issue2269058) {
   // This is a unittest against http://b/2269058.
   // - Temporary input mode should not be overridden by a permanent
   //   input mode change.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5701,8 +5938,11 @@ TEST_F(SessionTest, Issue2269058) {
 TEST_F(SessionTest, Issue2272745) {
   // This is a unittest against http://b/2272745.
   // A temporary input mode remains when a composition is canceled.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5714,7 +5954,7 @@ TEST_F(SessionTest, Issue2272745) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5732,7 +5972,11 @@ TEST_F(SessionTest, Issue2282319) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   session.SetConfig(&config);
 
@@ -5762,7 +6006,11 @@ TEST_F(SessionTest, Issue2297060) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   session.SetConfig(&config);
 
@@ -5774,7 +6022,11 @@ TEST_F(SessionTest, Issue2297060) {
 TEST_F(SessionTest, Issue2379374) {
   // This is a unittest against http://b/2379374.
   // Numpad ignores Direct input style when typing after conversion.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -5796,7 +6048,8 @@ TEST_F(SessionTest, Issue2379374) {
     request.set_config(&config);
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
   EXPECT_TRUE(SendKey("a", &session, &command));
@@ -5818,8 +6071,12 @@ TEST_F(SessionTest, Issue2569789) {
   // This is a unittest against http://b/2379374.
   // After typing "google", the input mode does not come back to the
   // previous input mode.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5834,7 +6091,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5848,7 +6105,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5864,7 +6121,7 @@ TEST_F(SessionTest, Issue2569789) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
     commands::Command command;
 
@@ -5881,8 +6138,11 @@ TEST_F(SessionTest, Issue2569789) {
 TEST_F(SessionTest, Issue2555503) {
   // This is a unittest against http://b/2555503.
   // Mode respects the previous character too much.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("a", &session, &command);
@@ -5901,8 +6161,11 @@ TEST_F(SessionTest, Issue2555503) {
 TEST_F(SessionTest, Issue2791640) {
   // This is a unittest against http://b/2791640.
   // Existing preedit should be committed when IME is turned off.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -5920,10 +6183,13 @@ TEST_F(SessionTest, Issue2791640) {
 
 TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
   // Existing preedit should be committed when IME is turned off.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
   // Check "hankaku/zenkaku"
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5941,7 +6207,7 @@ TEST_F(SessionTest, CommitExistingPreeditWhenIMEIsTurnedOff) {
 
   // Check "kanji"
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
@@ -5969,7 +6235,11 @@ TEST_F(SessionTest, SendKeyDirectInputStateTest) {
   config.set_session_keymap(config::Config::CUSTOM);
   config.set_custom_keymap_table(custom_keymap_table);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToDirect(&session);
   commands::Command command;
@@ -5986,7 +6256,11 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
   table.AddRuleWithAttributes("tt", "っ", "t", composer::DIRECT_INPUT);
   table.AddRuleWithAttributes("ta", "た", "", composer::NO_TABLE_ATTRIBUTE);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   session.get_internal_composer_only_for_unittest()->SetTable(&table);
 
@@ -6008,8 +6282,11 @@ TEST_F(SessionTest, HandlingDirectInputTableAttribute) {
 }
 
 TEST_F(SessionTest, IMEOnWithModeTest) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6023,7 +6300,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("あ", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6035,7 +6312,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ア", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6048,7 +6325,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ｱ", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6060,7 +6337,7 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
     EXPECT_SINGLE_SEGMENT("ａ", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToDirect(&session);
 
     commands::Command command;
@@ -6074,7 +6351,11 @@ TEST_F(SessionTest, IMEOnWithModeTest) {
 }
 
 TEST_F(SessionTest, InputModeConsumed) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   EXPECT_TRUE(session.InputModeHiragana(&command));
@@ -6105,7 +6386,11 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
   // In MSIME keymap, Hiragana is assigned for
@@ -6118,7 +6403,11 @@ TEST_F(SessionTest, InputModeConsumedForTestSendKey) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasComposition) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   SendKey("a", &session, &command);
@@ -6156,7 +6445,11 @@ TEST_F(SessionTest, InputModeOutputHasComposition) {
 }
 
 TEST_F(SessionTest, InputModeOutputHasCandidates) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -6164,7 +6457,8 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   InsertCharacterChars("aiueo", &session, &command);
@@ -6212,7 +6506,11 @@ TEST_F(SessionTest, InputModeOutputHasCandidates) {
 }
 
 TEST_F(SessionTest, PerformedCommand) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -6243,7 +6541,8 @@ TEST_F(SessionTest, PerformedCommand) {
     ConversionRequest request;
     SetComposer(&session, &request);
     FillT13Ns(request, &segments);
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     commands::Command command;
     // SPACE
     EXPECT_STATS_NOT_EXIST("Performed_Composition_Convert");
@@ -6285,7 +6584,11 @@ TEST_F(SessionTest, ResetContext) {
 }
 
 TEST_F(SessionTest, ClearUndoOnResetContext) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -6311,13 +6614,15 @@ TEST_F(SessionTest, ClearUndoOnResetContext) {
   }
 
   {
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_SINGLE_SEGMENT("あいうえお", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -6418,7 +6723,11 @@ TEST_F(SessionTest, Issue5742293) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -6427,7 +6736,7 @@ TEST_F(SessionTest, Issue5742293) {
   capability.set_text_deletion(commands::Capability::DELETE_PRECEDING_TEXT);
   session.set_client_capability(capability);
 
-  SetUndoContext(&session);
+  SetUndoContext(&session, &converter);
 
   commands::Command command;
 
@@ -6442,17 +6751,22 @@ TEST_F(SessionTest, Issue5742293) {
 }
 
 TEST_F(SessionTest, AutoConversion) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   Segments segments;
   SetAiueo(&segments);
   ConversionRequest default_request;
   FillT13Ns(default_request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Auto Off
   config::Config config;
   config.set_use_auto_conversion(false);
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6463,7 +6777,7 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY("てすと。", "てすと。", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6477,7 +6791,7 @@ TEST_F(SessionTest, AutoConversion) {
   // Auto On
   config.set_use_auto_conversion(true);
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -6489,7 +6803,7 @@ TEST_F(SessionTest, AutoConversion) {
     EXPECT_SINGLE_SEGMENT_AND_KEY("あいうえお", "あいうえお", command);
   }
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -6503,7 +6817,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the pattern number + "."
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6516,7 +6830,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for the ".."
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6528,7 +6842,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6541,7 +6855,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Don't trigger auto conversion for "." only.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6553,7 +6867,7 @@ TEST_F(SessionTest, AutoConversion) {
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     commands::Command command;
@@ -6566,7 +6880,7 @@ TEST_F(SessionTest, AutoConversion) {
 
   // Do auto conversion even if romanji-table is modified.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -6608,7 +6922,7 @@ TEST_F(SessionTest, AutoConversion) {
               config::Config::AUTO_CONVERSION_EXCLAMATION_MARK);
 
           for (int i = 0; i < 4; ++i) {
-            Session session(engine_.get());
+            Session session(&engine);
             session.SetConfig(&config);
             InitSessionToPrecomposition(&session);
             commands::Command command;
@@ -6645,7 +6959,11 @@ TEST_F(SessionTest, AutoConversion) {
 TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
   // This is a unittest against http://b/3203944.
   // Input mode should not be changed when a space key is typed.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -6664,7 +6982,11 @@ TEST_F(SessionTest, InputSpaceWithKatakanaMode) {
 TEST_F(SessionTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -6683,7 +7005,8 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
   ConversionRequest request;
   SetComposer(&session, &request);
   FillT13Ns(request, &segments);
-  GetConverterMock()->SetStartConversionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   command.Clear();
   EXPECT_TRUE(session.ConvertToHalfASCII(&command));
@@ -6693,7 +7016,11 @@ TEST_F(SessionTest, AlphanumericOfSSH) {
 TEST_F(SessionTest, KeitaiInputToggle) {
   config::Config config;
   config.set_session_keymap(config::Config::MSIME);
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
 
   InitSessionToPrecomposition(&session, *mobile_request_);
@@ -6826,8 +7153,11 @@ TEST_F(SessionTest, KeitaiInputFlick) {
   config.set_session_keymap(config::Config::MSIME);
   commands::Command command;
 
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session, *mobile_request_);
     InsertCharacterCodeAndString('6', "は", &session, &command);
@@ -6836,10 +7166,11 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
     EXPECT_EQ("はじょう", command.output().preedit().segment(0).value());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
@@ -6850,10 +7181,11 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     InsertCharacterCodeAndString('3', "ょ", &session, &command);
     InsertCharacterCodeAndString('1', "う", &session, &command);
     EXPECT_EQ("はじょう", command.output().preedit().segment(0).value());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session, *mobile_request_);
 
@@ -6913,11 +7245,16 @@ TEST_F(SessionTest, KeitaiInputFlick) {
     SendKey("6", &session, &command);
     EXPECT_EQ("あるぱかしんのふくしゅう",
               command.output().preedit().segment(0).value());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 }
 
 TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   ConversionRequest request;
@@ -6946,7 +7283,8 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
   command.Clear();
@@ -6967,7 +7305,8 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    GetConverterMock()->SetCommitSegments(&segments, true);
+    EXPECT_CALL(converter, CommitSegments(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
   }
 
   command.Clear();
@@ -6979,7 +7318,11 @@ TEST_F(SessionTest, CommitCandidateAt2ndOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   ConversionRequest request;
@@ -7008,7 +7351,8 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
     candidate = segment->add_candidate();
     candidate->value = "抜いた";
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
   }
 
   command.Clear();
@@ -7020,11 +7364,6 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
   session.SegmentFocusRight(&command);
   // "猫の|しっぽを|[抜いた]"
 
-  {  // Segments as result of CommitHeadToFocusedSegments
-    Segments segments;
-    GetConverterMock()->SetCommitSegments(&segments, true);
-  }
-
   command.Clear();
   command.mutable_input()->mutable_command()->set_id(0);
   ASSERT_TRUE(session.CommitCandidate(&command));
@@ -7033,7 +7372,11 @@ TEST_F(SessionTest, CommitCandidateAt3rdOf3Segments) {
 }
 
 TEST_F(SessionTest, CommitCandidateSuggestion) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments_mo;
@@ -7048,14 +7391,17 @@ TEST_F(SessionTest, CommitCandidateSuggestion) {
   commands::Command command;
   SendKey("M", &session, &command);
   command.Clear();
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
   SendKey("O", &session, &command);
   ASSERT_TRUE(command.output().has_candidates());
   EXPECT_EQ(2, command.output().candidates().candidate_size());
   EXPECT_EQ("MOCHA", command.output().candidates().candidate(0).value());
 
-  GetConverterMock()->SetCommitSegmentValue(&segments_mo, true);
-  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments_mo), Return(true)));
+  EXPECT_CALL(converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(Segments()));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(1);
   session.SendCommand(&command);
@@ -7094,7 +7440,11 @@ void FindCandidateIDs(const commands::Candidates &candidates,
 }
 
 TEST_F(SessionTest, CommitCandidateT13N) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
   Segments segments;
@@ -7108,8 +7458,8 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_EQ("TOK", segment->candidate(-2).value);
   EXPECT_EQ("Tok", segment->candidate(-3).value);
 
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillRepeatedly(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   commands::Command command;
   SendKey("k", &session, &command);
@@ -7120,8 +7470,10 @@ TEST_F(SessionTest, CommitCandidateT13N) {
   EXPECT_FALSE(FindCandidateID(command.output().candidates(), "TOK", &id));
 #else   // OS_WIN, __APPLE__
   EXPECT_TRUE(FindCandidateID(command.output().candidates(), "TOK", &id));
-  GetConverterMock()->SetCommitSegmentValue(&segments, true);
-  GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
+  EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+      .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+  EXPECT_CALL(converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(Segments()));
   SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
   command.mutable_input()->mutable_command()->set_id(id);
   session.SendCommand(&command);
@@ -7133,7 +7485,11 @@ TEST_F(SessionTest, CommitCandidateT13N) {
 }
 
 TEST_F(SessionTest, RequestConvertReverse) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -7147,7 +7503,11 @@ TEST_F(SessionTest, RequestConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFails) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kKanjiContainsNewline[] = "改行\n禁止";
   commands::Command command;
@@ -7160,12 +7520,16 @@ TEST_F(SessionTest, ConvertReverseFails) {
 }
 
 TEST_F(SessionTest, ConvertReverse) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kKanjiAiueo[] = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -7177,13 +7541,17 @@ TEST_F(SessionTest, ConvertReverse) {
 }
 
 TEST_F(SessionTest, EscapeFromConvertReverse) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kKanjiAiueo[] = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -7202,12 +7570,16 @@ TEST_F(SessionTest, EscapeFromConvertReverse) {
 }
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kKanjiAiueo[] = "阿伊宇江於";
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -7231,14 +7603,18 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverse) {
 
 TEST_F(SessionTest, SecondEscapeFromConvertReverseIssue5687022) {
   // This is a unittest against http://b/5687022
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kInput[] = "abcde";
   constexpr char kReading[] = "abcde";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
-  SetupMockForReverseConversion(kInput, kReading);
+  SetupMockForReverseConversion(kInput, kReading, &converter);
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -7257,14 +7633,17 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
   // Second escape from ConvertReverse should restore the original text
   // without any text normalization even if the input text contains any
   // special characters which Mozc usually do normalization.
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
 
-  Session session(engine_.get());
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kInput[] = "ゔ";
 
   commands::Command command;
   SetupCommandForReverseConversion(kInput, command.mutable_input());
-  SetupMockForReverseConversion(kInput, kInput);
+  SetupMockForReverseConversion(kInput, kInput, &converter);
 
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
@@ -7281,13 +7660,17 @@ TEST_F(SessionTest, SecondEscapeFromConvertReverseKeepsOriginalText) {
 }
 
 TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   constexpr char kKanjiAiueo[] = "阿伊宇江於";
 
   commands::Command command;
   SetupCommandForReverseConversion(kKanjiAiueo, command.mutable_input());
-  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお");
+  SetupMockForReverseConversion(kKanjiAiueo, "あいうえお", &converter);
 
   // Conversion Reverse
   EXPECT_TRUE(session.SendCommand(&command));
@@ -7308,7 +7691,11 @@ TEST_F(SessionTest, EscapeFromCompositionAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, ConvertReverseFromOffState) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   const std::string kanji_aiueo = "阿伊宇江於";
 
@@ -7317,19 +7704,23 @@ TEST_F(SessionTest, ConvertReverseFromOffState) {
   SendSpecialKey(commands::KeyEvent::OFF, &session, &command);
 
   SetupCommandForReverseConversion(kanji_aiueo, command.mutable_input());
-  SetupMockForReverseConversion(kanji_aiueo, "あいうえお");
+  SetupMockForReverseConversion(kanji_aiueo, "あいうえお", &converter);
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
 }
 
 TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
   // This is a unittest against http://b/5145295.
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
   SetupCommandForReverseConversion("あいうえお", command.mutable_input());
-  SetupMockForReverseConversion("あいうえお", "あいうえお");
+  SetupMockForReverseConversion("あいうえお", "あいうえお", &converter);
   EXPECT_TRUE(session.SendCommand(&command));
   EXPECT_TRUE(command.output().consumed());
   EXPECT_EQ("あいうえお", command.output().preedit().segment(0).value());
@@ -7345,7 +7736,11 @@ TEST_F(SessionTest, DCHECKFailureAfterConvertReverse) {
 }
 
 TEST_F(SessionTest, LaunchTool) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
 
   {
     commands::Command command;
@@ -7373,7 +7768,11 @@ TEST_F(SessionTest, LaunchTool) {
 }
 
 TEST_F(SessionTest, NotZeroQuerySuggest) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Disable zero query suggest.
@@ -7393,9 +7792,9 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
   segment->set_key("");
   segment->add_candidate()->value = "search";
   segment->add_candidate()->value = "input";
-  GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
 
   // Commit composition and zero query suggest should not be invoked.
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _)).Times(0);
   command.Clear();
   session.Commit(&command);
   EXPECT_EQ("google", command.output().result().value());
@@ -7407,10 +7806,13 @@ TEST_F(SessionTest, NotZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, ZeroQuerySuggest) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
   {  // Commit
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request);
+    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
     commands::Command command;
     session.Commit(&command);
@@ -7421,12 +7823,13 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ("search", command.output().candidates().candidate(0).value());
     EXPECT_EQ("input", command.output().candidates().candidate(1).value());
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {  // CommitSegment
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request);
+    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
     commands::Command command;
     session.CommitSegment(&command);
@@ -7437,12 +7840,13 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ("search", command.output().candidates().candidate(0).value());
     EXPECT_EQ("input", command.output().candidates().candidate(1).value());
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {  // CommitCandidate
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
-    SetupZeroQuerySuggestionReady(true, &session, &request);
+    SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
 
     commands::Command command;
     SetSendCommandCommand(commands::SessionCommand::SUBMIT_CANDIDATE, &command);
@@ -7456,10 +7860,11 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
     EXPECT_EQ("search", command.output().candidates().candidate(0).value());
     EXPECT_EQ("input", command.output().candidates().candidate(1).value());
     EXPECT_EQ(ImeContext::PRECOMPOSITION, session.context().state());
+    Mock::VerifyAndClearExpectations(&converter);
   }
 
   {  // CommitFirstSuggestion
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Enable zero query suggest.
@@ -7478,7 +7883,8 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment = segments.add_segment();
       segment->set_key("");
       segment->add_candidate()->value = "google";
-      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+      EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
     command.Clear();
@@ -7492,12 +7898,11 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
       segment->set_key("");
       segment->add_candidate()->value = "search";
       segment->add_candidate()->value = "input";
-      GetConverterMock()->SetStartSuggestionForRequest(&segments, true);
+      EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+          .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     }
 
     command.Clear();
-    Segments empty_segments;
-    GetConverterMock()->SetFinishConversion(&empty_segments);
     session.CommitFirstSuggestion(&command);
     EXPECT_EQ("google", command.output().result().value());
     EXPECT_EQ("", GetComposition(command));
@@ -7510,11 +7915,15 @@ TEST_F(SessionTest, ZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Cancel command should close the candidate window.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     command.Clear();
     session.EditCancel(&command);
@@ -7526,10 +7935,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // PredictAndConvert should select the first candidate.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     command.Clear();
     session.PredictAndConvert(&command);
@@ -7541,14 +7950,15 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // CommitFirstSuggestion should insert the first candidate.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     command.Clear();
     // FinishConversion is expected to return empty Segments.
-    GetConverterMock()->SetFinishConversion(std::make_unique<Segments>().get());
+    EXPECT_CALL(converter, FinishConversion(_, _))
+        .WillRepeatedly(SetArgPointee<1>(Segments()));
     session.CommitFirstSuggestion(&command);
     EXPECT_TRUE(command.output().consumed());
     EXPECT_FALSE(command.output().has_preedit());
@@ -7559,10 +7969,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Space should be inserted directly.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     SendKey("Space", &session, &command);
     EXPECT_TRUE(command.output().consumed());
@@ -7573,10 +7983,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // 'a' should be inserted in the composition.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
     EXPECT_EQ(commands::HIRAGANA, command.output().mode());
 
     SendKey("a", &session, &command);
@@ -7588,10 +7998,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Enter should be inserted directly.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     SendKey("Enter", &session, &command);
     EXPECT_FALSE(command.output().consumed());
@@ -7602,10 +8012,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // Right should be inserted directly.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     SendKey("Right", &session, &command);
     EXPECT_FALSE(command.output().consumed());
@@ -7616,10 +8026,10 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
   }
 
   {  // SelectCnadidate command should work with zero query suggestion.
-    Session session(engine_.get());
+    Session session(&engine);
     commands::Request request;
     commands::Command command;
-    SetupZeroQuerySuggestion(&session, &request, &command);
+    SetupZeroQuerySuggestion(&session, &request, &command, &converter);
 
     // Send SELECT_CANDIDATE command.
     const int first_id = command.output().candidates().candidate(0).id();
@@ -7636,7 +8046,11 @@ TEST_F(SessionTest, CommandsAfterZeroQuerySuggest) {
 }
 
 TEST_F(SessionTest, Issue4437420) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   commands::Request request;
@@ -7684,7 +8098,11 @@ TEST_F(SessionTest, Issue4437420) {
 
 // If undo context is empty, key event for UNDO should be echoed back. b/5553298
 TEST_F(SessionTest, Issue5553298) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // Undo requires capability DELETE_PRECEDING_TEXT.
@@ -7709,6 +8127,10 @@ TEST_F(SessionTest, Issue5553298) {
 }
 
 TEST_F(SessionTest, UndoKeyAction) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   commands::Command command;
   commands::Request request;
   // Creates overriding config.
@@ -7716,7 +8138,7 @@ TEST_F(SessionTest, UndoKeyAction) {
   overriding_config.set_session_keymap(config::Config::MOBILE);
   // Test in half width ascii mode.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-halfascii mode.
@@ -7761,7 +8183,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test in Hiaragana-mode.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -7803,7 +8225,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to do nothing for voiced sounds.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -7851,7 +8273,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test to make nothing newly in preedit for empty composition.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -7877,7 +8299,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Test of acting as UNDO key. Almost same as the first section in Undo test.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     commands::Capability capability;
@@ -7895,13 +8317,15 @@ TEST_F(SessionTest, UndoKeyAction) {
     candidate = segments.mutable_segment(0)->add_candidate();
     candidate->value = "AIUEO";
 
-    GetConverterMock()->SetStartConversionForRequest(&segments, true);
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
     session.Convert(&command);
     EXPECT_FALSE(command.output().has_result());
     EXPECT_PREEDIT("あいうえお", command);
 
-    GetConverterMock()->SetCommitSegmentValue(&segments, true);
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.Commit(&command);
     EXPECT_FALSE(command.output().has_preedit());
@@ -7930,7 +8354,7 @@ TEST_F(SessionTest, UndoKeyAction) {
 
   // Do not UNDO even if UNDO stack is not empty if it is in COMPOSITE state.
   {
-    Session session(engine_.get());
+    Session session(&engine);
     InitSessionToPrecomposition(&session);
 
     // Change to 12keys-Hiragana mode.
@@ -8038,7 +8462,11 @@ TEST_F(SessionTest, DedupAfterUndo) {
 }
 
 TEST_F(SessionTest, MoveCursor) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -8054,7 +8482,11 @@ TEST_F(SessionTest, MoveCursor) {
 }
 
 TEST_F(SessionTest, MoveCursorPrecomposition) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
 
@@ -8065,7 +8497,11 @@ TEST_F(SessionTest, MoveCursorPrecomposition) {
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommit) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -8093,7 +8529,11 @@ TEST_F(SessionTest, MoveCursorRightWithCommit) {
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommit) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   commands::Request request;
   request = *mobile_request_;
   request.set_special_romanji_table(
@@ -8128,13 +8568,17 @@ TEST_F(SessionTest, MoveCursorLeftWithCommit) {
 }
 
 TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   commands::Request request(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
       commands::Request::COMMIT_WITHOUT_CONSUMING);
-  SetupZeroQuerySuggestionReady(true, &session, &request);
+  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
@@ -8152,13 +8596,17 @@ TEST_F(SessionTest, MoveCursorRightWithCommitWithZeroQuerySuggestion) {
 }
 
 TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   commands::Request request(*mobile_request_);
   request.set_special_romanji_table(
       commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
   request.set_crossing_edge_behavior(
       commands::Request::COMMIT_WITHOUT_CONSUMING);
-  SetupZeroQuerySuggestionReady(true, &session, &request);
+  SetupZeroQuerySuggestionReady(true, &session, &request, &converter);
   commands::Command command;
 
   InsertCharacterChars("GOOGLE", &session, &command);
@@ -8180,7 +8628,11 @@ TEST_F(SessionTest, MoveCursorLeftWithCommitWithZeroQuerySuggestion) {
 }
 
 TEST_F(SessionTest, CommitHead) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   composer::Table table;
   table.AddRule("mo", "も", "");
   table.AddRule("zu", "ず", "");
@@ -8201,8 +8653,12 @@ TEST_F(SessionTest, CommitHead) {
   EXPECT_EQ("ず", GetComposition(command));
 }
 
-TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
-  Session session(engine_.get());
+TEST_F(SessionTest, PasswordWithToggleAlphabetInput) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
 
   commands::Request request;
   request = *mobile_request_;
@@ -8254,7 +8710,11 @@ TEST_F(SessionTest, PasswordWithToggleAlpabetInput) {
 }
 
 TEST_F(SessionTest, SwitchInputFieldType) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   // initial state is NORMAL
@@ -8272,7 +8732,11 @@ TEST_F(SessionTest, SwitchInputFieldType) {
 }
 
 TEST_F(SessionTest, CursorKeysInPasswordMode) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
 
   commands::Request request;
   request = *mobile_request_;
@@ -8319,7 +8783,11 @@ TEST_F(SessionTest, CursorKeysInPasswordMode) {
 }
 
 TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
   commands::Command command;
   commands::Request request;
@@ -8369,7 +8837,11 @@ TEST_F(SessionTest, BackKeyCommitsPreeditInPasswordMode) {
 }
 
 TEST_F(SessionTest, EditCancel) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments_mo;
@@ -8385,7 +8857,8 @@ TEST_F(SessionTest, EditCancel) {
     commands::Command command;
     SendKey("M", &session, &command);
 
-    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+    EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8404,11 +8877,12 @@ TEST_F(SessionTest, EditCancel) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO");
+    SetupMockForReverseConversion("[MO]", "MO", &converter);
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+    EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8457,8 +8931,12 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Cancel of Precomposition and deactivate IME
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -8476,7 +8954,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Composition and deactivate IME
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -8496,14 +8974,15 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Suggestion and deactivate IME
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
     commands::Command command;
     SendKey("M", &session, &command);
 
-    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+    EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     SendKey("O", &session, &command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8522,9 +9001,9 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Conversion and deactivate IME
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
 
     commands::Command command;
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
@@ -8540,7 +9019,7 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
 
@@ -8549,11 +9028,12 @@ TEST_F(SessionTest, EditCancelAndIMEOff) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO");
+    SetupMockForReverseConversion("[MO]", "MO", &converter);
     EXPECT_TRUE(session.SendCommand(&command));
 
     command.Clear();
-    GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+    EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+        .WillRepeatedly(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
     session.ConvertCancel(&command);
     ASSERT_TRUE(command.output().has_candidates());
     EXPECT_EQ(2, command.output().candidates().candidate_size());
@@ -8593,10 +9073,14 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Cancel of Precomposition in password field
      // Basically this is unusual because there is no character to be canceled
      // when Precomposition state.
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8614,7 +9098,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Composition in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8632,9 +9116,9 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Conversion in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
     // Actually this works well because Cancel command in conversion mode
@@ -8650,7 +9134,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Reverse conversion in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8660,7 +9144,7 @@ TEST_F(SessionTest, CancelInPasswordModeIssue5955618) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO");
+    SetupMockForReverseConversion("[MO]", "MO", &converter);
     EXPECT_TRUE(session.SendCommand(&command));
 
     // Actually this works well because Cancel command in conversion mode
@@ -8704,8 +9188,12 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     segment->add_candidate()->value = "MOZUKU";
   }
 
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
   {  // Cancel of Precomposition and deactivate IME in password field.
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8732,7 +9220,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Composition and deactivate IME in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8759,9 +9247,9 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Conversion and deactivate IME in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
-    InitSessionToConversionWithAiueo(&session);
+    InitSessionToConversionWithAiueo(&session, &converter);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
 
     commands::Command command;
@@ -8785,7 +9273,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
   }
 
   {  // Cancel of Reverse conversion and deactivate IME in password field
-    Session session(engine_.get());
+    Session session(&engine);
     session.SetConfig(&config);
     InitSessionToPrecomposition(&session);
     SwitchInputFieldType(commands::Context::PASSWORD, &session);
@@ -8795,7 +9283,7 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
     // "[MO]" is a converted string like Kanji.
     // "MO" is an input string like Hiragana.
     SetupCommandForReverseConversion("[MO]", command.mutable_input());
-    SetupMockForReverseConversion("[MO]", "MO");
+    SetupMockForReverseConversion("[MO]", "MO", &converter);
     EXPECT_TRUE(session.SendCommand(&command));
 
     EXPECT_TRUE(TestSendKey("hankaku/zenkaku", &session, &command));
@@ -8815,7 +9303,11 @@ TEST_F(SessionTest, CancelAndIMEOffInPasswordModeIssue5955618) {
 }
 
 TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments_mo;
@@ -8826,7 +9318,8 @@ TEST_F(SessionTest, DoNothingOnCompositionKeepingSuggestWindow) {
     segment->add_candidate()->value = "MOCHA";
     segment->add_candidate()->value = "MOZUKU";
   }
-  GetConverterMock()->SetStartSuggestionForRequest(&segments_mo, true);
+  EXPECT_CALL(converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_mo), Return(true)));
 
   commands::Command command;
   SendKey("M", &session, &command);
@@ -8840,7 +9333,11 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
   config::Config config;
   config.set_use_auto_conversion(true);
 
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   session.SetConfig(&config);
   InitSessionToPrecomposition(&session);
 
@@ -8851,7 +9348,8 @@ TEST_F(SessionTest, ModeChangeOfConvertAtPunctuations) {
     segment->set_key("あ");
     segment->add_candidate()->value = "あ";
   }
-  GetConverterMock()->SetStartConversionForRequest(&segments_a_conv, true);
+  EXPECT_CALL(converter, StartConversionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments_a_conv), Return(true)));
 
   commands::Command command;
   SendKey("a", &session, &command);  // "あ|" (composition)
@@ -8897,7 +9395,11 @@ TEST_F(SessionTest, SuppressSuggestion) {
 }
 
 TEST_F(SessionTest, DeleteHistory) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   Segments segments;
@@ -8906,7 +9408,8 @@ TEST_F(SessionTest, DeleteHistory) {
   segment->add_candidate()->value = "DeleteHistory";
   ConversionRequest request;
   SetComposer(&session, &request);
-  GetConverterMock()->SetStartPredictionForRequest(&segments, true);
+  EXPECT_CALL(converter, StartPredictionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
 
   // Type "del". Preedit = "でｌ".
   commands::Command command;
@@ -8924,8 +9427,10 @@ TEST_F(SessionTest, DeleteHistory) {
 
   // Do DeleteHistory command. After that, the session should be back in
   // composition state and preedit gets back to "でｌ" again.
-  EXPECT_CALL(*engine_->GetUserDataManager(),
-              ClearUserPredictionEntry("", "DeleteHistory"))
+  MockUserDataManager user_data_manager;
+  EXPECT_CALL(engine, GetUserDataManager())
+      .WillOnce(Return(&user_data_manager));
+  EXPECT_CALL(user_data_manager, ClearUserPredictionEntry("", "DeleteHistory"))
       .WillOnce(Return(true));
   EXPECT_TRUE(SendKey("Ctrl Delete", &session, &command));
   EXPECT_EQ(ImeContext::COMPOSITION, session.context().state());
@@ -8933,7 +9438,11 @@ TEST_F(SessionTest, DeleteHistory) {
 }
 
 TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToDirect(&session);
 
   commands::Command command;
@@ -8947,7 +9456,11 @@ TEST_F(SessionTest, SendKeyWithKeyStringDirect) {
 }
 
 TEST_F(SessionTest, SendKeyWithKeyString) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   commands::Command command;
@@ -8978,7 +9491,11 @@ TEST_F(SessionTest, SendKeyWithKeyString) {
 }
 
 TEST_F(SessionTest, IndirectImeOnOff) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -9025,7 +9542,11 @@ TEST_F(SessionTest, IndirectImeOnOff) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOn) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToDirect(&session);
 
   {
@@ -9077,7 +9598,11 @@ TEST_F(SessionTest, MakeSureIMEOn) {
 }
 
 TEST_F(SessionTest, MakeSureIMEOff) {
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
   InitSessionToPrecomposition(&session);
 
   {
@@ -9136,14 +9661,9 @@ TEST_F(SessionTest, MakeSureIMEOff) {
     // Set up converter.
     {
       commands::Command command;
-
-      Segments segments;
       InsertCharacterChars("aiueo", &session, &command);
       ConversionRequest request;
       SetComposer(&session, &request);
-      SetAiueo(&segments);
-      FillT13Ns(request, &segments);
-      GetConverterMock()->SetCommitSegmentValue(&segments, true);
     }
 
     // Send SessionCommand::TURN_OFF_IME to commit composition.
@@ -9209,7 +9729,10 @@ TEST_F(SessionTest, SetConfig) {
   config::Config config;
   config::ConfigHandler::GetDefaultConfig(&config);
   config.set_session_keymap(config::Config::CUSTOM);
-  Session session(engine_.get());
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+  Session session(&engine);
   session.PushUndoContext();
   session.SetConfig(&config);
 

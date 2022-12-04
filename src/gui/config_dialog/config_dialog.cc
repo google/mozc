@@ -494,6 +494,7 @@ void GetComboboxForPreeditMethod(const QComboBox *combobox,
 // Actually ConvertFromProto and ConvertToProto are almost the same.
 // The difference only SET_ and GET_. We would like to unify the twos.
 void ConfigDialog::ConvertFromProto(const config::Config &config) {
+  base_config_ = config;
   // tab1
   SetComboboxForPreeditMethod(config, inputModeComboBox);
   SET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
@@ -527,7 +528,6 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
   // InfoListConfig
   localUsageDictionaryCheckBox->setChecked(
       config.information_list_config().use_local_usage_dictionary());
-  information_list_config_ = config.information_list_config();
 
   // tab3
   SET_CHECKBOX(useAutoImeTurnOff, use_auto_ime_turn_off);
@@ -577,6 +577,8 @@ void ConfigDialog::ConvertFromProto(const config::Config &config) {
 }
 
 void ConfigDialog::ConvertToProto(config::Config *config) const {
+  *config = base_config_;
+
   // tab1
   GetComboboxForPreeditMethod(inputModeComboBox, config);
   GET_COMBOBOX(punctuationsSettingComboBox, PunctuationMethod,
@@ -612,7 +614,6 @@ void ConfigDialog::ConvertToProto(config::Config *config) const {
   GET_CHECKBOX(spellingCorrectionCheckBox, use_spelling_correction);
 
   // InformationListConfig
-  config->mutable_information_list_config()->CopyFrom(information_list_config_);
   config->mutable_information_list_config()->set_use_local_usage_dictionary(
       localUsageDictionaryCheckBox->isChecked());
 
@@ -804,24 +805,23 @@ void ConfigDialog::SelectSuggestionSetting(int state) {
 }
 
 void ConfigDialog::ResetToDefaults() {
+  const QString message =
+      tr("When you reset %1 settings, any changes "
+         "you've made will be reverted to the default settings. "
+         "Do you want to reset settings? "
+         "The following items are not reset with this operation.\n"
+         " - Personalization data\n"
+         " - Input history\n"
+         " - Usage statistics and crash reports\n"
+         " - Administrator settings")
+          .arg(GuiUtil::ProductName());
   if (QMessageBox::Ok ==
-      QMessageBox::question(
-          this, windowTitle(),
-          tr("When you reset %1 settings, any changes "
-             "you've made will be reverted to the default settings. "
-             "Do you want to reset settings? "
-             "The following items are not reset with this operation.\n"
-             " - Personalization data\n"
-             " - Input history\n"
-             " - Usage statistics and crash reports\n"
-             " - Administrator settings")
-              .arg(GuiUtil::ProductName()),
-          QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Cancel)) {
+      QMessageBox::question(this, windowTitle(), message,
+                            QMessageBox::Ok | QMessageBox::Cancel,
+                            QMessageBox::Cancel)) {
     // TODO(taku): remove the dependency to config::ConfigHandler
     // nice to have GET_DEFAULT_CONFIG command
-    config::Config config;
-    config::ConfigHandler::GetDefaultConfig(&config);
-    ConvertFromProto(config);
+    ConvertFromProto(config::ConfigHandler::DefaultConfig());
   }
 }
 

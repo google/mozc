@@ -37,7 +37,7 @@
 load("//:build_defs.bzl", "cc_library_mozc")
 
 cc_library_mozc(
-    name = "mozc_lib",
+    name = "mozc_lib_without_spellchecker",
     srcs = ["mozcjni.cc"],
     visibility = ["//:__pkg__"],
     deps = [
@@ -56,6 +56,16 @@ cc_library_mozc(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library_mozc(
+    name = "mozc_lib",
+    visibility = ["//:__pkg__"],
+    deps = [
+        ":mozc_lib_without_spellchecker",
+        "//spelling:spellchecker_service_registration",
     ],
     alwayslink = 1,
 )

@@ -83,19 +83,6 @@
       ],
     },
     {
-      'target_name': 'mock_converter_engine',
-      'type': 'static_library',
-      'sources': [
-        'mock_converter_engine.cc',
-      ],
-      'dependencies': [
-        '../base/absl.gyp:absl_strings',
-        '../base/base.gyp:base',
-        '../converter/converter_base.gyp:converter_mock',
-        '../testing/testing.gyp:testing',
-      ],
-    },
-    {
       'target_name': 'oss_engine_factory',
       'type': 'none',
       'dependencies': [

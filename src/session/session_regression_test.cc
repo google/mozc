@@ -566,26 +566,17 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   InitSessionToPrecomposition(session_.get());
 
   commands::Command command;
-  const std::string target_word = "会内";
-  int target_id = 1;  // ID of "会内"
+  int target_id = 1;  // ID of deletation tareget
 
-  // 1. Check the initial state.
+  // 1. Type "aiu" and check 2nd candidate, which is our deleteation target.
   InsertCharacterChars("aiu", &command);
-  {
-    auto candidate = command.output().candidates().candidate(0);
-    EXPECT_NE(target_id, candidate.id());
-    EXPECT_NE(target_word, candidate.value());
-  }
-  {
-    auto candidate = command.output().candidates().candidate(1);
-    EXPECT_EQ(target_id, candidate.id());
-    EXPECT_EQ(target_word, candidate.value());
-  }
+  const std::string target_word =
+      command.output().candidates().candidate(1).value();
 
-  // 2. Submit a candidate ("会内") to be deleted from history.
+  // 2. Submit the 2nd candidate to be deleted from history.
   SendCommandWithId(commands::SessionCommand::SUBMIT_CANDIDATE, target_id,
                     &command);
-  target_id = 0;  // ID of "会内" is changed after submit.
+  target_id = 0;  // ID of the deletion target is changed after submit.
 
   InsertCharacterChars("aiu", &command);
   {
@@ -602,7 +593,8 @@ TEST_F(SessionRegressionTest, DeleteCandidateFromHistory) {
   // 3. Delete the above candidate from the history.
   SendCommandWithId(commands::SessionCommand::DELETE_CANDIDATE_FROM_HISTORY,
                     target_id, &command);
-  target_id = 1;  // ID of "会内" is reverted after history deletion.
+  target_id =
+      1;  // ID of the deletion target is reverted after history deletion.
 
   EXPECT_TRUE(command.output().has_candidates());
   EXPECT_GT(command.output().candidates().candidate_size(), 0);

@@ -145,7 +145,17 @@ const char *kScenarioFileList[] = {
     DATA_DIR "suggest_after_zero_query.txt",
     DATA_DIR "twelvekeys_switch_inputmode_scenario.txt",
     DATA_DIR "twelvekeys_toggle_flick_alphabet_scenario.txt",
-    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_a.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ka.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_sa.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ta.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_na.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ha.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ma.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ya.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_ra.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_wa.txt",
+    DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_symbol.txt",
     DATA_DIR "undo.txt",
     DATA_DIR "zero_query_suggestion.txt",
 #undef DATA_DIR
@@ -429,7 +439,6 @@ const char *kScenariosForExperimentParams[] = {
 commands::Request GetMobileRequest() {
   commands::Request request = commands::Request::default_instance();
   commands::RequestForUnitTest::FillMobileRequest(&request);
-  request.set_one_phase_suggestion(true);
   return request;
 }
 

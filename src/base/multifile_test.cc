@@ -94,7 +94,7 @@ TEST(InputMultiFileTest, ReadSingleFileTest) {
   std::vector<std::string> expected_lines;
   constexpr int kNumLines = 10;
   {
-    OutputFileStream ofs(path.c_str());
+    OutputFileStream ofs(path);
     for (int i = 0; i < kNumLines; ++i) {
       std::string line = absl::StrFormat("Hi, line %d", i);
       expected_lines.push_back(line);
@@ -132,7 +132,7 @@ TEST(InputMultiFileTest, ReadMultipleFilesTest) {
           FileUtil::JoinPath(absl::GetFlag(FLAGS_test_tmpdir), filename);
       paths.push_back(path);
 
-      OutputFileStream ofs(path.c_str());
+      OutputFileStream ofs(path);
       for (int i = 0; i < kNumLinesPerFile; ++i) {
         std::string line = absl::StrFormat("Hi, line %d", ++serial_line_no);
         expected_lines.push_back(line);

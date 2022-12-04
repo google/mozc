@@ -76,10 +76,8 @@
       ],
       'dependencies': [
         '../base/absl.gyp:absl_strings',
-        '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../engine/engine.gyp:engine',
-        '../engine/engine.gyp:mock_converter_engine',
         '../engine/engine.gyp:mock_data_engine_factory',
         '../rewriter/rewriter.gyp:rewriter',
         '../testing/testing.gyp:gtest_main',
@@ -116,8 +114,6 @@
       ],
       'dependencies': [
         '../base/base_test.gyp:clock_mock',
-        '../converter/converter_base.gyp:converter_mock',
-        '../engine/engine.gyp:mock_converter_engine',
         '../testing/testing.gyp:gtest_main',
         '../usage_stats/usage_stats_test.gyp:usage_stats_testing_util',
         'session.gyp:session',
@@ -135,7 +131,6 @@
         'session_converter_test.cc',
       ],
       'dependencies': [
-        '../converter/converter_base.gyp:converter_mock',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../testing/testing.gyp:gtest_main',
         '../testing/testing.gyp:testing',
@@ -224,8 +219,6 @@
       ],
       'dependencies': [
         '../base/base.gyp:base',
-        '../converter/converter_base.gyp:converter_mock',
-        '../engine/engine.gyp:mock_converter_engine',
         '../protocol/protocol.gyp:commands_proto',
         '../protocol/protocol.gyp:config_proto',
         '../testing/testing.gyp:gtest_main',

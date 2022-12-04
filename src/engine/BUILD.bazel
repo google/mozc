@@ -160,23 +160,6 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "mock_converter_engine",
-    testonly = True,
-    srcs = ["mock_converter_engine.cc"],
-    hdrs = ["mock_converter_engine.h"],
-    visibility = ["//session:__subpackages__"],
-    deps = [
-        ":engine_interface",
-        ":user_data_manager_mock",
-        "//base",
-        "//base:logging",
-        "//base:port",
-        "//converter:converter_interface",
-        "//converter:converter_mock",
-    ],
-)
-
-cc_library_mozc(
     name = "engine_stub",
     testonly = True,
     hdrs = ["engine_stub.h"],

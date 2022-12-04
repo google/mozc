@@ -117,7 +117,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
     const std::string new_filename =
         FileUtil::JoinPath(SystemUtil::GetUserProfileDirectory(),
                            RemovePrefix(kUserPrefix, filename));
-    InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
+    InputFileStream *ifs = new InputFileStream(new_filename, mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
@@ -127,7 +127,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
     // file:///foo.map
   } else if (absl::StartsWith(filename, kFilePrefix)) {
     const std::string new_filename = RemovePrefix(kFilePrefix, filename);
-    InputFileStream *ifs = new InputFileStream(new_filename.c_str(), mode);
+    InputFileStream *ifs = new InputFileStream(new_filename, mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;
@@ -145,7 +145,7 @@ std::istream *ConfigFileStream::Open(const std::string &filename,
     return nullptr;
   } else {
     LOG(WARNING) << filename << " has no prefix. open from localfile";
-    InputFileStream *ifs = new InputFileStream(filename.c_str(), mode);
+    InputFileStream *ifs = new InputFileStream(filename, mode);
     CHECK(ifs);
     if (ifs->good()) {
       return ifs;

@@ -59,8 +59,6 @@ uint32_t GenerateRandomSeed() {
 
 ABSL_FLAG(uint32_t, random_seed, GenerateRandomSeed(),
           "Random seed value. This value will be interpreted as uint32.");
-ABSL_FLAG(bool, call_expand_suggestion, false,
-          "If true, ExpandSuggestion is called after each send key event.");
 ABSL_FLAG(bool, set_mobile_request, false,
           "If true, set commands::Request to the mobine one.");
 
@@ -89,8 +87,6 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
     client.SetRequest(request, &output);
   }
 
-  const bool call_expand_suggestion =
-      absl::GetFlag(FLAGS_call_expand_suggestion);
   while (keyevents_size < kMaxEventSize) {
     keys.clear();
     session::RandomKeyEventsGenerator::GenerateSequence(&keys);
@@ -98,9 +94,6 @@ TEST(SessionHandlerStressTest, BasicStressTest) {
       ++keyevents_size;
       EXPECT_TRUE(client.TestSendKey(keys[i], &output));
       EXPECT_TRUE(client.SendKey(keys[i], &output));
-      if (call_expand_suggestion) {
-        EXPECT_TRUE(client.ExpandSuggestion(&output));
-      }
     }
   }
   EXPECT_TRUE(client.DeleteSession());

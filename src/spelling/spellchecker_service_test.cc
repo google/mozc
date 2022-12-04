@@ -29,11 +29,10 @@
 
 #include "spelling/spellchecker_service.h"
 
-#include <fstream>
-#include <ios>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/file_util.h"
 #include "base/util.h"

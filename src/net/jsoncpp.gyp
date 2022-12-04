@@ -49,6 +49,9 @@
         '<@(jsoncpp_srcs)',
         'jsoncpp.h',
       ],
+      'cflags': [
+        '-Wno-error',
+      ],
       'include_dirs': [
         '<@(jsoncpp_include_dirs)',
       ],

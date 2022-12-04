@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
               << ", file = " << input.filename;
       writer.AddFile(input.name, input.alignment, input.filename);
     }
-    mozc::OutputFileStream output(tmpfile.c_str(),
+    mozc::OutputFileStream output(tmpfile,
                                   std::ios_base::out | std::ios_base::binary);
     writer.Finish(&output);
     output.close();

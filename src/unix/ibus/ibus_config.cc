@@ -39,10 +39,8 @@
 #include "unix/ibus/main.h"
 #include "absl/status/status.h"
 #include "absl/strings/ascii.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
-#include "absl/strings/str_split.h"
 
 namespace mozc {
 
@@ -72,13 +70,32 @@ std::string UpdateConfigFile() {
   }
 }
 
-bool ParseConfig(const std::string &data, ibus::Config &config) {
-  if (mozc::protobuf::TextFormat::ParseFromString(data, &config)) {
-    return true;
+std::string NormalizeLayout(const std::string &layout) {
+  std::string output;
+  for (const char c : layout) {
+    if (absl::ascii_isalnum(c) || c == '_' || c == '-' || c == '/') {
+      output += c;
+    } else {
+      output += '_';
+    }
   }
-  // Failed to parse the data, fallback to the default setting.
-  mozc::protobuf::TextFormat::ParseFromString(kIbusConfigTextProto, &config);
-  return false;
+  return output;
+}
+
+bool ParseConfig(const std::string &data, ibus::Config &config) {
+  const bool success =
+      mozc::protobuf::TextFormat::ParseFromString(data, &config);
+  if (!success) {
+    // Failed to parse the data, fallback to the default setting.
+    mozc::protobuf::TextFormat::ParseFromString(kIbusConfigTextProto, &config);
+  }
+
+  for (ibus::Engine &engine : *config.mutable_engines()) {
+    engine.set_layout(NormalizeLayout(engine.layout()));
+    engine.set_layout_variant(NormalizeLayout(engine.layout_variant()));
+    engine.set_layout_option(NormalizeLayout(engine.layout_option()));
+  }
+  return success;
 }
 
 std::string EscapeXmlValue(const std::string &value) {
@@ -105,11 +122,9 @@ std::string CreateEnginesXml(const ibus::Config &config) {
         "  <setup>", kEngineSetup, "</setup>\n",
         "  <name>", EscapeXmlValue(engine.name()), "</name>\n",
         "  <longname>", EscapeXmlValue(engine.longname()), "</longname>\n",
-        "  <layout>", EscapeXmlValue(engine.layout()), "</layout>\n",
-        "  <layout_variant>", EscapeXmlValue(engine.layout_variant()),
-        "</layout_variant>\n",
-        "  <layout_option>", EscapeXmlValue(engine.layout_option()),
-        "</layout_option>\n",
+        "  <layout>", engine.layout(), "</layout>\n",
+        "  <layout_variant>", engine.layout_variant(), "</layout_variant>\n",
+        "  <layout_option>", engine.layout_option(), "</layout_option>\n",
         "</engine>\n");
     // clang-format on
   }

@@ -169,9 +169,6 @@ class Session : public SessionInterface {
   // Select a candidate located by input.command.id and commit.
   bool CommitCandidate(mozc::commands::Command *command);
 
-  // Expands suggestion candidates.
-  bool ExpandSuggestion(mozc::commands::Command *command);
-
   // Commits only the first segment.
   bool CommitSegment(mozc::commands::Command *command);
   // Commits some characters at the head of the preedit.

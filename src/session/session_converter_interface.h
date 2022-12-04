@@ -141,14 +141,6 @@ class SessionConverterInterface {
       const composer::Composer &composer,
       const ConversionPreferences &preferences) = 0;
 
-  // Send a prediction request to the converter.
-  // The result is added at the tail of existing candidate list as "suggestion"
-  // candidates.
-  virtual bool ExpandSuggestion(const composer::Composer &composer) = 0;
-  virtual bool ExpandSuggestionWithPreferences(
-      const composer::Composer &composer,
-      const ConversionPreferences &preferences) = 0;
-
   // Clear conversion segments, but keep the context.
   virtual void Cancel() = 0;
 

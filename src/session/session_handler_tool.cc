@@ -199,14 +199,6 @@ bool SessionHandlerTool::SubmitCandidate(uint32_t id,
   return EvalCommand(&input, output);
 }
 
-bool SessionHandlerTool::ExpandSuggestion(commands::Output *output) {
-  commands::Input input;
-  input.set_type(commands::Input::SEND_COMMAND);
-  input.mutable_command()->set_type(
-      commands::SessionCommand::EXPAND_SUGGESTION);
-  return EvalCommand(&input, output);
-}
-
 bool SessionHandlerTool::Reload() {
   commands::Input input;
   input.set_type(commands::Input::RELOAD);
@@ -588,8 +580,6 @@ absl::Status SessionHandlerInterpreter::Eval(
     uint32_t id;
     MOZC_ASSERT_TRUE(GetCandidateIdByValue(args[1], &id));
     MOZC_ASSERT_TRUE(client_->SubmitCandidate(id, last_output_.get()));
-  } else if (command == "EXPAND_SUGGESTION") {
-    MOZC_ASSERT_TRUE(client_->ExpandSuggestion(last_output_.get()));
   } else if (command == "UNDO_OR_REWIND") {
     MOZC_ASSERT_TRUE(client_->UndoOrRewind(last_output_.get()));
   } else if (command == "SWITCH_INPUT_MODE") {
