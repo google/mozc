@@ -27,21 +27,5 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "spelling/spellchecker_service.h"
-
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "base/file_stream.h"
-#include "base/file_util.h"
-#include "base/util.h"
-#include "data_manager/data_manager.h"
-#include "protocol/commands.pb.h"
-#include "testing/base/public/gmock.h"
-#include "testing/base/public/googletest.h"
-#include "testing/base/public/gunit.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
+#include "spelling/rulebased_filter.h"
 
