@@ -494,7 +494,7 @@ void SessionUsageObserver::EvalCommandHandler(
   if (IsSessionIndependentCommand(input.type())) {
     return;
   } else if (!input.has_id()) {
-    LOG(WARNING) << "no id";
+    LOG(WARNING) << "no id. input type: " << input.type();
     // Should have id
     return;
   }
