@@ -244,6 +244,10 @@ def ParseOptions() -> argparse.Namespace:
   parser.add_argument(
       '--input_emoticon', dest='input_emoticon', help='emoticon data file')
   parser.add_argument(
+      '--output_tsv',
+      dest='output_tsv',
+      help='output tsv file')
+  parser.add_argument(
       '--output_token_array',
       dest='output_token_array',
       help='output token array file')
@@ -277,6 +281,11 @@ def main():
                           options.output_token_array,
                           options.output_string_array)
 
+  if options.output_tsv:
+    with codecs.open(options.output_tsv, 'w', encoding='utf-8') as f:
+      for key, values in merged_zero_query_dict.items():
+        for value in values:
+          f.write(key + '\t' + value.value + '\n')
 
 if __name__ == '__main__':
   main()
