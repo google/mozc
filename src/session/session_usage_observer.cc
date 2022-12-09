@@ -87,6 +87,7 @@ uint32_t GetDuration(uint64_t base_value) {
 
 bool IsSessionIndependentCommand(commands::Input::CommandType type) {
   switch (type) {
+    // LINT.IfChange(session_independent_command)
     case commands::Input::NO_OPERATION:
     case commands::Input::SET_CONFIG:
     case commands::Input::GET_CONFIG:
@@ -96,6 +97,10 @@ bool IsSessionIndependentCommand(commands::Input::CommandType type) {
     case commands::Input::CLEAR_UNUSED_USER_PREDICTION:
     case commands::Input::RELOAD:
     case commands::Input::SEND_USER_DICTIONARY_COMMAND:
+    case commands::Input::SYNC_DATA:
+    case commands::Input::CHECK_SPELLING:
+    case commands::Input::SET_REQUEST:
+    // LINT.ThenChange()
       return true;
     default:
       return false;
