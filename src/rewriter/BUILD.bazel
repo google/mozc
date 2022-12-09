@@ -464,6 +464,7 @@ cc_test_mozc(
         "//composer:table",
         "//config:config_handler",
         "//converter:segments",
+        "//converter:segments_matchers",
         "//data_manager/testing:mock_data_manager",
         "//dictionary:dictionary_mock",
         "//dictionary:pos_matcher_lib",

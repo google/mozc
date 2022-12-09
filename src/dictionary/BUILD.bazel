@@ -702,6 +702,7 @@ cc_library_mozc(
         "//base:port",
         "//base:util",
         "//request:conversion_request",
+        "//testing:gunit",
         "@com_google_absl//absl/strings",
     ],
 )

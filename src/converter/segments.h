@@ -358,6 +358,8 @@ class Segment final {
     return os << segment.DebugString();
   }
 
+  const std::deque<Candidate *> &candidates() const { return candidates_; }
+
   // For debug. Candidate words removed through conversion process.
   std::vector<Candidate> removed_candidates_for_debug_;
 
