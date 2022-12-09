@@ -413,7 +413,7 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
     const std::string kInputs[] = {
         "🛳\uFE0E",  // U+1F6F3,U+FE0E - text presentation sequence
         "🛳\uFE0F",  // U+1F6F3,U+FE0F - emoji presentation sequence
-        "✌🏿",       // U+261D,U+1F3FF - emoji modifier sequence
+        "✌🏿",      // U+261D,U+1F3FF - emoji modifier sequence
         "🇯🇵",       // U+1F1EF,U+1F1F5 - emoji flag sequence
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // U+1F3F4,U+E0067,U+E0062,U+E0065,U+E006E,U+E0067
                                          // - emoji tag sequence
@@ -449,7 +449,7 @@ TEST(UtilTest, SplitStringToUtf8Graphemes) {
                                // text_presentation_selector]
         "🛳\uFE0F\uFE0F",       // Multiple extends [emoji_presentation_selector,
                                // emoji_presentation_selector]
-        "✌🏿\U0001F3FF",        // Multiple extends [emoji_modifier,
+        "✌🏿\U0001F3FF",       // Multiple extends [emoji_modifier,
                                // emoji_modifier]
         "🏴󠁧󠁢󠁥󠁮󠁧󠁿\U000E0067",  // Multiple extends
                                                    // [tag_end,
@@ -616,7 +616,7 @@ TEST(UtilTest, Utf8ToCodepoints) {
   }
 
   {  // Single codepoint characters.
-    std::string str =  "aあ亜\na";
+    std::string str = "aあ亜\na";
     std::vector<int> expected = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
 
     std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
@@ -624,12 +624,12 @@ TEST(UtilTest, Utf8ToCodepoints) {
   }
 
   {  // Multiple codepoint characters
-    std::string str = (
-        "神"  // U+795E
-        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
-        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
-    );
-    std::vector<int> expected = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099 };
+    std::string str =
+        ("神"  // U+795E
+         "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+         "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+        );
+    std::vector<int> expected = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099};
 
     std::vector<char32_t> codepoints = Util::Utf8ToCodepoints(str);
     EXPECT_THAT(codepoints, ElementsAreArray(expected));
@@ -643,17 +643,17 @@ TEST(UtilTest, CodepointsToUtf8) {
   }
 
   {  // Single codepoint characters.
-    std::string expected =  "aあ亜\na";
+    std::string expected = "aあ亜\na";
     std::vector<char32_t> cps = {0x0061, 0x3042, 0x4E9C, 0x000A, 0x0061};
     EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
   }
 
   {  // Multiple codepoint characters
-    std::string expected = (
-        "神"  // U+795E
-        "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
-        "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
-    );
+    std::string expected =
+        ("神"  // U+795E
+         "神󠄀"  // U+795E,U+E0100 - 2 codepoints [IVS]
+         "あ゙"  // U+3042,U+3099  - 2 codepoints [Dakuten]
+        );
     std::vector<char32_t> cps = {0x795E, 0x795E, 0xE0100, 0x3042, 0x3099};
     EXPECT_EQ(Util::CodepointsToUtf8(cps), expected);
   }
@@ -887,7 +887,6 @@ TEST(UtilTest, IsUtf16Bom) {
   EXPECT_FALSE(Util::IsUtf16Bom("\xff\xff"));
 }
 
-
 TEST(UtilTest, BracketTest) {
   static const struct BracketType {
     const char *open_bracket;
@@ -909,6 +908,37 @@ TEST(UtilTest, BracketTest) {
     EXPECT_FALSE(Util::IsOpenBracket(kBracketType[i].close_bracket, &pair));
     EXPECT_FALSE(Util::IsCloseBracket(kBracketType[i].open_bracket, &pair));
   }
+}
+
+TEST(UtilTest, IsBracketPairText) {
+  EXPECT_TRUE(Util::IsBracketPairText("«»"));
+  EXPECT_TRUE(Util::IsBracketPairText("()"));
+  EXPECT_TRUE(Util::IsBracketPairText("[]"));
+  EXPECT_TRUE(Util::IsBracketPairText("{}"));
+  EXPECT_TRUE(Util::IsBracketPairText("‘’"));
+  EXPECT_TRUE(Util::IsBracketPairText("“”"));
+  EXPECT_TRUE(Util::IsBracketPairText("‹›"));
+  EXPECT_TRUE(Util::IsBracketPairText("〈〉"));
+  EXPECT_TRUE(Util::IsBracketPairText("《》"));
+  EXPECT_TRUE(Util::IsBracketPairText("「」"));
+  EXPECT_TRUE(Util::IsBracketPairText("『』"));
+  EXPECT_TRUE(Util::IsBracketPairText("【】"));
+  EXPECT_TRUE(Util::IsBracketPairText("〔〕"));
+  EXPECT_TRUE(Util::IsBracketPairText("〘〙"));
+  EXPECT_TRUE(Util::IsBracketPairText("〚〛"));
+  EXPECT_TRUE(Util::IsBracketPairText("（）"));
+  EXPECT_TRUE(Util::IsBracketPairText("［］"));
+  EXPECT_TRUE(Util::IsBracketPairText("｛｝"));
+  EXPECT_TRUE(Util::IsBracketPairText("｢｣"));
+
+  // Open bracket and close brakcet don't match.
+  EXPECT_FALSE(Util::IsBracketPairText("(]"));
+
+  // More than two characters.
+  EXPECT_FALSE(Util::IsBracketPairText("{{}}"));
+
+  // Non bracket character exists.
+  EXPECT_FALSE(Util::IsBracketPairText("1)"));
 }
 
 TEST(UtilTest, IsEnglishTransliteration) {

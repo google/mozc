@@ -69,6 +69,7 @@
 #include "base/double_array.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
@@ -1009,6 +1010,19 @@ bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
   }
   *open_bracket = std::string(iter->GetOpenBracket());
   return true;
+}
+
+bool Util::IsBracketPairText(absl::string_view input) {
+  // The definition of "bracket" here is a bit wider than kSortedBracketPairs
+  // because it also contains some additional pairs listed in
+  // data/symbol/symbol.tsv.
+  static const auto &kBracketPairText =
+      *new absl::flat_hash_set<absl::string_view>{
+          "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
+          "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
+          "〚〛", "（）", "［］", "｛｝", "｢｣",
+      };
+  return kBracketPairText.contains(input);
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(const std::string &input) {

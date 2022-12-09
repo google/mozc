@@ -492,6 +492,7 @@ cc_library_mozc(
         ":japanese_util",
         ":logging",
         ":port",
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/numeric:bits",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

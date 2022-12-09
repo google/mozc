@@ -298,6 +298,9 @@ class Util {
   // corresponding open bracket is assigned.
   static bool IsCloseBracket(absl::string_view key, std::string *open_bracket);
 
+  // Returns true if input is a bracket pair text (e.g. "「」").
+  static bool IsBracketPairText(absl::string_view input);
+
   static void EncodeUri(const std::string &input, std::string *output);
   static void DecodeUri(const std::string &input, std::string *output);
 
