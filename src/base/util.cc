@@ -881,9 +881,8 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
 #endif  // OS_WIN
 
 #if defined(OS_CHROMEOS)
-  // TODO(googleo): b/171939770 Accessing "/dev/urandom" is not allowed in
-  // "ime" sandbox. Returns false to use the self-implemented random number
-  // instead. When the API is unblocked, remove the hack.
+  // Accessing "/dev/urandom" is not allowed in "ime" sandbox. Returns false to
+  // use the self-implemented random number instead.
   return false;
 #endif  // OS_CHROMEOS
 
@@ -902,8 +901,6 @@ void Util::GetRandomSequence(char *buf, size_t buf_size) {
   if (GetSecureRandomSequence(buf, buf_size)) {
     return;
   }
-  LOG(ERROR) << "Failed to generate secure random sequence. "
-             << "Make it with Util::Random()";
   for (size_t i = 0; i < buf_size; ++i) {
     buf[i] = static_cast<char>(Util::Random(256));
   }
