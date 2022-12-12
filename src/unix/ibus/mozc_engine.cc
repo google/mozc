@@ -231,24 +231,28 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
-CandidateWindowHandlerInterface *CreateGtkCandidateWindowHandler(
-    ::mozc::renderer::RendererClient *renderer_client) {
+bool UseMozcCandidateWindow() {
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
-    return nullptr;
+    return false;
   }
 
 #ifndef ENABLE_QT_RENDERER
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
     // mozc_renderer is not supported on wayland session.
-    return nullptr;
+    return false;
   }
 #endif  // !ENABLE_QT_RENDERER
 
-  auto *handler = new GtkCandidateWindowHandler(renderer_client);
-  handler->RegisterGSettingsObserver();
-  return handler;
+  // TODO(nona): integrate with renderer/renderer_client.cc
+  // TODO(nona): Check executable bit for renderer.
+  const std::string renderer_path =
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
+  if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
+    LOG(ERROR) << s;
+    return false;
+  }
+  return true;
 }
-
 }  // namespace
 
 MozcEngine::MozcEngine()
@@ -259,12 +263,14 @@ MozcEngine::MozcEngine()
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       preedit_handler_(new PreeditHandler()),
-      gtk_candidate_window_handler_(
-          CreateGtkCandidateWindowHandler(new renderer::RendererClient())),
-      ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
+      use_mozc_candidate_window_(UseMozcCandidateWindow()),
+      mozc_candidate_window_handler_(new renderer::RendererClient()),
       preedit_method_(config::Config::ROMAN) {
   if (selection_monitor_ != nullptr) {
     selection_monitor_->StartMonitoring();
+  }
+  if (use_mozc_candidate_window_) {
+    mozc_candidate_window_handler_.RegisterGSettingsObserver();
   }
 
   ibus_config_.Initialize();
@@ -699,24 +705,11 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
 CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
     IBusEngine *engine) {
-  if (!gtk_candidate_window_handler_) {
-    return ibus_candidate_window_handler_.get();
+  if (use_mozc_candidate_window_ &&
+      engine->client_capabilities & IBUS_CAP_PREEDIT_TEXT) {
+    return &mozc_candidate_window_handler_;
   }
-
-  if (!(engine->client_capabilities & IBUS_CAP_PREEDIT_TEXT)) {
-    return ibus_candidate_window_handler_.get();
-  }
-
-  // TODO(nona): integrate with renderer/renderer_client.cc
-  const std::string renderer_path =
-      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
-  if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
-    LOG(ERROR) << s;
-    return ibus_candidate_window_handler_.get();
-  }
-
-  // TODO(nona): Check executable bit for renderer.
-  return gtk_candidate_window_handler_.get();
+  return &ibus_candidate_window_handler_;
 }
 
 }  // namespace ibus
