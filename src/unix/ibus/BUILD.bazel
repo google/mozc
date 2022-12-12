@@ -177,7 +177,6 @@ cc_library_mozc(
         ],
     ),
     defines = [
-        "ENABLE_GTK_RENDERER",
         "ENABLE_QT_RENDERER",
         "MOZC_ENABLE_X11_SELECTION_MONITOR",
     ],

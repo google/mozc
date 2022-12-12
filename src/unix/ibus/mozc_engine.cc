@@ -49,8 +49,10 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "renderer/renderer_client.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
+#include "unix/ibus/gtk_candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"
@@ -62,16 +64,8 @@
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
 
-#ifdef ENABLE_GTK_RENDERER
-#include "renderer/renderer_client.h"
-#include "unix/ibus/gtk_candidate_window_handler.h"
-#endif  // ENABLE_GTK_RENDERER
-
-
-#ifdef ENABLE_GTK_RENDERER
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
-#endif  // ENABLE_GTK_RENDERER
 
 namespace {
 
@@ -237,8 +231,7 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
-#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
-CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
+CandidateWindowHandlerInterface *CreateGtkCandidateWindowHandler(
     ::mozc::renderer::RendererClient *renderer_client) {
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
     return nullptr;
@@ -255,7 +248,6 @@ CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
   handler->RegisterGSettingsObserver();
   return handler;
 }
-#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
 
 }  // namespace
 
@@ -267,10 +259,8 @@ MozcEngine::MozcEngine()
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       preedit_handler_(new PreeditHandler()),
-#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
       gtk_candidate_window_handler_(
-          createGtkCandidateWindowHandler(new renderer::RendererClient())),
-#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
+          CreateGtkCandidateWindowHandler(new renderer::RendererClient())),
       ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
       preedit_method_(config::Config::ROMAN) {
   if (selection_monitor_ != nullptr) {
@@ -709,9 +699,6 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
 CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
     IBusEngine *engine) {
-#ifndef ENABLE_GTK_RENDERER
-  return ibus_candidate_window_handler_.get();
-#else   // ENABLE_GTK_RENDERER
   if (!gtk_candidate_window_handler_) {
     return ibus_candidate_window_handler_.get();
   }
@@ -730,7 +717,6 @@ CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
 
   // TODO(nona): Check executable bit for renderer.
   return gtk_candidate_window_handler_.get();
-#endif  // not ENABLE_GTK_RENDERER
 }
 
 }  // namespace ibus

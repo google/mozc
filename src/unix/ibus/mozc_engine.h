@@ -135,11 +135,9 @@ class MozcEngine : public EngineInterface {
   std::unique_ptr<PropertyHandlerInterface> property_handler_;
   std::unique_ptr<PreeditHandlerInterface> preedit_handler_;
 
-#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
   // TODO(nona): Introduce CandidateWindowHandlerManager to avoid direct access.
   std::unique_ptr<CandidateWindowHandlerInterface>
       gtk_candidate_window_handler_;
-#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
   std::unique_ptr<CandidateWindowHandlerInterface>
       ibus_candidate_window_handler_;
   config::Config::PreeditMethod preedit_method_;

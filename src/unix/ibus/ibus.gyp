@@ -330,34 +330,28 @@
         'xcb_build_environment',
       ],
     },
-  ],
-  'conditions': [
-    ['enable_gtk_renderer==1', {
-      'targets': [
-        {
-          'target_name': 'gtk_candidate_window_handler',
-          'type': 'static_library',
-          'sources': [
-            'gtk_candidate_window_handler.cc',
-          ],
-          'dependencies': [
-            '../../protocol/protocol.gyp:renderer_proto',
-            '../../renderer/renderer.gyp:renderer_client',
-            'ibus_build_environment',
-          ],
-        },
-        {
-          'target_name': 'gtk_candidate_window_handler_test',
-          'type': 'executable',
-          'sources': [
-            'gtk_candidate_window_handler_test.cc',
-          ],
-          'dependencies': [
-            'gtk_candidate_window_handler',
-            '../../testing/testing.gyp:gtest_main',
-          ],
-        },
+    {
+      'target_name': 'gtk_candidate_window_handler',
+      'type': 'static_library',
+      'sources': [
+        'gtk_candidate_window_handler.cc',
       ],
-    }],
+      'dependencies': [
+        '../../protocol/protocol.gyp:renderer_proto',
+        '../../renderer/renderer.gyp:renderer_client',
+        'ibus_build_environment',
+      ],
+    },
+    {
+      'target_name': 'gtk_candidate_window_handler_test',
+      'type': 'executable',
+      'sources': [
+        'gtk_candidate_window_handler_test.cc',
+      ],
+      'dependencies': [
+        'gtk_candidate_window_handler',
+        '../../testing/testing.gyp:gtest_main',
+      ],
+    },
   ],
 }
