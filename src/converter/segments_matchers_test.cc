@@ -43,6 +43,7 @@ using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Not;
 using ::testing::Pointee;
+using ::testing::StrEq;
 
 Segment::Candidate MakeCandidate(const std::string &key,
                                  const std::string &value) {
@@ -111,6 +112,17 @@ TEST(SegmentsMatchersTest, HasSingleCandidate) {
               HasSingleCandidate(Field(&Segment::Candidate::value, "value")));
   EXPECT_THAT(
       y, Not(HasSingleCandidate(Field(&Segment::Candidate::value, "value1"))));
+}
+
+TEST(SegmentsMatchersTest, ContainsCandidate) {
+  const Segment x = MakeSegment("key", {"value1", "value2", "value3"});
+  constexpr auto ValueIs = [](const auto &value) {
+    return Field(&Segment::Candidate::value, StrEq(value));
+  };
+  EXPECT_THAT(x, ContainsCandidate(ValueIs("value1")));
+  EXPECT_THAT(x, ContainsCandidate(ValueIs("value2")));
+  EXPECT_THAT(x, ContainsCandidate(ValueIs("value3")));
+  EXPECT_THAT(x, Not(ContainsCandidate(ValueIs("value4"))));
 }
 
 TEST(SegmentsMatchersTest, EqualsSegments) {

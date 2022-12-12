@@ -84,6 +84,7 @@ class DateRewriter : public RewriterInterface {
   static bool AdToEra(int year, std::vector<std::string> *results) {
     return AdToEra(year, 1, results);
   }
+  static std::vector<std::string> AdToEra(int year, int month);
 
   // Converts AD to Japanese ERA.
   // If given string is invalid, this function does not nothing and
@@ -114,6 +115,7 @@ class DateRewriter : public RewriterInterface {
   //   25   :  30 -> "25時30分、25時半、午前1時30分、午前1時半、25:30"
   static bool ConvertTime(uint32_t hour, uint32_t min,
                           std::vector<std::string> *results);
+  static std::vector<std::string> ConvertTime(uint32_t hour, uint32_t min);
 
   // Converts given date to string expression.
   // If given date information is invalid, this function does nothing and
@@ -129,6 +131,9 @@ class DateRewriter : public RewriterInterface {
   //   2000:  2  : 29 -> "平成12年2月29日,2000年2月29日,2000-02-29,2000/02/29"
   static bool ConvertDateWithYear(uint32_t year, uint32_t month, uint32_t day,
                                   std::vector<std::string> *results);
+  static std::vector<std::string> ConvertDateWithYear(uint32_t year,
+                                                      uint32_t month,
+                                                      uint32_t day);
 
   // The key of the extra format.
   // The value can be specified via user dictionary.

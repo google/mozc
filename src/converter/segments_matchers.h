@@ -197,6 +197,12 @@ template <typename T>
   return CandidatesAreArray(std::vector<CandidateMatcherType>{matcher});
 }
 
+// Checks if a segment contains a candidate that matches the
+// given matcher.
+MATCHER_P(ContainsCandidate, matcher, "") {
+  return ::testing::Matches(::testing::Contains(matcher))(arg.candidates());
+}
+
 // Checks if a segments exactly matches the given segments except for the
 // following three fields:
 //   * pool_
