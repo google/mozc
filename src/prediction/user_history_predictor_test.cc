@@ -68,11 +68,10 @@
 namespace mozc {
 namespace {
 
-using commands::Request;
-using config::Config;
-using dictionary::DictionaryMock;
-using dictionary::SuppressionDictionary;
-using dictionary::Token;
+using ::mozc::commands::Request;
+using ::mozc::config::Config;
+using ::mozc::dictionary::MockDictionary;
+using ::mozc::dictionary::SuppressionDictionary;
 
 }  // namespace
 
@@ -91,7 +90,7 @@ class UserHistoryPredictorTest : public ::testing::Test {
     convreq_->set_max_user_history_prediction_candidates_size(10);
     convreq_->set_max_user_history_prediction_candidates_size_for_zero_query(
         10);
-    data_and_predictor_.reset(CreateDataAndPredictor());
+    data_and_predictor_ = CreateDataAndPredictor();
 
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
@@ -114,10 +113,6 @@ class UserHistoryPredictorTest : public ::testing::Test {
     predictor->ClearAllHistory();
     predictor->WaitForSyncer();
     return predictor;
-  }
-
-  DictionaryMock *GetDictionaryMock() {
-    return data_and_predictor_->dictionary.get();
   }
 
   SuppressionDictionary *GetSuppressionDictionary() {
@@ -400,16 +395,16 @@ class UserHistoryPredictorTest : public ::testing::Test {
 
  private:
   struct DataAndPredictor {
-    std::unique_ptr<DictionaryMock> dictionary;
+    std::unique_ptr<MockDictionary> dictionary;
     std::unique_ptr<SuppressionDictionary> suppression_dictionary;
     std::unique_ptr<UserHistoryPredictor> predictor;
     dictionary::PosMatcher pos_matcher;
   };
 
-  DataAndPredictor *CreateDataAndPredictor() const {
-    DataAndPredictor *ret = new DataAndPredictor;
+  std::unique_ptr<DataAndPredictor> CreateDataAndPredictor() const {
+    auto ret = std::make_unique<DataAndPredictor>();
     testing::MockDataManager data_manager;
-    ret->dictionary = std::make_unique<DictionaryMock>();
+    ret->dictionary = std::make_unique<MockDictionary>();
     ret->suppression_dictionary = std::make_unique<SuppressionDictionary>();
     ret->pos_matcher.Set(data_manager.GetPosMatcherData());
     ret->predictor = std::make_unique<UserHistoryPredictor>(
@@ -1086,7 +1081,7 @@ TEST_F(UserHistoryPredictorTest, StartsWithPunctuations) {
     }
     segments.Clear();
     {
-      // Prediciton
+      // Prediction
       SetUpInputForPrediction(first_char, composer_.get(), &segments);
       EXPECT_EQ(kTestCases[i].expected_result,
                 predictor->PredictForRequest(*convreq_, &segments))
@@ -2060,7 +2055,7 @@ const PrivacySensitiveTestData kNonSensitiveCases[] = {
     {kSensitive,  // We might want to revisit this behavior
      "Type just a number.", "2398402938402934", "2398402938402934"},
     {kNonSensitive,  // We might want to revisit this behavior
-     "Type an common English word which might be included in our system "
+     "Type a common English word which might be included in our system "
      "dictionary with number postfix.",
      "Orange10000", "Orange10000"},
 };
@@ -2070,23 +2065,10 @@ const PrivacySensitiveTestData kNonSensitiveCases[] = {
 TEST_F(UserHistoryPredictorTest, PrivacySensitiveTest) {
   UserHistoryPredictor *predictor = GetUserHistoryPredictor();
 
-  // Add those words to the mock dictionary that are assumed to exist in privacy
-  // sensitive filtering.
-  const char *kEnglishWords[] = {
-      "variable",
-      "UPPER",
-  };
-  for (size_t i = 0; i < std::size(kEnglishWords); ++i) {
-    // LookupPredictive is used in UserHistoryPredictor::IsPrivacySensitive().
-    GetDictionaryMock()->AddLookupExact(kEnglishWords[i], kEnglishWords[i],
-                                        kEnglishWords[i], Token::NONE);
-  }
-
-  for (size_t i = 0; i < std::size(kNonSensitiveCases); ++i) {
+  for (const PrivacySensitiveTestData &data : kNonSensitiveCases) {
     predictor->ClearAllHistory();
     WaitForSyncer(predictor);
 
-    const PrivacySensitiveTestData &data = kNonSensitiveCases[i];
     const std::string description(data.scenario_description);
     const std::string input(data.input);
     const std::string output(data.output);
