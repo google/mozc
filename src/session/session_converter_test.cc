@@ -1548,6 +1548,88 @@ TEST_F(SessionConverterTest, CommitHeadToFocusedSegmentsAtLastSegment) {
   EXPECT_FALSE(converter.IsActive());
 }
 
+TEST_F(SessionConverterTest, CommitConvertedBracketPairText) {
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+  Segments segments;
+  const std::string kKakko = "かっこ";
+
+  {  // Initialize segments.
+    segments.Clear();
+    Segment *segment = segments.add_segment();
+    Segment::Candidate *candidate;
+    segment->set_key(kKakko);
+    candidate = segment->add_candidate();
+    candidate->value = "（）";
+    candidate->key = kKakko;
+    candidate->content_key = kKakko;
+    candidate = segment->add_candidate();
+    candidate->value = "「」";
+    candidate->key = kKakko;
+    candidate->content_key = kKakko;
+  }
+
+  composer_->InsertCharacterPreedit(kKakko);
+
+  // Suggestion
+  EXPECT_CALL(mock_converter, StartSuggestionForRequest(_, _))
+      .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+  ASSERT_TRUE(converter.Suggest(*composer_));
+  std::vector<int> expected_indices = {0};
+  EXPECT_TRUE(IsCandidateListVisible(converter));
+  EXPECT_TRUE(converter.IsActive());
+
+  {  // Check the candidate list.
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_FALSE(output.has_result());
+    EXPECT_TRUE(output.has_preedit());
+    EXPECT_TRUE(output.has_candidates());
+
+    const commands::Preedit &preedit = output.preedit();
+    EXPECT_EQ(1, preedit.segment_size());
+    EXPECT_EQ(kKakko, preedit.segment(0).value());
+
+    const commands::Candidates &candidates = output.candidates();
+    EXPECT_EQ(2, candidates.size());
+    EXPECT_EQ("（）", candidates.candidate(0).value());
+    EXPECT_FALSE(candidates.has_focused_index());
+    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  }
+
+  EXPECT_CALL(mock_converter, CommitSegmentValue(_, 0, 1))
+      .WillOnce(Return(true));
+  // FinishConversion is expected to return empty Segments.
+  EXPECT_CALL(mock_converter, FinishConversion(_, _))
+      .WillOnce(SetArgPointee<1>(Segments()));
+
+  size_t committed_key_size = 0;
+  converter.CommitSuggestionByIndex(1, *composer_, Context::default_instance(),
+                                    &committed_key_size);
+  expected_indices.clear();
+  composer_->Reset();
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_FALSE(converter.IsActive());
+  EXPECT_EQ(SessionConverter::kConsumedAllCharacters, committed_key_size);
+
+  {  // Check the result
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_TRUE(output.has_result());
+    EXPECT_FALSE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Result &result = output.result();
+    EXPECT_EQ("「」", result.value());
+    EXPECT_EQ(kKakko, result.key());
+    EXPECT_EQ(-1, result.cursor_offset());
+    EXPECT_EQ(SessionConverterInterface::COMPOSITION, GetState(converter));
+    EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  }
+
+  EXPECT_FALSE(converter.IsActive());
+}
+
 TEST_F(SessionConverterTest, CommitPreedit) {
   MockConverter mock_converter;
   SessionConverter converter(&mock_converter, request_.get(), config_.get());
@@ -1576,6 +1658,35 @@ TEST_F(SessionConverterTest, CommitPreedit) {
 
   EXPECT_COUNT_STATS("Commit", 1);
   EXPECT_COUNT_STATS("CommitFromComposition", 1);
+}
+
+TEST_F(SessionConverterTest, CommitPreeditBracketPairText) {
+  MockConverter mock_converter;
+  SessionConverter converter(&mock_converter, request_.get(), config_.get());
+
+  std::vector<int> expected_indices;
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  composer_->InsertCharacterPreedit("（）");
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+  converter.CommitPreedit(*composer_, Context::default_instance());
+  composer_->Reset();
+  EXPECT_FALSE(IsCandidateListVisible(converter));
+  EXPECT_SELECTED_CANDIDATE_INDICES_EQ(converter, expected_indices);
+
+  {  // Check the result
+    commands::Output output;
+    converter.FillOutput(*composer_, &output);
+    EXPECT_TRUE(output.has_result());
+    EXPECT_FALSE(output.has_preedit());
+    EXPECT_FALSE(output.has_candidates());
+
+    const commands::Result &result = output.result();
+    EXPECT_EQ("（）", result.value());
+    EXPECT_EQ("（）", result.key());
+    EXPECT_EQ(-1, result.cursor_offset());
+  }
+
+  EXPECT_FALSE(converter.IsActive());
 }
 
 TEST_F(SessionConverterTest, ClearSegmentsBeforeSuggest) {

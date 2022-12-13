@@ -831,6 +831,12 @@ TEST(SessionOutputTest, FillConversionResult) {
   EXPECT_EQ("ABC", result.value());
 }
 
+TEST(SessionOutputTest, FillCursorOffsetResult) {
+  commands::Result result;
+  SessionOutput::FillCursorOffsetResult(-1, &result);
+  EXPECT_EQ(-1, result.cursor_offset());
+}
+
 TEST(SessionOutputTest, FillPreeditResult) {
   commands::Result result;
   SessionOutput::FillPreeditResult("ABC", &result);

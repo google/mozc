@@ -520,5 +520,11 @@ void SessionOutput::FillPreeditResult(const std::string &preedit,
                                            normalized_preedit, result_proto);
 }
 
+// static
+void SessionOutput::FillCursorOffsetResult(int32_t cursor_offset,
+                                           commands::Result *result_proto) {
+  result_proto->set_cursor_offset(cursor_offset);
+}
+
 }  // namespace session
 }  // namespace mozc

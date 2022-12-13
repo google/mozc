@@ -767,6 +767,14 @@ bool DateRewriter::AdToEra(int year, int month,
   return r;
 }
 
+std::vector<std::string> DateRewriter::AdToEra(int year, int month) {
+  std::vector<std::string> results;
+  if (!AdToEra(year, month, &results)) {
+    results.clear();
+  }
+  return results;
+}
+
 bool DateRewriter::EraToAd(const std::string &key,
                            std::vector<std::string> *results,
                            std::vector<std::string> *descriptions) {
@@ -805,6 +813,15 @@ bool DateRewriter::ConvertTime(uint32_t hour, uint32_t min,
   return true;
 }
 
+std::vector<std::string> DateRewriter::ConvertTime(uint32_t hour,
+                                                   uint32_t min) {
+  std::vector<std::string> results;
+  if (!ConvertTime(hour, min, &results)) {
+    results.clear();
+  }
+  return results;
+}
+
 bool DateRewriter::ConvertDateWithYear(uint32_t year, uint32_t month,
                                        uint32_t day,
                                        std::vector<std::string> *results) {
@@ -817,6 +834,16 @@ bool DateRewriter::ConvertDateWithYear(uint32_t year, uint32_t month,
   results->push_back(absl::StrFormat("%d-%2.2d-%2.2d", year, month, day));
   results->push_back(absl::StrFormat("%d年%d月%d日", year, month, day));
   return true;
+}
+
+std::vector<std::string> DateRewriter::ConvertDateWithYear(uint32_t year,
+                                                           uint32_t month,
+                                                           uint32_t day) {
+  std::vector<std::string> results;
+  if (!ConvertDateWithYear(year, month, day, &results)) {
+    results.clear();
+  }
+  return results;
 }
 
 namespace {

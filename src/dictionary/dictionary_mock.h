@@ -60,6 +60,7 @@
 #include "dictionary/dictionary_interface.h"
 #include "dictionary/dictionary_token.h"
 #include "request/conversion_request.h"
+#include "testing/base/public/gmock.h"
 #include "absl/strings/string_view.h"
 
 namespace mozc {
@@ -71,10 +72,48 @@ std::unique_ptr<Token> CreateToken(const std::string &key,
                                    int rid,
                                    Token::AttributesBitfield attributes);
 
+class MockDictionary : public DictionaryInterface {
+ public:
+  static constexpr int kDefaultCost = 0;
+  static constexpr int kDefaultPosId = 1;
+
+  MockDictionary() = default;
+  ~MockDictionary() override = default;
+
+  MOCK_METHOD(bool, HasKey, (absl::string_view key), (const, override));
+  MOCK_METHOD(bool, HasValue, (absl::string_view value), (const, override));
+  MOCK_METHOD(void, LookupPredictive,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupPrefix,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupExact,
+              (absl::string_view key,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(void, LookupReverse,
+              (absl::string_view str,
+               const ConversionRequest &conversion_request, Callback *callback),
+              (const, override));
+  MOCK_METHOD(bool, LookupComment,
+              (absl::string_view key, absl::string_view value,
+               const ConversionRequest &conversion_request,
+               std::string *comment),
+              (const, override));
+  MOCK_METHOD(void, PopulateReverseLookupCache, (absl::string_view str),
+              (const, override));
+  MOCK_METHOD(void, ClearReverseLookupCache, (), (const, override));
+  MOCK_METHOD(bool, Sync, (), (override));
+  MOCK_METHOD(bool, Reload, (), (override));
+};
+
 class DictionaryMock final : public DictionaryInterface {
  public:
-  static const int kDefaultCost;
-  static const int kDummyPosId;
+  static constexpr int kDefaultCost = MockDictionary::kDefaultCost;
+  static constexpr int kDummyPosId = MockDictionary::kDefaultPosId;
 
   DictionaryMock();
 

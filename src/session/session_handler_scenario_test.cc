@@ -133,6 +133,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "kana_modifier_insensitive_conversion.txt",
     DATA_DIR "mobile_partial_variant_candidates.txt",
     DATA_DIR "mobile_qwerty_transliteration_scenario.txt",
+    DATA_DIR "mobile_revert_user_history_learning.txt",
     DATA_DIR "mobile_t13n_candidates.txt",
     DATA_DIR "on_off_cancel.txt",
     DATA_DIR "partial_suggestion.txt",

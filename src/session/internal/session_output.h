@@ -76,8 +76,7 @@ class SessionOutput {
   // For debug. Fill the CandidateList protobuf with the
   // removed_candidates_for_debug in the segment.
   static void FillRemovedCandidates(
-      const Segment &segment,
-      commands::CandidateList *candidate_list_proto);
+      const Segment &segment, commands::CandidateList *candidate_list_proto);
 
   // Check if the usages should be rendered on the current CandidateList status.
   static bool ShouldShowUsages(const Segment &segment,
@@ -135,6 +134,10 @@ class SessionOutput {
   // string for a preedit result.
   static void FillPreeditResult(const std::string &preedit,
                                 commands::Result *result_proto);
+
+  // Fill the Result protobuf with cursor offset.
+  static void FillCursorOffsetResult(int32_t cursor_offset,
+                                     commands::Result *result_proto);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SessionOutput);

@@ -49,8 +49,10 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "renderer/renderer_client.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
+#include "unix/ibus/gtk_candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"
@@ -62,16 +64,8 @@
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
 
-#ifdef ENABLE_GTK_RENDERER
-#include "renderer/renderer_client.h"
-#include "unix/ibus/gtk_candidate_window_handler.h"
-#endif  // ENABLE_GTK_RENDERER
-
-
-#ifdef ENABLE_GTK_RENDERER
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
-#endif  // ENABLE_GTK_RENDERER
 
 namespace {
 
@@ -237,26 +231,28 @@ std::unique_ptr<client::ClientInterface> CreateAndConfigureClient() {
   return client;
 }
 
-#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
-CandidateWindowHandlerInterface *createGtkCandidateWindowHandler(
-    ::mozc::renderer::RendererClient *renderer_client) {
+bool UseMozcCandidateWindow() {
   if (!absl::GetFlag(FLAGS_use_mozc_renderer)) {
-    return nullptr;
+    return false;
   }
 
 #ifndef ENABLE_QT_RENDERER
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
     // mozc_renderer is not supported on wayland session.
-    return nullptr;
+    return false;
   }
 #endif  // !ENABLE_QT_RENDERER
 
-  auto *handler = new GtkCandidateWindowHandler(renderer_client);
-  handler->RegisterGSettingsObserver();
-  return handler;
+  // TODO(nona): integrate with renderer/renderer_client.cc
+  // TODO(nona): Check executable bit for renderer.
+  const std::string renderer_path =
+      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
+  if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
+    LOG(ERROR) << s;
+    return false;
+  }
+  return true;
 }
-#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
-
 }  // namespace
 
 MozcEngine::MozcEngine()
@@ -267,14 +263,14 @@ MozcEngine::MozcEngine()
       selection_monitor_(SelectionMonitorFactory::Create(1024)),
 #endif  // MOZC_ENABLE_X11_SELECTION_MONITOR
       preedit_handler_(new PreeditHandler()),
-#if defined(ENABLE_GTK_RENDERER) || defined(ENABLE_QT_RENDERER)
-      gtk_candidate_window_handler_(
-          createGtkCandidateWindowHandler(new renderer::RendererClient())),
-#endif  // ENABLE_GTK_RENDERER || ENABLE_QT_RENDERER
-      ibus_candidate_window_handler_(new IBusCandidateWindowHandler()),
+      use_mozc_candidate_window_(UseMozcCandidateWindow()),
+      mozc_candidate_window_handler_(new renderer::RendererClient()),
       preedit_method_(config::Config::ROMAN) {
   if (selection_monitor_ != nullptr) {
     selection_monitor_->StartMonitoring();
+  }
+  if (use_mozc_candidate_window_) {
+    mozc_candidate_window_handler_.RegisterGSettingsObserver();
   }
 
   ibus_config_.Initialize();
@@ -709,28 +705,11 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 
 CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
     IBusEngine *engine) {
-#ifndef ENABLE_GTK_RENDERER
-  return ibus_candidate_window_handler_.get();
-#else   // ENABLE_GTK_RENDERER
-  if (!gtk_candidate_window_handler_) {
-    return ibus_candidate_window_handler_.get();
+  if (use_mozc_candidate_window_ &&
+      engine->client_capabilities & IBUS_CAP_PREEDIT_TEXT) {
+    return &mozc_candidate_window_handler_;
   }
-
-  if (!(engine->client_capabilities & IBUS_CAP_PREEDIT_TEXT)) {
-    return ibus_candidate_window_handler_.get();
-  }
-
-  // TODO(nona): integrate with renderer/renderer_client.cc
-  const std::string renderer_path =
-      FileUtil::JoinPath(SystemUtil::GetServerDirectory(), "mozc_renderer");
-  if (absl::Status s = FileUtil::FileExists(renderer_path); !s.ok()) {
-    LOG(ERROR) << s;
-    return ibus_candidate_window_handler_.get();
-  }
-
-  // TODO(nona): Check executable bit for renderer.
-  return gtk_candidate_window_handler_.get();
-#endif  // not ENABLE_GTK_RENDERER
+  return &ibus_candidate_window_handler_;
 }
 
 }  // namespace ibus

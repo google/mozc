@@ -94,9 +94,6 @@ std::unique_ptr<Token> CreateToken(const std::string &key,
   return token;
 }
 
-const int DictionaryMock::kDefaultCost = 0;
-const int DictionaryMock::kDummyPosId = 1;
-
 DictionaryMock::DictionaryMock() { LOG(INFO) << "DictionaryMock is created"; }
 
 DictionaryMock::~DictionaryMock() = default;

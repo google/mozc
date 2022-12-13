@@ -59,7 +59,7 @@ bazel build @com_google_protobuf//:protoc
 IBus specific configurations are customizable in
 `~/.config/mozc/ibus_config.textproto`.
 
-The file path may be `~/.mozc/ibus_config.textproto` if `~/.mozc` directry
+The file path may be `~/.mozc/ibus_config.textproto` if `~/.mozc` directory
 already exists.
 
 Here is the default configuration.
@@ -140,4 +140,37 @@ engines {
   rank : 80
 }
 active_on_launch: False
+```
+
+### Fixed composition mode per engine
+
+`composition_mode` specifies the composition mode every time the engine is
+enabled. This is useful to switch the composition mode by using Ibus hot keys.
+
+The available values are `DIRECT`, `HIRAGANA`, `FULL_KATAKANA`, `HALF_ASCII`, `FULL_ASCII`, `HALF_KATAKANA`, and `NONE`.
+`NONE` does not change the composition mode.
+
+`symbol` is a label to represent the engine used by Ibus.
+
+```
+engines {
+  name : "mozc-on"
+  longname : "Mozc:あ"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+  symbol : "あ"
+  composition_mode: HIRAGANA
+}
+engines {
+  name : "mozc-off"
+  longname : "Mozc:A_"
+  layout : "default"
+  layout_variant : ""
+  layout_option : ""
+  rank : 80
+  symbol: "A"
+  composition_mode: DIRECT
+}
 ```

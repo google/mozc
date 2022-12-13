@@ -69,6 +69,7 @@
 #include "base/double_array.h"
 #include "base/logging.h"
 #include "base/port.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/numeric/bits.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
@@ -880,9 +881,8 @@ bool GetSecureRandomSequence(char *buf, size_t buf_size) {
 #endif  // OS_WIN
 
 #if defined(OS_CHROMEOS)
-  // TODO(googleo): b/171939770 Accessing "/dev/urandom" is not allowed in
-  // "ime" sandbox. Returns false to use the self-implemented random number
-  // instead. When the API is unblocked, remove the hack.
+  // Accessing "/dev/urandom" is not allowed in "ime" sandbox. Returns false to
+  // use the self-implemented random number instead.
   return false;
 #endif  // OS_CHROMEOS
 
@@ -901,8 +901,6 @@ void Util::GetRandomSequence(char *buf, size_t buf_size) {
   if (GetSecureRandomSequence(buf, buf_size)) {
     return;
   }
-  LOG(ERROR) << "Failed to generate secure random sequence. "
-             << "Make it with Util::Random()";
   for (size_t i = 0; i < buf_size; ++i) {
     buf[i] = static_cast<char>(Util::Random(256));
   }
@@ -1009,6 +1007,19 @@ bool Util::IsCloseBracket(absl::string_view key, std::string *open_bracket) {
   }
   *open_bracket = std::string(iter->GetOpenBracket());
   return true;
+}
+
+bool Util::IsBracketPairText(absl::string_view input) {
+  // The definition of "bracket" here is a bit wider than kSortedBracketPairs
+  // because it also contains some additional pairs listed in
+  // data/symbol/symbol.tsv.
+  static const auto &kBracketPairText =
+      *new absl::flat_hash_set<absl::string_view>{
+          "«»",   "()",   "[]",   "{}",   "‘’",   "“”",   "‹›",
+          "〈〉", "《》", "「」", "『』", "【】", "〔〕", "〘〙",
+          "〚〛", "（）", "［］", "｛｝", "｢｣",
+      };
+  return kBracketPairText.contains(input);
 }
 
 bool Util::IsFullWidthSymbolInHalfWidthKatakana(const std::string &input) {

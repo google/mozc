@@ -31,9 +31,13 @@
 #define MOZC_CONVERTER_SEGMENTS_MATCHERS_H_
 
 #include <algorithm>
+#include <initializer_list>
+#include <string>
+#include <vector>
 
 #include "converter/segments.h"
 #include "testing/base/public/gmock.h"
+#include "absl/strings/str_format.h"
 
 namespace mozc {
 
@@ -132,6 +136,71 @@ MATCHER_P(EqualsSegment, segment, "") {
   }
 
   return true;
+}
+
+namespace internal {
+
+// A helper function to print a container of candidate matchers.
+template <typename Container>
+std::string PrintCandidateMatcherArray(const Container &matchers) {
+  std::string str = "candidates are:\n";
+  int index = 0;
+  for (const auto &matcher : matchers) {
+    str += absl::StrFormat("  cand %d %s\n", index++,
+                           ::testing::PrintToString(matcher));
+  }
+  return str;
+}
+
+}  // namespace internal
+
+// A matcher for Segment to test if its candidates are equal to the given
+// matchers in order. Use CandidatesAreArray() helpers to deduce matcher types.
+MATCHER_P(CandidatesAreArrayMatcherImpl, matcher_array,
+          ::mozc::internal::PrintCandidateMatcherArray(matcher_array)) {
+  return ::testing::Matches(::testing::ElementsAreArray(matcher_array))(
+      arg.candidates());
+}
+
+// Checks if a segment contains a candidate list that matches the given matchers
+// in the given order. Example usage:
+//
+// Segment segment = ...;
+// EXPECT_THAT(segment, CandidatesAreArray({
+//     Field(&Segment::Candidate::value, "value"),
+//     Field(&Segment::Candidate::key, "key"),
+// });
+//
+// The above code checks if the first candidate's value is "value" and the
+// second candidate's key is "key".
+//
+// Remark: Each candidate matcher should test against the pointer type
+// (Segment::Candidate *). Note: Field() from gMock is applicable to pointer
+// types too. See SegmentsMatchersTest.CandidatesAreArrayWithCustomMatcher for
+// example.
+template <typename T>
+::testing::Matcher<Segment> CandidatesAreArray(
+    std::initializer_list<T> matchers) {
+  return CandidatesAreArrayMatcherImpl(matchers);
+}
+
+template <typename T>
+::testing::Matcher<Segment> CandidatesAreArray(const std::vector<T> &matchers) {
+  return CandidatesAreArrayMatcherImpl(matchers);
+}
+
+// Checks if a segment contains one and only one candidate that matches the
+// given matcher.
+template <typename T>
+::testing::Matcher<Segment> HasSingleCandidate(const T &matcher) {
+  using CandidateMatcherType = ::testing::Matcher<const Segment::Candidate *>;
+  return CandidatesAreArray(std::vector<CandidateMatcherType>{matcher});
+}
+
+// Checks if a segment contains a candidate that matches the
+// given matcher.
+MATCHER_P(ContainsCandidate, matcher, "") {
+  return ::testing::Matches(::testing::Contains(matcher))(arg.candidates());
 }
 
 // Checks if a segments exactly matches the given segments except for the

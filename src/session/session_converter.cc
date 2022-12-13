@@ -113,6 +113,12 @@ const ConversionRequest CreateIncognitoConversionRequest(
   return request;
 }
 
+// Calculate cursor offset for committed text.
+int32_t CalculateCursorOffset(const std::string &committed_text) {
+  // If committed_text is a bracket pair, set the cursor in the middle.
+  return Util::IsBracketPairText(committed_text) ? -1 : 0;
+}
+
 }  // namespace
 
 const size_t SessionConverter::kConsumedAllCharacters =
@@ -833,6 +839,10 @@ void SessionConverter::CommitPreedit(const composer::Composer &composer,
   const std::string normalized_preedit = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(preedit, result_.get());
 
+  // Cursor offset needs to be calculated based on normalized text.
+  SessionOutput::FillCursorOffsetResult(
+      CalculateCursorOffset(normalized_preedit), result_.get());
+
   // TODO(toshiyuki): Move ConverterUtil::InitSegmentsFromString()
   // into here, because this is the only usage of the method.
   ConverterUtil::InitSegmentsFromString(key, normalized_preedit,
@@ -861,6 +871,8 @@ void SessionConverter::CommitHead(size_t count,
   Util::Utf8SubString(preedit, 0, *consumed_key_size, &preedit);
   const std::string composition = TextNormalizer::NormalizeText(preedit);
   SessionOutput::FillPreeditResult(composition, result_.get());
+  SessionOutput::FillCursorOffsetResult(CalculateCursorOffset(composition),
+                                        result_.get());
 }
 
 void SessionConverter::Revert() {
@@ -1337,6 +1349,8 @@ bool SessionConverter::UpdateResult(size_t index, size_t size,
     *consumed_key_size = GetConsumedPreeditSize(index, size);
   }
   SessionOutput::FillConversionResult(preedit, conversion, result_.get());
+  SessionOutput::FillCursorOffsetResult(CalculateCursorOffset(conversion),
+                                        result_.get());
   return true;
 }
 

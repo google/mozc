@@ -105,6 +105,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../testing/testing.gyp:testing',
       ],
     },
     {

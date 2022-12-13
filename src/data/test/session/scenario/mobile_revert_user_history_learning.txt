@@ -1,0 +1,58 @@
+# Enable IME
+SEND_KEY	ON
+
+SET_MOBILE_REQUEST
+
+# Switch to 12keys-hiragana keyboard layout.
+UPDATE_MOBILE_KEYBOARD	FLICK_TO_HIRAGANA	SPACE_OR_CONVERT_KEEPING_COMPOSITION
+SWITCH_INPUT_MODE	HIRAGANA
+
+
+# Check if the user history is working for suggestion
+# 1. "合い" is the top candidate for "あい"
+# 2. Submit "あい"
+# 3. "あい" should be the top candidate by user history learning
+RESET_CONTEXT
+SEND_KEYS	1_
+EXPECT_PREEDIT	あい
+EXPECT_CANDIDATE	0	合い
+EXPECT_IN_ALL_CANDIDATE_WORDS	合い
+EXPECT_IN_ALL_CANDIDATE_WORDS	あい
+SUBMIT_CANDIDATE_BY_VALUE	あい
+EXPECT_RESULT	あい
+
+RESET_CONTEXT
+SEND_KEYS	1_
+EXPECT_PREEDIT	あい
+EXPECT_CANDIDATE	0	あい
+
+# Check if the CLEAR_USER_PREDICTION is working
+# "合い" should be the top candidate after CLEAR_USER_PREDICTION command
+CLEAR_USER_PREDICTION
+
+RESET_CONTEXT
+SEND_KEYS	1_
+EXPECT_PREEDIT	あい
+EXPECT_CANDIDATE	0	合い
+
+# Check if the REVERT by BACKSPACE is working
+# 1. "合い" is the top candidate for "あい"
+# 2. Submit "あい"
+# 3. Send BACKSPACE
+# 3. "あい" should NOT be the top candidate
+RESET_CONTEXT
+SEND_KEYS	1_
+EXPECT_PREEDIT	あい
+EXPECT_CANDIDATE	0	合い
+EXPECT_IN_ALL_CANDIDATE_WORDS	合い
+EXPECT_IN_ALL_CANDIDATE_WORDS	あい
+SUBMIT_CANDIDATE_BY_VALUE	あい
+EXPECT_RESULT	あい
+SEND_KEY	BACKSPACE
+
+RESET_CONTEXT
+SEND_KEYS	1_
+EXPECT_PREEDIT	あい
+EXPECT_CANDIDATE	0	合い
+
+CLEAR_USER_PREDICTION

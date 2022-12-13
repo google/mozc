@@ -70,6 +70,7 @@ cc_library_mozc(
     srcs = ["spellchecker_service.cc"],
     hdrs = ["spellchecker_service.h"],
     deps = [
+        ":rulebased_filter",
         ":spellchecker_service_interface",
         "//base:file_util",
         "//base:port",
@@ -112,10 +113,48 @@ cc_test_mozc(
     deps = [
         ":spellchecker_service",
         "//base",
+        "//base:file_stream",
         "//base:file_util",
         "//base:util",
         "//data_manager",
         "//protocol:commands_cc_proto",
+        "//testing:gunit_main",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library_mozc(
+    name = "rulebased_filter",
+    srcs = ["rulebased_filter.cc"],
+    hdrs = ["rulebased_filter.h"],
+    deps = [
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:logging",
+        "//base:port",
+        "//base:util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test_mozc(
+    name = "rulebased_filter_test",
+    size = "small",
+    srcs = ["rulebased_filter_test.cc"],
+    deps = [
+        ":rulebased_filter",
+        "//base",
+        "//base:file_stream",
+        "//base:file_util",
+        "//base:util",
         "//testing:gunit_main",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",

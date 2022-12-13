@@ -38,6 +38,7 @@
 #include "composer/table.h"
 #include "config/config_handler.h"
 #include "converter/segments.h"
+#include "converter/segments_matchers.h"
 #include "data_manager/testing/mock_data_manager.h"
 #include "dictionary/dictionary_mock.h"
 #include "dictionary/pos_matcher.h"
@@ -52,8 +53,15 @@
 namespace mozc {
 namespace {
 
-using dictionary::DictionaryMock;
-using dictionary::Token;
+using ::mozc::dictionary::MockDictionary;
+using ::mozc::dictionary::PosMatcher;
+using ::testing::AllOf;
+using ::testing::Field;
+using ::testing::Matcher;
+using ::testing::Mock;
+using ::testing::Pointee;
+using ::testing::Return;
+using ::testing::StrEq;
 
 void InsertASCIISequence(const std::string &text,
                          composer::Composer *composer) {
@@ -64,29 +72,15 @@ void InsertASCIISequence(const std::string &text,
   }
 }
 
-}  // namespace
-
 class LanguageAwareRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
   LanguageAwareRewriterTest() {}
   ~LanguageAwareRewriterTest() override {}
 
-  void SetUp() override {
-    usage_stats::UsageStats::ClearAllStatsForTest();
-    dictionary_mock_ = std::make_unique<DictionaryMock>();
-  }
+  void SetUp() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
-  void TearDown() override {
-    dictionary_mock_.reset();
-    usage_stats::UsageStats::ClearAllStatsForTest();
-  }
-
-  LanguageAwareRewriter *CreateLanguageAwareRewriter() const {
-    return new LanguageAwareRewriter(
-        dictionary::PosMatcher(data_manager_.GetPosMatcherData()),
-        dictionary_mock_.get());
-  }
+  void TearDown() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
   bool RewriteWithLanguageAwareInput(const LanguageAwareRewriter *rewriter,
                                      const std::string &key,
@@ -117,16 +111,12 @@ class LanguageAwareRewriterTest : public ::testing::Test {
     return rewriter->Rewrite(request, segments);
   }
 
-  std::unique_ptr<DictionaryMock> dictionary_mock_;
   usage_stats::scoped_usage_stats_enabler usage_stats_enabler_;
-
   const testing::MockDataManager data_manager_;
 
  private:
   const testing::ScopedTmpUserProfileDirectory tmp_profile_dir_;
 };
-
-namespace {
 
 void PushFrontCandidate(const std::string &data, Segment *segment) {
   Segment::Candidate *candidate = segment->push_front_candidate();
@@ -136,127 +126,138 @@ void PushFrontCandidate(const std::string &data, Segment *segment) {
   candidate->content_value = data;
   candidate->content_key = data;
 }
-}  // namespace
+
+// A matcher for Segment::Candidate to test if a candidate has the given value.
+constexpr auto ValueIs =
+    [](const auto &matcher) -> Matcher<const Segment::Candidate *> {
+  return Field(&Segment::Candidate::value, matcher);
+};
+
+// A matcher for Segment::Candidate to test if a candidate has the given value
+// with "did you mean" annotation.
+constexpr auto IsLangAwareCandidate =
+    [](absl::string_view value) -> Matcher<const Segment::Candidate *> {
+  return Pointee(AllOf(Field(&Segment::Candidate::key, value),
+                       Field(&Segment::Candidate::value, value),
+                       Field(&Segment::Candidate::prefix, "→ "),
+                       Field(&Segment::Candidate::description, "もしかして")));
+};
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInput) {
-  dictionary_mock_->AddLookupExact("house", "house", "house", Token::NONE);
-  dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
-  dictionary_mock_->AddLookupExact("google", "google", "google", Token::NONE);
-  dictionary_mock_->AddLookupExact("naru", "naru", "naru", Token::NONE);
-  dictionary_mock_->AddLookupExact("なる", "なる", "naru", Token::NONE);
-
-  std::unique_ptr<LanguageAwareRewriter> rewriter(
-      CreateLanguageAwareRewriter());
-
-  const std::string &kPrefix = "→ ";
-  const std::string &kDidYouMean = "もしかして";
-
+  MockDictionary dictionary;
+  LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
+                                 &dictionary);
   {
     // "python" is composed to "ｐｙてょｎ", but "python" should be suggested,
     // because alphabet characters are in the middle of the word.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "python",
-                                              &composition, &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
+                                              &segments));
 
     EXPECT_EQ("ｐｙてょｎ", composition);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("python", candidate.key);
-    EXPECT_EQ("python", candidate.value);
-    EXPECT_EQ(kPrefix, candidate.prefix);
-    EXPECT_EQ(kDidYouMean, candidate.description);
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    EXPECT_THAT(segments.conversion_segment(0),
+                HasSingleCandidate(IsLangAwareCandidate("python")));
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
     // "mozuk" is composed to "もずｋ", then "mozuk" is not suggested.
-    // The tailing alphabet characters are not counted.
+    // The trailing alphabet characters are not counted.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "mozuk",
-                                               &composition, &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "mozuk", &composition,
+                                               &segments));
 
     EXPECT_EQ("もずｋ", composition);
+    ASSERT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
     // "house" is composed to "ほうせ".  Since "house" is in the dictionary
-    // dislike the above "mozuk" case, "house" should be suggested.
+    // unlike the above "mozuk" case, "house" should be suggested.
     std::string composition;
     Segments segments;
-
-    if (segments.conversion_segments_size() == 0) {
-      segments.add_segment();
-    }
-
-    Segment *segment = segments.mutable_conversion_segment(0);
-    // Add three candidates.
-    // => ["cand0", "cand1", "cand2"]
+    Segment *segment = segments.push_back_segment();
+    // Add three candidates: ["cand0", "cand1", "cand2"].
     PushFrontCandidate("cand2", segment);
     PushFrontCandidate("cand1", segment);
     PushFrontCandidate("cand0", segment);
-    EXPECT_EQ(3, segment->candidates_size());
+    ASSERT_EQ(3, segment->candidates_size());
+
+    // Set up the mock dictionary: "ほうせ" -> "house" doesn't exist but there's
+    // an entry whose value is "house".
+    EXPECT_CALL(dictionary, HasKey(StrEq("ほうせ"))).WillOnce(Return(false));
+    EXPECT_CALL(dictionary, HasValue(StrEq("house"))).WillOnce(Return(true));
 
     // "house" should be inserted as the 3rd candidate (b/w cand1 and cand2).
     // => ["cand0", "cand1", "house", "cand2"]
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "house",
-                                              &composition, &segments));
-    EXPECT_EQ(4, segment->candidates_size());
-
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "house", &composition,
+                                              &segments));
     EXPECT_EQ("ほうせ", composition);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(2);
-    EXPECT_EQ("house", candidate.key);
-    EXPECT_EQ("house", candidate.value);
-    EXPECT_EQ(kPrefix, candidate.prefix);
-    EXPECT_EQ(kDidYouMean, candidate.description);
+    EXPECT_THAT(*segment, CandidatesAreArray({
+                              ValueIs("cand0"),
+                              ValueIs("cand1"),
+                              IsLangAwareCandidate("house"),
+                              ValueIs("cand2"),
+                          }));
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
+    // Set up the mock dictionary: there's an entry whose value is "house".
+    EXPECT_CALL(dictionary, HasValue(StrEq("query"))).WillOnce(Return(true));
+
     // "query" is composed to "くえｒｙ".  Since "query" is in the dictionary
-    // dislike the above "mozuk" case, "query" should be suggested.
+    // unlike the above "mozuk" case, "query" should be suggested.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "query",
-                                              &composition, &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "query", &composition,
+                                              &segments));
 
     EXPECT_EQ("くえｒｙ", composition);
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("query", candidate.key);
-    EXPECT_EQ("query", candidate.value);
-    EXPECT_EQ(kPrefix, candidate.prefix);
-    EXPECT_EQ(kDidYouMean, candidate.description);
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    EXPECT_THAT(segments.conversion_segment(0),
+                HasSingleCandidate(IsLangAwareCandidate("query")));
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
     // "google" is composed to "google" by mode_switching_handler.
     // If the suggestion is equal to the composition, that suggestion
     // is not added.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "google",
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "google",
                                                &composition, &segments));
     EXPECT_EQ("google", composition);
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
+    // Set up the mock dictionary.
+    EXPECT_CALL(dictionary, HasKey(StrEq("なる"))).WillRepeatedly(Return(true));
+    EXPECT_CALL(dictionary, HasValue(StrEq("なる")))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(dictionary, HasValue(StrEq("naru")))
+        .WillRepeatedly(Return(true));
+
     // The key "なる" has two value "naru" and "なる".
     // In this case, language aware rewriter should not be triggered.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "naru",
-                                               &composition, &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "naru", &composition,
+                                               &segments));
 
     EXPECT_EQ("なる", composition);
+    ASSERT_EQ(1, segments.conversion_segments_size());
     EXPECT_EQ(0, segments.conversion_segment(0).candidates_size());
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
 }
 
 TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
-  std::unique_ptr<LanguageAwareRewriter> rewriter(
-      CreateLanguageAwareRewriter());
+  MockDictionary dictionary;
+  LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
+                                 &dictionary);
 
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionTriggered");
   EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
@@ -268,27 +269,21 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     // because alphabet characters are in the middle of the word.
     std::string composition;
     Segments segments;
-    EXPECT_TRUE(RewriteWithLanguageAwareInput(rewriter.get(), "python",
-                                              &composition, &segments));
+    EXPECT_TRUE(RewriteWithLanguageAwareInput(&rewriter, "python", &composition,
+                                              &segments));
     EXPECT_EQ(kPyTeyoN, composition);
-
-    const Segment::Candidate &candidate =
-        segments.conversion_segment(0).candidate(0);
-    EXPECT_EQ("python", candidate.key);
-    EXPECT_EQ("python", candidate.value);
-
+    ASSERT_EQ(1, segments.conversion_segments_size());
+    EXPECT_THAT(segments.conversion_segment(0),
+                HasSingleCandidate(IsLangAwareCandidate("python")));
     EXPECT_COUNT_STATS("LanguageAwareSuggestionTriggered", 1);
     EXPECT_STATS_NOT_EXIST("LanguageAwareSuggestionCommitted");
+    Mock::VerifyAndClearExpectations(&dictionary);
   }
-
   {
     // Call Rewrite with "python" again, then call Finish.  Both ...Triggered
     // and ...Committed should be incremented.
     // Note, RewriteWithLanguageAwareInput is not used here, because
     // Finish also requires ConversionRequest.
-    std::string composition;
-    Segments segments;
-
     commands::Request client_request;
     client_request.set_language_aware_input(
         commands::Request::LANGUAGE_AWARE_SUGGESTION);
@@ -298,56 +293,55 @@ TEST_F(LanguageAwareRewriterTest, LanguageAwareInputUsageStats) {
     table.InitializeWithRequestAndConfig(client_request, default_config,
                                          data_manager_);
 
+    std::string composition;
     composer::Composer composer(&table, &client_request, &default_config);
     InsertASCIISequence("python", &composer);
     composer.GetStringForPreedit(&composition);
     EXPECT_EQ(kPyTeyoN, composition);
 
     // Perform the rewrite command.
+    Segments segments;
     Segment *segment = segments.add_segment();
     segment->set_key(composition);
     ConversionRequest request(&composer, &client_request, &default_config);
     request.set_request_type(ConversionRequest::SUGGESTION);
 
-    EXPECT_TRUE(rewriter->Rewrite(request, &segments));
+    EXPECT_TRUE(rewriter.Rewrite(request, &segments));
 
     EXPECT_COUNT_STATS("LanguageAwareSuggestionTriggered", 2);
 
     segment->set_segment_type(Segment::FIXED_VALUE);
     EXPECT_LT(0, segment->candidates_size());
-    rewriter->Finish(request, &segments);
+    rewriter.Finish(request, &segments);
     EXPECT_COUNT_STATS("LanguageAwareSuggestionCommitted", 1);
   }
 }
 
 TEST_F(LanguageAwareRewriterTest, NotRewriteFullWidthAsciiToHalfWidthAscii) {
-  std::unique_ptr<LanguageAwareRewriter> rewriter(
-      CreateLanguageAwareRewriter());
-
+  MockDictionary dictionary;
+  LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
+                                 &dictionary);
   {
     // "1d*=" is composed to "１ｄ＊＝", which are the full width ascii
     // characters of "1d*=". We do not want to rewrite full width ascii to
     // half width ascii by LanguageAwareRewriter.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(
-        rewriter.get(), "1d*=", &composition, &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "1d*=", &composition,
+                                               &segments));
     EXPECT_EQ("１ｄ＊＝", composition);
   }
-
   {
     // "xyzw" is composed to "ｘｙｚｗ". Do not rewrite.
     std::string composition;
     Segments segments;
-    EXPECT_FALSE(RewriteWithLanguageAwareInput(rewriter.get(), "xyzw",
-                                               &composition, &segments));
+    EXPECT_FALSE(RewriteWithLanguageAwareInput(&rewriter, "xyzw", &composition,
+                                               &segments));
     EXPECT_EQ("ｘｙｚｗ", composition);
   }
 }
 
 TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
-  dictionary_mock_->AddLookupExact("query", "query", "query", Token::NONE);
-
   struct {
     commands::Request::SpecialRomanjiTable table;
     config::Config::PreeditMethod preedit_method;
@@ -369,8 +363,9 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
        RewriterInterface::NOT_AVAILABLE},
   };
 
-  std::unique_ptr<LanguageAwareRewriter> rewriter(
-      CreateLanguageAwareRewriter());
+  MockDictionary dictionary;
+  LanguageAwareRewriter rewriter(PosMatcher(data_manager_.GetPosMatcherData()),
+                                 &dictionary);
   for (const auto &param : kParams) {
     commands::Request request;
     request.set_language_aware_input(
@@ -387,8 +382,9 @@ TEST_F(LanguageAwareRewriterTest, IsDisabledInTwelveKeyLayout) {
     InsertASCIISequence("query", &composer);
 
     ConversionRequest conv_request(&composer, &request, &config);
-    EXPECT_EQ(param.type, rewriter->capability(conv_request));
+    EXPECT_EQ(param.type, rewriter.capability(conv_request));
   }
 }
 
+}  // namespace
 }  // namespace mozc

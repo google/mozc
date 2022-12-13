@@ -594,6 +594,7 @@ def mozc_dataset(
             zero_query_def,
         ],
         outs = [
+            "zero_query_data.tsv",
             "zero_query_token.data",
             "zero_query_string.data",
         ],
@@ -603,6 +604,7 @@ def mozc_dataset(
             "--input_symbol=$(location " + symbol_src + ") " +
             "--input_emoji=$(location " + emoji_src + ") " +
             "--input_emoticon=$(location " + emoticon_categorized_src + ") " +
+            "--output_tsv=$(location :zero_query_data.tsv) " +
             "--output_token_array=$(location :zero_query_token.data) " +
             "--output_string_array=$(location :zero_query_string.data)"
         ),
