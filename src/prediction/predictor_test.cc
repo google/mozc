@@ -57,7 +57,7 @@
 namespace mozc {
 namespace {
 
-using ::mozc::dictionary::DictionaryMock;
+using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::SuppressionDictionary;
 using ::testing::_;
 using ::testing::AtMost;
@@ -214,7 +214,7 @@ TEST_F(MobilePredictorTest, CallPredictorsForMobilePrediction) {
 }
 
 TEST_F(MobilePredictorTest, CallPredictorsForMobilePartialPrediction) {
-  DictionaryMock dictionary_mock;
+  MockDictionary dictionary_mock;
   testing::MockDataManager data_manager;
   const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
   const SuppressionDictionary suppression_dictionary;
