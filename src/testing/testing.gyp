@@ -74,6 +74,7 @@
         '<(gmock_dir)/src/gmock-matchers.cc',
         '<(gmock_dir)/src/gmock-spec-builders.cc',
         '<(gmock_dir)/src/gmock.cc',
+        '<(gtest_dir)/src/gtest-assertion-result.cc',
         '<(gtest_dir)/src/gtest-death-test.cc',
         '<(gtest_dir)/src/gtest-filepath.cc',
         '<(gtest_dir)/src/gtest-matchers.cc',
