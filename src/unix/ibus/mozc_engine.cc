@@ -236,6 +236,15 @@ bool UseMozcCandidateWindow() {
     return false;
   }
 
+  // Follows the user's preference set in the environment variable.
+  const std::string candidate_window = GetEnv("MOZC_IBUS_CANDIDATE_WINDOW");
+  if (candidate_window == "ibus") {
+    return false;
+  }
+  if (candidate_window == "mozc") {
+    return true;
+  }
+
 #ifndef ENABLE_QT_RENDERER
   if (GetEnv("XDG_SESSION_TYPE") == "wayland") {
     // mozc_renderer is not supported on wayland session.

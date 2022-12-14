@@ -94,7 +94,7 @@ namespace {
 
 using ::mozc::dictionary::DictionaryImpl;
 using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::DictionaryMock;
+using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuffixDictionary;
@@ -104,6 +104,9 @@ using ::mozc::dictionary::Token;
 using ::mozc::dictionary::UserDictionaryStub;
 using ::mozc::dictionary::ValueDictionary;
 using ::mozc::usage_stats::UsageStats;
+using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::StrEq;
 
 void PushBackCandidate(Segment *segment, absl::string_view text) {
   Segment::Candidate *cand = segment->push_back_candidate();
@@ -196,8 +199,8 @@ class ConverterTest : public ::testing::Test {
   };
 
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  ConverterTest() {}
-  ~ConverterTest() override {}
+  ConverterTest() = default;
+  ~ConverterTest() override = default;
 
   void SetUp() override { UsageStats::ClearAllStatsForTest(); }
 
@@ -1218,15 +1221,30 @@ TEST_F(ConverterTest, PredictSetKey) {
   }
 }
 
+// An action that invokes a DictionaryInterface::Callback with the token whose
+// key and value is set to the given ones.
+ACTION_P2(InvokeCallbackWithUserDictionaryToken, key, value) {
+  // const absl::string_view key = arg0;
+  DictionaryInterface::Callback *const callback = arg2;
+  const Token token(std::string(key), value, MockDictionary::kDefaultCost,
+                    MockDictionary::kDefaultPosId,
+                    MockDictionary::kDefaultPosId, Token::USER_DICTIONARY);
+  callback->OnToken(key, key, token);
+}
+
 TEST_F(ConverterTest, VariantExpansionForSuggestion) {
   // Create Converter with mock user dictionary
   testing::MockDataManager data_manager;
-  auto mock_user_dictionary = std::make_unique<DictionaryMock>();
+  auto mock_user_dictionary = std::make_unique<MockDictionary>();
 
-  mock_user_dictionary->AddLookupPredictive("てすと", "てすと", "<>!?",
-                                            Token::USER_DICTIONARY);
-  mock_user_dictionary->AddLookupPrefix("てすと", "てすと", "<>!?",
-                                        Token::USER_DICTIONARY);
+  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(_, _, _))
+      .Times(AnyNumber());
+  EXPECT_CALL(*mock_user_dictionary, LookupPredictive(StrEq("てすと"), _, _))
+      .WillRepeatedly(InvokeCallbackWithUserDictionaryToken("てすと", "<>!?"));
+
+  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*mock_user_dictionary, LookupPrefix(StrEq("てすとの"), _, _))
+      .WillRepeatedly(InvokeCallbackWithUserDictionaryToken("てすと", "<>!?"));
   auto suppression_dictionary = std::make_unique<SuppressionDictionary>();
 
   const char *dictionary_data = nullptr;

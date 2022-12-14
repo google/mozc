@@ -33,7 +33,7 @@
       'target_name': 'jsoncpp',
       'type': 'static_library',
       'variables': {
-        'jsoncpp_root': '<(third_party_dir)/jsoncpp/current',
+        'jsoncpp_root': '<(third_party_dir)/jsoncpp',
         'jsoncpp_srcs': [
           '<(jsoncpp_root)/src/lib_json/json_reader.cpp',
           '<(jsoncpp_root)/src/lib_json/json_value.cpp',
