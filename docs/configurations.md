@@ -174,3 +174,16 @@ engines {
   composition_mode: DIRECT
 }
 ```
+
+
+### Use the default Ibus candidate window
+
+If the environment variable `MOZC_IBUS_CANDIDATE_WINDOW` is set to `ibus`,
+The default Ibus candidate window is used instead of the Mozc candidate window.
+
+If `MOZC_IBUS_CANDIDATE_WINDOW` is set to `mozc`, the Mozc candidate window is
+always used.
+
+Note, the default Ibus candidate window may not have the full features
+we provide to the Mozc candidate window such as information list
+(e.g. word usage dictionary).
