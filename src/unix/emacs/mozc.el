@@ -120,7 +120,7 @@
 
 
 (eval-when-compile
-  (require 'cl))
+  (require 'cl-lib))
 
 
 
@@ -391,7 +391,7 @@ Key code and symbols are renamed so that the helper process understands them."
   (let ((basic-type (event-basic-type event))
         (modifiers (event-modifiers event)))
     ;; Rename special keys to ones the helper process understands.
-    (let ((key (case basic-type
+    (let ((key (cl-case basic-type
                  (?\b 'backspace)
                  (?\s 'space)
                  (?\d 'backspace)
@@ -823,7 +823,7 @@ Non-nil SEPARATOR is inserted between each segment."
          (mapconcat
           (lambda (segment)
             (apply #'propertize (mozc-protobuf-get segment 'value)
-                   (case (mozc-protobuf-get segment 'annotation)
+                   (cl-case (mozc-protobuf-get segment 'annotation)
                      (highlight
                       '(face mozc-preedit-selected-face))
                      (t
@@ -1254,7 +1254,7 @@ The function returns non-nil on success, and nil on failure."
                 ;; work as expected if the point is off the screen.
                 (vertical-motion -1)
                 (scroll-up 1))
-              (incf scrolled-lines))
+              (cl-incf scrolled-lines))
             (let ((content (car contents)))
               (let ((left-text (car content))
                     (right-text (cadr content))
@@ -1640,7 +1640,7 @@ version           -- should be version string"
   "Invalidate variable `mozc-helper-process' if PROC is not running normally.
 Current implementation throws MESSAGE away."
   (when (eq proc mozc-helper-process)
-    (case (process-status proc)
+    (cl-case (process-status proc)
       (run)  ; Do nothing.
       (t  ; Invalidate mozc-helper-process.
        (setq mozc-helper-process nil)))))
