@@ -155,10 +155,9 @@ inline int GetDefaultCandidateIndex(const Segment &segment) {
       return i;
     }
   }
-
-  LOG(WARNING) << "Cannot find default candidate. "
-               << "key: " << segment.key() << ", "
-               << "candidates_size: " << segment.candidates_size();
+  VLOG(2) << "Cannot find default candidate. "
+          << "key: " << segment.key() << ", "
+          << "candidates_size: " << segment.candidates_size();
   return 0;
 }
 
@@ -524,7 +523,7 @@ UserSegmentHistoryRewriter::UserSegmentHistoryRewriter(
   CHECK_EQ(sizeof(uint32_t), sizeof(KeyTriggerValue));
 }
 
-UserSegmentHistoryRewriter::~UserSegmentHistoryRewriter() {}
+UserSegmentHistoryRewriter::~UserSegmentHistoryRewriter() = default;
 
 #define INSERT_FEATURE(func, base_key, base_value, force_insert)               \
   do {                                                                         \
