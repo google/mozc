@@ -153,18 +153,21 @@ bazel build package --config oss_android
 ⚠️ The GYP build will stop supporting the IBus build.
 * https://github.com/google/mozc/issues/567
 
-To keep using the GYP build at this moment,
-please add the --use_gyp_for_ibus_build flag to build_mozc.py.
+⚠️ The GYP build no longer support the GTK candidate window build.
+* https://github.com/google/mozc/issues/567
+
+To keep using the GYP build without GTK candidate window at this moment,
+please add the `--use_gyp_for_ibus_build` and `--no_gtk_build` flags
+to build_mozc.py.
 
 ```
 python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build
+python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build --no_gtk_build
 ```
 
 `package` is an alias to build:
 * //server:mozc_server
 * //gui/tool:mozc_tool
-* //renderer:mozc_renderer
 * //unix/ibus:ibus_mozc
 
 
@@ -176,9 +179,8 @@ python3 build_mozc.py runtests -c Debug
 
 ### Differences between Bazel build and GYP build
 
-GYP build is under maintenance mode. While the existing targets are supported
-by both GYP and Bazel as much as possible, new targets will be supported by
-Bazel only.
+GYP build is under maintenance mode. New features might be supported by
+Bazel only, and some features might be dropped as a trade-off to accept PRs.
 
 Targets only for Bazel:
 * AUX dictionary (//data/dictionary_oss:aux_dictionary)
