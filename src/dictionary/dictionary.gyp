@@ -97,18 +97,6 @@
       },
     },
     {
-      'target_name': 'dictionary_mock',
-      'type': 'static_library',
-      'sources': [
-        'dictionary_mock.cc',
-      ],
-      'dependencies': [
-        '../base/absl.gyp:absl_strings',
-        '../base/base.gyp:base',
-        '../testing/testing.gyp:testing',
-      ],
-    },
-    {
       'target_name': 'dictionary_test_util',
       'type': 'static_library',
       'sources': [

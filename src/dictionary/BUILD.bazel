@@ -691,35 +691,11 @@ cc_test_mozc(
 cc_library_mozc(
     name = "dictionary_mock",
     testonly = True,
-    srcs = ["dictionary_mock.cc"],
     hdrs = ["dictionary_mock.h"],
     visibility = ["//:__subpackages__"],
     deps = [
         ":dictionary_interface",
-        ":dictionary_token",
-        "//base",
-        "//base:logging",
-        "//base:port",
-        "//base:util",
-        "//request:conversion_request",
         "//testing:gunit",
-        "@com_google_absl//absl/strings",
-    ],
-)
-
-cc_test_mozc(
-    name = "dictionary_mock_test",
-    size = "small",
-    srcs = ["dictionary_mock_test.cc"],
-    requires_full_emulation = False,
-    deps = [
-        ":dictionary_mock",
-        ":dictionary_test_util",
-        ":dictionary_token",
-        "//base:logging",
-        "//base:util",
-        "//request:conversion_request",
-        "//testing:gunit_main",
     ],
 )
 
