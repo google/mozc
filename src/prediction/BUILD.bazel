@@ -41,7 +41,6 @@ load(
 
 package(default_visibility = ["//:__subpackages__"])
 
-# c.f., //protocol:portable_proto
 cc_proto_library(
     name = "user_history_predictor_cc_proto",
     deps = [":user_history_predictor_proto"],
