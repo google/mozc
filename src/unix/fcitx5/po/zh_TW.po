@@ -5,14 +5,15 @@
 # Translators:
 # csslayer <wengxt@gmail.com>, 2017
 # bruh, 2020
+# Neko ◣ 0xFF, 2022
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: fcitx5-mozc\n"
 "Report-Msgid-Bugs-To: fcitx-dev@googlegroups.com\n"
-"POT-Creation-Date: 2022-03-25 04:41+0000\n"
+"POT-Creation-Date: 2022-12-16 20:25+0000\n"
 "PO-Revision-Date: 2017-11-23 05:28+0000\n"
-"Last-Translator: bruh, 2020\n"
+"Last-Translator: Neko ◣ 0xFF, 2022\n"
 "Language-Team: Chinese (Taiwan) (https://www.transifex.com/fcitx/teams/12005/"
 "zh_TW/)\n"
 "Language: zh_TW\n"
@@ -31,7 +32,7 @@ msgstr "添加單詞"
 
 #: mozc_engine.h:48
 msgid "Always"
-msgstr ""
+msgstr "總是"
 
 #: mozc_engine.h:78 mozc_engine.cc:157
 msgid "Configuration Tool"
@@ -47,11 +48,11 @@ msgstr "直接鍵盤輸入"
 
 #: mozc_engine.h:69
 msgid "Expand Usage (Requires vertical candidate list)"
-msgstr ""
+msgstr "擴展使用 (需要垂直候選列表)"
 
 #: mozc_engine.h:73
 msgid "Fix embedded preedit cursor at the beginning of the preedit"
-msgstr ""
+msgstr "在預編輯的開頭修復嵌入的預編輯光標"
 
 #. Full width ASCII letter A.
 #: mozc_engine.h:53 mozc_engine.cc:82
@@ -79,15 +80,15 @@ msgstr "平假名"
 
 #: mozc_engine.h:49
 msgid "Hotkey"
-msgstr ""
+msgstr "快捷鍵"
 
 #: mozc_engine.h:75
 msgid "Hotkey to expand usage"
-msgstr ""
+msgstr "擴展使用的快捷鍵"
 
 #: mozc_engine.h:63
 msgid "Initial Mode"
-msgstr ""
+msgstr "初始模式"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:8
 msgid "Japanese input method based on Mozc"
@@ -95,7 +96,7 @@ msgstr "基於 Mozc 的日語輸入法"
 
 #: mozc_engine.cc:143 mozc_engine.cc:144
 msgid "Mozc Settings"
-msgstr ""
+msgstr "Mozc 設定"
 
 #: org.fcitx.Fcitx5.Addon.Mozc.metainfo.xml.in:7
 msgid "Mozc for Fcitx 5"
@@ -103,19 +104,19 @@ msgstr "Fcitx 5 的 Mozc 支援"
 
 #: mozc_engine.h:48
 msgid "On Focus"
-msgstr ""
+msgstr "選中時"
 
 #. We don't have a good library option for this, just do the simple
 #. replace. absl's runtime parsed format string is too copmlex.
 #: mozc_response_parser.cc:175
 #, c-format
 msgid "Press %s to show usages."
-msgstr ""
+msgstr "按下 %s 顯示用法。"
 
-#: mozc_state.cc:405
+#: mozc_state.cc:408
 msgid "Press Escape to go back"
 msgstr "按下 Escape 返回"
 
 #: mozc_engine.h:65
 msgid "Vertical candidate list"
-msgstr ""
+msgstr "垂直候選字列表"
