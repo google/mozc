@@ -286,7 +286,6 @@ def ExpandMetaTarget(options, meta_target_name):
 
 def CheckIbusBuild(options, targets):
   """Check if targets contains ibus builds without the command flag."""
-
   if options.use_gyp_for_ibus_build:
     return
 
@@ -313,7 +312,6 @@ def CheckIbusBuild(options, targets):
 
 def CheckGtkBuild(options):
   """Check if targets contains gtk builds without the command flag."""
-
   if options.no_gtk_build:
     return
 
