@@ -1200,6 +1200,7 @@ SessionConverter *SessionConverter::Clone() const {
   session_converter->config_ = config_;
   session_converter->use_cascading_window_ = use_cascading_window_;
   session_converter->selected_candidate_indices_ = selected_candidate_indices_;
+  session_converter->request_type_ = request_type_;
 
   if (session_converter->CheckState(SUGGESTION | PREDICTION | CONVERSION)) {
     // UpdateCandidateList() is not simple setter and it uses some members.
