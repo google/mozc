@@ -34,10 +34,8 @@ import logging
 import multiprocessing
 import os
 import shutil
-import stat
 import subprocess
 import sys
-import tempfile
 import zipfile
 
 
@@ -130,42 +128,10 @@ def RemoveDirectoryRecursively(directory):
       shutil.rmtree(directory, ignore_errors=True)
 
 
-def MakeFileWritableRecursively(path):
-  """Make files (including directories) writable recursively."""
-  for root, dirs, files in os.walk(path):
-    for name in dirs + files:
-      path = os.path.join(root, name)
-      os.chmod(path, os.lstat(path).st_mode | stat.S_IWRITE)
-
-
 def PrintErrorAndExit(error_message):
   """Prints the error message and exists."""
   logging.critical('\n==========\n%s\n==========', error_message)
   sys.exit(1)
-
-
-def GetRelPath(path, start):
-  """Return a relative path to |path| from |start|."""
-  # NOTE: Python 2.6 provides os.path.relpath, which has almost the same
-  # functionality as this function. Since Python 2.6 is not the internal
-  # official version, we reimplement it.
-  path_list = os.path.abspath(os.path.normpath(path)).split(os.sep)
-  start_list = os.path.abspath(os.path.normpath(start)).split(os.sep)
-
-  common_prefix_count = 0
-  for i in range(0, min(len(path_list), len(start_list))):
-    if path_list[i] != start_list[i]:
-      break
-    common_prefix_count += 1
-
-  return os.sep.join(['..'] * (len(start_list) - common_prefix_count) +
-                     path_list[common_prefix_count:])
-
-
-def CheckFileOrDie(file_name):
-  """Check the file exists or dies if not."""
-  if not os.path.isfile(file_name):
-    PrintErrorAndExit('No such file: ' + file_name)
 
 
 class _ZipFileWithPermissions(zipfile.ZipFile):
@@ -243,24 +209,3 @@ class ColoredLoggingFilter(logging.Filter):
       record.levelname = ColoredText(level_name, level_no)
 
     return True
-
-
-def WalkFileContainers(comma_separated_paths):
-  """Walks like os.walk() accepting comma separated directory or zip file paths.
-
-  Args:
-    comma_separated_paths: e.g., "directory/path,zip/file/path.zip"
-  Yields:
-    See os.walk()
-  """
-  for path in comma_separated_paths.split(','):
-    if os.path.isdir(path):
-      for dirpath, dirnames, filenames in os.walk(path):
-        yield dirpath, dirnames, filenames
-    else:
-      tempdir = tempfile.mkdtemp()
-      with zipfile.ZipFile(path, 'r') as z:
-        z.extractall(tempdir)
-        for dirpath, dirnames, filenames in os.walk(tempdir):
-          yield dirpath, dirnames, filenames
-
