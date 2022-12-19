@@ -327,12 +327,15 @@
       'target_name': 'session_all_test',
       'type': 'none',
       'dependencies': [
+        ## Stress tests and scenario tests are disabled,
+        ## because they take long time (~100sec in total).
+        ## Those tests are checked by other tools (e.g. Bazel test).
+        # 'session_converter_stress_test',
+        # 'session_handler_scenario_test',
+        # 'session_handler_stress_test',
         'random_keyevents_generator_test',
         'request_test_util_test',
-        'session_converter_stress_test',
         'session_converter_test',
-        'session_handler_scenario_test',
-        'session_handler_stress_test',
         'session_handler_test',
         'session_key_handling_test',
         'session_internal_test',
