@@ -46,7 +46,7 @@
 
     # enable_gtk_renderer represents if mozc_renderer is supported on Linux
     # or not.
-    'enable_gtk_renderer%': '1',
+    'enable_gtk_renderer%': '0',
 
     # enable ambiguous search (a.k.a. KATSUKOU-conversion).
     'enable_ambiguous_search%': '0',

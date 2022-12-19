@@ -68,6 +68,13 @@ ABS_SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 MOZC_ROOT = ABS_SCRIPT_DIR
 EXT_THIRD_PARTY_DIR = os.path.join(MOZC_ROOT, 'third_party')
 
+# Gtk2 candidate window is deprecated.
+# The build rules and code will be removed in future.
+#   https://github.com/google/mozc/issues/567
+# Qt5 candidate window built by Bazel is the alternative.
+#   https://github.com/google/mozc/blob/master/docs/build_mozc_in_docker.md
+USE_DEPRECATED_GTK_RENDERER = False
+
 sys.path.append(SRC_DIR)
 
 
@@ -266,10 +273,12 @@ def ExpandMetaTarget(options, meta_target_name):
   if target_platform == 'Linux':
     CheckGtkBuild(options)
     targets = [SRC_DIR + '/server/server.gyp:mozc_server',
-               # Gtk candidate window built by mozc_renderer is no longer
-               # included in the package alias.
-               # SRC_DIR + '/renderer/renderer.gyp:mozc_renderer',
                SRC_DIR + '/gui/gui.gyp:mozc_tool']
+    if USE_DEPRECATED_GTK_RENDERER:
+      # Gtk candidate window built by mozc_renderer is no longer
+      # included in the package alias.
+      # USE_DEPRECATED_GTK_RENDERER should be False unless the code is modified.
+      targets.append(SRC_DIR + '/renderer/renderer.gyp:mozc_renderer')
     if PkgExists('ibus-1.0 >= 1.4.1'):
       targets.append(SRC_DIR + '/unix/ibus/ibus.gyp:ibus_mozc')
   elif target_platform == 'Mac':
@@ -491,6 +500,12 @@ def GypMain(options, unused_args):
 
   if options.branding:
     gyp_options.extend(['-D', 'branding=%s' % options.branding])
+
+  # Gtk configurations
+  # Gtk2 candidate window is deprecated.
+  # USE_DEPRECATED_GTK_RENDERER should be False unless the code is modified.
+  if USE_DEPRECATED_GTK_RENDERER:
+    gyp_options.extend(['-D', 'enable_gtk_renderer=1'])
 
   # Qt configurations
   if options.noqt:

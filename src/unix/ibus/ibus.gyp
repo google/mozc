@@ -179,20 +179,16 @@
         '../../base/absl.gyp:absl_strings',
         '../../client/client.gyp:client',
         '../../protocol/protocol.gyp:commands_proto',
+        '../../protocol/protocol.gyp:renderer_proto',
         '../../session/session_base.gyp:ime_switch_util',
         'gen_ibus_mozc_files',
+        'gtk_candidate_window_handler',
         'ibus_config_proto',
         'ibus_property_handler',
         'message_translator',
         'path_util',
       ],
       'conditions': [
-        ['enable_gtk_renderer==1', {
-          'dependencies': [
-            '../../protocol/protocol.gyp:renderer_proto',
-            'gtk_candidate_window_handler',
-          ],
-        }],
         ['enable_x11_selection_monitor==1', {
           'dependencies': [
             'selection_monitor',
