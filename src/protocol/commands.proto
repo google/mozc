@@ -586,8 +586,7 @@ message DecoderExperimentParams {
   // Bitmap of enabled variation character types.
   optional uint32 variation_character_types = 8 [default = 0];
 
-  // Enable number decoder for prediction.
-  optional bool enable_number_decoder = 9 [default = false];
+  reserved 9;  // Deprecated enable_number_decoder
 
   // If true, we do not add the segment model penalty on calculating
   // prediction candidate cost.

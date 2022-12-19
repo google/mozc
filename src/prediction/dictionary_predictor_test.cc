@@ -4027,9 +4027,6 @@ TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
   Segments segments;
   SetUpInputForSuggestion("よんじゅうごかい", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enable_number_decoder(
-      true);
-
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),

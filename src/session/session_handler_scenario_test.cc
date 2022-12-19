@@ -279,7 +279,7 @@ void ParseLine(SessionHandlerInterpreter &handler, const std::string &line) {
     return;
   }
   if (status.code() != absl::StatusCode::kUnimplemented) {
-    EXPECT_TRUE(false) << status.message();
+    FAIL() << status.message();
   }
 
   const std::string &command = args[0];
@@ -414,7 +414,7 @@ TEST_P(SessionHandlerScenarioTest, TestImplBase) {
       mozc::testing::GetSourceFile({GetParam()});
   ASSERT_TRUE(scenario_path.ok()) << scenario_path.status();
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
-  InputFileStream input_stream(scenario_path->c_str());
+  InputFileStream input_stream(*scenario_path);
 
   std::string line_text;
   int line_number = 0;
@@ -465,12 +465,6 @@ INSTANTIATE_TEST_SUITE_P(
             []() {
               auto request = GetMobileRequest();
               request.mutable_decoder_experiment_params()
-                  ->set_enable_number_decoder(true);
-              return request;
-            }(),
-            []() {
-              auto request = GetMobileRequest();
-              request.mutable_decoder_experiment_params()
                   ->set_cancel_segment_model_penalty_for_prediction(true);
               return request;
             }(),
@@ -491,7 +485,7 @@ TEST_P(SessionHandlerScenarioTestForRequest, TestImplBase) {
   handler_->SetRequest(std::get<1>(GetParam()));
 
   LOG(INFO) << "Testing " << FileUtil::Basename(*scenario_path);
-  InputFileStream input_stream(scenario_path->c_str());
+  InputFileStream input_stream(*scenario_path);
   std::string line_text;
   int line_number = 0;
   while (std::getline(input_stream, line_text)) {

@@ -128,13 +128,13 @@ bool IsLatinInputMode(const ConversionRequest &request) {
 
 bool IsQwertyMobileTable(const ConversionRequest &request) {
   const auto table = request.request().special_romanji_table();
-  return (table == commands::Request::QWERTY_MOBILE_TO_HIRAGANA ||
-          table == commands::Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
+  return (table == Request::QWERTY_MOBILE_TO_HIRAGANA ||
+          table == Request::QWERTY_MOBILE_TO_HALFWIDTHASCII);
 }
 
 bool IsLanguageAwareInputEnabled(const ConversionRequest &request) {
   const auto lang_aware = request.request().language_aware_input();
-  return lang_aware == commands::Request::LANGUAGE_AWARE_SUGGESTION;
+  return lang_aware == Request::LANGUAGE_AWARE_SUGGESTION;
 }
 
 // Returns true if |segments| contains number history.
@@ -163,7 +163,7 @@ bool GetNumberHistory(const Segments &segments, std::string *number_key) {
   return true;
 }
 
-bool IsMixedConversionEnabled(const commands::Request &request) {
+bool IsMixedConversionEnabled(const Request &request) {
   return request.mixed_conversion();
 }
 
@@ -494,7 +494,7 @@ DictionaryPredictor::DictionaryPredictor(
                                zero_query_number_string_array_data);
 }
 
-DictionaryPredictor::~DictionaryPredictor() {}
+DictionaryPredictor::~DictionaryPredictor() = default;
 
 void DictionaryPredictor::Finish(const ConversionRequest &request,
                                  Segments *segments) {
@@ -1999,7 +1999,7 @@ void DictionaryPredictor::CheckBigramResult(
   // we want to suggest "霊長類研究所" from the history "京都大学".
   if (ctype == Util::KANJI && Util::CharsLen(value) >= 2) {
     // Do not filter this.
-    // TODO(toshiyuki): one-length kanji prediciton may be annoying other than
+    // TODO(toshiyuki): one-length kanji prediction may be annoying other than
     // some exceptions, "駅", "口", etc
     MOZC_WORD_LOG(*result, "Valid bigram. Kanji suffix (>= 2).");
     return;
@@ -2430,7 +2430,8 @@ bool DictionaryPredictor::AggregateNumberCandidates(
     const ConversionRequest &request, const Segments &segments,
     std::vector<Result> *results) const {
   DCHECK(results);
-  if (!request.request().decoder_experiment_params().enable_number_decoder()) {
+
+  if (!IsMixedConversionEnabled(request.request())) {
     return false;
   }
 
