@@ -1926,8 +1926,6 @@ TEST_F(ConverterTest,
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
   commands::RequestForUnitTest::FillMobileRequest(&request);
-  request.mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   ConversionRequest conversion_request(&composer, &request, &config);
   conversion_request.set_request_type(ConversionRequest::PREDICTION);
 
@@ -1955,8 +1953,6 @@ TEST_F(ConverterTest, DoNotAddOverlappingNodesForPrediction) {
   composer::Table table;
   composer::Composer composer(&table, &request, &config);
   commands::RequestForUnitTest::FillMobileRequest(&request);
-  request.mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   const dictionary::PosMatcher pos_matcher(
       engine->GetDataManager()->GetPosMatcherData());
   ConversionRequest conversion_request(&composer, &request, &config);

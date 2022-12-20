@@ -109,12 +109,6 @@ bool IsEnableNewSpatialScoring(const ConversionRequest &request) {
       .enable_new_spatial_scoring();
 }
 
-bool ShouldEnrichPartialCandidates(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enrich_partial_candidates();
-}
-
 // Returns true if the |target| may be reduncant result.
 bool MaybeRedundant(const std::string &reference, const std::string &target) {
   return absl::StartsWith(target, reference);
@@ -720,7 +714,7 @@ DictionaryPredictor::PredictionTypes DictionaryPredictor::AggregatePrediction(
     selected_types |= TYPING_CORRECTION;
   }
 
-  if (ShouldEnrichPartialCandidates(request)) {
+  if (IsMixedConversionEnabled(request.request())) {
     AggregatePrefixCandidates(request, segments, results);
     selected_types |= PREFIX;
   }
@@ -930,7 +924,7 @@ bool DictionaryPredictor::AddPredictionToCandidates(
       continue;
     }
 
-    if (ShouldEnrichPartialCandidates(request)) {
+    if (IsMixedConversionEnabled(request.request())) {
       // Suppress long candidates to show more candidates in the candidate view.
       if (input_key_len > 0 &&  // Do not filter for zero query
           (input_key_len < Util::CharsLen(result.key)) &&
@@ -1343,23 +1337,6 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
 
   for (Result &result : *results) {
     int cost = GetLMCost(result, rid);
-    if (request.request()
-            .decoder_experiment_params()
-            .cancel_segment_model_penalty_for_prediction()) {
-      // The result of GetLMCost() includes segment suffix penalty for all
-      // types of result.
-      // In particular, realtime candidates include both of prefix and suffix
-      // penalties.
-      // In this experiment, we assume that the user's input unit
-      // is not always 'Bunsetsu', so we cancel the penalty for the
-      // segment suffix.
-      cost -= segmenter_->GetSuffixPenalty(result.rid);
-      if (result.types & REALTIME) {
-        // immutable_converter adds prefix / suffix penalties for
-        // realtime candidates.
-        cost -= segmenter_->GetPrefixPenalty(result.lid);
-      }
-    }
     MOZC_WORD_LOG(result, absl::StrCat("GetLMCost: ", cost));
 
     // Demote filtered word here, because they are not filtered for exact match.
@@ -1380,27 +1357,18 @@ void DictionaryPredictor::SetPredictionCostForMixedConversion(
       const size_t input_key_len = Util::CharsLen(input_key);
       const size_t key_len = Util::CharsLen(result.key);
       if (key_len > input_key_len) {
-        if (ShouldEnrichPartialCandidates(request)) {
-          // Skip to add additional penalty for TYPING_CORRECTION because
-          // query cost is already added for them.
-          // (DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection)
-          //
-          // Without this handling, a lot of TYPING_CORRECTION candidates
-          // can be appended at the end of the candidate list.
-          if (result.types & UNIGRAM) {
-            const size_t predicted_key_len = key_len - input_key_len;
-            // -500 * log(prob)
-            // See also: mozc/converter/candidate_filter.cc
-            const int predictive_penalty = 500 * log(50 * predicted_key_len);
-            cost += predictive_penalty;
-          }
-        } else {
-          // Cost penalty means that exact candidates are evaluated
-          // 50 times bigger in frequency.
-          // Note that the cost is calculated by cost = -500 * log(prob)
-          // 1956 = 500 * log(50)
-          constexpr int kNotExactPenalty = 1956;
-          cost += kNotExactPenalty;
+        // Skip to add additional penalty for TYPING_CORRECTION because
+        // query cost is already added for them.
+        // (DictionaryPredictor::GetPredictiveResultsUsingTypingCorrection)
+        //
+        // Without this handling, a lot of TYPING_CORRECTION candidates
+        // can be appended at the end of the candidate list.
+        if (result.types & UNIGRAM) {
+          const size_t predicted_key_len = key_len - input_key_len;
+          // -500 * log(prob)
+          // See also: mozc/converter/candidate_filter.cc
+          const int predictive_penalty = 500 * log(50 * predicted_key_len);
+          cost += predictive_penalty;
         }
         MOZC_WORD_LOG(result,
                       absl::StrCat("Unigram | Typing correction: ", cost));

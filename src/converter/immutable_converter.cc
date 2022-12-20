@@ -81,10 +81,8 @@ constexpr int kMaxCost = 32767;
 constexpr int kMinCost = -32767;
 constexpr int kDefaultNumberCost = 3000;
 
-bool ShouldEnrichPartialCandidates(const ConversionRequest &request) {
-  return request.request()
-      .decoder_experiment_params()
-      .enrich_partial_candidates();
+bool IsMobileRequest(const ConversionRequest &request) {
+  return request.request().mixed_conversion();
 }
 
 class KeyCorrectedNodeListBuilder : public BaseNodeListBuilder {
@@ -229,7 +227,7 @@ void NormalizeHistorySegments(Segments *segments) {
     segment->set_key(key);
 
     // Ad-hoc rewrite for Numbers
-    // Since number candidate is generative, i.e, any number can be
+    // Since number candidate is generative, i.e., any number can be
     // written by users, we normalize the value here. normalzied number
     // is used for the ranking tweaking based on history
     if (key.size() > 1 && key == c->value && key == c->content_value &&
@@ -694,7 +692,7 @@ bool ImmutableConverterImpl::ResegmentPersonalName(size_t pos,
     //
     // last_name_cost + transition_cost + first_name_cost == compound_cost
     // last_name_cost == first_name_cost
-    // i.e,
+    // i.e.,
     // last_name_cost = first_name_cost =
     // (compound_cost - transition_cost) / 2;
     const int32_t wcost =
@@ -1030,7 +1028,7 @@ bool ImmutableConverterImpl::Viterbi(const Segments &segments,
 
   // Specialization for the first segment.
   // Don't run on the left boundary (the connection with BOS node),
-  // beacuse it is already run above.
+  // because it is already run above.
   {
     const size_t right_boundary =
         left_boundary + segments.segment(0).key().size();
@@ -1477,7 +1475,7 @@ bool ImmutableConverterImpl::MakeLattice(const ConversionRequest &request,
 
   // Nodes look up for real time conversion
   // If "enrich_partial_candidates" is true, stop adding predictive nodes here.
-  if (is_prediction && !ShouldEnrichPartialCandidates(request)) {
+  if (is_prediction && !IsMobileRequest(request)) {
     MakeLatticeNodesForPredictiveNodes(*segments, request, lattice);
   }
 
@@ -1977,8 +1975,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
                               type == ConversionRequest::PARTIAL_PREDICTION);
   const bool is_suggestion = (type == ConversionRequest::SUGGESTION ||
                               type == ConversionRequest::PARTIAL_SUGGESTION);
-  const FilterType filter_type =
-      request.request().mixed_conversion() ? MOBILE : DESKTOP;
+  const FilterType filter_type = IsMobileRequest(request) ? MOBILE : DESKTOP;
 
   auto do_suggestion = [this, &request, &lattice, &group, &segments,
                         &filter_type, &is_prediction]() {
@@ -2012,7 +2009,7 @@ bool ImmutableConverterImpl::MakeSegments(const ConversionRequest &request,
       InsertFirstSegmentToCandidates(request, segments, lattice, group,
                                      only_first_segment_candidates_size,
                                      filter_type, false /* allow_exact */);
-      // TODO(taku): We do not want to refer `is_prediciton` here.
+      // TODO(taku): We do not want to refer `is_prediction` here.
       // This is a temporal workaround to fill all personal names appeared
       // as exact partial candidates. Expand candidates as many as possible
       if (is_prediction) {

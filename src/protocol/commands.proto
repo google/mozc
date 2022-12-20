@@ -570,10 +570,7 @@ message DecoderExperimentParams {
   // Otherwise, use the default penalty 1700.
   optional int32 spatial_cost_penalty_min_char_length = 6 [default = 0];
 
-  // If true, increase the number of partial candidates.
-  // Prefix lookup results will be included to the result of
-  // the dictionary predictor.
-  optional bool enrich_partial_candidates = 7 [default = false];
+  reserved 7;  // Deprecated enrich_partial_candidates
 
   enum VariationCharacterType {
     NO_VARIATION = 0;
@@ -588,10 +585,7 @@ message DecoderExperimentParams {
 
   reserved 9;  // Deprecated enable_number_decoder
 
-  // If true, we do not add the segment model penalty on calculating
-  // prediction candidate cost.
-  optional bool cancel_segment_model_penalty_for_prediction = 10
-      [default = false];
+  reserved 10;  // Deprecated cancel_segment_model_penalty_for_prediction
 
   // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
   // letters.

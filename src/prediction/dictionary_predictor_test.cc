@@ -778,12 +778,12 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  DictionaryPredictor::PredictionTypes AddRealtimeForMobile(
+  DictionaryPredictor::PredictionTypes AddDefaultPredictionTypes(
       DictionaryPredictor::PredictionTypes types, bool is_mobile) {
     if (!is_mobile) {
       return types;
     }
-    return types | DictionaryPredictor::REALTIME;
+    return types | DictionaryPredictor::REALTIME | DictionaryPredictor::PREFIX;
   }
 
   commands::DecoderExperimentParams *mutable_decoder_experiment_params() {
@@ -938,13 +938,15 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     // character count) is long enough.
     SetUpInputForSuggestion("てすとだよ", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+                                                 segments, &results));
 
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
+                                                 segments, &results));
   }
 
   // Short keys.
@@ -953,11 +955,13 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       // Unigram is triggered even if key length is short.
       SetUpInputForSuggestion("てす", composer_.get(), &segments);
       composer_->SetInputMode(transliteration::HIRAGANA);
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME |
+                 DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, segments, &results));
 
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME |
+                 DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_prediction_, segments, &results));
     } else {
@@ -988,9 +992,10 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "A", "A", composer_.get(),
                                        &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+                                                 segments, &results));
   }
 
   // Both history and current segment are long => UNIGRAM or BIGRAM
@@ -998,7 +1003,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(
+    EXPECT_EQ(AddDefaultPredictionTypes(
                   DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
                   is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
@@ -1012,8 +1017,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       SetUpInputForSuggestionWithHistory("A", "てすとだよ", "abc",
                                          composer_.get(), &segments);
       composer_->SetInputMode(transliteration::HIRAGANA);
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                    DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
+                 DictionaryPredictor::REALTIME | DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, segments, &results));
     } else {
@@ -1145,11 +1150,13 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     // character count) is long enough.
     SetUpInputForSuggestion("てすとだよ", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
 
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results));
   }
@@ -1160,11 +1167,13 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     // Unigram is not triggered if key length is short.
     SetUpInputForSuggestion("て", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
 
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results));
   }
@@ -1183,7 +1192,8 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "A", "A", composer_.get(),
                                        &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1193,8 +1203,9 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                  DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
+                  true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1204,8 +1215,9 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("て", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                  DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
+                  true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1352,12 +1364,15 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
 
     // Input mode is Latin(HALF_ASCII or FULL_ASCII) => ENGLISH
     config_->set_use_realtime_conversion(false);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::ENGLISH, is_mobile),
-              predictor->AggregatePredictionForRequest(request_for_suggestion,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::ENGLISH, is_mobile),
+        predictor->AggregatePredictionForRequest(request_for_suggestion,
+                                                 segments, &results));
 
     config_->set_use_realtime_conversion(true);
-    EXPECT_EQ(DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
+                  is_mobile),
               predictor->AggregatePredictionForRequest(request_for_suggestion,
                                                        segments, &results));
 
@@ -3460,15 +3475,6 @@ TEST_F(DictionaryPredictorTest, EnrichPartialCandidates) {
   SetUpInputForSuggestion("わたしのな", composer_.get(), &segments);
 
   std::vector<DictionaryPredictor::Result> results;
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      false);
-  EXPECT_FALSE(predictor->AggregatePredictionForRequest(
-                   *convreq_for_prediction_, segments, &results) &
-               DictionaryPredictor::PREFIX);
-
-  results.clear();
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   EXPECT_TRUE(predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results) &
               DictionaryPredictor::PREFIX);
@@ -3870,8 +3876,6 @@ TEST_F(DictionaryPredictorTest,
   Segments segments;
   SetUpInputForSuggestion("てすと", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   int exact_count = 0;
@@ -3913,8 +3917,6 @@ TEST_F(DictionaryPredictorTest,
   SetUpInputForSuggestionWithHistory("", "わたし", "私", composer_.get(),
                                      &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   composer_->SetInputMode(transliteration::HIRAGANA);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
@@ -4008,8 +4010,6 @@ TEST_F(DictionaryPredictorTest,
   Segments segments;
   SetUpInputForSuggestion("かつた", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   convreq_for_prediction_->set_use_actual_converter_for_realtime_conversion(
       true);
   composer_->SetInputMode(transliteration::HIRAGANA);
@@ -4031,58 +4031,6 @@ TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
                                       "よんじゅうご", "45"));
-}
-
-TEST_F(DictionaryPredictorTest, CancelSegmentModelPenalty) {
-  testing::MockDataManager data_manager;
-  const MockDictionary dictionary;
-  MockConverter converter;
-  ImmutableConverterMock immutable_converter;
-  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
-      CreateSuffixDictionaryFromDataManager(data_manager));
-  std::unique_ptr<const Connector> connector =
-      Connector::CreateFromDataManager(data_manager).value();
-  std::unique_ptr<const Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(data_manager));
-  std::unique_ptr<const SuggestionFilter> suggestion_filter(
-      CreateSuggestionFilter(data_manager));
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-
-  {
-    // Set up mock immutable converter (for REALTIME).
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = "ちょう";
-    candidate->value = "超";
-    candidate->wcost = 100;
-    candidate->lid = pos_matcher.GetNounPrefixId();
-    candidate->rid = pos_matcher.GetNounPrefixId();
-    // Segment model penalty is added to the wcost in converter.
-    candidate->wcost += segmenter->GetPrefixPenalty(candidate->rid);
-    candidate->wcost += segmenter->GetSuffixPenalty(candidate->lid);
-
-    immutable_converter.SetConvertForRequest(segments);
-  }
-
-  TestableDictionaryPredictor predictor(
-      data_manager, &converter, &immutable_converter, &dictionary,
-      suffix_dictionary.get(), connector.get(), segmenter.get(), &pos_matcher,
-      suggestion_filter.get());
-
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
-
-  Segments segments;
-  SetUpInputForSuggestion("ちょう", composer_.get(), &segments);
-
-  request_->mutable_decoder_experiment_params()
-      ->set_cancel_segment_model_penalty_for_prediction(true);
-  composer_->SetInputMode(transliteration::HIRAGANA);
-  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
-  const auto &c = segments.conversion_segment(0).candidate(0);
-  // Only transition cost (to the empty history) and the original wcost
-  // should be used for the candidate cost.
-  EXPECT_EQ(connector->GetTransitionCost(0, c.lid) + 100, c.cost);
 }
 
 TEST_F(DictionaryPredictorTest, DoNotPredictNoisyNumberEntries) {
