@@ -1,5 +1,8 @@
 # How to build Mozc in Docker
 
+[![Linux](https://github.com/google/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/linux.yaml)
+[![Android lib](https://github.com/google/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/android.yaml)
+
 ## Introduction
 Docker containers are available to build Mozc binaries for Android JNI library and Linux desktop.
 
@@ -22,7 +25,7 @@ You may need to execute `docker` with `sudo` (e.g. `sudo docker build ...`).
 
 Notes
 * `mozc_ubuntu20.04` is a Docker image name (customizable).
-* `mozc_build` is a Docker contaniner name (customizable).
+* `mozc_build` is a Docker container name (customizable).
 * Don't forget to rebuild Docker container when Dockerfile is updated.
 
 
@@ -35,7 +38,7 @@ docker exec mozc_build bazel build package --config oss_linux -c opt
 
 Notes
 * You might want to execute `docker stop` after `docker exec`.
-* `mozc_build` is the Docker contaniner name created in the above section.
+* `mozc_build` is the Docker container name created in the above section.
 
 
 ### Copy Mozc binaries from Docker container to host
@@ -51,7 +54,7 @@ the build and install paths.
 
 Notes
 * You might want to execute `docker stop` after copying.
-* `mozc_build` is the Docker contaniner name created in the above section.
+* `mozc_build` is the Docker container name created in the above section.
 
 -----
 
@@ -91,7 +94,7 @@ Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 bazel test ... --config oss_linux -c dbg -- -net/... -third_party/...
 ```
 
-* `...` means all targets under the current and sub directories.
+* `...` means all targets under the current and subdirectories.
 * `--` means the end of the flags which start from `-`.
 * `-<dir>/...` means exclusion of all targets under the `dir`.
   + `net` and `third_party` are not supported yet.
