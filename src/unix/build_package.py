@@ -47,6 +47,9 @@ class LocationRules:
         'mozc_server': os.path.join(args.mozc_dir, 'mozc_server'),
         'mozc_tool': os.path.join(args.mozc_dir, 'mozc_tool'),
         'mozc_renderer': os.path.join(args.mozc_dir, 'mozc_renderer'),
+        'mozc_emacs_helper': os.path.join(args.emacs_helper_dir,
+                                          'mozc_emacs_helper'),
+        'mozc.el': os.path.join(args.emacs_client_dir, 'mozc.el'),
     }
 
   def GetDestName(self, src: str) -> str:
@@ -69,6 +72,11 @@ def ParseArguments() -> argparse.Namespace:
                       default='/usr/lib/ibus-mozc/ibus-engine-mozc')
   # For ibus icons.
   parser.add_argument('--ibus_mozc_install_dir', default='/usr/share/ibus-mozc')
+  # For mozc_emacs_helper
+  parser.add_argument('--emacs_helper_dir', default='/usr/bin')
+  # For mozc.el
+  parser.add_argument('--emacs_client_dir',
+                      default='/usr/share/emacs/site-lisp/emacs-mozc')
   parser.add_argument('--output')
   return parser.parse_args()
 
