@@ -3,6 +3,21 @@
 [![Linux](https://github.com/google/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/linux.yaml)
 [![Android lib](https://github.com/google/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/android.yaml)
 
+## Summary
+
+If you are not sure what the following commands do, please check the descriptions below
+and make sure the operations before running them.
+
+```
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu20.04/Dockerfile
+docker build --rm -tag mozc_ubuntu20.04 .
+docker create --interactive --tty --name mozc_build mozc_ubuntu20.04
+
+docker start mozc_build
+docker exec mozc_build bazel build package --config oss_linux -c opt
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
+```
+
 ## Introduction
 Docker containers are available to build Mozc binaries for Android JNI library and Linux desktop.
 
@@ -34,26 +49,13 @@ Notes
 ```
 docker start mozc_build
 docker exec mozc_build bazel build package --config oss_linux -c opt
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
+
+`mozc.zip` contains built files.
 
 Notes
-* You might want to execute `docker stop` after `docker exec`.
-* `mozc_build` is the Docker container name created in the above section.
-
-
-### Copy Mozc binaries from Docker container to host
-
-```
-docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/server/mozc_server .
-docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/ibus/ibus_mozc .
-...
-```
-
-See [Install paths](#install-paths) below for more information about
-the build and install paths.
-
-Notes
-* You might want to execute `docker stop` after copying.
+* You might want to execute `docker stop` after build.
 * `mozc_build` is the Docker container name created in the above section.
 
 -----
@@ -67,26 +69,23 @@ bazel build package --config oss_linux -c opt
 Note: You might want to execute `docker start --interactive mozc_build`
 to enter the docker container before the above command.
 
-`package` is an alias to build:
-* //server:mozc_server
-* //gui/tool:mozc_tool
-* //renderer:mozc_renderer
-* //unix/ibus:ibus_mozc
-* //unix:icons
-* //unix/emacs:mozc_emacs_helper
+`package` builds Mozc binaries and locates them into `mozc.zip` as follows.
 
-### Install paths
+| build rule                     | install path |
+| ------------------------------ | ------------ |
+| //server:mozc_server           | /usr/lib/mozc/mozc_server |
+| //gui/tool:mozc_tool           | /usr/lib/mozc/mozc_tool |
+| //renderer:mozc_renderer       | /usr/lib/mozc/mozc_renderer |
+| //unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
+| //unix/ibus:gen_mozc_xml       | /usr/share/ibus/component/mozc.xml |
+| //unix:icons                   | /usr/share/ibus-mozc/... |
+| //unix:icons                   | /usr/share/icons/mozc/... |
+| //unix/emacs:mozc.el           | /usr/share/emacs/site-lisp/emacs-mozc/mozc.el |
+| //unix/emacs:mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
 
-| build path   | install path |
-| ------------ | ------------ |
-| bazel-bin/server/mozc_server           | /usr/lib/mozc/mozc_server |
-| bazel-bin/gui/tool/mozc_tool           | /usr/lib/mozc/mozc_tool |
-| bazel-bin/renderer/mozc_renderer       | /usr/lib/mozc/mozc_renderer |
-| bazel-bin/unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
-| bazel-bin/unix/ibus/mozc.xml           | /usr/share/ibus/component/mozc.xml |
-| bazel-bin/unix/emacs/mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
+Install paths are configurable by modifying
+[src/config.bzl](https://github.com/google/mozc/blob/master/src/config.bzl).
 
-Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 
 ### Unittests
 
