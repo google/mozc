@@ -31,15 +31,19 @@
 """Script to make a zip file of Mozc built files."""
 
 import argparse
+import glob
 import os
 import shutil
 import tempfile
+import zipfile
 
 
-class LocationRules:
-  """Rules to locate the build targets to the install paths."""
+class Packager:
+  """Packager to locate the build targets to the install paths."""
 
   def __init__(self, args):
+    self.mozc_icons_dir = args.mozc_icons_dir
+    self.ibus_icons_dir = args.ibus_mozc_install_dir
     self.location_rules = {
         'ibus_mozc': args.ibus_mozc_path,
         'icons.zip': '/tmp/icons.zip',
@@ -52,9 +56,46 @@ class LocationRules:
         'mozc.el': os.path.join(args.emacs_client_dir, 'mozc.el'),
     }
 
+  def PackageFiles(self, inputs: list[str], output: str) -> None:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+      self.LocateFiles(tmp_dir, inputs)
+      basename = os.path.splitext(output)[0]
+      shutil.make_archive(basename, format='zip', root_dir=tmp_dir)
+
   def GetDestName(self, src: str) -> str:
     basename = os.path.basename(src)
-    return self.location_rules.get(basename, basename).lstrip('/')
+    return self.location_rules.get(basename, basename)
+
+  def JoinTopDir(self, top_dir: str, path: str) -> str:
+    return os.path.join(top_dir, path.lstrip('/'))
+
+  def LocateFiles(self, top_dir: str, files: list[str]) -> None:
+    """Locate files to install directories."""
+    for src in files:
+      dest_name = self.GetDestName(src)
+      dest_path = self.JoinTopDir(top_dir, dest_name)
+      os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+      shutil.copy(src, dest_path)
+
+      if src.endswith('icons.zip'):
+        self.LocateIconFiles(top_dir, src)
+
+  def LocateIconFiles(self, top_dir: str, icons_zip: str) -> None:
+    """Locate icon files archived in icons.zip."""
+    mozc_icons_dir = self.JoinTopDir(top_dir, self.mozc_icons_dir)
+    ibus_icons_dir = self.JoinTopDir(top_dir, self.ibus_icons_dir)
+    # Extract icons.zip to mozc_icons_dir.
+    with zipfile.ZipFile(icons_zip) as icons:
+      icons.extractall(mozc_icons_dir)
+
+    # Copy mozc_icons_dir/*.png to ibus_icons_dir.
+    os.makedirs(ibus_icons_dir, exist_ok=True)
+    for icon in glob.glob(os.path.join(mozc_icons_dir, '*.png')):
+      shutil.copy(icon, ibus_icons_dir)
+
+    # Rename mozc.png to product_icon.png in ibus_icons_dir.
+    shutil.move(os.path.join(ibus_icons_dir, 'mozc.png'),
+                os.path.join(ibus_icons_dir, 'product_icon.png'))
 
 
 def ParseArguments() -> argparse.Namespace:
@@ -64,7 +105,7 @@ def ParseArguments() -> argparse.Namespace:
   # For mozc_server, mozc_tool, mozc_renderer
   parser.add_argument('--mozc_dir', default='/usr/lib/mozc')
   # For icons
-  parser.add_argument('--mozc_icon_dir', default='/usr/share/icons/mozc')
+  parser.add_argument('--mozc_icons_dir', default='/usr/share/icons/mozc')
   # For mozc.xml
   parser.add_argument('--ibus_component_dir', default='/usr/lib/ibus/component')
   # For ibus-engine-mozc. It's not dir but a file path.
@@ -83,16 +124,8 @@ def ParseArguments() -> argparse.Namespace:
 
 def main():
   args = ParseArguments()
-  location_rules = LocationRules(args)
-  with tempfile.TemporaryDirectory() as tmp_dir:
-    for src in args.inputs:
-      dest_name = location_rules.GetDestName(src)
-      dest_path = os.path.join(tmp_dir, dest_name)
-      os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-      shutil.copy(src, dest_path)
-
-    basename = os.path.splitext(args.output)[0]
-    shutil.make_archive(basename, format='zip', root_dir=tmp_dir)
+  packager = Packager(args)
+  packager.PackageFiles(args.inputs, args.output)
 
 
 if __name__ == '__main__':
