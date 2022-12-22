@@ -2569,12 +2569,16 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+    // CommitSegments() sets the first segment SUBMITTED.
+    segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+    segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+    EXPECT_CALL(converter, CommitSegments(_, _))
         .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
     session.CommitCandidate(&command);
-    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+    EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-2", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
@@ -2588,13 +2592,18 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
     // Move to second segment and do the same thing.
+    segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(1)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+    EXPECT_CALL(converter, CommitSegments(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.SegmentFocusRight(&command);
     command.Clear();
     command.mutable_input()->mutable_command()->set_id(1);
     session.CommitCandidate(&command);
     // "cand2-2" is focused
-    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+    EXPECT_PREEDIT("cand3-1", command);
     EXPECT_RESULT("cand1-1cand2-2", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
@@ -2609,6 +2618,9 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
   }
   {  // Undo for CommitSegment
+    segments.mutable_segment(0)->set_segment_type(Segment::FREE);
+    segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+    segments.mutable_segment(2)->set_segment_type(Segment::FREE);
     EXPECT_CALL(converter, StartConversionForRequest(_, _))
         .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
     command.Clear();
@@ -2617,14 +2629,17 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
-    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
-        .WillRepeatedly(DoAll(SetArgPointee<0>(segments), Return(true)));
     command.Clear();
     session.ConvertNext(&command);
     EXPECT_EQ("cand1-2cand2-1cand3-1", GetComposition(command));
     command.Clear();
+    segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+    segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+    EXPECT_CALL(converter, CommitSegments(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
     session.CommitSegment(&command);
-    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+    EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-2", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
@@ -2646,9 +2661,16 @@ TEST_P(SessionTest, UndoForMultipleSegments) {
     session.ConvertNext(&command);
     EXPECT_PREEDIT("cand1-1cand2-1cand3-2", command);
     command.Clear();
+    segments.mutable_segment(0)->set_segment_type(Segment::SUBMITTED);
+    segments.mutable_segment(1)->set_segment_type(Segment::FREE);
+    segments.mutable_segment(2)->set_segment_type(Segment::FREE);
+    EXPECT_CALL(converter, CommitSegments(_, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+    // "cand3-2" is focused, but once CommitSegment() runs, which commits
+    // the first segment (Ctrl + N on MS-IME),
+    // the last segment goes back to the initial candidate ("cand3-1").
     session.CommitSegment(&command);
-    // "cand3-2" is focused
-    EXPECT_PREEDIT("cand1-1cand2-1cand3-1", command);
+    EXPECT_PREEDIT("cand2-1cand3-1", command);
     EXPECT_RESULT("cand1-1", command);
     EXPECT_EQ(ImeContext::CONVERSION, session.context().state());
 
