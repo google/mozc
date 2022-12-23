@@ -1204,17 +1204,28 @@ message Status {
 
 // This message contains which characters are to be deleted by client.
 // E.g. if current composition and surrounding text are
-//     "この感じは漢字は"
-//                ^^^^^^
+//     "この感じは[漢字は]" ("漢字は" is the composition)
 // and we send DeletionRange with offset == -3 and length == 3, then they will
 // be rendered like:
-//     "この漢字は"
-//          ^^^^^^
+//     "この[漢字は]"
 message DeletionRange {
-  // Offset of start of range.
+  // Offset of start of the deletion range.
+  // Right now,
+  // - Only nagative value is expected.
+  //     In this case, the offset is counted from the beginning of the
+  //     composition (see the message comment right above).
+  // - Positive or 0 value is not sent.
+  //     But not forbidden.
+  //     Though its expectation is not decided yet,
+  //     the client implementation should be prepared (at least, don't crash).
   optional int32 offset = 1;
 
   // Length of the range.
+  // Right now offset==abs(length) is expected.
+  // The expectation where the above condition doesn't meet
+  // is not defined yet.
+  // This may be defined in future (when positive offset becomes
+  // supported?).
   optional int32 length = 2;
 }
 
