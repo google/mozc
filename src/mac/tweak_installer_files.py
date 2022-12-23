@@ -132,7 +132,7 @@ def TweakInstallerFiles(args: argparse.Namespace, work_dir: str) -> None:
   TweakQtApps(top_dir)
 
   # Create a zip file with the zip command.
-  # It's possbiel but not easy to contain symlinks with shutil.make_archive.
+  # It's possible but not easy to contain symlinks with shutil.make_archive.
   if os.path.exists(args.output):
     os.remove(args.output)
   orig_dir = os.getcwd()

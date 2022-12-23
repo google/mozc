@@ -28,6 +28,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 load("//:build_defs.bzl", "py_binary_mozc", "select_mozc")
+load(
+    "//:config.bzl",
+    "EMACS_MOZC_CLIENT_DIR",
+    "EMACS_MOZC_HELPER_DIR",
+    "IBUS_MOZC_INSTALL_DIR",
+    "IBUS_MOZC_PATH",
+    "LINUX_MOZC_ICONS_DIR",
+    "LINUX_MOZC_SERVER_DIR",
+)
 
 package(default_visibility = ["//:__subpackages__"])
 
@@ -71,4 +80,35 @@ genrule(
 py_binary_mozc(
     name = "build_icons",
     srcs = ["build_icons.py"],
+)
+
+genrule(
+    name = "package",
+    srcs = [
+        "//gui/tool:mozc_tool",
+        "//renderer:mozc_renderer",
+        "//server:mozc_server",
+        "//unix/emacs:mozc_emacs_helper",
+        "//unix/ibus:gen_mozc_xml",
+        "//unix/ibus:ibus_mozc",
+        "//unix:icons",
+        "//unix/emacs:mozc.el",
+    ],
+    outs = ["mozc.zip"],
+    cmd = " ".join([
+        "$(location :build_package) --inputs $(SRCS) --output $@",
+        "--mozc_dir \"" + LINUX_MOZC_SERVER_DIR + "\"",
+        "--mozc_icons_dir \"" + LINUX_MOZC_ICONS_DIR + "\"",
+        "--ibus_mozc_path \"" + IBUS_MOZC_PATH + "\"",
+        "--ibus_mozc_install_dir \"" + IBUS_MOZC_INSTALL_DIR + "\"",
+        "--emacs_client_dir \"" + EMACS_MOZC_CLIENT_DIR + "\"",
+        "--emacs_helper_dir \"" + EMACS_MOZC_HELPER_DIR + "\"",
+    ]),
+    exec_tools = [":build_package"],
+)
+
+py_binary_mozc(
+    name = "build_package",
+    srcs = ["build_package.py"],
+    deps = ["//build_tools:util"],
 )

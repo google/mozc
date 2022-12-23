@@ -1,6 +1,8 @@
 How to build Mozc on OS X
 =========================
 
+[![macOS](https://github.com/google/mozc/actions/workflows/macos.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/macos.yaml)
+
 ## Get the Code
 
 You can download Mozc source code as follows:
@@ -44,7 +46,7 @@ make
 ### Edit src/config.bzl
 
 Modify variables in `src/config.bzl` to fit your environment.
-Note: `~` does not represent the home directry.
+Note: `~` does not represent the home directory.
 The exact path should be specified (e.g. `MACOS_QT_PATH = "/Users/mozc/myqt"`).
 
 Tips: the following command makes the specified file untracked by Git.

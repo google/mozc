@@ -37,6 +37,8 @@ load(
     "cc_test_mozc",
 )
 
+exports_files(["mozc.el"])
+
 cc_binary_mozc(
     name = "mozc_emacs_helper",
     srcs = ["mozc_emacs_helper.cc"],

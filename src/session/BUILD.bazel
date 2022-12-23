@@ -890,7 +890,7 @@ cc_binary_mozc(
 
 cc_test_mozc(
     name = "session_handler_scenario_test",
-    size = "medium",
+    size = "large",
     srcs = ["session_handler_scenario_test.cc"],
     data = [
         "//data/test/session/scenario:scenario_files",

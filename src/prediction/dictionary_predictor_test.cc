@@ -87,7 +87,7 @@ namespace mozc {
 namespace {
 
 using ::mozc::dictionary::DictionaryInterface;
-using ::mozc::dictionary::DictionaryMock;
+using ::mozc::dictionary::MockDictionary;
 using ::mozc::dictionary::PosGroup;
 using ::mozc::dictionary::PosMatcher;
 using ::mozc::dictionary::SuffixDictionary;
@@ -95,9 +95,15 @@ using ::mozc::dictionary::SuppressionDictionary;
 using ::mozc::dictionary::SystemDictionary;
 using ::mozc::dictionary::Token;
 using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::AtLeast;
 using ::testing::DoAll;
+using ::testing::Ne;
+using ::testing::Ref;
 using ::testing::Return;
 using ::testing::SetArgPointee;
+using ::testing::StartsWith;
+using ::testing::StrEq;
 using ::testing::WithParamInterface;
 
 constexpr int kInfinity = (2 << 20);
@@ -204,7 +210,7 @@ class MockDataAndPredictor {
  public:
   // Initializes predictor with given dictionary and suffix_dictionary.  When
   // nullptr is passed to the first argument |dictionary|, the default
-  // DictionaryMock is used. For the second, the default is MockDataManager's
+  // MockDictionary is used. For the second, the default is MockDataManager's
   // suffix dictionary. Note that |dictionary| and |suffix_dictionary| are
   // owned by this class.
   void Init(const DictionaryInterface *dictionary = nullptr,
@@ -212,10 +218,10 @@ class MockDataAndPredictor {
     pos_matcher_.Set(data_manager_.GetPosMatcherData());
     suppression_dictionary_ = std::make_unique<SuppressionDictionary>();
     if (!dictionary) {
-      dictionary_mock_ = new DictionaryMock;
-      dictionary_.reset(dictionary_mock_);
+      mock_dictionary_ = new MockDictionary;
+      dictionary_.reset(mock_dictionary_);
     } else {
-      dictionary_mock_ = nullptr;
+      mock_dictionary_ = nullptr;
       dictionary_.reset(dictionary);
     }
     if (!suffix_dictionary) {
@@ -245,7 +251,7 @@ class MockDataAndPredictor {
 
   const PosMatcher &pos_matcher() const { return pos_matcher_; }
 
-  DictionaryMock *mutable_dictionary() { return dictionary_mock_; }
+  MockDictionary *mutable_dictionary() { return mock_dictionary_; }
 
   const TestableDictionaryPredictor *dictionary_predictor() {
     return dictionary_predictor_.get();
@@ -263,7 +269,7 @@ class MockDataAndPredictor {
   std::unique_ptr<const Segmenter> segmenter_;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary_;
   std::unique_ptr<const DictionaryInterface> dictionary_;
-  DictionaryMock *dictionary_mock_;
+  MockDictionary *mock_dictionary_;
   std::unique_ptr<const PosGroup> pos_group_;
   std::unique_ptr<ImmutableConverterInterface> immutable_converter_;
   MockConverter converter_;
@@ -271,40 +277,57 @@ class MockDataAndPredictor {
   std::unique_ptr<TestableDictionaryPredictor> dictionary_predictor_;
 };
 
-class CallCheckDictionary : public DictionaryInterface {
- public:
-  CallCheckDictionary() = default;
-  ~CallCheckDictionary() override = default;
-
-  MOCK_METHOD(bool, HasKey, (absl::string_view), (const, override));
-  MOCK_METHOD(bool, HasValue, (absl::string_view), (const, override));
-  MOCK_METHOD(void, LookupPredictive,
-              (absl::string_view key, const ConversionRequest &convreq,
-               Callback *callback),
-              (const, override));
-  MOCK_METHOD(void, LookupPrefix,
-              (absl::string_view key, const ConversionRequest &convreq,
-               Callback *callback),
-              (const, override));
-  MOCK_METHOD(void, LookupExact,
-              (absl::string_view key, const ConversionRequest &convreq,
-               Callback *callback),
-              (const, override));
-  MOCK_METHOD(void, LookupReverse,
-              (absl::string_view str, const ConversionRequest &convreq,
-               Callback *callback),
-              (const, override));
-};
-
-// Action to call the third argument of LookupPrefix with the token
-// <key, value>.
-ACTION_P4(LookupPrefixOneToken, key, value, lid, rid) {
+// Action to call the third argument of LookupPrefix/LookupPredictive with the
+// token <key, value>.
+ACTION_P6(InvokeCallbackWithOneToken, key, value, cost, lid, rid, attributes) {
   Token token;
   token.key = key;
   token.value = value;
+  token.cost = cost;
   token.lid = lid;
   token.rid = rid;
+  token.attributes = attributes;
   arg2->OnToken(key, key, token);
+}
+
+ACTION_P(InvokeCallbackWithTokens, token_list) {
+  using Callback = DictionaryInterface::Callback;
+  Callback *callback = arg2;
+  for (const Token &token : token_list) {
+    if (callback->OnKey(token.key) != Callback::TRAVERSE_CONTINUE ||
+        callback->OnActualKey(token.key, token.key, false) !=
+            Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+    if (callback->OnToken(token.key, token.key, token) !=
+        Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+  }
+}
+
+ACTION_P2(InvokeCallbackWithKeyValuesImpl, key_value_list, token_attribute) {
+  using Callback = DictionaryInterface::Callback;
+  Callback *callback = arg2;
+  for (const auto &[key, value] : key_value_list) {
+    if (callback->OnKey(key) != Callback::TRAVERSE_CONTINUE ||
+        callback->OnActualKey(key, key, false) != Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+    const Token token(key, value, MockDictionary::kDefaultCost,
+                      MockDictionary::kDefaultPosId,
+                      MockDictionary::kDefaultPosId, token_attribute);
+    if (callback->OnToken(key, key, token) != Callback::TRAVERSE_CONTINUE) {
+      return;
+    }
+  }
+}
+
+auto InvokeCallbackWithKeyValues(
+    const std::vector<std::pair<std::string, std::string>> &key_value_list,
+    Token::Attribute attribute = Token::NONE)
+    -> decltype(InvokeCallbackWithKeyValuesImpl(key_value_list, attribute)) {
+  return InvokeCallbackWithKeyValuesImpl(key_value_list, attribute);
 }
 
 void InitSegmentsWithKey(absl::string_view key, Segments *segments) {
@@ -380,106 +403,105 @@ class DictionaryPredictorTest : public ::testing::Test {
     mozc::usage_stats::UsageStats::ClearAllStatsForTest();
   }
 
-  static void AddWordsToMockDic(DictionaryMock *mock) {
-    constexpr char kGoogleA[] = "ぐーぐるあ";
+  static void AddWordsToMockDic(MockDictionary *mock) {
+    EXPECT_CALL(*mock, LookupPredictive(_, _, _)).Times(AnyNumber());
+    EXPECT_CALL(*mock, LookupPrefix(_, _, _)).Times(AnyNumber());
 
-    constexpr char kGoogleAdsenseHiragana[] = "ぐーぐるあどせんす";
-    constexpr char kGoogleAdsenseKatakana[] = "グーグルアドセンス";
-    mock->AddLookupPredictive(kGoogleA, kGoogleAdsenseHiragana,
-                              kGoogleAdsenseKatakana, Token::NONE);
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("ぐーぐるあ"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"ぐーぐるあどせんす", "グーグルアドセンス"},
+            {"ぐーぐるあどわーず", "グーグルアドワーズ"},
+        }));
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("ぐーぐる"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"ぐーぐるあどせんす", "グーグルアドセンス"},
+            {"ぐーぐるあどわーず", "グーグルアドワーズ"},
+        }));
+    EXPECT_CALL(*mock, LookupPrefix(StrEq("ぐーぐる"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"グーグル", "グーグル"},
+        }));
+    EXPECT_CALL(*mock, LookupPrefix(StrEq("あどせんす"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"アドセンス", "アドセンス"},
+        }));
+    EXPECT_CALL(*mock, LookupPrefix(StrEq("てすと"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"てすと", "テスト"},
+        }));
 
-    constexpr char kGoogleAdwordsHiragana[] = "ぐーぐるあどわーず";
-    constexpr char kGoogleAdwordsKatakana[] = "グーグルアドワーズ";
-    mock->AddLookupPredictive(kGoogleA, kGoogleAdwordsHiragana,
-                              kGoogleAdwordsKatakana, Token::NONE);
+    EXPECT_CALL(*mock, LookupPrefix(StartsWith("ふぃるたーたいしょう"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            // Note: This is in the filter
+            {"ふぃるたーたいしょう", "フィルター対象"},
+            // Note: This is NOT in the filter
+            {"ふぃるたーたいしょう", "フィルター大将"},
+        }));
+    EXPECT_CALL(*mock,
+                LookupPredictive(StartsWith("ふぃるたーたいしょう"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"ふぃるたーたいしょう", "フィルター対象"},
+            {"ふぃるたーたいし", "フィルター大将"},
+        }));
 
-    constexpr char kGoogle[] = "ぐーぐる";
-    mock->AddLookupPredictive(kGoogle, kGoogleAdsenseHiragana,
-                              kGoogleAdsenseKatakana, Token::NONE);
-    mock->AddLookupPredictive(kGoogle, kGoogleAdwordsHiragana,
-                              kGoogleAdwordsKatakana, Token::NONE);
+    // RealtimeConversionWithSpellingCorrection test performs prefix search for
+    // the query "かぷりちょうざで", which starts with "かぷりちょうざ".
+    EXPECT_CALL(*mock, LookupPrefix(StartsWith("かぷりちょうざ"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues(
+            {
+                {"かぷりちょーざ", "カプリチョーザ"},
+            },
+            Token::SPELLING_CORRECTION));
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("かぷりちょうざ"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues(
+            {
+                {"かぷりちょーざ", "カプリチョーザ"},
+            },
+            Token::SPELLING_CORRECTION));
+    EXPECT_CALL(*mock, LookupPrefix(StrEq("で"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"で", "で"},
+        }));
 
-    constexpr char kGoogleKatakana[] = "グーグル";
-    mock->AddLookupPrefix(kGoogle, kGoogleKatakana, kGoogleKatakana,
-                          Token::NONE);
-
-    constexpr char kAdsense[] = "あどせんす";
-    constexpr char kAdsenseKatakana[] = "アドセンス";
-    mock->AddLookupPrefix(kAdsense, kAdsenseKatakana, kAdsenseKatakana,
-                          Token::NONE);
-
-    constexpr char kTestHiragana[] = "てすと";
-    constexpr char kTestKatakana[] = "テスト";
-    mock->AddLookupPrefix(kTestHiragana, kTestHiragana, kTestKatakana,
-                          Token::NONE);
-
-    constexpr char kFilterHiragana[] = "ふぃるたーたいしょう";
-    constexpr char kFilterPrefixHiragana[] = "ふぃるたーたいし";
-
-    // Note: This is in the filter
-    constexpr char kFilterWord[] = "フィルター対象";
-
-    // Note: This is NOT in the filter
-    constexpr char kNonFilterWord[] = "フィルター大将";
-
-    mock->AddLookupPrefix(kFilterHiragana, kFilterHiragana, kFilterWord,
-                          Token::NONE);
-
-    mock->AddLookupPrefix(kFilterHiragana, kFilterHiragana, kNonFilterWord,
-                          Token::NONE);
-
-    mock->AddLookupPredictive(kFilterHiragana, kFilterHiragana, kFilterWord,
-                              Token::NONE);
-
-    mock->AddLookupPredictive(kFilterHiragana, kFilterPrefixHiragana,
-                              kFilterWord, Token::NONE);
-
-    constexpr char kWrongCapriHiragana[] = "かぷりちょうざ";
-    constexpr char kRightCapriHiragana[] = "かぷりちょーざ";
-    constexpr char kCapriKatakana[] = "カプリチョーザ";
-
-    mock->AddLookupPrefix(kWrongCapriHiragana, kRightCapriHiragana,
-                          kCapriKatakana, Token::SPELLING_CORRECTION);
-
-    mock->AddLookupPredictive(kWrongCapriHiragana, kRightCapriHiragana,
-                              kCapriKatakana, Token::SPELLING_CORRECTION);
-
-    constexpr char kDe[] = "で";
-
-    mock->AddLookupPrefix(kDe, kDe, kDe, Token::NONE);
-
-    constexpr char kHirosueHiragana[] = "ひろすえ";
-    constexpr char kHirosue[] = "広末";
-
-    mock->AddLookupPrefix(kHirosueHiragana, kHirosueHiragana, kHirosue,
-                          Token::NONE);
-
-    constexpr char kYuzaHiragana[] = "ゆーざー";
-    constexpr char kYuza[] = "ユーザー";
     // For dictionary suggestion
-    mock->AddLookupPredictive(kYuzaHiragana, kYuzaHiragana, kYuza,
-                              Token::USER_DICTIONARY);
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("ゆーざー"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues(
+            {
+                {"ゆーざー", "ユーザー"},
+            },
+            Token::USER_DICTIONARY));
     // For realtime conversion
-    mock->AddLookupPrefix(kYuzaHiragana, kYuzaHiragana, kYuza,
-                          Token::USER_DICTIONARY);
+    EXPECT_CALL(*mock, LookupPrefix(StartsWith("ゆーざー"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues(
+            {
+                {"ゆーざー", "ユーザー"},
+            },
+            Token::USER_DICTIONARY));
 
     // Some English entries
-    mock->AddLookupPredictive("conv", "converge", "converge", Token::NONE);
-    mock->AddLookupPredictive("conv", "converged", "converged", Token::NONE);
-    mock->AddLookupPredictive("conv", "convergent", "convergent", Token::NONE);
-    mock->AddLookupPredictive("con", "contraction", "contraction", Token::NONE);
-    mock->AddLookupPredictive("con", "control", "control", Token::NONE);
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("conv"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"converge", "converge"},
+            {"converged", "converged"},
+            {"convergent", "convergent"},
+        }));
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("con"), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"contraction", "contraction"},
+            {"control", "control"},
+        }));
   }
 
-  MockDataAndPredictor *CreateDictionaryPredictorWithMockData() {
-    MockDataAndPredictor *ret = new MockDataAndPredictor;
+  static std::unique_ptr<MockDataAndPredictor>
+  CreateDictionaryPredictorWithMockData() {
+    auto ret = std::make_unique<MockDataAndPredictor>();
     ret->Init();
     AddWordsToMockDic(ret->mutable_dictionary());
     return ret;
   }
 
-  void GenerateKeyEvents(absl::string_view text,
-                         std::vector<commands::KeyEvent> *keys) {
+  static void GenerateKeyEvents(absl::string_view text,
+                                std::vector<commands::KeyEvent> *keys) {
     keys->clear();
 
     const char *begin = text.data();
@@ -539,10 +561,9 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-        new MockDataAndPredictor);
-    // CallCheckDictionary is managed by data_and_predictor;
-    CallCheckDictionary *check_dictionary = new CallCheckDictionary;
+    auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+    // MockDictionary is managed by data_and_predictor;
+    auto *check_dictionary = new MockDictionary;
     data_and_predictor->Init(check_dictionary, nullptr);
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -558,9 +579,8 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(::testing::Ne(""),
-                                   ::testing::Ref(*convreq_for_prediction_), _))
-          .Times(::testing::AtLeast(1));
+                  LookupPredictive(Ne(""), Ref(*convreq_for_prediction_), _))
+          .Times(AtLeast(1));
 
       std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateUnigramCandidate(*convreq_for_prediction_, segments,
@@ -575,10 +595,9 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-        new MockDataAndPredictor);
-    // CallCheckDictionary is managed by data_and_predictor;
-    CallCheckDictionary *check_dictionary = new CallCheckDictionary;
+    auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+    // MockDictionary is managed by data_and_predictor;
+    auto *check_dictionary = new MockDictionary;
     data_and_predictor->Init(check_dictionary, nullptr);
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -608,11 +627,11 @@ class DictionaryPredictorTest : public ::testing::Test {
 
       // History key and value should be in the dictionary.
       EXPECT_CALL(*check_dictionary,
-                  LookupPrefix(_, ::testing::Ref(*convreq_for_prediction_), _))
-          .WillOnce(LookupPrefixOneToken("ぐーぐる", "グーグル", 1, 1));
-      EXPECT_CALL(
-          *check_dictionary,
-          LookupPredictive(_, ::testing::Ref(*convreq_for_prediction_), _));
+                  LookupPrefix(_, Ref(*convreq_for_prediction_), _))
+          .WillOnce(InvokeCallbackWithOneToken("ぐーぐる", "グーグル", 0, 1, 1,
+                                               Token::NONE));
+      EXPECT_CALL(*check_dictionary,
+                  LookupPredictive(_, Ref(*convreq_for_prediction_), _));
 
       std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateBigramPrediction(*convreq_for_prediction_, segments,
@@ -628,10 +647,9 @@ class DictionaryPredictorTest : public ::testing::Test {
 
     table_->LoadFromFile("system://romanji-hiragana.tsv");
     composer_->SetTable(table_.get());
-    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-        new MockDataAndPredictor);
-    // CallCheckDictionary is managed by data_and_predictor.
-    CallCheckDictionary *check_dictionary = new CallCheckDictionary;
+    auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+    // MockDictionary is managed by data_and_predictor.
+    auto *check_dictionary = new MockDictionary;
     data_and_predictor->Init(nullptr, check_dictionary);
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
@@ -648,9 +666,8 @@ class DictionaryPredictorTest : public ::testing::Test {
       segment->set_key(query);
 
       EXPECT_CALL(*check_dictionary,
-                  LookupPredictive(::testing::Ne(""),
-                                   ::testing::Ref(*convreq_for_prediction_), _))
-          .Times(::testing::AtLeast(1));
+                  LookupPredictive(Ne(""), Ref(*convreq_for_prediction_), _))
+          .Times(AtLeast(1));
 
       std::vector<TestableDictionaryPredictor::Result> results;
       predictor->AggregateSuffixPrediction(*convreq_for_prediction_, segments,
@@ -694,8 +711,8 @@ class DictionaryPredictorTest : public ::testing::Test {
       transliteration::TransliterationType input_mode, const char *key,
       const char *expected_prefix, const char *expected_values[],
       size_t expected_values_size) {
-    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-        CreateDictionaryPredictorWithMockData());
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+        CreateDictionaryPredictorWithMockData();
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
 
@@ -732,8 +749,8 @@ class DictionaryPredictorTest : public ::testing::Test {
     request_->set_special_romanji_table(
         commands::Request::QWERTY_MOBILE_TO_HIRAGANA);
 
-    std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-        CreateDictionaryPredictorWithMockData());
+    std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+        CreateDictionaryPredictorWithMockData();
     const TestableDictionaryPredictor *predictor =
         data_and_predictor->dictionary_predictor();
 
@@ -761,12 +778,12 @@ class DictionaryPredictorTest : public ::testing::Test {
     }
   }
 
-  DictionaryPredictor::PredictionTypes AddRealtimeForMobile(
+  DictionaryPredictor::PredictionTypes AddDefaultPredictionTypes(
       DictionaryPredictor::PredictionTypes types, bool is_mobile) {
     if (!is_mobile) {
       return types;
     }
-    return types | DictionaryPredictor::REALTIME;
+    return types | DictionaryPredictor::REALTIME | DictionaryPredictor::PREFIX;
   }
 
   commands::DecoderExperimentParams *mutable_decoder_experiment_params() {
@@ -787,8 +804,8 @@ class DictionaryPredictorTest : public ::testing::Test {
 };
 
 TEST_F(DictionaryPredictorTest, OnOffTest) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -814,8 +831,8 @@ TEST_F(DictionaryPredictorTest, OnOffTest) {
 }
 
 TEST_F(DictionaryPredictorTest, PartialSuggestion) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -844,8 +861,8 @@ TEST_F(DictionaryPredictorTest, BigramTest) {
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   // "グーグルアドセンス" will be returned.
@@ -864,8 +881,8 @@ TEST_F(DictionaryPredictorTest, BigramTestWithZeroQuery) {
   // history is "グーグル"
   PrependHistorySegments("ぐーぐる", "グーグル", &segments);
 
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   EXPECT_TRUE(
@@ -882,8 +899,8 @@ TEST_F(DictionaryPredictorTest, Regression3042706) {
   // history is "きょうと/京都"
   PrependHistorySegments("きょうと", "京都", &segments);
 
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   EXPECT_TRUE(
@@ -901,8 +918,8 @@ class TriggerConditionsTest : public DictionaryPredictorTest,
 
 TEST_P(TriggerConditionsTest, TriggerConditions) {
   bool is_mobile = (GetParam() == MOBILE);
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -921,13 +938,15 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     // character count) is long enough.
     SetUpInputForSuggestion("てすとだよ", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+                                                 segments, &results));
 
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
+                                                 segments, &results));
   }
 
   // Short keys.
@@ -936,11 +955,13 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       // Unigram is triggered even if key length is short.
       SetUpInputForSuggestion("てす", composer_.get(), &segments);
       composer_->SetInputMode(transliteration::HIRAGANA);
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME |
+                 DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, segments, &results));
 
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME |
+                 DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_prediction_, segments, &results));
     } else {
@@ -971,9 +992,10 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "A", "A", composer_.get(),
                                        &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::UNIGRAM, is_mobile),
-              predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM, is_mobile),
+        predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
+                                                 segments, &results));
   }
 
   // Both history and current segment are long => UNIGRAM or BIGRAM
@@ -981,7 +1003,7 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(AddRealtimeForMobile(
+    EXPECT_EQ(AddDefaultPredictionTypes(
                   DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
                   is_mobile),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
@@ -995,8 +1017,8 @@ TEST_P(TriggerConditionsTest, TriggerConditions) {
       SetUpInputForSuggestionWithHistory("A", "てすとだよ", "abc",
                                          composer_.get(), &segments);
       composer_->SetInputMode(transliteration::HIRAGANA);
-      EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                    DictionaryPredictor::REALTIME,
+      EXPECT_EQ((DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
+                 DictionaryPredictor::REALTIME | DictionaryPredictor::PREFIX),
                 predictor->AggregatePredictionForRequest(
                     *convreq_for_suggestion_, segments, &results));
     } else {
@@ -1110,8 +1132,8 @@ INSTANTIATE_TEST_SUITE_P(TriggerConditionsForPlatforms, TriggerConditionsTest,
                          ::testing::Values(DESKTOP, MOBILE));
 
 TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -1128,11 +1150,13 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     // character count) is long enough.
     SetUpInputForSuggestion("てすとだよ", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
 
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results));
   }
@@ -1143,11 +1167,13 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     // Unigram is not triggered if key length is short.
     SetUpInputForSuggestion("て", composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
 
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results));
   }
@@ -1166,7 +1192,8 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "A", "A", composer_.get(),
                                        &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(DictionaryPredictor::UNIGRAM,
+                                        true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1176,8 +1203,9 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("てすとだよ", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                  DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
+                  true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1187,8 +1215,9 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
     SetUpInputForSuggestionWithHistory("て", "てすとだよ", "abc",
                                        composer_.get(), &segments);
     composer_->SetInputMode(transliteration::HIRAGANA);
-    EXPECT_EQ(DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM |
-                  DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::UNIGRAM | DictionaryPredictor::BIGRAM,
+                  true /*is_mobile*/),
               predictor->AggregatePredictionForRequest(*convreq_for_suggestion_,
                                                        segments, &results));
   }
@@ -1290,8 +1319,8 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsMobile) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -1335,12 +1364,15 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
 
     // Input mode is Latin(HALF_ASCII or FULL_ASCII) => ENGLISH
     config_->set_use_realtime_conversion(false);
-    EXPECT_EQ(AddRealtimeForMobile(DictionaryPredictor::ENGLISH, is_mobile),
-              predictor->AggregatePredictionForRequest(request_for_suggestion,
-                                                       segments, &results));
+    EXPECT_EQ(
+        AddDefaultPredictionTypes(DictionaryPredictor::ENGLISH, is_mobile),
+        predictor->AggregatePredictionForRequest(request_for_suggestion,
+                                                 segments, &results));
 
     config_->set_use_realtime_conversion(true);
-    EXPECT_EQ(DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
+    EXPECT_EQ(AddDefaultPredictionTypes(
+                  DictionaryPredictor::ENGLISH | DictionaryPredictor::REALTIME,
+                  is_mobile),
               predictor->AggregatePredictionForRequest(request_for_suggestion,
                                                        segments, &results));
 
@@ -1361,8 +1393,8 @@ TEST_F(DictionaryPredictorTest, TriggerConditionsLatinInputMode) {
 
 TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
   Segments segments;
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -1387,27 +1419,41 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidate) {
 TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
   constexpr char kHiraganaA[] = "あ";
   constexpr char kHiraganaAA[] = "ああ";
-
-  DictionaryMock mock_dict;
-  // A system dictionary entry "a".
-  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "a", Token::NONE);
-  // System dictionary entries "a0", ..., "a9", which are detected as redundant
-  // by MaybeRedundant(); see dictionary_predictor.cc.
-  for (int i = 0; i < 10; ++i) {
-    mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA,
-                                  absl::StrFormat("a%d", i), Token::NONE);
-  }
-  // A user dictionary entry "aaa".  MaybeRedundant() detects this entry as
-  // redundant but it should not be filtered in prediction.
-  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaA, "aaa",
-                                Token::USER_DICTIONARY);
-
+  constexpr auto kCost = MockDictionary::kDefaultCost;
+  constexpr auto kPosId = MockDictionary::kDefaultPosId;
   constexpr int kZipcodeId = 100;
   constexpr int kUnknownId = 100;
-  mock_dict.AddLookupPredictive(kHiraganaA, kHiraganaAA, "bbb", 0, kUnknownId,
-                                kUnknownId, Token::USER_DICTIONARY);
-  mock_dict.AddLookupPredictive(kHiraganaAA, kHiraganaAA, "bbb", 0, kUnknownId,
-                                kUnknownId, Token::USER_DICTIONARY);
+
+  const std::vector<Token> a_tokens = {
+      // A system dictionary entry "a".
+      {kHiraganaA, "a", kCost, kPosId, kPosId, Token::NONE},
+      // System dictionary entries "a0", ..., "a9", which are detected as
+      // redundant
+      // by MaybeRedundant(); see dictionary_predictor.cc.
+      {kHiraganaA, "a0", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a1", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a2", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a3", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a4", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a5", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a6", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a7", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a8", kCost, kPosId, kPosId, Token::NONE},
+      {kHiraganaA, "a9", kCost, kPosId, kPosId, Token::NONE},
+      // A user dictionary entry "aaa".  MaybeRedundant() detects this entry as
+      // redundant but it should not be filtered in prediction.
+      {kHiraganaA, "aaa", kCost, kPosId, kPosId, Token::USER_DICTIONARY},
+      {kHiraganaAA, "bbb", 0, kUnknownId, kUnknownId, Token::USER_DICTIONARY},
+  };
+  const std::vector<Token> aa_tokens = {
+      {kHiraganaAA, "bbb", 0, kUnknownId, kUnknownId, Token::USER_DICTIONARY},
+  };
+  MockDictionary mock_dict;
+  EXPECT_CALL(mock_dict, LookupPredictive(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(mock_dict, LookupPredictive(StrEq(kHiraganaA), _, _))
+      .WillRepeatedly(InvokeCallbackWithTokens(a_tokens));
+  EXPECT_CALL(mock_dict, LookupPredictive(StrEq(kHiraganaAA), _, _))
+      .WillRepeatedly(InvokeCallbackWithTokens(aa_tokens));
 
   config_->set_use_dictionary_suggest(true);
   config_->set_use_realtime_conversion(false);
@@ -1479,8 +1525,8 @@ TEST_F(DictionaryPredictorTest, AggregateUnigramCandidateForMixedConversion) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -1541,8 +1587,8 @@ TEST_F(DictionaryPredictorTest, AggregateBigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
@@ -1578,25 +1624,33 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
   {
     constexpr char kHistory[] = "ありがとう";
 
-    DictionaryMock *mock = data_and_predictor->mutable_dictionary();
-    mock->AddLookupPrefix(kHistory, kHistory, kHistory, Token::NONE);
+    MockDictionary *mock = data_and_predictor->mutable_dictionary();
+    EXPECT_CALL(*mock, LookupPrefix(_, _, _)).Times(AnyNumber());
+    EXPECT_CALL(*mock, LookupPredictive(_, _, _)).Times(AnyNumber());
+    EXPECT_CALL(*mock, LookupPrefix(StrEq(kHistory), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {kHistory, kHistory},
+        }));
+    EXPECT_CALL(*mock, LookupPredictive(StrEq(kHistory), _, _))
+        .WillRepeatedly(InvokeCallbackWithKeyValues({
+            {"ありがとうございます", "ありがとうございます"},
+            {"ありがとうございます", "ありがとう御座います"},
+            {"ありがとうございました", "ありがとうございました"},
+            {"ありがとうございました", "ありがとう御座いました"},
 
-    auto add_word = [&mock](const std::string &key, const std::string &value) {
-      mock->AddLookupPredictive("ありがとう", key, value, Token::NONE);
-    };
-    add_word("ありがとうございます", "ありがとうございます");
-    add_word("ありがとうございます", "ありがとう御座います");
-    add_word("ありがとうございました", "ありがとうございました");
-    add_word("ありがとうございました", "ありがとう御座いました");
+            {"ございます", "ございます"},
+            {"ございます", "御座います"},
+            // ("ございました", "ございました") is not in the dictionary.
+            {"ございました", "御座いました"},
 
-    add_word("ございます", "ございます");
-    add_word("ございます", "御座います");
-    // ("ございました", "ございました") is not in the dictionary.
-    add_word("ございました", "御座いました");
-
-    // Word less than 10.
-    add_word("ありがとうね", "ありがとうね");
-    add_word("ね", "ね");
+            // Word less than 10.
+            {"ありがとうね", "ありがとうね"},
+            {"ね", "ね"},
+        }));
+    EXPECT_CALL(*mock, HasKey(StrEq("ございます")))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mock, HasKey(StrEq("ございました")))
+        .WillRepeatedly(Return(true));
 
     Segments segments;
 
@@ -1638,8 +1692,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryBigramPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, AggregateZeroQueryPredictionLatinInputMode) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
@@ -1725,8 +1779,8 @@ TEST_F(DictionaryPredictorTest, AggregateZeroQueryPredictionLatinInputMode) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   Segments segments;
@@ -1798,8 +1852,8 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSize) {
 }
 
 TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   Segments segments;
@@ -1838,7 +1892,7 @@ TEST_F(DictionaryPredictorTest, GetRealtimeCandidateMaxSizeForMixed) {
 
 TEST_F(DictionaryPredictorTest, AggregateRealtimeConversion) {
   testing::MockDataManager data_manager;
-  const DictionaryMock dictionary;
+  const MockDictionary dictionary;
   MockConverter converter;
   ImmutableConverterMock immutable_converter;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -2004,8 +2058,8 @@ class TestSuffixDictionary : public DictionaryInterface {
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, GetCandidateCutoffThreshold) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   Segments segments;
@@ -2182,8 +2236,8 @@ TEST_F(DictionaryPredictorTest, AggregateTypeCorrectingPrediction) {
 }
 
 TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   const PosMatcher &pos_matcher = data_and_predictor->pos_matcher();
@@ -2248,8 +2302,8 @@ TEST_F(DictionaryPredictorTest, ZeroQuerySuggestionAfterNumbers) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   const PosMatcher &pos_matcher = data_and_predictor->pos_matcher();
@@ -2298,8 +2352,8 @@ TEST_F(DictionaryPredictorTest, TriggerNumberZeroQuerySuggestion) {
 }
 
 TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2341,8 +2395,8 @@ TEST_F(DictionaryPredictorTest, TriggerZeroQuerySuggestion) {
 
 TEST_F(DictionaryPredictorTest, GetHistoryKeyAndValue) {
   Segments segments;
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2371,8 +2425,8 @@ TEST_F(DictionaryPredictorTest, IsZipCodeRequest) {
 }
 
 TEST_F(DictionaryPredictorTest, IsAggressiveSuggestion) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2410,8 +2464,8 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionStartingWithAlphabets) {
   config_->set_use_dictionary_suggest(false);
   config_->set_use_realtime_conversion(true);
 
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2443,8 +2497,8 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
   config_->set_use_dictionary_suggest(false);
   config_->set_use_realtime_conversion(true);
 
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2474,8 +2528,8 @@ TEST_F(DictionaryPredictorTest, RealtimeConversionWithSpellingCorrection) {
 }
 
 TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2490,8 +2544,8 @@ TEST_F(DictionaryPredictorTest, GetMissSpelledPosition) {
 }
 
 TEST_F(DictionaryPredictorTest, RemoveMissSpelledCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2639,8 +2693,8 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForRomanTest) {
 
   table_->LoadFromFile("system://romanji-hiragana.tsv");
   composer_->SetTable(table_.get());
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2704,8 +2758,8 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
   config_->set_use_realtime_conversion(false);
 
   table_->LoadFromFile("system://kana.tsv");
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2774,8 +2828,8 @@ TEST_F(DictionaryPredictorTest, ExpansionPenaltyForKanaTest) {
 }
 
 TEST_F(DictionaryPredictorTest, GetLMCost) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2798,8 +2852,8 @@ TEST_F(DictionaryPredictorTest, GetLMCost) {
 }
 
 TEST_F(DictionaryPredictorTest, SetPredictionCostForMixedConversion) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -2860,8 +2914,8 @@ void AddTestableDictionaryPredictorResult(
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, SetLMCostForUserDictionaryWord) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3101,8 +3155,8 @@ TEST_F(DictionaryPredictorTest, DISABLED_MobileZeroQuerySuggestionAfterEOS) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateUserDictionaryAttribute) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3198,8 +3252,8 @@ TEST_F(DictionaryPredictorTest, SetDebugDescription) {
 }
 
 TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3245,7 +3299,7 @@ TEST_F(DictionaryPredictorTest, MergeAttributesForDebug) {
 
 TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
   testing::MockDataManager data_manager;
-  DictionaryMock dictionary;
+  const MockDictionary dictionary;
   MockConverter converter;
   ImmutableConverterMock immutable_converter;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -3284,8 +3338,8 @@ TEST_F(DictionaryPredictorTest, PropagateRealtimeConversionBoundary) {
 }
 
 TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3324,8 +3378,8 @@ TEST_F(DictionaryPredictorTest, PropagateResultCosts) {
 }
 
 TEST_F(DictionaryPredictorTest, PredictNCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3369,8 +3423,8 @@ TEST_F(DictionaryPredictorTest, PredictNCandidates) {
 }
 
 TEST_F(DictionaryPredictorTest, SuggestFilteredwordForExactMatchOnMobile) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3421,23 +3475,14 @@ TEST_F(DictionaryPredictorTest, EnrichPartialCandidates) {
   SetUpInputForSuggestion("わたしのな", composer_.get(), &segments);
 
   std::vector<DictionaryPredictor::Result> results;
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      false);
-  EXPECT_FALSE(predictor->AggregatePredictionForRequest(
-                   *convreq_for_prediction_, segments, &results) &
-               DictionaryPredictor::PREFIX);
-
-  results.clear();
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   EXPECT_TRUE(predictor->AggregatePredictionForRequest(*convreq_for_prediction_,
                                                        segments, &results) &
               DictionaryPredictor::PREFIX);
 }
 
 TEST_F(DictionaryPredictorTest, SuppressFilteredwordForExactMatch) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const TestableDictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
 
@@ -3488,7 +3533,7 @@ constexpr char kTestTokenArray[] =
     "\x00\x00"
     "\x00\x00\x00\x00";
 
-const char *kTestStrings[] = {"",     "( •̀ㅁ•́;)", "❕",  "❣", "あ",
+const char *kTestStrings[] = {"",     "( •̀ㅁ•́;)", "❕", "❣", "あ",
                               "ああ", "あい",     "猫", "😾"};
 
 struct TestEntry {
@@ -3619,8 +3664,8 @@ void SetSegmentForCommit(const std::string &candidate_value,
 }  // namespace
 
 TEST_F(DictionaryPredictorTest, UsageStats) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   DictionaryPredictor *predictor =
       data_and_predictor->mutable_dictionary_predictor();
 
@@ -3670,7 +3715,7 @@ TEST_F(DictionaryPredictorTest, UsageStats) {
 // b/235917071
 TEST_F(DictionaryPredictorTest, DoNotModifyHistorySegment) {
   testing::MockDataManager data_manager;
-  const DictionaryMock dictionary;
+  const MockDictionary dictionary;
   MockConverter converter;
   ImmutableConverterMock immutable_converter;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -3724,7 +3769,7 @@ TEST_F(DictionaryPredictorTest, DoNotModifyHistorySegment) {
 
 TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
   testing::MockDataManager data_manager;
-  const DictionaryMock dictionary;
+  const MockDictionary dictionary;
   MockConverter converter;
   ImmutableConverterMock immutable_converter;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -3780,17 +3825,18 @@ TEST_F(DictionaryPredictorTest, SetCostForRealtimeTopCandidate) {
 }
 
 TEST_F(DictionaryPredictorTest, DoNotAggregateZipcodeEntries) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   const PosMatcher &pos_matcher = data_and_predictor->pos_matcher();
-  DictionaryMock *mock = data_and_predictor->mutable_dictionary();
-  mock->AddLookupPredictive("101", "101-0001", "東京都千代田", 100 /* cost */,
-                            pos_matcher.GetZipcodeId(),
-                            pos_matcher.GetZipcodeId(), Token::NONE);
+  MockDictionary *mock = data_and_predictor->mutable_dictionary();
+  EXPECT_CALL(*mock, LookupPredictive(StrEq("101"), _, _))
+      .WillOnce(InvokeCallbackWithOneToken(
+          "101-0001", "東京都千代田", 100 /* cost */,
+          pos_matcher.GetZipcodeId(), pos_matcher.GetZipcodeId(), Token::NONE));
   Segments segments;
 
   SetUpInputForSuggestion("101", composer_.get(), &segments);
@@ -3804,29 +3850,32 @@ TEST_F(DictionaryPredictorTest, DoNotAggregateZipcodeEntries) {
 
 TEST_F(DictionaryPredictorTest,
        DoNotFilterExactUnigramForEnrichPartialCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
-  DictionaryMock *mock = data_and_predictor->mutable_dictionary();
-  // Exact entries
-  for (int i = 0; i < 30; ++i) {
-    mock->AddLookupPredictive("てすと", "てすと", absl::StrCat(i, "テストE"),
-                              5000 + i, 0, 0, Token::NONE);
-  }
-  // Predictive entries
-  for (int i = 0; i < 30; ++i) {
-    mock->AddLookupPredictive("てすと", "てすとて", absl::StrCat(i, "テストP"),
-                              100 + i, 0, 0, Token::NONE);
+  MockDictionary *mock = data_and_predictor->mutable_dictionary();
+  {
+    std::vector<Token> tokens;
+    // Exact entries
+    for (int i = 0; i < 30; ++i) {
+      tokens.emplace_back("てすと", absl::StrCat(i, "テストE"), 5000 + i, 0, 0,
+                          Token::NONE);
+    }
+    // Predictive entries
+    for (int i = 0; i < 30; ++i) {
+      tokens.emplace_back("てすとて", absl::StrCat(i, "テストP"), 100 + i, 0, 0,
+                          Token::NONE);
+    }
+    EXPECT_CALL(*mock, LookupPredictive(StrEq("てすと"), _, _))
+        .WillRepeatedly(InvokeCallbackWithTokens(tokens));
   }
 
   Segments segments;
   SetUpInputForSuggestion("てすと", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   int exact_count = 0;
@@ -3841,26 +3890,33 @@ TEST_F(DictionaryPredictorTest,
 
 TEST_F(DictionaryPredictorTest,
        DoNotFilterZeroQueryCandidatesForEnrichPartialCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      new MockDataAndPredictor);
-  DictionaryMock *suffix_mock = new DictionaryMock;
+  auto data_and_predictor = std::make_unique<MockDataAndPredictor>();
+  MockDictionary *suffix_mock = new MockDictionary;
   data_and_predictor->Init(nullptr, suffix_mock);
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
 
   // Predictive entries for zero query
-  for (int i = 0; i < 10; ++i) {
-    suffix_mock->AddLookupPredictive("", "てすと", absl::StrCat(i, "テストS"),
-                                     100 + i, 0, 0, Token::NONE);
-  }
+  const std::vector<Token> tokens = {
+      {"てすと", "0テストS", 100, 0, 0, Token::NONE},
+      {"てすと", "1テストS", 101, 0, 0, Token::NONE},
+      {"てすと", "2テストS", 102, 0, 0, Token::NONE},
+      {"てすと", "3テストS", 103, 0, 0, Token::NONE},
+      {"てすと", "4テストS", 104, 0, 0, Token::NONE},
+      {"てすと", "5テストS", 105, 0, 0, Token::NONE},
+      {"てすと", "6テストS", 106, 0, 0, Token::NONE},
+      {"てすと", "7テストS", 107, 0, 0, Token::NONE},
+      {"てすと", "8テストS", 108, 0, 0, Token::NONE},
+      {"てすと", "9テストS", 109, 0, 0, Token::NONE},
+  };
+  EXPECT_CALL(*suffix_mock, LookupPredictive(StrEq(""), _, _))
+      .WillRepeatedly(InvokeCallbackWithTokens(tokens));
 
   Segments segments;
   SetUpInputForSuggestionWithHistory("", "わたし", "私", composer_.get(),
                                      &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   composer_->SetInputMode(transliteration::HIRAGANA);
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
@@ -3870,7 +3926,7 @@ TEST_F(DictionaryPredictorTest,
 TEST_F(DictionaryPredictorTest,
        DoNotFilterOneSegmentRealtimeCandidatesForEnrichPartialCandidates) {
   testing::MockDataManager data_manager;
-  const DictionaryMock dictionary;
+  const MockDictionary dictionary;
   MockConverter converter;
   ImmutableConverterMock immutable_converter;
   std::unique_ptr<const DictionaryInterface> suffix_dictionary(
@@ -3954,8 +4010,6 @@ TEST_F(DictionaryPredictorTest,
   Segments segments;
   SetUpInputForSuggestion("かつた", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enrich_partial_candidates(
-      true);
   convreq_for_prediction_->set_use_actual_converter_for_realtime_conversion(
       true);
   composer_->SetInputMode(transliteration::HIRAGANA);
@@ -3964,8 +4018,8 @@ TEST_F(DictionaryPredictorTest,
 }
 
 TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
-  std::unique_ptr<MockDataAndPredictor> data_and_predictor(
-      CreateDictionaryPredictorWithMockData());
+  std::unique_ptr<MockDataAndPredictor> data_and_predictor =
+      CreateDictionaryPredictorWithMockData();
   const DictionaryPredictor *predictor =
       data_and_predictor->dictionary_predictor();
   commands::RequestForUnitTest::FillMobileRequest(request_.get());
@@ -3973,65 +4027,10 @@ TEST_F(DictionaryPredictorTest, NumberDecoderCandidates) {
   Segments segments;
   SetUpInputForSuggestion("よんじゅうごかい", composer_.get(), &segments);
 
-  request_->mutable_decoder_experiment_params()->set_enable_number_decoder(
-      true);
-
   EXPECT_TRUE(
       predictor->PredictForRequest(*convreq_for_prediction_, &segments));
   EXPECT_TRUE(FindCandidateByKeyValue(segments.conversion_segment(0),
                                       "よんじゅうご", "45"));
-}
-
-TEST_F(DictionaryPredictorTest, CancelSegmentModelPenalty) {
-  testing::MockDataManager data_manager;
-  const DictionaryMock dictionary;
-  MockConverter converter;
-  ImmutableConverterMock immutable_converter;
-  std::unique_ptr<const DictionaryInterface> suffix_dictionary(
-      CreateSuffixDictionaryFromDataManager(data_manager));
-  std::unique_ptr<const Connector> connector =
-      Connector::CreateFromDataManager(data_manager).value();
-  std::unique_ptr<const Segmenter> segmenter(
-      Segmenter::CreateFromDataManager(data_manager));
-  std::unique_ptr<const SuggestionFilter> suggestion_filter(
-      CreateSuggestionFilter(data_manager));
-  const dictionary::PosMatcher pos_matcher(data_manager.GetPosMatcherData());
-
-  {
-    // Set up mock immutable converter (for REALTIME).
-    Segments segments;
-    Segment *segment = segments.add_segment();
-    Segment::Candidate *candidate = segment->add_candidate();
-    candidate->key = "ちょう";
-    candidate->value = "超";
-    candidate->wcost = 100;
-    candidate->lid = pos_matcher.GetNounPrefixId();
-    candidate->rid = pos_matcher.GetNounPrefixId();
-    // Segment model penalty is added to the wcost in converter.
-    candidate->wcost += segmenter->GetPrefixPenalty(candidate->rid);
-    candidate->wcost += segmenter->GetSuffixPenalty(candidate->lid);
-
-    immutable_converter.SetConvertForRequest(segments);
-  }
-
-  TestableDictionaryPredictor predictor(
-      data_manager, &converter, &immutable_converter, &dictionary,
-      suffix_dictionary.get(), connector.get(), segmenter.get(), &pos_matcher,
-      suggestion_filter.get());
-
-  commands::RequestForUnitTest::FillMobileRequest(request_.get());
-
-  Segments segments;
-  SetUpInputForSuggestion("ちょう", composer_.get(), &segments);
-
-  request_->mutable_decoder_experiment_params()
-      ->set_cancel_segment_model_penalty_for_prediction(true);
-  composer_->SetInputMode(transliteration::HIRAGANA);
-  EXPECT_TRUE(predictor.PredictForRequest(*convreq_for_prediction_, &segments));
-  const auto &c = segments.conversion_segment(0).candidate(0);
-  // Only transition cost (to the empty history) and the original wcost
-  // should be used for the candidate cost.
-  EXPECT_EQ(connector->GetTransitionCost(0, c.lid) + 100, c.cost);
 }
 
 TEST_F(DictionaryPredictorTest, DoNotPredictNoisyNumberEntries) {

@@ -258,18 +258,17 @@ class UserDictionaryTest : public ::testing::Test {
     std::vector<Entry> entries_;
   };
 
-  void TestLookupPredictiveHelper(const Entry *expected, size_t expected_size,
+  bool TestLookupPredictiveHelper(const Entry *expected, size_t expected_size,
                                   absl::string_view key,
                                   const UserDictionary &dic) {
     EntryCollector collector;
     dic.LookupPredictive(key, convreq_, &collector);
 
     if (expected == nullptr || expected_size == 0) {
-      EXPECT_TRUE(collector.entries().empty());
-    } else {
-      ASSERT_FALSE(collector.entries().empty());
-      CompareEntries(expected, expected_size, collector.entries());
+      return collector.entries().empty();
     }
+    return (!collector.entries().empty() &&
+            CompareEntries(expected, expected_size, collector.entries()));
   }
 
   void TestLookupPrefixHelper(const Entry *expected, size_t expected_size,
@@ -314,11 +313,11 @@ class UserDictionaryTest : public ::testing::Test {
     return absl::StrJoin(encoded_items, "");
   }
 
-  static void CompareEntries(const Entry *expected, size_t expected_size,
+  static bool CompareEntries(const Entry *expected, size_t expected_size,
                              const std::vector<Entry> &actual) {
     const std::string expected_encoded = EncodeEntries(expected, expected_size);
     const std::string actual_encoded = EncodeEntries(&actual[0], actual.size());
-    EXPECT_EQ(expected_encoded, actual_encoded);
+    return expected_encoded == actual_encoded;
   }
 
   static void LoadFromString(const std::string &contents,
@@ -390,7 +389,8 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected0, std::size(kExpected0), "start", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpected0, std::size(kExpected0),
+                                         "start", *dic));
 
   // Another normal lookup operation.
   const Entry kExpected1[] = {
@@ -400,7 +400,8 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
       {"started", "started", 210, 210},   {"starting", "starting", 100, 100},
       {"starting", "starting", 220, 220},
   };
-  TestLookupPredictiveHelper(kExpected1, std::size(kExpected1), "st", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(kExpected1, std::size(kExpected1),
+                                         "st", *dic));
 
   // Invalid input values should be just ignored.
   TestLookupPredictiveHelper(nullptr, 0, "", *dic);
@@ -428,8 +429,8 @@ TEST_F(UserDictionaryTest, TestLookupPredictive) {
   TestLookupPredictiveHelper(kExpected3, std::size(kExpected3), "end", *dic);
 
   // Entries in the dictionary before reloading cannot be looked up.
-  TestLookupPredictiveHelper(nullptr, 0, "start", *dic);
-  TestLookupPredictiveHelper(nullptr, 0, "st", *dic);
+  EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "start", *dic));
+  EXPECT_TRUE(TestLookupPredictiveHelper(nullptr, 0, "st", *dic));
 }
 
 TEST_F(UserDictionaryTest, TestLookupPrefix) {

@@ -424,6 +424,25 @@ bool SetOrAddFieldValueFromString(const std::string &name,
   return TextFormat::ParseFieldValueFromString(value, field, message);
 }
 
+bool SetOrAddFieldValueFromString(const std::vector<std::string> &names,
+                                  const std::string &value, Message *message) {
+  if (names.empty()) {
+    LOG(ERROR) << "Empty names is passed";
+    return false;
+  }
+  const std::string &first = names[0];
+  if (names.size() == 1) {
+    return SetOrAddFieldValueFromString(first, value, message);
+  }
+  const FieldDescriptor *field =
+      message->GetDescriptor()->FindFieldByName(first);
+  Message *field_message =
+      message->GetReflection()->MutableMessage(message, field);
+  return SetOrAddFieldValueFromString(
+      std::vector<std::string>(names.begin() + 1, names.end()), value,
+      field_message);
+}
+
 // Parses protobuf from string without validation.
 // input sample: context.experimental_features="chrome_omnibox"
 // We cannot use TextFormat::ParseFromString since it doesn't allow invalid
@@ -595,14 +614,16 @@ absl::Status SessionHandlerInterpreter::Eval(
     RequestForUnitTest::FillMobileRequest(request_.get());
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_REQUEST") {
-    MOZC_ASSERT_EQ(3, args.size());
-    MOZC_ASSERT_TRUE(
-        SetOrAddFieldValueFromString(args[1], args[2], request_.get()));
+    MOZC_ASSERT_TRUE(args.size() >= 3);
+    MOZC_ASSERT_TRUE(SetOrAddFieldValueFromString(
+        std::vector<std::string>(args.begin() + 1, args.end() - 1),
+        *(args.end() - 1), request_.get()));
     MOZC_ASSERT_TRUE(client_->SetRequest(*request_, last_output_.get()));
   } else if (command == "SET_CONFIG") {
-    MOZC_ASSERT_EQ(3, args.size());
-    MOZC_ASSERT_TRUE(
-        SetOrAddFieldValueFromString(args[1], args[2], config_.get()));
+    MOZC_ASSERT_TRUE(args.size() >= 3);
+    MOZC_ASSERT_TRUE(SetOrAddFieldValueFromString(
+        std::vector<std::string>(args.begin() + 1, args.end() - 1),
+        *(args.end() - 1), config_.get()));
     MOZC_ASSERT_TRUE(client_->SetConfig(*config_, last_output_.get()));
   } else if (command == "SET_SELECTION_TEXT") {
     MOZC_ASSERT_EQ(2, args.size());

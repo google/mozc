@@ -1,3 +1,32 @@
+# Copyright 2010-2021, Google Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     * Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following disclaimer
+# in the documentation and/or other materials provided with the
+# distribution.
+#     * Neither the name of Google Inc. nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 # Rules for triggering zero query suggestion/prediction.
 # File format:
 # trigger<TAB>candidate_1,candidate_2,...,candidate_n
@@ -10,3 +39,180 @@
 @	ezweb.ne.jp
 @	i.softbank.jp
 @	softbank.ne.jp
+
+# Popular expressions
+QR	コード
+あけましておめでとう	ございます
+あけましておめでとうございます	🎍
+ありがとう	ございます
+ありがとうございました	😊,🙇
+ありがとうございます	😊,🙇
+ありませんでした	🙇
+いかがな	もの
+いきます	✨
+いたしました	✨
+いたします	🙇,✨
+いただいております	🙇
+いただきました	✨,😊
+いただきます	🙇,✨
+いつもありがとう	ございます,♪
+おはよう	ございます,☀
+おはようございます	☀,😃,🌞,😊
+おめでとう	ございます,🎉
+おめでとうございます	🎍
+おやめ	ください
+おります	😊,🙇
+お越しください	😊
+お楽しみください	✨
+お間違いの	ない
+お願い	します
+お願いいたします	🙇
+お願いします	🙇
+お願い申し上げます	🙇,🤲
+お願い致します	🙇,🤲
+お見逃し	なく
+お見舞い	申し上げます
+お待ち	して
+お待ちいたして	おります
+お待ちして	おります
+お待ちしてます	😊
+お待ち申し上げて	おります
+お誕生日	おめでとう
+お誕生日おめでとう	ございます
+お知らせありがとう	ございます
+お知らせです	📢,✨
+お届けします	✨
+お疲れ様	でした
+お疲れ様でした	✨
+お褒めの	言葉
+お問い合わせください	😊
+がお送り	します
+がございます	🙇
+ができました	✨,😊
+ができます	✨
+が出来ました	✨,😊
+ください	😊
+くださいね	😊
+くださいませ	🙇,😊
+くれました	✨,😊
+ございました	😊,🙇
+ございます	😊,✨
+こちらから	↓
+こんにちは	😃,😊,☀
+ご縁がありますように	🙏
+ご確認ください	🙇
+ご協力よろしく	お願い
+ご紹介したいと	思います
+ご紹介します	✨
+ご紹介です	✨
+ご馳走さま	でした
+ご入学おめでとう	ございます
+ご迷惑を	おかけ
+ご来店ありがとうございました	😊
+ご来店お待ちして	おります
+ご覧ください	😊
+さること	ながら
+されました	✨
+されます	✨
+していきます	✨
+しています	😊
+しております	😊,🙇
+してきました	✨
+してます	😊
+して下さい	😊
+しました	✨
+します	🙇
+せていただきました	✨,😊
+せていただきます	🙇,✨
+せて頂きました	✨,😊
+せて頂きます	🙇,✨
+ぜひご覧	ください
+チャンネル	登録
+できちゃ	います
+できました	✨,😊
+できます	✨
+でした	✨
+です	✨
+どうぞよろしく	お願い
+となりました	✨
+なくては	ならない
+なっています	✨
+なっております	✨,🙇
+なりました	✨
+な人と	繋がりたい
+にしました	✨
+になりました	✨
+のお越しを	お待ち
+ハッシュ	タグ
+プレゼント	🎁
+までよろしく	お願い
+みてください	😊
+みてくださいね	😊
+やっては	いけない
+ようになりました	✨
+よりお待ちして	おります
+よろしく	お願い
+よろしくお願い	します
+れています	✨
+れました	✨
+をいただきました	✨,😊
+をお待ちして	おります
+をしました	✨,😊
+をプレゼント	🎁
+をよろしく	お願い
+を行いました	✨,😊
+を行います	✨
+引き続きよろしく	お願い
+運びと	なりました
+応援よろしく	お願い
+下さい	😊
+何卒よろしく	お願い
+可愛い	❤
+会えます	ように
+皆さまいかが	お過ごし
+皆様いかが	お過ごし
+皆様よろしく	お願い
+開催します	✨
+外から失礼します	🙇
+楽しみたいと	思います
+勘弁	して
+感の	ある
+頑張りたいと	思います
+嬉しいです	😊
+宜しく	お願い
+休まず	営業
+言わずと	知れた
+御礼	申し上げます
+行ってきました	✨
+細心の	注意
+残り少なく	なって
+思います	😊
+思っています	😊
+暑い日が続きますね	💦
+勝手では	ございますが
+承って	おります
+笑っては	いけない
+紹介します	✨
+心よりお待ち	して
+新年あけまして	おめでとう
+新年明けまして	おめでとう
+新年明けましておめでとうございます	🎍
+申し上げて	おります
+申し上げます	🙇
+切らして	おりまして
+待ちに	待った
+大好き	❤
+丹精	込めて
+致します	🙇,😊
+中です	✨
+頂きました	✨,😊
+頂きます	🙇
+頂けたらと	思います
+店です	😊,✨
+都合に	より
+入荷しました	✨
+本当にありがとう	ございました
+名無し	さん
+明けましておめでとうございます	🎍
+予定です	✨
+来てください	😊

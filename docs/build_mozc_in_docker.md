@@ -1,5 +1,23 @@
 # How to build Mozc in Docker
 
+[![Linux](https://github.com/google/mozc/actions/workflows/linux.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/linux.yaml)
+[![Android lib](https://github.com/google/mozc/actions/workflows/android.yaml/badge.svg)](https://github.com/google/mozc/actions/workflows/android.yaml)
+
+## Summary
+
+If you are not sure what the following commands do, please check the descriptions below
+and make sure the operations before running them.
+
+```
+curl -O https://raw.githubusercontent.com/google/mozc/master/docker/ubuntu20.04/Dockerfile
+docker build --rm -tag mozc_ubuntu20.04 .
+docker create --interactive --tty --name mozc_build mozc_ubuntu20.04
+
+docker start mozc_build
+docker exec mozc_build bazel build package --config oss_linux -c opt
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
+```
+
 ## Introduction
 Docker containers are available to build Mozc binaries for Android JNI library and Linux desktop.
 
@@ -22,7 +40,7 @@ You may need to execute `docker` with `sudo` (e.g. `sudo docker build ...`).
 
 Notes
 * `mozc_ubuntu20.04` is a Docker image name (customizable).
-* `mozc_build` is a Docker contaniner name (customizable).
+* `mozc_build` is a Docker container name (customizable).
 * Don't forget to rebuild Docker container when Dockerfile is updated.
 
 
@@ -31,27 +49,14 @@ Notes
 ```
 docker start mozc_build
 docker exec mozc_build bazel build package --config oss_linux -c opt
+docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/mozc.zip .
 ```
+
+`mozc.zip` contains built files.
 
 Notes
-* You might want to execute `docker stop` after `docker exec`.
-* `mozc_build` is the Docker contaniner name created in the above section.
-
-
-### Copy Mozc binaries from Docker container to host
-
-```
-docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/server/mozc_server .
-docker cp mozc_build:/home/mozc_builder/work/mozc/src/bazel-bin/unix/ibus/ibus_mozc .
-...
-```
-
-See [Install paths](#install-paths) below for more information about
-the build and install paths.
-
-Notes
-* You might want to execute `docker stop` after copying.
-* `mozc_build` is the Docker contaniner name created in the above section.
+* You might want to execute `docker stop` after build.
+* `mozc_build` is the Docker container name created in the above section.
 
 -----
 
@@ -64,26 +69,23 @@ bazel build package --config oss_linux -c opt
 Note: You might want to execute `docker start --interactive mozc_build`
 to enter the docker container before the above command.
 
-`package` is an alias to build:
-* //server:mozc_server
-* //gui/tool:mozc_tool
-* //renderer:mozc_renderer
-* //unix/ibus:ibus_mozc
-* //unix:icons
-* //unix/emacs:mozc_emacs_helper
+`package` builds Mozc binaries and locates them into `mozc.zip` as follows.
 
-### Install paths
+| build rule                     | install path |
+| ------------------------------ | ------------ |
+| //server:mozc_server           | /usr/lib/mozc/mozc_server |
+| //gui/tool:mozc_tool           | /usr/lib/mozc/mozc_tool |
+| //renderer:mozc_renderer       | /usr/lib/mozc/mozc_renderer |
+| //unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
+| //unix/ibus:gen_mozc_xml       | /usr/share/ibus/component/mozc.xml |
+| //unix:icons                   | /usr/share/ibus-mozc/... |
+| //unix:icons                   | /usr/share/icons/mozc/... |
+| //unix/emacs:mozc.el           | /usr/share/emacs/site-lisp/emacs-mozc/mozc.el |
+| //unix/emacs:mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
 
-| build path   | install path |
-| ------------ | ------------ |
-| bazel-bin/server/mozc_server           | /usr/lib/mozc/mozc_server |
-| bazel-bin/gui/tool/mozc_tool           | /usr/lib/mozc/mozc_tool |
-| bazel-bin/renderer/mozc_renderer       | /usr/lib/mozc/mozc_renderer |
-| bazel-bin/unix/ibus/ibus_mozc          | /usr/lib/ibus-mozc/ibus-engine-mozc |
-| bazel-bin/unix/ibus/mozc.xml           | /usr/share/ibus/component/mozc.xml |
-| bazel-bin/unix/emacs/mozc_emacs_helper | /usr/bin/mozc_emacs_helper |
+Install paths are configurable by modifying
+[src/config.bzl](https://github.com/google/mozc/blob/master/src/config.bzl).
 
-Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 
 ### Unittests
 
@@ -91,7 +93,7 @@ Also, unzip bazel-bin/unix/icons.zip into /usr/share/ibus-mozc/.
 bazel test ... --config oss_linux -c dbg -- -net/... -third_party/...
 ```
 
-* `...` means all targets under the current and sub directories.
+* `...` means all targets under the current and subdirectories.
 * `--` means the end of the flags which start from `-`.
 * `-<dir>/...` means exclusion of all targets under the `dir`.
   + `net` and `third_party` are not supported yet.
@@ -153,18 +155,21 @@ bazel build package --config oss_android
 ⚠️ The GYP build will stop supporting the IBus build.
 * https://github.com/google/mozc/issues/567
 
-To keep using the GYP build at this moment,
-please add the --use_gyp_for_ibus_build flag to build_mozc.py.
+⚠️ The GYP build no longer support the GTK candidate window build.
+* https://github.com/google/mozc/issues/567
+
+To keep using the GYP build without GTK candidate window at this moment,
+please add the `--use_gyp_for_ibus_build` and `--no_gtk_build` flags
+to build_mozc.py.
 
 ```
 python3 build_mozc.py gyp
-python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build
+python3 build_mozc.py build -c Release package --use_gyp_for_ibus_build --no_gtk_build
 ```
 
 `package` is an alias to build:
 * //server:mozc_server
 * //gui/tool:mozc_tool
-* //renderer:mozc_renderer
 * //unix/ibus:ibus_mozc
 
 
@@ -176,9 +181,8 @@ python3 build_mozc.py runtests -c Debug
 
 ### Differences between Bazel build and GYP build
 
-GYP build is under maintenance mode. While the existing targets are supported
-by both GYP and Bazel as much as possible, new targets will be supported by
-Bazel only.
+GYP build is under maintenance mode. New features might be supported by
+Bazel only, and some features might be dropped as a trade-off to accept PRs.
 
 Targets only for Bazel:
 * AUX dictionary (//data/dictionary_oss:aux_dictionary)

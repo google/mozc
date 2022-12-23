@@ -95,7 +95,7 @@ cc_qt_library_mozc(
 
 cc_qt_binary_mozc(
     name = "mozc_tool",
-    visibility = ["//:__pkg__"],
+    visibility = ["//:__subpackages__"],
     deps = [":mozc_tool_main_lib"],
 )
 

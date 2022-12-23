@@ -55,7 +55,6 @@
         '../converter/converter_base.gyp:segments',
         '../data_manager/testing/mock_data_manager.gyp:mock_data_manager',
         '../dictionary/dictionary.gyp:dictionary',
-        '../dictionary/dictionary.gyp:dictionary_mock',
         '../dictionary/dictionary.gyp:suffix_dictionary',
         '../dictionary/dictionary_base.gyp:pos_matcher',
         '../dictionary/system/system_dictionary.gyp:system_dictionary',
