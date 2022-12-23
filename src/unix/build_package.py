@@ -35,6 +35,7 @@ import glob
 import os
 import shutil
 import tempfile
+from typing import List
 import zipfile
 
 
@@ -56,7 +57,7 @@ class Packager:
         'mozc.el': os.path.join(args.emacs_client_dir, 'mozc.el'),
     }
 
-  def PackageFiles(self, inputs: list[str], output: str) -> None:
+  def PackageFiles(self, inputs: List[str], output: str) -> None:
     with tempfile.TemporaryDirectory() as tmp_dir:
       self.LocateFiles(tmp_dir, inputs)
       basename = os.path.splitext(output)[0]
@@ -69,7 +70,7 @@ class Packager:
   def JoinTopDir(self, top_dir: str, path: str) -> str:
     return os.path.join(top_dir, path.lstrip('/'))
 
-  def LocateFiles(self, top_dir: str, files: list[str]) -> None:
+  def LocateFiles(self, top_dir: str, files: List[str]) -> None:
     """Locate files to install directories."""
     for src in files:
       dest_name = self.GetDestName(src)
