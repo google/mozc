@@ -47,19 +47,11 @@ config_setting(
 )
 
 config_setting(
-    name = "ios",
+    name = "apple",
     values = {
         "define": "TARGET=ios",
         # "cc_target_os": "apple",
     },
-)
-
-# apple is used for both iOS and macOS.
-config_setting(
-    name = "apple",
-    constraint_values = [
-        "@platforms//os:osx",
-    ],
 )
 
 config_setting(
