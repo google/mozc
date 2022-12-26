@@ -332,11 +332,16 @@ bool CharChunk::AddInputInternal(std::string *input) {
 
   // The prefix of key reached a conversion result, thus entry is not nullptr.
 
-  if (key.size() == key_length) {
-    const bool is_following_entry =
-        (!conversion_.empty() ||
-         (!raw_.empty() && !pending_.empty() && raw_ != pending_));
+  // Check if this CharChunk does not contain a conversion result before.
+  const bool is_first_entry =
+      (conversion_.empty() &&
+       (raw_.empty() || pending_.empty() || raw_ == pending_));
+  // If this entry is the first entry, the attributes are applied to this chunk.
+  if (is_first_entry) {
+    attributes_ = entry->attributes();
+  }
 
+  if (key.size() == key_length) {
     raw_.append(*input);
     input->clear();
     if (fixed) {
@@ -345,12 +350,6 @@ bool CharChunk::AddInputInternal(std::string *input) {
       conversion_.append(entry->result());
       pending_ = entry->pending();
       ambiguous_.clear();
-
-      // If this entry is the first entry, the table attributes are
-      // applied to this chunk.
-      if (!is_following_entry) {
-        attributes_ = entry->attributes();
-      }
     } else {  // !fixed
       // The whole string of key reached a conversion result, but the
       // result is ambiguous (like "n" with "n->ん and na->な").
