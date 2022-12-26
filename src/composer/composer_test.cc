@@ -2172,7 +2172,7 @@ TEST_F(ComposerTest, Issue2819580Case1) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("んy", result);
+  EXPECT_EQ("ny", result);
 }
 
 TEST_F(ComposerTest, Issue2819580Case2) {
@@ -2191,7 +2191,7 @@ TEST_F(ComposerTest, Issue2819580Case2) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ぽんy", result);
+  EXPECT_EQ("ぽny", result);
 }
 
 TEST_F(ComposerTest, Issue2819580Case3) {
@@ -2208,7 +2208,7 @@ TEST_F(ComposerTest, Issue2819580Case3) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("zんy", result);
+  EXPECT_EQ("zny", result);
 }
 
 TEST_F(ComposerTest, Issue2797991Case1) {

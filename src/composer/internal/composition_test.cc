@@ -1169,7 +1169,7 @@ TEST_F(CompositionTest, Issue2819580) {
   {
     std::string output;
     composition_->GetStringWithTrimMode(FIX, &output);
-    EXPECT_EQ("んｙ", output);
+    EXPECT_EQ("ｎｙ", output);
 
     composition_->GetStringWithTrimMode(ASIS, &output);
     EXPECT_EQ("ｎｙ", output);

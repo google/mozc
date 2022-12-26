@@ -325,11 +325,7 @@ bool CharChunk::AddInputInternal(std::string *input) {
     const std::string new_pending_chars(*input, 0, key_length);
     raw_.append(new_pending_chars);
     pending_.append(new_pending_chars);
-    if (!ambiguous_.empty()) {
-      // If ambiguous_ has already a value, ambiguous_ is appended.
-      // ex. "ny" makes ambiguous_ "んy", but "sh" leaves ambiguous_ empty.
-      ambiguous_.append(new_pending_chars);
-    }
+    ambiguous_.clear();
     input->erase(0, key_length);
     return kNoLoop;
   }
