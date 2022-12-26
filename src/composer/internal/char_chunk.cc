@@ -48,16 +48,6 @@ namespace {
 // Max recursion count for looking up pending loop.
 constexpr int kMaxRecursion = 4;
 
-// Delete "end" from "target", if "target" ends with the "end".
-bool DeleteEnd(const std::string &end, std::string *target) {
-  const std::string::size_type rindex = target->rfind(end);
-  if (rindex == std::string::npos) {
-    return false;
-  }
-  target->erase(rindex);
-  return true;
-}
-
 // Get from pending rules recursively
 // The recursion will be stopped if recursion_count is 0.
 // When returns false, the caller doesn't append result entries.
@@ -374,12 +364,13 @@ bool CharChunk::AddInputInternal(std::string *input) {
     return kNoLoop;
   }
 
-  // Delete pending_ from raw_ if matched.
-  DeleteEnd(pending_, &raw_);
-
   // A result was found without any ambiguity.
-  input->assign(key, key_length, key.size() - key_length);
-  raw_.append(key, 0, key_length);
+
+  // Move used input characters to raw_.
+  const size_t used_input_length = key_length - pending_.size();
+  raw_.append(*input, 0, used_input_length);
+  input->erase(0, used_input_length);
+
   conversion_.append(entry->result());
   pending_ = entry->pending();
   ambiguous_.clear();

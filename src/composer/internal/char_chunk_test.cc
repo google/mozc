@@ -438,6 +438,30 @@ TEST(CharChunkTest, AddInputInternal) {
   }
 }
 
+TEST(CharChunkTest, AddInputInternalDifferentPending) {
+  Table table;
+  table.AddRule("1", "", "あ");
+  table.AddRule("あ*", "", "ぁ");
+
+  CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+  {
+    std::string key = "1";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("あ", chunk.pending());
+  }
+  {
+    std::string key = "*";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1*", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("ぁ", chunk.pending());
+  }
+}
+
 TEST(CharChunkTest, CaseSensitive) {
   Table table;
   table.AddRule("ka", "[ka]", "");
