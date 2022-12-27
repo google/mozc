@@ -293,14 +293,14 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
 bool CharChunk::AddInputInternal(std::string *input) {
   constexpr bool kNoLoop = false;
 
-  size_t key_length = 0;
+  size_t used_key_length = 0;
   bool fixed = false;
   std::string key = pending_ + *input;
-  const Entry *entry = table_->LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table_->LookUpPrefix(key, &used_key_length, &fixed);
   local_length_cache_ = std::string::npos;
 
   if (entry == nullptr) {
-    if (key_length == 0) {
+    if (used_key_length == 0) {
       // No prefix character is not contained in the table, fallback
       // operation is performed.
       if (pending_.empty()) {
@@ -310,23 +310,24 @@ bool CharChunk::AddInputInternal(std::string *input) {
       return kNoLoop;
     }
 
-    if (key_length < pending_.size()) {
+    if (used_key_length < pending_.size()) {
       // Do not modify this char_chunk, all key characters will be used
       // by the next char_chunk.
       return kNoLoop;
     }
 
-    DCHECK_GE(key_length, pending_.size());
     // Some prefix character is contained in the table, but not
     // reached any conversion result (like "t" with "ta->た").
-    key_length -= pending_.size();
-
     // Conversion data had only pending.
-    const std::string new_pending_chars(*input, 0, key_length);
-    raw_.append(new_pending_chars);
-    pending_.append(new_pending_chars);
+
+    // Move used input characters to CharChunk data.
+    DCHECK_GE(used_key_length, pending_.size());
+    const size_t used_input_length = used_key_length - pending_.size();
+    const std::string used_input_chars(*input, 0, used_input_length);
+    raw_.append(used_input_chars);
+    pending_.append(used_input_chars);
     ambiguous_.clear();
-    input->erase(0, key_length);
+    input->erase(0, used_input_length);
     return kNoLoop;
   }
 
@@ -341,34 +342,24 @@ bool CharChunk::AddInputInternal(std::string *input) {
     attributes_ = entry->attributes();
   }
 
-  if (key.size() == key_length) {
-    raw_.append(*input);
-    input->clear();
-    if (fixed) {
-      // The whole key has been used, table lookup has reached a fixed
-      // value.  It is a stable world. (like "ka->か", "q@->だ").
-      conversion_.append(entry->result());
-      pending_ = entry->pending();
-      ambiguous_.clear();
-    } else {  // !fixed
-      // The whole string of key reached a conversion result, but the
-      // result is ambiguous (like "n" with "n->ん and na->な").
-      pending_ = key;
-      ambiguous_ = entry->result();
-    }
-    return kNoLoop;
-  }
-
-  // A result was found without any ambiguity.
-
   // Move used input characters to raw_.
-  const size_t used_input_length = key_length - pending_.size();
+  const size_t used_input_length = used_key_length - pending_.size();
   raw_.append(*input, 0, used_input_length);
   input->erase(0, used_input_length);
 
-  conversion_.append(entry->result());
-  pending_ = entry->pending();
-  ambiguous_.clear();
+  if (fixed || key.size() > used_key_length) {
+    // A result was found. Ambiguity is resolved because `fixed` is true or
+    // the key still remains. e.g. If the key is "nk", "n" is used for "ん"
+    // because the next remaining character "k" is not used with "n".
+    conversion_.append(entry->result());
+    pending_ = entry->pending();
+    ambiguous_.clear();
+  } else {
+    // A result was found, but it is still ambiguous.
+    // e.g. "n" with "n->ん and na->な".
+    pending_ = key;
+    ambiguous_ = entry->result();
+  }
 
   if (input->empty() || pending_.empty()) {
     // If the remaining input character or pending character is empty,
