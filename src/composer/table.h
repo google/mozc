@@ -146,6 +146,10 @@ class Table {
   // return the trimmed visible string.
   static std::string DeleteSpecialKey(const std::string &input);
 
+  // If the string starts with a special key wrapped with ("\x0F", "\x0E"),
+  // erases it and returns true. Otherwise returns false.
+  static bool TrimLeadingSpecialKey(std::string *input);
+
   // Return the default table.
   static const Table &GetDefaultTable();
 

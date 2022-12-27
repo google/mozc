@@ -633,6 +633,19 @@ std::string Table::DeleteSpecialKey(const std::string &input) {
 }
 
 // static
+bool Table::TrimLeadingSpecialKey(std::string *input) {
+  if (!absl::StartsWith(*input, kSpecialKeyOpen)) {
+    return false;
+  }
+  size_t close_pos = input->find(kSpecialKeyClose, 1);
+  if (close_pos == std::string::npos) {
+    return false;
+  }
+  input->erase(0, close_pos + 1);
+  return true;
+}
+
+// static
 const Table &Table::GetDefaultTable() {
   static Table *default_table = nullptr;
   if (!default_table) {

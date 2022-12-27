@@ -644,6 +644,39 @@ TEST(CharChunkTest, CaseSensitive) {
   EXPECT_TRUE(chunk.pending().empty());
 }
 
+TEST(CharChunkTest, TrimHeadSpecialKey) {
+  Table table;
+  table.AddRule("ああ", "", "い");
+  table.AddRule("いあ", "", "う");
+  table.AddRule("あ{!}", "あ", "");
+  table.AddRule("い{!}", "い", "");
+  table.AddRule("う{!}", "う", "");
+
+  std::string input(Table::ParseSpecialKey("ああ{!}{!}あ{!}"));
+  {
+    // Check a normal behavior. "ああ{!}" is converted to "い".
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, Table::ParseSpecialKey("{!}あ{!}"));
+    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("ああ{!}"));
+    EXPECT_EQ(chunk.conversion(), "い");
+    EXPECT_EQ(chunk.pending(), "");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
+  {
+    // The first "{!}" is erased because:
+    // 1. it is a special key.
+    // 2. there is no conversion rule starting from "{!}"".
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, "");
+    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("あ{!}"));
+    EXPECT_EQ(chunk.conversion(), "あ");
+    EXPECT_EQ(chunk.pending(), "");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
+}
+
 TEST(CharChunkTest, AlphanumericOfSSH) {
   // This is a unittest against http://b/3199626
   // 'ssh' (っｓｈ) + F10 should be 'ssh'.

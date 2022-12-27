@@ -725,14 +725,17 @@ TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
 }
 
 TEST_F(ComposerTest, InsertCommandCharacter) {
+  table_->AddRule("{<}", "REWIND", "");
+  table_->AddRule("{!}", "STOP", "");
+
   composer_->SetInputMode(transliteration::HALF_ASCII);
 
   composer_->InsertCommandCharacter(Composer::REWIND);
-  EXPECT_EQ("\x0F<\x0E", GetPreedit(composer_.get()));
+  EXPECT_EQ("REWIND", GetPreedit(composer_.get()));
 
   composer_->Reset();
   composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
-  EXPECT_EQ("\x0F!\x0E", GetPreedit(composer_.get()));
+  EXPECT_EQ("STOP", GetPreedit(composer_.get()));
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {

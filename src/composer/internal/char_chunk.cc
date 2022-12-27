@@ -291,6 +291,7 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
 }
 
 bool CharChunk::AddInputInternal(std::string *input) {
+  constexpr bool kLoop = true;
   constexpr bool kNoLoop = false;
 
   size_t used_key_length = 0;
@@ -301,7 +302,13 @@ bool CharChunk::AddInputInternal(std::string *input) {
 
   if (entry == nullptr) {
     if (used_key_length == 0) {
-      // No prefix character is not contained in the table, fallback
+      // If `input` starts with a special key, erases it and keeps the loop.
+      // For example, if `input` is "{!}ab{?}", `input` becomes "ab{?}".
+      if (Table::TrimLeadingSpecialKey(input)) {
+        return kLoop;
+      }
+
+      // The prefix characters are not contained in the table, fallback
       // operation is performed.
       if (pending_.empty()) {
         // Conversion data was not found.
@@ -367,7 +374,6 @@ bool CharChunk::AddInputInternal(std::string *input) {
     return kNoLoop;
   }
 
-  constexpr bool kLoop = true;
   return kLoop;
 }
 

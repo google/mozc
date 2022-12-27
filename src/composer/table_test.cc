@@ -999,6 +999,54 @@ TEST_F(TableTest, SpecialKeys) {
   }
 }
 
+TEST_F(TableTest, DeleteSpecialKey) {
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{!}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}")), "");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("a{bcd}")), "a");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}{abc}d")), "d");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}a{bc}d")), "ad");
+  EXPECT_EQ(Table::DeleteSpecialKey(Table::ParseSpecialKey("{!}ab{cd}")), "ab");
+
+  // Invalid patterns
+  //   "\x0F" = parsed-"{"
+  //   "\x0E" = parsed-"}"
+  EXPECT_EQ(Table::DeleteSpecialKey("\x0F" "ab"), "\x0F" "ab");
+  EXPECT_EQ(Table::DeleteSpecialKey("ab" "\x0E"), "ab" "\x0E");
+  EXPECT_EQ(Table::DeleteSpecialKey("\x0F" "\x0F" "ab" "\x0E"), "");
+  EXPECT_EQ(Table::DeleteSpecialKey("\x0F" "ab" "\x0E" "\x0E"), "\x0E");
+}
+
+TEST_F(TableTest, TrimLeadingpecialKey) {
+  std::string input = Table::ParseSpecialKey("{!}ab");
+  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
+  EXPECT_EQ(input, "ab");
+
+  input = Table::ParseSpecialKey("{!}{?}ab");
+  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
+  EXPECT_EQ(input, Table::ParseSpecialKey("{?}ab"));
+
+  input = Table::ParseSpecialKey("a{!}b");
+  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
+  EXPECT_EQ(input, Table::ParseSpecialKey("a{!}b"));
+
+  // Invalid patterns
+  //   "\x0F" = parsed-"{"
+  //   "\x0E" = parsed-"}"
+  input = "\x0F" "ab";  // "{ab"
+  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
+  input = "ab" "\x0E";  // "ab}"
+  EXPECT_FALSE(Table::TrimLeadingSpecialKey(&input));
+  input = "\x0F" "\x0F" "ab" "\x0E";  // "{{ab}"
+  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
+  EXPECT_TRUE(input.empty());
+  input = "\x0F" "ab" "\x0E" "\x0E";  // "{ab}}"
+  EXPECT_TRUE(Table::TrimLeadingSpecialKey(&input));
+  EXPECT_EQ(input, "\x0E");
+}
+
 TEST_F(TableTest, TableManager) {
   TableManager table_manager;
   absl::flat_hash_set<const Table *> table_set;
