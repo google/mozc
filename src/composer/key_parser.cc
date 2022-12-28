@@ -38,8 +38,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/port.h"
-#include "base/singleton.h"
 #include "base/util.h"
 #include "protocol/commands.pb.h"
 #include "absl/strings/str_split.h"
@@ -50,7 +48,7 @@ using commands::KeyEvent;
 namespace {
 
 typedef std::map<std::string, KeyEvent::SpecialKey> SpecialKeysMap;
-typedef std::multimap<std::string, KeyEvent::ModifierKey> ModifiersMap;
+typedef std::map<std::string, std::vector<KeyEvent::ModifierKey>> ModifiersMap;
 
 class KeyParserData {
  public:
@@ -64,30 +62,24 @@ class KeyParserData {
     //  CHECK(keymap::KeyType::NUM_KEYTYPES < static_cast<int32>(' '));
     VLOG(1) << "Init KeyParser Data";
 
-    modifiers_map_.insert(std::make_pair("ctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(std::make_pair("control", KeyEvent::CTRL));
-    modifiers_map_.insert(std::make_pair("alt", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("option", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("meta", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("super", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("hyper", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("shift", KeyEvent::SHIFT));
-    modifiers_map_.insert(std::make_pair("caps", KeyEvent::CAPS));
-    modifiers_map_.insert(std::make_pair("keydown", KeyEvent::KEY_DOWN));
-    modifiers_map_.insert(std::make_pair("keyup", KeyEvent::KEY_UP));
+    modifiers_map_["ctrl"] = {KeyEvent::CTRL};
+    modifiers_map_["control"] = {KeyEvent::CTRL};
+    modifiers_map_["alt"] = {KeyEvent::ALT};
+    modifiers_map_["option"] = {KeyEvent::ALT};
+    modifiers_map_["meta"] = {KeyEvent::ALT};
+    modifiers_map_["super"] = {KeyEvent::ALT};
+    modifiers_map_["hyper"] = {KeyEvent::ALT};
+    modifiers_map_["shift"] = {KeyEvent::SHIFT};
+    modifiers_map_["caps"] = {KeyEvent::CAPS};
+    modifiers_map_["keydown"] = {KeyEvent::KEY_DOWN};
+    modifiers_map_["keyup"] = {KeyEvent::KEY_UP};
 
-    modifiers_map_.insert(std::make_pair("leftctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(std::make_pair("leftctrl", KeyEvent::LEFT_CTRL));
-    modifiers_map_.insert(std::make_pair("rightctrl", KeyEvent::CTRL));
-    modifiers_map_.insert(std::make_pair("rightctrl", KeyEvent::RIGHT_CTRL));
-    modifiers_map_.insert(std::make_pair("leftalt", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("leftalt", KeyEvent::LEFT_ALT));
-    modifiers_map_.insert(std::make_pair("rightalt", KeyEvent::ALT));
-    modifiers_map_.insert(std::make_pair("rightalt", KeyEvent::RIGHT_ALT));
-    modifiers_map_.insert(std::make_pair("leftshift", KeyEvent::SHIFT));
-    modifiers_map_.insert(std::make_pair("leftshift", KeyEvent::LEFT_SHIFT));
-    modifiers_map_.insert(std::make_pair("rightshift", KeyEvent::SHIFT));
-    modifiers_map_.insert(std::make_pair("rightshift", KeyEvent::RIGHT_SHIFT));
+    modifiers_map_["leftctrl"] = {KeyEvent::CTRL, KeyEvent::LEFT_CTRL};
+    modifiers_map_["rightctrl"] = {KeyEvent::CTRL, KeyEvent::RIGHT_CTRL};
+    modifiers_map_["leftalt"] = {KeyEvent::ALT, KeyEvent::LEFT_ALT};
+    modifiers_map_["rightalt"] = {KeyEvent::ALT, KeyEvent::RIGHT_ALT};
+    modifiers_map_["leftshift"] = {KeyEvent::SHIFT, KeyEvent::LEFT_SHIFT};
+    modifiers_map_["rightshift"] = {KeyEvent::SHIFT, KeyEvent::RIGHT_SHIFT};
 
     keycode_map_["on"] = KeyEvent::ON;
     keycode_map_["off"] = KeyEvent::OFF;
@@ -184,6 +176,7 @@ class KeyParserData {
 };
 }  // namespace
 
+// static
 bool KeyParser::ParseKey(const std::string &key_string, KeyEvent *key_event) {
   std::vector<std::string> keys =
       absl::StrSplit(key_string, ' ', absl::SkipEmpty());
@@ -194,48 +187,40 @@ bool KeyParser::ParseKey(const std::string &key_string, KeyEvent *key_event) {
   return KeyParser::ParseKeyVector(keys, key_event);
 }
 
+// static
 bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
                                KeyEvent *key_event) {
   CHECK(key_event);
-
-  const ModifiersMap &modifiers_map =
-      Singleton<KeyParserData>::get()->modifiers_map();
-  const SpecialKeysMap &keycode_map =
-      Singleton<KeyParserData>::get()->keycode_map();
+  static KeyParserData *parser_data = new KeyParserData();
+  const ModifiersMap &modifiers = parser_data->modifiers_map();
+  const SpecialKeysMap &specials = parser_data->keycode_map();
 
   key_event->Clear();
   std::set<commands::KeyEvent::ModifierKey> modifiers_set;
 
-  for (size_t i = 0; i < keys.size(); ++i) {
-    if (Util::CharsLen(keys[i]) == 1) {
-      char32_t key_code = 0;
-      if (Util::SplitFirstChar32(keys[i], &key_code, nullptr)) {
-        key_event->set_key_code(key_code);
-      }
-    } else {
-      std::string key = keys[i];
-      Util::LowerString(&key);
-
-      if (modifiers_map.count(key) > 0) {
-        std::pair<ModifiersMap::const_iterator, ModifiersMap::const_iterator>
-            range = modifiers_map.equal_range(key);
-        for (ModifiersMap::const_iterator iter = range.first;
-             iter != range.second; ++iter) {
-          modifiers_set.insert(iter->second);
-        }
-      } else if (keycode_map.count(key) == 1) {
-        key_event->set_special_key(keycode_map.find(key)->second);
-      } else {
-        LOG(ERROR) << "Unknown key: " << keys[i];
-        return false;
-      }
+  for (const std::string &key : keys) {
+    if (Util::CharsLen(key) == 1) {
+      key_event->set_key_code(Util::Utf8ToUcs4(key));
+      continue;
     }
+
+    std::string lower_key = key;
+    Util::LowerString(&lower_key);
+
+    if (const auto &it = modifiers.find(lower_key); it != modifiers.end()) {
+      modifiers_set.insert(it->second.begin(), it->second.end());
+      continue;
+    }
+    if (const auto &it = specials.find(lower_key); it != specials.end()) {
+      key_event->set_special_key(it->second);
+      continue;
+    }
+    LOG(ERROR) << "Unknown key: " << key;
+    return false;
   }
 
-  for (std::set<commands::KeyEvent::ModifierKey>::iterator iter =
-           modifiers_set.begin();
-       iter != modifiers_set.end(); ++iter) {
-    key_event->add_modifier_keys(*iter);
+  for (const commands::KeyEvent::ModifierKey modifier : modifiers_set) {
+    key_event->add_modifier_keys(modifier);
   }
 
   return true;

@@ -34,184 +34,175 @@
 #include <string>
 #include <utility>
 
-#include "base/port.h"
 #include "composer/key_event_util.h"
 #include "protocol/commands.pb.h"
 #include "testing/base/public/gunit.h"
 
 namespace mozc {
 
+using commands::KeyEvent;
+
 TEST(KeyParserTest, KeyCode) {
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
 
   EXPECT_TRUE(KeyParser::ParseKey("a", &key_event));
-  EXPECT_EQ('a', key_event.key_code());
+  EXPECT_EQ(key_event.key_code(), 'a');
 
   key_event.Clear();
   EXPECT_TRUE(KeyParser::ParseKey("A", &key_event));
-  EXPECT_EQ('A', key_event.key_code());
+  EXPECT_EQ(key_event.key_code(), 'A');
 
   // "あ" (not half width)
   constexpr char32_t kHiraganaA = 0x3042;
   key_event.Clear();
   EXPECT_TRUE(KeyParser::ParseKey("あ", &key_event));
-  EXPECT_EQ(kHiraganaA, key_event.key_code());
+  EXPECT_EQ(key_event.key_code(), kHiraganaA);
 }
 
 TEST(KeyParserTest, ModifierKeys) {
   const std::pair<std::string, uint32_t> kTestData[] = {
-      std::make_pair("ctrl", commands::KeyEvent::CTRL),
-      std::make_pair("leftctrl",
-                     commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL),
-      std::make_pair("rightctrl",
-                     commands::KeyEvent::CTRL | commands::KeyEvent::RIGHT_CTRL),
+      {"ctrl", KeyEvent::CTRL},
+      {"leftctrl", KeyEvent::CTRL | KeyEvent::LEFT_CTRL},
+      {"rightctrl", KeyEvent::CTRL | KeyEvent::RIGHT_CTRL},
+      {"alt", KeyEvent::ALT},
+      {"leftalt", KeyEvent::ALT | KeyEvent::LEFT_ALT},
+      {"rightalt", KeyEvent::ALT | KeyEvent::RIGHT_ALT},
+      {"shift", KeyEvent::SHIFT},
+      {"leftshift", KeyEvent::SHIFT | KeyEvent::LEFT_SHIFT},
+      {"rightshift", KeyEvent::SHIFT | KeyEvent::RIGHT_SHIFT},
 
-      std::make_pair("alt", commands::KeyEvent::ALT),
-      std::make_pair("leftalt",
-                     commands::KeyEvent::ALT | commands::KeyEvent::LEFT_ALT),
-      std::make_pair("rightalt",
-                     commands::KeyEvent::ALT | commands::KeyEvent::RIGHT_ALT),
+      {"caps", KeyEvent::CAPS},
+      {"keydown", KeyEvent::KEY_DOWN},
+      {"keyup", KeyEvent::KEY_UP},
 
-      std::make_pair("shift", commands::KeyEvent::SHIFT),
-      std::make_pair("leftshift", commands::KeyEvent::SHIFT |
-                                      commands::KeyEvent::LEFT_SHIFT),
-      std::make_pair("rightshift", commands::KeyEvent::SHIFT |
-                                       commands::KeyEvent::RIGHT_SHIFT),
-
-      std::make_pair("caps", commands::KeyEvent::CAPS),
-      std::make_pair("keydown", commands::KeyEvent::KEY_DOWN),
-      std::make_pair("keyup", commands::KeyEvent::KEY_UP),
-
-      std::make_pair("SHIFT", commands::KeyEvent::SHIFT),
+      {"SHIFT", KeyEvent::SHIFT},
   };
 
-  for (size_t i = 0; i < std::size(kTestData); ++i) {
-    SCOPED_TRACE(kTestData[i].first);
-    commands::KeyEvent key_event;
-    EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));
-    EXPECT_EQ(kTestData[i].second, KeyEventUtil::GetModifiers(key_event));
+  for (const std::pair<std::string, uint32_t> &data : kTestData) {
+    SCOPED_TRACE(data.first);
+    KeyEvent key_event;
+    EXPECT_TRUE(KeyParser::ParseKey(data.first, &key_event));
+    EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), data.second);
   }
 }
 
 TEST(KeyParserTest, MultipleModifierKeys) {
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
   EXPECT_TRUE(KeyParser::ParseKey("LeftCtrl RightCtrl", &key_event));
-  EXPECT_EQ(3, key_event.modifier_keys_size());
-  EXPECT_EQ((commands::KeyEvent::CTRL | commands::KeyEvent::LEFT_CTRL |
-             commands::KeyEvent::RIGHT_CTRL),
-            KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(key_event.modifier_keys_size(), 3);
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event),
+            KeyEvent::CTRL | KeyEvent::LEFT_CTRL | KeyEvent::RIGHT_CTRL);
 }
 
 TEST(KeyParserTest, SpecialKeys) {
-  const std::pair<std::string, commands::KeyEvent::SpecialKey> kTestData[] = {
-      std::make_pair("on", commands::KeyEvent::ON),
-      std::make_pair("off", commands::KeyEvent::OFF),
-      std::make_pair("left", commands::KeyEvent::LEFT),
-      std::make_pair("down", commands::KeyEvent::DOWN),
-      std::make_pair("up", commands::KeyEvent::UP),
-      std::make_pair("right", commands::KeyEvent::RIGHT),
-      std::make_pair("enter", commands::KeyEvent::ENTER),
-      std::make_pair("return", commands::KeyEvent::ENTER),
-      std::make_pair("esc", commands::KeyEvent::ESCAPE),
-      std::make_pair("escape", commands::KeyEvent::ESCAPE),
-      std::make_pair("delete", commands::KeyEvent::DEL),
-      std::make_pair("del", commands::KeyEvent::DEL),
-      std::make_pair("bs", commands::KeyEvent::BACKSPACE),
-      std::make_pair("backspace", commands::KeyEvent::BACKSPACE),
-      std::make_pair("henkan", commands::KeyEvent::HENKAN),
-      std::make_pair("muhenkan", commands::KeyEvent::MUHENKAN),
-      std::make_pair("kana", commands::KeyEvent::KANA),
-      std::make_pair("hiragana", commands::KeyEvent::KANA),
-      std::make_pair("katakana", commands::KeyEvent::KATAKANA),
-      std::make_pair("eisu", commands::KeyEvent::EISU),
-      std::make_pair("home", commands::KeyEvent::HOME),
-      std::make_pair("end", commands::KeyEvent::END),
-      std::make_pair("space", commands::KeyEvent::SPACE),
-      std::make_pair("ascii", commands::KeyEvent::TEXT_INPUT),  // deprecated
-      std::make_pair("textinput", commands::KeyEvent::TEXT_INPUT),
-      std::make_pair("tab", commands::KeyEvent::TAB),
-      std::make_pair("pageup", commands::KeyEvent::PAGE_UP),
-      std::make_pair("pagedown", commands::KeyEvent::PAGE_DOWN),
-      std::make_pair("insert", commands::KeyEvent::INSERT),
-      std::make_pair("hankaku", commands::KeyEvent::HANKAKU),
-      std::make_pair("zenkaku", commands::KeyEvent::HANKAKU),
-      std::make_pair("hankaku/zenkaku", commands::KeyEvent::HANKAKU),
-      std::make_pair("kanji", commands::KeyEvent::KANJI),
+  const std::pair<std::string, KeyEvent::SpecialKey> kTestData[] = {
+      {"on", KeyEvent::ON},
+      {"off", KeyEvent::OFF},
+      {"left", KeyEvent::LEFT},
+      {"down", KeyEvent::DOWN},
+      {"up", KeyEvent::UP},
+      {"right", KeyEvent::RIGHT},
+      {"enter", KeyEvent::ENTER},
+      {"return", KeyEvent::ENTER},
+      {"esc", KeyEvent::ESCAPE},
+      {"escape", KeyEvent::ESCAPE},
+      {"delete", KeyEvent::DEL},
+      {"del", KeyEvent::DEL},
+      {"bs", KeyEvent::BACKSPACE},
+      {"backspace", KeyEvent::BACKSPACE},
+      {"henkan", KeyEvent::HENKAN},
+      {"muhenkan", KeyEvent::MUHENKAN},
+      {"kana", KeyEvent::KANA},
+      {"hiragana", KeyEvent::KANA},
+      {"katakana", KeyEvent::KATAKANA},
+      {"eisu", KeyEvent::EISU},
+      {"home", KeyEvent::HOME},
+      {"end", KeyEvent::END},
+      {"space", KeyEvent::SPACE},
+      {"ascii", KeyEvent::TEXT_INPUT},  // deprecated
+      {"textinput", KeyEvent::TEXT_INPUT},
+      {"tab", KeyEvent::TAB},
+      {"pageup", KeyEvent::PAGE_UP},
+      {"pagedown", KeyEvent::PAGE_DOWN},
+      {"insert", KeyEvent::INSERT},
+      {"hankaku", KeyEvent::HANKAKU},
+      {"zenkaku", KeyEvent::HANKAKU},
+      {"hankaku/zenkaku", KeyEvent::HANKAKU},
+      {"kanji", KeyEvent::KANJI},
 
-      std::make_pair("f1", commands::KeyEvent::F1),
-      std::make_pair("f2", commands::KeyEvent::F2),
-      std::make_pair("f3", commands::KeyEvent::F3),
-      std::make_pair("f4", commands::KeyEvent::F4),
-      std::make_pair("f5", commands::KeyEvent::F5),
-      std::make_pair("f6", commands::KeyEvent::F6),
-      std::make_pair("f7", commands::KeyEvent::F7),
-      std::make_pair("f8", commands::KeyEvent::F8),
-      std::make_pair("f9", commands::KeyEvent::F9),
-      std::make_pair("f10", commands::KeyEvent::F10),
-      std::make_pair("f11", commands::KeyEvent::F11),
-      std::make_pair("f12", commands::KeyEvent::F12),
-      std::make_pair("f13", commands::KeyEvent::F13),
-      std::make_pair("f14", commands::KeyEvent::F14),
-      std::make_pair("f15", commands::KeyEvent::F15),
-      std::make_pair("f16", commands::KeyEvent::F16),
-      std::make_pair("f17", commands::KeyEvent::F17),
-      std::make_pair("f18", commands::KeyEvent::F18),
-      std::make_pair("f19", commands::KeyEvent::F19),
-      std::make_pair("f20", commands::KeyEvent::F20),
-      std::make_pair("f21", commands::KeyEvent::F21),
-      std::make_pair("f22", commands::KeyEvent::F22),
-      std::make_pair("f23", commands::KeyEvent::F23),
-      std::make_pair("f24", commands::KeyEvent::F24),
+      {"f1", KeyEvent::F1},
+      {"f2", KeyEvent::F2},
+      {"f3", KeyEvent::F3},
+      {"f4", KeyEvent::F4},
+      {"f5", KeyEvent::F5},
+      {"f6", KeyEvent::F6},
+      {"f7", KeyEvent::F7},
+      {"f8", KeyEvent::F8},
+      {"f9", KeyEvent::F9},
+      {"f10", KeyEvent::F10},
+      {"f11", KeyEvent::F11},
+      {"f12", KeyEvent::F12},
+      {"f13", KeyEvent::F13},
+      {"f14", KeyEvent::F14},
+      {"f15", KeyEvent::F15},
+      {"f16", KeyEvent::F16},
+      {"f17", KeyEvent::F17},
+      {"f18", KeyEvent::F18},
+      {"f19", KeyEvent::F19},
+      {"f20", KeyEvent::F20},
+      {"f21", KeyEvent::F21},
+      {"f22", KeyEvent::F22},
+      {"f23", KeyEvent::F23},
+      {"f24", KeyEvent::F24},
 
-      std::make_pair("numpad0", commands::KeyEvent::NUMPAD0),
-      std::make_pair("numpad1", commands::KeyEvent::NUMPAD1),
-      std::make_pair("numpad2", commands::KeyEvent::NUMPAD2),
-      std::make_pair("numpad3", commands::KeyEvent::NUMPAD3),
-      std::make_pair("numpad4", commands::KeyEvent::NUMPAD4),
-      std::make_pair("numpad5", commands::KeyEvent::NUMPAD5),
-      std::make_pair("numpad6", commands::KeyEvent::NUMPAD6),
-      std::make_pair("numpad7", commands::KeyEvent::NUMPAD7),
-      std::make_pair("numpad8", commands::KeyEvent::NUMPAD8),
-      std::make_pair("numpad9", commands::KeyEvent::NUMPAD9),
+      {"numpad0", KeyEvent::NUMPAD0},
+      {"numpad1", KeyEvent::NUMPAD1},
+      {"numpad2", KeyEvent::NUMPAD2},
+      {"numpad3", KeyEvent::NUMPAD3},
+      {"numpad4", KeyEvent::NUMPAD4},
+      {"numpad5", KeyEvent::NUMPAD5},
+      {"numpad6", KeyEvent::NUMPAD6},
+      {"numpad7", KeyEvent::NUMPAD7},
+      {"numpad8", KeyEvent::NUMPAD8},
+      {"numpad9", KeyEvent::NUMPAD9},
 
-      std::make_pair("multiply", commands::KeyEvent::MULTIPLY),
-      std::make_pair("add", commands::KeyEvent::ADD),
-      std::make_pair("separator", commands::KeyEvent::SEPARATOR),
-      std::make_pair("subtract", commands::KeyEvent::SUBTRACT),
-      std::make_pair("decimal", commands::KeyEvent::DECIMAL),
-      std::make_pair("divide", commands::KeyEvent::DIVIDE),
-      std::make_pair("equals", commands::KeyEvent::EQUALS),
-      std::make_pair("comma", commands::KeyEvent::COMMA),
+      {"multiply", KeyEvent::MULTIPLY},
+      {"add", KeyEvent::ADD},
+      {"separator", KeyEvent::SEPARATOR},
+      {"subtract", KeyEvent::SUBTRACT},
+      {"decimal", KeyEvent::DECIMAL},
+      {"divide", KeyEvent::DIVIDE},
+      {"equals", KeyEvent::EQUALS},
+      {"comma", KeyEvent::COMMA},
 
-      std::make_pair("on", commands::KeyEvent::ON),
+      {"on", KeyEvent::ON},
   };
 
-  for (size_t i = 0; i < std::size(kTestData); ++i) {
-    SCOPED_TRACE(kTestData[i].first);
-    commands::KeyEvent key_event;
-    EXPECT_TRUE(KeyParser::ParseKey(kTestData[i].first, &key_event));
-    EXPECT_EQ(kTestData[i].second, key_event.special_key());
+  for (const std::pair<std::string, KeyEvent::SpecialKey> &data : kTestData) {
+    SCOPED_TRACE(data.first);
+    KeyEvent key_event;
+    EXPECT_TRUE(KeyParser::ParseKey(data.first, &key_event));
+    EXPECT_EQ(key_event.special_key(), data.second);
   }
 }
 
 TEST(KeyParserTest, Combination) {
-  commands::KeyEvent key_event;
+  KeyEvent key_event;
 
   EXPECT_TRUE(KeyParser::ParseKey("LeftShift CTRL a", &key_event));
-  EXPECT_EQ('a', key_event.key_code());
-  EXPECT_EQ(commands::KeyEvent::LEFT_SHIFT | commands::KeyEvent::SHIFT |
-                commands::KeyEvent::CTRL,
-            KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(key_event.key_code(), 'a');
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event),
+            KeyEvent::LEFT_SHIFT | KeyEvent::SHIFT | KeyEvent::CTRL);
 
   EXPECT_TRUE(KeyParser::ParseKey("rightalt On", &key_event));
-  EXPECT_EQ(commands::KeyEvent::ON, key_event.special_key());
-  EXPECT_EQ(commands::KeyEvent::RIGHT_ALT | commands::KeyEvent::ALT,
+  EXPECT_EQ(key_event.special_key(), KeyEvent::ON);
+  EXPECT_EQ(KeyEvent::RIGHT_ALT | KeyEvent::ALT,
             KeyEventUtil::GetModifiers(key_event));
 
   EXPECT_TRUE(KeyParser::ParseKey("SHIFT on a", &key_event));
-  EXPECT_EQ('a', key_event.key_code());
-  EXPECT_EQ(commands::KeyEvent::ON, key_event.special_key());
-  EXPECT_EQ(commands::KeyEvent::SHIFT, KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(key_event.key_code(), 'a');
+  EXPECT_EQ(key_event.special_key(), KeyEvent::ON);
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::SHIFT);
 }
 
 }  // namespace mozc
