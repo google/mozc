@@ -154,11 +154,6 @@ cc_test_mozc(
     requires_full_emulation = False,
     deps = [
         ":table",
-        "//base",
-        "//base:file_util",
-        "//base:port",
-        "//base:system_util",
-        "//composer/internal:composition_input",
         "//config:config_handler",
         "//data_manager/testing:mock_data_manager",
         "//protocol:commands_cc_proto",

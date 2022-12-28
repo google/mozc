@@ -101,8 +101,8 @@ constexpr char k50KeysHiraganaTableFile[] =
     "system://50keys-hiragana.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
-constexpr char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
-constexpr char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
+constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
+constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
 }  // namespace
 
 // ========================================
