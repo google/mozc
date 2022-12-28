@@ -25,3 +25,20 @@ as the same meaning.
 
 * `session` uses `composer` as a member of `ImeContext`.
 * `data/preedit/` contains transliteration rules used by `composer` via `table`.
+
+
+## Transliterations
+
+Transliteration is the feature to change the character form from Hiragana to
+other type of scripts (e.g. ねこ → neko). In general, function keys F7 - F10
+are mapped to this feature.
+
+This transliteration is performed while text composing but not the Kanji
+conversion. So there are some additional requirements:
+
+* Consistency with the user's raw input.
+  For example, "しか" is usually transliterated to "shika",
+  however "しか" should be transliterated to "sica" if the user typed so.
+* Awareness of the user's modification.
+  For example, "tta" is composed to "った". Then if the user deleted "た",
+  The transliteration from the remaining "っ" is "t" rather than "xtsu".
