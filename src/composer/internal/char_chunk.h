@@ -156,9 +156,34 @@ class CharChunk final {
 
  private:
   const Table *table_;
+
+  // There are four variables to represent a composing text:
+  // `raw_`, `conversion_`, `pending_`, and `ambiguous_`.
+  // In general, when the user types a key (e.g. "a"),
+  // `raw_` contains the typed character (i.e. "a"), and
+  // either or some of `conversion_`, `pending_`, and `ambiguous_` contains
+  // converted characters. (e.g. "あ" to `converted_`).
+  //
+  // At least one of `conversion_`, `pending_`, and `ambiguous_` is not empty.
+
+  // `raw_`: Actual characters typed by the user (e.g "ka").
+  // In some situations through the user's text editing,
+  // it may contain synthesized data transliterated from `conversion_`.
   std::string raw_;
+  // `conversion_`: Converted character from `raw_` (e.g. "か").
+  // Conversion rules from `raw_` to `conversion_` are described in `table_`.
   std::string conversion_;
+  // `pending_`: Converted character from `raw_`.
+  // Conversion rules from `raw_` to `pending_` are described in `table_`.
+  // If no rules are matched with the input, it is also added to `pending_`.
+  // For example, if `raw_` is "tt", conversion_ is "っ" and pending_ is "t".
+  // This `pending_` is prepended to the user's input in the next time.
   std::string pending_;
+  // `ambiguous_`: Conversted character from `raw_`, but unlike `conversion_`,
+  // it is not yet determined (e.g. "ん").
+  // If the `raw_` is "n", it can be converted to "ん" at this moment.
+  // However it can be converted to "な", if the next input is "a".
+  // In this case, "ん" is stored to `ambiguous_` instaeed of `conversion_`.
   std::string ambiguous_;
   Transliterators::Transliterator transliterator_;
   TableAttributes attributes_;

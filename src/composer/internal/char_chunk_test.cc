@@ -438,6 +438,199 @@ TEST(CharChunkTest, AddInputInternal) {
   }
 }
 
+TEST(CharChunkTest, AddInputInternalDifferentPending) {
+  Table table;
+  table.AddRule("1", "", "あ");
+  table.AddRule("あ*", "", "ぁ");
+
+  CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+  {
+    std::string key = "1";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("あ", chunk.pending());
+  }
+  {
+    std::string key = "*";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1*", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("ぁ", chunk.pending());
+  }
+}
+
+TEST(CharChunkTest, AddInputInternalAmbiguousConversion) {
+  Table table;
+  table.AddRule("a", "あ", "");
+  table.AddRule("n", "ん", "");
+  table.AddRule("nn", "ん", "");
+  table.AddRule("na", "な", "");
+  table.AddRule("ya", "や", "");
+  table.AddRule("nya", "にゃ", "");
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "n";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_EQ("ん", chunk.ambiguous());
+
+    key = "a";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("na", chunk.raw());
+    EXPECT_EQ("な", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "n";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_EQ("ん", chunk.ambiguous());
+
+    key = "y";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("ny", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("ny", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+
+    key = "a";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("nya", chunk.raw());
+    EXPECT_EQ("にゃ", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "nya";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("nya", chunk.raw());
+    EXPECT_EQ("にゃ", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "n";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("", key);
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_EQ("ん", chunk.ambiguous());
+
+    key = "k";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("k", key);
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("ん", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "nk";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("k", key);
+    EXPECT_EQ("n", chunk.raw());
+    EXPECT_EQ("ん", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+  }
+}
+
+TEST(CharChunkTest, AddInputInternalWithAttributes) {
+  Table table;
+  table.AddRuleWithAttributes("1", "", "あ", NO_TRANSLITERATION);
+  table.AddRule("あ*", "", "ぁ");
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "1";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("あ", chunk.pending());
+    EXPECT_EQ(NO_TRANSLITERATION, chunk.attributes());
+
+    key = "*";
+    chunk.AddInputInternal(&key);
+    EXPECT_TRUE(key.empty());
+    EXPECT_EQ("1*", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("ぁ", chunk.pending());
+    EXPECT_EQ(NO_TRANSLITERATION, chunk.attributes());
+  }
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table);
+
+    std::string key = "1*";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("*", key);
+    EXPECT_EQ("1", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("あ", chunk.pending());
+    EXPECT_EQ(NO_TRANSLITERATION, chunk.attributes());
+
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("", key);
+    EXPECT_EQ("1*", chunk.raw());
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("ぁ", chunk.pending());
+    EXPECT_EQ(NO_TRANSLITERATION, chunk.attributes());
+  }
+
+  Table table2;
+  table2.AddRuleWithAttributes("n", "ん", "", NO_TRANSLITERATION);
+  table2.AddRuleWithAttributes("na", "な", "", DIRECT_INPUT);
+
+  {
+    CharChunk chunk(Transliterators::CONVERSION_STRING, &table2);
+
+    std::string key = "n";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("", chunk.conversion());
+    EXPECT_EQ("n", chunk.pending());
+    EXPECT_EQ("ん", chunk.ambiguous());
+    EXPECT_EQ(NO_TRANSLITERATION, chunk.attributes());
+
+    key = "a";
+    chunk.AddInputInternal(&key);
+    EXPECT_EQ("な", chunk.conversion());
+    EXPECT_EQ("", chunk.pending());
+    EXPECT_EQ("", chunk.ambiguous());
+    EXPECT_EQ(DIRECT_INPUT, chunk.attributes());
+  }
+}
+
 TEST(CharChunkTest, CaseSensitive) {
   Table table;
   table.AddRule("ka", "[ka]", "");
@@ -449,6 +642,39 @@ TEST(CharChunkTest, CaseSensitive) {
   EXPECT_EQ("Ka", chunk.raw());
   EXPECT_EQ("[ka]", chunk.conversion());
   EXPECT_TRUE(chunk.pending().empty());
+}
+
+TEST(CharChunkTest, TrimHeadSpecialKey) {
+  Table table;
+  table.AddRule("ああ", "", "い");
+  table.AddRule("いあ", "", "う");
+  table.AddRule("あ{!}", "あ", "");
+  table.AddRule("い{!}", "い", "");
+  table.AddRule("う{!}", "う", "");
+
+  std::string input(Table::ParseSpecialKey("ああ{!}{!}あ{!}"));
+  {
+    // Check a normal behavior. "ああ{!}" is converted to "い".
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, Table::ParseSpecialKey("{!}あ{!}"));
+    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("ああ{!}"));
+    EXPECT_EQ(chunk.conversion(), "い");
+    EXPECT_EQ(chunk.pending(), "");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
+  {
+    // The first "{!}" is erased because:
+    // 1. it is a special key.
+    // 2. there is no conversion rule starting from "{!}"".
+    CharChunk chunk(Transliterators::HIRAGANA, &table);
+    chunk.AddInput(&input);
+    EXPECT_EQ(input, "");
+    EXPECT_EQ(chunk.raw(), Table::ParseSpecialKey("あ{!}"));
+    EXPECT_EQ(chunk.conversion(), "あ");
+    EXPECT_EQ(chunk.pending(), "");
+    EXPECT_EQ(chunk.ambiguous(), "");
+  }
 }
 
 TEST(CharChunkTest, AlphanumericOfSSH) {
@@ -875,7 +1101,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      EXPECT_EQ("んｙ", result);
+      EXPECT_EQ("ｎｙ", result);
     }
 
     {
@@ -937,7 +1163,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      EXPECT_EQ("ぽんｙ", result);
+      EXPECT_EQ("ぽｎｙ", result);
     }
 
     {
@@ -971,7 +1197,7 @@ TEST(CharChunkTest, Issue2819580) {
     {
       std::string result;
       chunk.AppendFixedResult(Transliterators::HIRAGANA, &result);
-      EXPECT_EQ("ｚんｙ", result);
+      EXPECT_EQ("ｚｎｙ", result);
     }
   }
 }

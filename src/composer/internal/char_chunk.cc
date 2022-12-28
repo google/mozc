@@ -48,16 +48,6 @@ namespace {
 // Max recursion count for looking up pending loop.
 constexpr int kMaxRecursion = 4;
 
-// Delete "end" from "target", if "target" ends with the "end".
-bool DeleteEnd(const std::string &end, std::string *target) {
-  const std::string::size_type rindex = target->rfind(end);
-  if (rindex == std::string::npos) {
-    return false;
-  }
-  target->erase(rindex);
-  return true;
-}
-
 // Get from pending rules recursively
 // The recursion will be stopped if recursion_count is 0.
 // When returns false, the caller doesn't append result entries.
@@ -301,17 +291,24 @@ void CharChunk::Combine(const CharChunk &left_chunk) {
 }
 
 bool CharChunk::AddInputInternal(std::string *input) {
+  constexpr bool kLoop = true;
   constexpr bool kNoLoop = false;
 
-  size_t key_length = 0;
+  size_t used_key_length = 0;
   bool fixed = false;
   std::string key = pending_ + *input;
-  const Entry *entry = table_->LookUpPrefix(key, &key_length, &fixed);
+  const Entry *entry = table_->LookUpPrefix(key, &used_key_length, &fixed);
   local_length_cache_ = std::string::npos;
 
   if (entry == nullptr) {
-    if (key_length == 0) {
-      // No prefix character is not contained in the table, fallback
+    if (used_key_length == 0) {
+      // If `input` starts with a special key, erases it and keeps the loop.
+      // For example, if `input` is "{!}ab{?}", `input` becomes "ab{?}".
+      if (Table::TrimLeadingSpecialKey(input)) {
+        return kLoop;
+      }
+
+      // The prefix characters are not contained in the table, fallback
       // operation is performed.
       if (pending_.empty()) {
         // Conversion data was not found.
@@ -320,69 +317,56 @@ bool CharChunk::AddInputInternal(std::string *input) {
       return kNoLoop;
     }
 
-    if (key_length < pending_.size()) {
+    if (used_key_length < pending_.size()) {
       // Do not modify this char_chunk, all key characters will be used
       // by the next char_chunk.
       return kNoLoop;
     }
 
-    DCHECK_GE(key_length, pending_.size());
     // Some prefix character is contained in the table, but not
     // reached any conversion result (like "t" with "ta->た").
-    key_length -= pending_.size();
-
     // Conversion data had only pending.
-    const std::string new_pending_chars(*input, 0, key_length);
-    raw_.append(new_pending_chars);
-    pending_.append(new_pending_chars);
-    if (!ambiguous_.empty()) {
-      // If ambiguous_ has already a value, ambiguous_ is appended.
-      // ex. "ny" makes ambiguous_ "んy", but "sh" leaves ambiguous_ empty.
-      ambiguous_.append(new_pending_chars);
-    }
-    input->erase(0, key_length);
+
+    // Move used input characters to CharChunk data.
+    DCHECK_GE(used_key_length, pending_.size());
+    const size_t used_input_length = used_key_length - pending_.size();
+    const std::string used_input_chars(*input, 0, used_input_length);
+    raw_.append(used_input_chars);
+    pending_.append(used_input_chars);
+    ambiguous_.clear();
+    input->erase(0, used_input_length);
     return kNoLoop;
   }
 
   // The prefix of key reached a conversion result, thus entry is not nullptr.
 
-  if (key.size() == key_length) {
-    const bool is_following_entry =
-        (!conversion_.empty() ||
-         (!raw_.empty() && !pending_.empty() && raw_ != pending_));
-
-    raw_.append(*input);
-    input->clear();
-    if (fixed) {
-      // The whole key has been used, table lookup has reached a fixed
-      // value.  It is a stable world. (like "ka->か", "q@->だ").
-      conversion_.append(entry->result());
-      pending_ = entry->pending();
-      ambiguous_.clear();
-
-      // If this entry is the first entry, the table attributes are
-      // applied to this chunk.
-      if (!is_following_entry) {
-        attributes_ = entry->attributes();
-      }
-    } else {  // !fixed
-      // The whole string of key reached a conversion result, but the
-      // result is ambiguous (like "n" with "n->ん and na->な").
-      pending_ = key;
-      ambiguous_ = entry->result();
-    }
-    return kNoLoop;
+  // Check if this CharChunk does not contain a conversion result before.
+  const bool is_first_entry =
+      (conversion_.empty() &&
+       (raw_.empty() || pending_.empty() || raw_ == pending_));
+  // If this entry is the first entry, the attributes are applied to this chunk.
+  if (is_first_entry) {
+    attributes_ = entry->attributes();
   }
 
-  // Delete pending_ from raw_ if matched.
-  DeleteEnd(pending_, &raw_);
+  // Move used input characters to raw_.
+  const size_t used_input_length = used_key_length - pending_.size();
+  raw_.append(*input, 0, used_input_length);
+  input->erase(0, used_input_length);
 
-  // A result was found without any ambiguity.
-  input->assign(key, key_length, key.size() - key_length);
-  raw_.append(key, 0, key_length);
-  conversion_.append(entry->result());
-  pending_ = entry->pending();
-  ambiguous_.clear();
+  if (fixed || key.size() > used_key_length) {
+    // A result was found. Ambiguity is resolved because `fixed` is true or
+    // the key still remains. e.g. If the key is "nk", "n" is used for "ん"
+    // because the next remaining character "k" is not used with "n".
+    conversion_.append(entry->result());
+    pending_ = entry->pending();
+    ambiguous_.clear();
+  } else {
+    // A result was found, but it is still ambiguous.
+    // e.g. "n" with "n->ん and na->な".
+    pending_ = key;
+    ambiguous_ = entry->result();
+  }
 
   if (input->empty() || pending_.empty()) {
     // If the remaining input character or pending character is empty,
@@ -390,7 +374,6 @@ bool CharChunk::AddInputInternal(std::string *input) {
     return kNoLoop;
   }
 
-  constexpr bool kLoop = true;
   return kLoop;
 }
 

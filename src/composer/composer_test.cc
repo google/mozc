@@ -725,14 +725,17 @@ TEST_F(ComposerTest, GetStringFunctionsInputFieldType) {
 }
 
 TEST_F(ComposerTest, InsertCommandCharacter) {
+  table_->AddRule("{<}", "REWIND", "");
+  table_->AddRule("{!}", "STOP", "");
+
   composer_->SetInputMode(transliteration::HALF_ASCII);
 
   composer_->InsertCommandCharacter(Composer::REWIND);
-  EXPECT_EQ("\x0F<\x0E", GetPreedit(composer_.get()));
+  EXPECT_EQ("REWIND", GetPreedit(composer_.get()));
 
   composer_->Reset();
   composer_->InsertCommandCharacter(Composer::STOP_KEY_TOGGLING);
-  EXPECT_EQ("\x0F!\x0E", GetPreedit(composer_.get()));
+  EXPECT_EQ("STOP", GetPreedit(composer_.get()));
 }
 
 TEST_F(ComposerTest, InsertCharacterKeyEvent) {
@@ -2172,7 +2175,7 @@ TEST_F(ComposerTest, Issue2819580Case1) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("んy", result);
+  EXPECT_EQ("ny", result);
 }
 
 TEST_F(ComposerTest, Issue2819580Case2) {
@@ -2191,7 +2194,7 @@ TEST_F(ComposerTest, Issue2819580Case2) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("ぽんy", result);
+  EXPECT_EQ("ぽny", result);
 }
 
 TEST_F(ComposerTest, Issue2819580Case3) {
@@ -2208,7 +2211,7 @@ TEST_F(ComposerTest, Issue2819580Case3) {
 
   std::string result;
   composer_->GetQueryForConversion(&result);
-  EXPECT_EQ("zんy", result);
+  EXPECT_EQ("zny", result);
 }
 
 TEST_F(ComposerTest, Issue2797991Case1) {

@@ -101,8 +101,8 @@ constexpr char k50KeysHiraganaTableFile[] =
     "system://50keys-hiragana.tsv";
 
 constexpr char kNewChunkPrefix[] = "\t";
-constexpr char kSpecialKeyOpen[] = "\x0F";   // Shift-In of ASCII
-constexpr char kSpecialKeyClose[] = "\x0E";  // Shift-Out of ASCII
+constexpr char kSpecialKeyOpen[] = "\u000F";   // Shift-In of ASCII (1 byte)
+constexpr char kSpecialKeyClose[] = "\u000E";  // Shift-Out of ASCII (1 byte)
 }  // namespace
 
 // ========================================
@@ -630,6 +630,19 @@ std::string Table::DeleteSpecialKey(const std::string &input) {
     cursor = close_pos + 1;
   }
   return output;
+}
+
+// static
+bool Table::TrimLeadingSpecialKey(std::string *input) {
+  if (!absl::StartsWith(*input, kSpecialKeyOpen)) {
+    return false;
+  }
+  size_t close_pos = input->find(kSpecialKeyClose, 1);
+  if (close_pos == std::string::npos) {
+    return false;
+  }
+  input->erase(0, close_pos + 1);
+  return true;
 }
 
 // static
