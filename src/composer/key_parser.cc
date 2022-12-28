@@ -200,6 +200,10 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
 
   for (const std::string &key : keys) {
     if (Util::CharsLen(key) == 1) {
+      if (key_event->has_key_code()) {
+        // Multiple keys are not supported.
+        return false;
+      }
       key_event->set_key_code(Util::Utf8ToUcs4(key));
       continue;
     }
@@ -212,6 +216,10 @@ bool KeyParser::ParseKeyVector(const std::vector<std::string> &keys,
       continue;
     }
     if (const auto &it = specials.find(lower_key); it != specials.end()) {
+      if (key_event->has_special_key()) {
+        // Multiple special keys are not supported.
+        return false;
+      }
       key_event->set_special_key(it->second);
       continue;
     }

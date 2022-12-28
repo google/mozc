@@ -196,13 +196,30 @@ TEST(KeyParserTest, Combination) {
 
   EXPECT_TRUE(KeyParser::ParseKey("rightalt On", &key_event));
   EXPECT_EQ(key_event.special_key(), KeyEvent::ON);
-  EXPECT_EQ(KeyEvent::RIGHT_ALT | KeyEvent::ALT,
-            KeyEventUtil::GetModifiers(key_event));
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event),
+            KeyEvent::RIGHT_ALT | KeyEvent::ALT);
 
   EXPECT_TRUE(KeyParser::ParseKey("SHIFT on a", &key_event));
   EXPECT_EQ(key_event.key_code(), 'a');
   EXPECT_EQ(key_event.special_key(), KeyEvent::ON);
   EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::SHIFT);
+
+  EXPECT_TRUE(KeyParser::ParseKey("alt a", &key_event));
+  EXPECT_EQ(key_event.key_code(), 'a');
+  EXPECT_FALSE(key_event.has_special_key());
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::ALT);
+
+  // meta and hyper are identical to alt.
+  EXPECT_TRUE(KeyParser::ParseKey("a meta hyper", &key_event));
+  EXPECT_EQ(key_event.key_code(), 'a');
+  EXPECT_FALSE(key_event.has_special_key());
+  EXPECT_EQ(KeyEventUtil::GetModifiers(key_event), KeyEvent::ALT);
+
+  // multiple keys are not supported.
+  EXPECT_FALSE(KeyParser::ParseKey("a alt z", &key_event));
+
+  // multiple special keys are not supported.
+  EXPECT_FALSE(KeyParser::ParseKey("muhenkan backspace", &key_event));
 }
 
 }  // namespace mozc
