@@ -57,6 +57,7 @@
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
 #include "protocol/user_dictionary_storage.pb.h"
+#include "session/internal/ime_context.h"
 #include "session/session.h"
 #include "session/session_observer_handler.h"
 #ifndef MOZC_DISABLE_SESSION_WATCHDOG
@@ -698,6 +699,13 @@ bool SessionHandler::NoOperation(commands::Command *command) { return true; }
 bool SessionHandler::CheckSpelling(commands::Command *command) {
   if (!command->input().has_check_spelling_request() ||
       command->input().check_spelling_request().text().empty()) {
+    return true;
+  }
+
+  // Do not run spellchecker for composition.
+  if (const auto *elm = session_map_->Head();
+      elm && elm->value &&
+      elm->value->context().state() == session::ImeContext::COMPOSITION) {
     return true;
   }
 
