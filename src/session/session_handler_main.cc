@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
 
   std::string line;
   if (!absl::GetFlag(FLAGS_input).empty()) {
-    mozc::InputFileStream input(absl::GetFlag(FLAGS_input).c_str());
+    mozc::InputFileStream input(absl::GetFlag(FLAGS_input));
     while (std::getline(input, line)) {
       mozc::ParseLine(handler, line);
     }
