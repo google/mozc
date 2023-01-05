@@ -40,13 +40,6 @@
 #include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/path_util.h"
 
-// On Gnome Shell with IBus 1.5, new property named "symbol" is used to
-// represent the mode indicator on the system panel. Note that "symbol" does
-// not exist in IBus 1.4.x.
-#if IBUS_CHECK_VERSION(1, 5, 0)
-#define MOZC_IBUS_HAS_SYMBOL
-#endif  // IBus >= 1.5
-
 namespace mozc {
 namespace ibus {
 
@@ -70,13 +63,11 @@ bool IsMozcToolAvailable() {
 
 bool GetDisabled(IBusEngine *engine) {
   bool disabled = false;
-#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
   guint purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
   guint hints = IBUS_INPUT_HINT_NONE;
   ibus_engine_get_content_type(engine, &purpose, &hints);
   disabled = (purpose == IBUS_INPUT_PURPOSE_PASSWORD ||
               purpose == IBUS_INPUT_PURPOSE_PIN);
-#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
   return disabled;
 }
 
@@ -192,10 +183,8 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
 
   // Gnome shell uses symbol property for the mode indicator text icon iff the
   // property name is "InputMode".
-#ifdef MOZC_IBUS_HAS_SYMBOL
   IBusText *symbol = ibus_text_new_from_static_string(mode_symbol);
   ibus_property_set_symbol(prop_composition_mode_, symbol);
-#endif  // MOZC_IBUS_HAS_SYMBOL
 
   // Likewise, |prop_composition_mode_| owns |sub_prop_list|. We have to sink
   // |prop_composition_mode_| here so ibus_engine_update_property() call in
@@ -322,10 +311,8 @@ void PropertyHandler::UpdateCompositionModeIcon(
 
   const char *mode_symbol = entry->label_for_panel;
   // Update the text icon for Gnome shell.
-#ifdef MOZC_IBUS_HAS_SYMBOL
   IBusText *symbol = ibus_text_new_from_static_string(mode_symbol);
   ibus_property_set_symbol(prop_composition_mode_, symbol);
-#endif  // MOZC_IBUS_HAS_SYMBOL
 
   const std::string &mode_label =
       translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";

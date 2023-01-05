@@ -113,9 +113,25 @@ unitests to stderr.
 bazel test base:util_test --config oss_linux --test_arg=--logtostderr --test_output=all
 ```
 
-### Build Mozc on other Linux environment
+## Build Mozc on other Linux environment
 
 Note: This section is not about our officially supported build process.
+
+### Software requirements
+
+* Python: 3.7 or later
+* Ibus: 1.5.4 or later
+* Qt5: 5.12 or later
+* libglib
+* libxcb
+
+You may also need other libraries.
+See the configurations of
+[Dockerfile](https://github.com/google/mozc/blob/master/docker/ubuntu20.04/Dockerfile)
+and
+[GitHub Actions](https://github.com/google/mozc/blob/master/.github/workflows/linux.yaml).
+
+### Build configurations
 
 To build Mozc on other Linux environment rather than the supported Docker
 environment, you might need to modify the following files.
