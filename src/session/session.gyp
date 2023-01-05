@@ -163,6 +163,7 @@
       'dependencies': [
         '../base/absl.gyp:absl_strings',
         '../base/base.gyp:base',
+        '../engine/engine.gyp:engine_factory',
         '../usage_stats/usage_stats_base.gyp:usage_stats_uploader',
         '../protocol/protocol.gyp:commands_proto',
         'session_handler',
