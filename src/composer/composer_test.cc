@@ -3229,6 +3229,7 @@ TEST_F(ComposerTest, SimultaneousInput) {
   table_->AddRule("か{!}", "か", "");  // d → か (timeout)
   table_->AddRule("かk", "れ", "");    // dk → れ
   table_->AddRule("いd", "れ", "");    // kd → れ
+  table_->AddRule("zl", "→", "");     // normal conversion w/o timeout
 
   constexpr uint64_t kBaseSeconds = 86400;  // Epoch time + 1 day.
   mozc::ScopedClockMock clock(kBaseSeconds, 0);
@@ -3248,6 +3249,15 @@ TEST_F(ComposerTest, SimultaneousInput) {
   clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
   ASSERT_TRUE(InsertKeyWithMode("d", commands::HIRAGANA, composer_.get()));
   EXPECT_EQ("れいか", GetPreedit(composer_.get()));
+
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("z", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("れいかｚ", GetPreedit(composer_.get()));
+
+  // Even after timeout, normal conversions work.
+  clock->PutClockForward(0, 200'000);  // +200 msec (> 50)
+  ASSERT_TRUE(InsertKeyWithMode("l", commands::HIRAGANA, composer_.get()));
+  EXPECT_EQ("れいか→", GetPreedit(composer_.get()));
 }
 }  // namespace composer
 }  // namespace mozc
