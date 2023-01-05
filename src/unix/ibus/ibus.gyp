@@ -181,8 +181,8 @@
         '../../protocol/protocol.gyp:commands_proto',
         '../../protocol/protocol.gyp:renderer_proto',
         '../../session/session_base.gyp:ime_switch_util',
+        'candidate_window_handler',
         'gen_ibus_mozc_files',
-        'gtk_candidate_window_handler',
         'ibus_config_proto',
         'ibus_property_handler',
         'message_translator',
@@ -276,7 +276,7 @@
       'conditions': [
         ['enable_gtk_renderer==1', {
           'dependencies': [
-            'gtk_candidate_window_handler_test',
+            'candidate_window_handler_test',
           ],
         }],
       ],
@@ -327,10 +327,10 @@
       ],
     },
     {
-      'target_name': 'gtk_candidate_window_handler',
+      'target_name': 'candidate_window_handler',
       'type': 'static_library',
       'sources': [
-        'gtk_candidate_window_handler.cc',
+        'candidate_window_handler.cc',
       ],
       'dependencies': [
         '../../protocol/protocol.gyp:renderer_proto',
@@ -339,13 +339,13 @@
       ],
     },
     {
-      'target_name': 'gtk_candidate_window_handler_test',
+      'target_name': 'candidate_window_handler_test',
       'type': 'executable',
       'sources': [
-        'gtk_candidate_window_handler_test.cc',
+        'candidate_window_handler_test.cc',
       ],
       'dependencies': [
-        'gtk_candidate_window_handler',
+        'candidate_window_handler',
         '../../testing/testing.gyp:gtest_main',
       ],
     },

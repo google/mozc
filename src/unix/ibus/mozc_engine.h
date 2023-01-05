@@ -39,7 +39,7 @@
 #include "protocol/config.pb.h"
 #include "testing/base/public/gunit_prod.h"
 #include "unix/ibus/engine_interface.h"
-#include "unix/ibus/gtk_candidate_window_handler.h"
+#include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_config.h"
 
@@ -140,7 +140,7 @@ class MozcEngine : public EngineInterface {
   // If true, uses Mozc candidate window instead of IBus default one.
   bool use_mozc_candidate_window_;
   // TODO(nona): Introduce CandidateWindowHandlerManager to avoid direct access.
-  GtkCandidateWindowHandler mozc_candidate_window_handler_;
+  CandidateWindowHandler mozc_candidate_window_handler_;
   IBusCandidateWindowHandler ibus_candidate_window_handler_;
   config::Config::PreeditMethod preedit_method_;
 

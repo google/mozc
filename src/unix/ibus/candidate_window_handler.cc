@@ -27,7 +27,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "unix/ibus/gtk_candidate_window_handler.h"
+#include "unix/ibus/candidate_window_handler.h"
 
 #include <gio/gio.h>
 #include <unistd.h>
@@ -99,8 +99,8 @@ GSettings *OpenIBusPanelSettings() {
 // The callback function to the "changed" signal to GSettings object.
 void GSettingsChangedCallback(GSettings *settings, const gchar *key,
                               gpointer user_data) {
-  GtkCandidateWindowHandler *handler =
-      reinterpret_cast<GtkCandidateWindowHandler *>(user_data);
+  CandidateWindowHandler *handler =
+      reinterpret_cast<CandidateWindowHandler *>(user_data);
   if (g_strcmp0(key, kIBusPanelUseCustomFont) == 0) {
     GVariantUniquePtr use_custom_font_value = MakeGVariantUniquePtr(
         g_settings_get_value(settings, kIBusPanelUseCustomFont));
@@ -126,7 +126,7 @@ void GSettingsChangedCallback(GSettings *settings, const gchar *key,
 
 class GSettingsObserver {
  public:
-  explicit GSettingsObserver(GtkCandidateWindowHandler *handler)
+  explicit GSettingsObserver(CandidateWindowHandler *handler)
       : settings_(OpenIBusPanelSettings()), settings_observer_id_(0) {
     if (settings_ != nullptr) {
       gpointer ptr = reinterpret_cast<gpointer>(handler);
@@ -152,16 +152,17 @@ class GSettingsObserver {
   gulong settings_observer_id_;
 };
 
-GtkCandidateWindowHandler::GtkCandidateWindowHandler(
+CandidateWindowHandler::CandidateWindowHandler(
     renderer::RendererInterface *renderer)
     : renderer_(renderer),
       last_update_output_(new commands::Output()),
       use_custom_font_description_(false) {}
 
-GtkCandidateWindowHandler::~GtkCandidateWindowHandler() {}
+CandidateWindowHandler::~CandidateWindowHandler() {}
 
-bool GtkCandidateWindowHandler::SendUpdateCommand(
-    IBusEngine *engine, const commands::Output &output, bool visibility) {
+bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
+                                               const commands::Output &output,
+                                               bool visibility) {
   using commands::RendererCommand;
   RendererCommand command;
 
@@ -210,43 +211,43 @@ bool GtkCandidateWindowHandler::SendUpdateCommand(
   return renderer_->ExecCommand(command);
 }
 
-void GtkCandidateWindowHandler::Update(IBusEngine *engine,
-                                       const commands::Output &output) {
+void CandidateWindowHandler::Update(IBusEngine *engine,
+                                    const commands::Output &output) {
   *last_update_output_ = output;
 
   UpdateCursorRect(engine);
 }
 
-void GtkCandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+void CandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
   const bool has_candidates =
       last_update_output_->has_candidates() &&
       last_update_output_->candidates().candidate_size() > 0;
   SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 
-void GtkCandidateWindowHandler::Hide(IBusEngine *engine) {
+void CandidateWindowHandler::Hide(IBusEngine *engine) {
   SendUpdateCommand(engine, *last_update_output_, false);
 }
 
-void GtkCandidateWindowHandler::Show(IBusEngine *engine) {
+void CandidateWindowHandler::Show(IBusEngine *engine) {
   SendUpdateCommand(engine, *last_update_output_, true);
 }
 
-void GtkCandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
+void CandidateWindowHandler::OnIBusCustomFontDescriptionChanged(
     const std::string &custom_font_description) {
   custom_font_description_.assign(custom_font_description);
 }
 
-void GtkCandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
+void CandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
     bool use_custom_font_description) {
   use_custom_font_description_ = use_custom_font_description;
 }
 
-void GtkCandidateWindowHandler::RegisterGSettingsObserver() {
+void CandidateWindowHandler::RegisterGSettingsObserver() {
   settings_observer_ = std::make_unique<GSettingsObserver>(this);
 }
 
-std::string GtkCandidateWindowHandler::GetFontDescription() const {
+std::string CandidateWindowHandler::GetFontDescription() const {
   if (!use_custom_font_description_) {
     // TODO(nona): Load application default font settings.
     return kDefaultFont;

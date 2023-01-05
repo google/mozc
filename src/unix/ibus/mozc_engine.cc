@@ -52,7 +52,7 @@
 #include "renderer/renderer_client.h"
 #include "session/ime_switch_util.h"
 #include "unix/ibus/engine_registrar.h"
-#include "unix/ibus/gtk_candidate_window_handler.h"
+#include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"

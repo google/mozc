@@ -30,7 +30,7 @@
 #ifndef MOZC_UNIX_IBUS_IBUS_HEADER_H_
 #define MOZC_UNIX_IBUS_IBUS_HEADER_H_
 
-#include <ibus.h>
+#include <ibus.h>  // IWYU pragma: export
 
 #if !IBUS_CHECK_VERSION(1, 5, 4)
 #error "ibus-mozc requires IBus>=1.5.4"

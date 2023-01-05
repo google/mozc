@@ -181,7 +181,7 @@ cc_library_mozc(
         "MOZC_ENABLE_X11_SELECTION_MONITOR",
     ],
     deps = [
-        ":gtk_candidate_window_handler",
+        ":candidate_window_handler",
         ":ibus_config",
         ":ibus_mozc_metadata",
         ":ibus_property_handler",
@@ -307,12 +307,12 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "gtk_candidate_window_handler",
-    srcs = select_mozc(linux = ["gtk_candidate_window_handler.cc"]),
+    name = "candidate_window_handler",
+    srcs = select_mozc(linux = ["candidate_window_handler.cc"]),
     hdrs = select_mozc(
         linux = [
             "candidate_window_handler_interface.h",
-            "gtk_candidate_window_handler.h",
+            "candidate_window_handler.h",
             "ibus_header.h",
         ],
     ),
@@ -337,10 +337,10 @@ cc_library_mozc(
 )
 
 cc_test_mozc(
-    name = "gtk_candidate_window_handler_test",
-    srcs = select_mozc(linux = ["gtk_candidate_window_handler_test.cc"]),
+    name = "candidate_window_handler_test",
+    srcs = select_mozc(linux = ["candidate_window_handler_test.cc"]),
     deps = [
-        ":gtk_candidate_window_handler",
+        ":candidate_window_handler",
         "//base:coordinates",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",
