@@ -293,8 +293,8 @@ MozcEngine::MozcEngine()
 
 MozcEngine::~MozcEngine() { SyncData(true); }
 
-void MozcEngine::CandidateClicked(IBusEngine *engine, guint index, guint button,
-                                  guint state) {
+void MozcEngine::CandidateClicked(IBusEngine *engine, uint index, uint button,
+                                  uint state) {
   if (index >= unique_candidate_ids_.size()) {
     return;
   }
@@ -412,12 +412,12 @@ void MozcEngine::PageUp(IBusEngine *engine) {
   // candidate window.
 }
 
-gboolean MozcEngine::ProcessKeyEvent(IBusEngine *engine, guint keyval,
-                                     guint keycode, guint modifiers) {
+bool MozcEngine::ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
+                                 uint modifiers) {
   VLOG(2) << "keyval: " << keyval << ", keycode: " << keycode
           << ", modifiers: " << modifiers;
   if (property_handler_->IsDisabled()) {
-    return FALSE;
+    return false;
   }
 
   // layout_is_jp is only used determine Kana input with US layout.
@@ -429,13 +429,13 @@ gboolean MozcEngine::ProcessKeyEvent(IBusEngine *engine, guint keyval,
   if (!key_event_handler_->GetKeyEvent(keyval, keycode, modifiers,
                                        preedit_method_, layout_is_jp, &key)) {
     // Doesn't send a key event to mozc_server.
-    return FALSE;
+    return false;
   }
 
   VLOG(2) << key.DebugString();
   if (!property_handler_->IsActivated() &&
       !config::ImeSwitchUtil::IsDirectModeCommand(key)) {
-    return FALSE;
+    return false;
   }
 
   key.set_activated(property_handler_->IsActivated());
@@ -452,45 +452,44 @@ gboolean MozcEngine::ProcessKeyEvent(IBusEngine *engine, guint keyval,
   commands::Output output;
   if (!client_->SendKeyWithContext(key, context, &output)) {
     LOG(ERROR) << "SendKey failed";
-    return FALSE;
+    return false;
   }
 
   VLOG(2) << output.DebugString();
 
   UpdateAll(engine, output);
 
-  const bool consumed = output.consumed();
-  return consumed ? TRUE : FALSE;
+  return output.consumed();
 }
 
 void MozcEngine::PropertyActivate(IBusEngine *engine,
-                                  const gchar *property_name,
-                                  guint property_state) {
+                                  const char *property_name,
+                                  uint property_state) {
   property_handler_->ProcessPropertyActivate(engine, property_name,
                                              property_state);
 }
 
-void MozcEngine::PropertyHide(IBusEngine *engine, const gchar *property_name) {
+void MozcEngine::PropertyHide(IBusEngine *engine, const char *property_name) {
   // We can ignore the signal.
 }
 
-void MozcEngine::PropertyShow(IBusEngine *engine, const gchar *property_name) {
+void MozcEngine::PropertyShow(IBusEngine *engine, const char *property_name) {
   // We can ignore the signal.
 }
 
 void MozcEngine::Reset(IBusEngine *engine) { RevertSession(engine); }
 
-void MozcEngine::SetCapabilities(IBusEngine *engine, guint capabilities) {
+void MozcEngine::SetCapabilities(IBusEngine *engine, uint capabilities) {
   // Do nothing.
 }
 
-void MozcEngine::SetCursorLocation(IBusEngine *engine, gint x, gint y, gint w,
-                                   gint h) {
+void MozcEngine::SetCursorLocation(IBusEngine *engine, int x, int y, int w,
+                                   int h) {
   GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
 }
 
-void MozcEngine::SetContentType(IBusEngine *engine, guint purpose,
-                                guint hints) {
+void MozcEngine::SetContentType(IBusEngine *engine, uint purpose,
+                                uint hints) {
   const bool prev_disabled = property_handler_->IsDisabled();
   property_handler_->UpdateContentType(engine);
   if (!prev_disabled && property_handler_->IsDisabled()) {

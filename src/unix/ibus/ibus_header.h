@@ -37,6 +37,7 @@
 static_assert(std::is_same<gint, int>::value, "gint must be int.");
 static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
 static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
+static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 
 #if !IBUS_CHECK_VERSION(1, 5, 4)
 #error "ibus-mozc requires IBus>=1.5.4"

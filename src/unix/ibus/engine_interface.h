@@ -27,8 +27,8 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_UNIX_IBUS_SRC_ENGINE_INTERFACE_H_
-#define MOZC_UNIX_IBUS_SRC_ENGINE_INTERFACE_H_
+#ifndef MOZC_UNIX_IBUS_ENGINE_INTERFACE_H_
+#define MOZC_UNIX_IBUS_ENGINE_INTERFACE_H_
 
 #include "unix/ibus/ibus_header.h"
 
@@ -41,12 +41,12 @@ namespace ibus {
 // A concete class is registered to ibus with mozc::ibus::EngineRegistrar.
 class EngineInterface {
  public:
-  EngineInterface() {}
-  virtual ~EngineInterface() {}
+  EngineInterface() = default;
+  virtual ~EngineInterface() = default;
 
   // The interface function for the "candidate-clicked" signal
-  virtual void CandidateClicked(IBusEngine *engine, guint index, guint button,
-                                guint state) = 0;
+  virtual void CandidateClicked(IBusEngine *engine, uint index, uint button,
+                                uint state) = 0;
 
   // The interface function for the "cursor-down" signal
   virtual void CursorDown(IBusEngine *engine) = 0;
@@ -73,35 +73,35 @@ class EngineInterface {
   virtual void PageUp(IBusEngine *engine) = 0;
 
   // The interface function for the "process-key-event" signal
-  virtual gboolean ProcessKeyEvent(IBusEngine *engine, guint keyval,
-                                   guint keycode, guint state) = 0;
+  virtual bool ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
+                               uint state) = 0;
 
   // The interface function for the "property-activate" signal
-  virtual void PropertyActivate(IBusEngine *engine, const gchar *property_name,
-                                guint property_state) = 0;
+  virtual void PropertyActivate(IBusEngine *engine, const char *property_name,
+                                uint property_state) = 0;
 
   // The interface function for the "property-hide" signal
-  virtual void PropertyHide(IBusEngine *engine, const gchar *property_name) = 0;
+  virtual void PropertyHide(IBusEngine *engine, const char *property_name) = 0;
 
   // The interface function for the "property-show" signal
-  virtual void PropertyShow(IBusEngine *engine, const gchar *property_name) = 0;
+  virtual void PropertyShow(IBusEngine *engine, const char *property_name) = 0;
 
   // The interface function for the "reset" signal
   virtual void Reset(IBusEngine *engine) = 0;
 
   // The interface function for the "set-capabilities" signal
-  virtual void SetCapabilities(IBusEngine *engine, guint capabilities) = 0;
+  virtual void SetCapabilities(IBusEngine *engine, uint capabilities) = 0;
 
   // The interface function for the "set-cursor-location" signal
-  virtual void SetCursorLocation(IBusEngine *engine, gint x, gint y, gint w,
-                                 gint h) = 0;
+  virtual void SetCursorLocation(IBusEngine *engine, int x, int y, int w,
+                                 int h) = 0;
 
   // The interface function for the "set-content-type" signal
-  virtual void SetContentType(IBusEngine *engine, guint purpose,
-                              guint hints) = 0;
+  virtual void SetContentType(IBusEngine *engine, uint purpose,
+                              uint hints) = 0;
 };
 
 }  // namespace ibus
 }  // namespace mozc
 
-#endif  //  MOZC_UNIX_IBUS_SRC_ENGINE_INTERFACE_H_
+#endif  //  MOZC_UNIX_IBUS_ENGINE_INTERFACE_H_

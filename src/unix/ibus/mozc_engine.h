@@ -71,26 +71,27 @@ class MozcEngine : public EngineInterface {
   virtual ~MozcEngine();
 
   // EngineInterface functions
-  void CandidateClicked(IBusEngine *engine, guint index, guint button,
-                        guint state);
-  void CursorDown(IBusEngine *engine);
-  void CursorUp(IBusEngine *engine);
-  void Disable(IBusEngine *engine);
-  void Enable(IBusEngine *engine);
-  void FocusIn(IBusEngine *engine);
-  void FocusOut(IBusEngine *engine);
-  void PageDown(IBusEngine *engine);
-  void PageUp(IBusEngine *engine);
-  gboolean ProcessKeyEvent(IBusEngine *engine, guint keyval, guint keycode,
-                           guint state);
-  void PropertyActivate(IBusEngine *engine, const gchar *property_name,
-                        guint property_state);
-  void PropertyHide(IBusEngine *engine, const gchar *property_name);
-  void PropertyShow(IBusEngine *engine, const gchar *property_name);
-  void Reset(IBusEngine *engine);
-  void SetCapabilities(IBusEngine *engine, guint capabilities);
-  void SetCursorLocation(IBusEngine *engine, gint x, gint y, gint w, gint h);
-  void SetContentType(IBusEngine *engine, guint purpose, guint hints);
+  void CandidateClicked(IBusEngine *engine, uint index, uint button,
+                        uint state) override;
+  void CursorDown(IBusEngine *engine) override;
+  void CursorUp(IBusEngine *engine) override;
+  void Disable(IBusEngine *engine) override;
+  void Enable(IBusEngine *engine) override;
+  void FocusIn(IBusEngine *engine) override;
+  void FocusOut(IBusEngine *engine) override;
+  void PageDown(IBusEngine *engine) override;
+  void PageUp(IBusEngine *engine) override;
+  bool ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
+                       uint state) override;
+  void PropertyActivate(IBusEngine *engine, const char *property_name,
+                        uint property_state) override;
+  void PropertyHide(IBusEngine *engine, const char *property_name)  override;
+  void PropertyShow(IBusEngine *engine, const char *property_name)  override;
+  void Reset(IBusEngine *engine)  override;
+  void SetCapabilities(IBusEngine *engine, uint capabilities)  override;
+  void SetCursorLocation(IBusEngine *engine, int x, int y, int w,
+                         int h) override;
+  void SetContentType(IBusEngine *engine, uint purpose, uint hints) override;
 
   // Returns the GType which this class represents.
   static GType GetType();

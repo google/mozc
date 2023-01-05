@@ -125,6 +125,7 @@ void EngineRegistrar::PageUp(IBusEngine *engine) { g_engine->PageUp(engine); }
 
 gboolean EngineRegistrar::ProcessKeyEvent(IBusEngine *engine, guint keyval,
                                           guint keycode, guint state) {
+  // bool is automatically converted to gboolean, which is int.
   return g_engine->ProcessKeyEvent(engine, keyval, keycode, state);
 }
 
