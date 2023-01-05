@@ -83,27 +83,12 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
-    name = "ibus_mozc_metadata",
-    srcs = ["mozc_engine_property.cc"],
-    hdrs = ["mozc_engine_property.h"],
-    deps = [
-        "//base:base",
-        "//base:port",
-        "//protocol:commands_cc_proto",
-    ] + select_mozc(
-        linux = ["//third_party/ibus"],
-        oss_linux = ["@ibus//:ibus"],
-    ),
-)
-
-cc_library_mozc(
     name = "ibus_property_handler",
     srcs = select_mozc(linux = ["property_handler.cc"]),
     hdrs = select_mozc(linux = ["property_handler.h"]),
     deps = [
         ":ibus_header",
         ":ibus_utils",
-        ":ibus_mozc_metadata",
         "//base",
         "//base:file_util",
         "//base:logging",
@@ -188,7 +173,6 @@ cc_library_mozc(
         ":candidate_window_handler",
         ":ibus_config",
         ":ibus_header",
-        ":ibus_mozc_metadata",
         ":ibus_property_handler",
         ":ibus_utils",
         ":x11_selection_monitor",
@@ -273,7 +257,6 @@ cc_binary_mozc(
         ":ibus_config",
         ":ibus_header",
         ":ibus_mozc_lib",
-        ":ibus_mozc_metadata",
         ":ibus_utils",
         "//base",
         "//base:init_mozc",
@@ -296,7 +279,6 @@ cc_test_mozc(
     ),
     deps = [
         ":ibus_mozc_lib",
-        ":ibus_mozc_metadata",
         "//base",
         "//base:clock",
         "//base:port",

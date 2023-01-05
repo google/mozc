@@ -36,8 +36,8 @@
 #include "base/logging.h"
 #include "base/system_util.h"
 #include "client/client.h"  // For client interface
+#include "protocol/commands.pb.h"
 #include "unix/ibus/message_translator.h"
-#include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/path_util.h"
 
 namespace mozc {
@@ -50,6 +50,96 @@ constexpr char kGObjectDataKey[] = "ibus-mozc-aux-data";
 
 // Icon path for MozcTool
 constexpr char kMozcToolIconPath[] = "tool.png";
+
+struct MozcEngineProperty {
+  commands::CompositionMode composition_mode;
+  const char *key;    // IBus property key for the mode.
+  const char *label;  // text for the radio menu (ibus-anthy compatible).
+  const char *label_for_panel;  // text for the language panel.
+  const char *icon;
+};
+
+// The list of properties used in ibus-mozc.
+constexpr MozcEngineProperty kMozcEngineProperties[] = {
+    {
+        commands::DIRECT,
+        "InputMode.Direct",
+        "Direct input",
+        "A",
+        "direct.png",
+    },
+    {
+        commands::HIRAGANA,
+        "InputMode.Hiragana",
+        "Hiragana",
+        "あ",
+        "hiragana.png",
+    },
+    {
+        commands::FULL_KATAKANA,
+        "InputMode.Katakana",
+        "Katakana",
+        "ア",
+        "katakana_full.png",
+    },
+    {
+        commands::HALF_ASCII,
+        "InputMode.Latin",
+        "Latin",
+        "_A",
+        "alpha_half.png",
+    },
+    {
+        commands::FULL_ASCII,
+        "InputMode.WideLatin",
+        "Wide Latin",
+        "Ａ",
+        "alpha_full.png",
+    },
+    {
+        commands::HALF_KATAKANA,
+        "InputMode.HalfWidthKatakana",
+        "Half width katakana",
+        "_ｱ",
+        "katakana_half.png",
+    },
+};
+
+struct MozcEngineToolProperty {
+  const char *key;    // IBus property key for the MozcTool.
+  const char *mode;   // command line passed as --mode=
+  const char *label;  // text for the menu.
+  const char *icon;   // icon
+};
+
+constexpr MozcEngineToolProperty kMozcEngineToolProperties[] = {
+    {
+        "Tool.ConfigDialog",
+        "config_dialog",
+        "Properties",
+        "properties.png",
+    },
+    {
+        "Tool.DictionaryTool",
+        "dictionary_tool",
+        "Dictionary Tool",
+        "dictionary.png",
+    },
+    {
+        "Tool.WordRegisterDialog",
+        "word_register_dialog",
+        "Add Word",
+        "word_register.png",
+    },
+    {
+        "Tool.AboutDialog",
+        "about_dialog",
+        "About Mozc",
+        nullptr,
+    },
+};
+
+constexpr commands::CompositionMode kImeOffCompositionMode = commands::DIRECT;
 
 // Returns true if mozc_tool is installed.
 bool IsMozcToolAvailable() {
@@ -81,7 +171,7 @@ PropertyHandler::PropertyHandler(
       prop_mozc_tool_(nullptr),
       client_(client),
       translator_(std::move(translator)),
-      original_composition_mode_(kMozcEngineInitialCompositionMode),
+      original_composition_mode_(commands::HIRAGANA),
       is_activated_(is_active_on_launch),
       is_disabled_(false) {
   commands::SessionCommand command;
@@ -131,23 +221,17 @@ void PropertyHandler::Register(IBusEngine *engine) {
 
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendCompositionPropertyToPanel() {
-  if (kMozcEngineProperties == nullptr || kMozcEnginePropertiesSize == 0) {
-    return;
-  }
-
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
 
   // Create items for the radio menu.
   const commands::CompositionMode initial_mode =
-      is_activated_ ? original_composition_mode_
-                    : kMozcEnginePropertyIMEOffState->composition_mode;
+      is_activated_ ? original_composition_mode_ : kImeOffCompositionMode;
 
   std::string icon_path_for_panel;
   const char *mode_symbol = nullptr;
-  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    const MozcEngineProperty &entry = kMozcEngineProperties[i];
+  for (const MozcEngineProperty &entry : kMozcEngineProperties) {
     IBusText *label = ibus_text_new_from_string(
         translator_->MaybeTranslate(entry.label).c_str());
     IBusPropState state = PROP_STATE_UNCHECKED;
@@ -200,10 +284,9 @@ void PropertyHandler::UpdateContentTypeImpl(IBusEngine *engine, bool disabled) {
   if (prev_is_disabled == is_disabled_) {
     return;
   }
-  const auto visible_mode =
-      (prev_is_disabled && !is_disabled_ && IsActivated())
-          ? original_composition_mode_
-          : kMozcEnginePropertyIMEOffState->composition_mode;
+  const auto visible_mode = (prev_is_disabled && !is_disabled_ && IsActivated())
+                                ? original_composition_mode_
+                                : kImeOffCompositionMode;
   UpdateCompositionModeIcon(engine, visible_mode);
 }
 
@@ -217,8 +300,7 @@ void PropertyHandler::UpdateContentType(IBusEngine *engine) {
 
 // TODO(nona): do not use kMozcEngine*** directory.
 void PropertyHandler::AppendToolPropertyToPanel() {
-  if (kMozcEngineToolProperties == nullptr ||
-      kMozcEngineToolPropertiesSize == 0 || !IsMozcToolAvailable()) {
+  if (!IsMozcToolAvailable()) {
     return;
   }
 
@@ -226,8 +308,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
   IBusPropList *sub_prop_list = ibus_prop_list_new();
 
-  for (size_t i = 0; i < kMozcEngineToolPropertiesSize; ++i) {
-    const MozcEngineToolProperty &entry = kMozcEngineToolProperties[i];
+  for (const MozcEngineToolProperty &entry : kMozcEngineToolProperties) {
     IBusText *label = ibus_text_new_from_string(
         translator_->MaybeTranslate(entry.label).c_str());
     // TODO(yusukes): It would be better to use entry.icon here?
@@ -266,9 +347,7 @@ void PropertyHandler::Update(IBusEngine *engine,
     if (output.status().activated()) {
       UpdateCompositionModeIcon(engine, output.status().mode());
     } else {
-      DCHECK(kMozcEnginePropertyIMEOffState);
-      UpdateCompositionModeIcon(
-          engine, kMozcEnginePropertyIMEOffState->composition_mode);
+      UpdateCompositionModeIcon(engine, kImeOffCompositionMode);
     }
     is_activated_ = output.status().activated();
     original_composition_mode_ = output.status().mode();
@@ -282,9 +361,9 @@ void PropertyHandler::UpdateCompositionModeIcon(
   }
 
   const MozcEngineProperty *entry = nullptr;
-  for (size_t i = 0; i < kMozcEnginePropertiesSize; ++i) {
-    if (kMozcEngineProperties[i].composition_mode == new_composition_mode) {
-      entry = &(kMozcEngineProperties[i]);
+  for (const MozcEngineProperty &property : kMozcEngineProperties) {
+    if (property.composition_mode == new_composition_mode) {
+      entry = &property;
       break;
     }
   }
@@ -333,8 +412,7 @@ void PropertyHandler::SetCompositionMode(
   // IMEOn. This setting can be configured with setting
   // kMozcEnginePropertyIMEOffState. If kMozcEnginePropertyIMEOffState is
   // nullptr, it means current IME should not be off.
-  if (kMozcEnginePropertyIMEOffState && is_activated_ &&
-      composition_mode == kMozcEnginePropertyIMEOffState->composition_mode) {
+  if (is_activated_ && composition_mode == kImeOffCompositionMode) {
     command.set_type(commands::SessionCommand::TURN_OFF_IME);
     command.set_composition_mode(original_composition_mode_);
     client_->SendCommand(command, &output);

@@ -56,7 +56,6 @@
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"
-#include "unix/ibus/mozc_engine_property.h"
 #include "unix/ibus/path_util.h"
 #include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"

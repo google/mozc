@@ -90,18 +90,6 @@
       ],
     },
     {
-      'target_name': 'ibus_mozc_metadata',
-      'type': 'static_library',
-      'sources': [
-        'mozc_engine_property.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../protocol/protocol.gyp:commands_proto',
-        'ibus_build_environment',
-      ],
-    },
-    {
       'target_name': 'ibus_property_handler',
       'type': 'static_library',
       'sources': [
@@ -237,7 +225,6 @@
         'gen_ibus_mozc_files',
         'gen_mozc_xml',
         'ibus_mozc_lib',
-        'ibus_mozc_metadata',
       ],
     },
     {
@@ -260,7 +247,6 @@
         '../../protocol/protocol.gyp:commands_proto',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
-        'ibus_mozc_metadata',
       ],
       'variables': {
         'test_size': 'small',
