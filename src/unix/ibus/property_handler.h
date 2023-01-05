@@ -98,7 +98,7 @@ class PropertyHandler {
       commands::CompositionMode new_composition_mode);
   void SetCompositionMode(commands::CompositionMode composition_mode);
 
-  IBusPropList *prop_root_;
+  IbusPropListWrapper prop_root_;
   IbusPropertyWrapper prop_composition_mode_;
   IbusPropertyWrapper prop_mozc_tool_;
   client::ClientInterface *client_;

@@ -167,7 +167,7 @@ bool GetDisabled(IbusEngineWrapper *engine) {
 PropertyHandler::PropertyHandler(
     std::unique_ptr<MessageTranslatorInterface> translator,
     bool is_active_on_launch, client::ClientInterface *client)
-    : prop_root_(ibus_prop_list_new()),
+    : prop_root_(),
       prop_composition_mode_(nullptr),
       prop_mozc_tool_(nullptr),
       client_(client),
@@ -192,7 +192,7 @@ PropertyHandler::PropertyHandler(
 
   // We have to sink |prop_root_| as well so ibus_engine_register_properties()
   // in FocusIn() does not destruct it.
-  g_object_ref_sink(prop_root_);
+  prop_root_.RefSink();
 }
 
 PropertyHandler::~PropertyHandler() {
@@ -202,15 +202,12 @@ PropertyHandler::~PropertyHandler() {
   // The ref counter will drop to one.
   prop_mozc_tool_.Unref();
 
-  if (prop_root_) {
-    // Destroy all objects under the root.
-    g_object_unref(prop_root_);
-    prop_root_ = nullptr;
-  }
+  // Destroy all objects under the root.
+  prop_root_.Unref();
 }
 
 void PropertyHandler::Register(IbusEngineWrapper *engine) {
-  engine->RegisterProperties(prop_root_);
+  engine->RegisterProperties(prop_root_.GetPropList());
   UpdateContentType(engine);
 }
 
@@ -218,7 +215,7 @@ void PropertyHandler::Register(IbusEngineWrapper *engine) {
 void PropertyHandler::AppendCompositionPropertyToPanel() {
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
-  IBusPropList *sub_prop_list = ibus_prop_list_new();
+  IbusPropListWrapper sub_prop_list;
 
   // Create items for the radio menu.
   const commands::CompositionMode initial_mode =
@@ -238,9 +235,8 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
         entry.key, PROP_TYPE_RADIO, label, nullptr /* icon */, state,
         nullptr /* sub props */);
     item.SetData(kMozcEnginePropertyKey, entry);
-    ibus_prop_list_append(sub_prop_list, item.GetProperty());
-    // |sub_prop_list| owns |item.GetProperty()| by calling g_object_ref_sink
-    // for |item.GetProperty()|.
+    // |sub_prop_list| owns |item|.
+    sub_prop_list.Append(&item);
   }
   DCHECK(!icon_path_for_panel.empty());
   DCHECK(mode_symbol != nullptr);
@@ -253,9 +249,9 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   // Do not change the name. Otherwise the Gnome shell fails to recognize that
   // this property indicates Mozc's input mode.
   // See /usr/share/gnome-shell/js/ui/status/keyboard.js for details.
-  prop_composition_mode_.Initialize("InputMode", PROP_TYPE_MENU, mode_label,
-                                    icon_path_for_panel.c_str(),
-                                    PROP_STATE_UNCHECKED, sub_prop_list);
+  prop_composition_mode_.Initialize(
+      "InputMode", PROP_TYPE_MENU, mode_label, icon_path_for_panel.c_str(),
+      PROP_STATE_UNCHECKED, sub_prop_list.GetPropList());
 
   // Gnome shell uses symbol property for the mode indicator text icon iff the
   // property name is "InputMode".
@@ -266,7 +262,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   // PropertyActivate() does not destruct the object.
   prop_composition_mode_.RefSink();
 
-  ibus_prop_list_append(prop_root_, prop_composition_mode_.GetProperty());
+  prop_root_.Append(&prop_composition_mode_);
 }
 
 void PropertyHandler::UpdateContentTypeImpl(IbusEngineWrapper *engine,
@@ -298,7 +294,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
 
   // |sub_prop_list| is a radio menu which is shown when a button in the
   // language panel (i.e. |prop_composition_mode_| below) is clicked.
-  IBusPropList *sub_prop_list = ibus_prop_list_new();
+  IbusPropListWrapper sub_prop_list;
 
   for (const MozcEngineToolProperty &entry : kMozcEngineToolProperties) {
     const std::string label = translator_->MaybeTranslate(entry.label);
@@ -307,21 +303,21 @@ void PropertyHandler::AppendToolPropertyToPanel() {
         entry.mode, PROP_TYPE_NORMAL, label, nullptr /* icon */,
         PROP_STATE_UNCHECKED, nullptr);
     item.SetData(kMozcEnginePropertyKey, entry);
-    ibus_prop_list_append(sub_prop_list, item.GetProperty());
+    sub_prop_list.Append(&item);
   }
 
   const std::string tool_label = translator_->MaybeTranslate("Tools");
   const std::string icon_path = GetIconPath(kMozcToolIconPath);
   prop_mozc_tool_.Initialize("MozcTool", PROP_TYPE_MENU, tool_label,
                              icon_path.c_str(), PROP_STATE_UNCHECKED,
-                             sub_prop_list);
+                             sub_prop_list.GetPropList());
 
   // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
   // |prop_mozc_tool_| here so ibus_engine_update_property() call in
   // PropertyActivate() does not destruct the object.
   prop_mozc_tool_.RefSink();
 
-  ibus_prop_list_append(prop_root_, prop_mozc_tool_.GetProperty());
+  prop_root_.Append(&prop_mozc_tool_);
 }
 
 void PropertyHandler::Update(IbusEngineWrapper *engine,
@@ -358,13 +354,11 @@ void PropertyHandler::UpdateCompositionModeIcon(
   }
   DCHECK(entry);
 
-  for (guint prop_index = 0;; ++prop_index) {
-    IBusProperty *ibus_prop =
-        ibus_prop_list_get(prop_composition_mode_.GetSubProps(), prop_index);
-    if (ibus_prop == nullptr) {
+  for (uint prop_index = 0;; ++prop_index) {
+    IbusPropertyWrapper prop = prop_composition_mode_.GetSubProp(prop_index);
+    if (!prop.IsInitialized()) {
       break;
     }
-    IbusPropertyWrapper prop(ibus_prop);
     if (!g_strcmp0(entry->key, prop.GetKey())) {
       // Update the language panel.
       prop_composition_mode_.SetIcon(GetIconPath(entry->icon).c_str());
@@ -374,7 +368,8 @@ void PropertyHandler::UpdateCompositionModeIcon(
       prop.SetState(PROP_STATE_UNCHECKED);
     }
     engine->UpdateProperty(prop.GetProperty());
-    // No need to call unref since ibus_prop_list_get does not add ref.
+    // No need to call unref since GetSubProp (ibus_prop_list_get) does not add
+    // ref.
   }
 
   const char *mode_symbol = entry->label_for_panel;
@@ -421,13 +416,11 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
   }
 
   if (prop_mozc_tool_.IsInitialized()) {
-    for (guint prop_index = 0;; ++prop_index) {
-      IBusProperty *ibus_prop = ibus_prop_list_get(
-          prop_mozc_tool_.GetSubProps(), prop_index);
-      if (ibus_prop == nullptr) {
+    for (uint prop_index = 0;; ++prop_index) {
+      IbusPropertyWrapper prop = prop_mozc_tool_.GetSubProp(prop_index);
+      if (!prop.IsInitialized()) {
         break;
       }
-      IbusPropertyWrapper prop(ibus_prop);
       if (g_strcmp0(prop.GetKey(), property_name) != 0) {
         continue;
       }
@@ -449,13 +442,11 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
   }
 
   if (prop_composition_mode_.IsInitialized()) {
-    for (guint prop_index = 0;; ++prop_index) {
-      IBusProperty *ibus_prop =
-          ibus_prop_list_get(prop_composition_mode_.GetSubProps(), prop_index);
-      if (ibus_prop == nullptr) {
+    for (uint prop_index = 0;; ++prop_index) {
+      IbusPropertyWrapper prop = prop_composition_mode_.GetSubProp(prop_index);
+      if (!prop.IsInitialized()) {
         break;
       }
-      IbusPropertyWrapper prop(ibus_prop);
       if (g_strcmp0(prop.GetKey(), property_name) != 0) {
         continue;
       }

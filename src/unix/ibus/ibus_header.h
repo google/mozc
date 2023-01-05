@@ -103,16 +103,51 @@ class IbusEngineWrapper {
   IBusEngine *engine_;  // Does not take the ownership.
 };
 
-class IbusPropertyWrapper {
+class GobjectWrapper {
+ public:
+  explicit GobjectWrapper() = default;
+  virtual ~GobjectWrapper() = default;
+  virtual GObject *GetGobject() = 0;
+
+  void Unref() {
+    GObject *obj = GetGobject();
+    if (obj) {
+      g_object_unref(obj);
+    }
+  }
+  void RefSink() {
+    GObject *obj = GetGobject();
+    if (obj) {
+      g_object_ref_sink(obj);
+    }
+  }
+
+  // https://docs.gtk.org/gobject/method.Object.get_data.html
+  template <typename T>
+  const T *GetData(const char *key) {
+    void *data = g_object_get_data(GetGobject(), key);
+    return reinterpret_cast<const T *>(data);
+  }
+
+  template <typename T>
+  void SetData(const char *key, const T &data) {
+    g_object_set_data(GetGobject(), key,
+                      reinterpret_cast<void *>(const_cast<T *>(&data)));
+  }
+};
+
+class IbusPropertyWrapper : public GobjectWrapper {
  public:
   explicit IbusPropertyWrapper(IBusProperty *property): property_(property) {}
-  ~IbusPropertyWrapper() = default;
+  virtual ~IbusPropertyWrapper() = default;
 
   IbusPropertyWrapper(const char *key, IBusPropType type,
                       const std::string &label, const char *icon,
                       IBusPropState state, IBusPropList *prop_list) {
     property_ = New(key, type, label, icon, state, prop_list);
   }
+
+  GObject *GetGobject() override { return G_OBJECT(property_); }
 
   static IBusProperty *New(const char *key, IBusPropType type,
                            const std::string &label, const char *icon,
@@ -140,8 +175,10 @@ class IbusPropertyWrapper {
   const char *GetKey() {
     return ibus_property_get_key(property_);
   }
-  IBusPropList *GetSubProps() {
-    return ibus_property_get_sub_props(property_);
+  IbusPropertyWrapper GetSubProp(uint index) {
+    IBusProperty *sub_prop =
+        ibus_prop_list_get(ibus_property_get_sub_props(property_), index);
+    return IbusPropertyWrapper(sub_prop);
   }
 
   void SetIcon(const char *icon) {
@@ -159,32 +196,29 @@ class IbusPropertyWrapper {
     ibus_property_set_state(property_, state);
   }
 
-  // GObject functions
+ private:
+  IBusProperty *property_;  // Does not take ownership.
+};
 
-  void Unref() {
-    if (property_) {
-      g_object_unref(G_OBJECT(property_));
-    }
+class IbusPropListWrapper : public GobjectWrapper {
+ public:
+  IbusPropListWrapper() {
+    prop_list_ = ibus_prop_list_new();
   }
-  void RefSink() {
-    g_object_ref_sink(G_OBJECT(property_));
-  }
+  virtual ~IbusPropListWrapper() = default;
 
-  // https://docs.gtk.org/gobject/method.Object.get_data.html
-  template<typename T>
-  const T *GetData(const char *key) {
-    void *data = g_object_get_data(G_OBJECT(property_), key);
-    return  reinterpret_cast<const T*>(data);
-  }
+  GObject *GetGobject() override { return G_OBJECT(prop_list_); }
 
-  template<typename T>
-  void SetData(const char *key, const T &data) {
-    g_object_set_data(G_OBJECT(property_), key,
-                      reinterpret_cast<void *>(const_cast<T *>(&data)));
+  IBusPropList *GetPropList() { return prop_list_; }
+
+  void Append(IbusPropertyWrapper* property) {
+    // `prop_list_` owns appended item.
+    // `g_object_ref_sink` is internally called.
+    ibus_prop_list_append(prop_list_, property->GetProperty());
   }
 
  private:
-  IBusProperty *property_;  // Does not take ownership.
+  IBusPropList *prop_list_;  // Does not take ownership.
 };
 
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_
