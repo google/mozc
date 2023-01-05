@@ -33,37 +33,58 @@
 #include <memory>
 #include <vector>
 
-#include "base/port.h"
+#include "client/client.h"
+#include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
-#include "unix/ibus/property_handler_interface.h"
+#include "unix/ibus/message_translator.h"
+
 
 namespace mozc {
-
-namespace client {
-class ClientInterface;
-}  // namespace client
 namespace ibus {
 
-class MessageTranslatorInterface;
-
-class PropertyHandler : public PropertyHandlerInterface {
+class PropertyHandler {
  public:
   // This class takes the ownership of translator, but not client.
   PropertyHandler(std::unique_ptr<MessageTranslatorInterface> translator,
                   bool is_active_on_launch,
                   client::ClientInterface *client);
-  virtual ~PropertyHandler();
+  ~PropertyHandler();
 
-  virtual void Register(IBusEngine *engine);
-  virtual void ResetContentType(IBusEngine *engine);
-  virtual void UpdateContentType(IBusEngine *engine);
-  virtual void Update(IBusEngine *engine, const commands::Output &output);
-  virtual void ProcessPropertyActivate(IBusEngine *engine,
-                                       const gchar *property_name,
-                                       guint property_state);
-  virtual bool IsActivated() const;
-  virtual bool IsDisabled() const;
-  virtual commands::CompositionMode GetOriginalCompositionMode() const;
+  // Registers current properties into engine.
+  void Register(IBusEngine *engine);
+
+  void ResetContentType(IBusEngine *engine);
+  void UpdateContentType(IBusEngine *engine);
+
+  // Update properties.
+  void Update(IBusEngine *engine, const commands::Output &output);
+
+  void ProcessPropertyActivate(IBusEngine *engine, const char *property_name,
+                               uint property_state);
+
+  // Following two methods represent two aspects of an IME state.
+  // * (activated, disabled) == (false, false)
+  //     This is the state so-called "IME is off". However, an IME is expected
+  //     to monitor keyevents that are assigned to DirectMode. A user should be
+  //     able to turn on the IME by using shortcut or GUI menu.
+  // * (activated, disabled) == (false, true)
+  //     This is a state where an IME is expected to do nothing. A user should
+  //     be unable to turn on the IME by using shortcut nor GUI menu. This state
+  //     is used mainly on the password field. IME becomes to be "turned-off"
+  //     once |disabled| state is flipped to false.
+  // * (activated, disabled) == (true, false)
+  //     This is the state so-called "IME is on". A user should be able to turn
+  //     off the IME by using shortcut or GUI menu.
+  // * (activated, disabled) == (true, true)
+  //     This is the state where an IME is expected to do nothing. A user should
+  //     be unable to turn on the IME by using shortcut nor GUI menu. This state
+  //     is used mainly on the password field. IME becomes to be "turned-on"
+  //     once |disabled| state is flipped to false.
+  bool IsActivated() const;
+  bool IsDisabled() const;
+
+  // Returns original composition mode before.
+  commands::CompositionMode GetOriginalCompositionMode() const;
 
  private:
   void UpdateContentTypeImpl(IBusEngine *engine, bool disabled);

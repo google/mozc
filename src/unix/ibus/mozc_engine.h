@@ -42,6 +42,7 @@
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_config.h"
+#include "unix/ibus/property_handler.h"
 
 namespace mozc {
 
@@ -56,7 +57,6 @@ class KeyEventHandler;
 class LaunchToolTest;
 class MessageTranslatorInterface;
 class PreeditHandlerInterface;
-class PropertyHandlerInterface;
 class SelectionMonitorInterface;
 
 // Implements EngineInterface and handles signals from IBus daemon.
@@ -141,7 +141,7 @@ class MozcEngine : public EngineInterface {
   std::unique_ptr<client::ClientInterface> client_;
   std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
 
-  std::unique_ptr<PropertyHandlerInterface> property_handler_;
+  std::unique_ptr<PropertyHandler> property_handler_;
   std::unique_ptr<PreeditHandlerInterface> preedit_handler_;
 
   // If true, uses Mozc candidate window instead of IBus default one.

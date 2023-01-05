@@ -349,8 +349,8 @@ void PropertyHandler::SetCompositionMode(
 }
 
 void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
-                                              const gchar *property_name,
-                                              guint property_state) {
+                                              const char *property_name,
+                                              uint property_state) {
   if (IsDisabled()) {
     return;
   }
@@ -362,16 +362,18 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
       if (prop == nullptr) {
         break;
       }
-      if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
-        const MozcEngineToolProperty *entry =
-            reinterpret_cast<const MozcEngineToolProperty *>(
-                g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-        DCHECK(entry->mode);
-        if (!client_->LaunchTool(entry->mode, "")) {
-          LOG(ERROR) << "cannot launch: " << entry->mode;
-        }
-        return;
+      if (g_strcmp0(ibus_property_get_key(prop), property_name) != 0) {
+        continue;
       }
+
+      const MozcEngineToolProperty *entry =
+          reinterpret_cast<const MozcEngineToolProperty *>(
+              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+      DCHECK(entry->mode);
+      if (!client_->LaunchTool(entry->mode, "")) {
+        LOG(ERROR) << "cannot launch: " << entry->mode;
+      }
+      return;
     }
   }
 
@@ -386,14 +388,16 @@ void PropertyHandler::ProcessPropertyActivate(IBusEngine *engine,
       if (prop == nullptr) {
         break;
       }
-      if (!g_strcmp0(property_name, ibus_property_get_key(prop))) {
-        const MozcEngineProperty *entry =
-            reinterpret_cast<const MozcEngineProperty *>(
-                g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
-        SetCompositionMode(engine, entry->composition_mode);
-        UpdateCompositionModeIcon(engine, entry->composition_mode);
-        break;
+      if (g_strcmp0(ibus_property_get_key(prop), property_name) != 0) {
+        continue;
       }
+
+      const MozcEngineProperty *entry =
+          reinterpret_cast<const MozcEngineProperty *>(
+              g_object_get_data(G_OBJECT(prop), kGObjectDataKey));
+      SetCompositionMode(engine, entry->composition_mode);
+      UpdateCompositionModeIcon(engine, entry->composition_mode);
+      break;
     }
   }
 }

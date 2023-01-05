@@ -99,12 +99,7 @@ cc_library_mozc(
 cc_library_mozc(
     name = "ibus_property_handler",
     srcs = select_mozc(linux = ["property_handler.cc"]),
-    hdrs = select_mozc(
-        linux = [
-            "property_handler.h",
-            "property_handler_interface.h",
-        ],
-    ),
+    hdrs = select_mozc(linux = ["property_handler.h"]),
     deps = [
         ":ibus_header",
         ":ibus_utils",
