@@ -32,6 +32,12 @@
 
 #include <ibus.h>  // IWYU pragma: export
 
+#include <type_traits>
+
+static_assert(std::is_same<gint, int>::value, "gint must be int.");
+static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
+static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
+
 #if !IBUS_CHECK_VERSION(1, 5, 4)
 #error "ibus-mozc requires IBus>=1.5.4"
 #endif  // libibus (<1.5.4)

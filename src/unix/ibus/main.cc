@@ -47,8 +47,6 @@ ABSL_FLAG(bool, xml, false, "Output xml data for the engine.");
 
 namespace {
 
-IBusBus *g_bus = nullptr;
-
 #ifndef MOZC_NO_LOGGING
 void EnableVerboseLog() {
   constexpr int kDefaultVerboseLevel = 1;
@@ -64,7 +62,7 @@ void IgnoreSigChild() {
   sa.sa_handler = SIG_IGN;
   ::sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  CHECK_EQ(0, ::sigaction(SIGCHLD, &sa, nullptr));
+  CHECK_EQ(::sigaction(SIGCHLD, &sa, nullptr), 0);
   // TODO(taku): move this function inside client::Session::LaunchTool
 }
 
@@ -90,13 +88,12 @@ IBusComponent *GetIBusComponent() {
 }
 
 // Initializes ibus components and adds Mozc engine.
-void InitIBusComponent(bool executed_by_ibus_daemon) {
-  g_bus = ibus_bus_new();
-  g_signal_connect(g_bus, "disconnected",
+void InitIBusComponent(IBusBus *bus, bool executed_by_ibus_daemon) {
+  g_signal_connect(bus, "disconnected",
                    G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), nullptr);
 
   IBusComponent *component = GetIBusComponent();
-  IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(g_bus));
+  IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(bus));
   GList *engines = ibus_component_get_engines(component);
   for (GList *p = engines; p; p = p->next) {
     IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc *>(p->data);
@@ -106,9 +103,9 @@ void InitIBusComponent(bool executed_by_ibus_daemon) {
   }
 
   if (executed_by_ibus_daemon) {
-    ibus_bus_request_name(g_bus, kComponentName, 0);
+    ibus_bus_request_name(bus, kComponentName, 0);
   } else {
-    ibus_bus_register_component(g_bus, component);
+    ibus_bus_register_component(bus, component);
   }
   g_object_unref(component);
 }
@@ -121,7 +118,7 @@ void OutputXml() {
 
 }  // namespace
 
-int main(gint argc, gchar **argv) {
+int main(int argc, char **argv) {
   mozc::InitMozc(argv[0], &argc, &argv);
   if (absl::GetFlag(FLAGS_xml)) {
     OutputXml();
@@ -129,7 +126,8 @@ int main(gint argc, gchar **argv) {
   }
 
   ibus_init();
-  InitIBusComponent(absl::GetFlag(FLAGS_ibus));
+  IBusBus *bus = ibus_bus_new();
+  InitIBusComponent(bus, absl::GetFlag(FLAGS_ibus));
 #ifndef MOZC_NO_LOGGING
   EnableVerboseLog();
 #endif  // MOZC_NO_LOGGING
