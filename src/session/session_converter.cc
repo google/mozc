@@ -106,7 +106,7 @@ const char *GetCandidateShortcuts(
 }
 
 // Creates ConversionRequest to fill incognito candidate words.
-const ConversionRequest CreateIncognitoConversionRequest(
+ConversionRequest CreateIncognitoConversionRequest(
     const ConversionRequest &base_request, const Config &incognito_config) {
   ConversionRequest request = base_request;
   request.set_config(&incognito_config);
@@ -117,6 +117,15 @@ const ConversionRequest CreateIncognitoConversionRequest(
 int32_t CalculateCursorOffset(const std::string &committed_text) {
   // If committed_text is a bracket pair, set the cursor in the middle.
   return Util::IsBracketPairText(committed_text) ? -1 : 0;
+}
+
+void SetUseActualConverterForRealtimeConversion(
+    const Request &request, ConversionRequest *conversion_request) {
+  conversion_request->set_use_actual_converter_for_realtime_conversion(
+      absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
+  if (request.mixed_conversion()) {  // i.e., mobile request
+    conversion_request->set_use_actual_converter_for_realtime_conversion(false);
+  }
 }
 
 }  // namespace
@@ -145,7 +154,7 @@ SessionConverter::SessionConverter(const ConverterInterface *converter,
   SetConfig(config);
 }
 
-SessionConverter::~SessionConverter() {}
+SessionConverter::~SessionConverter() = default;
 
 bool SessionConverter::CheckState(
     SessionConverterInterface::States states) const {
@@ -462,21 +471,15 @@ bool SessionConverter::SuggestWithPreferences(
   bool use_partial_composition = (cursor != composer.GetLength() &&
                                   cursor != 0 && request_->mixed_conversion());
   // Setup request based on the above two flags.
+  SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
   if (use_partial_composition) {
+    // Auto partial suggestion should be activated only when we use all the
+    // composition.
+    // Note: For now, use_partial_composition is only for mobile typing.
     SetRequestType(ConversionRequest::PARTIAL_PREDICTION, &conversion_request);
   } else {
-    // For *partial* suggestion,
-    // create_partial_candidates is false because auto partial suggestion
-    // should be activated only when the cursor is at the tail or head from
-    // the view point of UX.
-    // use_actual_converter_for_realtime_conversion is also false because of
-    // implementation reason. If the flag is true, all the composition
-    // characters will be used in the below process, which conflicts
-    // with *partial* prediction.
     conversion_request.set_create_partial_candidates(
         request_->auto_partial_suggestion());
-    conversion_request.set_use_actual_converter_for_realtime_conversion(
-        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
     if (use_prediction_candidate) {
       SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
     } else {
@@ -561,10 +564,11 @@ bool SessionConverter::PredictWithPreferences(
   DCHECK(CheckState(COMPOSITION | SUGGESTION | CONVERSION | PREDICTION));
   ResetResult();
 
-  // Initialize the segments for prediction
+  // Initialize the segments and conversion_request for prediction
   ConversionRequest conversion_request(&composer, request_, config_);
   SetConversionPreferences(preferences, segments_.get(), &conversion_request);
   SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
+  SetUseActualConverterForRealtimeConversion(*request_, &conversion_request);
 
   const bool predict_first =
       !CheckState(PREDICTION) && IsEmptySegment(previous_suggestions_);
@@ -577,13 +581,9 @@ bool SessionConverter::PredictWithPreferences(
   segments_->clear_conversion_segments();
 
   if (predict_expand || predict_first) {
-    conversion_request.set_use_actual_converter_for_realtime_conversion(
-        absl::GetFlag(FLAGS_use_actual_converter_for_realtime_conversion));
-    SetRequestType(ConversionRequest::PREDICTION, &conversion_request);
     if (!converter_->StartPredictionForRequest(conversion_request,
                                                segments_.get())) {
       LOG(WARNING) << "StartPredictionForRequest() failed";
-
       // TODO(komatsu): Perform refactoring after checking the stability test.
       //
       // If predict_expand is true, it means we have prevous_suggestions_.
@@ -1806,7 +1806,7 @@ void SessionConverter::SetRequestType(
   conversion_request->set_request_type(request_type);
 }
 
-const Config SessionConverter::CreateIncognitoConfig() {
+Config SessionConverter::CreateIncognitoConfig() {
   Config ret = *config_;
   ret.set_incognito_mode(true);
   return ret;

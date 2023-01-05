@@ -298,7 +298,7 @@ class SessionConverter : public SessionConverterInterface {
   void GetConversion(size_t index, size_t size, std::string *conversion) const;
   // Gets consumed size of the preedit characters.
   // c.f. CommitSuggestionInternal
-  size_t GetConsumedPreeditSize(const size_t index, size_t size) const;
+  size_t GetConsumedPreeditSize(size_t index, size_t size) const;
 
   // Performs the command if the command candidate is selected.  True
   // is returned if a command is performed.
@@ -317,7 +317,7 @@ class SessionConverter : public SessionConverterInterface {
   void UpdateCandidateList();
 
   // Returns the candidate index to be used by the converter.
-  int GetCandidateIndexForConverter(const size_t segment_index) const;
+  int GetCandidateIndexForConverter(size_t segment_index) const;
 
   // If focus_id is pointing to the last of suggestions,
   // call StartPrediction().
@@ -362,7 +362,7 @@ class SessionConverter : public SessionConverterInterface {
                       ConversionRequest *conversion_request);
 
   // Creates a config for incognito mode from the current config.
-  const config::Config CreateIncognitoConfig();
+  config::Config CreateIncognitoConfig();
 
   const ConverterInterface *converter_;
   std::unique_ptr<Segments> segments_;
