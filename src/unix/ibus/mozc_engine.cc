@@ -156,21 +156,18 @@ struct SurroundingTextInfo {
   std::string following_text;
 };
 
-bool GetSurroundingText(IBusEngine *engine,
+bool GetSurroundingText(IbusEngineWrapper *engine,
                         SelectionMonitorInterface *selection_monitor,
                         SurroundingTextInfo *info) {
-  if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+  if (!(engine->CheckCapabilities(IBUS_CAP_SURROUNDING_TEXT))) {
     VLOG(1) << "Give up CONVERT_REVERSE due to client_capabilities: "
-            << engine->client_capabilities;
+            << engine->GetCapabilities();
     return false;
   }
-  guint cursor_pos = 0;
-  guint anchor_pos = 0;
-  // DO NOT call g_object_unref against this.
-  // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
-  IBusText *text = nullptr;
-  ibus_engine_get_surrounding_text(engine, &text, &cursor_pos, &anchor_pos);
-  const std::string surrounding_text(ibus_text_get_text(text));
+  uint cursor_pos = 0;
+  uint anchor_pos = 0;
+  const std::string surrounding_text =
+      engine->GetSurroundingText(&cursor_pos, &anchor_pos);
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (cursor_pos == anchor_pos && selection_monitor != nullptr) {
@@ -293,8 +290,8 @@ MozcEngine::MozcEngine()
 
 MozcEngine::~MozcEngine() { SyncData(true); }
 
-void MozcEngine::CandidateClicked(IBusEngine *engine, uint index, uint button,
-                                  uint state) {
+void MozcEngine::CandidateClicked(IbusEngineWrapper *engine, uint index,
+                                  uint button, uint state) {
   if (index >= unique_candidate_ids_.size()) {
     return;
   }
@@ -310,17 +307,17 @@ void MozcEngine::CandidateClicked(IBusEngine *engine, uint index, uint button,
   UpdateAll(engine, output);
 }
 
-void MozcEngine::CursorDown(IBusEngine *engine) {
+void MozcEngine::CursorDown(IbusEngineWrapper *engine) {
   // TODO(mazda): Implement this.
 }
 
-void MozcEngine::CursorUp(IBusEngine *engine) {
+void MozcEngine::CursorUp(IbusEngineWrapper *engine) {
   // TODO(mazda): Implement this.
 }
 
-void MozcEngine::Disable(IBusEngine *engine) {
+void MozcEngine::Disable(IbusEngineWrapper *engine) {
   RevertSession(engine);
-  GetCandidateWindowHandler(engine)->Hide(engine);
+  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
   key_event_handler_->Clear();
 }
 
@@ -346,7 +343,7 @@ commands::CompositionMode ConvertCompositionMode(
 }
 }  // namespace
 
-void MozcEngine::Enable(IBusEngine *engine) {
+void MozcEngine::Enable(IbusEngineWrapper *engine) {
   // Launch mozc_server
   client_->EnsureConnection();
   UpdatePreeditMethod();
@@ -357,12 +354,10 @@ void MozcEngine::Enable(IBusEngine *engine) {
   // (crosbug.com/4596).
   RevertSession(engine);
 
-  // If engine wants to use surrounding text, we should call
-  // ibus_engine_get_surrounding_text once when the engine enabled.
-  ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
+  engine->EnableSurroundingText();
 
   commands::CompositionMode mode = ConvertCompositionMode(
-      ibus_config_.GetCompositionMode(ibus_engine_get_name(engine)));
+      ibus_config_.GetCompositionMode(engine->GetName()));
 
   if (mode == commands::NUM_OF_COMPOSITIONS) {
     // Do nothing.
@@ -378,18 +373,18 @@ void MozcEngine::Enable(IBusEngine *engine) {
     if (!client_->SendCommand(command, &output)) {
       LOG(ERROR) << "SendCommand failed";
     }
-    property_handler_->Update(engine, output);
+    property_handler_->Update(engine->GetEngine(), output);
   }
 }
 
-void MozcEngine::FocusIn(IBusEngine *engine) {
-  property_handler_->Register(engine);
+void MozcEngine::FocusIn(IbusEngineWrapper *engine) {
+  property_handler_->Register(engine->GetEngine());
   UpdatePreeditMethod();
 }
 
-void MozcEngine::FocusOut(IBusEngine *engine) {
-  GetCandidateWindowHandler(engine)->Hide(engine);
-  property_handler_->ResetContentType(engine);
+void MozcEngine::FocusOut(IbusEngineWrapper *engine) {
+  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
+  property_handler_->ResetContentType(engine->GetEngine());
 
   // Note that the preedit string (if any) will be committed by IBus runtime
   // because we are specifying |IBUS_ENGINE_PREEDIT_COMMIT| flag to
@@ -402,18 +397,18 @@ void MozcEngine::FocusOut(IBusEngine *engine) {
   SyncData(false);
 }
 
-void MozcEngine::PageDown(IBusEngine *engine) {
+void MozcEngine::PageDown(IbusEngineWrapper *engine) {
   // TODO(mazda,yusukes): Implement this to support arrow icons inside the Gtk+
   // candidate window.
 }
 
-void MozcEngine::PageUp(IBusEngine *engine) {
+void MozcEngine::PageUp(IbusEngineWrapper *engine) {
   // TODO(mazda,yusukes): Implement this to support arrow icons inside the Gtk+
   // candidate window.
 }
 
-bool MozcEngine::ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
-                                 uint modifiers) {
+bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
+                                 uint keycode, uint modifiers) {
   VLOG(2) << "keyval: " << keyval << ", keycode: " << keycode
           << ", modifiers: " << modifiers;
   if (property_handler_->IsDisabled()) {
@@ -421,8 +416,7 @@ bool MozcEngine::ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
   }
 
   // layout_is_jp is only used determine Kana input with US layout.
-  const std::string &layout =
-      ibus_config_.GetLayout(ibus_engine_get_name(engine));
+  const std::string &layout = ibus_config_.GetLayout(engine->GetName());
   const bool layout_is_jp = (layout != "us");
 
   commands::KeyEvent key;
@@ -443,8 +437,7 @@ bool MozcEngine::ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
 
   commands::Context context;
   SurroundingTextInfo surrounding_text_info;
-  if (GetSurroundingText(engine,
-                         selection_monitor_.get(),
+  if (GetSurroundingText(engine, selection_monitor_.get(),
                          &surrounding_text_info)) {
     context.set_preceding_text(surrounding_text_info.preceding_text);
     context.set_following_text(surrounding_text_info.following_text);
@@ -462,36 +455,38 @@ bool MozcEngine::ProcessKeyEvent(IBusEngine *engine, uint keyval, uint keycode,
   return output.consumed();
 }
 
-void MozcEngine::PropertyActivate(IBusEngine *engine,
+void MozcEngine::PropertyActivate(IbusEngineWrapper *engine,
                                   const char *property_name,
                                   uint property_state) {
-  property_handler_->ProcessPropertyActivate(engine, property_name,
+  property_handler_->ProcessPropertyActivate(engine->GetEngine(), property_name,
                                              property_state);
 }
 
-void MozcEngine::PropertyHide(IBusEngine *engine, const char *property_name) {
+void MozcEngine::PropertyHide(IbusEngineWrapper *engine,
+                              const char *property_name) {
   // We can ignore the signal.
 }
 
-void MozcEngine::PropertyShow(IBusEngine *engine, const char *property_name) {
+void MozcEngine::PropertyShow(IbusEngineWrapper *engine,
+                              const char *property_name) {
   // We can ignore the signal.
 }
 
-void MozcEngine::Reset(IBusEngine *engine) { RevertSession(engine); }
+void MozcEngine::Reset(IbusEngineWrapper *engine) { RevertSession(engine); }
 
-void MozcEngine::SetCapabilities(IBusEngine *engine, uint capabilities) {
+void MozcEngine::SetCapabilities(IbusEngineWrapper *engine, uint capabilities) {
   // Do nothing.
 }
 
-void MozcEngine::SetCursorLocation(IBusEngine *engine, int x, int y, int w,
-                                   int h) {
-  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
+void MozcEngine::SetCursorLocation(IbusEngineWrapper *engine, int x, int y,
+                                   int w, int h) {
+  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine->GetEngine());
 }
 
-void MozcEngine::SetContentType(IBusEngine *engine, uint purpose,
+void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
                                 uint hints) {
   const bool prev_disabled = property_handler_->IsDisabled();
-  property_handler_->UpdateContentType(engine);
+  property_handler_->UpdateContentType(engine->GetEngine());
   if (!prev_disabled && property_handler_->IsDisabled()) {
     // Make sure on-going composition is reverted.
     RevertSession(engine);
@@ -519,45 +514,40 @@ GType MozcEngine::GetType() {
 // static
 void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) { ibus_quit(); }
 
-bool MozcEngine::UpdateAll(IBusEngine *engine, const commands::Output &output) {
+bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
+                           const commands::Output &output) {
   UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
-  preedit_handler_->Update(engine, output);
-  GetCandidateWindowHandler(engine)->Update(engine, output);
+  preedit_handler_->Update(engine->GetEngine(), output);
+  GetCandidateWindowHandler(engine)->Update(engine->GetEngine(), output);
   UpdateCandidateIDMapping(output);
 
-  property_handler_->Update(engine, output);
+  property_handler_->Update(engine->GetEngine(), output);
 
   LaunchTool(output);
   ExecuteCallback(engine, output);
   return true;
 }
 
-bool MozcEngine::UpdateDeletionRange(IBusEngine *engine,
+bool MozcEngine::UpdateDeletionRange(IbusEngineWrapper *engine,
                                      const commands::Output &output) {
   if (output.has_deletion_range() && output.deletion_range().offset() < 0 &&
       output.deletion_range().offset() + output.deletion_range().length() >=
           0) {
-    // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
-    // many of the major applications.  Confirmed that it works on
-    // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
-    ibus_engine_delete_surrounding_text(engine,
-                                        output.deletion_range().offset(),
-                                        output.deletion_range().length());
+    engine->DeleteSurroundingText(output.deletion_range().offset(),
+                                  output.deletion_range().length());
   }
   return true;
 }
 
-bool MozcEngine::UpdateResult(IBusEngine *engine,
+bool MozcEngine::UpdateResult(IbusEngineWrapper *engine,
                               const commands::Output &output) const {
   if (!output.has_result()) {
     VLOG(2) << "output doesn't contain result";
     return true;
   }
 
-  IBusText *text = ibus_text_new_from_string(output.result().value().c_str());
-  ibus_engine_commit_text(engine, text);
-  // |text| is released by ibus_engine_commit_text.
+  engine->CommitText(output.result().value());
   return true;
 }
 
@@ -614,7 +604,7 @@ bool MozcEngine::LaunchTool(const commands::Output &output) const {
   return true;
 }
 
-void MozcEngine::RevertSession(IBusEngine *engine) {
+void MozcEngine::RevertSession(IbusEngineWrapper *engine) {
   // TODO(team): We should skip following actions when there is no on-going
   // omposition.
   commands::SessionCommand command;
@@ -627,7 +617,7 @@ void MozcEngine::RevertSession(IBusEngine *engine) {
   UpdateAll(engine, output);
 }
 
-bool MozcEngine::ExecuteCallback(IBusEngine *engine,
+bool MozcEngine::ExecuteCallback(IbusEngineWrapper *engine,
                                  const commands::Output &output) {
   if (!output.has_callback()) {
     return false;
@@ -665,13 +655,12 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
       // Having |IBUS_CAP_SURROUNDING_TEXT| does not necessarily mean that the
       // client supports |ibus_engine_delete_surrounding_text()|, but there is
       // no other good criteria.
-      if (!(engine->client_capabilities & IBUS_CAP_SURROUNDING_TEXT)) {
+      if (!(engine->CheckCapabilities(IBUS_CAP_SURROUNDING_TEXT))) {
         return false;
       }
       break;
     case commands::SessionCommand::CONVERT_REVERSE: {
-      if (!GetSurroundingText(engine,
-                              selection_monitor_.get(),
+      if (!GetSurroundingText(engine, selection_monitor_.get(),
                               &surrounding_text_info)) {
         return false;
       }
@@ -712,9 +701,9 @@ bool MozcEngine::ExecuteCallback(IBusEngine *engine,
 }
 
 CandidateWindowHandlerInterface *MozcEngine::GetCandidateWindowHandler(
-    IBusEngine *engine) {
+    IbusEngineWrapper *engine) {
   if (use_mozc_candidate_window_ &&
-      engine->client_capabilities & IBUS_CAP_PREEDIT_TEXT) {
+      engine->CheckCapabilities(IBUS_CAP_PREEDIT_TEXT)) {
     return &mozc_candidate_window_handler_;
   }
   return &ibus_candidate_window_handler_;

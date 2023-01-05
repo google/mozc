@@ -32,6 +32,7 @@
 
 #include <ibus.h>  // IWYU pragma: export
 
+#include <string>
 #include <type_traits>
 
 static_assert(std::is_same<gint, int>::value, "gint must be int.");
@@ -42,5 +43,52 @@ static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 #if !IBUS_CHECK_VERSION(1, 5, 4)
 #error "ibus-mozc requires IBus>=1.5.4"
 #endif  // libibus (<1.5.4)
+
+class IbusEngineWrapper {
+ public:
+  explicit IbusEngineWrapper(IBusEngine *engine): engine_(engine) {}
+  ~IbusEngineWrapper() = default;
+
+  IBusEngine *GetEngine() { return engine_; }
+
+  const char *GetName() { return ibus_engine_get_name(engine_); }
+
+  void CommitText(const std::string &text) {
+    IBusText *ibus_text = ibus_text_new_from_string(text.c_str());
+    ibus_engine_commit_text(engine_, ibus_text);
+    // `ibus_text` is released by ibus_engine_commit_text.
+  }
+
+  void EnableSurroundingText() {
+    // If engine wants to use surrounding text, we should call
+    // ibus_engine_get_surrounding_text once when the engine enabled.
+    // https://ibus.github.io/docs/ibus-1.5/IBusEngine.html#ibus-engine-get-surrounding-text
+    ibus_engine_get_surrounding_text(engine_, nullptr, nullptr, nullptr);
+  }
+
+  const char *GetSurroundingText(uint *cursor_pos, uint *anchor_pos) {
+    // DO NOT call g_object_unref against this.
+    // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
+    IBusText *text = nullptr;
+    ibus_engine_get_surrounding_text(engine_, &text, cursor_pos, anchor_pos);
+    return ibus_text_get_text(text);
+  }
+
+  void DeleteSurroundingText(int offset, uint size) {
+    // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
+    // many of the major applications.  Confirmed that it works on
+    // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
+    ibus_engine_delete_surrounding_text(engine_, offset, size);
+  }
+
+  uint GetCapabilities() { return engine_->client_capabilities; }
+
+  bool CheckCapabilities(uint capabilities) {
+    return (engine_->client_capabilities & capabilities) == capabilities;
+  }
+
+ private:
+  IBusEngine *engine_;  // Does not take the ownership.
+};
 
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_
