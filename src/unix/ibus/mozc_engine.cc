@@ -372,18 +372,18 @@ void MozcEngine::Enable(IbusEngineWrapper *engine) {
     if (!client_->SendCommand(command, &output)) {
       LOG(ERROR) << "SendCommand failed";
     }
-    property_handler_->Update(engine->GetEngine(), output);
+    property_handler_->Update(engine, output);
   }
 }
 
 void MozcEngine::FocusIn(IbusEngineWrapper *engine) {
-  property_handler_->Register(engine->GetEngine());
+  property_handler_->Register(engine);
   UpdatePreeditMethod();
 }
 
 void MozcEngine::FocusOut(IbusEngineWrapper *engine) {
   GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
-  property_handler_->ResetContentType(engine->GetEngine());
+  property_handler_->ResetContentType(engine);
 
   // Note that the preedit string (if any) will be committed by IBus runtime
   // because we are specifying |IBUS_ENGINE_PREEDIT_COMMIT| flag to
@@ -457,7 +457,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
 void MozcEngine::PropertyActivate(IbusEngineWrapper *engine,
                                   const char *property_name,
                                   uint property_state) {
-  property_handler_->ProcessPropertyActivate(engine->GetEngine(), property_name,
+  property_handler_->ProcessPropertyActivate(engine, property_name,
                                              property_state);
 }
 
@@ -485,7 +485,7 @@ void MozcEngine::SetCursorLocation(IbusEngineWrapper *engine, int x, int y,
 void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
                                 uint hints) {
   const bool prev_disabled = property_handler_->IsDisabled();
-  property_handler_->UpdateContentType(engine->GetEngine());
+  property_handler_->UpdateContentType(engine);
   if (!prev_disabled && property_handler_->IsDisabled()) {
     // Make sure on-going composition is reverted.
     RevertSession(engine);
@@ -521,7 +521,7 @@ bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
   GetCandidateWindowHandler(engine)->Update(engine->GetEngine(), output);
   UpdateCandidateIDMapping(output);
 
-  property_handler_->Update(engine->GetEngine(), output);
+  property_handler_->Update(engine, output);
 
   LaunchTool(output);
   ExecuteCallback(engine, output);

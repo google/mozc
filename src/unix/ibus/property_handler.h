@@ -51,16 +51,16 @@ class PropertyHandler {
   ~PropertyHandler();
 
   // Registers current properties into engine.
-  void Register(IBusEngine *engine);
+  void Register(IbusEngineWrapper *engine);
 
-  void ResetContentType(IBusEngine *engine);
-  void UpdateContentType(IBusEngine *engine);
+  void ResetContentType(IbusEngineWrapper *engine);
+  void UpdateContentType(IbusEngineWrapper *engine);
 
   // Update properties.
-  void Update(IBusEngine *engine, const commands::Output &output);
+  void Update(IbusEngineWrapper *engine, const commands::Output &output);
 
-  void ProcessPropertyActivate(IBusEngine *engine, const char *property_name,
-                               uint property_state);
+  void ProcessPropertyActivate(IbusEngineWrapper *engine,
+                               const char *property_name, uint property_state);
 
   // Following two methods represent two aspects of an IME state.
   // * (activated, disabled) == (false, false)
@@ -87,20 +87,20 @@ class PropertyHandler {
   commands::CompositionMode GetOriginalCompositionMode() const;
 
  private:
-  void UpdateContentTypeImpl(IBusEngine *engine, bool disabled);
+  void UpdateContentTypeImpl(IbusEngineWrapper *engine, bool disabled);
   // Appends composition properties into panel
   void AppendCompositionPropertyToPanel();
   // Appends tool properties into panel
   void AppendToolPropertyToPanel();
   // Appends switch properties into panel
   void UpdateCompositionModeIcon(
-      IBusEngine *engine, const commands::CompositionMode new_composition_mode);
-  void SetCompositionMode(IBusEngine *engine,
-                          commands::CompositionMode composition_mode);
+      IbusEngineWrapper *engine,
+      commands::CompositionMode new_composition_mode);
+  void SetCompositionMode(commands::CompositionMode composition_mode);
 
   IBusPropList *prop_root_;
-  IBusProperty *prop_composition_mode_;
-  IBusProperty *prop_mozc_tool_;
+  IbusPropertyWrapper prop_composition_mode_;
+  IbusPropertyWrapper prop_mozc_tool_;
   client::ClientInterface *client_;
   std::unique_ptr<MessageTranslatorInterface> translator_;
   commands::CompositionMode original_composition_mode_;

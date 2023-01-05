@@ -53,10 +53,22 @@ class IbusEngineWrapper {
 
   const char *GetName() { return ibus_engine_get_name(engine_); }
 
+  void GetContentType(uint *purpose, uint *hints) {
+    ibus_engine_get_content_type(engine_, purpose, hints);
+  }
+
   void CommitText(const std::string &text) {
     IBusText *ibus_text = ibus_text_new_from_string(text.c_str());
     ibus_engine_commit_text(engine_, ibus_text);
     // `ibus_text` is released by ibus_engine_commit_text.
+  }
+
+  void RegisterProperties(IBusPropList *properties) {
+    ibus_engine_register_properties(engine_, properties);
+  }
+
+  void UpdateProperty(IBusProperty *property) {
+    ibus_engine_update_property(engine_, property);
   }
 
   void EnableSurroundingText() {
@@ -89,6 +101,90 @@ class IbusEngineWrapper {
 
  private:
   IBusEngine *engine_;  // Does not take the ownership.
+};
+
+class IbusPropertyWrapper {
+ public:
+  explicit IbusPropertyWrapper(IBusProperty *property): property_(property) {}
+  ~IbusPropertyWrapper() = default;
+
+  IbusPropertyWrapper(const char *key, IBusPropType type,
+                      const std::string &label, const char *icon,
+                      IBusPropState state, IBusPropList *prop_list) {
+    property_ = New(key, type, label, icon, state, prop_list);
+  }
+
+  static IBusProperty *New(const char *key, IBusPropType type,
+                           const std::string &label, const char *icon,
+                           IBusPropState state, IBusPropList *prop_list) {
+    IBusText *ibus_label = ibus_text_new_from_string(label.c_str());
+
+    constexpr IBusText *tooltip = nullptr;
+    constexpr bool sensitive = true;
+    constexpr bool visible = true;
+
+    return ibus_property_new(key, type, ibus_label, icon, tooltip, sensitive,
+                             visible, state, prop_list);
+  }
+
+  void Initialize(const char *key, IBusPropType type, const std::string &label,
+                  const char *icon, IBusPropState state,
+                  IBusPropList *prop_list) {
+    property_ = New(key, type, label, icon, state, prop_list);
+  }
+
+  IBusProperty *GetProperty() { return property_; }
+
+  bool IsInitialized() { return property_ != nullptr; }
+
+  const char *GetKey() {
+    return ibus_property_get_key(property_);
+  }
+  IBusPropList *GetSubProps() {
+    return ibus_property_get_sub_props(property_);
+  }
+
+  void SetIcon(const char *icon) {
+    ibus_property_set_icon(property_, icon);
+  }
+  void SetLabel(const char *label) {
+    IBusText *ibus_label = ibus_text_new_from_string(label);
+    ibus_property_set_label(property_, ibus_label);
+  }
+  void SetSymbol(const char *symbol) {
+    IBusText *ibus_symbol = ibus_text_new_from_string(symbol);
+    ibus_property_set_symbol(property_, ibus_symbol);
+  }
+  void SetState(IBusPropState state) {
+    ibus_property_set_state(property_, state);
+  }
+
+  // GObject functions
+
+  void Unref() {
+    if (property_) {
+      g_object_unref(G_OBJECT(property_));
+    }
+  }
+  void RefSink() {
+    g_object_ref_sink(G_OBJECT(property_));
+  }
+
+  // https://docs.gtk.org/gobject/method.Object.get_data.html
+  template<typename T>
+  const T *GetData(const char *key) {
+    void *data = g_object_get_data(G_OBJECT(property_), key);
+    return  reinterpret_cast<const T*>(data);
+  }
+
+  template<typename T>
+  void SetData(const char *key, const T &data) {
+    g_object_set_data(G_OBJECT(property_), key,
+                      reinterpret_cast<void *>(const_cast<T *>(&data)));
+  }
+
+ private:
+  IBusProperty *property_;  // Does not take ownership.
 };
 
 #endif  // MOZC_UNIX_IBUS_IBUS_HEADER_H_
