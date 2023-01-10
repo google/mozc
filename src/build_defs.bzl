@@ -413,9 +413,9 @@ def select_mozc(
         "//bazel/cc_target_os:darwin": _get_value([macos, ios, client, default]),
         "//bazel/cc_target_os:wasm": _get_value([wasm, client, default]),
         "//bazel/cc_target_os:windows": _get_value([windows, client, default]),
-        "//bazel/bazel/cc_target_os:linux": _get_value([linux, client, default]),
-        "//bazel/bazel/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
-        "//bazel/bazel/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
-        "//bazel/bazel/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
+        "//bazel/cc_target_os:linux": _get_value([linux, client, default]),
+        "//bazel/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
+        "//bazel/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
+        "//bazel/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
         "//conditions:default": default,
     })
