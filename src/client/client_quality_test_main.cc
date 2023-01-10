@@ -113,8 +113,9 @@ bool GenerateKeySequenceFrom(const std::string& hiragana_sentence,
     } else if (ucs4 == 0x30FB || ucs4 == 0xFF65) {
       key.set_key_code(0x002F);  // "・" -> "/"  "･" -> "/"
     } else {
-      LOG(WARNING) << "Unexpected character: " << std::hex << ucs4 << ": in "
-                   << input << " (" << hiragana_sentence << ")";
+      LOG(WARNING) << "Unexpected character: " << std::hex
+                   << static_cast<uint32_t>(ucs4) << ": in " << input << " ("
+                   << hiragana_sentence << ")";
       return false;
     }
     keys->push_back(key);
