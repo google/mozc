@@ -31,7 +31,6 @@
 #define MOZC_BASE_PROTOBUF_DESCRIPTOR_H_
 
 #include "base/protobuf/protobuf.h"
-#include "third_party/protobuf/descriptor.h"
 
 #include "google/protobuf/descriptor.h"
 

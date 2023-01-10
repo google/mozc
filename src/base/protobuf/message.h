@@ -31,7 +31,6 @@
 #define MOZC_BASE_PROTOBUF_MESSAGE_H_
 
 #include "base/protobuf/protobuf.h"
-#include "third_party/protobuf/message.h"
 
 #include "google/protobuf/message.h"
 
