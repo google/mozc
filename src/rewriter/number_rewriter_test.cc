@@ -962,7 +962,6 @@ TEST_F(NumberRewriterTest, RewriteArabicNumberTest) {
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  constexpr char kBubun[] = "部分";
   Segments segments;
   {
     Segment *seg = segments.push_back_segment();
@@ -974,7 +973,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
     candidate->value = "090";
     candidate->content_key = "090";
     candidate->content_value = "090";
-    candidate->description = kBubun;
     candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = 3;
   }
@@ -994,7 +992,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
   ASSERT_LE(2, seg.candidates_size());
   for (size_t i = 0; i < seg.candidates_size(); ++i) {
     const Segment::Candidate &candidate = seg.candidate(i);
-    EXPECT_TRUE(absl::StartsWith(candidate.description, kBubun));
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }
@@ -1003,7 +1000,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b16765535) {
 TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
   std::unique_ptr<NumberRewriter> number_rewriter(CreateNumberRewriter());
 
-  constexpr char kBubun[] = "部分";
   Segments segments;
   {
     Segment *seg = segments.push_back_segment();
@@ -1016,7 +1012,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     candidate->value = "一人";
     candidate->content_key = "ひとり";
     candidate->content_value = "一人";
-    candidate->description = kBubun;
     candidate->attributes = Segment::Candidate::PARTIALLY_KEY_CONSUMED;
     candidate->consumed_key_size = 3;
   }
@@ -1033,7 +1028,6 @@ TEST_F(NumberRewriterTest, RewriteForPartialSuggestion_b19470020) {
     }
     found_halfwidth = true;
     EXPECT_EQ(3, candidate.consumed_key_size);
-    EXPECT_TRUE(absl::StartsWith(candidate.description, kBubun));
     EXPECT_TRUE(candidate.attributes &
                 Segment::Candidate::PARTIALLY_KEY_CONSUMED);
   }

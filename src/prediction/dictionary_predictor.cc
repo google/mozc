@@ -1010,9 +1010,6 @@ void DictionaryPredictor::SetDescription(PredictionTypes types,
   if (types & TYPING_CORRECTION) {
     Util::AppendStringWithDelimiter(" ", "補正", description);
   }
-  if (attributes & Segment::Candidate::AUTO_PARTIAL_SUGGESTION) {
-    Util::AppendStringWithDelimiter(" ", "部分", description);
-  }
 }
 
 void DictionaryPredictor::SetDebugDescription(PredictionTypes types,

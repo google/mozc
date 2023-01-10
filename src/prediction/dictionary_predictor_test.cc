@@ -3219,7 +3219,7 @@ TEST_F(DictionaryPredictorTest, SetDescription) {
     description.clear();
     DictionaryPredictor::SetDescription(
         0, Segment::Candidate::AUTO_PARTIAL_SUGGESTION, &description);
-    EXPECT_EQ("部分", description);
+    EXPECT_TRUE(description.empty());
   }
 }
 
