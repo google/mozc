@@ -31,6 +31,7 @@
 #define MOZC_BASE_PROTOBUF_TEXT_FORMAT_H_
 
 #include "base/protobuf/protobuf.h"
+#include "third_party/protobuf/text_format.h"
 
 #include "google/protobuf/text_format.h"
 

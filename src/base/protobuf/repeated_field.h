@@ -31,6 +31,7 @@
 #define MOZC_BASE_PROTOBUF_REPEATED_FIELD_H_
 
 #include "base/protobuf/protobuf.h"
+#include "third_party/protobuf/repeated_field.h"
 
 #include "google/protobuf/repeated_field.h"
 

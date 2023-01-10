@@ -31,6 +31,7 @@
 #define MOZC_BASE_PROTOBUF_ZERO_COPY_STREAM_IMPL_H_
 
 #include "base/protobuf/protobuf.h"
+#include "third_party/protobuf/io/zero_copy_stream_impl.h"
 
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 
