@@ -102,9 +102,17 @@ using ::testing::Ne;
 using ::testing::Ref;
 using ::testing::Return;
 using ::testing::SetArgPointee;
-using ::testing::StartsWith;
 using ::testing::StrEq;
 using ::testing::WithParamInterface;
+
+#ifndef OS_WIN
+using ::testing::StartsWith;
+#else   // OS_WIN
+// On Windows, ::testing::StartsWith() fails to compile. Define a simple
+// equivalent matcher as a workaround.
+// TODO(noriyukit): Remove this once it compiles successfully on Windows.
+MATCHER_P(StartsWith, prefix, "") { return absl::StartsWith(arg, prefix); }
+#endif  // OS_WIN
 
 constexpr int kInfinity = (2 << 20);
 
