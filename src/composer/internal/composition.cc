@@ -97,9 +97,7 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
     return pos;
   }
 
-  CharChunkList::iterator right_chunk;
-  MaybeSplitChunkAt(pos, &right_chunk);
-
+  CharChunkList::iterator right_chunk = MaybeSplitChunkAt(pos);
   CharChunkList::iterator left_chunk = GetInsertionChunk(right_chunk);
   CombinePendingChunks(left_chunk, input);
 
@@ -116,9 +114,8 @@ size_t Composition::InsertInput(size_t pos, const CompositionInput &input) {
   return GetPosition(Transliterators::LOCAL, right_chunk);
 }
 
-// Deletes a right-hand character of the composition.
+// Deletes a right-hand character of the composition at the position.
 size_t Composition::DeleteAt(const size_t position) {
-  CharChunkList::iterator chunk_it;
   const size_t original_size = GetLength();
   size_t new_position = position;
   // We have to perform deletion repeatedly because there might be 0-length
@@ -128,7 +125,7 @@ size_t Composition::DeleteAt(const size_t position) {
   // chunk1 : 'b'
   // And DeleteAt(0) is invoked, we have to delete both chunks.
   while (!chunks_.empty() && GetLength() == original_size) {
-    MaybeSplitChunkAt(position, &chunk_it);
+    CharChunkList::iterator chunk_it = MaybeSplitChunkAt(position);
     new_position = GetPosition(Transliterators::LOCAL, chunk_it);
     if (chunk_it == chunks_.end()) {
       break;
@@ -350,18 +347,20 @@ CharChunkList::iterator Composition::GetChunkAt(
     return chunks_.begin();
   }
 
-  size_t rest_pos = position;
+  size_t chunk_offset = 0;
+  size_t chunk_length = 0;
   for (auto it = chunks_.begin(); it != chunks_.end(); ++it) {
-    const size_t chunk_length = (*it)->GetLength(transliterator);
-    if (rest_pos <= chunk_length) {
-      *inner_position = rest_pos;
-      return it;
+    chunk_length = (*it)->GetLength(transliterator);
+    if (chunk_offset + chunk_length < position) {
+      chunk_offset += chunk_length;
+      continue;
     }
-    rest_pos -= chunk_length;
+    *inner_position = position - chunk_offset;
+    return it;
   }
-  auto it = chunks_.end();
-  --it;
-  *inner_position = (*it)->GetLength(transliterator);
+  auto it = std::prev(chunks_.end());
+  // Inner position here is the end of the last chunk.
+  *inner_position = chunk_length;
   return it;
 }
 
@@ -383,29 +382,25 @@ size_t Composition::GetPosition(Transliterators::Transliterator transliterator,
   return position;
 }
 
-// Return the left CharChunk and the right it.
-CharChunk *Composition::MaybeSplitChunkAt(const size_t pos,
-                                          CharChunkList::iterator *it) {
-  // The position is the beginning of composition.
-  if (pos <= 0) {
-    *it = chunks_.begin();
-    return nullptr;
+// Return the iterator to the right side CharChunk at the `position`.
+// If the `position` is in the middle of a CharChunk, that CharChunk is split.
+CharChunkList::iterator Composition::MaybeSplitChunkAt(const size_t position) {
+  size_t inner_position;
+  CharChunkList::iterator it =
+      GetChunkAt(position, Transliterators::LOCAL, &inner_position);
+  if (it == chunks_.begin() && inner_position == 0) {
+    return it;
   }
 
-  size_t inner_position;
-  *it = GetChunkAt(pos, Transliterators::LOCAL, &inner_position);
-
-  CharChunk *chunk = (*it)->get();
+  CharChunk *chunk = it->get();
   if (inner_position == chunk->GetLength(Transliterators::LOCAL)) {
-    ++(*it);
-    return chunk;
+    return std::next(it);
   }
 
   std::unique_ptr<CharChunk> left_chunk =
       chunk->SplitChunk(Transliterators::LOCAL, inner_position);
-  CharChunk *ret = left_chunk.get();
-  chunks_.insert(*it, std::move(left_chunk));
-  return ret;
+  chunks_.insert(it, std::move(left_chunk));
+  return it;
 }
 
 void Composition::CombinePendingChunks(CharChunkList::iterator it,

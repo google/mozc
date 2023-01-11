@@ -62,7 +62,40 @@ class Composition final {
 
   ~Composition();
 
+  // Deletes a right-hand character of the composition at the position.
+  // e.g.
+  // "012".DeleteAt(0) -> "12"
+  // "{0}12".DeleteAt(0) -> "2"  // {0} is an invisible character.
+  //
+  // Correctly speaking, DeleteAt removes char-chunks ranged between
+  // * the left-point where the length is `position`
+  // * the right-point where the length is `position + 1`
+  //
+  // If the char-chunks are ["a", "b", "c"], DeleteAt(1) removes "b" because
+  // the range of length 1 and 2 is ["a", < "b" >, "c"].
+  // If the char-chunks are ["a", "bc", "d"], DeleteAt(1) removes "b" too.
+  // The char-chunks are split if necessary first (e.g.["a", "b", "c", "d"]).
+  // Then it becomes ["a", < "b" > , "c", "d"].
+  //
+  // The same thing is applied to invisible characters.
+  // If the char-chunks are ["a", "{b}", "c", "d"],
+  // DeleteAt(1) removes both "{b}" and "c",
+  // because the range is ["a", < "{b}", "c", > "d"],
+  //
+  // Note, if the last removed char-chunk has trailing invisible characters,
+  // they are also removed.
+  // If the char-chunks are ["a", "{b}", "c{d}", "e"],
+  // DeleteAt(1) removes both "{b}" and "c{d}".
+  //
+  // Examples:
+  //   ["a", "{b}c", "d"].DeleteAt(0) -> ["{b}c", "d"]
+  //   ["a", "{b}c", "d"].DeleteAt(1) -> ["a", "d"]
+  //   ["a{b}", "c", "d"].DeleteAt(0) -> ["c", "d"]
+  //   ["a{b}", "c", "d"].DeleteAt(1) -> ["a{b}", "d"]
+  //   ["a", "{b}", "c"].DeleteAt(0) -> ["{b}, "c"]
+  //   ["a", "{b}", "c"].DeleteAt(1) -> ["a"]
   size_t DeleteAt(size_t position);
+
   size_t InsertAt(size_t position, const std::string &input);
   size_t InsertKeyAndPreeditAt(size_t position, const std::string &key,
                                const std::string &preedit);
@@ -70,6 +103,7 @@ class Composition final {
   // and return the new position.
   size_t InsertInput(size_t position, const CompositionInput &input);
 
+  // Clear all chunks.
   void Erase();
 
   // Get the position on mode_to from position_from on mode_from.
@@ -111,6 +145,11 @@ class Composition final {
   bool IsToggleable(size_t position) const;
 
   // Following methods are declared as public for unit test.
+
+  // Return the focused CharChunk iterator at the `position`,
+  // and fill `inner_position` as the position inside the returned CharChunk.
+  // ["a", "bc", "e"].GetChunkAt(2) returns "bc" and fills inner_position to 1,
+  // as "c" is the focused character.
   CharChunkList::iterator GetChunkAt(
       size_t position, Transliterators::Transliterator transliterator,
       size_t *inner_position);
@@ -120,10 +159,32 @@ class Composition final {
   size_t GetPosition(Transliterators::Transliterator transliterator,
                      CharChunkList::const_iterator it) const;
 
+  // Return CharChunk to be inserted a new character.
+  // The argument `it` is the focused CharChunk by the cursor.
   CharChunkList::iterator GetInsertionChunk(CharChunkList::iterator it);
+
   CharChunkList::iterator InsertChunk(CharChunkList::const_iterator it);
 
-  CharChunk *MaybeSplitChunkAt(size_t position, CharChunkList::iterator *it);
+
+  // Return the iterator to the right side CharChunk at the `position`.
+  // If the `position` is in the middle of a CharChunk, that CharChunk is split.
+  //
+  // examples
+  // # typical cases
+  // chunks: ["a", "bc", "d"], pos: 0 -> "a" (= begin)
+  // chunks: ["a", "bc", "d"], pos: 1 -> "bc"
+  // chunks: ["a", "bc", "d"], pos: 2 -> "c", chunks become ["a", "b", "c", "d"]
+  // chunks: ["a", "bc", "d"], pos: 3 -> "d"
+  // chunks: ["a", "bc", "d"], pos: 4 -> end
+  // # {b} is an invisible character
+  // chunks: ["a", "{b}c", "d"], pos: 1 -> "{b}c"
+  // chunks: ["a", "{b}c", "d"], pos: 2 -> "d"
+  // chunks: ["a", "{b}c", "d"], pos: 3 -> end
+  // # {c} is an invisible character
+  // chunks: ["a", "b{c}", "d"], pos: 1 -> "b{c}"
+  // chunks: ["a", "b{c}", "d"], pos: 2 -> "d"
+  // chunks: ["a", "b{c}", "d"], pos: 3 -> end
+  CharChunkList::iterator MaybeSplitChunkAt(size_t position);
 
   // Combine |input| and chunks from |it| to left direction,
   // which have pending data and can be combined.
