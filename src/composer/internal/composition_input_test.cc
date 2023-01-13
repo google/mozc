@@ -72,10 +72,10 @@ TEST(CompositionInputTest, BasicTest) {
     input.set_is_new_input(true);
 
     EXPECT_FALSE(input.Empty());
-    EXPECT_EQ("raw", input.raw());
+    EXPECT_EQ(input.raw(), "raw");
     EXPECT_TRUE(input.has_conversion());
-    EXPECT_EQ("conversion", input.conversion());
-    EXPECT_EQ(2, input.probable_key_events().size());
+    EXPECT_EQ(input.conversion(), "conversion");
+    EXPECT_EQ(input.probable_key_events().size(), 2);
     EXPECT_TRUE(input.is_new_input());
   }
 
@@ -91,10 +91,10 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_FALSE(input.is_new_input());
 
     EXPECT_FALSE(input2.Empty());
-    EXPECT_EQ("raw", input2.raw());
+    EXPECT_EQ(input2.raw(), "raw");
     EXPECT_TRUE(input2.has_conversion());
-    EXPECT_EQ("conversion", input2.conversion());
-    EXPECT_EQ(2, input2.probable_key_events().size());
+    EXPECT_EQ(input2.conversion(), "conversion");
+    EXPECT_EQ(input2.probable_key_events().size(), 2);
     EXPECT_TRUE(input2.is_new_input());
   }
 
@@ -110,7 +110,7 @@ TEST(CompositionInputTest, BasicTest) {
     EXPECT_TRUE(input.mutable_conversion()->empty());
     EXPECT_TRUE(input.has_conversion());
     input.mutable_conversion()->assign("mutable_conversion");
-    EXPECT_EQ("mutable_conversion", input.conversion());
+    EXPECT_EQ(input.conversion(), "mutable_conversion");
 
     ASSERT_FALSE(input2.Empty());
     EXPECT_TRUE(input2.has_conversion());

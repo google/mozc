@@ -38,7 +38,7 @@ package(default_visibility = ["//:__subpackages__"])
 cc_library_mozc(
     name = "protobuf",
     hdrs = ["protobuf.h"],
-    deps = ["@com_google_protobuf//:protobuf"],
+    deps = [],
 )
 
 cc_library_mozc(

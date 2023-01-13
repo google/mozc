@@ -37,12 +37,14 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
-#include "unix/ibus/mozc_engine_property.h"
 
 namespace mozc {
 namespace ibus {
 
 namespace {
+
+// Maximum Number of candidate words per page.
+const size_t kPageSize = 9;
 
 // Returns an IBusText used for showing the auxiliary text in the candidate
 // window. Returns nullptr if no text has to be shown. Caller must release the

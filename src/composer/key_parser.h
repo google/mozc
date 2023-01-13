@@ -35,22 +35,21 @@
 #include <string>
 #include <vector>
 
-#include "base/port.h"
+#include "protocol/commands.pb.h"
 
 namespace mozc {
-namespace commands {
-class KeyEvent;
-}
 
 class KeyParser {
  public:
+  // Disallow implicit constructors.
+  KeyParser() = delete;
+  KeyParser(const KeyParser &) = delete;
+  KeyParser &operator=(const KeyParser &) = delete;
+
   static bool ParseKey(const std::string &key_string,
                        commands::KeyEvent *key_event);
   static bool ParseKeyVector(const std::vector<std::string> &keys,
                              commands::KeyEvent *key_event);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(KeyParser);
 };
 
 }  // namespace mozc

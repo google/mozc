@@ -34,6 +34,8 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "composer/internal/char_chunk.h"
 #include "composer/internal/composition_input.h"
@@ -191,8 +193,7 @@ static int InitComposition(Composition* comp) {
       {"った", "", "tta"}, {"っ", "ty", "tty"},
   };
   static const int test_chunks_size = std::size(test_chunks);
-  CharChunkList::iterator it;
-  comp->MaybeSplitChunkAt(0, &it);
+  CharChunkList::iterator it = comp->MaybeSplitChunkAt(0);
   for (int i = 0; i < test_chunks_size; ++i) {
     const TestCharChunk& data = test_chunks[i];
     CharChunk* chunk = comp->InsertChunk(it)->get();
@@ -205,8 +206,7 @@ static int InitComposition(Composition* comp) {
 
 static CharChunk* AppendChunk(const char* conversion, const char* pending,
                               const char* raw, Composition* comp) {
-  CharChunkList::iterator it;
-  comp->MaybeSplitChunkAt(comp->GetLength(), &it);
+  CharChunkList::iterator it = comp->MaybeSplitChunkAt(comp->GetLength());
 
   CharChunk* chunk = comp->InsertChunk(it)->get();
   chunk->set_conversion(conversion);
@@ -466,9 +466,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
       Composition raw_comp(table_.get());
       InitComposition(&raw_comp);
       raw_comp.SetDisplayMode(dummy_position, Transliterators::RAW_STRING);
-      CharChunkList::iterator raw_it;
-
-      raw_comp.MaybeSplitChunkAt(test.position, &raw_it);
+      raw_comp.MaybeSplitChunkAt(test.position);
       const size_t raw_chunks_size = raw_comp.GetCharChunkList().size();
       EXPECT_EQ(test.expected_raw_chunks_size, raw_chunks_size);
     }
@@ -478,9 +476,7 @@ TEST_F(CompositionTest, MaybeSplitChunkAt) {
       InitComposition(&conv_comp);
       conv_comp.SetDisplayMode(dummy_position,
                                Transliterators::CONVERSION_STRING);
-      CharChunkList::iterator conv_it;
-
-      conv_comp.MaybeSplitChunkAt(test.position, &conv_it);
+      conv_comp.MaybeSplitChunkAt(test.position);
       const size_t conv_chunks_size = conv_comp.GetCharChunkList().size();
       EXPECT_EQ(test.expected_conv_chunks_size, conv_chunks_size);
     }
@@ -549,31 +545,70 @@ TEST_F(CompositionTest, DeleteAt) {
 }
 
 TEST_F(CompositionTest, DeleteAtInvisibleCharacter) {
-  CharChunkList::iterator it;
-  CharChunk* chunk;
+  using ChunkData = std::vector<std::pair<std::string, std::string>>;
+  auto init_chunk = [](Composition *composition, const ChunkData &data) {
+    composition->Erase();
+    CharChunkList::iterator it = composition->MaybeSplitChunkAt(0);
+    for (const auto &item : data) {
+      CharChunk *chunk = composition->InsertChunk(it)->get();
+      chunk->set_raw(Table::ParseSpecialKey(item.first));
+      chunk->set_pending(Table::ParseSpecialKey(item.second));
+    }
+  };
 
-  composition_->MaybeSplitChunkAt(0, &it);
+  {
+    init_chunk(composition_.get(), {{"1", "{1}"}, {"2", "{2}2"}, {"3", "3"}});
 
-  chunk = composition_->InsertChunk(it)->get();
-  chunk->set_raw("1");
-  chunk->set_pending(Table::ParseSpecialKey("{1}"));
+    // Now the CharChunks in the comp are expected to be following;
+    // (raw, pending) = [ ("1", "{1}"), ("2", "{2}2"), ("3", "3") ]
+    // {} means invisible characters.
 
-  chunk = composition_->InsertChunk(it)->get();
-  chunk->set_raw("2");
-  chunk->set_pending(Table::ParseSpecialKey("{2}2"));
+    composition_->DeleteAt(0);
+    std::string composition;
+    composition_->GetString(&composition);
+    EXPECT_EQ("3", composition);
+    EXPECT_EQ(1, composition_->GetCharChunkList().size());
+  }
+  {
+    init_chunk(composition_.get(), {{"1", "{1}"}, {"2", "{2}2"}, {"3", "3"}});
 
-  chunk = composition_->InsertChunk(it)->get();
-  chunk->set_raw("3");
-  chunk->set_pending("3");
+    composition_->DeleteAt(1);
+    std::string composition;
+    composition_->GetString(&composition);
+    EXPECT_EQ("2", composition);
+    const CharChunkList &chunks = composition_->GetCharChunkList();
+    EXPECT_EQ(2, chunks.size());
+    const CharChunk &chunk0 = **(chunks.begin());
+    EXPECT_EQ("1", chunk0.raw());
+    EXPECT_EQ(Table::ParseSpecialKey("{1}"), chunk0.pending());
+    const CharChunk &chunk1 = **(std::next(chunks.begin()));
+    EXPECT_EQ("2", chunk1.raw());
+    EXPECT_EQ(Table::ParseSpecialKey("{2}2"), chunk1.pending());
+  }
 
-  // Now the CharChunks in the comp are expected to be following;
-  // (raw, pending) = [ ("1", "{1}"), ("2", "{2}2"), ("3", "3") ]
-  // {} means invisible characters.
+  {
+    init_chunk(composition_.get(), {{"1", "{1}"}, {"2", "2{2}"}, {"3", "3"}});
 
-  composition_->DeleteAt(0);
-  std::string composition;
-  composition_->GetString(&composition);
-  EXPECT_EQ("3", composition);
+    composition_->DeleteAt(0);
+    std::string composition;
+    composition_->GetString(&composition);
+    // 0-th character is "2".
+    // As "{1}" is a character between the head and "2", it is removed.
+    // All "2{2}" is also removed because they are in the same chunk.
+    EXPECT_EQ("3", composition);
+    EXPECT_EQ(1, composition_->GetCharChunkList().size());
+  }
+
+  {
+    init_chunk(composition_.get(), {{"1", "{1}"}, {"2", "2{2}"}, {"3", "{3}"}});
+
+    composition_->DeleteAt(0);
+    std::string composition;
+    composition_->GetString(&composition);
+    EXPECT_EQ("", composition);
+    EXPECT_EQ(1, composition_->GetCharChunkList().size());
+    EXPECT_EQ("3", (*composition_->GetCharChunkList().begin())->raw());
+  }
 }
 
 namespace {
@@ -1292,8 +1327,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
 
     size_t pos = 0;
 
-    CharChunkList::iterator it;
-    comp.MaybeSplitChunkAt(pos, &it);
+    CharChunkList::iterator it = comp.MaybeSplitChunkAt(pos);
     CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
 
     CompositionInput input;
@@ -1313,8 +1347,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     size_t pos = 0;
     pos = comp.InsertAt(pos, "x");
 
-    CharChunkList::iterator it;
-    comp.MaybeSplitChunkAt(pos, &it);
+    CharChunkList::iterator it = comp.MaybeSplitChunkAt(pos);
     CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("n", "", false, &input);
@@ -1335,8 +1368,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     pos = comp.InsertAt(pos, "y");
     pos = comp.InsertAt(0, "n");
 
-    CharChunkList::iterator it;
-    comp.MaybeSplitChunkAt(2, &it);
+    CharChunkList::iterator it = comp.MaybeSplitChunkAt(2);
     CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("a", "", false, &input);
@@ -1359,8 +1391,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     pos = comp.InsertAt(pos, "y");
     pos = comp.InsertAt(1, "n");
 
-    CharChunkList::iterator it;
-    comp.MaybeSplitChunkAt(3, &it);
+    CharChunkList::iterator it = comp.MaybeSplitChunkAt(3);
     CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("a", "", false, &input);
@@ -1384,8 +1415,7 @@ TEST_F(CompositionTest, CombinePendingChunks) {
     pos = comp.InsertAt(pos, "y");
     pos = comp.InsertAt(1, "n");
 
-    CharChunkList::iterator it;
-    comp.MaybeSplitChunkAt(3, &it);
+    CharChunkList::iterator it = comp.MaybeSplitChunkAt(3);
     CharChunkList::iterator chunk_it = comp.GetInsertionChunk(it);
     CompositionInput input;
     SetInput("x", "a", false, &input);

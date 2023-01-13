@@ -33,9 +33,9 @@ cc_(library|binary|test) wrappers to add :macro dependency.
 depending on it.
 """
 
-load("//tools/build_defs:build_cleaner.bzl", "register_extension_info")
-load("//tools/build_defs:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
-load("//tools/build_rules/android_cc_test:def.bzl", "android_cc_test")
+load("//bazel:stubs.bzl", "register_extension_info")
+load("//bazel:stubs.bzl", "pytype_strict_binary", "pytype_strict_library")
+load("//bazel:stubs.bzl", "android_cc_test")
 load("//:config.bzl", "BRANDING", "MACOS_BUNDLE_ID_PREFIX", "MACOS_MIN_OS_VER")
 load("@build_bazel_rules_apple//apple:apple_binary.bzl", "apple_binary")
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_application", "macos_bundle")
@@ -407,15 +407,15 @@ def select_mozc(
       Generated select statement.
     """
     return select({
-        "//tools/cc_target_os:android": _get_value([android, client, default]),
-        "//tools/cc_target_os:apple": _get_value([ios, client, default]),
-        "//tools/cc_target_os:chromiumos": _get_value([chromiumos, client, default]),
-        "//tools/cc_target_os:darwin": _get_value([macos, ios, client, default]),
-        "//tools/cc_target_os:wasm": _get_value([wasm, client, default]),
-        "//tools/cc_target_os:windows": _get_value([windows, client, default]),
-        "//tools/cc_target_os:linux": _get_value([linux, client, default]),
-        "//tools/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
-        "//tools/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
-        "//tools/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
+        "//bazel/cc_target_os:android": _get_value([android, client, default]),
+        "//bazel/cc_target_os:apple": _get_value([ios, client, default]),
+        "//bazel/cc_target_os:chromiumos": _get_value([chromiumos, client, default]),
+        "//bazel/cc_target_os:darwin": _get_value([macos, ios, client, default]),
+        "//bazel/cc_target_os:wasm": _get_value([wasm, client, default]),
+        "//bazel/cc_target_os:windows": _get_value([windows, client, default]),
+        "//bazel/cc_target_os:linux": _get_value([linux, client, default]),
+        "//bazel/cc_target_os:oss_android": _get_value([oss_android, oss, android, client, default]),
+        "//bazel/cc_target_os:oss_linux": _get_value([oss_linux, oss, linux, client, default]),
+        "//bazel/cc_target_os:oss_macos": _get_value([oss_macos, oss, macos, ios, client, default]),
         "//conditions:default": default,
     })

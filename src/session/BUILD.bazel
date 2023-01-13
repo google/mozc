@@ -346,6 +346,7 @@ cc_library_mozc(
         "//engine:engine_builder_interface",
         "//engine:user_data_manager_interface",
         "//engine:engine_interface",
+        "//session/internal:ime_context",
         "//protocol:commands_cc_proto",
         "//protocol:config_cc_proto",
         "//protocol:user_dictionary_storage_cc_proto",

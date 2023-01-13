@@ -58,6 +58,7 @@ enum CompositionMode {
 }
 
 message KeyEvent {
+  // LINT.IfChange
   enum SpecialKey {
     NO_SPECIALKEY = 0;
     DIGIT = 1;
@@ -230,6 +231,11 @@ message KeyEvent {
     RIGHT_SHIFT = 1024;
     CAPS = 2048;
   }
+  // LINT.ThenChange(
+  //     //composer/key_parser.cc,
+  //     //gui/config_dialog/keybinding_editor.cc,
+  //     //unix/ibus/key_translator.cc
+  // )
 
   // Probable key event, mainly for touch screen.
   // User's input has ambiguity (e.g. the touch position is merginal)

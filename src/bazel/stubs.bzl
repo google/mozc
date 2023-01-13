@@ -27,9 +27,46 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Stub functions."""
+"""Stub build rules."""
+
+def android_cc_test(name, cc_test_name, **kwargs):
+    # 'foo_test' and 'foo_test_android' are identical for OSS yet.
+    # TODO(b/110808149): Support Android test.
+    _ignore = kwargs  # @unused
+    native.test_suite(
+        name = name,
+        tests = [cc_test_name],
+    )
+
+def bzl_library(**kwargs):
+    # Do nothing for OSS.
+    _ignore = kwargs  # @unused
+    pass
+
+def cc_embed_data(**kwargs):
+    # Do nothing for OSS.
+    _ignore = kwargs  # @unused
+    pass
+
+def jspb_proto_library(**kwargs):
+    # Do nothing for OSS.
+    _ignore = kwargs  # @unused
+    pass
+
+def py2and3_test(**kwargs):
+    native.py_test(**kwargs)
+    pass
+
+def pytype_strict_library(**kwargs):
+    native.py_library(**kwargs)
+    pass
+
+def pytype_strict_binary(test_lib = True, **kwargs):
+    _ignore = test_lib  # @unused
+    native.py_binary(**kwargs)
+    pass
 
 def register_extension_info(**kwargs):
     # Do nothing for OSS.
-    _ignore = kwargs
+    _ignore = kwargs  # @unused
     pass

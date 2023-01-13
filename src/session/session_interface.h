@@ -51,6 +51,8 @@ class Table;
 }  // namespace composer
 
 namespace session {
+class ImeContext;
+
 class SessionInterface {
  public:
   virtual ~SessionInterface() {}
@@ -87,6 +89,8 @@ class SessionInterface {
 
   // return 0 (default value) if no command is executed in this session.
   virtual uint64_t last_command_time() const = 0;
+
+  virtual const ImeContext &context() const = 0;
 };
 
 }  // namespace session

@@ -27,15 +27,15 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_UNIX_IBUS_GTK_CANDIDATE_WINDOW_HANDLER_H_
-#define MOZC_UNIX_IBUS_GTK_CANDIDATE_WINDOW_HANDLER_H_
+#ifndef MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_H_
+#define MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_H_
 
 #include <memory>
 
-#include "base/coordinates.h"
 #include "base/port.h"
 #include "protocol/renderer_command.pb.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
+#include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace commands {
@@ -48,11 +48,11 @@ namespace ibus {
 
 class GSettingsObserver;
 
-class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
+class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
-  // GtkCandidateWindowHandler takes ownership of renderer_ pointer.
-  explicit GtkCandidateWindowHandler(renderer::RendererInterface *renderer);
-  virtual ~GtkCandidateWindowHandler();
+  // CandidateWindowHandler takes ownership of renderer_ pointer.
+  explicit CandidateWindowHandler(renderer::RendererInterface *renderer);
+  virtual ~CandidateWindowHandler();
 
   virtual void Update(IBusEngine *engine, const commands::Output &output);
   virtual void UpdateCursorRect(IBusEngine *engine);
@@ -81,9 +81,9 @@ class GtkCandidateWindowHandler : public CandidateWindowHandlerInterface {
   std::unique_ptr<GSettingsObserver> settings_observer_;
   commands::RendererCommand::Rectangle preedit_begin_;
 
-  DISALLOW_COPY_AND_ASSIGN(GtkCandidateWindowHandler);
+  DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandler);
 };
 
 }  // namespace ibus
 }  // namespace mozc
-#endif  // MOZC_UNIX_IBUS_GTK_CANDIDATE_WINDOW_HANDLER_H_
+#endif  // MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_H_

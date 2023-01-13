@@ -32,7 +32,7 @@ load(
     "cc_library_mozc",
 )
 load(
-    "//tools/build_defs:qt.bzl",
+    "//bazel:qt.bzl",
     "cc_qt_library_mozc",
     "qt_moc_mozc",
 )

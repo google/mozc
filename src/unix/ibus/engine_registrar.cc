@@ -63,9 +63,7 @@ bool EngineRegistrar::Register(EngineInterface *engine,
   engine_class->reset = Reset;
   engine_class->set_capabilities = SetCapabilities;
   engine_class->set_cursor_location = SetCursorLocation;
-#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
   engine_class->set_content_type = SetContentType;
-#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
   return true;
 }
 
@@ -89,9 +87,7 @@ EngineInterface *EngineRegistrar::Unregister(IBusEngineClass *engine_class) {
   engine_class->reset = nullptr;
   engine_class->set_capabilities = nullptr;
   engine_class->set_cursor_location = nullptr;
-#if defined(MOZC_ENABLE_IBUS_INPUT_PURPOSE)
   engine_class->set_content_type = nullptr;
-#endif  // MOZC_ENABLE_IBUS_INPUT_PURPOSE
 
   mozc::ibus::EngineInterface *previous = g_engine;
   g_engine = nullptr;
@@ -100,68 +96,96 @@ EngineInterface *EngineRegistrar::Unregister(IBusEngineClass *engine_class) {
 
 void EngineRegistrar::CandidateClicked(IBusEngine *engine, guint index,
                                        guint button, guint state) {
-  g_engine->CandidateClicked(engine, index, button, state);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->CandidateClicked(&engine_wrapper, index, button, state);
 }
 
 void EngineRegistrar::CursorDown(IBusEngine *engine) {
-  g_engine->CursorDown(engine);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->CursorDown(&engine_wrapper);
 }
 
 void EngineRegistrar::CursorUp(IBusEngine *engine) {
-  g_engine->CursorUp(engine);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->CursorUp(&engine_wrapper);
 }
 
-void EngineRegistrar::Disable(IBusEngine *engine) { g_engine->Disable(engine); }
+void EngineRegistrar::Disable(IBusEngine *engine) {
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->Disable(&engine_wrapper);
+}
 
-void EngineRegistrar::Enable(IBusEngine *engine) { g_engine->Enable(engine); }
+void EngineRegistrar::Enable(IBusEngine *engine) {
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->Enable(&engine_wrapper);
+}
 
-void EngineRegistrar::FocusIn(IBusEngine *engine) { g_engine->FocusIn(engine); }
+void EngineRegistrar::FocusIn(IBusEngine *engine) {
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->FocusIn(&engine_wrapper);
+}
 
 void EngineRegistrar::FocusOut(IBusEngine *engine) {
-  g_engine->FocusOut(engine);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->FocusOut(&engine_wrapper);
 }
 
 void EngineRegistrar::PageDown(IBusEngine *engine) {
-  g_engine->PageDown(engine);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->PageDown(&engine_wrapper);
 }
 
-void EngineRegistrar::PageUp(IBusEngine *engine) { g_engine->PageUp(engine); }
+void EngineRegistrar::PageUp(IBusEngine *engine) {
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->PageUp(&engine_wrapper);
+}
 
 gboolean EngineRegistrar::ProcessKeyEvent(IBusEngine *engine, guint keyval,
                                           guint keycode, guint state) {
-  return g_engine->ProcessKeyEvent(engine, keyval, keycode, state);
+  IbusEngineWrapper engine_wrapper(engine);
+  // bool is automatically converted to gboolean, which is int.
+  return g_engine->ProcessKeyEvent(&engine_wrapper, keyval, keycode, state);
 }
 
 void EngineRegistrar::PropertyActivate(IBusEngine *engine,
                                        const gchar *property_name,
                                        guint property_state) {
-  g_engine->PropertyActivate(engine, property_name, property_state);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->PropertyActivate(&engine_wrapper, property_name, property_state);
 }
 
 void EngineRegistrar::PropertyHide(IBusEngine *engine,
                                    const gchar *property_name) {
-  g_engine->PropertyHide(engine, property_name);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->PropertyHide(&engine_wrapper, property_name);
 }
 
 void EngineRegistrar::PropertyShow(IBusEngine *engine,
                                    const gchar *property_name) {
-  g_engine->PropertyShow(engine, property_name);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->PropertyShow(&engine_wrapper, property_name);
 }
 
-void EngineRegistrar::Reset(IBusEngine *engine) { g_engine->Reset(engine); }
+void EngineRegistrar::Reset(IBusEngine *engine) {
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->Reset(&engine_wrapper);
+}
 
 void EngineRegistrar::SetCapabilities(IBusEngine *engine, guint capabilities) {
-  g_engine->SetCapabilities(engine, capabilities);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->SetCapabilities(&engine_wrapper, capabilities);
 }
 
 void EngineRegistrar::SetCursorLocation(IBusEngine *engine, gint x, gint y,
                                         gint w, gint h) {
-  g_engine->SetCursorLocation(engine, x, y, w, h);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->SetCursorLocation(&engine_wrapper, x, y, w, h);
 }
 
 void EngineRegistrar::SetContentType(IBusEngine *engine, guint purpose,
                                      guint hints) {
-  g_engine->SetContentType(engine, purpose, hints);
+  IbusEngineWrapper engine_wrapper(engine);
+  g_engine->SetContentType(&engine_wrapper, purpose, hints);
 }
 
 }  // namespace ibus

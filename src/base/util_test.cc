@@ -33,6 +33,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ios>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -665,7 +666,8 @@ void VerifyUtf8ToUcs4(const std::string &text, char32_t expected_ucs4,
   const char *end = begin + text.size();
   size_t mblen = 0;
   char32_t result = Util::Utf8ToUcs4(begin, end, &mblen);
-  EXPECT_EQ(expected_ucs4, result) << text << " " << expected_ucs4;
+  EXPECT_EQ(expected_ucs4, result)
+      << text << " " << std::hex << static_cast<uint64_t>(expected_ucs4);
   EXPECT_EQ(expected_len, mblen) << text << " " << expected_len;
 }
 

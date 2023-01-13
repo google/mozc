@@ -28,7 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 load(
-    "//tools/build_defs:qt.bzl",
+    "//bazel:qt.bzl",
     "cc_qt_binary_mozc",
     "cc_qt_library_mozc",
     "qt_moc_mozc",

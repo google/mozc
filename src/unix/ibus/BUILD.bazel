@@ -74,14 +74,9 @@ genrule(
 )
 
 cc_library_mozc(
-    name = "ibus_mozc_metadata",
-    srcs = ["mozc_engine_property.cc"],
-    hdrs = ["mozc_engine_property.h"],
-    deps = [
-        "//base:base",
-        "//base:port",
-        "//protocol:commands_cc_proto",
-    ] + select_mozc(
+    name = "ibus_header",
+    hdrs = select_mozc(linux = ["ibus_header.h"]),
+    deps = select_mozc(
         linux = ["//third_party/ibus"],
         oss_linux = ["@ibus//:ibus"],
     ),
@@ -90,16 +85,10 @@ cc_library_mozc(
 cc_library_mozc(
     name = "ibus_property_handler",
     srcs = select_mozc(linux = ["property_handler.cc"]),
-    hdrs = select_mozc(
-        linux = [
-            "ibus_header.h",
-            "property_handler.h",
-            "property_handler_interface.h",
-        ],
-    ),
+    hdrs = select_mozc(linux = ["property_handler.h"]),
     deps = [
+        ":ibus_header",
         ":ibus_utils",
-        ":ibus_mozc_metadata",
         "//base",
         "//base:file_util",
         "//base:logging",
@@ -181,9 +170,9 @@ cc_library_mozc(
         "MOZC_ENABLE_X11_SELECTION_MONITOR",
     ],
     deps = [
-        ":gtk_candidate_window_handler",
+        ":candidate_window_handler",
         ":ibus_config",
-        ":ibus_mozc_metadata",
+        ":ibus_header",
         ":ibus_property_handler",
         ":ibus_utils",
         ":x11_selection_monitor",
@@ -266,8 +255,8 @@ cc_binary_mozc(
     ),
     deps = [
         ":ibus_config",
+        ":ibus_header",
         ":ibus_mozc_lib",
-        ":ibus_mozc_metadata",
         ":ibus_utils",
         "//base",
         "//base:init_mozc",
@@ -290,7 +279,6 @@ cc_test_mozc(
     ),
     deps = [
         ":ibus_mozc_lib",
-        ":ibus_mozc_metadata",
         "//base",
         "//base:clock",
         "//base:port",
@@ -307,17 +295,17 @@ cc_test_mozc(
 )
 
 cc_library_mozc(
-    name = "gtk_candidate_window_handler",
-    srcs = select_mozc(linux = ["gtk_candidate_window_handler.cc"]),
+    name = "candidate_window_handler",
+    srcs = select_mozc(linux = ["candidate_window_handler.cc"]),
     hdrs = select_mozc(
         linux = [
             "candidate_window_handler_interface.h",
-            "gtk_candidate_window_handler.h",
-            "ibus_header.h",
+            "candidate_window_handler.h",
         ],
     ),
     copts = select_mozc(linux = ["-Ithird_party/glib"]),
     deps = [
+        ":ibus_header",
         "//base:coordinates",
         "//base:logging",
         "//base:port",
@@ -337,10 +325,10 @@ cc_library_mozc(
 )
 
 cc_test_mozc(
-    name = "gtk_candidate_window_handler_test",
-    srcs = select_mozc(linux = ["gtk_candidate_window_handler_test.cc"]),
+    name = "candidate_window_handler_test",
+    srcs = select_mozc(linux = ["candidate_window_handler_test.cc"]),
     deps = [
-        ":gtk_candidate_window_handler",
+        ":candidate_window_handler",
         "//base:coordinates",
         "//protocol:candidates_cc_proto",
         "//protocol:commands_cc_proto",

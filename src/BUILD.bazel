@@ -31,7 +31,7 @@
 #   Declaration of package_group for visibility managing.
 
 load("//:build_defs.bzl", "select_mozc")
-load("//tools/build_defs:stubs.bzl", "bzl_library")
+load("//bazel:stubs.bzl", "bzl_library")
 
 package(default_visibility = [
     "//:__subpackages__",
@@ -113,8 +113,8 @@ bzl_library(
     visibility = ["//:__subpackages__"],
     deps = [
         ":config_bzl",
+        "//bazel:stubs.bzl",
         "//devtools/build_cleaner/skylark:build_defs_lib",
-        "//tools/build_defs:stubs.bzl",
         "//tools/build_rules/android_cc_test:def",
         "@build_bazel_rules_apple//apple:apple_binary",
         "@build_bazel_rules_apple//apple:macos",

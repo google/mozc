@@ -27,31 +27,23 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Stub build rules."""
+load("//bazel:stubs.bzl", "bzl_library")
 
-def bzl_library(**kwargs):
-    # Do nothing for OSS.
-    _ignore = kwargs
-    pass
+bzl_library(
+    name = "qt_bzl",
+    srcs = ["qt.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+    deps = [
+        "//:build_defs_bzl",
+        "//:config_bzl",
+        "@build_bazel_rules_apple//apple:macos",
+    ],
+)
 
-def cc_embed_data(**kwargs):
-    # Do nothing for OSS.
-    _ignore = kwargs
-    pass
-
-def jspb_proto_library(**kwargs):
-    # Do nothing for OSS.
-    _ignore = kwargs
-    pass
-
-def py2and3_test(**kwargs):
-    native.py_test(**kwargs)
-    pass
-
-def pytype_strict_library(**kwargs):
-    native.py_library(**kwargs)
-    pass
-
-def pytype_strict_binary(test_lib = True, **kwargs):
-    native.py_binary(**kwargs)
-    pass
+bzl_library(
+    name = "stubs_bzl",
+    srcs = ["stubs.bzl"],
+    parse_tests = False,
+    visibility = ["//visibility:private"],
+)

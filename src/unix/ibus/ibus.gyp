@@ -90,18 +90,6 @@
       ],
     },
     {
-      'target_name': 'ibus_mozc_metadata',
-      'type': 'static_library',
-      'sources': [
-        'mozc_engine_property.cc',
-      ],
-      'dependencies': [
-        '../../base/base.gyp:base',
-        '../../protocol/protocol.gyp:commands_proto',
-        'ibus_build_environment',
-      ],
-    },
-    {
       'target_name': 'ibus_property_handler',
       'type': 'static_library',
       'sources': [
@@ -181,8 +169,8 @@
         '../../protocol/protocol.gyp:commands_proto',
         '../../protocol/protocol.gyp:renderer_proto',
         '../../session/session_base.gyp:ime_switch_util',
+        'candidate_window_handler',
         'gen_ibus_mozc_files',
-        'gtk_candidate_window_handler',
         'ibus_config_proto',
         'ibus_property_handler',
         'message_translator',
@@ -237,7 +225,6 @@
         'gen_ibus_mozc_files',
         'gen_mozc_xml',
         'ibus_mozc_lib',
-        'ibus_mozc_metadata',
       ],
     },
     {
@@ -260,7 +247,6 @@
         '../../protocol/protocol.gyp:commands_proto',
         '../../testing/testing.gyp:gtest_main',
         'ibus_mozc_lib',
-        'ibus_mozc_metadata',
       ],
       'variables': {
         'test_size': 'small',
@@ -276,7 +262,7 @@
       'conditions': [
         ['enable_gtk_renderer==1', {
           'dependencies': [
-            'gtk_candidate_window_handler_test',
+            'candidate_window_handler_test',
           ],
         }],
       ],
@@ -327,10 +313,10 @@
       ],
     },
     {
-      'target_name': 'gtk_candidate_window_handler',
+      'target_name': 'candidate_window_handler',
       'type': 'static_library',
       'sources': [
-        'gtk_candidate_window_handler.cc',
+        'candidate_window_handler.cc',
       ],
       'dependencies': [
         '../../protocol/protocol.gyp:renderer_proto',
@@ -339,13 +325,13 @@
       ],
     },
     {
-      'target_name': 'gtk_candidate_window_handler_test',
+      'target_name': 'candidate_window_handler_test',
       'type': 'executable',
       'sources': [
-        'gtk_candidate_window_handler_test.cc',
+        'candidate_window_handler_test.cc',
       ],
       'dependencies': [
-        'gtk_candidate_window_handler',
+        'candidate_window_handler',
         '../../testing/testing.gyp:gtest_main',
       ],
     },

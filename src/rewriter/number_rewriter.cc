@@ -260,15 +260,7 @@ void MergeCandidateInfoInternal(const Segment::Candidate &base_cand,
   cand->lid = base_cand.lid;
   cand->rid = base_cand.rid;
   cand->style = result_cand.style;
-
-  if (base_cand.attributes & Segment::Candidate::PARTIALLY_KEY_CONSUMED) {
-    cand->description.assign("部分");
-    if (!result_cand.description.empty()) {
-      cand->description.append(1, '\n').append(result_cand.description);
-    }
-  } else {
-    cand->description.assign(result_cand.description);
-  }
+  cand->description.assign(result_cand.description);
 
   // Don't want to have FULL_WIDTH form for Hex/Oct/BIN..etc.
   if (cand->style == NumberUtil::NumberString::NUMBER_HEX ||
