@@ -41,6 +41,8 @@ struct ShowUIAttributes;
 class UIVisibilityTracker {
  public:
   UIVisibilityTracker();
+  UIVisibilityTracker(const UIVisibilityTracker&) = delete;
+  UIVisibilityTracker& operator=(const UIVisibilityTracker&) = delete;
 
   // Returns true if the given message is a visibility-test-message for the
   // composition window.  If a visibility-test-message is trapped by the
@@ -125,8 +127,6 @@ class UIVisibilityTracker {
   bool candidate_window_activated_;
   bool suggest_window_activated_;
   bool composition_window_activated_;
-
-  DISALLOW_COPY_AND_ASSIGN(UIVisibilityTracker);
 };
 }  // namespace win32
 }  // namespace mozc

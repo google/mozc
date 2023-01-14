@@ -56,14 +56,14 @@ class SelectionMonitorInterface {
 
 class SelectionMonitorFactory {
  public:
+  SelectionMonitorFactory() = delete;
+  SelectionMonitorFactory(const SelectionMonitorFactory&) = delete;
+  SelectionMonitorFactory& operator=(const SelectionMonitorFactory&) = delete;
   // Returns an instance of SelectionMonitorInterface implementation.
   // Caller must take the ownership of returned object.
   // |max_text_bytes| represents the maximum string size in bytes which
   // limits each string field in SelectionInfo structure.
   static SelectionMonitorInterface *Create(size_t max_text_bytes);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SelectionMonitorFactory);
 };
 
 }  // namespace ibus

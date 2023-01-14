@@ -40,6 +40,10 @@ namespace ibus {
 
 class SurroundingTextUtil {
  public:
+  SurroundingTextUtil() = delete;
+  SurroundingTextUtil(const SurroundingTextUtil &) = delete;
+  SurroundingTextUtil &operator=(const SurroundingTextUtil &) = delete;
+
   // Calculates |from| - |to| and stores the result into |delta| with
   // checking integer overflow.
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
@@ -61,9 +65,6 @@ class SurroundingTextUtil {
   static bool GetAnchorPosFromSelection(const std::string &surrounding_text,
                                         const std::string &selected_text,
                                         guint cursor_pos, guint *anchor_pos);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SurroundingTextUtil);
 };
 
 }  // namespace ibus

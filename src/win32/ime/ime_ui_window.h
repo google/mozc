@@ -41,12 +41,11 @@ namespace win32 {
 
 class UIWindowManager {
  public:
+  UIWindowManager(const UIWindowManager&) = delete;
+  UIWindowManager& operator=(const UIWindowManager&) = delete;
   static bool OnDllProcessAttach(HINSTANCE module_handle, bool static_loading);
   static void OnDllProcessDetach(HINSTANCE module_handle,
                                  bool process_shutdown);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(UIWindowManager);
 };
 }  // namespace win32
 }  // namespace mozc

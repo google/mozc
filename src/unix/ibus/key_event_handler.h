@@ -44,6 +44,8 @@ namespace ibus {
 class KeyEventHandler {
  public:
   KeyEventHandler();
+  KeyEventHandler(const KeyEventHandler &) = delete;
+  KeyEventHandler &operator=(const KeyEventHandler &) = delete;
 
   // Converts a key event came from ibus to commands::KeyEvent. This is a
   // stateful method. It stores modifier keys states since ibus doesn't send
@@ -69,8 +71,6 @@ class KeyEventHandler {
   std::set<guint> currently_pressed_modifiers_;
   // Pending modifier keys.
   std::set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyEventHandler);
 };
 
 }  // namespace ibus

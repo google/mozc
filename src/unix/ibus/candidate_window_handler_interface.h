@@ -44,6 +44,10 @@ namespace ibus {
 class CandidateWindowHandlerInterface {
  public:
   CandidateWindowHandlerInterface() {}
+  CandidateWindowHandlerInterface(const CandidateWindowHandlerInterface &) =
+      delete;
+  CandidateWindowHandlerInterface &operator=(
+      const CandidateWindowHandlerInterface &) = delete;
   virtual ~CandidateWindowHandlerInterface() {}
 
   // Updates candidate state. This function also shows or hides candidate window
@@ -68,9 +72,6 @@ class CandidateWindowHandlerInterface {
       const std::string &custom_font_description) = 0;
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description) = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandlerInterface);
 };
 
 }  // namespace ibus

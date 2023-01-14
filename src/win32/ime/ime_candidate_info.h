@@ -65,6 +65,9 @@ struct CandidateInfo {
 
 class CandidateInfoUtil {
  public:
+  CandidateInfoUtil(const CandidateInfoUtil &) = delete;
+  CandidateInfoUtil &operator=(const CandidateInfoUtil &) = delete;
+
   // Returns an Input Method Context Component (IMCC) handle with initializing
   // it with an empty CANDIDATEINFO data.  Returns nullptr if fails.
   // You can specify the previously used handle in |current_handle| to transfer
@@ -102,9 +105,6 @@ class CandidateInfoUtil {
   FRIEND_TEST(CandidateInfoUtilTest, WriteResultTest);
   FRIEND_TEST(CandidateInfoUtilTest, WriteSafeDefaultTest);
   FRIEND_TEST(CandidateInfoUtilTest, PagingEmulation_Issue4077022);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(CandidateInfoUtil);
 };
 
 }  // namespace win32

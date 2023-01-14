@@ -46,6 +46,8 @@ namespace ibus {
 class KeyTranslator {
  public:
   KeyTranslator() = default;
+  KeyTranslator(const KeyTranslator &) = delete;
+  KeyTranslator &operator=(const KeyTranslator &) = delete;
   virtual ~KeyTranslator() = default;
 
   // Converts ibus keycode to Mozc key code and stores them on |out_event|.
@@ -68,8 +70,6 @@ class KeyTranslator {
   // Returns true iff key is HiraganaKatakana with shift modifier.
   static bool IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
                                              guint modifiers);
-
-  DISALLOW_COPY_AND_ASSIGN(KeyTranslator);
 };
 
 }  // namespace ibus

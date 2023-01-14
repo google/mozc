@@ -50,6 +50,8 @@ class GSettingsObserver;
 
 class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
+  CandidateWindowHandler(const CandidateWindowHandler &) = delete;
+  CandidateWindowHandler &operator=(const CandidateWindowHandler &) = delete;
   // CandidateWindowHandler takes ownership of renderer_ pointer.
   explicit CandidateWindowHandler(renderer::RendererInterface *renderer);
   virtual ~CandidateWindowHandler();
@@ -80,8 +82,6 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   bool use_custom_font_description_;
   std::unique_ptr<GSettingsObserver> settings_observer_;
   commands::RendererCommand::Rectangle preedit_begin_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandler);
 };
 
 }  // namespace ibus

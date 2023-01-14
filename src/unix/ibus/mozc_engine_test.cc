@@ -42,6 +42,8 @@ namespace ibus {
 class LaunchToolTest : public testing::Test {
  public:
   LaunchToolTest() = default;
+  LaunchToolTest(const LaunchToolTest&) = delete;
+  LaunchToolTest& operator=(const LaunchToolTest&) = delete;
 
  protected:
   virtual void SetUp() {
@@ -56,9 +58,6 @@ class LaunchToolTest : public testing::Test {
 
   client::ClientMock* mock_;
   std::unique_ptr<MozcEngine> mozc_engine_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(LaunchToolTest);
 };
 
 TEST_F(LaunchToolTest, LaunchToolTest) {

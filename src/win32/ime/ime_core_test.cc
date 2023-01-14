@@ -130,6 +130,8 @@ class TestServerLauncher : public client::ServerLauncherInterface {
 class MockClient : public client::Client {
  public:
   MockClient() : launcher_(nullptr) {}
+  MockClient(const MockClient &) = delete;
+  MockClient &operator=(const MockClient &) = delete;
   explicit MockClient(const commands::Output &mock_response)
       : launcher_(nullptr) {
     client_factory_.SetConnection(true);
@@ -153,8 +155,6 @@ class MockClient : public client::Client {
  private:
   IPCClientFactoryMock client_factory_;
   TestServerLauncher *launcher_;
-
-  DISALLOW_COPY_AND_ASSIGN(MockClient);
 };
 }  // namespace
 

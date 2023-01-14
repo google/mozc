@@ -159,6 +159,10 @@ class PrivateRendererMessageInitializer {
   PrivateRendererMessageInitializer()
       : private_renderer_message_(
             ::RegisterWindowMessage(mozc::kMessageReceiverMessageName)) {}
+  PrivateRendererMessageInitializer(const PrivateRendererMessageInitializer &) =
+      delete;
+  PrivateRendererMessageInitializer &operator=(
+      const PrivateRendererMessageInitializer &) = delete;
 
   // Adds an exceptional rule for the message filter which prevents from
   // receiving a window message from a process in lower integrity level.
@@ -185,7 +189,6 @@ class PrivateRendererMessageInitializer {
 
  private:
   UINT private_renderer_message_;
-  DISALLOW_COPY_AND_ASSIGN(PrivateRendererMessageInitializer);
 };
 
 void UpdateCommand(const UIContext &context, HWND ui_window,
@@ -338,6 +341,9 @@ bool TurnOnIMEAndTryToReconvertFromIME(HWND hwnd) {
 
 class LangBarCallbackImpl : public LangBarCallback {
  public:
+  LangBarCallbackImpl(const LangBarCallbackImpl &) = delete;
+  LangBarCallbackImpl &operator=(const LangBarCallbackImpl &) = delete;
+
   explicit LangBarCallbackImpl(HWND hwnd) : hwnd_(hwnd), reference_count_(1) {}
 
   virtual ~LangBarCallbackImpl() {}
@@ -517,13 +523,14 @@ class LangBarCallbackImpl : public LangBarCallback {
   // volatile modifier is added to conform with InterlockedIncrement API.
   volatile LONG reference_count_;
   HWND hwnd_;
-
-  DISALLOW_COPY_AND_ASSIGN(LangBarCallbackImpl);
 };
 
 // TODO(yukawa): Refactor for unit tests and better integration with ImeCore.
 class DefaultUIWindow {
  public:
+  DefaultUIWindow(const DefaultUIWindow &) = delete;
+  DefaultUIWindow &operator=(const DefaultUIWindow &) = delete;
+
   explicit DefaultUIWindow(HWND hwnd)
       : hwnd_(hwnd),
         langbar_callback_(new LangBarCallbackImpl(hwnd)),
@@ -962,8 +969,6 @@ class DefaultUIWindow {
   // Represents the last LangBarInfo that is set to the LangBar. nullpter if
   // no cached data is available.
   std::unique_ptr<LangBarInfo> langbar_info_cache_;
-
-  DISALLOW_COPY_AND_ASSIGN(DefaultUIWindow);
 };
 
 // When a series of private callback messages is incoming from the renderer

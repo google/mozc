@@ -68,6 +68,8 @@ class SelectionMonitorInterface;
 class MozcEngine : public EngineInterface {
  public:
   MozcEngine();
+  MozcEngine(const MozcEngine &) = delete;
+  MozcEngine &operator=(const MozcEngine &) = delete;
   virtual ~MozcEngine();
 
   // EngineInterface functions
@@ -157,8 +159,6 @@ class MozcEngine : public EngineInterface {
 
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
-
-  DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };
 
 }  // namespace ibus

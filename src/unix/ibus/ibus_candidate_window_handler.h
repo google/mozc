@@ -38,6 +38,9 @@ namespace ibus {
 class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
   IBusCandidateWindowHandler();
+  IBusCandidateWindowHandler(const IBusCandidateWindowHandler &) = delete;
+  IBusCandidateWindowHandler &operator=(const IBusCandidateWindowHandler &) =
+      delete;
   virtual ~IBusCandidateWindowHandler();
 
   virtual void Update(IBusEngine *engine, const commands::Output &output);
@@ -54,7 +57,6 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
  private:
   bool UpdateAuxiliaryText(IBusEngine *engine, const commands::Output &output);
   bool UpdateCandidates(IBusEngine *engine, const commands::Output &output);
-  DISALLOW_COPY_AND_ASSIGN(IBusCandidateWindowHandler);
 };
 
 }  // namespace ibus
