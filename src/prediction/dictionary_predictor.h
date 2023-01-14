@@ -59,6 +59,8 @@ namespace mozc {
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
+  DictionaryPredictor(const DictionaryPredictor &) = delete;
+  DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const DataManagerInterface &data_manager,
@@ -535,8 +537,6 @@ class DictionaryPredictor : public PredictorInterface {
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
   NumberDecoder number_decoder_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryPredictor);
 };
 
 }  // namespace mozc

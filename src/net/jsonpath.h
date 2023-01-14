@@ -46,6 +46,9 @@ namespace net {
 // "eval()" method on the underlying script language.
 class JsonPath {
  public:
+  JsonPath() = delete;
+  JsonPath(const JsonPath &) = delete;
+  JsonPath &operator=(const JsonPath &) = delete;
   // Perform JsonPath query |jsonpath| to the Json node |root|.
   // Results are saved in |output|. |root| node has the
   // ownership of the pointer (const Json::Value *) in |output|.
@@ -69,9 +72,6 @@ class JsonPath {
   // }
   static bool Parse(const Json::Value &root, const std::string &jsonpath,
                     std::vector<const Json::Value *> *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(JsonPath);
 };
 
 }  // namespace net
