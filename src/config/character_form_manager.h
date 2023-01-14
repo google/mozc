@@ -52,6 +52,9 @@ class CharacterFormManager {
  public:
   enum FormType { UNKNOWN_FORM, HALF_WIDTH, FULL_WIDTH };
 
+  CharacterFormManager(const CharacterFormManager &) = delete;
+  CharacterFormManager &operator=(const CharacterFormManager &) = delete;
+
   // Returns the preference of character form.
   // This method cannot return the preference,
   // if str has two set of string groups having different preferences.
@@ -151,8 +154,6 @@ class CharacterFormManager {
   ~CharacterFormManager();
 
   std::unique_ptr<Data> data_;
-
-  DISALLOW_COPY_AND_ASSIGN(CharacterFormManager);
 };
 
 }  // namespace config

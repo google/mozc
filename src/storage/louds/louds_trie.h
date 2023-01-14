@@ -51,6 +51,8 @@ class LoudsTrie {
   typedef Louds::Node Node;
 
   LoudsTrie() : edge_character_(nullptr) {}
+  LoudsTrie(const LoudsTrie &) = delete;
+  LoudsTrie &operator=(const LoudsTrie &) = delete;
   ~LoudsTrie() {}
 
   // Opens the binary image and constructs the data structure.  The first four
@@ -200,8 +202,6 @@ class LoudsTrie {
   // This array also doesn't have an entry for super root.
   // In other words, id=2 in louds_ corresponds to edge_character_[1].
   const char *edge_character_;
-
-  DISALLOW_COPY_AND_ASSIGN(LoudsTrie);
 };
 
 }  // namespace louds

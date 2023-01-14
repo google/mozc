@@ -42,6 +42,8 @@ namespace louds {
 class LoudsTrieBuilder {
  public:
   LoudsTrieBuilder();
+  LoudsTrieBuilder(const LoudsTrieBuilder &) = delete;
+  LoudsTrieBuilder &operator=(const LoudsTrieBuilder &) = delete;
 
   // Adds the word to the builder. It is necessary to call this method,
   // before Build invocation.
@@ -64,8 +66,6 @@ class LoudsTrieBuilder {
   std::vector<std::string> word_list_;
   std::vector<int> id_list_;
   std::string image_;
-
-  DISALLOW_COPY_AND_ASSIGN(LoudsTrieBuilder);
 };
 
 }  // namespace louds

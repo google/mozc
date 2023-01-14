@@ -48,6 +48,10 @@ class StatsConfigUtilInterface {
 
 class StatsConfigUtil {
  public:
+  StatsConfigUtil() = delete;
+  StatsConfigUtil(const StatsConfigUtil&) = delete;
+  StatsConfigUtil& operator=(const StatsConfigUtil&) = delete;
+
   // Get send stats config from proper field.
   //  Windows: registry
   //  Mac: text file
@@ -64,8 +68,6 @@ class StatsConfigUtil {
   static void SetHandler(StatsConfigUtilInterface *handler);
 
   // Should never be allocated.
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(StatsConfigUtil);
 };
 
 }  // namespace config

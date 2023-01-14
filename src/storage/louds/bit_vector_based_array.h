@@ -44,6 +44,8 @@ namespace louds {
 class BitVectorBasedArray {
  public:
   BitVectorBasedArray() {}
+  BitVectorBasedArray(const BitVectorBasedArray &) = delete;
+  BitVectorBasedArray &operator=(const BitVectorBasedArray &) = delete;
 
   void Open(const uint8_t *image);
   void Close();
@@ -57,8 +59,6 @@ class BitVectorBasedArray {
   size_t base_length_;
   size_t step_length_;
   const char *data_;
-
-  DISALLOW_COPY_AND_ASSIGN(BitVectorBasedArray);
 };
 
 }  // namespace louds
