@@ -43,6 +43,9 @@ namespace mozc {
 // Arabic numbers, Roman numbers, Kanji numbers, and so on.
 class NumberUtil {
  public:
+  NumberUtil() = delete;
+  NumberUtil(const NumberUtil &) = delete;
+  NumberUtil &operator=(const NumberUtil &) = delete;
   // Converts the string to a number and return it.
   static int SimpleAtoi(absl::string_view str);
 
@@ -186,9 +189,6 @@ class NumberUtil {
   // "百二十" -> 10020
   static void KanjiNumberToArabicNumber(absl::string_view input,
                                         std::string *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(NumberUtil);
 };
 
 }  // namespace mozc

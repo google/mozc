@@ -33,7 +33,7 @@
 #include <Windows.h>
 
 #include <string>
-#else
+#else  // OS_WIN
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -120,18 +120,18 @@ Mmap::Mmap() : text_(nullptr), size_(0) {}
 
 #ifndef O_BINARY
 #define O_BINARY 0
-#endif
+#endif  // O_BINARY
 
 namespace {
 class ScopedCloser {
  public:
   explicit ScopedCloser(int fd) : fd_(fd) {}
+  ScopedCloser(const ScopedCloser &) = delete;
+  ScopedCloser &operator=(const ScopedCloser &) = delete;
   ~ScopedCloser() { ::close(fd_); }
 
  private:
   int fd_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedCloser);
 };
 }  // namespace
 
@@ -201,7 +201,7 @@ void Mmap::Close() {
 
 #ifndef MOZC_HAVE_MLOCK
 #error "MOZC_HAVE_MLOCK is not defined"
-#endif
+#endif  // MOZC_HAVE_MLOCK
 
 #if MOZC_HAVE_MLOCK
 bool Mmap::IsMLockSupported() { return true; }

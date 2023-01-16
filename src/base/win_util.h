@@ -179,6 +179,8 @@ class WinUtil {
 class ScopedCOMInitializer {
  public:
   ScopedCOMInitializer();
+  ScopedCOMInitializer(const ScopedCOMInitializer &) = delete;
+  ScopedCOMInitializer &operator=(const ScopedCOMInitializer &) = delete;
   ScopedCOMInitializer::~ScopedCOMInitializer();
 
   // Returns the error code from CoInitialize(nullptr)
@@ -187,9 +189,6 @@ class ScopedCOMInitializer {
 
  protected:
   HRESULT hr_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ScopedCOMInitializer);
 };
 
 }  // namespace mozc

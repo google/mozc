@@ -51,6 +51,10 @@ class PasswordManagerInterface;
 
 class PasswordManager {
  public:
+  PasswordManager() = delete;
+  PasswordManager(const PasswordManager &) = delete;
+  PasswordManager &operator=(const PasswordManager &) = delete;
+
   // Initialize password.
   // If password is not found, make a random password internally.
   // return false if initialization failed.
@@ -66,9 +70,6 @@ class PasswordManager {
 
   // set internal interface for unittesting
   static void SetPasswordManagerHandler(PasswordManagerInterface *handler);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(PasswordManager);
 };
 
 // Implements PasswordManager implementation.

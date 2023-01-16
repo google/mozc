@@ -46,12 +46,13 @@ namespace internal {
 // TODO(team): Consider to remove this class and stop doing obfuscation.
 class UnverifiedSHA1 {
  public:
+  UnverifiedSHA1() = delete;
+  UnverifiedSHA1(const UnverifiedSHA1&) = delete;
+  UnverifiedSHA1& operator=(const UnverifiedSHA1&) = delete;
+
   // Returns 20-byte-length SHA1 digest.
   // CAVEATS: See the above comment.
   static std::string MakeDigest(absl::string_view source);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UnverifiedSHA1);
 };
 
 }  // namespace internal

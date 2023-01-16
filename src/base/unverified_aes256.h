@@ -45,6 +45,10 @@ namespace internal {
 // TODO(team): Consider to remove this class and stop doing obfuscation.
 class UnverifiedAES256 {
  public:
+  UnverifiedAES256() = delete;
+  UnverifiedAES256(const UnverifiedAES256 &) = delete;
+  UnverifiedAES256 &operator=(const UnverifiedAES256 &) = delete;
+
   static constexpr size_t kKeyBytes = 32;    // 256 bit
   static constexpr size_t kBlockBytes = 16;  // 128 bit
   static constexpr size_t kKeyScheduleBytes = 240;
@@ -81,9 +85,6 @@ class UnverifiedAES256 {
   static void InvMixColumns(uint8_t block[kBlockBytes]);
   static void ShiftRows(uint8_t block[kBlockBytes]);
   static void InvShiftRows(uint8_t block[kBlockBytes]);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UnverifiedAES256);
 };
 
 }  // namespace internal

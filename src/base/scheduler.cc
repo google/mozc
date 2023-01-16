@@ -57,6 +57,9 @@ class TimerThread final : public Thread {
         << "Either of due_time or interval must be non 0.";
   }
 
+  TimerThread(const TimerThread &) = delete;
+  TimerThread &operator=(const TimerThread &) = delete;
+
   ~TimerThread() override {
     SignalQuit();
     Join();
@@ -104,12 +107,12 @@ class TimerThread final : public Thread {
   uint32_t interval_;
 
   UnnamedEvent event_;
-
-  DISALLOW_COPY_AND_ASSIGN(TimerThread);
 };
 
 class QueueTimer final {
  public:
+  QueueTimer(const QueueTimer &) = delete;
+  QueueTimer &operator=(const QueueTimer &) = delete;
   QueueTimer(std::function<void()> callback, uint32_t due_time, uint32_t period)
       : timer_thread_(callback, due_time, period) {}
 
@@ -117,8 +120,6 @@ class QueueTimer final {
 
  private:
   TimerThread timer_thread_;
-
-  DISALLOW_COPY_AND_ASSIGN(QueueTimer);
 };
 
 class Job {
@@ -174,6 +175,9 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
   SchedulerImpl() {
     Util::SetRandomSeed(static_cast<uint32_t>(Clock::GetTime()));
   }
+
+  SchedulerImpl(const SchedulerImpl &) = delete;
+  SchedulerImpl &operator=(const SchedulerImpl &) = delete;
 
   ~SchedulerImpl() override { RemoveAllJobs(); }
 
@@ -275,8 +279,6 @@ class SchedulerImpl : public Scheduler::SchedulerInterface {
 
   std::map<std::string, Job> jobs_;
   absl::Mutex mutex_;
-
-  DISALLOW_COPY_AND_ASSIGN(SchedulerImpl);
 };
 
 Scheduler::SchedulerInterface *g_scheduler_handler = nullptr;

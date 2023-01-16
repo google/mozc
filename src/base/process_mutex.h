@@ -58,6 +58,8 @@ namespace mozc {
 class ProcessMutex {
  public:
   explicit ProcessMutex(const char *name);
+  ProcessMutex(const ProcessMutex &) = delete;
+  ProcessMutex &operator=(const ProcessMutex &) = delete;
   ~ProcessMutex();
 
   // return false if the process is already locked
@@ -86,8 +88,6 @@ class ProcessMutex {
   //     internal state.
   bool locked_;
   std::string filename_;
-
-  DISALLOW_COPY_AND_ASSIGN(ProcessMutex);
 };
 
 }  // namespace mozc

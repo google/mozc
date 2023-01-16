@@ -46,6 +46,9 @@ class BitArray {
     memset(reinterpret_cast<char *>(array_.get()), 0, 4 * (1 + (size >> 5)));
   }
 
+  BitArray(const BitArray &) = delete;
+  BitArray &operator=(const BitArray &) = delete;
+
   ~BitArray() {}
 
   // Gets true/false of |index|
@@ -85,8 +88,6 @@ class BitArray {
  private:
   std::unique_ptr<uint32_t[]> array_;
   const size_t size_;
-
-  DISALLOW_COPY_AND_ASSIGN(BitArray);
 };
 
 }  // namespace mozc

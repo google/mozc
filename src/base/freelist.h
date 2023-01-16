@@ -45,6 +45,9 @@ class FreeList {
   explicit FreeList(size_t size)
       : current_index_(0), chunk_index_(0), size_(size) {}
 
+  FreeList(const FreeList&) = delete;
+  FreeList& operator=(const FreeList&) = delete;
+
   ~FreeList() {
     for (size_t i = 0; i < pool_.size(); ++i) {
       delete[] pool_[i];
@@ -86,13 +89,13 @@ class FreeList {
   size_t current_index_;
   size_t chunk_index_;
   size_t size_;
-
-  DISALLOW_COPY_AND_ASSIGN(FreeList);
 };
 
 template <class T>
 class ObjectPool {
  public:
+  ObjectPool(const ObjectPool&) = delete;
+  ObjectPool& operator=(const ObjectPool&) = delete;
   explicit ObjectPool(int size) : freelist_(size) {}
 
   ~ObjectPool() {}
@@ -118,8 +121,6 @@ class ObjectPool {
  private:
   std::vector<T*> released_;
   FreeList<T> freelist_;
-
-  DISALLOW_COPY_AND_ASSIGN(ObjectPool);
 };
 
 }  // namespace mozc

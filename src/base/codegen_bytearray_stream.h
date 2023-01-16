@@ -91,6 +91,10 @@ enum StreamOwner {
 
 class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
  public:
+  BasicCodeGenByteArrayStreamBuf(const BasicCodeGenByteArrayStreamBuf &) =
+      delete;
+  BasicCodeGenByteArrayStreamBuf &operator=(
+      const BasicCodeGenByteArrayStreamBuf &) = delete;
   typedef std::char_traits<char> traits_type;
 
   // Args:
@@ -152,8 +156,6 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   uint64 word_buffer_;
 #endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
-
-  DISALLOW_COPY_AND_ASSIGN(BasicCodeGenByteArrayStreamBuf);
 };
 
 
@@ -166,6 +168,11 @@ class CodeGenByteArrayOutputStream : public std::ostream {
   CodeGenByteArrayOutputStream(std::ostream *output_stream,
                                codegenstream::StreamOwner own_output_stream);
 
+  CodeGenByteArrayOutputStream(const CodeGenByteArrayOutputStream &) = delete;
+
+  CodeGenByteArrayOutputStream &operator=(
+      const CodeGenByteArrayOutputStream &) = delete;
+
   // Writes the beginning of a variable definition.
   // A call to |OpenVarDef| must precede any output to the instance.
   void OpenVarDef(const std::string &var_name_base);
@@ -177,8 +184,6 @@ class CodeGenByteArrayOutputStream : public std::ostream {
 
  private:
   BasicCodeGenByteArrayStreamBuf streambuf_;
-
-  DISALLOW_COPY_AND_ASSIGN(CodeGenByteArrayOutputStream);
 };
 
 }  // namespace mozc

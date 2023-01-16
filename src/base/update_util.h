@@ -36,12 +36,13 @@ namespace mozc {
 
 class UpdateUtil {
  public:
+  UpdateUtil() = delete;
+  UpdateUtil(const UpdateUtil&) = delete;
+  UpdateUtil& operator=(const UpdateUtil&) = delete;
+
   // Writes a registry value for usage tracking by Omaha.
   // Returns true if the value is successfully written.
   static bool WriteActiveUsageInfo();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UpdateUtil);
 };
 
 }  // namespace mozc

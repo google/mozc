@@ -58,6 +58,10 @@ class Sid {
 
 class WinSandbox {
  public:
+  WinSandbox() = delete;
+  WinSandbox(const WinSandbox &) = delete;
+  WinSandbox &operator=(const WinSandbox &) = delete;
+
   // This emum is not compatible with the same name enum in Chromium sandbox
   // library.  This num has INTEGRITY_LEVEL_MEDIUM_PLUS and lacks of
   // INTEGRITY_LEVEL_MEDIUM_LOW and INTEGRITY_LEVEL_BELOW_LOW, which are not
@@ -199,9 +203,6 @@ class WinSandbox {
                               const std::wstring &token_user_sid,
                               const std::wstring &token_primary_group_sid,
                               bool is_windows_8_or_later);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WinSandbox);
 };
 
 }  // namespace mozc

@@ -87,6 +87,10 @@ class Encryptor {
     std::unique_ptr<InternalData> data_;
   };
 
+  Encryptor() = delete;
+  Encryptor(const Encryptor &) = delete;
+  Encryptor &operator=(const Encryptor &) = delete;
+
   // Encrypt character buffer. set the size of character buffer
   // in *buf_size. This function stores the size of result buffer in
   // *buf_size. Note that the capacity of buffer MUST BE LARGER
@@ -117,9 +121,6 @@ class Encryptor {
   // It uses CryptUnprotectData API to decrypt data on Windows.
   static bool UnprotectData(const std::string &cipher_text,
                             std::string *plain_text);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(Encryptor);
 };
 }  // namespace mozc
 #endif  // MOZC_BASE_ENCRYPTOR_H_

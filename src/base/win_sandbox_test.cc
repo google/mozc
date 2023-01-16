@@ -38,11 +38,12 @@ namespace {
 
 class TestableWinSandbox : public WinSandbox {
  public:
+  TestableWinSandbox() = delete;
+  TestableWinSandbox(const TestableWinSandbox&) = delete;
+  TestableWinSandbox& operator=(const TestableWinSandbox&) = delete;
+
   // Change access rights.
   using WinSandbox::GetSDDL;
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(TestableWinSandbox);
 };
 
 void VerifySidContained(const std::vector<Sid> sids,

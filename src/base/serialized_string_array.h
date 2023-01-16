@@ -222,6 +222,8 @@ class SerializedStringArray {
   using const_iterator = iterator;
 
   SerializedStringArray();  // Default is an empty array.
+  SerializedStringArray(const SerializedStringArray &) = delete;
+  SerializedStringArray &operator=(const SerializedStringArray &) = delete;
   ~SerializedStringArray();
 
   // Initializes the array from given memory block.  The block must be aligned
@@ -268,8 +270,6 @@ class SerializedStringArray {
 
  private:
   absl::string_view data_;
-
-  DISALLOW_COPY_AND_ASSIGN(SerializedStringArray);
 };
 
 }  // namespace mozc
