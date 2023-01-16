@@ -37,13 +37,17 @@ namespace ibus {
 
 class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
-  IBusCandidateWindowHandler();
-  virtual ~IBusCandidateWindowHandler();
+  IBusCandidateWindowHandler() = default;
+  IBusCandidateWindowHandler(const IBusCandidateWindowHandler &) = delete;
+  IBusCandidateWindowHandler &operator=(const IBusCandidateWindowHandler &) =
+      delete;
+  virtual ~IBusCandidateWindowHandler() = default;
 
-  virtual void Update(IBusEngine *engine, const commands::Output &output);
-  virtual void UpdateCursorRect(IBusEngine *engine);
-  virtual void Hide(IBusEngine *engine);
-  virtual void Show(IBusEngine *engine);
+  virtual void Update(IbusEngineWrapper *engine,
+                      const commands::Output &output);
+  virtual void UpdateCursorRect(IbusEngineWrapper *engine);
+  virtual void Hide(IbusEngineWrapper *engine);
+  virtual void Show(IbusEngineWrapper *engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
       const std::string &custom_font_description);
@@ -52,9 +56,10 @@ class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
       bool use_custom_font_description);
 
  private:
-  bool UpdateAuxiliaryText(IBusEngine *engine, const commands::Output &output);
-  bool UpdateCandidates(IBusEngine *engine, const commands::Output &output);
-  DISALLOW_COPY_AND_ASSIGN(IBusCandidateWindowHandler);
+  bool UpdateAuxiliaryText(IbusEngineWrapper *engine,
+                           const commands::Output &output);
+  bool UpdateCandidates(IbusEngineWrapper *engine,
+                        const commands::Output &output);
 };
 
 }  // namespace ibus

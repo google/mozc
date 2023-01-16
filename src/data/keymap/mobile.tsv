@@ -2,7 +2,7 @@ status	key	command
 Composition	ASCII	InsertCharacter
 Composition	Backspace	Backspace
 Composition	Ctrl a	MoveCursorToBeginning
-Composition	Ctrl Backspace	Backspace
+Composition	Ctrl Backspace	Undo
 Composition	Ctrl d	MoveCursorRight
 Composition	Ctrl Down	MoveCursorToEnd
 Composition	Ctrl e	MoveCursorToBeginning
@@ -63,7 +63,7 @@ Composition	VirtualRight	MoveCursorRight
 Composition	VirtualEnter	Commit
 Conversion	Backspace	Cancel
 Conversion	Ctrl a	SegmentFocusFirst
-Conversion	Ctrl Backspace	Cancel
+Conversion	Ctrl Backspace	Undo
 Conversion	Ctrl d	SegmentFocusRight
 Conversion	Ctrl Down	CommitOnlyFirstSegment
 Conversion	Ctrl e	ConvertPrev

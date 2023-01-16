@@ -43,6 +43,8 @@ class ExistenceFilter;
 // Simple bloomfilter
 class SuggestionFilter {
  public:
+  SuggestionFilter(const SuggestionFilter &) = delete;
+  SuggestionFilter &operator=(const SuggestionFilter &) = delete;
   SuggestionFilter(const char *data, size_t size);
   ~SuggestionFilter();
 
@@ -50,8 +52,6 @@ class SuggestionFilter {
 
  private:
   std::unique_ptr<mozc::storage::ExistenceFilter> filter_;
-
-  DISALLOW_COPY_AND_ASSIGN(SuggestionFilter);
 };
 
 }  // namespace mozc

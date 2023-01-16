@@ -138,12 +138,12 @@ TEST_F(UpdateUtilTestWin, WriteActiveUsageInfo) {
   EXPECT_EQ(L"dr", call_result().written_value_name);
   EXPECT_EQ(L"1", call_result().written_value);
   ASSERT_TRUE(call_result().reg_close_key_called);
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
   EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
   ASSERT_FALSE(call_result().reg_create_key_ex_called);
   ASSERT_FALSE(call_result().reg_set_value_ex_called);
   ASSERT_FALSE(call_result().reg_close_key_called);
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
 
 #else  // OS_WIN
@@ -153,7 +153,7 @@ TEST(UpdateUtilTest, WriteActiveUsageInfo) {
   EXPECT_FALSE(UpdateUtil::WriteActiveUsageInfo());
 }
 
-#endif
+#endif  // OS_WIN
 
 }  // namespace
 }  // namespace mozc

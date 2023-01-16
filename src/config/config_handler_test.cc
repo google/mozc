@@ -83,6 +83,9 @@ class ConfigHandlerTest : public ::testing::Test {
 
 class ScopedSetConfigFileName {
  public:
+  ScopedSetConfigFileName() = delete;
+  ScopedSetConfigFileName(const ScopedSetConfigFileName &) = delete;
+  ScopedSetConfigFileName &operator=(const ScopedSetConfigFileName &) = delete;
   explicit ScopedSetConfigFileName(const std::string &new_name)
       : default_config_filename_(ConfigHandler::GetConfigFileName()) {
     ConfigHandler::SetConfigFileName(new_name);
@@ -94,8 +97,6 @@ class ScopedSetConfigFileName {
 
  private:
   std::string default_config_filename_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedSetConfigFileName);
 };
 
 TEST_F(ConfigHandlerTest, SetConfig) {

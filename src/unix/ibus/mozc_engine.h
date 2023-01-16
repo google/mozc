@@ -42,6 +42,8 @@
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_config.h"
+#include "unix/ibus/ibus_wrapper.h"
+#include "unix/ibus/preedit_handler.h"
 #include "unix/ibus/property_handler.h"
 
 namespace mozc {
@@ -55,8 +57,6 @@ namespace ibus {
 class CandidateWindowHandlerInterface;
 class KeyEventHandler;
 class LaunchToolTest;
-class MessageTranslatorInterface;
-class PreeditHandlerInterface;
 class SelectionMonitorInterface;
 
 // Implements EngineInterface and handles signals from IBus daemon.
@@ -68,6 +68,8 @@ class SelectionMonitorInterface;
 class MozcEngine : public EngineInterface {
  public:
   MozcEngine();
+  MozcEngine(const MozcEngine &) = delete;
+  MozcEngine &operator=(const MozcEngine &) = delete;
   virtual ~MozcEngine();
 
   // EngineInterface functions
@@ -95,11 +97,6 @@ class MozcEngine : public EngineInterface {
                          int h) override;
   void SetContentType(IbusEngineWrapper *engine, uint purpose,
                       uint hints) override;
-
-  // Returns the GType which this class represents.
-  static GType GetType();
-  // The callback function to the "disconnected" signal to the bus object.
-  static void Disconnected(IBusBus *bus, gpointer user_data);
 
  private:
   // Updates the preedit text and the candidate window and inserts result
@@ -142,7 +139,7 @@ class MozcEngine : public EngineInterface {
   std::unique_ptr<SelectionMonitorInterface> selection_monitor_;
 
   std::unique_ptr<PropertyHandler> property_handler_;
-  std::unique_ptr<PreeditHandlerInterface> preedit_handler_;
+  std::unique_ptr<PreeditHandler> preedit_handler_;
 
   // If true, uses Mozc candidate window instead of IBus default one.
   bool use_mozc_candidate_window_;
@@ -157,8 +154,6 @@ class MozcEngine : public EngineInterface {
 
   friend class LaunchToolTest;
   FRIEND_TEST(LaunchToolTest, LaunchToolTest);
-
-  DISALLOW_COPY_AND_ASSIGN(MozcEngine);
 };
 
 }  // namespace ibus

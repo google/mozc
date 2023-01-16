@@ -32,19 +32,77 @@
 #include "base/logging.h"
 #include "unix/ibus/engine_interface.h"
 
-namespace {
-mozc::ibus::EngineInterface *g_engine = nullptr;
-}
-
 namespace mozc {
 namespace ibus {
 
-bool EngineRegistrar::Register(EngineInterface *engine,
-                               IBusEngineClass *engine_class) {
-  DCHECK(engine) << "engine is nullptr";
-  DCHECK(!g_engine) << "engine is already registered";
+namespace {
+EngineInterface *g_engine = nullptr;
 
-  g_engine = engine;
+struct IBusMozcEngineClass {
+  IBusEngineClass parent;
+};
+
+struct IBusMozcEngine {
+  IBusEngine parent;
+  mozc::ibus::EngineInterface *engine;
+};
+
+IBusEngineClass *g_parent_class = nullptr;
+
+GObject *IBusMozcEngineClassConstructor(
+    GType type, uint n_construct_properties,
+    GObjectConstructParam *construct_properties) {
+  return G_OBJECT_CLASS(g_parent_class)
+      ->constructor(type, n_construct_properties, construct_properties);
+}
+
+void IBusMozcEngineClassDestroy(IBusObject *engine) {
+  IBUS_OBJECT_CLASS(g_parent_class)->destroy(engine);
+}
+
+void IBusMozcEngineClassInit(gpointer klass, gpointer class_data) {
+  IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
+
+  VLOG(2) << "MozcEngineClassInit is called";
+  EngineRegistrar::Register(engine_class);
+
+  g_parent_class =
+      reinterpret_cast<IBusEngineClass *>(g_type_class_peek_parent(klass));
+
+  GObjectClass *object_class = G_OBJECT_CLASS(klass);
+  object_class->constructor = IBusMozcEngineClassConstructor;
+  IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS(klass);
+  ibus_object_class->destroy = IBusMozcEngineClassDestroy;
+}
+
+void IBusMozcEngineInit(GTypeInstance *instance, gpointer klass) {
+  IBusMozcEngine *engine = reinterpret_cast<IBusMozcEngine *>(instance);
+  engine->engine = g_engine;
+}
+}  // namespace
+
+// static
+GType RegisterEngine(EngineInterface *engine) {
+  static GType type_id = 0;
+
+  static const GTypeInfo type_info = {
+      sizeof(IBusMozcEngineClass), nullptr, nullptr,
+      IBusMozcEngineClassInit,     nullptr, nullptr,
+      sizeof(IBusMozcEngine),      0,       IBusMozcEngineInit,
+  };
+
+  if (type_id == 0) {
+    g_engine = engine;
+    type_id = g_type_register_static(IBUS_TYPE_ENGINE, "IBusMozcEngine",
+                                     &type_info, static_cast<GTypeFlags>(0));
+    DCHECK_NE(type_id, 0) << "g_type_register_static failed";
+  }
+
+  return type_id;
+}
+
+bool EngineRegistrar::Register(IBusEngineClass *engine_class) {
+  DCHECK(g_engine) << "engine is no registered";
 
   engine_class->cursor_down = CursorDown;
   engine_class->candidate_clicked = CandidateClicked;

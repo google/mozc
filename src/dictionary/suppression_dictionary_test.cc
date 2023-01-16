@@ -120,9 +120,9 @@ class DictionaryLoaderThread : public Thread {
       // like 30 times compaired with MacOS. This should be a temporary
       // solution.
       Util::Sleep(1);
-#else
+#else  // OS_IOS
       Util::Sleep(5);
-#endif
+#endif  // OS_IOS
     }
   }
 

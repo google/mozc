@@ -54,6 +54,7 @@
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
+#include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"
 #include "unix/ibus/path_util.h"
@@ -62,6 +63,7 @@
 #include "unix/ibus/selection_monitor.h"
 #include "unix/ibus/surrounding_text_util.h"
 #include "absl/flags/flag.h"
+#include "absl/strings/string_view.h"
 
 ABSL_FLAG(bool, use_mozc_renderer, true,
           "The engine tries to use mozc_renderer if available.");
@@ -98,49 +100,6 @@ std::string GetMessageLocale() {
   return kMozcDefaultUILocale;
 }
 
-struct IBusMozcEngineClass {
-  IBusEngineClass parent;
-};
-
-struct IBusMozcEngine {
-  IBusEngine parent;
-  mozc::ibus::MozcEngine *engine;
-};
-
-IBusEngineClass *g_parent_class = nullptr;
-
-GObject *MozcEngineClassConstructor(
-    GType type, guint n_construct_properties,
-    GObjectConstructParam *construct_properties) {
-  return G_OBJECT_CLASS(g_parent_class)
-      ->constructor(type, n_construct_properties, construct_properties);
-}
-
-void MozcEngineClassDestroy(IBusObject *engine) {
-  IBUS_OBJECT_CLASS(g_parent_class)->destroy(engine);
-}
-
-void MozcEngineClassInit(gpointer klass, gpointer class_data) {
-  IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
-
-  VLOG(2) << "MozcEngineClassInit is called";
-  mozc::ibus::EngineRegistrar::Register(
-      mozc::Singleton<mozc::ibus::MozcEngine>::get(), engine_class);
-
-  g_parent_class =
-      reinterpret_cast<IBusEngineClass *>(g_type_class_peek_parent(klass));
-
-  GObjectClass *object_class = G_OBJECT_CLASS(klass);
-  object_class->constructor = MozcEngineClassConstructor;
-  IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS(klass);
-  ibus_object_class->destroy = MozcEngineClassDestroy;
-}
-
-void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
-  IBusMozcEngine *engine = reinterpret_cast<IBusMozcEngine *>(instance);
-  engine->engine = mozc::Singleton<mozc::ibus::MozcEngine>::get();
-}
-
 }  // namespace
 
 namespace mozc {
@@ -165,13 +124,13 @@ bool GetSurroundingText(IbusEngineWrapper *engine,
   }
   uint cursor_pos = 0;
   uint anchor_pos = 0;
-  const std::string surrounding_text =
+  const absl::string_view surrounding_text =
       engine->GetSurroundingText(&cursor_pos, &anchor_pos);
 
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (cursor_pos == anchor_pos && selection_monitor != nullptr) {
     const SelectionInfo &info = selection_monitor->GetSelectionInfo();
-    guint new_anchor_pos = 0;
+    uint new_anchor_pos = 0;
     if (SurroundingTextUtil::GetAnchorPosFromSelection(
             surrounding_text, info.selected_text, cursor_pos,
             &new_anchor_pos)) {
@@ -316,7 +275,7 @@ void MozcEngine::CursorUp(IbusEngineWrapper *engine) {
 
 void MozcEngine::Disable(IbusEngineWrapper *engine) {
   RevertSession(engine);
-  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->Hide(engine);
   key_event_handler_->Clear();
 }
 
@@ -382,7 +341,7 @@ void MozcEngine::FocusIn(IbusEngineWrapper *engine) {
 }
 
 void MozcEngine::FocusOut(IbusEngineWrapper *engine) {
-  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->Hide(engine);
   property_handler_->ResetContentType(engine);
 
   // Note that the preedit string (if any) will be committed by IBus runtime
@@ -415,7 +374,7 @@ bool MozcEngine::ProcessKeyEvent(IbusEngineWrapper *engine, uint keyval,
   }
 
   // layout_is_jp is only used determine Kana input with US layout.
-  const std::string &layout = ibus_config_.GetLayout(engine->GetName());
+  const absl::string_view layout = ibus_config_.GetLayout(engine->GetName());
   const bool layout_is_jp = (layout != "us");
 
   commands::KeyEvent key;
@@ -479,7 +438,7 @@ void MozcEngine::SetCapabilities(IbusEngineWrapper *engine, uint capabilities) {
 
 void MozcEngine::SetCursorLocation(IbusEngineWrapper *engine, int x, int y,
                                    int w, int h) {
-  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
 }
 
 void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
@@ -492,33 +451,12 @@ void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
   }
 }
 
-GType MozcEngine::GetType() {
-  static GType type = 0;
-
-  static const GTypeInfo type_info = {
-      sizeof(IBusMozcEngineClass), nullptr, nullptr,
-      MozcEngineClassInit,         nullptr, nullptr,
-      sizeof(IBusMozcEngine),      0,       MozcEngineInstanceInit,
-  };
-
-  if (type == 0) {
-    type = g_type_register_static(IBUS_TYPE_ENGINE, "IBusMozcEngine",
-                                  &type_info, static_cast<GTypeFlags>(0));
-    DCHECK_NE(type, 0) << "g_type_register_static failed";
-  }
-
-  return type;
-}
-
-// static
-void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) { ibus_quit(); }
-
 bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
                            const commands::Output &output) {
   UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
-  preedit_handler_->Update(engine->GetEngine(), output);
-  GetCandidateWindowHandler(engine)->Update(engine->GetEngine(), output);
+  preedit_handler_->Update(engine, output);
+  GetCandidateWindowHandler(engine)->Update(engine, output);
   UpdateCandidateIDMapping(output);
 
   property_handler_->Update(engine, output);

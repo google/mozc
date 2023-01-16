@@ -404,10 +404,11 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
     constexpr uint32_t kNoModifiers = 0;
     for (int i = 0; i < chars.size(); ++i) {
       command->Clear();
+      command->mutable_input()->set_type(commands::Input::SEND_KEY);
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
-      session->InsertCharacter(command);
+      session->SendKey(command);
     }
   }
 
@@ -418,11 +419,12 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
     constexpr uint32_t kNoModifiers = 0;
     for (size_t i = 0; i < chars.size(); ++i) {
       command->Clear();
+      command->mutable_input()->set_type(commands::Input::SEND_KEY);
       *command->mutable_input()->mutable_context() = context;
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
-      session->InsertCharacter(command);
+      session->SendKey(command);
     }
   }
 
@@ -441,11 +443,12 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
     CHECK_EQ(inputs.size(), chars.size());
     for (int i = 0; i < chars.size(); ++i) {
       command->Clear();
+      command->mutable_input()->set_type(commands::Input::SEND_KEY);
       commands::KeyEvent *key_event = command->mutable_input()->mutable_key();
       key_event->set_key_code(chars[i]);
       key_event->set_modifiers(kNoModifiers);
       key_event->set_key_string(inputs[i]);
-      session->InsertCharacter(command);
+      session->SendKey(command);
     }
   }
 
@@ -493,6 +496,9 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
     Mock::VerifyAndClearExpectations(converter);
   }
 
+  // TODO(matsuzakit): Set the session's state to PRECOMPOSITION.
+  // Though the method name asserts "ToPrecomposition",
+  // this method doesn't change session's state.
   void InitSessionToPrecomposition(Session *session) {
 #ifdef OS_WIN
     // Session is created with direct mode on Windows
@@ -703,12 +709,9 @@ class SessionTest : public ::testing::TestWithParam<commands::Request> {
 INSTANTIATE_TEST_SUITE_P(
     SessionTestForRequest, SessionTest,
     ::testing::Values(commands::Request::default_instance(), []() {
-      // TODO(b/263214961): Replace with undo_partial_commit.
-      // Using enable_new_spatial_scoring here only
-      // for concept verification purposes.
       auto request = commands::Request::default_instance();
-      request.mutable_decoder_experiment_params()
-          ->set_enable_new_spatial_scoring(true);
+      request.mutable_decoder_experiment_params()->set_undo_partial_commit(
+          true);
       return request;
     }()));
 
@@ -828,7 +831,7 @@ TEST_P(SessionTest, SendCommand) {
   EXPECT_FALSE(command.output().has_result());
   EXPECT_FALSE(command.output().has_preedit());
   EXPECT_FALSE(command.output().has_candidates());
-  // test of reseting the history segements
+  // test of resetting the history segements
   {
     MockEngine engine;
     MockConverter converter;
@@ -2754,6 +2757,34 @@ TEST_P(SessionTest, UndoOrRewindRewind) {
   Session session(&engine);
   InitSessionToPrecomposition(&session, *mobile_request_);
 
+  {  // Commit something. It's expected that Undo is not trigerred later.
+    commands::Command command;
+    Segments segments;
+    InsertCharacterChars("aiueo", &session, &command);
+    ConversionRequest request;
+    SetComposer(&session, &request);
+    SetAiueo(&segments);
+    Segment::Candidate *candidate;
+    candidate = segments.mutable_segment(0)->add_candidate();
+    candidate->value = "aiueo";
+    candidate = segments.mutable_segment(0)->add_candidate();
+    candidate->value = "AIUEO";
+
+    EXPECT_CALL(converter, StartConversionForRequest(_, _))
+        .WillOnce(DoAll(SetArgPointee<1>(segments), Return(true)));
+    command.Clear();
+    session.Convert(&command);
+    EXPECT_FALSE(command.output().has_result());
+    EXPECT_PREEDIT("あいうえお", command);
+
+    EXPECT_CALL(converter, CommitSegmentValue(_, _, _))
+        .WillOnce(DoAll(SetArgPointee<0>(segments), Return(true)));
+    command.Clear();
+    session.Commit(&command);
+    EXPECT_FALSE(command.output().has_preedit());
+    EXPECT_RESULT("あいうえお", command);
+  }
+
   Segments segments;
   {
     Segment *segment;
@@ -3090,11 +3121,20 @@ TEST_P(SessionTest, NeedlessClearUndoContext) {
 
     command.Clear();
     session.Undo(&command);
-    EXPECT_FALSE(command.output().has_result());
-    EXPECT_TRUE(command.output().has_deletion_range());
-    EXPECT_EQ(-5, command.output().deletion_range().offset());
-    EXPECT_EQ(5, command.output().deletion_range().length());
-    EXPECT_PREEDIT("あいうえお", command);
+
+    if (GetParam().decoder_experiment_params().undo_partial_commit()) {
+      // Undo did nothing because the undo stack emptied by Escape event,
+      // which modified the composition.
+      EXPECT_FALSE(command.output().has_result());
+      EXPECT_FALSE(command.output().has_deletion_range());
+      EXPECT_FALSE(command.output().has_result());
+    } else {
+      EXPECT_FALSE(command.output().has_result());
+      EXPECT_TRUE(command.output().has_deletion_range());
+      EXPECT_EQ(-5, command.output().deletion_range().offset());
+      EXPECT_EQ(5, command.output().deletion_range().length());
+      EXPECT_PREEDIT("あいうえお", command);
+    }
   }
 }
 
@@ -9685,34 +9725,39 @@ TEST_P(SessionTest, MakeSureIMEOff) {
         commands::DIRECT);
     EXPECT_FALSE(session.SendCommand(&command));
   }
+}
 
+TEST_P(SessionTest, MakeSureIMEOffWithCommitComposition) {
+  MockConverter converter;
+  MockEngine engine;
+  EXPECT_CALL(engine, GetConverter()).WillRepeatedly(Return(&converter));
+
+  Session session(&engine);
+  // Make sure SessionCommand::TURN_OFF_IME terminates the existing
+  // composition.
+
+  InitSessionToPrecomposition(&session);
+
+  // Set up converter.
   {
-    // Make sure SessionCommand::TURN_OFF_IME terminates the existing
-    // composition.
+    commands::Command command;
+    InsertCharacterChars("aiueo", &session, &command);
+    ConversionRequest request;
+    SetComposer(&session, &request);
+  }
 
-    InitSessionToPrecomposition(&session);
-
-    // Set up converter.
-    {
-      commands::Command command;
-      InsertCharacterChars("aiueo", &session, &command);
-      ConversionRequest request;
-      SetComposer(&session, &request);
-    }
-
-    // Send SessionCommand::TURN_OFF_IME to commit composition.
-    {
-      commands::Command command;
-      SetSendCommandCommand(commands::SessionCommand::TURN_OFF_IME, &command);
-      command.mutable_input()->mutable_command()->set_composition_mode(
-          commands::FULL_KATAKANA);
-      ASSERT_TRUE(session.SendCommand(&command));
-      EXPECT_RESULT("あいうえお", command);
-      EXPECT_TRUE(command.output().consumed());
-      ASSERT_TRUE(command.output().has_status());
-      EXPECT_FALSE(command.output().status().activated());
-      EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
-    }
+  // Send SessionCommand::TURN_OFF_IME to commit composition.
+  {
+    commands::Command command;
+    SetSendCommandCommand(commands::SessionCommand::TURN_OFF_IME, &command);
+    command.mutable_input()->mutable_command()->set_composition_mode(
+        commands::FULL_KATAKANA);
+    ASSERT_TRUE(session.SendCommand(&command));
+    EXPECT_RESULT("あいうえお", command);
+    EXPECT_TRUE(command.output().consumed());
+    ASSERT_TRUE(command.output().has_status());
+    EXPECT_FALSE(command.output().status().activated());
+    EXPECT_EQ(commands::FULL_KATAKANA, command.output().status().mode());
   }
 }
 

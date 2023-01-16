@@ -186,7 +186,7 @@ class RegistryEmulator {
         return kHKLM32_ClientState_Read;
       }
     }
-    EXPECT_TRUE(false) << "Unexpected combination found.  regsam = " << regsam;
+    ADD_FAILURE() << "Unexpected combination found.  regsam = " << regsam;
     return KRegKey_NotFound;
   }
 
@@ -257,7 +257,7 @@ class RegistryEmulator {
                                            DWORD reserved, DWORD type,
                                            const BYTE *data, DWORD num_data) {
     if (key != kHKLM32_ClientState_ReadWrite) {
-      EXPECT_TRUE(false) << "Unexpected key is specified.";
+      ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
     const wchar_t *src = reinterpret_cast<const wchar_t *>(data);
@@ -276,7 +276,7 @@ class RegistryEmulator {
   static LSTATUS WINAPI TestRegCloseKey(HKEY key) {
     if ((kHKLM32_ClientState_Read != key) &&
         (kHKLM32_ClientState_ReadWrite != key)) {
-      EXPECT_TRUE(false) << "Unexpected key is specified.";
+      ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
     return ERROR_SUCCESS;
@@ -394,7 +394,7 @@ class RegistryEmulator {
                                              LPBYTE data, LPDWORD num_data) {
     if ((kHKLM32_ClientState_Read != key) &&
         (kHKLM32_ClientState_ReadWrite != key)) {
-      EXPECT_TRUE(false) << "Unexpected key is specified.";
+      ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
 
@@ -415,7 +415,7 @@ class RegistryEmulator {
 
   static LSTATUS WINAPI TestRegDeleteValueW(HKEY key, LPCWSTR value_name) {
     if (kHKLM32_ClientState_ReadWrite != key) {
-      EXPECT_TRUE(false) << "Unexpected key is specified.";
+      ADD_FAILURE() << "Unexpected key is specified.";
       return ERROR_ACCESS_DENIED;
     }
     if (IsEqualInLowercase(value_name, kRegEntryNameForChannel)) {

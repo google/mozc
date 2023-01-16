@@ -44,6 +44,9 @@ class ProxyManagerInterface;
 // TODO(mukai): Currently ProxyManager doesn't work on Linux.
 class ProxyManager {
  public:
+  ProxyManager() = delete;
+  ProxyManager(const ProxyManager &) = delete;
+  ProxyManager &operator=(const ProxyManager &) = delete;
   // Get the system configuration proxy info.  Stores the hostname /
   // port number to "hostdata" (scheme://host:port format) and
   // username / password to "authdata" (username:password format).
@@ -54,9 +57,6 @@ class ProxyManager {
 
   // Inject a dependency for unittesting
   static void SetProxyManager(ProxyManagerInterface *proxy_manager);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ProxyManager);
 };
 
 // Implements ProxyManager implementation.

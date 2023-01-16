@@ -92,6 +92,9 @@ std::string GetServiceName() {
 
 class ParentApplicationWatchDog : public ProcessWatchDog {
  public:
+  ParentApplicationWatchDog(const ParentApplicationWatchDog &) = delete;
+  ParentApplicationWatchDog &operator=(const ParentApplicationWatchDog &) =
+      delete;
   explicit ParentApplicationWatchDog(RendererServer *renderer_server)
       : renderer_server_(renderer_server) {}
   ~ParentApplicationWatchDog() override {}
@@ -118,12 +121,14 @@ class ParentApplicationWatchDog : public ProcessWatchDog {
 
  private:
   RendererServer *renderer_server_;
-  DISALLOW_COPY_AND_ASSIGN(ParentApplicationWatchDog);
 };
 
 class RendererServerSendCommand : public client::SendCommandInterface {
  public:
   RendererServerSendCommand() : receiver_handle_(0) {}
+  RendererServerSendCommand(const RendererServerSendCommand &) = delete;
+  RendererServerSendCommand &operator=(const RendererServerSendCommand &) =
+      delete;
   ~RendererServerSendCommand() override {}
 
   bool SendCommand(const mozc::commands::SessionCommand &command,
@@ -167,7 +172,6 @@ class RendererServerSendCommand : public client::SendCommandInterface {
 
  private:
   uint32_t receiver_handle_;
-  DISALLOW_COPY_AND_ASSIGN(RendererServerSendCommand);
 };
 
 RendererServer::RendererServer()

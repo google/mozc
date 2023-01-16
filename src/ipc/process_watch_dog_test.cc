@@ -71,6 +71,6 @@ TEST(ProcessWatchDog, ProcessWatchDogTest) {
   } else {
     LOG(ERROR) << "cannot execute fork";
   }
-#endif
+#endif  // OS_WIN
 }
 }  // namespace mozc

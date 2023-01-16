@@ -38,6 +38,7 @@
 #include "client/client.h"  // For client interface
 #include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/message_translator.h"
 #include "unix/ibus/path_util.h"
 
@@ -207,7 +208,7 @@ PropertyHandler::~PropertyHandler() {
 }
 
 void PropertyHandler::Register(IbusEngineWrapper *engine) {
-  engine->RegisterProperties(prop_root_.GetPropList());
+  engine->RegisterProperties(&prop_root_);
   UpdateContentType(engine);
 }
 
@@ -232,7 +233,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       mode_symbol = entry.label_for_panel;
     }
     IbusPropertyWrapper item(
-        entry.key, PROP_TYPE_RADIO, label, nullptr /* icon */, state,
+        entry.key, PROP_TYPE_RADIO, label, "" /* icon */, state,
         nullptr /* sub props */);
     item.SetData(kMozcEnginePropertyKey, entry);
     // |sub_prop_list| owns |item|.
@@ -249,9 +250,9 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
   // Do not change the name. Otherwise the Gnome shell fails to recognize that
   // this property indicates Mozc's input mode.
   // See /usr/share/gnome-shell/js/ui/status/keyboard.js for details.
-  prop_composition_mode_.Initialize(
-      "InputMode", PROP_TYPE_MENU, mode_label, icon_path_for_panel.c_str(),
-      PROP_STATE_UNCHECKED, sub_prop_list.GetPropList());
+  prop_composition_mode_.Initialize("InputMode", PROP_TYPE_MENU, mode_label,
+                                    icon_path_for_panel, PROP_STATE_UNCHECKED,
+                                    sub_prop_list.GetPropList());
 
   // Gnome shell uses symbol property for the mode indicator text icon iff the
   // property name is "InputMode".
@@ -300,7 +301,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
     const std::string label = translator_->MaybeTranslate(entry.label);
     // TODO(yusukes): It would be better to use entry.icon here?
     IbusPropertyWrapper item(
-        entry.mode, PROP_TYPE_NORMAL, label, nullptr /* icon */,
+        entry.mode, PROP_TYPE_NORMAL, label, "" /* icon */,
         PROP_STATE_UNCHECKED, nullptr);
     item.SetData(kMozcEnginePropertyKey, entry);
     sub_prop_list.Append(&item);
@@ -308,9 +309,8 @@ void PropertyHandler::AppendToolPropertyToPanel() {
 
   const std::string tool_label = translator_->MaybeTranslate("Tools");
   const std::string icon_path = GetIconPath(kMozcToolIconPath);
-  prop_mozc_tool_.Initialize("MozcTool", PROP_TYPE_MENU, tool_label,
-                             icon_path.c_str(), PROP_STATE_UNCHECKED,
-                             sub_prop_list.GetPropList());
+  prop_mozc_tool_.Initialize("MozcTool", PROP_TYPE_MENU, tool_label, icon_path,
+                             PROP_STATE_UNCHECKED, sub_prop_list.GetPropList());
 
   // Likewise, |prop_mozc_tool_| owns |sub_prop_list|. We have to sink
   // |prop_mozc_tool_| here so ibus_engine_update_property() call in
@@ -359,15 +359,15 @@ void PropertyHandler::UpdateCompositionModeIcon(
     if (!prop.IsInitialized()) {
       break;
     }
-    if (!g_strcmp0(entry->key, prop.GetKey())) {
+    if (entry->key == prop.GetKey()) {
       // Update the language panel.
-      prop_composition_mode_.SetIcon(GetIconPath(entry->icon).c_str());
+      prop_composition_mode_.SetIcon(GetIconPath(entry->icon));
       // Update the radio menu item.
       prop.SetState(PROP_STATE_CHECKED);
     } else {
       prop.SetState(PROP_STATE_UNCHECKED);
     }
-    engine->UpdateProperty(prop.GetProperty());
+    engine->UpdateProperty(&prop);
     // No need to call unref since GetSubProp (ibus_prop_list_get) does not add
     // ref.
   }
@@ -378,9 +378,9 @@ void PropertyHandler::UpdateCompositionModeIcon(
 
   const std::string mode_label =
       translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
-  prop_composition_mode_.SetLabel(mode_label.c_str());
+  prop_composition_mode_.SetLabel(mode_label);
 
-  engine->UpdateProperty(prop_composition_mode_.GetProperty());
+  engine->UpdateProperty(&prop_composition_mode_);
 }
 
 void PropertyHandler::SetCompositionMode(
@@ -421,7 +421,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
       if (!prop.IsInitialized()) {
         break;
       }
-      if (g_strcmp0(prop.GetKey(), property_name) != 0) {
+      if (prop.GetKey() != property_name) {
         continue;
       }
 
@@ -447,7 +447,7 @@ void PropertyHandler::ProcessPropertyActivate(IbusEngineWrapper *engine,
       if (!prop.IsInitialized()) {
         break;
       }
-      if (g_strcmp0(prop.GetKey(), property_name) != 0) {
+      if (prop.GetKey() != property_name) {
         continue;
       }
 

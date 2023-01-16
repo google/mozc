@@ -33,7 +33,7 @@
 #include <string>
 
 #include "base/port.h"
-#include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace commands {
@@ -44,21 +44,26 @@ namespace ibus {
 class CandidateWindowHandlerInterface {
  public:
   CandidateWindowHandlerInterface() {}
+  CandidateWindowHandlerInterface(const CandidateWindowHandlerInterface &) =
+      delete;
+  CandidateWindowHandlerInterface &operator=(
+      const CandidateWindowHandlerInterface &) = delete;
   virtual ~CandidateWindowHandlerInterface() {}
 
   // Updates candidate state. This function also shows or hides candidate window
   // based on output argument.
-  virtual void Update(IBusEngine *engine, const commands::Output &output) = 0;
+  virtual void Update(IbusEngineWrapper *engine,
+                      const commands::Output &output) = 0;
 
   // Updates candidate state. This function also shows or hides candidate window
   // based on the last |Update| call.
-  virtual void UpdateCursorRect(IBusEngine *engine) = 0;
+  virtual void UpdateCursorRect(IbusEngineWrapper *engine) = 0;
 
   // Hides candidate window.
-  virtual void Hide(IBusEngine *engine) = 0;
+  virtual void Hide(IbusEngineWrapper *engine) = 0;
 
   // Shows candidate window.
-  virtual void Show(IBusEngine *engine) = 0;
+  virtual void Show(IbusEngineWrapper *engine) = 0;
 
   // Following methods handle property-changed events relevant to ibus-panel.
   // |custom_font_description| should be a string representation of
@@ -68,9 +73,6 @@ class CandidateWindowHandlerInterface {
       const std::string &custom_font_description) = 0;
   virtual void OnIBusUseCustomFontDescriptionChanged(
       bool use_custom_font_description) = 0;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandlerInterface);
 };
 
 }  // namespace ibus

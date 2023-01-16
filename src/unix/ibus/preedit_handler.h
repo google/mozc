@@ -30,17 +30,18 @@
 #ifndef MOZC_UNIX_IBUS_PREEDIT_HANDLER_H_
 #define MOZC_UNIX_IBUS_PREEDIT_HANDLER_H_
 
-#include "unix/ibus/preedit_handler_interface.h"
+#include "protocol/commands.pb.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace ibus {
 
-class PreeditHandler : public PreeditHandlerInterface {
+class PreeditHandler {
  public:
-  PreeditHandler();
-  virtual ~PreeditHandler();
+  PreeditHandler() = default;
+  ~PreeditHandler() = default;
 
-  virtual bool Update(IBusEngine *engine, const commands::Output &output);
+  bool Update(IbusEngineWrapper *engine, const commands::Output &output);
 };
 
 }  // namespace ibus

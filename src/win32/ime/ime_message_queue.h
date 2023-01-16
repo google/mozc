@@ -44,6 +44,8 @@ namespace win32 {
 // of the number of messages.
 class MessageQueue {
  public:
+  MessageQueue(const MessageQueue&) = delete;
+  MessageQueue& operator=(const MessageQueue&) = delete;
   explicit MessageQueue(HIMC himc);
 
   // Attach the message list comes from ImeToAsciiEx callback.
@@ -66,8 +68,6 @@ class MessageQueue {
   LPTRANSMSGLIST transmsg_;
   std::vector<TRANSMSG> messages_;
   int transmsg_count_;
-
-  DISALLOW_COPY_AND_ASSIGN(MessageQueue);
 };
 
 }  // namespace win32

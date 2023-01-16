@@ -75,6 +75,9 @@ struct PrivateContext {
 // TODO(yukawa): refactor the lifetime management mechanism for PrivateContext.
 class PrivateContextUtil {
  public:
+  PrivateContextUtil(const PrivateContextUtil &) = delete;
+  PrivateContextUtil &operator=(const PrivateContextUtil &) = delete;
+
   // Returns true if given private data handle is pointing a valid
   // PrivateContext.
   static bool IsValidPrivateContext(HIMCC private_data_handle);
@@ -83,9 +86,6 @@ class PrivateContextUtil {
   // pointed data is not a Mozc's PrivateContext, this method initializes it.
   static bool EnsurePrivateContextIsInitialized(
       HIMCC *private_data_handle_pointer);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(PrivateContextUtil);
 };
 }  // namespace win32
 }  // namespace mozc

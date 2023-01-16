@@ -91,6 +91,8 @@ class Louds {
   };
 
   Louds();
+  Louds(const Louds &) = delete;
+  Louds &operator=(const Louds &) = delete;
   ~Louds();
 
   // Initializes this LOUDS from bit array.  To improve the performance of
@@ -174,8 +176,6 @@ class Louds {
   size_t select1_cache_size_;
   std::unique_ptr<int[]> select_cache_;
   int *select1_cache_ptr_;  // = select_cache_.get() + select0_cache_size_
-
-  DISALLOW_COPY_AND_ASSIGN(Louds);
 };
 
 }  // namespace louds

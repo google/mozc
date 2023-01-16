@@ -166,12 +166,12 @@ class SendCommandInterfaceMock : public client::SendCommandInterface {
 
 MATCHER_P(SelectCommandEq, id, "") {
   if (!arg.has_type()) {
-    *result_listener << "type does not exists.";
+    *result_listener << "type does not exist.";
     return false;
   }
 
   if (!arg.has_id()) {
-    *result_listener << "id does not exists.";
+    *result_listener << "id does not exist.";
     return false;
   }
 
@@ -1376,7 +1376,7 @@ TEST_F(CandidateWindowTest, OnMouseLeftUpTest) {
   const Rect kInRect(5, 5, 100, 100);
   const Rect kOutRect(20, 30, 100, 100);
   {
-    SCOPED_TRACE("SendCommandInterface does not exists");
+    SCOPED_TRACE("SendCommandInterface does not exist.");
     CandidateWindowTestKit testkit = SetUpCandidateWindow();
     testkit.window->OnMouseLeftUp(kPos);
     // We expects doing nothing except just logging ERROR message. However we

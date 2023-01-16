@@ -34,18 +34,23 @@
 
 #include "base/port.h"
 #include "unix/ibus/ibus_header.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
 
 class SurroundingTextUtil {
  public:
+  SurroundingTextUtil() = delete;
+  SurroundingTextUtil(const SurroundingTextUtil &) = delete;
+  SurroundingTextUtil &operator=(const SurroundingTextUtil &) = delete;
+
   // Calculates |from| - |to| and stores the result into |delta| with
   // checking integer overflow.
   // Returns true when neither |abs(delta)| nor |-delta| does not cause
   // integer overflow, that is, |delta| is in a safe range.
   // Returns false otherwise.
-  static bool GetSafeDelta(guint from, guint to, int32 *delta);
+  static bool GetSafeDelta(uint from, uint to, int32_t *delta);
 
   // Returns true if
   // 1. |surrounding_text| contains |selected_text|
@@ -58,12 +63,9 @@ class SurroundingTextUtil {
   // When both 1) and 2) are satisfied, this function calculates
   // |*anchor_pos| for case 1).
   // Otherwise returns false.
-  static bool GetAnchorPosFromSelection(const std::string &surrounding_text,
-                                        const std::string &selected_text,
-                                        guint cursor_pos, guint *anchor_pos);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SurroundingTextUtil);
+  static bool GetAnchorPosFromSelection(absl::string_view surrounding_text,
+                                        absl::string_view selected_text,
+                                        uint cursor_pos, uint *anchor_pos);
 };
 
 }  // namespace ibus

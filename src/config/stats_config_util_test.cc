@@ -695,7 +695,7 @@ TEST(StatsConfigUtilTestLinux, DefaultValueTest) {
 TEST(StatsConfigUtilTestNonOfficialBuild, DefaultValueTest) {
   EXPECT_FALSE(StatsConfigUtil::IsEnabled());
 }
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 }  // namespace config
 }  // namespace mozc

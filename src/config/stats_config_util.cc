@@ -81,12 +81,11 @@ const wchar_t kSendStatsName[] = L"usagestats";
 class WinStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   WinStatsConfigUtilImpl() {}
+  WinStatsConfigUtilImpl(const WinStatsConfigUtilImpl &) = delete;
+  WinStatsConfigUtilImpl &operator=(const WinStatsConfigUtilImpl &) = delete;
   virtual ~WinStatsConfigUtilImpl() {}
   virtual bool IsEnabled();
   virtual bool SetEnabled(bool val);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(WinStatsConfigUtilImpl);
 };
 
 bool WinStatsConfigUtilImpl::IsEnabled() {
@@ -230,6 +229,9 @@ bool MacStatsConfigUtilImpl::SetEnabled(bool val) {
 class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   AndroidStatsConfigUtilImpl() {}
+  AndroidStatsConfigUtilImpl(const AndroidStatsConfigUtilImpl &) = delete;
+  AndroidStatsConfigUtilImpl &operator=(const AndroidStatsConfigUtilImpl &) =
+      delete;
   virtual ~AndroidStatsConfigUtilImpl() {}
   virtual bool IsEnabled() {
     Config config;
@@ -240,9 +242,6 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
     // TODO(horo): Implement this.
     return false;
   }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(AndroidStatsConfigUtilImpl);
 };
 #endif  // OS_ANDROID
 
@@ -251,12 +250,11 @@ class AndroidStatsConfigUtilImpl : public StatsConfigUtilInterface {
 class NullStatsConfigUtilImpl : public StatsConfigUtilInterface {
  public:
   NullStatsConfigUtilImpl() {}
+  NullStatsConfigUtilImpl(const NullStatsConfigUtilImpl &) = delete;
+  NullStatsConfigUtilImpl &operator=(const NullStatsConfigUtilImpl &) = delete;
   ~NullStatsConfigUtilImpl() override {}
   bool IsEnabled() override { return false; }
   bool SetEnabled(bool val) override { return true; }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NullStatsConfigUtilImpl);
 };
 
 StatsConfigUtilInterface *g_stats_config_util_handler = nullptr;

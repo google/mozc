@@ -31,33 +31,34 @@
 #define MOZC_UNIX_IBUS_CANDIDATE_WINDOW_HANDLER_H_
 
 #include <memory>
+#include <string>
+#include <variant>
 
 #include "base/port.h"
+#include "protocol/commands.pb.h"
 #include "protocol/renderer_command.pb.h"
+#include "renderer/renderer_interface.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
-#include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
-namespace commands {
-class RendererCommand;
-}  // namespace commands
-namespace renderer {
-class RendererInterface;
-}  // namespace renderer
 namespace ibus {
 
-class GSettingsObserver;
+class GsettingsObserver;
 
 class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
+  CandidateWindowHandler(const CandidateWindowHandler &) = delete;
+  CandidateWindowHandler &operator=(const CandidateWindowHandler &) = delete;
   // CandidateWindowHandler takes ownership of renderer_ pointer.
   explicit CandidateWindowHandler(renderer::RendererInterface *renderer);
   virtual ~CandidateWindowHandler();
 
-  virtual void Update(IBusEngine *engine, const commands::Output &output);
-  virtual void UpdateCursorRect(IBusEngine *engine);
-  virtual void Hide(IBusEngine *engine);
-  virtual void Show(IBusEngine *engine);
+  virtual void Update(IbusEngineWrapper *engine,
+                      const commands::Output &output);
+  virtual void UpdateCursorRect(IbusEngineWrapper *engine);
+  virtual void Hide(IbusEngineWrapper *engine);
+  virtual void Show(IbusEngineWrapper *engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
       const std::string &custom_font_description);
@@ -67,9 +68,12 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
 
   void RegisterGSettingsObserver();
 
+  void OnSettingsUpdated(absl::string_view key,
+                         const GsettingsWrapper::Variant &value);
+
  protected:
-  bool SendUpdateCommand(IBusEngine *engine, const commands::Output &output,
-                         bool visibility);
+  bool SendUpdateCommand(IbusEngineWrapper *engine,
+                         const commands::Output &output, bool visibility);
 
   std::unique_ptr<renderer::RendererInterface> renderer_;
   std::unique_ptr<commands::Output> last_update_output_;
@@ -78,10 +82,8 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   std::string GetFontDescription() const;
   std::string custom_font_description_;
   bool use_custom_font_description_;
-  std::unique_ptr<GSettingsObserver> settings_observer_;
+  std::unique_ptr<GsettingsObserver> settings_observer_;
   commands::RendererCommand::Rectangle preedit_begin_;
-
-  DISALLOW_COPY_AND_ASSIGN(CandidateWindowHandler);
 };
 
 }  // namespace ibus

@@ -106,6 +106,9 @@ const int32 kIDs[kNumCandidates] = {
 
 class ScopedCandidateInfoBuffer {
  public:
+  ScopedCandidateInfoBuffer(const ScopedCandidateInfoBuffer &) = delete;
+  ScopedCandidateInfoBuffer &operator=(const ScopedCandidateInfoBuffer &) =
+      delete;
   explicit ScopedCandidateInfoBuffer(size_t size)
       : header_(static_cast<CANDIDATEINFO *>(Allocate(size))) {}
   ~ScopedCandidateInfoBuffer() { ::HeapFree(::GetProcessHeap(), 0, header_); }
@@ -132,8 +135,6 @@ class ScopedCandidateInfoBuffer {
     return ::HeapAlloc(::GetProcessHeap(), 0, size);
   }
   CANDIDATEINFO *header_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedCandidateInfoBuffer);
 };
 
 // TODO(yukawa): Make a common library for this function.

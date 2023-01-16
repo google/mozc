@@ -41,6 +41,9 @@ namespace win32 {
 template <class T>
 class ScopedHIMC {
  public:
+  ScopedHIMC(const ScopedHIMC &) = delete;
+  ScopedHIMC &operator=(const ScopedHIMC &) = delete;
+
   explicit ScopedHIMC(HIMC himc) : himc_(nullptr), pointer_(nullptr) {
     pointer_ = static_cast<T *>(::ImmLockIMC(himc));
     if (pointer_ == nullptr) {
@@ -68,12 +71,14 @@ class ScopedHIMC {
  private:
   HIMC himc_;
   T *pointer_;
-  DISALLOW_COPY_AND_ASSIGN(ScopedHIMC);
 };
 
 template <class T>
 class ScopedHIMCC {
  public:
+  ScopedHIMCC(const ScopedHIMCC &) = delete;
+  ScopedHIMCC &operator=(const ScopedHIMCC &) = delete;
+
   explicit ScopedHIMCC(HIMCC himcc) : himcc_(himcc), pointer_(nullptr) {
     pointer_ = static_cast<T *>(::ImmLockIMCC(himcc_));
     if (pointer_ == nullptr) {
@@ -99,7 +104,6 @@ class ScopedHIMCC {
  private:
   T *pointer_;
   HIMCC himcc_;
-  DISALLOW_COPY_AND_ASSIGN(ScopedHIMCC);
 };
 
 }  // namespace win32

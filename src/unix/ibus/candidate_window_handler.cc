@@ -34,6 +34,7 @@
 
 #include <memory>
 #include <string>
+#include <variant>
 
 #include "base/logging.h"
 #include "protocol/candidates.pb.h"
@@ -41,6 +42,8 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"
+#include "unix/ibus/ibus_wrapper.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
@@ -48,107 +51,49 @@ namespace ibus {
 namespace {
 
 constexpr char kDefaultFont[] = "SansSerif 11";
-const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
-const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
-const gchar kIBusPanelCustomFont[] = "custom-font";
-
-using GVariantUniquePtr = std::unique_ptr<GVariant, void (*)(GVariant *)>;
-
-GVariantUniquePtr MakeGVariantUniquePtr(GVariant *variant) {
-  return GVariantUniquePtr(variant, &g_variant_unref);
-}
-
-bool GetString(const GVariantUniquePtr &value, std::string *out_string) {
-  if (g_variant_classify(value.get()) != G_VARIANT_CLASS_STRING) {
-    return false;
-  }
-  *out_string =
-      static_cast<const char *>(g_variant_get_string(value.get(), nullptr));
-  return true;
-}
-
-bool GetBoolean(const GVariantUniquePtr &value, bool *out_boolean) {
-  if (g_variant_classify(value.get()) != G_VARIANT_CLASS_BOOLEAN) {
-    return false;
-  }
-  *out_boolean = (g_variant_get_boolean(value.get()) != FALSE);
-  return true;
-}
-
-bool HasScheme(const char *schema_name) {
-  GSettingsSchemaSource *schema_source = g_settings_schema_source_get_default();
-  if (schema_source == nullptr) {
-    return false;
-  }
-  GSettingsSchema *schema =
-      g_settings_schema_source_lookup(schema_source, schema_name, TRUE);
-  if (schema == nullptr) {
-    return false;
-  }
-  g_settings_schema_unref(schema);
-  return true;
-}
-
-GSettings *OpenIBusPanelSettings() {
-  if (!HasScheme(kIBusPanelSchema)) {
-    return nullptr;
-  }
-  return g_settings_new(kIBusPanelSchema);
-}
-
-// The callback function to the "changed" signal to GSettings object.
-void GSettingsChangedCallback(GSettings *settings, const gchar *key,
-                              gpointer user_data) {
-  CandidateWindowHandler *handler =
-      reinterpret_cast<CandidateWindowHandler *>(user_data);
-  if (g_strcmp0(key, kIBusPanelUseCustomFont) == 0) {
-    GVariantUniquePtr use_custom_font_value = MakeGVariantUniquePtr(
-        g_settings_get_value(settings, kIBusPanelUseCustomFont));
-    bool use_custom_font = false;
-    if (GetBoolean(use_custom_font_value, &use_custom_font)) {
-      handler->OnIBusUseCustomFontDescriptionChanged(use_custom_font);
-    } else {
-      LOG(ERROR) << "Cannot get panel:use_custom_font configuration.";
-    }
-  } else if (g_strcmp0(key, kIBusPanelCustomFont) == 0) {
-    GVariantUniquePtr custom_font_value = MakeGVariantUniquePtr(
-        g_settings_get_value(settings, kIBusPanelCustomFont));
-    std::string font_description;
-    if (GetString(custom_font_value, &font_description)) {
-      handler->OnIBusCustomFontDescriptionChanged(font_description);
-    } else {
-      LOG(ERROR) << "Cannot get panel:custom_font configuration.";
-    }
-  }
-}
+constexpr char kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
+constexpr char kIBusPanelUseCustomFont[] = "use-custom-font";
+constexpr char kIBusPanelCustomFont[] = "custom-font";
 
 }  // namespace
 
-class GSettingsObserver {
+class GsettingsObserver {
  public:
-  explicit GSettingsObserver(CandidateWindowHandler *handler)
-      : settings_(OpenIBusPanelSettings()), settings_observer_id_(0) {
-    if (settings_ != nullptr) {
-      gpointer ptr = reinterpret_cast<gpointer>(handler);
-      settings_observer_id_ = g_signal_connect(
-          settings_, "changed", G_CALLBACK(GSettingsChangedCallback), ptr);
-      // Emulate state changes to set the initial values to the renderer.
-      GSettingsChangedCallback(settings_, kIBusPanelUseCustomFont, ptr);
-      GSettingsChangedCallback(settings_, kIBusPanelCustomFont, ptr);
+  explicit GsettingsObserver(CandidateWindowHandler *handler)
+      : settings_(GsettingsWrapper(kIBusPanelSchema)),
+        settings_observer_id_(0) {
+    if (!settings_.IsInitialized()) {
+      return;
     }
+    settings_observer_id_ =
+        settings_.SignalConnect("changed", OnChanged, handler);
+
+    // Emulate state changes to set the initial values to the renderer.
+    handler->OnSettingsUpdated(kIBusPanelUseCustomFont,
+                               settings_.GetVariant(kIBusPanelUseCustomFont));
+    handler->OnSettingsUpdated(kIBusPanelCustomFont,
+                               settings_.GetVariant(kIBusPanelCustomFont));
   }
 
-  ~GSettingsObserver() {
-    if (settings_ != nullptr) {
-      if (settings_observer_id_ != 0) {
-        g_signal_handler_disconnect(settings_, settings_observer_id_);
-      }
-      g_object_unref(settings_);
+  ~GsettingsObserver() {
+    if (!settings_.IsInitialized()) {
+      return;
     }
+    if (settings_observer_id_ != 0) {
+      settings_.SignalHandlerDisconnect(settings_observer_id_);
+    }
+    settings_.Unref();
   }
 
  private:
-  GSettings *settings_;
+  // The callback function to the "changed" signal to GSettings object.
+  static void OnChanged(GSettings *settings, const char *key, void *user_data) {
+    CandidateWindowHandler *handler =
+        reinterpret_cast<CandidateWindowHandler *>(user_data);
+    handler->OnSettingsUpdated(key, GsettingsWrapper(settings).GetVariant(key));
+  }
+
+  GsettingsWrapper settings_;
   gulong settings_observer_id_;
 };
 
@@ -160,7 +105,7 @@ CandidateWindowHandler::CandidateWindowHandler(
 
 CandidateWindowHandler::~CandidateWindowHandler() {}
 
-bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
+bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
                                                const commands::Output &output,
                                                bool visibility) {
   using commands::RendererCommand;
@@ -173,7 +118,7 @@ bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
       command.mutable_application_info();
 
   auto *preedit_rectangle = command.mutable_preedit_rectangle();
-  const auto &cursor_area = engine->cursor_area;
+  const IbusEngineWrapper::Rectangle &cursor_area = engine->GetCursorArea();
   preedit_rectangle->set_left(cursor_area.x);
   preedit_rectangle->set_top(cursor_area.y);
   preedit_rectangle->set_right(cursor_area.x + cursor_area.width);
@@ -211,25 +156,25 @@ bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
   return renderer_->ExecCommand(command);
 }
 
-void CandidateWindowHandler::Update(IBusEngine *engine,
+void CandidateWindowHandler::Update(IbusEngineWrapper *engine,
                                     const commands::Output &output) {
   *last_update_output_ = output;
 
   UpdateCursorRect(engine);
 }
 
-void CandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+void CandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
   const bool has_candidates =
       last_update_output_->has_candidates() &&
       last_update_output_->candidates().candidate_size() > 0;
   SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 
-void CandidateWindowHandler::Hide(IBusEngine *engine) {
+void CandidateWindowHandler::Hide(IbusEngineWrapper *engine) {
   SendUpdateCommand(engine, *last_update_output_, false);
 }
 
-void CandidateWindowHandler::Show(IBusEngine *engine) {
+void CandidateWindowHandler::Show(IbusEngineWrapper *engine) {
   SendUpdateCommand(engine, *last_update_output_, true);
 }
 
@@ -244,7 +189,7 @@ void CandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
 }
 
 void CandidateWindowHandler::RegisterGSettingsObserver() {
-  settings_observer_ = std::make_unique<GSettingsObserver>(this);
+  settings_observer_ = std::make_unique<GsettingsObserver>(this);
 }
 
 std::string CandidateWindowHandler::GetFontDescription() const {
@@ -254,6 +199,28 @@ std::string CandidateWindowHandler::GetFontDescription() const {
   }
   DCHECK(!custom_font_description_.empty());
   return custom_font_description_;
+}
+
+void CandidateWindowHandler::OnSettingsUpdated(
+    absl::string_view key, const GsettingsWrapper::Variant &value) {
+  if (key == kIBusPanelUseCustomFont) {
+    if (std::holds_alternative<bool>(value)) {
+      bool use_custom_font = std::get<bool>(value);
+      OnIBusUseCustomFontDescriptionChanged(use_custom_font);
+    } else {
+      LOG(ERROR) << "Cannot get panel:use_custom_font configuration.";
+    }
+    return;
+  }
+
+  if (key == kIBusPanelCustomFont) {
+    if (std::holds_alternative<std::string>(value)) {
+      std::string font_description = std::get<std::string>(value);
+      OnIBusCustomFontDescriptionChanged(font_description);
+    } else {
+      LOG(ERROR) << "Cannot get panel:custom_font configuration.";
+    }
+  }
 }
 
 }  // namespace ibus

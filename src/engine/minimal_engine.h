@@ -44,6 +44,8 @@ namespace mozc {
 class MinimalEngine : public EngineInterface {
  public:
   MinimalEngine();
+  MinimalEngine(const MinimalEngine &) = delete;
+  MinimalEngine &operator=(const MinimalEngine &) = delete;
   ~MinimalEngine() override;
 
   ConverterInterface *GetConverter() const override;
@@ -61,8 +63,6 @@ class MinimalEngine : public EngineInterface {
   std::unique_ptr<dictionary::SuppressionDictionary> suppression_dictionary_;
   std::unique_ptr<UserDataManagerInterface> user_data_manager_;
   std::unique_ptr<const DataManagerInterface> data_manager_;
-
-  DISALLOW_COPY_AND_ASSIGN(MinimalEngine);
 };
 
 }  // namespace mozc

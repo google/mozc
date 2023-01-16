@@ -41,6 +41,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 
@@ -155,7 +156,7 @@ const std::string &IbusConfig::GetEnginesXml() const { return engine_xml_; }
 
 const ibus::Config &IbusConfig::GetConfig() const { return config_; }
 
-const std::string &IbusConfig::GetLayout(const std::string &name) const {
+const std::string &IbusConfig::GetLayout(absl::string_view name) const {
   for (const ibus::Engine &engine : config_.engines()) {
     if (engine.name() == name) {
       return engine.layout();
@@ -165,9 +166,9 @@ const std::string &IbusConfig::GetLayout(const std::string &name) const {
 }
 
 ibus::Engine::CompositionMode IbusConfig::GetCompositionMode(
-    const std::string &name) const {
+    absl::string_view engine_name) const {
   for (const ibus::Engine &engine : config_.engines()) {
-    if (engine.name() == name) {
+    if (engine.name() == engine_name) {
       return engine.composition_mode();
     }
   }

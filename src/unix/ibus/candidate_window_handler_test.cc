@@ -168,11 +168,12 @@ MATCHER_P(OutputEq, expected, "") {
 TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
   const Rect kExpectedCursorArea(10, 20, 200, 100);
 
-  IBusEngine engine = {};
-  engine.cursor_area.x = kExpectedCursorArea.Left();
-  engine.cursor_area.y = kExpectedCursorArea.Top();
-  engine.cursor_area.width = kExpectedCursorArea.Width();
-  engine.cursor_area.height = kExpectedCursorArea.Height();
+  IBusEngine ibus_engine = {};
+  ibus_engine.cursor_area.x = kExpectedCursorArea.Left();
+  ibus_engine.cursor_area.y = kExpectedCursorArea.Top();
+  ibus_engine.cursor_area.width = kExpectedCursorArea.Width();
+  ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
+  IbusEngineWrapper engine(&ibus_engine);
 
   {
     SCOPED_TRACE("visibility check. false case");
@@ -219,11 +220,12 @@ TEST(CandidateWindowHandlerTest, SendUpdateCommandTest) {
 TEST(CandidateWindowHandlerTest, UpdateTest) {
   const Rect kExpectedCursorArea(10, 20, 200, 100);
 
-  IBusEngine engine = {};
-  engine.cursor_area.x = kExpectedCursorArea.Left();
-  engine.cursor_area.y = kExpectedCursorArea.Top();
-  engine.cursor_area.width = kExpectedCursorArea.Width();
-  engine.cursor_area.height = kExpectedCursorArea.Height();
+  IBusEngine ibus_engine = {};
+  ibus_engine.cursor_area.x = kExpectedCursorArea.Left();
+  ibus_engine.cursor_area.y = kExpectedCursorArea.Top();
+  ibus_engine.cursor_area.width = kExpectedCursorArea.Width();
+  ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
+  IbusEngineWrapper engine(&ibus_engine);
 
   const int sample_idx1 = 0;
   const int sample_idx2 = 1;
@@ -286,11 +288,12 @@ TEST(CandidateWindowHandlerTest, UpdateTest) {
 TEST(CandidateWindowHandlerTest, HideTest) {
   const Rect kExpectedCursorArea(10, 20, 200, 100);
 
-  IBusEngine engine = {};
-  engine.cursor_area.x = kExpectedCursorArea.Left();
-  engine.cursor_area.y = kExpectedCursorArea.Top();
-  engine.cursor_area.width = kExpectedCursorArea.Width();
-  engine.cursor_area.height = kExpectedCursorArea.Height();
+  IBusEngine ibus_engine = {};
+  ibus_engine.cursor_area.x = kExpectedCursorArea.Left();
+  ibus_engine.cursor_area.y = kExpectedCursorArea.Top();
+  ibus_engine.cursor_area.width = kExpectedCursorArea.Width();
+  ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
+  IbusEngineWrapper engine(&ibus_engine);
 
   RendererMock *renderer_mock = new RendererMock();
   TestableCandidateWindowHandler candidate_window_handler(renderer_mock);
@@ -302,11 +305,12 @@ TEST(CandidateWindowHandlerTest, HideTest) {
 TEST(CandidateWindowHandlerTest, ShowTest) {
   const Rect kExpectedCursorArea(10, 20, 200, 100);
 
-  IBusEngine engine = {};
-  engine.cursor_area.x = kExpectedCursorArea.Left();
-  engine.cursor_area.y = kExpectedCursorArea.Top();
-  engine.cursor_area.width = kExpectedCursorArea.Width();
-  engine.cursor_area.height = kExpectedCursorArea.Height();
+  IBusEngine ibus_engine = {};
+  ibus_engine.cursor_area.x = kExpectedCursorArea.Left();
+  ibus_engine.cursor_area.y = kExpectedCursorArea.Top();
+  ibus_engine.cursor_area.width = kExpectedCursorArea.Width();
+  ibus_engine.cursor_area.height = kExpectedCursorArea.Height();
+  IbusEngineWrapper engine(&ibus_engine);
 
   RendererMock *renderer_mock = new RendererMock();
   TestableCandidateWindowHandler candidate_window_handler(renderer_mock);

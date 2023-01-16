@@ -81,6 +81,8 @@ class LangBarCallback {
 class LanguageBar {
  public:
   LanguageBar();
+  LanguageBar(const LanguageBar&) = delete;
+  LanguageBar& operator=(const LanguageBar&) = delete;
   ~LanguageBar();
 
   // initialize and uninitialize ImeLangBarItemButton object.
@@ -120,8 +122,6 @@ class LanguageBar {
 
   // The cookie issued for installing ITfSystemLangBarItemSink of help_menu_.
   DWORD help_menu_cookie_;
-
-  DISALLOW_COPY_AND_ASSIGN(LanguageBar);
 };
 
 #endif  // MOZC_WIN32_IME_IME_LANGUAGE_BAR_H_

@@ -50,6 +50,8 @@ class ParentApplicationWatchDog;
 class RendererServer : public IPCServer {
  public:
   RendererServer();
+  RendererServer(const RendererServer &) = delete;
+  RendererServer &operator=(const RendererServer &) = delete;
   ~RendererServer() override;
 
   void SetRendererInterface(RendererInterface *renderer_interface);
@@ -94,8 +96,6 @@ class RendererServer : public IPCServer {
   uint32_t timeout_;
   std::unique_ptr<ParentApplicationWatchDog> watch_dog_;
   std::unique_ptr<RendererServerSendCommand> send_command_;
-
-  DISALLOW_COPY_AND_ASSIGN(RendererServer);
 };
 
 }  // namespace renderer

@@ -50,11 +50,10 @@ class DataManagerTestBase : public ::testing::Test {
 
   DataManagerTestBase(DataManagerInterface *data_manager,
                       // The following three are used in segmenter test.
-                      const size_t lsize, const size_t rsize,
-                      IsBoundaryFunc is_boundary,
+                      size_t lsize, size_t rsize, IsBoundaryFunc is_boundary,
                       // The following two are used in connector test.
                       const std::string &connection_txt_file,
-                      const int expected_resolution,
+                      int expected_resolution,
                       // The following two are used in suggestion filter test.
                       const std::vector<std::string> &dictionary_files,
                       const std::vector<std::string> &suggestion_filter_files,

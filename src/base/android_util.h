@@ -75,7 +75,7 @@ class AndroidUtil {
   static bool GetPropertyFromFile(const std::string &key, std::string *output);
 
   // Parses the line.
-  // If the returned value is ture, the property's key and value string are
+  // If the returned value is true, the property's key and value string are
   // returned as |lhs| and |rhs| respectively.
   // If false, |line| is malformed.
   // In this case |lhs| and |rhs| are not modified.

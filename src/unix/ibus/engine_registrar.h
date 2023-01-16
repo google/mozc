@@ -27,22 +27,24 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef MOZC_UNIX_IBUS_SRC_ENGINE_REGISTRAR_H_
-#define MOZC_UNIX_IBUS_SRC_ENGINE_REGISTRAR_H_
+#ifndef MOZC_UNIX_IBUS_ENGINE_REGISTRAR_H_
+#define MOZC_UNIX_IBUS_ENGINE_REGISTRAR_H_
 
+#include "unix/ibus/engine_interface.h"
 #include "unix/ibus/ibus_header.h"
 
 namespace mozc {
 namespace ibus {
 
-class EngineInterface;
+// Resisters the engine and returns the identifier for this engine class.
+GType RegisterEngine(EngineInterface *engine);
 
 // Provides functions to register/unregister interface functions implemented by
 // a concrete class of EngineInterface as signal handlers of IBusEngine.
 class EngineRegistrar {
  public:
-  // Registers signal handlers implemented by |engine| to the ibus framework.
-  static bool Register(EngineInterface *engine, IBusEngineClass *engine_class);
+  // Registers signal handlers called to `engine_class`.
+  static bool Register(IBusEngineClass *engine_class);
 
   // Unregisters all signal handlers registered to the ibus framework.
   // Returns an engine interface registered previously.
@@ -78,4 +80,4 @@ class EngineRegistrar {
 }  // namespace ibus
 }  // namespace mozc
 
-#endif  // MOZC_UNIX_IBUS_SRC_ENGINE_REGISTRAR_H_
+#endif  // MOZC_UNIX_IBUS_ENGINE_REGISTRAR_H_

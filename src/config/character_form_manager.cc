@@ -60,6 +60,9 @@ constexpr char kFileName[] = "user://cform.db";
 class CharacterFormManagerImpl {
  public:
   CharacterFormManagerImpl();
+  CharacterFormManagerImpl(const CharacterFormManagerImpl &) = delete;
+  CharacterFormManagerImpl &operator=(const CharacterFormManagerImpl &) =
+      delete;
   virtual ~CharacterFormManagerImpl();
 
   Config::CharacterForm GetCharacterForm(const std::string &str) const;
@@ -121,8 +124,6 @@ class CharacterFormManagerImpl {
   // character form conversion requires that output has consistent forms.
   // i.e. output should consists by half-width only or full-width only.
   bool require_consistent_conversion_;
-
-  DISALLOW_COPY_AND_ASSIGN(CharacterFormManagerImpl);
 };
 
 // TODO(hidehiko): Get rid of inheritance.

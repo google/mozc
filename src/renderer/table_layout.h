@@ -112,6 +112,8 @@ namespace renderer {
 class TableLayout : public TableLayoutInterface {
  public:
   TableLayout();
+  TableLayout(const TableLayout &) = delete;
+  TableLayout &operator=(const TableLayout &) = delete;
 
   // Reset layout freeze and initialize the number of rows and columns.
   void Initialize(int num_rows, int num_columns) override;
@@ -193,8 +195,6 @@ class TableLayout : public TableLayoutInterface {
   int vscroll_width_pixels_;
 
   bool layout_frozen_;
-
-  DISALLOW_COPY_AND_ASSIGN(TableLayout);
 };
 
 }  // namespace renderer

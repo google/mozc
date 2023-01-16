@@ -44,11 +44,13 @@ namespace ibus {
 class KeyEventHandler {
  public:
   KeyEventHandler();
+  KeyEventHandler(const KeyEventHandler &) = delete;
+  KeyEventHandler &operator=(const KeyEventHandler &) = delete;
 
   // Converts a key event came from ibus to commands::KeyEvent. This is a
   // stateful method. It stores modifier keys states since ibus doesn't send
   // an enough information about the modifier keys.
-  bool GetKeyEvent(guint keyval, guint keycode, guint modifiers,
+  bool GetKeyEvent(uint keyval, uint keycode, uint modifiers,
                    config::Config::PreeditMethod preedit_method,
                    bool layout_is_jp, commands::KeyEvent *key);
 
@@ -59,18 +61,16 @@ class KeyEventHandler {
   friend class KeyEventHandlerTest;
 
   // Manages modifier keys. Returns false if it should not be sent to server.
-  bool ProcessModifiers(bool is_key_up, guint keyval,
+  bool ProcessModifiers(bool is_key_up, uint keyval,
                         commands::KeyEvent *key_event);
 
   std::unique_ptr<KeyTranslator> key_translator_;
   // Non modifier key is pressed or not after all keys are released.
   bool is_non_modifier_key_pressed_;
   // Currently pressed modifier keys.  It is set of keyval.
-  std::set<guint> currently_pressed_modifiers_;
+  std::set<uint> currently_pressed_modifiers_;
   // Pending modifier keys.
   std::set<commands::KeyEvent::ModifierKey> modifiers_to_be_sent_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyEventHandler);
 };
 
 }  // namespace ibus

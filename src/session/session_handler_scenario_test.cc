@@ -158,6 +158,7 @@ const char *kScenarioFileList[] = {
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_wa.txt",
     DATA_DIR "twelvekeys_toggle_hiragana_preedit_scenario_symbol.txt",
     DATA_DIR "undo.txt",
+    DATA_DIR "undo_partial_commit.txt",
     DATA_DIR "zero_query_suggestion.txt",
 #undef DATA_DIR
 };

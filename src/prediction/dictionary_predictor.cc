@@ -1082,6 +1082,8 @@ namespace {
 
 class FindValueCallback : public DictionaryInterface::Callback {
  public:
+  FindValueCallback(const FindValueCallback &) = delete;
+  FindValueCallback &operator=(const FindValueCallback &) = delete;
   explicit FindValueCallback(absl::string_view target_value)
       : target_value_(target_value), found_(false) {}
 
@@ -1104,8 +1106,6 @@ class FindValueCallback : public DictionaryInterface::Callback {
   absl::string_view target_value_;
   bool found_;
   Token token_;
-
-  DISALLOW_COPY_AND_ASSIGN(FindValueCallback);
 };
 
 }  // namespace

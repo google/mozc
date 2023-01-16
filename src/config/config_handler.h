@@ -48,6 +48,10 @@ enum {
 // This is pure static class.  All public static methods are thread-safe.
 class ConfigHandler {
  public:
+  ConfigHandler() = delete;
+  ConfigHandler(const ConfigHandler &) = delete;
+  ConfigHandler &operator=(const ConfigHandler &) = delete;
+
   // Returns current config.
   // This method returns a *copied* Config instance
   // so use this with caution, especially when custom_keymap_table exists
@@ -107,9 +111,6 @@ class ConfigHandler {
 
   // Get default keymap for each platform.
   static Config::SessionKeymap GetDefaultKeyMap();
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ConfigHandler);
 };
 
 }  // namespace config

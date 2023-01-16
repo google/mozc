@@ -245,7 +245,7 @@ void Session::PushUndoContext() {
 
 void Session::PopUndoContext() {
   // TODO(komatsu): Support multiple undo.
-  if (!prev_context_) {
+  if (!HasUndoContext()) {
     return;
   }
   context_.swap(prev_context_);
@@ -253,6 +253,14 @@ void Session::PopUndoContext() {
 }
 
 void Session::ClearUndoContext() { prev_context_.reset(); }
+
+bool Session::HasUndoContext() const { return prev_context_ != nullptr; }
+
+void Session::MaybeSetUndoStatus(commands::Command *command) const {
+  if (HasUndoContext()) {
+    command->mutable_output()->mutable_status()->set_undo_available(true);
+  }
+}
 
 void Session::EnsureIMEIsOn() {
   if (context_->state() == ImeContext::DIRECT) {
@@ -299,6 +307,7 @@ bool Session::SendCommand(commands::Command *command) {
         LOG(ERROR) << "Unknown mode: " << session_command.composition_mode();
         break;
     }
+    MaybeSetUndoStatus(command);
     return result;
   }
 
@@ -375,7 +384,7 @@ bool Session::SendCommand(commands::Command *command) {
       result = DoNothing(command);
       break;
   }
-
+  MaybeSetUndoStatus(command);
   return result;
 }
 
@@ -465,7 +474,7 @@ bool Session::TestSendKey(commands::Command *command) {
 
     // If undo context is empty, echoes back the key event so that it can be
     // handled by the application. b/5553298
-    if (key_command == keymap::PrecompositionState::UNDO && !prev_context_) {
+    if (key_command == keymap::PrecompositionState::UNDO && !HasUndoContext()) {
       return EchoBack(command);
     }
 
@@ -511,6 +520,7 @@ bool Session::SendKey(commands::Command *command) {
 
   SessionUsageStatsUtil::AddSendKeyOutputStats(command->output());
 
+  MaybeSetUndoStatus(command);
   return result;
 }
 
@@ -1179,6 +1189,11 @@ bool Session::ConvertReverse(commands::Command *command) {
 
   composer::Composer *composer = context_->mutable_composer();
   composer->Reset();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   std::vector<std::string> reading_characters;
   composer->InsertCharacterPreedit(reading);
   composer->set_source_text(composition);
@@ -1205,7 +1220,7 @@ bool Session::RequestUndo(commands::Command *command) {
 
   // If undo context is empty, echoes back the key event so that it can be
   // handled by the application. b/5553298
-  if (context_->state() == ImeContext::PRECOMPOSITION && !prev_context_) {
+  if (context_->state() == ImeContext::PRECOMPOSITION && !HasUndoContext()) {
     return EchoBack(command);
   }
 
@@ -1228,7 +1243,7 @@ bool Session::Undo(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
 
   // Check the undo context
-  if (!prev_context_) {
+  if (!HasUndoContext()) {
     return DoNothing(command);
   }
 
@@ -1326,7 +1341,8 @@ bool Session::CommitCandidate(commands::Command *command) {
       if (consumed_key_size < context_->composer().GetLength()) {
         // partial suggestion was committed.
         context_->mutable_composer()->DeleteRange(0, consumed_key_size);
-        MoveCursorToEnd(command);
+        // Don't clear the undo context, which we've just updated.
+        MoveCursorToEndInternal(command, false);
         // Copy the previous output for Undo.
         *context_->mutable_output() = command->output();
         return true;
@@ -1471,6 +1487,11 @@ bool Session::InsertCharacter(commands::Command *command) {
   }
 
   context_->mutable_composer()->InsertCharacterKeyEvent(key);
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (context_->mutable_composer()->ShouldCommit()) {
     CommitCompositionDirectly(command);
     return true;
@@ -1804,7 +1825,15 @@ bool Session::CommitSegment(commands::Command *command) {
 
   PushUndoContext();
 
-  CommitFirstSegmentInternal(command->input().context());
+  size_t size;
+  context_->mutable_converter()->CommitFirstSegment(
+      context_->composer(), command->input().context(), &size);
+  if (size > 0) {
+    // Delete the key characters of the first segment from the preedit.
+    context_->mutable_composer()->DeleteRange(0, size);
+    // The number of segments should be more than one.
+    DCHECK_GT(context_->composer().GetLength(), 0);
+  }
 
   if (!context_->converter().IsActive()) {
     // If the converter is not active (ie. the segment size was one.),
@@ -1821,18 +1850,6 @@ bool Session::CommitSegment(commands::Command *command) {
   // Copy the previous output for Undo.
   *context_->mutable_output() = command->output();
   return true;
-}
-
-void Session::CommitFirstSegmentInternal(const commands::Context &context) {
-  size_t size;
-  context_->mutable_converter()->CommitFirstSegment(context_->composer(),
-                                                    context, &size);
-  if (size > 0) {
-    // Delete the key characters of the first segment from the preedit.
-    context_->mutable_composer()->DeleteRange(0, size);
-    // The number of segments should be more than one.
-    DCHECK_GT(context_->composer().GetLength(), 0);
-  }
 }
 
 void Session::CommitHeadToFocusedSegmentsInternal(
@@ -2205,17 +2222,25 @@ bool Session::LaunchWordRegisterDialog(commands::Command *command) {
 }
 
 bool Session::UndoOrRewind(commands::Command *command) {
+  bool undo_partical_commit =
+      context_->GetRequest().decoder_experiment_params().undo_partial_commit();
+  // Undo if we can order UNDO command (undo_partial_commit=true).
+  // Undo is prioritized over rewind otherwise the undo operation for
+  // partical commit doesn't work (rewind always consumes the event).
+  if (undo_partical_commit && HasUndoContext()) {
+    return Undo(command);
+  }
+
   // Rewind if the state is in composition.
   if (context_->state() & ImeContext::COMPOSITION) {
     command->mutable_output()->set_consumed(true);
     return SendComposerCommand(composer::Composer::REWIND, command);
   }
 
-  // Undo if we can order UNDO command.
-  if (prev_context_) {
+  // Undo if we can order UNDO command (undo_partial_commit=false).
+  if (!undo_partical_commit && HasUndoContext()) {
     return Undo(command);
   }
-
   // Mozc decoder doesn't do anything for UNDO_OR_REWIND.
   // Echo back the event to the client to give it a chance to delegate
   // undo operation to the app.
@@ -2231,6 +2256,11 @@ bool Session::SendComposerCommand(
   }
 
   context_->mutable_composer()->InsertCommandCharacter(composer_command);
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   // InsertCommandCharacter method updates the preedit text
   // so we need to update suggest candidates.
   if (Suggest(command->input())) {
@@ -2298,6 +2328,8 @@ bool Session::Convert(commands::Command *command) {
           commands::Request::COMMIT) {
         // Space is committed with the composition
         context_->mutable_composer()->InsertCharacterPreedit(" ");
+        // Don't push the context to the undo context here.
+        // It'll be done in Commit() below.
         return Commit(command);
       } else {
         // SPACE_OR_CONVERT_KEEPING_COMPOSITION or
@@ -2314,6 +2346,11 @@ bool Session::Convert(commands::Command *command) {
       DCHECK_EQ(' ', composition[composition.size() - 1]);
       // Delete the last space.
       context_->mutable_composer()->Backspace();
+      if (context_->GetRequest()
+              .decoder_experiment_params()
+              .undo_partial_commit()) {
+        ClearUndoContext();
+      }
     }
   }
 
@@ -2388,6 +2425,11 @@ bool Session::MoveCursorRight(commands::Command *command) {
     return true;
   }
   context_->mutable_composer()->MoveCursorRight();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (Suggest(command->input())) {
     Output(command);
     return true;
@@ -2417,6 +2459,11 @@ bool Session::MoveCursorLeft(commands::Command *command) {
     return true;
   }
   context_->mutable_composer()->MoveCursorLeft();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (Suggest(command->input())) {
     Output(command);
     return true;
@@ -2426,11 +2473,21 @@ bool Session::MoveCursorLeft(commands::Command *command) {
 }
 
 bool Session::MoveCursorToEnd(commands::Command *command) {
+  return MoveCursorToEndInternal(
+      command,
+      context_->GetRequest().decoder_experiment_params().undo_partial_commit());
+}
+
+bool Session::MoveCursorToEndInternal(commands::Command *command,
+                                      bool clear_undo) {
   command->mutable_output()->set_consumed(true);
   if (CommitIfPassword(command)) {
     return true;
   }
   context_->mutable_composer()->MoveCursorToEnd();
+  if (clear_undo) {
+    ClearUndoContext();
+  }
   if (Suggest(command->input())) {
     Output(command);
     return true;
@@ -2455,6 +2512,11 @@ bool Session::MoveCursorTo(commands::Command *command) {
   }
   context_->mutable_composer()->MoveCursorTo(
       command->input().command().cursor_position());
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (Suggest(command->input())) {
     Output(command);
     return true;
@@ -2469,6 +2531,11 @@ bool Session::MoveCursorToBeginning(commands::Command *command) {
     return true;
   }
   context_->mutable_composer()->MoveCursorToBeginning();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (Suggest(command->input())) {
     Output(command);
     return true;
@@ -2480,6 +2547,11 @@ bool Session::MoveCursorToBeginning(commands::Command *command) {
 bool Session::Delete(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   context_->mutable_composer()->Delete();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
     OutputMode(command);
@@ -2495,6 +2567,11 @@ bool Session::Delete(commands::Command *command) {
 bool Session::Backspace(commands::Command *command) {
   command->mutable_output()->set_consumed(true);
   context_->mutable_composer()->Backspace();
+  if (context_->GetRequest()
+          .decoder_experiment_params()
+          .undo_partial_commit()) {
+    ClearUndoContext();
+  }
   if (context_->mutable_composer()->Empty()) {
     SetSessionState(ImeContext::PRECOMPOSITION, context_.get());
     OutputMode(command);

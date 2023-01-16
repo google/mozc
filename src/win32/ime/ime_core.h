@@ -67,6 +67,9 @@ struct InputState;
 // TODO(yukawa): Refactor this class to be testable.
 class ImeCore {
  public:
+  ImeCore(const ImeCore &) = delete;
+  ImeCore &operator=(const ImeCore &) = delete;
+
   // Main implementation of ImeProcessKey callback.
   static KeyEventHandlerResult ImeProcessKey(
       mozc::client::ClientInterface *client, const VirtualKey &virtual_key,
@@ -222,8 +225,6 @@ class ImeCore {
   FRIEND_TEST(ImeCoreTest, TemporalConversionModeMessageOrderTest);
   FRIEND_TEST(ImeCoreTest, CandidateMessageOrderTest);
   FRIEND_TEST(ImeCoreTest, CompositionMessageOrderTest);
-
-  DISALLOW_COPY_AND_ASSIGN(ImeCore);
 };
 
 }  // namespace win32

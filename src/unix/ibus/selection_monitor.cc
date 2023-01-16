@@ -102,6 +102,9 @@ class SelectionMonitorServer {
         xfixes_first_event_(0),
         xcb_maximum_request_len_(0) {}
 
+  SelectionMonitorServer(const SelectionMonitorServer &) = delete;
+  SelectionMonitorServer &operator=(const SelectionMonitorServer &) = delete;
+
   ~SelectionMonitorServer() { Release(); }
 
   bool Init() {
@@ -476,8 +479,6 @@ class SelectionMonitorServer {
   uint32 xcb_maximum_request_len_;
   SelectionInfo last_request_info_;
   XcbAtoms atoms_;
-
-  DISALLOW_COPY_AND_ASSIGN(SelectionMonitorServer);
 };
 
 class SelectionMonitorImpl : public SelectionMonitorInterface, public Thread {

@@ -59,6 +59,8 @@ namespace mozc {
 // Dictionary-based predictor
 class DictionaryPredictor : public PredictorInterface {
  public:
+  DictionaryPredictor(const DictionaryPredictor &) = delete;
+  DictionaryPredictor &operator=(const DictionaryPredictor &) = delete;
   // Initializes a predictor with given references to submodules. Note that
   // pointers are not owned by the class and to be deleted by the caller.
   DictionaryPredictor(const DataManagerInterface &data_manager,
@@ -97,7 +99,7 @@ class DictionaryPredictor : public PredictorInterface {
     SUFFIX = 8,
     // add English words.
     ENGLISH = 16,
-    // add prediciton to type corrected keys
+    // add prediction to type corrected keys
     TYPING_CORRECTION = 32,
     // prefix candidates
     // "今日", "教" for the input, "きょうは"
@@ -395,7 +397,7 @@ class DictionaryPredictor : public PredictorInterface {
   size_t GetMissSpelledPosition(const std::string &key,
                                 const std::string &value) const;
 
-  // Returns language model cost of |token| given prediciton type |type|.
+  // Returns language model cost of |token| given prediction type |type|.
   // |rid| is the right id of previous word (token).
   // If |rid| is unknown, set 0 as a default value.
   int GetLMCost(const Result &result, int rid) const;
@@ -535,8 +537,6 @@ class DictionaryPredictor : public PredictorInterface {
   ZeroQueryDict zero_query_dict_;
   ZeroQueryDict zero_query_number_dict_;
   NumberDecoder number_decoder_;
-
-  DISALLOW_COPY_AND_ASSIGN(DictionaryPredictor);
 };
 
 }  // namespace mozc

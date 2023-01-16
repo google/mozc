@@ -55,7 +55,7 @@ KeyEventHandler::KeyEventHandler() : key_translator_(new KeyTranslator) {
   Clear();
 }
 
-bool KeyEventHandler::GetKeyEvent(guint keyval, guint keycode, guint modifiers,
+bool KeyEventHandler::GetKeyEvent(uint keyval, uint keycode, uint modifiers,
                                   config::Config::PreeditMethod preedit_method,
                                   bool layout_is_jp, commands::KeyEvent *key) {
   DCHECK(key);
@@ -77,7 +77,7 @@ void KeyEventHandler::Clear() {
   modifiers_to_be_sent_.clear();
 }
 
-bool KeyEventHandler::ProcessModifiers(bool is_key_up, guint keyval,
+bool KeyEventHandler::ProcessModifiers(bool is_key_up, uint keyval,
                                        commands::KeyEvent *key_event) {
   // Manage modifier key event.
   // Modifier key event is sent on key up if non-modifier key has not been

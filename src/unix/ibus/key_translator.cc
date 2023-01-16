@@ -34,12 +34,11 @@
 #include <string>
 
 #include "base/logging.h"
-#include "base/port.h"
 
 namespace mozc {
 namespace {
 static const auto kSpecialKeyMap =
-    new std::map<guint, commands::KeyEvent::SpecialKey>({
+    new std::map<uint, commands::KeyEvent::SpecialKey>({
         {IBUS_space, commands::KeyEvent::SPACE},
         {IBUS_Return, commands::KeyEvent::ENTER},
         {IBUS_Left, commands::KeyEvent::LEFT},
@@ -138,170 +137,170 @@ static const auto kSpecialKeyMap =
         //   - IBUS_Kana_Lock? IBUS_KEY_Kana_Shift?
     });
 
-static const auto kModifierKeyMap =
-    new std::map<guint, commands::KeyEvent::ModifierKey>({
-        {IBUS_Shift_L, commands::KeyEvent::SHIFT},
-        {IBUS_Shift_R, commands::KeyEvent::SHIFT},
-        {IBUS_Control_L, commands::KeyEvent::CTRL},
-        {IBUS_Control_R, commands::KeyEvent::CTRL},
-        {IBUS_Alt_L, commands::KeyEvent::ALT},
-        {IBUS_Alt_R, commands::KeyEvent::ALT},
-        {IBUS_LOCK_MASK, commands::KeyEvent::CAPS},
-    });
-
-static const auto kModifierMaskMap =
-    new std::map<guint, commands::KeyEvent::ModifierKey>({
-        {IBUS_SHIFT_MASK, commands::KeyEvent::SHIFT},
-        {IBUS_CONTROL_MASK, commands::KeyEvent::CTRL},
-        {IBUS_MOD1_MASK, commands::KeyEvent::ALT},
-    });
+static const auto kIbusModifierMaskMap = new std::map<uint, uint>({
+    {IBUS_Shift_L, IBUS_SHIFT_MASK},
+    {IBUS_Shift_R, IBUS_SHIFT_MASK},
+    {IBUS_Control_L, IBUS_CONTROL_MASK},
+    {IBUS_Control_R, IBUS_CONTROL_MASK},
+    {IBUS_Alt_L, IBUS_MOD1_MASK},
+    {IBUS_Alt_R, IBUS_MOD1_MASK},
+});
 
 // Stores a mapping from ASCII to Kana character. For example, ASCII character
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-typedef std::map<guint, std::pair<const char*, const char*>> KanaMap;
+typedef std::map<uint, std::pair<const char*, const char*>> KanaMap;
 static const KanaMap *kKanaJpMap = new KanaMap({
-        {'1', {"ぬ", "ぬ"}},
-        {'!', {"ぬ", "ぬ"}},
-        {'2', {"ふ", "ふ"}},
-        {'\"', {"ふ", "ふ"}},
-        {'3', {"あ", "ぁ"}},
-        {'#', {"あ", "ぁ"}},
-        {'4', {"う", "ぅ"}},
-        {'$', {"う", "ぅ"}},
-        {'5', {"え", "ぇ"}},
-        {'%', {"え", "ぇ"}},
-        {'6', {"お", "ぉ"}},
-        {'&', {"お", "ぉ"}},
-        {'7', {"や", "ゃ"}},
-        {'\'', {"や", "ゃ"}},
-        {'8', {"ゆ", "ゅ"}},
-        {'(', {"ゆ", "ゅ"}},
-        {'9', {"よ", "ょ"}},
-        {')', {"よ", "ょ"}},
-        {'0', {"わ", "を"}},
-        {'-', {"ほ", "ほ"}},
-        {'=', {"ほ", "ほ"}},
-        {'^', {"へ", "を"}},
-        {'~', {"へ", "を"}},
-        {'|', {"ー", "ー"}},
-        {'q', {"た", "た"}},
-        {'Q', {"た", "た"}},
-        {'w', {"て", "て"}},
-        {'W', {"て", "て"}},
-        {'e', {"い", "ぃ"}},
-        {'E', {"い", "ぃ"}},
-        {'r', {"す", "す"}},
-        {'R', {"す", "す"}},
-        {'t', {"か", "か"}},
-        {'T', {"か", "か"}},
-        {'y', {"ん", "ん"}},
-        {'Y', {"ん", "ん"}},
-        {'u', {"な", "な"}},
-        {'U', {"な", "な"}},
-        {'i', {"に", "に"}},
-        {'I', {"に", "に"}},
-        {'o', {"ら", "ら"}},
-        {'O', {"ら", "ら"}},
-        {'p', {"せ", "せ"}},
-        {'P', {"せ", "せ"}},
-        {'@', {"゛", "゛"}},
-        {'`', {"゛", "゛"}},
-        {'[', {"゜", "「"}},
-        {'{', {"゜", "「"}},
-        {'a', {"ち", "ち"}},
-        {'A', {"ち", "ち"}},
-        {'s', {"と", "と"}},
-        {'S', {"と", "と"}},
-        {'d', {"し", "し"}},
-        {'D', {"し", "し"}},
-        {'f', {"は", "は"}},
-        {'F', {"は", "は"}},
-        {'g', {"き", "き"}},
-        {'G', {"き", "き"}},
-        {'h', {"く", "く"}},
-        {'H', {"く", "く"}},
-        {'j', {"ま", "ま"}},
-        {'J', {"ま", "ま"}},
-        {'k', {"の", "の"}},
-        {'K', {"の", "の"}},
-        {'l', {"り", "り"}},
-        {'L', {"り", "り"}},
-        {';', {"れ", "れ"}},
-        {'+', {"れ", "れ"}},
-        {':', {"け", "け"}},
-        {'*', {"け", "け"}},
-        {']', {"む", "」"}},
-        {'}', {"む", "」"}},
-        {'z', {"つ", "っ"}},
-        {'Z', {"つ", "っ"}},
-        {'x', {"さ", "さ"}},
-        {'X', {"さ", "さ"}},
-        {'c', {"そ", "そ"}},
-        {'C', {"そ", "そ"}},
-        {'v', {"ひ", "ひ"}},
-        {'V', {"ひ", "ひ"}},
-        {'b', {"こ", "こ"}},
-        {'B', {"こ", "こ"}},
-        {'n', {"み", "み"}},
-        {'N', {"み", "み"}},
-        {'m', {"も", "も"}},
-        {'M', {"も", "も"}},
-        {',', {"ね", "、"}},
-        {'<', {"ね", "、"}},
-        {'.', {"る", "。"}},
-        {'>', {"る", "。"}},
-        {'/', {"め", "・"}},
-        {'?', {"め", "・"}},
-        {'_', {"ろ", "ろ"}},
-        // A backslash is handled in a special way because it is input by
-        // two different keys (the one next to Backslash and the one next
-        // to Right Shift).
-        {'\\', {"", ""}},
-    });
+    {'1', {"ぬ", "ぬ"}},
+    {'!', {"ぬ", "ぬ"}},
+    {'2', {"ふ", "ふ"}},
+    {'\"', {"ふ", "ふ"}},
+    {'3', {"あ", "ぁ"}},
+    {'#', {"あ", "ぁ"}},
+    {'4', {"う", "ぅ"}},
+    {'$', {"う", "ぅ"}},
+    {'5', {"え", "ぇ"}},
+    {'%', {"え", "ぇ"}},
+    {'6', {"お", "ぉ"}},
+    {'&', {"お", "ぉ"}},
+    {'7', {"や", "ゃ"}},
+    {'\'', {"や", "ゃ"}},
+    {'8', {"ゆ", "ゅ"}},
+    {'(', {"ゆ", "ゅ"}},
+    {'9', {"よ", "ょ"}},
+    {')', {"よ", "ょ"}},
+    {'0', {"わ", "を"}},
+    {'-', {"ほ", "ほ"}},
+    {'=', {"ほ", "ほ"}},
+    {'^', {"へ", "を"}},
+    {'~', {"へ", "を"}},
+    {'|', {"ー", "ー"}},
+    {'q', {"た", "た"}},
+    {'Q', {"た", "た"}},
+    {'w', {"て", "て"}},
+    {'W', {"て", "て"}},
+    {'e', {"い", "ぃ"}},
+    {'E', {"い", "ぃ"}},
+    {'r', {"す", "す"}},
+    {'R', {"す", "す"}},
+    {'t', {"か", "か"}},
+    {'T', {"か", "か"}},
+    {'y', {"ん", "ん"}},
+    {'Y', {"ん", "ん"}},
+    {'u', {"な", "な"}},
+    {'U', {"な", "な"}},
+    {'i', {"に", "に"}},
+    {'I', {"に", "に"}},
+    {'o', {"ら", "ら"}},
+    {'O', {"ら", "ら"}},
+    {'p', {"せ", "せ"}},
+    {'P', {"せ", "せ"}},
+    {'@', {"゛", "゛"}},
+    {'`', {"゛", "゛"}},
+    {'[', {"゜", "「"}},
+    {'{', {"゜", "「"}},
+    {'a', {"ち", "ち"}},
+    {'A', {"ち", "ち"}},
+    {'s', {"と", "と"}},
+    {'S', {"と", "と"}},
+    {'d', {"し", "し"}},
+    {'D', {"し", "し"}},
+    {'f', {"は", "は"}},
+    {'F', {"は", "は"}},
+    {'g', {"き", "き"}},
+    {'G', {"き", "き"}},
+    {'h', {"く", "く"}},
+    {'H', {"く", "く"}},
+    {'j', {"ま", "ま"}},
+    {'J', {"ま", "ま"}},
+    {'k', {"の", "の"}},
+    {'K', {"の", "の"}},
+    {'l', {"り", "り"}},
+    {'L', {"り", "り"}},
+    {';', {"れ", "れ"}},
+    {'+', {"れ", "れ"}},
+    {':', {"け", "け"}},
+    {'*', {"け", "け"}},
+    {']', {"む", "」"}},
+    {'}', {"む", "」"}},
+    {'z', {"つ", "っ"}},
+    {'Z', {"つ", "っ"}},
+    {'x', {"さ", "さ"}},
+    {'X', {"さ", "さ"}},
+    {'c', {"そ", "そ"}},
+    {'C', {"そ", "そ"}},
+    {'v', {"ひ", "ひ"}},
+    {'V', {"ひ", "ひ"}},
+    {'b', {"こ", "こ"}},
+    {'B', {"こ", "こ"}},
+    {'n', {"み", "み"}},
+    {'N', {"み", "み"}},
+    {'m', {"も", "も"}},
+    {'M', {"も", "も"}},
+    {',', {"ね", "、"}},
+    {'<', {"ね", "、"}},
+    {'.', {"る", "。"}},
+    {'>', {"る", "。"}},
+    {'/', {"め", "・"}},
+    {'?', {"め", "・"}},
+    {'_', {"ろ", "ろ"}},
+    // A backslash is handled in a special way because it is input by
+    // two different keys (the one next to Backslash and the one next
+    // to Right Shift).
+    {'\\', {"ろ", "ろ"}},
+    {U'¥', {"ー", "ー"}},  // U+00A5
+});
 
 static const KanaMap *kKanaUsMap = new KanaMap({
-      {'`', {"ろ", "ろ"}},  {'~', {"ろ", "ろ"}},  {'1', {"ぬ", "ぬ"}},
-      {'!', {"ぬ", "ぬ"}},  {'2', {"ふ", "ふ"}},  {'@', {"ふ", "ふ"}},
-      {'3', {"あ", "ぁ"}},  {'#', {"あ", "ぁ"}},  {'4', {"う", "ぅ"}},
-      {'$', {"う", "ぅ"}},  {'5', {"え", "ぇ"}},  {'%', {"え", "ぇ"}},
-      {'6', {"お", "ぉ"}},  {'^', {"お", "ぉ"}},  {'7', {"や", "ゃ"}},
-      {'&', {"や", "ゃ"}},  {'8', {"ゆ", "ゅ"}},  {'*', {"ゆ", "ゅ"}},
-      {'9', {"よ", "ょ"}},  {'(', {"よ", "ょ"}},  {'0', {"わ", "を"}},
-      {')', {"わ", "を"}},  {'-', {"ほ", "ー"}},  {'_', {"ほ", "ー"}},
-      {'=', {"へ", "へ"}},  {'+', {"へ", "へ"}},  {'q', {"た", "た"}},
-      {'Q', {"た", "た"}},  {'w', {"て", "て"}},  {'W', {"て", "て"}},
-      {'e', {"い", "ぃ"}},  {'E', {"い", "ぃ"}},  {'r', {"す", "す"}},
-      {'R', {"す", "す"}},  {'t', {"か", "か"}},  {'T', {"か", "か"}},
-      {'y', {"ん", "ん"}},  {'Y', {"ん", "ん"}},  {'u', {"な", "な"}},
-      {'U', {"な", "な"}},  {'i', {"に", "に"}},  {'I', {"に", "に"}},
-      {'o', {"ら", "ら"}},  {'O', {"ら", "ら"}},  {'p', {"せ", "せ"}},
-      {'P', {"せ", "せ"}},  {'[', {"゛", "゛"}},  {'{', {"゛", "゛"}},
-      {']', {"゜", "「"}},  {'}', {"゜", "「"}},  {'\\', {"む", "」"}},
-      {'|', {"む", "」"}},  {'a', {"ち", "ち"}},  {'A', {"ち", "ち"}},
-      {'s', {"と", "と"}},  {'S', {"と", "と"}},  {'d', {"し", "し"}},
-      {'D', {"し", "し"}},  {'f', {"は", "は"}},  {'F', {"は", "は"}},
-      {'g', {"き", "き"}},  {'G', {"き", "き"}},  {'h', {"く", "く"}},
-      {'H', {"く", "く"}},  {'j', {"ま", "ま"}},  {'J', {"ま", "ま"}},
-      {'k', {"の", "の"}},  {'K', {"の", "の"}},  {'l', {"り", "り"}},
-      {'L', {"り", "り"}},  {';', {"れ", "れ"}},  {':', {"れ", "れ"}},
-      {'\'', {"け", "け"}}, {'\"', {"け", "け"}}, {'z', {"つ", "っ"}},
-      {'Z', {"つ", "っ"}},  {'x', {"さ", "さ"}},  {'X', {"さ", "さ"}},
-      {'c', {"そ", "そ"}},  {'C', {"そ", "そ"}},  {'v', {"ひ", "ひ"}},
-      {'V', {"ひ", "ひ"}},  {'b', {"こ", "こ"}},  {'B', {"こ", "こ"}},
-      {'n', {"み", "み"}},  {'N', {"み", "み"}},  {'m', {"も", "も"}},
-      {'M', {"も", "も"}},  {',', {"ね", "、"}},  {'<', {"ね", "、"}},
-      {'.', {"る", "。"}},  {'>', {"る", "。"}},  {'/', {"め", "・"}},
-      {'?', {"め", "・"}},
-    });
+    {'`', {"ろ", "ろ"}},  {'~', {"ろ", "ろ"}},  {'1', {"ぬ", "ぬ"}},
+    {'!', {"ぬ", "ぬ"}},  {'2', {"ふ", "ふ"}},  {'@', {"ふ", "ふ"}},
+    {'3', {"あ", "ぁ"}},  {'#', {"あ", "ぁ"}},  {'4', {"う", "ぅ"}},
+    {'$', {"う", "ぅ"}},  {'5', {"え", "ぇ"}},  {'%', {"え", "ぇ"}},
+    {'6', {"お", "ぉ"}},  {'^', {"お", "ぉ"}},  {'7', {"や", "ゃ"}},
+    {'&', {"や", "ゃ"}},  {'8', {"ゆ", "ゅ"}},  {'*', {"ゆ", "ゅ"}},
+    {'9', {"よ", "ょ"}},  {'(', {"よ", "ょ"}},  {'0', {"わ", "を"}},
+    {')', {"わ", "を"}},  {'-', {"ほ", "ー"}},  {'_', {"ほ", "ー"}},
+    {'=', {"へ", "へ"}},  {'+', {"へ", "へ"}},  {'q', {"た", "た"}},
+    {'Q', {"た", "た"}},  {'w', {"て", "て"}},  {'W', {"て", "て"}},
+    {'e', {"い", "ぃ"}},  {'E', {"い", "ぃ"}},  {'r', {"す", "す"}},
+    {'R', {"す", "す"}},  {'t', {"か", "か"}},  {'T', {"か", "か"}},
+    {'y', {"ん", "ん"}},  {'Y', {"ん", "ん"}},  {'u', {"な", "な"}},
+    {'U', {"な", "な"}},  {'i', {"に", "に"}},  {'I', {"に", "に"}},
+    {'o', {"ら", "ら"}},  {'O', {"ら", "ら"}},  {'p', {"せ", "せ"}},
+    {'P', {"せ", "せ"}},  {'[', {"゛", "゛"}},  {'{', {"゛", "゛"}},
+    {']', {"゜", "「"}},  {'}', {"゜", "「"}},  {'\\', {"む", "」"}},
+    {'|', {"む", "」"}},  {'a', {"ち", "ち"}},  {'A', {"ち", "ち"}},
+    {'s', {"と", "と"}},  {'S', {"と", "と"}},  {'d', {"し", "し"}},
+    {'D', {"し", "し"}},  {'f', {"は", "は"}},  {'F', {"は", "は"}},
+    {'g', {"き", "き"}},  {'G', {"き", "き"}},  {'h', {"く", "く"}},
+    {'H', {"く", "く"}},  {'j', {"ま", "ま"}},  {'J', {"ま", "ま"}},
+    {'k', {"の", "の"}},  {'K', {"の", "の"}},  {'l', {"り", "り"}},
+    {'L', {"り", "り"}},  {';', {"れ", "れ"}},  {':', {"れ", "れ"}},
+    {'\'', {"け", "け"}}, {'\"', {"け", "け"}}, {'z', {"つ", "っ"}},
+    {'Z', {"つ", "っ"}},  {'x', {"さ", "さ"}},  {'X', {"さ", "さ"}},
+    {'c', {"そ", "そ"}},  {'C', {"そ", "そ"}},  {'v', {"ひ", "ひ"}},
+    {'V', {"ひ", "ひ"}},  {'b', {"こ", "こ"}},  {'B', {"こ", "こ"}},
+    {'n', {"み", "み"}},  {'N', {"み", "み"}},  {'m', {"も", "も"}},
+    {'M', {"も", "も"}},  {',', {"ね", "、"}},  {'<', {"ね", "、"}},
+    {'.', {"る", "。"}},  {'>', {"る", "。"}},  {'/', {"め", "・"}},
+    {'?', {"め", "・"}},
+});
+
+const char *GetKanaValue(const KanaMap &kana_map, uint keyval, bool is_shift) {
+  KanaMap::const_iterator iter = kana_map.find(keyval);
+  if (iter == kana_map.end()) {
+    return nullptr;
+  }
+  return (is_shift) ? iter->second.second : iter->second.first;
+}
 
 }  // namespace
 
 namespace ibus {
 
 // TODO(nona): Fix 'Shift-0' behavior b/4338394
-bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
+bool KeyTranslator::Translate(uint keyval, uint keycode, uint modifiers,
                               config::Config::PreeditMethod method,
                               bool layout_is_jp,
                               commands::KeyEvent *out_event) const {
@@ -324,13 +323,14 @@ bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
     out_event->set_key_code(keyval);
     out_event->set_key_string(kana_key_string);
   } else if (IsAscii(keyval, keycode, modifiers)) {
-    if (IBUS_LOCK_MASK & modifiers) {
+    if (modifiers & IBUS_LOCK_MASK) {
       out_event->add_modifier_keys(commands::KeyEvent::CAPS);
     }
     out_event->set_key_code(keyval);
-  } else if (auto it = kModifierKeyMap->find(keyval);
-             it != kModifierKeyMap->end()) {
-    out_event->add_modifier_keys(it->second);
+  } else if (auto it = kIbusModifierMaskMap->find(keyval);
+             it != kIbusModifierMaskMap->end()) {
+    // Convert Ibus modifier key to mask (e.g. IBUS_Shift_L to IBUS_SHIFT_MASK)
+    modifiers |= it->second;
   } else if (auto it = kSpecialKeyMap->find(keyval);
              it != kSpecialKeyMap->end()) {
     out_event->set_special_key(it->second);
@@ -339,66 +339,51 @@ bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
     return false;
   }
 
-  for (auto it = kModifierMaskMap->begin();
-       it != kModifierMaskMap->end(); ++it) {
-    // Do not set a SHIFT modifier when |keyval| is a printable key by following
+  // Modifier keys
+  if (modifiers & IBUS_SHIFT_MASK && !IsPrintable(keyval, keycode, modifiers)) {
+    // Only set a SHIFT modifier when `keyval` is a printable key by following
     // the Mozc's rule.
-    if ((it->second == commands::KeyEvent::SHIFT) &&
-        IsPrintable(keyval, keycode, modifiers)) {
-      continue;
-    }
-
-    if (it->first & modifiers) {
-      // Add a modifier key if doesn't exist.
-      commands::KeyEvent::ModifierKey modifier = it->second;
-      bool found = false;
-      for (int i = 0; i < out_event->modifier_keys_size(); ++i) {
-        if (modifier == out_event->modifier_keys(i)) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        out_event->add_modifier_keys(modifier);
-      }
-    }
+    out_event->add_modifier_keys(commands::KeyEvent::SHIFT);
+  }
+  if (modifiers & IBUS_CONTROL_MASK) {
+    out_event->add_modifier_keys(commands::KeyEvent::CTRL);
+  }
+  if (modifiers & IBUS_MOD1_MASK) {
+    out_event->add_modifier_keys(commands::KeyEvent::ALT);
   }
 
   return true;
 }
 
-bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
-                                                   guint modifiers) {
+bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(uint keyval, uint keycode,
+                                                   uint modifiers) {
   return ((modifiers & IBUS_SHIFT_MASK) && (keyval == IBUS_Hiragana_Katakana));
 }
 
-bool KeyTranslator::IsKanaAvailable(guint keyval, guint keycode,
-                                    guint modifiers, bool layout_is_jp,
+bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode,
+                                    uint modifiers, bool layout_is_jp,
                                     std::string *out) const {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }
   const KanaMap &kana_map = layout_is_jp ? *kKanaJpMap : *kKanaUsMap;
-  KanaMap::const_iterator iter = kana_map.find(keyval);
-  if (iter == kana_map.end()) {
-    return false;
+
+  // When a Japanese keyboard is in use, the yen-sign key and the backslash
+  // key generate the same |keyval|. In this case, we have to check |keycode|
+  // to return an appropriate string. See the following IBus issue for
+  // details: https://github.com/ibus/ibus/issues/73
+  if (layout_is_jp && keyval == '\\' && keycode == IBUS_bar) {
+    keyval = U'¥';  // U+00A5
   }
 
+  const bool is_shift = (modifiers & IBUS_SHIFT_MASK);
+  const char* kana = GetKanaValue(kana_map, keyval, is_shift);
+
+  if (kana == nullptr) {
+    return false;
+  }
   if (out) {
-    // When a Japanese keyboard is in use, the yen-sign key and the backslash
-    // key generate the same |keyval|. In this case, we have to check |keycode|
-    // to return an appropriate string. See the following IBus issue for
-    // details: https://github.com/ibus/ibus/issues/73
-    if (keyval == '\\' && layout_is_jp) {
-      if (keycode == IBUS_bar) {
-        *out = "ー";
-      } else {
-        *out = "ろ";
-      }
-    } else {
-      *out = (modifiers & IBUS_SHIFT_MASK) ? iter->second.second
-                                           : iter->second.first;
-    }
+    out->assign(kana);
   }
   return true;
 }
@@ -406,14 +391,14 @@ bool KeyTranslator::IsKanaAvailable(guint keyval, guint keycode,
 // TODO(nona): resolve S-'0' problem (b/4338394).
 // TODO(nona): Current printable detection is weak. To enhance accuracy, use xkb
 // key map
-bool KeyTranslator::IsPrintable(guint keyval, guint keycode, guint modifiers) {
+bool KeyTranslator::IsPrintable(uint keyval, uint keycode, uint modifiers) {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }
   return IsAscii(keyval, keycode, modifiers);
 }
 
-bool KeyTranslator::IsAscii(guint keyval, guint keycode, guint modifiers) {
+bool KeyTranslator::IsAscii(uint keyval, uint keycode, uint modifiers) {
   return (keyval > IBUS_space &&
           // Note: Space key (0x20) is a special key in Mozc.
           keyval <= IBUS_asciitilde);  // 0x7e.

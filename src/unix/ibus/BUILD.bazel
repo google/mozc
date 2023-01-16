@@ -83,12 +83,31 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
+    name = "ibus_wrapper",
+    srcs = select_mozc(linux = ["ibus_wrapper.cc"]),
+    hdrs = select_mozc(linux = ["ibus_wrapper.h"]),
+    deps = [
+        "@com_google_absl//absl/strings",
+    ] + select_mozc(
+        linux = [
+            ":ibus_header",
+            "//third_party/ibus",
+        ],
+        oss_linux = [
+            ":ibus_header",
+            "@ibus//:ibus",
+        ],
+    ),
+)
+
+cc_library_mozc(
     name = "ibus_property_handler",
     srcs = select_mozc(linux = ["property_handler.cc"]),
     hdrs = select_mozc(linux = ["property_handler.h"]),
     deps = [
         ":ibus_header",
         ":ibus_utils",
+        ":ibus_wrapper",
         "//base",
         "//base:file_util",
         "//base:logging",
@@ -96,6 +115,7 @@ cc_library_mozc(
         "//base:system_util",
         "//client:client",
         "//protocol:commands_cc_proto",
+        "@com_google_absl//absl/strings",
     ] + select_mozc(
         linux = ["//third_party/ibus"],
         oss_linux = ["@ibus//:ibus"],
@@ -161,7 +181,6 @@ cc_library_mozc(
             "key_translator.h",
             "mozc_engine.h",
             "preedit_handler.h",
-            "preedit_handler_interface.h",
             "surrounding_text_util.h",
         ],
     ),
@@ -175,6 +194,7 @@ cc_library_mozc(
         ":ibus_header",
         ":ibus_property_handler",
         ":ibus_utils",
+        ":ibus_wrapper",
         ":x11_selection_monitor",
         "//base",
         "//base:clock",
@@ -192,6 +212,8 @@ cc_library_mozc(
         "//session:ime_switch_util",
         "//testing:gunit_prod",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -263,6 +285,7 @@ cc_binary_mozc(
         "//base:logging",
         "//base:version",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -315,12 +338,17 @@ cc_library_mozc(
         "//renderer:renderer_client",
         "//renderer:renderer_interface",
         "//renderer:unix_const",
+        "@com_google_absl//absl/strings",
     ] + select_mozc(
         linux = [
+            ":ibus_wrapper",
             "//third_party/ibus",
             "//third_party/glib/gio",
         ],
-        oss_linux = ["@ibus//:ibus"],
+        oss_linux = [
+            ":ibus_wrapper",
+            "@ibus//:ibus",
+        ],
     ),
 )
 

@@ -66,6 +66,16 @@
       },
     },
     {
+      'target_name': 'ibus_wrapper',
+      'type': 'static_library',
+      'sources': [
+        'ibus_wrapper.cc',
+      ],
+      'dependencies': [
+        'ibus_build_environment',
+      ],
+    },
+    {
       'target_name': 'gen_mozc_xml',
       'type': 'none',
       'actions': [
@@ -98,6 +108,7 @@
       'dependencies': [
         '../../protocol/protocol.gyp:commands_proto',
         'ibus_build_environment',
+        'ibus_wrapper',
         'message_translator',
         'path_util',
       ],
@@ -173,6 +184,7 @@
         'gen_ibus_mozc_files',
         'ibus_config_proto',
         'ibus_property_handler',
+        'ibus_wrapper',
         'message_translator',
         'path_util',
       ],
@@ -322,6 +334,7 @@
         '../../protocol/protocol.gyp:renderer_proto',
         '../../renderer/renderer.gyp:renderer_client',
         'ibus_build_environment',
+        'ibus_wrapper',
       ],
     },
     {

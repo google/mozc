@@ -38,7 +38,7 @@ namespace {
 class TestThread : public Thread {
  public:
   explicit TestThread(int time) : time_(time), invoked_(false) {}
-  ~TestThread() override {}
+  ~TestThread() override = default;
 
   void Run() override {
     invoked_ = true;

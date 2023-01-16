@@ -36,15 +36,16 @@
 #include "base/logging.h"
 #include "base/port.h"
 #include "base/util.h"
+#include "absl/strings/string_view.h"
 
 namespace mozc {
 namespace ibus {
 
-bool SurroundingTextUtil::GetSafeDelta(guint from, guint to, int32 *delta) {
+bool SurroundingTextUtil::GetSafeDelta(uint from, uint to, int32 *delta) {
   DCHECK(delta);
 
-  static_assert(sizeof(int64) >= sizeof(guint),
-                "int64 must be sufficient to store a guint value.");
+  static_assert(sizeof(int64) >= sizeof(uint),
+                "int64 must be sufficient to store a uint value.");
   static_assert(sizeof(int64) == sizeof(llabs(0)),
                 "|llabs(0)| must returns a 64-bit integer.");
   const int64 kInt32AbsMax =
@@ -105,10 +106,10 @@ bool StartsWith(ConstChar32Iterator *iter, ConstChar32Iterator *prefix_iter) {
 // Returns true if |surrounding_text| contains |selected_text|
 // from |cursor_pos| to |*anchor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosForward(const std::string &surrounding_text,
-                            const std::string &selected_text,
-                            size_t selected_chars_len, guint cursor_pos,
-                            guint *anchor_pos) {
+bool SearchAnchorPosForward(absl::string_view surrounding_text,
+                            absl::string_view selected_text,
+                            size_t selected_chars_len, uint cursor_pos,
+                            uint *anchor_pos) {
   ConstChar32Iterator iter(surrounding_text);
   // Move |iter| to cursor pos.
   if (!Skip(&iter, cursor_pos)) {
@@ -126,17 +127,17 @@ bool SearchAnchorPosForward(const std::string &surrounding_text,
 // Returns true if |surrounding_text| contains |selected_text|
 // from |*anchor_pos| to |cursor_pos|.
 // Otherwise returns false.
-bool SearchAnchorPosBackward(const std::string &surrounding_text,
-                             const std::string &selected_text,
-                             size_t selected_chars_len, guint cursor_pos,
-                             guint *anchor_pos) {
+bool SearchAnchorPosBackward(absl::string_view surrounding_text,
+                             absl::string_view selected_text,
+                             size_t selected_chars_len, uint cursor_pos,
+                             uint *anchor_pos) {
   if (cursor_pos < selected_chars_len) {
     return false;
   }
 
   ConstChar32Iterator iter(surrounding_text);
   // Skip |iter| to (potential) anchor pos.
-  const guint skip_count = cursor_pos - selected_chars_len;
+  const uint skip_count = cursor_pos - selected_chars_len;
   DCHECK_LE(skip_count, cursor_pos);
   if (!Skip(&iter, skip_count)) {
     return false;
@@ -153,8 +154,8 @@ bool SearchAnchorPosBackward(const std::string &surrounding_text,
 }  // namespace
 
 bool SurroundingTextUtil::GetAnchorPosFromSelection(
-    const std::string &surrounding_text, const std::string &selected_text,
-    guint cursor_pos, guint *anchor_pos) {
+    absl::string_view surrounding_text, absl::string_view selected_text,
+    uint cursor_pos, uint *anchor_pos) {
   DCHECK(anchor_pos);
 
   if (surrounding_text.empty()) {

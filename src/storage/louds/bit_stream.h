@@ -42,6 +42,8 @@ namespace louds {
 class BitStream {
  public:
   BitStream();
+  BitStream(const BitStream&) = delete;
+  BitStream& operator=(const BitStream&) = delete;
 
   const std::string &image() const { return image_; }
   size_t num_bits() const { return num_bits_; }
@@ -55,8 +57,6 @@ class BitStream {
  private:
   std::string image_;
   size_t num_bits_;
-
-  DISALLOW_COPY_AND_ASSIGN(BitStream);
 };
 
 }  // namespace louds

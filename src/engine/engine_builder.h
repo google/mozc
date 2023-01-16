@@ -40,6 +40,8 @@ namespace mozc {
 class EngineBuilder : public EngineBuilderInterface {
  public:
   EngineBuilder();
+  EngineBuilder(const EngineBuilder &) = delete;
+  EngineBuilder &operator=(const EngineBuilder &) = delete;
   ~EngineBuilder() override;
 
   // Implementation of EngineBuilderInterface.  PrepareAsync() is implemented
@@ -57,8 +59,6 @@ class EngineBuilder : public EngineBuilderInterface {
  private:
   class Preparator;
   std::unique_ptr<Preparator> preparator_;
-
-  DISALLOW_COPY_AND_ASSIGN(EngineBuilder);
 };
 
 }  // namespace mozc

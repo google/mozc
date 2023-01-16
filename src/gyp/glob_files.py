@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2010-2021, Google Inc.
 # All rights reserved.
 #
@@ -27,22 +28,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{
-  'variables': {
-    'relative_dir': 'data/test/session/scenario/usage_stats',
-    'gen_out_dir': '<(SHARED_INTERMEDIATE_DIR)/<(relative_dir)',
-  },
-  'targets': [
-    {
-      'target_name': 'install_session_handler_usage_stats_scenario_test_data',
-      'type': 'none',
-      'variables': {
-        'test_data': [
-          '<!@(<(glob) *.txt)',
-        ],
-        'test_data_subdir': 'data/test/session/scenario/usage_stats',
-      },
-      'includes': ['../../../../../gyp/install_testdata.gypi'],
-    },
-  ],
-}
+"""Script to glob files for GYP build.
+
+glob_files.py --include "*.txt" --exclude "exclude.txt"
+"""
+
+import argparse
+import glob
+
+
+def _ParseArguments():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--include', nargs='+')
+  parser.add_argument('--exclude', nargs='+', default=[])
+  return parser.parse_args()
+
+
+def main():
+  args = _ParseArguments()
+  includes = []
+  excludes = []
+  for include in args.include:
+    a = glob.glob(include)
+    includes.extend(a)
+  for exclude in args.exclude:
+    excludes.extend(glob.glob(exclude))
+
+  for file in list(set(includes) - set(excludes)):
+    print(file)
+
+
+if __name__ == '__main__':
+  main()

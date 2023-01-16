@@ -42,6 +42,9 @@ namespace louds {
 class BitVectorBasedArrayBuilder {
  public:
   BitVectorBasedArrayBuilder();
+  BitVectorBasedArrayBuilder(const BitVectorBasedArrayBuilder&) = delete;
+  BitVectorBasedArrayBuilder& operator=(const BitVectorBasedArrayBuilder&) =
+      delete;
   ~BitVectorBasedArrayBuilder();
 
   // Adds the element to the builder.
@@ -74,7 +77,6 @@ class BitVectorBasedArrayBuilder {
   size_t step_length_;
 
   std::string image_;
-  DISALLOW_COPY_AND_ASSIGN(BitVectorBasedArrayBuilder);
 };
 
 }  // namespace louds

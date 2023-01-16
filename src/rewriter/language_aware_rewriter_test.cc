@@ -75,8 +75,8 @@ void InsertASCIISequence(const std::string &text,
 class LanguageAwareRewriterTest : public ::testing::Test {
  protected:
   // Workaround for C2512 error (no default appropriate constructor) on MSVS.
-  LanguageAwareRewriterTest() {}
-  ~LanguageAwareRewriterTest() override {}
+  LanguageAwareRewriterTest() = default;
+  ~LanguageAwareRewriterTest() override = default;
 
   void SetUp() override { usage_stats::UsageStats::ClearAllStatsForTest(); }
 
