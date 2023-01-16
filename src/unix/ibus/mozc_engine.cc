@@ -99,49 +99,6 @@ std::string GetMessageLocale() {
   return kMozcDefaultUILocale;
 }
 
-struct IBusMozcEngineClass {
-  IBusEngineClass parent;
-};
-
-struct IBusMozcEngine {
-  IBusEngine parent;
-  mozc::ibus::MozcEngine *engine;
-};
-
-IBusEngineClass *g_parent_class = nullptr;
-
-GObject *MozcEngineClassConstructor(
-    GType type, uint n_construct_properties,
-    GObjectConstructParam *construct_properties) {
-  return G_OBJECT_CLASS(g_parent_class)
-      ->constructor(type, n_construct_properties, construct_properties);
-}
-
-void MozcEngineClassDestroy(IBusObject *engine) {
-  IBUS_OBJECT_CLASS(g_parent_class)->destroy(engine);
-}
-
-void MozcEngineClassInit(gpointer klass, gpointer class_data) {
-  IBusEngineClass *engine_class = IBUS_ENGINE_CLASS(klass);
-
-  VLOG(2) << "MozcEngineClassInit is called";
-  mozc::ibus::EngineRegistrar::Register(
-      mozc::Singleton<mozc::ibus::MozcEngine>::get(), engine_class);
-
-  g_parent_class =
-      reinterpret_cast<IBusEngineClass *>(g_type_class_peek_parent(klass));
-
-  GObjectClass *object_class = G_OBJECT_CLASS(klass);
-  object_class->constructor = MozcEngineClassConstructor;
-  IBusObjectClass *ibus_object_class = IBUS_OBJECT_CLASS(klass);
-  ibus_object_class->destroy = MozcEngineClassDestroy;
-}
-
-void MozcEngineInstanceInit(GTypeInstance *instance, gpointer klass) {
-  IBusMozcEngine *engine = reinterpret_cast<IBusMozcEngine *>(instance);
-  engine->engine = mozc::Singleton<mozc::ibus::MozcEngine>::get();
-}
-
 }  // namespace
 
 namespace mozc {
@@ -491,25 +448,6 @@ void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
     // Make sure on-going composition is reverted.
     RevertSession(engine);
   }
-}
-
-// static
-GType MozcEngine::RegisterEngine() {
-  static GType type = 0;
-
-  static const GTypeInfo type_info = {
-      sizeof(IBusMozcEngineClass), nullptr, nullptr,
-      MozcEngineClassInit,         nullptr, nullptr,
-      sizeof(IBusMozcEngine),      0,       MozcEngineInstanceInit,
-  };
-
-  if (type == 0) {
-    type = g_type_register_static(IBUS_TYPE_ENGINE, "IBusMozcEngine",
-                                  &type_info, static_cast<GTypeFlags>(0));
-    DCHECK_NE(type, 0) << "g_type_register_static failed";
-  }
-
-  return type;
 }
 
 // static

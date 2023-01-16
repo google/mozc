@@ -37,6 +37,7 @@
 #include "base/init_mozc.h"
 #include "base/logging.h"
 #include "base/version.h"
+#include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/ibus_config.h"
 #include "unix/ibus/mozc_engine.h"
 #include "unix/ibus/path_util.h"
@@ -91,7 +92,7 @@ void InitIbusComponent(IbusBusWrapper *bus, bool executed_by_ibus_daemon) {
                    G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), nullptr);
 
   IbusComponentWrapper component = GetIbusComponent();
-  const GType type = mozc::ibus::MozcEngine::RegisterEngine();
+  const GType type = mozc::ibus::RegisterEngine(new mozc::ibus::MozcEngine);
   bus->AddEngines(component.GetEngineNames(), type);
 
   if (executed_by_ibus_daemon) {
