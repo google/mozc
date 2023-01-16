@@ -289,7 +289,18 @@ class Session : public SessionInterface {
 
   void PushUndoContext();
   void PopUndoContext();
+  // Clear the undo context.
+  // (The below description is effective when undo_partial_commit() is enabled)
+  // This should be called when the composer's preedit or cursor position
+  // is updated by non-undo related operations. This achieves intuitive
+  // behavior, which clears the undo context on the user's edit operation.
   void ClearUndoContext();
+  bool HasUndoContext() const;
+  // Set command.output.status.undo_available to true if HasUndoContext()==true.
+  // Otherwise no-op.
+  // Some code treats empty Status and default Status differently so
+  // we don't want to create a new Status instance if not required.
+  void MaybeSetUndoStatus(commands::Command *command) const;
 
   // Return true if full width space is preferred in the given new input
   // state than half width space. When |input| does not have new input mode,
@@ -306,10 +317,6 @@ class Session : public SessionInterface {
   // would not be used from SendKey but used from SendCommand because
   // it requires the argument id.
   bool SelectCandidate(mozc::commands::Command *command);
-
-  // Calls SessionConverter::ConmmitFirstSegment() and deletes characters
-  // from the composer.
-  void CommitFirstSegmentInternal(const commands::Context &context);
 
   // Calls SessionConverter::ConmmitHeadToFocusedSegments()
   // and deletes characters from the composer.
@@ -362,6 +369,9 @@ class Session : public SessionInterface {
   bool SendKeyPrecompositionState(mozc::commands::Command *command);
   bool SendKeyCompositionState(mozc::commands::Command *command);
   bool SendKeyConversionState(mozc::commands::Command *command);
+
+  bool MoveCursorToEndInternal(mozc::commands::Command *command,
+                               bool clear_undo);
 
   // update last_command_time;
   void UpdateTime();

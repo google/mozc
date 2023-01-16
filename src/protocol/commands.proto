@@ -556,7 +556,7 @@ message Capability {
       [default = NO_TEXT_DELETION_CAPABILITY];
 }
 
-// Next ID: 12
+// Next ID: 13
 // Bundles together some Android experiment flags so that they can be easily
 // retrieved throughout the native code.  These flags are generally specific to
 // the decoder, and are made available when the decoder is initialized.
@@ -596,12 +596,16 @@ message DecoderExperimentParams {
   // If true, EnvironmentalFilterRewriter avoids suggesting some unrenderable
   // letters.
   optional bool enable_environmental_filter_rewriter = 11 [default = true];
+
+  // Enable multiple undo for partial commit.
+  optional bool undo_partial_commit = 12 [default = false];
 }
 
 // Clients' request to the server.
 // Users cannot modify this.
 // In the future each request may be able to be overwritten by Config.
 // The server does not have to obey this request.
+// Next ID: 23
 message Request {
   // Enable zero query suggestion.
   optional bool zero_query_suggestion = 1
@@ -1206,6 +1210,10 @@ message Status {
   // |comeback_mode| can be different from |mode|.
   // TODO(yukawa): Use more appropriate name.
   optional CompositionMode comeback_mode = 3;
+
+  // Whether Undo operation is available.
+  // The client may enable/disable the Undo key based on this value.
+  optional bool undo_available = 26;
 }
 
 // This message contains which characters are to be deleted by client.
@@ -1235,6 +1243,7 @@ message DeletionRange {
   optional int32 length = 2;
 }
 
+// Next ID: 26
 message Output {
   optional uint64 id = 1 [jstype = JS_STRING];
 
