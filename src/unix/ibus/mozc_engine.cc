@@ -450,9 +450,6 @@ void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
   }
 }
 
-// static
-void MozcEngine::Disconnected(IBusBus *bus, gpointer user_data) { ibus_quit(); }
-
 bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
                            const commands::Output &output) {
   UpdateDeletionRange(engine, output);

@@ -41,6 +41,8 @@ static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 #error "ibus-mozc requires IBus>=1.5.4"
 #endif  // libibus (<1.5.4)
 
+namespace mozc {
+namespace ibus {
 
 // GobjectWrapper
 
@@ -285,3 +287,6 @@ void IbusBusWrapper::RequestName(const char *name) {
 void IbusBusWrapper::RegisterComponent(IbusComponentWrapper *component) {
   ibus_bus_register_component(bus_, component->GetComponent());
 }
+
+}  // namespace ibus
+}  // namespace mozc

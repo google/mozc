@@ -35,6 +35,9 @@
 #include <string>
 #include <vector>
 
+namespace mozc {
+namespace ibus {
+
 class GobjectWrapper {
  public:
   explicit GobjectWrapper() = default;
@@ -199,5 +202,8 @@ class IbusBusWrapper {
  private:
   IBusBus *bus_;  // Does not take the ownership.
 };
+
+}  // namespace ibus
+}  // namespace mozc
 
 #endif  // MOZC_UNIX_IBUS_IBUS_WRAPPER_H_

@@ -98,9 +98,6 @@ class MozcEngine : public EngineInterface {
   void SetContentType(IbusEngineWrapper *engine, uint purpose,
                       uint hints) override;
 
-  // The callback function to the "disconnected" signal to the bus object.
-  static void Disconnected(IBusBus *bus, gpointer user_data);
-
  private:
   // Updates the preedit text and the candidate window and inserts result
   // based on the content of |output|.
