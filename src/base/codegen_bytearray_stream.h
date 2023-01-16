@@ -56,7 +56,7 @@
 // platform.
 #error \
     "base/codegen_bytearray_stream.h shouldn't be used from android platform."
-#endif
+#endif  // OS_ANDROID
 
 #ifdef OS_WIN
 // Visual C++ does not support string literals longer than 65535 characters
@@ -124,16 +124,16 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
       4000 * 1024;  // 4 mega chars
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   static const size_t kNumOfBytesOnOneLine = 4 * sizeof(uint64);
-#else
+#else   // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   static constexpr size_t kNumOfBytesOnOneLine = 20;
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   // Converts a raw byte stream to C source code.
   void WriteBytes(const char *begin, const char *end);
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   void WriteWordBuffer();
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   size_t internal_output_buffer_size_;
   std::unique_ptr<char[]> internal_output_buffer_;
@@ -143,7 +143,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   std::ios_base::fmtflags output_stream_format_flags_;
   char output_stream_format_fill_;
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   bool is_open_;
   std::string var_name_base_;
@@ -151,7 +151,7 @@ class BasicCodeGenByteArrayStreamBuf : public std::streambuf {
 
 #ifdef MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
   uint64 word_buffer_;
-#endif
+#endif  // MOZC_CODEGEN_BYTEARRAY_STREAM_USES_WORD_ARRAY
 
   DISALLOW_COPY_AND_ASSIGN(BasicCodeGenByteArrayStreamBuf);
 };

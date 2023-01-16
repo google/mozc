@@ -133,7 +133,7 @@ const GUID kTipFunctionProvider = {
     0x4a08,
     {0x9e, 0x1d, 0xb, 0xef, 0x62, 0x8b, 0x5f, 0x0e}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 constexpr char kHelpUrl[] = "https://github.com/google/mozc";
 constexpr char kLogFileName[] = "Mozc_tsf_ui.log";
@@ -167,7 +167,7 @@ const GUID kTipFunctionProvider = {
     0x4ca0,
     {0xbb, 0xe4, 0x32, 0xfe, 0x8, 0xc1, 0x48, 0xf4}};
 
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 HRESULT SpawnTool(const std::string &command) {
   if (!Process::SpawnMozcProcess(kMozcTool, "--mode=" + command)) {
@@ -252,11 +252,11 @@ struct CComPtrHash {
     //     need to check _M_X64 first.
 #if defined(_M_X64)
     constexpr size_t kUnusedBits = 3;  // assuming 8-byte aligned
-#elif defined(_M_IX86)
+#elif defined(_M_IX86)                 // defined(_M_X64)
     constexpr size_t kUnusedBits = 2;  // assuming 4-byte aligned
-#else
+#else                                  // defined(_M_IX86)
 #error "unsupported platform"
-#endif
+#endif  // defined(_M_IX86)
     // Compress the data by shifting unused bits.
     return reinterpret_cast<size_t>(value.p) >> kUnusedBits;
   }

@@ -52,7 +52,7 @@ static const GUID kGoogleJapaneseInputProfile = {
     0x4b1b,
     {0xb4, 0x20, 0xfa, 0x98, 0x5b, 0xb0, 0xb8, 0x0d}};
 
-#else
+#else  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // {10A67BC8-22FA-4A59-90DC-2546652C56BF}
 static const GUID kMozcTextService = {
@@ -68,7 +68,7 @@ static const GUID kMozcProfile = {
     0x43fe,
     {0xa0, 0x0e, 0xaa, 0xcb, 0x1d, 0x9e, 0x6d, 0x3d}};
 
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 // Represents the language ID of this text service.
 const LANGID kTextServiceLanguage = MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT);
@@ -78,17 +78,17 @@ const LANGID kTextServiceLanguage = MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT);
 const GUID &TsfProfile::GetTextServiceGuid() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   return kGoogleJapaneseInputTextService;
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   return kMozcTextService;
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
 
 const GUID &TsfProfile::GetProfileGuid() {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
   return kGoogleJapaneseInputProfile;
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
   return kMozcProfile;
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 }
 
 LANGID TsfProfile::GetLangId() { return kTextServiceLanguage; }

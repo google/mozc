@@ -49,5 +49,5 @@ class MacProcess {
   static bool LaunchErrorMessageDialog(const std::string &error_type);
 };
 }  // namespace mozc
-#endif
+#endif  // __APPLE__
 #endif  // MOZC_BASE_MAC_PROCESS_H_

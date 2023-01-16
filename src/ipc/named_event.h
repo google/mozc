@@ -32,9 +32,9 @@
 
 #ifdef OS_WIN
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <semaphore.h>
-#endif
+#endif  // OS_WIN
 
 #include <string>
 
@@ -136,10 +136,10 @@ class NamedEventListener {
 
 #ifdef OS_WIN
   HANDLE handle_;
-#else
+#else   // OS_WIN
   sem_t *sem_;
   std::string key_filename_;
-#endif
+#endif  // OS_WIN
 };
 
 class NamedEventNotifier {
@@ -159,9 +159,9 @@ class NamedEventNotifier {
  private:
 #ifdef OS_WIN
   HANDLE handle_;
-#else
+#else   // OS_WIN
   sem_t *sem_;
-#endif
+#endif  // OS_WIN
 };
 }  // namespace mozc
 

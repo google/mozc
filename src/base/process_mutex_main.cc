@@ -54,9 +54,9 @@ int main(int argc, char **argv) {
 
 #ifdef OS_WIN
   ::Sleep(absl::GetFlag(FLAGS_sleep_time) * 1000);
-#else
+#else   // OS_WIN
   ::sleep(absl::GetFlag(FLAGS_sleep_time));
-#endif
+#endif  // OS_WIN
 
   mutex.UnLock();
 

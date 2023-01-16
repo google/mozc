@@ -128,7 +128,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       ::RegCloseKey(hKey);
     }
   }
-#endif
+#endif  // !MOZC_NO_LOGGING
 
   mozc::WinCommandLine cmd;
   int argc = cmd.argc();

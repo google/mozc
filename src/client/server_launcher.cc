@@ -33,7 +33,7 @@
 #include <shlobj.h>
 #include <string.h>
 #include <windows.h>
-#else
+#else  // OS_WIN
 #include <unistd.h>
 #endif  // OS_WIN
 
@@ -130,7 +130,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(WARNING) << "Parent process is in job. start with restricted mode";
     arg += "--restricted";
   }
-#endif
+#endif  // OS_WIN
 
 #ifdef DEBUG
   // In order to test the Session treatment (timeout/size constratins),
@@ -168,7 +168,7 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(ERROR) << "Can't start process: " << ::GetLastError();
     return false;
   }
-#elif defined(__APPLE__)
+#elif defined(__APPLE__)  // OS_WIN
   // Use launchd API instead of spawning process.  It doesn't use
   // server_program() at all.
   const bool result = MacUtil::StartLaunchdService(
@@ -177,13 +177,13 @@ bool ServerLauncher::StartServer(ClientInterface *client) {
     LOG(ERROR) << "Can't start process";
     return false;
   }
-#else
+#else                     // defined(__APPLE__)
   const bool result = mozc::Process::SpawnProcess(server_program(), arg, &pid);
   if (!result) {
     LOG(ERROR) << "Can't start process: " << strerror(result);
     return false;
   }
-#endif  // OS_WIN
+#endif                    // defined(__APPLE__)
 
   // maybe another process will launch mozc_server at the same time.
   if (client->PingServer()) {

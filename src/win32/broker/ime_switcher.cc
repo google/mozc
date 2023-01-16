@@ -66,10 +66,10 @@ void NotifyFatalMessageImpl(const std::string &msg) {
   // Explicitly causes crash so that the migration failure will be notified
   // through crash dump.
   LOG(FATAL) << msg;
-#else
+#else   // MOZC_NO_LOGGING
   ::MessageBoxA(nullptr, msg.c_str(), "GoogleIMEJaBroker",
                 MB_OK | MB_ICONERROR);
-#endif
+#endif  // MOZC_NO_LOGGING
 }
 
 void NotifyFatalMessage(const std::string &msg, int line) {

@@ -60,9 +60,9 @@ namespace {
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kReconvertFunctionDisplayName[] =
     L"Google Japanese Input: Reconversion Function";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kReconvertFunctionDisplayName[] = L"Mozc: Reconversion Function";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class CandidateListCallbackImpl : public TipCandidateListCallback {
  public:

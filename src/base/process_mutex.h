@@ -80,7 +80,7 @@ class ProcessMutex {
  private:
 #ifdef OS_WIN
   ScopedHandle handle_;
-#endif
+#endif  // OS_WIN
 
   // TODO(yukawa): Remove this flag as it can always be determined by other
   //     internal state.

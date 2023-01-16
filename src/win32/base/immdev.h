@@ -34,7 +34,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif  // __cplusplus
 
 #ifndef _IMM_DDK_DEFINED_
 #define _IMM_DDK_DEFINED_
@@ -148,7 +148,7 @@ LRESULT WINAPI ImmRequestMessageA(IN HIMC, IN WPARAM, IN LPARAM);
 LRESULT WINAPI ImmRequestMessageW(IN HIMC, IN WPARAM, IN LPARAM);
 #ifdef UNICODE
 #define ImmRequestMessage ImmRequestMessageW
-#else
+#else  // UNICODE
 #define ImmRequestMessage ImmRequestMessageA
 #endif  // !UNICODE
 #endif  // WINVER >= 0x040A
@@ -237,7 +237,7 @@ UINT WINAPI ImeToAsciiEx(IN UINT uVirtKey, IN UINT uScaCode,
                          IN CONST LPBYTE lpbKeyState,
                          OUT LPTRANSMSGLIST lpTransBuf, IN UINT fuState,
                          IN HIMC);
-#else
+#else   // WINVER >= 0x040A
 UINT WINAPI ImeToAsciiEx(IN UINT uVirtKey, IN UINT uScaCode,
                          IN CONST LPBYTE lpbKeyState, OUT LPDWORD lpdwTransBuf,
                          IN UINT fuState, IN HIMC);
@@ -273,5 +273,5 @@ typedef struct tagIMEPENDATA {
 #endif  // _IMM_DDK_DEFINED_
 #ifdef __cplusplus
 }  // extern "C"
-#endif
+#endif  // __cplusplus
 #endif  // MOZC_WIN32_BASE_IMMDEV_H_

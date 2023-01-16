@@ -49,10 +49,10 @@ using ATL::CComPtr;
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Google Japanese Input: GetPreferredTouchKeyboardLayout Function";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kGetPreferredTouchKeyboardLayoutDisplayName[] =
     L"Mozc: GetPreferredTouchKeyboardLayout Function";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetPreferredTouchKeyboardLayoutImpl
     : public ITfFnGetPreferredTouchKeyboardLayout {

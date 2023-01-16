@@ -34,7 +34,7 @@
 
 #ifndef OS_WIN
 #include <pthread.h>
-#endif
+#endif  // !OS_WIN
 
 namespace mozc {
 
@@ -58,11 +58,11 @@ class UnnamedEvent {
  private:
 #ifdef OS_WIN
   ScopedHandle handle_;
-#else
+#else   // OS_WIN
   pthread_cond_t cond_;
   pthread_mutex_t mutex_;
   bool notified_;
-#endif
+#endif  // OS_WIN
 };
 }  // namespace mozc
 

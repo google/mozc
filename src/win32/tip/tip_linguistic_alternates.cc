@@ -56,9 +56,9 @@ namespace {
 
 #ifdef GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kSearchCandidateProviderName[] = L"Google Japanese Input";
-#else
+#else   // GOOGLE_JAPANESE_INPUT_BUILD
 const wchar_t kSearchCandidateProviderName[] = L"Mozc";
-#endif
+#endif  // GOOGLE_JAPANESE_INPUT_BUILD
 
 class GetLinguisticAlternatesImpl : public ITfFnGetLinguisticAlternates {
  public:
