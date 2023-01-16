@@ -268,7 +268,7 @@ class Session : public SessionInterface {
   // For unittest only
   mozc::composer::Composer *get_internal_composer_only_for_unittest();
 
-  const ImeContext &context() const override;
+  const ImeContext &context() const;
 
  private:
   FRIEND_TEST(SessionTest, OutputInitialComposition);
