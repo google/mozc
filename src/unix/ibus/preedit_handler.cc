@@ -33,6 +33,7 @@
 
 #include "base/logging.h"
 #include "protocol/commands.pb.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace ibus {
@@ -106,19 +107,16 @@ int CursorPos(const commands::Output &output) {
 
 }  // namespace
 
-PreeditHandler::PreeditHandler() {}
-
-PreeditHandler::~PreeditHandler() {}
-
-bool PreeditHandler::Update(IBusEngine *engine,
+bool PreeditHandler::Update(IbusEngineWrapper *engine,
                             const commands::Output &output) {
   if (!output.has_preedit()) {
-    ibus_engine_hide_preedit_text(engine);
+    ibus_engine_hide_preedit_text(engine->GetEngine());
     return true;
   }
   IBusText *text = ComposePreeditText(output.preedit());
-  ibus_engine_update_preedit_text_with_mode(engine, text, CursorPos(output),
-                                            TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
+  ibus_engine_update_preedit_text_with_mode(engine->GetEngine(), text,
+                                            CursorPos(output), TRUE,
+                                            IBUS_ENGINE_PREEDIT_COMMIT);
   // |text| is released by ibus_engine_update_preedit_text.
   return true;
 }

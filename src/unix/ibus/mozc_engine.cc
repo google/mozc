@@ -518,7 +518,7 @@ bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
                            const commands::Output &output) {
   UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
-  preedit_handler_->Update(engine->GetEngine(), output);
+  preedit_handler_->Update(engine, output);
   GetCandidateWindowHandler(engine)->Update(engine, output);
   UpdateCandidateIDMapping(output);
 

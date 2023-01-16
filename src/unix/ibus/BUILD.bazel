@@ -178,7 +178,6 @@ cc_library_mozc(
             "key_translator.h",
             "mozc_engine.h",
             "preedit_handler.h",
-            "preedit_handler_interface.h",
             "surrounding_text_util.h",
         ],
     ),
