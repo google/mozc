@@ -233,7 +233,7 @@ void PropertyHandler::AppendCompositionPropertyToPanel() {
       mode_symbol = entry.label_for_panel;
     }
     IbusPropertyWrapper item(
-        entry.key, PROP_TYPE_RADIO, label, {} /* icon */, state,
+        entry.key, PROP_TYPE_RADIO, label, "" /* icon */, state,
         nullptr /* sub props */);
     item.SetData(kMozcEnginePropertyKey, entry);
     // |sub_prop_list| owns |item|.
@@ -301,7 +301,7 @@ void PropertyHandler::AppendToolPropertyToPanel() {
     const std::string label = translator_->MaybeTranslate(entry.label);
     // TODO(yusukes): It would be better to use entry.icon here?
     IbusPropertyWrapper item(
-        entry.mode, PROP_TYPE_NORMAL, label, {} /* icon */,
+        entry.mode, PROP_TYPE_NORMAL, label, "" /* icon */,
         PROP_STATE_UNCHECKED, nullptr);
     item.SetData(kMozcEnginePropertyKey, entry);
     sub_prop_list.Append(&item);

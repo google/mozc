@@ -34,6 +34,7 @@
 
 #include <functional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "absl/strings/string_view.h"
