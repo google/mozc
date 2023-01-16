@@ -35,7 +35,7 @@
 #include "base/port.h"
 #include "protocol/renderer_command.pb.h"
 #include "unix/ibus/candidate_window_handler_interface.h"
-#include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace commands {
@@ -56,10 +56,11 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   explicit CandidateWindowHandler(renderer::RendererInterface *renderer);
   virtual ~CandidateWindowHandler();
 
-  virtual void Update(IBusEngine *engine, const commands::Output &output);
-  virtual void UpdateCursorRect(IBusEngine *engine);
-  virtual void Hide(IBusEngine *engine);
-  virtual void Show(IBusEngine *engine);
+  virtual void Update(IbusEngineWrapper *engine,
+                      const commands::Output &output);
+  virtual void UpdateCursorRect(IbusEngineWrapper *engine);
+  virtual void Hide(IbusEngineWrapper *engine);
+  virtual void Show(IbusEngineWrapper *engine);
 
   virtual void OnIBusCustomFontDescriptionChanged(
       const std::string &custom_font_description);
@@ -70,8 +71,8 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   void RegisterGSettingsObserver();
 
  protected:
-  bool SendUpdateCommand(IBusEngine *engine, const commands::Output &output,
-                         bool visibility);
+  bool SendUpdateCommand(IbusEngineWrapper *engine,
+                         const commands::Output &output, bool visibility);
 
   std::unique_ptr<renderer::RendererInterface> renderer_;
   std::unique_ptr<commands::Output> last_update_output_;

@@ -335,10 +335,14 @@ cc_library_mozc(
         "//renderer:unix_const",
     ] + select_mozc(
         linux = [
+            ":ibus_wrapper",
             "//third_party/ibus",
             "//third_party/glib/gio",
         ],
-        oss_linux = ["@ibus//:ibus"],
+        oss_linux = [
+            ":ibus_wrapper",
+            "@ibus//:ibus",
+        ],
     ),
 )
 

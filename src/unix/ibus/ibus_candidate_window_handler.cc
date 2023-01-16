@@ -37,6 +37,7 @@
 #include "protocol/candidates.pb.h"
 #include "protocol/commands.pb.h"
 #include "protocol/config.pb.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace ibus {
@@ -88,32 +89,32 @@ IBusCandidateWindowHandler::IBusCandidateWindowHandler() {}
 
 IBusCandidateWindowHandler::~IBusCandidateWindowHandler() {}
 
-void IBusCandidateWindowHandler::Update(IBusEngine *engine,
+void IBusCandidateWindowHandler::Update(IbusEngineWrapper *engine,
                                         const commands::Output &output) {
   UpdateCandidates(engine, output);
   UpdateAuxiliaryText(engine, output);
 }
 
-void IBusCandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+void IBusCandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
   // Nothing to do because IBus takes care of where to show its candidate
   // window.
 }
 
-void IBusCandidateWindowHandler::Hide(IBusEngine *engine) {
-  ibus_engine_hide_lookup_table(engine);
-  ibus_engine_hide_auxiliary_text(engine);
+void IBusCandidateWindowHandler::Hide(IbusEngineWrapper *engine) {
+  ibus_engine_hide_lookup_table(engine->GetEngine());
+  ibus_engine_hide_auxiliary_text(engine->GetEngine());
 }
 
-void IBusCandidateWindowHandler::Show(IBusEngine *engine) {
-  ibus_engine_show_lookup_table(engine);
-  ibus_engine_show_auxiliary_text(engine);
+void IBusCandidateWindowHandler::Show(IbusEngineWrapper *engine) {
+  ibus_engine_show_lookup_table(engine->GetEngine());
+  ibus_engine_show_auxiliary_text(engine->GetEngine());
 }
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateCandidates(
-    IBusEngine *engine, const commands::Output &output) {
+    IbusEngineWrapper *engine, const commands::Output &output) {
   if (!output.has_candidates() || output.candidates().candidate_size() == 0) {
-    ibus_engine_hide_lookup_table(engine);
+    ibus_engine_hide_lookup_table(engine->GetEngine());
     return true;
   }
 
@@ -160,25 +161,26 @@ bool IBusCandidateWindowHandler::UpdateCandidates(
     // |table|.
   }
 
-  ibus_engine_update_lookup_table(engine, table, TRUE);
+  ibus_engine_update_lookup_table(engine->GetEngine(), table, TRUE);
   // |table| is released by ibus_engine_update_lookup_table.
   return true;
 }
 
 // TODO(hsumita): Writes test for this method.
 bool IBusCandidateWindowHandler::UpdateAuxiliaryText(
-    IBusEngine *engine, const commands::Output &output) {
+    IbusEngineWrapper *engine, const commands::Output &output) {
   if (!output.has_candidates()) {
-    ibus_engine_hide_auxiliary_text(engine);
+    ibus_engine_hide_auxiliary_text(engine->GetEngine());
     return true;
   }
 
   IBusText *auxiliary_text = ComposeAuxiliaryText(output.candidates());
   if (auxiliary_text) {
-    ibus_engine_update_auxiliary_text(engine, auxiliary_text, TRUE);
+    ibus_engine_update_auxiliary_text(engine->GetEngine(), auxiliary_text,
+                                      TRUE);
     // |auxiliary_text| is released by ibus_engine_update_auxiliary_text.
   } else {
-    ibus_engine_hide_auxiliary_text(engine);
+    ibus_engine_hide_auxiliary_text(engine->GetEngine());
   }
 
   return true;

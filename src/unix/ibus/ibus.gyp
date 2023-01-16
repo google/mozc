@@ -334,6 +334,7 @@
         '../../protocol/protocol.gyp:renderer_proto',
         '../../renderer/renderer.gyp:renderer_client',
         'ibus_build_environment',
+        'ibus_wrapper',
       ],
     },
     {

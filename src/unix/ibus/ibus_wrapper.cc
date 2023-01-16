@@ -195,3 +195,8 @@ uint IbusEngineWrapper::GetCapabilities() {
 bool IbusEngineWrapper::CheckCapabilities(uint capabilities) {
   return (engine_->client_capabilities & capabilities) == capabilities;
 }
+
+IbusEngineWrapper::Rectangle IbusEngineWrapper::GetCursorArea() {
+  const IBusRectangle &cursor_area = engine_->cursor_area;
+  return {cursor_area.x, cursor_area.y, cursor_area.width, cursor_area.height};
+}

@@ -130,6 +130,14 @@ class IbusEngineWrapper {
 
   bool CheckCapabilities(uint capabilities);
 
+  struct Rectangle {
+    int x;
+    int y;
+    int width;
+    int height;
+  };
+  Rectangle GetCursorArea();
+
  private:
   IBusEngine *engine_;  // Does not take the ownership.
 };

@@ -41,6 +41,7 @@
 #include "protocol/renderer_command.pb.h"
 #include "renderer/renderer_interface.h"
 #include "renderer/unix/const.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace ibus {
@@ -160,7 +161,7 @@ CandidateWindowHandler::CandidateWindowHandler(
 
 CandidateWindowHandler::~CandidateWindowHandler() {}
 
-bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
+bool CandidateWindowHandler::SendUpdateCommand(IbusEngineWrapper *engine,
                                                const commands::Output &output,
                                                bool visibility) {
   using commands::RendererCommand;
@@ -173,7 +174,7 @@ bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
       command.mutable_application_info();
 
   auto *preedit_rectangle = command.mutable_preedit_rectangle();
-  const auto &cursor_area = engine->cursor_area;
+  const IbusEngineWrapper::Rectangle &cursor_area = engine->GetCursorArea();
   preedit_rectangle->set_left(cursor_area.x);
   preedit_rectangle->set_top(cursor_area.y);
   preedit_rectangle->set_right(cursor_area.x + cursor_area.width);
@@ -211,25 +212,25 @@ bool CandidateWindowHandler::SendUpdateCommand(IBusEngine *engine,
   return renderer_->ExecCommand(command);
 }
 
-void CandidateWindowHandler::Update(IBusEngine *engine,
+void CandidateWindowHandler::Update(IbusEngineWrapper *engine,
                                     const commands::Output &output) {
   *last_update_output_ = output;
 
   UpdateCursorRect(engine);
 }
 
-void CandidateWindowHandler::UpdateCursorRect(IBusEngine *engine) {
+void CandidateWindowHandler::UpdateCursorRect(IbusEngineWrapper *engine) {
   const bool has_candidates =
       last_update_output_->has_candidates() &&
       last_update_output_->candidates().candidate_size() > 0;
   SendUpdateCommand(engine, *last_update_output_, has_candidates);
 }
 
-void CandidateWindowHandler::Hide(IBusEngine *engine) {
+void CandidateWindowHandler::Hide(IbusEngineWrapper *engine) {
   SendUpdateCommand(engine, *last_update_output_, false);
 }
 
-void CandidateWindowHandler::Show(IBusEngine *engine) {
+void CandidateWindowHandler::Show(IbusEngineWrapper *engine) {
   SendUpdateCommand(engine, *last_update_output_, true);
 }
 

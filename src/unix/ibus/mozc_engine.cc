@@ -317,7 +317,7 @@ void MozcEngine::CursorUp(IbusEngineWrapper *engine) {
 
 void MozcEngine::Disable(IbusEngineWrapper *engine) {
   RevertSession(engine);
-  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->Hide(engine);
   key_event_handler_->Clear();
 }
 
@@ -383,7 +383,7 @@ void MozcEngine::FocusIn(IbusEngineWrapper *engine) {
 }
 
 void MozcEngine::FocusOut(IbusEngineWrapper *engine) {
-  GetCandidateWindowHandler(engine)->Hide(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->Hide(engine);
   property_handler_->ResetContentType(engine);
 
   // Note that the preedit string (if any) will be committed by IBus runtime
@@ -480,7 +480,7 @@ void MozcEngine::SetCapabilities(IbusEngineWrapper *engine, uint capabilities) {
 
 void MozcEngine::SetCursorLocation(IbusEngineWrapper *engine, int x, int y,
                                    int w, int h) {
-  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine->GetEngine());
+  GetCandidateWindowHandler(engine)->UpdateCursorRect(engine);
 }
 
 void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
@@ -519,7 +519,7 @@ bool MozcEngine::UpdateAll(IbusEngineWrapper *engine,
   UpdateDeletionRange(engine, output);
   UpdateResult(engine, output);
   preedit_handler_->Update(engine->GetEngine(), output);
-  GetCandidateWindowHandler(engine)->Update(engine->GetEngine(), output);
+  GetCandidateWindowHandler(engine)->Update(engine, output);
   UpdateCandidateIDMapping(output);
 
   property_handler_->Update(engine, output);
