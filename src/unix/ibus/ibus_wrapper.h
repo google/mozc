@@ -33,6 +33,7 @@
 #include <ibus.h>
 
 #include <string>
+#include <vector>
 
 class GobjectWrapper {
  public:
@@ -85,7 +86,7 @@ class IbusPropertyWrapper : public GobjectWrapper {
   void SetState(IBusPropState state);
 
  private:
-  IBusProperty *property_;  // Does not take ownership.
+  IBusProperty *property_;  // Does not take the ownership.
 };
 
 class IbusPropListWrapper : public GobjectWrapper {
@@ -100,7 +101,7 @@ class IbusPropListWrapper : public GobjectWrapper {
   void Append(IbusPropertyWrapper* property);
 
  private:
-  IBusPropList *prop_list_;  // Does not take ownership.
+  IBusPropList *prop_list_;  // Does not take the ownership.
 };
 
 class IbusTextWrapper {
@@ -115,7 +116,7 @@ class IbusTextWrapper {
   void AppendAttribute(uint type, uint value, uint start_index, int end_index);
 
  private:
-  IBusText *text_;  // Does not take ownership.
+  IBusText *text_;  // Does not take the ownership.
 };
 
 class IbusEngineWrapper {
@@ -159,6 +160,44 @@ class IbusEngineWrapper {
 
  private:
   IBusEngine *engine_;  // Does not take the ownership.
+};
+
+class IbusComponentWrapper : public GobjectWrapper {
+ public:
+  IbusComponentWrapper(const char *name, const char *description,
+                    const char *version, const char *license,
+                    const char *author, const char *homepage,
+                    const char *command_line, const char *textdomain);
+  ~IbusComponentWrapper() = default;
+
+  GObject *GetGobject() override;
+
+  IBusComponent *GetComponent();
+
+  void AddEngine(const char *name, const char *longname,
+                 const char *description, const char *language,
+                 const char *license, const char *author, const char *icon,
+                 const char *layout);
+
+  std::vector<const char *> GetEngineNames();
+
+ private:
+  IBusComponent *component_;  // Does not take the ownership.
+};
+
+class IbusBusWrapper {
+ public:
+  IbusBusWrapper();
+  ~IbusBusWrapper() = default;
+
+  IBusBus *GetBus();
+
+  void AddEngines(const std::vector<const char *> engine_names, GType type);
+  void RequestName(const char *name);
+  void RegisterComponent(IbusComponentWrapper *component);
+
+ private:
+  IBusBus *bus_;  // Does not take the ownership.
 };
 
 #endif  // MOZC_UNIX_IBUS_IBUS_WRAPPER_H_

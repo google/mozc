@@ -98,8 +98,8 @@ class MozcEngine : public EngineInterface {
   void SetContentType(IbusEngineWrapper *engine, uint purpose,
                       uint hints) override;
 
-  // Returns the GType which this class represents.
-  static GType GetType();
+  // Resisters the engine and returns the GType which this class represents.
+  static GType RegisterEngine();
   // The callback function to the "disconnected" signal to the bus object.
   static void Disconnected(IBusBus *bus, gpointer user_data);
 

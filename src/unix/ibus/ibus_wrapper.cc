@@ -227,3 +227,61 @@ IbusEngineWrapper::Rectangle IbusEngineWrapper::GetCursorArea() {
   const IBusRectangle &cursor_area = engine_->cursor_area;
   return {cursor_area.x, cursor_area.y, cursor_area.width, cursor_area.height};
 }
+
+
+// IbusComponentWrapper
+
+IbusComponentWrapper::IbusComponentWrapper(
+    const char *name, const char *description, const char *version,
+    const char *license, const char *author, const char *homepage,
+    const char *command_line, const char *textdomain) {
+  component_ = ibus_component_new(name, description, version, license, author,
+                                  homepage, command_line, textdomain);
+}
+
+GObject *IbusComponentWrapper::GetGobject() { return G_OBJECT(component_); }
+
+IBusComponent *IbusComponentWrapper::GetComponent() { return component_; }
+
+void IbusComponentWrapper::AddEngine(const char *name, const char *longname,
+                                     const char *description,
+                                     const char *language, const char *license,
+                                     const char *author, const char *icon,
+                                     const char *layout) {
+  ibus_component_add_engine(
+      component_, ibus_engine_desc_new(name, longname, description, language,
+                                       license, author, icon, layout));
+}
+
+std::vector<const char *> IbusComponentWrapper::GetEngineNames() {
+  std::vector<const char *> names;
+  GList *engines = ibus_component_get_engines(component_);
+  for (GList *p = engines; p; p = p->next) {
+    IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc *>(p->data);
+    const char *engine_name = ibus_engine_desc_get_name(engine);
+    names.push_back(engine_name);
+  }
+  return names;
+}
+
+
+// IbusBusWrapper
+
+IbusBusWrapper::IbusBusWrapper() { bus_ = ibus_bus_new(); }
+
+IBusBus *IbusBusWrapper::GetBus() { return bus_; }
+
+void IbusBusWrapper::AddEngines(const std::vector<const char *> engine_names,
+                                GType type) {
+  IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(bus_));
+  for (const char *engine_name : engine_names) {
+    ibus_factory_add_engine(factory, engine_name, type);
+  }
+}
+void IbusBusWrapper::RequestName(const char *name) {
+  constexpr uint32_t flags = 0;
+  ibus_bus_request_name(bus_, name, flags);
+}
+void IbusBusWrapper::RegisterComponent(IbusComponentWrapper *component) {
+  ibus_bus_register_component(bus_, component->GetComponent());
+}

@@ -67,8 +67,8 @@ void IgnoreSigChild() {
 }
 
 // Creates a IBusComponent object and add engine(s) to the object.
-IBusComponent *GetIBusComponent() {
-  IBusComponent *component = ibus_component_new(
+IbusComponentWrapper GetIbusComponent() {
+  IbusComponentWrapper component(
       kComponentName, kComponentDescription,
       mozc::Version::GetMozcVersion().c_str(), kComponentLicense,
       kComponentAuthor, kComponentHomepage, "", kComponentTextdomain);
@@ -77,37 +77,29 @@ IBusComponent *GetIBusComponent() {
   mozc::IbusConfig ibus_config;
   ibus_config.Initialize();
   for (const mozc::ibus::Engine &engine : ibus_config.GetConfig().engines()) {
-    ibus_component_add_engine(
-        component,
-        ibus_engine_desc_new(engine.name().c_str(), engine.longname().c_str(),
-                             kEngineDescription, kEngineLanguage,
-                             kComponentLicense, kComponentAuthor,
-                             icon_path.c_str(), engine.layout().c_str()));
+    component.AddEngine(engine.name().c_str(), engine.longname().c_str(),
+                        kEngineDescription, kEngineLanguage, kComponentLicense,
+                        kComponentAuthor, icon_path.c_str(),
+                        engine.layout().c_str());
   }
   return component;
 }
 
 // Initializes ibus components and adds Mozc engine.
-void InitIBusComponent(IBusBus *bus, bool executed_by_ibus_daemon) {
-  g_signal_connect(bus, "disconnected",
+void InitIbusComponent(IbusBusWrapper *bus, bool executed_by_ibus_daemon) {
+  g_signal_connect(bus->GetBus(), "disconnected",
                    G_CALLBACK(mozc::ibus::MozcEngine::Disconnected), nullptr);
 
-  IBusComponent *component = GetIBusComponent();
-  IBusFactory *factory = ibus_factory_new(ibus_bus_get_connection(bus));
-  GList *engines = ibus_component_get_engines(component);
-  for (GList *p = engines; p; p = p->next) {
-    IBusEngineDesc *engine = reinterpret_cast<IBusEngineDesc *>(p->data);
-    const gchar *const engine_name = ibus_engine_desc_get_name(engine);
-    ibus_factory_add_engine(factory, engine_name,
-                            mozc::ibus::MozcEngine::GetType());
-  }
+  IbusComponentWrapper component = GetIbusComponent();
+  const GType type = mozc::ibus::MozcEngine::RegisterEngine();
+  bus->AddEngines(component.GetEngineNames(), type);
 
   if (executed_by_ibus_daemon) {
-    ibus_bus_request_name(bus, kComponentName, 0);
+    bus->RequestName(kComponentName);
   } else {
-    ibus_bus_register_component(bus, component);
+    bus->RegisterComponent(&component);
   }
-  g_object_unref(component);
+  component.Unref();
 }
 
 void OutputXml() {
@@ -126,8 +118,8 @@ int main(int argc, char **argv) {
   }
 
   ibus_init();
-  IBusBus *bus = ibus_bus_new();
-  InitIBusComponent(bus, absl::GetFlag(FLAGS_ibus));
+  IbusBusWrapper bus;
+  InitIbusComponent(&bus, absl::GetFlag(FLAGS_ibus));
 #ifndef MOZC_NO_LOGGING
   EnableVerboseLog();
 #endif  // MOZC_NO_LOGGING

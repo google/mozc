@@ -493,7 +493,8 @@ void MozcEngine::SetContentType(IbusEngineWrapper *engine, uint purpose,
   }
 }
 
-GType MozcEngine::GetType() {
+// static
+GType MozcEngine::RegisterEngine() {
   static GType type = 0;
 
   static const GTypeInfo type_info = {
