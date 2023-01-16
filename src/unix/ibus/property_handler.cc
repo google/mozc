@@ -208,7 +208,7 @@ PropertyHandler::~PropertyHandler() {
 }
 
 void PropertyHandler::Register(IbusEngineWrapper *engine) {
-  engine->RegisterProperties(prop_root_.GetPropList());
+  engine->RegisterProperties(&prop_root_);
   UpdateContentType(engine);
 }
 
@@ -368,7 +368,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
     } else {
       prop.SetState(PROP_STATE_UNCHECKED);
     }
-    engine->UpdateProperty(prop.GetProperty());
+    engine->UpdateProperty(&prop);
     // No need to call unref since GetSubProp (ibus_prop_list_get) does not add
     // ref.
   }
@@ -381,7 +381,7 @@ void PropertyHandler::UpdateCompositionModeIcon(
       translator_->MaybeTranslate("Input Mode") + " (" + mode_symbol + ")";
   prop_composition_mode_.SetLabel(mode_label.c_str());
 
-  engine->UpdateProperty(prop_composition_mode_.GetProperty());
+  engine->UpdateProperty(&prop_composition_mode_);
 }
 
 void PropertyHandler::SetCompositionMode(

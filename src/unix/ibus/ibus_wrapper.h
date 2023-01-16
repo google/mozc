@@ -34,37 +34,6 @@
 
 #include <string>
 
-class IbusEngineWrapper {
- public:
-  explicit IbusEngineWrapper(IBusEngine *engine);
-  ~IbusEngineWrapper() = default;
-
-  IBusEngine *GetEngine();
-
-  const char *GetName();
-
-  void GetContentType(uint *purpose, uint *hints);
-
-  void CommitText(const std::string &text);
-
-  void RegisterProperties(IBusPropList *properties);
-
-  void UpdateProperty(IBusProperty *property);
-
-  void EnableSurroundingText();
-
-  const char *GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
-
-  void DeleteSurroundingText(int offset, uint size);
-
-  uint GetCapabilities();
-
-  bool CheckCapabilities(uint capabilities);
-
- private:
-  IBusEngine *engine_;  // Does not take the ownership.
-};
-
 class GobjectWrapper {
  public:
   explicit GobjectWrapper() = default;
@@ -132,6 +101,37 @@ class IbusPropListWrapper : public GobjectWrapper {
 
  private:
   IBusPropList *prop_list_;  // Does not take ownership.
+};
+
+class IbusEngineWrapper {
+ public:
+  explicit IbusEngineWrapper(IBusEngine *engine);
+  ~IbusEngineWrapper() = default;
+
+  IBusEngine *GetEngine();
+
+  const char *GetName();
+
+  void GetContentType(uint *purpose, uint *hints);
+
+  void CommitText(const std::string &text);
+
+  void RegisterProperties(IbusPropListWrapper *properties);
+
+  void UpdateProperty(IbusPropertyWrapper *property);
+
+  void EnableSurroundingText();
+
+  const char *GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
+
+  void DeleteSurroundingText(int offset, uint size);
+
+  uint GetCapabilities();
+
+  bool CheckCapabilities(uint capabilities);
+
+ private:
+  IBusEngine *engine_;  // Does not take the ownership.
 };
 
 #endif  // MOZC_UNIX_IBUS_IBUS_WRAPPER_H_

@@ -42,66 +42,6 @@ static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 #endif  // libibus (<1.5.4)
 
 
-// IbusEngineWrapper
-
-IbusEngineWrapper::IbusEngineWrapper(IBusEngine *engine) : engine_(engine) {}
-
-IBusEngine *IbusEngineWrapper::GetEngine() { return engine_; }
-
-const char *IbusEngineWrapper::GetName() {
-  return ibus_engine_get_name(engine_);
-}
-
-void IbusEngineWrapper::GetContentType(uint *purpose, uint *hints) {
-  ibus_engine_get_content_type(engine_, purpose, hints);
-}
-
-void IbusEngineWrapper::CommitText(const std::string &text) {
-  IBusText *ibus_text = ibus_text_new_from_string(text.c_str());
-  ibus_engine_commit_text(engine_, ibus_text);
-  // `ibus_text` is released by ibus_engine_commit_text.
-}
-
-void IbusEngineWrapper::RegisterProperties(IBusPropList *properties) {
-  ibus_engine_register_properties(engine_, properties);
-}
-
-void IbusEngineWrapper::UpdateProperty(IBusProperty *property) {
-  ibus_engine_update_property(engine_, property);
-}
-
-void IbusEngineWrapper::EnableSurroundingText() {
-  // If engine wants to use surrounding text, we should call
-  // ibus_engine_get_surrounding_text once when the engine enabled.
-  // https://ibus.github.io/docs/ibus-1.5/IBusEngine.html#ibus-engine-get-surrounding-text
-  ibus_engine_get_surrounding_text(engine_, nullptr, nullptr, nullptr);
-}
-
-const char *IbusEngineWrapper::GetSurroundingText(uint *cursor_pos,
-                                                  uint *anchor_pos) {
-  // DO NOT call g_object_unref against this.
-  // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
-  IBusText *text = nullptr;
-  ibus_engine_get_surrounding_text(engine_, &text, cursor_pos, anchor_pos);
-  return ibus_text_get_text(text);
-}
-
-void IbusEngineWrapper::DeleteSurroundingText(int offset, uint size) {
-  // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
-  // many of the major applications.  Confirmed that it works on
-  // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
-  ibus_engine_delete_surrounding_text(engine_, offset, size);
-}
-
-uint IbusEngineWrapper::GetCapabilities() {
-  return engine_->client_capabilities;
-}
-
-bool IbusEngineWrapper::CheckCapabilities(uint capabilities) {
-  return (engine_->client_capabilities & capabilities) == capabilities;
-}
-
-
 // GobjectWrapper
 
 void GobjectWrapper::Unref() {
@@ -194,4 +134,64 @@ void IbusPropListWrapper::Append(IbusPropertyWrapper *property) {
   // `prop_list_` owns appended item.
   // `g_object_ref_sink` is internally called.
   ibus_prop_list_append(prop_list_, property->GetProperty());
+}
+
+
+// IbusEngineWrapper
+
+IbusEngineWrapper::IbusEngineWrapper(IBusEngine *engine) : engine_(engine) {}
+
+IBusEngine *IbusEngineWrapper::GetEngine() { return engine_; }
+
+const char *IbusEngineWrapper::GetName() {
+  return ibus_engine_get_name(engine_);
+}
+
+void IbusEngineWrapper::GetContentType(uint *purpose, uint *hints) {
+  ibus_engine_get_content_type(engine_, purpose, hints);
+}
+
+void IbusEngineWrapper::CommitText(const std::string &text) {
+  IBusText *ibus_text = ibus_text_new_from_string(text.c_str());
+  ibus_engine_commit_text(engine_, ibus_text);
+  // `ibus_text` is released by ibus_engine_commit_text.
+}
+
+void IbusEngineWrapper::RegisterProperties(IbusPropListWrapper *properties) {
+  ibus_engine_register_properties(engine_, properties->GetPropList());
+}
+
+void IbusEngineWrapper::UpdateProperty(IbusPropertyWrapper *property) {
+  ibus_engine_update_property(engine_, property->GetProperty());
+}
+
+void IbusEngineWrapper::EnableSurroundingText() {
+  // If engine wants to use surrounding text, we should call
+  // ibus_engine_get_surrounding_text once when the engine enabled.
+  // https://ibus.github.io/docs/ibus-1.5/IBusEngine.html#ibus-engine-get-surrounding-text
+  ibus_engine_get_surrounding_text(engine_, nullptr, nullptr, nullptr);
+}
+
+const char *IbusEngineWrapper::GetSurroundingText(uint *cursor_pos,
+                                                  uint *anchor_pos) {
+  // DO NOT call g_object_unref against this.
+  // http://developer.gnome.org/gobject/stable/gobject-The-Base-Object-Type.html#gobject-The-Base-Object-Type.description
+  IBusText *text = nullptr;
+  ibus_engine_get_surrounding_text(engine_, &text, cursor_pos, anchor_pos);
+  return ibus_text_get_text(text);
+}
+
+void IbusEngineWrapper::DeleteSurroundingText(int offset, uint size) {
+  // Nowadays 'ibus_engine_delete_surrounding_text' becomes functional on
+  // many of the major applications.  Confirmed that it works on
+  // Firefox 10.0, LibreOffice 3.3.4 and GEdit 3.2.3.
+  ibus_engine_delete_surrounding_text(engine_, offset, size);
+}
+
+uint IbusEngineWrapper::GetCapabilities() {
+  return engine_->client_capabilities;
+}
+
+bool IbusEngineWrapper::CheckCapabilities(uint capabilities) {
+  return (engine_->client_capabilities & capabilities) == capabilities;
 }
