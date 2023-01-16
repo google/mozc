@@ -37,11 +37,11 @@ namespace mozc {
 namespace ibus {
 
 TEST(SurroundingTextUtilTest, GetSafeDelta) {
-  const guint kSafeInt32MaxAsGUint =
-      static_cast<guint>(std::numeric_limits<int32>::max());
-  const guint kTooLargeGUint = kSafeInt32MaxAsGUint + 42;
+  const uint kSafeInt32MaxAsUint =
+      static_cast<uint>(std::numeric_limits<int32_t>::max());
+  const uint kTooLargeUint = kSafeInt32MaxAsUint + 42;
 
-  int32 delta = 0;
+  int32_t delta = 0;
 
   EXPECT_TRUE(SurroundingTextUtil::GetSafeDelta(42, 10, &delta));
   EXPECT_EQ(32, delta);
@@ -53,36 +53,36 @@ TEST(SurroundingTextUtilTest, GetSafeDelta) {
   EXPECT_EQ(-1, delta);
 
   EXPECT_TRUE(
-      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint, 0, &delta));
-  EXPECT_EQ(kSafeInt32MaxAsGUint, delta);
+      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsUint, 0, &delta));
+  EXPECT_EQ(kSafeInt32MaxAsUint, delta);
   EXPECT_GE(abs(delta), 0);
 
   EXPECT_TRUE(
-      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsGUint + 1, 1, &delta));
-  EXPECT_EQ(kSafeInt32MaxAsGUint, delta);
+      SurroundingTextUtil::GetSafeDelta(kSafeInt32MaxAsUint + 1, 1, &delta));
+  EXPECT_EQ(kSafeInt32MaxAsUint, delta);
   EXPECT_GE(abs(delta), 0);
 
   EXPECT_TRUE(
-      SurroundingTextUtil::GetSafeDelta(0, kSafeInt32MaxAsGUint, &delta));
-  EXPECT_EQ(-static_cast<int64>(kSafeInt32MaxAsGUint), delta);
+      SurroundingTextUtil::GetSafeDelta(0, kSafeInt32MaxAsUint, &delta));
+  EXPECT_EQ(-static_cast<int64>(kSafeInt32MaxAsUint), delta);
   EXPECT_GE(abs(delta), 0);
 
-  // The result exceeds int32.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeGUint, 0, &delta));
+  // The result exceeds int32_t.
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeUint, 0, &delta));
 
-  // The result exceeds int32.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeGUint, 0, &delta));
+  // The result exceeds int32_t.
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(kTooLargeUint, 0, &delta));
 
   // Underflow.
-  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(0, kTooLargeGUint, &delta));
+  EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(0, kTooLargeUint, &delta));
 
-  // The abs(result) exceeds int32.
+  // The abs(result) exceeds int32_t.
   EXPECT_FALSE(SurroundingTextUtil::GetSafeDelta(
-      static_cast<guint>(-std::numeric_limits<int32>::min()), 0, &delta));
+      static_cast<uint>(-std::numeric_limits<int32_t>::min()), 0, &delta));
 }
 
 TEST(SurroundingTextUtilTest, GetAnchorPosFromSelection) {
-  guint anchor_pos = 0;
+  uint anchor_pos = 0;
 
   EXPECT_TRUE(SurroundingTextUtil::GetAnchorPosFromSelection("abcde", "abcde",
                                                              0, &anchor_pos));

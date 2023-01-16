@@ -49,9 +49,9 @@ namespace ibus {
 namespace {
 
 constexpr char kDefaultFont[] = "SansSerif 11";
-const gchar kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
-const gchar kIBusPanelUseCustomFont[] = "use-custom-font";
-const gchar kIBusPanelCustomFont[] = "custom-font";
+constexpr char kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
+constexpr char kIBusPanelUseCustomFont[] = "use-custom-font";
+constexpr char kIBusPanelCustomFont[] = "custom-font";
 
 using GVariantUniquePtr = std::unique_ptr<GVariant, void (*)(GVariant *)>;
 

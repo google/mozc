@@ -111,7 +111,7 @@ struct IBusMozcEngine {
 IBusEngineClass *g_parent_class = nullptr;
 
 GObject *MozcEngineClassConstructor(
-    GType type, guint n_construct_properties,
+    GType type, uint n_construct_properties,
     GObjectConstructParam *construct_properties) {
   return G_OBJECT_CLASS(g_parent_class)
       ->constructor(type, n_construct_properties, construct_properties);
@@ -172,7 +172,7 @@ bool GetSurroundingText(IbusEngineWrapper *engine,
 #ifdef MOZC_ENABLE_X11_SELECTION_MONITOR
   if (cursor_pos == anchor_pos && selection_monitor != nullptr) {
     const SelectionInfo &info = selection_monitor->GetSelectionInfo();
-    guint new_anchor_pos = 0;
+    uint new_anchor_pos = 0;
     if (SurroundingTextUtil::GetAnchorPosFromSelection(
             surrounding_text, info.selected_text, cursor_pos,
             &new_anchor_pos)) {

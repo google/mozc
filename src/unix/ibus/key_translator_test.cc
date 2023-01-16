@@ -40,7 +40,7 @@ namespace mozc {
 namespace ibus {
 
 struct {
-  guint ibus_key;
+  uint ibus_key;
   commands::KeyEvent::SpecialKey mozc_key;
 } kSpecialKeys[] = {
     {IBUS_space, commands::KeyEvent::SPACE},
@@ -234,7 +234,7 @@ TEST_F(KeyTranslatorTest, TranslateSingleModifierMasks) {
 
 TEST_F(KeyTranslatorTest, TranslateMultipleModifierMasks) {
   commands::KeyEvent out;
-  guint modifier;
+  uint modifier;
 
   // CTRL + SHIFT modifier
   // C-S-F1 (CTRL + SHIFT + SpecialKey)
@@ -384,7 +384,7 @@ TEST_F(KeyTranslatorTest, HiraganaKatakanaHandlingWithMultipleModifiersTest) {
   // Check Hiragana_Katakana local hack. The detail is described in
   // key_translator.cc file.
   commands::KeyEvent out;
-  guint modifier;
+  uint modifier;
 
   // C-S-Hiragana_Katakana
   modifier = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK;

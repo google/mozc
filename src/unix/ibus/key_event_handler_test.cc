@@ -59,8 +59,8 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   // Currently this function does not supports special keys.
-  void AppendToKeyEvent(guint keyval, commands::KeyEvent *key) const {
-    const std::map<guint, commands::KeyEvent::ModifierKey>::const_iterator it =
+  void AppendToKeyEvent(uint keyval, commands::KeyEvent *key) const {
+    const std::map<uint, commands::KeyEvent::ModifierKey>::const_iterator it =
         keyval_to_modifier_.find(keyval);
     if (it != keyval_to_modifier_.end()) {
       bool found = false;
@@ -78,19 +78,19 @@ class KeyEventHandlerTest : public testing::Test {
     }
   }
 
-  bool ProcessKey(bool is_key_up, guint keyval, commands::KeyEvent *key) {
+  bool ProcessKey(bool is_key_up, uint keyval, commands::KeyEvent *key) {
     AppendToKeyEvent(keyval, key);
     return handler_->ProcessModifiers(is_key_up, keyval, key);
   }
 
-  bool ProcessKeyWithCapsLock(bool is_key_up, guint keyval,
+  bool ProcessKeyWithCapsLock(bool is_key_up, uint keyval,
                               commands::KeyEvent *key) {
     key->add_modifier_keys(commands::KeyEvent::CAPS);
     return ProcessKey(is_key_up, keyval, key);
   }
 
-  bool IsPressed(guint keyval) const {
-    const std::set<guint> &pressed_set = handler_->currently_pressed_modifiers_;
+  bool IsPressed(uint keyval) const {
+    const std::set<uint> &pressed_set = handler_->currently_pressed_modifiers_;
     return pressed_set.find(keyval) != pressed_set.end();
   }
 
@@ -98,7 +98,7 @@ class KeyEventHandlerTest : public testing::Test {
     return handler_->is_non_modifier_key_pressed_;
   }
 
-  const std::set<guint> &currently_pressed_modifiers() {
+  const std::set<uint> &currently_pressed_modifiers() {
     return handler_->currently_pressed_modifiers_;
   }
 
@@ -106,8 +106,8 @@ class KeyEventHandlerTest : public testing::Test {
     return handler_->modifiers_to_be_sent_;
   }
 
-  testing::AssertionResult CheckModifiersToBeSent(uint32 modifiers) {
-    uint32 to_be_sent_mask = 0;
+  testing::AssertionResult CheckModifiersToBeSent(uint32_t modifiers) {
+    uint32_t to_be_sent_mask = 0;
     for (std::set<commands::KeyEvent::ModifierKey>::iterator it =
              modifiers_to_be_sent().begin();
          it != modifiers_to_be_sent().end(); ++it) {
@@ -135,7 +135,7 @@ class KeyEventHandlerTest : public testing::Test {
   }
 
   std::unique_ptr<KeyEventHandler> handler_;
-  std::map<guint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
+  std::map<uint, commands::KeyEvent::ModifierKey> keyval_to_modifier_;
 };
 
 #define EXPECT_MODIFIERS_TO_BE_SENT(modifiers) \
@@ -144,8 +144,8 @@ class KeyEventHandlerTest : public testing::Test {
 #define EXPECT_NO_MODIFIERS_PRESSED() EXPECT_TRUE(CheckModifiersPressed(false))
 
 namespace {
-constexpr uint32 kNoModifiers = 0;
-const guint kDummyKeycode = 0;
+constexpr uint32_t kNoModifiers = 0;
+const uint kDummyKeycode = 0;
 }  // namespace
 
 TEST_F(KeyEventHandlerTest, GetKeyEvent) {
@@ -412,24 +412,24 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
   // - All states are cleared when a non-modifier key with no modifier keys
   //   is pressed / released.
 
-  const guint kKeySet[] = {
+  const uint kKeySet[] = {
       IBUS_Alt_L,   IBUS_Alt_R,   IBUS_Control_L, IBUS_Control_R,
       IBUS_Shift_L, IBUS_Shift_R, IBUS_Caps_Lock, IBUS_a,
   };
   constexpr size_t kKeySetSize = std::size(kKeySet);
-  Util::SetRandomSeed(static_cast<uint32>(Clock::GetTime()));
+  Util::SetRandomSeed(static_cast<uint32_t>(Clock::GetTime()));
 
   constexpr int kTrialNum = 1000;
   for (int trial = 0; trial < kTrialNum; ++trial) {
     handler_->Clear();
 
-    std::set<guint> pressed_keys;
+    std::set<uint> pressed_keys;
     std::string key_sequence;
 
     constexpr int kSequenceLength = 100;
     for (int i = 0; i < kSequenceLength; ++i) {
       const int key_index = Util::Random(kKeySetSize);
-      const guint key_value = kKeySet[key_index];
+      const uint key_value = kKeySet[key_index];
 
       bool is_key_up;
       if (pressed_keys.find(key_value) == pressed_keys.end()) {
@@ -444,7 +444,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
                                       is_key_up, key_index);
 
       commands::KeyEvent key;
-      for (std::set<guint>::const_iterator it = pressed_keys.begin();
+      for (std::set<uint>::const_iterator it = pressed_keys.begin();
            it != pressed_keys.end(); ++it) {
         AppendToKeyEvent(*it, &key);
       }
@@ -461,7 +461,7 @@ TEST_F(KeyEventHandlerTest, ProcessModifiersRandomTest) {
 
     // Anytime non-modifier key without modifier key should clear states.
     commands::KeyEvent key;
-    const guint non_modifier_key = IBUS_b;
+    const uint non_modifier_key = IBUS_b;
     AppendToKeyEvent(non_modifier_key, &key);
     ProcessKey(false, non_modifier_key, &key);
 

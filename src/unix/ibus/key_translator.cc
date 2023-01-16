@@ -39,7 +39,7 @@
 namespace mozc {
 namespace {
 static const auto kSpecialKeyMap =
-    new std::map<guint, commands::KeyEvent::SpecialKey>({
+    new std::map<uint, commands::KeyEvent::SpecialKey>({
         {IBUS_space, commands::KeyEvent::SPACE},
         {IBUS_Return, commands::KeyEvent::ENTER},
         {IBUS_Left, commands::KeyEvent::LEFT},
@@ -139,7 +139,7 @@ static const auto kSpecialKeyMap =
     });
 
 static const auto kModifierKeyMap =
-    new std::map<guint, commands::KeyEvent::ModifierKey>({
+    new std::map<uint, commands::KeyEvent::ModifierKey>({
         {IBUS_Shift_L, commands::KeyEvent::SHIFT},
         {IBUS_Shift_R, commands::KeyEvent::SHIFT},
         {IBUS_Control_L, commands::KeyEvent::CTRL},
@@ -150,7 +150,7 @@ static const auto kModifierKeyMap =
     });
 
 static const auto kModifierMaskMap =
-    new std::map<guint, commands::KeyEvent::ModifierKey>({
+    new std::map<uint, commands::KeyEvent::ModifierKey>({
         {IBUS_SHIFT_MASK, commands::KeyEvent::SHIFT},
         {IBUS_CONTROL_MASK, commands::KeyEvent::CTRL},
         {IBUS_MOD1_MASK, commands::KeyEvent::ALT},
@@ -160,7 +160,7 @@ static const auto kModifierMaskMap =
 // '4' is mapped to Japanese 'Hiragana Letter U' (without Shift modifier) and
 // 'Hiragana Letter Small U' (with Shift modifier).
 // TODO(team): Add kana_map_dv to support Dvoraklayout.
-typedef std::map<guint, std::pair<const char*, const char*>> KanaMap;
+typedef std::map<uint, std::pair<const char*, const char*>> KanaMap;
 static const KanaMap *kKanaJpMap = new KanaMap({
         {'1', {"ぬ", "ぬ"}},
         {'!', {"ぬ", "ぬ"}},
@@ -301,7 +301,7 @@ static const KanaMap *kKanaUsMap = new KanaMap({
 namespace ibus {
 
 // TODO(nona): Fix 'Shift-0' behavior b/4338394
-bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
+bool KeyTranslator::Translate(uint keyval, uint keycode, uint modifiers,
                               config::Config::PreeditMethod method,
                               bool layout_is_jp,
                               commands::KeyEvent *out_event) const {
@@ -367,13 +367,13 @@ bool KeyTranslator::Translate(guint keyval, guint keycode, guint modifiers,
   return true;
 }
 
-bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(guint keyval, guint keycode,
-                                                   guint modifiers) {
+bool KeyTranslator::IsHiraganaKatakanaKeyWithShift(uint keyval, uint keycode,
+                                                   uint modifiers) {
   return ((modifiers & IBUS_SHIFT_MASK) && (keyval == IBUS_Hiragana_Katakana));
 }
 
-bool KeyTranslator::IsKanaAvailable(guint keyval, guint keycode,
-                                    guint modifiers, bool layout_is_jp,
+bool KeyTranslator::IsKanaAvailable(uint keyval, uint keycode,
+                                    uint modifiers, bool layout_is_jp,
                                     std::string *out) const {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
@@ -406,14 +406,14 @@ bool KeyTranslator::IsKanaAvailable(guint keyval, guint keycode,
 // TODO(nona): resolve S-'0' problem (b/4338394).
 // TODO(nona): Current printable detection is weak. To enhance accuracy, use xkb
 // key map
-bool KeyTranslator::IsPrintable(guint keyval, guint keycode, guint modifiers) {
+bool KeyTranslator::IsPrintable(uint keyval, uint keycode, uint modifiers) {
   if ((modifiers & IBUS_CONTROL_MASK) || (modifiers & IBUS_MOD1_MASK)) {
     return false;
   }
   return IsAscii(keyval, keycode, modifiers);
 }
 
-bool KeyTranslator::IsAscii(guint keyval, guint keycode, guint modifiers) {
+bool KeyTranslator::IsAscii(uint keyval, uint keycode, uint modifiers) {
   return (keyval > IBUS_space &&
           // Note: Space key (0x20) is a special key in Mozc.
           keyval <= IBUS_asciitilde);  // 0x7e.
