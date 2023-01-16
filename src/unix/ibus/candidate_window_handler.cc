@@ -55,76 +55,46 @@ constexpr char kIBusPanelSchema[] = "org.freedesktop.ibus.panel";
 constexpr char kIBusPanelUseCustomFont[] = "use-custom-font";
 constexpr char kIBusPanelCustomFont[] = "custom-font";
 
-CandidateWindowHandler::Variant GetVariant(GSettings *settings,
-                                           std::string_view key) {
-  CandidateWindowHandler::Variant value;
-  GVariant *variant = g_settings_get_value(settings, key.data());
-  if (g_variant_classify(variant) == G_VARIANT_CLASS_BOOLEAN) {
-    value = static_cast<bool>(g_variant_get_boolean(variant));
-  } else if (g_variant_classify(variant) == G_VARIANT_CLASS_STRING) {
-    value = std::string(g_variant_get_string(variant, nullptr));
-  }
-  g_variant_unref(variant);
-  return value;
-}
-
-GSettings *CreateGsettings(const char *schema_name) {
-  GSettingsSchemaSource *schema_source = g_settings_schema_source_get_default();
-  if (schema_source == nullptr) {
-    return nullptr;
-  }
-  GSettingsSchema *schema =
-      g_settings_schema_source_lookup(schema_source, schema_name, TRUE);
-  if (schema == nullptr) {
-    return nullptr;
-  }
-  g_settings_schema_unref(schema);
-  return g_settings_new(schema_name);
-}
-
-void UpdateSettings(GSettings *settings, absl::string_view key,
-                    CandidateWindowHandler *handler) {
-  CandidateWindowHandler::Variant variant = GetVariant(settings, key);
-  handler->OnSettingsUpdated(key, variant);
-}
-
-// The callback function to the "changed" signal to GSettings object.
-void GSettingsChangedCallback(GSettings *settings, const gchar *key,
-                              gpointer user_data) {
-  CandidateWindowHandler *handler =
-      reinterpret_cast<CandidateWindowHandler *>(user_data);
-  UpdateSettings(settings, key, handler);
-}
-
 }  // namespace
 
-class GSettingsObserver {
+class GsettingsObserver {
  public:
-  explicit GSettingsObserver(CandidateWindowHandler *handler)
-      : settings_(CreateGsettings(kIBusPanelSchema)), settings_observer_id_(0) {
-    if (settings_ == nullptr) {
+  explicit GsettingsObserver(CandidateWindowHandler *handler)
+      : settings_(GsettingsWrapper(kIBusPanelSchema)),
+        settings_observer_id_(0) {
+    if (!settings_.IsInitialized()) {
       return;
     }
-    gpointer ptr = reinterpret_cast<gpointer>(handler);
-    settings_observer_id_ = g_signal_connect(
-        settings_, "changed", G_CALLBACK(GSettingsChangedCallback), ptr);
+    settings_observer_id_ =
+        settings_.SignalConnect("changed", OnChanged, handler);
+
     // Emulate state changes to set the initial values to the renderer.
-    UpdateSettings(settings_, kIBusPanelUseCustomFont, handler);
-    UpdateSettings(settings_, kIBusPanelCustomFont, handler);
+    handler->OnSettingsUpdated(kIBusPanelUseCustomFont,
+                               settings_.GetVariant(kIBusPanelUseCustomFont));
+    handler->OnSettingsUpdated(kIBusPanelCustomFont,
+                               settings_.GetVariant(kIBusPanelCustomFont));
   }
 
-  ~GSettingsObserver() {
-    if (settings_ == nullptr) {
+  ~GsettingsObserver() {
+    if (!settings_.IsInitialized()) {
       return;
     }
     if (settings_observer_id_ != 0) {
-      g_signal_handler_disconnect(settings_, settings_observer_id_);
+      settings_.SignalHandlerDisconnect(settings_observer_id_);
     }
-    g_object_unref(settings_);
+    settings_.Unref();
   }
 
  private:
-  GSettings *settings_;
+  // The callback function to the "changed" signal to GSettings object.
+  static void OnChanged(GSettings *settings, const char *key,
+                        gpointer user_data) {
+    CandidateWindowHandler *handler =
+        reinterpret_cast<CandidateWindowHandler *>(user_data);
+    handler->OnSettingsUpdated(key, GsettingsWrapper(settings).GetVariant(key));
+  }
+
+  GsettingsWrapper settings_;
   gulong settings_observer_id_;
 };
 
@@ -220,7 +190,7 @@ void CandidateWindowHandler::OnIBusUseCustomFontDescriptionChanged(
 }
 
 void CandidateWindowHandler::RegisterGSettingsObserver() {
-  settings_observer_ = std::make_unique<GSettingsObserver>(this);
+  settings_observer_ = std::make_unique<GsettingsObserver>(this);
 }
 
 std::string CandidateWindowHandler::GetFontDescription() const {
@@ -232,8 +202,8 @@ std::string CandidateWindowHandler::GetFontDescription() const {
   return custom_font_description_;
 }
 
-void CandidateWindowHandler::OnSettingsUpdated(absl::string_view key,
-                                               const Variant &value) {
+void CandidateWindowHandler::OnSettingsUpdated(
+    absl::string_view key, const GsettingsWrapper::Variant &value) {
   if (key == kIBusPanelUseCustomFont) {
     if (std::holds_alternative<bool>(value)) {
       bool use_custom_font = std::get<bool>(value);

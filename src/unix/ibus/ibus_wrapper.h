@@ -32,6 +32,7 @@
 
 #include <ibus.h>
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -61,6 +62,37 @@ class GobjectWrapper {
     g_object_set_data(GetGobject(), key.data(),
                       reinterpret_cast<void *>(const_cast<T *>(&data)));
   }
+
+  template <typename C, typename D>
+  ulong SignalConnect(absl::string_view signal, C callback, D *user_data) {
+    GObject *obj = GetGobject();
+    if (obj == nullptr) {
+      return 0;
+    }
+    return g_signal_connect(obj, signal.data(),
+                            reinterpret_cast<GCallback>(callback),
+                            reinterpret_cast<gpointer>(user_data));
+  }
+
+  void SignalHandlerDisconnect(ulong id);
+};
+
+class GsettingsWrapper : public GobjectWrapper {
+ public:
+  explicit GsettingsWrapper(GSettings *settings);
+  explicit GsettingsWrapper(absl::string_view schema_name);
+  virtual ~GsettingsWrapper() = default;
+
+  GObject *GetGobject() override;
+  GSettings *GetGsettings();
+
+  bool IsInitialized();
+
+  using Variant = std::variant<bool, std::string>;
+  Variant GetVariant(std::string_view key);
+
+ private:
+  GSettings *settings_;  // Does not take the ownership.
 };
 
 class IbusPropertyWrapper : public GobjectWrapper {

@@ -44,7 +44,7 @@
 namespace mozc {
 namespace ibus {
 
-class GSettingsObserver;
+class GsettingsObserver;
 
 class CandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
@@ -68,8 +68,8 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
 
   void RegisterGSettingsObserver();
 
-  using Variant = std::variant<bool, std::string>;
-  void OnSettingsUpdated(absl::string_view key, const Variant &value);
+  void OnSettingsUpdated(absl::string_view key,
+                         const GsettingsWrapper::Variant &value);
 
  protected:
   bool SendUpdateCommand(IbusEngineWrapper *engine,
@@ -82,7 +82,7 @@ class CandidateWindowHandler : public CandidateWindowHandlerInterface {
   std::string GetFontDescription() const;
   std::string custom_font_description_;
   bool use_custom_font_description_;
-  std::unique_ptr<GSettingsObserver> settings_observer_;
+  std::unique_ptr<GsettingsObserver> settings_observer_;
   commands::RendererCommand::Rectangle preedit_begin_;
 };
 

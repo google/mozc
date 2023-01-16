@@ -36,6 +36,7 @@
 
 static_assert(std::is_same<gint, int>::value, "gint must be int.");
 static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
+static_assert(std::is_same<gulong, ulong>::value, "guint must be ulong.");
 static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
 static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
 
@@ -61,15 +62,66 @@ absl::string_view MakeStringView(const char *str) {
 
 void GobjectWrapper::Unref() {
   GObject *obj = GetGobject();
-  if (obj) {
-    g_object_unref(obj);
+  if (obj == nullptr) {
+    return;
   }
+  g_object_unref(obj);
 }
+
 void GobjectWrapper::RefSink() {
   GObject *obj = GetGobject();
-  if (obj) {
-    g_object_ref_sink(obj);
+  if (obj == nullptr) {
+    return;
   }
+  g_object_ref_sink(obj);
+}
+
+void GobjectWrapper::SignalHandlerDisconnect(ulong id) {
+  GObject *obj = GetGobject();
+  if (obj == nullptr) {
+    return;
+  }
+  g_signal_handler_disconnect(obj, id);
+}
+
+
+// GsettingsWrapper
+
+namespace {
+GSettings *CreateGsettings(absl::string_view schema_name) {
+  GSettingsSchemaSource *schema_source = g_settings_schema_source_get_default();
+  if (schema_source == nullptr) {
+    return nullptr;
+  }
+  GSettingsSchema *schema =
+      g_settings_schema_source_lookup(schema_source, schema_name.data(), TRUE);
+  if (schema == nullptr) {
+    return nullptr;
+  }
+  g_settings_schema_unref(schema);
+  return g_settings_new(schema_name.data());
+}
+}  // namespace
+
+GsettingsWrapper::GsettingsWrapper(GSettings *settings) : settings_(settings) {}
+GsettingsWrapper::GsettingsWrapper(absl::string_view schema_name)
+    : settings_(CreateGsettings(schema_name)) {}
+
+GObject *GsettingsWrapper::GetGobject() { return G_OBJECT(settings_); }
+GSettings *GsettingsWrapper::GetGsettings() { return settings_; }
+
+bool GsettingsWrapper::IsInitialized() { return settings_ != nullptr; }
+
+GsettingsWrapper::Variant GsettingsWrapper::GetVariant(std::string_view key) {
+  GsettingsWrapper::Variant value;
+  GVariant *variant = g_settings_get_value(settings_, key.data());
+  if (g_variant_classify(variant) == G_VARIANT_CLASS_BOOLEAN) {
+    value = static_cast<bool>(g_variant_get_boolean(variant));
+  } else if (g_variant_classify(variant) == G_VARIANT_CLASS_STRING) {
+    value = std::string(g_variant_get_string(variant, nullptr));
+  }
+  g_variant_unref(variant);
+  return value;
 }
 
 
