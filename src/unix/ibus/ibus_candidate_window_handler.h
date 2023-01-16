@@ -37,11 +37,11 @@ namespace ibus {
 
 class IBusCandidateWindowHandler : public CandidateWindowHandlerInterface {
  public:
-  IBusCandidateWindowHandler();
+  IBusCandidateWindowHandler() = default;
   IBusCandidateWindowHandler(const IBusCandidateWindowHandler &) = delete;
   IBusCandidateWindowHandler &operator=(const IBusCandidateWindowHandler &) =
       delete;
-  virtual ~IBusCandidateWindowHandler();
+  virtual ~IBusCandidateWindowHandler() = default;
 
   virtual void Update(IbusEngineWrapper *engine,
                       const commands::Output &output);

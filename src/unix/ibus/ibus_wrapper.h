@@ -143,10 +143,12 @@ class IbusPropListWrapper : public GobjectWrapper {
 
 class IbusTextWrapper {
  public:
-  IbusTextWrapper(absl::string_view text);
+  explicit IbusTextWrapper(IBusText *text);
+  explicit IbusTextWrapper(absl::string_view text);
   ~IbusTextWrapper() = default;
 
   IBusText *GetText();
+  bool IsInitialized();
 
   // `end_index` is `int` by following the base function.
   // https://ibus.github.io/docs/ibus-1.5/IBusText.html#ibus-text-append-attribute
@@ -155,6 +157,27 @@ class IbusTextWrapper {
  private:
   IBusText *text_;  // Does not take the ownership.
 };
+
+class IbusLookupTableWrapper {
+ public:
+  IbusLookupTableWrapper(size_t page_size, int cursor_pos, bool cursor_visible);
+  ~IbusLookupTableWrapper() = default;
+
+  IBusLookupTable *GetLookupTable();
+
+  void AppendCandidate(absl::string_view candidate);
+  void AppendLabel(absl::string_view label);
+
+  // https://ibus.github.io/docs/ibus-1.5/ibus-ibustypes.html#IBusOrientation-enum
+  // IBUS_ORIENTATION_HORIZONTAL = 0,
+  // IBUS_ORIENTATION_VERTICAL   = 1,
+  // IBUS_ORIENTATION_SYSTEM     = 2,
+  void SetOrientation(IBusOrientation orientation);
+
+ private:
+  IBusLookupTable *table_;  // Does not take the ownership.
+};
+
 
 class IbusEngineWrapper {
  public:
@@ -170,21 +193,16 @@ class IbusEngineWrapper {
   void CommitText(absl::string_view text);
 
   void UpdatePreeditTextWithMode(IbusTextWrapper *text, int cursor);
-
   void HidePreeditText();
 
   void RegisterProperties(IbusPropListWrapper *properties);
-
   void UpdateProperty(IbusPropertyWrapper *property);
 
   void EnableSurroundingText();
-
   absl::string_view GetSurroundingText(uint *cursor_pos, uint *anchor_pos);
-
   void DeleteSurroundingText(int offset, uint size);
 
   uint GetCapabilities();
-
   bool CheckCapabilities(uint capabilities);
 
   struct Rectangle {
@@ -194,6 +212,14 @@ class IbusEngineWrapper {
     int height;
   };
   Rectangle GetCursorArea();
+
+  void ShowLookupTable();
+  void HideLookupTable();
+  void UpdateLookupTable(IbusLookupTableWrapper *table);
+
+  void ShowAuxiliaryText();
+  void HideAuxiliaryText();
+  void UpdateAuxiliaryText(absl::string_view auxiliary_text);
 
  private:
   IBusEngine *engine_;  // Does not take the ownership.

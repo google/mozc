@@ -209,11 +209,15 @@ void IbusPropListWrapper::Append(IbusPropertyWrapper *property) {
 
 // IbusTextWrapper
 
+IbusTextWrapper::IbusTextWrapper(IBusText *text) {
+  text_ = text;
+}
 IbusTextWrapper::IbusTextWrapper(absl::string_view text) {
   text_ = ibus_text_new_from_string(text.data());
 }
 
 IBusText *IbusTextWrapper::GetText() { return text_; }
+bool IbusTextWrapper::IsInitialized() { return text_ != nullptr; }
 
 // `end_index` is `int` by following the base function.
 // https://ibus.github.io/docs/ibus-1.5/IBusText.html#ibus-text-append-attribute
@@ -221,6 +225,32 @@ void IbusTextWrapper::AppendAttribute(uint type, uint value, uint start_index,
                                       int end_index) {
   ibus_text_append_attribute(text_, type, value, start_index, end_index);
 }
+
+
+// IbusLookupTableWrapper
+
+IbusLookupTableWrapper::IbusLookupTableWrapper(size_t page_size, int cursor_pos,
+                                               bool cursor_visible) {
+  constexpr bool round = true;  // for lookup table wrap around.
+  table_ = ibus_lookup_table_new(page_size, cursor_pos, cursor_visible, round);
+}
+
+IBusLookupTable *IbusLookupTableWrapper::GetLookupTable() { return table_; }
+
+void IbusLookupTableWrapper::AppendCandidate(absl::string_view candidate) {
+  // `text` is released by ibus_engine_update_lookup_table along with `table_`.
+  IBusText *text = ibus_text_new_from_string(candidate.data());
+  ibus_lookup_table_append_candidate(table_, text);
+}
+void IbusLookupTableWrapper::AppendLabel(absl::string_view label) {
+  IBusText *text = ibus_text_new_from_string(label.data());
+  ibus_lookup_table_append_label(table_, text);
+}
+
+void IbusLookupTableWrapper::SetOrientation(IBusOrientation orientation) {
+  ibus_lookup_table_set_orientation(table_, orientation);
+}
+
 
 // IbusEngineWrapper
 
@@ -296,6 +326,35 @@ bool IbusEngineWrapper::CheckCapabilities(uint capabilities) {
 IbusEngineWrapper::Rectangle IbusEngineWrapper::GetCursorArea() {
   const IBusRectangle &cursor_area = engine_->cursor_area;
   return {cursor_area.x, cursor_area.y, cursor_area.width, cursor_area.height};
+}
+
+void IbusEngineWrapper::ShowLookupTable() {
+  ibus_engine_show_lookup_table(engine_);
+}
+
+void IbusEngineWrapper::HideLookupTable() {
+  ibus_engine_hide_lookup_table(engine_);
+}
+
+void IbusEngineWrapper::UpdateLookupTable(IbusLookupTableWrapper *table) {
+  constexpr bool visible = true;
+  // `table` is released by ibus_engine_update_lookup_table.
+  ibus_engine_update_lookup_table(engine_, table->GetLookupTable(), visible);
+}
+
+void IbusEngineWrapper::ShowAuxiliaryText() {
+  ibus_engine_show_auxiliary_text(engine_);
+}
+
+void IbusEngineWrapper::HideAuxiliaryText() {
+  ibus_engine_hide_auxiliary_text(engine_);
+}
+
+void IbusEngineWrapper::UpdateAuxiliaryText(absl::string_view auxiliary_text) {
+  constexpr bool visible = true;
+  // `text` is released by ibus_engine_update_auxiliary_text.
+  IBusText *text = ibus_text_new_from_string(auxiliary_text.data());
+  ibus_engine_update_auxiliary_text(engine_, text, visible);
 }
 
 
