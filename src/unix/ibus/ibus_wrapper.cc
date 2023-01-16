@@ -137,6 +137,21 @@ void IbusPropListWrapper::Append(IbusPropertyWrapper *property) {
 }
 
 
+// IbusTextWrapper
+
+IbusTextWrapper::IbusTextWrapper(const std::string &text) {
+  text_ = ibus_text_new_from_string(text.c_str());
+}
+
+IBusText *IbusTextWrapper::GetText() { return text_; }
+
+// `end_index` is `int` by following the base function.
+// https://ibus.github.io/docs/ibus-1.5/IBusText.html#ibus-text-append-attribute
+void IbusTextWrapper::AppendAttribute(uint type, uint value, uint start_index,
+                                      int end_index) {
+  ibus_text_append_attribute(text_, type, value, start_index, end_index);
+}
+
 // IbusEngineWrapper
 
 IbusEngineWrapper::IbusEngineWrapper(IBusEngine *engine) : engine_(engine) {}
@@ -156,6 +171,18 @@ void IbusEngineWrapper::CommitText(const std::string &text) {
   ibus_engine_commit_text(engine_, ibus_text);
   // `ibus_text` is released by ibus_engine_commit_text.
 }
+
+void IbusEngineWrapper::UpdatePreeditTextWithMode(IbusTextWrapper *text,
+                                                  int cursor) {
+  constexpr bool visible = true;
+  ibus_engine_update_preedit_text_with_mode(
+      engine_, text->GetText(), cursor, visible, IBUS_ENGINE_PREEDIT_COMMIT);
+}
+
+void IbusEngineWrapper::HidePreeditText() {
+  ibus_engine_hide_preedit_text(engine_);
+}
+
 
 void IbusEngineWrapper::RegisterProperties(IbusPropListWrapper *properties) {
   ibus_engine_register_properties(engine_, properties->GetPropList());

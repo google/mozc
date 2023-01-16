@@ -103,6 +103,21 @@ class IbusPropListWrapper : public GobjectWrapper {
   IBusPropList *prop_list_;  // Does not take ownership.
 };
 
+class IbusTextWrapper {
+ public:
+  IbusTextWrapper(const std::string &text);
+  ~IbusTextWrapper() = default;
+
+  IBusText *GetText();
+
+  // `end_index` is `int` by following the base function.
+  // https://ibus.github.io/docs/ibus-1.5/IBusText.html#ibus-text-append-attribute
+  void AppendAttribute(uint type, uint value, uint start_index, int end_index);
+
+ private:
+  IBusText *text_;  // Does not take ownership.
+};
+
 class IbusEngineWrapper {
  public:
   explicit IbusEngineWrapper(IBusEngine *engine);
@@ -115,6 +130,10 @@ class IbusEngineWrapper {
   void GetContentType(uint *purpose, uint *hints);
 
   void CommitText(const std::string &text);
+
+  void UpdatePreeditTextWithMode(IbusTextWrapper *text, int cursor);
+
+  void HidePreeditText();
 
   void RegisterProperties(IbusPropListWrapper *properties);
 

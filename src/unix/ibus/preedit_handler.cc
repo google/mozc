@@ -41,12 +41,12 @@ namespace ibus {
 namespace {
 // Returns an IBusText composed from |preedit| to render preedit text.
 // Caller must release the returned IBusText object.
-IBusText *ComposePreeditText(const commands::Preedit &preedit) {
+IbusTextWrapper ComposePreeditText(const commands::Preedit &preedit) {
   std::string data;
   for (int i = 0; i < preedit.segment_size(); ++i) {
     data.append(preedit.segment(i).value());
   }
-  IBusText *text = ibus_text_new_from_string(data.c_str());
+  IbusTextWrapper text(data);
 
   int start = 0;
   int end = 0;
@@ -68,22 +68,21 @@ IBusText *ComposePreeditText(const commands::Preedit &preedit) {
         break;
     }
     end += segment.value_length();
-    ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, attr, start,
-                               end);
+    text.AppendAttribute(IBUS_ATTR_TYPE_UNDERLINE, attr, start, end);
 
     // Many applications show a single underline regardless of using
     // IBUS_ATTR_UNDERLINE_SINGLE or IBUS_ATTR_UNDERLINE_DOUBLE for some
     // reasons. Here we add a background color for the highlighted candidate
     // to make it easiliy distinguishable.
     if (segment.annotation() == commands::Preedit::Segment::HIGHLIGHT) {
-      const guint kBackgroundColor = 0xD1EAFF;
-      ibus_text_append_attribute(text, IBUS_ATTR_TYPE_BACKGROUND,
-                                 kBackgroundColor, start, end);
+      constexpr uint kBackgroundColor = 0xD1EAFF;
+      text.AppendAttribute(IBUS_ATTR_TYPE_BACKGROUND, kBackgroundColor, start,
+                           end);
       // IBUS_ATTR_TYPE_FOREGROUND is necessary to highlight the segment on
       // Firefox.
-      const guint kForegroundColor = 0x000000;
-      ibus_text_append_attribute(text, IBUS_ATTR_TYPE_FOREGROUND,
-                                 kForegroundColor, start, end);
+      constexpr uint kForegroundColor = 0x000000;
+      text.AppendAttribute(IBUS_ATTR_TYPE_FOREGROUND, kForegroundColor, start,
+                           end);
     }
     start = end;
   }
@@ -110,13 +109,11 @@ int CursorPos(const commands::Output &output) {
 bool PreeditHandler::Update(IbusEngineWrapper *engine,
                             const commands::Output &output) {
   if (!output.has_preedit()) {
-    ibus_engine_hide_preedit_text(engine->GetEngine());
+    engine->HidePreeditText();
     return true;
   }
-  IBusText *text = ComposePreeditText(output.preedit());
-  ibus_engine_update_preedit_text_with_mode(engine->GetEngine(), text,
-                                            CursorPos(output), TRUE,
-                                            IBUS_ENGINE_PREEDIT_COMMIT);
+  IbusTextWrapper text = ComposePreeditText(output.preedit());
+  engine->UpdatePreeditTextWithMode(&text, CursorPos(output));
   // |text| is released by ibus_engine_update_preedit_text.
   return true;
 }
