@@ -108,17 +108,21 @@ def ParseArguments() -> argparse.Namespace:
   # For icons
   parser.add_argument('--mozc_icons_dir', default='/usr/share/icons/mozc')
   # For mozc.xml
-  parser.add_argument('--ibus_component_dir', default='/usr/lib/ibus/component')
+  parser.add_argument(
+      '--ibus_component_dir', default='/usr/share/ibus/component'
+  )
   # For ibus-engine-mozc. It's not dir but a file path.
-  parser.add_argument('--ibus_mozc_path',
-                      default='/usr/lib/ibus-mozc/ibus-engine-mozc')
+  parser.add_argument(
+      '--ibus_mozc_path', default='/usr/lib/ibus-mozc/ibus-engine-mozc'
+  )
   # For ibus icons.
   parser.add_argument('--ibus_mozc_install_dir', default='/usr/share/ibus-mozc')
   # For mozc_emacs_helper
   parser.add_argument('--emacs_helper_dir', default='/usr/bin')
   # For mozc.el
-  parser.add_argument('--emacs_client_dir',
-                      default='/usr/share/emacs/site-lisp/emacs-mozc')
+  parser.add_argument(
+      '--emacs_client_dir', default='/usr/share/emacs/site-lisp/emacs-mozc'
+  )
   parser.add_argument('--output')
   return parser.parse_args()
 
