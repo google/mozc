@@ -39,6 +39,7 @@ static_assert(std::is_same<guint, uint>::value, "guint must be uint.");
 static_assert(std::is_same<gulong, ulong>::value, "guint must be ulong.");
 static_assert(std::is_same<gchar, char>::value, "gchar must be char.");
 static_assert(std::is_same<gboolean, int>::value, "gboolean must be int.");
+static_assert(std::is_same<gpointer, void *>::value, "gpointer must be void*.");
 
 #if !IBUS_CHECK_VERSION(1, 5, 4)
 #error "ibus-mozc requires IBus>=1.5.4"
@@ -342,6 +343,8 @@ std::vector<absl::string_view > IbusComponentWrapper::GetEngineNames() {
 
 IbusBusWrapper::IbusBusWrapper() { bus_ = ibus_bus_new(); }
 
+GObject *IbusBusWrapper::GetGobject() { return G_OBJECT(bus_); }
+
 IBusBus *IbusBusWrapper::GetBus() { return bus_; }
 
 void IbusBusWrapper::AddEngines(
@@ -358,6 +361,18 @@ void IbusBusWrapper::RequestName(absl::string_view name) {
 void IbusBusWrapper::RegisterComponent(IbusComponentWrapper *component) {
   ibus_bus_register_component(bus_, component->GetComponent());
 }
+
+
+// IbusWrapper
+
+// static
+void IbusWrapper::Init() { ibus_init(); }
+
+// static
+void IbusWrapper::Main() { ibus_main(); }
+
+// static
+void IbusWrapper::Quit() { ibus_quit(); }
 
 }  // namespace ibus
 }  // namespace mozc

@@ -83,7 +83,7 @@ void IBusMozcEngineInit(GTypeInstance *instance, gpointer klass) {
 
 // static
 GType RegisterEngine(EngineInterface *engine) {
-  static GType type = 0;
+  static GType type_id = 0;
 
   static const GTypeInfo type_info = {
       sizeof(IBusMozcEngineClass), nullptr, nullptr,
@@ -91,14 +91,14 @@ GType RegisterEngine(EngineInterface *engine) {
       sizeof(IBusMozcEngine),      0,       IBusMozcEngineInit,
   };
 
-  if (type == 0) {
+  if (type_id == 0) {
     g_engine = engine;
-    type = g_type_register_static(IBUS_TYPE_ENGINE, "IBusMozcEngine",
-                                  &type_info, static_cast<GTypeFlags>(0));
-    DCHECK_NE(type, 0) << "g_type_register_static failed";
+    type_id = g_type_register_static(IBUS_TYPE_ENGINE, "IBusMozcEngine",
+                                     &type_info, static_cast<GTypeFlags>(0));
+    DCHECK_NE(type_id, 0) << "g_type_register_static failed";
   }
 
-  return type;
+  return type_id;
 }
 
 bool EngineRegistrar::Register(IBusEngineClass *engine_class) {

@@ -223,11 +223,12 @@ class IbusComponentWrapper : public GobjectWrapper {
   IBusComponent *component_;  // Does not take the ownership.
 };
 
-class IbusBusWrapper {
+class IbusBusWrapper : public GobjectWrapper {
  public:
   IbusBusWrapper();
   ~IbusBusWrapper() = default;
 
+  GObject *GetGobject() override;
   IBusBus *GetBus();
 
   void AddEngines(const std::vector<absl::string_view> engine_names,
@@ -237,6 +238,13 @@ class IbusBusWrapper {
 
  private:
   IBusBus *bus_;  // Does not take the ownership.
+};
+
+class IbusWrapper {
+ public:
+  static void Init();
+  static void Main();
+  static void Quit();
 };
 
 }  // namespace ibus

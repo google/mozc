@@ -50,14 +50,14 @@ namespace mozc {
 namespace ibus {
 namespace {
 
-#ifndef MOZC_NO_LOGGING
 void EnableVerboseLog() {
+#ifndef MOZC_NO_LOGGING
   constexpr int kDefaultVerboseLevel = 1;
   if (mozc::Logging::GetVerboseLevel() < kDefaultVerboseLevel) {
     mozc::Logging::SetVerboseLevel(kDefaultVerboseLevel);
   }
-}
 #endif  // MOZC_NO_LOGGING
+}
 
 void IgnoreSigChild() {
   // Don't wait() child process termination.
@@ -70,7 +70,7 @@ void IgnoreSigChild() {
 }
 
 // Callback function to the "disconnected" signal to the bus object.
-void Disconnected(IBusBus *bus, gpointer user_data) { ibus_quit(); }
+void OnDisconnected(IBusBus *bus, void *null_data) { IbusWrapper::Quit(); }
 
 // Creates a IBusComponent object and add engine(s) to the object.
 IbusComponentWrapper GetIbusComponent() {
@@ -93,12 +93,14 @@ IbusComponentWrapper GetIbusComponent() {
 // Initializes ibus components and adds Mozc engine.
 void InitIbusComponent(IbusBusWrapper *bus, MozcEngine *engine,
                        bool executed_by_ibus_daemon) {
-  g_signal_connect(bus->GetBus(), "disconnected",
-                   G_CALLBACK(Disconnected), nullptr);
+  // Set callback on disconnected from Ibus.
+  constexpr void *null_data = nullptr;
+  bus->SignalConnect("disconnected", OnDisconnected, null_data);
 
+  // Bind engine specifications in the user configuration to Ibus engine object.
   IbusComponentWrapper component = GetIbusComponent();
-  const GType type = RegisterEngine(engine);
-  bus->AddEngines(component.GetEngineNames(), type);
+  const GType type_id = RegisterEngine(engine);
+  bus->AddEngines(component.GetEngineNames(), type_id);
 
   if (executed_by_ibus_daemon) {
     bus->RequestName(kComponentName);
@@ -115,15 +117,13 @@ void OutputXml() {
 }
 
 void RunIbus() {
-  ibus_init();
+  IbusWrapper::Init();
   IbusBusWrapper bus;
   MozcEngine engine;
   InitIbusComponent(&bus, &engine, absl::GetFlag(FLAGS_ibus));
-#ifndef MOZC_NO_LOGGING
-  EnableVerboseLog();
-#endif  // MOZC_NO_LOGGING
+  EnableVerboseLog();  // Do nothing if MOZC_NO_LOGGING is defined.
   IgnoreSigChild();
-  ibus_main();
+  IbusWrapper::Main();
 }
 
 }  // namespace

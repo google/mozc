@@ -87,8 +87,7 @@ class GsettingsObserver {
 
  private:
   // The callback function to the "changed" signal to GSettings object.
-  static void OnChanged(GSettings *settings, const char *key,
-                        gpointer user_data) {
+  static void OnChanged(GSettings *settings, const char *key, void *user_data) {
     CandidateWindowHandler *handler =
         reinterpret_cast<CandidateWindowHandler *>(user_data);
     handler->OnSettingsUpdated(key, GsettingsWrapper(settings).GetVariant(key));

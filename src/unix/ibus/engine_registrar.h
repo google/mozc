@@ -36,7 +36,7 @@
 namespace mozc {
 namespace ibus {
 
-// Resisters the engine and returns the GType which this class represents.
+// Resisters the engine and returns the identifier for this engine class.
 GType RegisterEngine(EngineInterface *engine);
 
 // Provides functions to register/unregister interface functions implemented by
