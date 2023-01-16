@@ -41,6 +41,8 @@ class IPCClientFactoryMock;  // declared below.
 
 class IPCClientMock : public IPCClientInterface {
  public:
+  IPCClientMock(const IPCClientMock &) = delete;
+  IPCClientMock &operator=(const IPCClientMock &) = delete;
   explicit IPCClientMock(IPCClientFactoryMock *caller);
   bool Connected() const override;
   uint32_t GetServerProtocolVersion() const override;
@@ -72,13 +74,13 @@ class IPCClientMock : public IPCClientInterface {
   uint32_t server_process_id_;
   bool result_;
   std::string response_;
-
-  DISALLOW_COPY_AND_ASSIGN(IPCClientMock);
 };
 
 class IPCClientFactoryMock : public IPCClientFactoryInterface {
  public:
   IPCClientFactoryMock();
+  IPCClientFactoryMock(const IPCClientFactoryMock &) = delete;
+  IPCClientFactoryMock &operator=(const IPCClientFactoryMock &) = delete;
 
   IPCClientInterface *NewClient(const std::string &unused_name,
                                 const std::string &path_name) override;
@@ -119,8 +121,6 @@ class IPCClientFactoryMock : public IPCClientFactoryInterface {
   uint32_t server_process_id_;
   std::string request_;
   std::string response_;
-
-  DISALLOW_COPY_AND_ASSIGN(IPCClientFactoryMock);
 };
 
 }  // namespace mozc

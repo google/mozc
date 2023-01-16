@@ -51,6 +51,8 @@ class SetupUtil {
   };
 
   SetupUtil();
+  SetupUtil(const SetupUtil&) = delete;
+  SetupUtil& operator=(const SetupUtil&) = delete;
   virtual ~SetupUtil();
 
   // locks user dictionary
@@ -77,8 +79,6 @@ class SetupUtil {
   std::unique_ptr<UserDictionaryStorage> storage_;
 
   bool is_userdictionary_locked_;
-
-  DISALLOW_COPY_AND_ASSIGN(SetupUtil);
 };
 
 }  // namespace gui

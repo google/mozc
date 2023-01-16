@@ -44,6 +44,10 @@ struct TokenInfo;
 
 class SystemDictionaryCodecInterface {
  public:
+  SystemDictionaryCodecInterface(const SystemDictionaryCodecInterface &) =
+      delete;
+  SystemDictionaryCodecInterface &operator=(
+      const SystemDictionaryCodecInterface &) = delete;
   virtual ~SystemDictionaryCodecInterface() {}
 
   // Get section name functions are expected not to be called so often
@@ -107,18 +111,16 @@ class SystemDictionaryCodecInterface {
 
  protected:
   SystemDictionaryCodecInterface() {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SystemDictionaryCodecInterface);
 };
 
 class SystemDictionaryCodecFactory {
  public:
+  SystemDictionaryCodecFactory() = delete;
+  SystemDictionaryCodecFactory(const SystemDictionaryCodecFactory &) = delete;
+  SystemDictionaryCodecFactory &operator=(
+      const SystemDictionaryCodecFactory &) = delete;
   static SystemDictionaryCodecInterface *GetCodec();
   static void SetCodec(SystemDictionaryCodecInterface *codec);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(SystemDictionaryCodecFactory);
 };
 
 }  // namespace dictionary

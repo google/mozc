@@ -55,6 +55,8 @@ namespace gui {
 
 class SingletonWindowHelper {
  public:
+  SingletonWindowHelper(const SingletonWindowHelper&) = delete;
+  SingletonWindowHelper& operator=(const SingletonWindowHelper&) = delete;
   // name should be unique for the window.
   explicit SingletonWindowHelper(const std::string &name);
   virtual ~SingletonWindowHelper();
@@ -67,8 +69,6 @@ class SingletonWindowHelper {
 
  private:
   std::unique_ptr<ProcessMutex> mutex_;
-
-  DISALLOW_COPY_AND_ASSIGN(SingletonWindowHelper);
 };
 
 }  // namespace gui

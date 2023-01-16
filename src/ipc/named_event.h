@@ -88,13 +88,12 @@ namespace mozc {
 // Util class for Named Event
 class NamedEventUtil {
  public:
+  NamedEventUtil(const NamedEventUtil &) = delete;
+  NamedEventUtil &operator=(const NamedEventUtil &) = delete;
   // return real event name
   // Windows: <kEventPathPrefix>.<sid>.<name>
   // Linux/Mac: <Util::GetUserProfileDirectory()>/.<name>.event
   static const std::string GetEventPath(const char *name);
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(NamedEventUtil);
 };
 
 class NamedEventListener {

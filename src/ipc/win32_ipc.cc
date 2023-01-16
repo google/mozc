@@ -153,25 +153,22 @@ class IPCClientMutexBase {
 class ConverterClientMutex : public IPCClientMutexBase {
  public:
   ConverterClientMutex() : IPCClientMutexBase("converter") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ConverterClientMutex);
+  ConverterClientMutex(const ConverterClientMutex &) = delete;
+  ConverterClientMutex &operator=(const ConverterClientMutex &) = delete;
 };
 
 class RendererClientMutex : public IPCClientMutexBase {
  public:
   RendererClientMutex() : IPCClientMutexBase("renderer") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(RendererClientMutex);
+  RendererClientMutex(const RendererClientMutex &) = delete;
+  RendererClientMutex &operator=(const RendererClientMutex &) = delete;
 };
 
 class FallbackClientMutex : public IPCClientMutexBase {
  public:
   FallbackClientMutex() : IPCClientMutexBase("fallback") {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FallbackClientMutex);
+  FallbackClientMutex(const FallbackClientMutex &) = delete;
+  FallbackClientMutex &operator=(const FallbackClientMutex &) = delete;
 };
 
 // In Mozc client, we should support different IPC channels (client-converter
@@ -192,6 +189,9 @@ HANDLE GetClientMutex(const std::string &ipc_name) {
 // RAII class for calling ReleaseMutex in destructor.
 class ScopedReleaseMutex {
  public:
+  ScopedReleaseMutex() = delete;
+  ScopedReleaseMutex(const ScopedReleaseMutex &) = delete;
+  ScopedReleaseMutex &operator=(const ScopedReleaseMutex &) = delete;
   explicit ScopedReleaseMutex(HANDLE handle) : pipe_handle_(handle) {}
 
   virtual ~ScopedReleaseMutex() {
@@ -205,8 +205,6 @@ class ScopedReleaseMutex {
 
  private:
   HANDLE pipe_handle_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedReleaseMutex);
 };
 
 uint32 GetServerProcessIdImpl(HANDLE handle) {

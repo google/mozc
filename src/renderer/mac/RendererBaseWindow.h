@@ -39,6 +39,8 @@ namespace renderer {
 namespace mac {
 class RendererBaseWindow {
  public:
+  RendererBaseWindow(const RendererBaseWindow &) = delete;
+  RendererBaseWindow &operator=(const RendererBaseWindow &) = delete;
   Size GetWindowSize() const;
   virtual void Hide();
   virtual void Show();
@@ -58,7 +60,6 @@ class RendererBaseWindow {
  private:
   virtual void ResetView();
   NSInteger window_level_;
-  DISALLOW_COPY_AND_ASSIGN(RendererBaseWindow);
 };
 
 }  // namespace mozc::renderer::mac

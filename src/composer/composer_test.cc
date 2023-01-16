@@ -130,6 +130,8 @@ void ExpectSameComposer(const Composer &lhs, const Composer &rhs) {
 class ComposerTest : public ::testing::Test {
  protected:
   ComposerTest() = default;
+  ComposerTest(const ComposerTest &) = delete;
+  ComposerTest &operator=(const ComposerTest &) = delete;
   ~ComposerTest() override = default;
 
   void SetUp() override {
@@ -154,9 +156,6 @@ class ComposerTest : public ::testing::Test {
   std::unique_ptr<Table> table_;
   std::unique_ptr<Request> request_;
   std::unique_ptr<Config> config_;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(ComposerTest);
 };
 
 TEST_F(ComposerTest, Reset) {

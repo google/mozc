@@ -100,6 +100,8 @@ class Entry {
 class Table {
  public:
   Table();
+  Table(const Table &) = delete;
+  Table &operator=(const Table &) = delete;
   virtual ~Table();
 
   bool InitializeWithRequestAndConfig(const commands::Request &request,
@@ -173,8 +175,6 @@ class Table {
 
   // Typing model. nullptr if no corresponding model is available.
   std::unique_ptr<const TypingModel> typing_model_;
-
-  DISALLOW_COPY_AND_ASSIGN(Table);
 };
 
 class TableManager {

@@ -55,6 +55,8 @@ namespace {
 
 class IPCServerThread : public Thread {
  public:
+  IPCServerThread(const IPCServerThread &) = delete;
+  IPCServerThread &operator=(const IPCServerThread &) = delete;
   explicit IPCServerThread(IPCServer *server) : server_(server) {}
   ~IPCServerThread() override {}
   void Run() override {
@@ -65,8 +67,6 @@ class IPCServerThread : public Thread {
 
  private:
   IPCServer *server_;
-
-  DISALLOW_COPY_AND_ASSIGN(IPCServerThread);
 };
 
 }  // namespace

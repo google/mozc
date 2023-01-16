@@ -38,10 +38,10 @@ namespace mozc {
 
 class EncodingUtil {
  public:
+  EncodingUtil() = delete;
+  EncodingUtil(const EncodingUtil &) = delete;
+  EncodingUtil &operator=(const EncodingUtil &) = delete;
   static void SjisToUtf8(const std::string &input, std::string *output);
-
- private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(EncodingUtil);
 };
 
 }  // namespace mozc
