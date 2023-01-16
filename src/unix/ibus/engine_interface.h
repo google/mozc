@@ -31,6 +31,7 @@
 #define MOZC_UNIX_IBUS_ENGINE_INTERFACE_H_
 
 #include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 
 namespace mozc {
 namespace ibus {

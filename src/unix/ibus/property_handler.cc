@@ -38,6 +38,7 @@
 #include "client/client.h"  // For client interface
 #include "protocol/commands.pb.h"
 #include "unix/ibus/ibus_header.h"
+#include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/message_translator.h"
 #include "unix/ibus/path_util.h"
 

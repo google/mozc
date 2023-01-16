@@ -83,12 +83,29 @@ cc_library_mozc(
 )
 
 cc_library_mozc(
+    name = "ibus_wrapper",
+    srcs = select_mozc(linux = ["ibus_wrapper.cc"]),
+    hdrs = select_mozc(linux = ["ibus_wrapper.h"]),
+    deps = select_mozc(
+        linux = [
+            ":ibus_header",
+            "//third_party/ibus",
+        ],
+        oss_linux = [
+            ":ibus_header",
+            "@ibus//:ibus",
+        ],
+    ),
+)
+
+cc_library_mozc(
     name = "ibus_property_handler",
     srcs = select_mozc(linux = ["property_handler.cc"]),
     hdrs = select_mozc(linux = ["property_handler.h"]),
     deps = [
         ":ibus_header",
         ":ibus_utils",
+        ":ibus_wrapper",
         "//base",
         "//base:file_util",
         "//base:logging",
@@ -175,6 +192,7 @@ cc_library_mozc(
         ":ibus_header",
         ":ibus_property_handler",
         ":ibus_utils",
+        ":ibus_wrapper",
         ":x11_selection_monitor",
         "//base",
         "//base:clock",

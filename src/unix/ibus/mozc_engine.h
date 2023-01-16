@@ -42,6 +42,7 @@
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
 #include "unix/ibus/ibus_config.h"
+#include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/property_handler.h"
 
 namespace mozc {

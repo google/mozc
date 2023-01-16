@@ -54,6 +54,7 @@
 #include "unix/ibus/engine_registrar.h"
 #include "unix/ibus/candidate_window_handler.h"
 #include "unix/ibus/ibus_candidate_window_handler.h"
+#include "unix/ibus/ibus_wrapper.h"
 #include "unix/ibus/key_event_handler.h"
 #include "unix/ibus/message_translator.h"
 #include "unix/ibus/path_util.h"
