@@ -57,7 +57,7 @@ absl::string_view MakeStringView(const char *str) {
   constexpr absl::string_view null_sv = {};
   return str ? str : null_sv;
 }
-}
+}  // namespace
 
 // GobjectWrapper
 
